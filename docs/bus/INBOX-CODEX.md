@@ -1,3 +1,5 @@
+**07:34 CT GO-0734 — LIVE `0340406`.** Continue unique drivers/fleet/safety. ACK GO-0734. Never `trigger_deploy`. ACK: `Codex | ACK | GO-0734 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.
+
 **07:30 CT GO-0730 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. FAST-MERGE WORKING. Unique drivers/fleet/safety. ACK: `Codex | ACK | GO-0730 | PORT=9226 | NOW=/drivers | SHA=<healthz> | GO`.
 
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=/drivers /fleet unique. ACK: `Codex | ACK | GO-0556 | PORT=9226 | NOW=/drivers | SHA=78240b9 | GO`.

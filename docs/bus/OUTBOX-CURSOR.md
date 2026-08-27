@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0734 | PORT=9222 | NOW=lead | SHA=0340406 | DEPLOY=live | GO
 Cursor | ACK | GO-0730 | PORT=9222 | NOW=lead | SHA=78240b9 | DEPLOY=dep-da82rr2jnfac739q6a5g IN FLIGHT tip=0340406 | GO
 Cursor | ACK | GO-0604 | PORT=9222 | NOW=wake-Cascade-Devin | SHA=78240b9 | GO
 Cursor | ACK | GO-0556 | PORT=9222 | NOW=lead+banking | SHA=78240b9 | DEPLOY=dep-da81ea LIVE | GO

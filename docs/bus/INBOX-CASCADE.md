@@ -1,3 +1,5 @@
+**07:34 CT GO-0734 — LIVE `0340406`. YOU WERE WAITING ON A STALE SHA.** Hard-reload. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. Re-prove commodity PATCH (#16616). Status-filter / driver-label / wait-times / trip-pairing **routed** — do not sit. ACK: `CASCADE | ACK | GO-0734 | NOW=/dispatch | SHA=0340406 | GO`.
+
 **07:30 CT GO-0730 — THIS IS NOW. YOU ARE NOT WAITING.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. NOW=/dispatch unique. Self-ACK this line. Hard-reload when healthz=`0340406`. ACK: `CASCADE | ACK | GO-0730 | NOW=/dispatch | SHA=<healthz> | GO`.
 
 **06:04 CT GO-0604 — CASCADE YOU ARE NOT WAITING.** Live healthz **`78240b9`**. NOW=`/dispatch` unique (status-filter 400 / commodity PATCH 500 / driver-label). Hard-reload. Packet still GO-0556. ACK: `CASCADE | ACK | GO-0604 | NOW=/dispatch | SHA=78240b9 | GO`. Idle=defect.

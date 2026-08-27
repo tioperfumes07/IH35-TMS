@@ -1,3 +1,5 @@
+**07:34 CT GO-0734 — THIS IS NOW.** Live **`0340406`**. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. Cascade 5 routed. Nobody `trigger_deploy`.
+
 **07:30 CT GO-0730 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. Deploy `dep-da82rr2jnfac739q6a5g` tip `0340406`. Communicate FINDING→board+OUTBOX→correct seat. Nobody else `trigger_deploy`.
 
 **06:04 CT GO-0604 — Cascade `/dispatch` · Devin `/vendors` Reactivate. Live `78240b9`. Do not wait.**

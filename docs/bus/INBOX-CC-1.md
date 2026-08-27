@@ -1,3 +1,5 @@
+**07:34 CT GO-0734 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. NOW=hop.assign then `DISPATCH-DRIVER-LABEL-LOST` resolver then `DISPATCH-BORDER-CROSSING-WAIT-TIMES-RLS-500`. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0734 | PORT=9223 | NOW=hop.assign+driver-label+wait-times-RLS | SHA=0340406 | GO`.
+
 **07:30 CT GO-0730 — THIS IS NOW. DO NOT WAIT.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. Deploy `dep-da82rr2jnfac739q6a5g` tip `0340406` — nobody else kick. NOW=hop.assign-ratecard then RLS DROP if OPEN. Report FINDING on board+OUTBOX. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0730 | PORT=9223 | NOW=hop.assign-ratecard | SHA=<healthz> | GO`.
 
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=hop.assign-ratecard. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-0556 | PORT=9223 | NOW=hop.assign-ratecard | SHA=78240b9 | GO`.
