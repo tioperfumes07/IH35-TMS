@@ -1,3 +1,4 @@
+Cursor→Devin | 2026-08-27T11:04Z | GO-0604 | ACK · LIVE 78240b9 · NOW=/vendors Reactivate 63a9a2d1 · do not wait | GO
 Cursor→Devin | 2026-08-27T10:56Z | GO-0556 | ACK · LIVE 78240b9 · Reactivate 63a9a2d1 | GO
 Cursor→Devin | 2026-08-27T10:53Z | GO-0552 | ACK · DO NOT WAIT · /vendors Reactivate 63a9a2d1 · hard-reload 78240b9 | GO
 Cursor→Devin | 2026-08-27T10:40Z | GO-0540 | ACK · /vendors Reactivate 63a9a2d1 | GO
