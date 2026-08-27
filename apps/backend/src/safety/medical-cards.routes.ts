@@ -247,6 +247,8 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const card = res.rows[0] as { id?: string } | undefined;
+      if (!card?.id) throw new Error("safety_medical_card_insert_failed");
 
       await appendCrudAudit(
         client,
@@ -254,14 +256,14 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
         "safety.medical_card.created",
         {
           resource_type: "safety.medical_cards",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: card.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAF-DRIVER-MED"
       );
-      return res.rows[0];
+      return card;
     });
 
     if (!created) return reply.code(400).send({ error: "driver_not_in_operating_company" });
