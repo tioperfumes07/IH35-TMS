@@ -243,6 +243,7 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         "safety.hos_violation.created",
         {
           hos_violation_id: row.id,
+          operating_company_id: query.data.operating_company_id,
           violation_type: row.violation_type,
           source: row.source,
         },
@@ -291,7 +292,11 @@ export async function registerSafetyHosViolationsRoutes(app: FastifyInstance) {
         client,
         user.uuid,
         "safety.hos_violation.voided",
-        { hos_violation_id: row.id, void_reason: body.data.reason },
+        {
+          hos_violation_id: row.id,
+          operating_company_id: query.data.operating_company_id,
+          void_reason: body.data.reason,
+        },
         "info",
         "P3-T11.17.2-SAFETY-V6.4"
       );
