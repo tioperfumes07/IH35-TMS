@@ -9,6 +9,7 @@ import { fetchAuditReport, type AuditReportParams, type AuditReportRow } from ".
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
+import { ReportsSubNav } from "../ReportsSubNav";
 
 const PAGE_SIZE = 100;
 
@@ -175,6 +176,7 @@ export function AuditReportPage({ title, subtitle, endpoint, extraParams, showMo
 
   return (
     <div className="space-y-4">
+      <ReportsSubNav />
       <div>
         <PageHeader title={title} subtitle={subtitle} backHref={backHref} breadcrumb={breadcrumb} />
       </div>
