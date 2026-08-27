@@ -1,3 +1,5 @@
+**05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. NOW=U14 `/dispatch` unique. Re-prove driver-label on landed `78240b9`. ACK: `CASCADE | ACK | GO-0552 | NOW=/dispatch | SHA=<healthz> | GO`.
+
 **05:40 CT GO-0540 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. Re-prove dispatch 400/500 on **current** healthz. `/dispatch`+`/driver-hub` unique. ACK: `CASCADE | ACK | GO-0540 | NOW=/dispatch | SHA=<healthz> | GO`.
 
 **05:21 CT GO-0521 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0521.md`. ACK: `CASCADE | ACK | GO-0521 | NOW=/dispatch | SHA=<healthz> | GO`. Walk `/dispatch`+`/driver-hub` unique on **new** healthz. Not `/vendors`. No product PR. Never `trigger_deploy`.
