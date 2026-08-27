@@ -155,7 +155,10 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     return { tickets: rows };
   });
 
-  app.post("/api/v1/road-service-tickets", async (req, reply) => {
+  app.post(
+    "/api/v1/road-service-tickets",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const body = createTicketSchema.safeParse(req.body ?? {});
@@ -235,6 +238,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
         ]
       );
       const ticket = res.rows[0];
+      if (!ticket?.id) throw new Error("road_service_ticket_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -242,7 +246,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
         {
           operating_company_id: body.data.operating_company_id,
           resource_type: "maintenance.road_service_tickets",
-          resource_id: String(ticket?.id ?? ""),
+          resource_id: String(ticket.id),
         },
         "info",
         "P5-T17-ROAD-SERVICE"
@@ -257,8 +261,9 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
       });
     }
 
-    return reply.code(201).send({ ticket: row });
-  });
+      return reply.code(201).send({ ticket: row });
+    }
+  );
 
   app.patch("/api/v1/road-service-tickets/:id/complete", async (req, reply) => {
     const user = auth(req, reply);
