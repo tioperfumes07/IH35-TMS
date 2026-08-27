@@ -163,6 +163,8 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
       addLifecycle("damage_description", body.data.damage_description ?? undefined);
       addLifecycle("oos_date", body.data.oos_date ?? undefined);
       addLifecycle("oos_reason", body.data.oos_reason ?? undefined);
+      values.push(oldRow.status);
+      const expectedStatusIdx = values.length;
 
       const res = await client.query(
         `
@@ -170,12 +172,13 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
           SET ${setParts.join(", ")}
           WHERE id = $1::uuid
             AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+            AND status = $${expectedStatusIdx}::mdata.equipment_status
           RETURNING id, status::text, status_changed_at::text, status_change_reason
         `,
         values
       );
       const row = res.rows[0];
-      if (!row) return { kind: "not_found" as const };
+      if (!row) return { kind: "conflict" as const };
 
       await appendCrudAudit(client, authUser.uuid, "fleet.trailer.status_changed", {
         resource_id: row.id,
@@ -198,6 +201,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
 
     if (updated.kind === "not_found") return reply.code(404).send({ error: "mdata_equipment_not_found" });
     if (updated.kind === "illegal_transition") return reply.code(422).send(updated.error);
+    if (updated.kind === "conflict") return reply.code(409).send({ error: "mdata_equipment_state_changed" });
     return updated.row;
   });
 

@@ -391,9 +391,10 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
               updated_by_user_id = $5
           WHERE id = $1::uuid
             AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+            AND status = $6::mdata.equipment_status
           RETURNING id, status, status_changed_at::text, status_change_reason
         `,
-        [parsedParams.data.id, query.data.operating_company_id, body.data.status, body.data.reason, authUser.uuid]
+        [parsedParams.data.id, query.data.operating_company_id, body.data.status, body.data.reason, authUser.uuid, oldRow.status]
       );
       const row = res.rows[0];
       if (row) {
@@ -405,13 +406,14 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
           reason: body.data.reason,
         });
       }
-      return row ?? null;
+      return row ? { kind: "ok" as const, row } : { kind: "conflict" as const };
     });
     if (updated && typeof updated === "object" && "illegal" in updated) {
       return reply.code(422).send(updated.illegal);
     }
     if (!updated) return reply.code(404).send({ error: "mdata_equipment_not_found" });
-    return updated;
+    if (updated.kind === "conflict") return reply.code(409).send({ error: "mdata_equipment_state_changed" });
+    return updated.row;
   });
 
   app.patch("/api/v1/mdata/equipment/:id", async (req, reply) => {
