@@ -134,24 +134,30 @@ export function voidComplaintV64(companyId: string, id: string, voidReason: stri
   });
 }
 
-export function getIntegrityWoCostOutliers(companyId: string) {
-  return apiRequest<{ outliers: IntegrityReportRow[] }>(`/api/v1/safety/integrity/wo-cost-outliers?${companyQuery(companyId)}`);
+function integrityRangeQuery(companyId: string, range: { limit: number; offset: number }) {
+  const query = new URLSearchParams({ operating_company_id: companyId, limit: String(range.limit), offset: String(range.offset) });
+  return query.toString();
 }
 
-export function getIntegrityFuelMpgAnomalies(companyId: string) {
-  return apiRequest<{ anomalies: IntegrityReportRow[] }>(`/api/v1/safety/integrity/fuel-mpg-anomalies?${companyQuery(companyId)}`);
+export function getIntegrityWoCostOutliers(companyId: string, range: { limit: number; offset: number }) {
+  return apiRequest<{ outliers: IntegrityReportRow[]; total_count: number }>(`/api/v1/safety/integrity/wo-cost-outliers?${integrityRangeQuery(companyId, range)}`);
 }
 
-export function getIntegrityDriverDwellOutliers(companyId: string) {
-  return apiRequest<{ outliers: IntegrityReportRow[] }>(`/api/v1/safety/integrity/driver-dwell-outliers?${companyQuery(companyId)}`);
+export function getIntegrityFuelMpgAnomalies(companyId: string, range: { limit: number; offset: number }) {
+  return apiRequest<{ anomalies: IntegrityReportRow[]; total_count: number }>(`/api/v1/safety/integrity/fuel-mpg-anomalies?${integrityRangeQuery(companyId, range)}`);
 }
 
-export function getIntegrityHosPatternBreaks(companyId: string) {
-  return apiRequest<{ pattern_breaks: IntegrityReportRow[] }>(`/api/v1/safety/integrity/hos-pattern-breaks?${companyQuery(companyId)}`);
+export function getIntegrityDriverDwellOutliers(companyId: string, range: { limit: number; offset: number }) {
+  return apiRequest<{ outliers: IntegrityReportRow[]; total_count: number }>(`/api/v1/safety/integrity/driver-dwell-outliers?${integrityRangeQuery(companyId, range)}`);
 }
 
-export function getIntegrityObservations(companyId: string) {
-  return apiRequest<{ observations: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/observations?${companyQuery(companyId)}`);
+export function getIntegrityHosPatternBreaks(companyId: string, range: { limit: number; offset: number }) {
+  return apiRequest<{ pattern_breaks: IntegrityReportRow[]; total_count: number }>(`/api/v1/safety/integrity/hos-pattern-breaks?${integrityRangeQuery(companyId, range)}`);
+}
+
+export function getIntegrityObservations(companyId: string, ids: string[]) {
+  const query = new URLSearchParams({ operating_company_id: companyId, ids: ids.join(",") });
+  return apiRequest<{ observations: Array<Record<string, unknown>> }>(`/api/v1/safety/integrity/observations?${query.toString()}`);
 }
 
 export function reviewIntegrityObservation(companyId: string, id: string) {
