@@ -88,6 +88,7 @@ describe("safety onboarding routes (A24-8)", () => {
   it("POST /api/v1/safety/onboarding/sessions creates session", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: DRIVER_ID }], rowCount: 1 };
       if (sql.includes("status = 'in_progress'")) return { rows: [], rowCount: 0 };
       if (sql.includes("INSERT INTO safety.onboarding_sessions")) {
         return { rows: [baseSession()], rowCount: 1 };
@@ -108,6 +109,7 @@ describe("safety onboarding routes (A24-8)", () => {
   it("POST resumes the existing company-scoped driver session instead of duplicating it", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.drivers")) return { rows: [{ id: DRIVER_ID }], rowCount: 1 };
       if (sql.includes("status = 'in_progress'")) {
         return { rows: [baseSession({ current_step: 4 })], rowCount: 1 };
       }
@@ -122,6 +124,24 @@ describe("safety onboarding routes (A24-8)", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toMatchObject({ resumed: true, session: { id: SESSION_ID, current_step: 4 } });
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
+  });
+
+  it("POST rejects a driver outside the selected company before session lookup or insert", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.drivers")) return { rows: [], rowCount: 0 };
+      if (sql.includes("onboarding_sessions")) throw new Error("session query must not run");
+      return { rows: [], rowCount: 0 };
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/safety/onboarding/sessions",
+      payload: { operating_company_id: COMPANY, driver_id: DRIVER_ID },
+    });
+    expect(res.statusCode).toBe(404);
+    expect(res.json()).toEqual({ error: "driver_not_found" });
     expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 
