@@ -251,6 +251,8 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           `,
           [params.data.id, company.data.operating_company_id, body.data.voided_reason]
         );
+        const voided = voidRes.rows[0];
+        if (!voided) return null;
         await appendCrudAudit(
           client,
           user.uuid,
@@ -264,7 +266,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           "info",
           "P7-SAF-DRIVER-DQF"
         );
-        return voidRes.rows[0];
+        return voided;
       }
 
       const patchRes = await client.query(
@@ -289,6 +291,8 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           body.data.notes ?? null,
         ]
       );
+      const patched = patchRes.rows[0];
+      if (!patched) return null;
 
       await appendCrudAudit(
         client,
@@ -303,7 +307,7 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         "info",
         "P7-SAF-DRIVER-DQF"
       );
-      return patchRes.rows[0];
+      return patched;
     });
 
     if (!updated) return reply.code(404).send({ error: "driver_qualification_item_not_found" });
