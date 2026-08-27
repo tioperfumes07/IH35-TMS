@@ -15,6 +15,8 @@ Audience: **Owners**, **Administrators**, **Accountants** at **https://app.ih35d
 
 ---
 
+<a id="governance-first-mindset"></a>
+
 ## 1. Governance-first mindset
 
 Owners optimize **survival and compliance**, not just trucks moving.
@@ -41,6 +43,8 @@ IH35 is multi-tenant at the **operating company** grain. Owners toggling org con
 
 ---
 
+<a id="banking"></a>
+
 ## 3. Banking: registers and feeds
 
 Navigate **Banking → Home / Register** to see linked **Plaid** accounts.
@@ -57,6 +61,9 @@ Navigate **Banking → Home / Register** to see linked **Plaid** accounts.
 Use **Categorize / Uncategorized** views to **apply GL**, **mark transfers**, or route to **manual journal entries**—this is where operating reality meets the ledger.
 
 ---
+
+<a id="qbo-sync"></a>
+<a id="quickbooks-online-qbo-sync-posture"></a>
 
 ## 4. QuickBooks Online (QBO) sync posture
 
@@ -79,6 +86,8 @@ Chart of accounts cleanliness matters before MVP cutover:
 
 ---
 
+<a id="scheduled-reports"></a>
+
 ## 5. Scheduled reports (email automation)
 
 Owners (or delegated admins) configure **Scheduled reports** so field leaders get **predictable PDF/XLSX/CSV** in inbox.
@@ -92,6 +101,8 @@ Owners (or delegated admins) configure **Scheduled reports** so field leaders ge
 - Validate **timezone** (`America/Chicago` default) vs freight that sleeps in El Paso vs Detroit.
 
 ---
+
+<a id="user-administration-roles"></a>
 
 ## 6. User administration & roles
 
@@ -140,6 +151,8 @@ Use **strategic vendor** records (factoring, fuel cards, insurance) as first-cla
 
 ---
 
+<a id="launch-readiness"></a>
+
 ## 10. Pre-MVP checklist (Owner sign-off)
 
 - [ ] Two+ active Owners in `identity.users`.
@@ -168,6 +181,8 @@ Modern TMS bridges **bank deposits** to **open invoices** via **cash application
 - Write-offs require **dual control** (maker/checker) if your policy demands it—even if software allows solo click.
 
 Training accountants to **speak in cents internally** reduces rounding arguments with engineering logs.
+
+<a id="settlements"></a>
 
 ## Payroll + driver settlements: governance
 
