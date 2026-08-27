@@ -19,6 +19,8 @@ const dotInspectionsListQuerySchema = companyQuerySchema.extend({
   trailer_id: z.string().uuid().optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const cleanRateQuerySchema = z.object({
@@ -127,7 +129,7 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     const query = dotInspectionsListQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
-    const rows = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
+    const result = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
       const values: unknown[] = [query.data.operating_company_id];
       const filters: string[] = [];
       if (query.data.driver_id) {
@@ -150,6 +152,15 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
         values.push(query.data.to);
         filters.push(`AND di.inspection_date <= $${values.length}::date`);
       }
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+         FROM safety.dot_inspections di
+         WHERE di.operating_company_id = $1::uuid
+           AND di.voided_at IS NULL
+           ${filters.join("\n           ")}`,
+        values
+      );
+      values.push(query.data.limit, query.data.offset);
       // CLS-UUID-LABEL: this list never joined the driver/unit/WO names, so the frontend's
       // EntityLink rendered the raw driver_id/unit_id/auto_spawned_wo_id uuids with no label
       // (same class as LST-F105/107/108/109/111/112). Mirrors safety.accident_reports' join.
@@ -184,13 +195,13 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
             AND di.voided_at IS NULL
           ${filters.join("\n          ")}
           ORDER BY di.inspection_date DESC, di.created_at DESC
-          LIMIT 500
+          LIMIT $${values.length - 1} OFFSET $${values.length}
         `,
         values
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
-    return { dot_inspections: rows };
+    return { dot_inspections: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/dot-inspections/:id", async (req, reply) => {

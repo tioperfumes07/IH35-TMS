@@ -39,6 +39,8 @@ const emptyInspectionForm = (trailerId = "") => ({
 
 /** @matrix-built modules=safety cols=driver,unit,trailer,connectivity,reverse_link */
 export function DOTInspectionsTab() {
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -105,15 +107,21 @@ export function DOTInspectionsTab() {
   }, [trailerIdFromUrl]);
 
   const query = useQuery({
-    queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId],
+    queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId, page],
     queryFn: () =>
       listDotInspections(companyId, {
         driver_id: applied.driverId.trim() || undefined,
         unit_id: applied.unitId.trim() || undefined,
         trailer_id: applied.trailerId.trim() || undefined,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(companyId),
   });
+  const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  useEffect(() => setPage(1), [companyId, applied.driverId, applied.unitId, applied.trailerId]);
 
   const createMutation = useMutation({
     mutationFn: (input: CreateInput) => createDotInspection(input.companyId, input.payload),
@@ -374,6 +382,9 @@ export function DOTInspectionsTab() {
         emptyText="No DOT inspections found."
         storageKey="safety-dot-inspections"
         exportFilename="dot-inspections"
+        pageSize={pageSize}
+        pageSizeOptions={[pageSize]}
+        hidePager
         filterBar={
           <div className="flex flex-wrap items-end gap-3" data-testid="dot-inspections-filters">
             <label className="text-[11px] text-slate-600">
@@ -438,6 +449,14 @@ export function DOTInspectionsTab() {
         }
       />
       )}
+
+      {!listState.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="dot-inspections-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-gray-600">Page {page} of {pageCount} · {totalCount} inspections</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <h3 className="mb-2 text-xs font-semibold text-slate-800">Open DOT Station Dwell Events (last captured)</h3>

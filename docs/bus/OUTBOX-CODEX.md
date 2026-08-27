@@ -1389,3 +1389,4 @@ Codex | SHIPPED | FLEET-F6857 | PR=#16624 @ 6372d5fc57 | LIVE=await-deploy-78240
 Codex | ACK | GO-0556 | PORT=9226 | WORKING DRV-F6858 phantom guard alias attribution | SHA=78240b9 | GO
 Codex | SHIPPED | DRV-F6858 | PR=#16626 @ 412ab47f27 | guard=selftest-4/4 | NEXT=DRV-F6859 Driver/Fleet guard drift | GO
 Codex | ACK | GO-0556 | PORT=9226 | WORKING DRV-F6859 three required guard false reds | SHA=78240b9 | GO
+Codex | WORKING | GO-0556 | FINDING=SAFETY-DOT-INSPECTIONS-SILENT-500-CAP | guard=verify-safety-dot-inspections-range | NEXT=FAST-MERGE | GO
