@@ -1,3 +1,5 @@
+**08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` BOX Codex. Fully-Wired 1–12 per leaf. ACK: `Codex | ACK | GO-0808 | PORT=9226 | NOW=/drivers-vertical | SHA=<healthz> | GO`.
+
 **07:58 CT GO-0758 — VERTICAL unique.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX Codex. ACK: `Codex | ACK | GO-0758 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO`.
 
 **07:45 CT GO-0745.** Complete unique drivers/fleet/safety. Money OPEN → CC-1. Grep before remake. ACK: `Codex | ACK | GO-0745 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.

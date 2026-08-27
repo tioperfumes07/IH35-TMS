@@ -12,6 +12,7 @@ describe("cbp wait times", () => {
     const src = fs.readFileSync(path.join(here, "../../src/border-crossing/cbp-wait-times.service.ts"), "utf8");
     assert.match(src, /cbp_wait_times_cache/);
     assert.match(src, /bwt\.cbp\.gov/);
+    assert.match(src, /withLuciaBypass/);
   });
 
   it("returns fallback row on fetch failure", async () => {

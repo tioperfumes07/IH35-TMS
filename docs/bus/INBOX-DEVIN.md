@@ -1,3 +1,5 @@
+**08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md`. Exclusive /vendors. Unique FINDING. Do not remake HEADER-CREATE. ACK: `Devin | ACK | GO-0808 | NOW=/vendors | SHA=<healthz> | GO`.
+
 **07:58 CT GO-0758.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX Devin. ACK: `Devin | ACK | GO-0758 | NOW=/vendors | SHA=0340406 | GO`.
 
 **07:45 CT GO-0745.** Re-prove vendor FIXED class on `0340406`. HEADER-CREATE already wired on main — do not remake. ACK: `Devin | ACK | GO-0745 | NOW=/vendors | SHA=0340406 | GO`.

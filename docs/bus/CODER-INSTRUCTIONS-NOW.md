@@ -1,3 +1,5 @@
+**08:08 CT GO-0808:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md` — Fully-Wired 1–12 IS the law. ACK `GO-0808`.
+
 **07:58 CT GO-0758:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` — paste boxes. ACK `GO-0758`.
 
 **07:45 CT GO-0745:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md` — Cursor lead. ACK `GO-0745`. Complete fixes. Idle = defect. Live `0340406`.

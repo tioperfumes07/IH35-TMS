@@ -120,7 +120,10 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
             pu.scheduled_arrival_at::text AS pickup_date,
             de.city AS delivery_city, de.state AS delivery_state, de.scheduled_arrival_at::text AS delivery_date,
             l.assigned_primary_driver_id::text AS load_driver_id,
-            nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), '') AS load_driver_name
+            COALESCE(
+              nullif(trim(coalesce(ld.first_name,'') || ' ' || coalesce(ld.last_name,'')), ''),
+              mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+            ) AS load_driver_name
        FROM mdata.loads l
        LEFT JOIN mdata.drivers ld ON ld.id = l.assigned_primary_driver_id
         AND (

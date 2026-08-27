@@ -661,7 +661,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             u.unit_number,
             tr.equipment_number AS trailer_number,
             tr.equipment_type AS trailer_equipment_type,
-            CASE WHEN d.id IS NULL THEN NULL ELSE CONCAT(LEFT(d.first_name, 1), '. ', d.last_name) END AS driver_short_name,
+            COALESCE(
+              CASE WHEN d.id IS NULL THEN NULL ELSE CONCAT(LEFT(d.first_name, 1), '. ', d.last_name) END,
+              mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+            ) AS driver_short_name,
+            mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id) AS assigned_primary_driver_name_resolved,
             COALESCE(uds.has_open_pm_due_wo, false) AS has_open_pm_due_wo,
             COALESCE(uds.is_dispatch_blocked, false) AS is_dispatch_blocked,
             uds.dispatch_block_reason,
@@ -753,10 +757,17 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     });
 
     return {
-      loads: payload.rows.map((row) => ({
-        ...row,
-        dispatch_status: fromMdataStatus(String(row.status)),
-      })),
+      loads: payload.rows.map((row) => {
+        const resolved = row.assigned_primary_driver_name_resolved ?? null;
+        const joinName = row.driver_short_name ?? row.assigned_primary_driver_name ?? null;
+        const driverLabel = joinName || resolved || null;
+        return {
+          ...row,
+          dispatch_status: fromMdataStatus(String(row.status)),
+          driver_short_name: driverLabel,
+          assigned_primary_driver_name: driverLabel,
+        };
+      }),
       total_count: payload.total,
       has_more: query.offset + query.limit < payload.total,
     };
@@ -786,12 +797,18 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       const loadRes = await client.query(
         `
           SELECT l.*, c.customer_name,
-                 NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), '') AS assigned_secondary_driver_name,
+                 COALESCE(
+                   NULLIF(TRIM(CONCAT(COALESCE(sd.first_name, ''), ' ', COALESCE(sd.last_name, ''))), ''),
+                   mdata.resolve_driver_label_same_company(l.assigned_secondary_driver_id, l.operating_company_id)
+                 ) AS assigned_secondary_driver_name,
                  -- LV-TXN-002: the PRIMARY driver name and the unit number were never selected here, so
                  -- LoadDetailDrawer.tsx:372,374 read undefined and rendered "Unassigned" / "-" for a
                  -- load that HAS both. The SECONDARY (team) driver was already resolved three lines up,
                  -- which is what makes this an oversight rather than a design choice.
-                 NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), '') AS assigned_primary_driver_name,
+                 COALESCE(
+                   NULLIF(TRIM(CONCAT(COALESCE(pd.first_name, ''), ' ', COALESCE(pd.last_name, ''))), ''),
+                   mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+                 ) AS assigned_primary_driver_name,
                  u.unit_number AS assigned_unit_number,
                  -- LV-LOAD-DETAIL-SHOWS-UNASSIGNED: the THIRD field the drawer renders wrong. The card that
                  -- produced the driver/unit joins above named three absent columns; only two were resolved.

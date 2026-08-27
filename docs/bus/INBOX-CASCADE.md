@@ -1,3 +1,5 @@
+**08:08 CT GO-0808.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0808.md`. Unique FINDING. Re-prove wait-times+driver labels after Cursor merge. ACK: `CASCADE | ACK | GO-0808 | NOW=/dispatch | SHA=<healthz> | GO`.
+
 **07:58 CT GO-0758.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0758.md` BOX Cascade. ACK: `CASCADE | ACK | GO-0758 | NOW=/dispatch | SHA=0340406 | GO`.
 
 **07:45 CT GO-0745.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0745.md`. Cursor grepped your 7D-LEDGER. Wait-times INSERT still on main — not complete. ACK: `CASCADE | ACK | GO-0745 | NOW=/dispatch | SHA=0340406 | GO`.
