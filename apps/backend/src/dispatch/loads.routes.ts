@@ -67,15 +67,61 @@ export const stopDatetimeish = z.preprocess(
   z.string().datetime({ offset: true }).optional()
 );
 
+// The full mdata.load_status_enum / frontend LoadStatus vocabulary (19 values) — must stay aligned with
+// apps/backend/src/mdata/loads.routes.ts's loadStatusSchema and apps/frontend/src/api/loads.ts's
+// LoadStatus type. Any value in this set gets translated via fromMdataStatus() before the narrow
+// dispatchStatusSchema check below (see DISPATCH-LOAD-STATUS-FILTER-ENUM-MISMATCH-400).
+const WIDE_LOAD_STATUS_VALUES: ReadonlySet<string> = new Set([
+  "draft",
+  "booked",
+  "planned",
+  "unassigned",
+  "assigned",
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+  "delivered",
+  "delivered_pending_docs",
+  "completed_docs_received",
+  "invoiced",
+  "paid",
+  "closed",
+  "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
+]);
+
+/** Exported for the DISPATCH-LOAD-STATUS-FILTER-ENUM-MISMATCH-400 regression test — pure, no I/O. */
+export function normalizeDispatchStatusFilterValue(raw: string): string {
+  return WIDE_LOAD_STATUS_VALUES.has(raw) ? fromMdataStatus(raw) : raw;
+}
+
 const listDispatchLoadsQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // DISPATCH-LOAD-STATUS-FILTER-ENUM-MISMATCH-400: this endpoint validates against the NARROW dispatch
+  // status vocabulary (dispatchStatusSchema, 10 values), but mdata.load_status_enum / apps/frontend's
+  // wide LoadStatus type (19 values, incl. legacy draft/booked/planned/assigned/at_pickup/at_delivery/
+  // delivered/invoiced/paid/closed) is what a caller reading a load's own `.status` field or an old
+  // saved/bookmarked filter naturally has on hand — sending one of those 400'd with no frontend
+  // translation, and the failure was silent (a filtered list that just never loaded). Map any WIDE-
+  // vocabulary value down to its narrow equivalent (the same table `fromMdataStatus` already encodes)
+  // BEFORE the enum check, so a legacy status value degrades gracefully instead of 400ing; anything not
+  // in the wide vocabulary passes through unchanged, so genuine garbage still fails validation
+  // normally instead of being silently swallowed.
   status: z
     .preprocess((value) => {
-      if (Array.isArray(value)) return value;
-      if (typeof value === "string") return value.split(",").map((entry) => entry.trim()).filter(Boolean);
-      return undefined;
+      const raw = Array.isArray(value)
+        ? value
+        : typeof value === "string"
+          ? value.split(",").map((entry) => entry.trim()).filter(Boolean)
+          : undefined;
+      if (!raw) return undefined;
+      return raw.map(normalizeDispatchStatusFilterValue);
     }, z.array(dispatchStatusSchema).optional())
     .optional(),
   customer: z.string().uuid().optional(),
