@@ -25,6 +25,8 @@ const listQuerySchema = companyQuerySchema.extend({
   subject_driver_id: z.string().uuid().optional(),
   subject_unit_id: z.string().uuid().optional(),
   subject_vendor_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const acknowledgeBodySchema = z.object({
@@ -122,6 +124,15 @@ async function listIntegrityAlertsHandler(
       values.push(query[column]);
       filters.push(`ia.${column} = $${values.length}::uuid`);
     }
+    const countRes = await client.query<{ total_count: string }>(
+      `SELECT COUNT(*)::text AS total_count
+       FROM safety.integrity_alerts ia
+       WHERE ${filters.join(" AND ")}`,
+      values
+    );
+    const rangeValues = [...values, query.limit, query.offset];
+    const limitParameter = rangeValues.length - 1;
+    const offsetParameter = rangeValues.length;
     const res = await client.query(
       `
         SELECT ia.*,
@@ -147,32 +158,33 @@ async function listIntegrityAlertsHandler(
          AND v.operating_company_id = ia.operating_company_id
         WHERE ${filters.join(" AND ")}
         ORDER BY ia.created_at DESC
-        LIMIT 500
+        LIMIT $${limitParameter}
+        OFFSET $${offsetParameter}
       `,
-      values
+      rangeValues
     );
-    return res.rows;
+    return { rows: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
   });
 }
 
 export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/integrity-alerts", async (req, reply) => {
+  app.get("/api/v1/safety/integrity-alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
-    const rows = await listIntegrityAlertsHandler(user, query.data);
-    return { integrity_alerts: rows };
+    const result = await listIntegrityAlertsHandler(user, query.data);
+    return { integrity_alerts: result.rows, total_count: result.totalCount };
   });
 
-  app.get("/api/v1/safety/integrity-alerts/list", async (req, reply) => {
+  app.get("/api/v1/safety/integrity-alerts/list", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
 
-    const rows = await listIntegrityAlertsHandler(user, query.data);
-    return { integrity_alerts: rows };
+    const result = await listIntegrityAlertsHandler(user, query.data);
+    return { integrity_alerts: result.rows, total_count: result.totalCount };
   });
 
   app.get("/api/v1/safety/integrity-alert-rules", async (req, reply) => {

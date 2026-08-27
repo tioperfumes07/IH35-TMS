@@ -35,6 +35,7 @@ describe("IntegrityAlertsPage (A23-12)", () => {
           detection_summary: "Fuel MPG anomaly",
         },
       ],
+      total_count: 1,
     });
     vi.spyOn(safetyApi, "getIntegrityAlertRules").mockResolvedValue({
       integrity_alert_rules: [
