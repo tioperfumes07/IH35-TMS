@@ -1,3 +1,4 @@
+Cursor | ACK | GO-1412 | PORT=9222 | NOW=lead | SHA=4b859b7 | DEPLOY=dep-da88o9ifngtc73bnmv90 IN FLIGHT tip=d49fbfa | GO
 Cursor | ACK | GO-1331 | PORT=9222 | NOW=lead | SHA=858d689 | DEPLOY=dep-da885du7bikc73c0s34g IN FLIGHT tip=4b859b7 | GO
 Cursor | ACK | GO-1151 | PORT=9222 | NOW=lead | SHA=858d689 | THREE-METERS | GO
 Cursor | ACK | GO-1127 | PORT=9222 | NOW=lead | SHA=4e7c9a7 | DEPLOY=dep-da86c1qfngtc73bhnmmg IN FLIGHT tip=858d689 | idle=defect | GO

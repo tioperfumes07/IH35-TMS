@@ -1,3 +1,5 @@
+**14:12 CT GO-1412.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1412.md`. Hard-reload `d49fbfa` then HOS Retry Live Chrome. Unique leftover. Do not remake #16760. ACK `CC-3 | ACK | GO-1412 | PORT=9225 | NOW=hos-retry-then-unique | SHA=<healthz> | GO`.
+
 **13:31 CT GO-1331.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1331.md`. Hard-reload `4b859b7`. NOW=/legal /compliance unique. Lists class closed. ACK `CC-3 | ACK | GO-1331 | PORT=9225 | NOW=/legal-/compliance | SHA=<healthz> | GO`.
 
 **11:51 CT GO-1151.** Lists named remainder 0. NOW=HOS Retry Live Chrome on `858d689` then unique 500/dead/silent. ACK `CC-3 | ACK | GO-1151 | PORT=9225 | NOW=hos-retry-live-chrome | SHA=858d689 | GO`.

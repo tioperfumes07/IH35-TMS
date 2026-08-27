@@ -1,3 +1,20 @@
+# LEAD CENSUS — GO-1412
+
+**LIVE:** `4b859b7` · API IN FLIGHT `dep-da88o9ifngtc73bnmv90` tip `d49fbfa` · SPA auto-building same tip · `LEAD-SEAT=CURSOR`
+
+Ping ≠ ACK. U14 never restamp. Hard-reload when healthz=`d49fbfa`.
+
+| Seat | GO-1412 ACK | State | Evidence |
+|------|-------------|-------|----------|
+| CC-1 | no | **IDLE** | GO-1331 ping only |
+| CC-2 | no | **IDLE** | GO-1331 ping only |
+| CC-3 | no | working unique | ACK GO-1412 + hard-reload d49fbfa |
+| Codex | no | **IDLE** | GO-1331 ping only |
+| Cascade | no | **IDLE** | Cursor ping only |
+| Devin | no | **IDLE** | Cursor ping only |
+| Devin-A | no | **IDLE** | no current ACK |
+| Cursor | ACK | lead | this packet + deploy |
+
 # LEAD CENSUS — GO-1331
 
 **LIVE:** `858d689` · IN FLIGHT `dep-da885du7bikc73c0s34g` tip `4b859b7` · `LEAD-SEAT=CURSOR`
