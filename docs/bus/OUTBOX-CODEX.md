@@ -1217,3 +1217,5 @@ Codex | SHIPPED | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | 
 Codex | LIVE PASS | GO-1927 | FO=DRV-F6702 | SHA=1c7969f | picker=+Create first; Dry Van/Flatbed/Reefer/Oversize/Pneumatic exactly once; 4 USMCA TEST rows | mutation=none | NEXT=Fleet/Driver adjacent consumer sweep | GO
 Codex | WORKING | GO-1927 | FINDING=MAINT-F6705 | MODULE=maintenance | NOW=warranty audit company scope | NEXT=gate+FAST-MERGE | GO
 Codex | ACK | GO-1927 | PORT=9226 | NOW=next Driver/Fleet/Safety/Fuel/Maintenance/Insurance unique | SHA=1c7969f | GO
+Codex | WORKING | GO-1927 | FINDING=MAINT-F6706 | MODULE=maintenance | NOW=tire audit company scope | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6705 | PR=#16423 merged @ 30098a27e | guard=19/19 | NEXT=MAINT-F6706 | GO

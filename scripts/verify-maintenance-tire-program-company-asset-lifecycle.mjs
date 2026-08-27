@@ -5,6 +5,8 @@ import fs from "node:fs";
 
 const path = "apps/frontend/src/pages/maintenance/TireProgramPage.tsx";
 const source = fs.readFileSync(path, "utf8");
+const backendPath = "apps/backend/src/maintenance/tires.routes.ts";
+const backendSource = fs.readFileSync(backendPath, "utf8");
 const checks = [
   [/type TireActionScope = \{[\s\S]*companyId: string;[\s\S]*assetKind: "unit" \| "trailer";[\s\S]*assetId: string;[\s\S]*generation: number;/, "shared company/asset scope is explicit"],
   [/const actionGenerationRef = useRef\(0\)/, "shared action generation exists"],
@@ -20,7 +22,23 @@ const checks = [
 ];
 
 const failures = (candidate) => checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);
-const missing = failures(source);
+const auditEvents = [
+  "maintenance.tire_brand.created",
+  "maintenance.tire_record.created",
+  "maintenance.tire_record.updated",
+  "maintenance.tire_record.archived",
+  "maintenance.tire_rotated",
+  "maintenance.tire_replaced",
+  "maintenance.tire_tread_audited",
+];
+const backendFailures = (candidate) => auditEvents.flatMap((event) => {
+  const index = candidate.indexOf(`\"${event}\"`);
+  if (index < 0) return [`missing ${event} audit`];
+  return candidate.slice(index, index + 420).includes("operating_company_id:")
+    ? []
+    : [`${event} audit omits operating_company_id`];
+});
+const missing = [...failures(source), ...backendFailures(backendSource)];
 if (missing.length) {
   console.error(`verify-maintenance-tire-program-company-asset-lifecycle FAIL — ${missing.join("; ")}`);
   process.exit(1);
@@ -34,7 +52,17 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify-maintenance-tire-program-company-asset-lifecycle SELFTEST PASS — ${checks.length}/${checks.length} planted defects rejected`);
+  for (const event of auditEvents) {
+    const eventIndex = backendSource.indexOf(`\"${event}\"`);
+    const companyIndex = backendSource.indexOf("operating_company_id:", eventIndex);
+    const mutant = `${backendSource.slice(0, companyIndex)}PLANTED_COMPANY_SCOPE:${backendSource.slice(companyIndex + "operating_company_id:".length)}`;
+    if (backendFailures(mutant).length === 0) {
+      console.error(`verify-maintenance-tire-program-company-asset-lifecycle SELFTEST FAIL — ${event} tenantless audit`);
+      process.exit(1);
+    }
+  }
+  const mutationCount = checks.length + auditEvents.length;
+  console.log(`verify-maintenance-tire-program-company-asset-lifecycle SELFTEST PASS — ${mutationCount}/${mutationCount} planted defects rejected`);
 }
 
-console.log(`verify-maintenance-tire-program-company-asset-lifecycle PASS — ${checks.length} immutable company/asset lifecycle invariants`);
+console.log(`verify-maintenance-tire-program-company-asset-lifecycle PASS — ${checks.length + auditEvents.length} immutable company/asset/audit lifecycle invariants`);
