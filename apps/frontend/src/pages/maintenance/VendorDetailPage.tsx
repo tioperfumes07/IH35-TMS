@@ -2,7 +2,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { Link, useParams } from "react-router-dom";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceVendorDetail } from "../../api/maintenance";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
@@ -16,16 +16,30 @@ export function VendorDetailPage() {
   const { vendorId = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [woPage, setWoPage] = useState(1);
+  const [invoicePage, setInvoicePage] = useState(1);
+  const pageSize = 25;
 
   const detailQ = useQuery({
-    queryKey: ["maintenance", "vendor-detail", companyId, vendorId],
-    queryFn: () => getMaintenanceVendorDetail(vendorId, companyId),
+    queryKey: ["maintenance", "vendor-detail", companyId, vendorId, woPage, invoicePage],
+    queryFn: () => getMaintenanceVendorDetail(vendorId, companyId, { woPage, invoicePage, pageSize }),
     enabled: Boolean(companyId && vendorId),
   });
 
   const vendor = detailQ.data?.vendor;
   const woHistory = detailQ.data?.wo_history ?? [];
   const invoiceHistory = detailQ.data?.invoice_history ?? [];
+  const woTotal = detailQ.data?.wo_total_count ?? 0;
+  const invoiceTotal = detailQ.data?.invoice_total_count ?? 0;
+  const pager = (page: number, total: number, setPage: (page: number) => void, testId: string) => (
+    <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid={testId}>
+      <span>{total === 0 ? "0 of 0" : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total}`}</span>
+      <div className="flex gap-1">
+        <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page === 1 || detailQ.isFetching} onClick={() => setPage(page - 1)}>Previous</button>
+        <button type="button" className="rounded border px-2 py-1 disabled:opacity-50" disabled={page * pageSize >= total || detailQ.isFetching} onClick={() => setPage(page + 1)}>Next</button>
+      </div>
+    </div>
+  );
 
   const woColumns = useMemo<ParityColumn<VendorHistoryRow>[]>(
     () => [
@@ -117,6 +131,7 @@ export function VendorDetailPage() {
           storageKey="maintenance-vendor-wo-history"
           emptyText="No linked work orders yet."
         />
+        {pager(woPage, woTotal, setWoPage, "maintenance-vendor-wo-history-pager")}
       </div>
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
@@ -129,6 +144,7 @@ export function VendorDetailPage() {
           storageKey="maintenance-vendor-invoice-history"
           emptyText="No vendor invoices recorded."
         />
+        {pager(invoicePage, invoiceTotal, setInvoicePage, "maintenance-vendor-invoice-history-pager")}
       </div>
     </div>
   );

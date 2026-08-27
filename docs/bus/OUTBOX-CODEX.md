@@ -1438,3 +1438,5 @@ Codex | WORKING | GO-0808 | FINDING=SAFETY-F6874-ANOMALY-DASHBOARD-SILENT-200-CA
 Codex | WORKING | GO-0808 | FINDING=MAINT-F6875-DVIR-DEFECT-TRIAGE-HISTORY-SILENT-50-CAP | vertical=defect detail lifecycle history | guard=10/10 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | SAFETY-F6881 | PR=#16734 @ 2963591225 | Built=safety:driver_scheduler.list driver+unit+connectivity+reverse_link+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6882 service-timeline exact global range | GO
 Codex | SHIPPED | MAINT-F6882 | PR=#16735 @ f6ae1cd2b1 | Built=fleet unit+trailer service-history connectivity+reverse+qbo_chrome | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6884 parts assignment vertical | GO
+Codex | SHIPPED | MAINT-F6884 | PR=#16736 @ 919f7e0ed5 | Built=inventory assignments+vendor/unit reverse exact range | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6885 | GO
+Codex | WORKING | MAINT-F6885 | Built=maintenance vendor WO+invoice reverse exact range | guard=11/11 | NEXT=FAST-MERGE | GO
