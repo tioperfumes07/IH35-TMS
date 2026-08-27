@@ -768,14 +768,15 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     const deleted = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const result = await client.query(
         `
-          DELETE FROM insurance.policy_unit
+          UPDATE insurance.policy_unit
+          SET removed_at = COALESCE(removed_at, now()), updated_at = now()
           WHERE tenant_id = $1::uuid AND id = $2::uuid
           RETURNING id::text
         `,
         [query.data.operating_company_id, params.data.id]
       );
       if (!result.rows[0]) return false;
-      await appendCrudAudit(client, user.uuid, "insurance.policy_unit.deleted", {
+      await appendCrudAudit(client, user.uuid, "insurance.policy_unit.removed", {
         resource_id: params.data.id,
         operating_company_id: query.data.operating_company_id,
       });
