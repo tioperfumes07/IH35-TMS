@@ -1710,6 +1710,20 @@ export function updateVendor(id: string, body: UpdateVendorInput) {
   return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}`, { method: "PATCH", body });
 }
 
+export function deactivateVendor(id: string) {
+  return apiRequest<{ id: string; deactivated_at: string | null; was_already_deactivated: boolean }>(
+    `/api/v1/mdata/vendors/${id}/deactivate`,
+    { method: "POST", body: {} }
+  );
+}
+
+export function reactivateVendor(id: string) {
+  return apiRequest<{ id: string; deactivated_at: string | null; was_already_active: boolean }>(
+    `/api/v1/mdata/vendors/${id}/reactivate`,
+    { method: "POST", body: {} }
+  );
+}
+
 export function listLocations(params: CompanyScopedListParams = {}) {
   const query = new URLSearchParams();
   appendCompanyScopedQuery(query, params);
