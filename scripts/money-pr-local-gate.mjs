@@ -150,6 +150,7 @@ const STEPS = [
   ["verify-wo-line-void-not-delete", "scripts/verify-wo-line-void-not-delete.mjs"],
   ["verify-dispatch-load-patch-commodity-column-missing-500", "scripts/verify-dispatch-load-patch-commodity-column-missing-500.mjs"],
   ["verify-bookload-edit-freight-roundtrip", "scripts/verify-bookload-edit-freight-roundtrip.mjs"],
+  ["verify-road-service-wo-bill-race-locked", "scripts/verify-road-service-wo-bill-race-locked.mjs"],
 ];
 
 function runNode(rel) {

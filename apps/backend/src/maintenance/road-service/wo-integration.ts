@@ -78,6 +78,7 @@ export async function createWorkOrderFromRoadServiceTicket(
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
       LIMIT 1
+      FOR UPDATE
     `,
     [input.ticketId, input.operatingCompanyId]
   );
@@ -130,7 +131,16 @@ export async function createWorkOrderFromRoadServiceTicket(
     memo: `Road service ticket ${ticket.ticket_number} — ${ticket.vendor_name}`,
   });
 
-  await client.query(
+  // MAINT-MONEY-F6803A: the ticket row is FOR-UPDATE-locked above, which serializes concurrent
+  // create-wo calls for the same ticket under withCompany's transaction — a second call blocks on
+  // the SELECT, then (after the first commits) re-reads with wo_id already set and returns via the
+  // already_linked branch above, never reaching this INSERT/UPDATE path at all. This CAS + result
+  // check is defense-in-depth for the same reason every other money mutation in this codebase
+  // checks its own result: if the lock is ever bypassed (a future caller opening its own
+  // non-transactional connection, an isolation-level change), a null-only WHERE + a checked
+  // rowCount turns a silent duplicate-WO/orphan-bill race into a loud, diagnosable failure instead
+  // of one backlink write silently winning and orphaning the other WO + bill it just created.
+  const backlink = await client.query(
     `
       UPDATE maintenance.road_service_tickets
       SET wo_id = $3::uuid,
@@ -139,9 +149,13 @@ export async function createWorkOrderFromRoadServiceTicket(
           updated_at = now()
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
+        AND wo_id IS NULL
     `,
     [input.ticketId, input.operatingCompanyId, woUuid, bill?.uuid ?? null]
   );
+  if ((backlink.rowCount ?? 0) !== 1) {
+    throw new Error("road_service_ticket_wo_backlink_race");
+  }
 
   await appendCrudAudit(
     client,
