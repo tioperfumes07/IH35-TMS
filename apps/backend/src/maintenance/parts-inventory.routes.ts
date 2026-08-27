@@ -304,6 +304,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
         user.uuid,
         "maintenance.parts_purchase.voided",
         {
+          operating_company_id: query.data.operating_company_id,
           resource_id: params.data.id,
           resource_type: "maintenance.parts_purchases",
           void_reason: body.data.void_reason,
@@ -353,6 +354,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
         user.uuid,
         "maintenance.parts_inventory.adjusted",
         {
+          operating_company_id: query.data.operating_company_id,
           resource_id: params.data.id,
           reason: body.data.reason,
           delta_qty: body.data.delta_qty,
