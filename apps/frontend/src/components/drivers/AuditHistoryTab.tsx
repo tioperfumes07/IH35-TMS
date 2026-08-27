@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listDriverAuditEvents, type DriverAuditEvent } from "../../api/audit";
 import { Button } from "../Button";
 import { entityLabel } from "../../lib/entity-label";
-import { CappedListNotice } from "../CappedListNotice";
 import { ListErrorState } from "../ListErrorState";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { Download, AlertTriangle } from "lucide-react";
@@ -51,6 +50,8 @@ const STATUS_OPTIONS = [
 ];
 
 export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
+  const pageSize = 50;
+  const [page, setPage] = useState(0);
   // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays, wired to MultiSelectDropdown below.
   const [eventTypeFilter, setEventTypeFilter] = useState<string[]>([]);
   const [fromDate, setFromDate] = useState("");
@@ -80,6 +81,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
       statusFilter,
       sourceFilter,
       voidsOnly,
+      page,
     ],
     queryFn: () =>
       listDriverAuditEvents({
@@ -92,7 +94,8 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
         status: statusFilter.length > 0 ? statusFilter : undefined,
         source: sourceFilter.length > 0 ? sourceFilter : undefined,
         voidsOnly: voidsOnly || undefined,
-        limit: 200,
+        limit: pageSize,
+        offset: page * pageSize,
       }),
     enabled: Boolean(driverId) && Boolean(operatingCompanyId),
   });
@@ -119,6 +122,15 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
   };
 
   const events = auditQuery.isError ? [] : auditQuery.data?.events ?? [];
+  const totalCount = auditQuery.isError ? 0 : auditQuery.data?.total_count ?? 0;
+
+  useEffect(() => setPage(0), [driverId, operatingCompanyId, eventTypeFilter, fromIso, toIso, actorFilter, statusFilter, sourceFilter, voidsOnly]);
+
+  useEffect(() => {
+    if (!auditQuery.isFetching && page > 0 && events.length === 0) {
+      setPage(Math.max(0, Math.ceil(totalCount / pageSize) - 1));
+    }
+  }, [auditQuery.isFetching, events.length, page, totalCount]);
   const eventTypeOptions = useMemo(() => {
     const unique = new Set(events.map((row) => row.event_type));
     return Array.from(unique).sort();
@@ -304,6 +316,8 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               emptyText="No audit events for this driver."
               tableTestId="driver-audit-table"
               rowTestId={(row) => `driver-audit-row-${row.id}`}
+              pageSize={pageSize}
+              hidePager
               renderExpanded={(row) => (
                 <pre
                   className="max-h-48 overflow-auto rounded-sm bg-gray-50 p-2 text-[10px]"
@@ -314,13 +328,19 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               )}
             />
           )}
-          <CappedListNotice
-            shown={events.length}
-            limit={200}
-            total={auditQuery.data?.total_count ?? null}
-            hint="Narrow filters or export CSV for older audit events."
-            className="mt-2 text-[11px] text-slate-600"
-          />
+          {!auditQuery.isLoading && !auditQuery.isError && totalCount > pageSize ? (
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 text-[11px]" data-testid="driver-audit-server-pager">
+              <Button size="sm" variant="secondary" disabled={page === 0 || auditQuery.isFetching} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+                Previous
+              </Button>
+              <span className="text-slate-600">
+                {page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}
+              </span>
+              <Button size="sm" variant="secondary" disabled={(page + 1) * pageSize >= totalCount || auditQuery.isFetching} onClick={() => setPage((current) => current + 1)}>
+                Next
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
