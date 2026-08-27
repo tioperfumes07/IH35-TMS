@@ -41,7 +41,17 @@ export function FinanceModuleTabs() {
 
   return (
     <div className="space-y-2 border-b border-gray-200">
-      <nav className="-mb-px flex space-x-6" aria-label="Finance">
+      {/*
+        FINANCE-TABS-OVERFLOW-HIDDEN-UNREACHABLE: this nav is additive-only by design (comment above --
+        "no reorder"; each new flag-gated tab is appended) and has no wrap or scroll of its own, so once
+        enough tabs are enabled at once (base 6 + break-even + loan-wizard + calculator + amortization =
+        10, verified live) its content (993px) exceeds the container (852px on a common laptop width).
+        The ancestor page shell clips with overflow-x: hidden, so the trailing tab(s) -- confirmed
+        "Amortization" -- render in the DOM, are flag-enabled and fully functional at their own URL, but
+        are UNREACHABLE by click: no scrollbar, no wrap, no visual sign anything is missing. overflow-x-auto
+        keeps the overflow inside this nav's own scrollable box instead of past the shell's clip boundary.
+      */}
+      <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Finance">
         {tabs.map((tab) => {
           const isActive =
             currentPath === tab.to
