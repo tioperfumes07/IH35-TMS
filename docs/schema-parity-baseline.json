@@ -6695,6 +6695,9 @@
       "total_cost",
       "unit_cost",
       "uuid",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id",
       "work_order_uuid"
     ],
     "maintenance.work_order_seq_per_month": [
@@ -7474,7 +7477,9 @@
       "cancel_reason_code",
       "canceled_at",
       "canceled_by",
+      "cargo_weight_lbs",
       "catalog_load_type_id",
+      "commodity",
       "created_at",
       "currency_code",
       "customer_chargeback_amount_cents",
