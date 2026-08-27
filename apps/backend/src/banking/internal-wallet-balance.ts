@@ -183,9 +183,15 @@ export async function sumAuthoritativeDepositoryCashCents(
 
       [operatingCompanyId]
 
-    )
-
-    .catch(() => ({ rows: [{ total_cash: 0 }] }));
+    );
+    // BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: this used to catch-and-mask a query failure as a fake-zero
+    // total_cash row -- a real query failure (RLS glitch, connection blip, whatever) silently became
+    // "$0 depository cash" instead of failing loud, and this exact total feeds the /banking KPI strip,
+    // /cash-flow opening cash, AND /accounts/all -- one masked failure here corrupts three surfaces at
+    // once with a number that reads as a real, alarming balance. Let it throw; the caller chain
+    // (banking.routes.ts, cash-flow.service.ts, reports/cash-flow/route-fix.ts) already has honest
+    // error handling above it (the KPI route's kpiQuery.isError -> ListErrorBanner already exists on
+    // the frontend and simply never fired because this never threw).
 
 
 
@@ -224,9 +230,9 @@ export async function sumAuthoritativeDepositoryCashCents(
 
       [operatingCompanyId]
 
-    )
-
-    .catch(() => ({ rows: [{ internal_total: 0 }] }));
+    );
+    // BANK-KPI-FAKE-ZERO-CATCH-CLUSTER: same fix as the plaidRes query above -- fail loud instead of
+    // silently contributing $0 for the non-Plaid (internal wallet) leg of the same authoritative total.
 
 
 
