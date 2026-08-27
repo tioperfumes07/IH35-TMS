@@ -210,7 +210,7 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
     });
   });
 
-  fastify.post("/api/v1/safety/position-history", async (req: FastifyRequest, reply: FastifyReply) => {
+  fastify.post("/api/v1/safety/position-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -222,6 +222,31 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
 
     return withCompany(user.uuid, data.operating_company_id, async (client: any) => {
       if (!(await canonicalTableReady(client))) return sendCanonicalTableMissing(reply);
+      const linked = await client.query(
+        `SELECT
+           EXISTS (
+             SELECT 1 FROM mdata.units u
+              WHERE u.id = $2::uuid
+                AND u.deactivated_at IS NULL
+                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+           ) AS unit_ok,
+           EXISTS (
+             SELECT 1 FROM maint.position_set ps
+              WHERE ps.id = $3::uuid
+                AND ps.operating_company_id = $1::uuid
+                AND ps.is_active = true
+                AND ps.positions @> jsonb_build_array(jsonb_build_object('code', $4::text))
+           ) AS position_ok,
+           ($5::uuid IS NULL OR EXISTS (
+             SELECT 1 FROM maint.part p
+              WHERE p.id = $5::uuid AND p.tenant_id = $1::uuid
+           )) AS part_ok`,
+        [data.operating_company_id, data.unit_id, data.position_set_id, data.position_code, data.part_id ?? null]
+      );
+      const validity = linked.rows[0];
+      if (!validity?.unit_ok) return reply.code(404).send({ error: "mdata_unit_not_found" });
+      if (!validity?.position_ok) return reply.code(404).send({ error: "position_not_found" });
+      if (!validity?.part_ok) return reply.code(404).send({ error: "part_not_found" });
       // CLS-SCHEMA-DRIFT / PHANTOM COLUMN — prod-verified 2026-08-07: identity.users has
       // first_name / last_name / email and NO display_name, so this SELECT threw 42703 and every
       // POST to this route 500'd before a position-history row could be written. Composed the same way
@@ -252,8 +277,8 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
       );
 
       const row = result.rows[0];
-      if (row) {
-        await appendCrudAudit(
+      if (!row?.id) throw new Error("maintenance_position_history_insert_failed");
+      await appendCrudAudit(
           client,
           user.uuid,
           "maintenance.position_history.created",
@@ -269,7 +294,6 @@ export async function positionHistoryRoutes(fastify: FastifyInstance) {
           "info",
           "M2-INTEGRITY-POSITION-HISTORY"
         );
-      }
 
       return reply.code(201).send(row);
     });
