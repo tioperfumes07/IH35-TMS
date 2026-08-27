@@ -176,6 +176,7 @@ export async function runDiff(
 
   await updateSessionDiffResult(client, {
     sessionUuid,
+    operatingCompanyId,
     diffStatus,
     diffFindings: angleFindings,
     diffSummary,

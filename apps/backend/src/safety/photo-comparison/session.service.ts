@@ -420,6 +420,7 @@ export async function updateSessionDiffResult(
   client: DbClient,
   input: {
     sessionUuid: string;
+    operatingCompanyId: string;
     diffStatus: DiffStatus;
     diffFindings: unknown;
     diffSummary: string;
@@ -435,6 +436,7 @@ export async function updateSessionDiffResult(
           diff_completed_at = now(),
           auto_damage_report_uuid = COALESCE($5::uuid, auto_damage_report_uuid)
       WHERE uuid = $1::uuid
+        AND operating_company_id = $6::uuid
     `,
     [
       input.sessionUuid,
@@ -442,6 +444,7 @@ export async function updateSessionDiffResult(
       JSON.stringify(input.diffFindings),
       input.diffSummary,
       input.autoDamageReportUuid ?? null,
+      input.operatingCompanyId,
     ]
   );
 }
