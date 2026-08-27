@@ -91,7 +91,6 @@ async function evaluateRuleMatches(
         SELECT *
         FROM safety.v_fuel_mpg_anomalies
         WHERE operating_company_id = $1::uuid
-        LIMIT 200
       `,
       [operatingCompanyId]
     );
@@ -115,7 +114,6 @@ async function evaluateRuleMatches(
         FROM safety.v_driver_dwell_outliers
         WHERE operating_company_id = $1::uuid
           AND minutes_over_avg >= $2
-        LIMIT 200
       `,
       [operatingCompanyId, minMinutes]
     );
@@ -138,7 +136,6 @@ async function evaluateRuleMatches(
         FROM safety.v_wo_cost_outliers
         WHERE operating_company_id = $1::uuid
           AND z_score >= $2
-        LIMIT 200
       `,
       [operatingCompanyId, minZ]
     );
