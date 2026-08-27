@@ -227,6 +227,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
       });
       await appendCrudAudit(client, user.uuid, "maintenance.vehicles.created", {
         resource_id: created.id,
+        operating_company_id: companyId,
         unit_display_id: created.unit_display_id,
       });
       return created;
@@ -285,6 +286,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
       const pushed = await enqueueVehiclePushIfProjected(client, params.data.id, companyId, user.uuid);
       await appendCrudAudit(client, user.uuid, "maintenance.vehicles.updated", {
         resource_id: params.data.id,
+        operating_company_id: companyId,
         projected_push_enqueued: pushed,
         changes: buildPatchChanges(
           body.data as unknown as Record<string, unknown>,
@@ -318,6 +320,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
       const pushed = await enqueueVehiclePushIfProjected(client, params.data.id, companyId, user.uuid);
       await appendCrudAudit(client, user.uuid, "maintenance.vehicles.voided", {
         resource_id: params.data.id,
+        operating_company_id: companyId,
         void_reason: body.data.void_reason,
         projected_push_enqueued: pushed,
       });
