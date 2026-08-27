@@ -153,11 +153,13 @@ export type LoadDetail = DispatchLoadRow & {
     description?: string | null;
     amount_cents: number;
   }>;
-  // commodity is read-only display data here (DispatchBoard/DispatchKanban columns); it is NOT
-  // Edit-wizard-writable — mdata.loads has no per-load commodity/weight/reefer-setpoint columns
-  // (DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500, 2026-08-27). cargo_weight_lbs/
-  // reefer_setpoint_temp_f were removed from this type — no writer or reader remained after that fix.
+  // ACCT-F9508 (migration 202613220000): commodity + cargo_weight_lbs are now real mdata.loads
+  // columns, Edit-wizard-writable again (editLoadMapping.ts). reefer_setpoint_temp_f is NOT
+  // restored — that name was never a real column; the real reefer setpoint field is reefer_temp_f
+  // below. History: DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27) removed these
+  // from this type when they were still phantom columns.
   commodity?: string | null;
+  cargo_weight_lbs?: number | null;
   trip_type?: "NB" | "TR" | "SB" | null;
   piece_count?: number | null;
   customer_po_number?: string | null;

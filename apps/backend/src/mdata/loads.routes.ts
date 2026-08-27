@@ -923,12 +923,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             l.late_delivery_risk_y_n, l.late_delivery_est_deduction_cents, l.late_delivery_reason,
             l.miles_practical, l.miles_shortest, l.miles_deadhead,
             -- CLS-SCHEMA-DRIFT / PHANTOM COLUMN — verified against the PROD branch 2026-08-07:
-            -- mdata.loads has NO commodity, NO cargo_weight_lbs and NO reefer_setpoint_temp_f.
-            -- The comment above asserted those names; information_schema does not. This SELECT made
-            -- GET /api/v1/mdata/loads/:id return 500 (42703, commodity does not exist) for
-            -- EVERY load, while the list and dispatch endpoints — which do not select them — returned
-            -- 200. Found by creating a real USMCA load and reading it back.
-            -- The reefer setpoint that DOES exist is reefer_temp_f, already selected below.
+            -- mdata.loads had NO commodity, NO cargo_weight_lbs and NO reefer_setpoint_temp_f at that
+            -- time (the comment above asserted those names; information_schema did not). This SELECT
+            -- made GET /api/v1/mdata/loads/:id return 500 (42703, commodity does not exist) for EVERY
+            -- load, while the list and dispatch endpoints — which did not select them — returned 200.
+            -- RESTORED (ACCT-F9508, migration 202613220000): commodity + cargo_weight_lbs are real
+            -- columns now. reefer_setpoint_temp_f stays excluded — that name was never real; the
+            -- reefer setpoint that DOES exist is reefer_temp_f, already selected below.
+            l.commodity, l.cargo_weight_lbs,
             l.trip_type,
             -- Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
             l.piece_count, l.customer_po_number,
