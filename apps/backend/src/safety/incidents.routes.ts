@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
+import { randomUUID } from "node:crypto";
 
 const incidentTypeSchema = z.enum(["damage_report", "trailer_interchange", "cargo_claim"]);
 
@@ -509,11 +511,17 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
+    if (!isR2Configured()) return reply.code(503).send({ error: "r2_not_configured" });
     const file = await req.file();
     if (!file) return reply.code(400).send({ error: "file_required" });
 
+    const chunks: Buffer[] = [];
+    for await (const chunk of file.file) chunks.push(Buffer.from(chunk));
+    const buffer = Buffer.concat(chunks);
+    const safeFilename = (file.filename ?? "photo").replace(/[^a-zA-Z0-9._-]+/g, "-");
+
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const photoKey = `incidents/${params.data.id}/${file.filename ?? "photo"}`;
+      const photoKey = `safety/incidents/${query.data.operating_company_id}/${params.data.id}/${randomUUID()}-${safeFilename}`;
       const res = await client.query(
         `
           UPDATE safety.incidents
@@ -529,6 +537,9 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
         [params.data.id, query.data.operating_company_id, photoKey]
       );
       if (!res.rows[0]) return null;
+      // If storage rejects the bytes, withCompanyScope rolls the key append back; never expose a
+      // photo count or audit record for evidence that does not exist.
+      await putObjectBytes(photoKey, buffer, file.mimetype || "application/octet-stream");
       await appendCrudAudit(
         client,
         user.uuid,
@@ -550,7 +561,7 @@ export async function registerSafetyIncidentsRoutes(app: FastifyInstance) {
     });
 
     if (!result) return reply.code(404).send({ error: "incident_not_found" });
-    return result;
+    return reply.code(201).send(result);
   });
 
   /**
