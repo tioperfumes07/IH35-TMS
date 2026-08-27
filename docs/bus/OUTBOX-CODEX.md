@@ -1411,3 +1411,5 @@ Codex | ACK | GO-0808 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO
 Codex | SHIPPED | GO-0758 | FINDING=SAFETY-F6858 | PR=#16673 | merge=384418567d | guard=11/11 | NEXT=GO-0808 vertical | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6860-DRIVER-SCORE-HARSH-EVENTS-DOUBLE-CAP-50-OF-1000 | vertical=driver score events+unit+dashcam | guard=10/10 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | GO-0808 | FINDING=MAINT-F6859 | PR=#16674 | merge=3c9d2727ee | guard=13/13 | NEXT=driver-score vertical | GO
+Codex | WORKING | GO-0808 | FINDING=MAINT-F6861-PREFLIGHT-DVIR-QUEUE-SILENT-500-CAP-LOCAL-PAGER | vertical=major+minor+observation driver/unit/WO | guard=11/11+10/10 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | GO-0808 | FINDING=SAFETY-F6860 | PR=#16677 | merge=fa900121d3 | guard=10/10 | NEXT=pre-flight DVIR vertical | GO

@@ -2103,12 +2103,14 @@ export type PreFlightDvirQueueRow = {
 
 export function listPreFlightDvirQueue(
   operatingCompanyId: string,
-  params: { severity?: DvirSeverityLevel; status?: "open" | "routed" | "closed" } = {}
+  params: { severity?: DvirSeverityLevel; status?: "open" | "routed" | "closed"; limit?: number; offset?: number } = {}
 ) {
   const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.severity) q.set("severity", params.severity);
   if (params.status) q.set("status", params.status);
-  return apiRequest<{ defects: PreFlightDvirQueueRow[] }>(
+  if (params.limit != null) q.set("limit", String(params.limit));
+  if (params.offset != null) q.set("offset", String(params.offset));
+  return apiRequest<{ defects: PreFlightDvirQueueRow[]; total_count: number }>(
     `/api/v1/maintenance/pre-flight-dvir/queue?${q.toString()}`
   );
 }
