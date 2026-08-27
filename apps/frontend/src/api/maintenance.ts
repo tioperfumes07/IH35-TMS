@@ -1726,7 +1726,7 @@ export function getMaintenanceVendorsTemplateUrl(operatingCompanyId: string) {
 }
 
 export function getMaintenanceReportRows(report: string, operatingCompanyId: string) {
-  return apiRequest<{ report: string; rows: Array<Record<string, unknown>> }>(
+  return apiRequest<{ report: string; rows: Array<Record<string, unknown>>; total_count: number }>(
     `/api/v1/maintenance/reports/${encodeURIComponent(report)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
   );
 }

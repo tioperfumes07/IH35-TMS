@@ -50,7 +50,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT unit_id::text, COUNT(*)::int AS work_orders, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost
-           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
+           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST, unit_id ASC`,
           [companyId]
         )
       ).rows;
@@ -58,7 +58,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
       return (
         await client.query(
           `SELECT unit_id::text, COALESCE(SUM(total_actual_cost),0)::numeric(12,2) AS total_cost, COUNT(*)::int AS work_orders
-           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST LIMIT 50`,
+           FROM maintenance.work_orders WHERE operating_company_id = $1::uuid GROUP BY unit_id ORDER BY total_cost DESC NULLS LAST, unit_id ASC`,
           [companyId]
         )
       ).rows;
@@ -115,8 +115,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
                                      AND v.operating_company_id = $1::uuid
            WHERE w.operating_company_id = $1::uuid
            GROUP BY vendor_name
-           ORDER BY total_spend DESC NULLS LAST
-           LIMIT 20`,
+           ORDER BY total_spend DESC NULLS LAST, vendor_name ASC`,
           [companyId]
         )
       ).rows;
@@ -126,8 +125,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
           `SELECT id::text, display_id, total_actual_cost
            FROM maintenance.work_orders
            WHERE operating_company_id = $1::uuid AND COALESCE(total_actual_cost,0) >= 1000
-           ORDER BY total_actual_cost DESC NULLS LAST
-           LIMIT 100`,
+           ORDER BY total_actual_cost DESC NULLS LAST, id ASC`,
           [companyId]
         )
       ).rows;
@@ -139,8 +137,7 @@ async function buildRows(client: any, companyId: string, report: ReportId): Prom
            WHERE operating_company_id = $1::uuid
              AND status NOT IN ('complete','completed','cancelled')
              AND now() - COALESCE(opened_at, created_at) > INTERVAL '7 days'
-           ORDER BY age_days DESC
-           LIMIT 100`,
+           ORDER BY age_days DESC, id ASC`,
           [companyId]
         )
       ).rows;
@@ -164,7 +161,7 @@ export async function registerMaintenanceReportsRoutes(app: FastifyInstance) {
     const rows = await withCompany(user.uuid, query.data.operating_company_id, (client) =>
       buildRows(client, query.data.operating_company_id, params.data.report)
     );
-    return { report: params.data.report, rows };
+    return { report: params.data.report, rows, total_count: rows.length };
   });
 
   app.get("/api/v1/maintenance/reports/:report/export.xlsx", async (req, reply) => {
