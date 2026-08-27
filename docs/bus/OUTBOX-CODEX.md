@@ -1299,3 +1299,4 @@ Codex | GO-2158 | WORKING | FINDING=FUEL-F6755 | Load attribution now returns 40
 Codex | ACK | GO-2158 | PORT=9226 | WORKING FUEL-F6778 recommendation delivery queue truth | SHIPPED #16522 @ bd368d87d2 FUEL-F6777 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING FUEL-F6779 recommendation send exactly-once | SHIPPED #16524 @ 5047cb04d0 FUEL-F6778 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING SAFETY-F6780 dispatcher event void CAS | SHIPPED #16525 @ 665f28ca13 FUEL-F6779 | NEXT=guard+FAST-MERGE | GO
+Codex | ACK | GO-2158 | PORT=9226 | WORKING SAFETY-F6781 dispatcher voided-event immutability | SHIPPED #16527 @ 2ec702a5a6 SAFETY-F6780 | NEXT=guard+FAST-MERGE | GO

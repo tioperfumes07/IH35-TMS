@@ -725,7 +725,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
         `
           SELECT id, related_load_id, related_driver_id, related_customer_id
           FROM mdata.dispatcher_safety_events
-          WHERE id = $1 AND dispatcher_user_id = $2
+          WHERE id = $1 AND dispatcher_user_id = $2 AND voided_at IS NULL
           LIMIT 1
         `,
         [parsedParams.data.event_id, parsedParams.data.user_id]
@@ -743,7 +743,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
         `
           UPDATE mdata.dispatcher_safety_events
           SET ${sets.join(", ")}
-          WHERE id = $1 AND dispatcher_user_id = $2
+          WHERE id = $1 AND dispatcher_user_id = $2 AND voided_at IS NULL
           RETURNING *
         `,
         values
