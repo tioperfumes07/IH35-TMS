@@ -209,7 +209,9 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
     }
   );
 
-  app.patch("/api/v1/insurance/lawsuits/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/lawsuits/:id",
+    { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -243,6 +245,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
             FROM insurance.lawsuit
             WHERE tenant_id = $1::uuid AND id = $2::uuid
             LIMIT 1
+            FOR UPDATE
           `,
           [query.data.operating_company_id, params.data.id]
         );
@@ -284,7 +287,15 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
         values
       );
       if (!result.rows[0]) return { kind: "lawsuit_not_found" as const };
-      return { kind: "ok" as const, row: result.rows[0] };
+      const lawsuit = result.rows[0] as { id?: string };
+      await appendCrudAudit(client as never, user.uuid, "insurance.lawsuit.updated", {
+        resource_type: "insurance.lawsuit",
+        resource_id: lawsuit.id,
+        operating_company_id: query.data.operating_company_id,
+        claim_id: body.claim_id,
+        status: body.status,
+      });
+      return { kind: "ok" as const, row: lawsuit };
     });
 
     if (updated.kind === "claim_not_found") return reply.code(404).send({ error: "claim_not_found" });
@@ -297,5 +308,6 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       });
     }
     return updated.row;
-  });
+    }
+  );
 }
