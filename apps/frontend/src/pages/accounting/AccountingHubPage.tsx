@@ -293,7 +293,16 @@ export function AccountingHubPage() {
     for (const row of billPayments.slice(0, 12)) {
       items.push({
         key: `bp-${row.id}`,
-        label: entityLabel(row.reference_number || row.check_number || row.memo, row.id, "Payment"),
+        // ACCOUNTING-HUB-FIND-TRANSACTIONS-BILL-PAYMENT-LABEL-IGNORES-AVAILABLE-VENDOR-NAME:
+        // reference_number/check_number/memo are commonly blank on routine payments. The
+        // backend's listBillPayments() already resolves vendor_name + bill_number on every row
+        // (same pattern BillPaymentsListPage.tsx already uses) -- prefer those before falling
+        // back to the free-text fields, so a resolvable payment never renders "Payment — not visible".
+        label: entityLabel(
+          row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo,
+          row.id,
+          "Payment",
+        ),
         date: row.payment_date,
         amountCents: Number(row.amount_cents ?? 0),
         type: "Bill payment",
