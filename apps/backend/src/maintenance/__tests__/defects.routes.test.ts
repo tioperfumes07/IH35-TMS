@@ -175,7 +175,9 @@ describe("maintenance dvir defects routes (B27)", () => {
         expect(sql).not.toMatch(/dvir_submissions/i);
         expect(values?.[0]).toBe(DEFECT_ID);
         expect(values?.[1]).toBe(WO_ID);
-        return { rows: [], rowCount: 1 };
+        expect(sql).toMatch(/follow_up_wo_id IS NULL/i);
+        expect(sql).toMatch(/RETURNING id::text/i);
+        return { rows: [{ id: DEFECT_ID }], rowCount: 1 };
       }
       if (sql.includes("UPDATE safety.dvir_submissions")) {
         throw new Error("convert_to_wo must not UPDATE safety.dvir_submissions");
@@ -211,12 +213,49 @@ describe("maintenance dvir defects routes (B27)", () => {
       work_order_id: WO_ID,
     });
     expect(calls.some((s) => /UPDATE\s+safety\.dvir_defects/i.test(s))).toBe(true);
+    expect(calls.some((s) => /FOR UPDATE OF dd/i.test(s))).toBe(true);
     expect(calls.some((s) => /UPDATE\s+safety\.dvir_submissions/i.test(s))).toBe(false);
     expect(mockAppendCrudAudit).toHaveBeenCalledWith(
       expect.anything(),
       expect.any(String),
       "maintenance.dvir_defect.converted_to_wo",
       expect.objectContaining({ work_order_id: WO_ID })
+    );
+  });
+
+  it("POST triage convert_to_wo fails closed when the source link transition is lost", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("SET LOCAL") || sql.includes("set_config")) return { rows: [], rowCount: 0 };
+      if (sql.includes("next_wo_display_id")) return { rows: [{ display_id: "WO-TEST", sequence: 1 }], rowCount: 1 };
+      if (sql.includes("INSERT INTO maintenance.work_orders")) {
+        return { rows: [{ id: "55555555-5555-4555-8555-555555555555", display_id: "WO-TEST" }], rowCount: 1 };
+      }
+      if (sql.includes("UPDATE safety.dvir_defects")) return { rows: [], rowCount: 0 };
+      return {
+        rows: [{
+          id: DEFECT_ID,
+          dvir_submission_id: "33333333-3333-4333-8333-333333333333",
+          unit_id: "44444444-4444-4444-8444-444444444444",
+          item_key: "steering",
+          severity: "major",
+          follow_up_wo_id: null,
+          driver_id: null,
+        }],
+        rowCount: 1,
+      };
+    });
+
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/maintenance/dvir-defects/${DEFECT_ID}/triage`,
+      payload: { operating_company_id: COMPANY, action: "convert_to_wo", wo_type: "repair" },
+    });
+    expect(res.statusCode).toBe(500);
+    expect(mockAppendCrudAudit).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(String),
+      "maintenance.dvir_defect.converted_to_wo",
+      expect.anything(),
     );
   });
 });

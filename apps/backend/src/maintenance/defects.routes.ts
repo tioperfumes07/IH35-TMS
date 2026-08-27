@@ -242,8 +242,18 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
         return { triage_status: "closed" as const };
       }
 
-      if (defect.follow_up_wo_id) {
-        return { alreadyConverted: true as const, work_order_id: defect.follow_up_wo_id };
+      const lockedDefectRes = await client.query(
+        `SELECT dd.follow_up_wo_id::text
+           FROM safety.dvir_defects dd
+          WHERE dd.id = $1
+            AND dd.operating_company_id = $2::uuid
+          FOR UPDATE OF dd`,
+        [params.data.id, body.data.operating_company_id]
+      );
+      const lockedDefect = lockedDefectRes.rows[0];
+      if (!lockedDefect) return { notFound: true as const };
+      if (lockedDefect.follow_up_wo_id) {
+        return { alreadyConverted: true as const, work_order_id: lockedDefect.follow_up_wo_id };
       }
 
       // source_type must be in chk_maintenance_wo_source_type + next_wo_display_id allowlist
@@ -303,15 +313,18 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
 
       // Per-defect linkage (alreadyConverted gates on dd.follow_up_wo_id). Submissions-level
       // UPDATE was the wrong table — one submission can have many defects.
-      await client.query(
+      const linked = await client.query(
         `
           UPDATE safety.dvir_defects
-          SET follow_up_wo_id = COALESCE(follow_up_wo_id, $2)
+          SET follow_up_wo_id = $2
           WHERE id = $1
             AND operating_company_id = $3::uuid
+            AND follow_up_wo_id IS NULL
+          RETURNING id::text
         `,
         [params.data.id, workOrderId, body.data.operating_company_id]
       );
+      if (!linked.rows[0]) throw new Error("dvir_defect_follow_up_link_lost");
 
       await appendCrudAudit(client, user.uuid, `${TRIAGE_EVENT_PREFIX}converted_to_wo`, {
         ...auditBase,
