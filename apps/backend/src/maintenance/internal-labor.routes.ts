@@ -183,14 +183,16 @@ export async function internalLaborRoutes(app: FastifyInstance) {
         totalPartsCost,
         body.notes ?? null,
       ]);
+      const createdLabor = rows[0];
+      if (!createdLabor?.id) throw new Error("internal_labor_create_returned_no_row");
       await appendCrudAudit(client, user.uuid, "maintenance.internal_labor.created", {
         resource_type: "maintenance.internal_labor_log",
-        resource_id: rows[0]?.id,
+        resource_id: createdLabor.id,
         operating_company_id: body.operating_company_id,
         work_order_id: body.work_order_id,
         unit_id: body.unit_id,
       });
-      return rows[0];
+      return createdLabor;
     });
 
     if (!row) return reply.code(400).send({ error: "linked_entity_not_in_operating_company" });
