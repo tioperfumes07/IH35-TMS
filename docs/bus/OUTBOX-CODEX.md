@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16594 @ 7a8126421f SAFETY-F6847 | WORKING FLEET-F6848 unit-photo company parent+identity | guard=6/6 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16593 @ 855a591c71 FLEET-F6846 | WORKING SAFETY-F6847 driver-profile training identity | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16592 @ d5ec47038e FLEET-F6845 | WORKING FLEET-F6846 transfer completion identity chain | guard=6/6 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16591 @ 99e93d52be INS-F6844 | WORKING FLEET-F6845 equipment-transfer initiate identity | guard=4/4 | NEXT=FAST-MERGE | GO
