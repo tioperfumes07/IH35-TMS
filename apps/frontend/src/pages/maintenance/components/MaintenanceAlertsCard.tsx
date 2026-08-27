@@ -23,16 +23,19 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   const { pushToast } = useToast();
   const [schedulingAlertId, setSchedulingAlertId] = useState<string | null>(null);
   const [selectedWorkOrderId, setSelectedWorkOrderId] = useState<string | null>(null);
+  const pageSize = compact ? 10 : 50;
+  const [openPage, setOpenPage] = useState(1);
+  const [scheduledPage, setScheduledPage] = useState(1);
   const actionGenerationRef = useRef(0);
 
   const alertsQuery = useQuery({
-    queryKey: ["maintenance", "pm-alerts", operatingCompanyId],
-    queryFn: () => listMaintenancePmAlerts(operatingCompanyId),
+    queryKey: ["maintenance", "pm-alerts", operatingCompanyId, "open", pageSize, openPage],
+    queryFn: () => listMaintenancePmAlerts(operatingCompanyId, undefined, { limit: pageSize, offset: (openPage - 1) * pageSize }),
     enabled: Boolean(operatingCompanyId),
   });
   const scheduledAlertsQuery = useQuery({
-    queryKey: ["maintenance", "pm-alerts", operatingCompanyId, "scheduled"],
-    queryFn: () => listMaintenancePmAlerts(operatingCompanyId, "scheduled"),
+    queryKey: ["maintenance", "pm-alerts", operatingCompanyId, "scheduled", pageSize, scheduledPage],
+    queryFn: () => listMaintenancePmAlerts(operatingCompanyId, "scheduled", { limit: pageSize, offset: (scheduledPage - 1) * pageSize }),
     enabled: Boolean(operatingCompanyId) && !compact,
   });
 
@@ -71,12 +74,18 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     scheduleMutation.reset();
     setSchedulingAlertId(null);
     setSelectedWorkOrderId(null);
-  }, [operatingCompanyId]);
+    setOpenPage(1);
+    setScheduledPage(1);
+  }, [operatingCompanyId, pageSize]);
 
   const alerts = alertsQuery.data?.alerts ?? [];
   const scheduledAlerts = scheduledAlertsQuery.data?.alerts ?? [];
   const openTotalCount = alertsQuery.data?.total_count ?? alerts.length;
   const scheduledTotalCount = scheduledAlertsQuery.data?.total_count ?? scheduledAlerts.length;
+  const openPageCount = Math.max(1, Math.ceil(openTotalCount / pageSize));
+  const scheduledPageCount = Math.max(1, Math.ceil(scheduledTotalCount / pageSize));
+  useEffect(() => setOpenPage((current) => Math.min(current, openPageCount)), [openPageCount]);
+  useEffect(() => setScheduledPage((current) => Math.min(current, scheduledPageCount)), [scheduledPageCount]);
 
   if (alertsQuery.isError) {
     return (
@@ -112,10 +121,12 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
               </li>
             ))}
           </ul>
-          {openTotalCount > alerts.length ? (
-            <p className="border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid="pm-alerts-compact-range">
-              Showing {alerts.length} of {openTotalCount} open alerts.
-            </p>
+          {openTotalCount > pageSize ? (
+            <div className="flex items-center justify-end gap-1 border-t border-gray-100 px-2 py-1 text-[10px]" data-testid="pm-alerts-compact-pager">
+              <button type="button" disabled={openPage <= 1 || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.max(1, current - 1))}>Previous</button>
+              <span>Page {openPage} of {openPageCount} · {openTotalCount} open</span>
+              <button type="button" disabled={openPage >= openPageCount || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.min(openPageCount, current + 1))}>Next</button>
+            </div>
           ) : null}
           </div>
         )}
@@ -133,11 +144,6 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
         <p className="text-xs text-gray-500">No preventive maintenance alerts.</p>
       ) : (
         <ul className="space-y-2">
-          {openTotalCount > alerts.length ? (
-            <li className="text-xs text-slate-500" data-testid="pm-alerts-open-range">
-              Showing {alerts.length} of {openTotalCount} open alerts.
-            </li>
-          ) : null}
           {alerts.map((alert: MaintenancePmAlert) => (
             <li key={alert.id} className="p-2">
               <div className="flex items-center justify-between gap-2">
@@ -218,6 +224,13 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           ))}
         </ul>
       )}
+      {openTotalCount > pageSize ? (
+        <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="pm-alerts-open-pager">
+          <button type="button" disabled={openPage <= 1 || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.max(1, current - 1))}>Previous</button>
+          <span>Page {openPage} of {openPageCount} · {openTotalCount} open alerts</span>
+          <button type="button" disabled={openPage >= openPageCount || alertsQuery.isFetching} onClick={() => setOpenPage((current) => Math.min(openPageCount, current + 1))}>Next</button>
+        </div>
+      ) : null}
       {!compact && scheduledAlertsQuery.isError ? (
         <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-query-error">
           <ListErrorState
@@ -230,11 +243,6 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
       ) : !compact && scheduledAlerts.length > 0 ? (
         <div className="mt-3 border-t border-gray-200 pt-3" data-testid="pm-alerts-scheduled-reverse">
           <h4 className="text-xs font-semibold text-gray-700">Recently scheduled</h4>
-          {scheduledTotalCount > scheduledAlerts.length ? (
-            <p className="mt-1 text-xs text-slate-500" data-testid="pm-alerts-scheduled-range">
-              Showing {scheduledAlerts.length} of {scheduledTotalCount} scheduled alerts.
-            </p>
-          ) : null}
           <ul className="mt-2 space-y-1">
             {scheduledAlerts.map((alert) => (
               <li key={alert.id} className="text-xs text-gray-600">
@@ -245,6 +253,13 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
               </li>
             ))}
           </ul>
+          {scheduledTotalCount > pageSize ? (
+            <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="pm-alerts-scheduled-pager">
+              <button type="button" disabled={scheduledPage <= 1 || scheduledAlertsQuery.isFetching} onClick={() => setScheduledPage((current) => Math.max(1, current - 1))}>Previous</button>
+              <span>Page {scheduledPage} of {scheduledPageCount} · {scheduledTotalCount} scheduled alerts</span>
+              <button type="button" disabled={scheduledPage >= scheduledPageCount || scheduledAlertsQuery.isFetching} onClick={() => setScheduledPage((current) => Math.min(scheduledPageCount, current + 1))}>Next</button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

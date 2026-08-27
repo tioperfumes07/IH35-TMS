@@ -1406,3 +1406,6 @@ Codex | WORKING | FINDING=SAFETY-FINES-DRIVER-UNIT-REVERSE-SILENT-500-CAP | root
 Codex | ACK | GO-0758 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO
 Codex | WORKING | GO-0758 | FINDING=SAFETY-INTERNAL-FINES-DRIVER-LOAD-REVERSE-SILENT-500-CAP | vertical=history/pager | guard=PASS selftest10/10 | NEXT=FAST-MERGE then next owed history | GO
 Codex | WORKING | GO-0758 | FINDING=SAFETY-DOT-DWELL-QUEUE-DOUBLE-SILENT-CAP-NO-RETRY | vertical=history/pager/error/reload | guard=PASS selftest8/8 | NEXT=FAST-MERGE | GO
+Codex | WORKING | GO-0808 | FINDING=MAINT-F6859-PM-ALERTS-DISCLOSED-100-CAP-NO-NAVIGATION | vertical=compact+open+scheduled | guard=13/13 | NEXT=FAST-MERGE | GO
+Codex | ACK | GO-0808 | PORT=9226 | NOW=/drivers-vertical | SHA=0340406 | GO
+Codex | SHIPPED | GO-0758 | FINDING=SAFETY-F6858 | PR=#16673 | merge=384418567d | guard=11/11 | NEXT=GO-0808 vertical | GO
