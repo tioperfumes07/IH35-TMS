@@ -26,16 +26,22 @@ const listQuerySchema = z.object({
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
-const createSchema = z.object({
+// Exported for the MAINTENANCE-PARTS-CREATE-SUB-CATEGORY-BARCODE-NULL-400 regression test.
+export const createSchema = z.object({
   operating_company_id: z.string().uuid(),
   sku: z.string().trim().min(1).max(120),
   part_name: z.string().trim().min(1).max(250),
   manufacturer: z.string().trim().min(1).max(120),
   model_compatibility: z.array(z.string().trim().max(80)).default([]),
   category: z.enum(CATEGORY_VALUES),
-  sub_category: z.string().trim().max(120).optional(),
+  // MAINTENANCE-PARTS-CREATE-SUB-CATEGORY-BARCODE-NULL-400: matches updateSchema's sub_category/
+  // barcode_upc fields below — CreateMaintPartModal.tsx's blank-field form values are `null`
+  // (`form.sub_category.trim() || null`, same for barcode_upc), not `undefined`; a bare `.optional()`
+  // here rejected that shape, 400-ing every create where either optional field is left blank.
+  // Live-confirmed against prod.
+  sub_category: z.string().trim().max(120).nullable().optional(),
   typical_unit_cost_cents: z.number().int().nonnegative().default(0),
-  barcode_upc: z.string().trim().max(50).optional(),
+  barcode_upc: z.string().trim().max(50).nullable().optional(),
   is_active: z.boolean().default(true),
 });
 
