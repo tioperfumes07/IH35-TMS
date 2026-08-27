@@ -1,3 +1,4 @@
+Codex | WORKING | GO-0808 | FINDING=SAFETY-F6864-ACCIDENT-HISTORY-SILENT-500-CAP-ALL-REVERSE | vertical=list+driver/unit/trailer/load reverse | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0758 | FINDING=SAFETY-F6863-DOT-INSPECTION-PROFILE-REVERSE-FIRST-50-ONLY | vertical=driver+unit+trailer reverse | guard=9/9 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0758 | FINDING=SAFETY-F6862-ANOMALIES-UNBOUNDED-LIST-AND-REVERSE | vertical=tab+driver/unit/customer/invoice reverse | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0758 | FINDING=SAFETY-F6858-INTEGRITY-ALERTS-SILENT-500-CAP-REVERSE-RANGE | vertical=inbox+driver/unit/vendor reverse | guard=11/11 | NEXT=FAST-MERGE | GO

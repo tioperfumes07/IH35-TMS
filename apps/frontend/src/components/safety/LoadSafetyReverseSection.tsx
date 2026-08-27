@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getSafetyAccidents,
@@ -13,6 +14,7 @@ import { DispatcherSafetyEventsReverseBlock } from "./DispatcherSafetyEventsReve
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 import { listHosViolations } from "../../api/safetyV64";
 import { ListErrorState } from "../ListErrorState";
+import { Button } from "../Button";
 
 /**
  * SAF-C01 — REVERSE load↔safety. Accident reports and incidents already store load_id;
@@ -52,6 +54,9 @@ export function LoadSafetyReverseSection({
   loadId,
   "data-testid": testId = "load-detail-safety-records",
 }: Props) {
+  const accidentPageSize = 25;
+  const [accidentPage, setAccidentPage] = useState(1);
+  useEffect(() => setAccidentPage(1), [operatingCompanyId, loadId]);
   const accidentsQ = useQuery({
     queryKey: [
       "safety",
@@ -60,11 +65,14 @@ export function LoadSafetyReverseSection({
       "load",
       operatingCompanyId,
       loadId,
+      accidentPage,
     ],
-    queryFn: () => getSafetyAccidents(operatingCompanyId, { load_id: loadId }),
+    queryFn: () => getSafetyAccidents(operatingCompanyId, { load_id: loadId, limit: accidentPageSize, offset: (accidentPage - 1) * accidentPageSize }),
     enabled: Boolean(operatingCompanyId) && Boolean(loadId),
   });
   const accidents: Row[] = accidentsQ.data?.accidents ?? [];
+  const accidentTotal = accidentsQ.isError ? 0 : accidentsQ.data?.total_count ?? 0;
+  const accidentPageCount = Math.max(1, Math.ceil(accidentTotal / accidentPageSize));
   const hosViolationsQ = useQuery({
     queryKey: [
       "safety",
@@ -105,9 +113,9 @@ export function LoadSafetyReverseSection({
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-slate-900">
             Accidents
-            {accidents.length > 0 ? (
+            {accidentTotal > 0 ? (
               <span className="ml-2 text-xs font-normal text-gray-600">
-                ({accidents.length})
+                ({accidentTotal})
               </span>
             ) : null}
           </h3>
@@ -186,6 +194,13 @@ export function LoadSafetyReverseSection({
               );
             })}
           </ul>
+        ) : null}
+        {!accidentsQ.isError && accidentTotal > accidentPageSize ? (
+          <div className="flex items-center justify-end gap-2 text-xs" data-testid="load-safety-reverse-accidents-pager">
+            <Button size="sm" variant="secondary" disabled={accidentPage <= 1 || accidentsQ.isFetching} onClick={() => setAccidentPage((current) => Math.max(1, current - 1))}>Previous accidents</Button>
+            <span className="text-slate-600">Page {accidentPage} of {accidentPageCount} · {accidentTotal} accidents</span>
+            <Button size="sm" variant="secondary" disabled={accidentPage >= accidentPageCount || accidentsQ.isFetching} onClick={() => setAccidentPage((current) => Math.min(accidentPageCount, current + 1))}>Next accidents</Button>
+          </div>
         ) : null}
       </div>
 

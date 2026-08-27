@@ -24,6 +24,10 @@ const accidentsQuerySchema = companyQuerySchema.extend({
   // RANK5-ACCIDENT-TRAILER-ID — safety.accident_reports.trailer_id, live since rank 1 (PR #6316).
   trailer_id: z.string().uuid().optional(),
   load_id: z.string().uuid().optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 const trainingCompletionsQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
@@ -539,7 +543,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
            LIMIT 1`,
           [query.data.driver_id, query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [] };
+        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
         values.push(query.data.driver_id);
         scopeFilters.push(`AND ar.driver_id = $${values.length}`);
       }
@@ -555,6 +559,22 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
         values.push(query.data.load_id);
         scopeFilters.push(`AND ar.load_id = $${values.length}`);
       }
+      if (query.data.from) {
+        values.push(query.data.from);
+        scopeFilters.push(`AND ar.accident_at >= $${values.length}::date`);
+      }
+      if (query.data.to) {
+        values.push(query.data.to);
+        scopeFilters.push(`AND ar.accident_at < ($${values.length}::date + INTERVAL '1 day')`);
+      }
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+         FROM safety.accident_reports ar
+         WHERE ar.operating_company_id = $1::uuid
+         ${scopeFilters.join("\n         ")}`,
+        values
+      );
+      values.push(query.data.limit, query.data.offset);
       const res = await client.query(
         `
           SELECT ar.*,
@@ -612,14 +632,14 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
           WHERE ar.operating_company_id = $1::uuid
           ${scopeFilters.join("\n          ")}
           ORDER BY ar.accident_at DESC
-          LIMIT 500
+          LIMIT $${values.length - 1}::int OFFSET $${values.length}::int
         `,
         values
       );
-      return { found: true as const, rows: res.rows };
+      return { found: true as const, rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { accidents: result.rows };
+    return { accidents: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/accidents/:id", async (req, reply) => {

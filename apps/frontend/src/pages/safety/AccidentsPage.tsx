@@ -61,6 +61,8 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     onApply: setApplied,
   });
   const draft = staged.draft;
+  const pageSize = 50;
+  const [page, setPage] = useState(1);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const accidentIdParam = searchParams.get("accident_id");
@@ -89,13 +91,19 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
       driverIdFromUrl,
       unitIdFromUrl,
       trailerIdFromUrl,
+      applied,
+      page,
     ],
     queryFn: () =>
       getSafetyAccidents(operatingCompanyId, {
         load_id: loadIdFromUrl || undefined,
-        driver_id: driverIdFromUrl || undefined,
-        unit_id: unitIdFromUrl || undefined,
-        trailer_id: trailerIdFromUrl || undefined,
+        driver_id: applied.driverId || driverIdFromUrl || undefined,
+        unit_id: applied.unitId || unitIdFromUrl || undefined,
+        trailer_id: applied.trailerId || trailerIdFromUrl || undefined,
+        from: applied.from || undefined,
+        to: applied.to || undefined,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -110,6 +118,9 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
   });
 
   const allRows = accidentsQuery.data?.accidents ?? [];
+  const totalCount = accidentsQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  useEffect(() => setPage(1), [operatingCompanyId, loadIdFromUrl, applied]);
 
   // SAF-F33 reverse drill-through: another module linking here as
   // /safety/accidents?accident_id=<id> opens that exact accident even when it is not in the capped list.
@@ -125,33 +136,7 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
     }
   }, [accidentIdParam, linkedAccidentQuery.data, searchParams, setSearchParams]);
 
-  const rows = useMemo(() => {
-    return allRows.filter((row) => {
-      // SAF-F26: picker sets the canonical id; also accept name/number substring if typed legacy.
-      if (applied.driverId) {
-        const id = String(row.driver_id ?? "");
-        const name = String(row.driver_name ?? "").toLowerCase();
-        const needle = applied.driverId.trim().toLowerCase();
-        if (id !== applied.driverId && !name.includes(needle) && id.toLowerCase() !== needle) return false;
-      }
-      if (applied.unitId) {
-        const id = String(row.unit_id ?? "");
-        const num = String(row.unit_number ?? "").toLowerCase();
-        const needle = applied.unitId.trim().toLowerCase();
-        if (id !== applied.unitId && !num.includes(needle) && id.toLowerCase() !== needle) return false;
-      }
-      if (applied.trailerId) {
-        const id = String(row.trailer_id ?? "");
-        const num = String(row.trailer_number ?? row.equipment_number ?? "").toLowerCase();
-        const needle = applied.trailerId.trim().toLowerCase();
-        if (id !== applied.trailerId && !num.includes(needle) && id.toLowerCase() !== needle) return false;
-      }
-      const accidentDate = String(row.accident_at ?? "").slice(0, 10);
-      if (applied.from && accidentDate && accidentDate < applied.from) return false;
-      if (applied.to && accidentDate && accidentDate > applied.to) return false;
-      return true;
-    });
-  }, [allRows, applied]);
+  const rows = useMemo(() => allRows, [allRows]);
   const createMode = String(selectedAccident?.id ?? "") === "__create__";
 
   const openAccident = (row: Record<string, unknown>) => {
@@ -276,6 +261,9 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         exportFilename="accidents"
         tableTestId="accidents-table"
         rowTestId={(row) => `accident-row-${String(row.id)}`}
+        pageSize={pageSize}
+        pageSizeOptions={[pageSize]}
+        hidePager
         filterBar={
           <div className="flex flex-wrap items-center gap-2 text-[11px]" data-testid="accidents-filters">
             {/* SAF-F26: filters, not creators — allowCreate={false} (same law as IdvrPage). */}
@@ -361,6 +349,14 @@ export function AccidentsPage({ operatingCompanyId }: Props) {
         }
       />
       )}
+
+      {!accidentsQuery.isError && totalCount > pageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="accidents-server-pager">
+          <Button size="sm" variant="secondary" disabled={page <= 1 || accidentsQuery.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous</Button>
+          <span className="text-slate-600">Page {page} of {pageCount} · {totalCount} accidents</span>
+          <Button size="sm" variant="secondary" disabled={page >= pageCount || accidentsQuery.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       <AccidentReportDrawer
         open={drawerOpen}
