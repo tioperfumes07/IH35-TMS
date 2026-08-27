@@ -1,3 +1,5 @@
+**21:58 CT GO-2158.** Same as INBOX-DEVIN. One Devin. INBOX-DEVIN-A VOID as a second seat.
+
 **21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. Not PARKED. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `Devin-A | ACK | GO-2136 | PORT=9227 | NOW=/vendors | GO`
 
 **YOUR NOW:** same as Devin — `/vendors` unique only. Not `/dispatch` (Cascade).

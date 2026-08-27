@@ -1,3 +1,7 @@
+**21:58 CT GO-2158 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`. Live **`e3ae7a7`**. ACK: `CC-3 | ACK | GO-2158 | PORT=9225 | NOW=VENDOR-REACTIVATE-PATCH-404 | SHA=e3ae7a7 | GO`
+
+**YOUR NOW:** `VENDOR-REACTIVATE-PATCH-404-RLS-HIDES-DEACTIVATED` — wrap vendor PATCH reactivate (`deactivated_at=null`) in `withLuciaBypass()` + opco predicate like deactivate POST. Toast on 404. Not Devin Chrome. Do not remake #16433. Then `/compliance` unique.
+
 **21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `CC-3 | ACK | GO-2136 | PORT=9225 | NOW=MDATA-DEACTIVATE-prove | GO`
 
 **YOUR NOW:** `/compliance` unique then remaining `/lists`/`/system`. Exclusive `/lists` `/legal` `/compliance` `/program` `/system`. cwd=`~/IH35-TMS-cc3`. MDATA-DEACTIVATE already live-proved — do not remake. Stale `IH35-TMS-cc3-wt` deleted.

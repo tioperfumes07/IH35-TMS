@@ -1,3 +1,5 @@
+**21:58 CT GO-2158.** Lead. Live **`e3ae7a7`**. Do not second-kick deploy yet (just landed). Route Devin reactivate → CC-3. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`.
+
 **21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. LEAD-SEAT=CURSOR. Owner: wake all seats. ACK: `Cursor | ACK | GO-2136 | PORT=9222 | NOW=lead | GO`
 
 **YOUR NOW:** Lead. Census. FAST-MERGE. Overflow `/home` `/help` `/users` `/docs` `/inventory`. Do not steal money URLs. Deploy 5–10 only.

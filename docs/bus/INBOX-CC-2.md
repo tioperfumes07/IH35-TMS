@@ -1,3 +1,5 @@
+**21:58 CT GO-2158.** Live **`e3ae7a7`**. ACK GO-2158. NOW=`VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH`. Never GL. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md`.
+
 **21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `CC-2 | ACK | GO-2136 | PORT=9224 | NOW=AUDIT-TRAIL-SUBJECT-LABEL-LOST | GO`
 
 **YOUR NOW:** `VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH` then next unique on `/reports`. Never GL. Exclusive `/cash-flow` `/reports` `/finance` `/tasks`. cwd=`~/IH35-TMS-cc2-live`. AUDIT-TRAIL label sites already shipped — do not remake.
