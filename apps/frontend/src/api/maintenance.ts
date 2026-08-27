@@ -465,9 +465,11 @@ export function getMaintenanceKpiPmCompliance(companyId: string, periodStart: st
   }>(`/api/v1/maintenance/kpi/pm-compliance?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`);
 }
 
-export function listMaintenancePmAlerts(companyId: string, state?: MaintenancePmAlert["state"]) {
+export function listMaintenancePmAlerts(companyId: string, state?: MaintenancePmAlert["state"], range: { limit?: number; offset?: number } = {}) {
   const params = new URLSearchParams({ operating_company_id: companyId });
   if (state) params.set("state", state);
+  if (range.limit != null) params.set("limit", String(range.limit));
+  if (range.offset != null) params.set("offset", String(range.offset));
   return apiRequest<{ alerts: MaintenancePmAlert[]; total_count: number }>(`/api/v1/maintenance/pm-alerts?${params.toString()}`);
 }
 

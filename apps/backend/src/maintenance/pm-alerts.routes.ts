@@ -8,6 +8,8 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   state: z.enum(["open", "acknowledged", "scheduled", "dismissed"]).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const alertParamsSchema = z.object({
@@ -46,7 +48,7 @@ async function relationExists(client: any, relation: string): Promise<boolean> {
 }
 
 export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/pm-alerts", async (req, reply) => {
+  app.get("/api/v1/maintenance/pm-alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -64,6 +66,15 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
         filters.push(`a.state = 'open'`);
       }
 
+      const count = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+           FROM maintenance.pm_alerts a
+          WHERE ${filters.join(" AND ")}`,
+        values
+      );
+      const rangeValues = [...values, query.data.limit, query.data.offset];
+      const limitParameter = rangeValues.length - 1;
+      const offsetParameter = rangeValues.length;
       const res = await client.query(
         `
           SELECT
@@ -76,8 +87,7 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
             a.triggered_at::text,
             a.state::text,
             a.scheduled_work_order_id::text,
-            wo.display_id AS scheduled_work_order_display_id,
-            COUNT(*) OVER()::int AS total_count
+            wo.display_id AS scheduled_work_order_display_id
           FROM maintenance.pm_alerts a
           LEFT JOIN mdata.units u ON u.id = a.unit_id AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = a.operating_company_id
           LEFT JOIN maintenance.pm_schedules s ON s.id = a.pm_schedule_id
@@ -85,11 +95,12 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
                                                AND wo.operating_company_id = a.operating_company_id
           WHERE ${filters.join(" AND ")}
           ORDER BY a.triggered_at DESC
-          LIMIT 100
+          LIMIT $${limitParameter}
+          OFFSET $${offsetParameter}
         `,
-        values
+        rangeValues
       );
-      return { alerts: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
+      return { alerts: res.rows, total_count: Number(count.rows[0]?.total_count ?? 0) };
     });
 
     return result;
