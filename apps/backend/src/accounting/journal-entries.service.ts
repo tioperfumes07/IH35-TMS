@@ -983,8 +983,15 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
           -- bank-recon/match.service.ts). Reading display_id alone meant this JE source-link resolver
           -- tombstoned "Source — not visible" for essentially every bill-sourced journal entry, even
           -- though the href it builds from source_transaction_id was already correct.
-          COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label, src_reimbursement.display_label) AS source_transaction_display_id,
-          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description, link_settlement.display_id, link_load.load_number, link_unit.unit_number, link_deduction.display_label) AS linked_object_display_id
+          -- JE-SOURCE-LINKS-EXPENSE-NEVER-JOINED: expense is the same class of gap this comment block
+          -- already fixed for invoice/bill/bank_categorization/fuel_event/driver_reimbursement, and
+          -- live-reproduced the same way (created EXP-2026-00002, its JE detail's Source links panel
+          -- tombstoned "Source — not visible" even though the row exists and posted correctly).
+          -- accounting.expenses.expense_number is the SAME column listJournalEntries' own
+          -- JE_SOURCE_TRANSACTION_DISPLAY_ID_SQL already uses for this exact type (ex.expense_number)
+          -- a few lines above in this file — this query just never got the matching join.
+          COALESCE(src_inv.display_id, src_bill.display_id, src_bill.bill_number, src_banktx.display_label, src_fueltx.display_label, src_reimbursement.display_label, src_expense.display_label) AS source_transaction_display_id,
+          COALESCE(link_inv.display_id, link_bill.display_id, link_bill.bill_number, link_dispute.dispute_description, link_settlement.display_id, link_load.load_number, link_unit.unit_number, link_deduction.display_label, link_expense.display_label) AS linked_object_display_id
         FROM accounting.journal_entry_postings jep
         LEFT JOIN accounting.transaction_source_links tsl ON tsl.journal_entry_posting_id = jep.id
         LEFT JOIN accounting.invoices src_inv
@@ -1019,6 +1026,14 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             AND r.operating_company_id = $2::uuid
           LIMIT 1
         ) src_reimbursement ON true
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(NULLIF(e.expense_number, ''), 'Expense ' || e.transaction_date::text) AS display_label
+          FROM accounting.expenses e
+          WHERE jep.source_transaction_type = 'expense'
+            AND e.id::text = jep.source_transaction_id
+            AND e.operating_company_id = $2::uuid
+          LIMIT 1
+        ) src_expense ON true
         LEFT JOIN accounting.invoices link_inv
           ON tsl.linked_object_type = 'invoice'
           AND link_inv.id::text = tsl.linked_object_id
@@ -1051,6 +1066,14 @@ export async function getJournalEntrySourceLinks(userId: string, operatingCompan
             AND d.operating_company_id = $2::uuid
           LIMIT 1
         ) link_deduction ON true
+        LEFT JOIN LATERAL (
+          SELECT COALESCE(NULLIF(e2.expense_number, ''), 'Expense ' || e2.transaction_date::text) AS display_label
+          FROM accounting.expenses e2
+          WHERE tsl.linked_object_type = 'expense'
+            AND e2.id::text = tsl.linked_object_id
+            AND e2.operating_company_id = $2::uuid
+          LIMIT 1
+        ) link_expense ON true
         WHERE jep.journal_entry_uuid = $1
           AND jep.operating_company_id = $2::uuid
         ORDER BY jep.line_sequence ASC, tsl.created_at ASC NULLS LAST
