@@ -16,6 +16,12 @@ const querySchema = z.object({
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
+const detailQuerySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  wo_page: z.coerce.number().int().min(1).default(1),
+  invoice_page: z.coerce.number().int().min(1).default(1),
+  page_size: z.coerce.number().int().min(1).max(100).default(25),
+});
 
 const createSchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -213,7 +219,8 @@ async function assertMdataVendorExists(
 async function fetchVendorDetail(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }> },
   companyId: string,
-  vendorId: string
+  vendorId: string,
+  pages: { woPage: number; invoicePage: number; pageSize: number }
 ) {
   const res = await client.query(
     `
@@ -247,6 +254,17 @@ async function fetchVendorDetail(
         : null;
   const qboVendorId = typeof metadata.qbo_vendor_id === "string" ? metadata.qbo_vendor_id : null;
 
+  const historyPredicate = `wo.operating_company_id = $1::uuid
+        AND (($2::uuid IS NOT NULL AND wo.external_vendor_id = $2::uuid)
+          OR ($3::uuid IS NOT NULL AND wo.vendor_id = $3::uuid)
+          OR wo.repair_location ILIKE '%' || $4 || '%')`;
+  const historyValues = [companyId, mdataVendorId, qboVendorId, vendor.display_name];
+  const counts = await client.query(
+    `SELECT count(*)::int AS wo_total,
+            count(*) FILTER (WHERE NULLIF(trim(COALESCE(wo.external_vendor_invoice_number, '')), '') IS NOT NULL)::int AS invoice_total
+       FROM maintenance.work_orders wo WHERE ${historyPredicate}`,
+    historyValues
+  );
   const woRes = await client.query(
     `
       SELECT
@@ -260,16 +278,11 @@ async function fetchVendorDetail(
         wo.external_vendor_invoice_amount,
         wo.repair_location
       FROM maintenance.work_orders wo
-      WHERE wo.operating_company_id = $1::uuid
-        AND (
-          ($2::uuid IS NOT NULL AND wo.external_vendor_id = $2::uuid)
-          OR ($3::uuid IS NOT NULL AND wo.vendor_id = $3::uuid)
-          OR wo.repair_location ILIKE '%' || $4 || '%'
-        )
+      WHERE ${historyPredicate}
       ORDER BY wo.opened_at DESC NULLS LAST, wo.created_at DESC
-      LIMIT 100
+      LIMIT $5 OFFSET $6
     `,
-    [companyId, mdataVendorId, qboVendorId, vendor.display_name]
+    [...historyValues, pages.pageSize, (pages.woPage - 1) * pages.pageSize]
   );
 
   const invoiceRes = await client.query(
@@ -282,23 +295,20 @@ async function fetchVendorDetail(
         wo.closed_at::text AS invoice_date,
         wo.status
       FROM maintenance.work_orders wo
-      WHERE wo.operating_company_id = $1::uuid
+      WHERE ${historyPredicate}
         AND NULLIF(trim(COALESCE(wo.external_vendor_invoice_number, '')), '') IS NOT NULL
-        AND (
-          ($2::uuid IS NOT NULL AND wo.external_vendor_id = $2::uuid)
-          OR ($3::uuid IS NOT NULL AND wo.vendor_id = $3::uuid)
-          OR wo.repair_location ILIKE '%' || $4 || '%'
-        )
       ORDER BY wo.closed_at DESC NULLS LAST, wo.created_at DESC
-      LIMIT 100
+      LIMIT $5 OFFSET $6
     `,
-    [companyId, mdataVendorId, qboVendorId, vendor.display_name]
+    [...historyValues, pages.pageSize, (pages.invoicePage - 1) * pages.pageSize]
   );
 
   return {
     vendor,
     wo_history: woRes.rows,
     invoice_history: invoiceRes.rows,
+    wo_total_count: Number(counts.rows[0]?.wo_total ?? 0),
+    invoice_total_count: Number(counts.rows[0]?.invoice_total ?? 0),
   };
 }
 
@@ -341,10 +351,14 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
-    const parsed = querySchema.pick({ operating_company_id: true }).safeParse(req.query ?? {});
+    const parsed = detailQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const detail = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) =>
-      fetchVendorDetail(client, parsed.data.operating_company_id, params.data.id)
+      fetchVendorDetail(client, parsed.data.operating_company_id, params.data.id, {
+        woPage: parsed.data.wo_page,
+        invoicePage: parsed.data.invoice_page,
+        pageSize: parsed.data.page_size,
+      })
     );
     if (!detail) return reply.code(404).send({ error: "maintenance_vendor_not_found" });
     return detail;

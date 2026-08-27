@@ -1667,12 +1667,18 @@ export type MaintenanceVendorRow = {
   archive_reason?: string | null;
 };
 
-export function getMaintenanceVendorDetail(vendorId: string, operatingCompanyId: string) {
+export function getMaintenanceVendorDetail(vendorId: string, operatingCompanyId: string, pages: { woPage?: number; invoicePage?: number; pageSize?: number } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (pages.woPage) q.set("wo_page", String(pages.woPage));
+  if (pages.invoicePage) q.set("invoice_page", String(pages.invoicePage));
+  if (pages.pageSize) q.set("page_size", String(pages.pageSize));
   return apiRequest<{
     vendor: MaintenanceVendorRow;
     wo_history: Array<Record<string, unknown>>;
     invoice_history: Array<Record<string, unknown>>;
-  }>(`/api/v1/maintenance/vendors/${encodeURIComponent(vendorId)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+    wo_total_count: number;
+    invoice_total_count: number;
+  }>(`/api/v1/maintenance/vendors/${encodeURIComponent(vendorId)}?${q.toString()}`);
 }
 
 export function createMaintenanceVendor(body: Record<string, unknown>) {
