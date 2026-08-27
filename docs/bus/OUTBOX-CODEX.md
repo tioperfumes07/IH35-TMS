@@ -1,3 +1,4 @@
+Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16592 @ d5ec47038e FLEET-F6845 | WORKING FLEET-F6846 transfer completion identity chain | guard=6/6 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16591 @ 99e93d52be INS-F6844 | WORKING FLEET-F6845 equipment-transfer initiate identity | guard=4/4 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16590 @ b87a6b0abb INS-F6843 | WORKING INS-F6844 policy update pending conflict lock | guard=5/5 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16589 @ 501567523f INS-F6842 | WORKING INS-F6843 type-catalog pending draft lock | HANDOFF=CC-1 INS-MONEY-F6843A policy+bills lifecycle | guard=5/5 | NEXT=FAST-MERGE | GO
