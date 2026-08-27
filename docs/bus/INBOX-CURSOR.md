@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. `/banking` Match/recon then maint/safety/insurance then `/home` `/system`. Create TEST. **Do not void.** ACK `Cursor | ACK | GO-1722 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. `/banking` Match/recon then maint/safety/insurance then `/home` `/system`. Create TEST as needed — **do not void until launch**. ACK `Cursor | ACK | GO-1655 | PORT=9222 | NOW=/banking | SHA=<healthz> | GO`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1640.md`. NOW=/banking TEST expense Match recon ledger then maintenance/safety/insurance. Live `33c41fc`. ACK `Cursor | ACK | GO-1640 | PORT=9222 | NOW=/banking | SHA=<healthz> | GO`.

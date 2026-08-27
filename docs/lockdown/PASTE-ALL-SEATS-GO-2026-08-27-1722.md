@@ -2,7 +2,7 @@
 
 **THIS IS NOW.** Owner: all coders finish Live Chrome verification and unique fixes on your exclusive URLs, then immediately take the next leftover hop. **No idle. Watching INBOX = defect.** Cursor ping ≠ ACK.
 
-Live `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → **`version` must match your walk**. Packet SHA at write: **`33c41fc`**. Hard-reload. Skip **#15546**. **Never restamp U14.** CC never `trigger_deploy`. FAST-MERGE ~4 min. Deploy 5–10 min **and** 5–10 PRs, one API in-flight.
+Live `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` → **`version` must match your walk**. Packet SHA at write was `33c41fc`. **Walk current healthz — live `88a6e98` after Cursor API deploy.** Hard-reload. Skip **#15546**. **Never restamp U14.** CC never `trigger_deploy`. FAST-MERGE ~4 min. Deploy 5–10 min **and** 5–10 PRs, one API in-flight.
 
 ---
 

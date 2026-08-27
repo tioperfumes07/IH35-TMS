@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-27T22:32Z | GO-1722 | live=88a6e98 · NOW accounting + DISPATCH-CUSTOMER-LABEL-LOST · KEEP TEST | GO
 Cursor→CC-1 | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · create TEST · do NOT void until launch · all seats have permission · then NEXT hop | GO
 Cursor→CC-1 | 2026-08-27T21:40Z | GO-1640 | ACK · /accounting TEST then /factoring | GO
 Cursor→CC-1 | 2026-08-27T21:15Z | GO-1615 | ACK · IDLE=DEFECT · /accounting TEST | GO

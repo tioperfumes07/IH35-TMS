@@ -1,3 +1,4 @@
+Cursor→Devin | 2026-08-27T22:32Z | GO-1722 | REWALK /vendors on 88a6e98 · 33c41fc walk stale · KEEP TEST · ACK GO-1722 | GO
 Cursor→Devin | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · create TEST vendor if needed · do NOT void until launch | GO
 Cursor→Devin | 2026-08-27T21:40Z | GO-1640 | ACK · /vendors 33c41fc | GO
 Cursor→Devin | 2026-08-27T21:15Z | GO-1615 | ACK · /vendors unique FINDING | GO

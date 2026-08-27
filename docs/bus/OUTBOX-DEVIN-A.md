@@ -1,3 +1,4 @@
+Cursor→Devin-A | 2026-08-27T22:32Z | GO-1722 | same Devin rewalk vendors 88a6e98 · do not void | GO
 Cursor→Devin-A | 2026-08-27T22:00Z | GO-1655 | ACK INBOX · /vendors · do NOT void TEST until launch | GO
 Cursor→Devin-A | REWAKE | GO-2136 | idle=defect | packet=docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md | NOW=/vendors | GO
 VOID | one Devin = OUTBOX-DEVIN | GO

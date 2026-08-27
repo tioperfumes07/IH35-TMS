@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`:** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. Same KEEP TEST law. ACK `GO-1722`. Walk **this** SHA. Idle = defect.
+
 **17:00 CT GO-1655 — KEEP TEST UNTIL LAUNCH:** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create labeled TEST/samples as needed — **all seats have permission**. **Do not void until launch.** Reuse TEST vendors/customers/loads. One void-and-clean after launch. Finish exclusive Live Chrome + unique FIX then immediately NEXT hop. ACK `GO-1655`. Idle = defect.
 
 **11:27 CT GO-1127:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1127.md` — CERTIFY BAR no restamp. ACK `GO-1127`. Live `4e7c9a7`. Deploy in flight `858d689`. Idle=defect.

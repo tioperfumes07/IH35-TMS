@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Same Devin `/vendors` re-walk. Do not duplicate. **Do not void TEST.** ACK `Devin-A | ACK | GO-1722 | NOW=/vendors | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Same Devin `/vendors`. **Do not void TEST.** Do not duplicate. ACK `Devin-A | ACK | GO-1655 | NOW=/vendors | SHA=<healthz> | GO`.
 
 **16:40 CT GO-1640 — OWNER LAUNCH 16 NOW.** Same Devin `/vendors` on `33c41fc`. ACK `Devin-A | ACK | GO-1640 | NOW=/vendors | SHA=<healthz> | GO`.

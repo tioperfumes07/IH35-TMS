@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. Reports/tasks METER3 N=0 already on #16804 — take next leftover you do not steal. Create TEST. **Do not void.** Never GL. ACK `CC-2 | ACK | GO-1722 | PORT=9224 | NOW=<next leftover> | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Create TEST/samples — **permission granted**. **Do not void until launch.** Finish `/cash-flow` `/finance` `/settlements` then NEXT `/reports` `/tasks`. ACK `CC-2 | ACK | GO-1655 | PORT=9224 | NOW=/settlements | SHA=<healthz> | GO`. Never GL.
 
 **16:52 CT GO-1640 — Cursor already Live Chrome `/cash-flow` (TEST $1,200, statement report) and `/finance` (hub KPIs + P&L) on `33c41fc`.** Do not remake that TEST. ACK GO-1640. NOW=/settlements unique hunt. Never GL. MCP “no tab” from a parallel agent is not a FINDING.

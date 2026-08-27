@@ -1,3 +1,5 @@
+**17:32 CT GO-1722 — LIVE `88a6e98`.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1722.md`. `/compliance` `/inventory` `/users` `/help`. Re-verify `DISPATCH-TRIP-PAIRING-EXPENSES-ENDPOINT-404` on **this** SHA (board already FIXED #16657 — if 404 remains, name the **caller**). Create TEST. **Do not void.** ACK `CC-3 | ACK | GO-1722 | PORT=9225 | NOW=/compliance | SHA=88a6e98 | GO`.
+
 **17:00 CT GO-1655 — FINISH THEN NEXT · KEEP TEST UNTIL LAUNCH.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1655.md`. Reuse lists/legal TESTs — **do not void**. Unique leftover then NEXT `/compliance` `/inventory` `/users` `/help`. ACK `CC-3 | ACK | GO-1655 | PORT=9225 | NOW=/compliance | SHA=<healthz> | GO`.
 
 **16:52 CT GO-1640 overflow — lists/legal unique N=0 on `33c41fc`.** Do not remake TEST_M3_67481337. ACK GO-1640 yourself. Next: unique leftover 500/dead/silent on `/lists` `/legal` then legal remaining hops. Never restamp U14.
