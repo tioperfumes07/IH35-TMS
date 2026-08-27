@@ -1297,3 +1297,4 @@ Codex | GO-2158 | WORKING | FINDING=FLEET-F6753 | Unit+equipment deactivate now 
 Codex | GO-2158 | WORKING | FINDING=DRIVER-F6754 | Clear Default Truck now returns 409/no audit when no active default exists | NEXT=guard+tests+FAST-MERGE | GO
 Codex | GO-2158 | WORKING | FINDING=FUEL-F6755 | Load attribution now returns 409/no audit on zero-row active mutation | NEXT=guard+tests+FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | WORKING FUEL-F6778 recommendation delivery queue truth | SHIPPED #16522 @ bd368d87d2 FUEL-F6777 | NEXT=guard+FAST-MERGE | GO
+Codex | ACK | GO-2158 | PORT=9226 | WORKING FUEL-F6779 recommendation send exactly-once | SHIPPED #16524 @ 5047cb04d0 FUEL-F6778 | NEXT=guard+FAST-MERGE | GO
