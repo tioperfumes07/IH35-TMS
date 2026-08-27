@@ -19,6 +19,10 @@ const pmComplianceQuerySchema = kpiQuerySchema.extend({
   limit: z.coerce.number().int().min(1).max(100).default(25),
   offset: z.coerce.number().int().min(0).default(0),
 });
+const drilldownQuerySchema = kpiQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(100).default(25),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
 export type KpiSparkPoint = { day: string; value: number };
 
@@ -375,21 +379,22 @@ async function countActiveUnits(client: { query: (sql: string, values?: unknown[
 async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "downtime" | "mtbf" | "cpm" | "cost_per_truck") {
   const user = authed(req, reply);
   if (!user) return;
-  const parsed = kpiQuerySchema.safeParse(req.query ?? {});
+  const parsed = drilldownQuerySchema.safeParse(req.query ?? {});
   if (!parsed.success) return validationError(reply, parsed.error);
-  const q: KpiQuery = parsed.data;
+  const q = parsed.data;
   if (!assertKpiPeriod(q.period_start, q.period_end)) {
     return reply.code(400).send({ error: "validation_error", details: { period: ["period_start must be on or before period_end"] } });
   }
 
-  const rows = await withCompany(user.uuid, q.operating_company_id, async (client) => {
-    if (!(await relationExists(client, "maintenance.work_orders"))) return [];
+  const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
+    if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
     const unitClause = unitFilter(q.unit_id, "wo");
-    const params = [q.operating_company_id, q.period_start, q.period_end, ...unitParams(q.unit_id)];
+    const params: unknown[] = [q.operating_company_id, q.period_start, q.period_end, ...unitParams(q.unit_id)];
+    let dataSql: string;
+    let orderSql: string;
 
     if (kind === "downtime") {
-      const res = await client.query(
-        `
+      dataSql = `
           SELECT
             wo.id::text,
             wo.display_id,
@@ -405,17 +410,10 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
             AND COALESCE(wo.closed_at, wo.opened_at, wo.created_at)::date BETWEEN $2::date AND $3::date
             AND COALESCE(wo.duration_seconds, 0) > 0
             ${unitClause}
-          ORDER BY downtime_hours DESC
-          LIMIT 100
-        `,
-        params
-      );
-      return res.rows;
-    }
-
-    if (kind === "mtbf") {
-      const res = await client.query(
-        `
+        `;
+      orderSql = "downtime_hours DESC, id ASC";
+    } else if (kind === "mtbf") {
+      dataSql = `
           SELECT
             u.unit_number,
             wo.unit_id::text,
@@ -431,17 +429,10 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
             AND COALESCE(wo.closed_at, wo.updated_at)::date BETWEEN $2::date AND $3::date
             ${unitClause}
           GROUP BY u.unit_number, wo.unit_id
-          ORDER BY repair_count DESC
-          LIMIT 100
-        `,
-        params
-      );
-      return res.rows;
-    }
-
-    if (kind === "cpm") {
-      const res = await client.query(
-        `
+        `;
+      orderSql = "repair_count DESC, unit_id ASC";
+    } else if (kind === "cpm") {
+      dataSql = `
           WITH wo_cost AS (
             SELECT
               wo.unit_id,
@@ -474,16 +465,10 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
           JOIN mdata.units u ON u.id = wc.unit_id
                              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
           LEFT JOIN unit_miles um ON um.unit_id = wc.unit_id
-          ORDER BY wc.total_cents DESC
-          LIMIT 100
-        `,
-        params
-      );
-      return res.rows;
-    }
-
-    const res = await client.query(
-      `
+        `;
+      orderSql = "total_cents DESC, unit_id ASC";
+    } else {
+      dataSql = `
         SELECT
           u.unit_number,
           wo.unit_id::text,
@@ -497,13 +482,31 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
           AND COALESCE(wo.closed_at, wo.opened_at, wo.updated_at)::date BETWEEN $2::date AND $3::date
           ${unitClause}
         GROUP BY u.unit_number, wo.unit_id
-        ORDER BY total_cents DESC
-        LIMIT 100
-      `,
+      `;
+      orderSql = "total_cents DESC, unit_id ASC";
+    }
+
+    params.push(q.limit, q.offset);
+    const limitParam = params.length - 1;
+    const offsetParam = params.length;
+    const res = await client.query(
+      `WITH data AS (${dataSql}),
+            totals AS (SELECT COUNT(*)::int AS total_count FROM data)
+       SELECT page.*, totals.total_count
+         FROM totals
+         LEFT JOIN LATERAL (
+           SELECT * FROM data
+            ORDER BY ${orderSql}
+            LIMIT $${limitParam} OFFSET $${offsetParam}
+         ) page ON TRUE`,
       params
     );
-    return res.rows;
+    const totalCount = Number(res.rows[0]?.total_count ?? 0);
+    const rows = res.rows
+      .filter((row) => row.id != null || row.unit_id != null)
+      .map(({ total_count: _totalCount, ...row }) => row);
+    return { rows, total_count: totalCount };
   });
 
-  return { kind, rows, report_cross_link: "/reports/maintenance-cost-per-unit" };
+  return { kind, ...payload, report_cross_link: "/reports/maintenance-cost-per-unit" };
 }

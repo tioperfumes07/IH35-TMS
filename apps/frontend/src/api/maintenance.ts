@@ -444,10 +444,14 @@ export function getMaintenanceKpiDrilldown(
   companyId: string,
   periodStart: string,
   periodEnd: string,
-  unitId?: string
+  unitId?: string,
+  range: { limit?: number; offset?: number } = {}
 ) {
-  return apiRequest<{ kind: string; rows: Record<string, unknown>[]; report_cross_link?: string }>(
-    `/api/v1/maintenance/kpi/${kind}?${maintKpiQuery(companyId, periodStart, periodEnd, unitId)}`
+  const params = new URLSearchParams(maintKpiQuery(companyId, periodStart, periodEnd, unitId));
+  if (range.limit != null) params.set("limit", String(range.limit));
+  if (range.offset != null) params.set("offset", String(range.offset));
+  return apiRequest<{ kind: string; rows: Record<string, unknown>[]; total_count: number; report_cross_link?: string }>(
+    `/api/v1/maintenance/kpi/${kind}?${params.toString()}`
   );
 }
 
