@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../../banking/bank-account-visibility.js";
+import { sumAuthoritativeDepositoryCashCents } from "../../banking/internal-wallet-balance.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 const querySchema = companyQuerySchema.extend({
@@ -53,16 +54,21 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
       // with zero indication anything was wrong — exactly the deep-dive hunt's named class. A broken
       // balance query must fail loud, same standard already applied to the /425c court exhibits in
       // this same reports tree (exhibit-a/b/c/d: "NO .catch(): fail loud, never a blank/zero exhibit").
-      const bankRes = await client.query(
-        `
-          SELECT COALESCE(SUM(current_balance_cents), 0)::text AS total_cents
-          FROM banking.bank_accounts
-          WHERE operating_company_id = $1::uuid
-            AND is_active = true
-          ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
-        `,
-        [companyId]
-      );
+      //
+      // GAP45-OPERATING-BALANCE-READS-STALE-RAW-COLUMN-FOR-NON-PLAID-WALLET: this used to sum the raw
+      // banking.bank_accounts.current_balance_cents column directly. Per internal-wallet-balance.ts,
+      // that column is ONLY ever written by the Plaid webhook path -- any non-Plaid internal wallet
+      // (Relay Fuel Wallet, plaid_item_id IS NULL) is never kept in sync there, so the column holds a
+      // stale value with no relation to the wallet's real transaction history (verified prod
+      // br-fancy-credit-akjnd07a: raw column read -$543.45 for a wallet whose actual ledger-derived
+      // balance is +$1,200.00 -- a $1,743.45 swing on the entity's reported liquidity). Every other
+      // authoritative cash total in this codebase (cash-flow opening balance, KPI aggregate, account
+      // tiles) already reuses sumAuthoritativeDepositoryCashCents for exactly this reason -- switching
+      // this route to the same helper instead of re-deriving its own raw SUM.
+      const operatingBalanceCents = await sumAuthoritativeDepositoryCashCents(client, companyId, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+      });
 
       const loadRes = await client.query(
         `
@@ -79,7 +85,7 @@ export async function registerCashFlowReportRouteFix(app: FastifyInstance) {
         kind: "ok" as const,
         operating_company_id: companyId,
         as_of_date: asOf,
-        operating_balance_cents: Number(bankRes.rows[0]?.total_cents ?? 0),
+        operating_balance_cents: operatingBalanceCents,
         scoped_load_count: Number(loadRes.rows[0]?.cnt ?? 0),
         source: "gap-45-cash-flow-route-fix",
       };
