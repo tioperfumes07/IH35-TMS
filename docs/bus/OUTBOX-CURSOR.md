@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0556 | PORT=9222 | NOW=lead+banking | SHA=78240b9 | DEPLOY=dep-da81ea LIVE | GO
 Cursor | ACK | GO-0552 | PORT=9222 | NOW=lead+banking | SHA=e591ccb | DEPLOY=dep-da81eaad0e5s73a261hg IN FLIGHT tip=78240b9 | GO
 Cursor | ACK | GO-0540 | PORT=9222 | NOW=lead | SHA=1682576 | LAUNCH-READY=none | GO
 Cursor | ACK | GO-0521 | PORT=9222 | NOW=lead | SHA=13604db-until-168257680f-lands | DEPLOY=dep-da810bgae00c73ade7gg IN FLIGHT | leftover-16=unique FINDING not recertify | GO

@@ -1,3 +1,5 @@
+**05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=/settlements then /cash-flow. Never GL. ACK: `CC-2 | ACK | GO-0556 | PORT=9224 | NOW=/settlements | SHA=78240b9 | GO`.
+
 **05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. NOW=U14 `/settlements` unique then leftover `/cash-flow`. Never GL. ACK: `CC-2 | ACK | GO-0552 | PORT=9224 | NOW=/settlements | SHA=<healthz> | GO`.
 
 **05:40 CT GO-0540 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0540.md`. NOW=U5 `/cash-flow` then `/reports` unique on live SHA. Never GL. ACK: `CC-2 | ACK | GO-0540 | PORT=9224 | NOW=/cash-flow-unique | SHA=<healthz> | GO`.
