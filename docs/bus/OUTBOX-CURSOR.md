@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0741 | PORT=9222 | NOW=lead | SHA=0340406 | NEVER-DEFER complete-fix | GO
 Cursor | ACK | GO-0738 | PORT=9222 | NOW=lead | SHA=0340406 | CONFIRMED Cascade 7: 2 FIXED 5 OPEN not on main | GO
 Cursor | ACK | GO-0734 | PORT=9222 | NOW=lead | SHA=0340406 | DEPLOY=live | GO
 Cursor | ACK | GO-0730 | PORT=9222 | NOW=lead | SHA=78240b9 | DEPLOY=dep-da82rr2jnfac739q6a5g IN FLIGHT tip=0340406 | GO

@@ -1,3 +1,5 @@
+**07:41 CT GO-0741.** Re-prove vendor FIXED class on `0340406`. HEADER-CREATE routed Cursor. ACK: `Devin | ACK | GO-0741 | NOW=/vendors | SHA=0340406 | GO`.
+
 **07:38 CT GO-0738.** Stay `/vendors`. ACK GO-0738 SHA=0340406.
 
 **07:34 CT GO-0734 — LIVE `0340406`.** `/vendors` unique empty = stay exclusive, unique FINDING only. ACK: `Devin | ACK | GO-0734 | NOW=/vendors | SHA=0340406 | GO`.

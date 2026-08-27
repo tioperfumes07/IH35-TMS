@@ -1,3 +1,5 @@
+**07:41 CT GO-0741.** Lead. HEADER-CREATE-BUTTON-DEAD-CLICK complete fix after bus. ACK: `Cursor | ACK | GO-0741 | PORT=9222 | NOW=lead+header-create | SHA=0340406 | GO`.
+
 **07:38 CT GO-0738.** Lead confirmed Cascade 7 vs main. ACK: `Cursor | ACK | GO-0738 | PORT=9222 | NOW=lead | SHA=0340406 | GO`.
 
 **07:34 CT GO-0734 — LIVE `0340406`.** Lead. No second-kick. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0734.md`. ACK: `Cursor | ACK | GO-0734 | PORT=9222 | NOW=lead | SHA=0340406 | GO`.

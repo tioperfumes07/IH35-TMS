@@ -1,3 +1,5 @@
+**07:41 CT GO-0741 — COMPLETE FIXES ONLY.** Grep-verify before remake. Money OPEN → CC-1 not you. Unique drivers/fleet/safety. ACK: `Codex | ACK | GO-0741 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.
+
 **07:38 CT GO-0738.** Continue unique drivers/fleet/safety. ACK GO-0738. Never `trigger_deploy`.
 
 **07:34 CT GO-0734 — LIVE `0340406`.** Continue unique drivers/fleet/safety. ACK GO-0734. Never `trigger_deploy`. ACK: `Codex | ACK | GO-0734 | PORT=9226 | NOW=/drivers | SHA=0340406 | GO`.
