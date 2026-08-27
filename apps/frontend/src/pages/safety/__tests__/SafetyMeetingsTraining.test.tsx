@@ -165,6 +165,7 @@ describe("TrainingRecordsPage", () => {
           expiry_date: "2027-05-01",
         },
       ],
+      total_count: 1,
     });
     vi.spyOn(safetyApi, "createSafetyTrainingRecord").mockResolvedValue({ id: "rec-2" });
     vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({

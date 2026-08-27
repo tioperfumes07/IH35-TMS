@@ -37,7 +37,7 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
     ...actual,
     getDispatchDashboard: vi.fn(async () => ({ active_loads: 0, in_transit: 0, delivered: 0 })),
     listUnitsWithoutLoad: vi.fn(async () => ({ units: [] })),
-    listDispatchAssignmentHistory: vi.fn(async () => ({ rows: [] })),
+    listDispatchAssignmentHistory: vi.fn(async () => ({ rows: [], total_count: 0 })),
   };
 });
 

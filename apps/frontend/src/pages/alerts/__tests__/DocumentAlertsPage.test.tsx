@@ -42,6 +42,8 @@ describe("DocumentAlertsPage (A24-9)", () => {
         },
       ],
       pending_count: 1,
+      limit: 50,
+      offset: 0,
     });
     vi.spyOn(documentAlertsApi, "getDocumentAlertRules").mockResolvedValue({
       document_alert_rules: [

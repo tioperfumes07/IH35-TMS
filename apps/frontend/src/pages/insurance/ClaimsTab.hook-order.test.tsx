@@ -56,7 +56,7 @@ vi.mock("../../api/loads", () => ({
 
 vi.mock("../../api/safety", () => ({
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
-  getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [] }),
+  getSafetyAccidents: vi.fn().mockResolvedValue({ accidents: [], total_count: 0 }),
 }));
 
 function wrap(ui: ReactElement) {

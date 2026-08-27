@@ -24,7 +24,7 @@ function wrap(ui: ReactNode) {
 
 describe("DispatchAlertsPage (B21-D6)", () => {
   beforeEach(() => {
-    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [] });
+    vi.spyOn(safetyApi, "getSafetyAccidents").mockResolvedValue({ accidents: [], total_count: 0 });
     vi.spyOn(cashApi.cashAdvanceRequestsOfficeApi, "list").mockResolvedValue({ requests: [] });
     vi.spyOn(maintenanceApi, "getIntransitTriageQueue").mockResolvedValue({ issues: [] });
     vi.spyOn(dispatchApi, "listLateArrivalDispatchLoads").mockResolvedValue({
