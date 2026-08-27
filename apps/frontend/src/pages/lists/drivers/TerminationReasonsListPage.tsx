@@ -249,11 +249,22 @@ export function TerminationReasonsListPage() {
   );
 }
 
-function parseConflict(error: unknown): string | null {
+// Exported for the LISTS-TERMINATION-REASONS-PARSE-CONFLICT-NARROW-FIELD regression test.
+export function parseConflict(error: unknown): string | null {
   if (!(error instanceof ApiError)) return null;
   if (error.status === 409) return "A termination reason with this code already exists.";
   const data = error.data as { details?: { fieldErrors?: Record<string, string[]> } } | undefined;
-  return data?.details?.fieldErrors?.code?.[0] ?? null;
+  const fieldErrors = data?.details?.fieldErrors;
+  if (!fieldErrors) return null;
+  // LISTS-TERMINATION-REASONS-PARSE-CONFLICT-NARROW-FIELD: this used to read ONLY fieldErrors.code — a
+  // validation error on any OTHER field (label, description, severity) was silently swallowed, exactly
+  // the class of bug LISTS-LOAD-CANCELLATION-REASONS-CREATE-DESCRIPTION-NULL-400 (#16702) fixed for the
+  // sibling catalog. Surface the first field error from ANY field so a real validation failure is never
+  // silent.
+  for (const messages of Object.values(fieldErrors)) {
+    if (messages?.[0]) return messages[0];
+  }
+  return null;
 }
 
 type ModalProps = {
