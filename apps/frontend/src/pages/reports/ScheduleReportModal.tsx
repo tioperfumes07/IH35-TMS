@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReportLibrary } from "../../api/reports";
 import type { ScheduledReportCreatePayload } from "../../api/scheduled-reports";
-import { createScheduledReport, testSendScheduledReport } from "../../api/scheduled-reports";
+import { createScheduledReport, getScheduledReport, testSendScheduledReport, updateScheduledReport } from "../../api/scheduled-reports";
 import { Button } from "../../components/Button";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
@@ -14,15 +14,24 @@ type Props = {
   onClose: () => void;
   operatingCompanyId: string;
   defaultEmail: string;
+  /** SCHEDULED-REPORTS-EDIT-BUTTON-OPENS-BLANK-CREATE-FORM-NOT-EDIT: when set, the modal fetches the
+   * existing row, pre-fills every field from it, and Save calls PATCH instead of POST. */
+  editId?: string | null;
   onCreated: () => void;
 };
 
-export function ScheduleReportModal({ open, onClose, operatingCompanyId, defaultEmail, onCreated }: Props) {
+export function ScheduleReportModal({ open, onClose, operatingCompanyId, defaultEmail, editId, onCreated }: Props) {
   const { pushToast } = useToast();
+  const isEdit = Boolean(editId);
   const libQuery = useQuery({
     queryKey: ["reports", "library", operatingCompanyId],
     queryFn: () => getReportLibrary(operatingCompanyId),
     enabled: Boolean(operatingCompanyId) && open,
+  });
+  const detailQuery = useQuery({
+    queryKey: ["scheduled-report-detail", editId, operatingCompanyId],
+    queryFn: () => getScheduledReport(editId as string, operatingCompanyId),
+    enabled: Boolean(editId) && Boolean(operatingCompanyId) && open,
   });
   const [reportId, setReportId] = useState("ar-aging");
   const [rangeType, setRangeType] = useState<"rolling" | "calendar">("rolling");
@@ -40,6 +49,61 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
   const [subjectTpl, setSubjectTpl] = useState("{report_name} · {period} · {company}");
   const [showCron, setShowCron] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // SCHEDULED-REPORTS-EDIT-BUTTON-OPENS-BLANK-CREATE-FORM-NOT-EDIT: when opened in edit mode, seed every
+  // field from the fetched raw row instead of leaving the hardcoded create-mode defaults in place.
+  useEffect(() => {
+    if (!open || !editId || !detailQuery.data) return;
+    const row = detailQuery.data.record;
+    const params = (row.report_params ?? {}) as Record<string, unknown>;
+    const range = (params.range ?? {}) as Record<string, unknown>;
+    setReportId(row.report_id);
+    setRangeType(range.type === "calendar" ? "calendar" : "rolling");
+    setRollingDays(typeof range.rolling_days === "number" ? range.rolling_days : 30);
+    setCalendarPreset(
+      range.calendar_preset === "prev_month" || range.calendar_preset === "quarter" ? range.calendar_preset : "current_month",
+    );
+    setMinRevenueDollars(typeof params.min_revenue_cents === "number" ? String(params.min_revenue_cents / 100) : "");
+    if (row.frequency === "daily" || row.frequency === "weekly" || row.frequency === "monthly") {
+      setShowCron(false);
+      setFreqKind(row.frequency);
+    } else {
+      // "quarterly" (and any other non-editable-as-preset kind) has no dedicated UI here — surface it via
+      // the cron field so the real cron_expression is visible and preserved rather than silently discarded.
+      setShowCron(true);
+    }
+    setTimeLocal(row.run_time ? String(row.run_time).slice(0, 5) : "07:00");
+    setDayOfWeek(row.run_day_of_week ?? 1);
+    setDayOfMonth(row.run_day_of_month ?? 1);
+    setCronExpr(row.cron_expression ?? "");
+    setRecipients((row.recipients_to ?? []).join(", "));
+    setCc((row.recipients_cc ?? []).join(", "));
+    setFormat(row.format ?? "pdf");
+    setSubjectTpl(row.subject_template ?? "{report_name} · {period} · {company}");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editId, detailQuery.data]);
+
+  // Reset to create-mode defaults each time the modal opens fresh for "+ Schedule a new report" — otherwise
+  // a prior edit session's values would leak into the next create.
+  useEffect(() => {
+    if (!open || editId) return;
+    setReportId("ar-aging");
+    setRangeType("rolling");
+    setRollingDays(30);
+    setCalendarPreset("current_month");
+    setMinRevenueDollars("");
+    setFreqKind("weekly");
+    setTimeLocal("07:00");
+    setDayOfWeek(1);
+    setDayOfMonth(1);
+    setCronExpr("0 7 * * 1");
+    setRecipients(defaultEmail);
+    setCc("");
+    setFormat("pdf");
+    setSubjectTpl("{report_name} · {period} · {company}");
+    setShowCron(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editId]);
 
   const extraReports = useMemo(
     () => [
@@ -101,7 +165,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Schedule a report">
+    <Modal open={open} onClose={onClose} title={isEdit ? "Edit scheduled report" : "Schedule a report"}>
       <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-sm">
         <label className="block text-xs text-gray-600">
           Report
@@ -238,21 +302,27 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
         </Button>
         <Button
           loading={busy}
+          disabled={isEdit && detailQuery.isLoading}
           onClick={async () => {
             setBusy(true);
             try {
-              await createScheduledReport(buildPayload());
-              pushToast("Schedule created", "success");
+              if (isEdit && editId) {
+                await updateScheduledReport(editId, buildPayload());
+                pushToast("Schedule updated", "success");
+              } else {
+                await createScheduledReport(buildPayload());
+                pushToast("Schedule created", "success");
+              }
               onCreated();
               onClose();
             } catch {
-              pushToast("Create failed — see P6-T11201", "error");
+              pushToast(isEdit ? "Update failed — see P6-T11201" : "Create failed — see P6-T11201", "error");
             } finally {
               setBusy(false);
             }
           }}
         >
-          Save schedule
+          {isEdit ? "Save changes" : "Save schedule"}
         </Button>
       </div>
     </Modal>
