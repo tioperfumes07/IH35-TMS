@@ -40,6 +40,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedFine, setSelectedFine] = useState<Record<string, unknown> | null>(null);
   const [convertError, setConvertError] = useState<unknown>(null);
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
   const relatedLoadFromUrl = searchParams.get("related_load_id")?.trim() ?? "";
   const relatedUnitFromUrl = searchParams.get("related_unit_id")?.trim() ?? "";
   const subjectDriverFromUrl = searchParams.get("subject_driver_id")?.trim() ?? "";
@@ -95,6 +97,7 @@ export function FinesPage({ operatingCompanyId }: Props) {
       applied.driverId,
       relatedUnitFromUrl,
       subjectDriverFromUrl,
+      page,
     ] as const;
   const finesQuery = useQuery({
     queryKey: finesQueryKey,
@@ -105,6 +108,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
         related_load_id: relatedLoadFromUrl || undefined,
         related_unit_id: applied.unitId.trim() || relatedUnitFromUrl || undefined,
         subject_driver_id: applied.driverId.trim() || subjectDriverFromUrl || undefined,
+        limit: pageSize,
+        offset: page * pageSize,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -142,6 +147,12 @@ export function FinesPage({ operatingCompanyId }: Props) {
   }, [operatingCompanyId]); // Mutation reset is stable; company transitions own a fresh fine action lifecycle.
 
   const rows = finesQuery.data?.fines ?? [];
+  const totalCount = finesQuery.isError ? 0 : finesQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+
+  useEffect(() => {
+    setPage(0);
+  }, [operatingCompanyId, applied, relatedLoadFromUrl, relatedUnitFromUrl, subjectDriverFromUrl]);
 
   // SAF-F33 reverse drill-through: /safety/external-fines?fine_id=<id> opens that fine's drawer.
   const fineIdParam = searchParams.get("fine_id");
@@ -270,6 +281,8 @@ export function FinesPage({ operatingCompanyId }: Props) {
         emptyText="No fines found."
         storageKey="safety-external-fines"
         exportFilename="external-fines"
+        pageSize={pageSize}
+        hidePager
         filterBar={
           <div className="relative flex flex-wrap items-end gap-2" data-testid="external-fines-filters">
             <div data-testid="fines-record-type-filter">
@@ -359,6 +372,13 @@ export function FinesPage({ operatingCompanyId }: Props) {
         }
       />
       )}
+      {!finesQuery.isError && totalCount > 0 ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="external-fines-server-pager">
+          <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount}</span>
+          <Button type="button" size="sm" variant="secondary" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
+          <Button type="button" size="sm" variant="secondary" disabled={page + 1 >= pageCount} onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}>Next</Button>
+        </div>
+      ) : null}
 
       <FineCreateModal
         open={createOpen}

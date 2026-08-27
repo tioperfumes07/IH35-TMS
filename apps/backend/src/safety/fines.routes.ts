@@ -23,6 +23,8 @@ const finesQuerySchema = companyQuerySchema.extend({
   related_unit_id: z.string().uuid().optional(),
   issued_date_from: z.string().optional(),
   issued_date_to: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const createFineBody = z.object({
@@ -128,7 +130,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
             LIMIT 1`,
           [q.subject_driver_id, q.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false, rows: [] };
+        if (!parent.rows[0]) return { found: false, rows: [], total_count: 0 };
       }
       // SAF-F18: qualify every filter with cf. — the driver-name LEFT JOIN below adds mdata.drivers,
       // which shares operating_company_id / deactivated_at, so unqualified columns would be ambiguous.
@@ -165,6 +167,13 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
       // SAF-F18: join the driver name server-side so the list + detail render a NAME, not a raw uuid.
       // mdata.drivers RLS is identity-based; withCompanyScope runs under the Lucia user, so the join
       // only sees drivers this user may access. The join is scoped by the fine's own entity too.
+      const count = await client.query<{ total_count: number }>(
+        `SELECT COUNT(*)::int AS total_count
+           FROM safety.civil_fines cf
+          WHERE ${filters.join(" AND ")}`,
+        values
+      );
+      const rowValues = [...values, q.limit, q.offset];
       const res = await client.query(
         `
           SELECT cf.*,
@@ -208,14 +217,14 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
            AND cfp.is_active
           WHERE ${filters.join(" AND ")}
           ORDER BY cf.issued_date DESC, cf.created_at DESC
-          LIMIT 500
+          LIMIT $${rowValues.length - 1} OFFSET $${rowValues.length}
         `,
-        values
+        rowValues
       );
-      return { found: true, rows: res.rows };
+      return { found: true, rows: res.rows, total_count: count.rows[0]?.total_count ?? 0 };
     });
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { fines: result.rows };
+    return { fines: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/fines/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
