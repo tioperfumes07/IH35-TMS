@@ -116,6 +116,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         parsed.data.enrolled_at
       );
       await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.enrolled", {
+        operating_company_id: parsed.data.operating_company_id,
         resource_type: "safety.da_program_enrollments",
         resource_id: row.uuid,
         driver_uuid: parsed.data.driver_uuid,
@@ -144,6 +145,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         parsed.data.consortium_name
       );
       await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.bulk_enrolled", {
+        operating_company_id: parsed.data.operating_company_id,
         resource_type: "safety.da_program_enrollments",
         resource_id: parsed.data.operating_company_id,
         enrolled_count: bulk.enrolledCount,
@@ -214,6 +216,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         parsed.data.scheduled_at
       );
       await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.test_scheduled", {
+        operating_company_id: parsed.data.operating_company_id,
         resource_type: "safety.da_test_records",
         resource_id: row.uuid,
         test_type: parsed.data.test_type,
@@ -249,6 +252,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         user.uuid,
         "safety.drug_alcohol.result_recorded",
         {
+          operating_company_id: parsed.data.operating_company_id,
           resource_type: "safety.da_test_records",
           resource_id: row.uuid,
           result: parsed.data.result,
@@ -277,6 +281,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         parsed.data.sap_referral_uuid
       );
       await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.positive_flagged", {
+        operating_company_id: parsed.data.operating_company_id,
         resource_type: "safety.da_test_records",
         resource_id: row.uuid,
         sap_referral_uuid: parsed.data.sap_referral_uuid ?? null,
@@ -315,6 +320,7 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
         targetAlcoholPct: parsed.data.target_alcohol_pct,
       });
       await appendCrudAudit(client, user.uuid, "safety.drug_alcohol.random_draw", {
+        operating_company_id: parsed.data.operating_company_id,
         resource_type: "safety.da_random_pool_draws",
         resource_id: draw.uuid,
         pool_size: draw.pool_size,
