@@ -1,5 +1,5 @@
 import { entityLabel } from "../../lib/entity-label";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -175,6 +175,16 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const [step3Errors, setStep3Errors] = useState<Partial<Record<keyof Step3, string>>>({});
   const [serverError, setServerError] = useState("");
 
+  // INS-MONEY-F6843A-POLICY-WITH-BILLS-CREATE-MUTABLE-SCOPE-PENDING-DISMISS: createMutation used to
+  // submit a zero-input mutate() whose mutationFn/onSuccess closed over the LIVE operatingCompanyId
+  // (and, transitively, vendor/unit selections made under a possibly-earlier company — this wizard
+  // only reset its form state on `open`, never on an operatingCompanyId change while already open).
+  // Same scope-generation-snapshot idiom already used by PaymentScheduleTab.tsx's markPaidMutation /
+  // units/UnitPermitsTab.tsx's deleteMutation: a ref bumped on scope-key change, the mutation's
+  // variables carry an immutable snapshot (including the generation), and onSuccess/onError bail if
+  // the generation has since moved on.
+  const scopeGenerationRef = useRef(0);
+
   const typesQuery = useQuery({
     queryKey: ["insurance", "type-catalog", operatingCompanyId],
     enabled: open && Boolean(operatingCompanyId),
@@ -201,6 +211,10 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   }, [allUnits, activeChip]);
 
   useEffect(() => {
+    // Bump the generation on EVERY mount of this effect (open transition OR a company switch while
+    // already open) — a mutation snapshot taken before this point is now stale and its
+    // onSuccess/onError must not touch the toast/onCreated callback for whatever is now visible.
+    scopeGenerationRef.current += 1;
     if (!open) return;
     setStep(1);
     setStep1(INITIAL_STEP1);
@@ -211,7 +225,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     setStep3(INITIAL_STEP3);
     setStep3Errors({});
     setServerError("");
-  }, [open]);
+  }, [open, operatingCompanyId]);
 
   const premiumCents = useMemo(() => parsePremiumCents(step3.total_premium) ?? 0, [step3.total_premium]);
   const downPaymentCents = useMemo(() => parsePremiumCents(step3.down_payment) ?? 0, [step3.down_payment]);
@@ -304,8 +318,30 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   };
 
   const createMutation = useMutation({
-    mutationFn: () =>
-      createPolicyWithBills({
+    mutationFn: (input: { payload: Parameters<typeof createPolicyWithBills>[0]; generation: number }) =>
+      createPolicyWithBills(input.payload),
+    onSuccess: (result, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      pushToast(
+        `Policy created + ${result.billCount} bills scheduled (${formatMoney(result.totalAmountCents)} total).`,
+        "success"
+      );
+      onCreated(result.policyId);
+    },
+    onError: (err, input) => {
+      if (input.generation !== scopeGenerationRef.current) return;
+      setServerError(mapPolicyWithBillsError(err));
+    },
+  });
+  const resetCreateMutation = createMutation.reset;
+
+  useEffect(() => {
+    resetCreateMutation();
+  }, [operatingCompanyId, resetCreateMutation]);
+
+  const submitCreatePolicy = () => {
+    createMutation.mutate({
+      payload: {
         operating_company_id: operatingCompanyId,
         vendor_id: step1.insurer_vendor_id,
         insurer_name: step1.insurer_name.trim(),
@@ -321,18 +357,19 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         status: step1.status as "active" | "pending",
         insurer_email: step1.insurer_email.trim() || null,
         agent_contact: step1.agent_contact.trim() || null,
-      }),
-    onSuccess: (result) => {
-      pushToast(
-        `Policy created + ${result.billCount} bills scheduled (${formatMoney(result.totalAmountCents)} total).`,
-        "success"
-      );
-      onCreated(result.policyId);
-    },
-    onError: (err) => {
-      setServerError(mapPolicyWithBillsError(err));
-    },
-  });
+      },
+      generation: scopeGenerationRef.current,
+    });
+  };
+
+  // Refuse drawer dismissal (X / backdrop / Escape, all routed through ParityDrawer's onClose) and
+  // the step-1 Cancel button while the create-with-bills write is actually in flight — a raw
+  // onClose during persistence let the wizard close as if nothing were happening while a policy +
+  // bill set could still land moments later, inviting a confused duplicate re-submit.
+  const guardedOnClose = () => {
+    if (createMutation.isPending) return;
+    onClose();
+  };
 
   const title = [
     "Step 1 — Carrier & Type",
@@ -342,7 +379,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   ][step - 1]!;
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title={title} size="wide">
+    <ParityDrawer open={open} onClose={guardedOnClose} title={title} size="wide">
       <div className="space-y-4 text-sm">
         <StepIndicator current={step} total={4} />
 
@@ -632,7 +669,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
           <button
             type="button"
             className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
-            onClick={step === 1 ? onClose : () => setStep((s) => s - 1)}
+            onClick={step === 1 ? guardedOnClose : () => setStep((s) => s - 1)}
           >
             {step === 1 ? "Cancel" : "Back"}
           </button>
@@ -656,7 +693,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                 type="button"
                 disabled={createMutation.isPending}
                 className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
-                onClick={() => createMutation.mutate()}
+                onClick={submitCreatePolicy}
               >
                 {createMutation.isPending
                   ? "Creating..."
