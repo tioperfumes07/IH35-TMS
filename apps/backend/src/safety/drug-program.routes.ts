@@ -111,6 +111,29 @@ async function withCompanyScope<T>(
   });
 }
 
+async function hasActiveDriverInCompany(client: Queryable, operatingCompanyId: string, driverId: string) {
+  const result = await client.query<{ id: string }>(
+    `SELECT d.id::text
+       FROM mdata.drivers d
+      WHERE d.id = $2::uuid
+        AND d.deactivated_at IS NULL
+        AND (
+          d.operating_company_id = $1::uuid
+          OR EXISTS (
+            SELECT 1
+              FROM mdata.driver_company_authorizations drug_program_write_dca
+             WHERE drug_program_write_dca.driver_id = d.id
+               AND drug_program_write_dca.company_id = $1::uuid
+               AND drug_program_write_dca.is_authorized = true
+               AND drug_program_write_dca.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1`,
+    [operatingCompanyId, driverId]
+  );
+  return Boolean(result.rows[0]?.id);
+}
+
 export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/drug-program/tests", async (req, reply) => {
     const user = authUser(req, reply);
@@ -147,7 +170,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return { tests };
   });
 
-  app.post("/api/v1/safety/drug-program/tests", async (req, reply) => {
+  app.post("/api/v1/safety/drug-program/tests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -157,6 +180,9 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      if (!(await hasActiveDriverInCompany(client, company.data.operating_company_id, body.data.driver_id))) {
+        return { kind: "driver_not_found" as const };
+      }
       const res = await client.query(
         `
           INSERT INTO safety.drug_test (
@@ -183,13 +209,15 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const test = res.rows[0] as { id?: string } | undefined;
+      if (!test?.id) throw new Error("safety_drug_test_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.drug_test.created",
         {
           resource_type: "safety.drug_test",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: test.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
           result: body.data.result,
@@ -197,10 +225,11 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
         isBlockingDrugTestResult(body.data.result) ? "warning" : "info",
         "P7-SAF-DRUG-PROGRAM"
       );
-      return res.rows[0];
+      return { kind: "ok" as const, row: test };
     });
 
-    return reply.code(201).send(created);
+    if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    return reply.code(201).send(created.row);
   });
 
   app.patch("/api/v1/safety/drug-program/tests/:id", async (req, reply) => {
@@ -346,7 +375,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return { random_pools: rows };
   });
 
-  app.post("/api/v1/safety/drug-program/random-pools", async (req, reply) => {
+  app.post("/api/v1/safety/drug-program/random-pools", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -356,6 +385,9 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      if (!(await hasActiveDriverInCompany(client, company.data.operating_company_id, body.data.driver_id))) {
+        return { kind: "driver_not_found" as const };
+      }
       const res = await client.query(
         `
           INSERT INTO safety.random_pool (
@@ -378,23 +410,26 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const selection = res.rows[0] as { id?: string } | undefined;
+      if (!selection?.id) throw new Error("safety_random_pool_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.random_pool.created",
         {
           resource_type: "safety.random_pool",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: selection.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAF-DRUG-PROGRAM"
       );
-      return res.rows[0];
+      return { kind: "ok" as const, row: selection };
     });
 
-    return reply.code(201).send(created);
+    if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    return reply.code(201).send(created.row);
   });
 
   app.get("/api/v1/safety/drug-program/clearinghouse-queries", async (req, reply) => {
@@ -432,7 +467,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return { clearinghouse_queries: rows };
   });
 
-  app.post("/api/v1/safety/drug-program/clearinghouse-queries", async (req, reply) => {
+  app.post("/api/v1/safety/drug-program/clearinghouse-queries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -442,6 +477,21 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
 
     const created = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      if (!(await hasActiveDriverInCompany(client, company.data.operating_company_id, body.data.driver_id))) {
+        return { kind: "driver_not_found" as const };
+      }
+      if (body.data.document_id) {
+        const document = await client.query<{ id: string }>(
+          `SELECT id::text
+             FROM docs.files
+            WHERE id = $2::uuid
+              AND operating_company_id = $1::uuid
+              AND deleted_at IS NULL
+            LIMIT 1`,
+          [company.data.operating_company_id, body.data.document_id]
+        );
+        if (!document.rows[0]?.id) return { kind: "document_not_found" as const };
+      }
       const res = await client.query(
         `
           INSERT INTO safety.clearinghouse_query (
@@ -483,23 +533,27 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           body.data.document_id ?? null,
         ]
       );
+      const clearinghouseQuery = res.rows[0] as { id?: string } | undefined;
+      if (!clearinghouseQuery?.id) throw new Error("safety_clearinghouse_query_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.clearinghouse_query.created",
         {
           resource_type: "safety.clearinghouse_query",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: clearinghouseQuery.id,
           operating_company_id: company.data.operating_company_id,
           driver_id: body.data.driver_id,
         },
         "info",
         "P7-SAF-DRUG-PROGRAM"
       );
-      return res.rows[0];
+      return { kind: "ok" as const, row: clearinghouseQuery };
     });
 
-    return reply.code(201).send(created);
+    if (created.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
+    if (created.kind === "document_not_found") return reply.code(404).send({ error: "document_not_found" });
+    return reply.code(201).send(created.row);
   });
 
   app.get("/api/v1/safety/drug-program/drivers/:driver_id/drug-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
