@@ -34,7 +34,12 @@ export function DriverFinesReverseSection({
   const enabled = Boolean(operatingCompanyId) && Boolean(driverId);
   const civilPageSize = 25;
   const [civilPage, setCivilPage] = useState(1);
-  useEffect(() => setCivilPage(1), [operatingCompanyId, driverId]);
+  const internalPageSize = 25;
+  const [internalPage, setInternalPage] = useState(1);
+  useEffect(() => {
+    setCivilPage(1);
+    setInternalPage(1);
+  }, [operatingCompanyId, driverId]);
 
   const civilQuery = useQuery({
     queryKey: ["safety-fines", "reverse-driver", operatingCompanyId, driverId, civilPage],
@@ -47,8 +52,12 @@ export function DriverFinesReverseSection({
   });
 
   const internalQuery = useQuery({
-    queryKey: ["internal-fines", "reverse-driver", operatingCompanyId, driverId],
-    queryFn: () => getInternalFines(operatingCompanyId, { driver_id: driverId }),
+    queryKey: ["internal-fines", "reverse-driver", operatingCompanyId, driverId, internalPage],
+    queryFn: () => getInternalFines(operatingCompanyId, {
+      driver_id: driverId,
+      limit: internalPageSize,
+      offset: (internalPage - 1) * internalPageSize,
+    }),
     enabled,
   });
 
@@ -56,6 +65,8 @@ export function DriverFinesReverseSection({
   const civilTotal = civilQuery.isError ? 0 : civilQuery.data?.total_count ?? 0;
   const civilPageCount = Math.max(1, Math.ceil(civilTotal / civilPageSize));
   const internal = internalQuery.data?.fines ?? [];
+  const internalTotal = internalQuery.isError ? 0 : internalQuery.data?.total_count ?? 0;
+  const internalPageCount = Math.max(1, Math.ceil(internalTotal / internalPageSize));
   const isLoading = civilQuery.isLoading || internalQuery.isLoading;
   // Reported per-source: if only one call fails, saying "no fines" would be a lie about the other.
   const civilFailed = civilQuery.isError;
@@ -119,6 +130,13 @@ export function DriverFinesReverseSection({
               );
             })}
           </ul>
+        </div>
+      ) : null}
+      {!internalQuery.isError && internalTotal > internalPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="driver-fines-internal-server-pager">
+          <Button size="sm" variant="secondary" disabled={internalPage <= 1 || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.max(1, current - 1))}>Previous internal fines</Button>
+          <span className="text-slate-600">Page {internalPage} of {internalPageCount} · {internalTotal} internal fines</span>
+          <Button size="sm" variant="secondary" disabled={internalPage >= internalPageCount || internalQuery.isFetching} onClick={() => setInternalPage((current) => Math.min(internalPageCount, current + 1))}>Next internal fines</Button>
         </div>
       ) : null}
     </div>
