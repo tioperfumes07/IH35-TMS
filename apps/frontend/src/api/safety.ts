@@ -212,7 +212,7 @@ export function getSafetyDvirSubmissions(
   if (filters.to) qs.set("to", filters.to);
   if (filters.limit != null) qs.set("limit", String(filters.limit));
   if (filters.offset != null) qs.set("offset", String(filters.offset));
-  return apiRequest<{ submissions: Array<Record<string, unknown>> }>(`/api/v1/safety/dvir?${qs.toString()}`);
+  return apiRequest<{ submissions: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/dvir?${qs.toString()}`);
 }
 
 export function getSafetyDvirDetail(id: string, companyId: string) {

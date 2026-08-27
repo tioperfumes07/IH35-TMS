@@ -75,7 +75,7 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
            LIMIT 1`,
           [query.data.driver_id, query.data.operating_company_id]
         );
-        if (!parent.rows[0]) return { found: false as const, rows: [] };
+        if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
       }
       const filters: string[] = ["ds.operating_company_id = $1::uuid"];
       const values: unknown[] = [query.data.operating_company_id];
@@ -100,6 +100,10 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         filters.push(`ds.submitted_at <= $${idx++}`);
         values.push(query.data.to);
       }
+      const countRes = await client.query<{ total_count: number }>(
+        `SELECT COUNT(*)::int AS total_count FROM safety.dvir_submissions ds WHERE ${filters.join(" AND ")}`,
+        values
+      );
       values.push(query.data.limit, query.data.offset);
 
       const res = await client.query(
@@ -153,11 +157,11 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return { found: true as const, rows: res.rows };
+      return { found: true as const, rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
     if (!result.found) return reply.code(404).send({ error: "mdata_driver_not_found" });
-    return { submissions: result.rows };
+    return { submissions: result.rows, total_count: result.total_count };
   });
 
   app.get("/api/v1/safety/dvir/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
