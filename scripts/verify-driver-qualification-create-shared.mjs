@@ -19,6 +19,8 @@ const checks = [
   ["backend", handler, "qualification_create_dca.is_authorized = true"],
   ["backend", handler, "qualification_create_dca.deactivated_at IS NULL"],
   ["backend", handler, 'return reply.code(404).send({ error: "mdata_driver_not_found" })'],
+  ["backend", handler, "AND operating_company_id = $2::uuid"],
+  ["backend", handler, "AND operating_company_id = $3::uuid"],
   ["backend", handler, "INSERT INTO mdata.driver_equipment_qualifications"],
   ["api", apiHandler, "operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
   ["page", page, "createDriverQualification(driverId, body, companyId)"],

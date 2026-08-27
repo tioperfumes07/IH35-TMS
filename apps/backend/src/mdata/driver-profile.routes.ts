@@ -147,12 +147,14 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             et.code AS equipment_type_code,
             et.name AS equipment_type_name
           FROM mdata.driver_equipment_qualifications dq
-          JOIN catalogs.equipment_types et ON et.id = dq.equipment_type_id
+          JOIN catalogs.equipment_types et
+            ON et.id = dq.equipment_type_id
+           AND et.operating_company_id = $2::uuid
           WHERE dq.driver_id = $1
             ${includeInactive ? "" : "AND dq.deactivated_at IS NULL"}
           ORDER BY dq.qualified_at DESC, et.sort_order, et.name
         `,
-        [parsed.data.id]
+        [parsed.data.id, companyId]
       );
 
       const qualificationIds = qualificationsRes.rows.map((row) => String(row.id));
@@ -173,6 +175,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 FROM mdata.driver_equipment_qualifications dq
                 JOIN catalogs.equipment_line_item_templates lit
                   ON lit.equipment_type_id = dq.equipment_type_id
+                 AND lit.operating_company_id = $2::uuid
                  AND lit.deactivated_at IS NULL
                  AND lit.is_active = true
                 LEFT JOIN mdata.driver_pay_rates r
@@ -183,7 +186,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 WHERE dq.id = ANY($1::uuid[])
                 ORDER BY dq.id, lit.sort_order, lit.name
               `,
-              [qualificationIds]
+              [qualificationIds, companyId]
             );
 
       const byQualification = new Map<string, Array<Record<string, unknown>>>();
@@ -256,9 +259,14 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         );
         if (driverRes.rows.length === 0) return reply.code(404).send({ error: "mdata_driver_not_found" });
 
-        const equipmentTypeRes = await client.query(`SELECT id, code, name FROM catalogs.equipment_types WHERE id = $1 LIMIT 1`, [
-          parsedBody.data.equipment_type_id,
-        ]);
+        const equipmentTypeRes = await client.query(
+          `SELECT id, code, name
+             FROM catalogs.equipment_types
+            WHERE id = $1
+              AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [parsedBody.data.equipment_type_id, companyId]
+        );
         if (equipmentTypeRes.rows.length === 0) return reply.code(400).send({ error: "equipment_type_not_found" });
 
         const qualRes = await client.query(
@@ -287,11 +295,13 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
               FROM catalogs.equipment_line_item_templates
               WHERE equipment_type_id = $1
                 AND id = ANY($2::uuid[])
+                AND operating_company_id = $3::uuid
                 AND deactivated_at IS NULL
             `,
             [
               parsedBody.data.equipment_type_id,
               initialRates.map((rate) => rate.line_item_template_id),
+              companyId,
             ]
           );
           const validTemplateIds = new Set(validTemplateRes.rows.map((row) => String(row.id)));
@@ -366,11 +376,12 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
              AND r.effective_to IS NULL
              AND r.deactivated_at IS NULL
             WHERE lit.equipment_type_id = $2
+              AND lit.operating_company_id = $3::uuid
               AND lit.deactivated_at IS NULL
               AND lit.is_active = true
             ORDER BY lit.sort_order, lit.name
           `,
-          [qualification.id, qualification.equipment_type_id]
+          [qualification.id, qualification.equipment_type_id, companyId]
         );
 
         return reply.code(201).send({
@@ -514,10 +525,11 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
               lit.name AS line_item_name
             FROM catalogs.equipment_line_item_templates lit
             WHERE lit.equipment_type_id = $1
+              AND lit.operating_company_id = $2::uuid
               AND lit.deactivated_at IS NULL
             ORDER BY lit.sort_order, lit.name
           `,
-          [qualificationRes.rows[0].equipment_type_id]
+          [qualificationRes.rows[0].equipment_type_id, companyId]
         );
 
         const historyRes = await client.query(
@@ -616,10 +628,11 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             FROM catalogs.equipment_line_item_templates
             WHERE id = $1
               AND equipment_type_id = $2
+              AND operating_company_id = $3::uuid
               AND deactivated_at IS NULL
             LIMIT 1
           `,
-          [parsedBody.data.line_item_template_id, qualificationRes.rows[0].equipment_type_id]
+          [parsedBody.data.line_item_template_id, qualificationRes.rows[0].equipment_type_id, companyId]
         );
         if (templateRes.rows.length === 0) {
           return reply.code(400).send({ error: "line_item_template_not_in_equipment_type" });
@@ -903,9 +916,10 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             SELECT code, name
             FROM catalogs.equipment_types
             WHERE id = $1
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
-          [qualification.equipment_type_id]
+          [qualification.equipment_type_id, companyId]
         );
 
         const currentRatesRes = await client.query(
@@ -925,11 +939,12 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
              AND r.effective_to IS NULL
              AND r.deactivated_at IS NULL
             WHERE lit.equipment_type_id = $2
+              AND lit.operating_company_id = $3::uuid
               AND lit.deactivated_at IS NULL
               AND lit.is_active = true
             ORDER BY lit.sort_order, lit.name
           `,
-          [parsedParams.data.qual_id, qualification.equipment_type_id]
+          [parsedParams.data.qual_id, qualification.equipment_type_id, companyId]
         );
 
         return {
