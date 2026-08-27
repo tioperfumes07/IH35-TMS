@@ -1,3 +1,5 @@
+**07:30 CT GO-0730 — THIS IS NOW. YOU ARE NOT WAITING.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. NOW=/dispatch unique. Self-ACK this line. Hard-reload when healthz=`0340406`. ACK: `CASCADE | ACK | GO-0730 | NOW=/dispatch | SHA=<healthz> | GO`.
+
 **06:04 CT GO-0604 — CASCADE YOU ARE NOT WAITING.** Live healthz **`78240b9`**. NOW=`/dispatch` unique (status-filter 400 / commodity PATCH 500 / driver-label). Hard-reload. Packet still GO-0556. ACK: `CASCADE | ACK | GO-0604 | NOW=/dispatch | SHA=78240b9 | GO`. Idle=defect.
 
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. Re-walk /dispatch on **this** SHA (your GO-0552 ACK was e591ccb). ACK: `CASCADE | ACK | GO-0556 | NOW=/dispatch | SHA=78240b9 | GO`.

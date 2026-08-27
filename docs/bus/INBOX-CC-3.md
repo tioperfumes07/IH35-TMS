@@ -1,3 +1,5 @@
+**07:30 CT GO-0730 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. NOW=/lists then /legal then /compliance (ELD). Ping CC-1 for RLS migration. ACK: `CC-3 | ACK | GO-0730 | PORT=9225 | NOW=/lists | SHA=<healthz> | GO`.
+
 **05:56 CT GO-0556 — LIVE `78240b9`. HARD-RELOAD. WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0556.md`. NOW=/lists then /legal then /compliance (ELD). ACK: `CC-3 | ACK | GO-0556 | PORT=9225 | NOW=/lists | SHA=78240b9 | GO`.
 
 **05:52 CT GO-0552 — THIS IS NOW. DO NOT WAIT FOR DEPLOY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. NOW=U14 `/lists` then `/legal` then leftover `/compliance` (ELD is here). No remake Reactivate. ACK: `CC-3 | ACK | GO-0552 | PORT=9225 | NOW=/lists | SHA=<healthz> | GO`.

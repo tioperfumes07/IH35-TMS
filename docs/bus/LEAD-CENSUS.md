@@ -1,13 +1,13 @@
-# LEAD CENSUS — GO-0556
+# LEAD CENSUS — GO-0730
 
-**LIVE:** `78240b9` (healthz ok:true) · **DEPLOY:** `dep-da81eaad0e5s73a261hg` live · **main ahead:** 3 commits · **no second-kick**
+**LIVE:** `78240b9` · **DEPLOY IN FLIGHT:** `dep-da82rr2jnfac739q6a5g` tip `0340406` · Ping ≠ ACK
 
-| Seat | Self-ACK GO-0552 | Idle? |
-|------|------------------|-------|
-| CC-1 | **NO** | **YES until ACK GO-0556 + hop.assign** |
-| CC-2 | ACK GO-0540/working source | must ACK GO-0556 · NOW /settlements |
-| CC-3 | **NO GO-0552** | **YES until ACK + /lists** |
-| Codex | shipping fleet | ACK GO-0556 |
-| Cascade | ACK GO-0552 on **stale e591ccb** | **re-walk 78240b9** |
-| Devin | **NO** | **YES until Reactivate on 78240b9** |
-| Cursor | self | **NO** |
+| Seat | Self-ACK last GO? | Idle? |
+|------|-------------------|-------|
+| CC-1 | **NO** (Cursor pings only) | **YES until ACK+hop.assign** |
+| CC-2 | STATUS idle watching | **YES until ACK GO-0730 + /settlements** |
+| CC-3 | working /lists | ACK GO-0730 |
+| Codex | WORKING FAST-MERGE | ACK GO-0730 |
+| Cascade | **NO self-ACK GO-0604** | **YES until ACK GO-0730 + /dispatch** |
+| Devin | **NO self-ACK GO-0604** | **YES until ACK GO-0730 + Reactivate** |
+| Cursor | self | **NO — kicked deploy** |

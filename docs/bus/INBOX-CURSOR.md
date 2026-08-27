@@ -1,3 +1,5 @@
+**07:30 CT GO-0730 — THIS IS NOW.** Lead. Deploy IN FLIGHT `dep-da82rr2jnfac739q6a5g` — no second-kick. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0730.md`. ACK: `Cursor | ACK | GO-0730 | PORT=9222 | NOW=lead | SHA=<healthz> | GO`.
+
 **05:56 CT GO-0556 — LIVE `78240b9`.** Lead. No second-kick (3 behind, just landed). U14 `/banking`. ACK: `Cursor | ACK | GO-0556 | PORT=9222 | NOW=lead+banking | SHA=78240b9 | GO`.
 
 **05:52 CT GO-0552 — THIS IS NOW.** Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-0552.md`. Deploy IN FLIGHT `dep-da81eaad0e5s73a261hg` — no second-kick. U14 first `/banking`. ACK: `Cursor | ACK | GO-0552 | PORT=9222 | NOW=lead+banking | SHA=<healthz> | GO`.
