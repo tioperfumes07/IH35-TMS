@@ -372,8 +372,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             FROM safety.accident_reports
             WHERE operating_company_id = $1::uuid
               AND insurance_claim_id = $2::uuid
-            ORDER BY accident_at DESC NULLS LAST
-            LIMIT 50
+            ORDER BY accident_at DESC NULLS LAST, id ASC
           `,
           [query.data.operating_company_id, params.data.id]
         ),
@@ -383,8 +382,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             FROM insurance.lawsuit
             WHERE tenant_id = $1::uuid
               AND claim_id = $2::uuid
-            ORDER BY filed_date DESC NULLS LAST
-            LIMIT 50
+            ORDER BY filed_date DESC NULLS LAST, id ASC
           `,
           [query.data.operating_company_id, params.data.id]
         ),
@@ -394,8 +392,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             FROM legal.matters
             WHERE operating_company_id = $1::uuid
               AND insurance_claim_id = $2::uuid
-            ORDER BY matter_number ASC
-            LIMIT 50
+            ORDER BY matter_number ASC, id ASC
           `,
           [query.data.operating_company_id, params.data.id]
         ),
@@ -405,8 +402,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             FROM safety.incidents
             WHERE operating_company_id = $1::uuid
               AND auto_created_claim_id = $2::uuid
-            ORDER BY incident_at DESC NULLS LAST
-            LIMIT 50
+            ORDER BY incident_at DESC NULLS LAST, id ASC
           `,
           [query.data.operating_company_id, params.data.id]
         ),
@@ -416,7 +412,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
             FROM safety.damage_continuity_chains
             WHERE operating_company_id = $1::uuid
               AND insurance_claim_id = $2::uuid
-            LIMIT 50
+            ORDER BY uuid ASC
           `,
           [query.data.operating_company_id, params.data.id]
         ),
@@ -441,7 +437,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           `SELECT id::text, total_amount_cents::text, status, transaction_date::text
              FROM accounting.expenses
             WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
-            ORDER BY transaction_date DESC NULLS LAST LIMIT 50`,
+            ORDER BY transaction_date DESC NULLS LAST, id ASC`,
           [query.data.operating_company_id, params.data.id]
         );
         expenses = er.rows;
@@ -452,7 +448,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
              FROM accounting.bills
             WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
               AND revoked_at IS NULL
-            ORDER BY bill_date DESC NULLS LAST LIMIT 50`,
+            ORDER BY bill_date DESC NULLS LAST, id ASC`,
           [query.data.operating_company_id, params.data.id]
         );
         bills = br.rows;
@@ -462,7 +458,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
           `SELECT id::text, display_id, status
              FROM maintenance.work_orders
             WHERE operating_company_id = $1::uuid AND insurance_claim_id = $2::uuid
-            ORDER BY created_at DESC NULLS LAST LIMIT 50`,
+            ORDER BY created_at DESC NULLS LAST, id ASC`,
           [query.data.operating_company_id, params.data.id]
         );
         workOrders = wr.rows;
