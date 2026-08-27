@@ -356,7 +356,7 @@ export async function createWorkOrderWithLines(
       client as never,
       userId,
       "maintenance.wo.section_a_line_added",
-      { work_order_id: wo.id, amount, expense_category_uuid: line.expense_category_uuid },
+      { operating_company_id: header.operating_company_id, work_order_id: wo.id, amount, expense_category_uuid: line.expense_category_uuid },
       "info",
       "P3-T11.17-TWO-SECTION-V5"
     );
@@ -378,7 +378,7 @@ export async function createWorkOrderWithLines(
       client as never,
       userId,
       "maintenance.wo.section_b_line_added",
-      { work_order_id: wo.id, parent_line_id: parentId, service_item_uuid: parent.service_item_uuid },
+      { operating_company_id: header.operating_company_id, work_order_id: wo.id, parent_line_id: parentId, service_item_uuid: parent.service_item_uuid },
       "info",
       "P3-T11.17-TWO-SECTION-V5"
     );
@@ -412,6 +412,7 @@ export async function createWorkOrderWithLines(
         userId,
         "maintenance.wo.parts_subrow_added",
         {
+          operating_company_id: header.operating_company_id,
           work_order_id: wo.id,
           parent_line_id: parentId,
           sub_line_id: insert.rows[0]?.id,
@@ -428,6 +429,7 @@ export async function createWorkOrderWithLines(
           userId,
           "maintenance.wo.part_location_set",
           {
+            operating_company_id: header.operating_company_id,
             work_order_id: wo.id,
             sub_line_id: insert.rows[0]?.id,
             part_location_codes: sub.part_location_codes ?? [],
@@ -450,6 +452,7 @@ export async function createWorkOrderWithLines(
     userId,
     "maintenance.wo.created",
     {
+      operating_company_id: header.operating_company_id,
       resource_type: "maintenance.work_orders",
       resource_id: wo.id,
       display_id: wo.display_id,
@@ -466,6 +469,7 @@ export async function createWorkOrderWithLines(
     userId,
     "maintenance.work_order.opened",
     {
+      operating_company_id: header.operating_company_id,
       resource_type: "maintenance.work_orders",
       resource_id: wo.id,
       opened_at: new Date().toISOString(),
