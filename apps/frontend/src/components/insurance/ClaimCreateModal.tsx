@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -114,6 +114,7 @@ function mapApi4xxToErrors(error: ApiError): {
 
 export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const lifecycleGenerationRef = useRef(0);
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [formError, setFormError] = useState("");
@@ -190,35 +191,18 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
   }, [form.load_id, open, suggestionPinned, suggestionQuery.data]);
 
   const createMutation = useMutation({
-    mutationFn: (payload: { amountClaimedCents?: number; amountPaidCents?: number; deductibleCents?: number }) =>
-      insuranceClaimsApi.create({
-        operating_company_id: operatingCompanyId,
-        claim_number: form.claim_number.trim(),
-        policy_id: form.policy_id,
-        asset_id: form.asset_id || null,
-        driver_id: form.driver_id || null,
-        load_id: form.load_id || null,
-        accident_report_id: form.accident_report_id || null,
-        accident_date: form.accident_date,
-        reported_date: form.reported_date,
-        status: form.status,
-        amount_claimed_cents: payload.amountClaimedCents,
-        amount_paid_cents: payload.amountPaidCents,
-        adjuster_name: form.adjuster_name.trim() || null,
-        adjuster_email: form.adjuster_email.trim() || null,
-        notes: form.notes.trim() || null,
-        fault: form.fault,
-        driver_responsible: form.driver_responsible === "" ? null : form.driver_responsible === "true",
-        trailer_id: form.trailer_id || null,
-        deductible_cents: payload.deductibleCents,
-        recovery_rail: form.recovery_rail,
-        repair_books_treatment: form.repair_books_treatment,
-      }),
-    onSuccess: (claim) => {
+    mutationFn: (input: {
+      companyId: string;
+      generation: number;
+      payload: Omit<Parameters<typeof insuranceClaimsApi.create>[0], "operating_company_id">;
+    }) => insuranceClaimsApi.create({ ...input.payload, operating_company_id: input.companyId }),
+    onSuccess: (claim, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       pushToast("Claim created successfully.", "success");
       onCreated(claim.id, claim.claim_number);
     },
-    onError: (error) => {
+    onError: (error, input) => {
+      if (input.generation !== lifecycleGenerationRef.current) return;
       if (!(error instanceof ApiError)) {
         setServerError("Unexpected error while creating claim. Please try again.");
         return;
@@ -232,6 +216,23 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
       if (mapped.formError) setFormError(mapped.formError);
     },
   });
+
+  useEffect(() => {
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    setForm(INITIAL_FORM);
+    setFieldErrors({});
+    setFormError("");
+    setServerError("");
+    setSuggestionPinned(false);
+  }, [operatingCompanyId]);
+
+  const closeModal = () => {
+    if (createMutation.isPending) return;
+    lifecycleGenerationRef.current += 1;
+    createMutation.reset();
+    onClose();
+  };
 
   const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -268,14 +269,35 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
     if (Object.keys(nextFieldErrors).length > 0) return;
 
     createMutation.mutate({
-      amountClaimedCents: typeof amountClaimedCents === "number" ? amountClaimedCents : undefined,
-      amountPaidCents: typeof amountPaidCents === "number" ? amountPaidCents : undefined,
-      deductibleCents: typeof deductibleCents === "number" ? deductibleCents : undefined,
+      companyId: operatingCompanyId,
+      generation: lifecycleGenerationRef.current,
+      payload: {
+        claim_number: form.claim_number.trim(),
+        policy_id: form.policy_id,
+        asset_id: form.asset_id || null,
+        driver_id: form.driver_id || null,
+        load_id: form.load_id || null,
+        accident_report_id: form.accident_report_id || null,
+        accident_date: form.accident_date,
+        reported_date: form.reported_date,
+        status: form.status,
+        amount_claimed_cents: typeof amountClaimedCents === "number" ? amountClaimedCents : undefined,
+        amount_paid_cents: typeof amountPaidCents === "number" ? amountPaidCents : undefined,
+        adjuster_name: form.adjuster_name.trim() || null,
+        adjuster_email: form.adjuster_email.trim() || null,
+        notes: form.notes.trim() || null,
+        fault: form.fault,
+        driver_responsible: form.driver_responsible === "" ? null : form.driver_responsible === "true",
+        trailer_id: form.trailer_id || null,
+        deductible_cents: typeof deductibleCents === "number" ? deductibleCents : undefined,
+        recovery_rail: form.recovery_rail,
+        repair_books_treatment: form.repair_books_treatment,
+      },
     });
   };
 
   return (
-    <ParityDrawer open={open} onClose={onClose} title="Create Claim" size="wide">
+    <ParityDrawer open={open} onClose={closeModal} title="Create Claim" size="wide">
       <form
         className="space-y-4 text-sm"
         data-testid="claim-create-form"
@@ -567,7 +589,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
         </label>
 
         <div className="flex justify-end gap-2 border-t border-gray-100 pt-3">
-          <button type="button" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs" onClick={onClose}>
+          <button
+            type="button"
+            className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs"
+            onClick={closeModal}
+            disabled={createMutation.isPending}
+          >
             Cancel
           </button>
           <button
