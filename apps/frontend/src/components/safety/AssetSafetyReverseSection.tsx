@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getDotInspections,
@@ -14,6 +15,7 @@ import { ListErrorState } from "../ListErrorState";
 import { entityLabel } from "../../lib/entity-label";
 import { CivilFinesReverseBlock } from "./CivilFinesReverseBlock";
 import { SafetyEventsReverseBlock } from "./SafetyEventsReverseBlock";
+import { Button } from "../Button";
 
 /**
  * SAF-F17 — the REVERSE half of the asset↔safety link (unit and trailer profiles).
@@ -216,6 +218,9 @@ export function AssetSafetyReverseSection({
 
   const enabled = canViewSafety && Boolean(operatingCompanyId) && Boolean(assetId);
   const isUnit = assetKind === "unit";
+  const inspectionPageSize = 25;
+  const [inspectionPage, setInspectionPage] = useState(1);
+  useEffect(() => setInspectionPage(1), [operatingCompanyId, assetKind, assetId]);
 
   const accidentsQuery = useQuery({
     queryKey: ["safety", "reverse", "accidents", assetKind, operatingCompanyId, assetId],
@@ -226,9 +231,13 @@ export function AssetSafetyReverseSection({
   });
 
   const inspectionsQuery = useQuery({
-    queryKey: ["safety", "reverse", "dot-inspections", assetKind, operatingCompanyId, assetId],
+    queryKey: ["safety", "reverse", "dot-inspections", assetKind, operatingCompanyId, assetId, inspectionPage],
     queryFn: () =>
-      getDotInspections(operatingCompanyId, isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+      getDotInspections(operatingCompanyId, {
+        ...(isUnit ? { unit_id: assetId } : { trailer_id: assetId }),
+        limit: inspectionPageSize,
+        offset: (inspectionPage - 1) * inspectionPageSize,
+      }),
     enabled,
   });
 
@@ -243,6 +252,8 @@ export function AssetSafetyReverseSection({
 
   const accidents: Row[] = accidentsQuery.isError ? [] : accidentsQuery.data?.accidents ?? [];
   const inspections: Row[] = inspectionsQuery.isError ? [] : inspectionsQuery.data?.dot_inspections ?? [];
+  const inspectionTotal = inspectionsQuery.isError ? 0 : inspectionsQuery.data?.total_count ?? 0;
+  const inspectionPageCount = Math.max(1, Math.ceil(inspectionTotal / inspectionPageSize));
   const dvirs: Row[] = dvirQuery.isError ? [] : dvirQuery.data?.submissions ?? [];
   const contextLabel = isUnit ? "unit" : "trailer";
 
@@ -303,7 +314,7 @@ export function AssetSafetyReverseSection({
         errorText={`Failed to load DOT inspections for this ${contextLabel}.`}
         onRetry={() => void inspectionsQuery.refetch()}
         emptyText={`No DOT inspections for this ${contextLabel}.`}
-        count={inspections.length}
+        count={inspectionTotal}
       >
         {inspections.map((inspection) => (
           <li key={s(inspection.id)} className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-sm">
@@ -322,6 +333,13 @@ export function AssetSafetyReverseSection({
           </li>
         ))}
       </SectionShell>
+      {!inspectionsQuery.isError && inspectionTotal > inspectionPageSize ? (
+        <div className="flex items-center justify-end gap-2 text-xs" data-testid="asset-safety-reverse-dot-inspections-pager">
+          <Button size="sm" variant="secondary" disabled={inspectionPage <= 1 || inspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.max(1, current - 1))}>Previous inspections</Button>
+          <span className="text-slate-600">Page {inspectionPage} of {inspectionPageCount} · {inspectionTotal} inspections</span>
+          <Button size="sm" variant="secondary" disabled={inspectionPage >= inspectionPageCount || inspectionsQuery.isFetching} onClick={() => setInspectionPage((current) => Math.min(inspectionPageCount, current + 1))}>Next inspections</Button>
+        </div>
+      ) : null}
 
       <SectionShell
         title="DVIRs"
