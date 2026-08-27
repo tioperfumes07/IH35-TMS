@@ -18,16 +18,19 @@ export function DefectDetailPage() {
   const qc = useQueryClient();
   const [woModalOpen, setWoModalOpen] = useState(false);
   const [mechanicNotes, setMechanicNotes] = useState("");
+  const [historyPage, setHistoryPage] = useState(0);
+  const historyPageSize = 25;
   const actionGenerationRef = useRef(0);
 
   const q = useQuery({
-    queryKey: ["maintenance", "dvir-defect", operatingCompanyId, defectId],
-    queryFn: () => getMaintenanceDvirDefect(defectId, operatingCompanyId),
+    queryKey: ["maintenance", "dvir-defect", operatingCompanyId, defectId, historyPage],
+    queryFn: () => getMaintenanceDvirDefect(defectId, operatingCompanyId, { limit: historyPageSize, offset: historyPage * historyPageSize }),
     enabled: Boolean(operatingCompanyId && defectId),
   });
 
   const defect = q.data?.defect;
   const history = useMemo(() => q.data?.triage_history ?? [], [q.data?.triage_history]);
+  const historyTotal = q.data?.triage_history_total ?? 0;
 
   const triageMut = useMutation({
     mutationFn: (input: {
@@ -58,6 +61,7 @@ export function DefectDetailPage() {
     triageMut.reset();
     setMechanicNotes("");
     setWoModalOpen(false);
+    setHistoryPage(0);
   }, [operatingCompanyId, defectId]);
 
   const runTriage = (action: "assign" | "escalate" | "close_no_action" | "convert_to_wo") => {
@@ -175,6 +179,13 @@ export function DefectDetailPage() {
               ))}
               {history.length === 0 ? <li className="text-gray-500">No triage events yet.</li> : null}
             </ul>
+            {historyTotal > historyPageSize ? (
+              <div className="mt-3 flex items-center justify-between text-xs text-slate-600" data-testid="maint-dvir-defect-history-server-pager">
+                <Button size="sm" variant="secondary" disabled={historyPage === 0 || q.isFetching} onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}>Previous</Button>
+                <span>{historyPage * historyPageSize + 1}–{Math.min((historyPage + 1) * historyPageSize, historyTotal)} of {historyTotal}</span>
+                <Button size="sm" variant="secondary" disabled={(historyPage + 1) * historyPageSize >= historyTotal || q.isFetching} onClick={() => setHistoryPage((page) => page + 1)}>Next</Button>
+              </div>
+            ) : null}
           </section>
 
           <CreateWorkOrderModal

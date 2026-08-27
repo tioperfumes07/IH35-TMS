@@ -2008,11 +2008,15 @@ export function listMaintenanceDvirDefects(
   return apiRequest<{ defects: DvirDefectInboxRow[] }>(`/api/v1/maintenance/dvir-defects?${q.toString()}`);
 }
 
-export function getMaintenanceDvirDefect(id: string, operatingCompanyId: string) {
+export function getMaintenanceDvirDefect(id: string, operatingCompanyId: string, historyRange: { limit?: number; offset?: number } = {}) {
+  const q = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (historyRange.limit != null) q.set("history_limit", String(historyRange.limit));
+  if (historyRange.offset != null) q.set("history_offset", String(historyRange.offset));
   return apiRequest<{
     defect: DvirDefectInboxRow & { odometer?: number; location?: string; load_id?: string | null };
     triage_history: Array<{ event_class: string; created_at: string; payload: Record<string, unknown> }>;
-  }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+    triage_history_total: number;
+  }>(`/api/v1/maintenance/dvir-defects/${encodeURIComponent(id)}?${q.toString()}`);
 }
 
 export function triageMaintenanceDvirDefect(

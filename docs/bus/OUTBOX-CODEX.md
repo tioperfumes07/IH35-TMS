@@ -1426,3 +1426,4 @@ Codex | SHIPPED | GO-0808 | FINDING=SAFETY-F6860 | PR=#16677 | merge=fa900121d3 
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6872-GEOFENCE-BREACH-SILENT-1000-CAP | vertical=Safety register+Dispatch overview/list/kanban | guard=10/10 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6873-DRUG-PROGRAM-AUXILIARY-HISTORY-SILENT-500-CAP | vertical=random-pool+clearinghouse register | guard=12/12 | NEXT=FAST-MERGE | GO
 Codex | WORKING | GO-0808 | FINDING=SAFETY-F6874-ANOMALY-DASHBOARD-SILENT-200-CAP | vertical=dashboard+global badge | guard=10/10 | NEXT=FAST-MERGE | GO
+Codex | WORKING | GO-0808 | FINDING=MAINT-F6875-DVIR-DEFECT-TRIAGE-HISTORY-SILENT-50-CAP | vertical=defect detail lifecycle history | guard=10/10 | NEXT=FAST-MERGE | GO
