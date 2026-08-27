@@ -337,10 +337,24 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               loadId: body.data.related_load_uuid ?? null,
               createdByUserId: user.uuid,
             });
-            await client.query(
-              `UPDATE safety.internal_fines SET status = 'converted_to_liability', driver_liability_id = $2 WHERE id = $1`,
-              [fine.id, (liability as { id?: string }).id ?? null]
+            // SAFETY-MONEY-F6741 — this UPDATE used to match by fine.id alone and ignore the
+            // affected-row result, so a mismatch (wrong company, or a fine that already carries a
+            // driver_liability_id) would leave the just-inserted liability + settlement deduction
+            // as an orphan money recovery with no backlink, while the transaction still reported
+            // success. Scope by company + driver_liability_id IS NULL and require exactly one row —
+            // a mismatch throws here, which rolls back the whole transaction (including the
+            // liability/deduction just inserted above) rather than committing an orphan.
+            const fineLinked = await client.query(
+              `UPDATE safety.internal_fines
+                  SET status = 'converted_to_liability', driver_liability_id = $2
+                WHERE id = $1
+                  AND operating_company_id = $3::uuid
+                  AND driver_liability_id IS NULL`,
+              [fine.id, (liability as { id?: string }).id ?? null, query.data.operating_company_id]
             );
+            if ((fineLinked.rowCount ?? 0) !== 1) {
+              throw new Error("safety_internal_fine_liability_backlink_failed");
+            }
             await appendCrudAudit(
               client,
               user.uuid,

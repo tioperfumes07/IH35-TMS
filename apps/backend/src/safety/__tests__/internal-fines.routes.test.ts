@@ -184,6 +184,32 @@ describe("safety internal-fines approval control (FD1)", () => {
     expect(txnControlCalls).toHaveLength(0);
   });
 
+  // SAFETY-MONEY-F6741 — the liability→fine backlink UPDATE used to be fired-and-forgotten. A
+  // zero-row match (wrong company / already-linked fine) must fail loud, not silently report 201
+  // with a real liability + settlement deduction left orphaned with no fine backlink.
+  it("fails loud when the fine→liability backlink UPDATE matches zero rows (never reports success on an orphan)", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("UPDATE safety.internal_fines")) return { rows: [], rowCount: 0 };
+      return baseQuery().getMockImplementation()!(sql);
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/safety/internal-fines?operating_company_id=${COMPANY}`,
+      payload: {
+        driver_uuid: DRIVER,
+        reason_uuid: REASON,
+        amount: 1,
+        imposed_date: "2026-07-03",
+        status: "approved",
+        approved_by_user_uuid: APPROVER,
+      },
+    });
+    expect(res.statusCode).toBe(500);
+    // The final "converted" step never ran once the backlink UPDATE reported zero rows.
+    const finalAudit = mockAppendCrudAudit.mock.calls.find((c) => c[2] === "safety.internal_fine.created");
+    expect(finalAudit).toBeUndefined();
+  });
+
   it("creates a pending fine with NO approver and NO liability → 201", async () => {
     const res = await app.inject({
       method: "POST",
