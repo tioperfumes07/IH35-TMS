@@ -130,9 +130,16 @@ export function signOut(returnTo?: string) {
   return apiRequest<{ ok: boolean }>(`/api/v1/auth/logout${query}`, { method: "POST" });
 }
 
+// USERS-LIST-SILENT-50-CAP: the backend's default page size is 50 (max 200) — Users.tsx used to
+// call this with no `limit` at all and treated whatever page came back as the complete roster,
+// silently undercounting every KPI/tab total once an operating company had more than 50 identity
+// users (which includes Driver-role accounts, not just office staff). Requesting the backend's
+// own max (200) up front, and returning total_count so the caller can honestly detect and
+// disclose truncation beyond that, fixes both the common case and the silent-lie failure mode.
 export function listUsers(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ users: IdentityUser[] }>(`/api/v1/identity/users${query}`);
+  const query = new URLSearchParams({ limit: "200" });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ users: IdentityUser[]; total_count: number }>(`/api/v1/identity/users?${query}`);
 }
 
 // USERS-2: minimal name/role directory for assignee pickers. Use this (NOT listUsers, which is the

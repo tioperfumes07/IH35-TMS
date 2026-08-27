@@ -277,7 +277,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       return reply.code(403).send({ error: "forbidden" });
     }
 
-    const users = await withCurrentUser(authUser.uuid, async (client) => {
+    const { users, totalCount } = await withCurrentUser(authUser.uuid, async (client) => {
       const filters: string[] = [
         EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL,
         `(u.default_company_id IN (SELECT org.user_accessible_company_ids()) OR EXISTS (
@@ -302,6 +302,15 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
       }
       if (!include_inactive) filters.push("u.deactivated_at IS NULL");
       const whereClause = `WHERE ${filters.join(" AND ")}`;
+      // USERS-LIST-SILENT-50-CAP: the response used to return only `{ users }` — the paginated
+      // page, with no total. Users.tsx (frontend) treated that page as the complete roster and
+      // computed every KPI/tab count from it; with more real users than the default limit=50 (or
+      // even the max limit=200), those counts silently undercounted with zero indication of
+      // truncation. A single COUNT(*) over the identical WHERE clause fixes that at the source.
+      const countRes = await client.query<{ total: string }>(
+        `SELECT count(*)::text AS total FROM identity.users u ${whereClause}`,
+        values
+      );
       values.push(limit, offset);
       const limitIdx = values.length - 1;
       const offsetIdx = values.length;
@@ -317,10 +326,10 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows.map(mapIdentityUser);
+      return { users: res.rows.map(mapIdentityUser), totalCount: Number(countRes.rows[0]?.total ?? 0) };
     });
 
-    return { users };
+    return { users, total_count: totalCount };
   });
 
   // USERS-2 minimal directory for assignee pickers. Every office role may read it (never Driver), but it
