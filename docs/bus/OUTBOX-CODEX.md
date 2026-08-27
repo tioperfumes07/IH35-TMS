@@ -1252,3 +1252,4 @@ Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6722 stale parts adjustment g
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6723 WO status atomic company scope | SHIPPED #16453 MAINT-F6722 @ 2fd682f711 guards=7/7 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING MAINT-F6724 parts-link add→refresh→void audit company linkage | SHIPPED #16454 MAINT-F6723 @ dc2418002d guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
 Codex | ACK | GO-2024 | PORT=9226 | WORKING SAFETY-F6725 mounted v5 audit company remainder | SHIPPED #16455 MAINT-F6724 @ 91e020c83b guards=3/3 | SHA=dd54885 | NEXT=guard+FAST-MERGE | GO
+Codex | GO-2158 | WORKING | FINDING=SAFETY-F6734 | Photo Comparison post-trip mutation now carries authenticated company route→service→SQL | NEXT=guard+tests+FAST-MERGE | GO

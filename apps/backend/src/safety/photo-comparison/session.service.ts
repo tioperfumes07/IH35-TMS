@@ -285,6 +285,7 @@ export async function startPreTripSession(
 
 export async function submitPostTripPhotos(
   client: DbClient,
+  operatingCompanyId: string,
   sessionUuid: string,
   evidenceUuids: string[]
 ): Promise<PhotoComparisonSession> {
@@ -299,11 +300,11 @@ export async function submitPostTripPhotos(
           post_trip_evidence_uuids = $2::uuid[],
           diff_status = 'analyzing'
       WHERE uuid = $1::uuid
-        AND operating_company_id::text = current_setting('app.operating_company_id', true)
+        AND operating_company_id = $3::uuid
         AND post_trip_evidence_uuids IS NULL
       RETURNING ${SESSION_COLUMNS}
     `,
-    [sessionUuid, evidenceUuids]
+    [sessionUuid, evidenceUuids, operatingCompanyId]
   );
   const row = updated.rows[0];
   if (!row) throw new Error("session_not_found_or_post_already_submitted");
