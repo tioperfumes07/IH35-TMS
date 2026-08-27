@@ -307,6 +307,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
           ]
         );
         const id = res.rows[0]?.id;
+        if (!id) throw new Error("maintenance_inspection_insert_failed");
         await appendCrudAudit(client, user.uuid, "maintenance.inspection.created", {
           resource_id: id,
           operating_company_id: body.operating_company_id,
@@ -314,7 +315,8 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
           dvir_submission_id: body.dvir_submission_id ?? null,
         });
         const detail = await client.query(`${INSPECTION_SELECT} WHERE i.id = $1 LIMIT 1`, [id]);
-        return mapInspectionRow(detail.rows[0] ?? { id });
+        if (!detail.rows[0]) throw new Error("maintenance_inspection_detail_read_failed");
+        return mapInspectionRow(detail.rows[0]);
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -475,6 +477,8 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
             parsed.data.sort_order,
           ]
         );
+        const insertedPhoto = res.rows[0];
+        if (!insertedPhoto?.id) throw new Error("maintenance_inspection_photo_insert_failed");
 
         await appendCrudAudit(client, user.uuid, "maintenance.inspection.photo_attached", {
           resource_id: params.data.id,
@@ -482,7 +486,7 @@ export async function registerMaintenanceInspectionsRoutes(app: FastifyInstance)
           docs_file_id: parsed.data.docs_file_id,
         });
 
-        return res.rows[0];
+        return insertedPhoto;
       });
 
       if (photo === null) return reply.code(404).send({ error: "not_found" });
