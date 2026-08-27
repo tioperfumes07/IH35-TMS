@@ -196,6 +196,7 @@ describe("maintenance inspection routes (B30)", () => {
       if (sql.includes("set_config")) return { rows: [] };
       if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: true, dvir_ok: true }] };
       if (sql.includes("INSERT INTO maintenance.inspections")) return { rows: [sampleRow()] };
+      if (sql.includes("FROM maintenance.inspections i")) return { rows: [sampleRow()] };
       return { rows: [] };
     });
     const res = await app.inject({
@@ -207,6 +208,22 @@ describe("maintenance inspection routes (B30)", () => {
     const validationSql = mockQuery.mock.calls.map((call) => String(call[0])).find((sql) => sql.includes("AS unit_ok"));
     expect(validationSql).toContain("u.deactivated_at IS NULL");
     expect(validationSql).not.toContain("u.archived_at");
+  });
+
+  it("does not fabricate a successful create when the inspection insert returns no row", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("AS unit_ok")) return { rows: [{ unit_ok: true, dvir_ok: true }] };
+      if (sql.includes("INSERT INTO maintenance.inspections")) return { rows: [] };
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/maintenance/inspections",
+      payload: { operating_company_id: COMPANY, unit_id: UNIT_ID, inspection_type: "pre_trip" },
+    });
+    expect(res.statusCode).toBe(500);
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 
   it("POST /api/v1/maintenance/inspections/:id/photos attaches docs file", async () => {
@@ -231,5 +248,22 @@ describe("maintenance inspection routes (B30)", () => {
     });
     expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ photo: { docs_file_id: DOCS_FILE_ID } });
+  });
+
+  it("does not audit or return 201 when the photo insert returns no row", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("FROM maintenance.inspections WHERE id")) return { rows: [{ id: INSPECTION_ID }] };
+      if (sql.includes("FROM docs.files")) return { rows: [{ id: DOCS_FILE_ID }] };
+      if (sql.includes("INSERT INTO maintenance.inspection_photos")) return { rows: [] };
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/maintenance/inspections/${INSPECTION_ID}/photos`,
+      payload: { operating_company_id: COMPANY, docs_file_id: DOCS_FILE_ID },
+    });
+    expect(res.statusCode).toBe(500);
+    expect(mockAppendCrudAudit).not.toHaveBeenCalled();
   });
 });
