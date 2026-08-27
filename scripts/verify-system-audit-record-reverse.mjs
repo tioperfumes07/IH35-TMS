@@ -9,15 +9,21 @@ const files = {
   history: read("apps/frontend/src/components/audit/EntityAuditHistoryTab.tsx"),
   page: read("apps/frontend/src/pages/audit/AuditTrailPage.tsx"),
   transfers: read("apps/frontend/src/pages/banking/TransfersListPage.tsx"),
-  cashAdvanceRequests: read("apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx"),
+  cashAdvanceRequests: read(
+    "apps/frontend/src/pages/driver-finance/CashAdvanceRequestsPage.tsx",
+  ),
   driver: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
   unit: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
   trailer: read("apps/frontend/src/pages/fleet/TrailerProfilePage.tsx"),
   vendor: read("apps/frontend/src/pages/VendorDetail.tsx"),
   customer: read("apps/frontend/src/pages/CustomerDetail.tsx"),
-  workOrder: read("apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx"),
+  workOrder: read(
+    "apps/frontend/src/pages/maintenance/WorkOrderDetailPage.tsx",
+  ),
   load: read("apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx"),
-  migration: read("db/migrations/202612601200_system_audit_master_data_spine_subjects.sql"),
+  migration: read(
+    "db/migrations/202612601200_system_audit_master_data_spine_subjects.sql",
+  ),
   emitter: read("apps/backend/src/mdata/master-data-spine-emit.ts"),
   customerRoute: read("apps/backend/src/mdata/customers.routes.ts"),
   vendorRoute: read("apps/backend/src/mdata/vendors.routes.ts"),
@@ -27,110 +33,605 @@ const files = {
   feed: read("docs/specs/scoreboard/wire-sprint-built.json"),
   self: read("scripts/verify-system-audit-record-reverse.mjs"),
 };
-const HEADER = '/** @matrix-built {"modules":["system"],"cols":["reverse_link"],"leaves":["audit.trail"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */';
-function failures(s = files) { const found = [
-  ["company-scoped exact audit filter", s.routes.includes("audit_event_id: z.string().uuid().optional()") && s.routes.includes("e.uuid = $${values.length}::uuid") && s.api.includes('search.set("audit_event_id", params.auditEventId)')],
-  ["profile row exact drill", s.history.includes('kind="audit_event"') && s.history.includes("id={row.id}")],
-  ["system page honors exact record", s.page.includes('searchParams.get("audit_event_id")') && s.page.includes("listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })") && s.page.includes('data-testid="audit-trail-exact-event"')],
-  ["honest selected-record states", s.page.includes("Couldn't load the selected audit event") && s.page.includes("Audit event not found for this operating company.") && s.page.includes("onRetry={() => void exactAuditQuery.refetch()}")],
-  // ACCT-F5560: real code migrated the raw <EntityLink>/entityLabel(...) calls this guard originally
-  // pinned to the shared EntityLinkOrTombstone component (same honest tombstone-then-link guarantee,
-  // different literal call shape — same class fixed repeatedly this session, e.g. ACCT-F5552). Accept
-  // either shape rather than pin to the pre-refactor one.
-  ["selected actor canonical drill", s.page.includes('<EntityLink kind="user" id={exactAuditEvent.actor_user_id}') || s.page.includes('kind="user" id={exactAuditEvent.actor_user_id}')],
-  ["spine subject human labels", s.spine.includes("END                          AS subject_label") && s.api.includes("subject_label: string | null") && (s.page.includes("entityLabel(row.subject_label, row.subject_id, \"Subject\")") || s.page.includes('name={row.subject_label} noun="Subject"')) && s.page.includes('row.subject_label ?? "Subject label unavailable"') && s.page.includes('"subject_label"') && s.page.includes('e.subject_label ?? ""')],
-  ["historical task subjects derive canonical kind", s.spine.includes("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.invoices' THEN 'invoice'") && s.spine.includes("el.subject_type = 'task' AND el.source_table = 'accounting.bills' THEN 'bill'") && s.api.includes("subject_kind: string | null") && s.page.includes("row.subject_kind ?? row.subject_type")],
-  ["work-order subject same-company label", s.spine.includes("wo.id = el.source_reference_id") && s.spine.includes("wo.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(wo.display_id), '')") && s.page.includes('work_order: "work_order"')],
-  ["invoice subject same-company label", s.spine.includes("i.id = el.source_reference_id") && s.spine.includes("i.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(i.display_id), '')") && s.page.includes('invoice: "invoice"')],
-  ["bill subject same-company label", s.spine.includes("b.id = el.source_reference_id") && s.spine.includes("b.operating_company_id = el.operating_company_id") && s.spine.includes("COALESCE(b.display_id, b.bill_number)") && s.page.includes('bill: "bill"')],
-  ["load subject same-company join", s.spine.includes("l.operating_company_id = el.operating_company_id")],
-  ["driver subject same-company join", s.spine.includes("d.operating_company_id = el.operating_company_id")],
-  ["unit subject effective-company join", s.spine.includes("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id")],
-  ["customer spine subject allowed", s.migration.includes("'customer', 'vendor'")],
-  ["vendor spine subject allowed", s.migration.includes("'customer', 'vendor'") && s.migration.includes("p_subject_type NOT IN")],
-  ["shared master-data spine emitter", s.emitter.includes("events.log_event(") && s.emitter.includes('customer: "mdata.customers"') && s.emitter.includes('vendor: "mdata.vendors"') && s.emitter.includes('driver: "mdata.drivers"') && s.emitter.includes('unit: "mdata.units"')],
-  ["customer create emits spine atomically", s.customerRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.customerRoute.includes('subject_type: "customer"')],
-  ["vendor create emits spine atomically", s.vendorRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.vendorRoute.includes('subject_type: "vendor"')],
-  ["driver create emits spine atomically", s.driverRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.driverRoute.includes('subject_type: "driver"')],
-  ["unit create emits spine with effective company", s.unitRoute.includes("emitMasterDataCreatedSpineEvent(client, {") && s.unitRoute.includes("String(resolvedLeasedId ?? resolvedOwnerId)") && s.unitRoute.includes('subject_type: "unit"')],
-  ["customer subject same-company label", s.spine.includes("c.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(c.customer_name), '')")],
-  ["vendor subject same-company label", s.spine.includes("v.operating_company_id = el.operating_company_id") && s.spine.includes("NULLIF(TRIM(v.vendor_name), '')")],
-  ["customer source drill", s.page.includes('"mdata.customers": (id) => `/customers/${id}`')],
-  ["vendor source drill", s.page.includes('"mdata.vendors": (id) => `/vendors/${id}`')],
-  ["driver source drill", s.page.includes('"mdata.drivers": (id) => `/drivers/${id}`')],
-  ["unit source drill", s.page.includes('"mdata.units": (id) => `/fleet/units/${id}`')],
-  ["source routes never infer entity kind from table substrings", s.page.includes("const SOURCE_ROUTES") && !s.page.includes('t.includes("bill")') && !s.page.includes('t.includes("payment")')],
-  ["bill-payment source uses its canonical record route", s.page.includes('"accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`')],
-  ["journal-entry subject and source use the canonical record route", s.page.includes('journal_entry: "journal_entry"') && s.page.includes('"accounting.journal_entries": (id) => `/accounting/journal-entries/${id}`')],
-  ["customer-payment subject uses the canonical payment route", s.page.includes('customer_payment: "payment"')],
-  ["bank transaction and settlement sources use canonical query targets", s.page.includes('"banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`') && s.page.includes('"driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`')],
-  ["reconciliation-session source uses mounted workspace target", s.page.includes('"banking.reconciliation_sessions": (id) => `/banking/reconciliation-workspace?session_id=${id}`')],
-  ["intercompany-group source opens the canonical group detail", s.page.includes('"banking.intercompany_transfer_groups": (id) => `/banking/transfers?group_id=${id}`') && s.transfers.includes('searchParams.get("group_id")') && s.transfers.includes("openIntercompanyGroup(deepLinkGroupId)")],
-  ["cash-advance request source hydrates the exact scoped row", s.page.includes('"driver_finance.cash_advance_requests": (id) => `/driver-finance/cash-advance-requests?request_id=${id}`') && s.cashAdvanceRequests.includes('searchParams.get("request_id")') && s.cashAdvanceRequests.includes("cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)") && s.cashAdvanceRequests.includes('String(row.id ?? "") === requestIdFromUrl')],
-  ["all canonical history mounts remain", [s.driver, s.unit, s.trailer, s.vendor, s.customer, s.workOrder, s.load].every((source) => source.includes("<EntityAuditHistoryTab"))],
-].filter(([, ok]) => !ok).map(([name]) => name);
+const HEADER =
+  '/** @matrix-built {"modules":["system"],"cols":["reverse_link"],"leaves":["audit.trail"],"task":"CLASS-F5905-SYSTEM-TASK-REVERSE-EXACT","vertical":"class-sweep"} */';
+function failures(s = files) {
+  const found = [
+    [
+      "company-scoped exact audit filter",
+      s.routes.includes("audit_event_id: z.string().uuid().optional()") &&
+        s.routes.includes("e.uuid = $${values.length}::uuid") &&
+        s.api.includes('search.set("audit_event_id", params.auditEventId)'),
+    ],
+    [
+      "profile row exact drill",
+      s.history.includes('kind="audit_event"') &&
+        s.history.includes("id={row.id}"),
+    ],
+    [
+      "system page honors exact record",
+      s.page.includes('searchParams.get("audit_event_id")') &&
+        s.page.includes(
+          "listAuditEvents({ operatingCompanyId: companyId, auditEventId, limit: 1 })",
+        ) &&
+        s.page.includes('data-testid="audit-trail-exact-event"'),
+    ],
+    [
+      "honest selected-record states",
+      s.page.includes("Couldn't load the selected audit event") &&
+        s.page.includes("Audit event not found for this operating company.") &&
+        s.page.includes("onRetry={() => void exactAuditQuery.refetch()}"),
+    ],
+    // ACCT-F5560: real code migrated the raw <EntityLink>/entityLabel(...) calls this guard originally
+    // pinned to the shared EntityLinkOrTombstone component (same honest tombstone-then-link guarantee,
+    // different literal call shape — same class fixed repeatedly this session, e.g. ACCT-F5552). Accept
+    // either shape rather than pin to the pre-refactor one.
+    [
+      "selected actor canonical drill",
+      s.page.includes(
+        '<EntityLink kind="user" id={exactAuditEvent.actor_user_id}',
+      ) || s.page.includes('kind="user" id={exactAuditEvent.actor_user_id}'),
+    ],
+    [
+      "spine subject human labels",
+      s.spine.includes("END                          AS subject_label") &&
+        s.api.includes("subject_label: string | null") &&
+        (s.page.includes(
+          'entityLabel(row.subject_label, row.subject_id, "Subject")',
+        ) ||
+          s.page.includes('name={row.subject_label} noun="Subject"')) &&
+        s.page.includes('row.subject_label ?? "Subject label unavailable"') &&
+        s.page.includes('"subject_label"') &&
+        s.page.includes('e.subject_label ?? ""'),
+    ],
+    [
+      "historical task subjects derive canonical kind",
+      s.spine.includes(
+        "el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'",
+      ) &&
+        s.spine.includes(
+          "el.subject_type = 'task' AND el.source_table = 'accounting.invoices' THEN 'invoice'",
+        ) &&
+        s.spine.includes(
+          "el.subject_type = 'task' AND el.source_table = 'accounting.bills' THEN 'bill'",
+        ) &&
+        s.api.includes("subject_kind: string | null") &&
+        s.page.includes("row.subject_kind ?? row.subject_type"),
+    ],
+    [
+      "work-order subject same-company label",
+      s.spine.includes("wo.id = el.source_reference_id") &&
+        s.spine.includes("wo.operating_company_id = el.operating_company_id") &&
+        s.spine.includes("NULLIF(TRIM(wo.display_id), '')") &&
+        s.page.includes('work_order: "work_order"'),
+    ],
+    [
+      "invoice subject same-company label",
+      s.spine.includes("i.id = el.source_reference_id") &&
+        s.spine.includes("i.operating_company_id = el.operating_company_id") &&
+        s.spine.includes("NULLIF(TRIM(i.display_id), '')") &&
+        s.page.includes('invoice: "invoice"'),
+    ],
+    [
+      "bill subject same-company label",
+      s.spine.includes("b.id = el.source_reference_id") &&
+        s.spine.includes("b.operating_company_id = el.operating_company_id") &&
+        s.spine.includes("COALESCE(b.display_id, b.bill_number)") &&
+        s.page.includes('bill: "bill"'),
+    ],
+    [
+      "load subject same-company join",
+      s.spine.includes("l.operating_company_id = el.operating_company_id"),
+    ],
+    [
+      "driver subject same-company join",
+      s.spine.includes("d.operating_company_id = el.operating_company_id"),
+    ],
+    [
+      "unit subject effective-company join",
+      s.spine.includes(
+        "COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id",
+      ),
+    ],
+    [
+      "customer spine subject allowed",
+      s.migration.includes("'customer', 'vendor'"),
+    ],
+    [
+      "vendor spine subject allowed",
+      s.migration.includes("'customer', 'vendor'") &&
+        s.migration.includes("p_subject_type NOT IN"),
+    ],
+    [
+      "shared master-data spine emitter",
+      s.emitter.includes("events.log_event(") &&
+        s.emitter.includes('customer: "mdata.customers"') &&
+        s.emitter.includes('vendor: "mdata.vendors"') &&
+        s.emitter.includes('driver: "mdata.drivers"') &&
+        s.emitter.includes('unit: "mdata.units"'),
+    ],
+    [
+      "customer create emits spine atomically",
+      s.customerRoute.includes("emitMasterDataCreatedSpineEvent(client, {") &&
+        s.customerRoute.includes('subject_type: "customer"'),
+    ],
+    [
+      "vendor create emits spine atomically",
+      s.vendorRoute.includes("emitMasterDataCreatedSpineEvent(client, {") &&
+        s.vendorRoute.includes('subject_type: "vendor"'),
+    ],
+    [
+      "driver create emits spine atomically",
+      s.driverRoute.includes("emitMasterDataCreatedSpineEvent(client, {") &&
+        s.driverRoute.includes('subject_type: "driver"'),
+    ],
+    [
+      "unit create emits spine with effective company",
+      s.unitRoute.includes("emitMasterDataCreatedSpineEvent(client, {") &&
+        (s.unitRoute.includes("String(resolvedLeasedId ?? resolvedOwnerId)") ||
+          s.unitRoute.includes("String(operatingCompanyId)")) &&
+        s.unitRoute.includes('subject_type: "unit"'),
+    ],
+    [
+      "customer subject same-company label",
+      s.spine.includes("c.operating_company_id = el.operating_company_id") &&
+        s.spine.includes("NULLIF(TRIM(c.customer_name), '')"),
+    ],
+    [
+      "vendor subject same-company label",
+      s.spine.includes("v.operating_company_id = el.operating_company_id") &&
+        s.spine.includes("NULLIF(TRIM(v.vendor_name), '')"),
+    ],
+    [
+      "customer source drill",
+      s.page.includes('"mdata.customers": (id) => `/customers/${id}`'),
+    ],
+    [
+      "vendor source drill",
+      s.page.includes('"mdata.vendors": (id) => `/vendors/${id}`'),
+    ],
+    [
+      "driver source drill",
+      s.page.includes('"mdata.drivers": (id) => `/drivers/${id}`'),
+    ],
+    [
+      "unit source drill",
+      s.page.includes('"mdata.units": (id) => `/fleet/units/${id}`'),
+    ],
+    [
+      "source routes never infer entity kind from table substrings",
+      s.page.includes("const SOURCE_ROUTES") &&
+        !s.page.includes('t.includes("bill")') &&
+        !s.page.includes('t.includes("payment")'),
+    ],
+    [
+      "bill-payment source uses its canonical record route",
+      s.page.includes(
+        '"accounting.bill_payments": (id) => `/accounting/bill-payments/${id}`',
+      ),
+    ],
+    [
+      "journal-entry subject and source use the canonical record route",
+      s.page.includes('journal_entry: "journal_entry"') &&
+        s.page.includes(
+          '"accounting.journal_entries": (id) => `/accounting/journal-entries/${id}`',
+        ),
+    ],
+    [
+      "customer-payment subject uses the canonical payment route",
+      s.page.includes('customer_payment: "payment"'),
+    ],
+    [
+      "bank transaction and settlement sources use canonical query targets",
+      s.page.includes(
+        '"banking.bank_transactions": (id) => `/banking/transactions?txn_id=${id}`',
+      ) &&
+        s.page.includes(
+          '"driver_finance.driver_settlements": (id) => `/driver-finance/settlements?settlement_id=${id}`',
+        ),
+    ],
+    [
+      "reconciliation-session source uses mounted workspace target",
+      s.page.includes(
+        '"banking.reconciliation_sessions": (id) => `/banking/reconciliation-workspace?session_id=${id}`',
+      ),
+    ],
+    [
+      "intercompany-group source opens the canonical group detail",
+      s.page.includes(
+        '"banking.intercompany_transfer_groups": (id) => `/banking/transfers?group_id=${id}`',
+      ) &&
+        s.transfers.includes('searchParams.get("group_id")') &&
+        s.transfers.includes("openIntercompanyGroup(deepLinkGroupId)"),
+    ],
+    [
+      "cash-advance request source hydrates the exact scoped row",
+      s.page.includes(
+        '"driver_finance.cash_advance_requests": (id) => `/driver-finance/cash-advance-requests?request_id=${id}`',
+      ) &&
+        s.cashAdvanceRequests.includes('searchParams.get("request_id")') &&
+        s.cashAdvanceRequests.includes(
+          "cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)",
+        ) &&
+        s.cashAdvanceRequests.includes(
+          'String(row.id ?? "") === requestIdFromUrl',
+        ),
+    ],
+    [
+      "all canonical history mounts remain",
+      [
+        s.driver,
+        s.unit,
+        s.trailer,
+        s.vendor,
+        s.customer,
+        s.workOrder,
+        s.load,
+      ].every((source) => source.includes("<EntityAuditHistoryTab")),
+    ],
+  ]
+    .filter(([, ok]) => !ok)
+    .map(([name]) => name);
   let matrix;
-  try { matrix = JSON.parse(s.matrix); } catch (error) { found.push(`System matrix parse: ${error.message}`); }
-  const leaf = matrix?.leaves?.find((candidate) => candidate.id === "audit.trail");
-  if (!leaf?.required?.includes("reverse_link")) found.push("audit.trail must require reverse_link");
-  if (leaf?.route_hint !== "/audit/trail") found.push("audit.trail must name mounted route /audit/trail");
-  if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER)) found.push("exact System audit header missing");
-  try { if (JSON.parse(s.feed).entries?.some((entry) => entry.guard === "scripts/verify-system-audit-record-reverse.mjs")) found.push("manual feed duplicates exact System ownership"); }
-  catch (error) { found.push(`feed parse: ${error.message}`); }
+  try {
+    matrix = JSON.parse(s.matrix);
+  } catch (error) {
+    found.push(`System matrix parse: ${error.message}`);
+  }
+  const leaf = matrix?.leaves?.find(
+    (candidate) => candidate.id === "audit.trail",
+  );
+  if (!leaf?.required?.includes("reverse_link"))
+    found.push("audit.trail must require reverse_link");
+  if (leaf?.route_hint !== "/audit/trail")
+    found.push("audit.trail must name mounted route /audit/trail");
+  if (!s.self.split('import fs from "node:fs";')[0].includes(HEADER))
+    found.push("exact System audit header missing");
+  try {
+    if (
+      JSON.parse(s.feed).entries?.some(
+        (entry) =>
+          entry.guard === "scripts/verify-system-audit-record-reverse.mjs",
+      )
+    )
+      found.push("manual feed duplicates exact System ownership");
+  } catch (error) {
+    found.push(`feed parse: ${error.message}`);
+  }
   return found;
 }
 if (process.argv.includes("--selftest")) {
   const checks = [
-    failures({ ...files, routes: files.routes.replace("e.uuid = $${values.length}::uuid", "TRUE") }).includes("company-scoped exact audit filter"),
-    failures({ ...files, history: files.history.replace('kind="audit_event"', 'kind="user"') }).includes("profile row exact drill"),
-    failures({ ...files, page: files.page.replace("auditEventId, limit: 1", "limit: 1") }).includes("system page honors exact record"),
-    failures({ ...files, page: files.page.replace("Audit event not found for this operating company.", "No events") }).includes("honest selected-record states"),
-    failures({ ...files, page: files.page.replace("onRetry={() => void exactAuditQuery.refetch()}", "onRetry={() => undefined}") }).includes("honest selected-record states"),
-    failures({ ...files, page: files.page.replace('kind="user" id={exactAuditEvent.actor_user_id}', 'kind="unit" id={exactAuditEvent.actor_user_id}') }).includes("selected actor canonical drill"),
-    failures({ ...files, page: files.page.replace('name={row.subject_label} noun="Subject"', 'name={null} noun="Subject"') }).includes("spine subject human labels"),
-    failures({ ...files, spine: files.spine.replace("el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'", "FALSE THEN 'work_order'") }).includes("historical task subjects derive canonical kind"),
-    failures({ ...files, spine: files.spine.replace("wo.operating_company_id = el.operating_company_id", "TRUE") }).includes("work-order subject same-company label"),
-    failures({ ...files, spine: files.spine.replace("i.operating_company_id = el.operating_company_id", "TRUE") }).includes("invoice subject same-company label"),
-    failures({ ...files, spine: files.spine.replace("b.operating_company_id = el.operating_company_id", "TRUE") }).includes("bill subject same-company label"),
-    failures({ ...files, spine: files.spine.replace("l.operating_company_id = el.operating_company_id", "TRUE") }).includes("load subject same-company join"),
-    failures({ ...files, spine: files.spine.replace("d.operating_company_id = el.operating_company_id", "TRUE") }).includes("driver subject same-company join"),
-    failures({ ...files, spine: files.spine.replace("COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id", "TRUE") }).includes("unit subject effective-company join"),
-    failures({ ...files, migration: files.migration.replaceAll("'customer', 'vendor'", "'customer_unused', 'vendor'") }).includes("customer spine subject allowed"),
-    failures({ ...files, migration: files.migration.replaceAll("'customer', 'vendor'", "'customer', 'vendor_unused'") }).includes("vendor spine subject allowed"),
-    failures({ ...files, emitter: files.emitter.replace("events.log_event(", "events.log_event_unused(") }).includes("shared master-data spine emitter"),
-    failures({ ...files, customerRoute: files.customerRoute.replace('subject_type: "customer"', 'subject_type: "driver"') }).includes("customer create emits spine atomically"),
-    failures({ ...files, vendorRoute: files.vendorRoute.replace('subject_type: "vendor"', 'subject_type: "driver"') }).includes("vendor create emits spine atomically"),
-    failures({ ...files, driverRoute: files.driverRoute.replace('subject_type: "driver"', 'subject_type: "unit"') }).includes("driver create emits spine atomically"),
-    failures({ ...files, unitRoute: files.unitRoute.replace("String(resolvedLeasedId ?? resolvedOwnerId)", "String(resolvedOwnerId)") }).includes("unit create emits spine with effective company"),
-    failures({ ...files, spine: files.spine.replace("c.operating_company_id = el.operating_company_id", "TRUE") }).includes("customer subject same-company label"),
-    failures({ ...files, spine: files.spine.replace("v.operating_company_id = el.operating_company_id", "TRUE") }).includes("vendor subject same-company label"),
-    failures({ ...files, page: files.page.replace('"mdata.customers":', '"mdata.customers_unused":') }).includes("customer source drill"),
-    failures({ ...files, page: files.page.replace('"mdata.vendors":', '"mdata.vendors_unused":') }).includes("vendor source drill"),
-    failures({ ...files, page: files.page.replace('"mdata.drivers":', '"mdata.drivers_unused":') }).includes("driver source drill"),
-    failures({ ...files, page: files.page.replace('"mdata.units":', '"mdata.units_unused":') }).includes("unit source drill"),
-    failures({ ...files, page: files.page.replace("const SOURCE_ROUTES", 'const BROKEN_SOURCE_ROUTES').replace("SOURCE_ROUTES[ev.source_table]", 'BROKEN_SOURCE_ROUTES[ev.source_table]').concat('\n// t.includes("bill")') }).includes("source routes never infer entity kind from table substrings"),
-    failures({ ...files, page: files.page.replace('/accounting/bill-payments/${id}', '/accounting/bills/${id}') }).includes("bill-payment source uses its canonical record route"),
-    failures({ ...files, page: files.page.replace('journal_entry: "journal_entry"', 'journal_entry: "bill"') }).includes("journal-entry subject and source use the canonical record route"),
-    failures({ ...files, page: files.page.replace('customer_payment: "payment"', 'customer_payment: "bill"') }).includes("customer-payment subject uses the canonical payment route"),
-    failures({ ...files, page: files.page.replace('/accounting/journal-entries/${id}', '/accounting/bills/${id}') }).includes("journal-entry subject and source use the canonical record route"),
-    failures({ ...files, page: files.page.replace('/banking/transactions?txn_id=${id}', '/banking/transactions') }).includes("bank transaction and settlement sources use canonical query targets"),
-    failures({ ...files, page: files.page.replace('/banking/reconciliation-workspace?session_id=${id}', '/banking/reconciliation-workspace') }).includes("reconciliation-session source uses mounted workspace target"),
-    failures({ ...files, page: files.page.replace('/banking/transfers?group_id=${id}', '/banking/transfers') }).includes("intercompany-group source opens the canonical group detail"),
-    failures({ ...files, transfers: files.transfers.replace('searchParams.get("group_id")', 'searchParams.get("transfer_id")') }).includes("intercompany-group source opens the canonical group detail"),
-    failures({ ...files, transfers: files.transfers.replace("openIntercompanyGroup(deepLinkGroupId)", "openIntercompanyGroup('')") }).includes("intercompany-group source opens the canonical group detail"),
-    failures({ ...files, page: files.page.replace('/driver-finance/cash-advance-requests?request_id=${id}', '/driver-finance/cash-advance-requests') }).includes("cash-advance request source hydrates the exact scoped row"),
-    failures({ ...files, cashAdvanceRequests: files.cashAdvanceRequests.replace('searchParams.get("request_id")', 'searchParams.get("driver_id")') }).includes("cash-advance request source hydrates the exact scoped row"),
-    failures({ ...files, cashAdvanceRequests: files.cashAdvanceRequests.replace("cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)", "cashAdvanceRequestsOfficeApi.listPending(companyId)") }).includes("cash-advance request source hydrates the exact scoped row"),
-    failures({ ...files, cashAdvanceRequests: files.cashAdvanceRequests.replace('String(row.id ?? "") === requestIdFromUrl', 'String(row.id ?? "") === ""') }).includes("cash-advance request source hydrates the exact scoped row"),
-    failures({ ...files, load: "" }).includes("all canonical history mounts remain"),
-    failures({ ...files, matrix: files.matrix.replace('"id": "audit.trail"', '"id": "audit.trail.broken"') }).includes("audit.trail must require reverse_link"),
-    failures({ ...files, matrix: files.matrix.replace('"route_hint": "/audit/trail"', '"route_hint": "/broken"') }).includes("audit.trail must name mounted route /audit/trail"),
-    failures({ ...files, self: files.self.replace(HEADER, HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"')) }).includes("exact System audit header missing"),
-    failures({ ...files, feed: JSON.stringify({ entries: [{ guard: "scripts/verify-system-audit-record-reverse.mjs" }] }) }).includes("manual feed duplicates exact System ownership"),
+    failures({
+      ...files,
+      routes: files.routes.replace("e.uuid = $${values.length}::uuid", "TRUE"),
+    }).includes("company-scoped exact audit filter"),
+    failures({
+      ...files,
+      history: files.history.replace('kind="audit_event"', 'kind="user"'),
+    }).includes("profile row exact drill"),
+    failures({
+      ...files,
+      page: files.page.replace("auditEventId, limit: 1", "limit: 1"),
+    }).includes("system page honors exact record"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "Audit event not found for this operating company.",
+        "No events",
+      ),
+    }).includes("honest selected-record states"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "onRetry={() => void exactAuditQuery.refetch()}",
+        "onRetry={() => undefined}",
+      ),
+    }).includes("honest selected-record states"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        'kind="user" id={exactAuditEvent.actor_user_id}',
+        'kind="unit" id={exactAuditEvent.actor_user_id}',
+      ),
+    }).includes("selected actor canonical drill"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        'name={row.subject_label} noun="Subject"',
+        'name={null} noun="Subject"',
+      ),
+    }).includes("spine subject human labels"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "el.subject_type = 'task' AND el.source_table = 'maintenance.work_orders' THEN 'work_order'",
+        "FALSE THEN 'work_order'",
+      ),
+    }).includes("historical task subjects derive canonical kind"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "wo.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("work-order subject same-company label"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "i.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("invoice subject same-company label"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "b.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("bill subject same-company label"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "l.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("load subject same-company join"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "d.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("driver subject same-company join"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "COALESCE(un.currently_leased_to_company_id, un.owner_company_id) = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("unit subject effective-company join"),
+    failures({
+      ...files,
+      migration: files.migration.replaceAll(
+        "'customer', 'vendor'",
+        "'customer_unused', 'vendor'",
+      ),
+    }).includes("customer spine subject allowed"),
+    failures({
+      ...files,
+      migration: files.migration.replaceAll(
+        "'customer', 'vendor'",
+        "'customer', 'vendor_unused'",
+      ),
+    }).includes("vendor spine subject allowed"),
+    failures({
+      ...files,
+      emitter: files.emitter.replace(
+        "events.log_event(",
+        "events.log_event_unused(",
+      ),
+    }).includes("shared master-data spine emitter"),
+    failures({
+      ...files,
+      customerRoute: files.customerRoute.replace(
+        'subject_type: "customer"',
+        'subject_type: "driver"',
+      ),
+    }).includes("customer create emits spine atomically"),
+    failures({
+      ...files,
+      vendorRoute: files.vendorRoute.replace(
+        'subject_type: "vendor"',
+        'subject_type: "driver"',
+      ),
+    }).includes("vendor create emits spine atomically"),
+    failures({
+      ...files,
+      driverRoute: files.driverRoute.replace(
+        'subject_type: "driver"',
+        'subject_type: "unit"',
+      ),
+    }).includes("driver create emits spine atomically"),
+    failures({
+      ...files,
+      unitRoute: files.unitRoute.replace(
+        /String\((?:resolvedLeasedId \?\? resolvedOwnerId|operatingCompanyId)\)/,
+        "String(resolvedOwnerId)",
+      ),
+    }).includes("unit create emits spine with effective company"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "c.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("customer subject same-company label"),
+    failures({
+      ...files,
+      spine: files.spine.replace(
+        "v.operating_company_id = el.operating_company_id",
+        "TRUE",
+      ),
+    }).includes("vendor subject same-company label"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        '"mdata.customers":',
+        '"mdata.customers_unused":',
+      ),
+    }).includes("customer source drill"),
+    failures({
+      ...files,
+      page: files.page.replace('"mdata.vendors":', '"mdata.vendors_unused":'),
+    }).includes("vendor source drill"),
+    failures({
+      ...files,
+      page: files.page.replace('"mdata.drivers":', '"mdata.drivers_unused":'),
+    }).includes("driver source drill"),
+    failures({
+      ...files,
+      page: files.page.replace('"mdata.units":', '"mdata.units_unused":'),
+    }).includes("unit source drill"),
+    failures({
+      ...files,
+      page: files.page
+        .replace("const SOURCE_ROUTES", "const BROKEN_SOURCE_ROUTES")
+        .replace(
+          "SOURCE_ROUTES[ev.source_table]",
+          "BROKEN_SOURCE_ROUTES[ev.source_table]",
+        )
+        .concat('\n// t.includes("bill")'),
+    }).includes("source routes never infer entity kind from table substrings"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/accounting/bill-payments/${id}",
+        "/accounting/bills/${id}",
+      ),
+    }).includes("bill-payment source uses its canonical record route"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        'journal_entry: "journal_entry"',
+        'journal_entry: "bill"',
+      ),
+    }).includes(
+      "journal-entry subject and source use the canonical record route",
+    ),
+    failures({
+      ...files,
+      page: files.page.replace(
+        'customer_payment: "payment"',
+        'customer_payment: "bill"',
+      ),
+    }).includes("customer-payment subject uses the canonical payment route"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/accounting/journal-entries/${id}",
+        "/accounting/bills/${id}",
+      ),
+    }).includes(
+      "journal-entry subject and source use the canonical record route",
+    ),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/banking/transactions?txn_id=${id}",
+        "/banking/transactions",
+      ),
+    }).includes(
+      "bank transaction and settlement sources use canonical query targets",
+    ),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/banking/reconciliation-workspace?session_id=${id}",
+        "/banking/reconciliation-workspace",
+      ),
+    }).includes("reconciliation-session source uses mounted workspace target"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/banking/transfers?group_id=${id}",
+        "/banking/transfers",
+      ),
+    }).includes("intercompany-group source opens the canonical group detail"),
+    failures({
+      ...files,
+      transfers: files.transfers.replace(
+        'searchParams.get("group_id")',
+        'searchParams.get("transfer_id")',
+      ),
+    }).includes("intercompany-group source opens the canonical group detail"),
+    failures({
+      ...files,
+      transfers: files.transfers.replace(
+        "openIntercompanyGroup(deepLinkGroupId)",
+        "openIntercompanyGroup('')",
+      ),
+    }).includes("intercompany-group source opens the canonical group detail"),
+    failures({
+      ...files,
+      page: files.page.replace(
+        "/driver-finance/cash-advance-requests?request_id=${id}",
+        "/driver-finance/cash-advance-requests",
+      ),
+    }).includes("cash-advance request source hydrates the exact scoped row"),
+    failures({
+      ...files,
+      cashAdvanceRequests: files.cashAdvanceRequests.replace(
+        'searchParams.get("request_id")',
+        'searchParams.get("driver_id")',
+      ),
+    }).includes("cash-advance request source hydrates the exact scoped row"),
+    failures({
+      ...files,
+      cashAdvanceRequests: files.cashAdvanceRequests.replace(
+        "cashAdvanceRequestsOfficeApi.get(companyId, requestIdFromUrl)",
+        "cashAdvanceRequestsOfficeApi.listPending(companyId)",
+      ),
+    }).includes("cash-advance request source hydrates the exact scoped row"),
+    failures({
+      ...files,
+      cashAdvanceRequests: files.cashAdvanceRequests.replace(
+        'String(row.id ?? "") === requestIdFromUrl',
+        'String(row.id ?? "") === ""',
+      ),
+    }).includes("cash-advance request source hydrates the exact scoped row"),
+    failures({ ...files, load: "" }).includes(
+      "all canonical history mounts remain",
+    ),
+    failures({
+      ...files,
+      matrix: files.matrix.replace(
+        '"id": "audit.trail"',
+        '"id": "audit.trail.broken"',
+      ),
+    }).includes("audit.trail must require reverse_link"),
+    failures({
+      ...files,
+      matrix: files.matrix.replace(
+        '"route_hint": "/audit/trail"',
+        '"route_hint": "/broken"',
+      ),
+    }).includes("audit.trail must name mounted route /audit/trail"),
+    failures({
+      ...files,
+      self: files.self.replace(
+        HEADER,
+        HEADER.replace('"vertical":"class-sweep"', '"vertical":"broken"'),
+      ),
+    }).includes("exact System audit header missing"),
+    failures({
+      ...files,
+      feed: JSON.stringify({
+        entries: [{ guard: "scripts/verify-system-audit-record-reverse.mjs" }],
+      }),
+    }).includes("manual feed duplicates exact System ownership"),
   ];
-  if (checks.some((ok) => !ok)) { console.error(`verify-system-audit-record-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-system-audit-record-reverse selftest PASS — 46/46 runtime/evidence mutations red"); process.exit(0);
+  if (checks.some((ok) => !ok)) {
+    console.error(
+      `verify-system-audit-record-reverse selftest FAIL — mutations ${checks
+        .map((ok, i) => (ok ? null : i + 1))
+        .filter(Boolean)
+        .join(", ")} stayed green`,
+    );
+    process.exit(1);
+  }
+  console.log(
+    "verify-system-audit-record-reverse selftest PASS — 46/46 runtime/evidence mutations red",
+  );
+  process.exit(0);
 }
 const missing = failures();
-if (missing.length) { console.error(`verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }
-console.log("verify-system-audit-record-reverse PASS — exact audit drills plus atomic customer/vendor/driver/unit spine emits and same-company labels are wired");
+if (missing.length) {
+  console.error(
+    `verify-system-audit-record-reverse FAIL — ${missing.join(", ")}`,
+  );
+  process.exit(1);
+}
+console.log(
+  "verify-system-audit-record-reverse PASS — exact audit drills plus atomic customer/vendor/driver/unit spine emits and same-company labels are wired",
+);
