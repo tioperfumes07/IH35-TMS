@@ -309,6 +309,8 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           `,
           [params.data.id, company.data.operating_company_id, body.data.voided_reason]
         );
+        const voided = voidRes.rows[0];
+        if (!voided) return null;
         await appendCrudAudit(
           client,
           user.uuid,
@@ -322,7 +324,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           "info",
           "P7-SAF-DRIVER-MED"
         );
-        return voidRes.rows[0];
+        return voided;
       }
 
       const patchRes = await client.query(
@@ -347,6 +349,8 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
           body.data.notes ?? null,
         ]
       );
+      const patched = patchRes.rows[0];
+      if (!patched) return null;
 
       await appendCrudAudit(
         client,
@@ -361,7 +365,7 @@ export async function registerSafetyMedicalCardsRoutes(app: FastifyInstance) {
         "info",
         "P7-SAF-DRIVER-MED"
       );
-      return patchRes.rows[0];
+      return patched;
     });
 
     if (!updated) return reply.code(404).send({ error: "medical_card_not_found" });
