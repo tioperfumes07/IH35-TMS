@@ -5,9 +5,8 @@
 // and (via insurance-link.service) to the insurance.claim it produced, so an
 // auditor can trace "damage detected -> claim filed -> approved -> settled".
 //
-// All functions operate on an already tenant-scoped client (the caller is
-// expected to have run `SET LOCAL app.operating_company_id = ...`). RLS on
-// safety.incidents and safety.damage_continuity_chains enforces isolation.
+// All functions also carry explicit company predicates. Owner sessions can see
+// every active company, so RLS/session GUCs are defense-in-depth, never the scope boundary.
 
 export type Queryable = {
   query: <R = Record<string, unknown>>(
@@ -91,10 +90,10 @@ export async function startChain(
       FROM safety.incidents
       WHERE id = $1::uuid
         AND incident_type = 'damage_report'
-        AND operating_company_id::text = current_setting('app.operating_company_id', true)
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [params.initialDamageId]
+    [params.initialDamageId, params.operatingCompanyId]
   );
   const damageRow = damage.rows[0];
   if (!damageRow) return { kind: "damage_not_found" };
@@ -126,7 +125,7 @@ export async function startChain(
       params.operatingCompanyId,
       params.initialDamageId,
       Number(damageRow.damage_amount_cents ?? 0),
-      auditEvent("chain_started", { initial_damage_id: params.initialDamageId }),
+      auditEvent("chain_started", { operating_company_id: params.operatingCompanyId, initial_damage_id: params.initialDamageId }),
     ]
   );
   const chain = inserted.rows[0];
@@ -138,8 +137,9 @@ export async function startChain(
           final_resolution_status = COALESCE(final_resolution_status, 'open'),
           updated_at = now()
       WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
     `,
-    [params.initialDamageId, chain.uuid]
+    [params.initialDamageId, chain.uuid, params.operatingCompanyId]
   );
 
   return { kind: "ok", chain };
@@ -159,9 +159,10 @@ export async function appendDamage(
       SELECT uuid::text, initial_damage_id::text
       FROM safety.damage_continuity_chains
       WHERE uuid = $1::uuid
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [params.chainId]
+    [params.chainId, params.operatingCompanyId]
   );
   const chainRow = chainRes.rows[0];
   if (!chainRow) return { kind: "chain_not_found" };
@@ -172,10 +173,10 @@ export async function appendDamage(
       FROM safety.incidents
       WHERE id = $1::uuid
         AND incident_type = 'damage_report'
-        AND operating_company_id::text = current_setting('app.operating_company_id', true)
+        AND operating_company_id = $2::uuid
       LIMIT 1
     `,
-    [params.relatedDamageId]
+    [params.relatedDamageId, params.operatingCompanyId]
   );
   const damageRow = damage.rows[0];
   if (!damageRow) return { kind: "damage_not_found" };
@@ -190,8 +191,9 @@ export async function appendDamage(
           parent_incident_id = $3::uuid,
           updated_at = now()
       WHERE id = $1::uuid
+        AND operating_company_id = $4::uuid
     `,
-    [params.relatedDamageId, params.chainId, chainRow.initial_damage_id]
+    [params.relatedDamageId, params.chainId, chainRow.initial_damage_id, params.operatingCompanyId]
   );
 
   const updated = await client.query<DamageContinuityChain>(
@@ -201,13 +203,15 @@ export async function appendDamage(
             SELECT SUM(i.damage_amount_cents)::bigint
             FROM safety.incidents i
             WHERE i.continuity_chain_id = c.uuid
+              AND i.operating_company_id = c.operating_company_id
           ), 0),
           ${auditEventSql(2)},
           updated_at = now()
       WHERE c.uuid = $1::uuid
+        AND c.operating_company_id = $3::uuid
       RETURNING ${CHAIN_COLUMNS}
     `,
-    [params.chainId, auditEvent("damage_appended", { related_damage_id: params.relatedDamageId })]
+    [params.chainId, auditEvent("damage_appended", { operating_company_id: params.operatingCompanyId, related_damage_id: params.relatedDamageId }), params.operatingCompanyId]
   );
 
   return { kind: "ok", chain: updated.rows[0] };
@@ -231,13 +235,15 @@ export async function closeChain(
           ${auditEventSql(4)},
           updated_at = now()
       WHERE uuid = $1::uuid
+        AND operating_company_id = $5::uuid
       RETURNING ${CHAIN_COLUMNS}
     `,
     [
       params.chainId,
       params.finalResolutionStatus,
       params.totalActualCostCents ?? null,
-      auditEvent("chain_closed", { final_resolution_status: params.finalResolutionStatus }),
+      auditEvent("chain_closed", { operating_company_id: params.operatingCompanyId, final_resolution_status: params.finalResolutionStatus }),
+      params.operatingCompanyId,
     ]
   );
   const chain = updated.rows[0];
@@ -249,8 +255,9 @@ export async function closeChain(
       SET final_resolution_status = $2,
           updated_at = now()
       WHERE continuity_chain_id = $1::uuid
+        AND operating_company_id = $3::uuid
     `,
-    [params.chainId, params.finalResolutionStatus]
+    [params.chainId, params.finalResolutionStatus, params.operatingCompanyId]
   );
 
   return { kind: "ok", chain };

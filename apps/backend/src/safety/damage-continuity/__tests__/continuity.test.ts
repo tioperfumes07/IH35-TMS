@@ -55,11 +55,12 @@ describe("damage continuity service (GAP-38)", () => {
 
     expect(result.kind).toBe("ok");
     if (result.kind === "ok") expect(result.chain.uuid).toBe(CHAIN_ID);
-    // RLS: the damage lookup is tenant-scoped via app.operating_company_id.
+    // Explicit company scope is load-bearing; Owner sessions cannot use RLS as the boundary.
     const damageLookup = query.mock.calls.find((c) =>
       String(c[0]).includes("FROM safety.incidents")
     );
-    expect(String(damageLookup?.[0])).toContain("current_setting('app.operating_company_id', true)");
+    expect(String(damageLookup?.[0])).toContain("operating_company_id = $2::uuid");
+    expect(damageLookup?.[1]).toEqual([DAMAGE_ID, COMPANY]);
   });
 
   it("startChain returns damage_not_found when the incident is missing", async () => {
