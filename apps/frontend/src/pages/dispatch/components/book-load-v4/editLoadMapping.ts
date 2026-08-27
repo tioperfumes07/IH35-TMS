@@ -7,6 +7,9 @@
  *    commodity/weight (cargo_weight_lbs)/reefer setpoint (reefer_setpoint_temp_f) were REMOVED
  *    2026-08-27 (DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500) — mdata.loads never had those columns,
  *    so the original "no migration" ADD silently 500'd every Edit save that touched them.
+ *    RESTORED (ACCT-F9508, migration 202613220000): commodity + cargo_weight_lbs are real columns now
+ *    — round-tripped again below. reefer_setpoint_temp_f stays excluded (never a real column name;
+ *    the real reefer setpoint field is reefer_temp_f, already round-tripped separately).
  *    Still EXCLUDED (no column / gated / forbidden): load_type, trailer_type,
  *    and HAZMAT (forbidden by §4, Jorge ruling 2026-06-22). Excluded fields are NEVER prefilled-then-saved
  *    and NEVER in the PATCH body.
@@ -118,10 +121,10 @@ export function buildEditPrefill(load: LoadDetail): AnyValues {
     team_id: str(load.team_id),
     assigned_primary_driver_id: str(load.assigned_primary_driver_id),
     assigned_secondary_driver_id: str(load.assigned_secondary_driver_id),
-    // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/weight_lbs/reefer_setpoint
-    // prefill REMOVED — mdata.loads has never had commodity/cargo_weight_lbs/reefer_setpoint_temp_f
-    // columns (verified live, no migration ever added them), so these were always blank on prefill and
-    // 500'd the whole PATCH the moment a user touched them. See docs/audit/GUARD-WORKORDERS.md.
+    // ACCT-F9508 (migration 202613220000): commodity + cargo_weight_lbs are real columns again —
+    // prefilled and round-tripped. reefer_setpoint_temp_f stays excluded (never real; see reefer_temp_f).
+    commodity: str(load.commodity),
+    weight_lbs: num(load.cargo_weight_lbs),
     trip_type: str(load.trip_type),
     // Block 7 (migration 202606221000): pieces + customer PO round-trip.
     pieces: str(load.piece_count),
@@ -169,9 +172,13 @@ const SCALAR_FIELDS: Array<[string, string, (v: AnyValues) => unknown]> = [
   ["miles_shortest", "miles_shortest", (v) => num(v.miles_shortest)],
   ["miles_deadhead", "miles_deadhead", (v) => num(v.miles_deadhead)],
   ["assigned_unit_id", "assigned_unit_id", (v) => str(v.assigned_unit_id) || null],
-  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/weight_lbs/reefer_setpoint
-  // entries REMOVED — the backend PATCH schema no longer accepts them (mdata.loads has no matching
-  // columns; the old wiring 500'd any Edit save that touched these fields).
+  // ACCT-F9508 (migration 202613220000): commodity + cargo_weight_lbs restored — the backend PATCH
+  // schema accepts them again now that the columns are real (dispatch/loads.routes.ts).
+  ["commodity", "commodity", (v) => str(v.commodity) || null],
+  ["weight_lbs", "cargo_weight_lbs", (v) => {
+    const n = Number(v.weight_lbs);
+    return Number.isFinite(n) && n >= 0 ? Math.round(n) : null;
+  }],
   // trip_type is a non-nullable enum (NB/TR/SB) — omit (undefined) when blank so it's never cleared to null.
   ["trip_type", "trip_type", (v) => str(v.trip_type) || undefined],
   // Block 7 (migration 202606221000): pieces (form text) → piece_count (int) ; customer PO text.

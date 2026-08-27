@@ -360,12 +360,17 @@ const updateDispatchLoadBodySchema = z.object({
   miles_shortest: z.number().int().min(0).nullable().optional(),
   miles_deadhead: z.number().int().min(0).nullable().optional(),
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
-  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500: commodity/cargo_weight_lbs/reefer_setpoint_temp_f
-  // were REMOVED here (2026-08-27) — mdata.loads has never had these columns (verified live, no migration
-  // ever added them), so accepting them here fed update-load.service.ts's SCALAR_COLUMNS a direct write to
-  // a nonexistent column, 42703-ing any PATCH that touched them (including unrelated dirty fields in the
-  // same request). No per-load storage exists anywhere for these 3 concepts today; re-adding them requires
-  // a real migration, not a schema/route change. See docs/audit/GUARD-WORKORDERS.md.
+  // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/cargo_weight_lbs/
+  // reefer_setpoint_temp_f were REMOVED here because mdata.loads had never had these columns
+  // (verified live, no migration ever added them), so accepting them fed update-load.service.ts's
+  // SCALAR_COLUMNS a direct write to a nonexistent column, 42703-ing any PATCH that touched them.
+  // RESTORED (ACCT-F9508, migration 202613220000): commodity + cargo_weight_lbs now exist for real
+  // — this is the sibling CREATE-side finding (DISPATCH-LOAD-COMMODITY-CREATE-SILENT-NOOP), same
+  // root cause, now fixed at the schema level instead of band-aided. reefer_setpoint_temp_f is
+  // deliberately NOT restored: it was ALSO a false-premise column name — the real reefer setpoint
+  // column is reefer_temp_f (line below), already fully wired.
+  commodity: z.string().trim().max(120).nullable().optional(),
+  cargo_weight_lbs: z.number().int().min(0).nullable().optional(),
   // Block 7 (migration 202606221000, Jorge-approved): pieces + customer PO round-trip in Edit.
   piece_count: z.number().int().min(0).nullable().optional(),
   customer_po_number: z.string().trim().max(120).nullable().optional(),
@@ -688,7 +693,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             ml.miles_shortest AS miles_shortest,
             ml.miles_practical AS miles_practical,
             ml.loaded_miles AS loaded_miles,
-            ml.miles_deadhead AS miles_deadhead
+            ml.miles_deadhead AS miles_deadhead,
+            -- ACCT-F9508 (migration 202613220000): view has no commodity/cargo_weight_lbs cols (same
+            -- reasoning as trip_type below — read from mdata.loads via the already-joined ml alias
+            -- rather than widening the shared view). Feeds DispatchBoard/DispatchKanban's Commodity
+            -- column + isReeferCommodity() badge, previously always "—"/false (no source column existed).
+            ml.commodity AS commodity,
+            ml.cargo_weight_lbs AS cargo_weight_lbs
           FROM views.dispatch_load_with_driver_status l
           LEFT JOIN mdata.customers c ON c.id = l.customer_id
                                 AND c.operating_company_id = l.operating_company_id
@@ -829,6 +840,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
                  ml.miles_deadhead AS miles_deadhead,
+                 -- ACCT-F9508 (migration 202613220000): same trip_type pattern above — view has no
+                 -- commodity/cargo_weight_lbs cols, read from mdata.loads via ml rather than widening
+                 -- the shared view. Feeds LoadDetailDrawer + the Edit wizard's prefill (editLoadMapping.ts).
+                 ml.commodity AS commodity,
+                 ml.cargo_weight_lbs AS cargo_weight_lbs,
                  tr.id AS trailer_id,
                  tr.equipment_type AS trailer_equipment_type,
                  tr.equipment_number AS trailer_number,

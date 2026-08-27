@@ -1570,9 +1570,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           late_delivery_risk_y_n, late_delivery_est_deduction_cents, late_delivery_reason,
           ocr_source_pdf_r2_key, miles_practical, miles_shortest, miles_deadhead,
           customer_wo_number, pickup_number, border_routing, is_sample_data, loaded_miles,
-          load_trailer_equipment_id
+          load_trailer_equipment_id, commodity, cargo_weight_lbs
         )
-        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43)
+        VALUES ($1,$2,$3,$4,$5,'USD',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$40,$41,$42,$43,$44,$45)
         RETURNING *
       `,
       [
@@ -1626,6 +1626,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         // and is deliberately NOT decided here.
         input.miles_shortest ?? null,
         loadTrailerEquipmentId,
+        // ACCT-F9508-DISPATCH-LOAD-COMMODITY-CREATE-SILENT-NOOP: input.commodity/input.weight_lbs
+        // were declared on this interface and accepted by the create schema but never read here —
+        // BookLoadModalV4's live Commodity/Weight inputs were silently discarded on every save.
+        // Migration 202613220000 adds the real columns; normalize empty-string commodity to NULL
+        // (the schema allows "" through max(120), the column should not store it as a real value).
+        input.commodity?.trim() || null,
+        input.weight_lbs ?? null,
       ]
     );
     const load = loadRes.rows[0] as Record<string, unknown>;
