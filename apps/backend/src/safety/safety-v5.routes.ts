@@ -187,7 +187,17 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
               },
             ]
           );
-          await client.query(`UPDATE safety.dot_inspections SET spawned_wo_id = $2 WHERE id = $1`, [inspection.id, spawnedWo.woUuid]);
+          const linkedInspection = await client.query(
+            `UPDATE safety.dot_inspections
+                SET spawned_wo_id = $2
+              WHERE id = $1
+                AND operating_company_id = $3::uuid
+                AND spawned_wo_id IS NULL`,
+            [inspection.id, spawnedWo.woUuid, query.data.operating_company_id]
+          );
+          if ((linkedInspection.rowCount ?? linkedInspection.rows.length) !== 1) {
+            throw new Error("dot_inspection_work_order_backlink_failed");
+          }
           await appendCrudAudit(
             client,
             user.uuid,
