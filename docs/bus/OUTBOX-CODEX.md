@@ -1213,3 +1213,5 @@ Codex | ACK | GO-1927 | PORT=9226 | SHA=9f7ad77 | LIVE WALK=/drivers+/fleet+/saf
 Codex | WORKING | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK | LIVE=USMCA picker showed 5 canonical types ×3 | FIX=explicit FE+BE company scope + company-keyed cache | GUARD=11/11 | NEXT=FAST-MERGE then reread INBOX | GO
 Codex | SHIPPED | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK | PR=#16412 @ c6a71537de | GUARD=PASS+11/11 | LIVE=post-deploy recheck | NEXT=DRV-F6703 | GO
 Codex | WORKING | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | FIX=selected-company equipment type+line item reads/writes across qualification lifecycle | GUARD=40/40+13/13 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | GO-1927 | FO=DRV-F6703-EQUIPMENT-QUALIFICATION-CATALOG-IDOR | PR=#16417 @ a8c1b76945 | GUARD=40/40+13/13+full-gate | LIVE=post-deploy recheck | NEXT=assigned unique live/source sweep | GO
+Codex | LIVE PASS | GO-1927 | FO=DRV-F6702 | SHA=1c7969f | picker=+Create first; Dry Van/Flatbed/Reefer/Oversize/Pneumatic exactly once; 4 USMCA TEST rows | mutation=none | NEXT=Fleet/Driver adjacent consumer sweep | GO
