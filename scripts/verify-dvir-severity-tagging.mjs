@@ -59,6 +59,14 @@ contains("apps/backend/src/maintenance/pre-flight/dvir-severity.service.ts", sev
   { pattern: /canOverrideMajor/, label: "Manager+ RBAC gate" },
   { pattern: /appendCrudAudit/, label: "audit trail" },
 ]);
+function overrideAuditProblems(source) {
+  const eventIndex = source.indexOf('"safety.dvir.severity_override"');
+  if (eventIndex < 0) return ["missing safety.dvir.severity_override audit"];
+  return source.slice(eventIndex, eventIndex + 520).includes("operating_company_id: args.operatingCompanyId")
+    ? []
+    : ["severity override audit omits operating_company_id"];
+}
+failures.push(...overrideAuditProblems(severityService));
 
 const routingService = read("apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts");
 contains("apps/backend/src/maintenance/pre-flight/dvir-routing.service.ts", routingService, [
@@ -152,7 +160,15 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:dvir-severity-tagging SELFTEST PASS — ${routingAuditEvents.length}/${routingAuditEvents.length} tenantless audit mutations red`);
+  const overrideEventIndex = severityService.indexOf('"safety.dvir.severity_override"');
+  const overrideCompany = "operating_company_id: args.operatingCompanyId";
+  const overrideCompanyIndex = severityService.indexOf(overrideCompany, overrideEventIndex);
+  const overrideMutant = `${severityService.slice(0, overrideCompanyIndex)}PLANTED_SCOPE${severityService.slice(overrideCompanyIndex + overrideCompany.length)}`;
+  if (overrideAuditProblems(overrideMutant).length === 0) {
+    console.error("verify:dvir-severity-tagging SELFTEST FAILED — safety.dvir.severity_override");
+    process.exit(1);
+  }
+  console.log(`verify:dvir-severity-tagging SELFTEST PASS — ${routingAuditEvents.length + 1}/${routingAuditEvents.length + 1} tenantless audit mutations red`);
   process.exit(0);
 }
 
