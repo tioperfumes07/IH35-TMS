@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0521 | PORT=9222 | NOW=lead | SHA=13604db-until-168257680f-lands | DEPLOY=dep-da810bgae00c73ade7gg IN FLIGHT | leftover-16=unique FINDING not recertify | GO
 Cursor | overflow | VENDOR-REACTIVATE-PATCH-404 lucia PATCH+POST /reactivate | Devin re-verify after next healthz | CC-3 do not remake | GO
 Cursor | LEAD | GO-2158 | live e3ae7a7 | routed Devin reactivate → CC-3 | SAFER #16401 should be on this SHA | no second deploy | GO
 Cursor | LEAD | 2026-08-26T21:36CT | GO-2136 | owner=seats idle work now | packet PASTE-ALL-SEATS-GO-2026-08-26-2136.md | CC-1 NOW=escrow-residual | stale worktrees deleted | nobody else trigger_deploy | GO

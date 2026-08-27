@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-27T10:21Z | GO-0521 | ACK OUTBOX · unique drivers/fleet/safety · never restamp U14 · packet PASTE-ALL-SEATS-GO-2026-08-27-0521.md | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16596 @ dcf12ef964 FLEET-F6849 | WORKING FLEET-F6850 default driver↔truck atomic assignment | guard=9/9 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16595 @ 6191d771fa FLEET-F6848 | WORKING FLEET-F6849 unit-plate atomic parent+identity | guard=6/6 | NEXT=FAST-MERGE | GO
 Codex | ACK | GO-2158 | PORT=9226 | SHIPPED #16594 @ 7a8126421f SAFETY-F6847 | WORKING FLEET-F6848 unit-photo company parent+identity | guard=6/6 | NEXT=FAST-MERGE | GO
