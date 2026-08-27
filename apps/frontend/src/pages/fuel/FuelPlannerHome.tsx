@@ -43,6 +43,7 @@ import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { CappedListNotice } from "../../components/CappedListNotice";
+import { Combobox } from "../../components/shared/Combobox";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 
@@ -65,8 +66,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const [importOpen, setImportOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
+  const activeRoutePageSize = 25;
+  const [activeRoutePage, setActiveRoutePage] = useState(1);
+  const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);
   useEffect(() => {
     actionGenerationRef.current += 1;
+    setActiveRoutePage(1);
+    setSelectedActiveRouteId(null);
   }, [companyId]);
   // ACCT-F5048 — reverse "Open Fuel History" carries ?trailer_id=|unit_id=|load_id=|driver_id=
   // LST-F5172 — visible EntityPicker filters (URL-only is not reverse chrome).
@@ -146,8 +152,11 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     refetchInterval: 60_000,
   });
   const activeRoutesQuery = useQuery({
-    queryKey: ["fuel", "planner", "active-routes", companyId],
-    queryFn: () => getFuelActiveRoutes(companyId),
+    queryKey: ["fuel", "planner", "active-routes", companyId, activeRoutePage],
+    queryFn: () => getFuelActiveRoutes(companyId, {
+      limit: activeRoutePageSize,
+      offset: (activeRoutePage - 1) * activeRoutePageSize,
+    }),
     enabled: Boolean(companyId),
   });
   const settingsQuery = useQuery({
@@ -191,7 +200,22 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     enabled: Boolean(companyId) && tab === "history",
   });
 
-  const activeRoute = activeRoutesQuery.data?.routes?.[0] ?? null;
+  const activeRoutes = activeRoutesQuery.data?.routes ?? [];
+  const activeRouteTotal = activeRoutesQuery.data?.total_count ?? 0;
+  const activeRoutePageCount = Math.max(1, Math.ceil(activeRouteTotal / activeRoutePageSize));
+  const activeRoute = activeRoutes.find((route) => route.id === selectedActiveRouteId) ?? activeRoutes[0] ?? null;
+  const activeRouteOptions = activeRoutes.map((route) => ({
+    value: route.id,
+    label: `${route.load_display_id || route.load_id} · ${route.unit_display_id || "No unit"} · ${route.driver_full_name || route.driver_display_id || "No driver"}`,
+  }));
+  useEffect(() => {
+    if (activeRoutePage > activeRoutePageCount) setActiveRoutePage(activeRoutePageCount);
+  }, [activeRoutePage, activeRoutePageCount]);
+  useEffect(() => {
+    if (selectedActiveRouteId && !activeRoutes.some((route) => route.id === selectedActiveRouteId)) {
+      setSelectedActiveRouteId(null);
+    }
+  }, [activeRoutes, selectedActiveRouteId]);
   const detailQuery = useQuery({
     queryKey: ["fuel", "planner", "recommendation-detail", companyId, activeRoute?.id ?? ""],
     queryFn: () => getFuelRecommendationDetail(activeRoute!.id, companyId),
@@ -211,7 +235,6 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
       );
       void queryClient.invalidateQueries({
         queryKey: ["fuel", "planner", "active-routes", input.companyId],
-        exact: true,
       });
       void queryClient.invalidateQueries({
         queryKey: ["fuel", "planner", "recommendation-detail", input.companyId, input.routeId],
@@ -511,6 +534,37 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         ) : (
         <>
           <FuelKpiRow dashboard={dashboardQuery.data} lovesSyncStatus={lovesSyncQuery.data} />
+          <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-active-route-selector">
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="min-w-72 flex-1 text-xs font-semibold text-slate-700">
+                Active load plan
+                <Combobox
+                  value={activeRoute?.id ?? null}
+                  onChange={setSelectedActiveRouteId}
+                  options={activeRouteOptions}
+                  placeholder={activeRoutesQuery.isLoading ? "Loading active plans…" : "Select an active load plan"}
+                  loading={activeRoutesQuery.isLoading}
+                  disabled={activeRoutesQuery.isError || activeRoutes.length === 0}
+                  className="mt-1"
+                />
+              </label>
+              <div className="flex items-center gap-2 text-xs text-slate-600">
+                <ActionButton
+                  disabled={activeRoutePage <= 1 || activeRoutesQuery.isFetching}
+                  onClick={() => setActiveRoutePage((page) => Math.max(1, page - 1))}
+                >
+                  Previous plans
+                </ActionButton>
+                <span>Page {activeRoutePage} of {activeRoutePageCount} · {activeRouteTotal} active plans</span>
+                <ActionButton
+                  disabled={activeRoutePage >= activeRoutePageCount || activeRoutesQuery.isFetching}
+                  onClick={() => setActiveRoutePage((page) => Math.min(activeRoutePageCount, page + 1))}
+                >
+                  Next plans
+                </ActionButton>
+              </div>
+            </div>
+          </section>
           <ActiveTripStrip route={activeRoute} />
           <HosRulesBox
             maxMilesPerShift={Number(settingsQuery.data?.max_miles_per_shift ?? 720)}
