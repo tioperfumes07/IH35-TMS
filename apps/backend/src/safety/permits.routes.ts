@@ -256,7 +256,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return { renewal_reminder: updated };
   });
 
-  app.post("/api/v1/safety/permits", async (req, reply) => {
+  app.post("/api/v1/safety/permits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -264,7 +264,19 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      const res = await client.query(
+      if (body.data.unit_id) {
+        const unit = await client.query(
+          `SELECT id
+             FROM mdata.units
+            WHERE id = $1::uuid
+              AND deactivated_at IS NULL
+              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid
+            LIMIT 1`,
+          [body.data.unit_id, body.data.operating_company_id]
+        );
+        if (!unit.rows[0]) return { kind: "unit_not_found" as const };
+      }
+      const res = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.permits (
             operating_company_id,
@@ -296,25 +308,25 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
         ]
       );
       const row = res.rows[0];
-      if (!row) return null;
+      if (!row?.id) throw new Error("safety_permit_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.permit.created",
         {
           resource_type: "safety.permits",
-          resource_id: (row as { id?: string }).id ?? null,
+          resource_id: row.id,
           operating_company_id: body.data.operating_company_id,
           permit_type: body.data.permit_type,
         },
         "info",
         "A23-13"
       );
-      return mapPermitRow(row as Record<string, unknown>);
+      return { kind: "ok" as const, row: mapPermitRow(row) };
     });
 
-    if (!created) return reply.code(500).send({ error: "create_failed" });
-    return reply.code(201).send({ permit: created });
+    if (created.kind === "unit_not_found") return reply.code(404).send({ error: "mdata_unit_not_found" });
+    return reply.code(201).send({ permit: created.row });
   });
 
   app.patch("/api/v1/safety/permits/:id", async (req, reply) => {
