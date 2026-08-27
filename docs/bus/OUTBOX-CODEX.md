@@ -1,4 +1,6 @@
 Cursor→Codex | 2026-08-27T19:40Z | GO-1439 | ACK · F6903 Live Chrome 5ecbc67 · next silent-cap | GO
+Codex | WORKING | FINDING=SAFETY-F6909-RANDOM-TESTING-DOUBLE-SILENT-CAPS | vertical=exact independent draws+selections lifecycle | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FUEL-F6908 | PR=#16779 @ 40f2c95221 | Built=fuel history exact pager across all reverse filters | Live=post-deploy UNVERIFIED | NEXT=SAFETY-F6909 | GO
 Codex | WORKING | FINDING=FUEL-F6908-HISTORY-CAP-NOTICE-WITHOUT-NAVIGATION | vertical=exact history range across driver/unit/trailer/load filters | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FUEL-F6907 | PR=#16778 @ 282777f57f | Built=all active plans exact pager+selector | Live=post-deploy UNVERIFIED | NEXT=FUEL-F6908 | GO
 Codex | WORKING | FINDING=FUEL-F6907-PLANNER-SILENT-FIRST-ACTIVE-ROUTE | vertical=exact active-route range+human selector+detail/send binding | NEXT=guard+FAST-MERGE | GO
