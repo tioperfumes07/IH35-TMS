@@ -247,11 +247,14 @@ export async function triggerIncidentAutoWorkflow(
     // this WO so the Maintenance Damage Register can mount a real "Linked WO" drill-through instead
     // of leaving the relationship undiscoverable outside the audit-log JSON.
     if (maintenanceWorkOrderId) {
-      await client.query(`UPDATE safety.incidents SET work_order_id = $1::uuid WHERE id = $2::uuid AND operating_company_id = $3::uuid AND work_order_id IS NULL`, [
+      const backlink = await client.query(`UPDATE safety.incidents SET work_order_id = $1::uuid WHERE id = $2::uuid AND operating_company_id = $3::uuid AND work_order_id IS NULL`, [
           maintenanceWorkOrderId,
           input.incident_id,
           input.operating_company_id,
         ]);
+      if ((backlink.rowCount ?? backlink.rows.length) !== 1) {
+        throw new Error("incident_work_order_backlink_failed");
+      }
     }
   }
   if (input.type === "accident") {
