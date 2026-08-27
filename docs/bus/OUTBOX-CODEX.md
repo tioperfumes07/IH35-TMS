@@ -1210,3 +1210,4 @@ Codex | WORKING | FO=DRV-F6296-SAFETY-SCHEDULER-FLEET-GRID-EXCLUDES-SHARED-DRIVE
 Codex | WORKING | FO=FLT-F6297-UNIT-PERMIT-EXPIRY-SCAN-HIDES-OWNER-WHEN-LEASED | MODULE=fleet | NOW=guard+test+FAST-MERGE | GO
 Codex | ACK | GO-1405 | PORT=9226 | NOW=hop.assign | SHA=c46d592 | GO
 Codex | ACK | GO-1927 | PORT=9226 | SHA=9f7ad77 | LIVE WALK=/drivers+/fleet+/safety+/fuel+/maintenance+/insurance | PASS=no 500/dead/silent; canonical creates and reverse drills opened; no mutation submitted | SHIPPED=#16393,#16396,#16398 | NEXT=continue assigned live leaves | GO
+Codex | WORKING | GO-1927 | FO=DRV-F6702-EQUIPMENT-TYPE-PICKER-CROSS-OPCO-LEAK | LIVE=USMCA picker showed 5 canonical types ×3 | FIX=explicit FE+BE company scope + company-keyed cache | GUARD=11/11 | NEXT=FAST-MERGE then reread INBOX | GO

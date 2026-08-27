@@ -116,7 +116,7 @@ function ensureAdmin(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/equipment-types", async (req, reply) => {
+  app.get("/api/v1/catalogs/equipment-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -129,8 +129,9 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         throw error;
       });
       if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
-      // Reads are entity-scoped by FORCE RLS via the GUC set above; the join/filters are unchanged.
-      const filter = includeInactive ? "" : "WHERE et.is_active = true AND et.deactivated_at IS NULL";
+      // Owner sessions can bypass RLS, so the company predicate is load-bearing even though the
+      // company GUC is also set. Keep child templates on the same explicit company boundary.
+      const activeFilter = includeInactive ? "" : "AND et.is_active = true AND et.deactivated_at IS NULL";
       const res = await client.query(
         `
           SELECT
@@ -151,17 +152,21 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
               '[]'::json
             ) AS line_items
           FROM catalogs.equipment_types et
-          LEFT JOIN catalogs.equipment_line_item_templates lit ON lit.equipment_type_id = et.id
-          ${filter}
+          LEFT JOIN catalogs.equipment_line_item_templates lit
+            ON lit.equipment_type_id = et.id
+           AND lit.operating_company_id = $1
+          WHERE et.operating_company_id = $1
+          ${activeFilter}
           GROUP BY et.id
           ORDER BY et.sort_order, et.name
-        `
+        `,
+        [operatingCompanyId]
       );
       return { equipment_types: res.rows };
     });
   });
 
-  app.get<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id", async (req, reply) => {
+  app.get<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = idParamSchema.safeParse(req.params);
@@ -195,19 +200,22 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
               '[]'::json
             ) AS line_items
           FROM catalogs.equipment_types et
-          LEFT JOIN catalogs.equipment_line_item_templates lit ON lit.equipment_type_id = et.id
+          LEFT JOIN catalogs.equipment_line_item_templates lit
+            ON lit.equipment_type_id = et.id
+           AND lit.operating_company_id = $2
           WHERE et.id = $1
+            AND et.operating_company_id = $2
             AND et.deactivated_at IS NULL
           GROUP BY et.id
         `,
-        [parsed.data.id]
+        [parsed.data.id, operatingCompanyId]
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "not_found" });
       return { equipment_type: res.rows[0] };
     });
   });
 
-  app.post("/api/v1/catalogs/equipment-types", async (req, reply) => {
+  app.post("/api/v1/catalogs/equipment-types", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsed = createEquipmentTypeSchema.safeParse(req.body ?? {});
@@ -231,7 +239,8 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.equipment_types et
-          WHERE et.deactivated_at IS NULL
+          WHERE et.operating_company_id = $3
+            AND et.deactivated_at IS NULL
             AND (
               regexp_replace(
                 lower(trim(replace(replace(et.code, '_', '-'), '  ', ' '))),
@@ -246,7 +255,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
             )
           LIMIT 1
         `,
-        [normalizedCode, normalizedName]
+        [normalizedCode, normalizedName, operatingCompanyId]
       );
       if (collisionRes.rows.length > 0) {
         return reply.code(409).send({ error: "equipment_type_name_collision" });
@@ -282,6 +291,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
           {
             resource_id: newId,
             resource_type: "catalogs.equipment_types",
+            operating_company_id: operatingCompanyId,
             code: parsed.data.code,
             line_item_count: parsed.data.line_items.length,
           },
@@ -298,7 +308,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id", async (req, reply) => {
+  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params);
@@ -327,9 +337,11 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(user.uuid);
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
-      // WHERE id is entity-scoped by FORCE RLS via the GUC — a cross-entity id simply matches no row.
+      const idParameter = values.length;
+      values.push(operatingCompanyId);
+      const companyParameter = values.length;
       const res = await client.query(
-        `UPDATE catalogs.equipment_types SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING id`,
+        `UPDATE catalogs.equipment_types SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter} RETURNING id`,
         values
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "not_found" });
@@ -340,6 +352,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         {
           resource_id: parsedParams.data.id,
           resource_type: "catalogs.equipment_types",
+          operating_company_id: operatingCompanyId,
           changes: parsedBody.data,
         },
         "info",
@@ -349,7 +362,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id/line-items", async (req, reply) => {
+  app.post<{ Params: { id: string } }>("/api/v1/catalogs/equipment-types/:id/line-items", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params);
@@ -365,10 +378,11 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         throw error;
       });
       if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
-      // The parent equipment type must belong to the caller's entity — a template that pointed at
-      // another entity's equipment_type would break the same-entity invariant (the FK check bypasses
-      // RLS). This SELECT is RLS-scoped, so a cross-entity parent id returns no row -> 404.
-      const parentRes = await client.query(`SELECT id FROM catalogs.equipment_types WHERE id = $1 LIMIT 1`, [parsedParams.data.id]);
+      // The explicit company predicate is required because Owner sessions can bypass RLS.
+      const parentRes = await client.query(
+        `SELECT id FROM catalogs.equipment_types WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        [parsedParams.data.id, operatingCompanyId]
+      );
       if (parentRes.rows.length === 0) return reply.code(404).send({ error: "equipment_type_not_found" });
       try {
         const res = await client.query(
@@ -399,6 +413,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
           {
             resource_id: lineItemId,
             resource_type: "catalogs.equipment_line_item_templates",
+            operating_company_id: operatingCompanyId,
             equipment_type_id: parsedParams.data.id,
             code: parsedBody.data.code,
           },
@@ -415,7 +430,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/equipment-line-items/:id", async (req, reply) => {
+  app.patch<{ Params: { id: string } }>("/api/v1/catalogs/equipment-line-items/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params);
@@ -444,9 +459,11 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(user.uuid);
       fields.push(`updated_by_user_id = $${values.length}`);
       values.push(parsedParams.data.id);
-      // WHERE id is entity-scoped by FORCE RLS via the GUC.
+      const idParameter = values.length;
+      values.push(operatingCompanyId);
+      const companyParameter = values.length;
       const res = await client.query(
-        `UPDATE catalogs.equipment_line_item_templates SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING id`,
+        `UPDATE catalogs.equipment_line_item_templates SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter} RETURNING id`,
         values
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "not_found" });
@@ -457,6 +474,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         {
           resource_id: parsedParams.data.id,
           resource_type: "catalogs.equipment_line_item_templates",
+          operating_company_id: operatingCompanyId,
           changes: parsedBody.data,
         },
         "info",

@@ -218,32 +218,38 @@ export type UpdateCatalogRegistryEntryInput = Partial<{
   is_active: boolean;
 }>;
 
-export function listEquipmentTypes(includeInactive = false) {
-  const query = includeInactive ? "?include_inactive=true" : "";
-  return apiRequest<{ equipment_types: EquipmentType[] }>(`/api/v1/catalogs/equipment-types${query}`);
+export function listEquipmentTypes(operatingCompanyId: string, includeInactive = false) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  if (includeInactive) query.set("include_inactive", "true");
+  return apiRequest<{ equipment_types: EquipmentType[] }>(`/api/v1/catalogs/equipment-types?${query.toString()}`);
 }
 
-export function getEquipmentType(id: string) {
-  return apiRequest<{ equipment_type: EquipmentType }>(`/api/v1/catalogs/equipment-types/${id}`);
+export function getEquipmentType(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ equipment_type: EquipmentType }>(`/api/v1/catalogs/equipment-types/${id}?${query.toString()}`);
 }
 
-export function createEquipmentType(payload: CreateEquipmentTypeInput) {
-  return apiRequest<{ id: string }>("/api/v1/catalogs/equipment-types", { method: "POST", body: payload });
+export function createEquipmentType(operatingCompanyId: string, payload: CreateEquipmentTypeInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ id: string }>(`/api/v1/catalogs/equipment-types?${query.toString()}`, { method: "POST", body: payload });
 }
 
-export function updateEquipmentType(id: string, payload: UpdateEquipmentTypeInput) {
-  return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-types/${id}`, { method: "PATCH", body: payload });
+export function updateEquipmentType(id: string, operatingCompanyId: string, payload: UpdateEquipmentTypeInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-types/${id}?${query.toString()}`, { method: "PATCH", body: payload });
 }
 
-export function addLineItemTemplate(equipmentTypeId: string, payload: EquipmentTypeLineItemInput) {
-  return apiRequest<{ id: string }>(`/api/v1/catalogs/equipment-types/${equipmentTypeId}/line-items`, {
+export function addLineItemTemplate(equipmentTypeId: string, operatingCompanyId: string, payload: EquipmentTypeLineItemInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ id: string }>(`/api/v1/catalogs/equipment-types/${equipmentTypeId}/line-items?${query.toString()}`, {
     method: "POST",
     body: payload,
   });
 }
 
-export function updateLineItemTemplate(id: string, payload: UpdateLineItemTemplateInput) {
-  return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-line-items/${id}`, { method: "PATCH", body: payload });
+export function updateLineItemTemplate(id: string, operatingCompanyId: string, payload: UpdateLineItemTemplateInput) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ ok: true }>(`/api/v1/catalogs/equipment-line-items/${id}?${query.toString()}`, { method: "PATCH", body: payload });
 }
 
 export function listDriverLoadStatuses(operatingCompanyId: string, includeInactive = false) {

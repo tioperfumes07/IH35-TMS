@@ -12,6 +12,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-lst-picker01-equipment-type-inline-create";
 
 const DRIVER_DETAIL = "apps/frontend/src/pages/DriverDetail.tsx";
+const EQUIPMENT_TYPES_PAGE = "apps/frontend/src/pages/EquipmentTypesPage.tsx";
+const CATALOGS_API = "apps/frontend/src/api/catalogs.ts";
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const ROUTES = "apps/backend/src/catalogs/equipment-types.routes.ts";
 
@@ -28,6 +30,8 @@ function readRel(root, rel, overrides) {
 export function collectProblems(root = ROOT, overrides = null) {
   const problems = [];
   const detail = readRel(root, DRIVER_DETAIL, overrides);
+  const page = readRel(root, EQUIPMENT_TYPES_PAGE, overrides);
+  const api = readRel(root, CATALOGS_API, overrides);
   const registry = readRel(root, REGISTRY, overrides);
   const routes = readRel(root, ROUTES, overrides);
 
@@ -51,6 +55,30 @@ export function collectProblems(root = ROOT, overrides = null) {
     }
     if (!/equipment-types-for-driver-detail/.test(code)) {
       problems.push(`${DRIVER_DETAIL}: must invalidate equipment-types-for-driver-detail on inline create`);
+    }
+    if (!/const equipmentTypesQuery = useQuery\(\{[\s\S]{0,180}queryKey:\s*\["equipment-types-for-driver-detail",\s*companyId\]/.test(code)) {
+      problems.push(`${DRIVER_DETAIL}: equipment type query cache must be company-keyed`);
+    }
+    if (!/listEquipmentTypes\(companyId,\s*false\)/.test(code) || !/enabled:\s*Boolean\(companyId\)/.test(code)) {
+      problems.push(`${DRIVER_DETAIL}: equipment type read must send the selected company id`);
+    }
+  }
+
+  if (!page) problems.push(`missing ${EQUIPMENT_TYPES_PAGE}`);
+  else if (
+    !/queryKey:\s*\["catalogs",\s*"equipment-types",\s*companyId,\s*includeInactive\]/.test(page) ||
+    !/listEquipmentTypes\(companyId,\s*includeInactive\)/.test(page)
+  ) {
+    problems.push(`${EQUIPMENT_TYPES_PAGE}: catalog list/cache must be company-keyed`);
+  }
+
+  if (!api) problems.push(`missing ${CATALOGS_API}`);
+  else {
+    if (!/listEquipmentTypes\(operatingCompanyId:\s*string/.test(api)) {
+      problems.push(`${CATALOGS_API}: listEquipmentTypes must require operatingCompanyId`);
+    }
+    if (!/new URLSearchParams\(\{ operating_company_id:\s*operatingCompanyId \}\)/.test(api)) {
+      problems.push(`${CATALOGS_API}: equipment type lifecycle must send operating_company_id`);
     }
   }
 
@@ -77,11 +105,25 @@ export function collectProblems(root = ROOT, overrides = null) {
   }
 
   if (!routes) problems.push(`missing ${ROUTES}`);
-  else if (
-    !/INSERT INTO catalogs\.equipment_types \(/.test(routes) ||
-    !/FROM catalogs\.equipment_types/.test(routes)
-  ) {
-    problems.push(`${ROUTES}: must SELECT+INSERT catalogs.equipment_types (VERIFY-2 cl.5)`);
+  else {
+    if (!/INSERT INTO catalogs\.equipment_types \(/.test(routes) || !/FROM catalogs\.equipment_types/.test(routes)) {
+      problems.push(`${ROUTES}: must SELECT+INSERT catalogs.equipment_types (VERIFY-2 cl.5)`);
+    }
+    if (!/WHERE et\.operating_company_id = \$1[\s\S]{0,180}GROUP BY et\.id/.test(routes)) {
+      problems.push(`${ROUTES}: list read must explicitly predicate equipment types by company`);
+    }
+    if (!/lit\.operating_company_id = \$1/.test(routes)) {
+      problems.push(`${ROUTES}: list read must explicitly predicate line-item templates by company`);
+    }
+    if (!/WHERE et\.id = \$1\s+AND et\.operating_company_id = \$2/.test(routes)) {
+      problems.push(`${ROUTES}: detail read must bind id and company`);
+    }
+    if ((routes.match(/WHERE id = \$\$\{idParameter\} AND operating_company_id = \$\$\{companyParameter\}/g) ?? []).length < 2) {
+      problems.push(`${ROUTES}: update writes must bind id and company`);
+    }
+    if (!/WHERE id = \$1 AND operating_company_id = \$2 LIMIT 1/.test(routes)) {
+      problems.push(`${ROUTES}: line-item parent lookup must bind id and company`);
+    }
   }
 
   return problems;
@@ -129,6 +171,24 @@ if (process.argv.includes("--selftest")) {
     "must not disable Create when equipment type catalog is empty"
   );
   expectCaught(
+    "driver-company-cache-key-removed",
+    DRIVER_DETAIL,
+    (s) => s.replace(/queryKey: \["equipment-types-for-driver-detail", companyId\]/, 'queryKey: ["equipment-types-for-driver-detail"]'),
+    "query cache must be company-keyed"
+  );
+  expectCaught(
+    "catalog-page-company-read-removed",
+    EQUIPMENT_TYPES_PAGE,
+    (s) => s.replace("listEquipmentTypes(companyId, includeInactive)", "listEquipmentTypes(includeInactive)"),
+    "catalog list/cache must be company-keyed"
+  );
+  expectCaught(
+    "api-company-param-removed",
+    CATALOGS_API,
+    (s) => s.replace("listEquipmentTypes(operatingCompanyId: string", "listEquipmentTypes(includeInactive: boolean"),
+    "must require operatingCompanyId"
+  );
+  expectCaught(
     "registry-line-items-removed",
     REGISTRY,
     (s) => s.replace(/line_items:\s*\[/, "line_items_removed: ["),
@@ -140,13 +200,37 @@ if (process.argv.includes("--selftest")) {
     (s) => s.replace(/INSERT INTO catalogs\.equipment_types \(operating_company_id/g, "INSERT INTO catalogs.equipment_types_retire (operating_company_id"),
     "SELECT+INSERT catalogs.equipment_types"
   );
+  expectCaught(
+    "routes-list-company-predicate-removed",
+    ROUTES,
+    (s) => s.replace("WHERE et.operating_company_id = $1", "WHERE true"),
+    "list read must explicitly predicate equipment types by company"
+  );
+  expectCaught(
+    "routes-child-company-predicate-removed",
+    ROUTES,
+    (s) => s.replace("AND lit.operating_company_id = $1", "AND true"),
+    "line-item templates by company"
+  );
+  expectCaught(
+    "routes-detail-company-predicate-removed",
+    ROUTES,
+    (s) => s.replace("AND et.operating_company_id = $2", "AND true"),
+    "detail read must bind id and company"
+  );
+  expectCaught(
+    "routes-parent-company-predicate-removed",
+    ROUTES,
+    (s) => s.replace("WHERE id = $1 AND operating_company_id = $2 LIMIT 1", "WHERE id = $1 LIMIT 1"),
+    "line-item parent lookup must bind id and company"
+  );
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
     for (const f of failures) console.error("  - " + f);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST OK — 11 planted defects caught, live sources clean`);
 } else {
   const problems = collectProblems();
   if (problems.length) {
