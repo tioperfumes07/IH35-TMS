@@ -13,6 +13,11 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
 
+const historyListQuerySchema = companyQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
 const drugTestsListQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   test_type: z.string().trim().min(1).optional(),
@@ -375,10 +380,17 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/drug-program/random-pools", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const company = companyQuerySchema.safeParse(req.query ?? {});
+    const company = historyListQuerySchema.safeParse(req.query ?? {});
     if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
 
     const rows = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+           FROM safety.random_pool
+          WHERE operating_company_id = $1::uuid
+            AND voided_at IS NULL`,
+        [company.data.operating_company_id]
+      );
       const res = await client.query(
         `
           SELECT
@@ -397,14 +409,14 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           WHERE p.operating_company_id = $1::uuid
             AND p.voided_at IS NULL
           ORDER BY p.selected_at DESC, p.created_at DESC
-          LIMIT 500
+          LIMIT $2::int OFFSET $3::int
         `,
-        [company.data.operating_company_id]
+        [company.data.operating_company_id, company.data.limit, company.data.offset]
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
-    return { random_pools: rows };
+    return { random_pools: rows.rows, total_count: rows.total_count };
   });
 
   app.post("/api/v1/safety/drug-program/random-pools", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
@@ -467,10 +479,17 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
   app.get("/api/v1/safety/drug-program/clearinghouse-queries", async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
-    const company = companyQuerySchema.safeParse(req.query ?? {});
+    const company = historyListQuerySchema.safeParse(req.query ?? {});
     if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
 
     const rows = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const countRes = await client.query(
+        `SELECT count(*)::int AS total_count
+           FROM safety.clearinghouse_query
+          WHERE operating_company_id = $1::uuid
+            AND voided_at IS NULL`,
+        [company.data.operating_company_id]
+      );
       const res = await client.query(
         `
           SELECT
@@ -489,14 +508,14 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
           WHERE q.operating_company_id = $1::uuid
             AND q.voided_at IS NULL
           ORDER BY q.queried_at DESC
-          LIMIT 500
+          LIMIT $2::int OFFSET $3::int
         `,
-        [company.data.operating_company_id]
+        [company.data.operating_company_id, company.data.limit, company.data.offset]
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
     });
 
-    return { clearinghouse_queries: rows };
+    return { clearinghouse_queries: rows.rows, total_count: rows.total_count };
   });
 
   app.post("/api/v1/safety/drug-program/clearinghouse-queries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

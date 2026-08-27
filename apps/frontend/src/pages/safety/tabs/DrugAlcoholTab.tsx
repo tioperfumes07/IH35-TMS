@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -161,20 +161,25 @@ export function DrugAlcoholTab() {
   });
   const historyTotal = testsQ.isError ? 0 : testsQ.data?.total_count ?? 0;
   const historyPageCount = Math.max(1, Math.ceil(historyTotal / pageSize));
+  const auxiliaryPageSize = 8;
+  const [poolPage, setPoolPage] = useState(0);
+  const [clearinghousePage, setClearinghousePage] = useState(0);
 
   useEffect(() => setHistoryPage(1), [companyId, effectiveDriverId, appliedHistory]);
 
   const poolQ = useQuery({
-    queryKey: ["safety", "drug-program", "pool", companyId],
+    queryKey: ["safety", "drug-program", "pool", companyId, poolPage],
     enabled: Boolean(companyId),
-    queryFn: () => listRandomPoolEntries(companyId).then((r) => r.entries),
+    queryFn: () => listRandomPoolEntries(companyId, { limit: auxiliaryPageSize, offset: poolPage * auxiliaryPageSize }),
   });
 
   const clearinghouseQ = useQuery({
-    queryKey: ["safety", "drug-program", "clearinghouse", companyId],
+    queryKey: ["safety", "drug-program", "clearinghouse", companyId, clearinghousePage],
     enabled: Boolean(companyId),
-    queryFn: () => listClearinghouseQueries(companyId).then((r) => r.queries),
+    queryFn: () => listClearinghouseQueries(companyId, { limit: auxiliaryPageSize, offset: clearinghousePage * auxiliaryPageSize }),
   });
+
+  useEffect(() => { setPoolPage(0); setClearinghousePage(0); }, [companyId]);
 
   const drugStatusQ = useQuery({
     queryKey: ["safety", "drug-status", companyId, effectiveDriverId],
@@ -626,7 +631,7 @@ export function DrugAlcoholTab() {
             <div data-testid="drug-alcohol-pool-query-error"><ListErrorState status={0} message={userFacingApiError(poolQ.error, "Could not load the random pool roster.")} onRetry={() => void poolQ.refetch()} /></div>
           ) : (
             <ul className="mt-2 space-y-1">
-              {(poolQ.data ?? []).slice(0, 8).map((entry) => (
+              {(poolQ.data?.entries ?? []).map((entry) => (
                 <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
                   <EntityLink
                     kind="driver"
@@ -640,9 +645,16 @@ export function DrugAlcoholTab() {
                   <span>{String(entry.status ?? "selected")}</span>
                 </li>
               ))}
-              {(poolQ.data ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
+              {(poolQ.data?.entries ?? []).length === 0 ? <li className="text-slate-500">No pool entries.</li> : null}
             </ul>
           )}
+          {!poolQ.isError && (poolQ.data?.total_count ?? 0) > auxiliaryPageSize ? (
+            <div className="mt-2 flex items-center justify-between" data-testid="drug-alcohol-pool-server-pager">
+              <Button size="sm" variant="secondary" disabled={poolPage === 0 || poolQ.isFetching} onClick={() => setPoolPage((page) => Math.max(0, page - 1))}>Previous</Button>
+              <span>{poolPage * auxiliaryPageSize + 1}–{Math.min((poolPage + 1) * auxiliaryPageSize, poolQ.data?.total_count ?? 0)} of {poolQ.data?.total_count ?? 0}</span>
+              <Button size="sm" variant="secondary" disabled={(poolPage + 1) * auxiliaryPageSize >= (poolQ.data?.total_count ?? 0) || poolQ.isFetching} onClick={() => setPoolPage((page) => page + 1)}>Next</Button>
+            </div>
+          ) : null}
         </div>
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-xs">
           <h3 className="text-sm font-semibold text-slate-900">Clearinghouse queries</h3>
@@ -650,7 +662,7 @@ export function DrugAlcoholTab() {
             <div data-testid="drug-alcohol-clearinghouse-query-error"><ListErrorState status={0} message={userFacingApiError(clearinghouseQ.error, "Could not load clearinghouse queries.")} onRetry={() => void clearinghouseQ.refetch()} /></div>
           ) : (
             <ul className="mt-2 space-y-1">
-              {(clearinghouseQ.data ?? []).slice(0, 8).map((entry) => (
+              {(clearinghouseQ.data?.queries ?? []).map((entry) => (
                 <li key={String(entry.id)} className="flex justify-between border-b border-gray-100 py-1">
                   <EntityLink
                     kind="driver"
@@ -664,9 +676,16 @@ export function DrugAlcoholTab() {
                   <span>{String(entry.query_status ?? "pending")}</span>
                 </li>
               ))}
-              {(clearinghouseQ.data ?? []).length === 0 ? <li className="text-slate-500">No queries logged.</li> : null}
+              {(clearinghouseQ.data?.queries ?? []).length === 0 ? <li className="text-slate-500">No queries logged.</li> : null}
             </ul>
           )}
+          {!clearinghouseQ.isError && (clearinghouseQ.data?.total_count ?? 0) > auxiliaryPageSize ? (
+            <div className="mt-2 flex items-center justify-between" data-testid="drug-alcohol-clearinghouse-server-pager">
+              <Button size="sm" variant="secondary" disabled={clearinghousePage === 0 || clearinghouseQ.isFetching} onClick={() => setClearinghousePage((page) => Math.max(0, page - 1))}>Previous</Button>
+              <span>{clearinghousePage * auxiliaryPageSize + 1}–{Math.min((clearinghousePage + 1) * auxiliaryPageSize, clearinghouseQ.data?.total_count ?? 0)} of {clearinghouseQ.data?.total_count ?? 0}</span>
+              <Button size="sm" variant="secondary" disabled={(clearinghousePage + 1) * auxiliaryPageSize >= (clearinghouseQ.data?.total_count ?? 0) || clearinghouseQ.isFetching} onClick={() => setClearinghousePage((page) => page + 1)}>Next</Button>
+            </div>
+          ) : null}
         </div>
       </div>
 

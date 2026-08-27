@@ -51,9 +51,9 @@ describe("DrugAlcoholTab selected-driver label (SAF-B24-residual)", () => {
       total: 1,
       drivers: [{ id: "driver-1", first_name: "Jordan", last_name: "Ruiz", status: "Active" } as never],
     });
-    vi.spyOn(safetyApi, "listDrugProgramTests").mockResolvedValue({ tests: [] });
-    vi.spyOn(safetyApi, "listRandomPoolEntries").mockResolvedValue({ entries: [] });
-    vi.spyOn(safetyApi, "listClearinghouseQueries").mockResolvedValue({ queries: [] });
+    vi.spyOn(safetyApi, "listDrugProgramTests").mockResolvedValue({ tests: [], total_count: 0 });
+    vi.spyOn(safetyApi, "listRandomPoolEntries").mockResolvedValue({ entries: [], total_count: 0 });
+    vi.spyOn(safetyApi, "listClearinghouseQueries").mockResolvedValue({ queries: [], total_count: 0 });
     vi.spyOn(safetyApi, "getDriverDrugProgramStatus").mockResolvedValue({ is_blocked: false, block_reason: null } as never);
     vi.spyOn(safetyApi, "getDriverRtdCase").mockResolvedValue(null as never);
     vi.spyOn(safetyApi, "getDriverDispatchEligibility").mockResolvedValue({ eligible: true } as never);
