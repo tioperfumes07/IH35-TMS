@@ -597,7 +597,12 @@ export function LegalMatterDetailPage() {
                     <div>
                       <div className="font-semibold">{String(d.title ?? "")}</div>
                       <div className="text-xs text-gray-600">
-                        {properEnumOrFilterLabel(d.deadline_type)} · {String(d.deadline_at ?? "")}
+                        {/* LEGAL-MATTER-DEADLINE-RAW-TIMESTAMP-DISPLAY: this rendered the raw ISO
+                            instant verbatim (e.g. "2026-09-01T04:00:00.000Z" for an 11 PM CT
+                            deadline) instead of formatting it — every sibling date field on this
+                            page already goes through formatDateTimeUS/formatDateUS a few lines
+                            up. */}
+                        {properEnumOrFilterLabel(d.deadline_type)} · {formatDateTimeUS(d.deadline_at as string)}
                       </div>
                     </div>
                     {admin && !d.completed_at ? (
