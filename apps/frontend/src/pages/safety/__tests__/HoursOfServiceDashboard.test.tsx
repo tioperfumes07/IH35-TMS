@@ -75,6 +75,7 @@ describe("HoursOfServicePage", () => {
           occurred_at: "2026-06-02T12:00:00Z",
         },
       ],
+      total_count: 1,
     });
   });
 

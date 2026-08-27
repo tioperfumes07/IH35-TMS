@@ -1,17 +1,21 @@
 import { entityLabel } from "../../../lib/entity-label";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEldHosViolations, type EldHosViolation } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { Button } from "../../../components/Button";
 
 type Props = { operatingCompanyId: string };
 
 export function ViolationsTab({ operatingCompanyId }: Props) {
+  const pageSize = 25;
+  const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [operatingCompanyId]);
   const query = useQuery({
-    queryKey: ["eld", "hos-violations", operatingCompanyId],
-    queryFn: () => fetchEldHosViolations(operatingCompanyId),
+    queryKey: ["eld", "hos-violations", operatingCompanyId, page],
+    queryFn: () => fetchEldHosViolations(operatingCompanyId, { limit: pageSize, offset: (page - 1) * pageSize }),
     enabled: Boolean(operatingCompanyId),
   });
 
@@ -19,6 +23,8 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
     () => (query.data?.hos_violations ?? []).filter((row) => !row.voided_at),
     [query.data?.hos_violations],
   );
+  const total = query.isError ? 0 : query.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
   const columns = useMemo<Array<ParityColumn<EldHosViolation>>>(
     () => [
@@ -107,7 +113,13 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
         storageKey="eld-hos-violations"
         exportFilename="eld-hos-violations"
         tableTestId="eld-violations-table"
+        hidePager
       />
+      {!query.isError && total > pageSize ? <div className="flex items-center justify-end gap-2 text-xs" data-testid="eld-hos-violations-server-pager">
+        <Button size="sm" variant="secondary" disabled={page <= 1 || query.isFetching} onClick={() => setPage((current) => Math.max(1, current - 1))}>Previous violations</Button>
+        <span className="text-slate-600">Page {page} of {pageCount} · {total} violations</span>
+        <Button size="sm" variant="secondary" disabled={page >= pageCount || query.isFetching} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Next violations</Button>
+      </div> : null}
     </div>
   );
 }

@@ -20,7 +20,7 @@ export type IntegrityReportRow = Record<string, unknown> & {
 
 export function listHosViolations(
   companyId: string,
-  filters: { driver_id?: string; load_id?: string; from?: string; to?: string; source?: string } = {}
+  filters: { driver_id?: string; load_id?: string; from?: string; to?: string; source?: string; limit?: number; offset?: number } = {}
 ) {
   const qs = new URLSearchParams({ operating_company_id: companyId });
   if (filters.driver_id) qs.set("driver_id", filters.driver_id);
@@ -28,7 +28,9 @@ export function listHosViolations(
   if (filters.from) qs.set("from", filters.from);
   if (filters.to) qs.set("to", filters.to);
   if (filters.source) qs.set("source", filters.source);
-  return apiRequest<{ hos_violations: Array<Record<string, unknown>> }>(`/api/v1/safety/hos-violations?${qs.toString()}`);
+  if (filters.limit != null) qs.set("limit", String(filters.limit));
+  if (filters.offset != null) qs.set("offset", String(filters.offset));
+  return apiRequest<{ hos_violations: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/hos-violations?${qs.toString()}`);
 }
 
 export function createHosViolation(companyId: string, body: Record<string, unknown>) {
