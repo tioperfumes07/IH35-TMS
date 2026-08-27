@@ -12,6 +12,8 @@ const companyQuerySchema = z.object({
 const companyViolationListQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({
@@ -189,8 +191,23 @@ export async function registerSafetyCompanyViolationsRoutes(
              LIMIT 1`,
               [query.data.driver_id, query.data.operating_company_id],
             );
-            if (!parent.rows[0]) return { found: false as const, rows: [] };
+            if (!parent.rows[0]) return { found: false as const, rows: [], total_count: 0 };
           }
+          const countRes = await client.query(
+            `SELECT count(*)::int AS total_count
+             FROM safety.company_violations cv
+             WHERE cv.operating_company_id = $1::uuid
+               AND cv.deactivated_at IS NULL
+               AND ($2::uuid IS NULL OR EXISTS (
+                 SELECT 1 FROM safety.company_violation_drivers d
+                 WHERE d.violation_id = cv.id AND d.driver_id = $2::uuid AND d.is_active
+               ))
+               AND ($3::uuid IS NULL OR EXISTS (
+                 SELECT 1 FROM safety.company_violation_units u
+                 WHERE u.violation_id = cv.id AND u.unit_id = $3::uuid AND u.is_active
+               ))`,
+            [query.data.operating_company_id, query.data.driver_id ?? null, query.data.unit_id ?? null],
+          );
           const res = await client.query(
             `
           -- SAF-F29: related ids come from the JOIN TABLES, never the retired jsonb columns.
@@ -235,20 +252,22 @@ export async function registerSafetyCompanyViolationsRoutes(
               WHERE u.violation_id = cv.id AND u.unit_id = $3::uuid AND u.is_active
             ))
           ORDER BY cv.reported_date DESC, cv.created_at DESC
-          LIMIT 500
+          LIMIT $4 OFFSET $5
         `,
             [
               query.data.operating_company_id,
               query.data.driver_id ?? null,
               query.data.unit_id ?? null,
+              query.data.limit,
+              query.data.offset,
             ],
           );
-          return { found: true as const, rows: res.rows };
+          return { found: true as const, rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
         },
       );
       if (!result.found)
         return reply.code(404).send({ error: "mdata_driver_not_found" });
-      return { company_violations: result.rows };
+      return { company_violations: result.rows, total_count: result.total_count };
     },
   );
 
