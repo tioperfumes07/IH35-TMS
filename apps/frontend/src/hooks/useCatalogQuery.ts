@@ -157,6 +157,34 @@ export const GENERIC_CATALOG_REGISTRY: Record<string, GenericCatalogDefinition> 
     ],
     defaultSort: { column: "sort_order", dir: "asc" },
   },
+  // CATALOG-TIRE-POSITIONS-NO-FRONTEND-REGISTRY-ENTRY: tire_positions has had a working backend route
+  // (tire-positions.routes.ts, GLOBAL-BY-DESIGN, catalogs.tire_positions) since LST-F5969, but no
+  // registry entry here — catalogKeyToCatalogName() returned null and the page rendered "unknown
+  // catalog". Column/field shape verified live against prod (br-fancy-credit-akjnd07a,
+  // information_schema.columns): physical column is `name`, but fleet/factory.ts's list SELECT always
+  // aliases it `t.name AS display_name` and the create/update body schema requires `display_name` — so
+  // this entry uses `display_name` like every other fleet.* catalog above, matching the wire contract,
+  // not the physical column name.
+  "fleet.tire_positions": {
+    catalogName: "fleet.tire_positions",
+    displayName: "Tire Positions",
+    domain: "fleet",
+    catalogKey: "tire-positions",
+    columns: [
+      { key: "code", label: "Code", sortable: true, filterable: true },
+      { key: "display_name", label: "Tire Position", sortable: true, filterable: true },
+      { key: "description", label: "Description", sortable: false, filterable: false },
+      { key: "sort_order", label: "Sort", sortable: true, filterable: false },
+      { key: "is_active", label: "Status", sortable: true, filterable: false },
+    ],
+    fields: [
+      { key: "code", label: "Code", type: "text", required: true, readOnlyOnEdit: true },
+      { key: "display_name", label: "Tire Position", type: "text", required: true },
+      { key: "description", label: "Description", type: "text", required: false },
+      { key: "sort_order", label: "Sort Order", type: "number", required: false },
+    ],
+    defaultSort: { column: "sort_order", dir: "asc" },
+  },
   "fuel.expensive_states": {
     catalogName: "fuel.expensive_states",
     displayName: "Expensive States",
