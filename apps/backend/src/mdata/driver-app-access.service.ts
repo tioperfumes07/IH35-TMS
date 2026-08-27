@@ -135,6 +135,11 @@ export async function ensureDriverAppAccess(
   let identityUserId = driver.identity_user_id;
   let createdUser = false;
 
+  // This service intentionally returns domain errors to bulk invite callers instead of throwing.
+  // withCurrentUser commits returned values, so a savepoint is the transaction boundary that makes
+  // a lost driver-link CAS roll back any identity/access rows created earlier in this helper.
+  await client.query("SAVEPOINT driver_app_access_provision");
+
   if (!identityUserId) {
     const existingRes = await client.query<{ id: string }>(
       `
@@ -244,6 +249,8 @@ export async function ensureDriverAppAccess(
     [driverId, identityUserId, operatingCompanyId]
   );
   if (driver.identity_user_id !== identityUserId && !linkRes.rows[0]) {
+    await client.query("ROLLBACK TO SAVEPOINT driver_app_access_provision");
+    await client.query("RELEASE SAVEPOINT driver_app_access_provision");
     return { ok: false, error: "driver_app_access_state_changed" };
   }
 
@@ -273,6 +280,8 @@ export async function ensureDriverAppAccess(
       "BT-3-DRIVER-ONBOARDING"
     );
   }
+
+  await client.query("RELEASE SAVEPOINT driver_app_access_provision");
 
   return {
     ok: true,

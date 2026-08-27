@@ -14,7 +14,7 @@ function failuresFor(text) {
     ["pre-read selects company and active driver", /SELECT d\.id, d\.operating_company_id, d\.phone, d\.email, d\.identity_user_id[\s\S]{0,420}d\.deactivated_at IS NULL/.test(route)],
     ["link update is company scoped", /UPDATE mdata\.drivers[\s\S]{0,260}operating_company_id = \$4::uuid/.test(route)],
     ["link update is unlinked active CAS", /identity_user_id IS NULL[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}RETURNING id/.test(route)],
-    ["lost link returns state error before audit", /if \(!linked\.rows\[0\]\) return \{ error: "driver_phone_login_state_changed" as const \};[\s\S]{0,180}appendCrudAudit/.test(route)],
+    ["lost link rolls back then returns state error before audit", /if \(!linked\.rows\[0\]\) \{[\s\S]{0,140}ROLLBACK TO SAVEPOINT driver_phone_login_enable[\s\S]{0,180}driver_phone_login_state_changed[\s\S]{0,180}appendCrudAudit/.test(route)],
     ["state error maps to HTTP 409", /updated\.error === "driver_phone_login_state_changed"[\s\S]{0,100}reply\.code\(409\)/.test(route)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
@@ -32,7 +32,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("AND operating_company_id = $4::uuid", "AND true"),
     source.replace("AND identity_user_id IS NULL", "AND true"),
     source.replace("AND identity_user_id IS NULL\n              AND deactivated_at IS NULL", "AND identity_user_id IS NULL\n              AND true"),
-    source.replace('if (!linked.rows[0]) return { error: "driver_phone_login_state_changed" as const };', "void linked;"),
+    source.replace('await client.query("ROLLBACK TO SAVEPOINT driver_phone_login_enable");', 'await client.query("SELECT 1");'),
     source.replace('updated.error === "driver_phone_login_state_changed"', 'updated.error === "lost"'),
   ];
   const missed = mutations.map((mutation, index) => ({ index, failures: failuresFor(mutation) })).filter((entry) => entry.failures.length === 0);
