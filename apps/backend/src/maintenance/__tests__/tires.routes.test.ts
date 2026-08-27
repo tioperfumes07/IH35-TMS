@@ -126,6 +126,24 @@ describe("maintenance tire routes (B32)", () => {
     });
   });
 
+  it("GET /api/v1/maintenance/tires/events returns an exact scoped range", async () => {
+    mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
+      if (sql.includes("set_config")) return { rows: [] };
+      if (sql.includes("COUNT(*)::int AS total_count")) return { rows: [{ total_count: 251 }] };
+      if (sql.includes("FROM maintenance.tire_events")) {
+        expect(values?.slice(-2)).toEqual([25, 50]);
+        return { rows: [{ id: "evt-1", tire_record_id: RECORD_ID, event_type: "rotation", created_at: "2026-06-04T08:00:00Z" }] };
+      }
+      return { rows: [] };
+    });
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/maintenance/tires/events?operating_company_id=${COMPANY}&unit_id=${UNIT_ID}&limit=25&offset=50`,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ total_count: 251, rows: [{ id: "evt-1", event_type_label: "Rotation" }] });
+  });
+
   it("POST /api/v1/maintenance/tires/records mounts tire at axle position", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("set_config")) return { rows: [] };
