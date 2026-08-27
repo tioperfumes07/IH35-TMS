@@ -1,3 +1,7 @@
+**21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `CC-1 | ACK | GO-2136 | PORT=9223 | NOW=escrow-residual | GO`
+
+**YOUR NOW:** UTC reports already #16444 — skip. NOW=escrow residual then DEADHEAD then VENDOR-OPEN-BALANCE draft bills. Prove USMCA posting flags ON. Exclusive `/accounting` `/banking` `/settlements` `/factoring`. cwd=`~/IH35-TMS-claude`. Stale `-wt` deleted — do not recreate.
+
 **20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CC-1 | ACK | GO-2024 | PORT=9223 | NOW=FINANCIAL-REPORTS-UTC | SHA=2ef0af5 | GO`
 
 **YOUR NOW:** BANK-ACCOUNT-HIDE already #16316 — skip. NOW=`FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE` then escrow residual then DEADHEAD. Never remake #16371. Never trigger_deploy.

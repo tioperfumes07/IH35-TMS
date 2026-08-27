@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-26T21:36CT | GO-2136 | owner=seats idle work now | packet PASTE-ALL-SEATS-GO-2026-08-26-2136.md | CC-1 NOW=escrow-residual | stale worktrees deleted | nobody else trigger_deploy | GO
 Cursor | LEAD | 2026-08-26T20:43CT | GO-2024 | packet PASTE-ALL-SEATS-GO-2026-08-26-2024.md | live 2ef0af5 | CC-2 NOW=AUDIT-ACTIVITY-BY-USER-TASK-SUBJECT | CC-1 NOW=UTC-DATE (HIDE shipped) | Codex+Devin ACK | nobody trigger_deploy | GO
 Cursor | LEAD | 2026-08-26T19:27CT | GO-1927 | excel lock + exclusive browsers | live 9f7ad77 | Devin stop /dispatch | CC-3 deactivate class | GO
 Cursor | LEAD | 2026-08-26T19:13CT | GO-1913 | packet PASTE-ALL-SEATS-GO-2026-08-26-1913.md | live f12ab6e main 13 ahead | seats pull INBOX TOP | Jorge not messenger | GO

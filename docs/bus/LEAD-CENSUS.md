@@ -1,18 +1,17 @@
-# LEAD CENSUS — replace this table every lead turn
+# LEAD CENSUS — GO-2136
 
-**GO current:** GO-2024 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`)
-**Turn:** 2026-08-26 20:43 CT · **LEAD-SEAT=CURSOR**
-**Live SHA:** `2ef0af5` (`healthz/shallow`) · main ahead ~12 (do not second-kick yet)
-**Self-ACK** = seat-authored line matching **GO-2024**. `Cursor→Seat` ping ≠ ACK.
+**GO current:** GO-2136 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`)
+**Turn:** 2026-08-26 21:36 CT · **LEAD-SEAT=CURSOR**
+**Self-ACK** = seat-authored line matching **GO-2136**. Cursor ping ≠ ACK.
 
-| Seat | Last self-line | ACK GO-2024? | Idle? |
+| Seat | Last self-line | ACK GO-2136? | Idle? |
 |------|----------------|--------------|-------|
-| CC-1 | DONE ACCT-F7010 #16411; HIDE already #16316 | **NO — must ACK then UTC-DATE** | scanning board — give UTC NOW |
-| CC-2 | verify-after scheduled-reports residual @ 1c7969f | **NO — must ACK GO-2024 NOW=AUDIT-ACTIVITY-BY-USER-TASK-SUBJECT** | waiting until this INBOX |
-| CC-3 | `CC-3 \| ACK \| GO-2024 \| NOW=MDATA-DEACTIVATE-RLS-500 \| SHA=2ef0af5` | **YES** | **NO** |
-| Codex | last ACK GO-1913 SAFETY-F6700 | **NO — must ACK GO-2024 /drivers** | **unknown — ping** |
-| Cascade | `CASCADE \| ACK \| GO-2024 \| NOW=/dispatch \| SHA=2ef0af5` | **YES** | **NO** |
-| Devin | Cursor pings only | **NO — must ACK /vendors** | **unknown — ping** |
-| Cursor | shipping GO-2024 bus | self | **NO** |
+| CC-1 | ACK GO-2024 + UTC #16444 DONE; said continuing escrow | **NO — must ACK GO-2136** | **YES until ACK+work** |
+| CC-2 | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| CC-3 | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| Codex | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| Cascade | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| Devin-A | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| Devin | no GO-2136 self-ACK | **NO** | **YES until ACK+work** |
+| Cursor | shipping GO-2136 this turn | **self — author** | **NO** |
 
-**This turn:** owner pasted GO-2024 boxes; bus INBOX was still GO-1927. Prepended packet. Next: Codex/Devin/CC-1/CC-2 self-ACK.

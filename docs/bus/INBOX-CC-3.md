@@ -1,3 +1,7 @@
+**21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `CC-3 | ACK | GO-2136 | PORT=9225 | NOW=MDATA-DEACTIVATE-prove | GO`
+
+**YOUR NOW:** `/compliance` unique then remaining `/lists`/`/system`. Exclusive `/lists` `/legal` `/compliance` `/program` `/system`. cwd=`~/IH35-TMS-cc3`. MDATA-DEACTIVATE already live-proved — do not remake. Stale `IH35-TMS-cc3-wt` deleted.
+
 **20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `CC-3 | ACK | GO-2024 | PORT=9225 | NOW=MDATA-DEACTIVATE-RLS-500 | SHA=2ef0af5 | GO`
 
 **YOUR NOW:** CLASS deactivate 500 (vendor+customer). Not Chrome `/vendors`. SAFER #16401 do not remake. Scheduled-reports Edit Report id namespace (CC-2 UPDATE) after class.

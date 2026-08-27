@@ -1,3 +1,7 @@
+**21:36 CT GO-2136 — IDLE = DEFECT. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md`. Owner: seats idle — **work now**. Not PARKED. ACK OUTBOX. Skip #15546. Never `trigger_deploy`. ACK: `Devin | ACK | GO-2136 | PORT=n | NOW=/vendors | GO`
+
+**YOUR NOW:** `/vendors` unique only. Not `/dispatch`.
+
 **20:43 CT GO-2024 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2024.md`. Live **`2ef0af5`**. ACK OUTBOX. Skip #15546. ACK: `Devin | ACK | GO-2024 | NOW=/vendors | SHA=2ef0af5 | GO`
 
 **YOUR NOW:** /vendors ONLY. STOP /dispatch. One Devin.
