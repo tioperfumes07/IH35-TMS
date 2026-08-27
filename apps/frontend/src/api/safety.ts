@@ -611,16 +611,22 @@ export function bulkEnrollRandomPool(companyId: string, consortiumName: string) 
   );
 }
 
-export function listRandomPoolEntries(companyId: string) {
-  return apiRequest<{ random_pools: Array<Record<string, unknown>> }>(`/api/v1/safety/drug-program/random-pools?${q(companyId)}`).then(
-    (payload) => ({ entries: payload.random_pools ?? [] })
+export function listRandomPoolEntries(companyId: string, range: { limit?: number; offset?: number } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (range.limit != null) qs.set("limit", String(range.limit));
+  if (range.offset != null) qs.set("offset", String(range.offset));
+  return apiRequest<{ random_pools: Array<Record<string, unknown>>; total_count: number }>(`/api/v1/safety/drug-program/random-pools?${qs.toString()}`).then(
+    (payload) => ({ entries: payload.random_pools ?? [], total_count: payload.total_count ?? 0 })
   );
 }
 
-export function listClearinghouseQueries(companyId: string) {
-  return apiRequest<{ clearinghouse_queries: Array<Record<string, unknown>> }>(
-    `/api/v1/safety/drug-program/clearinghouse-queries?${q(companyId)}`
-  ).then((payload) => ({ queries: payload.clearinghouse_queries ?? [] }));
+export function listClearinghouseQueries(companyId: string, range: { limit?: number; offset?: number } = {}) {
+  const qs = new URLSearchParams({ operating_company_id: companyId });
+  if (range.limit != null) qs.set("limit", String(range.limit));
+  if (range.offset != null) qs.set("offset", String(range.offset));
+  return apiRequest<{ clearinghouse_queries: Array<Record<string, unknown>>; total_count: number }>(
+    `/api/v1/safety/drug-program/clearinghouse-queries?${qs.toString()}`
+  ).then((payload) => ({ queries: payload.clearinghouse_queries ?? [], total_count: payload.total_count ?? 0 }));
 }
 
 // SM3 — Drug & Alcohol consortium enrollment (GAP-81 safety.da_program_enrollments). Backs the
