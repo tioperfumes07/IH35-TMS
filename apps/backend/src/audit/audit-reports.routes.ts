@@ -339,7 +339,13 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
     const values: unknown[] = [d.operating_company_id];
     const filters = [
       `el.operating_company_id = $1::uuid`,
-      `el.event_type ILIKE ANY(ARRAY['%maintenance%','%work_order%','%inspection%','%repair%','%defect%'])`,
+      // MAINTENANCE-DECISION-LOG-WO-EVENT-PREFIX-NOT-MATCHED: this report was 100% empty for every
+      // company -- the emitter logs work-order lifecycle events as "wo.created"/"wo.status_changed"
+      // (the actual decision trail: created -> in_progress -> complete), but the filter only matched
+      // the literal substring "work_order", which never appears in a "wo."-prefixed event_type.
+      // Confirmed live: 0 events.event_log rows anywhere in prod match "defect"/"dvir"/"failure" --
+      // wo.* IS the real decision-log data source, just excluded by this pattern mismatch.
+      `el.event_type ILIKE ANY(ARRAY['%maintenance%','%work_order%','wo.%','%inspection%','%repair%','%defect%'])`,
       ...buildDateFilter(d.from, d.to, values, "el"),
     ];
     values.push(d.limit); const limPos = values.length;
