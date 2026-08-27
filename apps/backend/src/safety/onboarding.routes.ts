@@ -103,7 +103,10 @@ export function missingRequiredOnboardingSteps(stepData: Record<string, unknown>
 }
 
 export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/onboarding/sessions", async (req, reply) => {
+  app.post(
+    "/api/v1/safety/onboarding/sessions",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = createSessionSchema.safeParse(req.body ?? {});
@@ -113,6 +116,17 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
       // DRV-ONBOARD-LAUNCH — the Driver Profile is the canonical launcher. Repeated clicks must
       // resume the same open workflow, never fork duplicate qualification chains for one driver.
       if (body.data.driver_id) {
+        const driver = await client.query<{ id: string }>(
+          `SELECT id::text
+             FROM mdata.drivers
+            WHERE operating_company_id = $1::uuid
+              AND id = $2::uuid
+              AND deactivated_at IS NULL
+            LIMIT 1
+            FOR UPDATE`,
+          [body.data.operating_company_id, body.data.driver_id]
+        );
+        if (!driver.rows[0]?.id) return { kind: "driver_not_found" as const };
         const existing = await client.query(
           `SELECT *
              FROM safety.onboarding_sessions
@@ -123,7 +137,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
             LIMIT 1`,
           [body.data.operating_company_id, body.data.driver_id]
         );
-        if (existing.rows[0]) return { session: existing.rows[0], resumed: true as const };
+        if (existing.rows[0]) return { kind: "ok" as const, session: existing.rows[0], resumed: true as const };
       }
       const res = await client.query(
         `
@@ -140,23 +154,28 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
         `,
         [body.data.operating_company_id, body.data.driver_id ?? null, user.uuid]
       );
+      const session = res.rows[0] as { id?: string } | undefined;
+      if (!session?.id) throw new Error("safety_onboarding_session_insert_failed");
       await appendCrudAudit(
         client,
         user.uuid,
         "safety.onboarding_session.created",
         {
           resource_type: "safety.onboarding_sessions",
-          resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+          resource_id: session.id,
           operating_company_id: body.data.operating_company_id,
+          driver_id: body.data.driver_id ?? null,
         },
         "info",
         "A24-8-DRIVER-ONBOARDING"
       );
-      return { session: res.rows[0], resumed: false as const };
+      return { kind: "ok" as const, session, resumed: false as const };
     });
 
+    if (result.kind === "driver_not_found") return reply.code(404).send({ error: "driver_not_found" });
     return reply.code(result.resumed ? 200 : 201).send(result);
-  });
+    }
+  );
 
   app.get("/api/v1/safety/onboarding/sessions/:session_id", async (req, reply) => {
     const user = authUser(req, reply);
