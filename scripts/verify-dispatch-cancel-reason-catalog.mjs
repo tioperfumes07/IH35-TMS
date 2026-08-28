@@ -79,6 +79,12 @@ export function checkCancelModalCompanyScopedFetch(src) {
   if (!/reason\.reason_label\s*\?\?\s*reason\.display_name/.test(src)) {
     failures.push(`${CANCEL_MODAL}: dropdown label must accept catalog display_name`);
   }
+  if (!/disabled=\{reasonsQuery\.isLoading \|\| reasonsQuery\.isError\}/.test(src)) {
+    failures.push(`${CANCEL_MODAL}: reason picker must be disabled while its canonical catalog is unknown`);
+  }
+  if (!/reasonsQuery\.isError\s*\?\s*\([\s\S]{0,180}<ListErrorState[\s\S]{0,180}Cancellation reasons unavailable\.[\s\S]{0,180}reasonsQuery\.refetch\(\)/.test(src)) {
+    failures.push(`${CANCEL_MODAL}: reason catalog failure must be visible and retryable`);
+  }
   return failures;
 }
 
@@ -139,12 +145,19 @@ if (process.argv.includes("--selftest")) {
     queryKey: ["dispatch", "cancellation-reasons", operatingCompanyId],
     queryFn: () => listDispatchCancellationReasons(operatingCompanyId)
     reason.reason_label ?? reason.display_name
+    disabled={reasonsQuery.isLoading || reasonsQuery.isError}
+    reasonsQuery.isError ? (<ListErrorState message="Cancellation reasons unavailable." onRetry={() => void reasonsQuery.refetch()} />) : null
   `;
   const badModal = `
     queryKey: ["dispatch", "cancellation-reasons"],
     queryFn: () => listDispatchCancellationReasons()
     label: String(reason.reason_label)
   `;
+  const badModalActionable = goodModal.replace(
+    "reasonsQuery.isLoading || reasonsQuery.isError",
+    "reasonsQuery.isLoading",
+  );
+  const badModalSilent = goodModal.replace("reasonsQuery.isError ? (", "false ? (");
   const goodLoads = `
     FROM catalogs.load_cancellation_reasons
     WHERE reason_code = $1 AND operating_company_id = $2
@@ -160,6 +173,8 @@ if (process.argv.includes("--selftest")) {
     ["api without company fails", checkDispatchApiCompanyParam(badApi).length > 0],
     ["good modal passes", checkCancelModalCompanyScopedFetch(goodModal).length === 0],
     ["modal without company fails", checkCancelModalCompanyScopedFetch(badModal).length > 0],
+    ["modal actionable on catalog failure fails", checkCancelModalCompanyScopedFetch(badModalActionable).length > 0],
+    ["modal silent on catalog failure fails", checkCancelModalCompanyScopedFetch(badModalSilent).length > 0],
     ["good loads patch passes", checkLoadsStatusPatchUsesEntityCatalog(goodLoads).length === 0],
     ["legacy loads patch fails", checkLoadsStatusPatchUsesEntityCatalog(badLoads).length > 0],
   ];

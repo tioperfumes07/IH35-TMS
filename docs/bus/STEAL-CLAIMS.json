@@ -1,4 +1,5 @@
 {
+  "post.dispatch-cancel-reason-failure-honesty": "Codex 2026-08-28 DSP-F7088",
   "post.dispatch-bookload-equipment-query-failure-honesty": "Codex 2026-08-28 DSP-F7087",
   "post.dispatch-bol-summary-failure-honesty": "Codex 2026-08-28 DSP-F7086",
   "post.dispatch-overview-unassigned-units-error-honesty": "Codex 2026-08-28 DSP-F7085",
