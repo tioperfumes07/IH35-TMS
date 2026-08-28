@@ -216,6 +216,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T06:16:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.insurance-policy-unified-fleet-parity",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T06:31:00-05:00",
+      "go": "0004"
     }
   ]
 }
