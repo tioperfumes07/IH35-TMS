@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { addArrayWorksheet, writeWorkbookBuffer } from "../lib/exceljs-workbook.js";
 import { getFleetLocationHosRows, minutesToHMM, type FleetLocationHosRow } from "./fleet-location-hos.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -71,7 +72,7 @@ export async function registerFleetLocationHosRoutes(app: FastifyInstance) {
 
     if (query.data.format === "xlsx") {
       const buffer = await renderFleetLocationHosXlsx(rows);
-      const stamp = asOf.toISOString().slice(0, 10);
+      const stamp = companyBusinessDate(asOf);
       reply.header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       reply.header("Content-Disposition", `attachment; filename="fleet-location-hos-${stamp}.xlsx"`);
       return reply.send(buffer);
