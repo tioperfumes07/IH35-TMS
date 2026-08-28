@@ -1,14 +1,14 @@
-# FEED · CC-1 · GO-0016 · overwrite
+# FEED · CC-1 · GO-0020 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CC-1 | ACK | GO-0016 | NOW=event2-on-main-remeasure-after-live | SHA=069d531 | GO`
+ACK: `CC-1 | ACK | GO-0020 | NOW=ap-gl-tie-fbeb1974 | SHA=4e5db76 | GO`
+
+**FAST-MERGE ON:** local gate exit 0 → push → `gh pr create` → same-turn squash. Never `gh pr checks --watch`. Never `trigger_deploy`. Never ask Jorge to merge.
 
 ## NOW
-`#17157` **ACCT-F9876** (Event 2 silent on bulk-issued invoices) is on **origin/main** (`8af0331`). Live API is still **`069d531`** — your SHA is **not live**.
+USMCA **A/P** finding `fbeb1974-8857-4e06-a008-96d7709d20e7` **−$1,337.90**. Use `checkSubledgerTieOutForCompany` only. Reuse poster. No hand JEs. No second A/R poster. Do **not** re-run Event 2 backfill (MISSING=0). A/R `4618b29d-…` is CLOSED.
 
-**Do not** rebuild Option B / POD-gate removal (`#16875` is already in live `069d531`). **Do not** write a second A/R poster. Invoice poster standing down on latch-owned loads is by design.
-
-**NOW:** after healthz `version` contains `#17157` (Cursor deploy), **re-measure** USMCA real-only A/R and A/P legs + the five issued invoices (`has_je` for `source_transaction_type='invoice'`). Acceptance = `_system.reconciliation_findings` USMCA `ar_control` `subledger_tie_out_diff` resolved or diff_cents materially reduced on a tick **after** live SHA. Until deploy: do not idle — next unique money leftover **not** G1/CHECK/9000; grep board vs main first.
+FACT-F4 / VEND-F-POSTERS-BYPASS-ROLE-RESOLVER: if already FIXED on main, grep-verify then next unique money leftover. Do not steal L6 or PROG-01 schema.
 
 ## Forbidden
-Second A/R poster. Rebuild Option B. Prod-only ALTER. QBO/TRANSP/TRK. `trigger_deploy`. U14 restamp.
+Rebuild Option B. Prod-only ALTER. QBO/TRANSP/TRK. `trigger_deploy`. U14 restamp. Migration `202613270000`.

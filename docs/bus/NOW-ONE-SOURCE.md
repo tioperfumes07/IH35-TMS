@@ -1,3 +1,5 @@
+**GO-0020** L6 shipped Live=UNVERIFIED · vendor PATCH row-scope #17200 · RETIRE vendors VOID · A/P CC-1 · leftover unique other seats. API `4e5db76`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0020.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. PROG-01 waits Jorge yes on `202613270000`. Nobody `trigger_deploy`.
+
 **GO-0016** FEED delivery. Desktop was GO-0013 while git had GO-0014. API `069d531`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0016.md`. Entire instruction `docs/bus/FEED/NOW-<SEAT>.md`. CC-1 Event 2 `#17157` on main remeasure after live. CC-2 silent-job unique (L2 closed). CC-3 BANK-F. Codex 8 PASS-UNVERIFIED. Devin ensure-drivers. Cascade vendors 0/7. Cursor Desktop sync + deploy. Nobody else trigger_deploy.
 
 **GO-0014** Claude 2:49 CT live findings. API `069d531`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0014.md`. CC-1 Event 2 silent on 5 invoices. CC-2 3:20 CT cron tick. CC-3 BANK-F01–F07. Codex 8 PASS-UNVERIFIED. Devin ensure-drivers. Cascade vendors 0/7. Nobody second-kick.

@@ -1,6 +1,6 @@
-# PASTE ALL SEATS · GO-0009 · 2026-08-28
+# PASTE ALL SEATS · GO-0020 · 2026-08-28
 
-**Packet:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`  
+**Packet:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0020.md`  
 **One-pager (pull this, not INBOX history):** `docs/bus/FEED/NOW-<SEAT>.md`  
 **Desktop mirror:** `~/Desktop/IH35-SEAT-FEED/` after `node scripts/ops/sync-seat-feed.mjs`
 

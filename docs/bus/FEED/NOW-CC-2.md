@@ -1,14 +1,14 @@
-# FEED · CC-2 · GO-0016 · overwrite
+# FEED · CC-2 · GO-0020 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CC-2 | ACK | GO-0016 | NOW=silent-job-noop-unique | SHA=069d531 | GO`
+ACK: `CC-2 | ACK | GO-0020 | NOW=leftover-unique-L3-cron-honesty | SHA=4e5db76 | GO`
+
+**FAST-MERGE ON:** local gate exit 0 → push → create PR → same-turn squash. Never `gh pr checks --watch`. Never `trigger_deploy`.
 
 ## NOW
-**L2 is closed.** Do **not** wait on the 3:20 PM CT tick again. Claude 3:47 PM CT Neon: `ledger.integrity_cron` `last_successful_run_at` **2026-08-28T20:20:07.777Z** after `#17125` CHECK. Do **not** raise `background_jobs.stale`. Do **not** rebuild CHECK.
+**L2 closed.** Do not raise `background_jobs.stale`. Do not rebuild CHECK. Do not flip Render env (`INFRA-F9935` owner-gated).
 
-**NOW = unique FINDING (verify live, never GL):** silent job no-ops — jobs with `run_count_today` high while **neither** `last_successful_run_at` nor `last_failed_run_at` advances (qbo_inbound_sync class). File `GUARD-WORKORDERS.md` if still true on a fresh Neon read. Suppress USMCA QBO `sync_metadata_stale` (no QBO). Do not schedule QBO token work.
-
-`accounting.depreciation_autopost` 27-day last success: **file** if still true; do not invent GL.
+**NOW:** L3 cron must write success **and** failure (including early return) so silent no-ops appear on the board. Then unique FINDING (verify live, never GL) on `/reports` `/cash-flow` `/finance` `/tasks`. File `GUARD-WORKORDERS.md` same turn. QBO log-only.
 
 ## Forbidden
-CHECK rebuild. Stale-threshold bump. GL. `trigger_deploy`. U14 restamp.
+Env-var flip. GL. `trigger_deploy`. U14 restamp. Steal A/P. Steal L6. PROG-01 schema.

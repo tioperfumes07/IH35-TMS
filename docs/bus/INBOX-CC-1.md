@@ -1,3 +1,5 @@
+**GO-0020 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0020 | NOW=ap-gl-tie-fbeb1974 | SHA=4e5db76 | GO`. A/P −$1,337.90. No Event 2 re-run. Never trigger_deploy.
+
 **GO-0016 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0016 | NOW=event2-on-main-remeasure-after-live | SHA=069d531 | GO`. #17157 on main not live. Do not rebuild Option B. Never trigger_deploy.
 
 **GO-0014 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0014 | NOW=event2-silent-on-issued-invoices | SHA=069d531 | GO`. Five issued invoices has_je=false. Reuse latch Event 2. Do not write a second A/R poster. Option B already on live SHA. Re-measure A/R and A/P. Never trigger_deploy.

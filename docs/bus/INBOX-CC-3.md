@@ -1,3 +1,5 @@
+**GO-0020 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0020 | NOW=leftover-unique-banking-depreciation | SHA=4e5db76 | GO`. Do not ship b.operating_company_id PATCH (#17200 shipped). Never trigger_deploy.
+
 **GO-0016 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0016 | NOW=BANK-F01-F02-F03-F07 | SHA=069d531 | GO`. Samsara DISPROVEN. Never trigger_deploy.
 
 **GO-0014 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0014 | NOW=BANK-F01-F02-F03-F07 | SHA=069d531 | GO`. Samsara DISPROVEN. Banking P0 match-to-invoice. Never trigger_deploy.
