@@ -2,9 +2,9 @@
   "module": "factoring",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Banking Factoring (Faro) + Accounting More Factoring/settlements + Dispatch packets/queue",
     "nav": "apps/frontend/src/pages/factoring/FactoringHome.tsx SUBNAV + sidebar-config FACT/flyouts",
-    "routes": "/factoring* · /accounting/factoring* · /banking/factoring · /dispatch/factoring-queue"
+    "routes": "/factoring* \u00b7 /accounting/factoring* \u00b7 /banking/factoring \u00b7 /dispatch/factoring-queue"
   },
   "columns": [
     {
@@ -116,9 +116,59 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "gl_delta",
+      "group": "economics",
+      "label": "C25 GL \u0394"
+    },
+    {
+      "id": "subledger_tie",
+      "group": "economics",
+      "label": "C26 Subledger"
+    },
+    {
+      "id": "lifecycle_complete",
+      "group": "economics",
+      "label": "C27 Lifecycle"
+    },
+    {
+      "id": "reversal_symmetry",
+      "group": "economics",
+      "label": "C28 Reversal"
+    },
+    {
+      "id": "period_guard",
+      "group": "economics",
+      "label": "C29 Period"
+    },
+    {
+      "id": "entity_isolation",
+      "group": "economics",
+      "label": "C30 Entity"
+    },
+    {
+      "id": "non_empty_proof",
+      "group": "economics",
+      "label": "C31 Living doc"
     }
   ],
   "leaves": [
+    {
+      "id": "economics.invariants",
+      "tab": "Factoring",
+      "sub": "USMCA ledger invariants C25\u2013C31",
+      "route_hint": "/factoring* \u00b7 /accounting/factoring* \u00b7 /banking/factoring \u00b7 /dispatch/factoring-queue",
+      "required": [
+        "gl_delta",
+        "subledger_tie",
+        "lifecycle_complete",
+        "reversal_symmetry",
+        "period_guard",
+        "entity_isolation",
+        "non_empty_proof"
+      ]
+    },
     {
       "id": "home.summary",
       "tab": "Factoring home",
@@ -414,7 +464,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -426,7 +476,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -438,7 +488,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -450,7 +500,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/factoring",
       "surface_kind": "toolbar",
       "required": [
@@ -541,11 +591,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_remainder": {
       "finding": "VERTICAL-REVERSE-LINK-FACTORING-REMAINDER",
-      "note": "reserves.dashboard has no factor EntityLink kind; accounting.submit + confirm/add-factor modals + profile panel + DriverAutocomplete are create/picker chrome — reverse_link Required was inflation. Built: batches.create, factors.admin, faro.import, accounting.list/detail/factor_recon, banking.entry, wizard.batch.",
+      "note": "reserves.dashboard has no factor EntityLink kind; accounting.submit + confirm/add-factor modals + profile panel + DriverAutocomplete are create/picker chrome \u2014 reverse_link Required was inflation. Built: batches.create, factors.admin, faro.import, accounting.list/detail/factor_recon, banking.entry, wizard.batch.",
       "drops": [
         {
           "id": "reserves.dashboard",
@@ -707,7 +757,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 5 factoring leaves flagged here are false: home.statements_settings shows invariant/statement-history data with zero vendor references; factors.admin and accounting.factor_recon track factors as their own entity type, never as vendor records. home.equipment_loans and home.vendor_merges (not touched here — already correctly not flagged) both genuinely operate on real vendor records (a real lender_vendor_id ReferenceSelect, and real vendor-merge create/history against mdata.vendors).",
+      "note": "3 of 5 factoring leaves flagged here are false: home.statements_settings shows invariant/statement-history data with zero vendor references; factors.admin and accounting.factor_recon track factors as their own entity type, never as vendor records. home.equipment_loans and home.vendor_merges (not touched here \u2014 already correctly not flagged) both genuinely operate on real vendor records (a real lender_vendor_id ReferenceSelect, and real vendor-merge create/history against mdata.vendors).",
       "drops": [
         {
           "id": "home.statements_settings",

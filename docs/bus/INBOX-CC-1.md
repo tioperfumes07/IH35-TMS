@@ -1,3 +1,5 @@
+**LIVE `08d96f7` (uptime ~744s+).** Deploy landed. ACK `CC-1 | ACK | GO-0006 | NOW=accounting-G1-G2 | SHA=08d96f7 | GO`. Do not wait. Query-back every row you create.
+
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA = `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` (deploy `dep-da8q9cifngtc7386pbb0` in flight). **NOW=accounting G1 then G2.** No post-gl until G1+G2 land. Never `trigger_deploy`.
 
 **GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-1 | ACK | GO-0006 | NOW=accounting-G1-G2 | SHA=<healthz> | GO`. **NOW=accounting:** G1 `is_sample_data` source→JE+aging/balances, then G2 9000 throws `ACCOUNT_MAPPING_MISSING`. Then Option B Event 2. Then settlements leftover. Canonical reversal only. No post-gl until G1+G2 land. Never `trigger_deploy`.

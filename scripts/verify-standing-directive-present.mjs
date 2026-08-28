@@ -113,6 +113,14 @@ export function assertStandingDirectivePresent(root = ROOT) {
     if (!/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22/i.test(body) || !/OPEN hops/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include SESSION ANNOUNCE CURRENT-LAW + OPEN hops`);
     }
+    if (!/QUERY-BACK/i.test(body) || !/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include QUERY-BACK + QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28`);
+    }
+  }
+
+  const queryBackLaw = "docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md";
+  if (!fs.existsSync(path.join(root, queryBackLaw))) {
+    problems.push(`MISSING ${queryBackLaw}`);
   }
 
   const announceLaw = "docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md";

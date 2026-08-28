@@ -1,3 +1,5 @@
+**LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
+
 **GO-0006 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. ACK `CURSOR | ACK | GO-0006 | NOW=lead+U6 | SHA=<healthz> | GO`. Census. FAST-MERGE this bus PR. Urgent 6 only. Do not steal CC-1 money. Deploy only 5–10. No post-gl.
 
 **GO-0004 · CLAUDE LEAD ACTIVE.** `LEAD-SEAT=CC-1`. You are NOT lead. Worker + deploy lieutenant. Read `docs/bus/CLAUDE-LEAD-NOW.md` §3. FAST-MERGE this bus PR then Cursor-lane only. Only you `trigger_deploy` when Claude’s census says the 5–10 gate. Do not steal money. Do not recertify U14. C25–C31 stay seven columns. ACK: `CURSOR | ACK | GO-0004 | NOW=worker+deploy-lt | SHA=ebc1c4f | GO`.

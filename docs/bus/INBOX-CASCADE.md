@@ -1,3 +1,5 @@
+**LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
+
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX. Unique FINDING only on Urgent 6 (accounting/banking/settlements/factoring/dispatch/vendors). No U14 restamp. No product PR. Never `trigger_deploy`.
 
 **GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CASCADE | ACK | GO-0006 | NOW=unique-FINDING-U6 | SHA=<healthz> | GO`. Unique FINDING only on Urgent 6 surfaces. No U14 restamp. Never `trigger_deploy`.

@@ -130,7 +130,7 @@
     {
       "id": "gl_delta",
       "group": "economics",
-      "label": "C25 GL Δ"
+      "label": "C25 GL \u0394"
     },
     {
       "id": "subledger_tie",
@@ -176,7 +176,7 @@
     {
       "id": "economics.invariants",
       "tab": "Accounting",
-      "sub": "USMCA ledger invariants C25–C31",
+      "sub": "USMCA ledger invariants C25\u2013C31",
       "route_hint": "/accounting",
       "required": [
         "gl_delta",
