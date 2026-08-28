@@ -1509,3 +1509,7 @@ Codex | WORKING | FINDING=CUST-F6913-FMCSA-HISTORY-FIRST-25-ONLY | SOURCE-OF-TRU
 Codex | SHIPPED | CUST-F6913 | PR=#16865 @ caf848d900 | gate=exit0 | Built=complete FMCSA verification-history range | Live=post-deploy UNVERIFIED | NEXT=claim post.inventory | GO
 CODEX | CLAIMING | leftover=post.inventory | GO=0002 | reason=customers drained; drivers remaining caps disclosed or money-lane | NOW=inventory unique connectivity/history | GO
 CODEX | WORKING | FINDING=INV-F6914-PARTS-STOCK-MUTATIONS-LEAVE-SIBLING-SURFACE-STALE | SOURCE-OF-TRUTH=maintenance.parts_inventory | NOW=canonical dual-surface cache coherence+mutation guard | GO
+Codex | SHIPPED | INV-F6914 | PR=#16867 @ e5936cb655 | gate=exit0 | Built=dual-surface stock cache coherence across create/edit/purchase/adjust/void | Live=post-deploy UNVERIFIED | NEXT=claim post.maintenance-service-timeline | GO
+CODEX | CLAIMING | leftover=post.maintenance-rm-status-range | GO=0002 | reason=mounted R&M board hard-caps canonical open-WO set at 80 without total/navigation | NOW=exact scoped count+server range | GO
+CODEX | WORKING | FINDING=MAINT-F6915-RM-STATUS-BOARD-SILENT-80-CAP | SOURCE-OF-TRUTH=maintenance.work_orders | leaf=home.rm_status_board:{work_order,unit,connectivity,reverse_link} | NOW=exact server range+guard | GO
+CODEX | ACK | GO-0004 | NOW=post.maintenance-rm-status-range claimed+working | SHA=ebc1c4f | GO

@@ -22,7 +22,18 @@ export function assertRoadsideFields(input: {
   }
 }
 
-export async function listWorkOrdersByBucket(client: QueryClient, operatingCompanyId: string) {
+export async function listWorkOrdersByBucket(
+  client: QueryClient,
+  operatingCompanyId: string,
+  range: { limit: number; offset: number } = { limit: 50, offset: 0 },
+) {
+  const count = await client.query<{ total_count: number }>(
+    `SELECT COUNT(*)::int AS total_count
+       FROM maintenance.work_orders w
+      WHERE w.operating_company_id = $1::uuid
+        AND ${openWorkOrderPredicate("w")}`,
+    [operatingCompanyId],
+  );
   const result = await client.query(
     `
       SELECT
@@ -45,9 +56,9 @@ export async function listWorkOrdersByBucket(client: QueryClient, operatingCompa
       WHERE w.operating_company_id = $1::uuid
         AND ${openWorkOrderPredicate("w")}
       ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
-      LIMIT 80
+      LIMIT $2 OFFSET $3
     `,
-    [operatingCompanyId]
+    [operatingCompanyId, range.limit, range.offset]
   );
 
   const buckets: { in_house: Record<string, unknown>[]; external: Record<string, unknown>[]; roadside: Record<string, unknown>[] } = {
@@ -61,5 +72,10 @@ export async function listWorkOrdersByBucket(client: QueryClient, operatingCompa
     else if (bucket === "external") buckets.external.push(row);
     else buckets.in_house.push(row);
   }
-  return buckets;
+  return {
+    ...buckets,
+    total_count: Number(count.rows[0]?.total_count ?? 0),
+    limit: range.limit,
+    offset: range.offset,
+  };
 }

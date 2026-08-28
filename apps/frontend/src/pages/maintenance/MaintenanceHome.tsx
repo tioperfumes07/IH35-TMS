@@ -107,6 +107,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const [triageIssue, setTriageIssue] = useState<InTransitIssue | null>(null);
   const [triagePage, setTriagePage] = useState(1);
   const triagePageSize = 50;
+  const [rmStatusPage, setRmStatusPage] = useState(0);
+  const rmStatusPageSize = 50;
   // LV-MAINT-RM-STATUS-BOARD-SHELL / LV-MAINTENANCE-*-SHELL: derive from pathname when it
   // matches a leaf; otherwise honor MaintenanceTabRoute initialTab (never invent active_wos).
   const tab = (maintenanceTabFromPath(location.pathname) ?? initialTab) as MaintenanceTabId;
@@ -129,10 +131,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
   });
   const rmStatusQuery = useQuery({
-    queryKey: ["maintenance", "dashboard", "rm-status", companyId],
-    queryFn: () => getMaintenanceRmStatus(companyId),
+    queryKey: ["maintenance", "dashboard", "rm-status", companyId, rmStatusPage],
+    queryFn: () => getMaintenanceRmStatus(companyId, { limit: rmStatusPageSize, offset: rmStatusPage * rmStatusPageSize }),
     enabled: Boolean(companyId),
   });
+  useEffect(() => setRmStatusPage(0), [companyId]);
   const triageQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage", companyId],
     queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: 50, offset: 0 }),
@@ -395,6 +398,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 })}
               />
             )}
+            {!rmStatusQuery.isError && (rmStatusQuery.data?.total_count ?? 0) > rmStatusPageSize ? (
+              <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid="rm-status-server-range">
+                <span>{rmStatusPage * rmStatusPageSize + 1}–{Math.min((rmStatusPage + 1) * rmStatusPageSize, rmStatusQuery.data?.total_count ?? 0)} of {rmStatusQuery.data?.total_count ?? 0} open work orders</span>
+                <div className="flex gap-2">
+                  <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={rmStatusPage === 0 || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => Math.max(0, value - 1))}>Previous</button>
+                  <button type="button" className="rounded border border-slate-300 px-2 py-1 disabled:opacity-50" disabled={(rmStatusPage + 1) * rmStatusPageSize >= (rmStatusQuery.data?.total_count ?? 0) || rmStatusQuery.isFetching} onClick={() => setRmStatusPage((value) => value + 1)}>Next</button>
+                </div>
+              </div>
+            ) : null}
           </div>
           <aside className="flex flex-col gap-2">
             {companyId ? (

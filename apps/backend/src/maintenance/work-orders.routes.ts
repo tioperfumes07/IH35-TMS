@@ -49,6 +49,8 @@ const listQuerySchema = z.object({
 
 const listByBucketQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
@@ -433,8 +435,8 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
     const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
-      if (!(await maintenanceReady(client))) return { in_house: [], external: [], roadside: [] };
-      return listWorkOrdersByBucket(client, q.operating_company_id);
+      if (!(await maintenanceReady(client))) return { in_house: [], external: [], roadside: [], total_count: 0, limit: q.limit, offset: q.offset };
+      return listWorkOrdersByBucket(client, q.operating_company_id, { limit: q.limit, offset: q.offset });
     });
     return payload;
   });

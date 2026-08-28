@@ -13,6 +13,10 @@ import { excludeDemoPhantomSql, excludeSampleDataSql } from "../mdata/fleet-visi
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });
+const rmStatusQuerySchema = companyQuerySchema.extend({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
@@ -41,13 +45,13 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/dashboard/rm-status", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = rmStatusQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
     const buckets = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return { in_house: [], external: [], roadside: [] };
-      return listWorkOrdersByBucket(client, companyId);
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { in_house: [], external: [], roadside: [], total_count: 0, limit: parsed.data.limit, offset: parsed.data.offset };
+      return listWorkOrdersByBucket(client, companyId, { limit: parsed.data.limit, offset: parsed.data.offset });
     });
     return buckets;
   });

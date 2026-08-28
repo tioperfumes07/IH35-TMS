@@ -499,9 +499,12 @@ export function getVendorIntegrityHistory(vendorId: string, companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/maintenance/integrity/vendor-history/${encodeURIComponent(vendorId)}?${query(companyId)}`);
 }
 
-export function getMaintenanceRmStatus(companyId: string) {
-  return apiRequest<{ in_house: WorkOrder[]; external: WorkOrder[]; roadside: WorkOrder[] }>(
-    `/api/v1/maintenance/dashboard/rm-status?${query(companyId)}`
+export function getMaintenanceRmStatus(companyId: string, range: { limit?: number; offset?: number } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  params.set("limit", String(range.limit ?? 50));
+  params.set("offset", String(range.offset ?? 0));
+  return apiRequest<{ in_house: WorkOrder[]; external: WorkOrder[]; roadside: WorkOrder[]; total_count: number; limit: number; offset: number }>(
+    `/api/v1/maintenance/dashboard/rm-status?${params.toString()}`
   );
 }
 
