@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { notifyLoadAssigned } from "../services/push-notification.service.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import {
   assertDriverQualifiedForLoad,
   DriverNotQualifiedError,
@@ -302,6 +303,21 @@ export async function quickAssignLoad(
         "P5-F3-QUICKSAVE",
       );
 
+      // The spine is the canonical reverse/audit feed for dispatch mutations. Keep it in the same
+      // transaction as the load + assignment-history write: a committed assignment without this
+      // event is a silent partial success and cannot be repaired reliably by a detached callback.
+      await emitDispatchSpineEvent(client, {
+        operating_company_id: input.operating_company_id,
+        actor_user_id: userId,
+        event_type: "load.assigned_to_driver",
+        load_id: input.load_id,
+        payload: {
+          driver_id: input.driver_id,
+          unit_id: input.unit_id ?? null,
+          trailer_id: input.trailer_id ?? null,
+        },
+      });
+
       const prevDriver =
         (load as { assigned_primary_driver_id?: string | null })
           .assigned_primary_driver_id ?? null;
@@ -487,6 +503,17 @@ export async function completeQuicksaveDraft(
           ],
         );
       }
+      await emitDispatchSpineEvent(client, {
+        operating_company_id: input.operating_company_id,
+        actor_user_id: userId,
+        event_type: "load.quicksave_draft_completed",
+        load_id: input.load_id,
+        payload: {
+          unit_id: unitId ?? before.assigned_unit_id,
+          trailer_id: resolvedTrailerId ?? previousTrailerId,
+          pending_fields: pendingFields,
+        },
+      });
       return {
         load_id: input.load_id,
         pending_fields: pendingFields,
