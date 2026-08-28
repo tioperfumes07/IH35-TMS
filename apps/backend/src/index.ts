@@ -426,6 +426,7 @@ import { registerAccountingCatalogLookupRoutes } from "./accounting/items.routes
 import { initializeQboSyncAlertsCron } from "./qbo/sync-alerts-cron.js";
 import { initializeQboRemoteCountCollectorCron } from "./cron/qbo-remote-count-collector.cron.js";
 import { initializeReconciliationWorkerCron } from "./cron/reconciliation-worker.cron.js";
+import { initializeLedgerIntegrityCron } from "./cron/ledger-integrity.cron.js";
 import { startInProcessJobCatchup } from "./cron/in-process-startup-catchup.js";
 import { registerEmailRoutes } from "./email/email.routes.js";
 import { registerEmailQueueAdminRoutes } from "./admin/email-queue-admin.routes.js";
@@ -1649,6 +1650,13 @@ async function main() {
       app.log.info("[STARTUP] reconciliation-worker-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] reconciliation-worker-cron failed");
+    }
+
+    try {
+      initializeLedgerIntegrityCron(app);
+      app.log.info("[STARTUP] ledger-integrity-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] ledger-integrity-cron failed");
     }
 
     try {
