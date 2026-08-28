@@ -1645,3 +1645,5 @@ Codex | WORKING | CLS-F6966 | CLAIM=post.export-business-date | vertical=custome
 Codex | SHIPPED | SAF-F6963 | PR=#16928 @ b4a775851d | Built=backend safety+insurance business-date | routed-money=CC-1 | NEXT=CLS-F6966 | GO
 Codex | WORKING | SAF-F6978 | CLAIM=post.safety-hos-catalog-read-recovery | vertical=HOS-tab+create-modal | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | ELD-F6977 | PR=#16938 @ 5a226d0859 | Built=ELD stale-read recovery 3/3 | NEXT=SAF-F6978 | GO
+Codex | WORKING | SAF-F6979 | CLAIM=post.safety-incident-catalog-read-recovery | vertical=accident-type+complaint-type | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6978 | PR=#16939 @ 35a13cfc64 | Built=HOS catalog recovery 2/2 | NEXT=SAF-F6979 | GO

@@ -123,6 +123,10 @@ export function ComplaintsTab() {
     retry: false,
   });
 
+  // SAF-F6979: never retain cached complaint-type choices after the current
+  // company-scoped search fails. Retry must succeed before selection resumes.
+  const complaintTypeRows = complaintTypesQuery.isError ? [] : (complaintTypesQuery.data?.rows ?? []);
+
   const usersQuery = useQuery({
     queryKey: ["identity", "assignable-users", "complaints", companyId],
     queryFn: ({ signal }) => listAssignableUsers(companyId, signal),
@@ -132,20 +136,20 @@ export function ComplaintsTab() {
 
   const complaintTypeByCode = useMemo(() => {
     const map = new Map<string, string>();
-    for (const t of complaintTypesQuery.data?.rows ?? []) {
+    for (const t of complaintTypeRows) {
       map.set(String(t.type_code), String(t.type_name));
     }
     return map;
-  }, [complaintTypesQuery.data]);
+  }, [complaintTypeRows]);
 
   const complaintTypeOptions = useMemo(
     () =>
-      (complaintTypesQuery.data?.rows ?? []).map((t) => ({
+      complaintTypeRows.map((t) => ({
         value: String(t.id),
         label: String(t.type_name),
         type: String(t.type_code),
       })),
-    [complaintTypesQuery.data]
+    [complaintTypeRows]
   );
 
   const userOptions = useMemo(
@@ -476,11 +480,19 @@ export function ComplaintsTab() {
               operatingCompanyId={companyId}
               placeholder={complaintTypesQuery.isLoading ? "Loading types…" : "Type"}
               loading={complaintTypesQuery.isLoading}
+              disabled={complaintTypesQuery.isError}
               onSearch={setComplaintTypeSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({ queryKey: ["safety-v64", "complaint-types", companyId] });
               }}
             />
+            {complaintTypesQuery.isError ? (
+              <ListErrorState
+                status={0}
+                message="Complaint types could not be loaded."
+                onRetry={() => void complaintTypesQuery.refetch()}
+              />
+            ) : null}
             <CappedListNotice
               shown={complaintTypeOptions.length}
               limit={200}
