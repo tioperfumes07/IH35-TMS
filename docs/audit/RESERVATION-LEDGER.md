@@ -155,3 +155,5 @@ Draw the next unused number from your OWN block, record a `CLAIM-<n>` row below,
 | 2026-08-25T12:23:00-05:00 | Codex | QUICK-ASSIGN-QUALIFICATION-QUERY-FAILURES-FAIL-OPEN | — | RELEASED-ON-MERGE | codex/quick-assign-qualification-fail-open |
 | 2026-08-25T12:31:00-05:00 | Codex | DISPATCH-OCR-SCHEDULER-FAILURE-SILENT | apps/backend/src/dispatch/ocr-processor.service.ts, scripts/verify-dispatch-ocr-queue.mjs, docs/audit/GUARD-WORKORDERS.md | RESERVED | codex/reserve-ocr-scheduler-honesty |
 | 2026-08-25T12:37:00-05:00 | Codex | DISPATCH-OCR-SCHEDULER-FAILURE-SILENT | — | RELEASED-ON-MERGE | codex/ocr-scheduler-honesty |
+| 2026-08-28T07:35:00-05:00 | CC-3 | LV-TXN-017-USMCA-BILL-CREATE-VOID | docs/audit/LIVE-TXN-BATTERY-2026-08-06.md, docs/audit/USMCA-EXHAUSTIVE-BATTERY.md | RESERVED | cc3/live-txn-bill-usmca-20260828 |
+| 2026-08-28T07:45:00-05:00 | CC-3 | LV-TXN-017-USMCA-BILL-CREATE-VOID | docs/audit/LIVE-TXN-BATTERY-2026-08-06.md, docs/audit/USMCA-EXHAUSTIVE-BATTERY.md | RELEASED-ON-MERGE | cc3/live-txn-bill-usmca-20260828 |
