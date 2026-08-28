@@ -17,10 +17,8 @@ import {
   type InvoiceLineGuardRow,
 } from "./invoice-linkage-guards.js";
 import { recomputeInvoiceTotals } from "./shared.js";
-import { finalActiveDeliveryDepartureAt, postLoadRevenueLatch } from "./revrec-delivery-posting/poster.service.js";
+import { finalActiveDeliveryDepartureAt, fireRevrecLatchOnInvoiceIssued } from "./revrec-delivery-posting/poster.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
-import { enqueueAfterCommit } from "../lib/after-commit.js";
-import { companyBusinessDate } from "../lib/company-business-date.js";
 
 /**
  * ACCT-F61 — an invoice must not bill a delivery the system cannot evidence.
@@ -263,35 +261,19 @@ export async function sendDraftInvoice(
   // OWNER DECISION B (2026-08-27 23:00 CT,
   // docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md) — invoice ISSUANCE fires revrec
   // Event 2 when earn already exists, in addition to dispatch reaching completed_docs_received. This
-  // is the ONLY call site added for that trigger (§9.0.17 one helper, not a copy per send path) — it
   // covers BOTH this manual /send endpoint AND the POD-auto-send-after-delivery path in
-  // delivery-evidence-latch.ts, since both route through this function. After-commit, same reasoning
-  // as firePostLoadRevenueLatch in delivery-evidence-latch.ts (LV-REVREC-NOT-FIRING): the poster opens
-  // its OWN connection via withLuciaBypass and must not race this transaction's own 'sent' write.
-  // Swallow-and-log: a latch failure must never fail an invoice send that already succeeded.
+  // delivery-evidence-latch.ts, since both route through this function. GO-0014
+  // event2-silent-on-issued-invoices extracted this into fireRevrecLatchOnInvoiceIssued
+  // (poster.service.ts, §9.0.17 one helper) so accounting/invoices-bulk.routes.ts's mark_sent/
+  // set_status writers -- which reach the SAME issued statuses through a separate code path -- share
+  // it instead of staying silent. Behavior here is unchanged byte-for-byte.
   if (current.source_load_id) {
-    const loadId = String(current.source_load_id);
-    const opco = input.operatingCompanyId;
-    const actorUserId = input.userId;
-    const fire = async () => {
-      try {
-        await postLoadRevenueLatch({
-          operating_company_id: opco,
-          load_id: loadId,
-          // resolveEvent() maps this literal to the "bill" event; postLoadRevenueLatch's own gates
-          // (already_posted, earn_missing_for_bill, missing_issued_invoice, ...) decide whether it
-          // actually posts — this trigger does not assert the load's real dispatch status.
-          target_status: "completed_docs_received",
-          entry_date_iso: companyBusinessDate(),
-          actor_user_id: actorUserId,
-        });
-      } catch (err) {
-        console.warn({ err, invoice_id: input.invoiceId, load_id: loadId }, "acct_option_b_revrec_latch_on_send_failed");
-      }
-    };
-    if (!enqueueAfterCommit(client as object, { label: `revrec-latch-on-send:${input.invoiceId}`, run: fire })) {
-      await fire();
-    }
+    await fireRevrecLatchOnInvoiceIssued(client as object, {
+      operating_company_id: input.operatingCompanyId,
+      source_load_id: String(current.source_load_id),
+      actor_user_id: input.userId,
+      invoice_id: input.invoiceId,
+    });
   }
 
   // ACCT-F100 — OWNER RULING 2026-08-03: an invoice posts to the GL on Finalize/Post OR Send,
