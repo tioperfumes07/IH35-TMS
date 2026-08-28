@@ -134,6 +134,8 @@ const reverseListQuerySchema = z
     related_load_id: uuidSchema.optional(),
     related_customer_id: uuidSchema.optional(),
     related_driver_id: uuidSchema.optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(25),
+    offset: z.coerce.number().int().min(0).default(0),
   })
   .refine(
     (value) => [value.related_load_id, value.related_customer_id, value.related_driver_id].filter(Boolean).length === 1,
@@ -434,7 +436,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const events = await withCurrentUser(authUser.uuid, async (client) => {
         const query = parsedQuery.data;
         const opco = await scopeToCallerCompany(client, authUser.uuid, query.operating_company_id);
-        if (!opco) return [];
+        if (!opco) return { events: [], total_count: 0, limit: query.limit, offset: query.offset };
         const filter = query.related_load_id
           ? { sql: "e.related_load_id = $2 AND rl.id IS NOT NULL", value: query.related_load_id }
           : query.related_customer_id
@@ -442,6 +444,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
             : { sql: "e.related_driver_id = $2 AND rd.id IS NOT NULL", value: query.related_driver_id! };
         const res = await client.query(
           `
+          WITH filtered AS (
           SELECT
             e.id, e.dispatcher_user_id, du.email AS dispatcher_email, e.event_type, e.event_date,
             e.severity, e.summary, e.details, e.cost_amount, e.cost_currency,
@@ -462,14 +465,20 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
               AND dispatcher_reverse_dca.deactivated_at IS NULL
           ))
           WHERE e.voided_at IS NULL AND ${filter.sql}
-          ORDER BY e.event_date DESC, e.created_at DESC
-          LIMIT 200
+          ), totals AS (SELECT COUNT(*)::int AS total_count FROM filtered),
+          page AS (SELECT * FROM filtered ORDER BY event_date DESC, created_at DESC, id LIMIT $3 OFFSET $4)
+          SELECT page.*, totals.total_count FROM totals LEFT JOIN page ON true
         `,
-          [opco, filter.value]
+          [opco, filter.value, query.limit, query.offset]
         );
-        return res.rows;
+        return {
+          events: res.rows.filter((row) => row.id),
+          total_count: Number(res.rows[0]?.total_count ?? 0),
+          limit: query.limit,
+          offset: query.offset,
+        };
       });
-      return { events };
+      return events;
     } catch (error) {
       if (error instanceof OperatingCompanyMembershipError) {
         return reply.code(403).send({ error: "forbidden" });
