@@ -271,7 +271,7 @@ export function VehicleProfilePage() {
     setStatusModalTarget(null);
   }, [companyId, id]);
 
-  const telemetry = telemetryQuery.data ?? profile;
+  const telemetry = telemetryQuery.isError ? null : telemetryQuery.data ?? profile;
   const financial = profile?.financial_ytd as Record<string, unknown> | undefined;
   const quickAvailability = (unit?.quick_availability as string | null) ?? null;
   const showBackhaul = quickAvailability === "available" && !profile?.current_load;
