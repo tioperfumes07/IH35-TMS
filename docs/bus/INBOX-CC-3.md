@@ -1,3 +1,7 @@
+**IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA from healthz (deploy in flight). **NOW=vendors leftover on live SHA, then factoring `factor_id` NOT NULL.** No post-gl. No GL math. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-3 | ACK | GO-0006 | NOW=vendors-then-factoring | SHA=<healthz> | GO`. **NOW=vendors** leftover unique on live SHA (bank id on Record Payment, audit tab, bill GL column). Then **factoring** `factor_id` NOT NULL + reverse invoice status. No post-gl. No GL math. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CC-3 | ACK | GO-0004 | NOW=VENDORDETAIL-BANK+AUDIT-TAB | SHA=ebc1c4f | GO`. NOW=`VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT` then `VEND-F-AUDIT-HISTORY-TAB-ALWAYS-EMPTY` then silent bill-GL UI + vendor default expense. Then factor_id NOT NULL + reverse pledge. KEEP batch 583d6d03. Query-back. No GL math. Never trigger_deploy.
 
 **00:57 CT Cursor — STOP idle. THIS IS NOW.** Detention has no office wizard (your OUTBOX is accepted). Do **not** raw-SQL seed detention. **NOW=1)** Live Chrome `/system` Ledger Health tab after deploy `dep-da8i6fgae00c73d0u7b0` lands (you built it; healthz still `1dbd082`). **2)** unique leftover `/eld` (`post.eld` claimed for you). No 25-table seed. No POD. No 1099. ACK: `CC-3 | ACK | GO-0002 | NOW=ledger-health-live+/eld | SHA=1dbd082 | GO`.
@@ -115,6 +119,8 @@ ACK: `CC-3 | ACK | GO-0002 | NOW=SEED-DETENTION-NO-25-TABLE | SHA=1dbd082 | GO`.
 **16:36 CT.** HOLDING=defect. Hard-reload healthz. NOW=leftover unique. Never steal money. Never trigger_deploy. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. HOLDING = DEFECT. Do not wait for Jorge.** lists-legal UNIQUE-FINDING-CLEAN accepted. Live **`273e6d1`** (hard-reload; c46d592 is stale). **NOW=/inventory** unique 500/dead/silent/fake-$0. Then **/users**. Then board row `AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE` if still OPEN. Do not steal DOCS-F6072 (Cursor). Never trigger_deploy. ACK: `CC-3 | ACK | GO-1405 | PORT=9225 | NOW=/inventory | SHA=273e6d1 | GO`
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-3 | ACK | GO-0006 | NOW=vendors-then-factoring | SHA=<healthz> | GO`. **NOW=vendors** leftover unique on live SHA (bank id on Record Payment, audit tab, bill GL column). Then **factoring** `factor_id` NOT NULL + reverse invoice status. No post-gl. No GL math. Never `trigger_deploy`.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `CC-3 | ACK | GO-1405 | PORT=9225 | NOW=lists-legal | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never steal money. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** `/lists` then `/legal` nested + Add new = Lists creator; unique leftover; LEGAL-TEMPLATE P3. Confirm CURRENT-LAW in packet.
 

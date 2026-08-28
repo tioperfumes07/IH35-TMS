@@ -1,3 +1,7 @@
+**NOT PARKED. WORK NOW.** `git pull --ff-only origin main`. ACK OUTBOX. Packet `docs/lockdown/DEVIN-PACKETS-GO-0006.md`. **1h NOW:** query-back `is_sample_data` on every TEST row you created. **No new post-gl.** Unique FINDING on `/vendors`. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md` + `docs/lockdown/DEVIN-PACKETS-GO-0006.md`. Self-ACK `DEVIN | ACK | GO-0006 | NOW=/vendors-QUERY-BACK-NO-POST-GL | SHA=<healthz> | GO`. **1h:** query-back `is_sample_data` on rows you created. **No new post-gl.** KEEP TEST. Unique FINDING. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD. DO NOT WAIT FOR JORGE.** Auto-mode pause is a Devin product bug — this INBOX is the start signal. Self-ACK `DEVIN | ACK | GO-0004 | NOW=/vendors-QUERY-BACK | SHA=ebc1c4f | GO`. `/vendors` is NOT COMPLETE (your 8 VEND-F rows are on GUARD-WORKORDERS — one row each). Query-back every TEST row you created (ledger, not UI). KEEP TEST. No 1099. Roles = `chart_of_accounts_roles` not empty `account_role_bindings`. Never trigger_deploy.
 
 **00:45 CT Cursor ping (≠ ACK).** Self-ACK `DEVIN | ACK | GO-0002 | NOW=/vendors-TEST-NO-1099 | SHA=1dbd082 | GO`. KEEP TEST vendor. Unique FINDING with SOT block. **No 1099 finding.** Nobody trigger_deploy.

@@ -1,3 +1,7 @@
+**IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX. Unique FINDING only on Urgent 6 (accounting/banking/settlements/factoring/dispatch/vendors). No U14 restamp. No product PR. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CASCADE | ACK | GO-0006 | NOW=unique-FINDING-U6 | SHA=<healthz> | GO`. Unique FINDING only on Urgent 6 surfaces. No U14 restamp. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CASCADE | ACK | GO-0004 | NOW=latch-SQL+/fuel | SHA=ebc1c4f | GO`. Latch SQL then `/fuel`. FORBIDDEN NEXT=poll. Unique FINDING. Never trigger_deploy.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.

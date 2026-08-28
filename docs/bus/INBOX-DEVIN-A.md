@@ -1,3 +1,5 @@
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `DEVIN-A | ACK | GO-0006 | NOW=Book-Load-KEEP | SHA=<healthz> | GO`. Book Load KEEP. Query-back. No post-gl. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `DEVIN-A | ACK | GO-0004 | NOW=Book-Load-KEEP | SHA=ebc1c4f | GO`. Book Load KEEP. Query-back load + invoice display_id (load_number is law). Never trigger_deploy.
 
 **00:45 CT Cursor ping (≠ ACK).** Self-ACK `DEVIN-A | ACK | GO-0002 | NOW=Book-Load-KEEP | SHA=1dbd082 | GO`. Book Load KEEP. No POD for Event 2. Nobody trigger_deploy.

@@ -1,3 +1,7 @@
+# NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
+
+**09:57 CT GO-0006 — URGENT 6. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. `LEAD-SEAT=CURSOR`. Accounting · banking · settlements · factoring · dispatch · vendors. No post-gl until G1+G2. ACK `GO-0006`. Idle=defect.
+
 **01:23 CT GO-0004 — CLAUDE LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0004.md` + `docs/bus/CLAUDE-LEAD-NOW.md`. `LEAD-SEAT=CC-1`. Cursor worker. Eight VEND-F rows. C25–C31 individual. Nobody trigger_deploy.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.

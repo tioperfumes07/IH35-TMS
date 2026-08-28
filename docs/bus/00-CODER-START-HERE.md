@@ -1,5 +1,6 @@
 # START HERE
 
+0. **NOW=GO-0006 Urgent 6** — `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md` + `INBOX-<SEAT>.md` TOP. ACK then work YOUR row. Idle=defect.
 1. `git pull --ff-only origin main`
 2. `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow`
 3. **RUNBOOK:** `docs/lockdown/FINISH-ALL-MODULES-UNTIL-DONE-2026-08-24.md`
