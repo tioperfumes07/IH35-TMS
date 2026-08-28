@@ -1,3 +1,5 @@
+Codex | WORKING | DRV-F6958 | CLAIM=post.driver-nonmoney-business-date | vertical=qualification+safety+layover | guard=6/6 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | CUST-F6957 | PR=#16923 @ ab4dbc9042 | Built=customer+driver+report late-arrival business-date | Live=post-deploy UNVERIFIED | NEXT=DRV-F6958 | GO
 Codex | WORKING | CUST-F6957 | CLAIM=post.late-arrival-company-business-date | vertical=customers+drivers+reports | guard=10/10 | NEXT=FAST-MERGE | GO
 CODEX | ACK | GO-0004 | NOW=/customers-or-steal | SHA=ebc1c4f | GO
 Codex | HANDOFF | MAINT-MONEY-F6956 | routed=CC-1 | SOURCE=maintenance warranty/parts posting business dates | BLOCKS=post.maintenance-business-date-class | NEXT=nonmoney unique | GO

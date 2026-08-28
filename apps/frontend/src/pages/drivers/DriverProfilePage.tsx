@@ -66,6 +66,7 @@ import { DriverDqfPanel } from "./components/DriverDqfPanel";
 import { DriverLateArrivalCard } from "../../components/drivers/DriverLateArrivalCard";
 import { resolveApiUrl } from "../../api/client";
 import { ListErrorState } from "../../components/ListErrorState";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 interface LayoverSummary {
   total_layovers: number;
@@ -75,8 +76,8 @@ interface LayoverSummary {
 }
 
 function LayoverSummaryCard({ driverId, companyId }: { driverId: string; companyId: string }) {
-  const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-  const to = new Date().toISOString().slice(0, 10);
+  const to = companyToday();
+  const from = addDaysIso(to, -30);
   const { data, isLoading, isError, refetch } = useQuery<{ data: LayoverSummary[] }>({
     queryKey: ["driver-layovers-summary", driverId, companyId],
     queryFn: async () => {

@@ -8,10 +8,6 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { companyToday } from "../../lib/businessDate";
 import { ListErrorState } from "../ListErrorState";
 
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 type Props = {
   open: boolean;
   driverId: string;
