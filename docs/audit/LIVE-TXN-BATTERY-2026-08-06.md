@@ -9467,3 +9467,77 @@ NEON: invoice e01c4460-5d57-4b1c-9cec-7c1f24427016 INV-2026-00048, USMCA, $75.00
 APP: live UI create + Send attempt, 409 with the exact source-code message; confirmed correct-by-design
 BLOCKED: none
 NEXT: create-from-load on a load with actual_departure_at stamped, to reach a real AR + revenue JE
+
+---
+
+# CC-3 LIVE-TXN — LV-TXN-019 — USMCA revrec Event 2 (bill/A/R) backlog: 9 earn-only loads, $13,701.00 stuck, $3,600.00 of it already live-WRONG on paid invoices — 2026-08-28
+
+**Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`.** Surfaced while attempting the next live-txn-battery
+unit (an AR invoice from a real delivered load, following up on LV-TXN-018's finding that a manual/no-load
+invoice can't reach `sent`). No new row was created for this unit — this is a live-audit finding on EXISTING
+data, verified with live Neon queries and cross-checked against source.
+
+## VERDICT: **FAIL** — filed as an OPEN board row (`FACT-F4-PLEDGED-INVOICE-ZERO-AR`, widened), lane CC-1
+
+**How it was found:** picked the most recently delivered USMCA load with an invoice
+(`L-20260827-0857` / `e2d985b8-6f01-435e-9f10-3edacfd91c94`, invoice `6708d422-…`, `status='sent'`,
+`sent_at=2026-08-28T05:34:34Z`) to verify the AR + revenue JE. `journal_entry_postings` had **zero** rows for
+both the invoice UUID and the load UUID. Before concluding gap, checked the dedicated revrec table
+(`accounting.load_revenue_recognition_postings`) rather than trusting the generic postings table alone —
+Event 1 (`earn`) WAS posted (JE `1d43be14-…`, DR 1150 Unbilled Revenue / CR 4000 Freight Income, $50.00,
+balanced) but Event 2 (`bill`) never exists for this load.
+
+**Widened the check to all of USMCA rather than stopping at one load:**
+```
+accounting.load_revenue_recognition_postings, USMCA, is_active:
+  earn events: 12        bill events: 3        9 loads earn-only
+  sum(amount_cents) for the 9 earn-only loads = $13,701.00
+```
+
+**Root-caused via source, not guessed:** `apps/backend/src/accounting/invoice-send.service.ts:263-295` —
+Option B (`bb541e1c9d`, PR #16875, merged `2026-08-28 01:56:41 -0500` = `06:56:41Z`) added the ONLY call
+site that fires Event 2 on invoice Send. Confirmed **live and deployed**:
+```
+healthz/shallow: {"ok":true,"version":"08d96f7"}
+git merge-base --is-ancestor bb541e1c9d 08d96f7  →  true
+```
+But `L-20260827-0857`'s invoice was sent at `05:34:34Z` — **~1h22m before** `06:56:41Z` — i.e. under the
+OLD gate (`hasApprovedPodEvidence()`, which the same PR's own commit message says was "permanently
+unreachable" because `dispatch.pod_documents` has 0 rows system-wide). Correctly refused THEN. The fix is
+correct going forward but there is **no retry for anything already sent** — confirmed live in the UI:
+navigating to the invoice shows `Send` disabled, tooltip `"This invoice is sent. Only draft inv..."`. A
+resend was the obvious idempotent way to test AND remediate; the UI correctly blocks it, so this needs a
+one-time backfill script, not a UI action.
+
+**Three of the nine are not just stuck — they are actively WRONG right now:**
+```
+INV-2026-00037 (load 8df23e68…) $1,200.00 status=paid  → payment PMT-2026-00008 fa11d442…
+INV-2026-00044 (load 065538c8…) $1,200.00 status=paid  → payment PMT-2026-00009 b06fc0ea…
+INV-2026-00045 (load 686424c8…) $1,200.00 status=paid  → payment PMT-2026-00010 f2299270…
+
+Each payment's own JE (verified, all three identical shape):
+  DR 1090 Undeposited Funds   $1,200.00
+  CR 1100 Accounts Receivable $1,200.00
+```
+A/R was CREDITED $1,200.00 three times with **no debit ever posted** for any of the three (Event 2 never
+ran) — **Accounts Receivable is understated by $3,600.00 for USMCA on prod right now**, and the matching
+$3,600.00 sits permanently stranded in Unbilled Revenue (1150) since nothing ever moved it out. The cash
+side is correct (Undeposited Funds debited, matches the real payment) — this is purely a receivable-ledger
+integrity gap, not a missing-money gap.
+
+**Fix is NOT mine to make** (financial-cluster GL-posting math is CC-1's exclusive lane, and the existing
+poster must be reused, never re-derived): filed as an OPEN board row widening `FACT-F4-PLEDGED-INVOICE-ZERO-AR`
+with the full 9-load/$13,701.00 backlog, the $3,600.00 already-wrong subset, and the exact remediation shape
+(call `postLoadRevenueLatch` once per stuck `load_id` — idempotent by its own `already_posted` gate, matching
+the `scripts/run-*-once.mts` one-time-backfill pattern already used for USMCA).
+
+```
+VERDICT: FAIL (widened OPEN board row, not a new code change this PR)
+PR: (this branch — docs-only: board row + this entry + register touch)
+NEON: 9 earn-only loads, $13,701.00 total; 3 already-paid invoices with A/R credited-not-debited, $3,600.00
+      Option B fix confirmed deployed (08d96f7 ⊇ bb541e1c9d) but has no retroactive effect
+APP: healthz/shallow = 08d96f7; UI Send correctly disabled for sent invoices (no accidental double-post risk)
+BLOCKED: none — routed to CC-1 via board, not via the owner
+NEXT: once CC-1 ships the backfill, CC-3 re-verifies bill_count == earn_count and A/R reconciles to the
+      3 payments before closing the board row
+```
