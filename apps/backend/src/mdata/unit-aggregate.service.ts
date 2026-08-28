@@ -803,8 +803,8 @@ export async function buildUnitAggregate(
       WHERE w.unit_id = $1::uuid
         AND w.operating_company_id = $2::uuid
         AND w.voided_at IS NULL
+        AND w.status IN ('open', 'in_progress', 'awaiting_parts', 'awaiting_approval', 'scheduled')
       ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
-      LIMIT 10
     `,
     [unitId, operatingCompanyId]
   );

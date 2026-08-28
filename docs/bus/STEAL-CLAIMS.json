@@ -132,6 +132,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T03:28:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.unit-maintenance-snapshot-open-wo-range",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T03:35:00-05:00",
+      "go": "0004"
     }
   ]
 }
