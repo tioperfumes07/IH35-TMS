@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7041 | CLAIM=post.fleet-unit-assignment-exact-filter-guard | SOURCE=unit profile reverse drill→paged assignment API→WO.unit_id | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7040 | PR=#16997 @ 74dacf7af7 | Built=fleet fault exact-count guard 5/5 | NEXT=fleet assignment filter | GO
 Codex | WORKING | FLEET-F7040 | CLAIM=post.fleet-fault-summary-exact-count-guard | SOURCE=exact scoped fault totals + fail-closed profile | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7039 | PR=#16996 @ dfa6c248f6 | Built=fleet counter/list honesty guard 13/13 | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7039 | CLAIM=post.fleet-counter-fail-closed-guard | SOURCE=complete roster fail-closed counter slice | NEXT=guard+FAST-MERGE | GO
