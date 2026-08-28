@@ -23,6 +23,7 @@ import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Combobox } from "../../components/Combobox";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -368,7 +369,7 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `safety-events-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `safety-events-${companyToday()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

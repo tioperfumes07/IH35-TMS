@@ -26,6 +26,7 @@ import { DispatchSubnav } from "../components/dispatch/DispatchSubnav";
 import { PreSettlementsPanel } from "../components/driver-finance/PreSettlementsPanel";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../lib/api-error-message";
+import { companyToday } from "../lib/businessDate";
 import { DISPATCH_SECONDARY_TAB_PATH, dispatchSecondaryTabFromPath } from "../router/route-manifest";
 
 type ViewMode = "overview" | "list" | "kanban" | "units";
@@ -262,7 +263,7 @@ export function DispatchPage({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dispatch-loads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `dispatch-loads-${companyToday()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

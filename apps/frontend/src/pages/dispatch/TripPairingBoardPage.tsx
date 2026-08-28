@@ -10,6 +10,7 @@ import { BookLoadModalV4 } from "./components/BookLoadModalV4";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { companyToday } from "../../lib/businessDate";
 
 // §7 navy ruling (Jorge 2026-06-23): NB/TR/SB render in the navy family — no blue/purple/green pills.
 // Three distinguishable navy-family shades replace the old SB green (#16a34a) and any blue/purple.
@@ -138,7 +139,7 @@ export function TripPairingBoardPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `trip-pairing-board-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `trip-pairing-board-${companyToday()}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

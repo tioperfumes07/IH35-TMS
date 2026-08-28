@@ -12,6 +12,7 @@ import { useListState, type ListQueryStatus } from "../../components/list-state"
 import { formatUsdCents } from "../../lib/money";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { companyToday } from "../../lib/businessDate";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -55,7 +56,7 @@ function exportVendorsCsv(rows: VendorOption[], openByVendorId: Map<string, numb
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `vendors-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `vendors-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
