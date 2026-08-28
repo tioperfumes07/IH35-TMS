@@ -1864,3 +1864,5 @@ Codex | WORKING | DSP-F7099 | CLAIM=post.dispatch-auto-status-audit-failure-hone
 Codex | WORKING | DSP-F7100 | CLAIM=post.dispatch-filter-customer-failure-honesty | SOURCE=mdata.customers scoped roster→dispatch filter | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO
 Codex | SHIPPED | DSP-F7099 | PR=#17091 @ 451b359b91 | Built=auto-status provenance failure honesty | NEXT=dispatch customer filter failure | GO
+Codex | WORKING | DSP-F7101 | CLAIM=post.dispatch-assign-driver-failure-fail-closed | SOURCE=available-driver/HOS roster→assignment picker | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7100 | PR=#17094 @ 63d5a16d54 | Built=customer filter failure honesty | NEXT=assignment picker failure cap | GO

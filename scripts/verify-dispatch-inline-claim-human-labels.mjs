@@ -81,6 +81,9 @@ function assertAll(srcs) {
   if (!assign.includes("activeQuery.isLoading")) {
     problems.push("AssignDriverDropdown: pre-create roster loading state must drive the picker");
   }
+  if (!assign.includes("activeQuery.isLoading || activeQuery.isError")) {
+    problems.push("AssignDriverDropdown: active load/roster failure must disable selection and nested create");
+  }
   if (!/label:\s*d\.hos_safe \? d\.display_name : `\$\{d\.display_name\}/.test(assign)) {
     problems.push("AssignDriverDropdown: roster options must consume canonical driver display names");
   }
@@ -129,6 +132,7 @@ if (SELFTEST) {
     ["apps/frontend/src/components/dispatch/InlineUnitPicker.tsx", "const label = option?.label", "const label = next.slice(0, 8) || option?.label", "unit roster label"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "onRetry={() => void activeQuery.refetch()}", "", "driver retry"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'userFacingApiError(activeQuery.error, "Could not load available drivers")', 'String(activeQuery.error)', "safe driver error"],
+    ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", "activeQuery.isLoading || activeQuery.isError", "activeQuery.isLoading", "driver picker failure fail closed"],
     ["apps/frontend/src/pages/dispatch/AssignDriverDropdown.tsx", 'entityLabel([d.first_name, d.last_name].filter(Boolean).join(" ").trim(), d.id, "Driver")', '[d.first_name, d.last_name].filter(Boolean).join(" ").trim() || d.id', "raw driver UUID fallback"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'kind="insurance_policy"', 'kind="load"', "claim policy picker"],
     ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", 'label: `Accident — ${when}`', 'label: value', "claim accident label"],

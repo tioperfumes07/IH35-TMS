@@ -155,7 +155,7 @@ export function AssignDriverDropdown({
         className="h-9 w-full text-sm"
         options={comboboxOptions}
         value={value || null}
-        disabled={disabled || (!driversOverride && activeQuery.isLoading)}
+        disabled={disabled || (!driversOverride && (activeQuery.isLoading || activeQuery.isError))}
         loading={!driversOverride && activeQuery.isLoading}
         placeholder={activeQuery.isLoading ? "Loading…" : "Select driver"}
         allowClear

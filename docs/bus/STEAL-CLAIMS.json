@@ -1,4 +1,5 @@
 {
+  "post.dispatch-assign-driver-failure-fail-closed": "Codex 2026-08-28 DSP-F7101",
   "post.dispatch-filter-customer-failure-honesty": "Codex 2026-08-28 DSP-F7100",
   "post.dispatch-auto-status-audit-failure-honesty": "Codex 2026-08-28 DSP-F7099",
   "post.dispatch-flag-color-failure-honesty": "Codex 2026-08-28 DSP-F7098",
@@ -20,6 +21,7 @@
   "post.dispatch-quicksave-spine-atomicity": "Codex 2026-08-28 DSP-F7081",
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",
   "claims": [
+    { "leftover_id": "post.dispatch-assign-driver-failure-fail-closed", "seat": "CODEX", "claimed_at": "2026-08-28T23:59:00-05:00", "go": "0012" },
     { "leftover_id": "post.dispatch-filter-customer-failure-honesty", "seat": "CODEX", "claimed_at": "2026-08-28T23:55:00-05:00", "go": "0012" },
     { "leftover_id": "post.dispatch-planner-company-week-boundaries", "seat": "CODEX", "claimed_at": "2026-08-28T23:05:00-05:00", "go": "0009" },
     { "leftover_id": "post.dispatch-load-expense-authoritative-count", "seat": "CODEX", "claimed_at": "2026-08-28T22:55:00-05:00", "go": "0009" },
