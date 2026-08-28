@@ -57,11 +57,6 @@ const SYSTEM_DERIVED_ALLOWLIST = [
   },
   {
     file: "mdata/loads.routes.ts",
-    fragment: "/api/v1/mdata/loads/:id/status",
-    reason: "office status PATCH: cancellation reason lookup scopes by the load row's operating_company_id after user_accessible_company_ids() membership gate — not a client-supplied opco",
-  },
-  {
-    file: "mdata/loads.routes.ts",
     // Precise (not just the bare route) so this cannot also match the /status, /stops, or /audit
     // siblings above/below it in the same file — each of those needs its own allowlist decision.
     fragment: '"/api/v1/mdata/loads/:id", { config',
