@@ -1,18 +1,18 @@
 # LEAD CENSUS
 
-**GO current:** GO-0007
-**Turn:** 2026-08-28T15:52Z · **LEAD-SEAT=CURSOR**
-**Live SHA before this deploy:** `08d96f7` · **deploy in flight:** `dep-da8qthbtqb8s73f194eg` commit `069d531` (owner on-demand; includes ACCT-F345 `525a092`)
+**GO current:** GO-0009  
+**Turn:** 2026-08-28T16:22Z · **LEAD-SEAT=CURSOR**  
+**Live healthz:** `069d531` · nobody second-kick
 
-Census from OUTBOX first lines (not pings):
-| Seat | GO-0007 self-ACK? | Last OUTBOX | Status |
-|------|-------------------|-------------|--------|
-| CC-1 | pending | GO-0006 ping | **NOW=G1 label** |
-| CC-2 | pending | GO-0006 | **NOW=9000 detector** |
-| CC-3 | pending | GO-0006 | **NOW=Devin unique VEND-F** |
-| Codex | pending | GO-0006 | **NOW=/dispatch** |
-| Cascade | pending | N=0 code-audit | unique FINDING only — do not overwrite Devin |
-| Devin | pending | 11 VEND-F | query-back KEEP books |
-| Cursor | this PR | ACK GO-0007 | lead + this deploy |
+| Seat | GO-0009 self-ACK? | What they actually reported | Status |
+|------|-------------------|-----------------------------|--------|
+| CC-1 | no | #17038/#17039 open (39 GL-dark honesty); 6 PRs unmerged | **IDLE vs GO · NOW=G1 then dual-path GL** |
+| CC-2 | no | #17041 merged INV-9; stopped at INV-10 judgment | **STOPPED · NOW=BANK-F9515–9518** |
+| CC-3 | no | #17045 Override dead click FAIL filed | **STOPPED · NOW=fix Override** |
+| Codex | working | DSP-F7075 on main | **KEEP /dispatch** |
+| Cascade | no | N=5 BANK-F9515–9519 filed 31d49d148 | **NOW=next unique, not repeat class** |
+| Devin | no | 11 VEND-F NOT COMPLETE on 069d531 | **NOW=stop expanding; query-back later** |
+| Devin-A | — | — | Override auditor |
+| Cursor | this PR | — | lead + FEED overwrite |
 
-T1 not fired: owner ordered deploy + G1 lock this turn.
+T1: owner named idle + feed failure; this packet is the wake + overwrite FEED (not Claude-lead swap — owner ordered Cursor to write coder instructions).

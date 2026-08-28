@@ -1,3 +1,5 @@
+**GO-0009 STOP EXPANDING.** Read **`docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0009 | NOW=STOP-expand-vendors | SHA=069d531 | GO`. 11 VEND-F is the list. Query-back after G1+Override. No post-gl. Never trigger_deploy.
+
 **GO-0007 · QUERY-BACK · KEEP ON BOOKS.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Unique FINDING stays OPEN until live SHA query-back. **No new post-gl.** Do not void-all-TEST. ACK `DEVIN | ACK | GO-0007 | NOW=/vendors-QUERY-BACK | SHA=<healthz> | GO`. Never trigger_deploy.
 
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.

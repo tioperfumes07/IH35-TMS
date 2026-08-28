@@ -1,3 +1,5 @@
+**11:22 CT GO-0009 — SEAT FEED:** `docs/bus/FEED/NOW-<SEAT>.md` + `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. ACK `GO-0009`. Live `069d531`. CC-3 Override dead click. CC-1 G1 then dual bill-pay GL. CC-2 BANK-F9515–9518. Idle = defect.
+
 **09:57 CT GO-0006:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md` — Cursor lead. ACK `GO-0006`. Urgent 6 NOW. Idle = defect. Live `ebc1c4f`. No post-gl until G1+G2.
 
 **20:50 CT GO-2050:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md` — Cursor lead. ACK `GO-2050`. Idle = defect. Live `7eda992`. CC-1 A/R reclass (keep TESTs). Do not inherit TRANSP pass as USMCA certify.

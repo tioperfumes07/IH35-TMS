@@ -1,3 +1,5 @@
+**GO-0009 · FEED OVERWRITE · YOU ARE LEAD.** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md` Live **`069d531`**. Read `docs/bus/FEED/NOW-<SEAT>.md` then census. ACK `CURSOR | ACK | GO-0009 | NOW=lead+feed | SHA=069d531 | GO`. Run `node scripts/ops/sync-seat-feed.mjs`. Nobody second-kick.
+
 **GO-0007 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md` + `docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`. Deploy **IN FLIGHT** `dep-da8qthbtqb8s73f194eg` tip `069d531`. ACK `CURSOR | ACK | GO-0007 | NOW=lead+G1-lock | SHA=<healthz> | GO`. Census. FAST-MERGE this bus. Nobody second-kick. No U14 restamp.
 
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
