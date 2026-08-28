@@ -437,9 +437,12 @@ export function WorkOrderDetailPage() {
 
   const wo = woQ.data;
 
+  // MAINT-MONEY-F7012 — React Query retains the prior successful `data` under this query key even
+  // after a subsequent fetch fails, so a failed refetch must not leave the retained GL preview
+  // payload readable through this or any derived value. `isError` wins over any retained data.
   const postingPreviewRows = useMemo<PostingPreviewTableRow[]>(
-    () => (previewQ.data?.lines ?? []).map((line, index) => ({ ...line, row_key: `${line.description}-${index}` })),
-    [previewQ.data?.lines]
+    () => (previewQ.isError ? [] : previewQ.data?.lines ?? []).map((line, index) => ({ ...line, row_key: `${line.description}-${index}` })),
+    [previewQ.data?.lines, previewQ.isError]
   );
 
   // Direct expense EntityLink inside linkedFinancialsQ.data.expenses.map — locked contract
@@ -944,7 +947,11 @@ export function WorkOrderDetailPage() {
                 Posting preview endpoint not deployed yet for this environment.
               </div>
             ) : null}
-            {previewQ.data ? (
+            {/* MAINT-MONEY-F7012 — must be !previewQ.isError, not just previewQ.data: React Query
+                retains the prior successful payload across a failed refetch, so without this the
+                "unavailable" banner above renders SIMULTANEOUSLY with a stale cached total,
+                currency, line count, and DR/CR preview lines read as current GL. */}
+            {!previewQ.isError && previewQ.data ? (
               <div className="space-y-2 border-t border-slate-200 px-4 py-3 text-xs text-slate-700">
                 <FlatFieldGrid
                   columns={3}
