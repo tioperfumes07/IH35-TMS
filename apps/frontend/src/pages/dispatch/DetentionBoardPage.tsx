@@ -43,28 +43,35 @@ function EventActions({
 }: {
   event: DetentionBoardEvent;
   companyId: string;
-  onAction: () => void;
+  onAction: (submittedCompanyId: string) => void;
 }) {
   const { pushToast } = useToast();
+  type DetentionAction = { eventId: string; companyId: string };
   // DISP-F6326: none of this row's 3 mutations (nor the board's syncM) had onError — no toast
   // import anywhere in the file, no isError check, all fire-and-forget .mutate(). A rejected
   // close/bridge/notify silently did nothing: no error, no explanation, the button just went
   // back to enabled with zero feedback.
   const closeM = useMutation({
-    mutationFn: () => closeDetentionEvent(event.id, { operating_company_id: companyId }),
-    onSuccess: onAction,
+    mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
+      closeDetentionEvent(eventId, { operating_company_id: submittedCompanyId }),
+    onSuccess: (_result, variables) => onAction(variables.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not stop the detention accrual"), "error"),
   });
   const bridgeM = useMutation({
-    mutationFn: () => bridgeDetentionBilling(event.id, { operating_company_id: companyId }),
-    onSuccess: onAction,
+    mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
+      bridgeDetentionBilling(eventId, { operating_company_id: submittedCompanyId }),
+    onSuccess: (_result, variables) => onAction(variables.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not bridge detention to billing"), "error"),
   });
   const notifyM = useMutation({
-    mutationFn: () => notifyDetentionCustomer(event.id, { operating_company_id: companyId }),
-    onSuccess: onAction,
+    mutationFn: ({ eventId, companyId: submittedCompanyId }: DetentionAction) =>
+      notifyDetentionCustomer(eventId, { operating_company_id: submittedCompanyId }),
+    onSuccess: (_result, variables) => onAction(variables.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not notify the customer"), "error"),
   });
+
+  const actionPending = closeM.isPending || bridgeM.isPending || notifyM.isPending;
+  const actionVariables = { eventId: event.id, companyId };
 
   return (
     <div className="space-x-2">
@@ -72,8 +79,8 @@ function EventActions({
         <button
           type="button"
           className="rounded-sm border px-2 py-1 text-xs"
-          disabled={closeM.isPending}
-          onClick={() => closeM.mutate()}
+          disabled={actionPending}
+          onClick={() => closeM.mutate(actionVariables)}
         >
           Stop accrual
         </button>
@@ -82,8 +89,8 @@ function EventActions({
         <button
           type="button"
           className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-          disabled={bridgeM.isPending}
-          onClick={() => bridgeM.mutate()}
+          disabled={actionPending}
+          onClick={() => bridgeM.mutate(actionVariables)}
         >
           Bridge to billing
         </button>
@@ -92,8 +99,8 @@ function EventActions({
         <button
           type="button"
           className="rounded-sm border px-2 py-1 text-xs"
-          disabled={notifyM.isPending}
-          onClick={() => notifyM.mutate()}
+          disabled={actionPending}
+          onClick={() => notifyM.mutate(actionVariables)}
         >
           Notify customer
         </button>
@@ -123,13 +130,14 @@ export function DetentionBoardPage() {
 
   // DISP-F6326: see EventActions above — same file-wide gap.
   const syncM = useMutation({
-    mutationFn: () => syncDetentionFromArrivals(companyId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] }),
+    mutationFn: (submittedCompanyId: string) => syncDetentionFromArrivals(submittedCompanyId),
+    onSuccess: (_result, submittedCompanyId) =>
+      queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", submittedCompanyId] }),
     onError: (err) => pushToast(userFacingApiError(err, "Could not sync detention from arrivals"), "error"),
   });
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", companyId] });
+  const invalidate = (submittedCompanyId: string) =>
+    queryClient.invalidateQueries({ queryKey: ["dispatch", "detention-board", submittedCompanyId] });
 
   if (!companyId) {
     return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
@@ -219,7 +227,7 @@ export function DetentionBoardPage() {
               type="button"
               className="rounded-sm border px-3 py-1.5 text-sm"
               disabled={syncM.isPending}
-              onClick={() => syncM.mutate()}
+              onClick={() => syncM.mutate(companyId)}
             >
               Sync from arrivals
             </button>

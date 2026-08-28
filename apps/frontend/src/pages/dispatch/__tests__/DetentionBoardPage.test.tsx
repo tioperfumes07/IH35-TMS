@@ -1,9 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { DetentionBoardPage } from "../DetentionBoardPage";
+import { ToastProvider } from "../../../components/Toast";
+import { closeDetentionEvent, syncDetentionFromArrivals } from "../../../api/dispatch";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" }),
@@ -48,7 +50,9 @@ function wrap(ui: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
@@ -78,5 +82,20 @@ describe("DetentionBoardPage (B21-D5)", () => {
     expect(await screen.findByText("Sync from arrivals")).toBeTruthy();
     expect(await screen.findByText("Stop accrual")).toBeTruthy();
     expect(screen.getByText("Accrual")).toBeTruthy();
+  });
+
+  it("submits immutable company and event variables to detention writes", async () => {
+    wrap(<DetentionBoardPage />);
+    fireEvent.click(await screen.findByText("Stop accrual"));
+    await waitFor(() =>
+      expect(closeDetentionEvent).toHaveBeenCalledWith("det-1", {
+        operating_company_id: "91e0bf0a-133f-4ce8-a734-2586cfa66d96",
+      }),
+    );
+
+    fireEvent.click(screen.getByText("Sync from arrivals"));
+    await waitFor(() =>
+      expect(syncDetentionFromArrivals).toHaveBeenCalledWith("91e0bf0a-133f-4ce8-a734-2586cfa66d96"),
+    );
   });
 });
