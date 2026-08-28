@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 
 // LAUNCH-SAFE-LEDGER-MONITOR-DETECTORS (CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md /
 // STOP-CC1-ACCT-F5692-POD-GATE-2026-08-28.md §2): "stranded_intermediate detector must cover
@@ -34,8 +35,11 @@ type StrandedBalance = {
   sampleCents: number;
 };
 
+// role is deliberately a plain string, not StrandedRole — this scope shape is shared by the stranded-
+// intermediate detector (roles from STRANDED_INTERMEDIATE_ROLES) and the tie-out/suspense detectors below
+// (roles "ar_control"/"ap_control"/"ask_my_accountant", none of which are stranded-intermediate roles).
 type ResourceScope = {
-  role: StrandedRole;
+  role: string;
   account_id: string;
   account_number: string;
 };
@@ -231,11 +235,161 @@ async function checkStrandedIntermediateForCompany(client: DbClient, operatingCo
   }
 }
 
+// INV-3 SUBLEDGER TIE-OUT (detector 2 of the plan's 10): scripts/verify-gl-invariants.sql's own INV-3
+// block ("expect both differences = 0.00") computes this exact GL-vs-subledger diff for AR and AP on a
+// REAL-ONLY basis (excludes je.is_sample_data / invoice.is_sample_data / bill.is_sample_data, matching
+// the report-layer exclusion shipped in #16832). That script is a manual audit tool a human has to run;
+// this detector is the same math running unattended every hour, self-closing when the diff clears.
+//
+// Account resolution deliberately goes through resolveRoleAccountOptional("ar_control"/"ap_control") —
+// the SAME fail-closed resolver every real invoice/bill posting uses (posting-engine.service.ts) — so the
+// detector always ties out against the account the poster actually wrote to, never a name-matched guess.
+// If a company has no explicit/derivable control designation the resolver returns null and that leg is
+// skipped for that company (not a false "$0 diff" claim — nothing to compare).
+export async function checkSubledgerTieOutForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const arAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, "ar_control");
+  if (arAccountId) {
+    const glRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS cents
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
+          AND je.status <> 'voided' AND COALESCE(je.is_sample_data, false) = false
+      `,
+      [operatingCompanyId, arAccountId]
+    );
+    const subRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(amount_open_cents), 0)::text AS cents
+        FROM accounting.invoices
+        WHERE operating_company_id = $1::uuid AND voided_at IS NULL AND status NOT IN ('draft', 'proforma')
+          AND COALESCE(is_sample_data, false) = false
+      `,
+      [operatingCompanyId]
+    );
+    const glCents = Number(glRes.rows[0]?.cents ?? 0);
+    const subCents = Number(subRes.rows[0]?.cents ?? 0);
+    const diffCents = glCents - subCents;
+    const resourceScope: ResourceScope = { role: "ar_control", account_id: arAccountId, account_number: "" };
+
+    if (diffCents !== 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "subledger_tie_out_diff",
+        severity: "critical",
+        runId,
+        resourceScope,
+        localValue: { ledger: "ar", gl_cents: glCents, subledger_cents: subCents, diff_cents: diffCents },
+        thresholdSnapshot: { rule: "ar_control_gl_must_equal_open_invoice_subledger_real_only", threshold_cents: 0 },
+      });
+    } else {
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "subledger_tie_out_diff", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+
+  const apAccountId = await resolveRoleAccountOptional(client as never, operatingCompanyId, "ap_control");
+  if (apAccountId) {
+    const glRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS cents
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
+          AND je.status <> 'voided' AND COALESCE(je.is_sample_data, false) = false
+      `,
+      [operatingCompanyId, apAccountId]
+    );
+    const subRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(ROUND((total_amount - COALESCE(paid_amount, 0)) * 100)), 0)::text AS cents
+        FROM accounting.bills
+        WHERE operating_company_id = $1::uuid AND revoked_at IS NULL AND status <> 'draft'
+          AND COALESCE(is_sample_data, false) = false
+      `,
+      [operatingCompanyId]
+    );
+    const glCents = Number(glRes.rows[0]?.cents ?? 0);
+    const subCents = Number(subRes.rows[0]?.cents ?? 0);
+    const diffCents = glCents - subCents;
+    const resourceScope: ResourceScope = { role: "ap_control", account_id: apAccountId, account_number: "" };
+
+    if (diffCents !== 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "subledger_tie_out_diff",
+        severity: "critical",
+        runId,
+        resourceScope,
+        localValue: { ledger: "ap", gl_cents: glCents, subledger_cents: subCents, diff_cents: diffCents },
+        thresholdSnapshot: { rule: "ap_control_gl_must_equal_open_bill_subledger_real_only", threshold_cents: 0 },
+      });
+    } else {
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "subledger_tie_out_diff", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+}
+
+// USMCA 9000 "Ask My Accountant" SUSPENSE MUST NET ZERO (GUARD-WORKORDERS ACCT-F-9000: "category->account
+// resolver + ledger-health detector ... Refuse unmapped->9000; detector != 0"). 9000 is a miscoding
+// bucket — any real (non-sample), non-voided net balance sitting there means transactions were posted
+// unclassified and never triaged to a real account. Keyed on system_purpose (not a hardcoded account
+// number), so it naturally covers any future entity that seeds the same anchor account and skips entities
+// that never seeded it (nothing to compare, not a false "$0" claim).
+export async function checkAskMyAccountantForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const accountsRes = await client.query<{ account_id: string; account_number: string; account_name: string }>(
+    `
+      SELECT id::text AS account_id, account_number, account_name
+      FROM catalogs.accounts
+      WHERE operating_company_id = $1::uuid AND system_purpose = 'ask_my_accountant' AND deactivated_at IS NULL
+    `,
+    [operatingCompanyId]
+  );
+
+  for (const account of accountsRes.rows) {
+    const netRes = await client.query<{ cents: string | null }>(
+      `
+        SELECT COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::text AS cents
+        FROM accounting.journal_entry_postings p
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        WHERE p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
+          AND je.status <> 'voided' AND COALESCE(je.is_sample_data, false) = false
+      `,
+      [operatingCompanyId, account.account_id]
+    );
+    const netCents = Number(netRes.rows[0]?.cents ?? 0);
+    const resourceScope: ResourceScope = {
+      role: "ask_my_accountant",
+      account_id: account.account_id,
+      account_number: account.account_number,
+    };
+
+    if (netCents !== 0) {
+      await persistLedgerFinding(client, {
+        operatingCompanyId,
+        findingType: "ask_my_accountant_suspense_nonzero",
+        severity: "important",
+        runId,
+        resourceScope,
+        localValue: { account_name: account.account_name, net_cents: netCents },
+        thresholdSnapshot: { rule: "ask_my_accountant_suspense_must_net_zero_real_only", threshold_cents: 0 },
+      });
+    } else {
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "ask_my_accountant_suspense_nonzero", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
     const runId = randomUUID();
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
     await checkStrandedIntermediateForCompany(client, operatingCompanyId, runId);
+    await checkSubledgerTieOutForCompany(client, operatingCompanyId, runId);
+    await checkAskMyAccountantForCompany(client, operatingCompanyId, runId);
   }
 }
