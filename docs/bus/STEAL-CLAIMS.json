@@ -1,6 +1,7 @@
 {
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",
   "claims": [
+    { "leftover_id": "post.maintenance-completed-protection-retirement", "seat": "CODEX", "claimed_at": "2026-08-28T20:25:00-05:00", "go": "0006" },
     { "leftover_id": "post.partial-optional-chain-vertical-crash-sweep", "seat": "CODEX", "claimed_at": "2026-08-28T20:15:00-05:00", "go": "0006" },
     { "leftover_id": "post.lists-safety-generic-modal-connectivity-exact", "seat": "CODEX", "claimed_at": "2026-08-28T20:05:00-05:00", "go": "0006" },
     { "leftover_id": "post.insurance-policy-unit-complete-roster-guard", "seat": "CODEX", "claimed_at": "2026-08-28T19:45:00-05:00", "go": "0004" },
