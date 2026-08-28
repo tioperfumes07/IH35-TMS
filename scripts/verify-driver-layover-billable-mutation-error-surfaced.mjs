@@ -21,6 +21,7 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 const FILE = "apps/frontend/src/pages/drivers/DriverLayoverHistory.tsx";
+const ROUTES_FILE = "apps/backend/src/dispatch/layovers/routes.ts";
 
 const IMPORTS_TOAST_RE = /import\s*\{\s*useToast\s*\}\s*from\s*["']\.\.\/\.\.\/components\/Toast["']/;
 const ON_ERROR_RE = /onError:\s*\(err\)\s*=>\s*pushToast\(userFacingApiError\(err,/;
@@ -29,7 +30,7 @@ const SNAPSHOT_BODY_RE = /operating_company_id:\s*companyId/;
 const GENERATION_RE = /input\.generation\s*!==\s*scopeGenerationRef\.current/g;
 const EXACT_INVALIDATE_RE = /queryKey:\s*\["driver-layovers",\s*input\.companyId,\s*input\.driverId,\s*input\.from,\s*input\.to\]/;
 
-export function checkDriverLayoverBillableMutationError(src) {
+export function checkDriverLayoverBillableMutationError(src, routesSrc) {
   const offenders = [];
   if (!IMPORTS_TOAST_RE.test(src)) {
     offenders.push(`${FILE}: does not import useToast — DRV-F6330 regression.`);
@@ -41,12 +42,19 @@ export function checkDriverLayoverBillableMutationError(src) {
   if (!SNAPSHOT_BODY_RE.test(src)) offenders.push(`${FILE}: billable PATCH does not use its submitted company snapshot.`);
   if ((src.match(GENERATION_RE) ?? []).length < 2) offenders.push(`${FILE}: stale success/error callbacks are not rejected after scope changes.`);
   if (!EXACT_INVALIDATE_RE.test(src)) offenders.push(`${FILE}: success does not refresh the exact submitted company/driver/date query.`);
+  if (routesSrc !== undefined) {
+    const returningCount = (routesSrc.match(/RETURNING\s+uuid/g) ?? []).length;
+    const missingRowCount = (routesSrc.match(/if\s*\(!updatedLayover\)\s*return\s+reply\.code\(404\)\.send\(\{\s*error:\s*["']layover_not_found["']\s*\}\)/g) ?? []).length;
+    if (returningCount < 2) offenders.push(`${ROUTES_FILE}: both layover PATCH updates must RETURNING uuid.`);
+    if (missingRowCount < 2) offenders.push(`${ROUTES_FILE}: both layover PATCH routes must reject a zero-row update with layover_not_found.`);
+  }
   return offenders;
 }
 
 export function run() {
   const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
-  const offenders = checkDriverLayoverBillableMutationError(src);
+  const routesSrc = fs.readFileSync(path.join(repoRoot, ROUTES_FILE), "utf8");
+  const offenders = checkDriverLayoverBillableMutationError(src, routesSrc);
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -62,11 +70,19 @@ if (process.argv.includes("--selftest")) {
     });
   `;
   const fixed = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
+  const buggyRoutes = `
+    await client.query(
+      \`UPDATE dispatch.driver_layovers SET billable_to_customer = $1 WHERE uuid = $2 AND operating_company_id = $3::uuid\`,
+      [billable, uuid, operatingCompanyId],
+    );
+    return reply.send({ ok: true });
+  `;
+  const fixedRoutes = fs.readFileSync(path.join(repoRoot, ROUTES_FILE), "utf8");
 
-  const buggyOffenders = checkDriverLayoverBillableMutationError(buggy);
-  const fixedOffenders = checkDriverLayoverBillableMutationError(fixed);
+  const buggyOffenders = checkDriverLayoverBillableMutationError(buggy, buggyRoutes);
+  const fixedOffenders = checkDriverLayoverBillableMutationError(fixed, fixedRoutes);
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0) {
+  if (buggyOffenders.length >= 8 && fixedOffenders.length === 0) {
     console.log("verify-driver-layover-billable-mutation-error-surfaced selftest OK");
     process.exit(0);
   }

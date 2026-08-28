@@ -42,12 +42,18 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-    await withCurrentUser(user.uuid, async (client) => {
-      await client.query(
-        `UPDATE dispatch.driver_layovers SET billable_to_customer = $1 WHERE uuid = $2 AND operating_company_id = $3::uuid`,
+    const updatedLayover = await withCurrentUser(user.uuid, async (client) => {
+      const result = await client.query<{ uuid: string }>(
+        `UPDATE dispatch.driver_layovers
+            SET billable_to_customer = $1
+          WHERE uuid = $2
+            AND operating_company_id = $3::uuid
+        RETURNING uuid`,
         [body.data.billable, uuid, body.data.operating_company_id]
       );
+      return result.rows[0] ?? null;
     });
+    if (!updatedLayover) return reply.code(404).send({ error: "layover_not_found" });
     return reply.send({ ok: true });
   });
 
@@ -62,12 +68,18 @@ export async function registerLayoverRoutes(app: FastifyInstance) {
     }).safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
-    await withCurrentUser(user.uuid, async (client) => {
-      await client.query(
-        `UPDATE dispatch.driver_layovers SET per_diem_eligible = $1 WHERE uuid = $2 AND operating_company_id = $3::uuid`,
+    const updatedLayover = await withCurrentUser(user.uuid, async (client) => {
+      const result = await client.query<{ uuid: string }>(
+        `UPDATE dispatch.driver_layovers
+            SET per_diem_eligible = $1
+          WHERE uuid = $2
+            AND operating_company_id = $3::uuid
+        RETURNING uuid`,
         [body.data.per_diem_eligible, uuid, body.data.operating_company_id]
       );
+      return result.rows[0] ?? null;
     });
+    if (!updatedLayover) return reply.code(404).send({ error: "layover_not_found" });
     return reply.send({ ok: true });
   });
 }

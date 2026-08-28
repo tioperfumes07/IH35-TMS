@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0017 | NOW=dispatch-unique-500-only | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7130 | CLAIM=layover-PATCH-zero-row-silent-success | SOURCE=dispatch.driver_layovers | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7127K | CLAIM=combined-quick-assign-exact-company-write | SOURCE=mdata.loads→load_assignment_history | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127J | PR=#17187 @ 916cc2260b | Built=inline driver+unit exact-company writes | NEXT=combined quick assign | GO
 Codex | WORKING | DSP-F7127J | CLAIM=inline-quicksave-exact-company-writes | SOURCE=mdata.loads→load_assignment_history | NEXT=guard+FAST-MERGE | GO
