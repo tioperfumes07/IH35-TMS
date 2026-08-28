@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "./verify-customer-load-history-complete-range.mjs";
 /** @matrix-built {"modules":["customers"],"cols":["customer"],"leafRe":"^detail\\.(profile|contacts|contacts\\.create|billing|billing\\.record_payment|quality|quality\\.create_event|lanes|lanes\\.create|documents|coi|contracts|portal_users|tasks|loads|pnl|audit|edit|fmcsa_verify)$","task":"LINK-F5165-CUSTOMER-DETAIL-SELF-REFERENTIAL"} */
 /** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["detail.profile","detail.contacts","detail.contacts.create","detail.billing","detail.billing.record_payment","detail.quality","detail.quality.create_event","detail.lanes","detail.lanes.create","detail.documents","detail.contracts","detail.portal_users","detail.tasks","detail.loads","detail.pnl","detail.audit","detail.edit","detail.fmcsa_verify"],"task":"CUST-F5921-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**

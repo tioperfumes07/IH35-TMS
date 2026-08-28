@@ -13,7 +13,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
-import { listLoads, type DispatchLoadRow } from "../api/loads";
+import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
 import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
@@ -594,10 +594,9 @@ export function CustomerDetailPage() {
   const customerLoadsQuery = useQuery({
     queryKey: ["customer-loads", id, operatingCompanyId],
     queryFn: () =>
-      listLoads({
+      listAllLoads({
         customer_id: id,
         operating_company_id: operatingCompanyId ? [operatingCompanyId] : undefined,
-        limit: 200,
         sort: "created_at:desc",
       }).then((res) => res.loads),
     enabled: Boolean(id && operatingCompanyId && (activeTab === "Loads" || qualityModalOpen)),

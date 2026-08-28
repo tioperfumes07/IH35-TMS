@@ -257,6 +257,33 @@ export function listLoads(filters: LoadsListFilters) {
   return apiRequest<LoadsListResponse>(`/api/v1/mdata/loads${qs ? `?${qs}` : ""}`);
 }
 
+export async function listAllLoads(filters: Omit<LoadsListFilters, "limit" | "offset">) {
+  const pageSize = 200;
+  const loads: DispatchLoadRow[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+
+  for (;;) {
+    const page = await listLoads({ ...filters, limit: pageSize, offset });
+    if (expectedTotal == null) expectedTotal = page.total_count;
+    if (page.total_count !== expectedTotal) throw new Error("Load total changed during pagination. Retry.");
+    for (const load of page.loads) {
+      if (seen.has(load.id)) throw new Error("Load pagination returned a duplicate load. Retry.");
+      seen.add(load.id);
+      loads.push(load);
+    }
+    if (!page.has_more) break;
+    if (page.loads.length === 0) throw new Error("Load pagination stopped before the reported total.");
+    offset += page.loads.length;
+  }
+
+  if (loads.length !== (expectedTotal ?? 0)) {
+    throw new Error(`Load pagination returned ${loads.length} of ${expectedTotal ?? 0} rows.`);
+  }
+  return { loads, total_count: expectedTotal ?? 0, has_more: false } satisfies LoadsListResponse;
+}
+
 export function getLoad(id: string, operatingCompanyId?: string) {
   const query = new URLSearchParams();
   if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
