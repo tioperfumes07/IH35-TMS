@@ -1,4 +1,6 @@
-Codex | WORKING | SAF-F6968 | CLAIM=post.safety-company-year | vertical=D&A year+quarter+scheduler balance+request-number | guard=5/5 | NEXT=FAST-MERGE | GO
+Codex | WORKING | CLS-F6969 | CLAIM=post.nonmoney-frontend-business-date | vertical=dispatch+docs+driver-hub+users+lists+reports+system | guard=13/13 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6968 | PR=#16931 @ e77a8d3328 | Built=safety company calendar+rate limits | NEXT=CLS-F6969 | GO
+Codex | WORKING | SAF-F6968 | CLAIM=post.safety-company-year | vertical=D&A year+quarter+scheduler balance+request-number | guard=7/7 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | CLS-F6967 | PR=#16930 @ d8b9acbc55 | Built=export business-date remainder 13/13 | NEXT=SAF-F6968 | GO
 Codex | WORKING | CLS-F6967 | CLAIM=post.export-business-date-remainder | vertical=safety+dispatch+vendors+users+fuel | guard=13/13 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | CLS-F6966 | PR=#16929 @ 3f96d8dbfd | Built=customers+drivers+maintenance export dates | REMAINDER=CLS-F6967 | GO

@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
 // verified against apps/backend/src/integrations/samsara/border-crossings), NOT mdata.units.id.
@@ -33,8 +34,8 @@ const CROSSING_LABELS: Record<string, string> = {
 
 export function BorderCrossingHistory() {
   const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
-  const today = new Date().toISOString().slice(0, 10);
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const today = companyToday();
+  const weekAgo = addDaysIso(today, -7);
   const [from, setFrom] = useState(weekAgo);
   const [to, setTo] = useState(today);
   const staged = useStagedListFilters({

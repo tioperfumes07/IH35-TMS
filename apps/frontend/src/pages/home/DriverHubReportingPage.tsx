@@ -18,14 +18,13 @@ import {
 } from "../../api/driverInboxReporting";
 import { formatUsdCents } from "../../lib/money";
 import { entityLabel } from "../../lib/entity-label";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 function isoDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().split("T")[0];
+  return addDaysIso(companyToday(), -days);
 }
 function todayIso(): string {
-  return new Date().toISOString().split("T")[0];
+  return companyToday();
 }
 function fmtSeconds(s: number | null): string {
   if (s == null) return "—";

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 interface DispatcherGapStats {
   dispatcher_id: string | null;
@@ -17,8 +18,8 @@ interface Props {
 }
 
 export function DispatcherPerformanceCard({ dispatcherId, operatingCompanyId }: Props) {
-  const to = new Date().toISOString().slice(0, 10);
-  const from = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const to = companyToday();
+  const from = addDaysIso(to, -30);
 
   const { data } = useQuery<DispatcherGapStats | null>({
     queryKey: ["booking-gap-dispatcher", dispatcherId, from, to],

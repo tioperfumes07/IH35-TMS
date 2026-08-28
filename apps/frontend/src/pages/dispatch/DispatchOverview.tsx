@@ -22,6 +22,7 @@ import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { colors, spacing, typography } from "../../design/tokens";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 type Props = {
   operatingCompanyId: string;
@@ -186,8 +187,8 @@ function PanelError(message: string, onRetry: () => void) {
 }
 
 export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
-  const today = new Date().toISOString().slice(0, 10);
-  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const today = companyToday();
+  const weekAgo = addDaysIso(today, -7);
   const enabled = Boolean(operatingCompanyId);
 
   const dashboardQ = useQuery({

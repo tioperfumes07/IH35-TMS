@@ -11,6 +11,7 @@ import { formatDateTimeUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 function minutesToClock(value: number | null) {
   if (value == null) return "In yard";
@@ -25,12 +26,11 @@ function driverName(first: string | null, last: string | null) {
 }
 
 function monthStart() {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  return monthBoundsIso(companyToday()).start;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 export function GeofenceDwellReport() {

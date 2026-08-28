@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { companyToday } from "../../../lib/businessDate";
 
 export const PLANNER_RANGE_OPTIONS = [7, 14, 30, 40] as const;
 export type PlannerRangeDays = (typeof PLANNER_RANGE_OPTIONS)[number];
@@ -20,7 +21,7 @@ export function addDaysIso(iso: string, days: number): string {
 }
 
 export function buildPlannerRange(windowDays: number, startIso?: string): PlannerRange {
-  const start = startIso ?? new Date().toISOString().slice(0, 10);
+  const start = startIso ?? companyToday();
   return { start, end: addDaysIso(start, windowDays - 1) };
 }
 
