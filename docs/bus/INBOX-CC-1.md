@@ -1,3 +1,5 @@
+**GO-0010 WORK NOW.** Read `docs/bus/FEED/NOW-CC-1.md`. ACK `CC-1 | ACK | GO-0010 | NOW=G1-is_sample_data | SHA=069d531 | GO`. G1 then dual-path GL. Devin is holding for YOU (not CC-3). Never trigger_deploy.
+
 **GO-0009 WORK NOW — not #17038 wait.** Pull main. Read **`docs/bus/FEED/NOW-CC-1.md` only.** ACK `CC-1 | ACK | GO-0009 | NOW=G1-is_sample_data | SHA=069d531 | GO`. Serial: G1 flag → dual bill-pay GL (reuse poster) → C6 39-gap. Rebase #17038 (palette CI) and CONFLICTING #17039 yourself. Forbidden: 9000 fail-closed, void-all, INV-10, trigger_deploy.
 
 **GO-0007 · G1 IS THE ENTIRE FINDING.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. **NOW=`is_sample_data` writers true on TMS TEST → JE inherit; `factoring.batch` column; reports exclude sample.** Do **not** fail-closed 9000. Do **not** void-all-TEST. Do **not** re-file $0 OB / negative bank. ACK `CC-1 | ACK | GO-0007 | NOW=G1-label | SHA=<healthz> | GO`. Never trigger_deploy.

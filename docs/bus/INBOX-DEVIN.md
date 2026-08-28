@@ -1,3 +1,5 @@
+**GO-0010.** Read `docs/bus/FEED/NOW-DEVIN.md`. ACK `DEVIN | ACK | GO-0010 | NOW=queryback-override-toast | SHA=069d531 | GO`. Do not hold idle: query-back Override toast on FE d74dbbd. G1=CC-1 not CC-3. Never trigger_deploy.
+
 **ONE DEVIN. GO-0009.** Live API `069d531` · frontend version.json `6230c39` (not 08d96f7/de04cbf). Read `docs/bus/FEED/NOW-DEVIN.md`. ACK `DEVIN | ACK | GO-0009 | NOW=STOP-expand-vendors | SHA=069d531 | GO`. Stop expanding 11 VEND-F. Book Load KEEP. CC-3 owns Override. No post-gl. Never trigger_deploy.
 
 **GO-0009 STOP EXPANDING.** Read **`docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0009 | NOW=STOP-expand-vendors | SHA=069d531 | GO`. 11 VEND-F is the list. Query-back after G1+Override. No post-gl. Never trigger_deploy.
