@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getEscrowDriverBalances } from "../api/banking";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
-import { listDispatchLoads } from "../api/dispatch";
+import { listAllDispatchLoads } from "../api/dispatch";
 import { listPendingEscrowDeductions, listSettlements } from "../api/driverFinance";
 import { getActiveLiabilities } from "../api/liabilities";
 import { formatUsd, formatUsdCents } from "../lib/money";
@@ -334,11 +334,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const dispatchLoadsQuery = useQuery({
     queryKey: ["dispatch", "drivers-home", selectedCompanyId],
     queryFn: () =>
-      listDispatchLoads({
+      listAllDispatchLoads({
         operating_company_id: selectedCompanyId!,
         view: "home",
-        limit: 200,
-        offset: 0,
         status: ["assigned_not_dispatched", "dispatched", "in_transit"],
       }),
     enabled: Boolean(selectedCompanyId),

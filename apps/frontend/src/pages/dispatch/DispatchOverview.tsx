@@ -9,6 +9,7 @@ import {
   getDetentionBoard,
   getDispatchDashboard,
   listAtRiskDispatchLoads,
+  listAllDispatchLoads,
   listDispatchLoads,
   listLateArrivalDispatchLoads,
   listUnitsWithoutLoad,
@@ -234,11 +235,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   const oosLoadsQ = useQuery({
     queryKey: ["dispatch", "overview", "oos-loads", operatingCompanyId],
     queryFn: () =>
-      listDispatchLoads({
+      listAllDispatchLoads({
         operating_company_id: operatingCompanyId,
         view: "home",
-        limit: 50,
-        offset: 0,
         status: ["assigned_not_dispatched", "dispatched", "in_transit", "delivered_pending_docs"],
       }),
     enabled,

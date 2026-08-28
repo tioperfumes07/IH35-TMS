@@ -1525,3 +1525,6 @@ CODEX | WORKING | FINDING=LST-F6920-BROKERS-DIRECTORY-SILENT-DEFAULT-PAGE | SOUR
 Codex | SHIPPED | LST-F6920 | PR=#16883 @ 46541bb5b9 | gate=exit0 | Built=lists names.brokers complete customer range | Live=post-deploy UNVERIFIED | NEXT=DRV-F6921 | GO
 CODEX | CLAIMING | leftover=post.drivers-home-complete-roster | GO=0004 | leaf=home.roster | reason=/drivers master roster tabs+KPIs derive from one 200-row page | NOW=canonical exhaustive driver scan+guard | GO
 CODEX | WORKING | FINDING=DRV-F6921-DRIVERS-HOME-SILENT-200-ROSTER | SOURCE-OF-TRUTH=mdata.drivers | leaf=home.roster:{driver,connectivity,reverse_link,qbo_chrome} | GO
+Codex | SHIPPED | DRV-F6921 | PR=#16886 @ 9a312c8bb9 | gate=exit0 | Built=drivers home.roster full canonical range | Live=post-deploy UNVERIFIED | NEXT=DSP-F6922 | GO
+CODEX | CLAIMING | leftover=post.active-dispatch-load-complete-range | GO=0004 | leaves=drivers.home.active_movement+dispatch.overview.oos | reason=client-derived availability/OOS filter read first 200/50 active loads only | NOW=shared exhaustive load scanner+guard | GO
+CODEX | WORKING | FINDING=DSP-F6922-ACTIVE-LOAD-DERIVED-STATE-SILENT-PAGE | SOURCE-OF-TRUTH=views.dispatch_load_with_driver_status | cols=load+driver+unit+connectivity+reverse_link | GO
