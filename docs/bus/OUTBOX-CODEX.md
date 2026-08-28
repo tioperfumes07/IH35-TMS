@@ -1840,3 +1840,4 @@ Codex | SHIPPED | DSP-F7074 | PR=#17044 @ de04cbfd0d | Built=dispatch document h
 Codex | WORKING | DSP-F7076 | CLAIM=post.dispatch-catalog-pickers-complete-range | SOURCE=4 scoped catalogs total+offset→3 creator leaves | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7075 | PR=#17046 @ 8b525e4d89 | Built=dispatch pre-dispatch HOS failure visible | NEXT=catalog picker complete range | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7081 | NOW=quicksave spine emit atomicity | SOURCE=quick-assign.service+quicksave.routes | GUARD=verify-a2-audit-emit-dispatch 3/3 | NEXT=FAST-MERGE | GO
+CODEX | WORKING | GO-0009 | FINDING=DSP-F7082 | NOW=Book Load create spine atomicity | GUARD=verify-a2 5/5 | NEXT=FAST-MERGE | GO
