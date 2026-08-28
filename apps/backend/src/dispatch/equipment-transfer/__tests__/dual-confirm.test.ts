@@ -77,7 +77,7 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
         }],
       ],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
-      ["UPDATE mdata.equipment", []],
+      ["UPDATE mdata.equipment", [{ id: EQUIPMENT }]],
       ["INSERT INTO mdata.equipment_log", [{ id: equipmentLogId }]],
       ["audit.append_event", []],
       ["INSERT INTO outbox.events", []],
@@ -102,6 +102,30 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
     expect(outboxCall?.[1]?.[0]).toBe("dispatch.equipment_transfer.confirmed");
     const outboxPayload = JSON.parse(String(outboxCall?.[1]?.[1] ?? "{}"));
     expect(outboxPayload.driver_uuid).toBe(FROM_DRIVER);
+  });
+
+  it("confirmInbound rejects a missing or cross-company equipment row before audit/log/notify", async () => {
+    const client = mockClient([
+      [
+        "FROM dispatch.equipment_transfer_requests",
+        [{
+          uuid: REQUEST_UUID,
+          to_driver_uuid: TO_DRIVER,
+          from_driver_uuid: FROM_DRIVER,
+          equipment_uuid: EQUIPMENT,
+          status: "outbound_confirmed",
+          outbound_evidence_uuid: OUTBOUND_EVIDENCE,
+        }],
+      ],
+      ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
+      ["UPDATE mdata.equipment", []],
+    ]);
+
+    const result = await confirmInbound(client, USER, COMPANY, REQUEST_UUID, TO_DRIVER, INBOUND_EVIDENCE);
+    expect(result.kind).toBe("equipment_not_found");
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO mdata.equipment_log"))).toBe(false);
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("audit.append_event"))).toBe(false);
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO outbox.events"))).toBe(false);
   });
 
   it("confirmInbound rejects wrong driver", async () => {

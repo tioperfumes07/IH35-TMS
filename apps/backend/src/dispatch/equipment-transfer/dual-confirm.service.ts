@@ -8,6 +8,7 @@ const BLOCK_ID = "GAP-37-EQUIPMENT-DUAL-CONFIRM";
 export type ConfirmResult =
   | { kind: "ok"; uuid: string }
   | { kind: "not_found" }
+  | { kind: "equipment_not_found" }
   | { kind: "driver_mismatch" }
   | { kind: "invalid_status" };
 
@@ -35,16 +36,20 @@ export async function confirmOutbound(
   if (String(req.from_driver_uuid) !== driverUuid) return { kind: "driver_mismatch" };
   if (req.status !== "pending_outbound") return { kind: "invalid_status" };
 
-  await client.query(
+  const transferUpdate = await client.query(
     `
       UPDATE dispatch.equipment_transfer_requests
       SET status = 'outbound_confirmed',
           outbound_confirmed_at = now(),
           outbound_evidence_uuid = $3::uuid
-      WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
+      WHERE uuid = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND status = 'pending_outbound'
+      RETURNING uuid::text
     `,
     [requestUuid, operatingCompanyId, evidenceUuid]
   );
+  if (!transferUpdate.rows[0]?.uuid) return { kind: "invalid_status" };
 
   await appendCrudAudit(
     client as never,
@@ -100,18 +105,22 @@ export async function confirmInbound(
   if (String(req.to_driver_uuid) !== driverUuid) return { kind: "driver_mismatch" };
   if (req.status !== "outbound_confirmed") return { kind: "invalid_status" };
 
-  await client.query(
+  const transferUpdate = await client.query(
     `
       UPDATE dispatch.equipment_transfer_requests
       SET status = 'completed',
           inbound_confirmed_at = now(),
           inbound_evidence_uuid = $3::uuid
-      WHERE uuid = $1::uuid AND operating_company_id = $2::uuid
+      WHERE uuid = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND status = 'outbound_confirmed'
+      RETURNING uuid::text
     `,
     [requestUuid, operatingCompanyId, evidenceUuid]
   );
+  if (!transferUpdate.rows[0]?.uuid) return { kind: "invalid_status" };
 
-  await client.query(
+  const equipmentUpdate = await client.query(
     // §4 landmine: mdata.equipment has NO operating_company_id column (owner_company_id +
     // currently_leased_to_company_id are the real entity columns — migration 0015). The prior
     // `operating_company_id = $2` 42703'd → inbound transfer confirm 500'd. Scope by ownership/lease.
@@ -120,9 +129,11 @@ export async function confirmInbound(
       SET assigned_driver_id = $3::uuid, updated_at = now()
       WHERE id = $1::uuid
         AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      RETURNING id::text
     `,
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
   );
+  if (!equipmentUpdate.rows[0]?.id) return { kind: "equipment_not_found" };
 
   // Domain equipment activity log (0242 / biz-flow-8). event_type CHECK only allows
   // Coupled|Uncoupled|Moved|StatusChange|MaintenanceStart|MaintenanceEnd|Note — use Moved
