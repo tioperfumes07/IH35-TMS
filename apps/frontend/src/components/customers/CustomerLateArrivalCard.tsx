@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { ListErrorState } from "../ListErrorState";
 
 type LateArrivalEntityDetail = {
@@ -15,12 +16,11 @@ type LateArrivalEntityDetail = {
 };
 
 function monthStart() {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  return monthBoundsIso(companyToday()).start;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function pct(rate: number) {

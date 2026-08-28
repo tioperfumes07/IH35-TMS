@@ -1,3 +1,5 @@
+Codex | WORKING | CUST-F6957 | CLAIM=post.late-arrival-company-business-date | vertical=customers+drivers+reports | guard=10/10 | NEXT=FAST-MERGE | GO
+CODEX | ACK | GO-0004 | NOW=/customers-or-steal | SHA=ebc1c4f | GO
 Codex | HANDOFF | MAINT-MONEY-F6956 | routed=CC-1 | SOURCE=maintenance warranty/parts posting business dates | BLOCKS=post.maintenance-business-date-class | NEXT=nonmoney unique | GO
 Codex | SHIPPED | MDATA-F6955 | PR=#16921 @ bdd153bccd | Built=mdata-business-date-class | Live=post-deploy UNVERIFIED | NEXT=MAINT scan→CC-1 handoff | GO
 Codex | WORKING | FINDING=MDATA-F6955-BUSINESS-DATES-USE-UTC | vertical=customers+drivers+fleet lifecycle/PDF | NEXT=guard+FAST-MERGE | GO

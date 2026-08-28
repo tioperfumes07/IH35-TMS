@@ -76,6 +76,18 @@ contains("apps/frontend/src/pages/reports/LateArrivalReport.tsx", report, [
   { pattern: /\/api\/v1\/dispatch\/analytics\/late-arrivals/, label: "report API fetch" },
 ]);
 
+function businessDateFailures(source, surface) {
+  return [
+    !/monthBoundsIso\(companyToday\(\)\)\.start/.test(source)
+      ? `${surface} late-arrival window must start on the company-local month`
+      : null,
+    !/return companyToday\(\)/.test(source)
+      ? `${surface} late-arrival window must end on the company-local day`
+      : null,
+  ].filter(Boolean);
+}
+failures.push(...businessDateFailures(report, "report"));
+
 const driverCard = read("apps/frontend/src/components/drivers/DriverLateArrivalCard.tsx");
 function driverCardFailures(source) {
   return [
@@ -85,6 +97,7 @@ function driverCardFailures(source) {
     /query\.isError \|\| !query\.data/.test(source)
       ? "driver late-arrival failure must not masquerade as no data"
       : null,
+    ...businessDateFailures(source, "driver"),
   ].filter(Boolean);
 }
 failures.push(...driverCardFailures(driverCard));
@@ -97,6 +110,7 @@ function customerCardFailures(source) {
     /query\.isError \|\| !query\.data/.test(source)
       ? "customer late-arrival failure must not masquerade as no data"
       : null,
+    ...businessDateFailures(source, "customer"),
   ].filter(Boolean);
 }
 failures.push(...customerCardFailures(customerCard));
@@ -122,6 +136,8 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     driverCard.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}"),
     driverCard.replace("if (query.isError) {", "if (query.isError || !query.data) {"),
+    driverCard.replace("monthBoundsIso(companyToday()).start", 'new Date().toISOString().slice(0, 10)'),
+    driverCard.replace("return companyToday();", 'return new Date().toISOString().slice(0, 10);'),
   ];
   for (const [index, mutated] of mutations.entries()) {
     if (mutated === driverCard || driverCardFailures(mutated).length === 0) throw new Error(`driver-card mutation ${index + 1} escaped`);
@@ -129,11 +145,20 @@ if (process.argv.includes("--selftest")) {
   const customerMutations = [
     customerCard.replace("onRetry={() => void query.refetch()}", "onRetry={() => undefined}"),
     customerCard.replace("if (query.isError) {", "if (query.isError || !query.data) {"),
+    customerCard.replace("monthBoundsIso(companyToday()).start", 'new Date().toISOString().slice(0, 10)'),
+    customerCard.replace("return companyToday();", 'return new Date().toISOString().slice(0, 10);'),
   ];
   for (const [index, mutated] of customerMutations.entries()) {
     if (mutated === customerCard || customerCardFailures(mutated).length === 0) throw new Error(`customer-card mutation ${index + 1} escaped`);
   }
-  console.log("verify:late-arrival-analytics SELFTEST PASS — 4/4 driver/customer failure/empty mutations red");
+  const reportMutations = [
+    report.replace("monthBoundsIso(companyToday()).start", 'new Date().toISOString().slice(0, 10)'),
+    report.replace("return companyToday();", 'return new Date().toISOString().slice(0, 10);'),
+  ];
+  for (const [index, mutated] of reportMutations.entries()) {
+    if (mutated === report || businessDateFailures(mutated, "report").length === 0) throw new Error(`report business-date mutation ${index + 1} escaped`);
+  }
+  console.log("verify:late-arrival-analytics SELFTEST PASS — 10/10 failure/empty/business-date mutations red");
   process.exit(0);
 }
 
