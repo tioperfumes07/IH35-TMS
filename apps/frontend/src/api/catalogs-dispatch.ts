@@ -38,6 +38,43 @@ export type DispatchCatalogUpdateBody = Partial<DispatchCatalogCreateBody> & {
   is_active?: boolean;
 };
 
+type DispatchCatalogListClient = {
+  list: (filters: DispatchCatalogListFilters) => Promise<DispatchCatalogListResponse>;
+};
+
+/**
+ * Exhaust a canonical dispatch catalog when the mounted consumer must offer every active row.
+ * Pickers cannot honestly use a single bounded page: an omitted row is unreachable and its FK can
+ * never reach the submit payload. Keep ordinary list pages paged; use this only for complete pickers.
+ */
+export async function listAllDispatchCatalogRows(
+  client: DispatchCatalogListClient,
+  filters: Omit<DispatchCatalogListFilters, "limit" | "offset">,
+  pageSize = 200
+): Promise<DispatchCatalogListResponse> {
+  const rows: DispatchCatalogRow[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+
+  while (expectedTotal === null || rows.length < expectedTotal) {
+    const page = await client.list({ ...filters, limit: pageSize, offset });
+    if (expectedTotal === null) expectedTotal = page.total;
+    else if (page.total !== expectedTotal) throw new Error("Dispatch catalog changed while loading; retry the picker.");
+    if (page.rows.length === 0) throw new Error("Dispatch catalog pagination stopped before the reported total.");
+
+    for (const row of page.rows) {
+      if (seen.has(row.id)) throw new Error("Dispatch catalog pagination returned a duplicate row.");
+      seen.add(row.id);
+      rows.push(row);
+    }
+    offset += page.rows.length;
+  }
+
+  if (rows.length !== expectedTotal) throw new Error("Dispatch catalog pagination exceeded the reported total.");
+  return { rows, total: expectedTotal };
+}
+
 function buildQuery(filters: DispatchCatalogListFilters) {
   const query = new URLSearchParams();
   query.set("operating_company_id", filters.operating_company_id);

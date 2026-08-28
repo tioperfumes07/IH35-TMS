@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // W2 — assert the wizard actually queries the additional-charges catalog (GUARD network-captured
 // ZERO requests live). Mock the client so the test can prove the request fires + is company-scoped.
 vi.mock("../../api/catalogs-dispatch", () => ({
+  listAllDispatchCatalogRows: (client: { list: (filters: unknown) => Promise<unknown> }, filters: unknown) =>
+    client.list({ ...(filters as object), limit: 200, offset: 0 }),
   additionalChargesCatalogClient: {
     list: vi.fn(async () => ({
       rows: [

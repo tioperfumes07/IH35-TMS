@@ -3,7 +3,7 @@ import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { pickupTimeTypesCatalogClient } from "../../api/catalogs-dispatch";
+import { listAllDispatchCatalogRows, pickupTimeTypesCatalogClient } from "../../api/catalogs-dispatch";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { Button } from "../../components/Button";
@@ -219,7 +219,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
 
   const pickupTimeTypesQuery = useQuery({
     queryKey: ["dispatch", "pickup-time-types", operatingCompanyId],
-    queryFn: () => pickupTimeTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => listAllDispatchCatalogRows(pickupTimeTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
     enabled: Boolean(operatingCompanyId),
   });
 

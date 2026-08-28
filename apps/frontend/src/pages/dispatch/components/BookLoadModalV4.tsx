@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { useForm, type FieldErrors, type UseFormSetValue } from "react-hook-form";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createDispatchLoad } from "../../../api/dispatch";
-import { loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
+import { listAllDispatchCatalogRows, loadTypesCatalogClient, lumperProvidersCatalogClient, pickupTimeTypesCatalogClient } from "../../../api/catalogs-dispatch";
 import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
@@ -529,7 +529,7 @@ export function BookLoadModalV4({
   );
   const pickupTimeTypesQuery = useQuery({
     queryKey: ["book-load-pickup-time-types", operatingCompanyId],
-    queryFn: () => pickupTimeTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => listAllDispatchCatalogRows(pickupTimeTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
     enabled: Boolean(operatingCompanyId),
   });
   const pickupTimeTypeOptions = useMemo(
@@ -538,7 +538,7 @@ export function BookLoadModalV4({
   );
   const lumperProvidersQuery = useQuery({
     queryKey: ["book-load-lumper-providers", operatingCompanyId],
-    queryFn: () => lumperProvidersCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => listAllDispatchCatalogRows(lumperProvidersCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
     enabled: Boolean(operatingCompanyId),
   });
   const lumperProviderOptions = useMemo(
@@ -547,7 +547,7 @@ export function BookLoadModalV4({
   );
   const loadTypesQuery = useQuery({
     queryKey: ["book-load-catalog-load-types", operatingCompanyId],
-    queryFn: () => loadTypesCatalogClient.list({ operating_company_id: operatingCompanyId, is_active: "true", limit: 200 }),
+    queryFn: () => listAllDispatchCatalogRows(loadTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
     enabled: Boolean(operatingCompanyId),
   });
   const loadTypeOptions = useMemo(

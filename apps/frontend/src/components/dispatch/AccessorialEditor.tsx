@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { additionalChargesCatalogClient } from "../../api/catalogs-dispatch";
+import { additionalChargesCatalogClient, listAllDispatchCatalogRows } from "../../api/catalogs-dispatch";
 import { CappedListNotice } from "../CappedListNotice";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
@@ -37,10 +37,9 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
   const catalogQuery = useQuery({
     queryKey: ["book-load-additional-charges", operatingCompanyId],
     queryFn: () =>
-      additionalChargesCatalogClient.list({
+      listAllDispatchCatalogRows(additionalChargesCatalogClient, {
         operating_company_id: operatingCompanyId,
         is_active: "true",
-        limit: 200,
       }),
     enabled: Boolean(operatingCompanyId),
   });
