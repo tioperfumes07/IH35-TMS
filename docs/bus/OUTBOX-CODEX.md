@@ -1785,3 +1785,5 @@ Codex | WORKING | SAF-F7053 | CLAIM=post.accident-driver-paged-reverse-guard | S
 Codex | SHIPPED | CUST-F7052 | PR=#17009 @ aa369d96af | Built=exact customer Built evidence guard | NEXT=accident driver reverse | GO
 Codex | WORKING | SAF-F7054 | CLAIM=post.da-shared-driver-label-guard-semantic-reader | SOURCE=DA enrollment/test readers→authorized shared-driver labels | NEXT=guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | SAF-F7053 | PR=#17010 @ c42d5befbc | Built=paged accident driver reverse 25/25 | NEXT=DA driver labels | GO
+Codex | WORKING | DSP-F7055 | CLAIM=post.dispatch-assign-driver-complete-roster-hos-honesty | SOURCE=AssignDriverDropdown→listAllDrivers+created HOS unknown | NEXT=runtime+guard+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F7054 | PR=#17011 @ c9af709f3a | Built=authorized D&A labels 13/13 | NEXT=dispatch driver picker | GO

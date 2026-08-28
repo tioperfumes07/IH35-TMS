@@ -111,7 +111,9 @@ export function AssignDriverDropdown({
         hours_remaining_today: 0,
         hours_remaining_week: 0,
         distance_to_pickup_miles: 0,
-        hos_safe: true,
+        // A newly created driver has no load-relative HOS evaluation yet. Keep the option selectable
+        // (the assignment AuthGate rechecks it), but never manufacture clearance in the picker.
+        hos_safe: false,
         is_in_violation: false,
       } satisfies AvailableDriverRow,
       ...sorted,

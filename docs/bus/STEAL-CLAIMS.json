@@ -1,6 +1,7 @@
 {
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",
   "claims": [
+    { "leftover_id": "post.dispatch-assign-driver-complete-roster-hos-honesty", "seat": "CODEX", "claimed_at": "2026-08-28T19:35:00-05:00", "go": "0004" },
     { "leftover_id": "post.da-shared-driver-label-guard-semantic-reader", "seat": "CODEX", "claimed_at": "2026-08-28T19:25:00-05:00", "go": "0004" },
     { "leftover_id": "post.accident-driver-paged-reverse-guard", "seat": "CODEX", "claimed_at": "2026-08-28T19:15:00-05:00", "go": "0004" },
     { "leftover_id": "post.customer-built-exact-leaves-meta-guard", "seat": "CODEX", "claimed_at": "2026-08-28T19:05:00-05:00", "go": "0004" },
