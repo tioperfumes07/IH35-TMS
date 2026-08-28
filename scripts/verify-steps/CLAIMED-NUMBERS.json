@@ -1,8 +1,9 @@
 {
   "9859": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-2",
-    "purpose": "verify-ledger-findings-no-human-resolve"
+    "claimed_at": "2026-08-27",
+    "claimed_by": "cc-3",
+    "purpose": "verify-ledger-health-no-human-resolve",
+    "note": "COLLISION RESOLVED 2026-08-28: cc-2's claim-reserve commit d837e234db (23:24:18) landed AFTER cc-3's file already merged on origin/main (a6801b12, earlier same session) with this exact number and a near-identical purpose (GET-only + no UPDATE/DELETE on _system.reconciliation_findings anywhere in the backend, table-wide not integration-scoped, so it already covers 'ledger' once that value exists). cc-2's reservation is superseded — see INBOX-CC-2.md for the redirect to 9863."
   },
   "9855": {
     "claimed_at": "2026-08-27",
