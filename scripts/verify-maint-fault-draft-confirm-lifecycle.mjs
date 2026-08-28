@@ -15,6 +15,10 @@ function inspect(value) {
     [/confirmGenerationRef\.current \+= 1[\s\S]*confirmMutation\.reset\(\)[\s\S]*setSelectedId\(null\)[\s\S]*\[companyId\]/, "company transition does not reset confirmation and selection state"],
     [/confirmMutation\.mutate\(\{ workOrderId, companyId, generation: confirmGenerationRef\.current \}\)/, "confirm action does not snapshot company and generation"],
     [/onClick=\{\(\) => confirmDraft\(selected\.id\)\}/, "mounted confirmation bypasses the guarded submitter"],
+    [/if \(draftsQuery\.isError\) setSelectedId\(null\)[\s\S]*\[draftsQuery\.isError\]/, "failed read does not close retained review state"],
+    [/const confirmDraft[\s\S]*if \(draftsQuery\.isError\) return;/, "confirm remains callable during failed read"],
+    [/const all = draftsQuery\.isError \? \[\] : draftsQuery\.data/, "failed read retains draft rows"],
+    [/disabled=\{confirmMutation\.isPending \|\| draftsQuery\.isError\}/, "confirm button does not fail closed"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   return failures;
@@ -30,6 +34,10 @@ if (process.argv.includes("--selftest")) {
     ["confirmMutation.reset();\n    setSelectedId(null);", "confirmMutation.reset();\n    // planted: selection survives"],
     ["companyId, generation: confirmGenerationRef.current", "companyId: '', generation: 0"],
     ["confirmDraft(selected.id)", "confirmMutation.mutate(selected.id)"],
+    ["if (draftsQuery.isError) setSelectedId(null);", "if (false) setSelectedId(null);"],
+    ["if (draftsQuery.isError) return;", "if (false) return;"],
+    ["const all = draftsQuery.isError ? [] : draftsQuery.data", "const all = false ? [] : draftsQuery.data"],
+    ["confirmMutation.isPending || draftsQuery.isError", "confirmMutation.isPending"],
   ];
   for (const [before, after] of mutations) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);

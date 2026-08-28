@@ -1674,3 +1674,5 @@ Codex | SHIPPED | SAF-F6992 | PR=#16951 @ 37762e6982 | Built=anomaly rules+seed+
 Codex | WORKING | INS-F6993 | CLAIM=post.insurance-policy-type-label-read-recovery | vertical=policies-list+detail | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | INS-F6993 | PR=#16952 @ 988e6057b7 | Built=policy list+detail failed-cache label honesty | Live=post-deploy UNVERIFIED | NEXT=insurance query-recovery census | GO
 Codex | WORKING | MAINT-F6994 | CLAIM=post.maintenance-fault-rule-read-recovery | vertical=create+edit+save+retry | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6994 | PR=#16953 @ 4cf005f2ae | Built=fault rules create+edit+save+retry | Live=post-deploy UNVERIFIED | NEXT=fault-drafts recovery census | GO
+Codex | WORKING | MAINT-F6995 | CLAIM=post.maintenance-fault-draft-read-recovery | vertical=rows+review+confirm+retry | NEXT=guard+FAST-MERGE | GO
