@@ -43,6 +43,17 @@ function processorFailureSignals(processor) {
   return failures;
 }
 
+function processorClaimSignals(processor) {
+  const failures = [];
+  if (!/status IN \('pending_ocr', 'failed'\)[\s\S]{0,120}?RETURNING \*/.test(processor)) failures.push("processor must atomically claim pending and failed items");
+  if (!/WHERE id = \$1[\s\S]{0,80}?operating_company_id = \$2::uuid[\s\S]{0,80}?status IN \('pending_ocr', 'failed'\)/.test(processor)) failures.push("claim must bind exact operating company");
+  if (!/SET status = 'ready_review'[\s\S]{0,500}?operating_company_id = \$4::uuid[\s\S]{0,80}?status = 'processing'[\s\S]{0,80}?RETURNING \*/.test(processor)) failures.push("ready-review write must compare-and-set company and processing status");
+  if (!/SET status = 'failed'[\s\S]{0,350}?operating_company_id = \$3::uuid[\s\S]{0,80}?status = 'processing'[\s\S]{0,80}?RETURNING \*/.test(processor)) failures.push("failed write must compare-and-set company and processing status");
+  if (!/if \(!update\.rows\[0\]\) throw new Error\("ocr_processing_state_conflict"\)/.test(processor)) failures.push("ready-review transition must reject a lost processing claim");
+  if (!/if \(!failed\.rows\[0\]\) throw err/.test(processor)) failures.push("failure transition must reject a lost processing claim");
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const page = read(paths.page);
@@ -71,6 +82,7 @@ function main() {
   if (!processor.includes("createOcrIntakeFromEmail")) failures.push("processor must intake email attachments to R2");
   if (!processor.includes("processOcrIntakeQueueItem")) failures.push("processor must run async OCR extraction");
   failures.push(...processorFailureSignals(processor));
+  failures.push(...processorClaimSignals(processor));
   if (!processor.includes("book_load_prefill")) failures.push("processor must build book load prefill on convert");
   if (!index.includes("registerDispatchOcrIntakeRoutes")) failures.push("backend index must register ocr intake routes");
 
@@ -104,13 +116,22 @@ function main() {
   if (process.argv.includes("--selftest")) {
     const swallowed = processor.replace(/\.catch\(\(error: unknown\) => \{[\s\S]*?\n\s*\}\)/, ".catch(() => undefined)");
     const unnamed = processor.replace("scheduled_processing_failed", "scheduled_processing_error");
+    const claimMutants = [
+      processor.replace("status IN ('pending_ocr', 'failed')", "status = 'pending_ocr'"),
+      processor.replace("AND operating_company_id = $2::uuid\n          AND status IN ('pending_ocr', 'failed')", "AND status IN ('pending_ocr', 'failed')"),
+      processor.replace("AND operating_company_id = $4::uuid\n            AND status = 'processing'", "AND operating_company_id = $4::uuid"),
+      processor.replace("AND operating_company_id = $3::uuid\n            AND status = 'processing'", "AND operating_company_id = $3::uuid"),
+      processor.replace('if (!update.rows[0]) throw new Error("ocr_processing_state_conflict");', ""),
+      processor.replace("if (!failed.rows[0]) throw err;", ""),
+    ];
     if (!processorFailureSignals(swallowed).some((message) => message.includes("swallow"))) {
       fail("selftest swallowed scheduler mutation escaped");
     }
     if (!processorFailureSignals(unnamed).some((message) => message.includes("must name"))) {
       fail("selftest unnamed scheduler mutation escaped");
     }
-    console.log("verify:dispatch-ocr-queue SELFTEST PASS (2/2 planted defects rejected)");
+    if (!claimMutants.every((mutant) => processorClaimSignals(mutant).length > 0)) fail("selftest claim mutation escaped");
+    console.log("verify:dispatch-ocr-queue SELFTEST PASS (8/8 planted defects rejected)");
   }
 }
 
