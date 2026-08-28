@@ -233,15 +233,18 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       );
     }
 
-    await client.query(
+    const loadLinkUpdate = await client.query<{ id: string }>(
       `
         UPDATE mdata.loads
         SET driver_instructions_file_id = $2,
             updated_at = now()
         WHERE id = $1
+          AND operating_company_id = $3::uuid
+        RETURNING id
       `,
-      [input.load_id, fileId]
+      [input.load_id, fileId, input.operating_company_id]
     );
+    if (!loadLinkUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
     const baseUrl = process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
     const portalLink = baseUrl ? `${baseUrl}/dispatch?load_id=${input.load_id}` : `Load ${load.load_number}`;
