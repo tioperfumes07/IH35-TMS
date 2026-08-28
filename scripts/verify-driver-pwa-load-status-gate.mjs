@@ -30,6 +30,33 @@ function contains(relativePath, content, checks) {
   }
 }
 
+function auditScopedStatusHandlers(relativePath, content, handlers) {
+  const issues = [];
+  for (const { label, start, end } of handlers) {
+    // Route URLs also appear in the dispatch-view file header; bind the actual handler declaration,
+    // which is the final occurrence before the next route, never the descriptive comment.
+    const from = content.lastIndexOf(start);
+    const to = end ? content.indexOf(end, from + start.length) : content.length;
+    const block = from < 0 ? "" : content.slice(from, to < 0 ? content.length : to);
+    const require = (pattern, message) => {
+      if (!pattern.test(block)) issues.push(`${relativePath}: ${label} ${message}`);
+    };
+    require(/l\.operating_company_id::text AS operating_company_id/, "must capture immutable load company");
+    require(/company_id = l\.operating_company_id/, "must admit only same-company or actively authorized drivers");
+    require(/is_authorized = true/, "must require active shared-driver authorization");
+    require(/deactivated_at IS NULL/, "must reject deactivated shared-driver authorization");
+    require(
+      /UPDATE mdata\.loads SET status = \$2 WHERE id = \$1 AND operating_company_id = \$3::uuid/,
+      "status UPDATE must bind exact captured company"
+    );
+    require(
+      /\[params\.data\.(?:id|uuid), nextLoadStatus, stop\.operating_company_id\]/,
+      "status UPDATE parameters must use the captured load company"
+    );
+  }
+  return issues;
+}
+
 const driverLoads = read("apps/backend/src/driver/loads.routes.ts");
 contains("apps/backend/src/driver/loads.routes.ts", driverLoads, [
   { pattern: /validateLoadStopStatusWrite/, label: "import shared load-status gate" },
@@ -62,6 +89,57 @@ const dispatchView = read("apps/backend/src/dispatch/driver-pwa/dispatch-view.ro
 contains("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts", dispatchView, [
   { pattern: /validateLoadStopStatusWrite/, label: "dispatch-view parity gate" },
 ]);
+
+const scopeIssues = [
+  ...auditScopedStatusHandlers("apps/backend/src/driver/loads.routes.ts", driverLoads, [
+    {
+      label: "arrive",
+      start: "/api/v1/driver/loads/:id/stops/:stopId/arrive",
+      end: "/api/v1/driver/loads/:id/stops/:stopId/depart",
+    },
+    { label: "depart", start: "/api/v1/driver/loads/:id/stops/:stopId/depart" },
+  ]),
+  ...auditScopedStatusHandlers("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts", dispatchView, [
+    {
+      label: "arrival",
+      start: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival",
+      end: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+    },
+    {
+      label: "departure",
+      start: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+      end: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document",
+    },
+  ]),
+];
+for (const issue of scopeIssues) fail(issue);
+
+if (process.argv.includes("--selftest")) {
+  const brokenDriver = driverLoads
+    .replaceAll("l.operating_company_id::text AS operating_company_id", "NULL::text AS operating_company_id")
+    .replaceAll("AND operating_company_id = $3::uuid", "")
+    .replaceAll(".is_authorized = true", ".is_authorized = false");
+  const brokenDispatch = dispatchView
+    .replaceAll("l.operating_company_id::text AS operating_company_id", "NULL::text AS operating_company_id")
+    .replaceAll("AND operating_company_id = $3::uuid", "")
+    .replaceAll(".deactivated_at IS NULL", ".deactivated_at IS NOT NULL");
+  const planted = [
+    ...auditScopedStatusHandlers("driver", brokenDriver, [
+      { label: "arrive", start: "/api/v1/driver/loads/:id/stops/:stopId/arrive", end: "/api/v1/driver/loads/:id/stops/:stopId/depart" },
+      { label: "depart", start: "/api/v1/driver/loads/:id/stops/:stopId/depart" },
+    ]),
+    ...auditScopedStatusHandlers("dispatch-view", brokenDispatch, [
+      { label: "arrival", start: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival", end: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure" },
+      { label: "departure", start: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure", end: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document" },
+    ]),
+  ];
+  if (scopeIssues.length || planted.length < 12) {
+    console.error(`verify:driver-pwa-load-status-gate SELFTEST FAILED — clean=${scopeIssues.length}, planted=${planted.length}`);
+    process.exit(1);
+  }
+  console.log(`verify:driver-pwa-load-status-gate SELFTEST PASS — ${planted.length} planted scope defects caught`);
+  process.exit(0);
+}
 
 read("apps/backend/src/dispatch/load-state-machine.ts");
 

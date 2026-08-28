@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7127H | CLAIM=driver-pwa-status-company-scope-vertical | SOURCE=mdata.loads+driver_company_authorizations | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127G | PR=#17178 @ 6c717ad885 | Built=dispatch transition exact-company write | NEXT=driver/PWA status vertical | GO
 Codex | WORKING | DSP-F7127G | CLAIM=dispatch-transition-exact-company-write | SOURCE=mdata.loads.operating_company_id | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127F | PR=#17177 @ 8e5998e7b2 | Built=generic PATCH exact-company scope+audit | NEXT=dispatch transition scope | GO
 Codex | WORKING | DSP-F7127F | CLAIM=generic-load-patch-company-scope | SOURCE=mdata.loads→audit.audit_events | NEXT=guard+FAST-MERGE | GO

@@ -326,11 +326,20 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; load_status: string; latitude: number | null; longitude: number | null; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, l.status::text AS load_status, loc.latitude, loc.longitude,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
+          JOIN mdata.drivers drv ON drv.id = $3
+                                 AND (drv.operating_company_id = l.operating_company_id OR EXISTS (
+                                   SELECT 1 FROM mdata.driver_company_authorizations arrival_stop_dca
+                                   WHERE arrival_stop_dca.driver_id = drv.id
+                                     AND arrival_stop_dca.company_id = l.operating_company_id
+                                     AND arrival_stop_dca.is_authorized = true
+                                     AND arrival_stop_dca.deactivated_at IS NULL
+                                 ))
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
@@ -363,7 +372,10 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         [params.data.stop_uuid]
       );
 
-      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+      await client.query(
+        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
+        [params.data.uuid, nextLoadStatus, stop.operating_company_id]
+      );
 
       await appendCrudAudit(client, req.user!.uuid, "dispatch.driver_pwa.stop_arrival", {
         load_id: params.data.uuid,
@@ -450,7 +462,10 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         [params.data.stop_uuid]
       );
 
-      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.uuid, nextLoadStatus]);
+      await client.query(
+        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
+        [params.data.uuid, nextLoadStatus, stop.operating_company_id]
+      );
 
       // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
       // transition was the ONLY path that latched revenue, so a load delivered in the field never
