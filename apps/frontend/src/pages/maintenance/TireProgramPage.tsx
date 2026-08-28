@@ -257,14 +257,28 @@ export function TireProgramPage() {
     setEventPage(0);
   }, [companyId, assetKind, assetId]);
 
+  useEffect(() => {
+    if (!layoutQ.isError && !brandsQ.isError) return;
+    setMountOpen(false);
+    setAction(null);
+    setSelectedRecord(null);
+    setMountDraft(EMPTY_MOUNT);
+    setToPosition("");
+    setTreadDepth("");
+    if (brandsQ.isError) {
+      setBrandOpen(false);
+      setBrandName("");
+    }
+  }, [brandsQ.isError, layoutQ.isError]);
+
   const groupedPositions = useMemo(() => {
-    const positions = layoutQ.data?.positions ?? [];
+    const positions = layoutQ.isError ? [] : (layoutQ.data?.positions ?? []);
     return {
       steer: positions.filter((p) => p.group === "steer"),
       drive: positions.filter((p) => p.group === "drive"),
       trailer: positions.filter((p) => p.group === "trailer"),
     };
-  }, [layoutQ.data?.positions]);
+  }, [layoutQ.data?.positions, layoutQ.isError]);
 
   const openQuickAction = (record: MaintenanceTireRecordRow, next: "rotate" | "replace" | "tread") => {
     setSelectedRecord(record);
@@ -327,8 +341,8 @@ export function TireProgramPage() {
     </section>
   );
 
-  const eventRows = eventsQ.data?.rows ?? [];
-  const eventTotalCount = eventsQ.data?.total_count ?? 0;
+  const eventRows = eventsQ.isError ? [] : (eventsQ.data?.rows ?? []);
+  const eventTotalCount = eventsQ.isError ? 0 : (eventsQ.data?.total_count ?? 0);
 
   const eventColumns = useMemo<ParityColumn<MaintenanceTireEventRow>[]>(
     () => [
@@ -362,12 +376,12 @@ export function TireProgramPage() {
         backHref="/maintenance"
         actions={
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" disabled={!companyId} onClick={() => setBrandOpen(true)}>
+            <Button type="button" variant="secondary" disabled={!companyId || brandsQ.isError} onClick={() => setBrandOpen(true)}>
               + Create Brand
             </Button>
             <Button
               type="button"
-              disabled={!companyId || !assetId}
+              disabled={!companyId || !assetId || layoutQ.isError || brandsQ.isError}
               onClick={() => {
                 setMountDraft(EMPTY_MOUNT);
                 setMountOpen(true);
@@ -405,16 +419,36 @@ export function TireProgramPage() {
             dataTestId={`tire-program-${assetKind}-select`}
           />
         </label>
-        <div className="self-end text-xs text-gray-600" data-testid="tire-program-alert-count">
-          Low tread alerts: {alertsQ.data?.count ?? 0}
-        </div>
+        {alertsQ.isError ? (
+          <ListErrorState
+            title="Couldn't load tire alerts"
+            status={0}
+            message={(alertsQ.error as Error)?.message}
+            onRetry={() => void alertsQ.refetch()}
+          />
+        ) : (
+          <div className="self-end text-xs text-gray-600" data-testid="tire-program-alert-count">
+            Low tread alerts: {alertsQ.data?.count ?? 0}
+          </div>
+        )}
       </div>
 
       {assetId ? (
         <div className="space-y-4">
-          {renderPositionGrid("Steer", groupedPositions.steer)}
-          {renderPositionGrid("Drive", groupedPositions.drive)}
-          {groupedPositions.trailer.length > 0 ? renderPositionGrid("Trailer", groupedPositions.trailer) : null}
+          {layoutQ.isError ? (
+            <ListErrorState
+              title="Couldn't load tire layout"
+              status={0}
+              message={(layoutQ.error as Error)?.message}
+              onRetry={() => void layoutQ.refetch()}
+            />
+          ) : (
+            <>
+              {renderPositionGrid("Steer", groupedPositions.steer)}
+              {renderPositionGrid("Drive", groupedPositions.drive)}
+              {groupedPositions.trailer.length > 0 ? renderPositionGrid("Trailer", groupedPositions.trailer) : null}
+            </>
+          )}
 
           <section data-testid="tire-program-history">
             <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Rotation / replacement history</h3>
@@ -488,6 +522,8 @@ export function TireProgramPage() {
               options={(brandsQ.data?.rows ?? []).map((brand) => ({ value: brand.id, label: brand.name }))}
               createKind="maintenance_tire_brand"
               operatingCompanyId={companyId}
+              disabled={brandsQ.isError}
+              loading={brandsQ.isLoading}
               placeholder="Select brand…"
               onOptionCreated={async (opt) => {
                 setMountDraft((d) => ({ ...d, brand_id: opt.value, brand_name: opt.label }));
@@ -513,7 +549,7 @@ export function TireProgramPage() {
           </label>
           <Button
             type="button"
-            disabled={!mountDraft.position_code || mountMutation.isPending}
+            disabled={layoutQ.isError || brandsQ.isError || !mountDraft.position_code || mountMutation.isPending}
             onClick={() => mountMutation.mutate({ ...snapshotScope(), draft: { ...mountDraft } })}
           >
             Mount tire
@@ -533,7 +569,7 @@ export function TireProgramPage() {
           </label>
           <Button
             type="button"
-            disabled={!brandName.trim() || brandMutation.isPending}
+            disabled={brandsQ.isError || !brandName.trim() || brandMutation.isPending}
             onClick={() => brandMutation.mutate({
               companyId,
               generation: actionGenerationRef.current,
@@ -574,7 +610,7 @@ export function TireProgramPage() {
             </label>
             <Button
               type="button"
-              disabled={!toPosition || rotateMutation.isPending}
+              disabled={layoutQ.isError || !toPosition || rotateMutation.isPending}
               onClick={() => rotateMutation.mutate({
                 ...snapshotScope(),
                 tireRecordId: String(selectedRecord?.id),
@@ -605,7 +641,7 @@ export function TireProgramPage() {
             </label>
             <Button
               type="button"
-              disabled={replaceMutation.isPending}
+              disabled={layoutQ.isError || replaceMutation.isPending}
               onClick={() => replaceMutation.mutate({
                 ...snapshotScope(),
                 tireRecordId: String(selectedRecord?.id),
@@ -628,7 +664,7 @@ export function TireProgramPage() {
             </label>
             <Button
               type="button"
-              disabled={!treadDepth || treadMutation.isPending}
+              disabled={layoutQ.isError || !treadDepth || treadMutation.isPending}
               onClick={() => treadMutation.mutate({
                 ...snapshotScope(),
                 tireRecordId: String(selectedRecord?.id),

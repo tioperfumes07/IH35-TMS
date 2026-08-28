@@ -1696,3 +1696,5 @@ Codex | SHIPPED | MAINT-F7003 | PR=#16962 @ fd4eb29cc8 | Built=vendor profile+WO
 Codex | WORKING | MAINT-F7004 | CLAIM=post.maintenance-warranty-read-recovery | vertical=create+detect-WO+file-claim | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7004 | PR=#16963 @ a61e939120 | Built=warranty create+detect-WO+file fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
 Codex | WORKING | MAINT-F7005 | CLAIM=post.maintenance-inspections-read-recovery | vertical=list+pager+create+edit+archive+photo | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7005 | PR=#16964 @ 72388ff0a5 | Built=inspections list+pager+create/edit/archive fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
+Codex | WORKING | MAINT-F7006 | CLAIM=post.maintenance-tire-program-read-recovery | vertical=brand-catalog+layout-actions+alerts+event-history | NEXT=root-fix+guard+FAST-MERGE | GO

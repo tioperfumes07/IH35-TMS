@@ -19,6 +19,15 @@ const checks = [
   [/rotateMutation\.mutate\(\{\s*\.\.\.snapshotScope\(\),\s*tireRecordId: String\(selectedRecord\?\.id\),\s*toPosition,\s*\}\)/, "rotate submits immutable record, position, and scope"],
   [/replaceMutation\.mutate\(\{\s*\.\.\.snapshotScope\(\),\s*tireRecordId: String\(selectedRecord\?\.id\),\s*draft: \{ \.\.\.mountDraft \},\s*\}\)/, "replace submits immutable record, draft, and scope"],
   [/treadMutation\.mutate\(\{\s*\.\.\.snapshotScope\(\),\s*tireRecordId: String\(selectedRecord\?\.id\),\s*treadDepth,\s*\}\)/, "tread audit submits immutable record, depth, and scope"],
+  [/const positions = layoutQ\.isError \? \[\] : \(layoutQ\.data\?\.positions \?\? \[\]\)/, "failed layout read suppresses cached tire positions"],
+  [/if \(!layoutQ\.isError && !brandsQ\.isError\) return;[\s\S]*setMountOpen\(false\);[\s\S]*setAction\(null\);[\s\S]*setSelectedRecord\(null\);[\s\S]*setMountDraft\(EMPTY_MOUNT\);/, "failed layout or brand read retires retained tire actions"],
+  [/disabled=\{!companyId \|\| !assetId \|\| layoutQ\.isError \|\| brandsQ\.isError\}/, "mount entry fails closed on layout or brand errors"],
+  [/alertsQ\.isError \? \([\s\S]*title="Couldn't load tire alerts"[\s\S]*onRetry=\{\(\) => void alertsQ\.refetch\(\)\}/, "alert count failure is retryable and never claims zero"],
+  [/layoutQ\.isError \? \([\s\S]*title="Couldn't load tire layout"[\s\S]*onRetry=\{\(\) => void layoutQ\.refetch\(\)\}[\s\S]*renderPositionGrid/, "layout failure replaces cached positions with exact Retry"],
+  [/disabled=\{brandsQ\.isError\}[\s\S]*loading=\{brandsQ\.isLoading\}/, "brand picker fails closed on its canonical read"],
+  [/disabled=\{layoutQ\.isError \|\| brandsQ\.isError \|\| !mountDraft\.position_code \|\| mountMutation\.isPending\}/, "mount submit fails closed on required reads"],
+  [/disabled=\{brandsQ\.isError \|\| !brandName\.trim\(\) \|\| brandMutation\.isPending\}/, "brand submit fails closed on catalog read"],
+  [/const eventRows = eventsQ\.isError \? \[\] : \(eventsQ\.data\?\.rows \?\? \[\]\);\s*const eventTotalCount = eventsQ\.isError \? 0 : \(eventsQ\.data\?\.total_count \?\? 0\);/, "event failure suppresses cached rows and exact count"],
 ];
 
 const failures = (candidate) => checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);
