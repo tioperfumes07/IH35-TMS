@@ -961,6 +961,8 @@ export function createVendorBill(
     /** QBO Class on bill header — persisted as accounting.bills.class_id when column present. */
     class_id?: string;
     attachment_draft_id?: string;
+    /** VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — marks accounting.bills.is_sample_data at creation. */
+    is_sample_data?: boolean;
     /** LAW-E2E #3167 — real bill_lines payloads (not memo-only). */
     lines: Array<{
       account_id?: string;

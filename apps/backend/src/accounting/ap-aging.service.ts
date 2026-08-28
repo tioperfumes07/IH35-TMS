@@ -328,6 +328,11 @@ export const AP_AGING_OPEN_BILLS_SQL = `
           -- ar-aging.service.ts's identical fix) because removing it is churn with no behavioural
           -- change; 'void' is ADDED so this clause is no longer purely decorative.
           AND b.status NOT IN ('void', 'voided', 'draft')
+          -- VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE (GO-0009 G1) — a demo/test bill has no real AP
+          -- liability; without this the office's aging report mixes fixture noise into a report a
+          -- real vendor payment decision is made from. Mirrors balance-sheet.service.ts /
+          -- trial-balance.service.ts's existing is_sample_data exclusion.
+          AND b.is_sample_data = false
           AND GREATEST(
             COALESCE(b.amount_cents, 0)
               - COALESCE((

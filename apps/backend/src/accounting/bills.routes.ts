@@ -95,6 +95,12 @@ const createBillBodySchema = z.object({
   // LAW-E2E #3167 — vendor Bill create must send real lines (not memo-only). When present, createBill
   // persists accounting.bill_lines in the same txn; empty array fails closed.
   lines: z.array(createBillLineSchema).max(200).optional(),
+  // VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — createBill() (bills.service.ts) has accepted
+  // `isSampleData` since it exists, but this route never read it from the request body, so every
+  // bill ever created here wrote is_sample_data=false regardless of intent. The JE poster already
+  // derives journal_entries.is_sample_data from this same column (posting-engine.service.ts
+  // readSourceIsSampleData) — wiring the create-time flag is the only fix this needed.
+  is_sample_data: z.boolean().optional(),
 });
 
 const payBillBodySchema = z.object({
@@ -355,6 +361,7 @@ export async function registerBillsRoutes(app: FastifyInstance) {
           classId: body.data.class_id,
           attachmentDraftId: body.data.attachment_draft_id,
           duplicateOverrideReason: body.data.duplicate_override_reason,
+          isSampleData: body.data.is_sample_data,
           lines: body.data.lines?.map((line) => ({
             accountId: line.account_id,
             amountCents: line.amount_cents,

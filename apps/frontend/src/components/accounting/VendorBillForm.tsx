@@ -48,6 +48,11 @@ export type VendorBillFormSubmitPayload = {
   class_id?: string;
   /** Real bill lines — required for vendor create; createBill persists these in the same txn. */
   lines: VendorBillFormLinePayload[];
+  /** VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — marks this bill as demo/test data at CREATION (mirrors
+   * the Book Load wizard's `is_sample_data` checkbox). Before this field existed, the only way to
+   * mark a fixture bill was to hand-type a "sample tag" into the Memo field (see its placeholder
+   * text below) — a human convention the poster and every downstream report ignore. */
+  is_sample_data?: boolean;
 };
 
 type Props = {
@@ -155,6 +160,7 @@ export function VendorBillForm({
   }, [nextBillNumberQuery.data?.document_number]);
   /** Operator memo / Gate-B sample tag — persisted at the front of `memo` (LV-SAMPLE-BILL-UNTAGGED). */
   const [operatorMemo, setOperatorMemo] = useState("");
+  const [isSampleData, setIsSampleData] = useState(false);
   const [terms, setTerms] = useState("net_30");
   const [vendorId, setVendorId] = useState("");
   const [loadNumber, setLoadNumber] = useState("");
@@ -340,6 +346,7 @@ export function VendorBillForm({
       ...(linkedClaimId ? { insurance_claim_id: linkedClaimId } : {}),
       ...(resolvedLegalMatterId ? { legal_matter_id: resolvedLegalMatterId } : {}),
       ...(classId ? { class_id: classId } : {}),
+      is_sample_data: isSampleData,
     });
   }
 
@@ -467,10 +474,27 @@ export function VendorBillForm({
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs"
             value={operatorMemo}
             onChange={(event) => setOperatorMemo(event.target.value)}
-            placeholder="Memo / sample tag (e.g. USMCA_GATEB_SAMPLE_YYYY-MM-DD)"
+            placeholder="Memo"
             data-testid="vendor-bill-operator-memo"
             aria-label="Memo"
           />
+        </Field>
+        <Field label="">
+          {/* VEND-F-TEST-DATA-NOT-FLAGGED-SAMPLE — the ONLY UI path that sets
+              accounting.bills.is_sample_data on create. Mirrors Book Load's `is_sample_data`
+              checkbox (BookLoadModalV4.tsx). The JE poster already derives its own
+              journal_entries.is_sample_data from this column (posting-engine.service.ts
+              readSourceIsSampleData) — marking it here is the only wiring this needed. */}
+          <label className="flex items-center gap-1.5 text-xs text-gray-600">
+            <input
+              type="checkbox"
+              data-testid="vendor-bill-is-sample-data"
+              checked={isSampleData}
+              onChange={(event) => setIsSampleData(event.target.checked)}
+              className="h-3.5 w-3.5 rounded-sm border-gray-300"
+            />
+            Sample / demo bill
+          </label>
         </Field>
         <Field label="A/P Account *">
           <ReferenceSelect
