@@ -1,3 +1,6 @@
+Codex | WORKING | DSP-F7127 | CLAIM=dispatch.load-detail-company-scope-vertical | SOURCE=mdata.loads exact company+load detail GET | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7126 | PR=#17163 @ a16a96ec4e | Built=detention immutable write scope+serialization | NEXT=load-detail scope vertical | GO
+CODEX | ACK | GO-0016 | NOW=pass-unverified-evidence-8 | SHA=4e5db76 | result=8/8 already UNVERIFIED on origin/main | GO
 Codex | WORKING | DSP-F7126 | CLAIM=dispatch.detention-write-scope | SOURCE=dispatch.detention_events company-owned row actions+sync | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7125 | PR=#17159 @ 1ff6955ed7 | Built=OCR conversion immutable company lifecycle | NEXT=detention write scope | GO
 CODEX | ACK | GO-0016 | NOW=pass-unverified-evidence-8 | SHA=069d531 | result=already-honest-on-main-#17145 | GO

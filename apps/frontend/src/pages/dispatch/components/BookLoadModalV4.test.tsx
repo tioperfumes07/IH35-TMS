@@ -106,7 +106,7 @@ describe("BookLoadModalV4", () => {
     );
 
     // Pick a real customer from the list — the picker is a listbox, so the option is clicked, not typed.
-    const customerInput = await screen.findByPlaceholderText(/Select customer/i);
+    const customerInput = await screen.findByPlaceholderText(/Search customers/i);
     await user.click(customerInput);
     await user.click(await screen.findByRole("option", { name: /LIVE TEST CUSTOMER LLC/i }));
 

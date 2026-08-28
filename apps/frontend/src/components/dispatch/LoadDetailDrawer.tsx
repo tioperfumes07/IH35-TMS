@@ -162,7 +162,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   // INNER JOIN on a deactivated customer — LV-SYSTEM-AUDIT-LOAD-LINK-DEAD-END), mdata still
   // fills the drawer.
   const dispatchLoadQuery = useDispatchLoad(loadId, operatingCompanyId);
-  const mdataLoadQuery = useLoad(loadId);
+  const mdataLoadQuery = useLoad(loadId, operatingCompanyId);
   const load = (dispatchLoadQuery.data ?? mdataLoadQuery.data) as LoadDetail | undefined;
   const loadQueryIsLoading =
     !load && (mdataLoadQuery.isLoading || Boolean(operatingCompanyId && dispatchLoadQuery.isLoading));
