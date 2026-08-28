@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-0004 | NOW=latch-SQL+/fuel | SHA=ebc1c4f | GO
 CASCADE | METER3-WALK | MODULE=program | SHA=ebc1c4f | N=0 | 0 console errors | GO
 CASCADE | METER3-WALK | MODULE=fuel | SHA=ebc1c4f | N=0 | 0 console errors · all API 200 | GO
 CASCADE | METER3-WALK | MODULE=driver-hub | SHA=ebc1c4f | N=0 | 0 console errors | GO
