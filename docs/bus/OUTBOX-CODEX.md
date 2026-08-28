@@ -1,4 +1,9 @@
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7146 | CLAIM=stop-extra-rate-cross-company-load-link | SOURCE=mdata.loads→mdata.load_stops→dispatch.stop_extra_rates | NEXT=FAST-MERGE | GO
+Codex | FINDING | DSP-MONEY-F7146A | routed=CC-1 | detention customer notice check-send-stamp race | board=OPEN | GO
+Codex | FINDING | DSP-MONEY-F7146B | routed=CC-1 | cancellation approval/load-status unchecked writes | board=OPEN | GO
+Codex | SHIPPED | DSP-F7145 | PR=#17242 @ 70d639a76b | Built=fail-closed equipment transfer lifecycle | NEXT=stop extra-rate scope | GO
+CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7145 | CLAIM=equipment-transfer-completes-after-zero-row-equipment-write | SOURCE=dispatch.equipment_transfer_requests→mdata.equipment→mdata.equipment_log | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7144 | PR=#17240 @ 480c151d18 | Built=atomic Driver PWA departure lifecycle | NEXT=equipment transfer lifecycle | GO
 CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO

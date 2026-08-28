@@ -44,8 +44,13 @@ export async function addStopExtra(client: Queryable, input: AddStopExtraInput) 
       WHERE EXISTS (
         SELECT 1
         FROM mdata.load_stops ls
+        JOIN mdata.loads l
+          ON l.id = ls.load_id
+         AND l.operating_company_id = $1::uuid
+         AND l.soft_deleted_at IS NULL
         WHERE ls.id = $2::uuid
           AND ls.load_id = $3::uuid
+          AND ls.soft_deleted_at IS NULL
       )
       RETURNING *
     `,
@@ -72,6 +77,12 @@ export async function listForLoad(client: Queryable, input: { operating_company_
       FROM dispatch.stop_extra_rates ser
       JOIN mdata.load_stops ls
         ON ls.id = ser.stop_uuid
+       AND ls.load_id = ser.load_uuid
+       AND ls.soft_deleted_at IS NULL
+      JOIN mdata.loads l
+        ON l.id = ser.load_uuid
+       AND l.operating_company_id = ser.operating_company_id
+       AND l.soft_deleted_at IS NULL
       WHERE ser.operating_company_id = $1::uuid
         AND ser.load_uuid = $2
         AND ser.is_active = true
@@ -90,6 +101,13 @@ export async function totalForLoad(client: Queryable, input: { operating_company
       WHERE operating_company_id = $1::uuid
         AND load_uuid = $2
         AND is_active = true
+        AND EXISTS (
+          SELECT 1
+          FROM mdata.loads l
+          WHERE l.id = dispatch.stop_extra_rates.load_uuid
+            AND l.operating_company_id = dispatch.stop_extra_rates.operating_company_id
+            AND l.soft_deleted_at IS NULL
+        )
     `,
     [input.operating_company_id, input.load_uuid]
   );
@@ -107,6 +125,17 @@ export async function softDelete(client: Queryable, input: SoftDeleteStopExtraIn
         AND stop_uuid = $3
         AND uuid = $4
         AND is_active = true
+        AND EXISTS (
+          SELECT 1
+          FROM mdata.load_stops ls
+          JOIN mdata.loads l
+            ON l.id = ls.load_id
+           AND l.operating_company_id = dispatch.stop_extra_rates.operating_company_id
+           AND l.soft_deleted_at IS NULL
+          WHERE ls.id = dispatch.stop_extra_rates.stop_uuid
+            AND ls.load_id = dispatch.stop_extra_rates.load_uuid
+            AND ls.soft_deleted_at IS NULL
+        )
       RETURNING *
     `,
     [input.operating_company_id, input.load_uuid, input.stop_uuid, input.rate_uuid]

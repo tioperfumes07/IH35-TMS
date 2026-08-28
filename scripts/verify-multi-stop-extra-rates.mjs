@@ -22,6 +22,18 @@ function read(path) {
   return readFileSync(path, "utf8");
 }
 
+function scopeFailures(source) {
+  const failures = [];
+  const require = (pattern, message) => {
+    if (!pattern.test(source)) failures.push(message);
+  };
+  require(/INSERT INTO dispatch\.stop_extra_rates[\s\S]{0,900}JOIN mdata\.loads l[\s\S]{0,160}l\.operating_company_id = \$1::uuid[\s\S]{0,220}ls\.id = \$2::uuid[\s\S]{0,100}ls\.load_id = \$3::uuid/, "create must prove stop→load→company against canonical loads");
+  require(/FROM dispatch\.stop_extra_rates ser[\s\S]{0,300}ls\.load_id = ser\.load_uuid[\s\S]{0,260}l\.operating_company_id = ser\.operating_company_id/, "list must preserve stop/load/company continuity");
+  require(/SUM\(amount_cents\)[\s\S]{0,500}l\.id = dispatch\.stop_extra_rates\.load_uuid[\s\S]{0,160}l\.operating_company_id = dispatch\.stop_extra_rates\.operating_company_id/, "total must re-prove canonical load company");
+  require(/UPDATE dispatch\.stop_extra_rates[\s\S]{0,700}ls\.id = dispatch\.stop_extra_rates\.stop_uuid[\s\S]{0,120}ls\.load_id = dispatch\.stop_extra_rates\.load_uuid/, "soft-delete must re-prove canonical stop/load continuity");
+  return failures;
+}
+
 const migration = read(files.migration);
 const service = read(files.service);
 const routes = read(files.routes);
@@ -49,6 +61,20 @@ const checks = [
   ["backend index registers routes", indexTs.includes("registerLoadStopExtraRateRoutes")],
   ["spec doc references WF-053", docs.includes("WF-053")],
 ];
+for (const failure of scopeFailures(service)) checks.push([failure, false]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    service.replace("AND l.operating_company_id = $1::uuid", ""),
+    service.replace("AND ls.load_id = ser.load_uuid", ""),
+    service.replace("AND l.operating_company_id = ser.operating_company_id", ""),
+    service.replace("AND l.operating_company_id = dispatch.stop_extra_rates.operating_company_id", ""),
+    service.replace("AND ls.load_id = dispatch.stop_extra_rates.load_uuid", ""),
+  ];
+  for (const [index, mutation] of mutations.entries()) {
+    if (scopeFailures(mutation).length === 0) checks.push([`selftest scope mutation ${index + 1} escaped`, false]);
+  }
+}
 
 let failed = false;
 for (const [label, ok] of checks) {
@@ -65,4 +91,4 @@ if (failed) {
   process.exit(1);
 }
 
-console.log("GAP-31 multi-stop extra-rate guard: PASS");
+console.log(`GAP-31 multi-stop extra-rate guard: PASS${process.argv.includes("--selftest") ? " — 5 scope mutations caught" : ""}`);
