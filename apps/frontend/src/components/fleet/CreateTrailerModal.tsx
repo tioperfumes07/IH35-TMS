@@ -102,10 +102,10 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
   });
   const companyOptions = useMemo(
     () =>
-      (companiesQuery.data ?? [])
+      (companiesQuery.isError ? [] : companiesQuery.data ?? [])
         .filter((c) => c.is_active)
         .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
-    [companiesQuery.data]
+    [companiesQuery.data, companiesQuery.isError]
   );
 
   /** @matrix-built modules=fleet cols=trailer,connectivity,reverse_link */
@@ -239,6 +239,7 @@ export function CreateTrailerModal({ open, operatingCompanyId, onClose, onCreate
                 onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
                 placeholder="Select company"
                 loading={companiesQuery.isLoading}
+                disabled={companiesQuery.isError}
                 allowClear
                 dataField="currently_leased_to_company_id"
               />

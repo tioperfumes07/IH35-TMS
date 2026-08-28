@@ -67,10 +67,10 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
   });
   const companyOptions = useMemo(
     () =>
-      (companiesQuery.data ?? [])
+      (companiesQuery.isError ? [] : companiesQuery.data ?? [])
         .filter((c) => c.is_active)
         .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
-    [companiesQuery.data]
+    [companiesQuery.data, companiesQuery.isError]
   );
 
   // Initialize once per open so a refetch can't reset the form + wipe edits.
@@ -226,6 +226,7 @@ export function EditTrailerModal({ open, trailerId, operatingCompanyId, onClose,
                 onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
                 placeholder="Select company"
                 loading={companiesQuery.isLoading}
+                disabled={companiesQuery.isError}
                 allowClear
                 dataField="currently_leased_to_company_id"
               />
