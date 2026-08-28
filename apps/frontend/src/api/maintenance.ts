@@ -579,9 +579,13 @@ export function getMaintenanceInTransitQueue(companyId: string, range: { limit?:
   );
 }
 
-export function getMaintenanceRecentActivity(companyId: string) {
-  return apiRequest<{ recent: WorkOrder[]; completed: WorkOrder[]; recent_total_count: number; completed_total_count: number }>(
-    `/api/v1/maintenance/dashboard/recent-activity?${query(companyId)}`
+export function getMaintenanceRecentActivity(companyId: string, range: { limit?: number; recent_offset?: number; completed_offset?: number } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  params.set("limit", String(range.limit ?? 5));
+  params.set("recent_offset", String(range.recent_offset ?? 0));
+  params.set("completed_offset", String(range.completed_offset ?? 0));
+  return apiRequest<{ recent: WorkOrder[]; completed: WorkOrder[]; recent_total_count: number; completed_total_count: number; limit: number; recent_offset: number; completed_offset: number }>(
+    `/api/v1/maintenance/dashboard/recent-activity?${params.toString()}`
   );
 }
 

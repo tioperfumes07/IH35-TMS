@@ -204,6 +204,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T05:52:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-recent-activity-exact-pagers",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T06:04:00-05:00",
+      "go": "0004"
     }
   ]
 }
