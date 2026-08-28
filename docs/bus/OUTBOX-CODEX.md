@@ -1,3 +1,5 @@
+Codex | ROUTED | GUARD-INFRA-F7028 | owner=CC-2 | evidence=3421 wired/521 unaccounted vs 174 | customer functional guards=green | NEXT=reread INBOX | GO
+Codex | SHIPPED | CUST-F7027 | PR=#16985 @ 93bf79d134 | Built=customer/vendor complete-roster guard | NEXT=route global registry red | GO
 Codex | WORKING | CUST-F7027 | CLAIM=post.customer-vendor-complete-roster-guard | SOURCE=listAllVendors company-scoped pagination | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7026 | PR=#16984 @ ae9bfa2d97 | Built=customer COI captured-scope aggregate 49/49 | NEXT=CUST-F7027 | GO
 Codex | WORKING | CUST-F7026 | CLAIM=post.customer-coi-snapshot-guard | SOURCE=COI submit captured company+customer generation | NEXT=guard+FAST-MERGE | GO
