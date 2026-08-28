@@ -9,7 +9,7 @@ import {
   type AllocationMethod,
   type InsuranceCoverageType,
 } from "../../api/insurance";
-import { listUnits } from "../../api/mdata";
+import { listAllUnits } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -182,9 +182,8 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery, activeChip],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: () =>
-      listUnits({
+      listAllUnits({
         operating_company_id: operatingCompanyId,
-        limit: 200,
         search: unitSearchQuery.trim() || undefined,
         include: "trailers",
         type: activeChip === "All" ? undefined : activeChip,

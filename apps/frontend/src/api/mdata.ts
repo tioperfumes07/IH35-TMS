@@ -1866,6 +1866,7 @@ export function listUnits(
     limit?: number;
     offset?: number;
     include?: "trailers";
+    include_inactive?: boolean;
     type?: "Truck" | "Tractor" | "Trailer" | "Reefer" | "DryVan" | "Flatbed" | "Stepdeck" | "Lowboy" | "Tanker" | "Custom";
   } = {}
 ) {
@@ -1882,6 +1883,7 @@ export function listUnits(
   // include=trailers returns the UNIFIED fleet (trucks from mdata.units + trailers from mdata.equipment),
   // each row tagged kind:"truck"|"trailer" and already deactivated_at-filtered.
   if (params.include) query.set("include", params.include);
+  if (params.include_inactive) query.set("include_inactive", "true");
   if (params.type) query.set("type", params.type);
   const qs = query.toString();
   // total = real server-side count (GO-LIVE Block 1A) so the Fleet UI can page through the FULL fleet.
@@ -1890,7 +1892,7 @@ export function listUnits(
 
 /** Exhaust a stable scoped unit population for complete-grid consumers; pickers stay server-searched. */
 export async function listAllUnits(
-  params: Omit<Parameters<typeof listUnits>[0], "limit" | "offset"> = {},
+  params: Omit<NonNullable<Parameters<typeof listUnits>[0]>, "limit" | "offset">,
 ) {
   const limit = 500;
   const units: unknown[] = [];
