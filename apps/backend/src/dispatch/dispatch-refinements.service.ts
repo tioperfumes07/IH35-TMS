@@ -507,7 +507,6 @@ export async function listAvailableDriversForDispatch(
           AND d.status = 'Active'::mdata.driver_status
           AND d.deactivated_at IS NULL
         ORDER BY d.last_name ASC, d.first_name ASC
-        LIMIT 200
       `,
       [operatingCompanyId]
     );
