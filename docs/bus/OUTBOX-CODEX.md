@@ -1,3 +1,6 @@
+Codex | ACK | GO-0007 | NOW=/dispatch-unique | SHA=08d96f7 | GO
+Codex | WORKING | DSP-F7074 | CLAIM=post.dispatch-document-history-complete-range | SOURCE=docs.files total+offset→shared+load/factoring histories | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7073 | PR=#17043 @ e3827e6520 | Built=dispatch:home.list customer complete roster | NEXT=document histories | GO
 Codex | WORKING | DSP-F7073 | CLAIM=post.dispatch-customer-filter-complete-roster | SOURCE=mdata.customers total+offset→dispatch home filter | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7072 | PR=#17040 @ a9c3bb5d73 | Built=dispatch:misc.layover 4/4 complete range | NEXT=dispatch customer filter | GO
 Codex | WORKING | DSP-F7072 | CLAIM=post.dispatch-layover-history-complete-range | SOURCE=driver_layovers scoped range→driver/load reverse table | NEXT=guard+FAST-MERGE | GO

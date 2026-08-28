@@ -2,6 +2,8 @@
 /** @matrix-built {"modules":["drivers"],"cols":["reverse_link"],"leaves":["profiles.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["reverse_link"],"leaves":["unit.profile.documents","trailer.profile.documents"],"task":"CLASS-F5903-DOCUMENT-REVERSE-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["fleet"],"cols":["connectivity"],"leaves":["unit.profile.documents","trailer.profile.documents"],"task":"FLEET-F5933-DOCUMENT-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leaves":["load.drawer.documents","load.drawer.factoring"],"task":"DSP-F7074-DOCUMENT-HISTORY-COMPLETE-RANGE","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["reverse_link"],"leaves":["load.drawer.factoring"],"task":"DSP-F7074-DOCUMENT-HISTORY-COMPLETE-RANGE","vertical":"class-sweep"} */
 import fs from "node:fs";
 import process from "node:process";
 
@@ -9,6 +11,10 @@ const FILES = {
   resolver: "apps/frontend/src/components/shared/EntityLink.tsx",
   hub: "apps/frontend/src/pages/docs/DocsHomePage.tsx",
   shared: "apps/frontend/src/components/documents/DocumentsTab.tsx",
+  api: "apps/frontend/src/api/docs.ts",
+  route: "apps/backend/src/docs/files.routes.ts",
+  loadDrawer: "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx",
+  factoringTab: "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
   unit: "apps/frontend/src/components/vehicle-profile/DocumentsSection.tsx",
   trailer: "apps/frontend/src/components/trailer-profile/DocumentsSection.tsx",
   customer: "apps/frontend/src/pages/CustomerDetail.tsx",
@@ -29,6 +35,17 @@ function verify(source) {
   need("hub", 'params.delete("file_id")', "closing preview must clear the deep-link query");
   need("hub", 'kind="document"', "Docs hub filenames must be canonical document links");
   need("shared", 'data-testid="entity-document-record-link"', "shared entity document rosters must drill through");
+  for (const text of ["export async function listAllFiles", "page.total !== expectedTotal", "seen.has(file.id)", "offset += page.files.length", "pagination stopped before the reported total"]) {
+    need("api", text, `canonical document scanner missing ${text}`);
+  }
+  need("route", "ORDER BY f.created_at DESC, f.id DESC", "document list must retain deterministic range ordering");
+  need("shared", "listAllFiles({", "shared entity document histories must exhaust the scoped range");
+  if (/listFiles\(\{[\s\S]{0,220}limit:\s*200/.test(source.shared)) failures.push("shared entity document history retains a silent page cap");
+  for (const key of ["loadDrawer", "factoringTab"]) {
+    const calls = source[key].match(/listAllFiles\(\{[^}]+entity_type:\s*"(?:load|invoice)"[^}]+\}\)/g) ?? [];
+    if (calls.length !== 2) failures.push(`${key} must exhaust both load and invoice document histories`);
+    if (/listFiles\(\{[^}]+entity_type:\s*"(?:load|invoice)"[^}]+limit:\s*(?:50|200)/.test(source[key])) failures.push(`${key} retains a silent document page cap`);
+  }
   need("unit", 'data-testid="unit-document-record-link"', "unit document roster must drill through");
   need("trailer", 'data-testid="trailer-document-record-link"', "trailer document roster must drill through");
   need("trailer", 'EntityLinkOrTombstone kind="document"', "trailer document roster must tombstone unavailable records");
@@ -64,6 +81,12 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["hub", 'searchParams.get("file_id")', 'searchParams.get("document_id")'],
     ["hub", 'params.delete("file_id")', 'params.delete("document_id")'],
     ["shared", 'data-testid="entity-document-record-link"', 'data-testid="broken-entity-document-link"'],
+    ["api", "page.total !== expectedTotal", "false"],
+    ["api", "offset += page.files.length", "offset += 200"],
+    ["route", "ORDER BY f.created_at DESC, f.id DESC", "ORDER BY f.created_at DESC"],
+    ["shared", "listAllFiles({", "listFiles({"],
+    ["loadDrawer", "listAllFiles({ operating_company_id: load!.operating_company_id, entity_type: \"load\"", "listFiles({ operating_company_id: load!.operating_company_id, entity_type: \"load\", limit: 200"],
+    ["factoringTab", "listAllFiles({ operating_company_id: operatingCompanyId, entity_type: \"invoice\"", "listFiles({ operating_company_id: operatingCompanyId, entity_type: \"invoice\", limit: 50"],
     ["unit", 'data-testid="unit-document-record-link"', 'data-testid="broken-unit-document-link"'],
     ["trailer", 'data-testid="trailer-document-record-link"', 'data-testid="broken-trailer-document-link"'],
     ["trailer", 'EntityLinkOrTombstone kind="document"', 'EntityLink kind="document"'],
