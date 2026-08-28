@@ -1,4 +1,9 @@
 {
+  "9915": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-import-mints-payee-vendor"
+  },
   "9911": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
