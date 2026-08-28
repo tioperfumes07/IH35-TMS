@@ -182,8 +182,7 @@ export async function getLayoversForDriver(
         AND next_load.operating_company_id = dl.operating_company_id
        WHERE dl.operating_company_id = $1::uuid AND dl.driver_uuid = $2
          ${dateFilter}
-       ORDER BY dl.layover_started_at DESC
-       LIMIT 100`,
+       ORDER BY dl.layover_started_at DESC, dl.uuid DESC`,
       params
     );
     return res.rows;

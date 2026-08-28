@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["driver","load","connectivity","reverse_link"],"leaves":["misc.layover"],"task":"DSP-F7072-LAYOVER-HISTORY-COMPLETE-RANGE","vertical":"class-sweep"} */
 /**
  * GAP-28 CI guard — verifies layover detection worker and routes are wired into
  * apps/backend/src/index.ts.
@@ -16,6 +17,7 @@ import { readFileSync } from "node:fs";
 
 const LABEL = "verify-layover-detection";
 const INDEX_TS_PATH = "apps/backend/src/index.ts";
+const SERVICE_TS_PATH = "apps/backend/src/dispatch/layovers/detection.service.ts";
 
 export function assertGuard(indexTs) {
   const errors = [];
@@ -27,6 +29,22 @@ export function assertGuard(indexTs) {
   }
   if (!/initializeLayoverDetectorWorker\(app\)/.test(indexTs)) {
     errors.push("layover worker imported but never called — initializeLayoverDetectorWorker(app) missing from index.ts startup");
+  }
+  return errors;
+}
+
+export function assertCompleteRange(serviceTs) {
+  const errors = [];
+  const historyQuery = serviceTs.match(/FROM dispatch\.driver_layovers dl[\s\S]*?params\n\s*\);/)?.[0] ?? "";
+  if (!historyQuery) errors.push("canonical driver layover history query missing");
+  if (!/WHERE dl\.operating_company_id = \$1::uuid AND dl\.driver_uuid = \$2/.test(historyQuery)) {
+    errors.push("layover history must retain exact company and driver scope");
+  }
+  if (!/ORDER BY dl\.layover_started_at DESC, dl\.uuid DESC/.test(historyQuery)) {
+    errors.push("layover history must use stable deterministic ordering");
+  }
+  if (/\bLIMIT\s+\d+/i.test(historyQuery)) {
+    errors.push("layover history must not silently cap the selected date range");
   }
   return errors;
 }
@@ -70,7 +88,30 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log(`[${LABEL}] --selftest OK`);
+  const completeHistory = `
+    FROM dispatch.driver_layovers dl
+    WHERE dl.operating_company_id = $1::uuid AND dl.driver_uuid = $2
+    ORDER BY dl.layover_started_at DESC, dl.uuid DESC\`,
+    params
+  );
+  `;
+  if (assertCompleteRange(completeHistory).length) {
+    console.error(`[${LABEL}] --selftest FAIL: complete-history fixture rejected`, assertCompleteRange(completeHistory));
+    process.exit(1);
+  }
+  const rangeMutations = [
+    completeHistory.replace("ORDER BY dl.layover_started_at DESC, dl.uuid DESC", "ORDER BY dl.layover_started_at DESC LIMIT 100"),
+    completeHistory.replace("dl.operating_company_id = $1::uuid", "dl.operating_company_id IS NOT NULL"),
+    completeHistory.replace(", dl.uuid DESC", ""),
+  ];
+  for (const [index, mutated] of rangeMutations.entries()) {
+    if (assertCompleteRange(mutated).length === 0) {
+      console.error(`[${LABEL}] --selftest FAIL: complete-range mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`[${LABEL}] --selftest OK — 6/6 wiring/complete-range mutations red`);
 }
 
 function main() {
@@ -80,7 +121,8 @@ function main() {
   }
 
   const indexTs = readFileSync(INDEX_TS_PATH, "utf8");
-  const errors = assertGuard(indexTs);
+  const serviceTs = readFileSync(SERVICE_TS_PATH, "utf8");
+  const errors = [...assertGuard(indexTs), ...assertCompleteRange(serviceTs)];
   if (errors.length) {
     for (const e of errors) console.error(`✗ FAIL: ${e}`);
     console.error("GAP-28 CI guard failed");
