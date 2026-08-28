@@ -27,6 +27,15 @@ function fail(msg) {
   process.exit(1);
 }
 
+export function checkSettingsReadBeforeWrite(page) {
+  const failures = [];
+  const disabledContracts = page.match(/disabled=\{prefsQuery\.isLoading \|\| prefsQuery\.isError \|\| saveViewM\.isPending\}/g) ?? [];
+  if (disabledContracts.length !== 2) failures.push("both saved-view choices must fail closed while the preference read is failed");
+  if (!page.includes("Retry before changing it so an unknown saved preference")) failures.push("read failure must explain that Retry is required before write");
+  if (page.includes("Choosing an option below will still save")) failures.push("read failure must not invite a blind preference overwrite");
+  return failures;
+}
+
 function main() {
   const page = read(paths.page);
   const pageTest = read(paths.pageTest);
@@ -43,6 +52,7 @@ function main() {
   if (!page.includes("updateDispatchPreferences")) failures.push("DispatchSettingsPage must save preferences via API");
   if (!page.includes("dispatch-settings-auto-routing")) failures.push("DispatchSettingsPage must expose auto-routing section");
   if (!page.includes("dispatch-settings-alert-thresholds")) failures.push("DispatchSettingsPage must expose alert thresholds section");
+  failures.push(...checkSettingsReadBeforeWrite(page));
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DispatchSettingsPage tests must cover at least 3 cases");
 
   if (!dispatchApi.includes("getDispatchPreferences")) failures.push("dispatch API must export getDispatchPreferences");
@@ -65,6 +75,20 @@ function main() {
   }
 
   console.log("verify:dispatch-settings-tab PASS");
+}
+
+if (process.argv.includes("--selftest")) {
+  const fixed = read(paths.page);
+  const buggy = fixed
+    .replaceAll("prefsQuery.isLoading || prefsQuery.isError || saveViewM.isPending", "prefsQuery.isLoading || saveViewM.isPending")
+    .replace("Retry before changing it so an unknown saved preference", "Choosing an option below will still save");
+  const planted = checkSettingsReadBeforeWrite(buggy);
+  const current = checkSettingsReadBeforeWrite(fixed);
+  if (planted.length >= 3 && current.length === 0) {
+    console.log("verify:dispatch-settings-tab selftest PASS — planted blind-write regression rejected");
+    process.exit(0);
+  }
+  fail(`selftest failed: planted=${planted.length}, current=${current.join("; ") || "none"}`);
 }
 
 main();
