@@ -5,7 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { sendEmail } from "../notifications/email.service.js";
-import { bridgeDetentionToBilling } from "./detention.service.js";
+import { bridgeDetentionToBillingInClientTx } from "./detention.service.js";
 
 const AUDIT_TAG = "GAP-19";
 
@@ -310,7 +310,16 @@ export async function approveDetentionRequest(
   operatingCompanyId: string,
   requestId: string
 ) {
-  const request = await withCompany(userId, operatingCompanyId, async (client) => {
+  // DSP-MONEY-F7132A — the whole approval sequence (status check, bridge, invoice, evidence, final
+  // status flip) now runs in ONE transaction, with the request row locked (FOR UPDATE) from the
+  // FIRST read. rejectDetentionRequest takes the SAME FOR UPDATE lock on the same row, so the two
+  // are now mutually exclusive at the database level: whichever transaction acquires the lock first
+  // wins outright, and the other blocks until it commits, then re-reads the (now-changed) status and
+  // bails out BEFORE attempting any of the money side effects — never after. Previously the initial
+  // status read was its own already-committed transaction with no lock, so a reject could land in
+  // the gap between that read and the unconditional final UPDATE, which would then silently flip a
+  // just-rejected request back to 'invoiced' and bill/notify for it anyway.
+  const result = await withCompany(userId, operatingCompanyId, async (client) => {
     const res = await client.query(
       `
         SELECT dr.*, l.load_number, c.customer_name, c.ar_email
@@ -320,28 +329,28 @@ export async function approveDetentionRequest(
         LEFT JOIN mdata.customers c ON c.id = dr.customer_id
                                    AND c.operating_company_id = dr.operating_company_id
         WHERE dr.id = $1 AND dr.operating_company_id = $2::uuid
+        FOR UPDATE OF dr
       `,
       [requestId, operatingCompanyId]
     );
-    return res.rows[0] ?? null;
-  });
-  if (!request) return { ok: false as const, error: "not_found" as const };
-  if (request.status !== "pending_review") return { ok: false as const, error: "not_pending" as const };
+    const request = res.rows[0] ?? null;
+    if (!request) return { ok: false as const, error: "not_found" as const };
+    if (request.status !== "pending_review") return { ok: false as const, error: "not_pending" as const };
 
-  // Bridge detention accrual into the load's billable total (rate_total_cents).
-  // NOTE: this merges detention into the linehaul total — buildInvoiceFromLoad
-  // emits a single 'linehaul' line. A discrete detention invoice line is a
-  // follow-up that needs separate authorization.
-  const bridge = await bridgeDetentionToBilling(userId, operatingCompanyId, String(request.detention_event_id));
-  if (!bridge.ok && bridge.error !== "already_billed") {
-    return { ok: false as const, error: bridge.error };
-  }
+    // Bridge detention accrual into the load's billable total (rate_total_cents), IN this same
+    // locked transaction now, not as a separate already-committed call.
+    // NOTE: this merges detention into the linehaul total — buildInvoiceFromLoad
+    // emits a single 'linehaul' line. A discrete detention invoice line is a
+    // follow-up that needs separate authorization.
+    const bridge = await bridgeDetentionToBillingInClientTx(client, userId, operatingCompanyId, String(request.detention_event_id));
+    if (!bridge.ok && bridge.error !== "already_billed") {
+      return { ok: false as const, error: bridge.error };
+    }
 
-  const result = await withCompany(userId, operatingCompanyId, async (client) => {
-    // ACCT-F5624 — bridgeDetentionToBilling (above) now re-syncs any existing draft/proforma invoice
-    // itself (or mints the long-overdue one) whenever it raises rate_total_cents, so buildInvoiceFromLoad
-    // here always sees an up-to-date invoice — see detention.service.ts for the root fix and why it
-    // lives there rather than here (this route is not the only caller of bridgeDetentionToBilling).
+    // ACCT-F5624 — the bridge above now re-syncs any existing draft/proforma invoice itself (or
+    // mints the long-overdue one) whenever it raises rate_total_cents, so buildInvoiceFromLoad here
+    // always sees an up-to-date invoice — see detention.service.ts for the root fix and why it lives
+    // there rather than here (this route is not the only caller of the bridge).
     const built = await buildInvoiceFromLoad(client, {
       userId,
       operatingCompanyId,
@@ -359,6 +368,8 @@ export async function approveDetentionRequest(
     );
     const evidenceId = evidence?.id ? String(evidence.id) : null;
 
+    // Defense in depth: the FOR UPDATE lock above already makes a lost race impossible, but this
+    // CAS keeps the invariant explicit and self-enforcing even if the lock scope above ever changes.
     const updated = await client.query(
       `
         UPDATE dispatch.detention_requests
@@ -368,11 +379,12 @@ export async function approveDetentionRequest(
             invoice_id = $3,
             invoice_line_id = $4,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $5::uuid
+        WHERE id = $1 AND operating_company_id = $5::uuid AND status = 'pending_review'
         RETURNING *
       `,
       [requestId, userId, invoiceId, lineId, operatingCompanyId]
     );
+    if (!updated.rows[0]) return { ok: false as const, error: "not_pending" as const };
 
     await appendCrudAudit(
       client,
@@ -388,7 +400,7 @@ export async function approveDetentionRequest(
         evidence_id: evidenceId,
         amount_cents: Number(request.amount_cents ?? 0),
         billing_note:
-          "detention merged into linehaul total via bridgeDetentionToBilling; discrete detention line is a follow-up",
+          "detention merged into linehaul total via bridgeDetentionToBillingInClientTx; discrete detention line is a follow-up",
       },
       "info",
       AUDIT_TAG
@@ -401,15 +413,21 @@ export async function approveDetentionRequest(
       evidence_id: evidenceId,
       evidence,
       idempotent_invoice: built.idempotent,
+      loadNumber: String(request.load_number ?? request.load_id ?? ""),
+      customerName: request.customer_name ? String(request.customer_name) : null,
+      customerEmail: request.ar_email ? String(request.ar_email) : null,
+      amountCents: Number(request.amount_cents ?? 0),
     };
   });
 
+  if (!result.ok) return result;
+
   // Block H — notify the customer AFTER the approval transaction commits.
   const notification = await notifyCustomerOfApprovedDetention(userId, operatingCompanyId, requestId, {
-    loadNumber: String(request.load_number ?? request.load_id ?? ""),
-    customerName: request.customer_name ? String(request.customer_name) : null,
-    customerEmail: request.ar_email ? String(request.ar_email) : null,
-    amountCents: Number(request.amount_cents ?? 0),
+    loadNumber: result.loadNumber,
+    customerName: result.customerName,
+    customerEmail: result.customerEmail,
+    amountCents: result.amountCents,
     evidence: result.evidence,
   });
 
