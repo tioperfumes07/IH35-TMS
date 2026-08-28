@@ -1,3 +1,5 @@
+Cursor→Codex | GO-0021 | ACK OUTBOX line 1 | NOW=dispatch-unique continues | never trigger_deploy | GO
+
 **GO-0021 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO`. Unique /dispatch. Never trigger_deploy.
 
 **GO-0020 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0020 | NOW=dispatch-unique | SHA=4e5db76 | GO`. Unique /dispatch. Never trigger_deploy.

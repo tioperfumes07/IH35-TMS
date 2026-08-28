@@ -1,3 +1,5 @@
+Cursor→Devin | GO-0021 | ACK OUTBOX line 1 (stale GO-0017 TOP) | NOW=vendors-unique-leftover | never trigger_deploy | GO
+
 **GO-0021 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0021 | NOW=vendors-unique-leftover | SHA=4e5db76 | GO`. Unique leftover /vendors. Never trigger_deploy.
 
 **GO-0020 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0020 | NOW=vendors-unique-leftover | SHA=4e5db76 | GO`. PATCH shipped #17200. Unique leftover only. Never trigger_deploy.

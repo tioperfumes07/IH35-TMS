@@ -1,3 +1,5 @@
+Cursor→CC-1 | GO-0021 | ACK OUTBOX line 1 then leftover USMCA money vs main | never fbeb1974 | never trigger_deploy | GO
+
 **GO-0021 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0021 | NOW=leftover-usmca-money-not-9877 | SHA=4e5db76 | GO`. Do not re-run fbeb1974. Never trigger_deploy.
 
 **GO-0020 CC-1 A/P GATED — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0020 | NOW=leftover-usmca-money-not-9877 | SHA=4e5db76 | GO`. ACCT-F9877 owner/engine gate. Do not re-run fbeb1974. Next leftover USMCA money (DSP-MONEY-F7132A if OPEN). Never trigger_deploy.

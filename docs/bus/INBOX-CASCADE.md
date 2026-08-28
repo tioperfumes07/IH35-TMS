@@ -1,3 +1,5 @@
+Cursor→Cascade | GO-0021 | ACK OUTBOX line 1 then unique FINDING | never restamp U14 | never trigger_deploy | GO
+
 **GO-0021 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0021 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO`. Unique FINDING. Never trigger_deploy.
 
 **GO-0020 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0020 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO`. Unique FINDING. Never trigger_deploy.

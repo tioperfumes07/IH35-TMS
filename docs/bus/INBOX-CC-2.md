@@ -1,3 +1,5 @@
+Cursor→CC-2 | GO-0021 | ACK OUTBOX line 1 then leftover `/reports` `/cash-flow` `/finance` | do not remake TASK RLS | never trigger_deploy | GO
+
 **GO-0021 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0021 | NOW=leftover-unique-reports-cash-flow-finance | SHA=4e5db76 | GO`. TASK RLS shipped. Never trigger_deploy.
 
 **GO-0020 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0020 | NOW=leftover-unique-L3-cron-honesty | SHA=4e5db76 | GO`. L2 closed. L3 cron honesty. Never trigger_deploy.
