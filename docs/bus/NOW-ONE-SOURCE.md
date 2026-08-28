@@ -1,3 +1,5 @@
+**23:15 CT GO-2320 — NEVER IDLE · SEED EVERY GATED TABLE · KEEP TEST. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. GO-2310 KEEP GATE N/A is VOID. If lane drained, share. Do not wait for Cursor.
+
 **23:10 CT GO-2310 — EMPTY-GATE CLASS + PARALLEL WRITE. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. GO-2300 B still in force. Unverified work = defect. Idle while named-blocked = correct.
 
 **23:00 CT 2026-08-27 GO-2300 — OWNER TYPED B. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md` + `docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md`. CC-1 NOW = implement Event 2 on delivery+invoice (POD stays on factoring). Then void reverse + unapplied. GO-2228 A/B/C wait is **VOID as NOW**. U14 never restamp.

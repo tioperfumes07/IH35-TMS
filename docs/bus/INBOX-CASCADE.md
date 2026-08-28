@@ -1,3 +1,5 @@
+**23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `CASCADE | ACK | GO-2320 | NOW=lifecycle-SQL-or-steal | GO`. Lifecycle SQL. If blocked, unique FINDING elsewhere. Do not sit. No product PR.
+
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `CASCADE | ACK | GO-2310 | NOW=lifecycle-SQL | GO`. Lifecycle proof in SQL (JE lines). Parallel to Devin-A Chrome. After B live for Event 2. No product PR.
 
 **23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `CASCADE | ACK | GO-2300 | NOW=lifecycle-slice | GO`. After B is live: one USMCA deliver+invoice+JE-lines walk. Unique FINDING only. No product PR. Never recertify. Never `trigger_deploy`.

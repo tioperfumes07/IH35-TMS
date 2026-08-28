@@ -1,55 +1,55 @@
 {
   "operating_company": "USMCA",
-  "note": "launch_owed=false means KEEP GATE when empty. Blast radius: Claude name-match 2026-08-28; CC-2 extends by tracing posters.",
+  "note": "Owner 2026-08-27 23:15: do not leave gated tables at 0 rows. Seed labeled TEST; do not delete. launch_owed true on all seven. CC-2 extends by tracing posters.",
   "tables": [
     {
       "table": "dispatch.pod_documents",
-      "path": "revrec Event 2",
-      "launch_owed": false,
-      "triage": "RELOCATED",
-      "reason": "Owner B — POD gates factoring not A/R"
+      "path": "factoring has_approved_pod (Event 2 relocated by owner B)",
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "TEST approved POD so factoring submit is not gated on 0"
     },
     {
       "table": "factoring.batch",
       "path": "factoring batch posting",
       "launch_owed": true,
       "triage": "SEED",
-      "reason": "USMCA factoring hop needs a living TEST batch"
+      "reason": "labeled TEST batch"
     },
     {
       "table": "factor.faro_daily_imports",
       "path": "Faro import recon",
-      "launch_owed": false,
-      "triage": "KEEP_GATE_NA",
-      "reason": "Faro TRANSP history; do not fake imports"
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "owner: every gated table gets a TEST row; not TRANSP books"
     },
     {
       "table": "dispatch.detention_evidence",
       "path": "detention billing",
       "launch_owed": true,
       "triage": "SEED",
-      "reason": "ops money; empty evidence silent no-post"
+      "reason": "labeled TEST detention"
     },
     {
       "table": "banking.equipment_loans",
       "path": "equipment loan posting",
-      "launch_owed": false,
-      "triage": "KEEP_GATE_NA",
-      "reason": "USMCA owns no assets today"
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "owner authorized one TEST asset + loan + bank txns to match"
     },
     {
       "table": "accounting.related_party_loan_schedule",
       "path": "RP interest accrual",
-      "launch_owed": false,
-      "triage": "KEEP_GATE_NA",
-      "reason": "no RP loan to accrue"
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "labeled TEST schedule so the poster can fire"
     },
     {
       "table": "accounting.tax_document",
       "path": "tax document",
-      "launch_owed": false,
-      "triage": "KEEP_GATE_NA",
-      "reason": "not Horizon 1"
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "labeled TEST tax doc; keep; do not delete"
     }
   ]
 }
