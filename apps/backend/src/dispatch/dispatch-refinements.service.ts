@@ -608,7 +608,6 @@ export async function listLoadTemplates(userId: string, operatingCompanyId: stri
     const predicates = ["operating_company_id = $1::uuid"];
     if (filters.customer_id) { values.push(filters.customer_id); predicates.push(`template_json->>'customer_id' = $${values.length}`); }
     if (filters.template_id) { values.push(filters.template_id); predicates.push(`id = $${values.length}::uuid`); }
-    const scopedAllRows = Boolean(filters.customer_id || filters.template_id);
     const res = await client.query<{
       id: string;
       name: string;
@@ -621,8 +620,7 @@ export async function listLoadTemplates(userId: string, operatingCompanyId: stri
         SELECT id, name, template_json, created_at, updated_at, COUNT(*) OVER() AS total_count
         FROM dispatch.load_templates
         WHERE ${predicates.join(" AND ")}
-        ORDER BY name ASC
-        ${scopedAllRows ? "" : "LIMIT 500"}
+        ORDER BY name ASC, id ASC
       `,
       values
     );
