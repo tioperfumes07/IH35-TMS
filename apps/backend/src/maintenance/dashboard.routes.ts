@@ -205,7 +205,11 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/dashboard/recent-activity", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      limit: z.coerce.number().int().min(1).max(50).default(5),
+      recent_offset: z.coerce.number().int().min(0).default(0),
+      completed_offset: z.coerce.number().int().min(0).default(0),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
@@ -220,9 +224,9 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             -- main work-order table correctly showed none.
             AND voided_at IS NULL
           ORDER BY opened_at DESC NULLS LAST, created_at DESC
-          LIMIT 5
+          LIMIT $2 OFFSET $3
         `,
-        [companyId]
+        [companyId, parsed.data.limit, parsed.data.recent_offset]
       );
       const completed = await client.query(
         `
@@ -231,15 +235,18 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             AND status = 'complete'
             AND voided_at IS NULL
           ORDER BY updated_at DESC NULLS LAST
-          LIMIT 5
+          LIMIT $2 OFFSET $3
         `,
-        [companyId]
+        [companyId, parsed.data.limit, parsed.data.completed_offset]
       );
       return {
         recent: recent.rows,
         completed: completed.rows,
         recent_total_count: Number(recent.rows[0]?.total_count ?? 0),
         completed_total_count: Number(completed.rows[0]?.total_count ?? 0),
+        limit: parsed.data.limit,
+        recent_offset: parsed.data.recent_offset,
+        completed_offset: parsed.data.completed_offset,
       };
     });
     return payload;

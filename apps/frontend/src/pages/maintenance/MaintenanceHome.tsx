@@ -109,6 +109,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const triagePageSize = 50;
   const [rmStatusPage, setRmStatusPage] = useState(0);
   const rmStatusPageSize = 50;
+  const [recentWoPage, setRecentWoPage] = useState(0);
+  const [completedWoPage, setCompletedWoPage] = useState(0);
+  const activityPageSize = 5;
   // LV-MAINT-RM-STATUS-BOARD-SHELL / LV-MAINTENANCE-*-SHELL: derive from pathname when it
   // matches a leaf; otherwise honor MaintenanceTabRoute initialTab (never invent active_wos).
   const tab = (maintenanceTabFromPath(location.pathname) ?? initialTab) as MaintenanceTabId;
@@ -157,10 +160,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId),
   });
   const recentQuery = useQuery({
-    queryKey: ["maintenance", "dashboard", "recent", companyId],
-    queryFn: () => getMaintenanceRecentActivity(companyId),
+    queryKey: ["maintenance", "dashboard", "recent", companyId, recentWoPage, completedWoPage],
+    queryFn: () => getMaintenanceRecentActivity(companyId, {
+      limit: activityPageSize,
+      recent_offset: recentWoPage * activityPageSize,
+      completed_offset: completedWoPage * activityPageSize,
+    }),
     enabled: Boolean(companyId),
   });
+  useEffect(() => { setRecentWoPage(0); setCompletedWoPage(0); }, [companyId]);
   const workOrdersQuery = useQuery({
     queryKey: [
       "maintenance",
@@ -622,6 +630,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         completed={recentQuery.data?.completed ?? []}
         recentTotalCount={recentQuery.data?.recent_total_count ?? recentQuery.data?.recent?.length ?? 0}
         completedTotalCount={recentQuery.data?.completed_total_count ?? recentQuery.data?.completed?.length ?? 0}
+        pageSize={activityPageSize}
+        recentPage={recentWoPage}
+        completedPage={completedWoPage}
+        fetching={recentQuery.isFetching}
+        onRecentPageChange={setRecentWoPage}
+        onCompletedPageChange={setCompletedWoPage}
         onOpen={(id) => setSelectedWorkOrderId(id)}
       />
 
