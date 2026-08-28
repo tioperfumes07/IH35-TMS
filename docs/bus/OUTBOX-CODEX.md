@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7039 | CLAIM=post.fleet-counter-fail-closed-guard | SOURCE=complete roster fail-closed counter slice | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7038 | PR=#16995 @ 6fade73c65 | Built=unit+equipment deactivation truth guard 8/8 | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7038 | CLAIM=post.fleet-deactivate-route-guard-extractor | SOURCE=unit+equipment exact soft-deactivate routes | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7037 | PR=#16994 @ dbedebb769 | Built=arriving-soon severe unit block owner/lease scope | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7037 | CLAIM=post.fleet-arriving-soon-unit-block-phantom-column | SOURCE=mdata.units owner/lease + selected-company load | NEXT=runtime+guard+FAST-MERGE | GO
