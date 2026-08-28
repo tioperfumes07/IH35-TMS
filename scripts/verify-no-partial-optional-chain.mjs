@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["customers","maintenance","fuel","system"],"cols":["connectivity"],"leaves":["list.create","maintenance.modal.work_order_detail","planner","tab.overview"],"task":"CLS-F7066-PARTIAL-OPTIONAL-CHAIN-VERTICAL-CRASH-SWEEP","vertical":"class-sweep"} */
 /**
  * verify-no-partial-optional-chain
  *

@@ -334,7 +334,7 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
       >
         <Row label="Open findings">{lhOpen == null ? "—" : <span className="tabular-nums">{lhOpen}</span>}</Row>
         <Row label="Critical">{lhCritical == null ? "—" : <span className="tabular-nums">{lhCritical}</span>}</Row>
-        <Row label="Integrations monitored">{ledgerHealth.data?.by_integration.length ?? "—"}</Row>
+        <Row label="Integrations monitored">{ledgerHealth.data?.by_integration?.length ?? "—"}</Row>
       </Card>
 
       {/* Claude Coder */}

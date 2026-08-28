@@ -216,8 +216,8 @@ function CustomerActivityFeed({
 
   useEffect(() => {
     if (!activityQuery.isSuccess || activityPage === 1) return;
-    if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1);
-  }, [activityPage, activityQuery.data?.events.length, activityQuery.isSuccess]);
+    if ((activityQuery.data?.events?.length ?? 0) === 0) setActivityPage(1);
+  }, [activityPage, activityQuery.data?.events?.length, activityQuery.isSuccess]);
 
   const activityTotal = activityQuery.data?.total_count ?? 0;
   const activityStart = activityTotal === 0 ? 0 : (activityPage - 1) * activityPageSize + 1;

@@ -167,7 +167,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     enabled: Boolean(companyId),
   });
   const complianceDriverId =
-    activeRoutesQuery.data?.routes.find((route) => route.id === selectedActiveRouteId)?.driver_id ??
+    activeRoutesQuery.data?.routes?.find((route) => route.id === selectedActiveRouteId)?.driver_id ??
     activeRoutesQuery.data?.routes[0]?.driver_id ??
     null;
   const complianceQuery = useQuery({
