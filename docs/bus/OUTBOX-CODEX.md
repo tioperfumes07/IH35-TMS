@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7137 | CLAIM=customer-notify-check-send-insert-race-duplicates-provider-delivery | SOURCE=dispatch.notify_log pending/sent unique identity | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7136 | PR=#17217 @ f7a65b936d | Built=OCR durable retry claim+CAS | NEXT=customer notify lifecycle | GO
 Codex | WORKING | DSP-F7136 | CLAIM=OCR-reprocess-failed-silent-noop+multi-instance-claim-race | SOURCE=dispatch.ocr_intake_queue.status | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7135 | PR=#17213 @ 31e58e4a8a | Built=predicted delivery lock+idempotent audit | NEXT=OCR reprocess | GO
 Codex | WORKING | DSP-F7135 | CLAIM=predicted-delivery-confirm-race-duplicate-audit | SOURCE=mdata.loads.predicted_delivery_date→forecast.predicted_delivery_changes | NEXT=guard+FAST-MERGE | GO
