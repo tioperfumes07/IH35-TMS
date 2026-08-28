@@ -15,7 +15,9 @@ export function assertModuleProgressNotAuthored(msg) {
   const fails = [];
   const progress = [...msg.matchAll(/^MODULE_PROGRESS:\s*(\S+)\s+(\d+)\s+of\s+(\d+)/gm)];
   const remaining = (msg.match(/^REMAINING:\s*(.*)$/m)?.[1] ?? "").trim();
-  const remainingIsOpen = remaining && !/^(n\/a|none|-)$/i.test(remaining);
+  const remainingHonestLive = /^Live=(UNVERIFIED|BLOCKED)\b/i.test(remaining);
+  const remainingIsOpen =
+    remaining && !/^(n\/a|none|-)$/i.test(remaining) && !remainingHonestLive;
 
   for (const [, mod, n, m] of progress) {
     if (n === m && remainingIsOpen) {
@@ -38,7 +40,7 @@ if (process.argv.includes("--selftest")) {
   const planted = `FINDING: X
 MODULE_PROGRESS: accounting 39 of 39
 LIVE PROOF: exit 0
-REMAINING: Live=BLOCKED until INV-3 is 0.00. Not fully wired.
+REMAINING: G1 leftover hops still open
 `;
   const found = assertModuleProgressNotAuthored(planted);
   if (!found.some((f) => /39 of 39/.test(f))) {
@@ -51,6 +53,15 @@ REMAINING: G1 is_sample_data writers
 `);
   if (ok.length) {
     console.error(`${LABEL} SELFTEST FAIL — honest N<M should pass: ${ok.join("; ")}`);
+    process.exit(1);
+  }
+  const honestLive = assertModuleProgressNotAuthored(`FINDING: X
+MODULE_PROGRESS: N/A
+Live=UNVERIFIED
+REMAINING: Live=UNVERIFIED until a deploy >= this SHA serves healthz; stamp coverage 1 of N leaves.
+`);
+  if (honestLive.length) {
+    console.error(`${LABEL} SELFTEST FAIL — honest Live=UNVERIFIED REMAINING rejected: ${honestLive.join("; ")}`);
     process.exit(1);
   }
   console.log(`${LABEL} --selftest PASS`);

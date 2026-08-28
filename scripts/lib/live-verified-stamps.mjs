@@ -48,8 +48,27 @@ export function isAncestor(root, maybeAncestor, descendant) {
   }
 }
 
-export function fetchHealthzVersionSync(url = HEALTHZ_SHALLOW) {
-  if (process.env.IH35_HEALTHZ_SHA) return String(process.env.IH35_HEALTHZ_SHA).trim();
+function ciOrProd() {
+  return (
+    process.env.CI === "true" ||
+    process.env.CI === "1" ||
+    process.env.GITHUB_ACTIONS === "true" ||
+    process.env.NODE_ENV === "production"
+  );
+}
+
+/** Env override is selftest-only and hard-refused under CI / NODE_ENV=production. */
+export function healthzEnvOverrideAllowed(opts = {}) {
+  const selftest = process.argv.includes("--selftest") || opts.selftest === true;
+  if (ciOrProd()) return false;
+  if (opts.forceCurl) return false;
+  return selftest;
+}
+
+export function fetchHealthzVersionSync(url = HEALTHZ_SHALLOW, opts = {}) {
+  if (healthzEnvOverrideAllowed(opts) && process.env.IH35_HEALTHZ_SHA) {
+    return String(process.env.IH35_HEALTHZ_SHA).trim();
+  }
   try {
     const body = execSync(`curl -fsS --max-time 8 ${JSON.stringify(url)}`, {
       encoding: "utf8",
