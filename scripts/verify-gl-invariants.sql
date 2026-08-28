@@ -32,17 +32,34 @@ SELECT count(*) AS total_je,
        count(*) FILTER (WHERE lines>0 AND diff<>0)   AS je_unbalanced
 FROM je;
 
-\echo '=== INV-3  SUBLEDGER TIE-OUT, USMCA (expect both differences = 0.00) ==='
+-- ACCT-F59 tie-out basis fix (2026-08-28, GO-2228 blocker): this CTE used to compare GL to
+-- subledger with is_sample_data included on BOTH sides — internally consistent, but not comparable
+-- to what the balance sheet / trial balance / P&L / cash-flow / register actually show, since
+-- #16832 excluded is_sample_data from all of those (`AND COALESCE(je.is_sample_data, false) = false`
+-- on the GL side, mirrored here exactly). A "$0.00" on the OLD (sample-included) basis proved nothing
+-- about what the balance sheet reports — two different A/R numbers existed under the same invariant
+-- name. Both ar_gl/ap_gl (join journal_entries, filter je.is_sample_data) and ar_sub/ap_sub (filter
+-- the subledger row's own is_sample_data column — accounting.invoices/bills both carry it, migration
+-- 202612370000) now compute REAL-ONLY, same basis as the reports.
+\echo '=== INV-3  SUBLEDGER TIE-OUT, USMCA, REAL-ONLY basis matching TB/BS (expect both differences = 0.00) ==='
 WITH ar_gl AS (SELECT coalesce(sum(CASE WHEN p.debit_or_credit='debit' THEN p.amount_cents ELSE -p.amount_cents END),0)/100.0 g
-               FROM accounting.journal_entry_postings p JOIN catalogs.accounts a ON a.id=p.account_id
-               WHERE a.system_purpose='accounts_receivable' AND a.operating_company_id=:'USMCA'),
+               FROM accounting.journal_entry_postings p
+               JOIN catalogs.accounts a ON a.id=p.account_id
+               JOIN accounting.journal_entries je ON je.id=p.journal_entry_uuid
+               WHERE a.system_purpose='accounts_receivable' AND a.operating_company_id=:'USMCA'
+                 AND je.status<>'voided' AND COALESCE(je.is_sample_data,false)=false),
      ar_sub AS (SELECT coalesce(sum(amount_open_cents),0)/100.0 s FROM accounting.invoices
-               WHERE operating_company_id=:'USMCA' AND voided_at IS NULL AND status NOT IN ('draft','proforma')),
+               WHERE operating_company_id=:'USMCA' AND voided_at IS NULL AND status NOT IN ('draft','proforma')
+                 AND COALESCE(is_sample_data,false)=false),
      ap_gl AS (SELECT coalesce(sum(CASE WHEN p.debit_or_credit='credit' THEN p.amount_cents ELSE -p.amount_cents END),0)/100.0 g
-               FROM accounting.journal_entry_postings p JOIN catalogs.accounts a ON a.id=p.account_id
-               WHERE a.system_purpose='accounts_payable' AND a.operating_company_id=:'USMCA'),
+               FROM accounting.journal_entry_postings p
+               JOIN catalogs.accounts a ON a.id=p.account_id
+               JOIN accounting.journal_entries je ON je.id=p.journal_entry_uuid
+               WHERE a.system_purpose='accounts_payable' AND a.operating_company_id=:'USMCA'
+                 AND je.status<>'voided' AND COALESCE(je.is_sample_data,false)=false),
      ap_sub AS (SELECT coalesce(sum(total_amount-coalesce(paid_amount,0)),0) s FROM accounting.bills
-               WHERE operating_company_id=:'USMCA' AND voided_at IS NULL AND status<>'draft')
+               WHERE operating_company_id=:'USMCA' AND voided_at IS NULL AND status<>'draft'
+                 AND COALESCE(is_sample_data,false)=false)
 SELECT (SELECT g FROM ar_gl) AS ar_gl, (SELECT s FROM ar_sub) AS ar_subledger,
        (SELECT g FROM ar_gl)-(SELECT s FROM ar_sub) AS ar_difference,
        (SELECT g FROM ap_gl) AS ap_gl, (SELECT s FROM ap_sub) AS ap_subledger,
