@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7038 | CLAIM=post.fleet-deactivate-route-guard-extractor | SOURCE=unit+equipment exact soft-deactivate routes | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7037 | PR=#16994 @ dbedebb769 | Built=arriving-soon severe unit block owner/lease scope | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7037 | CLAIM=post.fleet-arriving-soon-unit-block-phantom-column | SOURCE=mdata.units owner/lease + selected-company load | NEXT=runtime+guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7036 | PR=#16993 @ c98f266a16 | Built=complete driver roster server-search guard 4/4 | NEXT=fleet census | GO
 Codex | WORKING | DRV-F7036 | CLAIM=post.driver-roster-complete-search-guard | SOURCE=listAllDrivers selected-company server search | NEXT=guard+FAST-MERGE | GO
