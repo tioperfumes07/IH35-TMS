@@ -126,6 +126,7 @@
     "verify:booking-driver-names": "node scripts/verify-booking-driver-names.mjs",
     "verify:pwa-date-format": "node scripts/verify-no-bare-tolocale-in-pwa.mjs",
     "verify:bill-payment-posts-gl": "node scripts/verify-bill-payment-posts-gl.mjs",
+    "verify:customer-payment-unapply-mounted-route": "node scripts/verify-customer-payment-unapply-hits-mounted-route.mjs",
     "verify:multipart-size-limits": "node scripts/verify-multipart-size-limits.mjs",
     "verify:book-load-driver-qualification-gate": "node scripts/verify-book-load-driver-qualification-gate.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",

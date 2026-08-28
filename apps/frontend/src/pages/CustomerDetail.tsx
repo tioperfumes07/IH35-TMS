@@ -15,7 +15,7 @@ import { z } from "zod";
 import { listAllInvoices, listInvoices, type Invoice } from "../api/accounting";
 import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
-import { listAllCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
+import { listAllCustomerPayments, recordCustomerPayment, unapplyCustomerPaymentApplication, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
 import { listAllFmcsaLookups } from "../api/fmcsa";
@@ -1043,7 +1043,17 @@ export function CustomerDetailPage() {
   });
 
   const unapplyCustomerPaymentMutation = useMutation({
-    mutationFn: (paymentId: string) => unapplyCustomerPayment(id, paymentId),
+    // CUST-MONEY-F6105: "Unapply" is a single button per PAYMENT row, but the canonical route
+    // unapplies one payment_applications row at a time. A payment can carry more than one applied
+    // invoice, so unapplying the whole row means unapplying every still-applied application on it,
+    // sequentially (not Promise.all -- each DELETE mutates the same payment's amount_unapplied_cents,
+    // and concurrent writes to that row would race).
+    mutationFn: async (payment: CustomerPaymentListRow) => {
+      const applications = payment.applied_to_invoices ?? [];
+      for (const application of applications) {
+        await unapplyCustomerPaymentApplication(payment.id, application.application_id, selectedCompanyId ?? "");
+      }
+    },
     onSuccess: () => {
       pushToast("Payment unapplied", "success");
       void queryClient.invalidateQueries({ queryKey: ["customer-payments", id] });
@@ -2393,11 +2403,11 @@ export function CustomerDetailPage() {
                 sortDirection={paySortDirection}
                 onSortChange={onPaySortChange}
                 rowActions={(p) =>
-                  canUnapplyCustomerPayment ? (
+                  canUnapplyCustomerPayment && (p.applied_to_invoices ?? []).length > 0 ? (
                     <button
                       type="button"
                       className="text-red-700 underline"
-                      onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p.id)}
+                      onClick={() => void unapplyCustomerPaymentMutation.mutateAsync(p)}
                     >
                       Unapply
                     </button>
