@@ -26,6 +26,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-open-balance-excludes-void";
@@ -219,6 +220,10 @@ function selftest() {
 }
 
 function main() {
+  const rangeGuard = spawnSync(process.execPath, [path.join(ROOT, "scripts/verify-customer-financial-history-complete-range.mjs"), ...(process.argv.includes("--selftest") ? ["--selftest"] : [])], {
+    stdio: "inherit",
+  });
+  if (rangeGuard.status !== 0) process.exit(rangeGuard.status ?? 1);
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
