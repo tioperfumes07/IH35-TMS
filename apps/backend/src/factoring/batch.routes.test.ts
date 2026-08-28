@@ -49,8 +49,10 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SELECT id::text, status") && sql.includes("FROM factoring.batch")) {
     const id = String(values?.[0] ?? "");
     if (id === "99999999-9999-4999-8999-999999999999") return { rows: [] };
-    if (id === "77777777-7777-4777-8777-777777777777") return { rows: [{ id, status: "submitted" }] };
-    return { rows: [{ id, status: "draft" }] };
+    if (id === "77777777-7777-4777-8777-777777777777") return { rows: [{ id, status: "submitted", factor_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" }] };
+    // BANK-F9513-FACTORING-SUBMIT-NULL-FACTOR — a draft with no resolved factor on record.
+    if (id === "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee") return { rows: [{ id, status: "draft", factor_id: null }] };
+    return { rows: [{ id, status: "draft", factor_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc" }] };
   }
 
   if (sql.includes("UPDATE factoring.batch") && sql.includes("SET status = 'submitted'")) {
@@ -209,6 +211,18 @@ describe("factoring batch service", () => {
       code: "batch_already_submitted",
     });
   });
+
+  // BANK-F9513-FACTORING-SUBMIT-NULL-FACTOR — createDraftBatch can resolve factor_id to NULL
+  // (customer has no factoring-company assignment / none active as-of date); submitBatch must not
+  // let that draft move to "submitted" — the status the funding/reserve pipeline treats as
+  // "actively pledged to a factor" — with no factor on record.
+  it("submitBatch rejects a draft with no resolved factor_id", async () => {
+    await expect(
+      submitBatch("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee", batchTenant, { client: { query: queryMock } })
+    ).rejects.toMatchObject<FactoringBatchError>({
+      code: "batch_factor_id_missing",
+    });
+  });
 });
 
 describe("factoring batch routes", () => {
@@ -267,6 +281,17 @@ describe("factoring batch routes", () => {
       id: batchId,
       status: "submitted",
     });
+  });
+
+  // BANK-F9513-FACTORING-SUBMIT-NULL-FACTOR
+  it("POST submit rejects a draft with no resolved factor_id", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: `/api/v1/factoring/batches/eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee/submit?operating_company_id=${batchTenant}`,
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({ error: "batch_factor_id_missing" });
   });
 
   it("tenant isolation returns not found", async () => {
