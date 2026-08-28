@@ -1531,3 +1531,6 @@ CODEX | WORKING | FINDING=DSP-F6922-ACTIVE-LOAD-DERIVED-STATE-SILENT-PAGE | SOUR
 Codex | SHIPPED | DSP-F6922 | PR=#16887 @ f0c3f1405a | gate=exit0 | Built=drivers active movement+dispatch OOS complete load range | Live=post-deploy UNVERIFIED | NEXT=FLT-F6923 | GO
 CODEX | CLAIMING | leftover=post.truck-planner-complete-unit-roster | GO=0004 | leaf=dispatch.planner.trucks | reason=canonical schedule grid merges one 500-row default unit page as full fleet | NOW=exhaustive unit scanner+guard | GO
 CODEX | WORKING | FINDING=FLT-F6923-TRUCK-PLANNER-SILENT-500-UNIT-ROSTER | SOURCE-OF-TRUTH=mdata.units owner/leased company scope | cols=unit+driver+connectivity+reverse_link | GO
+Codex | SHIPPED | FLT-F6923 | PR=#16889 @ f2ad0de434 | gate=exit0 | Built=dispatch+fleet planner.trucks complete unit range | Live=post-deploy UNVERIFIED | NEXT=VEND-F6924 | GO
+CODEX | CLAIMING | leftover=post.vendor-complete-rosters-nonmoney | GO=0004 | leaves=vendors.home.roster+maintenance.parts.vendor_suggestions | reason=complete vendor populations use one 5000/default page | NOW=canonical exhaustive vendor scanner+guard | GO
+CODEX | WORKING | FINDING=VEND-F6924-NONMONEY-VENDOR-ROSTERS-SILENT-PAGE | SOURCE-OF-TRUTH=mdata.vendors | cols=vendor+connectivity+reverse_link | GO

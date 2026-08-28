@@ -1650,6 +1650,31 @@ export function listVendors(params: CompanyScopedListParams = {}) {
   });
 }
 
+/** Exhaust a stable scoped vendor population for complete-roster and complete-suggestion surfaces. */
+export async function listAllVendors(
+  params: Omit<CompanyScopedListParams, "limit" | "offset"> = {},
+) {
+  const limit = 5000;
+  const vendors: VendorOption[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+  while (true) {
+    const page = await listVendors({ ...params, limit, offset });
+    if (expectedTotal == null) expectedTotal = page.total;
+    if (page.total !== expectedTotal) throw new Error("Vendor roster changed during pagination. Retry.");
+    for (const vendor of page.vendors) {
+      if (!seen.has(vendor.id)) {
+        seen.add(vendor.id);
+        vendors.push(vendor);
+      }
+    }
+    if (offset + page.vendors.length >= expectedTotal) return { vendors, total: expectedTotal };
+    if (page.vendors.length === 0) throw new Error("Vendor roster pagination stopped before the reported total.");
+    offset += page.vendors.length;
+  }
+}
+
 export function getVendor(id: string, operatingCompanyId?: string | null) {
   const query = operatingCompanyId ? `?operating_company_id=${encodeURIComponent(operatingCompanyId)}` : "";
   return apiRequest<VendorOption>(`/api/v1/mdata/vendors/${id}${query}`);
