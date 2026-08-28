@@ -1,4 +1,9 @@
 {
+  "9895": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-transaction-health-computed-not-stored"
+  },
   "9891": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
