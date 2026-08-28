@@ -60,13 +60,18 @@ export function LiveTelemetrySection({
         <div>Source: {dash(latestPosition?.source ?? (samsara ? "samsara" : null))}</div>
       </div>
       {faults.length > 0 ? (
-        <ul className="mt-2 list-disc pl-5 text-xs text-gray-700">
-          {faults.slice(0, 3).map((f) => (
-            <li key={f.code}>
-              {f.code} ({f.severity}) {f.description ?? ""}
-            </li>
-          ))}
-        </ul>
+        <div className="mt-2" data-testid="vp-telemetry-active-faults">
+          <p className="text-xs font-medium text-gray-700">
+            Active fault codes ({faults.length})
+          </p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-gray-700">
+            {faults.map((f) => (
+              <li key={f.code}>
+                {f.code} ({f.severity}) {f.description ?? ""}
+              </li>
+            ))}
+          </ul>
+        </div>
       ) : (
         <p className="mt-2 text-xs text-gray-500">No active fault codes.</p>
       )}

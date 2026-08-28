@@ -258,6 +258,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T07:28:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.fleet-live-telemetry-complete-fault-snapshot",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T08:14:00-05:00",
+      "go": "0004"
     }
   ]
 }

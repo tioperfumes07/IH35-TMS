@@ -30,6 +30,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   profile: "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
+  telemetry: "apps/frontend/src/components/vehicle-profile/LiveTelemetrySection.tsx",
   editModal: "apps/frontend/src/components/fleet/EditVehicleModal.tsx",
   unitDetail: "apps/frontend/src/pages/units/UnitDetail.tsx",
   assignment: "apps/frontend/src/components/trailer-profile/CurrentAssignmentSection.tsx",
@@ -113,6 +114,13 @@ export function audit(src) {
   }
   if (!/telemetryQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/.test(src.profile)) {
     failures.push(`${FILES.profile}: live-telemetry refresh failure must be visible and retryable instead of silently falling back`);
+  }
+  if (!/Active fault codes \(\{faults\.length\}\)/.test(src.telemetry) ||
+      !/\{faults\.map\(\(f\) => \(/.test(src.telemetry)) {
+    failures.push(`${FILES.telemetry}: unit.profile.telemetry must disclose and render the complete current active-fault snapshot`);
+  }
+  if (/faults\.slice\(/.test(src.telemetry)) {
+    failures.push(`${FILES.telemetry}: unit.profile.telemetry must not silently cap the current active-fault snapshot`);
   }
   if (!/\{profile \? <div id=["']asset-financial["']/.test(src.profile)) {
     failures.push(`${FILES.profile}: classification controls must not render before the profile resolves`);
@@ -203,6 +211,8 @@ if (process.argv.includes("--selftest")) {
     ["profile-error-state", "profile", /profileQuery\.isError \? \(\s*<ListErrorState/, "profileQuery.isError ? (<div"],
     ["profile-fault-error", "profile", /onRetry=\{\(\) => void faultSummaryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["profile-telemetry-error", "profile", /onRetry=\{\(\) => void telemetryQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["telemetry-complete-fault-list", "telemetry", /\{faults\.map\(\(f\) => \(/, "{faults.slice(0, 3).map((f) => ("],
+    ["telemetry-fault-count", "telemetry", /Active fault codes \(\{faults\.length\}\)/, "Active fault codes"],
     ["profile-loading-controls", "profile", /\{profile \? <div id="asset-financial"/, '<div id="asset-financial"'],
     ["profile-scoping", "profile", /unitId=\{id\}/g, "unitId={undefined}"],
     ["edit-modal-patch", "editModal", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(undefined, input.companyId, input.patch)"],
