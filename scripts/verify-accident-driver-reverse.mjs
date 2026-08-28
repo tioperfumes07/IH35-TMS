@@ -76,7 +76,7 @@ function audit(w, x, y, z, m = matrix, fd = feed, sl = self) {
   )
     f.push("driver filter API");
   if (
-    !/getSafetyAccidents\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(
+    !/getSafetyAccidents\(operatingCompanyId, \{ driver_id: driverId, limit: accidentPageSize, offset: \(accidentPage - 1\) \* accidentPageSize \}\)/.test(
       z,
     )
   )
@@ -211,12 +211,13 @@ if (process.argv.includes("--selftest")) {
       v,
     ],
     ["filter", c, r, a, v.replaceAll("driver_id: driverId", "driver_id: ''")],
+    ["reverse-range", c, r, a, v.replace("limit: accidentPageSize, offset: (accidentPage - 1) * accidentPageSize", "limit: 1, offset: 0")],
     [
       "section",
       c,
       r,
       a,
-      v.replace(/driver-safety-reverse-accidents/, "missing"),
+      v.replaceAll("driver-safety-reverse-accidents", "missing"),
     ],
     ["accident", c, r, a, v.replaceAll('kind="accident"', 'kind="load"')],
     [
@@ -277,7 +278,7 @@ if (process.argv.includes("--selftest")) {
   });
   if (!audit(c, r, a, v, matrix, JSON.stringify(fj)).length)
     throw new Error("feed mutation survived");
-  console.log(`${L} SELFTEST PASS — 24 mutations detected`);
+  console.log(`${L} SELFTEST PASS — 25 mutations detected`);
   process.exit(0);
 }
 const f = audit(c, r, a, v);
