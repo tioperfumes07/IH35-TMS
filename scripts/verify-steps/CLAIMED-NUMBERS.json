@@ -6571,5 +6571,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1328
+  "total_claimed": 1328,
+  "9913": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-ledger-finding-type-dual-artifact"
+  }
 }
