@@ -1,4 +1,9 @@
 {
+  "9947": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-tasks-cross-tenant-scope"
+  },
   "9943": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
