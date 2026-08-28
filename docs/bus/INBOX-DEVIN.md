@@ -1,3 +1,5 @@
+**GO-0016 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0016 | NOW=ensure-drivers-payee | SHA=069d531 | GO`. POST ensure-drivers ×4. No SQL. Never trigger_deploy.
+
 **GO-0014 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0014 | NOW=ensure-drivers-payee | SHA=069d531 | GO`. PREPEND OUTBOX. POST /api/v1/mdata/vendors/ensure-drivers for 4 USMCA drivers. No SQL-patch. Never trigger_deploy.
 
 **GO-0013 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0013 | NOW=usmca-unique-FINDING-vendors | SHA=069d531 | GO`. PREPEND OUTBOX. Cascade frozen — unique FINDING USMCA /vendors. KEEP TEST. Never trigger_deploy.

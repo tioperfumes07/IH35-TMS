@@ -1,14 +1,16 @@
-# LEAD CENSUS
-**GO-0014** Claude 2:49 PM CT · API `069d531` · packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0014.md`
+# LEAD CENSUS — replace this table every lead turn
 
-| Seat | vs GO-0014 | Idle? | NOW |
-|------|------------|-------|-----|
-| CC-1 | GO-0013 CHECK done; waiting next | was waiting packet | Event 2 silent on 5 issued invoices; re-measure A/R+A/P |
-| CC-2 | waiting 3:20 CT cron tick | needs this ACK | last_success vs last_fail; no stale-threshold |
-| CC-3 | DISPROVEN then inbox | **was idle** | BANK-F01/F02/F03/F07 |
-| Codex | F7114 on main | needs this ACK | 8 PASS+UNVERIFIED tracker rows |
-| Devin | OUTBOX still GO-0002 | **stale** | POST ensure-drivers (4 USMCA) |
-| Cascade | frozen GO-0010 | **unfrozen this GO** | vendors 0/7 prod_verified truth |
-| Cursor | lead | this packet | stamp-expiry overflow after merge |
+**GO current:** GO-0016
+**Turn:** 2026-08-28 16:00 CT · **LEAD-SEAT=CURSOR**
+**Live SHA:** `069d531`
+**Delivery defect:** Desktop `IH35-SEAT-FEED` was GO-0013 while origin/main FEED was GO-0014. Seats that never git-pull missed 0014.
 
-Skip #15546 #16895. Nobody `trigger_deploy`. U14 never restamp. 9000 not a seat. QBO USMCA finding suppress.
+| Seat | ACK GO-0016? | Idle? |
+|------|----------------|-------|
+| CC-1 | NO until OUTBOX self-ACK | YES until ACK |
+| CC-2 | NO (closed 0014 in chat; FEED was 0013) | must ACK 0016 |
+| CC-3 | NO until ACK | unknown |
+| Codex | NO until ACK | unknown |
+| Cascade | NO until ACK | unknown |
+| Devin | NO until ACK | YES if OUTBOX still GO-0002 |
+| Cursor | self | NO |

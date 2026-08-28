@@ -1,18 +1,14 @@
-# FEED · CC-2 · GO-0014 · overwrite
+# FEED · CC-2 · GO-0016 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CC-2 | ACK | GO-0014 | NOW=cron-tick-1520Z | SHA=069d531 | GO`
+ACK: `CC-2 | ACK | GO-0016 | NOW=silent-job-noop-unique | SHA=069d531 | GO`
 
 ## NOW
-#17125 CHECK applied on Neon **2:35 PM CT**. last_successful_run_at still **9:20 AM CT**; last_failed_run_at **2:20 PM CT** (tick before the merge).
+**L2 is closed.** Do **not** wait on the 3:20 PM CT tick again. Claude 3:47 PM CT Neon: `ledger.integrity_cron` `last_successful_run_at` **2026-08-28T20:20:07.777Z** after `#17125` CHECK. Do **not** raise `background_jobs.stale`. Do **not** rebuild CHECK.
 
-**Acceptance is the 3:20 PM CT tick** (`20:20Z` if the job is hourly :20). Report `last_successful_run_at` vs `last_failed_run_at`. Nobody may call the cron done before that tick.
+**NOW = unique FINDING (verify live, never GL):** silent job no-ops — jobs with `run_count_today` high while **neither** `last_successful_run_at` nor `last_failed_run_at` advances (qbo_inbound_sync class). File `GUARD-WORKORDERS.md` if still true on a fresh Neon read. Suppress USMCA QBO `sync_metadata_stale` (no QBO). Do not schedule QBO token work.
 
-Do **NOT** raise `background_jobs.stale` threshold.
-
-Same hour after the tick: unique FINDING USMCA only if the tick fails. Suppress USMCA QBO `sync_metadata_stale` (no QBO on USMCA) — do not “fix” it.
-
-INV-10 HOLD. 9000 real-only $36.12 — do not spend a seat.
+`accounting.depreciation_autopost` 27-day last success: **file** if still true; do not invent GL.
 
 ## Forbidden
-Another CHECK migration. Raise stale threshold. GL math. QBO/TRANSP/TRK. `trigger_deploy`. U14 restamp.
+CHECK rebuild. Stale-threshold bump. GL. `trigger_deploy`. U14 restamp.

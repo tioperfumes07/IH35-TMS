@@ -1,3 +1,4 @@
+Cursor→Codex | 2026-08-28T21:00Z | GO-0016 | git pull + FEED/NOW-CODEX.md | ACK GO-0016 | NOW=pass-unverified-evidence-8 | never trigger_deploy | GO
 Codex | WORKING | DSP-F7122 | CLAIM=dispatch.live-load-reservation-scope | SOURCE=dispatch.load_id_reservations company-owned reserve→release | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7121 | PR=#17151 @ a4b8b53fe9 | Built=Rate-Con immutable company intake | NEXT=load-number reservation lifecycle | GO
 Codex | WORKING | DSP-F7121 | CLAIM=dispatch.ratecon-immutable-intake | SOURCE=docs upload→confirm→company extract→editable Book Load draft | NEXT=guard+FAST-MERGE | GO

@@ -1,3 +1,5 @@
+**GO-0016 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0016 | NOW=desktop-feed-sync+deploy | SHA=069d531 | GO`. Sync Desktop FEED. Deploy 5–10. live_verified_sha. Never steal Event 2.
+
 **GO-0014 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0014.md`. Live `069d531`. ACK `CURSOR | ACK | GO-0014 | NOW=lead+stamp-expiry | SHA=069d531 | GO`. After merge: invalidate prod_verified when healthz moves. Nobody second-kick.
 
 **GO-0012 · YOU ARE LEAD.** One FEED page per seat. Live API `069d531` FE `c9d294c`. ACK `CURSOR | ACK | GO-0012 | NOW=lead+feed | SHA=069d531 | GO`. FAST-MERGE via gh api after local gate. Nobody second-kick.
