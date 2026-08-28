@@ -9407,3 +9407,63 @@ BLOCKED: none
 NEXT: continue the accounting money-surface sweep (invoices, expenses, driver settlements) per the dependency
       order in USMCA-EXHAUSTIVE-BATTERY.md §Dependency order
 ```
+
+---
+
+# CC-3 LIVE-TXN — LV-TXN-018 — USMCA manual (no-load) invoice correctly BLOCKED from sending by the delivery-evidence gate — 2026-08-28
+
+**Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`.** Created live through the app UI (Owner session)
+same as LV-TXN-017. Branch `cc3/live-txn-invoice-usmca-20260828`.
+
+## VERDICT: **PASS** — this is the ACCT-F61/LV-012 gate working exactly as designed, not a defect
+
+**Created:** `Accounting → Invoices → + Create → Blank invoice (no load)`, customer = existing `TIO PERFUMES`
+(`3e066edd-22ad-4014-9871-a93cf099c382`), income account `Freight / Line-haul Income` (4000), one line
+$75.00, description marker `CC3-LIVETXN-20260828-INV-01`. Server returned `INV-2026-00048`.
+
+**Live proof — invoice row:**
+```
+id            e01c4460-5d57-4b1c-9cec-7c1f24427016
+display_id    INV-2026-00048
+total_cents   7500
+status        draft
+operating_company_id  5c854333-… (USMCA)
+```
+No `journal_entry_postings` row for this UUID — correct: a **draft** invoice must not post revenue before
+it is sent (matches the ACCT-F351 pattern where recognition ties to the send/delivery event, not to row
+creation).
+
+**Clicked `Send`. Got a 409, not a silent success:**
+```
+"This invoice is not linked to a load, so the system holds no delivery evidence for it.
+ Link the load it bills, or send it manually after confirming delivery by another means."
+```
+Traced to source: `apps/backend/src/accounting/invoice-send.service.ts:143-181` (ACCT-F61 / LV-012
+delivery-evidence gate). A manual/no-load invoice hits `evidenceReason = "no_source_load"` **by
+definition** (LV-012's own fix note: a no-load invoice used to be the ONE case the gate's inverted logic
+let through clean — 11,981 of 11,982 prod invoices at the time carried no `source_load_id`). Whether that
+409 fires depends on `INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE` per entity — confirmed live:
+```
+lib.feature_flag_overrides: INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE
+  TRANSP (91e0bf0a-…)  enabled=true
+  USMCA  (5c854333-…)  enabled=true   ← what fired here
+  TRK    (b49a737b-…)  enabled=true
+```
+Enabled for all three entities, USMCA included — this is enforcement, not an accidental default. The gate
+did exactly its job: refused to let a no-evidence invoice raise A/R and recognize revenue on a
+recourse-factored book.
+
+**Disposition:** no board row filed — the control is correct-by-design and live-proven working. The invoice
+is left in place as `draft` (current CREATE-TEST law: leave test rows, no per-fix void) — it never touched
+the GL, so there is nothing to reverse. To actually exercise the AR-invoice money path, the next unit should
+use "From an existing load" on a load that has real delivery evidence (`actual_departure_at` stamped), not
+a blank manual invoice — recorded here so the next hop doesn't repeat this same non-defect.
+
+```
+VERDICT: PASS (of the guard — not a money-posting test; recorded as a corrected NEXT step)
+PR: (this branch, CC-3 self-merge on green per §1)
+NEON: invoice e01c4460-5d57-4b1c-9cec-7c1f24427016 INV-2026-00048, USMCA, $75.00, draft, no JE (correct)
+      INVOICE_SEND_REQUIRES_DELIVERY_EVIDENCE enabled=true on all 3 entities incl. USMCA
+APP: live UI create + Send attempt, 409 with the exact source-code message; confirmed correct-by-design
+BLOCKED: none
+NEXT: create-from-load on a load with actual_departure_at stamped, to reach a real AR + revenue JE
