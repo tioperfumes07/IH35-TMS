@@ -45,6 +45,7 @@ function audit(sources) {
   if (!/typesQuery\.data\?\.find\(\(entry\) => entry\.code === policy\.coverage_type\)\?\.name/.test(list)) {
     failures.push("PoliciesList must resolve the catalog name by canonical coverage code");
   }
+  if (!/typesQuery\.isError \? undefined : typesQuery\.data\?\.find/.test(list)) failures.push("policy list must not resolve labels from a failed retained catalog");
   if (!/render:\s*\(p:\s*InsurancePolicy\)\s*=>\s*coverageTypeName\(p\)/.test(list)) {
     failures.push("PoliciesList Type column must render the resolved human label");
   }
@@ -54,6 +55,7 @@ function audit(sources) {
   if (!/listInsuranceTypeCatalog/.test(detail) || !/typesQuery\.data\?\.find\(\(entry\) => entry\.code === policy\.coverage_type\)\?\.name/.test(detail)) {
     failures.push("PolicyDetail must resolve the same canonical type catalog label");
   }
+  if (!/typesQuery\.isError \? undefined : typesQuery\.data\?\.find/.test(detail)) failures.push("policy detail must not resolve labels from a failed retained catalog");
   if (/subtitle=\{`\$\{policy\.insurer_name} · \$\{policy\.coverage_type} ·/.test(detail)) {
     failures.push("PolicyDetail subtitle must not render the raw coverage_type code");
   }
@@ -101,7 +103,9 @@ if (process.argv.includes("--selftest")) {
     ["missing company predicate", { ...real, routes: real.routes.replaceAll("AND tc.tenant_id = p.tenant_id", "") }],
     ["missing serializer label", { ...real, routes: real.routes.replaceAll("tc.name AS coverage_type_name", "p.coverage_type AS coverage_type_name") }],
     ["raw list renderer", { ...real, list: real.list.replace('render: (p: InsurancePolicy) => coverageTypeName(p)', 'render: (p: InsurancePolicy) => p.coverage_type') }],
+    ["list cached catalog survives error", { ...real, list: real.list.replace("typesQuery.isError ? undefined : typesQuery.data?.find", "false ? undefined : typesQuery.data?.find") }],
     ["raw detail subtitle", { ...real, detail: real.detail.replace("${coverageTypeName}", "${policy.coverage_type}") }],
+    ["detail cached catalog survives error", { ...real, detail: real.detail.replace("typesQuery.isError ? undefined : typesQuery.data?.find", "false ? undefined : typesQuery.data?.find") }],
     ["raw uncovered labels", { ...real, gaps: real.gaps.replace("missingTypeLabels(row.missing_types, typeNameByCode)", 'row.missing_types.join(", ")') }],
     ["raw mismatched labels", { ...real, gaps: real.gaps.replaceAll("missingTypeLabels(row.missing_types, typeNameByCode)", 'row.missing_types.join(", ")') }],
     ["raw vendor reverse label", { ...real, vendor: real.vendor.replace("insuranceTypeLabel(policy.coverage_type, policy.coverage_type_name)", "policy.coverage_type") }],

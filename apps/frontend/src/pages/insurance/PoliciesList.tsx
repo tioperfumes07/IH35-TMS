@@ -96,7 +96,7 @@ export function PoliciesList() {
   const coverageTypeName = (policy: InsurancePolicy) =>
     insuranceTypeLabel(
       policy.coverage_type,
-      policy.coverage_type_name ?? typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name,
+      policy.coverage_type_name ?? (typesQuery.isError ? undefined : typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name),
     );
 
   // TBL-STANDARD: shared DataTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
