@@ -1720,3 +1720,4 @@ Codex | SHIPPED | MAINT-F7016 | PR=#16975 @ 9358c19249 | Built=RM sidebar triage
 Codex | WORKING | MAINT-F7017 | CLAIM=post.maintenance-rm-status-single-flight-ratchet | vertical=RM board transition actions+guard | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7017 | PR=#16976 @ d1d5c46ff0 | Built=RM board transitions single-flight+lifecycle ratchet restored | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining unique census | GO
 Codex | WORKING | MAINT-F7018 | CLAIM=post.maintenance-lifecycle-ratchet-alignment | vertical=RM failure exclusion+parts adjustment scope | NEXT=guard repair+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7018 | PR=#16977 @ 5fa3c6da3c | Built=3 Maintenance connectivity ratchets restored+15 mutation kills | Live=runtime unchanged | NEXT=route cross-lane guard reds then next unique | GO
