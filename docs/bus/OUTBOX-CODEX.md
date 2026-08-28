@@ -1799,3 +1799,5 @@ Codex | SHIPPED | INS-F7059 | PR=#17016 @ 08d96f771c | Built=claim identity 2/2 
 Codex | WORKING | INS-F7060 | CLAIM=post.insurance-policy-identity-vertical | SOURCE=policy create→list→exact detail identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | INS-F7060 | PR=#17017 @ 198ef5037d | Built=policy identity 3/3 leaves | NEXT=accident identity vertical | GO
 Codex | WORKING | SAF-F7061 | CLAIM=post.safety-accident-identity-vertical | SOURCE=accident create→list→exact detail identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F7061 | PR=#17018 @ afef317869 | Built=accident identity 2/2 leaves | NEXT=legal matter identity | GO
+Codex | WORKING | LEGAL-F7062 | CLAIM=post.legal-matter-identity-vertical | SOURCE=matter create→list→exact detail identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
