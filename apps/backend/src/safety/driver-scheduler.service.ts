@@ -114,7 +114,7 @@ async function appendLeaveAudit(
 }
 
 async function nextRequestNumber(client: QueryableClient, operatingCompanyId: string): Promise<string> {
-  const year = new Date().getUTCFullYear();
+  const year = Number(companyBusinessDate().slice(0, 4));
   const prefix = `DLS-${year}-`;
   const res = await client.query(
     `

@@ -28,6 +28,11 @@ import {
   updateLeavePolicySchema,
 } from "./driver-scheduler.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+
+function companyBusinessYear(): number {
+  return Number(companyBusinessDate().slice(0, 4));
+}
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -182,7 +187,10 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/driver/scheduler/request/:id/documentation", async (req, reply) => {
+  app.post(
+    "/api/v1/driver/scheduler/request/:id/documentation",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedParams = uuidParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -204,26 +212,31 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     });
     if ("error" in result) return reply.code(409).send(result);
     return result.request;
-  });
+    }
+  );
 
   // Driver-facing self balance (GAP 2): returns ONLY the authenticated driver's own leave balance.
   // Driver self-resolution comes from requireDriverSession → req.driver (never list-and-take-first, never
   // an arbitrary :driver_id). Reuses the office getLeaveBalance computation, scoped to the driver's own id.
-  app.get("/api/v1/driver/scheduler/balance", async (req, reply) => {
+  app.get(
+    "/api/v1/driver/scheduler/balance",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedQuery = z.object({ year: z.coerce.number().int().min(2000).max(2100).optional() }).safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const d = req.driver!;
     const oc = await fetchDriverCompanyId(req.user!.uuid, d.id);
     if (!oc) return reply.code(403).send({ error: "driver_company_not_found" });
-    const year = parsedQuery.data.year ?? new Date().getUTCFullYear();
+    const year = parsedQuery.data.year ?? companyBusinessYear();
     const bal = await withCurrentUser(req.user!.uuid, async (client) => {
       // membership-scope-exempt: principal-derived
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [oc]);
       return getLeaveBalance(client, oc, d.id, year);
     });
     return { balance: bal, year };
-  });
+    }
+  );
 
   app.get("/api/v1/safety/scheduler/grid", async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -349,7 +362,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.extend({ year: z.coerce.number().int().optional() }).safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
-    const year = parsedQuery.data.year ?? new Date().getUTCFullYear();
+    const year = parsedQuery.data.year ?? companyBusinessYear();
     const result = await withCompanyScope(user.uuid, parsedQuery.data.operating_company_id, async (client) => {
       const parent = await client.query(
         `SELECT 1 FROM mdata.drivers d
@@ -389,7 +402,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
         .extend({ year: z.coerce.number().int().min(2000).max(2100).optional() })
         .safeParse(req.query ?? {});
       if (!parsed.success) return sendValidationError(reply, parsed.error);
-      const year = parsed.data.year ?? new Date().getUTCFullYear();
+      const year = parsed.data.year ?? companyBusinessYear();
       return withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
         listLeaveBalances(client, parsed.data.operating_company_id, year)
       );
