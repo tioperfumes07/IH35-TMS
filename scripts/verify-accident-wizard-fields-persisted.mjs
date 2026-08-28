@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["accident"],"leaves":["accidents.list","accidents.create"],"task":"SAF-F7061-ACCIDENT-IDENTITY-VERTICAL","vertical":"column-wave"} */
 /**
  * GUARD: every field the accident wizard renders is controlled AND persisted (SAF-F05 / DoD layer B).
  *
@@ -22,6 +23,7 @@ const DRAWER = "apps/frontend/src/components/safety/AccidentReportDrawer.tsx";
 const CLIENT = "apps/frontend/src/api/safety.ts";
 const ROUTE = "apps/backend/src/safety/safety.routes.ts";
 const MIGRATION = "db/migrations/202607810000_accident_reports_capture_fields.sql";
+const PAGE = "apps/frontend/src/pages/safety/AccidentsPage.tsx";
 const LABEL = "verify-accident-wizard-fields-persisted";
 const SELFTEST = process.argv.includes("--selftest");
 
@@ -50,6 +52,7 @@ export function assertAccidentFieldsPersisted(sources) {
   const client = sources?.[CLIENT] ?? read(CLIENT);
   const route = sources?.[ROUTE] ?? read(ROUTE);
   const migration = sources?.[MIGRATION] ?? read(MIGRATION);
+  const page = sources?.[PAGE] ?? read(PAGE);
   const problems = [];
 
   for (const f of FIELDS) {
@@ -163,6 +166,18 @@ export function assertAccidentFieldsPersisted(sources) {
   if (!/INSERT INTO safety\.accident_cost_lines/.test(route)) {
     problems.push(`${ROUTE}: cost lines are accepted but never INSERTed into safety.accident_cost_lines.`);
   }
+  if (!/getSafetyAccidentDetail\(String\(accidentIdParam\), operatingCompanyId\)/.test(page)) {
+    problems.push(`${PAGE}: deep-linked accident does not use the exact company/id detail read.`);
+  }
+  if (!/const openAccident = \(row:[\s\S]{0,180}setSelectedAccident\(row\)/.test(page)) {
+    problems.push(`${PAGE}: accident list row no longer opens its canonical record identity.`);
+  }
+  if (!/createSafetyAccident\(\{ operating_company_id: companyId, \.\.\.payload \}\)/.test(drawer)) {
+    problems.push(`${DRAWER}: create does not write the submitted company-scoped accident record.`);
+  }
+  if (!/onUpdated=\{\(\) => \{[\s\S]{0,180}invalidateQueries\(\{ queryKey: \["safety"\] \}\)/.test(page)) {
+    problems.push(`${PAGE}: successful accident create does not refresh the canonical list.`);
+  }
 
   return problems;
 }
@@ -173,6 +188,7 @@ if (SELFTEST) {
     [CLIENT]: read(CLIENT),
     [ROUTE]: read(ROUTE),
     [MIGRATION]: read(MIGRATION),
+    [PAGE]: read(PAGE),
   };
   const failures = [];
   const expectCaught = (name, mutated, needle) => {
@@ -203,6 +219,10 @@ if (SELFTEST) {
     { ...live, [DRAWER]: live[DRAWER].replace(/onChange=\{\(([^)]*)\) => setServiceType\([^}]*\}/, "onChange={() => {}}") },
     "service_type"
   );
+  expectCaught("detail-identity", { ...live, [PAGE]: live[PAGE].replace("getSafetyAccidentDetail(String(accidentIdParam), operatingCompanyId)", "getSafetyAccidentDetail('', operatingCompanyId)") }, "exact company/id detail read");
+  expectCaught("list-open-identity", { ...live, [PAGE]: live[PAGE].replace("setSelectedAccident(row);", "setSelectedAccident(null);") }, "canonical record identity");
+  expectCaught("create-company-scope", { ...live, [DRAWER]: live[DRAWER].replace("createSafetyAccident({ operating_company_id: companyId, ...payload })", "createSafetyAccident(payload)") }, "company-scoped accident record");
+  expectCaught("create-refresh", { ...live, [PAGE]: live[PAGE].replace('invalidateQueries({ queryKey: ["safety"] })', 'invalidateQueries({ queryKey: ["unrelated"] })') }, "refresh the canonical list");
   // 5b. record_type (P44 derived shape): the REGRESSED version of the fix itself — gating the
   //     derivation behind an `if (knownCodes.includes(code))` so a non-canonical accident type leaves
   //     recordType stale instead of resolving it. This is the exact defect this session's fix closed.
@@ -250,7 +270,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 8 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 13 planted persistence/identity defects caught, live sources clean`);
   process.exit(0);
 }
 
@@ -261,5 +281,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — ${FIELDS.length} text field(s) + ${ENUM_FIELDS.length} enum control(s) + cost lines are controlled, sent, accepted and written`
+  `${LABEL} OK — accident create→list→exact detail identity plus ${FIELDS.length} text fields, ${ENUM_FIELDS.length} enums and cost lines persist`
 );
