@@ -449,6 +449,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
           LIMIT 1
+          FOR UPDATE OF s, l
         `,
         [params.data.stop_uuid, params.data.uuid, driver.id]
       );
@@ -465,20 +466,30 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
         if (distance > 25) return { error: "outside_geofence" as const, distance };
       }
 
-      await client.query(
+      const departureUpdate = await client.query(
         `
           UPDATE mdata.load_stops
           SET actual_departure_at = now(),
               status = 'departed'
           WHERE id = $1
+            AND load_id = $2
+            AND actual_departure_at IS NULL
+          RETURNING id
         `,
-        [params.data.stop_uuid]
+        [params.data.stop_uuid, params.data.uuid]
       );
+      if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };
 
-      await client.query(
-        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
-        [params.data.uuid, nextLoadStatus, stop.operating_company_id]
+      const loadUpdate = await client.query(
+        `UPDATE mdata.loads
+         SET status = $2
+         WHERE id = $1
+           AND operating_company_id = $3::uuid
+           AND status::text = $4
+         RETURNING id`,
+        [params.data.uuid, nextLoadStatus, stop.operating_company_id, stop.load_status]
       );
+      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
 
       // CLS-DISP-WIRE-07 — the driver's departure is the delivery evidence. Without this the office
       // transition was the ONLY path that latched revenue, so a load delivered in the field never
@@ -518,6 +529,8 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
       if (updated.error === "invalid_stop_state") return reply.code(400).send({ error: "invalid_stop_state" });
       if (updated.error === "invalid_load_state")
         return reply.code(409).send({ error: "invalid_load_state", from: updated.from, to: updated.to });
+      if (updated.error === "departure_already_recorded" || updated.error === "load_transition_conflict")
+        return reply.code(409).send({ error: updated.error });
       return reply.code(403).send({ error: "forbidden" });
     }
     return updated;

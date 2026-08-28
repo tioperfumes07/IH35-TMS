@@ -89,6 +89,22 @@ function auditDriverArrivalLifecycle(content) {
   return issues;
 }
 
+function auditDepartureLifecycle(relativePath, content, start, end) {
+  const from = content.lastIndexOf(start);
+  const to = end ? content.indexOf(end, from + start.length) : content.length;
+  const block = from < 0 ? "" : content.slice(from, to < 0 ? content.length : to);
+  const issues = [];
+  const require = (pattern, message) => {
+    if (!pattern.test(block)) issues.push(`${relativePath}: departure ${message}`);
+  };
+  require(/FOR UPDATE OF s, l/, "must lock the stop and load before lifecycle validation");
+  require(/actual_departure_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first departure stamp");
+  require(/if \(!departureUpdate\.rows\[0\]\?\.id\) return \{ error: "departure_already_recorded" as const \}/, "must reject a duplicate departure before side effects");
+  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
+  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition before side effects");
+  return issues;
+}
+
 const driverLoads = read("apps/backend/src/driver/loads.routes.ts");
 contains("apps/backend/src/driver/loads.routes.ts", driverLoads, [
   { pattern: /validateLoadStopStatusWrite/, label: "import shared load-status gate" },
@@ -149,6 +165,20 @@ const arrivalLifecycleIssues = auditDispatchArrivalLifecycle(dispatchView);
 for (const issue of arrivalLifecycleIssues) fail(issue);
 const driverArrivalLifecycleIssues = auditDriverArrivalLifecycle(driverLoads);
 for (const issue of driverArrivalLifecycleIssues) fail(issue);
+const departureLifecycleIssues = [
+  ...auditDepartureLifecycle(
+    "apps/backend/src/driver/loads.routes.ts",
+    driverLoads,
+    "/api/v1/driver/loads/:id/stops/:stopId/depart"
+  ),
+  ...auditDepartureLifecycle(
+    "apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts",
+    dispatchView,
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+    "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document"
+  ),
+];
+for (const issue of departureLifecycleIssues) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const brokenDriver = driverLoads
@@ -178,18 +208,36 @@ if (process.argv.includes("--selftest")) {
   ];
   const arrivalMutationsFail = arrivalMutations.every((mutant) => auditDispatchArrivalLifecycle(mutant).length > 0);
   const driverArrivalMutations = [
-    driverLoads.replace("FOR UPDATE OF s, l", ""),
+    driverLoads.replaceAll("FOR UPDATE OF s, l", ""),
     driverLoads.replace("AND actual_arrival_at IS NULL", ""),
     driverLoads.replace('if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };', ""),
     driverLoads.replace("AND status::text = $4", ""),
     driverLoads.replace('if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };', ""),
   ];
   const driverArrivalMutationsFail = driverArrivalMutations.every((mutant) => auditDriverArrivalLifecycle(mutant).length > 0);
-  if (scopeIssues.length || arrivalLifecycleIssues.length || driverArrivalLifecycleIssues.length || planted.length < 12 || !arrivalMutationsFail || !driverArrivalMutationsFail) {
-    console.error(`verify:driver-pwa-load-status-gate SELFTEST FAILED — scope=${scopeIssues.length}, pwaLifecycle=${arrivalLifecycleIssues.length}, driverLifecycle=${driverArrivalLifecycleIssues.length}, planted=${planted.length}, pwaMutations=${arrivalMutationsFail}, driverMutations=${driverArrivalMutationsFail}`);
+  const departureMutations = [dispatchView, driverLoads].flatMap((source) => [
+    source.replaceAll("FOR UPDATE OF s, l", ""),
+    source.replace("AND actual_departure_at IS NULL", ""),
+    source.replace('if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };', ""),
+    source.replaceAll("AND status::text = $4", ""),
+    source.replaceAll('if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };', ""),
+  ]);
+  const departureMutationsFail = departureMutations.every((mutant, index) => {
+    const isDispatch = index < 5;
+    return auditDepartureLifecycle(
+      isDispatch ? "dispatch-view" : "driver-loads",
+      mutant,
+      isDispatch
+        ? "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure"
+        : "/api/v1/driver/loads/:id/stops/:stopId/depart",
+      isDispatch ? "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document" : undefined
+    ).length > 0;
+  });
+  if (scopeIssues.length || arrivalLifecycleIssues.length || driverArrivalLifecycleIssues.length || departureLifecycleIssues.length || planted.length < 12 || !arrivalMutationsFail || !driverArrivalMutationsFail || !departureMutationsFail) {
+    console.error(`verify:driver-pwa-load-status-gate SELFTEST FAILED — scope=${scopeIssues.length}, pwaArrival=${arrivalLifecycleIssues.length}, driverArrival=${driverArrivalLifecycleIssues.length}, departure=${departureLifecycleIssues.length}, planted=${planted.length}, pwaArrivalMutations=${arrivalMutationsFail}, driverArrivalMutations=${driverArrivalMutationsFail}, departureMutations=${departureMutationsFail}`);
     process.exit(1);
   }
-  console.log(`verify:driver-pwa-load-status-gate SELFTEST PASS — ${planted.length} scope + 10 arrival lifecycle defects caught`);
+  console.log(`verify:driver-pwa-load-status-gate SELFTEST PASS — ${planted.length} scope + 10 arrival + 10 departure lifecycle defects caught`);
   process.exit(0);
 }
 
