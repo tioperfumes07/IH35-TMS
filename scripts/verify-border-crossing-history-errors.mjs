@@ -25,6 +25,24 @@ function assert(src, routeSrc) {
   if (!/!res\.ok/.test(src)) {
     problems.push(`${FILE}: must fail closed on !res.ok`);
   }
+  if (!/const submittedGeneration = \+\+scopeGenerationRef\.current/.test(src)) {
+    problems.push(`${FILE}: history read must snapshot a scope generation`);
+  }
+  if (!/const submittedCompanyId = selectedCompanyId/.test(src) || !/encodeURIComponent\(submittedCompanyId\)/.test(src)) {
+    problems.push(`${FILE}: history read must snapshot the submitted company`);
+  }
+  if ((src.match(/scopeGenerationRef\.current !== submittedGeneration/g) ?? []).length < 2) {
+    problems.push(`${FILE}: stale history success and error completions must be suppressed`);
+  }
+  if (!/scopeGenerationRef\.current === submittedGeneration\) setLoading\(false\)/.test(src)) {
+    problems.push(`${FILE}: stale completion must not clear current loading state`);
+  }
+  if (!/setRows\(\[\]\);\s*setSelected\(null\);\s*setLoadError\(null\)/.test(src)) {
+    problems.push(`${FILE}: company/read identity transition must clear prior rows, detail, and error`);
+  }
+  if (!/onClick=\{retryHistory\}/.test(src) || !/>\s*Retry\s*</.test(src)) {
+    problems.push(`${FILE}: failed canonical history read must expose exact Retry recovery`);
+  }
   for (const id of ["unit_id", "driver_id", "load_id"]) {
     if (!new RegExp(`ubc\\.${id}::text`).test(routeSrc)) problems.push(`${ROUTE_FILE}: history payload must expose ${id}`);
   }
@@ -41,6 +59,9 @@ if (SELFTEST) {
     .replace(/loadError/g, "ignored")
     .replace(/border-crossing-history-error/g, "x")
     .replace(/!res\.ok/, "false")
+    .replace(/const submittedGeneration = \+\+scopeGenerationRef\.current/, "const submittedGeneration = 0")
+    .replace(/const submittedCompanyId = selectedCompanyId/, "const submittedCompanyId = operatingCompanyId")
+    .replace(/onClick=\{retryHistory\}/, "onClick={() => undefined}")
     .replace(
       /\.catch\(\([\s\S]*?\)\s*=>\s*\{[\s\S]*?\}\)/,
       ".catch(() => setRows([]))"

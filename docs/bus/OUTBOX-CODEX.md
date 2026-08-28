@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7119 | CLAIM=dispatch.border_history-read-lifecycle | SOURCE=mdata.unit_border_crossings company-scoped history GET | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | GO-0014-HONESTY | PR=#17145 @ d3bf5f35f6 | Dispatch=5 Accounting=3 false PASS→UNVERIFIED | NEXT=/dispatch unique | GO
 CODEX | ACK | GO-0014 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO
 Codex | WORKING | GO-0014 | honest-status=8 PASS→UNVERIFIED | Dispatch=5 Accounting=3 | NEXT=ratchet+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7118 | PR=#17142 @ 5911a8c92a | Built=settings canonical read-before-write | NEXT=GO-0014 evidence honesty | GO
