@@ -1493,13 +1493,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       }
 
       const mdataStatus = toMdataStatus(targetStatus);
-      await client.query(
+      const transitionUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads
          SET status = $2
          WHERE id = $1
-           AND operating_company_id = $3::uuid`,
+           AND operating_company_id = $3::uuid
+         RETURNING id`,
         [params.data.id, mdataStatus, operatingCompanyId]
       );
+      if (!transitionUpdate.rows[0]?.id) return { error: "not_found" as const };
       if (mdataStatus === "abandoned" || mdataStatus === "driver_walkoff" || mdataStatus === "driver_no_show") {
         await emitAutoProposedEscrowEvents({
           client,
