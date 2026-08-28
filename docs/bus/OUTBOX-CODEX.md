@@ -1855,3 +1855,5 @@ Codex | WORKING | DSP-F7094 | CLAIM=post.dispatch-multistop-pickup-type-failure-
 Codex | WORKING | DSP-F7095 | CLAIM=post.dispatch-tri-signal-failure-honesty | SOURCE=active load tri-signals→Dispatch List+Table risk column | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7095 | PR=#17083 @ 1af1b36ef0 | Built=dispatch status-signal failure honesty | NEXT=telemetry failure honesty | GO
 Codex | WORKING | DSP-F7096 | CLAIM=post.dispatch-telemetry-failure-honesty | SOURCE=load positions+fleet location→Dispatch List+Table | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7096 | PR=#17085 @ 45ef9bfe23 | Built=dispatch telemetry failure honesty | NEXT=assignment history failure honesty | GO
+Codex | WORKING | DSP-F7097 | CLAIM=post.dispatch-load-assignment-history-failure-honesty | SOURCE=load assignment history→drawer reverse trail | NEXT=guard+FAST-MERGE | GO

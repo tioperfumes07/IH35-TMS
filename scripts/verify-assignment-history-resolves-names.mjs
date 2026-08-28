@@ -93,6 +93,10 @@ export function auditDrawer(raw) {
   if (/\b(?:previous|new)_driver_id\s*\)?\s*\.slice\s*\(/.test(src) || /String\(\s*r\.(?:previous|new)_driver_id\s*\)\s*\.slice\s*\(/.test(src)) {
     problems.push(`${DRAWER}: slices a *_driver_id for display — render the resolved name (CLS-UUID-LABEL).`);
   }
+  if (!raw.includes('title="Couldn\'t load assignment history"')) problems.push(`${DRAWER}: failed history read is not visible.`);
+  if (!raw.includes("onRetry={() => void assignmentHistoryQuery.refetch()}")) problems.push(`${DRAWER}: failed history read is not retryable.`);
+  if (!raw.includes("assignmentHistoryQuery.isError ? [] : assignmentHistoryQuery.data?.rows ?? []")) problems.push(`${DRAWER}: cached history rows remain visible after a failed refetch.`);
+  if (!raw.includes("!assignmentHistoryQuery.isError && (assignmentHistoryQuery.data?.rows ?? []).length === 0")) problems.push(`${DRAWER}: failed history read can still render the honest-empty message.`);
   return problems;
 }
 
@@ -139,7 +143,7 @@ export async function other(){}`, 1],
 export async function other(){}`, 1],
     ["previous shared authorization removed", auditService, goodSvc.replace("FROM mdata.driver_company_authorizations assignment_previous_driver_dca", "FROM removed assignment_previous_driver_dca"), 1],
     ["new shared authorization removed", auditService, goodSvc.replace("FROM mdata.driver_company_authorizations assignment_new_driver_dca", "FROM removed assignment_new_driver_dca"), 1],
-    ["clean drawer", auditDrawer, `const prev = driverLabel(r.previous_driver_id, r.previous_driver_name);`, 0],
+    ["clean drawer", auditDrawer, `const prev = driverLabel(r.previous_driver_id, r.previous_driver_name); title="Couldn't load assignment history" onRetry={() => void assignmentHistoryQuery.refetch()} {(assignmentHistoryQuery.isError ? [] : assignmentHistoryQuery.data?.rows ?? []).map(render)} {!assignmentHistoryQuery.isError && (assignmentHistoryQuery.data?.rows ?? []).length === 0}`, 0],
     ["drawer slices the uuid", auditDrawer, `const prev = String(r.previous_driver_id).slice(0, 8);`, 1],
     ["safe retryable page error", auditPage, `{...formatQueryErrorDetail(historyQ.error)} onRetry={() => void historyQ.refetch()}`, 0],
     ["raw page error", auditPage, `message={(historyQ.error as Error)?.message} onRetry={() => void historyQ.refetch()}`, 1],

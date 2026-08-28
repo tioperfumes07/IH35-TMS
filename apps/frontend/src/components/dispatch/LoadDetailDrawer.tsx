@@ -11,6 +11,7 @@ import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { useToast } from "../Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
+import { ListErrorState } from "../ListErrorState";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
 import { getDownloadUrl, listAllFiles } from "../../api/docs";
@@ -905,7 +906,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
           {activeTab === "Assignment History" ? (
             <div className="space-y-3">
               {assignmentHistoryQuery.isLoading ? <div className="text-sm text-gray-500">Loading assignment history…</div> : null}
-              {(assignmentHistoryQuery.data?.rows ?? []).map((row) => {
+              {assignmentHistoryQuery.isError ? (
+                <ListErrorState
+                  title="Couldn't load assignment history"
+                  status={(assignmentHistoryQuery.error as { status?: number } | null)?.status ?? 0}
+                  message={userFacingApiError(assignmentHistoryQuery.error, "Assignment history failed")}
+                  onRetry={() => void assignmentHistoryQuery.refetch()}
+                />
+              ) : null}
+              {(assignmentHistoryQuery.isError ? [] : assignmentHistoryQuery.data?.rows ?? []).map((row) => {
                 const r = row as Record<string, unknown>;
                 const id = String(r.id ?? "");
                 const at = r.assigned_at ? new Date(String(r.assigned_at)).toLocaleString() : "";
@@ -1013,7 +1022,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                   </div>
                 );
               })}
-              {!assignmentHistoryQuery.isLoading && (assignmentHistoryQuery.data?.rows ?? []).length === 0 ? (
+              {!assignmentHistoryQuery.isLoading && !assignmentHistoryQuery.isError && (assignmentHistoryQuery.data?.rows ?? []).length === 0 ? (
                 <div className="text-sm text-gray-500">No assignment events yet.</div>
               ) : null}
             </div>
