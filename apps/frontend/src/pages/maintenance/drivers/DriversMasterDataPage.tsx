@@ -256,7 +256,7 @@ export function DriversMasterDataPage() {
           }}>
             CSV Import
           </Button>
-          {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
+          {!driversQuery.isError && !csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
         </div>
         {driversQuery.isError ? (
           <ListErrorState

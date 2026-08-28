@@ -1684,3 +1684,5 @@ Codex | SHIPPED | MAINT-F6997 | PR=#16956 @ 1a2396c69e | Built=WO parts exact-ra
 Codex | WORKING | MAINT-F6998 | CLAIM=post.maintenance-master-data-read-recovery | vertical=parts+vehicles+drivers create/import/edit/void | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6998 | PR=#16957 @ 321e9b46c9 | Built=parts+vehicles+drivers failed-read write recovery | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6999 parts KPI honesty | GO
 Codex | WORKING | MAINT-F6999 | CLAIM=post.maintenance-parts-kpi-read-honesty | SOURCE=company-scoped parts KPI reader | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | MAINT-F7000 | CLAIM=post.maintenance-csv-capability-read-honesty | vertical=vehicles+drivers | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6999 | PR=#16958 @ 5e378f69f6 | Built=parts KPI failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=MAINT-F7000 | GO
