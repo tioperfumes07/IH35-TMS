@@ -4,7 +4,7 @@
 /**
  * verify-system-module.mjs
  * CI guard: the Owner-only SYSTEM module (owner-supplied design) must stay WIRED — sidebar entry, route,
- * page, and all six tabs. It also enforces the module's design law: SYSTEM is Owner-only, and QuickBooks
+ * page, and all seven tabs. It also enforces the module's design law: SYSTEM is Owner-only, and QuickBooks
  * Reconciliation is NOT combined with bank reconciliation.
  *
  * FAILS IF ANY OF:
@@ -14,7 +14,7 @@
  *   3. routes/manifest.tsx does not lazy-import SystemModulePage AND register path="/system" behind
  *      OwnerOnlyRoute.
  *   4. SystemModulePage.tsx is missing or does not export SystemModulePage.
- *   5. Any of the six canonical tab labels is missing from SystemModulePage.tsx.
+ *   5. Any of the seven canonical tab labels is missing from SystemModulePage.tsx.
  *
  * Self-test (pure logic, no filesystem): node scripts/verify-system-module.mjs --selftest
  */
@@ -24,13 +24,14 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** The six canonical SYSTEM tab labels (must match SYSTEM_TABS in SystemModulePage.tsx). */
+/** The seven canonical SYSTEM tab labels (must match SYSTEM_TABS in SystemModulePage.tsx). */
 export const SYSTEM_TAB_LABELS = [
   "Overview",
   "QuickBooks Reconciliation",
   "QuickBooks Sync",
   "Program Tracker",
   "Software / Build",
+  "Ledger Health",
   "Claude Coder",
 ];
 
@@ -361,4 +362,4 @@ if (failures.length) {
   for (const f of failures) console.error("  x " + f);
   process.exit(1);
 }
-console.log("verify:system-module PASS (sidebar + route + page + 6 tabs wired; Owner-only; QBO recon ≠ bank recon)");
+console.log("verify:system-module PASS (sidebar + route + page + 7 tabs wired; Owner-only; QBO recon ≠ bank recon)");

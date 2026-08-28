@@ -6,6 +6,7 @@ import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
 import { getQboReconciliation, type QboReconResponse, type ReconObject } from "../../api/qbo-recon";
+import { getLedgerHealth, type LedgerHealthResponse, type LedgerHealthFinding } from "../../api/ledger-health";
 import { getQboSyncHealth, type QboSyncHealthResponse } from "../../api/qbo-integration";
 import { getApAging, type ApAgingSummary } from "../../api/arApAging";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../../api/program-tracker";
@@ -23,13 +24,14 @@ import { ListErrorState } from "../../components/ListErrorState";
  * NON-FINANCIAL: reads financial data (AP aging, QBO recon/sync health), posts nothing.
  */
 
-// Canonical tab set — the guard (scripts/verify-system-module.mjs) asserts all six labels are present.
+// Canonical tab set — the guard (scripts/verify-system-module.mjs) asserts all seven labels are present.
 export const SYSTEM_TABS = [
   { id: "overview", label: "Overview" },
   { id: "qbo-recon", label: "QuickBooks Reconciliation" },
   { id: "qbo-sync", label: "QuickBooks Sync" },
   { id: "program", label: "Program Tracker" },
   { id: "software", label: "Software / Build" },
+  { id: "ledger-health", label: "Ledger Health" },
   { id: "claude-coder", label: "Claude Coder" },
 ] as const;
 
@@ -166,6 +168,13 @@ function useSystemData(companyId: string | null, qboAvailable: boolean) {
     retry: false,
     staleTime: 60_000,
   });
+  const ledgerHealth = useQuery<LedgerHealthResponse>({
+    queryKey: ["system", "ledger-health", companyId],
+    queryFn: () => getLedgerHealth(companyId as string),
+    enabled,
+    retry: false,
+    staleTime: 60_000,
+  });
   const health = useQuery({
     queryKey: ["system", "healthz"],
     queryFn: fetchHealth,
@@ -173,7 +182,7 @@ function useSystemData(companyId: string | null, qboAvailable: boolean) {
     staleTime: 30_000,
   });
 
-  return { recon, syncHealth, apAging, tracker, health };
+  return { recon, syncHealth, apAging, tracker, health, ledgerHealth };
 }
 
 type HealthSnapshot = {
@@ -208,7 +217,9 @@ type SystemData = ReturnType<typeof useSystemData>;
 // ---- tab bodies -----------------------------------------------------------------------------------
 
 function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen: (id: SystemTabId) => void; qboAvailable: boolean }) {
-  const { recon, syncHealth, apAging, tracker, health } = data;
+  const { recon, syncHealth, apAging, tracker, health, ledgerHealth } = data;
+  const lhOpen = ledgerHealth.data?.open_findings_count ?? null;
+  const lhCritical = ledgerHealth.data?.critical_open_count ?? null;
   const apObj = findApObject(recon.data);
   const reconAlerts = recon.data?.open_findings_count ?? null;
   const syncConnected = syncHealth.data?.status === "healthy" || syncHealth.data?.status === "syncing";
@@ -303,6 +314,28 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
         </Row>
       </Card>
 
+      {/* Ledger Health */}
+      <Card
+        title="Ledger Health"
+        pill={
+          lhOpen == null ? (
+            <Pill tone="neutral">—</Pill>
+          ) : lhCritical && lhCritical > 0 ? (
+            <Pill tone="off">{lhCritical} CRITICAL</Pill>
+          ) : lhOpen > 0 ? (
+            <Pill tone="warn">{lhOpen} OPEN</Pill>
+          ) : (
+            <Pill tone="ok">CLEAN</Pill>
+          )
+        }
+        sub="Cross-integration reconciliation findings (QBO, Samsara, Plaid, FMCSA). Read-only — findings self-close on re-detection; there is no manual resolve action here."
+        footer={<GhostButton onClick={() => onOpen("ledger-health")}>Open Ledger Health</GhostButton>}
+      >
+        <Row label="Open findings">{lhOpen == null ? "—" : <span className="tabular-nums">{lhOpen}</span>}</Row>
+        <Row label="Critical">{lhCritical == null ? "—" : <span className="tabular-nums">{lhCritical}</span>}</Row>
+        <Row label="Integrations monitored">{ledgerHealth.data?.by_integration.length ?? "—"}</Row>
+      </Card>
+
       {/* Claude Coder */}
       <Card title="Claude Coder" pill={<Pill tone="neutral">OWNER ONLY</Pill>} sub="Launch Claude Code on your machine (no terminal runs inside this app) plus a read-only activity view." full
         footer={<GhostButton onClick={() => onOpen("claude-coder")}>Open Claude Coder</GhostButton>}>
@@ -372,6 +405,96 @@ function QboReconTab({ data }: { data: SystemData }) {
           rowKey={(row) => row.object}
           storageKey="system-qbo-reconciled-objects"
           emptyText={recon.isError ? "Reconciliation unavailable." : recon.isLoading ? "Loading reconciliation…" : "No reconciled objects found."}
+        />
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * LEDGER-HEALTH tab — read-only. No resolve/close/acknowledge control exists anywhere on this page by
+ * design: findings self-close when the detector/cron re-checks and the underlying drift clears. See
+ * apps/backend/src/system/ledger-health-reads.ts's header and scripts/verify-ledger-health-no-human-resolve.mjs.
+ */
+function LedgerHealthTab({ data }: { data: SystemData }) {
+  const { ledgerHealth } = data;
+  const lh = ledgerHealth.data;
+  const columns: ParityColumn<LedgerHealthFinding>[] = [
+    { key: "integration", label: "Integration", sortable: true },
+    { key: "finding_type", label: "Type", sortable: true },
+    { key: "mirror_category", label: "Category", sortable: true },
+    {
+      key: "severity",
+      label: "Severity",
+      sortable: true,
+      render: (row) =>
+        row.severity === "critical" ? (
+          <Pill tone="off">CRITICAL</Pill>
+        ) : row.severity === "important" ? (
+          <Pill tone="warn">IMPORTANT</Pill>
+        ) : (
+          <Pill tone="neutral">CLEANUP</Pill>
+        ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (row) => (row.status === "open" ? <Pill tone="warn">OPEN</Pill> : <Pill tone="ok">{row.status.toUpperCase()}</Pill>),
+    },
+    {
+      key: "drift_metric_abs",
+      label: "Drift",
+      sortable: true,
+      className: "text-right",
+      cellClass: "text-right tabular-nums",
+      render: (row) => (row.drift_metric_abs == null ? "—" : row.drift_metric_abs.toLocaleString("en-US")),
+    },
+    { key: "detected_at", label: "Detected", sortable: true, render: (row) => ctDateTime(row.detected_at) },
+    { key: "last_seen_at", label: "Last seen", sortable: true, render: (row) => ctDateTime(row.last_seen_at) },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <Card
+        title="Ledger Health"
+        pill={<Pill tone="neutral">SELF-CLOSE ONLY</Pill>}
+        sub="Every open reconciliation finding across every integration — QBO, Samsara, Plaid, FMCSA today; any future integration appears automatically. Display-only: a finding clears when the detector re-checks and the drift is gone, never by a click here."
+      >
+        <Row label="Open findings">{lh ? <span className="tabular-nums">{lh.open_findings_count}</span> : "—"}</Row>
+        <Row label="Critical">{lh ? <span className="tabular-nums">{lh.critical_open_count}</span> : "—"}</Row>
+        <Row label="Important">{lh ? <span className="tabular-nums">{lh.important_open_count}</span> : "—"}</Row>
+        <Row label="Cleanup">{lh ? <span className="tabular-nums">{lh.cleanup_open_count}</span> : "—"}</Row>
+        <Row label="Generated">{ctDateTime(lh?.generated_at)}</Row>
+      </Card>
+
+      <Card title="By integration" sub="Last successful reconciliation tick per integration.">
+        {(lh?.by_integration ?? []).length === 0 ? (
+          <div className="text-[12px] text-slate-500">{ledgerHealth.isLoading ? "Loading…" : "No integration state recorded yet."}</div>
+        ) : (
+          (lh?.by_integration ?? []).map((row) => (
+            <Row
+              key={row.integration}
+              label={
+                <span className="inline-flex items-center gap-2">
+                  {row.integration}
+                  {row.critical_open_count > 0 ? <Pill tone="off">{row.critical_open_count} critical</Pill> : null}
+                </span>
+              }
+            >
+              {row.open_count} open · last tick {ctDateTime(row.last_successful_tick_at)}
+            </Row>
+          ))
+        )}
+      </Card>
+
+      <Card title="Findings" full sub="Newest first, open first. Read-only.">
+        <ParityTable<LedgerHealthFinding>
+          columns={columns}
+          rows={lh?.findings ?? []}
+          rowKey={(row) => row.id}
+          storageKey="system-ledger-health-findings"
+          emptyText={ledgerHealth.isError ? "Ledger health unavailable." : ledgerHealth.isLoading ? "Loading findings…" : "No findings — clean."}
         />
       </Card>
     </div>
@@ -755,6 +878,7 @@ export function SystemModulePage() {
         {tab === "qbo-sync" ? <QboSyncTab data={data} /> : null}
         {tab === "program" ? <ProgramTab data={data} /> : null}
         {tab === "software" ? <SoftwareTab data={data} qboAvailable={qboAvailable} /> : null}
+        {tab === "ledger-health" ? <LedgerHealthTab data={data} /> : null}
         {tab === "claude-coder" ? <ClaudeCoderTab data={data} qboAvailable={qboAvailable} /> : null}
       </div>
 

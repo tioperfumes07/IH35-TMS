@@ -1001,6 +1001,7 @@
     "verify:wo-audit-entity-type": "node scripts/verify-wo-audit-entity-type.mjs",
     "verify:safety-csa-canonical-read": "node scripts/verify-safety-csa-canonical-read.mjs",
     "verify:system-module": "node scripts/verify-system-module.mjs",
+    "verify:ledger-health-no-human-resolve": "node scripts/verify-ledger-health-no-human-resolve.mjs",
     "verify:ent-audit-all-entity-types": "node scripts/verify-ent-audit-all-entity-types.mjs",
     "verify:tracker-no-duplicate-block-ids": "node scripts/verify-tracker-no-duplicate-block-ids.mjs",
     "verify:qbo-parity-banking-home": "node scripts/verify-qbo-parity-banking-home.mjs",
