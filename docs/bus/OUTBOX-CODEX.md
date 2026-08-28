@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7127B | CLAIM=load-detail-company-scope-remainder | SOURCE=mdata.loads exact opco detail across cash-advance+invoice | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127 | PR=#17169 @ 1b82cc9a28 | Built=dispatch load-detail scope vertical | NEXT=cross-module direct callers | GO
 Codex | WORKING | DSP-F7127 | CLAIM=dispatch.load-detail-company-scope-vertical | SOURCE=mdata.loads exact company+load detail GET | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7126 | PR=#17163 @ a16a96ec4e | Built=detention immutable write scope+serialization | NEXT=load-detail scope vertical | GO
 CODEX | ACK | GO-0016 | NOW=pass-unverified-evidence-8 | SHA=4e5db76 | result=8/8 already UNVERIFIED on origin/main | GO

@@ -126,8 +126,8 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
   });
 
   const loadDetailQuery = useQuery({
-    queryKey: ["invoice-type-modal", "load-detail", loadId],
-    queryFn: () => getLoad(String(loadId)),
+    queryKey: ["invoice-type-modal", "load-detail", operatingCompanyId, loadId],
+    queryFn: () => getLoad(String(loadId), operatingCompanyId),
     enabled: Boolean(operatingCompanyId) && open && Boolean(loadId),
     staleTime: 60_000,
   });

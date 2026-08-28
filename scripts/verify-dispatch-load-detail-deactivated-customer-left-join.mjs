@@ -24,6 +24,9 @@ const LOAD_API = "apps/frontend/src/api/loads.ts";
 const FACTORING_TAB = "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx";
 const FINES_CARD = "apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx";
 const BOOK_LOAD = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const CASH_ADVANCE = "apps/frontend/src/pages/cash-advances/components/CreateAdvanceModal.tsx";
+const INVOICE_DETAIL = "apps/frontend/src/pages/accounting/InvoiceDetailPage.tsx";
+const INVOICE_MODAL = "apps/frontend/src/pages/accounting/modals/InvoiceTypeModalBase.tsx";
 
 /** Slice the GET /api/v1/dispatch/loads/:id handler body (through the first null-detail return). */
 function detailGetSlice(src) {
@@ -35,7 +38,7 @@ function detailGetSlice(src) {
   return src.slice(start, end);
 }
 
-function check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc) {
+function check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc, cashAdvanceSrc, invoiceDetailSrc, invoiceModalSrc) {
   const problems = [];
   const detail = detailGetSlice(src);
   if (!detail) {
@@ -113,6 +116,30 @@ function check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc) 
   if (!/enabled: Boolean\(open && editLoadId && operatingCompanyId\)/.test(bookLoadSrc)) {
     problems.push(`${BOOK_LOAD}: edit prefill must not run before company scope exists`);
   }
+  if (!/queryKey: \["cash-advances", "load-detail", operatingCompanyId, loadId\]/.test(cashAdvanceSrc)) {
+    problems.push(`${CASH_ADVANCE}: load-detail cache identity must include operating company`);
+  }
+  if (!/getLoad\(String\(loadId\), operatingCompanyId\)/.test(cashAdvanceSrc)) {
+    problems.push(`${CASH_ADVANCE}: load detail must send its existing operatingCompanyId prop`);
+  }
+  if (!/enabled: open && Boolean\(operatingCompanyId && loadId\)/.test(cashAdvanceSrc)) {
+    problems.push(`${CASH_ADVANCE}: load detail must not run before company scope exists`);
+  }
+  if (!/queryKey: \["accounting", "invoice", "source-load", selectedCompanyId, sourceLoadId\]/.test(invoiceDetailSrc)) {
+    problems.push(`${INVOICE_DETAIL}: source-load cache identity must include selected company`);
+  }
+  if (!/getLoad\(String\(sourceLoadId\), selectedCompanyId!\)/.test(invoiceDetailSrc)) {
+    problems.push(`${INVOICE_DETAIL}: source-load detail must send selected company`);
+  }
+  if (!/enabled: Boolean\(selectedCompanyId && sourceLoadId\)/.test(invoiceDetailSrc)) {
+    problems.push(`${INVOICE_DETAIL}: source-load detail must not run before selected company exists`);
+  }
+  if (!/queryKey: \["invoice-type-modal", "load-detail", operatingCompanyId, loadId\]/.test(invoiceModalSrc)) {
+    problems.push(`${INVOICE_MODAL}: load-detail cache identity must include operating company`);
+  }
+  if (!/getLoad\(String\(loadId\), operatingCompanyId\)/.test(invoiceModalSrc)) {
+    problems.push(`${INVOICE_MODAL}: load detail must send its existing operatingCompanyId prop`);
+  }
 
   return problems;
 }
@@ -124,6 +151,9 @@ function main() {
   const factoringSrc = readFileSync(path.join(ROOT, FACTORING_TAB), "utf8");
   const finesSrc = readFileSync(path.join(ROOT, FINES_CARD), "utf8");
   const bookLoadSrc = readFileSync(path.join(ROOT, BOOK_LOAD), "utf8");
+  const cashAdvanceSrc = readFileSync(path.join(ROOT, CASH_ADVANCE), "utf8");
+  const invoiceDetailSrc = readFileSync(path.join(ROOT, INVOICE_DETAIL), "utf8");
+  const invoiceModalSrc = readFileSync(path.join(ROOT, INVOICE_MODAL), "utf8");
 
   if (SELFTEST) {
     const dir = mkdtempSync(path.join(tmpdir(), "load-detail-lj-"));
@@ -139,7 +169,7 @@ function main() {
         );
       const plantedPath = path.join(dir, "loads.routes.ts");
       writeFileSync(plantedPath, planted);
-      const plantedProblems = check(planted, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc);
+      const plantedProblems = check(planted, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc, cashAdvanceSrc, invoiceDetailSrc, invoiceModalSrc);
       if (plantedProblems.length === 0) {
         console.error(`${LABEL} --selftest FAIL: planted INNER JOIN customers did not trip the guard`);
         process.exit(1);
@@ -158,7 +188,7 @@ function main() {
             "const mdataLoadQuery = useLoad(",
             "const dispatchFailed = Boolean(operatingCompanyId && dispatchLoadQuery.isError);\n  const mdataLoadQuery = useLoad(",
           );
-      const gatedProblems = check(src, gatedDrawerFull, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc);
+      const gatedProblems = check(src, gatedDrawerFull, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc, cashAdvanceSrc, invoiceDetailSrc, invoiceModalSrc);
       if (!gatedProblems.some((p) => /gate useLoad on dispatchFailed|must always race company-scoped useLoad/.test(p))) {
         console.error(
           `${LABEL} --selftest FAIL: gated-on-dispatchFailed drawer did not trip the race assertion:\n${gatedProblems.join("\n")}`,
@@ -180,18 +210,29 @@ function main() {
           .replace('["book-load-edit", operatingCompanyId, editLoadId]', '["book-load-edit", editLoadId]')
           .replace("getLoad(editLoadId as string, operatingCompanyId)", "getLoad(editLoadId as string)")
           .replace("Boolean(open && editLoadId && operatingCompanyId)", "Boolean(open && editLoadId)"),
+        cashAdvanceSrc
+          .replace('["cash-advances", "load-detail", operatingCompanyId, loadId]', '["cash-advances", "load-detail", loadId]')
+          .replace("getLoad(String(loadId), operatingCompanyId)", "getLoad(String(loadId))")
+          .replace("Boolean(operatingCompanyId && loadId)", "Boolean(loadId)"),
+        invoiceDetailSrc
+          .replace('["accounting", "invoice", "source-load", selectedCompanyId, sourceLoadId]', '["accounting", "invoice", "source-load", sourceLoadId]')
+          .replace("getLoad(String(sourceLoadId), selectedCompanyId!)", "getLoad(String(sourceLoadId))")
+          .replace("Boolean(selectedCompanyId && sourceLoadId)", "Boolean(sourceLoadId)"),
+        invoiceModalSrc
+          .replace('["invoice-type-modal", "load-detail", operatingCompanyId, loadId]', '["invoice-type-modal", "load-detail", loadId]')
+          .replace("getLoad(String(loadId), operatingCompanyId)", "getLoad(String(loadId))"),
       );
-      if (unscopedConsumers.length < 8) {
+      if (unscopedConsumers.length < 16) {
         console.error(`${LABEL} --selftest FAIL: planted unscoped vertical was not fully detected:\n${unscopedConsumers.join("\n")}`);
         process.exit(1);
       }
-      const good = check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc);
+      const good = check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc, cashAdvanceSrc, invoiceDetailSrc, invoiceModalSrc);
       if (good.length) {
         console.error(`${LABEL} --selftest FAIL: real source already red:\n${good.join("\n")}`);
         process.exit(1);
       }
       console.log(
-        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and eight unscoped load-detail mutations fail; fixed source passes`,
+        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and sixteen unscoped load-detail mutations fail; fixed source passes`,
       );
       return;
     } finally {
@@ -199,13 +240,13 @@ function main() {
     }
   }
 
-  const problems = check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc);
+  const problems = check(src, drawerSrc, loadApiSrc, factoringSrc, finesSrc, bookLoadSrc, cashAdvanceSrc, invoiceDetailSrc, invoiceModalSrc);
   if (problems.length) {
     console.error(`${LABEL} FAIL:\n${problems.map((p) => `  - ${p}`).join("\n")}`);
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK — load-detail reads are company-scoped across shared hook, drawer, factoring, fines, and Book Load edit; fallback race preserved`,
+    `${LABEL} OK — all load-detail reads are company-scoped across dispatch, cash advance, and invoice surfaces; fallback race preserved`,
   );
 }
 
