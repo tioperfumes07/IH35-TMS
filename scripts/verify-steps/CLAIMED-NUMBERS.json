@@ -6646,5 +6646,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-customer-pnl-trailing-window-company-business-date"
+  },
+  "9957": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-maintenance-warranty-parts-business-dates"
   }
 }
