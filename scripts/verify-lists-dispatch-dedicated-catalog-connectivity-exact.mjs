@@ -66,6 +66,19 @@ export function audit(s = {}) {
   for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient", "loadTypesCatalogClient"]) {
     if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
   }
+  for (const token of [
+    "disabled={customersQuery.isLoading || customersQuery.isError}",
+    'message="Could not load customers." onRetry={() => void customersQuery.refetch()}',
+    "disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}",
+    'message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()}',
+    "disabled={lumperProvidersQuery.isLoading || lumperProvidersQuery.isError}",
+    'message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()}',
+    "pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}",
+    "onPickupTimeTypesRetry={() => void pickupTimeTypesQuery.refetch()}",
+  ]) if (!bookLoadModal.includes(token)) failures.push(`BookLoadModalV4 catalog failure honesty missing ${token}`);
+  const bookLoadStops = s.bookLoadStops ?? read("apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx");
+  for (const token of ["pickupTimeTypesLoading || pickupTimeTypesUnavailable", "Could not load pickup and appointment types.", "onRetry={onPickupTimeTypesRetry}"])
+    if (!bookLoadStops.includes(token)) failures.push(`BookLoadStopsSection pickup-time failure honesty missing ${token}`);
   if (!expectedAdjustments.includes("listAllDispatchCatalogRows(detentionReasonsCatalogClient") || /detentionReasonsCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(expectedAdjustments)) failures.push("ExpectedAdjustmentsCallout must exhaust detention-reasons catalog");
   for (const token of ["detentionReasonsQuery.isError", "disabled={detentionReasonsQuery.isLoading || detentionReasonsQuery.isError}", "Couldn't load detention reasons.", "onClick={() => void detentionReasonsQuery.refetch()}"])
     if (!expectedAdjustments.includes(token)) failures.push(`ExpectedAdjustmentsCallout failure honesty missing ${token}`);
@@ -99,7 +112,7 @@ export function audit(s = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), accessorialEditor: read(ACCESSORIAL_EDITOR), multiStopEditor: read(MULTI_STOP_EDITOR), bookLoadModal: read(BOOK_LOAD_MODAL), expectedAdjustments: read(EXPECTED_ADJUSTMENTS), self: read(SELF) };
+  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), accessorialEditor: read(ACCESSORIAL_EDITOR), multiStopEditor: read(MULTI_STOP_EDITOR), bookLoadModal: read(BOOK_LOAD_MODAL), bookLoadStops: read("apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx"), expectedAdjustments: read(EXPECTED_ADJUSTMENTS), self: read(SELF) };
   const mutations = [
     ["matrix", original.matrix.replace('"id": "catalog.dispatch.load_types.list"', '"id": "catalog.dispatch.load_types.list.broken"')],
     ["manifest", original.manifest.replace('path="/lists/dispatch/load-types"', 'path="/lists/dispatch/load-types-broken"')],
@@ -113,6 +126,10 @@ if (process.argv.includes("--selftest")) {
     ["multiStopEditor", original.multiStopEditor.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],
     ["multiStopEditor", original.multiStopEditor.replace("onClick={() => void pickupTimeTypesQuery.refetch()}", "onClick={() => undefined}")],
     ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
+    ["bookLoadModal", original.bookLoadModal.replace("disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}", "disabled={loadTypesQuery.isLoading}")],
+    ["bookLoadModal", original.bookLoadModal.replace("onRetry={() => void lumperProvidersQuery.refetch()}", "onRetry={() => undefined}")],
+    ["bookLoadModal", original.bookLoadModal.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],
+    ["bookLoadStops", original.bookLoadStops.replace("pickupTimeTypesLoading || pickupTimeTypesUnavailable", "pickupTimeTypesLoading")],
     ["expectedAdjustments", original.expectedAdjustments.replace("listAllDispatchCatalogRows(detentionReasonsCatalogClient", "detentionReasonsCatalogClient.list")],
     ["expectedAdjustments", original.expectedAdjustments.replace("detentionReasonsQuery.isLoading || detentionReasonsQuery.isError", "detentionReasonsQuery.isLoading")],
     ["expectedAdjustments", original.expectedAdjustments.replace("onClick={() => void detentionReasonsQuery.refetch()}", "onClick={() => void Promise.resolve()}")],
