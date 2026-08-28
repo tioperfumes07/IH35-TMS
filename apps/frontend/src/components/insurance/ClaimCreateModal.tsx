@@ -17,6 +17,7 @@ import { ParityDrawer } from "../parity/ParityDrawer";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
 import { Combobox } from "../Combobox";
+import { LoadSuggestionReadError } from "../shared/LoadSuggestionReadError";
 
 /** Tri-state driver_responsible: "" = not yet determined (NULL), "true" / "false" = decided. */
 type DriverResponsibleOption = "" | "true" | "false";
@@ -390,6 +391,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
                 Auto-filled from active trip for this driver/unit/trailer on the accident date.
               </span>
             ) : null}
+            <LoadSuggestionReadError query={suggestionQuery} />
           </label>
 
           <label className="space-y-1" data-testid="claim-create-trailer-field">
