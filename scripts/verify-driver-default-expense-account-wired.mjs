@@ -34,8 +34,9 @@ export function check({ routes, banking, auto, types }) {
     }
     // List SELECT must keep entity predicate IN the template (not only in ${whereClause}) —
     // verify-mdata-entity-scope fails when the hash changes without a visible predicate.
-    if (!/FROM mdata\.drivers\s+WHERE operating_company_id\s*=/.test(routes.replace(/\s+/g, " "))) {
-      f.push(`${ROUTES}: list SELECT must include WHERE operating_company_id = in the SQL template`);
+    const canonicalListScopes = routes.match(/WHERE \(operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \([\s\S]{0,360}?canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid[\s\S]{0,180}?canonical_list_dca\.is_authorized = true[\s\S]{0,120}?canonical_list_dca\.deactivated_at IS NULL/g) ?? [];
+    if (canonicalListScopes.length !== 2) {
+      f.push(`${ROUTES}: count + list SELECTs must carry canonical ownership/active-authorization scope`);
     }
   }
   if (!banking) f.push(`${BANKING}: missing`);
@@ -85,7 +86,19 @@ default_expense_account_id,
 default_expense_account_id,
 default_expense_account_id,
 FROM mdata.drivers
-          WHERE operating_company_id = $1`,
+WHERE (operating_company_id = $\${ociIdx}::uuid OR EXISTS (
+  SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca
+  WHERE canonical_list_dca.company_id = $\${ociIdx}::uuid
+    AND canonical_list_dca.is_authorized = true
+    AND canonical_list_dca.deactivated_at IS NULL
+))
+FROM mdata.drivers
+WHERE (operating_company_id = $\${ociIdx}::uuid OR EXISTS (
+  SELECT 1 FROM mdata.driver_company_authorizations canonical_list_dca
+  WHERE canonical_list_dca.company_id = $\${ociIdx}::uuid
+    AND canonical_list_dca.is_authorized = true
+    AND canonical_list_dca.deactivated_at IS NULL
+))`,
     banking: `// ACCT-F18
 accountId: draft.accountId || driverAcct || "",
 default_expense_account_id`,
@@ -103,6 +116,10 @@ default_expense_account_id`,
     [
       "missing banking prefill caught",
       check({ ...good, banking: "// nothing" }).some((x) => x.includes("DriverAutocomplete")),
+    ],
+    [
+      "missing active authorization scope caught",
+      check({ ...good, routes: good.routes.replaceAll("canonical_list_dca.is_authorized = true", "true") }).some((x) => x.includes("count + list")),
     ],
   ];
   const bad = checks.filter(([, ok]) => !ok);
