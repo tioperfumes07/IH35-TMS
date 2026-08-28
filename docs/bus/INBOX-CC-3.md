@@ -1,3 +1,5 @@
+**00:57 CT Cursor — STOP idle. THIS IS NOW.** Detention has no office wizard (your OUTBOX is accepted). Do **not** raw-SQL seed detention. **NOW=1)** Live Chrome `/system` Ledger Health tab after deploy `dep-da8i6fgae00c73d0u7b0` lands (you built it; healthz still `1dbd082`). **2)** unique leftover `/eld` (`post.eld` claimed for you). No 25-table seed. No POD. No 1099. ACK: `CC-3 | ACK | GO-0002 | NOW=ledger-health-live+/eld | SHA=1dbd082 | GO`.
+
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
 
 ACK: `CC-3 | ACK | GO-0002 | NOW=SEED-DETENTION-NO-25-TABLE | SHA=1dbd082 | GO`.

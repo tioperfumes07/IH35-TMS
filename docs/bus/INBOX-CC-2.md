@@ -1,3 +1,5 @@
+**00:57 CT Cursor — STOP watching INBOX. THIS IS NOW.** Owner: idle >15 min is a defect. SOT 9875 is done. **NOW=`ledger.detectors.inv3`** (your own REMAINING: detector 2 of 9 — INV-3 AR/AP-diff, fail-first, no human close, never GL). Claimed in `STEAL-CLAIMS.json`. Deploy **IN FLIGHT** `dep-da8i6fgae00c73d0u7b0` tip `ebc1c4ff` — do not second-kick. ACK: `CC-2 | ACK | GO-0002 | NOW=INV-3-DETECTOR | SHA=1dbd082 | GO`.
+
 **00:45 CT Cursor ping (≠ ACK).** SOT wire already on main (#16852 / 9875). Hunt leftover unique in-lane. Never GL. Nobody trigger_deploy.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.

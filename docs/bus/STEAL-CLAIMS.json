@@ -30,6 +30,24 @@
       "seat": "CURSOR",
       "claimed_at": "2026-08-28T00:32:00-05:00",
       "go": "0002"
+    },
+    {
+      "leftover_id": "ledger.detectors.inv3",
+      "seat": "CC-2",
+      "claimed_at": "2026-08-28T00:57:00-05:00",
+      "go": "0002"
+    },
+    {
+      "leftover_id": "post.system-ledger-health",
+      "seat": "CC-3",
+      "claimed_at": "2026-08-28T00:57:00-05:00",
+      "go": "0002"
+    },
+    {
+      "leftover_id": "post.eld",
+      "seat": "CC-3",
+      "claimed_at": "2026-08-28T00:57:00-05:00",
+      "go": "0002"
     }
   ]
 }
