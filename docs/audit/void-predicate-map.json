@@ -75,6 +75,13 @@
         "voided_at"
       ]
     },
+    "accounting.credit_memo_applications": {
+      "canonical_column": "voided_at",
+      "predicate": "voided_at IS NULL",
+      "all_columns": [
+        "voided_at"
+      ]
+    },
     "accounting.customer_classifications": {
       "canonical_column": "archived_at",
       "predicate": "archived_at IS NULL",
