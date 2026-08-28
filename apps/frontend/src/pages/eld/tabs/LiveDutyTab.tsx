@@ -26,8 +26,8 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
     refetchInterval: 60_000,
   });
 
-  const rows = query.data?.drivers ?? [];
-  const counts = query.data?.counts;
+  const rows = query.isError ? [] : query.data?.drivers ?? [];
+  const counts = query.isError ? null : query.data?.counts;
 
   const columns = useMemo<Array<ParityColumn<HosRosterDriver>>>(
     () => [

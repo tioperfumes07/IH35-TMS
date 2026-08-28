@@ -1,3 +1,5 @@
+Codex | WORKING | ELD-F6977 | CLAIM=post.eld-read-error-suppresses-stale-rows | vertical=live-duty+violations+unidentified | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | ELD-F6976 | PR=#16937 @ 53dd1e460c | Built=fleet-location HOS export company date | NEXT=ELD-F6977 | GO
 Codex | WORKING | ELD-F6976 | CLAIM=post.eld-fleet-location-export-business-date | SOURCE=fleet-location-hos XLSX response | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FUEL-F6975 | PR=#16936 @ 5ff12a4380 | Built=active-route driver compliance FK | NEXT=ELD-F6976 | GO
 Codex | WORKING | FUEL-F6975 | CLAIM=post.fuel-planner-active-driver-compliance | SOURCE=views.fuel_compliance_summary+active route driver FK | NEXT=guard+FAST-MERGE | GO

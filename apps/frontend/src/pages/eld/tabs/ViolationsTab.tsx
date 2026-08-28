@@ -20,8 +20,8 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
   });
 
   const rows = useMemo(
-    () => (query.data?.hos_violations ?? []).filter((row) => !row.voided_at),
-    [query.data?.hos_violations],
+    () => (query.isError ? [] : query.data?.hos_violations ?? []).filter((row) => !row.voided_at),
+    [query.data?.hos_violations, query.isError],
   );
   const total = query.isError ? 0 : query.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
