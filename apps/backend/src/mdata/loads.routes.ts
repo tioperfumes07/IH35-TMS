@@ -1069,6 +1069,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = loadStatusTransitionBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const scopedCompanyId = parsedQuery.data.operating_company_id;
+    await assertCompanyMembership(authUser.uuid, scopedCompanyId);
     const { new_status: newStatus, cancellation_reason_code: cancellationReasonCode, cancellation_notes: cancellationNotes } = parsedBody.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
@@ -1084,9 +1088,9 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       }>(
         `SELECT id, status, operating_company_id FROM mdata.loads
          WHERE id = $1 AND soft_deleted_at IS NULL
-           AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+           AND operating_company_id = $2::uuid
          LIMIT 1`,
-        [parsedParams.data.id]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const current = currentRes.rows[0] ?? null;
       if (!current) return { error: "mdata_load_not_found" as const };
@@ -1149,13 +1153,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           UPDATE mdata.loads
           SET status = $2
           WHERE id = $1
-            AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+            AND operating_company_id = $3::uuid
           RETURNING
             id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
             assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
             dispatcher_user_id, notes, created_at, updated_at, soft_deleted_at, deleted_by_user_id
         `,
-        [parsedParams.data.id, newStatus]
+        [parsedParams.data.id, newStatus, scopedCompanyId]
       );
       const row = updateRes.rows[0] ?? null;
       if (!row) return { error: "mdata_load_not_found" as const };

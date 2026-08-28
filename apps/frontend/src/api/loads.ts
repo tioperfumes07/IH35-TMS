@@ -361,21 +361,17 @@ function toDispatchTransitionStatus(status: LoadStatus): DispatchStatus | null {
 export function updateLoadStatus(
   id: string,
   body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string },
-  operatingCompanyId?: string | null
+  operatingCompanyId: string
 ) {
   const dispatchStatus = toDispatchTransitionStatus(body.new_status);
   if (dispatchStatus) {
-    if (!operatingCompanyId) {
-      return Promise.reject(
-        new Error("operating_company_id is required for dispatch load status transitions")
-      );
-    }
     return transitionDispatchLoad(id, operatingCompanyId, {
       new_status: dispatchStatus,
       cancellation_reason_code: body.cancellation_reason_code,
     }) as Promise<LoadDetail | { ok: true; status: string }>;
   }
-  return apiRequest<LoadDetail | { ok: true; status: string }>(`/api/v1/mdata/loads/${id}/status`, {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<LoadDetail | { ok: true; status: string }>(`/api/v1/mdata/loads/${id}/status?${query.toString()}`, {
     method: "PATCH",
     body,
   });
@@ -406,7 +402,7 @@ export function useLoadsList(filters: LoadsListFilters) {
   });
 }
 
-export function useLoad(id: string | null, operatingCompanyId: string | null) {
+export function useLoad(id: string | null, operatingCompanyId: string | null | undefined) {
   return useQuery({
     queryKey: ["loads", "detail", operatingCompanyId, id],
     queryFn: () => getLoad(id as string, operatingCompanyId as string),
@@ -455,21 +451,23 @@ export function useCreateLoad() {
   });
 }
 
-export function useUpdateLoadStatus(operatingCompanyId?: string | null) {
+export function useUpdateLoadStatus(operatingCompanyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, body }: { id: string; body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string } }) =>
-      updateLoadStatus(id, body, operatingCompanyId),
+    mutationFn: ({ id, body }: { id: string; body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string } }) => {
+      if (!operatingCompanyId) return Promise.reject(new Error("operating_company_id is required to update a load status"));
+      return updateLoadStatus(id, body, operatingCompanyId);
+    },
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
-      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", vars.id] });
-      void queryClient.invalidateQueries({ queryKey: ["loads", "audit", vars.id] });
-      void queryClient.invalidateQueries({ queryKey: ["dispatch", "load-detail", vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", operatingCompanyId, vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "audit", operatingCompanyId, vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "load-detail", vars.id, operatingCompanyId] });
     },
   });
 }
 
-export function useCancelLoad(operatingCompanyId?: string | null) {
+export function useCancelLoad(operatingCompanyId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reasonCode, notes }: { id: string; reasonCode: string; notes?: string }) => {
@@ -480,8 +478,8 @@ export function useCancelLoad(operatingCompanyId?: string | null) {
     },
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
-      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", vars.id] });
-      void queryClient.invalidateQueries({ queryKey: ["loads", "audit", vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", operatingCompanyId, vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "audit", operatingCompanyId, vars.id] });
     },
   });
 }

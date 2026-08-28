@@ -131,7 +131,7 @@ function check(src, mdataLoadsSrc, drawerSrc, loadApiSrc, factoringSrc, finesSrc
     );
   }
 
-  if (!/export function useLoad\(id: string \| null, operatingCompanyId: string \| null\)/.test(loadApiSrc)) {
+  if (!/export function useLoad\(id: string \| null, operatingCompanyId: string \| null \| undefined\)/.test(loadApiSrc)) {
     problems.push(`${LOAD_API}: shared useLoad must require an operating-company scope`);
   }
   if (!/export function getLoad\(id: string, operatingCompanyId: string\)/.test(loadApiSrc)) {
@@ -264,7 +264,7 @@ function main() {
       const unscopedApi = loadApiSrc
         .replace("export function getLoad(id: string, operatingCompanyId: string)", "export function getLoad(id: string, operatingCompanyId?: string)")
         .replace("new URLSearchParams({ operating_company_id: operatingCompanyId })", "new URLSearchParams()")
-        .replace("export function useLoad(id: string | null, operatingCompanyId: string | null)", "export function useLoad(id: string | null)")
+        .replace("export function useLoad(id: string | null, operatingCompanyId: string | null | undefined)", "export function useLoad(id: string | null)")
         .replace('["loads", "detail", operatingCompanyId, id]', '["loads", "detail", id]')
         .replace("getLoad(id as string, operatingCompanyId as string)", "getLoad(id as string)")
         .replace("Boolean(id && operatingCompanyId)", "Boolean(id)");
