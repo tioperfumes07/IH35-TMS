@@ -13,6 +13,8 @@ Last locked: 2026-06-08 by Jorge. Repo doc WINS over any handoff/STATUS/memory. 
 > 12-item meaning of wired/done (includes surface bar; **Live Chrome last**). Soft “includes all” without
 > that list is a process defect. Guard: `scripts/verify-fully-wired-complete-bar-present.mjs`.
 
+> **TAX / 1099 (2026-07-26 E1):** withholding and information-return obligation = **OWNER-DECISIONS-FINAL E1** (no withholding; No 1042-S/1099). Do not treat `docs/LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md` BLOCK-17/24 as current. Map: `docs/specs/SOURCE-OF-TRUTH-MAP.md`.
+
 ## 1. SIDEBAR — FINAL ORDER (additive, owner-locked)
 > **Count source of truth = `apps/frontend/src/components/layout/sidebar-config.ts` (`SIDEBAR_ITEM_IDS`),
 > enforced by `scripts/verify-sidebar-contract.mjs`. Live count is **30** (render count is role-dependent;

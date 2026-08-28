@@ -40,7 +40,7 @@ Complete answered set. Only **F15** pends one word. No outside accountant — yo
 - **D4 — C**: build accessorial engine after the invoice exists; standard default amounts, editable per invoice, vary by customer (amounts TBD by you).
 
 ## E — Tax / Close
-- **E1 — A**: no withholding from anyone; W-8BEN on file + in Legal.
+- **E1 — A**: no withholding from anyone (Mexico B1/B2 drivers, Mexican mechanics, all). W-8BEN on driver file AND in Legal. **No 1042-S/1099.**
 - **E2 — C**: suggest + a person confirms.
 - **E2b — 1**: auto-block dispatch on a positive drug/alcohol test.
 - **E3 — A**: build state hire-doc storage now.

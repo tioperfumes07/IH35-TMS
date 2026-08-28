@@ -31,3 +31,16 @@ Seed **only**:
 Before taking another seat’s leftover, append `docs/bus/STEAL-CLAIMS.json` (`leftover_id` unique). If the id is already claimed by another seat, pick a different leftover. Same shape as Rule 25. Pre-claimed this tick: Cascade `post.fuel`, Devin `post.vendors`.
 
 Idle law unchanged: **unverified work = defect; drained lane steals (after claim); do not stamp green to look busy.** Claude withdraws “idle while blocked = correct.”
+
+## 5. Seed hold until operational reports exclude sample (GO-0002)
+
+**1099 alarm is retracted.** E1 closed withholding/1099 on 2026-07-26. BLOCK-24 is PENDING/GATED. A TEST dollar on the 1099 report is not a finding and not a seed blocker.
+
+**Still HOLD the ~25-table seed campaign** until `is_sample_data` is excluded (same predicate as TB/P&L/BS post #16832) on live operational reports:
+
+- AP aging (`apps/backend/src/accounting/ap-aging.service.ts` — `FROM accounting.bills` has **no** sample filter)
+- AR aging (`apps/backend/src/accounting/ar-aging.service.ts` — `FROM accounting.invoices` has **no** sample filter)
+- vendor balances (`GET /api/v1/accounting/vendor-balances` / `accounting.vendor_balances`)
+- collections (`apps/backend/src/accounting/collections.service.ts` — **no** `is_sample_data`)
+
+**CC-1:** extend the sample filter + inherit flag on TEST docs. Then seed. Not before.

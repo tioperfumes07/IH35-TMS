@@ -1,3 +1,5 @@
+> **SUPERSEDED-BY (withholding / 1099 / 1042-S — 2026-07-26):** `docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md` **E1** — no withholding from anyone; **No 1042-S/1099.** This design remains a historical engine spec for a **PENDING/GATED** BLOCK-24. Do not treat dollars on that report as a filing obligation. Do not ask a CPA (`OPERATING-FACT-no-CPA-owner-decides`). The 07-05 ENTERPRISE “drivers = 1099-NEC” premise this doc cites is struck.
+
 # 1099-NEC / 1042-S Annual Tax-Document Generation + General Tax-Document PDF Engine
 
 > **HOLD LANGUAGE SUPERSEDED — OWNER LAW 2026-08-03 / owner directive 2026-08-06.** There are NO holds and no approval gate. All owner questions are asked-and-answered. Coders build, apply on Neon, and MERGE ON GREEN with proof. Any "build-and-hold", "Jorge merges", "never self-merge" or "wait for approval" wording below is HISTORICAL RECORD ONLY and must not be followed.

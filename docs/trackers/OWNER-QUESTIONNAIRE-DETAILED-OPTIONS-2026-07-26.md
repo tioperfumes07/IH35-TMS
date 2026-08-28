@@ -349,6 +349,8 @@
 
 ## E1 — Mexican B1 drivers tax reporting
 
+> **ANSWERED 2026-07-26 — OWNER-DECISIONS-FINAL E1 (do not fill the blanks below).** No withholding from anyone (Mexico B1/B2 drivers, Mexican mechanics, all). W-8BEN on driver file AND in Legal. **No 1042-S/1099.** There is no CPA. The option table is historical questionnaire chrome.
+
 | Option | Meaning |
 |--------|---------|
 | **A** | **W-8BEN on file + 1042-S**; withhold **30%** NRA unless treaty exception documented |

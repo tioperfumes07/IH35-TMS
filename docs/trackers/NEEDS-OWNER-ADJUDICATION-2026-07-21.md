@@ -1,5 +1,7 @@
 # NEEDS-OWNER — Adjudication vs saved rulings (2026-07-21)
 
+> **SUPERSEDED-BY (item 1 / BLOCK-24 1099+withholding — 2026-07-26):** OWNER-DECISIONS-FINAL **E1**. That question is **closed**. Do not re-ask. No CPA.
+
 ## Post-adjudication overrides (2026-07-21 evening)
 
 Owner rulings recorded after the read-only adjudication below. These do **not** rewrite the JSON snapshot; treat them as the live override layer when dispatching.
@@ -29,7 +31,7 @@ Owner rulings recorded after the read-only adjudication below. These do **not** 
 
 _Each is one crisp decision. Answer in a sentence; several are the same underlying call (noted)._
 
-1. **[BLOCK-24-of-29-TIER3.5-1099-ANNUAL]** (platform) — Mexican-B1 W-8BEN drivers doing US service: apply 1042-S + 30% NRA withholding, or 1099-NEC only — and is 30% withholding currently being done?
+1. **[BLOCK-24-of-29-TIER3.5-1099-ANNUAL]** — **SUPERSEDED 2026-07-26 E1.** No 1042-S/1099; no withholding; no CPA question. BLOCK-24 engine stays PENDING/GATED (not a filing surface).
 2. **[phase13-audit216-banking-industry]** (banking) — Is a lending-operations / banking-risk-analytics module in scope for IH35-TMS, or explicitly out-of-scope?
 3. **[phase3-audit57-process-audit-docs-workflow]** (platform) — Build a process-bottleneck / audit-docs workflow dashboard, or is it out-of-scope?
 4. **[phase3-audit72-calibration]** (fleet) — Track equipment calibration (ELD / scale) inside TMS, or treat it as out-of-scope?

@@ -1,3 +1,7 @@
+**00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
+
+ACK: `CC-1 | ACK | GO-0002 | NOW=OPTION-B-THEN-AGING-SAMPLE-FILTER | SHA=1dbd082 | GO`.
+
 **00:15 CT GO-0001 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. ACK: `CC-1 | ACK | GO-0001 | NOW=OPTION-B-EVENT2 | SHA=1dbd082 | GO`. No POD for Event 2. SOT block on every FINDING. Never second-kick deploy.
 
 **23:55 CT GO-2350 — B IS NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2350.md`. ACK: `CC-1 | ACK | GO-2350 | NOW=OPTION-B-EVENT2 | GO`. **Owner typed B.** Implement Event 2 on delivery+issued invoice; remove POD gate from Event 2 only. Then void reverse + unapplied. **GO-2228 “2.2 BLOCKED ON OWNER A/B/C” is VOID.** No new A/R poster. No POD seed. Never `trigger_deploy` (deploy already in flight).

@@ -19,7 +19,7 @@ Sanitized card only — no names, signatures, addresses, emails, personal-guaran
 | Opening | Currency | **USD home**; MXN via FX gain/loss (ASC 830) | |
 | Factoring | Treatment | **Secured borrowing / recourse** (NOT a sale); Substance-over-form | A/R remains pledged collateral; funding credits Factoring Advance; **no A/R derecognition** |
 | Factoring | Faro terms | **$1,000,000** revolving; fees **1.5% / 2% of Net at funding**; reserve **1.5%**; Purchase Price = Net − Fee − Reserve; proceeds = Purchase Price − transaction/wire fees; **30d+5d**; repurchase **95d**; default **0.067%/day compounded beginning after day 35** | Factor statements authoritative |
-| Drivers | Class | Mexican **B1** (not W-2/owner-op); **W-8BEN yearly** | "Cost of Labor–Mexico Drivers" |
+| Drivers | Class | Mexican **B1** (not W-2/owner-op); **W-8BEN yearly** | **E1 (2026-07-26):** no withholding; **No 1042-S/1099.** W-8BEN is on file + Legal. Do not treat 07-05 “1099-NEC” as current. |
 | Drivers | Pay | **5% net floor** + per-event override; deductions bucketed, no auto-cap | net-pay clearing acct |
 | Drivers | Balances | Cash Advance = **asset**; **Escrow = liability** (held-in-trust, 60–90d) | Additive **Driver Damage Loss** |
 | Basis | Dual-basis | **TMS ACCRUAL** at canonical load delivery; QBO **cash-basis** mirroring unchanged in QBO-SoR window | Delivery does **not** redefine cash recognition |

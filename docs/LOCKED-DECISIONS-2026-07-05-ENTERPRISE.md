@@ -1,13 +1,22 @@
 # IH35-TMS — ENTERPRISE + ACCOUNTING DECISIONS — LOCKED 2026-07-05 (committed)
 
-**Durable record so nothing is re-asked.** Mirrors auto-memory `enterprise-feature-decisions-2026-07-05`, `banking-split-and-linkage-design`. Companion: `docs/lockdown/00_LOCKED_DECISIONS.md`, `LOCKED-DECISIONS-2026-07-05-EVENING.md`.
+> **SUPERSEDED-BY (tax / 1099 / withholding — 2026-07-26):** `docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md` **E1**.
+> Canonical: no withholding from anyone (Mexico B1/B2 drivers, Mexican mechanics, all). W-8BEN on driver file AND in Legal. **No 1042-S/1099.** There is **no CPA** (`OPERATING-FACT-no-CPA-owner-decides`). Do not re-open BLOCK-24 filing, 30% NRA withholding, or “drivers = 1099-NEC” from this file.
+>
+> **SUPERSEDED-BY (opening / cutover dates in § OPENING BALANCES below):** `docs/lockdown/00_LOCKED_DECISIONS.md` **§8.9** (OB 03/31/2026 · live parallel 04/01/2026). The 01-01-2025 / 12/31/2024 lines in this file are historical.
+>
+> This file remains a **historical enterprise packet**. Any decision later reversed has a SUPERSEDED-BY line. Unmarked bullets may still be current — confirm against `00_LOCKED_DECISIONS.md` and OWNER-DECISIONS-FINAL before treating as NOW.
+
+**Durable record so nothing is re-asked.** Mirrors auto-memory `enterprise-feature-decisions-2026-07-05`, `banking-split-and-linkage-design`. Companion: `docs/lockdown/00_LOCKED_DECISIONS.md`.
 
 ---
 
 ## OPENING BALANCES / OPEN DATE
-- System opens **01-01-2025**. Opening = **QuickBooks Balance Sheet 12/31/2024** (signed).
+> **SUPERSEDED-BY** `docs/lockdown/00_LOCKED_DECISIONS.md` **§8.9** (owner-final 2026-07-16): opening balances = QBO BS as of **03/31/2026**; TMS posts live in parallel from **04/01/2026**. Do not use the 01-01-2025 / 12/31/2024 lines below as NOW.
+
+- System opens **01-01-2025**. Opening = **QuickBooks Balance Sheet 12/31/2024** (signed). *(historical — see SUPERSEDED-BY)*
 - **TRANSP + TRK: IMPORT opening balances FROM QuickBooks** (agent pulls the BS via QBO — no owner hand-entry; still a financial ceremony: build importer, show Jorge, run on OK/Neon, never self-post prod).
-- **USMCA = 0 on everything** at 01-01-2025 (no opening JE).
+- **USMCA = 0 on everything** at 01-01-2025 (no opening JE). *(historical open-date; USMCA still starts empty — confirm against §8.9 / current entity law)*
 
 ## A/P MIGRATION (AF-4)
 - **YES** — import ~$1.18M A/P from QuickBooks (BS/AP as of cutover), AFTER opening balances land.
@@ -25,7 +34,7 @@
 - **Depreciation (BLOCK-01):** 5-yr straight-line, revenue equipment, GAAP books. (Engine already exists: `accounting.fixed_assets` + FIN-21 poster; only autopost cron + CCG loan-link remain — PR #2179. Open micro-q: trailer useful life, default 60mo.)
 - **Driver escrow (BLOCK-02):** liability returned **≥90 days AFTER resign/fire/termination date**, net of deductions.
 - **IFTA (BLOCK-03):** in-house; model AllwaysTrack/McLeod/Alvys; base on **TRIP = practical miles**, discount **personal-conveyance**; Mexico is NOT an IFTA jurisdiction (tracked for visibility only); quarterly; Jorge files. (v1 already ships: `ifta.quarterly_preparations` + wizard — extend additively, PR #2177.)
-- **1099 + ALL tax docs (BLOCK-17/24):** drivers = 1099-NEC; build in-house per **IRS + US Treasury**; **Jorge/company transmits** (software never e-files); **every tax doc = PDF** for archive + mail + email. **Foreign-status caveat (from PR #2178):** a Mexican-B1 W-8BEN driver performing services in the US generally needs **1042-S + 30% NRA withholding**, not 1099-NEC — OPEN COMPLIANCE QUESTION for Jorge/CPA: is 30% withholding currently being done?
+- **1099 + ALL tax docs (BLOCK-17/24):** ~~drivers = 1099-NEC~~ / ~~1042-S + 30% NRA withholding~~ / ~~OPEN COMPLIANCE QUESTION for Jorge/CPA~~ — **SUPERSEDED 2026-07-26 by OWNER-DECISIONS-FINAL E1.** No withholding from anyone. W-8BEN on file + Legal. **No 1042-S/1099.** BLOCK-24 annual vendor 1099 remains **PENDING/GATED** (tracker row 600) — nobody files from it; a dollar on that report is not a finding. Software still never e-files. There is no CPA to ask.
 - **Factoring (CONN-2):** build **Faro** poster now (secured borrowing, ASC 860); Faro→RTS = later config swap. **CHAIN-06 (PR #2188) confirmed** CODER-34 (#1770, flag OFF) already implements the directive: **A/R closes only when the customer pays Faro**, never at funding.
 - **1099/425c consolidation (STMT-3), Consolidation (BLOCK-25):** defer to the very end (BLOCK-25 needs all 3 entities live).
 - **AF-8 payroll-bridge:** stays DEFERRED (1099, no QBO write-back). **AF-2 qbo-drift:** detect only, write stays OFF. **AF-7 money-controls:** OFF until owner tie-out.

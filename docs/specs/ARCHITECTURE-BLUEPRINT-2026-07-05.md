@@ -22,8 +22,10 @@ Never take the short/easy way, never defer a root problem, never patch, never gu
 
 ---
 
-## 2. DRIVER MODEL — hired 1099, NOT owner-operators
-IH35 drivers are **hired Mexican-B1 external contractors (1099 / W-8BEN)** — **not** owner-operators.
+## 2. DRIVER MODEL — hired contractors, NOT owner-operators
+> **SUPERSEDED-BY (1099/withholding wording):** OWNER-DECISIONS-FINAL **E1**. Drivers remain Mexican-B1 contractors with **W-8BEN** on file. **No 1042-S/1099; no withholding.** The historical “1099 / W-8BEN” label below is contractor classification chrome, not a filing obligation.
+
+IH35 drivers are **hired Mexican-B1 external contractors (W-8BEN on file)** — **not** owner-operators.
 - Driver pay = a **per-LOAD fixed fee** (`driver_finance.driver_bills.gross_amount_cents`, one bill per load, sourced from the load's `accounting.bills.amount_cents`). The "$/mi" is derived display only.
 - The **full customer linehaul is COMPANY revenue**; driver pay is a small independent labor line (**"Cost of Labor–Mexico Drivers"**), booked as **Contract Labor**, never "Purchased Transportation" (that's owner-ops) and never payroll-with-withholding.
 - Net-pay floor = **5% EDITABLE** per settlement (code is stale at 10%/50% → FIX). Consent = the **hire contract** (no separate e-sign). Recovery ordering = **pay-first, then escrow**.
@@ -31,7 +33,7 @@ IH35 drivers are **hired Mexican-B1 external contractors (1099 / W-8BEN)** — *
 ---
 
 ## 3. SETTLEMENT POSTING — Bill + BillPayment (LOCKED)
-Driver settlements post as **Bill + BillPayment** (driver = a **vendor**, for A/P aging + 1099/W-8BEN tracking) — **not** a single JE. Canonical engine = **`driver_finance.driver_settlements` + `driver_finance.driver_settlement_deductions`** (`payroll.*` retired).
+Driver settlements post as **Bill + BillPayment** (driver = a **vendor**, for A/P aging + W-8BEN on file) — **not** a single JE. Canonical engine = **`driver_finance.driver_settlements` + `driver_finance.driver_settlement_deductions`** (`payroll.*` retired). **Not** a 1099-filing requirement (E1).
 
 **Bill per LOAD** (numbered by the load #, auto-linked to the settlement). Multiple per-load bills aggregate into ONE settlement (a trip). Worked example — Mecor, 3 loads, 1 settlement:
 ```
