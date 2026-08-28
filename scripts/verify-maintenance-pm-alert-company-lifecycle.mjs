@@ -13,7 +13,7 @@ const checks = [
   [/(?:onSuccess: \(_result, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;[\s\S]*?){2}/, "both success callbacks reject stale generations"],
   [/(?:onError: \(_error, input\) => \{\s*if \(input\.generation === actionGenerationRef\.current\) pushToast\([\s\S]*?){2}/, "both error callbacks reject stale generations"],
   [/(?:invalidateQueries\(\{ queryKey: \["maintenance", "pm-alerts", input\.companyId\] \}\)[\s\S]*?){2}/, "both success callbacks refresh the submitted company"],
-  [/useEffect\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*ackMutation\.reset\(\);\s*scheduleMutation\.reset\(\);\s*setSchedulingAlertId\(null\);\s*setSelectedWorkOrderId\(null\);\s*\}, \[operatingCompanyId\]\)/, "company switch retires requests and clears action state"],
+  [/useEffect\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*ackMutation\.reset\(\);\s*scheduleMutation\.reset\(\);\s*setSchedulingAlertId\(null\);\s*setSelectedWorkOrderId\(null\);\s*setOpenPage\(1\);\s*setScheduledPage\(1\);\s*\}, \[operatingCompanyId, pageSize\]\)/, "company or range switch retires requests, clears action state, and resets both pagers"],
   [/ackMutation\.mutateAsync\(\{\s*alertId: alert\.id,\s*companyId: operatingCompanyId,\s*generation: actionGenerationRef\.current,\s*\}\)/, "ack helper submits immutable scope"],
   [/scheduleMutation\.mutate\(\{\s*alertId: alert\.id,\s*workOrderId: selectedWorkOrderId,\s*companyId: operatingCompanyId,\s*generation: actionGenerationRef\.current,\s*\}\)/, "schedule helper submits immutable scope"],
 ];
