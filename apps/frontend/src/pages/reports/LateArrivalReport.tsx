@@ -9,6 +9,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 
 type GroupBy = "driver" | "customer" | "lane";
 
@@ -30,12 +31,11 @@ type LateArrivalReport = {
 };
 
 function monthStart() {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  return monthBoundsIso(companyToday()).start;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function pct(rate: number) {
