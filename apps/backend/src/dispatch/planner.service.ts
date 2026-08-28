@@ -365,27 +365,32 @@ export async function reschedulePlannerLoad(
       };
     }
 
-    await client.query(
+    const pickupUpdate = await client.query<{ id: string }>(
       `
         UPDATE mdata.load_stops
         SET scheduled_arrival_at = $1::timestamptz,
             updated_at = now()
         WHERE id = $2::uuid
+          AND load_id = $3::uuid
+        RETURNING id
       `,
-      [parsedStart.toISOString(), load.pickup_stop_id]
+      [parsedStart.toISOString(), load.pickup_stop_id, loadId]
     );
+    if (!pickupUpdate.rows[0]?.id) return { ok: false, error: "load_not_found" };
 
     if (driverId && driverId !== String(load.driver_id ?? "")) {
-      await client.query(
+      const driverUpdate = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET assigned_primary_driver_id = $1::uuid,
               updated_at = now()
           WHERE id = $2::uuid
             AND operating_company_id = $3::uuid
+          RETURNING id
         `,
         [driverId, loadId, operatingCompanyId]
       );
+      if (!driverUpdate.rows[0]?.id) return { ok: false, error: "load_not_found" };
     }
 
     const refreshed = await client.query(

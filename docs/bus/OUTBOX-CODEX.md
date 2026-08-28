@@ -1944,3 +1944,5 @@ Codex | WORKING | DSP-F7127M | CLAIM=manual-reassign-exact-company-write | SOURC
 Codex | SHIPPED | DSP-F7127L | PR=#17190 @ b8ab2d09c5 | Built=Samsara status exact-company write | NEXT=manual reassign | GO
 Codex | WORKING | DSP-F7127N | CLAIM=load-distribution-exact-company-backlink | SOURCE=docs.files/file_links→mdata.loads | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127M | PR=#17191 @ 5f182e24f2 | Built=manual reassign exact-company write | NEXT=load distribution | GO
+Codex | WORKING | DSP-F7127O | CLAIM=planner-reschedule-write-continuity | SOURCE=load_stops.load_id+mdata.loads.opco | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127N | PR=#17192 @ abd66b4d82 | Built=distribution backlink exact-company | NEXT=planner reschedule | GO
