@@ -244,7 +244,10 @@ export function DriverDetailPage() {
   });
   const [rateChangeForm, setRateChangeForm] = useState<Record<string, string>>({
     amount: "",
-    effective_from: new Date().toISOString().slice(0, 10),
+    // DRV-MONEY-F6959 — companyToday(), not new Date().toISOString() (UTC): a qualification-rate
+    // change filed in the evening Central can otherwise become effective "tomorrow" by UTC's clock,
+    // shifting when settlement economics actually start using the new rate.
+    effective_from: companyToday(),
     change_reason: "raise",
     change_notes: "",
   });
@@ -1450,7 +1453,8 @@ export function DriverDetailPage() {
                               setRateChangeForm((current) => ({
                                 ...current,
                                 amount: line.amount ? String(line.amount) : "",
-                                effective_from: new Date().toISOString().slice(0, 10),
+                                // DRV-MONEY-F6959 — same companyToday() fix as the initial form state above.
+                                effective_from: companyToday(),
                               }));
                               setRateModalOpen(true);
                             }}
