@@ -37,10 +37,10 @@ export function audit(src) {
   if (!/createEquipment\(\{/.test(src.createTrailer)) {
     failures.push(`${FILES.createTrailer}: must post real trailer fields via createEquipment`);
   }
-  if (!/equipment_type: draft\.equipment_type/.test(src.createTrailer)) {
+  if (!/equipment_type: input\.draft\.equipment_type/.test(src.createTrailer)) {
     failures.push(`${FILES.createTrailer}: create payload must carry a real equipment_type`);
   }
-  if (!/mutationFn: \(\) => patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/.test(src.editTrailer)) {
+  if (!/mutationFn: \(input: \{ trailerId: string; companyId: string; generation: number; patch: Record<string, unknown> \}\) => patchTrailer\(input\.trailerId, input\.companyId, input\.patch\)/.test(src.editTrailer)) {
     failures.push(`${FILES.editTrailer}: edit must patch real trailer fields via patchTrailer`);
   }
   if (!/profileQuery\.isError[\s\S]{0,220}<ListErrorState[\s\S]{0,220}onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/.test(src.editTrailer)) {
@@ -117,8 +117,8 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["create-call", "createTrailer", /createEquipment\(\{/, "createSomethingElse({"],
-    ["create-type", "createTrailer", /equipment_type: draft\.equipment_type/, "equipment_type: undefined"],
-    ["edit-patch", "editTrailer", /mutationFn: \(\) => patchTrailer\(trailerId, operatingCompanyId, patchPayload\)/, "mutationFn: () => Promise.resolve()"],
+    ["create-type", "createTrailer", /equipment_type: input\.draft\.equipment_type/, "equipment_type: undefined"],
+    ["edit-patch", "editTrailer", /mutationFn: \(input: \{ trailerId: string; companyId: string; generation: number; patch: Record<string, unknown> \}\) => patchTrailer\(input\.trailerId, input\.companyId, input\.patch\)/, "mutationFn: () => Promise.resolve()"],
     ["edit-read-retry", "editTrailer", /onRetry=\{\(\) => void profileQuery\.refetch\(\)\}/, "onRetry={undefined}"],
     ["edit-save-profile-gate", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={companiesQuery.isError}"],
     ["edit-save-company-gate", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={profileQuery.isError}"],

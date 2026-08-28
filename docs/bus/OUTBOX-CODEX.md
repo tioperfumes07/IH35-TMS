@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7045 | CLAIM=post.fleet-trailer-modal-captured-scope-guard | SOURCE=captured trailer create/edit payloads | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7044 | PR=#17001 @ 8f07693aaf | Built=fleet creator route guard 21/21 | NEXT=trailer modal payload guard | GO
 Codex | WORKING | FLEET-F7044 | CLAIM=post.fleet-roster-create-route-guard-extractor | SOURCE=unit+trailer creator→canonical POST routes | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7043 | PR=#17000 @ 69c021afe7 | Built=complete fleet roster total guard 8/8 | NEXT=create route guard | GO
 Codex | WORKING | FLEET-F7041 | CLAIM=post.fleet-unit-assignment-exact-filter-guard | SOURCE=unit profile reverse drill→paged assignment API→WO.unit_id | NEXT=guard+FAST-MERGE | GO
