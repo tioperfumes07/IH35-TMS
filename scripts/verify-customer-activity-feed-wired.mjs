@@ -21,10 +21,15 @@ export function collectFailures(sources) {
   requireText("page", "listSpineEvents({", "activity feed does not call the canonical spine API");
   requireText("page", 'entityType: "customer"', "activity feed is not filtered to customer subjects");
   requireText("page", "entityId: customerId", "activity feed is not filtered to the selected customer id");
-  requireText("page", '["customers", "activity-feed", operatingCompanyId, customerId]', "query key is not company+customer scoped");
+  requireText("page", '["customers", "activity-feed", operatingCompanyId, customerId, activityPage]', "query key is not company+customer+page scoped");
   requireText("page", "Couldn't load customer activity", "activity feed lacks an explicit error state");
   requireText("page", "onRetry={() => void activityQuery.refetch()}", "activity feed lacks retry wiring");
   requireText("page", "No recorded activity for this customer.", "activity feed lacks an honest settled empty state");
+  requireText("page", "offset: (activityPage - 1) * activityPageSize", "activity feed does not request the selected server page");
+  requireText("page", "activityQuery.data?.total_count ?? 0", "activity feed discards the exact server total");
+  requireText("page", 'data-testid="customer-activity-server-pager"', "activity feed lacks exact server pager chrome");
+  requireText("page", "hidePager", "activity feed leaves the contradictory local ParityTable pager mounted");
+  requireText("page", "if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1)", "activity feed cannot recover from an out-of-range page after history changes");
   requireText("page", 'activeTab === "activity_feed"', "Activity Feed tab is not mounted");
   if (sources.page.includes(PLACEHOLDER)) failures.push("static Activity Feed placeholder remains");
 
@@ -66,6 +71,11 @@ if (process.argv.includes("--selftest")) {
     { name: "drops-selected-id", key: "page", from: "entityId: customerId", to: "entityId: undefined" },
     { name: "restores-placeholder", key: "page", from: "function CustomerActivityFeed", to: `${PLACEHOLDER}\nfunction CustomerActivityFeed` },
     { name: "drops-retry", key: "page", from: "onRetry={() => void activityQuery.refetch()}", to: "onRetry={undefined}" },
+    { name: "drops-server-offset", key: "page", from: "offset: (activityPage - 1) * activityPageSize", to: "offset: 0" },
+    { name: "drops-exact-total", key: "page", from: "activityQuery.data?.total_count ?? 0", to: "activityQuery.data?.events.length ?? 0" },
+    { name: "drops-server-pager", key: "page", from: 'data-testid="customer-activity-server-pager"', to: 'data-testid="customer-activity"' },
+    { name: "restores-local-pager", key: "page", from: "        hidePager\n", to: "" },
+    { name: "drops-page-recovery", key: "page", from: "if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1)", to: "if (false) setActivityPage(1)" },
     { name: "drops-company-scope", key: "route", from: "el.operating_company_id = $1::uuid", to: "TRUE" },
     {
       name: "drops-required-customer",
