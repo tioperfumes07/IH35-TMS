@@ -8,6 +8,7 @@ import { useToast } from "../../components/Toast";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
 import { Combobox } from "../../components/Combobox";
+import { companyToday } from "../../lib/businessDate";
 
 const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "All statuses" },
@@ -81,7 +82,7 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = href;
-    anchor.download = `IH35-drivers-dqf-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `IH35-drivers-dqf-${companyToday()}.csv`;
     anchor.click();
     URL.revokeObjectURL(href);
   }

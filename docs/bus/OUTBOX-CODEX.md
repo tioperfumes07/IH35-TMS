@@ -1623,3 +1623,5 @@ CODEX | CLAIMING+WORKING | FINDING=DRV-F6949-ASSIGNMENT-HISTORY-EMPTY-OUT-OF-RAN
 CODEX | CLAIMING+WORKING | FINDING=CUST-F6950-ACTIVITY-FEED-SILENT-250-CAP | SOURCE-OF-TRUTH=events.event_log via audit spine exact total/limit/offset | I-QUERIED=CustomerActivityFeed+listSpineEvents+spine-events route | NOT-CHECKED=event writers+money+Live+TRANSP/TRK | routed=Codex | GO
 Codex | SHIPPED | CUST-F6950 | PR=#16916 @ d1fb8ecf1f | gate=exit0 | Built=customers exact activity-feed range | Live=post-deploy UNVERIFIED | NEXT=DSP-F6951 | GO
 CODEX | CLAIMING+WORKING | FINDING=DSP-F6951-LOAD-TEMPLATE-CATALOG-SILENT-500-CAP | SOURCE-OF-TRUTH=dispatch.load_templates | I-QUERIED=listLoadTemplates+LIMIT500+LoadTemplatePicker+Library | NOT-CHECKED=template writer+load create+money+Live+TRANSP/TRK | routed=Codex | GO
+Codex | WORKING | CLS-F6966 | CLAIM=post.export-business-date | vertical=customers+drivers+maintenance CSV/PDF | guard=5/5 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6963 | PR=#16928 @ b4a775851d | Built=backend safety+insurance business-date | routed-money=CC-1 | NEXT=CLS-F6966 | GO

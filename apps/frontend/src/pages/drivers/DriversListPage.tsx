@@ -16,6 +16,7 @@ import { type DqfComplianceLevel, driverDisplayName, summarizeDriverDqf } from "
 import { formatDateUS } from "../../lib/formatDate";
 import { DriversTable } from "./DriversTable";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { companyToday } from "../../lib/businessDate";
 
 type DriversListPageProps = {
   onOpenProfile?: (driverId: string) => void;
@@ -173,7 +174,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       const href = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = href;
-      anchor.download = `IH35-driver-profiles-${new Date().toISOString().slice(0, 10)}.csv`;
+      anchor.download = `IH35-driver-profiles-${companyToday()}.csv`;
       anchor.click();
       URL.revokeObjectURL(href);
     } catch (err) {

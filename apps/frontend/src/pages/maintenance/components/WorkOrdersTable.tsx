@@ -7,6 +7,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { CollapsedListFilters, useStagedListFilters } from "../../../components/table";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { useToast } from "../../../components/Toast";
+import { companyToday } from "../../../lib/businessDate";
 
 type Props = {
   rows: WorkOrder[];
@@ -71,7 +72,7 @@ function exportSelectedCsv(selected: WorkOrder[]) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `active-work-orders-selected-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `active-work-orders-selected-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
