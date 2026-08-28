@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCustomerFactor } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 // LINK-F5171/LINK-F5178 — factoring:factors.admin + factoring:batches.detail (customer side) reverse
 // gaps. getCustomerFactor(customerId, companyId) already returns { factor, assignments, batches }
@@ -22,7 +23,9 @@ export function CustomerFactoringReverseSection({ operatingCompanyId, customerId
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-reverse">
       <h2 className="text-sm font-semibold text-slate-900">Factoring</h2>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Factoring assignment unavailable.</p> : null}
+      {query.isError ? (
+        <ListErrorState status={0} message="Factoring assignment unavailable." onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && !factor && batches.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No factoring assignment or batch history for this customer.</p>

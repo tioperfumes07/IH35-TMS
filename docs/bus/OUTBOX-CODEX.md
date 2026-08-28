@@ -1,3 +1,5 @@
+Codex | WORKING | CUST-F6973 | CLAIM=post.customer-factoring-reverse-error-recovery | vertical=assignment+dispatch-queue+recourse+submit-queue | SOURCE=customer-scoped factoring APIs | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CLS-F6970 | PR=#16933 @ fc37649400 | Built=nonmoney backend company dates 12/12 | routed-money=CC-1 | NEXT=CUST-F6973 | GO
 Codex | WORKING | CLS-F6970 | CLAIM=post.nonmoney-backend-business-date | vertical=maintenance+scheduler+dispatch+integrity+samsara+compliance+OCR | guard=12/12 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | CLS-F6969 | PR=#16932 @ 9b4e9a6f06 | Built=nonmoney frontend company dates 13/13 | NEXT=CLS-F6970 | GO
 Codex | WORKING | CLS-F6969 | CLAIM=post.nonmoney-frontend-business-date | vertical=dispatch+docs+driver-hub+users+lists+reports+system | guard=13/13 | NEXT=FAST-MERGE | GO
