@@ -1879,3 +1879,5 @@ Codex | SHIPPED | DSP-F7106 | PR=#17107 @ feb53eb82e | Built=reassign immutable 
 Codex | WORKING | DSP-F7108 | CLAIM=post.dispatch-save-template-modal-scope-snapshot | SOURCE=mounted SaveLoadTemplateModal scope→dispatch.load_templates writer | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7108 | PR=#17112 @ 904c4e050f | Built=save-template immutable scope lifecycle | NEXT=equipment-transfer scope | GO
 Codex | WORKING | DSP-F7109 | CLAIM=post.dispatch-equipment-transfer-modal-scope-snapshot | SOURCE=mounted EquipmentTransferModal→canonical initiation writer | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7109 | PR=#17115 @ 085ffb82a4 | Built=equipment-transfer immutable scope lifecycle | NEXT=quick-assign scope | GO
+Codex | WORKING | DSP-F7110 | CLAIM=post.dispatch-quick-assign-modal-scope-snapshot | SOURCE=mounted QuickAssignModal→load assignment writer | NEXT=guard+FAST-MERGE | GO

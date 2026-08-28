@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
@@ -32,6 +32,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
   const [trailerOption, setTrailerOption] = useState<EntityPickerOption | null>(null);
   const [ackAll, setAckAll] = useState(false);
   const [loading, setLoading] = useState(false);
+  const scopeGenerationRef = useRef(0);
 
   const resetDraft = useCallback(() => {
     setDriverId("");
@@ -44,13 +45,16 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
   }, []);
 
   useEffect(() => {
+    scopeGenerationRef.current += 1;
+    setLoading(false);
     if (open) resetDraft();
   }, [open, operatingCompanyId, loadId, resetDraft]);
 
   const handleClose = useCallback(() => {
+    if (loading) return;
     resetDraft();
     onClose();
-  }, [onClose, resetDraft]);
+  }, [loading, onClose, resetDraft]);
 
   const hasSelected = Boolean(driverId || unitId || trailerId);
 
@@ -61,17 +65,21 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
         onSubmit={async (event) => {
           event.preventDefault();
           if (!driverId) return;
+          const submittedGeneration = scopeGenerationRef.current;
+          const submittedOnSubmit = onSubmit;
+          const submittedPayload = {
+            driver_id: driverId,
+            unit_id: unitId || undefined,
+            trailer_id: trailerId || undefined,
+            acknowledged_warnings: ackAll ? [...hardWarnings] : [],
+          };
           setLoading(true);
           try {
-            await onSubmit({
-              driver_id: driverId,
-              unit_id: unitId || undefined,
-              trailer_id: trailerId || undefined,
-              acknowledged_warnings: ackAll ? hardWarnings : [],
-            });
+            await submittedOnSubmit(submittedPayload);
+            if (scopeGenerationRef.current !== submittedGeneration) return;
             handleClose();
           } finally {
-            setLoading(false);
+            if (scopeGenerationRef.current === submittedGeneration) setLoading(false);
           }
         }}
       >
@@ -94,6 +102,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
               placeholder="Select driver…"
               className="h-9 w-full text-sm"
               allowClear={false}
+              disabled={loading}
               // Standalone Modal chrome → default shell="modal".
             />
           </div>
@@ -110,6 +119,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
                 setUnitOption(option ?? null);
               }}
               enabled={open}
+              disabled={loading}
               placeholder="Select unit (optional)…"
               className="h-9 w-full text-sm"
             />
@@ -127,6 +137,7 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
                 setTrailerOption(option ?? null);
               }}
               enabled={open}
+              disabled={loading}
               placeholder="Select trailer (optional)…"
               className="h-9 w-full text-sm"
             />
@@ -160,12 +171,12 @@ export function QuickAssignModal({ open, operatingCompanyId, loadId, loadNumber,
         ) : null}
         {hardWarnings.length > 0 ? (
           <label className="flex items-center gap-2 text-xs text-red-700">
-            <input type="checkbox" checked={ackAll} onChange={(event) => setAckAll(event.target.checked)} />
+            <input type="checkbox" checked={ackAll} onChange={(event) => setAckAll(event.target.checked)} disabled={loading} />
             Owner override: acknowledge hard-block warnings ({hardWarnings.join(", ")})
           </label>
         ) : null}
         <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" size="sm" variant="secondary" onClick={handleClose}>
+          <Button type="button" size="sm" variant="secondary" onClick={handleClose} disabled={loading}>
             Close
           </Button>
           <Button type="submit" size="sm" loading={loading} disabled={!driverId}>
