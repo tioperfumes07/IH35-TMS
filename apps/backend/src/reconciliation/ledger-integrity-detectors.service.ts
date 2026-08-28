@@ -503,6 +503,42 @@ export async function checkNoGlDeltaForCompany(client: DbClient, operatingCompan
   }
 }
 
+// INV-9 FUTURE-DATED ENTRIES (detector 6 of the plan's 10): scripts/verify-gl-invariants.sql's own
+// INV-9 block ("expect 0"). A journal entry dated after today is either a real bug (clock skew on a
+// job, a typo digit, a timezone conversion error landing a date one day/month/year ahead of intent) or
+// a deliberate future-period accrual posted early — either way it is worth a finding, not a silent
+// pass, since a future-dated entry can distort any as-of-date report that reads entry_date without an
+// explicit upper bound. `important`, not `critical`: unlike an unbalanced entry or a GL-dark document,
+// this does not necessarily mean money is wrong, just that the date needs a human look.
+export async function checkFutureDatedEntriesForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const res = await client.query<{ count: string; furthest: string | null; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, MAX(entry_date)::text AS furthest, (ARRAY_AGG(id::text))[1:10] AS ids
+      FROM accounting.journal_entries
+      WHERE operating_company_id = $1::uuid AND entry_date > CURRENT_DATE
+        AND status <> 'voided' AND COALESCE(is_sample_data, false) = false
+    `,
+    [operatingCompanyId]
+  );
+  const count = Number(res.rows[0]?.count ?? 0);
+  const resourceScope: ResourceScope = { role: "journal_entry_date", account_id: "", account_number: "" };
+
+  if (count > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "future_dated_journal_entry",
+      severity: "important",
+      runId,
+      resourceScope,
+      localValue: { count, furthest_entry_date: res.rows[0]?.furthest ?? null, sample_journal_entry_ids: res.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "no_real_journal_entry_dated_after_today", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "future_dated_journal_entry", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
@@ -513,5 +549,6 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
     await checkAskMyAccountantForCompany(client, operatingCompanyId, runId);
     await checkPerEntryBalanceForCompany(client, operatingCompanyId, runId);
     await checkNoGlDeltaForCompany(client, operatingCompanyId, runId);
+    await checkFutureDatedEntriesForCompany(client, operatingCompanyId, runId);
   }
 }

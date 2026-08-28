@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   checkAskMyAccountantForCompany,
+  checkFutureDatedEntriesForCompany,
   checkNoGlDeltaForCompany,
   checkPerEntryBalanceForCompany,
   checkSubledgerTieOutForCompany,
@@ -26,6 +27,7 @@ function makeClient(opts: {
   unbalanced?: { count: number; ids: string[] };
   noGlDeltaInvoices?: { count: number; ids: string[] };
   noGlDeltaBills?: { count: number; ids: string[] };
+  futureDated?: { count: number; furthest: string | null; ids: string[] };
 }) {
   const calls: Call[] = [];
   const controlAccounts = opts.controlAccounts ?? {};
@@ -46,6 +48,10 @@ function makeClient(opts: {
       if (sql.includes("FROM accounting.bills b") && sql.includes("NOT EXISTS")) {
         const d = opts.noGlDeltaBills ?? { count: 0, ids: [] };
         return { rows: [{ count: String(d.count), ids: d.ids }] };
+      }
+      if (sql.includes("entry_date > CURRENT_DATE")) {
+        const d = opts.futureDated ?? { count: 0, furthest: null, ids: [] };
+        return { rows: [{ count: String(d.count), furthest: d.furthest, ids: d.ids }] };
       }
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
         const role = values?.[1] as "ar_control" | "ap_control" | undefined;
@@ -266,6 +272,45 @@ describe("ledger-integrity-detectors.service — INV-4 documents with no GL delt
     const client = makeClient({});
 
     await checkNoGlDeltaForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — INV-9 future-dated entries", () => {
+  it("files a future_dated_journal_entry finding (important, not critical) when any real entry is dated ahead", async () => {
+    const client = makeClient({ futureDated: { count: 2, furthest: "2027-01-01", ids: ["je-a", "je-b"] } });
+
+    await checkFutureDatedEntriesForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("future_dated_journal_entry");
+    expect(values[2]).toBe("important");
+    expect(JSON.parse(values[5] as string)).toMatchObject({
+      count: 2,
+      furthest_entry_date: "2027-01-01",
+      sample_journal_entry_ids: ["je-a", "je-b"],
+    });
+  });
+
+  it("auto-resolves an open finding once no real entry is dated ahead of today", async () => {
+    const client = makeClient({ futureDated: { count: 0, furthest: null, ids: [] }, openFindingId: "finding-5" });
+
+    await checkFutureDatedEntriesForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"))).toBe(false);
+    const resolveCall = client.calls.find((c) => c.sql.includes("status = 'resolved'"));
+    expect(resolveCall).toBeDefined();
+    expect(resolveCall!.values).toEqual(["finding-5"]);
+  });
+
+  it("does nothing in the expected steady state (nothing future-dated, nothing open)", async () => {
+    const client = makeClient({});
+
+    await checkFutureDatedEntriesForCompany(client as never, COMPANY, "run-1");
 
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
