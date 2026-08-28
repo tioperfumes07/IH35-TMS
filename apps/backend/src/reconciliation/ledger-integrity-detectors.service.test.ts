@@ -4,6 +4,7 @@ import {
   checkFutureDatedEntriesForCompany,
   checkNoGlDeltaForCompany,
   checkPerEntryBalanceForCompany,
+  checkReversalIntegrityForCompany,
   checkSubledgerTieOutForCompany,
 } from "./ledger-integrity-detectors.service.js";
 
@@ -28,6 +29,8 @@ function makeClient(opts: {
   noGlDeltaInvoices?: { count: number; ids: string[] };
   noGlDeltaBills?: { count: number; ids: string[] };
   futureDated?: { count: number; furthest: string | null; ids: string[] };
+  voidedInPlace?: { count: number; ids: string[] };
+  brokenReversalPointers?: { count: number; ids: string[] };
 }) {
   const calls: Call[] = [];
   const controlAccounts = opts.controlAccounts ?? {};
@@ -52,6 +55,14 @@ function makeClient(opts: {
       if (sql.includes("entry_date > CURRENT_DATE")) {
         const d = opts.futureDated ?? { count: 0, furthest: null, ids: [] };
         return { rows: [{ count: String(d.count), furthest: d.furthest, ids: d.ids }] };
+      }
+      if (sql.includes("voided_at IS NOT NULL")) {
+        const d = opts.voidedInPlace ?? { count: 0, ids: [] };
+        return { rows: [{ count: String(d.count), ids: d.ids }] };
+      }
+      if (sql.includes("rb.reverses_je_id IS DISTINCT FROM je.id")) {
+        const d = opts.brokenReversalPointers ?? { count: 0, ids: [] };
+        return { rows: [{ count: String(d.count), ids: d.ids }] };
       }
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
         const role = values?.[1] as "ar_control" | "ap_control" | undefined;
@@ -311,6 +322,58 @@ describe("ledger-integrity-detectors.service — INV-9 future-dated entries", ()
     const client = makeClient({});
 
     await checkFutureDatedEntriesForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — INV-11 reversal symmetry", () => {
+  it("files a journal_entry_voided_in_place finding when any real JE was voided instead of reversed", async () => {
+    const client = makeClient({ voidedInPlace: { count: 1, ids: ["je-voided-1"] } });
+
+    await checkReversalIntegrityForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1); // pointer leg is clean by default
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("journal_entry_voided_in_place");
+    expect(values[2]).toBe("critical");
+    expect(JSON.parse(values[5] as string)).toMatchObject({ count: 1, sample_journal_entry_ids: ["je-voided-1"] });
+  });
+
+  it("files a journal_entry_reversal_pointer_broken finding when reversed_by_je_id/reverses_je_id disagree", async () => {
+    const client = makeClient({ brokenReversalPointers: { count: 2, ids: ["je-a", "je-b"] } });
+
+    await checkReversalIntegrityForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("journal_entry_reversal_pointer_broken");
+    expect(values[2]).toBe("critical");
+    expect(JSON.parse(values[5] as string)).toMatchObject({ count: 2, sample_journal_entry_ids: ["je-a", "je-b"] });
+  });
+
+  it("auto-resolves both findings independently once each condition clears", async () => {
+    const client = makeClient({
+      voidedInPlace: { count: 0, ids: [] },
+      brokenReversalPointers: { count: 0, ids: [] },
+      openFindingId: "finding-6",
+    });
+
+    await checkReversalIntegrityForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"))).toBe(false);
+    const resolveCalls = client.calls.filter((c) => c.sql.includes("status = 'resolved'"));
+    expect(resolveCalls).toHaveLength(2); // both scopes resolve the same stubbed open finding id
+    for (const call of resolveCalls) expect(call.values).toEqual(["finding-6"]);
+  });
+
+  it("does nothing in the expected steady state (both checks clean, nothing open)", async () => {
+    const client = makeClient({});
+
+    await checkReversalIntegrityForCompany(client as never, COMPANY, "run-1");
 
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
