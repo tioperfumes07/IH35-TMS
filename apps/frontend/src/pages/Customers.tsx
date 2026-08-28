@@ -195,17 +195,33 @@ function CustomerActivityFeed({
   operatingCompanyId: string;
   customerId: string;
 }) {
+  const activityPageSize = 50;
+  const [activityPage, setActivityPage] = useState(1);
   const activityQuery = useQuery({
-    queryKey: ["customers", "activity-feed", operatingCompanyId, customerId],
+    queryKey: ["customers", "activity-feed", operatingCompanyId, customerId, activityPage],
     queryFn: () =>
       listSpineEvents({
         operatingCompanyId,
         entityType: "customer",
         entityId: customerId,
-        limit: 250,
+        limit: activityPageSize,
+        offset: (activityPage - 1) * activityPageSize,
       }),
     enabled: Boolean(operatingCompanyId && customerId),
   });
+
+  useEffect(() => {
+    setActivityPage(1);
+  }, [operatingCompanyId, customerId]);
+
+  useEffect(() => {
+    if (!activityQuery.isSuccess || activityPage === 1) return;
+    if ((activityQuery.data?.events.length ?? 0) === 0) setActivityPage(1);
+  }, [activityPage, activityQuery.data?.events.length, activityQuery.isSuccess]);
+
+  const activityTotal = activityQuery.data?.total_count ?? 0;
+  const activityStart = activityTotal === 0 ? 0 : (activityPage - 1) * activityPageSize + 1;
+  const activityEnd = Math.min(activityPage * activityPageSize, activityTotal);
 
   const columns = useMemo<Array<ParityColumn<SpineEvent>>>(() => [
     {
@@ -254,15 +270,42 @@ function CustomerActivityFeed({
   }
 
   return (
-    <ParityTable
-      rows={activityQuery.data?.events ?? []}
-      columns={columns}
-      rowKey={(event) => event.event_id}
-      loading={activityQuery.isPending || (activityQuery.isFetching && !activityQuery.data)}
-      storageKey="customer-activity-feed"
-      emptyText="No recorded activity for this customer."
-      exportFilename="customer-activity-feed"
-    />
+    <div className="space-y-2">
+      <ParityTable
+        rows={activityQuery.data?.events ?? []}
+        columns={columns}
+        rowKey={(event) => event.event_id}
+        loading={activityQuery.isPending || (activityQuery.isFetching && !activityQuery.data)}
+        storageKey="customer-activity-feed"
+        emptyText="No recorded activity for this customer."
+        exportFilename="customer-activity-feed"
+        pageSize={activityPageSize}
+        hidePager
+      />
+      <div className="flex items-center justify-between text-xs text-gray-600" data-testid="customer-activity-server-pager">
+        <span>{activityTotal === 0 ? "0 of 0" : `${activityStart}–${activityEnd} of ${activityTotal}`}</span>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={activityPage === 1 || activityQuery.isFetching}
+            onClick={() => setActivityPage((current) => Math.max(1, current - 1))}
+          >
+            Previous
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            disabled={activityEnd >= activityTotal || activityQuery.isFetching}
+            onClick={() => setActivityPage((current) => current + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
