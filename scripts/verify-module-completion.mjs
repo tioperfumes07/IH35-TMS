@@ -27,6 +27,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { classifyCommitRange, collectGitFacts, rangeCommitShas } from "./lib/branch-range-guard.mjs";
 import { openWaveIdsForModule } from "./lib/open-wave-modules.mjs";
+import {
+  assertLiveVerifiedStamps,
+  collectLiveVerifiedStamps,
+  fetchHealthzVersionSync,
+} from "./lib/live-verified-stamps.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DIR = path.join(ROOT, "docs/module-completion");
@@ -274,6 +279,20 @@ export function runAll(opts = {}) {
   if (!opts.skipCommits) {
     problems.push(...assertNoFalseCompleteClaims(listBranchCommits(), manifests));
   }
+  if (!opts.skipLiveVerified) {
+    try {
+      const healthzSha = fetchHealthzVersionSync();
+      problems.push(
+        ...assertLiveVerifiedStamps({
+          stamps: collectLiveVerifiedStamps(manifests),
+          healthzSha,
+          gitRoot: ROOT,
+        })
+      );
+    } catch (e) {
+      problems.push(String(e.message || e));
+    }
+  }
   return { problems, scores };
 }
 
@@ -371,6 +390,44 @@ if (isMain && SELFTEST) {
   if (cleanComplete.length) {
     failures.push(`all-PASS+no-wave+complete:true should be clean, got: ${cleanComplete.join("; ")}`);
   }
+
+  const emptyP = assertLiveVerifiedStamps({
+    stamps: collectLiveVerifiedStamps([{ file: "x.json", data: { items: [passItem("Z1")] } }]),
+    healthzSha: "deadbeef",
+    gitRoot: ROOT,
+  });
+  if (!emptyP.some((x) => x.includes("empty scope"))) failures.push("L6 empty scope not caught");
+
+  const head = sh("git rev-parse HEAD");
+  const staleP = assertLiveVerifiedStamps({
+    stamps: [
+      {
+        file: "docs/module-completion/system.json",
+        id: "L6-BOOT",
+        sha: "0000000000000000000000000000000000000001",
+        at: "2026-08-28T00:00:00Z",
+      },
+    ],
+    healthzSha: head,
+    gitRoot: ROOT,
+  });
+  if (!staleP.some((x) => x.includes("not a git commit") || x.includes("not an ancestor"))) {
+    failures.push("L6 stale/non-commit stamp not caught");
+  }
+
+  const okP = assertLiveVerifiedStamps({
+    stamps: [
+      {
+        file: "docs/module-completion/system.json",
+        id: "L6-BOOT",
+        sha: head,
+        at: "2026-08-28T22:21:00Z",
+      },
+    ],
+    healthzSha: head,
+    gitRoot: ROOT,
+  });
+  if (okP.length) failures.push(`L6 ancestor stamp should pass, got: ${okP.join("; ")}`);
 
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL`, failures);
