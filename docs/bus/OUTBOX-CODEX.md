@@ -1938,3 +1938,5 @@ Codex | WORKING | DSP-F7124 notify sync immutable company scope | leaf=settings.
 Codex | SHIPPED | DSP-F7123 | PR=#17154 @ d56cc78dc7 | scope=11 dispatch subnav queue failures honest+Retry | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7124
 Codex | WORKING | DSP-F7125 OCR conversion immutable item+company lifecycle | leaf=docs.ocr customer+load+connectivity+reverse | Live=BLOCKED | GO
 Codex | SHIPPED | DSP-F7124 | PR=#17156 @ ad1a81873e | leaf=settings.notify immutable sync company | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7125
+Codex | WORKING | DSP-F7127L | CLAIM=Samsara-auto-status-exact-company-write | SOURCE=mdata.loads→auto_status_switch_events | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127K | PR=#17189 @ 565104f02b | Built=combined Quick Assign exact-company write | NEXT=Samsara auto-status | GO

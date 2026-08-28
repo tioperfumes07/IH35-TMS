@@ -452,7 +452,15 @@ export async function applyAutoSwitch(
     return { applied: false, skipped: "invalid_load_state" };
   }
 
-  await client.query(`UPDATE mdata.loads SET status = $2, updated_at = now() WHERE id = $1::uuid`, [loadUuid, newStatus]);
+  const statusUpdate = await client.query<{ id: string }>(
+    `UPDATE mdata.loads
+     SET status = $2, updated_at = now()
+     WHERE id = $1::uuid
+       AND operating_company_id = $3::uuid
+     RETURNING id`,
+    [loadUuid, newStatus, operatingCompanyId]
+  );
+  if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };
 
   const eventRes = await client.query<{ uuid: string }>(
     `
