@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export async function renderTrailerProfilePdf(input: { equipmentNumber: string; htmlSections: string }) {
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /><style>
@@ -16,7 +17,7 @@ export async function renderTrailerProfilePdf(input: { equipmentNumber: string; 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
     const pdf = await page.pdf({ format: "Letter", printBackground: true });
-    const date = new Date().toISOString().slice(0, 10);
+    const date = companyBusinessDate();
     return {
       pdfBuffer: Buffer.from(pdf),
       filename: `TrailerProfile_${input.equipmentNumber}_${date}.pdf`,

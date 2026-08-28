@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { OperatingCompanyMembershipError, resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const qualityReadRoles = new Set(["Owner", "Administrator", "Manager", "Dispatcher", "Accountant", "Safety"]);
 const qualityWriteRoles = new Set(["Owner"]);
@@ -118,7 +119,7 @@ function isRecentDispute(eventType: string, eventDate: string | Date): boolean {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) {

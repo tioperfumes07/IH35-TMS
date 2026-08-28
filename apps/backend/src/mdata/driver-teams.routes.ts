@@ -4,6 +4,7 @@ import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
@@ -304,7 +305,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             b.secondary_driver_id,
             b.relationship ?? null,
             b.notes ?? null,
-            b.effective_from ?? new Date().toISOString().slice(0, 10),
+            b.effective_from ?? companyBusinessDate(),
             user.uuid,
           ]
         );

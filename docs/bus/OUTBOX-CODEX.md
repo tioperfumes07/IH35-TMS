@@ -1,3 +1,5 @@
+Codex | WORKING | FINDING=MDATA-F6955-BUSINESS-DATES-USE-UTC | vertical=customers+drivers+fleet lifecycle/PDF | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | HOS-F6954 | PR=#16920 @ d7455fb9e8 | Built=complete-manual-edit-audit | Live=post-deploy UNVERIFIED | NEXT=MDATA-F6955 | GO
 Codex | WORKING | FINDING=HOS-F6954-MANUAL-EDIT-AUDIT-SILENT-100-CAP | SOURCE=hos.duty_status_events | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6953 | PR=#16919 @ 3dd5ae5162 | Built=complete-harsh-event-clips | Live=post-deploy UNVERIFIED | NEXT=HOS-F6954 | GO
 Codex | WORKING | FINDING=SAF-F6953-HARSH-EVENT-DASHCAM-SILENT-20-CAP | SOURCE=telematics.dashcam_clips | NEXT=guard+FAST-MERGE | GO

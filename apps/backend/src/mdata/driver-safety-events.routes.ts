@@ -5,6 +5,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 
@@ -115,7 +116,7 @@ function canReadSafetyFile(role: string): boolean {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
