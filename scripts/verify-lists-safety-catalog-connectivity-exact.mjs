@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["catalog.safety.internal_fine_reasons.list","catalog.safety.internal_fine_reasons.create","catalog.safety.civil_fine_types.list","catalog.safety.civil_fine_types.create","catalog.safety.company_violation_types.list","catalog.safety.company_violation_types.create","catalog.safety.complaint_types.list","catalog.safety.complaint_types.create","catalog.safety.dot_violation_types.list","catalog.safety.dot_violation_types.create","catalog.safety.cargo_claim_reasons.list","catalog.safety.cargo_claim_reasons.create"],"task":"LISTS-F5956-SAFETY-CATALOG-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["lists.modal.safety_generic_catalog","catalog.safety.internal_fine_reasons.list","catalog.safety.internal_fine_reasons.create","catalog.safety.civil_fine_types.list","catalog.safety.civil_fine_types.create","catalog.safety.company_violation_types.list","catalog.safety.company_violation_types.create","catalog.safety.complaint_types.list","catalog.safety.complaint_types.create","catalog.safety.dot_violation_types.list","catalog.safety.dot_violation_types.create","catalog.safety.cargo_claim_reasons.list","catalog.safety.cargo_claim_reasons.create"],"task":"LST-F7065-SAFETY-GENERIC-MODAL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const GUARD = "scripts/verify-lists-safety-catalog-connectivity-exact.mjs";
@@ -7,6 +7,7 @@ const HEADER = fs.readFileSync(GUARD, "utf8").split("\n")[1];
 const MATRIX = "docs/specs/scoreboard/modules/lists.required.json";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const API = "apps/frontend/src/api/catalogs-safety.ts";
+const SHARED_MODAL = "apps/frontend/src/pages/lists/safety/SafetyGenericCatalogModal.tsx";
 
 const CATALOGS = [
   ["internal_fine_reasons", "internal-fine-reasons", "InternalFineReasons", "InternalFineReason"],
@@ -24,10 +25,27 @@ export function audit(sources = {}) {
   const matrixText = sources.matrix ?? read(MATRIX);
   const manifest = sources.manifest ?? read(MANIFEST);
   const api = sources.api ?? read(API);
+  const sharedModal = sources.sharedModal ?? read(SHARED_MODAL);
   const self = sources.self ?? read(GUARD);
   let matrix;
   try { matrix = JSON.parse(matrixText); } catch (error) { return [`Lists matrix invalid: ${error.message}`]; }
   if (!self.split("\n").includes(HEADER)) failures.push("exact Built header missing");
+
+  const modalLeaf = matrix.leaves?.find((candidate) => candidate.id === "lists.modal.safety_generic_catalog");
+  if (!modalLeaf?.required?.includes("connectivity")) failures.push("shared Safety catalog modal must require connectivity");
+  if (modalLeaf?.surface_path !== "pages/lists/safety/SafetyGenericCatalogModal.tsx") failures.push("shared Safety catalog modal must retain its canonical surface");
+  for (const contract of [
+    "client.create(operatingCompanyId, body)",
+    "client.update(row.id, operatingCompanyId, body",
+    "client.deactivate(row.id, operatingCompanyId)",
+  ]) {
+    if (!sharedModal.includes(contract)) failures.push(`shared Safety catalog modal missing ${contract}`);
+  }
+  if (sharedModal.split("onSaved();").length - 1 !== 2) failures.push("shared Safety catalog modal must reload after both save and deactivate");
+  if (sharedModal.split('setSubmitError(userFacingApiError(error, "Save failed"))').length - 1 !== 2) failures.push("shared Safety catalog modal must expose API errors from both mutation paths");
+  if (!sharedModal.includes("onClose();") || !sharedModal.includes("finally") || !sharedModal.includes("setIsSaving(false)")) {
+    failures.push("shared Safety catalog modal must close only after canonical success and always release saving state");
+  }
 
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
     const route = `/lists/safety/${slug}`;
@@ -58,7 +76,7 @@ export function audit(sources = {}) {
 
 if (process.argv.includes("--selftest")) {
   const original = {
-    matrix: read(MATRIX), manifest: read(MANIFEST), api: read(API), self: read(GUARD),
+    matrix: read(MATRIX), manifest: read(MANIFEST), api: read(API), sharedModal: read(SHARED_MODAL), self: read(GUARD),
   };
   let caught = 0;
   for (const [leafKey, slug, plural, singular] of CATALOGS) {
@@ -77,6 +95,19 @@ if (process.argv.includes("--selftest")) {
       caught++;
     }
   }
+  for (const mutant of [
+    original.sharedModal.replace("client.create(operatingCompanyId, body)", "client.create(\"\", body)"),
+    original.sharedModal.replace("client.update(row.id, operatingCompanyId, body", "client.update(row.id, \"\", body"),
+    original.sharedModal.replace("client.deactivate(row.id, operatingCompanyId)", "client.deactivate(row.id, \"\")"),
+    original.sharedModal.replace("onSaved();", "void 0;"),
+    original.sharedModal.replace("setSubmitError(userFacingApiError(error, \"Save failed\"))", "setSubmitError(\"hidden\")"),
+  ]) {
+    if (!audit({ ...original, sharedModal: mutant }).length) throw new Error("mutation survived: shared-modal connectivity");
+    caught++;
+  }
+  const modalMatrixMutant = original.matrix.replace('"id": "lists.modal.safety_generic_catalog"', '"id": "lists.modal.safety_generic_catalog.broken"');
+  if (!audit({ ...original, matrix: modalMatrixMutant }).length) throw new Error("mutation survived: shared-modal matrix leaf");
+  caught++;
   if (!audit({ ...original, self: original.self.replace(HEADER, `${HEADER}.broken`) }).length) throw new Error("header mutation survived");
   console.log(`verify-lists-safety-catalog-connectivity-exact SELFTEST PASS — ${caught + 1} planted defects rejected`);
   process.exit(0);
@@ -87,4 +118,4 @@ if (failures.length) {
   console.error(`verify-lists-safety-catalog-connectivity-exact FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log("verify-lists-safety-catalog-connectivity-exact PASS — 6 scoped Safety catalogs × list/create retain route→read→create→reload→audit connectivity");
+console.log("verify-lists-safety-catalog-connectivity-exact PASS — shared modal + 6 scoped Safety catalogs retain route→read→create/update/deactivate→reload→audit connectivity");

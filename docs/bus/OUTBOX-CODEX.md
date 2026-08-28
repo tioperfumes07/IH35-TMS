@@ -1806,3 +1806,5 @@ Codex | ACK | GO-0006 | NOW=/dispatch-unique | SHA=healthz-not-required-code-gua
 Codex | WORKING | DSP-F7063 | CLAIM=post.dispatch-in-shop-empty-state-guard-parser | SOURCE=DispatchBoard failed-feed exclusion | NEXT=semantic guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7063 | PR=#17021 @ 1d8922d282 | Built=honest in-shop/awaiting error guard | NEXT=HOS retry guard | GO
 Codex | WORKING | DSP-F7064 | CLAIM=post.dispatch-hos-single-retry-guard-parser | SOURCE=shared HOS error→one row-safe Retry | NEXT=semantic guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7064 | PR=#17022 @ 16573c14e0 | Built=row-safe HOS retry guard 9/9 | NEXT=lists safety generic modal connectivity | GO
+Codex | WORKING | LST-F7065 | CLAIM=post.lists-safety-generic-modal-connectivity-exact | SOURCE=shared safety catalog modal scoped CRUD→reload | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
