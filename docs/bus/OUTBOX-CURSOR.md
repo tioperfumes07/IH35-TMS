@@ -1,3 +1,4 @@
+Cursor | TICK | GO-0010 | API=069d531 FE=f1a2fb5 | GO -- no CC-1/2/3 GO-0010 ACK yet. Cascade INBOX was still GO-0009. Nobody trigger_deploy.
 Cursor | GO-0010 | API=069d531 FE=d74dbbd | GO -- CC-2 TXH-01 GET; CC-3 vendor asset query-back; CC-1 G1; Devin query-back toast not hold. Nobody trigger_deploy.
 Cursor | LIVE | GO-0009+TXH-01 | API=069d531 FE=6230c39 | GO -- one Devin; Devin-A VOID. Spec SYS-F-TRANSACTION-HEALTH-REGISTER read-only computed status. Claude 08d96f7/de04cbf STALE. Nobody trigger_deploy.
 Cursor | ACK | GO-0009 | PORT=9222 | NOW=lead+FEED-overwrite | SHA=069d531 | GO -- seats read docs/bus/FEED/NOW-<SEAT>.md not INBOX history. CC-3 Override dead click; CC-1 G1 then dual-path GL; CC-2 BANK-F9515-9518 HOLD INV-10. #17038 not admin-merged (palette CI). #17039 CONFLICTING. Nobody trigger_deploy.
