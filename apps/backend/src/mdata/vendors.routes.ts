@@ -207,6 +207,39 @@ function sendTestVendorFixtureRejected(reply: FastifyReply) {
   });
 }
 
+// VEND-F-VENDOR-CREATE-ACCEPTS-ASSET-AS-DEFAULT-EXPENSE-ACCT — the create/edit UI pickers
+// (VendorCreateModal.tsx, VendorDetail.tsx) already filter their candidate list to
+// `account_type === "Expense"`, but that is a client-side convenience only: this route accepted any
+// UUID with no server-side check, so a direct API call (or any future caller that doesn't go through
+// those two pickers) could set an asset/liability account as a vendor's default expense account. Not
+// hypothetical — Devin's own test rows `DEVIN-ASSET-DEFAULT-TEST` / `-TEST-2` are live proof, both
+// carrying an Asset-type "Driver Cash Advance" account here. Fail closed server-side, matching the
+// picker's own intent, so the UI filter is a convenience rather than the only guard.
+type DefaultExpenseAccountCheckResult = { ok: true } | { ok: false; accountType: string | null };
+
+async function checkDefaultExpenseAccountIsExpenseType(
+  client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<{ account_type: string | null }> }> },
+  accountId: string
+): Promise<DefaultExpenseAccountCheckResult> {
+  const res = await client.query(
+    `SELECT account_type FROM catalogs.accounts WHERE id = $1`,
+    [accountId]
+  );
+  const accountType = res.rows[0]?.account_type ?? null;
+  if (accountType === "Expense") return { ok: true };
+  return { ok: false, accountType };
+}
+
+function sendDefaultExpenseAccountNotExpenseRejected(reply: FastifyReply, accountType: string | null) {
+  return reply.code(422).send({
+    error: "vendor_default_expense_account_must_be_expense_type",
+    message: accountType
+      ? `The default expense account must be an Expense-type account (this one is ${accountType}).`
+      : "The default expense account must be an Expense-type account.",
+    fieldErrors: { default_expense_account_id: "Select an Expense-type account" },
+  });
+}
+
 // G6-2: vendor create previously had NO dedup guard (customers had one), so duplicate vendors could
 // be created freely. Mirror the customer pattern: (a) case-insensitive on name (lower(btrim(...))),
 // (b) entity-scoped by operating_company_id (mdata RLS is identity-based, NOT entity-scoped, so the
@@ -452,6 +485,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         fieldErrors: { name: "Already in use" },
       });
     }
+    if (b.default_expense_account_id) {
+      const check = await withCurrentUser(authUser.uuid, async (client) =>
+        checkDefaultExpenseAccountIsExpenseType(client, b.default_expense_account_id as string)
+      );
+      if (!check.ok) return sendDefaultExpenseAccountNotExpenseRejected(reply, check.accountType);
+    }
 
     try {
       const created = await withCurrentUser(authUser.uuid, async (client) => {
@@ -651,6 +690,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           fieldErrors: { name: "Already in use" },
         });
       }
+    }
+    if ("default_expense_account_id" in b && b.default_expense_account_id) {
+      const check = await withCurrentUser(authUser.uuid, async (client) =>
+        checkDefaultExpenseAccountIsExpenseType(client, b.default_expense_account_id as string)
+      );
+      if (!check.ok) return sendDefaultExpenseAccountNotExpenseRejected(reply, check.accountType);
     }
 
     const setParts: string[] = [];
