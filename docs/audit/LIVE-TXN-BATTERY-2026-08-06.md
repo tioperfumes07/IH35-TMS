@@ -9541,3 +9541,95 @@ BLOCKED: none — routed to CC-1 via board, not via the owner
 NEXT: once CC-1 ships the backfill, CC-3 re-verifies bill_count == earn_count and A/R reconciles to the
       3 payments before closing the board row
 ```
+
+---
+
+# CC-3 LIVE-TXN — LV-TXN-020 — Book Load wizard: "Override & dispatch" is a confirmed dead click; USMCA cannot book a NEW load whenever the driver lacks CDL/med-card data — 2026-08-28
+
+**Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`.** Attempting the next live-txn-battery unit — book a
+brand-new USMCA load end-to-end (create → dispatch → deliver → invoice) as a positive control on the
+just-verified-live Option B revrec fix (LV-TXN-019) — could not get PAST load creation. Filed as a live
+finding rather than forced through, per the harness's own guidance on repeated tool-call failures: this was
+reproduced three independent ways before concluding it is real, not automation flakiness.
+
+## VERDICT: **FAIL** — filed as an OPEN board row, lane CC-3 (frontend/entity-scope)
+
+**Setup:** `Dispatch → Load board → + Book Load`, trip type NB, customer TIO PERFUMES, load type "TEST DATA
+Dry Van", linehaul $50.00, stops Laredo TX → San Antonio TX, practical/shortest miles filled (150/140,
+required — client-side validation `miles_practical > 0` confirmed working correctly and is NOT the bug).
+
+**Blocker set hit on the FIRST driver/unit combo (Israel Galvan Garcia + unit USMCA-001):**
+```
+[WF-CDL-MISSING]     Israel Galvan Garcia: No CDL expiry date on file
+[WF-MED-CARD-MISSING] Israel Galvan Garcia: No DOT medical card on file
+[UNIT-OOS]           Unit USMCA-001 is out of service (OOS) and cannot be assigned
+```
+Switched to the #1-ranked suggested driver (Javier Vargas Solis, 71pts, HOS 100) and a different unit (T150)
+to rule out one bad test-data row. **Same two DOT blockers reappeared for the #1-ranked driver too**:
+```
+[WF-CDL-MISSING]      Javier Vargas Solis: No CDL expiry date on file — CDL is a DOT requirement for dispatch.
+[WF-MED-CARD-MISSING] Javier Vargas Solis: No DOT medical card on file — required for dispatch.
+```
+**Not filed as a defect by itself** — `USMCA-001` correctly being blocked as OOS is the gate working; missing
+CDL/med-card dates on the top-2 ranked USMCA drivers is a real DQF-completeness gap in the roster (worth a
+separate, lower-severity data-quality note), not a code bug.
+
+### ★ THE ACTUAL DEFECT — "Override & dispatch" never fires, reproduced three independent ways
+
+The wizard's own section D ("Pre-dispatch validation") supplies exactly the control for this: type a
+≥10-char reason, click `Override & dispatch`. **It does nothing.** Confirmed not a false read:
+
+1. **Real mouse click at the button's live-computed `getBoundingClientRect()` center** (`elementFromPoint`
+   at that exact coordinate returned the button itself, correct class list, `disabled: false`) — zero effect.
+2. **`find`-resolved ref, clicked immediately** (same tool used successfully for every other control in this
+   session, e.g. the invoice Send button in LV-TXN-018/019) — zero effect.
+3. **Keyboard: Tab to focus, confirmed `document.activeElement` IS the button, then Enter** (native buttons
+   fire `click` on Enter regardless of `type` — this bypasses any coordinate/scroll-timing question
+   entirely) — zero effect.
+
+**After all three, independently confirmed via instrumentation, not guessed:**
+- `read_network_requests`: **zero** POST/PATCH ever fired (only background `notifications`/`feature-flags`/
+  `optimal-drivers` polling) — not even an attempt, successful or failed.
+- `read_console_messages`: **zero** errors, warnings, or any log line.
+- `document.querySelectorAll('[aria-invalid="true"]')`: **empty** — the form has no client-side validation
+  errors at the moment of the click, so a legitimate "blocked by validation" explanation is ruled out.
+- The one stale banner ever seen (`"Not saved — these fields blocked it: miles practical"`) was from an
+  EARLIER attempt before `miles_practical` was filled, and never updated or cleared on any subsequent click —
+  consistent with the click handler never running again, not with a fresh validation re-check.
+- `mdata.loads` on prod, filtered on the marker / `load_number LIKE 'L-20260828-%'`: **zero rows** — nothing
+  was silently written either; this is a pure no-op, not a hidden partial write.
+
+**Root cause located in source, not guessed — `apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx:1666-1710`.**
+The button's own file has a comment on the exact panel rendering it (`PreDispatchValidationPanel`, GAP-14):
+*"Read-only preview — the submit-time gate (`gateBanner`) remains the enforcement path; this surfaces
+blockers before the dispatcher hits Book."* The button is wired to `onOwnerOverride` →
+`form.handleSubmit(async (values) => { ...; await submitLoad(values, "book_dispatch", {override:true}); },
+onInvalidSubmit)()` — a correct-looking, direct call. `btn.disabled === false` was confirmed live (the
+`disabled={(overrideReason ?? "").trim().length < 10 || !onOwnerOverride}` condition requires
+`onOwnerOverride` to be falsy for a disabled button, so the prop IS present) — yet invoking the handler,
+three ways, produces no observable effect whatsoever, not even a failed-validation toast. **This needs a
+CC-3 code-level debug session with the actual component mounted (React DevTools / a debugger breakpoint
+inside `onOwnerOverride`), which live-instrumentation-only browser automation cannot finish** — I am not
+claiming to have found the exact line that swallows the call, only that the call demonstrably never reaches
+`submitLoad`, `pushToast`, or even `onInvalidSubmit`.
+
+**Impact:** any USMCA dispatcher hitting a driver missing CDL/med-card data, or a unit with an open repair
+WO, is stuck — the ONLY override control in the wizard is silently inert, with **zero error feedback**, so
+the failure reads as "I clicked and nothing happened" with no clue why. Given the roster gap above, this is
+not a rare edge case — it is the FIRST or SECOND driver the ranking suggests.
+
+## Cleanup
+Modal closed via Cancel → Discard. Verified zero orphaned rows in `mdata.loads` for this attempt (query
+above). No test data left behind; nothing to void.
+
+```
+VERDICT: FAIL
+PR: (this branch — docs-only: board row + this entry)
+NEON: mdata.loads L-20260828-% / marker CC3-LIVETXN-20260828-LOAD-01 = 0 rows (clean, nothing written)
+APP: healthz/shallow live; reproduced on production UI, not a fork/branch
+BLOCKED: none — routed to CC-1/CC-3 via board, not via the owner
+NEXT: whichever seat picks up the board row needs an actual mounted-component debug session (breakpoint in
+      onOwnerOverride / submitLoad) since live black-box instrumentation has exhausted what it can show;
+      once fixed, CC-3 re-runs this exact repro (driver Javier Vargas Solis + unit T150, same override
+      reason text) as the live proof
+```
