@@ -1,3 +1,5 @@
+import { companyBusinessDate } from "../../lib/company-business-date.js";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type CertType =
@@ -56,11 +58,8 @@ export function computeDaysUntilExpiry(expiryDate: string | null, referenceDate 
   const expiry = new Date(expiryDate);
   if (Number.isNaN(expiry.getTime())) return null;
   const expiryUtc = Date.UTC(expiry.getUTCFullYear(), expiry.getUTCMonth(), expiry.getUTCDate());
-  const refUtc = Date.UTC(
-    referenceDate.getUTCFullYear(),
-    referenceDate.getUTCMonth(),
-    referenceDate.getUTCDate()
-  );
+  const [year, month, day] = companyBusinessDate(referenceDate).split("-").map(Number);
+  const refUtc = Date.UTC(year, month - 1, day);
   return Math.floor((expiryUtc - refUtc) / DAY_MS);
 }
 

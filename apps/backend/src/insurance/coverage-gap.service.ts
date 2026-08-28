@@ -1,4 +1,5 @@
 import type { InsuranceCoverageType } from "./policy.shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export const DISPATCH_REQUIRED_INSURANCE_COVERAGE_TYPES: InsuranceCoverageType[] = [
   "auto_liability",
@@ -29,7 +30,7 @@ type Queryable = {
 };
 
 function toIsoDateOnly(input?: string) {
-  if (!input) return new Date().toISOString().slice(0, 10);
+  if (!input) return companyBusinessDate();
   return input.slice(0, 10);
 }
 

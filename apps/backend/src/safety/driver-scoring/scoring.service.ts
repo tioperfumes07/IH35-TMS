@@ -1,5 +1,6 @@
 import type { PoolClient } from "pg";
 import { buildCompositeInput, computeCompositeScore } from "./composite-score.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 export type ScoringDbClient = Pick<PoolClient, "query">;
 
@@ -424,8 +425,9 @@ export async function listDriverTrend(
 }
 
 export function previousWeekPeriod(reference = new Date()): { period_start: string; period_end: string } {
-  const day = reference.getUTCDay();
-  const end = new Date(Date.UTC(reference.getUTCFullYear(), reference.getUTCMonth(), reference.getUTCDate()));
+  const [year, month, date] = companyBusinessDate(reference).split("-").map(Number);
+  const end = new Date(Date.UTC(year, month - 1, date));
+  const day = end.getUTCDay();
   end.setUTCDate(end.getUTCDate() - ((day + 7 - 0) % 7 || 7));
   const start = new Date(end);
   start.setUTCDate(start.getUTCDate() - 6);

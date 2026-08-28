@@ -14,6 +14,7 @@ import { randomBytes } from "node:crypto";
 import type { PoolClient } from "pg";
 import { scheduleTest } from "./program.service.js";
 import type { TestKind } from "./program.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -189,7 +190,7 @@ export async function drawRandomPool(
     if (!drawnTestKinds[uuid]) drawnTestKinds[uuid] = "alcohol";
   }
 
-  const drawDate = new Date().toISOString().slice(0, 10);
+  const drawDate = companyBusinessDate();
 
   const drawRes = await client.query<PoolDrawResult>(
     `
