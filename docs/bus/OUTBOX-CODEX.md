@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7071 | CLAIM=post.late-arrival-analytics-complete-range | SOURCE=completed stop aggregates→report+worker | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7070 | PR=#17035 @ d7e49c6f31 | Built=queues.detention 6/6 complete range | NEXT=late-arrival analytics | GO
 Codex | WORKING | DSP-F7070 | CLAIM=post.dispatch-detention-board-complete-queue | SOURCE=detention_events scoped operational queue→board+overview | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7069 | PR=#17034 @ ad861d08d5 | Built=no invented leaf; complete WORM history pager | NEXT=detention operational queue | GO
 Codex | WORKING | DSP-F7069 | CLAIM=post.dispatch-owner-override-log-complete-history | SOURCE=audit.audit_events total+offset→WORM history pager | NEXT=guard+FAST-MERGE | GO

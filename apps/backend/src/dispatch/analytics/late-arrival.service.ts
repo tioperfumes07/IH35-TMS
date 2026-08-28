@@ -194,7 +194,6 @@ function buildAggregateQuery(
       ${selectSql}
       HAVING count(*) > 0
       ORDER BY late_count DESC, entity_label ASC
-      LIMIT 500
     `,
     params: [],
   };
@@ -269,7 +268,6 @@ async function queryAggregates(
       ${selectSql}
       HAVING count(*) > 0
       ORDER BY late_count DESC, entity_label ASC
-      LIMIT 500
     `,
     params
   );
@@ -381,7 +379,7 @@ export async function getCustomerLateArrivalDetail(
 }
 
 export async function runLateArrivalAggregatorTick(client: PoolClient): Promise<number> {
-  const companies = await client.query(`SELECT id::text FROM org.companies WHERE is_active = true LIMIT 200`);
+  const companies = await client.query(`SELECT id::text FROM org.companies WHERE is_active = true ORDER BY id`);
   // FINANCIAL-REPORTS-AS-OF-DATE-USES-UTC-NOT-COMPANY-TIMEZONE: found as a 6th instance of the
   // same bug class — was new Date().toISOString() (UTC calendar date, rolls to the next day
   // ~19:00 Central). `to` is now the real company business day; `fromDate` anchors on that same
