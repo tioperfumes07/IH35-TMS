@@ -1,3 +1,5 @@
+**GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md` (one page).** ACK `CC-2 | ACK | GO-0011 | NOW=leftover-unique-not-dispatch | SHA=069d531 | GO`. #17081 GET shipped. Leftover unique. Never trigger_deploy.
+
 **GO-0010 WORK NOW — F9515-9522 done is not idle.** Read `docs/bus/FEED/NOW-CC-2.md`. ACK `CC-2 | ACK | GO-0010 | NOW=TXH-01-read-api | SHA=069d531 | GO`. Spec `claude/TXH-01-BLOCK-transaction-health-register-2026-08-28.md`. GET transaction-health, computed status, no migration. F9519=CC-1. Never trigger_deploy.
 
 **GO-0009 WORK NOW — INV-9 done is not idle.** Pull main. Read **`docs/bus/FEED/NOW-CC-2.md` only.** ACK `CC-2 | ACK | GO-0009 | NOW=BANK-F9515-9518 | SHA=069d531 | GO`. Cascade unique silent-catch. HOLD INV-10. Skip INV-1. Never trigger_deploy.

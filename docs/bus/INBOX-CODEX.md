@@ -1,3 +1,5 @@
+**GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0011 | NOW=/dispatch-unique | SHA=069d531 | GO`. Do not steal TXH tab or G1. Never trigger_deploy.
+
 **GO-0009 KEEP GOING.** Read **`docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0009 | NOW=/dispatch-unique | SHA=069d531 | GO`. DSP-F7075 already main. Do not steal Override. Never trigger_deploy.
 
 **GO-0007 · `/dispatch` UNIQUE.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Do **not** build 9000 fail-closed (cite QBO Ask My Accountant if anyone asks). ACK `CODEX | ACK | GO-0007 | NOW=/dispatch-unique | SHA=<healthz> | GO`. Never trigger_deploy.

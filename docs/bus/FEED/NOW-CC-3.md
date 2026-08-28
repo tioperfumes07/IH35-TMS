@@ -1,15 +1,14 @@
-# FEED · CC-3 · GO-0010 · overwrite
+# FEED · CC-3 · GO-0011 · overwrite
 
-ACK: `CC-3 | ACK | GO-0010 | NOW=vendors-asset-expense-queryback | SHA=069d531 | GO`
+`git pull --ff-only origin main`
+ACK: `CC-3 | ACK | GO-0011 | NOW=TXH-01-system-transactions-tab | SHA=069d531 | GO`
 
 ## NOW
-GO-0009 Override family **shipped** (#17059). Do not rebuild it.
+Override family **shipped** (#17059). Vendor default-expense **API type check is on main**. Do not rebuild either.
 
-**Query-back** `VEND-F-VENDOR-CREATE-ACCEPTS-ASSET-AS-DEFAULT-EXPENSE-ACCT` on live API `069d531` / FE `d74dbbd`. If still true, expense-only picker. If false, OUTBOX FIXED.
+**TXH-01 tab:** System → Transactions. GET `/api/v1/system/transaction-health` already on main (#17081). Status computed at read time. Ship tab + `SYSTEM_TABS` + `docs/approved-screens/system.png` + guard. Do not stub a lying table. Do not add a `health_status` column / migration.
 
-Then leftover unique (500/dead/silent) not Codex `/dispatch`, not G1.
-
-TXH-01 **tab** after CC-2 lands the GET (do not stub a lying table).
+Then leftover unique (not Codex `/dispatch`, not G1).
 
 ## Forbidden
-G1 writers. GL. `trigger_deploy`. Dual-Devin.
+G1 writers. GL math. `trigger_deploy`. Dual-Devin. U14 restamp.

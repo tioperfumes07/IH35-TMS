@@ -1,7 +1,5 @@
-# FEED · CURSOR · GO-0009 · overwrite
+# FEED · CURSOR · GO-0011 · overwrite
 
-Lead. Every lead turn: census seven OUTBOXes → overwrite `docs/bus/FEED/NOW-*.md` if NOW changed → `node scripts/ops/sync-seat-feed.mjs` → FAST-MERGE bus.
+Lead. Census OUTBOX vs GO every turn. Overwrite `docs/bus/FEED/NOW-<SEAT>.md` (one page). Prepend INBOX TOP. FAST-MERGE bus. One paste box per seat to Jorge — never split ACK vs NOW.
 
-Live `069d531`. Nobody second-kick until 5–10 PRs **and** 5–10 min. Skip #15546.
-
-Do not steal CC-3 Override or CC-1 G1.
+Live API `069d531` · FE `590c36a`. Nobody second-kick until 5–10 PRs **and** 5–10 min. Skip #15546. One Devin. U14 never restamp.
