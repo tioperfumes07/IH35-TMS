@@ -38,9 +38,8 @@ function tsFiles(dir) {
   return out;
 }
 
-const violations = [];
-for (const file of tsFiles(BACKEND)) {
-  const src = fs.readFileSync(file, "utf8");
+function aliasedUnitViolations(src, relativeFile) {
+  const found = [];
   // Collect aliases bound to mdata.units, e.g. "FROM mdata.units u" / "JOIN mdata.units AS un".
   const aliases = new Set();
   for (const m of src.matchAll(/mdata\.units\s+(?:AS\s+)?([a-zA-Z_]\w*)/g)) {
@@ -57,11 +56,18 @@ for (const file of tsFiles(BACKEND)) {
       const trimmed = line.trim();
       if (trimmed.startsWith("--") || trimmed.startsWith("//") || trimmed.startsWith("*")) continue;
       if (re.test(line)) {
-        violations.push(`${path.relative(ROOT, file)}: alias '${alias}' (mdata.units) references ${alias}.operating_company_id — units has no such column (use owner_company_id / currently_leased_to_company_id)`);
+        found.push(`${relativeFile}: alias '${alias}' (mdata.units) references ${alias}.operating_company_id — units has no such column (use owner_company_id / currently_leased_to_company_id)`);
       }
       re.lastIndex = 0;
     }
   }
+  return found;
+}
+
+const violations = [];
+for (const file of tsFiles(BACKEND)) {
+  const src = fs.readFileSync(file, "utf8");
+  violations.push(...aliasedUnitViolations(src, path.relative(ROOT, file)));
 }
 
 // WOID-1: also scan db/migrations SQL for the unaliased `FROM mdata.units ... operating_company_id` form.
@@ -74,6 +80,26 @@ if (fs.existsSync(MIGRATIONS)) {
       violations.push(`db/migrations/${name}: 'FROM mdata.units ... operating_company_id =' (unaliased) — units has no operating_company_id column; use COALESCE(currently_leased_to_company_id, owner_company_id)`);
     }
   }
+}
+
+const arrivingSoonFile = path.join(BACKEND, "maintenance/arriving-soon.routes.ts");
+const arrivingSoonSource = fs.readFileSync(arrivingSoonFile, "utf8");
+if (!/UPDATE mdata\.units AS u[\s\S]{0,420}COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$4::uuid[\s\S]{0,420}l\.operating_company_id = \$4::uuid[\s\S]{0,240}l\.assigned_unit_id = u\.id/.test(arrivingSoonSource)) {
+  violations.push("apps/backend/src/maintenance/arriving-soon.routes.ts: severe issue unit block must use canonical lease-aware unit scope plus selected-company load ownership");
+}
+
+if (process.argv.includes("--selftest")) {
+  const broken = arrivingSoonSource.replace(
+    "COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $4::uuid",
+    "u.operating_company_id = $4::uuid",
+  );
+  const caught = aliasedUnitViolations(broken, "planted-arriving-soon.routes.ts");
+  if (broken === arrivingSoonSource || caught.length !== 1) {
+    console.error("verify-units-no-operating-company-id SELFTEST FAIL — planted arriving-soon phantom column escaped");
+    process.exit(1);
+  }
+  console.log("verify-units-no-operating-company-id SELFTEST PASS — arriving-soon phantom column caught");
+  process.exit(0);
 }
 
 if (violations.length > 0) {

@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7037 | CLAIM=post.fleet-arriving-soon-unit-block-phantom-column | SOURCE=mdata.units owner/lease + selected-company load | NEXT=runtime+guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7036 | PR=#16993 @ c98f266a16 | Built=complete driver roster server-search guard 4/4 | NEXT=fleet census | GO
 Codex | WORKING | DRV-F7036 | CLAIM=post.driver-roster-complete-search-guard | SOURCE=listAllDrivers selected-company server search | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7033 | PR=#16992 @ c03262052e | Built=atomic suspend captured-scope guard 4/4 | NEXT=driver roster | GO
 Codex | WORKING | DRV-F7033 | CLAIM=post.driver-suspend-captured-scope-guard | SOURCE=atomic suspend captured driver+reason+generation | NEXT=guard+FAST-MERGE | GO
