@@ -1847,3 +1847,4 @@ Codex | WORKING | DSP-F7085 | CLAIM=post.dispatch-overview-unassigned-units-erro
 Codex | WORKING | DSP-F7086 | CLAIM=post.dispatch-bol-summary-failure-honesty | SOURCE=POD+BOL summary→shared Pod Review+Load Detail panel | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7087 | CLAIM=post.dispatch-bookload-equipment-query-failure-honesty | SOURCE=trailer-requirement+driver-team canonical reads→Book Load equipment | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7088 | CLAIM=post.dispatch-cancel-reason-failure-honesty | SOURCE=load_cancellation_reasons→Cancel Load picker/create/submit | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7089 | CLAIM=post.dispatch-detention-reason-failure-honesty | SOURCE=catalogs.detention_reasons→Book Load Expected Adjustments | NEXT=guard+FAST-MERGE | GO
