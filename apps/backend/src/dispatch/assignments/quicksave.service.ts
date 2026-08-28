@@ -187,10 +187,14 @@ export async function reassignUnit(
       if (!load) throw new Error("E_LOAD_NOT_FOUND");
       await assertUnitAvailable(client, input.unit_uuid, input.operating_company_id);
 
-      await client.query(
-        `UPDATE mdata.loads SET assigned_unit_id = $2, updated_at = now() WHERE id = $1`,
-        [input.load_uuid, input.unit_uuid]
+      const unitUpdate = await client.query<{ id: string }>(
+        `UPDATE mdata.loads
+         SET assigned_unit_id = $2, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $3::uuid
+         RETURNING id`,
+        [input.load_uuid, input.unit_uuid, input.operating_company_id]
       );
+      if (!unitUpdate.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
       // DISP-F6157: unit reassignment doesn't touch the trailer — carry the canonical current
       // trailer through unchanged rather than the co-driver uuid.
@@ -301,10 +305,14 @@ export async function reassignDriver(
       });
       if (qualBlock) throw new DriverNotQualifiedError(qualBlock);
 
-      await client.query(
-        `UPDATE mdata.loads SET assigned_primary_driver_id = $2, updated_at = now() WHERE id = $1`,
-        [input.load_uuid, input.driver_uuid]
+      const driverUpdate = await client.query<{ id: string }>(
+        `UPDATE mdata.loads
+         SET assigned_primary_driver_id = $2, updated_at = now()
+         WHERE id = $1 AND operating_company_id = $3::uuid
+         RETURNING id`,
+        [input.load_uuid, input.driver_uuid, input.operating_company_id]
       );
+      if (!driverUpdate.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
       // DISP-F6157: driver reassignment doesn't touch the trailer — carry the canonical current
       // trailer through unchanged rather than the co-driver uuid.

@@ -29,6 +29,43 @@ function contains(relativePath, content, checks) {
 }
 
 const service = read("apps/backend/src/dispatch/assignments/quicksave.service.ts");
+
+function scopedWriterFailures(source) {
+  const issues = [];
+  for (const { label, setColumn, result } of [
+    { label: "unit", setColumn: "assigned_unit_id", result: "unitUpdate" },
+    { label: "driver", setColumn: "assigned_primary_driver_id", result: "driverUpdate" },
+  ]) {
+    const pattern = new RegExp(
+      `const ${result} = await client\\.query<\\{ id: string \\}>\\([\\s\\S]*?` +
+        `SET ${setColumn} = \\$2, updated_at = now\\(\\)[\\s\\S]*?` +
+        `WHERE id = \\$1 AND operating_company_id = \\$3::uuid[\\s\\S]*?` +
+        `RETURNING id[\\s\\S]*?input\\.operating_company_id[\\s\\S]*?` +
+        `if \\(!${result}\\.rows\\[0\\]\\) throw new Error\\("E_LOAD_NOT_FOUND"\\)`
+    );
+    if (!pattern.test(source)) issues.push(`${label} quicksave must scope and check the canonical load UPDATE`);
+  }
+  return issues;
+}
+
+const writerIssues = scopedWriterFailures(service);
+for (const issue of writerIssues) fail(issue);
+
+if (process.argv.includes("--selftest")) {
+  if (writerIssues.length) throw new Error(`clean failed: ${writerIssues.join("; ")}`);
+  const mutations = [
+    service.replace("WHERE id = $1 AND operating_company_id = $3::uuid", "WHERE id = $1"),
+    service.replaceAll("WHERE id = $1 AND operating_company_id = $3::uuid", "WHERE id = $1"),
+    service.replace("if (!unitUpdate.rows[0])", "if (false)"),
+    service.replace("if (!driverUpdate.rows[0])", "if (false)"),
+    service.replace("[input.load_uuid, input.unit_uuid, input.operating_company_id]", "[input.load_uuid, input.unit_uuid]"),
+    service.replace("[input.load_uuid, input.driver_uuid, input.operating_company_id]", "[input.load_uuid, input.driver_uuid]"),
+  ];
+  const escaped = mutations.filter((fixture) => scopedWriterFailures(fixture).length === 0);
+  if (escaped.length) throw new Error(`${escaped.length}/${mutations.length} mutations escaped`);
+  console.log(`verify:assignments-quicksave SELFTEST PASS — ${mutations.length}/${mutations.length}`);
+  process.exit(0);
+}
 contains("apps/backend/src/dispatch/assignments/quicksave.service.ts", service, [
   { pattern: /reassignUnit/, label: "reassignUnit" },
   { pattern: /reassignDriver/, label: "reassignDriver" },
