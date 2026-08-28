@@ -1,3 +1,5 @@
+**GO-0013 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0013 | NOW=leftover-unique-usmca | SHA=069d531 | GO`. Samsara→detention DISPROVEN. Leftover unique USMCA. Never trigger_deploy.
+
 **GO-0013 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md` (one page).** ACK `CC-3 | ACK | GO-0013 | NOW=usmca-samsara-identity-detention | SHA=069d531 | GO`. Finish TXH tab if in flight, then prove USMCA Samsara identity_mismatch vs detention. Do not rebuild Override. Never trigger_deploy.
 
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md` (one page).** ACK `CC-3 | ACK | GO-0012 | NOW=TXH-01-system-transactions-tab | SHA=069d531 | GO`. Override shipped — do not rebuild. Never trigger_deploy.
