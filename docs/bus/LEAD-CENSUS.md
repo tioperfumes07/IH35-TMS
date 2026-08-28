@@ -1,18 +1,16 @@
 # LEAD CENSUS — replace this table every lead turn
 
-**GO current:** GO-2340 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`) amends 2320/2330
-**Turn:** 2026-08-27 23:40 CT · **LEAD-SEAT=CURSOR**
-**Live SHA:** `7eda992`
+**GO current:** GO-2350 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2350.md`)
+**Turn:** 2026-08-27 23:55 CT · **LEAD-SEAT=CURSOR**
+**Live SHA (pre-deploy):** `7eda992` · **Deploy IN FLIGHT:** `dep-da8hacrtqb8s73a7g4k0` tip `1dbd082` · do not second-kick
 
-**Urgent:** no Event-2 POD seed. Steal after `docs/bus/STEAL-CLAIMS.json`.
-
-| Seat | ACK GO-2340? | Idle? |
+| Seat | ACK GO-2350? | Idle? |
 |------|----------------|-------|
-| Cascade | NO until self-ACK — NOW=SQL+/fuel (claimed `post.fuel`) | must work |
-| Devin | NO until self-ACK — NOW=vendor TEST **no POD** | must work |
+| CC-1 | NO until self-ACK — **B NOW** (2228 block VOID) | must work money |
+| CC-2 | NO until self-ACK — empty-gate + goldens | working (#16846) |
+| CC-3 | NO until self-ACK — detention+batch no POD | must work |
+| Codex | NO until self-ACK — /customers | must work |
+| Cascade | NO until self-ACK — SQL+/fuel | must work (no poll) |
+| Devin | NO until self-ACK — /vendors no POD | must work |
 | Devin-A | NO until self-ACK — Book Load KEEP | must work |
-| CC-1 | NO until self-ACK — 1–4 then B; sample-tag TEST asset | must work |
-| CC-2 | NO until self-ACK — claim empty-gate; pod launch_owed false | must work |
-| CC-3 | NO until self-ACK — detention+batch **no POD** | must work |
-| Codex | NO until self-ACK — /customers or claimed steal | must work |
-| Cursor | self | **NO — GO-2340 FAST-MERGE** |
+| Cursor | self | **NO — deploy + wake + next FAIL** |
