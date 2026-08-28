@@ -222,10 +222,18 @@ export function listDispatcherSafetyEvents(userId: string, operatingCompanyId: s
 
 export function listDispatcherSafetyEventsByRelatedEntity(
   operatingCompanyId: string,
-  filter: { related_load_id: string } | { related_customer_id: string } | { related_driver_id: string }
+  filter: { related_load_id: string } | { related_customer_id: string } | { related_driver_id: string },
+  range: { limit: number; offset: number }
 ) {
-  const query = new URLSearchParams({ operating_company_id: operatingCompanyId, ...filter });
-  return apiRequest<{ events: DispatcherSafetyEvent[] }>(`/api/v1/mdata/dispatcher-safety-events?${query}`);
+  const query = new URLSearchParams({
+    operating_company_id: operatingCompanyId,
+    ...filter,
+    limit: String(range.limit),
+    offset: String(range.offset),
+  });
+  return apiRequest<{ events: DispatcherSafetyEvent[]; total_count: number; limit: number; offset: number }>(
+    `/api/v1/mdata/dispatcher-safety-events?${query}`
+  );
 }
 
 export function createDispatcherSafetyEvent(
