@@ -1777,3 +1777,5 @@ Codex | WORKING | FLEET-F7049 | CLAIM=post.fleet-bulk-inactivate-guard-extractor
 Codex | SHIPPED | FLEET-F7048 | PR=#17005 @ 15ad52bf6c | Built=trailer kind vertical guard 7/7 | NEXT=bulk inactivate lifecycle | GO
 Codex | WORKING | CUST-F7050 | CLAIM=post.customer-loads-complete-reader-parity-guard | SOURCE=CustomerDetail→listAllLoads company+customer | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7049 | PR=#17006 @ 1cc365fa2d | Built=bulk soft lifecycle guard 63/63 | NEXT=customer loads parity | GO
+Codex | WORKING | CUST-F7051 | CLAIM=post.customer-transaction-list-complete-invoice-guard | SOURCE=Customers transaction_list→listAllInvoices | NEXT=guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7050 | PR=#17007 @ bb8314b8b8 | Built=customer complete loads guard | NEXT=transaction list completeness | GO
