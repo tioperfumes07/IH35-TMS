@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../api/client";
 import { Modal } from "../Modal";
 import { EntityPicker } from "../parity/EntityPicker";
@@ -23,39 +23,69 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
   const [kind, setKind] = useState<"trailer" | "chassis">("trailer");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const scopeGenerationRef = useRef(0);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+    setEquipmentUuid("");
+    setEquipmentOption(null);
+    setFromDriver("");
+    setFromDriverOption(null);
+    setToDriver("");
+    setToDriverOption(null);
+    setLocation("");
+    setKind("trailer");
+    setBusy(false);
+    setError(null);
+  }, [open, operatingCompanyId]);
+
+  const closeUnlessBusy = () => {
+    if (!busy) onClose();
+  };
 
   async function submit() {
+    const submittedGeneration = scopeGenerationRef.current;
+    const submittedCompanyId = operatingCompanyId;
+    const submittedPayload = {
+      operating_company_id: submittedCompanyId,
+      equipment_uuid: equipmentUuid,
+      equipment_kind: kind,
+      from_driver_uuid: fromDriver,
+      to_driver_uuid: toDriver,
+      transfer_location: location,
+    };
+    const submittedOnCreated = onCreated;
+    const submittedOnClose = onClose;
     setBusy(true);
     setError(null);
     try {
       const res = await apiRequest<{ uuid: string }>("/api/v1/dispatch/equipment-transfers/initiate", {
         method: "POST",
         body: {
-          operating_company_id: operatingCompanyId,
-          equipment_uuid: equipmentUuid,
-          equipment_kind: kind,
-          from_driver_uuid: fromDriver,
-          to_driver_uuid: toDriver,
-          transfer_location: location,
+          ...submittedPayload,
         },
       });
-      onCreated?.(res.uuid);
-      onClose();
+      if (scopeGenerationRef.current !== submittedGeneration) return;
+      submittedOnCreated?.(res.uuid);
+      submittedOnClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to initiate transfer");
+      if (scopeGenerationRef.current === submittedGeneration) {
+        setError(e instanceof Error ? e.message : "Failed to initiate transfer");
+      }
     } finally {
-      setBusy(false);
+      if (scopeGenerationRef.current === submittedGeneration) setBusy(false);
     }
   }
 
   const hasSelected = Boolean(equipmentUuid || fromDriver || toDriver);
 
   return (
-    <Modal open={open} onClose={onClose} title="Initiate equipment transfer">
+    <Modal open={open} onClose={closeUnlessBusy} title="Initiate equipment transfer">
       <div data-testid="equipment-transfer-modal" className="grid gap-2">
         <select
           className="rounded-sm border px-2 py-1"
           value={kind}
+          disabled={busy}
           onChange={(e) => {
             setKind(e.target.value as typeof kind);
             setEquipmentUuid("");
@@ -75,6 +105,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             setEquipmentOption(option ?? null);
           }}
           enabled={open}
+          disabled={busy}
           placeholder={kind === "chassis" ? "Select chassis" : "Select trailer"}
         />
         <EntityPicker
@@ -86,6 +117,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             setFromDriverOption(option ?? null);
           }}
           enabled={open}
+          disabled={busy}
           placeholder="From driver"
         />
         <EntityPicker
@@ -97,6 +129,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             setToDriverOption(option ?? null);
           }}
           enabled={open}
+          disabled={busy}
           placeholder="To driver"
         />
         {/* Exact Leaves dispatch.modal.equipment_transfer:driver|trailer —
@@ -125,7 +158,7 @@ export function EquipmentTransferModal({ open, operatingCompanyId, onCreated, on
             ) : null}
           </div>
         ) : null}
-        <input className="rounded-sm border px-2 py-1" placeholder="Transfer location" value={location} onChange={(e) => setLocation(e.target.value)} />
+        <input className="rounded-sm border px-2 py-1 disabled:opacity-60" placeholder="Transfer location" value={location} onChange={(e) => setLocation(e.target.value)} disabled={busy} />
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
         <div className="mt-1 flex gap-2">
           <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-1 text-white disabled:opacity-50" disabled={busy} onClick={submit}>

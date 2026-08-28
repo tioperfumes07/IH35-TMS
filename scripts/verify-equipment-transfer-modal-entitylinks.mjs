@@ -20,8 +20,7 @@ function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function check() {
-  const src = fs.readFileSync(FILE, "utf8");
+function checkSource(src) {
   assert(/EntityLinkOrTombstone/.test(src), "must import/use EntityLinkOrTombstone");
   assert(
     /data-testid=["']equipment-transfer-modal-entitylinks["']/.test(src),
@@ -34,39 +33,45 @@ function check() {
   assert(/id=\{fromDriver\}\s+name=\{fromDriverOption\?\.label\}/.test(src), "from-driver FK must be coupled to its selected label");
   assert(/id=\{toDriver\}\s+name=\{toDriverOption\?\.label\}/.test(src), "to-driver FK must be coupled to its selected label");
   assert(!/entityLabel\(null,\s*(?:equipmentUuid|fromDriver|toDriver)/.test(src), "must not fabricate selected labels from UUIDs");
+  assert(/const scopeGenerationRef = useRef\(0\)/.test(src), "modal must own a scope generation");
+  assert(/\[open, operatingCompanyId\]/.test(src), "modal must reset on company/open transitions");
+  assert(/setEquipmentUuid\(""\)[\s\S]*setFromDriver\(""\)[\s\S]*setToDriver\(""\)[\s\S]*setLocation\(""\)[\s\S]*setError\(null\)/.test(src), "scope reset must clear the entire transfer draft");
+  assert(/const submittedPayload = \{[\s\S]*operating_company_id: submittedCompanyId[\s\S]*equipment_uuid: equipmentUuid[\s\S]*to_driver_uuid: toDriver/.test(src), "submit must snapshot company and transfer identities");
+  assert(/body: \{[\s\S]*\.\.\.submittedPayload/.test(src), "writer must consume only the submitted payload snapshot");
+  assert(/scopeGenerationRef\.current !== submittedGeneration\) return/.test(src), "late success must not close a replacement scope");
+  assert(/scopeGenerationRef\.current === submittedGeneration\)[\s\S]*setError/.test(src), "late failure must not contaminate a replacement scope");
+  assert(/<Modal open=\{open\} onClose=\{closeUnlessBusy\}/.test(src), "modal dismissal must be locked while pending");
+  assert((src.match(/disabled=\{busy\}/g) ?? []).length >= 6, "kind, three pickers, location, and submit must lock while pending");
+}
+
+function check() {
+  checkSource(fs.readFileSync(FILE, "utf8"));
 }
 
 function selftest() {
   const original = fs.readFileSync(FILE, "utf8");
-  const broken = original.replace(
-    /data-testid=["']equipment-transfer-modal-entitylinks["']/,
-    'data-testid="planted-missing"'
-  );
-  assert(broken !== original, "--selftest plant must mutate testid");
-  fs.writeFileSync(FILE, broken);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
+  const mutations = [
+    [/data-testid=["']equipment-transfer-modal-entitylinks["']/, 'data-testid="planted-missing"'],
+    [/name=\{fromDriverOption\?\.label\}/, "name={fromDriver}"],
+    [/const scopeGenerationRef = useRef\(0\)/, "const scopeGenerationRef = { current: 0 }"],
+    [/\[open, operatingCompanyId\]/, "[open]"],
+    [/setEquipmentUuid\(""\)/, "setEquipmentUuid(equipmentUuid)"],
+    [/operating_company_id: submittedCompanyId/, "operating_company_id: operatingCompanyId"],
+    [/\.\.\.submittedPayload/, "operating_company_id: operatingCompanyId"],
+    [/scopeGenerationRef\.current !== submittedGeneration\) return/, "false) return"],
+    [/scopeGenerationRef\.current === submittedGeneration\) \{/, "true) {"],
+    [/<Modal open=\{open\} onClose=\{closeUnlessBusy\}/, "<Modal open={open} onClose={onClose}"],
+    [/disabled=\{busy\}/, "disabled={false}"],
+  ];
+  for (const [pattern, replacement] of mutations) {
+    const broken = original.replace(pattern, replacement);
+    assert(broken !== original, `--selftest plant must mutate ${pattern}`);
+    let failed = false;
+    try { checkSource(broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
-  assert(failed, "--selftest expected FAIL when entitylinks testid removed");
-  const rawUuid = original.replace(/name=\{fromDriverOption\?\.label\}/, 'name={fromDriver}');
-  assert(rawUuid !== original, "--selftest label plant must match");
-  fs.writeFileSync(FILE, rawUuid);
-  let labelFailed = false;
-  try {
-    check();
-  } catch {
-    labelFailed = true;
-  } finally {
-    fs.writeFileSync(FILE, original);
-  }
-  assert(labelFailed, "--selftest expected FAIL when UUID replaces selected label");
   check();
-  console.log(`${LABEL}: OK — selftest PASS`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";

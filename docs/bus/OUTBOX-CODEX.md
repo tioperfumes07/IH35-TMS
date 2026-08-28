@@ -1877,3 +1877,5 @@ Codex | SHIPPED | DSP-F7104 | PR=#17105 @ 68871d0be6 | Built=customs broker fail
 Codex | WORKING | DSP-F7107 | CLAIM=post.dispatch-notify-preference-scope-snapshot | SOURCE=customer notification preferences write→selected customer/company | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7106 | PR=#17107 @ feb53eb82e | Built=reassign immutable scope lifecycle | NEXT=notify preference scope | GO
 Codex | WORKING | DSP-F7108 | CLAIM=post.dispatch-save-template-modal-scope-snapshot | SOURCE=mounted SaveLoadTemplateModal scope→dispatch.load_templates writer | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7108 | PR=#17112 @ 904c4e050f | Built=save-template immutable scope lifecycle | NEXT=equipment-transfer scope | GO
+Codex | WORKING | DSP-F7109 | CLAIM=post.dispatch-equipment-transfer-modal-scope-snapshot | SOURCE=mounted EquipmentTransferModal→canonical initiation writer | NEXT=guard+FAST-MERGE | GO
