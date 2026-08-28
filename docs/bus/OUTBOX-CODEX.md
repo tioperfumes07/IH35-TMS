@@ -1,3 +1,6 @@
+CODEX | ACK | GO-0009 | NOW=/dispatch-unique | SHA=069d531 | GO
+Codex | WORKING | DSP-F7078 | CLAIM=post.dispatch-detention-reason-picker-complete-range | SOURCE=catalogs.detention_reasons total+offset→Expected Adjustments picker | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7077 | PR=#17049 @ 087eba83ed | Built=Book Load geocode failure retry | NEXT=detention reason picker | GO
 Codex | WORKING | DSP-F7077 | CLAIM=post.dispatch-geocode-failure-retry | SOURCE=Trimble proxy geocodeSearch→Book Load stop address | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7076 | PR=#17047 @ d35dd2c419 | Built=dispatch catalog picker ranges complete | NEXT=geocode failure recovery | GO
 Codex | ACK | GO-0007 | NOW=/dispatch-unique | SHA=08d96f7 | GO

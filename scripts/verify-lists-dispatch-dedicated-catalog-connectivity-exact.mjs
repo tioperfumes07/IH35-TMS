@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["catalog.dispatch.dispatch_flag_colors.list","catalog.dispatch.dispatch_flag_colors.create","catalog.dispatch.load_types.list","catalog.dispatch.load_types.create","catalog.dispatch.detention_reasons.list","catalog.dispatch.detention_reasons.create","catalog.dispatch.pickup_time_types.list","catalog.dispatch.pickup_time_types.create","catalog.dispatch.additional_charges.list","catalog.dispatch.additional_charges.create","catalog.dispatch.load_cancellation_reasons.list","catalog.dispatch.load_cancellation_reasons.create"],"task":"LISTS-F5958-DISPATCH-DEDICATED-CATALOG-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /** @matrix-built {"modules":["dispatch"],"cols":["connectivity","picker_law"],"leaves":["secondary.book_load","load.drawer.stops","dispatch.modal.book_load_modal_v4"],"task":"DSP-F7076-DISPATCH-CATALOG-PICKERS-COMPLETE-RANGE","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity","picker_law"],"leaves":["secondary.book_load","dispatch.modal.book_load_modal_v4"],"task":"DSP-F7078-DETENTION-REASON-PICKER-COMPLETE-RANGE","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const SELF = "scripts/verify-lists-dispatch-dedicated-catalog-connectivity-exact.mjs";
@@ -13,6 +14,7 @@ const SHARED_BACKEND = "apps/backend/src/catalogs/dispatch/shared.ts";
 const ACCESSORIAL_EDITOR = "apps/frontend/src/components/dispatch/AccessorialEditor.tsx";
 const MULTI_STOP_EDITOR = "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx";
 const BOOK_LOAD_MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
+const EXPECTED_ADJUSTMENTS = "apps/frontend/src/pages/dispatch/components/book-load-v4/ExpectedAdjustmentsCallout.tsx";
 const SHARED = [
   ["load_types", "load-types", "LoadTypes", "loadTypesCatalogClient"],
   ["detention_reasons", "detention-reasons", "DetentionReasons", "detentionReasonsCatalogClient"],
@@ -46,6 +48,7 @@ export function audit(s = {}) {
   const accessorialEditor = s.accessorialEditor ?? read(ACCESSORIAL_EDITOR);
   const multiStopEditor = s.multiStopEditor ?? read(MULTI_STOP_EDITOR);
   const bookLoadModal = s.bookLoadModal ?? read(BOOK_LOAD_MODAL);
+  const expectedAdjustments = s.expectedAdjustments ?? read(EXPECTED_ADJUSTMENTS);
   const self = s.self ?? read(SELF);
   let matrix;
   try { matrix = JSON.parse(matrixText); } catch (error) { return [`Lists matrix invalid: ${error.message}`]; }
@@ -61,6 +64,8 @@ export function audit(s = {}) {
   for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient", "loadTypesCatalogClient"]) {
     if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
   }
+  if (!expectedAdjustments.includes("listAllDispatchCatalogRows(detentionReasonsCatalogClient") || /detentionReasonsCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(expectedAdjustments)) failures.push("ExpectedAdjustmentsCallout must exhaust detention-reasons catalog");
+  if (expectedAdjustments.includes("CappedListNotice") || expectedAdjustments.includes("Type to search for a reason that is not listed")) failures.push("ExpectedAdjustmentsCallout must not claim an unavailable server-search fallback");
   for (const token of ["withCompanyScope(", 'app.get(basePath', 'app.post(basePath', "operating_company_id = $1::uuid", "INSERT INTO ${tableName}", "appendCrudAudit("]) if (!sharedBackend.includes(token)) failures.push(`shared Dispatch backend missing ${token}`);
 
   for (const [leafKey, slug, pageName, clientName] of SHARED) {
@@ -90,7 +95,7 @@ export function audit(s = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), accessorialEditor: read(ACCESSORIAL_EDITOR), multiStopEditor: read(MULTI_STOP_EDITOR), bookLoadModal: read(BOOK_LOAD_MODAL), self: read(SELF) };
+  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), accessorialEditor: read(ACCESSORIAL_EDITOR), multiStopEditor: read(MULTI_STOP_EDITOR), bookLoadModal: read(BOOK_LOAD_MODAL), expectedAdjustments: read(EXPECTED_ADJUSTMENTS), self: read(SELF) };
   const mutations = [
     ["matrix", original.matrix.replace('"id": "catalog.dispatch.load_types.list"', '"id": "catalog.dispatch.load_types.list.broken"')],
     ["manifest", original.manifest.replace('path="/lists/dispatch/load-types"', 'path="/lists/dispatch/load-types-broken"')],
@@ -102,6 +107,7 @@ if (process.argv.includes("--selftest")) {
     ["accessorialEditor", original.accessorialEditor.replace("listAllDispatchCatalogRows(additionalChargesCatalogClient", "additionalChargesCatalogClient.list")],
     ["multiStopEditor", original.multiStopEditor.replace("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient", "pickupTimeTypesCatalogClient.list")],
     ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
+    ["expectedAdjustments", original.expectedAdjustments.replace("listAllDispatchCatalogRows(detentionReasonsCatalogClient", "detentionReasonsCatalogClient.list")],
   ];
   for (const [key, mutant] of mutations) if (!audit({ ...original, [key]: mutant }).length) throw new Error(`mutation survived: ${key}`);
   for (const [leafKey, slug, pageName, clientName] of SHARED) {
