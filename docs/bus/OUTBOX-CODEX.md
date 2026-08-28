@@ -1843,3 +1843,4 @@ CODEX | WORKING | GO-0009 | FINDING=DSP-F7081 | NOW=quicksave spine emit atomici
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7082 | NOW=Book Load create spine atomicity | GUARD=verify-a2 5/5 | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7083 | NOW=cancellation spine vertical completion | GUARD=verify-a2 9/9 | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7084 | NOW=pre-dispatch preview failure honesty | GUARD=predispatch-panel 2/2 | NEXT=FAST-MERGE | GO
+Codex | WORKING | DSP-F7085 | CLAIM=post.dispatch-overview-unassigned-units-error-honesty | SOURCE=units-without-load query→overview KPI+panel | NEXT=guard+FAST-MERGE | GO
