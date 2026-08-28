@@ -1853,3 +1853,5 @@ Codex | WORKING | DSP-F7091 | CLAIM=post.dispatch-notify-preferences-read-failur
 Codex | WORKING | DSP-F7093 | CLAIM=post.dispatch-load-template-read-failure-honesty | SOURCE=dispatch.load_templates→Book Load picker+template library | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7094 | CLAIM=post.dispatch-multistop-pickup-type-failure-honesty | SOURCE=catalogs.pickup_time_types→MultiStopEditor rows | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7095 | CLAIM=post.dispatch-tri-signal-failure-honesty | SOURCE=active load tri-signals→Dispatch List+Table risk column | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7095 | PR=#17083 @ 1af1b36ef0 | Built=dispatch status-signal failure honesty | NEXT=telemetry failure honesty | GO
+Codex | WORKING | DSP-F7096 | CLAIM=post.dispatch-telemetry-failure-honesty | SOURCE=load positions+fleet location→Dispatch List+Table | NEXT=guard+FAST-MERGE | GO
