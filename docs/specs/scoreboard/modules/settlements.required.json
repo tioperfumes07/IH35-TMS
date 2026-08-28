@@ -2,7 +2,7 @@
   "module": "settlements",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "IH35_ARCHITECTURAL_DESIGN — Settlements / driver finance",
+    "arch_design": "IH35_ARCHITECTURAL_DESIGN \u2014 Settlements / driver finance",
     "nav": "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
     "routes": "/driver-finance/*"
   },
@@ -116,9 +116,59 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "gl_delta",
+      "group": "economics",
+      "label": "C25 GL \u0394"
+    },
+    {
+      "id": "subledger_tie",
+      "group": "economics",
+      "label": "C26 Subledger"
+    },
+    {
+      "id": "lifecycle_complete",
+      "group": "economics",
+      "label": "C27 Lifecycle"
+    },
+    {
+      "id": "reversal_symmetry",
+      "group": "economics",
+      "label": "C28 Reversal"
+    },
+    {
+      "id": "period_guard",
+      "group": "economics",
+      "label": "C29 Period"
+    },
+    {
+      "id": "entity_isolation",
+      "group": "economics",
+      "label": "C30 Entity"
+    },
+    {
+      "id": "non_empty_proof",
+      "group": "economics",
+      "label": "C31 Living doc"
     }
   ],
   "leaves": [
+    {
+      "id": "economics.invariants",
+      "tab": "Settlements",
+      "sub": "USMCA ledger invariants C25\u2013C31",
+      "route_hint": "/driver-finance/*",
+      "required": [
+        "gl_delta",
+        "subledger_tie",
+        "lifecycle_complete",
+        "reversal_symmetry",
+        "period_guard",
+        "entity_isolation",
+        "non_empty_proof"
+      ]
+    },
     {
       "id": "settlements.list",
       "tab": "Settlements",
@@ -362,7 +412,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-finance/settlements",
       "surface_kind": "toolbar",
       "required": [
@@ -374,7 +424,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/driver-finance/settlements",
       "surface_kind": "toolbar",
       "required": [
@@ -386,7 +436,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/driver-finance/settlements",
       "surface_kind": "toolbar",
       "required": [
@@ -398,7 +448,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/settlements",
       "surface_kind": "toolbar",
       "required": [
@@ -466,7 +516,7 @@
           ]
         }
       ],
-      "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink — money gl_je/ap_bill claims were inflation"
+      "note": "Settlements FE has liability drills but no journal_entry/ap_bill EntityLink \u2014 money gl_je/ap_bill claims were inflation"
     },
     "liability_chrome_disputes_ca_2026_08_12": {
       "finding": "SETTLEMENTS-LIABILITY-CHROME",
@@ -498,7 +548,7 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "picker_law_2026_08_13_remainder_batch": {
       "finding": "VERTICAL-PICKER-LAW-REMAINDER-BATCH",
@@ -568,7 +618,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "both settlements leaves are false: SettlementsPage.tsx/SettlementsTable.tsx and SettlementDetailPage.tsx/SettlementHeader.tsx have zero unit references — driver/settlement/bill-scoped only, no unit linkage anywhere.",
+      "note": "both settlements leaves are false: SettlementsPage.tsx/SettlementsTable.tsx and SettlementDetailPage.tsx/SettlementHeader.tsx have zero unit references \u2014 driver/settlement/bill-scoped only, no unit linkage anywhere.",
       "drops": [
         {
           "id": "settlements.list",
@@ -586,7 +636,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 5 settlements leaves. Verified live — MarkDisbursedModal.tsx (only advanceId+method+reference, no driver_id), HoldDeductionModal.tsx (only EntityLink kind=\"settlement\"), LiabilityBreakdownModal.tsx (only liability EntityLink), SendAckRequestModal.tsx (only liabilityId+channel+message), PayRunClosePanel.tsx (only settlement/journal_entry/account links) — zero driver_id/EntityLink kind=\"driver\" in any of the 5 files.",
+      "note": "driver blanket-required on 5 settlements leaves. Verified live \u2014 MarkDisbursedModal.tsx (only advanceId+method+reference, no driver_id), HoldDeductionModal.tsx (only EntityLink kind=\"settlement\"), LiabilityBreakdownModal.tsx (only liability EntityLink), SendAckRequestModal.tsx (only liabilityId+channel+message), PayRunClosePanel.tsx (only settlement/journal_entry/account links) \u2014 zero driver_id/EntityLink kind=\"driver\" in any of the 5 files.",
       "drops": [
         {
           "id": "settlements.modal.mark_disbursed",

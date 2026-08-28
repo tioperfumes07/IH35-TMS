@@ -1,3 +1,5 @@
+**LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
+
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA from healthz (deploy in flight). **NOW=vendors leftover on live SHA, then factoring `factor_id` NOT NULL.** No post-gl. No GL math. Never `trigger_deploy`.
 
 **GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-3 | ACK | GO-0006 | NOW=vendors-then-factoring | SHA=<healthz> | GO`. **NOW=vendors** leftover unique on live SHA (bank id on Record Payment, audit tab, bill GL column). Then **factoring** `factor_id` NOT NULL + reverse invoice status. No post-gl. No GL math. Never `trigger_deploy`.

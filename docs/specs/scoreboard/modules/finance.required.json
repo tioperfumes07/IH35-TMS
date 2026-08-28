@@ -110,9 +110,59 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "gl_delta",
+      "group": "economics",
+      "label": "C25 GL \u0394"
+    },
+    {
+      "id": "subledger_tie",
+      "group": "economics",
+      "label": "C26 Subledger"
+    },
+    {
+      "id": "lifecycle_complete",
+      "group": "economics",
+      "label": "C27 Lifecycle"
+    },
+    {
+      "id": "reversal_symmetry",
+      "group": "economics",
+      "label": "C28 Reversal"
+    },
+    {
+      "id": "period_guard",
+      "group": "economics",
+      "label": "C29 Period"
+    },
+    {
+      "id": "entity_isolation",
+      "group": "economics",
+      "label": "C30 Entity"
+    },
+    {
+      "id": "non_empty_proof",
+      "group": "economics",
+      "label": "C31 Living doc"
     }
   ],
   "leaves": [
+    {
+      "id": "economics.invariants",
+      "tab": "Finance",
+      "sub": "USMCA ledger invariants C25\u2013C31",
+      "route_hint": "/",
+      "required": [
+        "gl_delta",
+        "subledger_tie",
+        "lifecycle_complete",
+        "reversal_symmetry",
+        "period_guard",
+        "entity_isolation",
+        "non_empty_proof"
+      ]
+    },
     {
       "id": "hub",
       "tab": "Hub",
@@ -259,7 +309,7 @@
       "required": [
         "connectivity"
       ],
-      "note": "picker_law dropped — LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
+      "note": "picker_law dropped \u2014 LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
     },
     {
       "id": "hop.accounting",
@@ -298,12 +348,12 @@
       "required": [
         "connectivity"
       ],
-      "note": "picker_law dropped — LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
+      "note": "picker_law dropped \u2014 LoanWizard has no canonical-entity FK (FINANCE-LOAN-WIZARD-PICKER-APPLICABILITY-THEATER)."
     },
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
@@ -315,7 +365,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
@@ -327,7 +377,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
@@ -339,14 +389,14 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/finance/ar-ap-aging",
       "surface_kind": "toolbar",
       "required": [
         "qbo_chrome"
       ],
       "surface_path": "pages/finance/ArApAgingPage.tsx",
-      "note": "N/A connectivity: no server-wired Filters panel exists anywhere in the Finance module today (ArApAgingPage — the real Search/Range/gear owner — has no CollapsedListFilters); qbo_chrome remains Cursor-owned chrome-law scope only."
+      "note": "N/A connectivity: no server-wired Filters panel exists anywhere in the Finance module today (ArApAgingPage \u2014 the real Search/Range/gear owner \u2014 has no CollapsedListFilters); qbo_chrome remains Cursor-owned chrome-law scope only."
     }
   ],
   "honesty_audit": {
@@ -362,11 +412,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_secondary": {
       "finding": "VERTICAL-REVERSE-LINK-SECONDARY-HONESTY",
-      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill — honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: nav.ar_ap_aging.",
+      "note": "Secondary module reverse_link Required on hub/chrome/nav leaves without reverse EntityLink drill \u2014 honesty drop. Built stays on money/ops modules already drained. Built restored for EntityLink surfaces: nav.ar_ap_aging.",
       "drops": [
         {
           "id": "hub",
@@ -540,7 +590,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "10 of 11 finance leaves (hub, hub alias, overview, and all 3 financial statement tabs, projections, scenarios, break-even) have zero customer references — pure GL-account outputs. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"customer\" in its AR-by-customer table and drill-down.",
+      "note": "10 of 11 finance leaves (hub, hub alias, overview, and all 3 financial statement tabs, projections, scenarios, break-even) have zero customer references \u2014 pure GL-account outputs. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"customer\" in its AR-by-customer table and drill-down.",
       "drops": [
         {
           "id": "hub",
@@ -606,7 +656,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "10 of 11 finance leaves (hub, hub alias, overview, all 3 statement tabs, projections, scenarios, break-even) have zero vendor references — pure GL-account outputs; nav.loan_wizard's \"Lender\" field is free text, never a real vendor_id. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"vendor\" in its AP-by-vendor table and bills drill-down.",
+      "note": "10 of 11 finance leaves (hub, hub alias, overview, all 3 statement tabs, projections, scenarios, break-even) have zero vendor references \u2014 pure GL-account outputs; nav.loan_wizard's \"Lender\" field is free text, never a real vendor_id. Only nav.ar_ap_aging genuinely renders EntityLink kind=\"vendor\" in its AP-by-vendor table and bills drill-down.",
       "drops": [
         {
           "id": "hub",

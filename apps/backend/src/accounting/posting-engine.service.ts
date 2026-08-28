@@ -1593,7 +1593,7 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
   // company-default cash-like fallback (mirrors buildCustomerPaymentLines' deposited_to_account_id-then-
   // cash-like resolution).
   let cashAccountId: string | null;
-  let creditRole: "bank" | "cc" | "cash_like";
+  let creditRole: "bank" | "cc" | "operating_bank";
   if (payment.from_bank_account_id) {
     cashAccountId = await resolveBankLedgerAccountId(client, operatingCompanyId, payment.from_bank_account_id);
     if (!cashAccountId) {
@@ -1607,24 +1607,18 @@ async function buildBillPaymentLines(client: DbClient, operatingCompanyId: strin
     cashAccountId = payment.cc_account_id;
     creditRole = "cc";
   } else {
-    // ACCT-F345 — DELIBERATELY STILL THE RECEIPT-SIDE FALLBACK HERE, and that is not an oversight.
-    //
-    // This tier has the same wrong-direction flaw as the driver-advance path (a bill payment is money
-    // LEAVING, so crediting undeposited_funds/cash_clearing is wrong by the same argument). I repointed
-    // it, then reverted on evidence: guard 3057 found TRANSP (91e0bf0a) ACTIVELY USING this tier —
-    // 2 bill_payment posting lines crediting its QBO-168 Undeposited Funds. My first reading, that the
-    // tier had "never been hit on prod", was true only for USMCA and false globally.
-    //
-    // Making it fail closed therefore stops being a safety improvement and becomes an outage for an
-    // entity that has no operating_bank binding — and the 2026-08-11 weekend merge law is USMCA-ONLY
-    // and forbids binding TRANSP/TRK. Shipping a fail-closed path for an entity I am not permitted to
-    // configure would break a live carrier's bill payments to fix a defect it is not yet exposed to.
-    //
-    // Tracked as the ACCT-F345 follow-up: bind operating_bank for TRANSP/TRK, then repoint this tier
-    // and add bill_payment to guard 3057's DISBURSEMENT_SOURCE_TYPES in the same PR.
-    cashAccountId = await resolveCashLikeAccountForCompany(client, operatingCompanyId);
-    if (!cashAccountId) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
-    creditRole = "cash_like";
+    // ACCT-F345 — last-resort bill-payment credit is operating_bank, never receipt-side clearing.
+    // Function-level (not file-level): customer payments may still call resolveCashLikeAccountForCompany.
+    // Live 2026-08-28: USMCA e8010d5a $1,200 and e12d04d9 $150 unreversed CR 1090; 8122d6e8 reversed;
+    // TRANSP dcbe5700 $5 CR QBO-168. Owner: TRANSP WF …6103 / QBO-1150040141 is operating bank.
+    cashAccountId = await resolveDisbursementCashAccountForCompany(client, operatingCompanyId);
+    if (!cashAccountId) {
+      throw new PostingEngineError(
+        "ACCOUNT_MAPPING_MISSING",
+        `operating_bank is not bound for operating_company_id=${operatingCompanyId} — refusing to credit undeposited_funds/cash_clearing on a bill payment outflow`
+      );
+    }
+    creditRole = "operating_bank";
   }
 
   const amount = Number(payment.amount_cents ?? Math.round(Number(payment.amount ?? "0") * 100));

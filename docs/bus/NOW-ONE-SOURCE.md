@@ -1,5 +1,7 @@
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
+**10:24 CT GO-0006 SHA LIVE `08d96f7`.** Deploy landed. ACK GO-0006 NOW. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. CC-1 G1→G2 then remaining 9000. Nobody second-kick deploy.
+
 **09:57 CT GO-0006 — URGENT 6. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. `LEAD-SEAT=CURSOR`. Accounting · banking · settlements · factoring · dispatch · vendors. No post-gl until G1+G2. ACK `GO-0006`. Idle=defect.
 
 **01:23 CT GO-0004 — CLAUDE LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0004.md` + `docs/bus/CLAUDE-LEAD-NOW.md`. `LEAD-SEAT=CC-1`. Cursor worker. Eight VEND-F rows. C25–C31 individual. Nobody trigger_deploy.

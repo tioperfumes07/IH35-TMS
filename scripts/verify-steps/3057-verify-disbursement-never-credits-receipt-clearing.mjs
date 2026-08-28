@@ -32,22 +32,11 @@ const LABEL = "3057-verify-disbursement-never-credits-receipt-clearing";
  * Source types that move money OUT. Each was verified against prod as an actual
  * journal_entry_postings.source_transaction_type value, not guessed from the code.
  *
- * ★ bill_payment IS DELIBERATELY ABSENT, and the reason matters more than the omission.
- * Its last-resort tier in buildBillPaymentLines has the identical wrong-direction fallback, and the
- * first version of this guard DID include it — which is how TRANSP (91e0bf0a) turned up with 2
- * bill_payment lines crediting its QBO-168 Undeposited Funds. That is a REAL instance of this defect
- * class, not a false positive.
- *
- * It is excluded because a guard must not fail on behaviour the code still permits: fixing that tier
- * requires an operating_bank binding for TRANSP/TRK, and the 2026-08-11 weekend merge law is
- * USMCA-ONLY and forbids binding them. Listing bill_payment now would fail CI on another lane's live,
- * unfixed, out-of-scope path — and a guard that fails on permitted behaviour is one that gets weakened
- * or deleted, which is how the coverage hole in ACCT-F333 was born.
- *
- * FOLLOW-UP (ACCT-F345): bind operating_bank for TRANSP/TRK, repoint that tier, and add
- * "bill_payment" to this array in the SAME PR. Adding it here without the code fix is the wrong order.
+ * bill_payment IS INCLUDED. Last-resort buildBillPaymentLines credits operating_bank and throws
+ * ACCOUNT_MAPPING_MISSING when unbound. TRANSP operating_bank is QBO-1150040141 (WF …6103).
+ * Historical unreversed credits must be WORM-reversed (this guard excludes reversed_by_line_id).
  */
-const DISBURSEMENT_SOURCE_TYPES = ["driver_advance", "driver_reimbursement", "cash_advance"];
+const DISBURSEMENT_SOURCE_TYPES = ["driver_advance", "driver_reimbursement", "cash_advance", "bill_payment"];
 
 /** The receipt-side clearing roles. Crediting either for an outflow is wrong by definition. */
 const RECEIPT_CLEARING_ROLES = ["undeposited_funds", "cash_clearing"];

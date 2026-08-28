@@ -63,6 +63,14 @@ if (!fs.existsSync(enginePath)) {
     /BILL_AP_NOT_POSTED/.test(body),
     "buildBillPaymentLines must throw BILL_AP_NOT_POSTED when the bill's A/P leg isn't posted (no negative A/P)"
   );
+  need(
+    !/resolveCashLikeAccountForCompany\(/.test(body),
+    "buildBillPaymentLines must NOT call resolveCashLikeAccountForCompany (receipt-side; ACCT-F345 function-level)"
+  );
+  need(
+    /resolveDisbursementCashAccountForCompany\(/.test(body),
+    "buildBillPaymentLines last-resort credit must resolve operating_bank via resolveDisbursementCashAccountForCompany"
+  );
 }
 
 // ---- GAP #1 — flag-gated entrypoint --------------------------------------------------------------

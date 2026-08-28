@@ -624,8 +624,15 @@
   },
   {
     "id": "LAW-2026-08-28-ECONOMIC-COLUMNS-C25-C31",
-    "title": "C25\u2013C31 economic columns must exist in columns.shared.json (GL delta / subledger / lifecycle / reversal / period / entity / living doc). Chrome walks cannot satisfy them.",
+    "title": "C25-C31 must exist in columns.shared.json AND every URGENT_16 module required.json (seven ids + economics.invariants leaf). Chrome walks cannot satisfy them.",
     "source_file": "docs/specs/scoreboard/columns.economic.json",
+    "guard": "scripts/verify-economic-columns-c25-c31-present.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-28-QUERY-BACK-HEALTHZ-LEAD",
+    "title": "Seat loop incomplete without ledger query-back of created rows; lead re-reads healthz every turn; no false complete; TRANSP WF 6103 is operating_bank; C25-C31 on URGENT_16 required.json",
+    "source_file": "docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md",
     "guard": "scripts/verify-economic-columns-c25-c31-present.mjs",
     "type": "enforced"
   },

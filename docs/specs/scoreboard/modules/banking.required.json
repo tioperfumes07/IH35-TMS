@@ -116,9 +116,59 @@
       "id": "bank",
       "group": "money",
       "label": "Bank / Match"
+    },
+    {
+      "id": "gl_delta",
+      "group": "economics",
+      "label": "C25 GL \u0394"
+    },
+    {
+      "id": "subledger_tie",
+      "group": "economics",
+      "label": "C26 Subledger"
+    },
+    {
+      "id": "lifecycle_complete",
+      "group": "economics",
+      "label": "C27 Lifecycle"
+    },
+    {
+      "id": "reversal_symmetry",
+      "group": "economics",
+      "label": "C28 Reversal"
+    },
+    {
+      "id": "period_guard",
+      "group": "economics",
+      "label": "C29 Period"
+    },
+    {
+      "id": "entity_isolation",
+      "group": "economics",
+      "label": "C30 Entity"
+    },
+    {
+      "id": "non_empty_proof",
+      "group": "economics",
+      "label": "C31 Living doc"
     }
   ],
   "leaves": [
+    {
+      "id": "economics.invariants",
+      "tab": "Banking",
+      "sub": "USMCA ledger invariants C25\u2013C31",
+      "route_hint": "/banking/*",
+      "required": [
+        "gl_delta",
+        "subledger_tie",
+        "lifecycle_complete",
+        "reversal_symmetry",
+        "period_guard",
+        "entity_isolation",
+        "non_empty_proof"
+      ]
+    },
     {
       "id": "accounts",
       "tab": "Accounts",
@@ -284,7 +334,9 @@
       "route_hint": "surface://pages/banking/TransferModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/banking/TransferModal.tsx",
-      "owned_surface_paths": ["pages/banking/TransfersListPage.tsx"],
+      "owned_surface_paths": [
+        "pages/banking/TransfersListPage.tsx"
+      ],
       "required": [
         "connectivity",
         "bank",

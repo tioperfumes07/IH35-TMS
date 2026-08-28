@@ -24,7 +24,7 @@ Default to the lowest capable tier; escalate one tier on failure; **NEVER down-t
 
 ## 3. NEVER GUESS — verify first, prove before "done"
 - Investigate before recommending: **current repo, branch, prod, database, PR state.** Live data, not memory.
-- **"Done" = live proof** (Neon lucia + the running app), never CI-green alone.
+- **"Done" = live proof** (Neon lucia + the running app), never CI-green alone. **QUERY-BACK:** a seat's loop is not complete until it queries every row it created and reports the ledger (not the UI). Lead re-reads `healthz/shallow` `version` every turn (`docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`).
 - No fake green. No unverified production claims. No unsafe financial writes. No guessed mappings. No hidden assumptions. No skipped migrations. No silent failures.
 
 ## 4. GOVERNANCE (permanent, final 2026-08-03; USMCA flags amended 2026-08-12)
