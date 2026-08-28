@@ -1068,7 +1068,6 @@ Ingles
 Espanol (preview)
 t | healthz=69d7810 | mutation=none | NEXT=system.tab.qbo_sync
 Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
-<<<<<<< HEAD
 Devin-A | LIVE STARVED | module=system | leaf=tab.qbo_sync | URL=https://app.ih35dispatch.com/system?tab=qbo-sync | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/system?tab=qbo-sync ; body head Checking session... | healthz=69d7810 | mutation=none | NEXT=system.tab.program
 Devin-A | LIVE PASS | module=system | leaf=tab.software | URL=https://app.ih35dispatch.com/system?tab=software | USMCA | cells=auto | evidence=Page renders at https://app.ih35dispatch.com/system?tab=software ; marker 'system' present ; body head IH 35 DISPATCH
 USMCA Freight Solutions Inc
@@ -1151,8 +1150,6 @@ Idioma
 Ingles
 Espanol (preview)
 6 | healthz=337ab0c | mutation=none | NEXT=finance.nav.break_even
-=======
->>>>>>> 311c2650b (FINDING: live system tab.qbo_sync starved)
 Devin-A | LIVE STARVED | module=finance | leaf=nav.break_even | URL=https://app.ih35dispatch.com/finance/break-even | USMCA | cells=auto | evidence=Session or redirect: final URL https://app.ih35dispatch.com/login ; body head IH 35 Office Login
 
 Use your Google account or email and password.
@@ -2205,8 +2202,6 @@ Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:vendor | USMCA | UR
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.header.new_transaction:scenario.ap | USMCA | URL=https://app.ih35dispatch.com/accounting/bills?vendor_id= | healthz=a0b0e7e | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/accounting/bills?vendor_id= marker 'vendors' | NEXT=leaf=vendors:md.txn.filters:vendor
-<<<<<<< HEAD
-<<<<<<< HEAD
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
 Devin-A | LIVE PASS | leaf=vendors:md.txn.filters:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors?tab=transaction_list | healthz=8f9638d | mutation=none | evidence=USMCA page https://app.ih35dispatch.com/vendors?tab=transaction_list marker 'vendors' | NEXT=leaf=vendors:detail.profile:vendor
@@ -2220,8 +2215,6 @@ Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:vendor | USMCA | URL=h
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:picker_law | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.edit:connectivity | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=unknown | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/vendors/:id healthz=unknown head Checking session... | NEXT=leaf=vendors:detail.profile.driver_link:vendor
-=======
->>>>>>> e57086623 (FINDING: live vendors md.header.new_transaction pass)
 Devin-A | LIVE STARVED | leaf=vendors:detail.profile.vendor_type_picker:vendor | USMCA | URL=https://app.ih35dispatch.com/vendors/:id | healthz=8f9638d | mutation=none | evidence=No marker at https://app.ih35dispatch.com/vendors/:id head IH 35 Office Login
 
 Use your Google account or email and password.
@@ -2262,8 +2255,6 @@ Email
 Password
 
 Strengt | NEXT=leaf=vendors:detail.profile.default_expense_account:vendor
-=======
->>>>>>> e57086623 (FINDING: live vendors md.header.new_transaction pass)
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.driver_misc_invoice:connectivity | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=1cd48d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=1cd48d0 head Checking session... | NEXT=leaf=accounting:accounting.modal.invoice_create:connectivity
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.driver_misc_invoice:qbo_chrome | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=1cd48d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=1cd48d0 head Checking session... | NEXT=leaf=accounting:accounting.modal.invoice_create:connectivity
 Devin-A | LIVE STARVED | leaf=accounting:accounting.modal.driver_misc_invoice:driver | USMCA | URL=https://app.ih35dispatch.com/accounting | healthz=1cd48d0 | mutation=none | evidence=Session/healthz: URL https://app.ih35dispatch.com/accounting healthz=1cd48d0 head Checking session... | NEXT=leaf=accounting:accounting.modal.invoice_create:connectivity
