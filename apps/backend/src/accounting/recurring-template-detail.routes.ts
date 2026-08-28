@@ -11,7 +11,8 @@ const paramsSchema = z.object({ id: z.string().uuid() });
 const listQuerySchema = companyQuerySchema.extend({
   customer_id: z.string().uuid(),
   kind: z.enum(["invoice", "bill", "expense", "journal_entry"]).optional(),
-  limit: z.coerce.number().int().min(1).max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance) {
@@ -23,9 +24,17 @@ export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance
     const opco = query.data.operating_company_id;
     await assertCompanyMembership(user.uuid, opco);
     const kind = query.data.kind ?? "invoice";
-    const limit = query.data.limit ?? 100;
-    const rows = await withCurrentUser(user.uuid, async (client) => {
+    const payload = await withCurrentUser(user.uuid, async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
+      const values = [opco, kind, query.data.customer_id];
+      const count = await client.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total
+           FROM accounting.recurring_templates rt
+          WHERE rt.operating_company_id = $1::uuid
+            AND rt.kind = $2
+            AND rt.template_payload->>'customer_id' = $3`,
+        values,
+      );
       const result = await client.query(
         `SELECT rt.id::text, rt.kind, rt.cadence, rt.cron_expression, rt.next_run_at::text,
                 rt.template_payload, rt.is_active, rt.last_run_at::text, rt.run_count,
@@ -35,12 +44,17 @@ export async function registerRecurringTemplateDetailRoutes(app: FastifyInstance
             AND rt.kind = $2
             AND rt.template_payload->>'customer_id' = $3
           ORDER BY rt.next_run_at ASC, rt.created_at DESC
-          LIMIT $4`,
-        [opco, kind, query.data.customer_id, limit],
+          LIMIT $4 OFFSET $5`,
+        [...values, query.data.limit, query.data.offset],
       );
-      return result.rows;
+      return {
+        rows: result.rows,
+        total: Number(count.rows[0]?.total ?? 0),
+        limit: query.data.limit,
+        offset: query.data.offset,
+      };
     });
-    return reply.send({ rows });
+    return reply.send(payload);
   });
 
   app.get("/api/v1/accounting/recurring-templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

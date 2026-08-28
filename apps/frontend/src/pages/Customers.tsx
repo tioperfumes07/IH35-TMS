@@ -7,8 +7,8 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listAllInvoices, listInvoices, listPayments, type Invoice, type Payment } from "../api/accounting";
-import { listAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
+import { listAllInvoices, listAllPayments, type Invoice, type Payment } from "../api/accounting";
+import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
@@ -623,7 +623,7 @@ export function CustomersPage() {
   const invoicesQuery = useQuery({
     queryKey: ["customers", "transactions", companyId, selectedCustomer?.id ?? "", statusFilter, dateFrom, dateTo],
     queryFn: () =>
-      listInvoices(companyId, {
+      listAllInvoices(companyId, {
         customer_id: selectedCustomer!.id,
         status: statusFilter || undefined,
         from_date: dateFrom || undefined,
@@ -634,33 +634,30 @@ export function CustomersPage() {
   const statementInvoicesQuery = useQuery({
     queryKey: ["customers", "statement-invoices", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
     queryFn: () =>
-      listInvoices(companyId, {
+      listAllInvoices(companyId, {
         customer_id: selectedCustomer!.id,
         from_date: dateFrom || undefined,
         to_date: dateTo || undefined,
-        limit: 200,
       }),
     enabled: Boolean(companyId && selectedCustomer?.id && (activeTab === "statements" || activeTab === "late_fees")),
   });
   const statementPaymentsQuery = useQuery({
     queryKey: ["customers", "statement-payments", companyId, selectedCustomer?.id ?? "", dateFrom, dateTo],
     queryFn: () =>
-      listPayments(companyId, {
+      listAllPayments(companyId, {
         customer_id: selectedCustomer!.id,
         status: "all",
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
-        limit: 200,
       }),
     enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "statements"),
   });
   const recurringQuery = useQuery({
     queryKey: ["customers", "recurring-templates", companyId, selectedCustomer?.id ?? ""],
     queryFn: () =>
-      listAccountingRecurringTemplates(companyId, {
+      listAllAccountingRecurringTemplates(companyId, {
         customer_id: selectedCustomer!.id,
         kind: "invoice",
-        limit: 100,
       }),
     enabled: Boolean(companyId && selectedCustomer?.id && activeTab === "recurring_transactions"),
   });

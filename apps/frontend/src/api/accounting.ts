@@ -611,6 +611,22 @@ export function listPayments(
   return apiRequest<{ rows: Payment[]; total: number }>(withCompany(`/api/v1/accounting/payments${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
+/** Exhaust a filtered payment range for mounted history/statement rollups. */
+export async function listAllPayments(
+  operatingCompanyId: string,
+  filters: Omit<Parameters<typeof listPayments>[1], "limit" | "offset"> = {}
+) {
+  const limit = 500;
+  const rows: Payment[] = [];
+  let offset = 0;
+  while (true) {
+    const page = await listPayments(operatingCompanyId, { ...filters, limit, offset });
+    rows.push(...page.rows);
+    if (rows.length >= page.total || page.rows.length === 0) return { rows, total: page.total };
+    offset += page.rows.length;
+  }
+}
+
 export function listVendorBalances(
   operatingCompanyId: string,
   params: { all?: boolean; sort?: "balance_desc" | "balance_asc" | "vendor_asc" } = {}

@@ -17,16 +17,32 @@ export type AccountingRecurringTemplateDetail = {
 
 export function listAccountingRecurringTemplates(
   operatingCompanyId: string,
-  params: { customer_id: string; kind?: AccountingRecurringTemplateDetail["kind"]; limit?: number },
+  params: { customer_id: string; kind?: AccountingRecurringTemplateDetail["kind"]; limit?: number; offset?: number },
 ) {
   const query = new URLSearchParams();
   query.set("operating_company_id", operatingCompanyId);
   query.set("customer_id", params.customer_id);
   if (params.kind) query.set("kind", params.kind);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
-  return apiRequest<{ rows: AccountingRecurringTemplateDetail[] }>(
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
+  return apiRequest<{ rows: AccountingRecurringTemplateDetail[]; total: number; limit: number; offset: number }>(
     `/api/v1/accounting/recurring-templates?${query.toString()}`,
   );
+}
+
+export async function listAllAccountingRecurringTemplates(
+  operatingCompanyId: string,
+  params: Omit<Parameters<typeof listAccountingRecurringTemplates>[1], "limit" | "offset">,
+) {
+  const limit = 200;
+  const rows: AccountingRecurringTemplateDetail[] = [];
+  let offset = 0;
+  while (true) {
+    const page = await listAccountingRecurringTemplates(operatingCompanyId, { ...params, limit, offset });
+    rows.push(...page.rows);
+    if (rows.length >= page.total || page.rows.length === 0) return { rows, total: page.total };
+    offset += page.rows.length;
+  }
 }
 
 export function getAccountingRecurringTemplate(id: string, operatingCompanyId: string) {
