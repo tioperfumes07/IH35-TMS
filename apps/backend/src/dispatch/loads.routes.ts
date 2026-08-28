@@ -461,7 +461,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dispatch/loads/reserve-id", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/reserve-id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -484,7 +484,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.delete("/api/v1/dispatch/loads/reserve-id/:reservation_uuid", async (req, reply) => {
+  app.delete("/api/v1/dispatch/loads/reserve-id/:reservation_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -505,7 +505,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return { released };
   });
 
-  app.post("/api/v1/dispatch/loads/ocr-upload", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/ocr-upload", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -543,7 +543,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return reply.code(201).send({ ocr_source_pdf_r2_key: r2Key });
   });
 
-  app.get("/api/v1/dispatch/preferences", async (req, reply) => {
+  app.get("/api/v1/dispatch/preferences", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
 
@@ -1332,19 +1332,6 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         }).catch((err) => {
           req.log.warn({ err, load_id: createdLoadId }, "auto_geofence_post_book_failed");
         });
-      }
-      const createdLoadIdForSpine = String(result.row.id ?? "");
-      const createdCompanyIdForSpine = String(result.row.operating_company_id ?? body.data.operating_company_id);
-      if (createdLoadIdForSpine && createdCompanyIdForSpine) {
-        void withCurrentUser(authUser.uuid, (client) =>
-          emitDispatchSpineEvent(client, {
-            operating_company_id: createdCompanyIdForSpine,
-            actor_user_id: authUser.uuid,
-            event_type: "load.created",
-            load_id: createdLoadIdForSpine,
-            payload: { load_number: result.row.load_number ?? null },
-          })
-        ).catch((err) => req.log.warn({ err }, "spine_emit_load_created_failed"));
       }
       return reply.code(201).send(result.row);
     } catch (error) {

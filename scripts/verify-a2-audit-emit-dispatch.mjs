@@ -32,7 +32,8 @@ else pass("dispatch-spine-emit.ts does not bypass log_event()");
 
 // 3. Each mutating file must import and call emitDispatchSpineEvent
 const mutatingFiles = [
-  { file: "apps/backend/src/dispatch/loads.routes.ts",        events: ["load.created", "load.status_changed", "load.chargeback_flagged"] },
+  { file: "apps/backend/src/dispatch/loads.routes.ts",        events: ["load.status_changed", "load.chargeback_flagged"] },
+  { file: "apps/backend/src/dispatch/book-load.service.ts",   events: ["load.created"] },
   { file: "apps/backend/src/dispatch/cancellation.routes.ts", events: ["load.cancelled", "load.cancellation_approved"] },
   { file: "apps/backend/src/dispatch/quick-assign.service.ts", events: ["load.assigned_to_driver", "load.quicksave_draft_completed"] },
 ];
@@ -66,6 +67,15 @@ function quickAssignAtomicityFailures(serviceSrc, routeSrc) {
   if (/emitDispatchSpineEvent|spine_emit_load_(?:assigned_to_driver|quicksave_draft_completed)_failed/.test(routeSrc)) {
     failures.push("route contains detached/swallowed spine emit");
   }
+  return failures;
+}
+
+function bookLoadAtomicityFailures(serviceSrc, routeSrc) {
+  const failures = [];
+  if (!/await\s+emitDispatchSpineEvent\(client,[\s\S]{0,500}?event_type:\s*["']load\.created["']/.test(serviceSrc)) {
+    failures.push("load.created not awaited in bookLoad transaction");
+  }
+  if (/spine_emit_load_created_failed/.test(routeSrc)) failures.push("route swallows detached load.created emit");
   return failures;
 }
 
@@ -110,6 +120,44 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (caught === mutations.length) pass(`SELFTEST caught ${caught}/${mutations.length} planted regressions`);
+
+  const bookLoadSrc = read("apps/backend/src/dispatch/book-load.service.ts");
+  const loadsRouteSrc = read("apps/backend/src/dispatch/loads.routes.ts");
+  const bookMutations = [
+    {
+      name: "book-load create emit loses await",
+      service: bookLoadSrc.replace(
+        /await emitDispatchSpineEvent\(client, \{([\s\S]{0,300}?event_type: "load\.created")/,
+        "void emitDispatchSpineEvent(client, {$1",
+      ),
+      route: loadsRouteSrc,
+    },
+    {
+      name: "load route restores swallowed post-commit create emit",
+      service: bookLoadSrc,
+      route: `${loadsRouteSrc}\nreq.log.warn({}, "spine_emit_load_created_failed");`,
+    },
+  ];
+  let bookCaught = 0;
+  for (const mutation of bookMutations) {
+    if (bookLoadAtomicityFailures(mutation.service, mutation.route).length > 0) {
+      console.log(`[verify-a2] SELFTEST PASS: ${mutation.name}`);
+      bookCaught += 1;
+    } else {
+      fail(`SELFTEST mutation survived: ${mutation.name}`);
+    }
+  }
+  if (bookCaught === bookMutations.length) pass(`SELFTEST caught ${bookCaught}/${bookMutations.length} book-load regressions`);
+}
+
+const bookLoadFailures = bookLoadAtomicityFailures(
+  read("apps/backend/src/dispatch/book-load.service.ts"),
+  read("apps/backend/src/dispatch/loads.routes.ts"),
+);
+if (bookLoadFailures.length > 0) {
+  for (const message of bookLoadFailures) fail(`book-load atomicity: ${message}`);
+} else {
+  pass("book-load load.created spine event is awaited in-transaction; route has no swallowed copy");
 }
 
 // 4. DispatchSpineEvent union must cover all expected types

@@ -18,6 +18,7 @@ import {
   reserveNextLoadId,
 } from "./load-id-reservation.service.js";
 import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -2111,6 +2112,17 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         }
       );
     }
+
+    // The dispatch spine is the canonical reverse/audit feed for a created load. Emit it on the
+    // booking client before commit so a 201 can never describe a load whose create event was lost
+    // by a detached post-response callback.
+    await emitDispatchSpineEvent(client, {
+      operating_company_id: input.operating_company_id,
+      actor_user_id: input.requestingUserUuid,
+      event_type: "load.created",
+      load_id: String(load.id),
+      payload: { load_number: load.load_number ?? null },
+    });
 
     return {
       kind: "ok",
