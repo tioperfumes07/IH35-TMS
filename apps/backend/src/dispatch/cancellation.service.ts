@@ -3,6 +3,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createTonuInvoiceForCancellation, TONU_CANCELLATION_AR_POSTING_FLAG_KEY } from "./cancellation-tonu-invoice.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -331,6 +332,17 @@ export async function cancelLoad(
         "P5-F4-CANCELLATIONS"
       );
 
+      await emitDispatchSpineEvent(client, {
+        operating_company_id: input.operating_company_id,
+        actor_user_id: userId,
+        event_type: "load.cancelled",
+        load_id: input.load_id,
+        payload: {
+          reason_code: input.reason_code,
+          pending_owner_approval: pendingOwnerApproval,
+        },
+      });
+
       await client.query("COMMIT");
       return {
         load_id: input.load_id,
@@ -467,8 +479,14 @@ export async function approveCancellation(
         "warning",
         "P5-F4-CANCELLATIONS"
       );
+      await emitDispatchSpineEvent(client, {
+        operating_company_id: input.operating_company_id,
+        actor_user_id: userId,
+        event_type: "load.cancellation_approved",
+        load_id: cancellation.load_id,
+      });
       await client.query("COMMIT");
-      return { id: input.cancellation_id, status: "approved" };
+      return { id: input.cancellation_id, load_id: cancellation.load_id, status: "approved" };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

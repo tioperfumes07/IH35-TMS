@@ -1,9 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import { withCurrentUser } from "../auth/db.js";
 import { approveCancellation, cancelLoad, listCancellationReasons, listCancellations } from "./cancellation.service.js";
-import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 
 const loadIdParamsSchema = z.object({ id: z.string().uuid() });
 const cancellationIdParamsSchema = z.object({ id: z.string().uuid() });
@@ -61,20 +59,6 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
         ...body.data,
         load_id: params.data.id,
       });
-      void withCurrentUser(user.uuid, (client) =>
-        emitDispatchSpineEvent(client, {
-          operating_company_id: body.data.operating_company_id,
-          actor_user_id: user.uuid,
-          event_type: "load.cancelled",
-          load_id: params.data.id,
-          payload: { reason_code: body.data.reason_code },
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
-          "spine_emit_load_cancelled_failed"
-        )
-      );
       return result;
     } catch (error) {
       const mapped = mapServiceError(error);
@@ -103,22 +87,6 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
         operating_company_id: body.data.operating_company_id,
         cancellation_id: params.data.id,
       });
-      const loadId = (result as { load_id?: string })?.load_id ?? "";
-      if (loadId) {
-        void withCurrentUser(user.uuid, (client) =>
-          emitDispatchSpineEvent(client, {
-            operating_company_id: body.data.operating_company_id,
-            actor_user_id: user.uuid,
-            event_type: "load.cancellation_approved",
-            load_id: loadId,
-          })
-        ).catch((err) =>
-          req.log.warn(
-            { err, load_id: loadId, company_id: body.data.operating_company_id },
-            "spine_emit_load_cancellation_approved_failed"
-          )
-        );
-      }
       return result;
     } catch (error) {
       const mapped = mapServiceError(error);
