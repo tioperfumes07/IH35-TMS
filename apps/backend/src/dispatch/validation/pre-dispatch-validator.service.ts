@@ -335,8 +335,23 @@ async function checkDriverHos(
         },
       ];
     }
-  } catch {
-    // HOS data unavailable — skip silently.
+  } catch (error) {
+    // Do not turn a failed safety read into a clean validation result. This remains a warning (rather
+    // than an invented hard block) so the existing role-gated dispatch policy is unchanged, while the
+    // dispatcher can distinguish "HOS unavailable" from "HOS checked and clear".
+    console.warn("[WF-HOS-UNAVAILABLE] checkDriverHos failed:", error);
+    return [
+      {
+        rule_id: "WF-HOS-UNAVAILABLE",
+        severity: "warn",
+        message: "HOS clocks could not be verified. Confirm the driver's current clocks before dispatch.",
+        evidence: {
+          driver_id: driverUuid,
+          operating_company_id: operatingCompanyId,
+          validation_status: "unavailable",
+        },
+      },
+    ];
   }
 
   return [];
