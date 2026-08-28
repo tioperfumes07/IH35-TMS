@@ -40,14 +40,14 @@ function main() {
   const failures = [];
 
   if (!actionBar.includes("SendMessageModal")) failures.push("ActionBar must mount SendMessageModal");
-  if (!actionBar.includes("SuspendConfirmModal")) failures.push("ActionBar must mount SuspendConfirmModal");
+  if (!actionBar.includes("<SuspendConfirmModal")) failures.push("ActionBar must mount SuspendConfirmModal");
   if (!actionBar.includes("TerminateConfirmModal")) failures.push("ActionBar must mount TerminateConfirmModal");
   if (!actionBar.includes('navigate(`/drivers/${driverId}`)')) failures.push("Edit must navigate to driver detail");
   if (!actionBar.includes("dp-action-send-message")) failures.push("Send Message button must be wired");
   if (!actionBar.includes("dp-export-pdf")) failures.push("Export PDF link must remain present");
 
   if (!sendModal.includes("sendDriverProfileMessage")) failures.push("SendMessageModal must call sendDriverProfileMessage");
-  if (!suspendModal.includes("suspendDriver(driverId")) failures.push("Suspend must call atomic suspendDriver endpoint");
+  if (!suspendModal.includes("suspendDriver(input.driverId, input.reason)")) failures.push("Suspend must call atomic suspendDriver endpoint with captured driver/reason scope");
   if (suspendModal.includes("updateDriver(driverId") || suspendModal.includes("createSafetyEvent(driverId")) {
     failures.push("Suspend must not use sequential updateDriver + createSafetyEvent");
   }
@@ -65,6 +65,29 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail("FAILED");
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      [suspendModal, "suspendDriver(input.driverId, input.reason)", "suspendDriver(driverId, reason)"],
+      [suspendModal, "generation: requestGenerationRef.current", "generation: 0"],
+      [actionBar, "<SuspendConfirmModal", "<MissingSuspendConfirmModal"],
+      [profilePage, "onActionComplete={refreshDriver}", "onActionComplete={() => undefined}"],
+    ];
+    for (const [source, needle, replacement] of mutations) {
+      const broken = source.replace(needle, replacement);
+      if (broken === source) fail(`SELFTEST mutation source missing: ${needle}`);
+      const caught = needle === "suspendDriver(input.driverId, input.reason)"
+        ? !broken.includes("suspendDriver(input.driverId, input.reason)")
+        : needle === "generation: requestGenerationRef.current"
+          ? !broken.includes("generation: requestGenerationRef.current")
+          : needle === "<SuspendConfirmModal"
+            ? !broken.includes("<SuspendConfirmModal")
+            : !broken.includes("onActionComplete={refreshDriver}");
+      if (!caught) fail(`SELFTEST planted defect escaped: ${needle}`);
+    }
+    console.log("[verify-drivers-profile-action-bar] SELFTEST PASS — 4 mutations detected");
+    return;
   }
 
   console.log("[verify-drivers-profile-action-bar] OK");
