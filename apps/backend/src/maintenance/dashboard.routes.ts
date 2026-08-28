@@ -248,7 +248,10 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
   app.get("/api/v1/maintenance/dashboard/dtc-auto-work-orders", async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      limit: z.coerce.number().int().min(1).max(100).default(10),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const companyId = parsed.data.operating_company_id;
 
@@ -274,13 +277,13 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
             AND w.status::text IN ('open', 'in_progress', 'waiting_parts')
             AND w.description ILIKE '[samsara_dtc_auto]%'
           ORDER BY w.opened_at DESC NULLS LAST, w.created_at DESC
-          LIMIT 50
+          LIMIT $2 OFFSET $3
         `,
-        [companyId]
+        [companyId, parsed.data.limit, parsed.data.offset]
       );
       return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
-    return rows;
+    return { ...rows, limit: parsed.data.limit, offset: parsed.data.offset };
   });
 
   app.get("/api/v1/maintenance/fleet-table/kpis", async (req, reply) => {
