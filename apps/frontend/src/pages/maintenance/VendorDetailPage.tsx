@@ -26,11 +26,15 @@ export function VendorDetailPage() {
     enabled: Boolean(companyId && vendorId),
   });
 
-  const vendor = detailQ.data?.vendor;
-  const woHistory = detailQ.data?.wo_history ?? [];
-  const invoiceHistory = detailQ.data?.invoice_history ?? [];
-  const woTotal = detailQ.data?.wo_total_count ?? 0;
-  const invoiceTotal = detailQ.data?.invoice_total_count ?? 0;
+  // A failed refetch can retain React Query's last successful payload. Treat the
+  // aggregate detail response as unavailable so stale profile/history data is
+  // never presented as the vendor's current reverse-link state.
+  const detail = detailQ.isError ? undefined : detailQ.data;
+  const vendor = detail?.vendor;
+  const woHistory = detail?.wo_history ?? [];
+  const invoiceHistory = detail?.invoice_history ?? [];
+  const woTotal = detail?.wo_total_count ?? 0;
+  const invoiceTotal = detail?.invoice_total_count ?? 0;
   const pager = (page: number, total: number, setPage: (page: number) => void, testId: string) => (
     <div className="mt-2 flex items-center justify-between text-xs text-slate-600" data-testid={testId}>
       <span>{total === 0 ? "0 of 0" : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total}`}</span>
@@ -121,35 +125,39 @@ export function VendorDetailPage() {
         </div>
       ) : null}
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-sm font-semibold text-gray-900">Work Order History</h3>
-        <ParityTable
-          rows={woHistory}
-          pageSize={pageSize}
-          hidePager
-          columns={woColumns}
-          rowKey={(row) => String(row.id)}
-          loading={detailQ.isLoading}
-          storageKey="maintenance-vendor-wo-history"
-          emptyText="No linked work orders yet."
-        />
-        {pager(woPage, woTotal, setWoPage, "maintenance-vendor-wo-history-pager")}
-      </div>
+      {!detailQ.isError ? (
+        <>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">Work Order History</h3>
+            <ParityTable
+              rows={woHistory}
+              pageSize={pageSize}
+              hidePager
+              columns={woColumns}
+              rowKey={(row) => String(row.id)}
+              loading={detailQ.isLoading}
+              storageKey="maintenance-vendor-wo-history"
+              emptyText="No linked work orders yet."
+            />
+            {pager(woPage, woTotal, setWoPage, "maintenance-vendor-wo-history-pager")}
+          </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <h3 className="mb-2 text-sm font-semibold text-gray-900">Invoice History</h3>
-        <ParityTable
-          rows={invoiceHistory}
-          pageSize={pageSize}
-          hidePager
-          columns={invoiceColumns}
-          rowKey={(row) => `${String(row.work_order_id)}-${String(row.invoice_number)}`}
-          loading={detailQ.isLoading}
-          storageKey="maintenance-vendor-invoice-history"
-          emptyText="No vendor invoices recorded."
-        />
-        {pager(invoicePage, invoiceTotal, setInvoicePage, "maintenance-vendor-invoice-history-pager")}
-      </div>
+          <div className="rounded-sm border border-gray-200 bg-white p-3">
+            <h3 className="mb-2 text-sm font-semibold text-gray-900">Invoice History</h3>
+            <ParityTable
+              rows={invoiceHistory}
+              pageSize={pageSize}
+              hidePager
+              columns={invoiceColumns}
+              rowKey={(row) => `${String(row.work_order_id)}-${String(row.invoice_number)}`}
+              loading={detailQ.isLoading}
+              storageKey="maintenance-vendor-invoice-history"
+              emptyText="No vendor invoices recorded."
+            />
+            {pager(invoicePage, invoiceTotal, setInvoicePage, "maintenance-vendor-invoice-history-pager")}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }
