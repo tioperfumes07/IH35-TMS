@@ -71,17 +71,22 @@ for (const c of CRONS) {
 
 // ── 3. Driver self-balance route ─────────────────────────────────────────────────
 const routes = read("apps/backend/src/safety/driver-scheduler.routes.ts");
-if (!routes.includes(`"/api/v1/driver/scheduler/balance"`)) {
+const driverBalanceUrl = `"/api/v1/driver/scheduler/balance"`;
+if (!routes.includes(driverBalanceUrl)) {
   failures.push("routes: missing GET /api/v1/driver/scheduler/balance");
 } else {
   // Extract the balance handler body and assert driver-session scoping + reuse.
-  const idx = routes.indexOf(`app.get("/api/v1/driver/scheduler/balance"`);
-  const body = routes.slice(idx, idx + 900);
+  const idx = routes.indexOf(driverBalanceUrl);
+  const body = routes.slice(Math.max(0, idx - 40), idx + 1_300);
   if (!body.includes("requireDriverSession")) failures.push("routes: driver balance must use requireDriverSession");
   if (!body.includes("req.driver!")) failures.push("routes: driver balance must resolve req.driver! (self, not a param)");
   if (!body.includes("getLeaveBalance")) failures.push("routes: driver balance must reuse getLeaveBalance");
   if (/req\.params/.test(body)) failures.push("routes: driver balance must NOT read a driver_id from params");
 }
+const driverBalanceIndex = routes.indexOf(driverBalanceUrl);
+const driverBalance = driverBalanceIndex >= 0
+  ? routes.slice(Math.max(0, driverBalanceIndex - 40), driverBalanceIndex + 1_300)
+  : "";
 
 const officeBalanceStart = routes.indexOf('app.get("/api/v1/safety/scheduler/balance/:driver_id"');
 const officeBalanceEnd = routes.indexOf('// Office Leave Balances tab', officeBalanceStart);
@@ -111,6 +116,24 @@ if (failures.length > 0) {
   process.exit(1);
 }
 if (process.argv.includes("--selftest")) {
+  const selfBalanceMutations = [
+    (x) => x.replace("requireDriverSession", "missingDriverSession"),
+    (x) => x.replace("const parsedQuery", "const leakedDriver = req.params.driver_id;\n    const parsedQuery"),
+    (x) => x.replace("getLeaveBalance", "missingLeaveBalance"),
+    (x) => x.replace("req.driver!", "req.params.driver_id"),
+  ];
+  for (const [index, mutate] of selfBalanceMutations.entries()) {
+    const broken = mutate(driverBalance);
+    const escaped = broken === driverBalance
+      || (broken.includes("requireDriverSession")
+        && broken.includes("req.driver!")
+        && broken.includes("getLeaveBalance")
+        && !/req\.params/.test(broken));
+    if (escaped) {
+      console.error(`${LABEL} — SELFTEST FAILED: planted self-balance defect ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
   const mutations = [
     (x) => x.replace("dca.is_authorized = true", "TRUE"),
     (x) => x.replace("if (!parent.rows[0])", "if (false)"),
@@ -130,7 +153,7 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} — SELFTEST OK (4 office-balance defects caught)`);
+  console.log(`${LABEL} — SELFTEST OK (4 self-balance + 4 office-balance defects caught)`);
   process.exit(0);
 }
 console.log(`${LABEL} — OK (3 crons registered + default-OFF gated, driver balance route + PWA wrapper present)`);

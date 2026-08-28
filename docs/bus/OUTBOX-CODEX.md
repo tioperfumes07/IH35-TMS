@@ -1,3 +1,5 @@
+Codex | WORKING | DRV-F7032 | CLAIM=post.driver-scheduler-self-balance-guard-extractor | SOURCE=driver-session exact self-balance route | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7031 | PR=#16990 @ 75babc7d5e | Built=driver compliance paged reverse guard 19/19 | NEXT=driver census | GO
 Codex | WORKING | DRV-F7031 | CLAIM=post.driver-compliance-history-paged-reverse-guard | SOURCE=background+medical exact server-paged reverse | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7030 | PR=#16989 @ c8f41b4abe | Built=driver hub Debt Alert reverse-link guard | NEXT=driver census | GO
 Codex | WORKING | DRV-F7030 | CLAIM=post.driver-hub-debt-alert-link-guard-window | SOURCE=drivers-tab fail-closed Debt Alert EntityLink | NEXT=guard+FAST-MERGE | GO
