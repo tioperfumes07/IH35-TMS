@@ -1,3 +1,5 @@
+**GO-0020 DEVIN-A VOID.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Never trigger_deploy.
+
 **GO-0016 DEVIN-A VOID as builder.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Unique FINDING only. Never trigger_deploy.
 
 **VOID — NOT A SEAT. OWNER 2026-08-28: one Devin.** Do not ACK as DEVIN-A. Read `docs/bus/FEED/NOW-DEVIN.md` only. Same NOW as Devin. Never trigger_deploy.
