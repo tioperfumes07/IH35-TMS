@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listCustomers } from "../../api/mdata";
+import { listAllCustomers, listCustomers } from "../../api/mdata";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityPicker } from "../parity/EntityPicker";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
@@ -85,12 +85,17 @@ export function FilterBar({
   const customersQuery = useQuery({
     queryKey: ["dispatch-filter", "customers", operatingCompanyId, customerSearch],
     queryFn: () =>
-      listCustomers({
-        operating_company_id: operatingCompanyId,
-        status: "active",
-        limit: 5000,
-        search: customerSearch || undefined,
-      }),
+      customerSearch
+        ? listCustomers({
+            operating_company_id: operatingCompanyId,
+            status: "active",
+            limit: 200,
+            search: customerSearch,
+          })
+        : listAllCustomers({
+            operating_company_id: operatingCompanyId,
+            status: "active",
+          }),
     enabled: Boolean(operatingCompanyId),
   });
 

@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7073 | CLAIM=post.dispatch-customer-filter-complete-roster | SOURCE=mdata.customers total+offset→dispatch home filter | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7072 | PR=#17040 @ a9c3bb5d73 | Built=dispatch:misc.layover 4/4 complete range | NEXT=dispatch customer filter | GO
 Codex | WORKING | DSP-F7072 | CLAIM=post.dispatch-layover-history-complete-range | SOURCE=driver_layovers scoped range→driver/load reverse table | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7071 | PR=#17036 @ 069d531de9 | Built=reports:report.late_arrival connectivity complete range | NEXT=layover history | GO
 Codex | WORKING | DSP-F7071 | CLAIM=post.late-arrival-analytics-complete-range | SOURCE=completed stop aggregates→report+worker | NEXT=guard+FAST-MERGE | GO
