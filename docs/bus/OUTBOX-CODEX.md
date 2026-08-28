@@ -1808,3 +1808,5 @@ Codex | SHIPPED | DSP-F7063 | PR=#17021 @ 1d8922d282 | Built=honest in-shop/awai
 Codex | WORKING | DSP-F7064 | CLAIM=post.dispatch-hos-single-retry-guard-parser | SOURCE=shared HOS error→one row-safe Retry | NEXT=semantic guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7064 | PR=#17022 @ 16573c14e0 | Built=row-safe HOS retry guard 9/9 | NEXT=lists safety generic modal connectivity | GO
 Codex | WORKING | LST-F7065 | CLAIM=post.lists-safety-generic-modal-connectivity-exact | SOURCE=shared safety catalog modal scoped CRUD→reload | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | LST-F7065 | PR=#17024 @ 9b5392782855 | Built=lists.modal.safety_generic_catalog connectivity 1/1 | NEXT=partial optional-chain vertical | GO
+Codex | WORKING | CLS-F7066 | CLAIM=post.partial-optional-chain-vertical-crash-sweep | SOURCE=API collection readers across maintenance/customers/fuel/system | NEXT=6-site root fix+guard+selftest+FAST-MERGE | GO

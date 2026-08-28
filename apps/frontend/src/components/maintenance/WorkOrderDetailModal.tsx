@@ -88,10 +88,10 @@ export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRe
 
   const partsTotal = partsLinksQuery.data?.total_count ?? 0;
   useEffect(() => {
-    if (!partsLinksQuery.isFetching && partsPage > 0 && (partsLinksQuery.data?.rows.length ?? 0) === 0) {
+    if (!partsLinksQuery.isFetching && partsPage > 0 && (partsLinksQuery.data?.rows?.length ?? 0) === 0) {
       setPartsPage(Math.max(0, Math.ceil(partsTotal / partsPageSize) - 1));
     }
-  }, [partsLinksQuery.data?.rows.length, partsLinksQuery.isFetching, partsPage, partsTotal]);
+  }, [partsLinksQuery.data?.rows?.length, partsLinksQuery.isFetching, partsPage, partsTotal]);
 
   if (!open) return null;
   if (!workOrder) {
