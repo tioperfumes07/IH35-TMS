@@ -187,6 +187,8 @@ export function InventoryAssignmentsPage() {
           <ParityTable<PartsAssignmentRow>
             columns={columns}
             rows={rows}
+            pageSize={PAGE_SIZE}
+            hidePager
             rowKey={(row) => row.id}
             emptyText="No part assignments yet. Parts linked on a work order appear here (qty used → unit via WO)."
             storageKey="inventory-assignments-trail"

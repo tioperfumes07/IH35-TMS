@@ -296,6 +296,8 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
       ) : (
         <ParityTable
           rows={events}
+          pageSize={pageSize}
+          hidePager
           columns={COLUMNS}
           rowKey={(row) => row.id}
           loading={auditQuery.isLoading}

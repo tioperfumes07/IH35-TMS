@@ -137,6 +137,8 @@ export function DispatchList({
       <div className="hidden md:block">
         <ParityTable<DispatchLoadRow>
           rows={effectiveLoads}
+          pageSize={limit}
+          hidePager
           rowKey={(load) => load.id}
           loading={loading}
           storageKey="dispatch-list-archived"
