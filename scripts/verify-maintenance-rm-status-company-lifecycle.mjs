@@ -11,9 +11,9 @@ const checks = [
   [/onSuccess: async \(_result, args\) => \{\s*if \(args\.generation !== statusGenerationRef\.current\) return;/, "stale completion is rejected"],
   [/(?:queryKey: \["maintenance", (?:"dashboard", )?"[^"]+", args\.companyId\][\s\S]*?){3}/, "all refreshes use submitted company"],
   [/useEffect\(\(\) => \{\s*statusGenerationRef\.current \+= 1;\s*statusMutation\.reset\(\);\s*setSelectedWorkOrderId\(null\);\s*\}, \[companyId\]\)/, "company switch retires request and closes detail"],
-  [/onAdvanceStatus=\{\(id, status\) => statusMutation\.mutate\(\{\s*id,\s*status,\s*companyId,\s*generation: statusGenerationRef\.current,\s*\}\)\}/, "board submit snapshots scope"],
-  [/statusMutation\.mutate\(\{\s*id: selectedWorkOrderId,\s*status: "complete",\s*companyId,\s*generation: statusGenerationRef\.current,\s*\}\)/, "detail completion snapshots scope"],
-  [/onError: \(\) => pushToast\("Failed to update R&M status", "error"\)/, "failure stays visible"],
+  [/statusActionPending=\{statusMutation\.isPending\}[\s\S]*onAdvanceStatus=\{\(id, status\) => \{\s*if \(statusMutation\.isPending\) return;\s*statusMutation\.mutate\(\{\s*id,\s*status,\s*companyId,\s*generation: statusGenerationRef\.current,\s*\}\);/, "board submit is single-flight and snapshots scope"],
+  [/id: loadedWorkOrderId,\s*status: "complete",\s*companyId,\s*generation: statusGenerationRef\.current,/, "detail completion submits loaded scope"],
+  [/onError: \(_error, args\) => \{\s*if \(args\.generation === statusGenerationRef\.current\) \{\s*pushToast\("Failed to update R&M status", "error"\);/, "current failure stays visible and stale failure is suppressed"],
 ];
 
 const failures = (candidate) => checks.filter(([pattern]) => !pattern.test(candidate)).map(([, label]) => label);

@@ -413,12 +413,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                   setCreateWoOpen(true);
                 }}
                 onOpen={(id) => setSelectedWorkOrderId(id)}
-                onAdvanceStatus={(id, status) => statusMutation.mutate({
-                  id,
-                  status,
-                  companyId,
-                  generation: statusGenerationRef.current,
-                })}
+                statusActionPending={statusMutation.isPending}
+                onAdvanceStatus={(id, status) => {
+                  if (statusMutation.isPending) return;
+                  statusMutation.mutate({
+                    id,
+                    status,
+                    companyId,
+                    generation: statusGenerationRef.current,
+                  });
+                }}
               />
             )}
             {!rmStatusQuery.isError && (rmStatusQuery.data?.total_count ?? 0) > rmStatusPageSize ? (
