@@ -320,24 +320,35 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
     const rows = await withCompany(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["operating_company_id = $1::uuid"];
-      if (!parsed.data.include_archived) filters.push("is_active = true");
+      const filters = ["mvendor.operating_company_id = $1::uuid"];
+      if (!parsed.data.include_archived) filters.push("mvendor.is_active = true");
       if (parsed.data.mdata_vendor_id) {
         values.push(parsed.data.mdata_vendor_id);
-        filters.push(`linked_vendor_id = $${values.length}::uuid`);
+        filters.push(`mvendor.linked_vendor_id = $${values.length}::uuid`);
       }
       if (parsed.data.search) {
         values.push(`%${parsed.data.search}%`);
         const idx = values.length;
-        filters.push(`(code ILIKE $${idx} OR display_name ILIKE $${idx} OR COALESCE(description, '') ILIKE $${idx})`);
+        filters.push(`(mvendor.code ILIKE $${idx} OR mvendor.display_name ILIKE $${idx} OR COALESCE(mvendor.description, '') ILIKE $${idx})`);
       }
       const result = await client.query(
         `
-          SELECT id, operating_company_id, code, display_name, description, metadata, linked_vendor_id,
-                 is_active, sort_order, created_at, updated_at
-          FROM catalogs.maintenance_vendors
+          SELECT mvendor.id, mvendor.operating_company_id, mvendor.code, mvendor.display_name,
+                 mvendor.description, mvendor.metadata, mvendor.linked_vendor_id,
+                 mvendor.is_active, mvendor.sort_order, mvendor.created_at, mvendor.updated_at,
+                 ap_vendor.vendor_name AS mdata_vendor_name
+          FROM catalogs.maintenance_vendors mvendor
+          LEFT JOIN mdata.vendors ap_vendor
+            ON ap_vendor.id = COALESCE(
+                 mvendor.linked_vendor_id,
+                 CASE
+                   WHEN mvendor.metadata->>'mdata_vendor_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                   THEN (mvendor.metadata->>'mdata_vendor_id')::uuid
+                 END
+               )
+           AND ap_vendor.operating_company_id = mvendor.operating_company_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY sort_order ASC, display_name ASC
+          ORDER BY mvendor.sort_order ASC, mvendor.display_name ASC
         `,
         values
       );
