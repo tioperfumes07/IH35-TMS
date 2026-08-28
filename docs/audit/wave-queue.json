@@ -134,14 +134,14 @@
           "note": "Draft invoices cannot post until sent. Send-path date-cast fix deployed (PR #4194). Tracked under CLS-CALENDAR-DATE."
         }
       ],
-      "completeness": "lucia-bypass Neon prod 2026-08-03: payments n_live_tup=12124; bill_payments n_live_tup=6544; bills n_live_tup=16250. source_system split per-row (qbo_payment_id, qbo_bill_payment_id, qbo_bill_id). Positive control: posting_batches posted > 180.",
+      "completeness": "lucia-bypass Neon prod 2026-08-03: payments n_live_tup=12124; bill_payments n_live_tup=6544; bills n_live_tup=16250. source_system split per-row (qbo_payment_id, qbo_bill_payment_id, qbo_bill_id). Positive control: posting_batches posted > 180. LIVE REGRESSION FOUND 2026-08-28 (Cascade, live DB re-check of the 'ZERO TMS-native payment GL gaps' claim, project tiny-field-89581227, entity USMCA 5c854333-6ea5-4faa-af31-67cb272fef80): running the guard live (`node scripts/verify-gl-posting-coverage.mjs` with a real DATABASE_URL — this suite SKIPs without one, so nothing had re-run it since the class was marked drained) FAILS with 39 TMS-native postable money events (bills, bill_payments, invoices — e.g. CC3-BILL-0001 x2, the SAMPLE-REPROVE-5094-VENDOR-0809-INS-01..12 and SAMPLE-VENDOR-UX-0809-INS-01..12 cohorts, INV-2026-00038, L-20260827-0857) that reached no accounting.transaction_source_links row — recognised money with no journal entry. scripts/known-gl-posting-coverage-gaps.json's known_gaps array is deliberately EMPTY by design ('Prod has ZERO TMS-native postable money events without a journal entry. Anything the guard reports is therefore NEW and fails') — this is a live, unacknowledged gap, not accepted debt. LIKELY PARTIAL ROOT CAUSE: scripts/verify-sweep-c6-money-insert-requires-je-poster.mjs (a separate, already-tracked static guard, part of the #16895 verify-static 211-failure finding) independently flags apps/backend/src/dispatch/cancellation-tonu-invoice.ts and apps/backend/src/factoring/packet-assemble.service.ts (both INSERT INTO accounting.invoices with no balanced-JE poster call) among its known C6 gap cohort — either could explain the INV-2026-00038 / L-20260827-0857 rows above, though the SAMPLE-*/CC3-BILL-0001 bill rows still need their own creation-path trace. Per that guard's own printed instruction: 'Do NOT open solo money-poster PRs — fold into C6.' NOT fixed here — filing only, per that instruction and the standing law that an agent never writes new GL-posting math solo. Re-verify this guard live (not the no-DB static run) before trusting 'status: drained' / 'guard_green: true' for this class again.",
       "guard": "scripts/verify-gl-posting-coverage.mjs",
       "drain_proof": {
-        "guard_green": true,
-        "guard_sample": "cust_pmt b5ef0cd4 (TRANSP $5) JE e2171e0a DR=CR=500c; bill_pmt 402b2bb3 (TRANSP $5) JE dcbe5700 DR=CR=500c",
+        "guard_green": false,
+        "guard_sample": "cust_pmt b5ef0cd4 (TRANSP $5) JE e2171e0a DR=CR=500c; bill_pmt 402b2bb3 (TRANSP $5) JE dcbe5700 DR=CR=500c STALE 2026-08-28: re-run live, guard_green flips to false — see completeness note.",
         "money_critical": true
       },
-      "status": "drained",
+      "status": "open",
       "hotfiles": [
         "apps/backend/src/accounting/posting-engine.service.ts"
       ]
