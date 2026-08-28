@@ -239,7 +239,7 @@ export function DriverDetailPage() {
   const [qboModalOpen, setQboModalOpen] = useState(false);
   const [newQualificationForm, setNewQualificationForm] = useState<Record<string, string>>({
     equipment_type_id: "",
-    qualified_at: new Date().toISOString().slice(0, 10),
+    qualified_at: companyToday(),
     notes: "",
   });
   const [rateChangeForm, setRateChangeForm] = useState<Record<string, string>>({
@@ -500,7 +500,7 @@ export function DriverDetailPage() {
       setAddQualificationOpen(false);
       setNewQualificationForm({
         equipment_type_id: "",
-        qualified_at: new Date().toISOString().slice(0, 10),
+        qualified_at: companyToday(),
         notes: "",
       });
       pushToast("Qualification added", "success");
@@ -1927,7 +1927,7 @@ export function DriverDetailPage() {
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Event date</label>
               <DatePicker
-                max={new Date().toISOString().slice(0, 10)}
+                max={companyToday()}
                 value={safetyForm.event_date}
                 onChange={(next) => setSafetyForm((current) => ({ ...current, event_date: next }))}
                 className={FORM_INPUT_CLASS}

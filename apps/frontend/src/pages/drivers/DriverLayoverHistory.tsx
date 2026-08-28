@@ -8,6 +8,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useToast } from "../../components/Toast";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 interface LayoverRow {
   uuid: string;
@@ -29,8 +30,8 @@ interface Props {
 }
 
 export function DriverLayoverHistory({ driverUuid, operatingCompanyId }: Props) {
-  const [from, setFrom] = useState(() => new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
-  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [from, setFrom] = useState(() => addDaysIso(companyToday(), -30));
+  const [to, setTo] = useState(() => companyToday());
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const scopeGenerationRef = useRef(0);
