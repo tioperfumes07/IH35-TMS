@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-0006 | NOW=unique-FINDING-U6 | SHA=08d96f7 | GO
 CASCADE | ACK | GO-0004 | NOW=latch-SQL+/fuel | SHA=ebc1c4f | GO
 CASCADE | METER3-WALK | MODULE=program | SHA=ebc1c4f | N=0 | 0 console errors | GO
 CASCADE | METER3-WALK | MODULE=fuel | SHA=ebc1c4f | N=0 | 0 console errors · all API 200 | GO
