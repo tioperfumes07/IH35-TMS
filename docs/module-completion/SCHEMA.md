@@ -42,6 +42,9 @@
   "evidence": "Neon lucia: COUNT(*) FROM accounting.bill_payments = 0 (2026-07-24)",
   "pr": null,
   "prod_verified": false,
+  "live_verified_at": null,
+  "live_verified_sha": null,
+
   "owner_hold": false,
   "tracker": null,
   "future_block": null
@@ -49,6 +52,8 @@
 ```
 
 `prod_verified` defaults **false**. Only GUARD may set `true` after a live prod click + Neon evidence. Agents must not flip it.
+
+**L6 (GO-0017):** optional `live_verified_at` (ISO timestamptz) + `live_verified_sha` (git SHA). When either is set, both are required. `verify-module-completion` FAILS if **zero** leaves are stamped, and FAILS if a stamp is not an ancestor of `GET /api/v1/healthz/shallow` `version` (not bare `/healthz`).
 
 ## Every work reply / PR
 
