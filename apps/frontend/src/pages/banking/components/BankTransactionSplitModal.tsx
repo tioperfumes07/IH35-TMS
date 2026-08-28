@@ -102,9 +102,17 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
     enabled: Boolean(open && companyId),
   });
 
+  // VEND-F-SILENT-BILL-GL-UI: the driver picker (below) and the product/service picker both
+  // prefill gl_account_id from their own default_expense_account_id when a line's category is
+  // still empty (ACCT-F18 Option-B). The vendor picker never did — vendorsQuery discarded
+  // default_expense_account_id entirely, even though the backend's VENDOR_SELECT_COLUMNS already
+  // returns it on every list call. Keep it so the multi-vendor-mode picker can prefill the same way.
   const vendorsQuery = useQuery({
     queryKey: ["banking", "split-vendors", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId }).then((res) => (res.vendors ?? []) as Array<{ id: string; name: string }>),
+    queryFn: () =>
+      listVendors({ operating_company_id: companyId }).then(
+        (res) => (res.vendors ?? []) as Array<{ id: string; name: string; default_expense_account_id?: string | null }>
+      ),
     enabled: Boolean(open && companyId),
   });
 
@@ -340,7 +348,15 @@ export function BankTransactionSplitModal({ open, companyId, transaction, onClos
                         <span className="text-[10px] font-semibold uppercase tracking-[0.4px] text-gray-500">Vendor</span>
                         <ReferenceSelect
                           value={line.vendor_id ?? null}
-                          onChange={(v) => patchLine(line._key, { vendor_id: v ?? undefined })}
+                          onChange={(v) => {
+                            const vendorAcct = (vendorsQuery.data ?? []).find((row) => row.id === v)?.default_expense_account_id;
+                            patchLine(line._key, {
+                              vendor_id: v ?? undefined,
+                              // ACCT-F18 Option-B, vendor half: prefill split-line GL when empty —
+                              // same pattern as the Driver and Product/Service pickers in this file.
+                              ...(vendorAcct && !line.gl_account_id ? { gl_account_id: vendorAcct } : {}),
+                            });
+                          }}
                           options={(vendorsQuery.data ?? []).map((v) => ({ value: v.id, label: v.name }))}
                           createKind="vendor"
                           operatingCompanyId={companyId}
