@@ -20,6 +20,8 @@ function verify(routes, api, page) {
   need(api, /wo_total_count: number;[\s\S]*invoice_total_count: number/, "typed client must retain both exact counts");
   need(page, /queryKey: \["maintenance", "vendor-detail", companyId, vendorId, woPage, invoicePage\]/, "query identity must include both pages");
   need(page, /maintenance-vendor-wo-history-pager[\s\S]*maintenance-vendor-invoice-history-pager/, "both mounted histories need controlled pagers");
+  need(page, /const detail = detailQ\.isError \? undefined : detailQ\.data;/, "failed aggregate reads must suppress retained vendor and history data");
+  need(page, /\{!detailQ\.isError \? \([\s\S]*Work Order History[\s\S]*Invoice History[\s\S]*\) : null\}/, "failed aggregate reads must hide both histories and their pagers together");
   need(page, /EntityLinkOrTombstone kind="work_order"/, "work-order forward drills must remain mounted");
   need(page, /EntityLink[\s\S]*kind="vendor"/, "canonical AP vendor drill must remain mounted");
   return errors;
@@ -36,6 +38,8 @@ if (process.argv.includes("--selftest")) {
     [sources[0], sources[1], sources[2].replace(", woPage, invoicePage]", "]")],
     [sources[0], sources[1], sources[2].replace("maintenance-vendor-wo-history-pager", "removed")],
     [sources[0], sources[1], sources[2].replace("maintenance-vendor-invoice-history-pager", "removed")],
+    [sources[0], sources[1], sources[2].replace("detailQ.isError ? undefined : detailQ.data", "detailQ.data")],
+    [sources[0], sources[1], sources[2].replace("{!detailQ.isError ? (", "{true ? (")],
     [sources[0], sources[1], sources[2].replaceAll('EntityLinkOrTombstone kind="work_order"', "span")],
     [sources[0], sources[1], sources[2].replaceAll('kind="vendor"', 'kind="unknown"')],
   ];
