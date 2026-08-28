@@ -9,7 +9,6 @@ import {
   buildExtractedFieldsFromParsed,
   heuristicExtractFromFilename,
   parseR2KeyFilename,
-  shouldAutoProcessQueueItem,
   type OcrIntakeExtractedFields,
   type OcrIntakeStatus,
 } from "./ocr-intake.lib.js";
@@ -148,19 +147,24 @@ export function scheduleOcrIntakeProcessing(itemId: string, operatingCompanyId: 
 export async function processOcrIntakeQueueItem(itemId: string, operatingCompanyId: string) {
   return withLuciaBypass(async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const existing = await client.query(
-      `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+    const claimed = await client.query(
+      `UPDATE dispatch.ocr_intake_queue
+          SET status = 'processing', updated_at = now(), error_message = NULL
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND status IN ('pending_ocr', 'failed')
+        RETURNING *`,
       [itemId, operatingCompanyId]
     );
-    const row = existing.rows[0] as Record<string, unknown> | undefined;
-    if (!row) return null;
-    const status = String(row.status) as OcrIntakeStatus;
-    if (!shouldAutoProcessQueueItem(status) && status !== "processing") return mapRow(row);
-
-    await client.query(
-      `UPDATE dispatch.ocr_intake_queue SET status = 'processing', updated_at = now() WHERE id = $1`,
-      [itemId]
-    );
+    let row = claimed.rows[0] as Record<string, unknown> | undefined;
+    if (!row) {
+      const existing = await client.query(
+        `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
+        [itemId, operatingCompanyId]
+      );
+      row = existing.rows[0] as Record<string, unknown> | undefined;
+      return row ? mapRow(row) : null;
+    }
 
     try {
       const r2Key = String(row.source_pdf_r2_key);
@@ -182,10 +186,13 @@ export async function processOcrIntakeQueueItem(itemId: string, operatingCompany
               updated_at = now(),
               error_message = NULL
           WHERE id = $1
+            AND operating_company_id = $4::uuid
+            AND status = 'processing'
           RETURNING *
         `,
-        [itemId, JSON.stringify(extracted), confidence]
+        [itemId, JSON.stringify(extracted), confidence, operatingCompanyId]
       );
+      if (!update.rows[0]) throw new Error("ocr_processing_state_conflict");
       return mapRow(update.rows[0] as Record<string, unknown>);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "ocr_process_failed";
@@ -194,10 +201,13 @@ export async function processOcrIntakeQueueItem(itemId: string, operatingCompany
           UPDATE dispatch.ocr_intake_queue
           SET status = 'failed', error_message = $2, processed_at = now(), updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $3::uuid
+            AND status = 'processing'
           RETURNING *
         `,
-        [itemId, message]
+        [itemId, message, operatingCompanyId]
       );
+      if (!failed.rows[0]) throw err;
       return mapRow(failed.rows[0] as Record<string, unknown>);
     }
   });
