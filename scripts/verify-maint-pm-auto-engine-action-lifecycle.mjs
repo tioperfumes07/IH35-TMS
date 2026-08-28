@@ -16,6 +16,12 @@ function inspect(value) {
     [/actionGenerationRef\.current \+= 1[\s\S]*settingsM\.reset\(\)[\s\S]*runNowM\.reset\(\)[\s\S]*\[companyId\]/, "company transition does not reset both actions"],
     [/settingsM\.mutate\(\{ companyId, generation: actionGenerationRef\.current, isPaused: !isPaused \}\)/, "settings caller does not snapshot company/generation/state"],
     [/runNowM\.mutate\(\{ companyId, generation: actionGenerationRef\.current \}\)/, "run caller does not snapshot company/generation"],
+    [/if \(!dashboardQ\.isError\) return;[\s\S]*settingsM\.reset\(\);[\s\S]*runNowM\.reset\(\);/, "dashboard failure does not retire both actions"],
+    [/const isPaused = !dashboardQ\.isError && Boolean\(dashboardQ\.data\?\.settings\?\.is_paused\);\s*const runs = dashboardQ\.isError \? \[\] : \(dashboardQ\.data\?\.runs \?\? \[\]\);\s*const recentLog = dashboardQ\.isError \? \[\] : \(dashboardQ\.data\?\.recent_log \?\? \[\]\);/, "dashboard failure does not suppress retained settings/runs/log"],
+    [/disabled=\{!companyId \|\| dashboardQ\.isError \|\| settingsM\.isPending\}/, "settings action does not fail closed on dashboard error"],
+    [/disabled=\{!companyId \|\| dashboardQ\.isError \|\| runNowM\.isPending \|\| isPaused\}/, "manual run does not fail closed on dashboard error"],
+    [/Status: \{dashboardQ\.isError \? "Unavailable" : isPaused \? "Paused" : "Active"\}/, "dashboard failure still claims an active scheduler status"],
+    [/\{!dashboardQ\.isError \? <div[\s\S]*recentLog\.map[\s\S]*recentLog\.length === 0[\s\S]*<\/div> : null\}/, "dashboard failure does not suppress retained reverse-linked action log"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   return failures;
@@ -31,6 +37,13 @@ if (process.argv.includes("--selftest")) {
     ["runNowM.reset();", "// planted: run state survives"],
     ["companyId, generation: actionGenerationRef.current, isPaused: !isPaused", "companyId: '', generation: 0, isPaused: !isPaused"],
     ["runNowM.mutate({ companyId, generation: actionGenerationRef.current })", "runNowM.mutate()"],
+    ["const runs = dashboardQ.isError ? [] : (dashboardQ.data?.runs ?? []);", "const runs = dashboardQ.data?.runs ?? [];"],
+    ["dashboardQ.isError || settingsM.isPending", "settingsM.isPending"],
+    ["dashboardQ.isError || runNowM.isPending", "runNowM.isPending"],
+    ["dashboardQ.isError ? \"Unavailable\" : isPaused ? \"Paused\" : \"Active\"", "isPaused ? \"Paused\" : \"Active\""],
+    ["if (!dashboardQ.isError) return;", "if (true) return;"],
+    ["const recentLog = dashboardQ.isError ? [] : (dashboardQ.data?.recent_log ?? []);", "const recentLog = dashboardQ.data?.recent_log ?? [];"],
+    ["{!dashboardQ.isError ? <div", "{true ? <div"],
   ];
   for (const [before, after] of mutations) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);
