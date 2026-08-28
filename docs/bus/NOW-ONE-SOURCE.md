@@ -1,4 +1,4 @@
-**GO-0012** API `069d531` FE `737d541`. G1 on main not live API. CC-1 rebase #17039. CC-2 leftover unique. CC-3 TXH tab (Override shipped). Codex `/dispatch`. Cascade unique. Devin PREPEND + Override query-back FE. One Devin. Nobody second-kick.
+**GO-0012** API `069d531` FE `451b359`. G1 on main not live API. CC-1 rebase #17039. CC-2 leftover unique. CC-3 TXH tab (Override shipped). Codex `/dispatch`. Cascade unique. Devin PREPEND + Override query-back FE. One Devin. Nobody second-kick.
 
 **GO-0011** API `069d531` FE `590c36a`. One paste/FEED page per seat. CC-1 fix+merge G1 PRs (17067 red). CC-2 leftover unique. CC-3 TXH-01 tab (#17081 GET on main). Codex `/dispatch`. Cascade unique. Devin PREPEND ACK + query-back FE. One Devin. Nobody second-kick.
 
