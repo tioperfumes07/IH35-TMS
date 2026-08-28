@@ -3,7 +3,6 @@ import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 const createIssueBodySchema = z.object({
@@ -67,36 +66,38 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
     const body = bodyParsed.data;
 
     const result = await withCurrentUser(authUser.uuid, async (client) => {
-      const driverRes = await client.query<{ id: string; full_name: string | null; operating_company_id: string }>(
+      const assignmentRes = await client.query<{
+        load_id: string;
+        assigned_unit_id: string | null;
+        driver_id: string;
+        driver_name: string | null;
+        operating_company_id: string;
+      }>(
         `
-          SELECT id, concat_ws(' ', first_name, last_name) AS full_name, operating_company_id::text AS operating_company_id
-          FROM mdata.drivers
-          WHERE identity_user_id = $1
-            AND deactivated_at IS NULL
+          SELECT l.id AS load_id,
+                 l.assigned_unit_id,
+                 d.id AS driver_id,
+                 concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+                 l.operating_company_id::text AS operating_company_id
+          FROM mdata.loads l
+          JOIN mdata.drivers d
+            ON d.identity_user_id = $1::uuid
+           AND d.id IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id)
+           AND d.deactivated_at IS NULL
+           AND d.archived_at IS NULL
+          WHERE l.id = $2::uuid
+            AND l.soft_deleted_at IS NULL
           LIMIT 1
         `,
-        [authUser.uuid]
+        [authUser.uuid, body.load_id]
       );
-      const driver = driverRes.rows[0] ?? null;
-      if (!driver) return { kind: "forbidden" as const, code: 403, error: "driver_profile_not_found" };
+      const assignment = assignmentRes.rows[0] ?? null;
+      if (!assignment) return { kind: "forbidden" as const, code: 403, error: "driver_load_mismatch" };
+      if (!assignment.assigned_unit_id) return { kind: "conflict" as const, code: 409, error: "load_missing_assigned_unit" };
 
-      const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null; assigned_secondary_driver_id: string | null }>(
-        `
-          SELECT id, assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id
-          FROM mdata.loads
-          WHERE id = $1
-            AND operating_company_id = $2::uuid
-            AND soft_deleted_at IS NULL
-          LIMIT 1
-        `,
-        [body.load_id, driver.operating_company_id]
-      );
-      const load = loadRes.rows[0] ?? null;
-      if (!load) return { kind: "not_found" as const, code: 404, error: "load_not_found" };
-
-      const ownsLoad = load.assigned_primary_driver_id === driver.id || load.assigned_secondary_driver_id === driver.id;
-      if (!ownsLoad) return { kind: "forbidden" as const, code: 403, error: "driver_load_mismatch" };
-      if (!load.assigned_unit_id) return { kind: "conflict" as const, code: 409, error: "load_missing_assigned_unit" };
+      // FORCE RLS on the issue table requires the canonical load company transaction-locally.
+      // Derive it from the assigned load, never a mutable/default company selection.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [assignment.operating_company_id]);
 
       const columnsRes = await client.query<{ column_name: string }>(
         `
@@ -123,8 +124,9 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
 
       const mandatoryMappings: Array<[string[], unknown]> = [
         [["id"], crypto.randomUUID()],
-        [["driver_id"], driver.id],
-        [["unit_id"], load.assigned_unit_id],
+        [["operating_company_id"], assignment.operating_company_id],
+        [["driver_id"], assignment.driver_id],
+        [["unit_id"], assignment.assigned_unit_id],
         [["issue_category", "category"], mapIncidentCategory(body.type)],
         [["issue_description", "description"], body.description],
         [["severity"], mapSeverity(body.severity)],
@@ -171,7 +173,8 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
           resource_type: "dispatch.intransit_issues",
           resource_id: inserted.id,
           load_id: body.load_id,
-          driver_id: driver.id,
+          driver_id: assignment.driver_id,
+          operating_company_id: assignment.operating_company_id,
           type: body.type,
           severity: body.severity,
         },
@@ -192,14 +195,13 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
         // this caller does not belong to. The pre-existing driver self-lookup above is left BYTE-
         // IDENTICAL — it is keyed on identity_user_id (the caller themselves), which is narrower than
         // a company predicate, and rewriting it would only churn the entity-scope baseline.
-        const callerCompanyId = await resolveOperatingCompanyId(client, authUser.uuid, null);
         const scopeRes = await client.query<{ operating_company_id: string | null; load_number: string | null }>(
           `SELECT operating_company_id::text AS operating_company_id, load_number
              FROM mdata.loads
             WHERE id = $1::uuid
               AND operating_company_id = $2::uuid
             LIMIT 1`,
-          [body.load_id, callerCompanyId]
+          [body.load_id, assignment.operating_company_id]
         );
         await enqueueOutboxEvent(
           client,

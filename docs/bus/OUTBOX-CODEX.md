@@ -1,4 +1,6 @@
 CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7143 | CLAIM=driver-pwa-intransit-create-missing-rls-company | SOURCE=mdata.loads→dispatch.intransit_issues | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7142 | PR=#17234 @ 5c29cdefb6 | Built=exact idempotent OCR finalize | NEXT=driver PWA issue create | GO
 Codex | WORKING | DSP-F7142 | CLAIM=ocr-finalize-not-ready+replay-reaudit | SOURCE=dispatch.ocr_intake_queue | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7141 | PR=#17232 @ 41bc93862a | Built=atomic in-transit resolve+notes | NEXT=OCR finalize lifecycle | GO
 Codex | WORKING | DSP-F7141 | CLAIM=intransit-resolve-notes-second-unchecked-write | SOURCE=dispatch.intransit_issues | NEXT=FAST-MERGE | GO
