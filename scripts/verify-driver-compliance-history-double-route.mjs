@@ -20,8 +20,8 @@ function audit(s) {
   if (!/bc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.backgroundRoute) || !/(?<!_)dca\.company_id = \$2::uuid[\s\S]{0,160}(?<!_)dca\.is_authorized = true[\s\S]{0,160}(?<!_)dca\.deactivated_at IS NULL/.test(s.backgroundRoute) || !/label_dca\.company_id = bc\.operating_company_id[\s\S]{0,160}label_dca\.is_authorized = true/.test(s.backgroundRoute)) failures.push("background-check exact scoped authorized reverse missing");
   if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(s.backgroundRoute)) failures.push("background-check invalid parent must not render as true empty");
   if (!/mc\.driver_id = \$\$\{values\.length\}::uuid/.test(s.medicalRoute) || !/d\.operating_company_id = mc\.operating_company_id/.test(s.medicalRoute)) failures.push("medical-card exact scoped reverse missing");
-  if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(s.background) || !/query\.isError/.test(s.background) || !/No background checks found/.test(s.background)) failures.push("background-check reverse states missing");
-  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(s.medical) || !/query\.isError/.test(s.medical) || !/No medical cards found/.test(s.medical)) failures.push("medical-card reverse states missing");
+  if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId, \{ limit: pageSize, offset: \(page - 1\) \* pageSize \}\)/.test(s.background) || !/query\.isError/.test(s.background) || !/query\.refetch\(\)/.test(s.background) || !/No background checks found/.test(s.background)) failures.push("background-check reverse states missing");
+  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId, \{ limit: pageSize, offset: \(page - 1\) \* pageSize \}\)/.test(s.medical) || !/query\.isError/.test(s.medical) || !/query\.refetch\(\)/.test(s.medical) || !/No medical cards found/.test(s.medical)) failures.push("medical-card reverse states missing");
   for (const [route, text] of [["detail", s.detail], ["profile", s.profile]]) {
     if (!/MedicalCardsHistorySection[\s\S]{0,140}driverId=\{id\}/.test(text)) failures.push(`${route} medical-card mount missing`);
     if (!/BackgroundChecksSection[\s\S]{0,140}driverId=\{id\}/.test(text)) failures.push(`${route} background-check mount missing`);
@@ -40,6 +40,12 @@ if (process.argv.includes("--selftest")) {
     ["background-label-auth", "backgroundRoute", /label_dca\.is_authorized = true/, "TRUE"],
     ["background-parent-404", "backgroundRoute", /if \(!result\.found\) return reply\.code\(404\)/, "if (false) return reply.code(404)"],
     ["medical-filter", "medicalRoute", /mc\.driver_id = \$\$\{values\.length\}::uuid/, "TRUE"],
+    ["background-paged-reverse", "background", /listSafetyBackgroundChecks\(operatingCompanyId, driverId,/, "listSafetyBackgroundChecks(operatingCompanyId, undefined,"],
+    ["background-error-state", "background", /query\.isError/g, "false"],
+    ["background-empty-state", "background", /No background checks found\./, "Background checks unavailable."],
+    ["medical-paged-reverse", "medical", /listSafetyMedicalCards\(operatingCompanyId, driverId,/, "listSafetyMedicalCards(operatingCompanyId, undefined,"],
+    ["medical-error-state", "medical", /query\.isError/g, "false"],
+    ["medical-empty-state", "medical", /No medical cards found\./, "Medical cards unavailable."],
     ["detail-medical", "detail", /MedicalCardsHistorySection/g, "MissingMedicalCards"],
     ["detail-background", "detail", /BackgroundChecksSection/g, "MissingBackgroundChecks"],
     ["profile-medical", "profile", /MedicalCardsHistorySection/g, "MissingMedicalCards"],
