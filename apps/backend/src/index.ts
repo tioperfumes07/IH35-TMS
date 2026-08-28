@@ -460,6 +460,7 @@ import { initializePlaidDailyRefreshCron } from "./integrations/plaid/daily-refr
 import { initializeDriverSettlementAutoPayCron } from "./driver-finance/auto-pay.cron.js";
 import { registerQboSyncEventLogRoutes } from "./qbo/sync-event-log.routes.js";
 import { default as registerLedgerHealthRoutes } from "./system/ledger-health.routes.js";
+import { registerTransactionHealthRoutes } from "./system/transaction-health.routes.js";
 import { registerRunnerStatusRoutes } from "./admin/runner-status.routes.js";
 import { registerForensicLiveRoutes } from "./admin/forensic-live.routes.js";
 import { registerLaunchReadinessRoutes } from "./admin/launch-readiness.routes.js";
@@ -785,6 +786,7 @@ async function main() {
   await registerLovesSyncStatusRoutes(app);
   await registerQboSyncEventLogRoutes(app);
   await registerLedgerHealthRoutes(app);
+  await registerTransactionHealthRoutes(app);
   await registerEmailRoutes(app);
   await registerEmailQueueAdminRoutes(app);
   await registerAdminClientErrorRoutes(app);
