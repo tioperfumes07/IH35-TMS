@@ -14,6 +14,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
+import { companyToday } from "../../lib/businessDate";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -139,7 +140,7 @@ function GhostButton({ onClick, children }: { onClick: () => void; children: Rea
 
 function useSystemData(companyId: string | null, qboAvailable: boolean) {
   const enabled = !!companyId;
-  const asOf = new Date().toISOString().slice(0, 10);
+  const asOf = companyToday();
 
   const recon = useQuery<QboReconResponse>({
     queryKey: ["system", "qbo-recon", companyId],

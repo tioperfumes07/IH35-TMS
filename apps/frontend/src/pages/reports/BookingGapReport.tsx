@@ -8,6 +8,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 interface DispatcherStats {
   dispatcher_id: string | null;
@@ -30,9 +31,9 @@ const PERIOD_LABELS: Record<Period, string> = {
 const DEFAULT_PERIOD: Period = "week";
 
 function periodDates(p: Period): { from: string; to: string } {
-  const to = new Date().toISOString().slice(0, 10);
+  const to = companyToday();
   const days = p === "week" ? 7 : p === "month" ? 30 : 90;
-  const from = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+  const from = addDaysIso(to, -days);
   return { from, to };
 }
 

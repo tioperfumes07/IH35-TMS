@@ -533,7 +533,7 @@ export function UserDetailPage() {
             <label className="mb-1 block text-xs font-semibold text-gray-600">Event date</label>
             <DatePicker
               value={eventDate}
-              max={new Date().toISOString().slice(0, 10)}
+              max={companyToday()}
               onChange={setEventDate}
               className="w-full h-9"
             />

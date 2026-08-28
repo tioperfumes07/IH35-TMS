@@ -5,6 +5,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
+import { companyToday } from "../../../lib/businessDate";
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -15,7 +16,7 @@ const TABS = [
 ] as const;
 
 export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = companyToday();
   const [filters, setFilters] = useState<FilterState>({
     period: "this_week",
     from: today,

@@ -11,6 +11,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 interface Finding {
   uuid: string;
@@ -41,8 +42,8 @@ const ANOMALY_COLORS: Record<string, string> = {
 
 export function GeofenceReconciliationReport() {
   const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
-  const today = new Date().toISOString().slice(0, 10);
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  const today = companyToday();
+  const yesterday = addDaysIso(today, -1);
   const [appliedDate, setAppliedDate] = useState(yesterday);
   const staged = useStagedListFilters({
     applied: { reportDate: appliedDate },

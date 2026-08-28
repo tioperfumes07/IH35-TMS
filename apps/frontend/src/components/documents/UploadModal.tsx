@@ -16,6 +16,7 @@ import { useToast } from "../Toast";
 import { useQuery } from "@tanstack/react-query";
 import { EntityPicker } from "../parity/EntityPicker";
 import type { EntityPickerKind } from "../parity/entityPickerRegistry";
+import { companyToday } from "../../lib/businessDate";
 
 type StandaloneLinkType = "driver" | "unit" | "vendor" | "customer" | "load";
 
@@ -54,7 +55,7 @@ type UploadModalProps = {
 };
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 function uploadWithProgress(

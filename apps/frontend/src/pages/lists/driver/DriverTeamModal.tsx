@@ -24,6 +24,7 @@ import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { DatePicker } from "../../../components/forms/DatePicker";
+import { addDaysIso, companyToday } from "../../../lib/businessDate";
 
 type Props = {
   open: boolean;
@@ -53,12 +54,12 @@ const EMPTY_FORM: FormState = {
 };
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 /** Backend rejects effective_from more than 30 days out (ensureEffectiveFromWithinWindow). */
 function maxEffectiveFromIso(): string {
-  return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return addDaysIso(companyToday(), 30);
 }
 
 export function DriverTeamModal({ open, operatingCompanyId, mode, team, onClose, onSaved }: Props) {
