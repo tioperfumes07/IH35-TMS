@@ -1,3 +1,5 @@
+**GO-0014 CASCADE NOW — `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0014 | NOW=vendors-0-of-7-prod-verified | SHA=069d531 | GO`. PREPEND OUTBOX. Establish vendors 0/7 prod_verified truth. Never trigger_deploy.
+
 **GO-0013 CASCADE FROZEN — work fanned out.** Read `docs/bus/FEED/NOW-CASCADE.md`. Do not block CC-2/Devin/Cursor. Never trigger_deploy.
 
 **GO-0013 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md` (one page).** ACK `CASCADE | ACK | GO-0013 | NOW=unique-FINDING-usmca-only | SHA=069d531 | GO`. PREPEND OUTBOX. Park TRANSP/TRK/QBO. Never trigger_deploy.

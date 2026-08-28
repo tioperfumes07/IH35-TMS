@@ -1,3 +1,5 @@
+**GO-0014 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0014 | NOW=event2-silent-on-issued-invoices | SHA=069d531 | GO`. Five issued invoices has_je=false. Reuse latch Event 2. Do not write a second A/R poster. Option B already on live SHA. Re-measure A/R and A/P. Never trigger_deploy.
+
 **GO-0013 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0013 | NOW=ledger-finding-type-check | SHA=069d531 | GO`. Widen CHECK + dual-artifact guard. Apply on Neon. No prod-only ALTER. USMCA-only. Never trigger_deploy.
 
 **GO-0012 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0012 | NOW=leftover-unique-money | SHA=069d531 | GO`. #17039 merged. Never trigger_deploy.
