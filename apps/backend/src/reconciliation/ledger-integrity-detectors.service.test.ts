@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { checkAskMyAccountantForCompany, checkSubledgerTieOutForCompany } from "./ledger-integrity-detectors.service.js";
+import {
+  checkAskMyAccountantForCompany,
+  checkPerEntryBalanceForCompany,
+  checkSubledgerTieOutForCompany,
+} from "./ledger-integrity-detectors.service.js";
 
 const COMPANY = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const AR_ACCOUNT = "11f4641f-6d83-4958-9f8b-0de94c107a70";
@@ -18,6 +22,7 @@ function makeClient(opts: {
   apSubCents?: string;
   askAccounts?: Array<{ account_id: string; account_number: string; account_name: string }>;
   openFindingId?: string | null;
+  unbalanced?: { count: number; ids: string[] };
 }) {
   const calls: Call[] = [];
   const controlAccounts = opts.controlAccounts ?? {};
@@ -27,6 +32,10 @@ function makeClient(opts: {
     async query(sql: string, values?: unknown[]) {
       calls.push({ sql, values });
 
+      if (sql.includes("WITH je AS") && sql.includes("FROM accounting.journal_entries j")) {
+        const unbalanced = opts.unbalanced ?? { count: 0, ids: [] };
+        return { rows: [{ unbalanced_count: String(unbalanced.count), unbalanced_ids: unbalanced.ids }] };
+      }
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
         const role = values?.[1] as "ar_control" | "ap_control" | undefined;
         const accountId = role ? controlAccounts[role] : undefined;
@@ -156,5 +165,43 @@ describe("ledger-integrity-detectors.service — 9000 Ask My Accountant suspense
 
     expect(client.calls.some((c) => c.sql.includes("FROM accounting.journal_entry_postings"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — INV-2 per-entry balance", () => {
+  it("files a single aggregate unbalanced_journal_entry finding when any real entry does not balance", async () => {
+    const client = makeClient({ unbalanced: { count: 2, ids: ["je-1", "je-2"] } });
+
+    await checkPerEntryBalanceForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("unbalanced_journal_entry");
+    expect(values[2]).toBe("critical");
+    expect(JSON.parse(values[5] as string)).toMatchObject({
+      unbalanced_count: 2,
+      sample_journal_entry_ids: ["je-1", "je-2"],
+    });
+  });
+
+  it("auto-resolves an open unbalanced-entry finding once every real entry balances again", async () => {
+    const client = makeClient({ unbalanced: { count: 0, ids: [] }, openFindingId: "finding-3" });
+
+    await checkPerEntryBalanceForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"))).toBe(false);
+    const resolveCall = client.calls.find((c) => c.sql.includes("status = 'resolved'"));
+    expect(resolveCall).toBeDefined();
+    expect(resolveCall!.values).toEqual(["finding-3"]);
+  });
+
+  it("does nothing when there is nothing open and nothing unbalanced (the expected steady state)", async () => {
+    const client = makeClient({ unbalanced: { count: 0, ids: [] } });
+
+    await checkPerEntryBalanceForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
   });
 });
