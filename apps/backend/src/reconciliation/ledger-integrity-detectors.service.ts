@@ -1,0 +1,241 @@
+import { randomUUID } from "node:crypto";
+
+// LAUNCH-SAFE-LEDGER-MONITOR-DETECTORS (CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md /
+// STOP-CC1-ACCT-F5692-POD-GATE-2026-08-28.md §2): "stranded_intermediate detector must cover
+// unbilled_revenue (1150), undeposited_funds (1090), and cash_clearing, and must not mix sample
+// into the operating metric without labeling it." Ledger findings write into the SAME
+// _system.reconciliation_findings table the QBO/Samsara reconciliation-worker.service.ts uses
+// (integration widened to include 'ledger' by migration 202613240000), but with a different
+// resolution contract: NO HUMAN CLOSE. Every ledger finding this module writes is resolved ONLY
+// by this module, on a later tick that finds the underlying condition cleared -- resolved_by_user_id
+// is always left NULL for integration='ledger' rows (see scripts/verify-ledger-findings-no-human-resolve.mjs,
+// which fails if any route ever sets resolved_by_user_id on an integration='ledger' row, or if this
+// file's own auto-resolve path stops leaving it NULL).
+//
+// Read-only detector: SELECT-only against accounting.journal_entry_postings / journal_entries /
+// catalogs.accounts / accounting.chart_of_accounts_roles. Never GL — no INSERT/UPDATE against any
+// posting table, ever.
+
+const STRANDED_INTERMEDIATE_ROLES = ["unbilled_revenue", "undeposited_funds", "cash_clearing"] as const;
+type StrandedRole = (typeof STRANDED_INTERMEDIATE_ROLES)[number];
+
+type DbClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+type RoleAccount = {
+  accountId: string;
+  accountNumber: string;
+  accountName: string;
+};
+
+type StrandedBalance = {
+  operatingCents: number;
+  sampleCents: number;
+};
+
+type ResourceScope = {
+  role: StrandedRole;
+  account_id: string;
+  account_number: string;
+};
+
+async function listActiveCompanies(client: DbClient): Promise<string[]> {
+  const res = await client.query<{ id: string }>(
+    `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
+  );
+  return res.rows.map((r) => r.id).filter(Boolean);
+}
+
+async function resolveRoleAccounts(client: DbClient, operatingCompanyId: string, role: StrandedRole): Promise<RoleAccount[]> {
+  const res = await client.query<{ account_id: string; account_number: string; account_name: string }>(
+    `
+      SELECT a.id::text AS account_id, a.account_number, a.account_name
+      FROM accounting.chart_of_accounts_roles r
+      JOIN catalogs.accounts a ON a.id = r.account_id
+      WHERE r.operating_company_id = $1::uuid
+        AND r.role = $2
+        AND r.is_active = true
+    `,
+    [operatingCompanyId, role]
+  );
+  return res.rows.map((r) => ({ accountId: r.account_id, accountNumber: r.account_number, accountName: r.account_name }));
+}
+
+// Sample vs operating split, same-shape as the report-layer exclusion already shipped in #16832
+// (TB/P&L/BS/CF/register filter accounting.journal_entries.is_sample_data) -- this detector reads
+// the SAME flag against the underlying ledger, not a report projection, so it catches what the
+// report-layer filter can only hide from a viewer, not fix in the raw books.
+async function readStrandedBalance(client: DbClient, operatingCompanyId: string, accountId: string): Promise<StrandedBalance> {
+  const res = await client.query<{ operating_cents: string | null; sample_cents: string | null }>(
+    `
+      SELECT
+        COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)
+          FILTER (WHERE je.is_sample_data = false), 0)::text AS operating_cents,
+        COALESCE(SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END)
+          FILTER (WHERE je.is_sample_data = true), 0)::text AS sample_cents
+      FROM accounting.journal_entry_postings p
+      JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+      WHERE p.operating_company_id = $1::uuid
+        AND p.account_id = $2::uuid
+    `,
+    [operatingCompanyId, accountId]
+  );
+  const row = res.rows[0];
+  return {
+    operatingCents: Number(row?.operating_cents ?? 0),
+    sampleCents: Number(row?.sample_cents ?? 0),
+  };
+}
+
+async function findOpenLedgerFinding(
+  client: DbClient,
+  operatingCompanyId: string,
+  findingType: string,
+  resourceScope: ResourceScope
+): Promise<{ id: string } | null> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM _system.reconciliation_findings
+      WHERE operating_company_id = $1::uuid
+        AND integration = 'ledger'
+        AND finding_type = $2
+        AND status = 'open'
+        AND resource_scope = $3::jsonb
+      ORDER BY detected_at DESC
+      LIMIT 1
+    `,
+    [operatingCompanyId, findingType, JSON.stringify(resourceScope)]
+  );
+  return res.rows[0]?.id ? { id: res.rows[0].id } : null;
+}
+
+// NO HUMAN CLOSE: the only status this module ever writes is 'open' (persistLedgerFinding) or
+// 'resolved' via THIS function, and resolved_by_user_id is always NULL here — never a user uuid.
+// A future route that wants to let a person close a ledger-integration finding must go through a
+// SEPARATE integration value or explicitly reject integration='ledger'; scripts/verify-ledger-
+// findings-no-human-resolve.mjs enforces that no such route exists today.
+async function autoResolveLedgerFinding(client: DbClient, findingId: string): Promise<void> {
+  await client.query(
+    `
+      UPDATE _system.reconciliation_findings
+      SET
+        status = 'resolved',
+        resolved_at = now(),
+        resolved_by_user_id = NULL,
+        resolution_notes = 'auto-resolved: ledger-integrity detector rescan found the condition cleared (no human close)',
+        updated_at = now()
+      WHERE id = $1::uuid
+        AND integration = 'ledger'
+    `,
+    [findingId]
+  );
+}
+
+async function persistLedgerFinding(
+  client: DbClient,
+  input: {
+    operatingCompanyId: string;
+    findingType: string;
+    severity: "critical" | "important" | "cleanup";
+    runId: string;
+    resourceScope: ResourceScope;
+    localValue: Record<string, unknown>;
+    thresholdSnapshot: Record<string, unknown>;
+  }
+): Promise<void> {
+  const existing = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM _system.reconciliation_findings
+      WHERE operating_company_id = $1::uuid
+        AND integration = 'ledger'
+        AND finding_type = $2
+        AND status = 'open'
+        AND resource_scope = $3::jsonb
+      LIMIT 1
+    `,
+    [input.operatingCompanyId, input.findingType, JSON.stringify(input.resourceScope)]
+  );
+
+  if (existing.rows[0]?.id) {
+    await client.query(
+      `
+        UPDATE _system.reconciliation_findings
+        SET
+          severity = $2,
+          last_seen_at = now(),
+          local_value = $3::jsonb,
+          threshold_snapshot = $4::jsonb,
+          updated_at = now()
+        WHERE id = $1::uuid
+      `,
+      [existing.rows[0].id, input.severity, JSON.stringify(input.localValue), JSON.stringify(input.thresholdSnapshot)]
+    );
+    return;
+  }
+
+  await client.query(
+    `
+      INSERT INTO _system.reconciliation_findings (
+        operating_company_id, integration, mirror_category, finding_type, severity, status,
+        detected_at, reconciliation_run_id, resource_scope, local_value, remote_value,
+        drift_metric_abs, drift_metric_pct, threshold_snapshot, first_seen_at, last_seen_at
+      )
+      VALUES (
+        $1::uuid, 'ledger', 'ledger_integrity', $2, $3, 'open',
+        now(), $4::uuid, $5::jsonb, $6::jsonb, NULL,
+        NULL, NULL, $7::jsonb, now(), now()
+      )
+    `,
+    [
+      input.operatingCompanyId,
+      input.findingType,
+      input.severity,
+      input.runId,
+      JSON.stringify(input.resourceScope),
+      JSON.stringify(input.localValue),
+      JSON.stringify(input.thresholdSnapshot),
+    ]
+  );
+}
+
+async function checkStrandedIntermediateForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  for (const role of STRANDED_INTERMEDIATE_ROLES) {
+    const accounts = await resolveRoleAccounts(client, operatingCompanyId, role);
+    for (const account of accounts) {
+      const balance = await readStrandedBalance(client, operatingCompanyId, account.accountId);
+      const resourceScope: ResourceScope = { role, account_id: account.accountId, account_number: account.accountNumber };
+
+      if (balance.sampleCents !== 0) {
+        await persistLedgerFinding(client, {
+          operatingCompanyId,
+          findingType: "stranded_intermediate_sample_commingled",
+          severity: "important",
+          runId,
+          resourceScope,
+          localValue: {
+            account_name: account.accountName,
+            operating_cents: balance.operatingCents,
+            sample_cents: balance.sampleCents,
+          },
+          thresholdSnapshot: { rule: "sample_data_must_not_appear_in_operating_ledger_accounts", threshold_cents: 0 },
+        });
+        continue;
+      }
+
+      const open = await findOpenLedgerFinding(client, operatingCompanyId, "stranded_intermediate_sample_commingled", resourceScope);
+      if (open) await autoResolveLedgerFinding(client, open.id);
+    }
+  }
+}
+
+export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
+  const companies = await listActiveCompanies(client);
+  for (const operatingCompanyId of companies) {
+    const runId = randomUUID();
+    await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    await checkStrandedIntermediateForCompany(client, operatingCompanyId, runId);
+  }
+}
