@@ -160,12 +160,12 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
 
   const accidentOptions = useMemo(
     () =>
-      (accidentsQuery.data ?? []).map((accident) => {
+      (accidentsQuery.isError ? [] : (accidentsQuery.data ?? [])).map((accident) => {
         const value = String(accident.id ?? "");
         const when = accident.accident_at ? String(accident.accident_at).slice(0, 10) : "Date unavailable";
         return { value, label: `Accident — ${when}` };
       }).filter((option) => option.value),
-    [accidentsQuery.data],
+    [accidentsQuery.data, accidentsQuery.isError],
   );
 
   useEffect(() => {
@@ -415,8 +415,18 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
               onChange={(next) => updateField("accident_report_id", next ?? "")}
               placeholder="Unassigned"
               loading={accidentsQuery.isLoading}
+              disabled={accidentsQuery.isError}
               error={accidentsQuery.isError ? "Couldn't load accident reports" : undefined}
             />
+            {accidentsQuery.isError ? (
+              <button
+                type="button"
+                className="text-xs font-semibold text-blue-700 underline"
+                onClick={() => void accidentsQuery.refetch()}
+              >
+                Retry accident reports
+              </button>
+            ) : null}
           </div>
 
           <label className="space-y-1">
