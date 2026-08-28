@@ -1,3 +1,4 @@
+Codex | WORKING | DSP-F7127C | CLAIM=canonical-load-detail-scope-contract | SOURCE=mdata.loads company+id GET | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7127B | CLAIM=load-detail-company-scope-remainder | SOURCE=mdata.loads exact opco detail across cash-advance+invoice | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127 | PR=#17169 @ 1b82cc9a28 | Built=dispatch load-detail scope vertical | NEXT=cross-module direct callers | GO
 Codex | WORKING | DSP-F7127 | CLAIM=dispatch.load-detail-company-scope-vertical | SOURCE=mdata.loads exact company+load detail GET | NEXT=guard+FAST-MERGE | GO

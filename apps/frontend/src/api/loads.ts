@@ -284,11 +284,9 @@ export async function listAllLoads(filters: Omit<LoadsListFilters, "limit" | "of
   return { loads, total_count: expectedTotal ?? 0, has_more: false } satisfies LoadsListResponse;
 }
 
-export function getLoad(id: string, operatingCompanyId?: string) {
-  const query = new URLSearchParams();
-  if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);
-  const qs = query.toString();
-  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}${qs ? `?${qs}` : ""}`);
+export function getLoad(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}?${query.toString()}`);
 }
 
 export function getLoadAudit(id: string) {

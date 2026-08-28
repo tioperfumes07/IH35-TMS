@@ -60,7 +60,7 @@ const isoDatetimeSchema = z.string().datetime({ offset: true });
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const optionalUuidQueryFilter = z.preprocess((value) => (value === "" ? undefined : value), z.string().uuid().optional());
-const loadDetailQuerySchema = z.object({ operating_company_id: optionalUuidQueryFilter });
+const loadDetailQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 
 function normalizeLoadSort(value: unknown) {
   if (typeof value !== "string") return value;
@@ -880,7 +880,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const scopedCompanyId = parsedQuery.data.operating_company_id;
-    if (scopedCompanyId) await assertCompanyMembership(authUser.uuid, scopedCompanyId);
+    await assertCompanyMembership(authUser.uuid, scopedCompanyId);
 
     const detail = await withCurrentUser(authUser.uuid, async (client) => {
       const loadRes = await client.query(
@@ -965,7 +965,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE ${loadRefMatchSql("l", 1)}
-            AND ($2::uuid IS NULL OR l.operating_company_id = $2::uuid)
+            AND l.operating_company_id = $2::uuid
             -- Tier-1 entity-scope (money by-id IDOR): rate_total_cents is GROSS customer revenue.
             -- Defense-in-depth mirror of the two SELECT RLS policies (loads_select_office +
             -- loads_select_driver) so an office user only reads loads of their accessible companies
@@ -987,7 +987,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             )
           LIMIT 1
         `,
-        [parsedParams.data.id, scopedCompanyId ?? null]
+        [parsedParams.data.id, scopedCompanyId]
       );
       const load = loadRes.rows[0] ?? null;
       if (!load) return null;
