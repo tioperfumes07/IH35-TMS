@@ -365,8 +365,8 @@ export function VehicleProfilePage() {
               nextPmDue={profile.next_pm_due}
               lastService={profile.last_service}
               unitId={id}
-              activeFaultCount={faultSummaryQuery.data?.total_count ?? 0}
-              pendingFaultDraftCount={faultSummaryQuery.data?.auto_wo_count ?? 0}
+              activeFaultCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count ?? 0}
+              pendingFaultDraftCount={faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count ?? 0}
               workOrders={profile.recent_activity?.work_orders ?? []}
             />
             <div className="mt-3">
