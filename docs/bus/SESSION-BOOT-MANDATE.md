@@ -1,3 +1,5 @@
+**11:22 CT GO-0009:** `git pull` → **`docs/bus/FEED/NOW-<SEAT>.md`** (one page, overwritten). Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. Desktop `~/Desktop/IH35-SEAT-FEED/`. ACK `GO-0009`. Idle = defect. Live `069d531`.
+
 **21:58 CT GO-2158:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md` · live `e3ae7a7` · CC-3 reactivate PATCH · Devin `/vendors` re-verify.
 
 **21:36 CT GO-2136:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2136.md` · Cursor lead · idle = defect.
@@ -21,7 +23,7 @@
 
 **FAST-MERGE 4 min ON · CONTINUOUS.** `docs/bus/FAST-MERGE-4MIN-LAW.md`
 
-Then `git pull --ff-only origin main` → **`docs/bus/LEAD-SEAT.md`** → **`docs/bus/NOW-ONE-SOURCE.md`** → `docs/bus/INBOX-<SEAT>.md` TOP.
+Then `git pull --ff-only origin main` → **`docs/bus/FEED/NOW-<SEAT>.md`** (current GO, overwrite) → **`docs/bus/LEAD-SEAT.md`** → **`docs/bus/NOW-ONE-SOURCE.md`** → `docs/bus/INBOX-<SEAT>.md` TOP.
 
 If `LEAD-SEAT=CC-1`, Claude is lead (`docs/bus/CLAUDE-LEAD-NOW.md`). Cursor is worker. T1–T6: `docs/bus/LEAD-CONTRACT.md`.
 

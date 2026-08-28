@@ -1,3 +1,5 @@
+**GO-0009.** Read **`docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0009 | NOW=reproduce-Override | SHA=069d531 | GO`. Auditor not builder. Never trigger_deploy.
+
 **GO-0007 · Book Load KEEP.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Query-back. Keep TEST on books. ACK `DEVIN-A | ACK | GO-0007 | NOW=Book-Load-KEEP | SHA=<healthz> | GO`. Never trigger_deploy.
 
 **GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `DEVIN-A | ACK | GO-0006 | NOW=Book-Load-KEEP | SHA=<healthz> | GO`. Book Load KEEP. Query-back. No post-gl. Never `trigger_deploy`.
