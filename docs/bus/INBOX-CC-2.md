@@ -1,3 +1,5 @@
+**GO-0013 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md` (one page).** ACK `CC-2 | ACK | GO-0013 | NOW=live-verify-ledger-cron-after-cc1 | SHA=069d531 | GO`. Do not author the CHECK migration. USMCA leftover unique until CC-1 lands, then live-verify cron. Never trigger_deploy.
+
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md` (one page).** ACK `CC-2 | ACK | GO-0012 | NOW=leftover-unique-not-dispatch | SHA=069d531 | GO`. Never trigger_deploy.
 
 **GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md` (one page).** ACK `CC-2 | ACK | GO-0011 | NOW=leftover-unique-not-dispatch | SHA=069d531 | GO`. #17081 GET shipped. Leftover unique. Never trigger_deploy.

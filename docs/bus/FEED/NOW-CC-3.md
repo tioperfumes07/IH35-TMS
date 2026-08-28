@@ -1,14 +1,12 @@
-# FEED · CC-3 · GO-0012 · overwrite
+# FEED · CC-3 · GO-0013 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CC-3 | ACK | GO-0012 | NOW=TXH-01-system-transactions-tab | SHA=069d531 | GO`
+ACK: `CC-3 | ACK | GO-0013 | NOW=usmca-samsara-identity-detention | SHA=069d531 | GO`
 
 ## NOW
-Book Load Override **shipped** (#17059). Do not rebuild.
+Override **shipped** (#17059). Do not rebuild.
 
-**TXH-01 tab:** System → Transactions. GET already on main (#17081). No migration. No `health_status` column. Ship tab + `SYSTEM_TABS` + `docs/approved-screens/system.png` + guard. Then leftover unique (not `/dispatch`).
-
-FAST-MERGE = local gate then `gh api` squash.
+Finish TXH-01 System → Transactions tab if the PR is already in flight (GET is on main #17081). Then **first new task:** prove whether USMCA's ~92 open `identity_mismatch` Samsara findings block `dispatch.detention_evidence` / accessorial billing. Query + click, USMCA only. If proven, fix the mapping path (not QBO). If not proven, file unique FINDING with the query — do not assume money.
 
 ## Forbidden
-G1. GL. `trigger_deploy`. Dual-Devin. U14 restamp.
+G1. GL. QBO / TRANSP / TRK. Rebuild Override. `trigger_deploy`. Dual-Devin. U14 restamp.

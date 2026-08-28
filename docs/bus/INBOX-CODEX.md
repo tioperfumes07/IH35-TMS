@@ -1,3 +1,5 @@
+**GO-0013 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0013 | NOW=/dispatch-usmca-unique | SHA=069d531 | GO`. Finish DSP-F7080 then USMCA /dispatch unique. Never trigger_deploy.
+
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO`. FAST-MERGE = gate then gh api. Never trigger_deploy.
 
 **GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0011 | NOW=/dispatch-unique | SHA=069d531 | GO`. Do not steal TXH tab or G1. Never trigger_deploy.

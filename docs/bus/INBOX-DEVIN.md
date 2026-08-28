@@ -1,3 +1,5 @@
+**GO-0013 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0013 | NOW=usmca-queryback-keep-test | SHA=069d531 | GO`. PREPEND OUTBOX. KEEP TEST. Do not stamp G1 FIXED on live API 069d531. Never trigger_deploy.
+
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0012 | NOW=queryback-override-FE | SHA=069d531 | GO`. PREPEND OUTBOX. G1 on main not live API. Never trigger_deploy.
 
 **GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0011 | NOW=queryback-live-not-hold | SHA=069d531 | GO`. PREPEND OUTBOX (line 1 is still GO-0002). Query-back FE `590c36a`. G1 not live (#17067 red). Never trigger_deploy.
