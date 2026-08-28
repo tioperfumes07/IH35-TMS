@@ -7,7 +7,7 @@
 
 | Seat | ACK GO-0020? | Idle? |
 |------|----------------|-------|
-| CC-1 | NO until OUTBOX self-ACK | YES until ACK — NOW=A/P |
+| CC-1 | YES (OUTBOX GO-0020 A/P complete) | NO — NOW leftover USMCA money; 9877 OWNER-GATED |
 | CC-2 | NO until ACK | NOW=L3 cron honesty + leftover |
 | CC-3 | NO until ACK | do not ship body vendor PATCH |
 | Codex | NO until ACK | NOW=/dispatch unique |

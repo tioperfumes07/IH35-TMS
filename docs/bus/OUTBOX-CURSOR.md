@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0020 | PORT=9222 | NOW=cc1-ap-gated-9877 | SHA=4e5db76 | GO -- CC-1 ACCT-F9877 root-caused; uq_je_reverses_je_id rehearsal blocked; owner A/B. CC-1 NOW leftover USMCA money not 9877. Nobody trigger_deploy.
 Cursor | ACK | GO-0020 | PORT=9222 | NOW=lead+feed+l6-live-unverified | SHA=4e5db76 | GO -- L6+vendor PATCH on main. A/P CC-1. PROG-01 blocked on Jorge 202613270000. Nobody trigger_deploy. U14 never restamp.
 Cursor | ACK | GO-0016 | PORT=9222 | NOW=desktop-feed-sync+deploy | SHA=069d531 | GO -- Desktop FEED was GO-0013; sync-seat-feed this turn. Event 2 #17157 on main not live. L2 closed. U14 never restamp.
 Cursor | TICK | GO-0014 | API=069d531 | GO -- Claude 2:49 P0 A/R neither path. CC-1 Event2 on issued invoices (Option B already on this SHA). CC-2 3:20 CT cron. CC-3 BANK-F01-07. Codex 8 PASS-UNVERIFIED. Devin ensure-drivers. Cascade vendors 0/7. Nobody trigger_deploy.

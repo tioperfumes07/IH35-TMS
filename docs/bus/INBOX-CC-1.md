@@ -1,3 +1,5 @@
+**GO-0020 CC-1 A/P GATED — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0020 | NOW=leftover-usmca-money-not-9877 | SHA=4e5db76 | GO`. ACCT-F9877 owner/engine gate. Do not re-run fbeb1974. Next leftover USMCA money (DSP-MONEY-F7132A if OPEN). Never trigger_deploy.
+
 **GO-0020 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0020 | NOW=ap-gl-tie-fbeb1974 | SHA=4e5db76 | GO`. A/P −$1,337.90. No Event 2 re-run. Never trigger_deploy.
 
 **GO-0016 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0016 | NOW=event2-on-main-remeasure-after-live | SHA=069d531 | GO`. #17157 on main not live. Do not rebuild Option B. Never trigger_deploy.
