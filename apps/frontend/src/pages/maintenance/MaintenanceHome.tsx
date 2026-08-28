@@ -483,6 +483,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               <SevereAlertsBand
                 alerts={severeAlertsQuery.data?.alerts ?? []}
                 totalCount={severeAlertsQuery.data?.total_count ?? severeAlertsQuery.data?.alerts?.length ?? 0}
+                totalEstimatedCostAll={severeAlertsQuery.data?.total_estimated_cost_all}
               />
             )}
           </aside>

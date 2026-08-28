@@ -130,6 +130,7 @@
     "verify:revrec-latch-fires-on-bulk-invoice-issuance": "node scripts/verify-revrec-latch-fires-on-bulk-invoice-issuance.mjs",
     "verify:detention-terms-history-fail-closed": "node scripts/verify-detention-terms-history-fail-closed.mjs",
     "verify:customer-billing-summary-fail-closed": "node scripts/verify-customer-billing-summary-fail-closed.mjs",
+    "verify:severe-alerts-total-cost-unbounded": "node scripts/verify-severe-alerts-total-cost-unbounded.mjs",
     "verify:multipart-size-limits": "node scripts/verify-multipart-size-limits.mjs",
     "verify:book-load-driver-qualification-gate": "node scripts/verify-book-load-driver-qualification-gate.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",

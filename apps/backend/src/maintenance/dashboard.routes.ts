@@ -64,7 +64,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     const companyId = parsed.data.operating_company_id;
 
     const result = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.work_orders"))) return { alerts: [], total_count: 0 };
+      if (!(await relationExists(client, "maintenance.work_orders"))) return { alerts: [], total_count: 0, total_estimated_cost_all: 0 };
       // XE-SCOPE: views.maintenance_severe_repair_alerts (0041) has NO company column and runs under
       // role-based RLS, so a plain `SELECT * FROM views.maintenance_severe_repair_alerts` BLENDS
       // TRANSP+TRK+USMCA repair alerts for a multi-entity Owner. We reproduce the view's exact
@@ -102,7 +102,34 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      return { alerts: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
+      // MAINT-MONEY-F6943 — the LIMIT 50 above bounds the LIST, correctly (a display cap, disclosed
+      // via total_count). But summing only the 50 RETURNED rows' total_estimated_cost for a dollar
+      // total is a DIFFERENT thing: once total_count exceeds 50, that sum silently excludes real
+      // severe/waiting-parts exposure that exists but was never fetched -- a truncated page presented
+      // as if it were the whole cost picture. This second query reproduces the EXACT SAME WHERE
+      // predicate with no LIMIT, aggregated server-side, so the true total is never bounded by what
+      // the list happens to display.
+      const costRes = await client.query(
+        `
+          SELECT COALESCE(SUM(w.total_actual_cost), 0)::numeric AS total_estimated_cost_all
+          FROM maintenance.work_orders w
+          JOIN mdata.units u ON u.id = w.unit_id
+                            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = w.operating_company_id
+          WHERE w.operating_company_id = $1::uuid
+            AND w.voided_at IS NULL
+            AND w.status NOT IN ('complete', 'cancelled')
+            AND (
+              w.severity = 'severe'
+              OR (w.status = 'waiting_parts' AND w.opened_at < now() - INTERVAL '5 days')
+            )
+        `,
+        [companyId]
+      );
+      return {
+        alerts: res.rows,
+        total_count: Number(res.rows[0]?.total_count ?? 0),
+        total_estimated_cost_all: Number(costRes.rows[0]?.total_estimated_cost_all ?? 0),
+      };
     });
     return result;
   });
