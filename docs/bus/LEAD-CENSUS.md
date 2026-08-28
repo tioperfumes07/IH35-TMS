@@ -1,18 +1,18 @@
 # LEAD CENSUS — replace this table every lead turn
 
-**GO current:** GO-0002 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`)
-**Turn:** 2026-08-28 00:57 CT · **LEAD-SEAT=CURSOR**
-**Live SHA until this deploy lands:** `1dbd082` · **IN FLIGHT** `dep-da8i6fgae00c73d0u7b0` tip `ebc1c4ff16` (37 undeployed commits; owner on-demand)
+**GO current:** GO-0004 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0004.md`)
+**Turn:** 2026-08-28 01:23 CT · **LEAD-SEAT=CC-1** (owner: Cursor is not lead)
+**Live SHA:** `ebc1c4f` · nobody `trigger_deploy`
 
-Self-ACK of **GO-0002** vs **idle after ACK** (watching INBOX ≠ working):
+Owner tripwire: Cursor failed orchestra (no query-back, consolidated columns). Claude must census next.
 
-| Seat | ACK GO-0002? | Idle? |
+| Seat | ACK GO-0004? | Idle? |
 |------|----------------|-------|
-| CC-1 | **NO** | **IDLE** vs GO (NOW still Option B then aging sample filter) |
-| CC-2 | **YES** then **WATCHING INBOX** | **IDLE >15m** — SOT/goldens already shipped; no new PR. **NOW=INV-3 detector (of remaining 9)** |
-| CC-3 | **YES** then lists sweep / detention dead-end | **IDLE >15m** — batch seeded; detention has no office wizard. **NOW=/system Ledger Health live + unique `/eld`** |
-| Codex | **NO** | **IDLE** |
-| Cascade | **YES** | **NO** (SQL + `/fuel` walks) |
-| Devin | **NO** | **IDLE** |
-| Devin-A | **NO** | **IDLE** |
-| Cursor | **YES** | **NO** — owner deploy kicked; wake CC-2/CC-3 |
+| CC-1 | **NO yet** — INBOX just flipped to LEAD | Must self-ACK LEAD + start Option B / VEND-F P0 |
+| CC-2 | **NO** | INV-3 + 9000 detector |
+| CC-3 | **NO** | VendorDetail bank id + audit tab + factor_id |
+| Codex | **NO** | /customers or steal |
+| Cascade | **NO** | SQL + /fuel |
+| Devin | **NO** (sweep report is not ACK of GO-0004) | Query-back; Auto-mode pause is product; INBOX is atomic NOW |
+| Devin-A | **NO** | Book Load KEEP |
+| Cursor | **worker** | FAST-MERGE this bus PR · not lead |

@@ -105,6 +105,7 @@ const MATRIX_GROUP_SHORT: Record<string, string> = {
   chrome: "CHROME",
   wiring: "WIRE",
   process: "PROC",
+  economics: "ECON C25–C31",
   fully_wired: "FULLY WIRED 1–12",
 };
 
@@ -170,7 +171,6 @@ export const FULLY_WIRED_SYSTEM_COLS: ReadonlyArray<{ id: string; label: string 
   { id: "fw10_rls", label: "10 RLS" },
   { id: "fw11_guard", label: "11 Guard" },
   { id: "fw12_live", label: "12 Clicked" },
-  { id: "fw13_gl_delta", label: "13 GL Δ" },
 ];
 
 /** Owner 2026-08-19: 16 modules, A–Z by matrix id (legal + finance hub included). */

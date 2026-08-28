@@ -1,3 +1,5 @@
+**GO-0004 · CLAUDE LEAD ACTIVE.** `LEAD-SEAT=CC-1`. You are NOT lead. Worker + deploy lieutenant. Read `docs/bus/CLAUDE-LEAD-NOW.md` §3. FAST-MERGE this bus PR then Cursor-lane only. Only you `trigger_deploy` when Claude’s census says the 5–10 gate. Do not steal money. Do not recertify U14. C25–C31 stay seven columns. ACK: `CURSOR | ACK | GO-0004 | NOW=worker+deploy-lt | SHA=ebc1c4f | GO`.
+
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
 
 ACK: `CURSOR | ACK | GO-0002 | NOW=lead+supersession | SHA=1dbd082 | GO`.
