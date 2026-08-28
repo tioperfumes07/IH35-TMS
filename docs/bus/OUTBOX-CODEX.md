@@ -1849,3 +1849,4 @@ Codex | WORKING | DSP-F7087 | CLAIM=post.dispatch-bookload-equipment-query-failu
 Codex | WORKING | DSP-F7088 | CLAIM=post.dispatch-cancel-reason-failure-honesty | SOURCE=load_cancellation_reasons→Cancel Load picker/create/submit | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7089 | CLAIM=post.dispatch-detention-reason-failure-honesty | SOURCE=catalogs.detention_reasons→Book Load Expected Adjustments | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7090 | CLAIM=post.dispatch-timeline-leave-failure-honesty | SOURCE=driver_scheduler leave grid→Unified Timeline status | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7091 | CLAIM=post.dispatch-notify-preferences-read-failure-honesty | SOURCE=customer_notify_preferences→Notify Preferences panel | NEXT=guard+FAST-MERGE | GO
