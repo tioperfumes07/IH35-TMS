@@ -197,7 +197,6 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
         WHERE de.operating_company_id = $1::uuid
           AND de.status IN ('accruing', 'closed')
         ORDER BY de.status ASC, de.started_at ASC
-        LIMIT 200
       `,
       [operatingCompanyId]
     );
