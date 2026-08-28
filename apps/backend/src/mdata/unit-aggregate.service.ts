@@ -831,7 +831,6 @@ export async function buildUnitAggregate(
         AND p.operating_company_id = $2::uuid
         AND p.archived_at IS NULL
       ORDER BY p.taken_at DESC NULLS LAST, p.created_at DESC
-      LIMIT 20
     `,
     [unitId, operatingCompanyId]
   );
