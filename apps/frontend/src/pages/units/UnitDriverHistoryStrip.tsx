@@ -83,6 +83,10 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
   const totalCount = historyQuery.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
+  useEffect(() => {
+    if (historyQuery.isSuccess && !historyQuery.isFetching && page > 0 && rows.length === 0) setPage(0);
+  }, [historyQuery.isFetching, historyQuery.isSuccess, page, rows.length]);
+
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-driver-history-strip">
       <div className="flex items-center justify-between gap-2">

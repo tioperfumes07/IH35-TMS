@@ -14,6 +14,7 @@ function findings(read = (file) => fs.readFileSync(file, "utf8")) {
   if (!component.includes("offset: page * pageSize")) out.push("selected offset missing");
   if (!component.includes("unit-driver-history-server-pager") || !component.includes("hidePager")) out.push("authoritative pager missing");
   if (!component.includes("useEffect(() => setPage(0), [operatingCompanyId, unitId, driverId, days])")) out.push("scope reset missing");
+  if (!component.includes("historyQuery.isSuccess && !historyQuery.isFetching && page > 0 && rows.length === 0")) out.push("out-of-range recovery missing");
   return out;
 }
 if (process.argv.includes("--selftest")) {
@@ -27,6 +28,7 @@ if (process.argv.includes("--selftest")) {
     (file, source) => file === componentFile ? source.replace(", page]", "]") : source,
     (file, source) => file === componentFile ? source.replace("unit-driver-history-server-pager", "removed-pager") : source,
     (file, source) => file === componentFile ? source.replace("offset: page * pageSize", "offset: 0") : source,
+    (file, source) => file === componentFile ? source.replace("page > 0 && rows.length === 0", "false") : source,
   ];
   for (const mutate of mutations) if (findings((file) => mutate(file, base[file])).length === 0) throw new Error("planted regression escaped guard");
   console.log(`verify-vehicle-driver-history-exact-range selftest: PASS (${mutations.length}/${mutations.length})`); process.exit(0);
