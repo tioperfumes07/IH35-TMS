@@ -155,6 +155,20 @@ export function DriversMasterDataPage() {
     setDraft(EMPTY_DRAFT);
   }, [companyId]);
 
+  useEffect(() => {
+    if (!driversQuery.isError) return;
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [driversQuery.isError]);
+
   const rows = useMemo(() => driversQuery.data?.rows ?? [], [driversQuery.data?.rows]);
   const csvEnabled = driversQuery.data?.csv_import_enabled ?? false;
 
@@ -228,15 +242,15 @@ export function DriversMasterDataPage() {
           <div className="flex items-center gap-2">
             {/* MAINT-F3522: server-bound drivers search — keep; ParityTable toolbar Search suppressed */}
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search drivers" />
-            <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>+ Create</Button>
+            <Button size="sm" variant="secondary" disabled={driversQuery.isError} onClick={() => setCreateOpen(true)}>+ Create</Button>
           </div>
         }
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
-          <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+          <input type="file" accept=".csv,text/csv" disabled={driversQuery.isError || !csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
+          <Button size="sm" variant="secondary" disabled={driversQuery.isError || !csvEnabled || !csvFile} onClick={() => {
             if (!csvFile) return;
             importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
           }}>
@@ -287,7 +301,7 @@ export function DriversMasterDataPage() {
             />
           </div>
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
+          <Button disabled={driversQuery.isError || !draft.first_name || !draft.last_name || !draft.phone || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -305,7 +319,7 @@ export function DriversMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.email ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, email: e.target.value || null } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
-            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={driversQuery.isError || updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -319,7 +333,7 @@ export function DriversMasterDataPage() {
         submitLabel="Void"
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
-          if (!voiding) return;
+          if (!voiding || driversQuery.isError) return;
           await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />

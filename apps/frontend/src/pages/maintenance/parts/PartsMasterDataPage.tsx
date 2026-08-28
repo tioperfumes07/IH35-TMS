@@ -182,6 +182,20 @@ export function PartsMasterDataPage() {
     setDraft(EMPTY_DRAFT);
   }, [companyId]);
 
+  useEffect(() => {
+    if (!partsQuery.isError) return;
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [partsQuery.isError]);
+
   const rows = useMemo(() => partsQuery.data?.rows ?? [], [partsQuery.data?.rows]);
 
   // Universal-list columns. Parts are NOT a linkable entity (no part-detail route), so there are no
@@ -236,7 +250,7 @@ export function PartsMasterDataPage() {
             {/* MAINT-F3518: server-bound parts search — keep; ParityTable toolbar Search suppressed */}
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search parts" />
             {/* ARCHIVE-not-DELETE (B25): prior header CTA "+ Create" — Sunset: 2026-09. Canonical: + Create Part. */}
-            <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+            <Button size="sm" variant="secondary" disabled={partsQuery.isError} onClick={() => setCreateOpen(true)}>
               + Create Part
             </Button>
           </div>
@@ -260,8 +274,8 @@ export function PartsMasterDataPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
-          <input type="file" accept=".csv,text/csv" onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvFile} onClick={() => {
+          <input type="file" accept=".csv,text/csv" disabled={partsQuery.isError} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
+          <Button size="sm" variant="secondary" disabled={partsQuery.isError || !csvFile} onClick={() => {
             if (!csvFile) return;
             importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
           }}>
@@ -317,7 +331,7 @@ export function PartsMasterDataPage() {
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Reorder threshold" type="number" value={draft.reorder_threshold} onChange={(e) => setDraft((p) => ({ ...p, reorder_threshold: e.target.value }))} />
           </div>
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Location" value={draft.location} onChange={(e) => setDraft((p) => ({ ...p, location: e.target.value }))} />
-          <Button disabled={!draft.part_number || !draft.name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
+          <Button disabled={partsQuery.isError || !draft.part_number || !draft.name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -334,7 +348,7 @@ export function PartsMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.qty_on_hand} onChange={(e) => setEditing((p) => (p ? { ...p, qty_on_hand: Number(e.target.value || 0) } : p))} />
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" type="number" value={editing.reorder_threshold} onChange={(e) => setEditing((p) => (p ? { ...p, reorder_threshold: Number(e.target.value || 0) } : p))} />
             </div>
-            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={partsQuery.isError || updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -348,7 +362,7 @@ export function PartsMasterDataPage() {
         submitLabel="Void"
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
-          if (!voiding) return;
+          if (!voiding || partsQuery.isError) return;
           await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
