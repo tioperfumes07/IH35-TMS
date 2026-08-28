@@ -423,7 +423,7 @@ export function ClaimCreateModal({ open, operatingCompanyId, onClose, onCreated 
             {accidentsQuery.isError ? (
               <button
                 type="button"
-                className="text-xs font-semibold text-blue-700 underline"
+                className="text-xs font-semibold text-slate-700 underline"
                 onClick={() => void accidentsQuery.refetch()}
               >
                 Retry accident reports
