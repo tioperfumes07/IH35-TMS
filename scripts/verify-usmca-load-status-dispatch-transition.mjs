@@ -12,15 +12,24 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const API = "apps/frontend/src/api/loads.ts";
 const ROUTE = "apps/backend/src/mdata/loads.routes.ts";
+const DISPATCH_ROUTE = "apps/backend/src/dispatch/loads.routes.ts";
 const LABEL = "verify-usmca-load-status-dispatch-transition";
 
 export function run() {
   const errors = [];
   const src = fs.readFileSync(path.join(ROOT, API), "utf8");
   const routeSrc = fs.readFileSync(path.join(ROOT, ROUTE), "utf8");
+  const dispatchRouteSrc = fs.readFileSync(path.join(ROOT, DISPATCH_ROUTE), "utf8");
   const routeStart = routeSrc.indexOf('app.patch("/api/v1/mdata/loads/:id/status"');
   const routeEnd = routeSrc.indexOf('app.patch("/api/v1/mdata/loads/:id"', routeStart);
   const statusRoute = routeStart < 0 ? "" : routeSrc.slice(routeStart, routeEnd);
+  const dispatchTransitionStart = dispatchRouteSrc.indexOf('app.patch("/api/v1/dispatch/loads/:id/transition"');
+  const dispatchTransitionEnd = dispatchRouteSrc.indexOf(
+    'app.get("/api/v1/dispatch/loads/:id/driver-status"',
+    dispatchTransitionStart
+  );
+  const dispatchTransitionRoute =
+    dispatchTransitionStart < 0 ? "" : dispatchRouteSrc.slice(dispatchTransitionStart, dispatchTransitionEnd);
 
   if (!src.includes("transitionDispatchLoad")) {
     errors.push(`${API} must call transitionDispatchLoad for dispatch-mapped statuses`);
@@ -56,6 +65,13 @@ export function run() {
   if (!/operating_company_id = \$2::uuid/.test(statusRoute) || !/operating_company_id = \$3::uuid/.test(statusRoute)) {
     errors.push(`${ROUTE}: status SELECT and UPDATE must both bind exact requested company`);
   }
+  if (
+    !/UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/.test(
+      dispatchTransitionRoute
+    )
+  ) {
+    errors.push(`${DISPATCH_ROUTE}: dispatch transition UPDATE must bind the exact requested company`);
+  }
 
   return errors;
 }
@@ -63,8 +79,10 @@ export function run() {
 function selftest() {
   const apiPath = path.join(ROOT, API);
   const routePath = path.join(ROOT, ROUTE);
+  const dispatchRoutePath = path.join(ROOT, DISPATCH_ROUTE);
   const backup = fs.readFileSync(apiPath, "utf8");
   const routeBackup = fs.readFileSync(routePath, "utf8");
+  const dispatchRouteBackup = fs.readFileSync(dispatchRoutePath, "utf8");
   try {
     const broken = backup
       .replace("operatingCompanyId: string\n)", "operatingCompanyId?: string | null\n)")
@@ -78,16 +96,22 @@ function selftest() {
       .replaceAll('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
       .replaceAll("operating_company_id = $2::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())")
       .replaceAll("operating_company_id = $3::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())");
+    const brokenDispatchRoute = dispatchRouteBackup.replace(
+      "AND operating_company_id = $3::uuid",
+      "AND operating_company_id IN (SELECT org.user_accessible_company_ids())"
+    );
     fs.writeFileSync(apiPath, broken, "utf8");
     fs.writeFileSync(routePath, brokenRoute, "utf8");
+    fs.writeFileSync(dispatchRoutePath, brokenDispatchRoute, "utf8");
     const planted = run();
-    if (planted.length < 9) {
+    if (planted.length < 10) {
       throw new Error(`planted status scope vertical produced only ${planted.length} failures`);
     }
     console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures detected)`);
   } finally {
     fs.writeFileSync(apiPath, backup, "utf8");
     fs.writeFileSync(routePath, routeBackup, "utf8");
+    fs.writeFileSync(dispatchRoutePath, dispatchRouteBackup, "utf8");
   }
 }
 
