@@ -58,6 +58,8 @@ type BookLoadCharge = {
 export type BookLoadInput = {
   requestingUserUuid: string;
   requestingUserRole: string;
+  /** Derived at the authenticated route boundary; never trust the public override flag here. */
+  creditLimitOverrideAuthorized?: boolean;
   operating_company_id: string;
   customer_id: string;
   status: DispatchStatus;
@@ -1977,6 +1979,21 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         },
         "info",
         "P6-T11171"
+      );
+    }
+
+    if (input.creditLimitOverrideAuthorized) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.loads.credit_limit_override",
+        {
+          load_uuid: load.id,
+          customer_id: input.customer_id,
+          operating_company_id: input.operating_company_id,
+        },
+        "warning",
+        "CUSTVEND-PAR-1"
       );
     }
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leaves":["dispatch.modal.book_load_modal_v4"],"task":"DSP-F7068-CREDIT-OVERRIDE-AUDIT-ATOMIC","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 
@@ -13,6 +14,26 @@ function fail(messages) {
 }
 
 const failures = [];
+const loadRouteRel = "apps/backend/src/dispatch/loads.routes.ts";
+const bookLoadRel = "apps/backend/src/dispatch/book-load.service.ts";
+
+function auditDispatchCreditOverride(routeText, bookText) {
+  const problems = [];
+  if (!routeText.includes("creditLimitOverrideAuthorized:")) problems.push("dispatch route must pass an authorization-derived override signal");
+  if (!routeText.includes('Boolean(body.data.override_credit_limit && ["Owner", "Administrator", "Manager"].includes(authUser.role))')) problems.push("dispatch route must derive override authorization from the authenticated role");
+  if (/dispatch\.loads\.credit_limit_override[\s\S]{0,500}\.catch\(\(\) => \{\}\)/.test(routeText)) problems.push("credit override audit must not remain fire-and-forget/swallowed in the route");
+  if (!bookText.includes("creditLimitOverrideAuthorized?: boolean")) problems.push("bookLoad input must carry the internal authorization-derived signal");
+  if (!bookText.includes("if (input.creditLimitOverrideAuthorized)")) problems.push("bookLoad transaction must gate the audit on the internal signal");
+  const eventAt = bookText.indexOf('"dispatch.loads.credit_limit_override"');
+  if (eventAt < 0) problems.push("bookLoad transaction must append the credit override audit");
+  const auditBlock = eventAt < 0 ? "" : bookText.slice(eventAt, eventAt + 450);
+  if (!auditBlock.includes("load_uuid: load.id") || !auditBlock.includes("customer_id: input.customer_id")) problems.push("override audit must identify the created load and customer");
+  return problems;
+}
+
+const loadRouteText = fs.readFileSync(path.join(ROOT, loadRouteRel), "utf8");
+const bookLoadText = fs.readFileSync(path.join(ROOT, bookLoadRel), "utf8");
+failures.push(...auditDispatchCreditOverride(loadRouteText, bookLoadText));
 
 // G1: Credit limit enforcement in invoices.routes.ts
 {
@@ -103,6 +124,20 @@ const failures = [];
 
 if (failures.length > 0) {
   fail(failures);
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutants = [
+    ["derived signal", loadRouteText.replace("creditLimitOverrideAuthorized:", "creditLimitOverrideAuthorizedBroken:"), bookLoadText],
+    ["role gate", loadRouteText.replace('Boolean(body.data.override_credit_limit && ["Owner", "Administrator", "Manager"].includes(authUser.role))', "Boolean(body.data.override_credit_limit)"), bookLoadText],
+    ["transaction gate", loadRouteText, bookLoadText.replace("if (input.creditLimitOverrideAuthorized)", "if (false)")],
+    ["load identity", loadRouteText, bookLoadText.replace(/("dispatch\.loads\.credit_limit_override"[\s\S]{0,300})load_uuid: load\.id/, "$1load_uuid: null")],
+  ];
+  for (const [name, routeMutant, bookMutant] of mutants) {
+    if (auditDispatchCreditOverride(routeMutant, bookMutant).length === 0) fail([`selftest mutation survived: ${name}`]);
+  }
+  console.log(`verify:custvend-par1 — SELFTEST PASS (${mutants.length}/4 planted override-audit defects rejected)`);
+  process.exit(0);
 }
 
 console.log("verify:custvend-par1 — OK");
