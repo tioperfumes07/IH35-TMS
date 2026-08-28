@@ -1922,7 +1922,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     }
 
     await consumeLoadNumberReservation(client, {
+      operatingCompanyId: input.operating_company_id,
       reservationId,
+      reservedByUserId: input.requestingUserUuid,
       loadId: String(load.id),
     });
 

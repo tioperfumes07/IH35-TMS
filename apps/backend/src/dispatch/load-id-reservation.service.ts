@@ -11,7 +11,9 @@ type ReserveInput = {
 };
 
 type ConsumeInput = {
+  operatingCompanyId: string;
   reservationId: string;
+  reservedByUserId: string;
   loadId: string;
 };
 
@@ -242,7 +244,7 @@ export async function cancelLoadIdReservation(client: DbClient, input: ClaimInpu
 }
 
 export async function consumeLoadNumberReservation(client: DbClient, input: ConsumeInput) {
-  await client.query(
+  const consumed = await client.query<{ id: string }>(
     `
       UPDATE dispatch.load_id_reservations
       SET status = 'consumed',
@@ -250,10 +252,14 @@ export async function consumeLoadNumberReservation(client: DbClient, input: Cons
           consumed_load_id = $2,
           updated_at = now()
       WHERE id = $1
+        AND operating_company_id = $3::uuid
+        AND reserved_by_user_id = $4::uuid
         AND status = 'reserved'
+      RETURNING id::text
     `,
-    [input.reservationId, input.loadId]
+    [input.reservationId, input.loadId, input.operatingCompanyId, input.reservedByUserId]
   );
+  if (!consumed.rows[0]?.id) throw new Error("load_id_reservation_consume_conflict");
 }
 
 // Backwards-compatible export used in existing code.
