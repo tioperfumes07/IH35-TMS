@@ -6601,5 +6601,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-customer-billing-summary-fail-closed"
+  },
+  "9933": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-severe-alerts-total-cost-unbounded"
   }
 }
