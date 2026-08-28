@@ -1,4 +1,9 @@
 {
+  "9907": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-planner-loves-sync-no-silent-catch"
+  },
   "9903": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
