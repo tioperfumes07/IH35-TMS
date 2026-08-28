@@ -509,9 +509,12 @@ export function getMaintenanceRmStatus(companyId: string, range: { limit?: numbe
 }
 
 export function getMaintenanceSevereAlerts(companyId: string) {
-  return apiRequest<{ alerts: Array<Record<string, unknown>>; total_count: number }>(
-    `/api/v1/maintenance/dashboard/severe-alerts?${query(companyId)}`
-  );
+  return apiRequest<{
+    alerts: Array<Record<string, unknown>>;
+    total_count: number;
+    /** MAINT-MONEY-F6943 — SUM(total_actual_cost) across every matching WO, not just the LIMIT-50 page. */
+    total_estimated_cost_all: number;
+  }>(`/api/v1/maintenance/dashboard/severe-alerts?${query(companyId)}`);
 }
 
 export function listSevereRepairEstimates(companyId: string, filters: { unit_id?: string } = {}) {
