@@ -66,7 +66,6 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
             OR (sp.scheduled_arrival_at IS NOT NULL AND sp.scheduled_arrival_at <= now())
           )
         ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC
-        LIMIT 100
       `,
       [operatingCompanyId]
     );
