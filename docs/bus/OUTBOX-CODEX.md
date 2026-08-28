@@ -1721,3 +1721,5 @@ Codex | WORKING | MAINT-F7017 | CLAIM=post.maintenance-rm-status-single-flight-r
 Codex | SHIPPED | MAINT-F7017 | PR=#16976 @ d1d5c46ff0 | Built=RM board transitions single-flight+lifecycle ratchet restored | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining unique census | GO
 Codex | WORKING | MAINT-F7018 | CLAIM=post.maintenance-lifecycle-ratchet-alignment | vertical=RM failure exclusion+parts adjustment scope | NEXT=guard repair+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7018 | PR=#16977 @ 5fa3c6da3c | Built=3 Maintenance connectivity ratchets restored+15 mutation kills | Live=runtime unchanged | NEXT=route cross-lane guard reds then next unique | GO
+Codex | SHIPPED | MAINT-F7019/F7020 ROUTING | PR=#16978 @ 52d748b6d0 | routed=CC-1+CC-3 board OPEN+OUTBOX | NEXT=customers guard census | GO
+Codex | WORKING | CUST-F7021 | CLAIM=post.customers-guard-current-surface-alignment | vertical=transaction list+detail tabs | NEXT=guard repair+FAST-MERGE | GO
