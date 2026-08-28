@@ -1534,3 +1534,6 @@ CODEX | WORKING | FINDING=FLT-F6923-TRUCK-PLANNER-SILENT-500-UNIT-ROSTER | SOURC
 Codex | SHIPPED | FLT-F6923 | PR=#16889 @ f2ad0de434 | gate=exit0 | Built=dispatch+fleet planner.trucks complete unit range | Live=post-deploy UNVERIFIED | NEXT=VEND-F6924 | GO
 CODEX | CLAIMING | leftover=post.vendor-complete-rosters-nonmoney | GO=0004 | leaves=vendors.home.roster+maintenance.parts.vendor_suggestions | reason=complete vendor populations use one 5000/default page | NOW=canonical exhaustive vendor scanner+guard | GO
 CODEX | WORKING | FINDING=VEND-F6924-NONMONEY-VENDOR-ROSTERS-SILENT-PAGE | SOURCE-OF-TRUTH=mdata.vendors | cols=vendor+connectivity+reverse_link | GO
+Codex | SHIPPED | VEND-F6924 | PR=#16890 @ 61dac4f300 | gate=exit0 | Built=vendors home roster+maintenance parts vendor suggestions complete range | Live=post-deploy UNVERIFIED | NEXT=FLT-F6925 | GO
+CODEX | CLAIMING | leftover=post.fleet-unit-photo-gallery-complete-range | GO=0004 | leaf=unit.profile.documents | reason=mounted canonical unit photo gallery silently truncates at 20 with no range/full-history route | NOW=exact company+unit scoped photo range+guard | GO
+CODEX | WORKING | FINDING=FLT-F6925-UNIT-PHOTO-GALLERY-SILENT-20-CAP | SOURCE-OF-TRUTH=mdata.unit_photos | leaf=unit.profile.documents:{unit,connectivity,reverse_link,qbo_chrome} | GO

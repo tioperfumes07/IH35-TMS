@@ -7,7 +7,7 @@ type Photo = {
 };
 
 export function PhotoGallery({ photos }: { photos: Photo[] }) {
-  if (photos.length === 0) return <p className="mt-2 text-xs text-gray-500">No driver photos yet.</p>;
+  if (photos.length === 0) return <p className="mt-2 text-xs text-gray-500">No unit photos yet.</p>;
   return (
     <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4" data-testid="vp-photo-gallery">
       {photos.map((p) => (
