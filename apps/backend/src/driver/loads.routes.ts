@@ -141,6 +141,7 @@ function buildRateConfirmationHtml(loadDisplayId: string, customerName: string):
 
 type LoadRow = {
   id: string;
+  operating_company_id: string;
   load_number: string | null;
   status: string;
   rate_total_cents: number | string | null;
@@ -250,12 +251,14 @@ async function fetchDriverOwnedLoad(client: { query: <R>(sql: string, values?: u
     `
       SELECT
         l.id,
+        l.operating_company_id::text,
         l.load_number,
         l.status::text,
         l.rate_total_cents,
         l.assigned_unit_id,
         l.updated_at,
         l.accepted_at,
+        l.customer_id::text,
         c.customer_name,
         concat_ws(' ', iu.first_name, iu.last_name) AS dispatcher_name,
         NULL::text AS dispatcher_phone,
@@ -269,6 +272,16 @@ async function fetchDriverOwnedLoad(client: { query: <R>(sql: string, values?: u
       WHERE l.id = $1
         AND l.soft_deleted_at IS NULL
         AND (l.assigned_primary_driver_id = $2 OR l.assigned_secondary_driver_id = $2)
+        AND (
+          l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $2)
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations driver_load_detail_dca
+            WHERE driver_load_detail_dca.driver_id = $2
+              AND driver_load_detail_dca.company_id = l.operating_company_id
+              AND driver_load_detail_dca.is_authorized = true
+              AND driver_load_detail_dca.deactivated_at IS NULL
+          )
+        )
       LIMIT 1
     `,
     [loadId, driverId]
@@ -290,6 +303,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         `
           SELECT
             l.id,
+            l.operating_company_id::text,
             l.load_number,
             l.status::text,
             l.rate_total_cents,
@@ -309,6 +323,16 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
           WHERE l.soft_deleted_at IS NULL
             AND (l.assigned_primary_driver_id = $1 OR l.assigned_secondary_driver_id = $1)
+            AND (
+              l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $1)
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations driver_load_list_dca
+                WHERE driver_load_list_dca.driver_id = $1
+                  AND driver_load_list_dca.company_id = l.operating_company_id
+                  AND driver_load_list_dca.is_authorized = true
+                  AND driver_load_list_dca.deactivated_at IS NULL
+              )
+            )
             AND l.status::text <> 'cancelled'
             AND l.status::text <> 'closed'
             AND NOT (l.status::text = 'delivered' AND l.updated_at < now() - interval '24 hours')
@@ -366,11 +390,12 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = l.operating_company_id
           WHERE s.load_id = $1
+            AND l.operating_company_id = $2::uuid
             AND s.stop_type = 'pickup'
           ORDER BY s.sequence_number ASC
           LIMIT 1
         `,
-        [params.data.id]
+        [params.data.id, load.operating_company_id]
       );
       const pickup = pickupRes.rows[0] ?? null;
       if (pickup?.latitude != null && pickup.longitude != null) {
@@ -405,6 +430,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             $9
           FROM mdata.loads l
           WHERE l.id = $1
+            AND l.operating_company_id = $10::uuid
           RETURNING id
         `,
         [
@@ -417,21 +443,25 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
           Math.round(body.data.geo_accuracy_m),
           body.data.scroll_completed,
           req.headers["user-agent"] ?? null,
+          load.operating_company_id,
         ]
       );
 
       const acceptanceId = ackRes.rows[0]?.id;
       if (!acceptanceId) return { error: "acceptance_insert_failed" as const };
 
-      await client.query(
+      const acceptedRes = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET accepted_at = now(),
               accepted_by_driver_id = $2
           WHERE id = $1
+            AND operating_company_id = $3::uuid
+          RETURNING id
         `,
-        [params.data.id, driver.id]
+        [params.data.id, driver.id, load.operating_company_id]
       );
+      if (!acceptedRes.rows[0]) throw new Error("driver_load_accept_scope_lost");
 
       await appendCrudAudit(
         client,
@@ -441,6 +471,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
           resource_type: "mdata.loads",
           resource_id: params.data.id,
           driver_id: driver.id,
+          operating_company_id: load.operating_company_id,
           acceptance_id: acceptanceId,
         },
         "info",
