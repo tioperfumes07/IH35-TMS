@@ -56,6 +56,7 @@ export type DispatcherSafetyEvent = {
 
 export type ReturningDispatcherDetectionResult = {
   returning_dispatcher: boolean;
+  total_count: number;
   matched_events: Array<{
     event_id: string;
     dispatcher_user_id: string;
