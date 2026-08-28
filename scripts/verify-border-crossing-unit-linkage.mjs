@@ -54,7 +54,13 @@ function mutateFleetLeaf(text, mutate) {
 function audit(s) {
   const failures = [];
   if (!/<EntityPicker[\s\S]{0,160}kind="unit"/.test(s.wizard)) failures.push("wizard canonical unit picker missing");
-  if (!/unit_id:\s*form\.unitId/.test(s.submit)) failures.push("wizard submit must forward unit FK");
+  if (!/unit_id:\s*input\.form\.unitId/.test(s.submit)) failures.push("wizard submit must forward snapshotted unit FK");
+  if (!/const scopeGeneration = useRef\(0\)/.test(s.submit) || !/scopeGeneration\.current \+= 1[\s\S]{0,180}setForm\(initialWizardForm\)[\s\S]{0,120}setResult\(null\)/.test(s.submit)) failures.push("wizard company transition must retire scope and reset draft/result");
+  if (!/const input = \{[\s\S]{0,180}companyId: selectedCompanyId[\s\S]{0,180}form: \{ \.\.\.form \}[\s\S]{0,120}generation: scopeGeneration\.current/.test(s.submit)) failures.push("wizard submit must snapshot company, full draft, and generation");
+  if (!/operating_company_id: input\.companyId[\s\S]{0,500}unit_id: input\.form\.unitId/.test(s.submit)) failures.push("wizard writer must consume immutable company and unit snapshot");
+  if ((s.submit.match(/scopeGeneration\.current !== input\.generation/g) ?? []).length < 2) failures.push("wizard must suppress stale success and error callbacks");
+  if (!/finally \{[\s\S]{0,100}scopeGeneration\.current === input\.generation[\s\S]{0,80}setSubmitting\(false\)/.test(s.submit)) failures.push("stale completion must not clear replacement-scope pending state");
+  if ((s.submit.match(/disabled=\{submitting/g) ?? []).length < 4 || (s.submit.match(/disabled=\{submitting \|\| !canNext\}/g) ?? []).length < 2) failures.push("wizard navigation must lock while the crossing write is pending");
   if (!/FROM mdata\.units[\s\S]{0,220}COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.writer)) failures.push("writer active tenant unit validation missing");
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id/.test(s.writer)) failures.push("writer unit persistence missing");
   if (!/unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact unit history filter missing");
@@ -88,7 +94,18 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "wizard", /(<EntityPicker[\s\S]{0,160})kind="unit"/, '$1kind="driver"'],
-    ["payload", "submit", /unit_id:\s*form\.unitId/, "unit_id: undefined"],
+    ["payload", "submit", /unit_id:\s*input\.form\.unitId/, "unit_id: undefined"],
+    ["scope-reset", "submit", /scopeGeneration\.current \+= 1/, "void scopeGeneration.current"],
+    ["draft-reset", "submit", /setForm\(initialWizardForm\)/, "void initialWizardForm"],
+    ["result-reset", "submit", /setResult\(null\)/, "void 0"],
+    ["submit-company-snapshot", "submit", /companyId: selectedCompanyId/, "companyId: undefined"],
+    ["submit-draft-snapshot", "submit", /form: \{ \.\.\.form \}/, "form"],
+    ["consume-company-snapshot", "submit", /operating_company_id: input\.companyId/, "operating_company_id: selectedCompanyId"],
+    ["consume-unit-snapshot", "submit", /unit_id: input\.form\.unitId/, "unit_id: form.unitId"],
+    ["stale-success", "submit", /if \(scopeGeneration\.current !== input\.generation\) return;/, "void input.generation;"],
+    ["stale-error", "submit", /if \(scopeGeneration\.current !== input\.generation\) return;/g, (match, offset) => offset > 0 ? "void input.generation;" : match],
+    ["pending-finally", "submit", /if \(scopeGeneration\.current === input\.generation\) setSubmitting\(false\);/, "setSubmitting(false);"],
+    ["pending-navigation", "submit", /disabled=\{submitting\}/, "disabled={false}"],
     ["scope", "writer", /COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/, "TRUE"],
     ["active", "writer", /(FROM mdata\.units[\s\S]{0,240})deactivated_at IS NULL/, "$1TRUE"],
     ["filter", "historyRoute", /filters\.push\(`ubc\.unit_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
