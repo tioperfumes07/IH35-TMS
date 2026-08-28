@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7138 | CLAIM=arrival-prompt-dismiss-arbitrary-uuid-false-success+not-persisted | SOURCE=dispatch.stop_arrivals+audit.audit_events | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7137 | PR=#17221 @ c968e8ab30 | Built=durable customer notify claim | NEXT=arrival prompt dismiss | GO
 Codex | WORKING | DSP-F7137 | CLAIM=customer-notify-check-send-insert-race-duplicates-provider-delivery | SOURCE=dispatch.notify_log pending/sent unique identity | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7136 | PR=#17217 @ f7a65b936d | Built=OCR durable retry claim+CAS | NEXT=customer notify lifecycle | GO
 Codex | WORKING | DSP-F7136 | CLAIM=OCR-reprocess-failed-silent-noop+multi-instance-claim-race | SOURCE=dispatch.ocr_intake_queue.status | NEXT=guard+FAST-MERGE | GO

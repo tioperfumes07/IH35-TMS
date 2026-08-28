@@ -29,5 +29,36 @@ if (!setsTenantGuc(routes)) {
   throw new Error(`Missing driver prompt tenant context — ${TENANT_GUC_HINT}`);
 }
 mustInclude(routes, "a.operating_company_id = $1::uuid", "driver prompt query tenant filter");
+mustInclude(routes, "dispatch.stop_arrival_dismissed", "durable arrival dismissal event");
+mustInclude(routes, "pg_advisory_xact_lock", "serialized arrival dismissal lifecycle");
+mustInclude(routes, "already_dismissed", "idempotent arrival dismissal replay");
+mustInclude(routes, "AND a.driver_id = $3::uuid", "dismiss prompt driver ownership predicate");
+mustInclude(routes, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
+mustInclude(routes, "if (!dismissed) return reply.code(404)", "honest missing-prompt dismissal response");
+if ((routes.match(/dismissed\.payload->>'resource_id'/g) ?? []).length < 1) {
+  throw new Error("Arrival prompt list must consume durable dismissal evidence");
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["drop ownership", routes.replace("AND a.driver_id = $3::uuid", "")],
+    ["drop pending lifecycle", routes.replaceAll("AND a.confirmed_at IS NULL", "")],
+    ["drop durable list exclusion", routes.replace("dismissed.payload->>'resource_id'", "dismissed.payload->>'missing_id'")],
+    ["restore false success", routes.replace("if (!dismissed) return reply.code(404)", "if (!dismissed) return { ok: true }")],
+  ];
+  for (const [name, mutated] of mutations) {
+    let caught = false;
+    try {
+      mustInclude(mutated, "AND a.driver_id = $3::uuid", "dismiss prompt driver ownership predicate");
+      mustInclude(mutated, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
+      mustInclude(mutated, "dismissed.payload->>'resource_id'", "durable list exclusion");
+      mustInclude(mutated, "if (!dismissed) return reply.code(404)", "honest false-success rejection");
+    } catch {
+      caught = true;
+    }
+    if (!caught) throw new Error(`Selftest mutation survived: ${name}`);
+  }
+  console.log(`verify-arrival-detection-tenant-scope selftest: ${mutations.length}/${mutations.length} caught`);
+}
 
 console.log("verify-arrival-detection-tenant-scope: ok");
