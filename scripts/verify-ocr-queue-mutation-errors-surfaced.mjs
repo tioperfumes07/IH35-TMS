@@ -56,6 +56,30 @@ export function checkOcrQueueMutationErrors(src) {
   if (FINALIZE_CATCH_RE.test(src) && !FINALIZE_HAS_CATCH_RE.test(src)) {
     offenders.push(`${FILE}: finalizeOcrIntakeConversion(...).then(...) has no .catch() — a rejected finalize will silently leave the queue item unmarked again.`);
   }
+  if (!/convertOcrIntakeToBookLoad\(input\.itemId,\s*\{ operating_company_id: input\.companyId \}\)/.test(src)) {
+    offenders.push(`${FILE}: OCR convert must submit immutable item/company variables.`);
+  }
+  if (!/reprocessOcrIntakeItem\(input\.itemId, input\.companyId\)/.test(src)) {
+    offenders.push(`${FILE}: OCR reprocess must submit immutable item/company variables.`);
+  }
+  if (!/onSuccess:\s*\(res, input\)\s*=>\s*onConvert\(input\.itemId, res\.book_load_prefill, input\.companyId\)/.test(src)) {
+    offenders.push(`${FILE}: OCR convert completion must retain submitted item/company ownership.`);
+  }
+  if (!/companyIdRef\.current !== submittedCompanyId/.test(src)) {
+    offenders.push(`${FILE}: stale prior-company OCR conversion completion is not rejected.`);
+  }
+  if (!/setBookSource\(\{ itemId, companyId: submittedCompanyId \}\)/.test(src)) {
+    offenders.push(`${FILE}: Book Load prefill must retain its OCR item/company owner.`);
+  }
+  if (!/operatingCompanyId=\{bookSource\?\.companyId \?\? companyId\}/.test(src)) {
+    offenders.push(`${FILE}: OCR Book Load modal is not pinned to the source company.`);
+  }
+  if (!/finalizeOcrIntakeConversion\(bookSource\.itemId,\s*\{\s*operating_company_id: bookSource\.companyId/.test(src)) {
+    offenders.push(`${FILE}: OCR finalize must use the retained source item/company.`);
+  }
+  if ((src.match(/disabled=\{convertM\.isPending \|\| reprocessM\.isPending\}/g) || []).length < 2) {
+    offenders.push(`${FILE}: convert and reprocess actions must serialize per OCR row.`);
+  }
   return offenders;
 }
 
@@ -87,13 +111,22 @@ if (process.argv.includes("--selftest")) {
   const buggyOffenders = checkOcrQueueMutationErrors(buggy);
   const fixedOffenders = checkOcrQueueMutationErrors(fixed);
 
-  if (buggyOffenders.length >= 5 && fixedOffenders.length === 0) {
+  const mutations = [
+    fixed.replace("companyIdRef.current !== submittedCompanyId", "false"),
+    fixed.replace("operatingCompanyId={bookSource?.companyId ?? companyId}", "operatingCompanyId={companyId}"),
+    fixed.replace("operating_company_id: bookSource.companyId", "operating_company_id: companyId"),
+    fixed.replace("disabled={convertM.isPending || reprocessM.isPending}", "disabled={convertM.isPending}"),
+  ];
+  const missedMutations = mutations.filter((source) => checkOcrQueueMutationErrors(source).length === 0);
+
+  if (buggyOffenders.length >= 5 && fixedOffenders.length === 0 && missedMutations.length === 0) {
     console.log("verify-ocr-queue-mutation-errors-surfaced selftest OK");
     process.exit(0);
   }
   console.error("verify-ocr-queue-mutation-errors-surfaced selftest FAILED", {
     buggyOffenders,
     fixedOffenders,
+    missedMutations: missedMutations.length,
   });
   process.exit(1);
 }
