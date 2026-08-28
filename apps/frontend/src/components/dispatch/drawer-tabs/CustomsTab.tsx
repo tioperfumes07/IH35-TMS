@@ -46,9 +46,16 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
           onChange={setBrokerId}
           placeholder="All brokers"
           loading={brokersQuery.isLoading}
+          disabled={brokersQuery.isError}
           allowClear
         />
       </div>
+      {brokersQuery.isError ? (
+        <ListErrorBanner
+          message="Couldn't load customs brokers for this company."
+          onRetry={() => void brokersQuery.refetch()}
+        />
+      ) : null}
       {query.isError ? <ListErrorBanner message="Couldn't load border crossings for this load." onRetry={() => void query.refetch()} /> : null}
       {query.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? <p className="text-sm text-gray-500">No completed border crossings linked to this load.</p> : null}

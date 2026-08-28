@@ -1870,3 +1870,5 @@ Codex | WORKING | DSP-F7102 | CLAIM=post.dispatch-book-load-catalog-failure-hone
 Codex | SHIPPED | DSP-F7101 | PR=#17096 @ cdb93a8213 | Built=assign-driver failure fail-closed | NEXT=Book Load catalog failures | GO
 Codex | WORKING | DSP-F7103 | CLAIM=post.dispatch-book-load-edit-prefill-failure-lock | SOURCE=persisted load detail→edit wizard baseline | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7102 | PR=#17099 @ 552df5a640 | Built=Book Load catalog failure vertical | NEXT=edit prefill failure lock | GO
+Codex | WORKING | DSP-F7104 | CLAIM=post.dispatch-customs-broker-catalog-failure-honesty | SOURCE=catalogs.mx_customs_brokers scoped reader→Load Detail Customs filter | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO
