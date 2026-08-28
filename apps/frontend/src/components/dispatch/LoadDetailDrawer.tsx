@@ -13,7 +13,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { Button } from "../Button";
 import { FlatFieldGrid } from "../layout/FlatFieldGrid";
 import { DocumentsTab } from "../documents/DocumentsTab";
-import { getDownloadUrl, listFiles } from "../../api/docs";
+import { getDownloadUrl, listAllFiles } from "../../api/docs";
 import { CancelLoadModal } from "./CancelLoadModal";
 import { LoadBolPanel } from "./LoadBolPanel";
 import { LoadDetailDriverPayTab } from "./LoadDetailDriverPayTab";
@@ -254,7 +254,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   const packageState = useMemo(() => parseFactoringPackageNotes(load?.notes), [load?.notes]);
   const loadDocsQuery = useQuery({
     queryKey: ["docs-files", "load-factoring-package", load?.operating_company_id, load?.id],
-    queryFn: () => listFiles({ operating_company_id: load!.operating_company_id, entity_type: "load", entity_id: load!.id, limit: 200, offset: 0 }).then((res) => res.files),
+    queryFn: () => listAllFiles({ operating_company_id: load!.operating_company_id, entity_type: "load", entity_id: load!.id }).then((res) => res.files),
     enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Documents"),
   });
   const loadInvoicesQuery = useQuery({
@@ -277,7 +277,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   }, [loadInvoicesQuery.data?.invoices]);
   const invoiceDocsQuery = useQuery({
     queryKey: ["docs-files", "invoice-factoring-package", load?.operating_company_id, linkedInvoice?.id],
-    queryFn: () => listFiles({ operating_company_id: load!.operating_company_id, entity_type: "invoice", entity_id: linkedInvoice!.id, limit: 200, offset: 0 }).then((res) => res.files),
+    queryFn: () => listAllFiles({ operating_company_id: load!.operating_company_id, entity_type: "invoice", entity_id: linkedInvoice!.id }).then((res) => res.files),
     enabled: Boolean(load?.operating_company_id && linkedInvoice?.id && activeTab === "Documents"),
   });
   const isPackageEligible = Boolean(load && ["delivered", "invoiced", "paid", "closed"].includes(load.status));

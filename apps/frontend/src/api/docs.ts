@@ -169,6 +169,39 @@ export function listFiles(filters: { operating_company_id: string } & Partial<{
   return apiRequest<{ files: DocsFile[]; total: number; limit: number; offset: number }>(`/api/v1/docs/files${qs ? `?${qs}` : ""}`);
 }
 
+/** Exhaust a stable scoped document population for surfaces that present complete histories. */
+export async function listAllFiles(
+  filters: { operating_company_id: string } & Partial<Omit<{
+    entity_type: FileEntityType;
+    entity_id: string;
+    category: string;
+    include_deleted: boolean;
+    include_incomplete: boolean;
+    limit: number;
+    offset: number;
+  }, "limit" | "offset">>,
+) {
+  const limit = 200;
+  const files: DocsFile[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+  while (true) {
+    const page = await listFiles({ ...filters, limit, offset });
+    if (expectedTotal == null) expectedTotal = page.total;
+    if (page.total !== expectedTotal) throw new Error("Document history changed during pagination. Retry.");
+    for (const file of page.files) {
+      if (!seen.has(file.id)) {
+        seen.add(file.id);
+        files.push(file);
+      }
+    }
+    if (files.length >= expectedTotal) return { files, total: expectedTotal, limit, offset: 0 };
+    if (page.files.length === 0) throw new Error("Document history pagination stopped before the reported total.");
+    offset += page.files.length;
+  }
+}
+
 export function getDocsFoundationKpis(operatingCompanyId?: string | null) {
   const query = new URLSearchParams();
   if (operatingCompanyId) query.set("operating_company_id", operatingCompanyId);

@@ -5,7 +5,7 @@ import { ApiError } from "../../api/client";
 import {
   getDownloadUrl,
   listFileCategories,
-  listFiles,
+  listAllFiles,
   restoreFile,
   type DocsFile,
 } from "../../api/docs";
@@ -74,13 +74,11 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
     queryKey: ["docs-files", operatingCompanyId, entityType, entityId, showDeleted],
     queryFn: () => {
       if (!operatingCompanyId) throw new Error("Operating company is required to list entity documents");
-      return listFiles({
+      return listAllFiles({
         operating_company_id: operatingCompanyId,
         entity_type: entityType,
         entity_id: entityId,
         include_deleted: showDeleted && isOwner,
-        limit: 200,
-        offset: 0,
       }).then((result) => result.files);
     },
     enabled: hasValidEntityId && Boolean(operatingCompanyId),

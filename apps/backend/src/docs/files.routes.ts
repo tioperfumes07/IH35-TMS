@@ -492,7 +492,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
           LEFT JOIN catalogs.file_categories fc ON fc.id = f.category_id
           LEFT JOIN identity.users iu ON iu.id = f.uploader_user_id
           ${whereClause}
-          ORDER BY f.created_at DESC
+          ORDER BY f.created_at DESC, f.id DESC
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}
         `,

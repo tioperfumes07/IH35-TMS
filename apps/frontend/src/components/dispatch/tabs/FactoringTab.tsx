@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLoad } from "../../../api/loads";
 import { listInvoices, listFactoringCandidateInvoices } from "../../../api/accounting";
-import { listFiles } from "../../../api/docs";
+import { listAllFiles } from "../../../api/docs";
 import { createFactor, listFactors } from "../../../api/factoring";
 import { apiRequest } from "../../../api/client";
 import { Button } from "../../Button";
@@ -169,7 +169,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   // documents for this load
   const docsQ = useQuery({
     queryKey: ["factoring-tab", "docs", operatingCompanyId, loadId],
-    queryFn: () => listFiles({ operating_company_id: operatingCompanyId, entity_type: "load", entity_id: loadId, limit: 200, offset: 0 }),
+    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "load", entity_id: loadId }),
     enabled: Boolean(operatingCompanyId && loadId),
   });
   const docs = docsQ.data?.files ?? [];
@@ -187,7 +187,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   // invoice docs (for PDF link)
   const invoiceDocsQ = useQuery({
     queryKey: ["factoring-tab", "invoice-docs", operatingCompanyId, linkedInvoice?.id],
-    queryFn: () => listFiles({ operating_company_id: operatingCompanyId, entity_type: "invoice", entity_id: linkedInvoice!.id, limit: 50, offset: 0 }),
+    queryFn: () => listAllFiles({ operating_company_id: operatingCompanyId, entity_type: "invoice", entity_id: linkedInvoice!.id }),
     enabled: Boolean(operatingCompanyId && linkedInvoice?.id),
   });
 
