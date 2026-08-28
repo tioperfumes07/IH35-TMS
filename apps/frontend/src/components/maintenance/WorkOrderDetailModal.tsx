@@ -79,6 +79,9 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
   });
 
   useEffect(() => setPartsPage(0), [operatingCompanyId, workOrderId]);
+  useEffect(() => {
+    if (partsLinksQuery.isError) setAddPartsLinkOpen(false);
+  }, [partsLinksQuery.isError]);
 
   const partsTotal = partsLinksQuery.data?.total_count ?? 0;
   useEffect(() => {
@@ -204,7 +207,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">Parts Links (IS/IT)</p>
               {!["complete", "completed"].includes(status) ? (
-                <Button variant="secondary" size="sm" onClick={() => setAddPartsLinkOpen(true)}>
+                <Button variant="secondary" size="sm" disabled={partsLinksQuery.isError} onClick={() => setAddPartsLinkOpen(true)}>
                   + Add parts link
                 </Button>
               ) : null}
@@ -258,7 +261,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               );
             })()}
             <AddPartsLinkDrawer
-              open={addPartsLinkOpen}
+              open={addPartsLinkOpen && !partsLinksQuery.isError}
               workOrderId={workOrderId}
               operatingCompanyId={operatingCompanyId}
               onClose={() => {
