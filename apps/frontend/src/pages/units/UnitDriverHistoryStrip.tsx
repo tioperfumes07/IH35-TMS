@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../api/vehicleDriverPairing";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { Button } from "../../components/Button";
 
 function formatDateTime(value: string | null) {
   if (!value) return "Current";
@@ -53,18 +54,24 @@ type UnitDriverHistoryStripProps = {
 };
 
 export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, days = 30 }: UnitDriverHistoryStripProps) {
+  const pageSize = 25;
+  const [page, setPage] = useState(0);
   const enabled = Boolean(operatingCompanyId) && (Boolean(unitId) || Boolean(driverId));
   const historyQuery = useQuery({
-    queryKey: ["vehicle-driver-history", operatingCompanyId, unitId, driverId, days],
+    queryKey: ["vehicle-driver-history", operatingCompanyId, unitId, driverId, days, page],
     queryFn: () =>
       listVehicleDriverHistory({
         operating_company_id: operatingCompanyId,
         unit_id: unitId,
         driver_id: driverId,
         days,
+        limit: pageSize,
+        offset: page * pageSize,
       }),
     enabled,
   });
+
+  useEffect(() => setPage(0), [operatingCompanyId, unitId, driverId, days]);
 
   const title = useMemo(() => {
     if (unitId && driverId) return "Driver-vehicle history";
@@ -73,6 +80,8 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
   }, [driverId, unitId]);
 
   const rows = historyQuery.data?.rows ?? [];
+  const totalCount = historyQuery.data?.total_count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-driver-history-strip">
@@ -101,7 +110,15 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
             tableTestId="unit-driver-history-table"
             rowTestId={(row) => `unit-driver-history-row-${row.id}`}
             initialPageSize={25}
+            hidePager
           />
+          {!historyQuery.isError && totalCount > pageSize ? (
+            <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="unit-driver-history-server-pager">
+              <Button size="sm" variant="secondary" disabled={page <= 0 || historyQuery.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button>
+              <span className="text-slate-600">Page {page + 1} of {pageCount} · {totalCount} assignments</span>
+              <Button size="sm" variant="secondary" disabled={page + 1 >= pageCount || historyQuery.isFetching} onClick={() => setPage((value) => Math.min(pageCount - 1, value + 1))}>Next</Button>
+            </div>
+          ) : null}
         </div>
       )}
     </section>

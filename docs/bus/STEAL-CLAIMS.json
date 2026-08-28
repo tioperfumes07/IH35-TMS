@@ -234,6 +234,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T06:56:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.vehicle-driver-assignment-history-exact-range",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T07:14:00-05:00",
+      "go": "0004"
     }
   ]
 }

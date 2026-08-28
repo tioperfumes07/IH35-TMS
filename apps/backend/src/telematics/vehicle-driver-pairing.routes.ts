@@ -10,6 +10,8 @@ const historyQuerySchema = z
     unit_id: z.string().uuid().optional(),
     driver_id: z.string().uuid().optional(),
     days: z.coerce.number().int().min(1).max(365).optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(25),
+    offset: z.coerce.number().int().min(0).default(0),
   })
   .refine((value) => Boolean(value.unit_id) || Boolean(value.driver_id), {
     message: "unit_id or driver_id is required",
@@ -52,6 +54,10 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
         filters.push(`a.driver_id = $${params.length}::uuid`);
       }
 
+      params.push(parsed.data.limit, parsed.data.offset);
+      const limitParam = params.length - 1;
+      const offsetParam = params.length;
+
       const res = await client.query<{
         id: string;
         unit_id: string;
@@ -61,6 +67,7 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
         started_at: string;
         ended_at: string | null;
         source: string;
+        total_count: number;
       }>(
         `
           SELECT
@@ -74,7 +81,8 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
             END AS driver_name,
             a.started_at::text,
             a.ended_at::text,
-            a.source
+            a.source,
+            COUNT(*) OVER()::int AS total_count
           FROM telematics.vehicle_driver_assignments a
           JOIN mdata.units u ON u.id = a.unit_id
                             AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
@@ -92,14 +100,14 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
                                     )
           WHERE ${filters.join(" AND ")}
           ORDER BY a.started_at DESC, a.created_at DESC
-          LIMIT 250
+          LIMIT $${limitParam} OFFSET $${offsetParam}
         `,
         params
       );
-      return res.rows;
+      return { rows: res.rows, total_count: Number(res.rows[0]?.total_count ?? 0) };
     });
 
-    return { rows };
+    return { rows: rows.rows, total_count: rows.total_count, limit: parsed.data.limit, offset: parsed.data.offset };
   });
 
   app.get("/api/v1/telematics/vehicle-driver-lookup", async (req, reply) => {
