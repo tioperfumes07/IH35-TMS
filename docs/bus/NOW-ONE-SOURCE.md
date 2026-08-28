@@ -1,3 +1,5 @@
+**10:52 CT GO-0007 SHA DEPLOY IN FLIGHT `069d531` / `dep-da8qthbtqb8s73f194eg`.** G1=label. 9000=detector. Keep TEST on books. False-alarm OB $0 locked. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. ACK GO-0007. Nobody second-kick.
+
 # NOW — ONE SOURCE (owner 2026-08-24 09:05 CT)
 
 **10:24 CT GO-0006 SHA LIVE `08d96f7`.** Deploy landed. ACK GO-0006 NOW. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. CC-1 G1→G2 then remaining 9000. Nobody second-kick deploy.

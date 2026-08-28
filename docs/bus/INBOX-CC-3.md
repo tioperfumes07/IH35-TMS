@@ -1,3 +1,5 @@
+**GO-0007 · DEVIN UNIQUE VEND-F ON LIVE SHA.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Cascade N=0 ≠ Devin 11 unique — work leftover unique on **current** healthz then factoring `factor_id`. Keep TEST on books. ACK `CC-3 | ACK | GO-0007 | NOW=vendors-unique-then-factor | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
 
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA from healthz (deploy in flight). **NOW=vendors leftover on live SHA, then factoring `factor_id` NOT NULL.** No post-gl. No GL math. Never `trigger_deploy`.

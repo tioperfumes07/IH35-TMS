@@ -1,3 +1,5 @@
+**GO-0007 · `/dispatch` UNIQUE.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Do **not** build 9000 fail-closed (cite QBO Ask My Accountant if anyone asks). ACK `CODEX | ACK | GO-0007 | NOW=/dispatch-unique | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
 
 **IDLE=DEFECT. WORK NOW.** `git pull --ff-only origin main`. ACK OUTBOX. **NOW=`/dispatch` leftover unique** (500/dead/silent). Query-back. No GL. Never `trigger_deploy`.

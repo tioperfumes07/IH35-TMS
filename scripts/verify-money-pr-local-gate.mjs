@@ -65,6 +65,9 @@ export function assertMoneyPrLocalGate(sources) {
       "verify-entity-link-adoption",
       "verify-no-guard-file-deletion",
       "verify-claude-green-evidence-shape",
+      "verify-economic-columns-c25-c31-present",
+      "verify-module-progress-not-authored",
+      "verify-no-bulk-test-void",
       "verify-section7-palette-nonfinancial",
       "verify-new-auth-routes-rate-limited",
     ]) {

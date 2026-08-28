@@ -58,6 +58,9 @@ const STEPS = [
   ["verify-no-guard-file-deletion", "scripts/verify-no-guard-file-deletion.mjs"],
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
   ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
+  ["verify-economic-columns-c25-c31-present", "scripts/verify-economic-columns-c25-c31-present.mjs"],
+  ["verify-module-progress-not-authored", "scripts/verify-module-progress-not-authored.mjs"],
+  ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
 
   // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
   // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a

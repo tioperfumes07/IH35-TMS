@@ -15,6 +15,7 @@ alwaysApply: true
 5. `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md` — **14/14 CERTIFIED CONCLUDED**. Never recertify. Leftover POST-U14 only. HOLD forbidden
 6. `docs/lockdown/SESSION-ANNOUNCE-CURRENT-LAW-HOPS-2026-08-22.md` — first reply: CURRENT-LAW bullets + OPEN hops only; omit CERTIFIED
 7. `docs/bus/LEAD-CONTRACT.md` + `docs/bus/LEAD-SEAT.md` — census every lead turn; T1–T6 → Claude lead (`CLAUDE-LEAD-NOW.md`)
+8. `docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md` — G1 = label; $0 OB / negative TEST bank = not a defect; 9000 = detector; keep TEST on books
 
 Cursor = SCREENS + JANITOR (FE screens, guards, scoreboard, cleanup).  
 Do **not** write GL money math (Claude Coder). Do **not** append audit Verdict rows (Cascade).
@@ -23,7 +24,7 @@ Governance: NO holds · NO `JORGE-APPROVED` · merge on green with proof · code
 
 **§6:** Search blueprint / questionnaire / locked decisions / accounting skill / approved UI / repo / Neon **before** escalating to the owner. Asking what the files already answer is a defect.
 
-**§7:** Skeleton hops may use labeled TEST DATA placeholders ($1,200 flat, $1.20/mi, $0.05 accessorial). Never present fabricated numbers as live production truth; never block a test on a missing real figure. **CREATE-TEST-THEN-VOID:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — empty TMS is expected; create labeled tests live; **all seats have permission**; **do not void until launch** (reuse TEST vendors/customers/loads; one clean pass after launch); disabled pay buttons are not a stop.
+**§7:** Skeleton hops may use labeled TEST DATA placeholders ($1,200 flat, $1.20/mi, $0.05 accessorial). Never present fabricated numbers as live production truth; never block a test on a missing real figure. **CREATE-TEST-THEN-VOID:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md` — empty TMS is expected; create labeled tests live; **all seats have permission**; **keep on the books** (void only to test void/reversal or true need); **G1** `is_sample_data` (`docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`); disabled pay buttons are not a stop.
 
 **§10 / Fully wired:** never answer “includes all” unless the FULLY-WIRED-COMPLETE-BAR list (items 1–12) is what you will build. Live Chrome is last.
 

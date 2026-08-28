@@ -1,3 +1,5 @@
+**GO-0007 · QUERY-BACK · KEEP ON BOOKS.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Unique FINDING stays OPEN until live SHA query-back. **No new post-gl.** Do not void-all-TEST. ACK `DEVIN | ACK | GO-0007 | NOW=/vendors-QUERY-BACK | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
 
 **NOT PARKED. WORK NOW.** `git pull --ff-only origin main`. ACK OUTBOX. Packet `docs/lockdown/DEVIN-PACKETS-GO-0006.md`. **1h NOW:** query-back `is_sample_data` on every TEST row you created. **No new post-gl.** Unique FINDING on `/vendors`. Never `trigger_deploy`.

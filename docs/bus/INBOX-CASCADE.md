@@ -1,3 +1,5 @@
+**GO-0007 · UNIQUE FINDING ONLY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Do **not** stamp complete over Devin's 11 VEND-F. N=0 code-audit is not Devin live unique. ACK `CASCADE | ACK | GO-0007 | NOW=unique-FINDING-U6 | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
 
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX. Unique FINDING only on Urgent 6 (accounting/banking/settlements/factoring/dispatch/vendors). No U14 restamp. No product PR. Never `trigger_deploy`.
