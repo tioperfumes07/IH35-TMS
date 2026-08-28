@@ -5,6 +5,7 @@ export type RecordVendorBillPaymentPayload = {
   date: string;
   amount_cents: number;
   method: string;
+  bank_account_id?: string;
   reference?: string;
   memo?: string;
   applications: Array<{ bill_id: string; amount_cents: number }>;
@@ -46,6 +47,13 @@ export function recordVendorBillPayment(vendorId: string, payload: RecordVendorB
   // QUERY (companyQuerySchema) and a body of {paid_at, payment_method, reference_number, ...}. The old
   // call sent operating_company_id in the BODY and used {date, method, reference} → 400 on every
   // "Record bill payment" click. Move the id to the query and translate the field names here.
+  //
+  // VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT: this translation layer dropped
+  // bank_account_id entirely — the backend column is from_bank_account_id and the backend also
+  // debits banking.bank_accounts.balance_cents (updateBankBalance) ONLY when bank_account_id is
+  // present, so every payment recorded through this form silently: (1) left the payment row with
+  // no bank-account link (breaks reconciliation/traceability), and (2) never reduced the paying
+  // bank account's balance in TMS. Forward the id the caller now supplies.
   return apiRequest<{ ok?: boolean; id?: string }>(
     `/api/v1/vendors/${vendorId}/bill-payments?operating_company_id=${encodeURIComponent(payload.operating_company_id)}`,
     {
@@ -54,6 +62,7 @@ export function recordVendorBillPayment(vendorId: string, payload: RecordVendorB
         paid_at: payload.date,
         amount_cents: payload.amount_cents,
         payment_method: payload.method,
+        bank_account_id: payload.bank_account_id,
         reference_number: payload.reference,
         applications: payload.applications,
       },
