@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -35,6 +35,16 @@ export function BorderCrossingWizardPage() {
     fastCardVerified?: boolean;
     fastCardWarning?: string | null;
   } | null>(null);
+  const scopeGeneration = useRef(0);
+
+  useEffect(() => {
+    scopeGeneration.current += 1;
+    setStep(0);
+    setForm(initialWizardForm);
+    setError(null);
+    setResult(null);
+    setSubmitting(false);
+  }, [selectedCompanyId]);
 
   const patch = (next: Partial<WizardFormState>) => setForm((prev) => ({ ...prev, ...next }));
 
@@ -55,28 +65,33 @@ export function BorderCrossingWizardPage() {
       setError("Select an operating company first.");
       return;
     }
+    const input = {
+      companyId: selectedCompanyId,
+      form: { ...form },
+      generation: scopeGeneration.current,
+    };
     setSubmitting(true);
     setError(null);
     try {
-      const plannedIso = new Date(form.plannedDate).toISOString();
+      const plannedIso = new Date(input.form.plannedDate).toISOString();
       const res = await fetch(resolveApiUrl("/api/v1/border-crossing/wizard"), {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          operating_company_id: selectedCompanyId,
-          load_id: form.loadId || undefined,
-          unit_id: form.unitId,
-          driver_id: form.driverId || undefined,
-          direction: form.direction,
-          port_of_entry_id: form.portOfEntryId,
+          operating_company_id: input.companyId,
+          load_id: input.form.loadId || undefined,
+          unit_id: input.form.unitId,
+          driver_id: input.form.driverId || undefined,
+          direction: input.form.direction,
+          port_of_entry_id: input.form.portOfEntryId,
           planned_date: plannedIso,
-          commodity: form.commodity,
-          commodity_value: form.commodityValue ? Number(form.commodityValue) : undefined,
-          weight: form.weight ? Number(form.weight) : undefined,
-          hazmat: form.hazmat,
-          customs_broker_id: form.customsBrokerId || undefined,
-          bond_number: form.bondNumber || undefined,
+          commodity: input.form.commodity,
+          commodity_value: input.form.commodityValue ? Number(input.form.commodityValue) : undefined,
+          weight: input.form.weight ? Number(input.form.weight) : undefined,
+          hazmat: input.form.hazmat,
+          customs_broker_id: input.form.customsBrokerId || undefined,
+          bond_number: input.form.bondNumber || undefined,
         }),
       });
       const payload = (await res.json()) as {
@@ -87,6 +102,7 @@ export function BorderCrossingWizardPage() {
         fast_card_warning?: string | null;
       };
       if (!res.ok) throw new Error(payload.error ?? "Wizard submission failed");
+      if (scopeGeneration.current !== input.generation) return;
       setResult({
         crossingId: payload.crossing_id,
         emanifestReference: payload.emanifest_reference,
@@ -95,9 +111,10 @@ export function BorderCrossingWizardPage() {
       });
       setStep(5);
     } catch (err) {
+      if (scopeGeneration.current !== input.generation) return;
       setError(userFacingApiError(err, "Wizard submission failed"));
     } finally {
-      setSubmitting(false);
+      if (scopeGeneration.current === input.generation) setSubmitting(false);
     }
   };
 
@@ -150,6 +167,7 @@ export function BorderCrossingWizardPage() {
                 key={label}
                 type="button"
                 className={`rounded-sm px-2 py-1 text-xs ${idx === step ? "bg-[#1F2A44] text-white" : "bg-gray-100"}`}
+                disabled={submitting}
                 onClick={() => setStep(idx)}
               >
                 {idx + 1}. {label}
@@ -182,7 +200,7 @@ export function BorderCrossingWizardPage() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {step > 0 ? (
-              <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" onClick={() => setStep(step - 1)}>
+              <button type="button" className="rounded-sm border px-3 py-1.5 text-sm" disabled={submitting} onClick={() => setStep(step - 1)}>
                 Back
               </button>
             ) : null}
@@ -190,7 +208,7 @@ export function BorderCrossingWizardPage() {
               <button
                 type="button"
                 className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
-                disabled={!canNext}
+                disabled={submitting || !canNext}
                 onClick={() => setStep(step + 1)}
               >
                 Next
