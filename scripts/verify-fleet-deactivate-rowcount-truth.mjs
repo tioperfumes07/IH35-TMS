@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 const targets = [
-  ["equipment", "apps/backend/src/mdata/equipment.routes.ts", /app\.post\("\/api\/v1\/mdata\/equipment\/:id\/deactivate"[\s\S]*?\n  \}\);/],
-  ["units", "apps/backend/src/mdata/units.routes.ts", /app\.post\("\/api\/v1\/mdata\/units\/:id\/deactivate"[\s\S]*?\n  \}\);/],
+  ["equipment", "apps/backend/src/mdata/equipment.routes.ts", '"/api/v1/mdata/equipment/:id/deactivate"', null],
+  ["units", "apps/backend/src/mdata/units.routes.ts", '"/api/v1/mdata/units/:id/deactivate"', '"/api/v1/mdata/units/:id/quick-availability"'],
 ];
 const checks = [
   ["deactivation rate limited", /rateLimit: \{ max: 30, timeWindow: "1 minute" \}/],
@@ -12,16 +12,22 @@ const checks = [
   ["exact row count required", /if \(result\.rowCount !== 1\) return null;/],
   ["row check before timestamp", /if \(result\.rowCount !== 1\) return null;[\s\S]{0,900}SELECT now\(\) AS deactivated_at/],
 ];
-function blockFor(path, pattern) { return fs.readFileSync(path, "utf8").match(pattern)?.[0] ?? ""; }
+function blockFor(path, routeUrl, nextRouteUrl) {
+  const source = fs.readFileSync(path, "utf8");
+  const start = source.indexOf(routeUrl);
+  if (start < 0) return "";
+  const end = nextRouteUrl ? source.indexOf(nextRouteUrl, start + routeUrl.length) : source.length;
+  return source.slice(Math.max(0, start - 40), end > start ? end : source.length);
+}
 function failures(text) { return checks.flatMap(([label, pattern]) => pattern.test(text) ? [] : [label]); }
-for (const [name, path, pattern] of targets) {
-  const block = blockFor(path, pattern);
+for (const [name, path, routeUrl, nextRouteUrl] of targets) {
+  const block = blockFor(path, routeUrl, nextRouteUrl);
   const problems = failures(block);
   if (problems.length) { console.error(`verify-fleet-deactivate-rowcount-truth FAILED ${name}:\n${problems.map((p) => ` - ${p}`).join("\n")}`); process.exit(1); }
 }
 if (process.argv.includes("--selftest")) {
-  for (const [name, path, pattern] of targets) {
-    const block = blockFor(path, pattern);
+  for (const [name, path, routeUrl, nextRouteUrl] of targets) {
+    const block = blockFor(path, routeUrl, nextRouteUrl);
     for (const [from, to] of [
       ["rateLimit: { max: 30, timeWindow: \"1 minute\" }", ""],
       ["const result = await client.query", "await client.query"],
