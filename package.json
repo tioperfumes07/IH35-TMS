@@ -133,6 +133,7 @@
     "verify:severe-alerts-total-cost-unbounded": "node scripts/verify-severe-alerts-total-cost-unbounded.mjs",
     "verify:detention-approval-serialized-lifecycle": "node scripts/verify-detention-approval-serialized-lifecycle.mjs",
     "verify:driver-rate-effective-date-company-business-date": "node scripts/verify-driver-rate-effective-date-company-business-date.mjs",
+    "verify:customer-pnl-trailing-window-company-business-date": "node scripts/verify-customer-pnl-trailing-window-company-business-date.mjs",
     "verify:multipart-size-limits": "node scripts/verify-multipart-size-limits.mjs",
     "verify:book-load-driver-qualification-gate": "node scripts/verify-book-load-driver-qualification-gate.mjs",
     "verify:booking-unit-ownership-fallback": "node scripts/verify-booking-unit-ownership-fallback.mjs",

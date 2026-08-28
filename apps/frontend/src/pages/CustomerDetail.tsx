@@ -128,11 +128,24 @@ function parseCustomerDetailPageTab(raw: string | null): CustomerTab {
 }
 
 // Per-Customer P&L default window — trailing 12 months (ISO yyyy-mm-dd), matching the report's date model.
+//
+// CUST-MONEY-F6964 — was `Date.UTC(now.getUTCFullYear(), ...)`, UTC's calendar date, not the
+// company's business day. After ~19:00 Central the window's own "today" endpoint had already
+// rolled to tomorrow by UTC's clock, shifting the whole trailing-12-month revenue/cost window
+// several hours ahead of the company day it claims to report as of. Fixed the same way this file's
+// other date defaults already are: derive `end` from companyToday() (the canonical company-timezone
+// "today"), then step the YEAR back by one on that ALREADY-company-local calendar date -- pure
+// calendar-part arithmetic on the parsed string, never a second trip through `new Date()`/UTC, same
+// technique addDaysIso/monthBoundsIso (lib/businessDate.ts) already use for date-only math.
 function trailing12mRange(): { start: string; end: string } {
-  const now = new Date();
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const start = new Date(Date.UTC(now.getUTCFullYear() - 1, now.getUTCMonth(), now.getUTCDate()));
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  const end = companyToday();
+  const [y, m, d] = end.split("-").map(Number);
+  // Date.UTC normalizes an out-of-range day (Feb 29 stepping back into a non-leap year) into the
+  // correct following date instead of producing a literal invalid "YYYY-02-29" string -- this is
+  // UTC math on already-company-local calendar PARTS only, never a second timezone conversion, the
+  // same pattern addDaysIso/monthBoundsIso (lib/businessDate.ts) use for date-only arithmetic.
+  const start = new Date(Date.UTC(y - 1, m - 1, d)).toISOString().slice(0, 10);
+  return { start, end };
 }
 
 function loadStatusVariant(status: string | null | undefined): "crit" | "warn" | "positive" | "neutral" {
