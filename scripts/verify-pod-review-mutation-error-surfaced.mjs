@@ -20,6 +20,7 @@ import process from "node:process";
 
 const repoRoot = process.cwd();
 const FILE = "apps/frontend/src/pages/dispatch/PodReviewPage.tsx";
+const BACKEND_FILE = "apps/backend/src/dispatch/pod.routes.ts";
 
 const IMPORTS_TOAST_RE = /import\s*\{\s*useToast\s*\}\s*from\s*["']\.\.\/\.\.\/components\/Toast["']/;
 const IMPORTS_ERROR_HELPER_RE = /import\s*\{[^}]*\buserFacingApiError\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/lib\/api-error-message["']/;
@@ -49,9 +50,25 @@ export function checkPodReviewMutationError(src) {
   return offenders;
 }
 
+export function checkPodReviewBackendLifecycle(src) {
+  const offenders = [];
+  const route = src.match(/app\.post\(\s*"\/api\/v1\/dispatch\/pod-documents\/:id\/review"[\s\S]*?(?=\n  app\.get\("\/api\/v1\/dispatch\/loads\/:loadId\/pod-bol")/)?.[0] ?? "";
+  if (!/FROM dispatch\.pod_documents[\s\S]*?archived_at IS NULL[\s\S]*?LIMIT 1[\s\S]*?FOR UPDATE/.test(route)) {
+    offenders.push(`${BACKEND_FILE}: POD review must lock the canonical row before checking its lifecycle status.`);
+  }
+  if (!/const reviewedPod = res\.rows\[0\];[\s\S]*?if \(!reviewedPod\) return \{ error: "pod_review_conflict" as const \};[\s\S]*?appendCrudAudit/.test(route)) {
+    offenders.push(`${BACKEND_FILE}: POD review must fail closed on a zero-row UPDATE before audit or downstream success.`);
+  }
+  if (!/return \{ pod: reviewedPod \};/.test(route)) {
+    offenders.push(`${BACKEND_FILE}: POD review must return only the update row proven to exist.`);
+  }
+  return offenders;
+}
+
 export function run() {
   const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
-  const offenders = checkPodReviewMutationError(src);
+  const backendSrc = fs.readFileSync(path.join(repoRoot, BACKEND_FILE), "utf8");
+  const offenders = [...checkPodReviewMutationError(src), ...checkPodReviewBackendLifecycle(backendSrc)];
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -63,11 +80,15 @@ if (process.argv.includes("--selftest")) {
     });
   `;
   const fixed = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
+  const fixedBackend = fs.readFileSync(path.join(repoRoot, BACKEND_FILE), "utf8");
+  const unlockedBackend = fixedBackend.replace(/\n\s*FOR UPDATE\n/, "\n");
+  const uncheckedBackend = fixedBackend.replace(/\n\s*const reviewedPod = res\.rows\[0\];\n\s*if \(!reviewedPod\) return \{ error: "pod_review_conflict" as const \};/, "");
 
   const buggyOffenders = checkPodReviewMutationError(buggy);
   const fixedOffenders = checkPodReviewMutationError(fixed);
 
-  if (buggyOffenders.length >= 8 && fixedOffenders.length === 0) {
+  const backendMutations = [unlockedBackend, uncheckedBackend].map(checkPodReviewBackendLifecycle);
+  if (buggyOffenders.length >= 8 && fixedOffenders.length === 0 && checkPodReviewBackendLifecycle(fixedBackend).length === 0 && backendMutations.every((result) => result.length > 0)) {
     console.log("verify-pod-review-mutation-error-surfaced selftest OK");
     process.exit(0);
   }
