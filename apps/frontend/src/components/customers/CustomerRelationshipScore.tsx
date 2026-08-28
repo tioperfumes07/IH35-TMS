@@ -8,7 +8,8 @@ type Props = {
   onRetry?: () => void;
 };
 
-function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undefined) {
+function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undefined, unavailable = false) {
+  if (unavailable) return "Unavailable";
   if (!tier) return "Unknown";
   if (tier === "at_risk") return "At Risk";
   if (tier === "thriving") return "Thriving";
@@ -16,7 +17,8 @@ function tierLabel(tier: CustomerRelationshipScore["health_tier"] | null | undef
   return "Watch";
 }
 
-function tierClass(tier: CustomerRelationshipScore["health_tier"] | null | undefined) {
+function tierClass(tier: CustomerRelationshipScore["health_tier"] | null | undefined, unavailable = false) {
+  if (unavailable) return "bg-slate-100 text-slate-700";
   if (tier === "thriving") return "bg-slate-100 text-slate-700";
   if (tier === "healthy") return "bg-teal-100 text-teal-800";
   if (tier === "watch") return "bg-slate-100 text-slate-700";
@@ -34,8 +36,8 @@ export function CustomerRelationshipScore({ score, loading = false, error = null
     <section className="rounded-sm border border-gray-200 bg-white p-3">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">Relationship Health</h3>
-        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierClass(score?.health_tier)}`}>
-          {tierLabel(score?.health_tier)}
+        <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${tierClass(score?.health_tier, Boolean(error))}`}>
+          {tierLabel(score?.health_tier, Boolean(error))}
         </span>
       </div>
 

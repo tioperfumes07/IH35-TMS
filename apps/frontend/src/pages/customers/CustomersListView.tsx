@@ -27,7 +27,8 @@ function qualityBadge(customer: Customer) {
   return { label, className: customerQualityClass(kind) };
 }
 
-function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined) {
+function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined, unavailable = false) {
+  if (unavailable) return { label: "Unavailable", className: "bg-slate-100 text-slate-700" };
   if (tier === "thriving") return { label: "Thriving", className: "bg-slate-100 text-slate-700" };
   if (tier === "healthy") return { label: "Healthy", className: "bg-teal-100 text-teal-800" };
   if (tier === "watch") return { label: "Watch", className: "bg-slate-100 text-slate-700" };
@@ -110,12 +111,15 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
       filtered.map((c) => ({
         ...c,
         open_balance: openBalancesAvailable ? (openByCustomerId.get(c.id) ?? 0) : null,
-        health_tier_label: relationshipTierBadge(c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null)).label,
+        health_tier_label: relationshipTierBadge(
+          c.relationship_health_tier ?? (atRiskCustomerIds.has(c.id) ? "at_risk" : null),
+          atRiskQuery.isError && !c.relationship_health_tier
+        ).label,
         quality_flag_label: qualityBadge(c).label,
         // Promote the heuristic "overdue" chip (open balance + Late-pay) to a real, sortable column.
         overdue_label: openBalancesAvailable && (openByCustomerId.get(c.id) ?? 0) > 0 && qualityBadge(c).label === "Late-pay" ? "Yes" : "No",
       })),
-    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds]
+    [filtered, openBalancesAvailable, openByCustomerId, atRiskCustomerIds, atRiskQuery.isError]
   );
 
   // LIST-EMPTY-1: empty row renders only once the roster fetch settles.
@@ -371,7 +375,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             render: (row) => {
               const tier = row.relationship_health_tier ?? (atRiskCustomerIds.has(row.id) ? "at_risk" : null);
-              const b = relationshipTierBadge(tier);
+              const b = relationshipTierBadge(tier, atRiskQuery.isError && !row.relationship_health_tier);
               return <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${b.className}`}>{b.label}</span>;
             },
           },

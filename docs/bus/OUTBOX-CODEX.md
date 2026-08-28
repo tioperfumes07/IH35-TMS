@@ -1651,3 +1651,5 @@ Codex | WORKING | INS-F6980 | CLAIM=post.insurance-claim-accident-read-recovery 
 Codex | SHIPPED | SAF-F6979 | PR=#16940 @ 5fd2f9b171 | Built=incident catalog recovery 2/2 | NEXT=INS-F6980 | GO
 Codex | WORKING | CLS-F6981 | CLAIM=post.nonmoney-suggest-load-fails-loud | vertical=insurance+safety 5/5 | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | INS-F6980 | PR=#16941 @ 496bac990a | Built=claim accident read recovery 1/1 | NEXT=CLS-F6981 | GO
+Codex | WORKING | CUST-F6982 | CLAIM=post.customer-relationship-health-read-failure-honesty | vertical=customers list+detail | SOURCE=company-scoped relationship-score reads | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CLS-F6981 | PR=#16942 @ d7a8455fbd | Built=nonmoney suggest-load recovery 5/5 | NEXT=CUST-F6982 | GO
