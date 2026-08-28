@@ -6586,5 +6586,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-customer-payment-unapply-hits-mounted-route"
+  },
+  "9921": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-revrec-latch-fires-on-bulk-invoice-issuance"
   }
 }
