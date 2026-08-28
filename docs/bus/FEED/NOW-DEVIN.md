@@ -1,12 +1,16 @@
-# FEED · DEVIN · GO-0010 · overwrite
+# FEED · DEVIN · GO-0011 · overwrite
 
-ACK: `DEVIN | ACK | GO-0010 | NOW=queryback-override-toast | SHA=069d531 | GO`
+`git pull --ff-only origin main`
+ACK: `DEVIN | ACK | GO-0011 | NOW=queryback-live-not-hold | SHA=069d531 | GO`
+
+PREPEND that ACK as line 1 of `docs/bus/OUTBOX-DEVIN.md` (your file still starts at GO-0002 — that is stale).
 
 ## NOW
-12 VEND-F + SEED-HOLD = list. **STOP expanding.**
+12 VEND-F + SEED-HOLD = the list. **STOP expanding.**
 
-**Do not idle on Override.** CC-3 #17059 is on frontend `d74dbbd`: hard-block toast (LV-TXN-020 clean click already submitted on `069d531`). Query-back Book Load Override **on FE `d74dbbd`**.
+Query-back **Book Load Override toast** on live FE `590c36a` (API still `069d531`). Do not wait for G1 merge to click Override.
 
-**G1 owner = CC-1**, not CC-3. Aging exclude-sample waits G1. Dual-path GL = CC-1.
+**G1 is not live yet** — #17067 OPEN + CI red. Do not stamp aging/sample FIXED until G1 squash is on `origin/main`. Keep TEST on books.
 
-KEEP TEST. No COMPLETE.
+## Forbidden
+Second Devin. `trigger_deploy`. U14 restamp. COMPLETE. post-gl. Idle holding.

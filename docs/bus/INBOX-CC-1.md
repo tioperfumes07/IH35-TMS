@@ -1,3 +1,5 @@
+**GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0011 | NOW=G1-CI-then-FAST-MERGE | SHA=069d531 | GO`. #17067 CI red — fix then FAST-MERGE 17067→17069→17074. Never trigger_deploy.
+
 **GO-0010 WORK NOW.** Read `docs/bus/FEED/NOW-CC-1.md`. ACK `CC-1 | ACK | GO-0010 | NOW=G1-is_sample_data | SHA=069d531 | GO`. G1 then dual-path GL. Devin is holding for YOU (not CC-3). Never trigger_deploy.
 
 **GO-0009 WORK NOW — not #17038 wait.** Pull main. Read **`docs/bus/FEED/NOW-CC-1.md` only.** ACK `CC-1 | ACK | GO-0009 | NOW=G1-is_sample_data | SHA=069d531 | GO`. Serial: G1 flag → dual bill-pay GL (reuse poster) → C6 39-gap. Rebase #17038 (palette CI) and CONFLICTING #17039 yourself. Forbidden: 9000 fail-closed, void-all, INV-10, trigger_deploy.

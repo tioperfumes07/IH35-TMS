@@ -16,6 +16,8 @@ const ADMIN_ONLY_HINTS = [
   "Owner\", \"Administrator",
   "/api/v1/admin/",
   "adminOnly",
+  "forbidden_owner_only",
+  "currentOwner(",
 ];
 
 const BOOTSTRAP_HINTS = [
@@ -36,6 +38,8 @@ const GUARD_HINTS = [
   "requireOperatingCompanyScope(",
   "withCompany(",
   "withCompanyScope(",
+  "resolveOperatingCompanyId(",
+  "user_company_access",
 ];
 
 const DRIVER_MESSAGES_SERVICE = path.join(SRC_DIR, "drivers/messages.service.ts");
@@ -154,7 +158,8 @@ for (const filePath of files) {
     const start = fnStart >= 0 ? fnStart : 0;
     const before = lines.slice(start, i + 1);
     const routeContext = lines.slice(routeStart, Math.min(lines.length, i + 12));
-    const hasMembership = before.some((line) => lineHasGuard(line));
+    const hasMembership =
+      before.some((line) => lineHasGuard(line)) || routeContext.some((line) => lineHasGuard(line));
     if (hasMembership || hasDriverPrincipalScope(routeContext)) continue;
 
     offenders.push(`${rel}:${i + 1}`);

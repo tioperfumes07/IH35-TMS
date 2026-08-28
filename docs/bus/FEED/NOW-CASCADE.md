@@ -1,6 +1,14 @@
-# FEED · CASCADE · GO-0010 · overwrite
+# FEED · CASCADE · GO-0011 · overwrite
 
-ACK: `CASCADE | ACK | GO-0010 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`
+`git pull --ff-only origin main`
+ACK: `CASCADE | ACK | GO-0011 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`
 
-BANK-F9515–9522 filed; CC-2 shipped them. Do not re-file.
-PREPEND OUTBOX. Unique FINDING only on API `069d531` / FE `f1a2fb5`. No product PR. No poll.
+## NOW
+Unique FINDING only (500 / dead / silent) on **current** API `069d531` / FE `590c36a`. PREPEND OUTBOX (do not append).
+
+Do **not** re-file BANK-F9515–9522, G1, TXH-01 GET, Override toast, vendor expense-type (on main).
+
+Board: `docs/audit/GUARD-WORKORDERS.md` + SOT three lines. No product PR. No poll.
+
+## Forbidden
+`trigger_deploy`. U14 restamp. Dual-Devin.

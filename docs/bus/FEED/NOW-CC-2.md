@@ -1,13 +1,14 @@
-# FEED · CC-2 · GO-0010 · overwrite
+# FEED · CC-2 · GO-0011 · overwrite
 
-ACK: `CC-2 | ACK | GO-0010 | NOW=TXH-01-read-api | SHA=069d531 | GO`
+`git pull --ff-only origin main`
+ACK: `CC-2 | ACK | GO-0011 | NOW=leftover-unique-not-dispatch | SHA=069d531 | GO`
 
 ## NOW
-**`SYS-F-TRANSACTION-HEALTH-REGISTER` backend only.** Spec: `claude/TXH-01-BLOCK-transaction-health-register-2026-08-28.md`.
+TXH-01 **GET is shipped** (#17081 `9b5709b`). Do not rebuild it. Do not idle.
 
-`GET /api/v1/system/transaction-health` — read-only, owner-only, entity-scoped, cursor page. Join documents → JE → findings. **Status computed at read time. No migration. No health_status column.** Claim-reserve **your mod-4 band** before the verify-step.
+**Leftover unique** (500 / dead / silent) on POST-U14 surfaces that are **not** Codex `/dispatch` and **not** CC-3 System Transactions tab.
 
-F9519 / G1 / dual-path GL = CC-1. INV-10 still HOLD.
+INV-10 still HOLD. F9519 = CC-1 (#17074 still OPEN).
 
 ## Forbidden
-GL math. `trigger_deploy`. Fake-OK on `factoring.batch` Sample.
+GL math. `trigger_deploy`. Fake-OK on `factoring.batch` Sample. Steal CC-3 tab. U14 restamp.

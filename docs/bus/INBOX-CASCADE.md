@@ -1,3 +1,5 @@
+**GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md` (one page).** ACK `CASCADE | ACK | GO-0011 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`. PREPEND OUTBOX. FE `590c36a`. Never trigger_deploy.
+
 **GO-0010.** Read `docs/bus/FEED/NOW-CASCADE.md`. ACK `CASCADE | ACK | GO-0010 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`. Do not re-file BANK-F9515–9522. PREPEND OUTBOX. Unique 500/dead/silent on live API 069d531 / FE f1a2fb5. No poll. Never trigger_deploy.
 
 **GO-0009 NEXT UNIQUE.** Read **`docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0009 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`. BANK-F9515–9519 already filed. Do not re-file. No poll. Never trigger_deploy.
