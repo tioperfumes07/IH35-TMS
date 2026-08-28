@@ -94,17 +94,22 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
 
     const summary = await withCompanyScope(user.uuid, companyId, async (client) => {
       const activeFactor = await resolveActiveFactor(client, companyId);
-      const res = await client
-        .query(
-          `
+      // BANK-F9518: this used to .catch(() => ({ rows: [] })) — worse than the plain fake-empty-200
+      // class (BANK-F9514/15/16/17), because a caught failure here fell through to the `fallback`
+      // object below, which supplies HARDCODED $0.00 reserve/chargeback/outstanding-liability balances
+      // and a $0 MTD total — a query failure and "this company genuinely has zero factoring activity"
+      // rendered as the identical healthy-looking summary. views.factoring_summary is a foundational,
+      // unconditionally-migrated view (db/migrations/202613170000 etc.), not conditionally created, so
+      // there is no legitimate defensive reason for the swallow.
+      const res = await client.query(
+        `
             SELECT *
             FROM views.factoring_summary
             WHERE operating_company_id = $1::uuid
             LIMIT 1
           `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        [companyId]
+      );
       return { row: res.rows[0] ?? null, activeFactor };
     });
 
@@ -160,9 +165,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         loadFilter = `AND inv.load_id = $${params.length}::uuid`;
       }
       params.push(limit);
-      const res = await client
-        .query(
-          `
+      // BANK-F9518: this used to .catch(() => ({ rows: [] })) — same fake-empty-200 class as the
+      // /summary swallow above. views.factoring_recourse_at_risk is foundational and unconditionally
+      // migrated (db/migrations/202609010000 etc.).
+      const res = await client.query(
+        `
             SELECT
               rr.*,
               inv.invoice_id,
@@ -185,9 +192,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             ORDER BY rr.days_until_recourse_expiry ASC, rr.factored_at DESC
             LIMIT $${params.length}
           `,
-          params
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        params
+      );
       return res.rows;
     });
 
@@ -213,9 +219,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
         historyParams.push(customerId);
         customerFilter = `AND inv.customer_id = $${historyParams.length}::uuid`;
       }
-      const historyRes = await client
-        .query(
-          `
+      // BANK-F9518: both queries below used to .catch(() => ({ rows: [] })) — same fake-empty-200
+      // class as /summary and /recourse-pipeline above. views.factoring_chargebacks_fees is
+      // foundational and unconditionally migrated (db/migrations/202613010000 etc.).
+      const historyRes = await client.query(
+        `
             SELECT
               cf.*,
               inv.invoice_id,
@@ -245,13 +253,11 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             ORDER BY cf.created_at DESC
             LIMIT 500
           `,
-          historyParams
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        historyParams
+      );
 
-      const monthlyRes = await client
-        .query(
-          `
+      const monthlyRes = await client.query(
+        `
             SELECT
               statement_month,
               SUM(chargeback_amount)::numeric AS chargeback_total,
@@ -262,9 +268,8 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
             ORDER BY statement_month DESC
             LIMIT 24
           `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        [companyId]
+      );
 
       return {
         history: historyRes.rows,
@@ -288,18 +293,19 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       const activeFactor = await resolveActiveFactor(client, companyId);
-      const rowsRes = await client
-        .query(
-          `
+      // BANK-F9518: this used to .catch(() => ({ rows: [] })) too — same class, same fix.
+      // views.factoring_statements_settings is foundational and unconditionally migrated
+      // (db/migrations/202613020000 etc.).
+      const rowsRes = await client.query(
+        `
             SELECT *
             FROM views.factoring_statements_settings
             WHERE operating_company_id = $1::uuid
             ORDER BY statement_month DESC NULLS LAST
             LIMIT 60
           `,
-          [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        [companyId]
+      );
 
       const rows = rowsRes.rows;
       const current = withCanonicalFactorIdentity(

@@ -339,11 +339,19 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     const q = query.data;
 
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
+      // BANK-F9516: all four branches of this handler used to .catch(() => ({ rows: [] })) their
+      // query — same fake-empty-200 class as BANK-F9514/F9515 (#17030, this same PR's F9515 fix).
+      // accounting.factoring_advances / accounting.escrow_postings+escrow_accounts /
+      // driver_finance.driver_advances / banking.bank_transactions are all foundational tables, not
+      // conditionally created. Only the "escrow" branch currently has a live frontend consumer
+      // (DriverEscrowTabContent.tsx's accountLedgerQuery, which already derives its error UI from
+      // useListState(...).isError) — factoring/advance_pool/the real-bank-account branch have no
+      // caller yet, but the fix is the same either way: a query failure should fail the request, not
+      // silently report zero rows to whichever caller shows up next.
       const virtual = virtualKind(params.data.id);
       if (virtual === "factoring") {
-        const res = await client
-          .query(
-            `
+        const res = await client.query(
+          `
               SELECT
                 fa.id,
                 fa.created_at::date AS txn_date,
@@ -359,15 +367,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               ORDER BY fa.created_at DESC
               LIMIT $2 OFFSET $3
             `,
-            [q.operating_company_id, q.limit, q.offset]
-          )
-          .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+          [q.operating_company_id, q.limit, q.offset]
+        );
         return res.rows;
       }
       if (virtual === "escrow") {
-        const res = await client
-          .query(
-            `
+        const res = await client.query(
+          `
               -- ACCT-F5703: repointed off driver_finance.escrow_ledger (near-empty, never kept in
               -- sync) onto accounting.escrow_postings/escrow_accounts — the real GL-linked liability
               -- subledger /accounting/escrow already reads correctly. driver_id is only meaningful for
@@ -412,15 +418,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               ORDER BY ep.posted_at DESC
               LIMIT $2 OFFSET $3
             `,
-            [q.operating_company_id, q.limit, q.offset]
-          )
-          .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+          [q.operating_company_id, q.limit, q.offset]
+        );
         return res.rows;
       }
       if (virtual === "advance_pool") {
-        const res = await client
-          .query(
-            `
+        const res = await client.query(
+          `
               SELECT
                 da.id,
                 da.created_at::date AS txn_date,
@@ -434,15 +438,13 @@ export async function registerBankingRoutes(app: FastifyInstance) {
               ORDER BY da.created_at DESC
               LIMIT $2 OFFSET $3
             `,
-            [q.operating_company_id, q.limit, q.offset]
-          )
-          .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+          [q.operating_company_id, q.limit, q.offset]
+        );
         return res.rows;
       }
 
-      const res = await client
-        .query(
-          `
+      const res = await client.query(
+        `
             SELECT
               bt.*,
               -- amount_cents is stored SIGNED on the Plaid convention: NEGATIVE = money IN (deposit),
@@ -457,9 +459,8 @@ export async function registerBankingRoutes(app: FastifyInstance) {
             ORDER BY bt.transaction_date DESC, bt.created_at DESC
             LIMIT $3 OFFSET $4
           `,
-          [q.operating_company_id, params.data.id, q.limit, q.offset]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        [q.operating_company_id, params.data.id, q.limit, q.offset]
+      );
       return res.rows;
     });
     return { register_rows: rows };
@@ -646,6 +647,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         });
       }
 
+      // BANK-F9517: this used to .catch(() => ({ rows: [] })) — worse than the fake-empty-200 class
+      // (BANK-F9514/15/16), because `if (!res.rows[0]) return false` below turns ANY query failure
+      // (constraint violation, connection drop, a future column rename) into the exact same 404
+      // "transaction_not_found" the caller gets for a genuinely missing row. A real error here — after
+      // reverseJournalEntryNoFlip has already run above, on this SAME transaction client — MUST throw
+      // so the whole undo (JE reversal included) rolls back; that is the entire point of the
+      // "FAIL-CLOSED" design already documented on the reversal call a few lines up. Swallowing this
+      // one query's failure quietly defeated that guarantee for exactly the step it existed to protect.
       const res = await client.query(
         `
           UPDATE banking.bank_transactions
@@ -676,7 +685,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           RETURNING id
         `,
         [params.data.id, companyId]
-      ).catch(() => ({ rows: [] as { id: string }[] }));
+      );
       if (!res.rows[0]) return false;
       await appendCrudAudit(
         client,
