@@ -6,6 +6,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { enqueueAccountingOutbox } from "../accounting/outbox-events.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
+import { postSourceTransactionInClientTx } from "../accounting/posting-engine.service.js";
+import { isBillPaymentGlPostingEnabled } from "../accounting/bill-payment-gl.service.js";
 
 const paymentMethodSchema = z.enum(["check", "ach", "wire", "cash", "credit_card"]);
 
@@ -90,6 +92,12 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
       const checkNumber = body.data.check_number?.trim() || body.data.reference_number?.trim();
       if (!checkNumber) return reply.code(400).send({ error: "check_number_required" });
     }
+
+    // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — same gate + same poster as
+    // bills.service.ts's payBill() (the PayBillModal path). This route (VendorBalances'
+    // "Pay bills" batch flow) recorded a real payment and decremented bank cash with zero journal
+    // entry. Reused verbatim, no new GL math.
+    const glPostingEnabled = await isBillPaymentGlPostingEnabled(query.data.operating_company_id, user.uuid);
 
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
@@ -203,6 +211,23 @@ export async function registerApPaymentApplicationRoutes(app: FastifyInstance) {
             `,
             [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
           );
+
+          // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — same reasoning as
+          // vendor-bill-payments.routes.ts's identical fix: parallel books never post a TMS
+          // Bill→GL leg for a QBO-origin bill; posting inside THIS transaction keeps bank and GL
+          // from ever diverging. Flag-OFF still pays — no regression to bill-paying.
+          const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
+          if (glPostingEnabled && !isQboBill) {
+            await postSourceTransactionInClientTx(
+              client,
+              {
+                operating_company_id: query.data.operating_company_id,
+                source_transaction_type: "bill_payment",
+                source_transaction_id: paymentId,
+              },
+              { userId: user.uuid }
+            );
+          }
 
           await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.vendor_bill_payment.created", "vendor_bill_payment", paymentId, {
             bill_payment_id: paymentId,
