@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
+import { companyToday } from "../../lib/businessDate";
 
 type AnnualRateStatus = {
   year: number;
@@ -41,13 +42,14 @@ async function apiPost(path: string, body?: unknown) {
 }
 
 function currentQuarter() {
-  return Math.floor(new Date().getUTCMonth() / 3) + 1;
+  const month = Number(companyToday().slice(5, 7));
+  return Math.floor((month - 1) / 3) + 1;
 }
 
 export function DrugAlcoholDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const year = new Date().getUTCFullYear();
+  const year = Number(companyToday().slice(0, 4));
   const queryClient = useQueryClient();
   const companyGenerationRef = useRef(0);
 
