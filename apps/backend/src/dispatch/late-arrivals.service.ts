@@ -98,7 +98,6 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
             OR sp.scheduled_arrival_at + ($2::int * interval '1 minute') < now()
           )
         ORDER BY sp.scheduled_arrival_at ASC, l.created_at DESC
-        LIMIT 200
       `,
       [operatingCompanyId, graceMinutes]
     );
