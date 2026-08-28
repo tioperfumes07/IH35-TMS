@@ -61,6 +61,8 @@ export function audit(s = {}) {
   }
   if (!accessorialEditor.includes("listAllDispatchCatalogRows(additionalChargesCatalogClient") || /additionalChargesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(accessorialEditor)) failures.push("AccessorialEditor must exhaust additional-charges catalog");
   if (!multiStopEditor.includes("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient") || /pickupTimeTypesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(multiStopEditor)) failures.push("MultiStopEditor must exhaust pickup-time-types catalog");
+  for (const token of ["pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "disabled={pickupTimeTypesLoading || pickupTimeTypesUnavailable}", "Could not load pickup and appointment types.", "onClick={() => void pickupTimeTypesQuery.refetch()}"])
+    if (!multiStopEditor.includes(token)) failures.push(`MultiStopEditor pickup-time failure honesty missing ${token}`);
   for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient", "loadTypesCatalogClient"]) {
     if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
   }
@@ -108,6 +110,8 @@ if (process.argv.includes("--selftest")) {
     ["sharedApi", original.sharedApi.replace("page.total !== expectedTotal", "page.total < expectedTotal")],
     ["accessorialEditor", original.accessorialEditor.replace("listAllDispatchCatalogRows(additionalChargesCatalogClient", "additionalChargesCatalogClient.list")],
     ["multiStopEditor", original.multiStopEditor.replace("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient", "pickupTimeTypesCatalogClient.list")],
+    ["multiStopEditor", original.multiStopEditor.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],
+    ["multiStopEditor", original.multiStopEditor.replace("onClick={() => void pickupTimeTypesQuery.refetch()}", "onClick={() => undefined}")],
     ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
     ["expectedAdjustments", original.expectedAdjustments.replace("listAllDispatchCatalogRows(detentionReasonsCatalogClient", "detentionReasonsCatalogClient.list")],
     ["expectedAdjustments", original.expectedAdjustments.replace("detentionReasonsQuery.isLoading || detentionReasonsQuery.isError", "detentionReasonsQuery.isLoading")],
