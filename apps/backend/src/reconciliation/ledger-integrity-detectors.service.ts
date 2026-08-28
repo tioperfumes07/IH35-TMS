@@ -383,6 +383,54 @@ export async function checkAskMyAccountantForCompany(client: DbClient, operating
   }
 }
 
+// INV-2 PER-ENTRY BALANCE (detector 4 of the plan's 10): scripts/verify-gl-invariants.sql's own INV-2
+// block ("expect je_unbalanced = 0"). This is a stronger check than a global trial-balance sum (INV-1) —
+// two entries individually off by +$10 and -$10 net to $0.00 on a whole-ledger sum but are each a real
+// broken posting. The posting engine is supposed to enforce debits=credits at write time (this has been
+// 0/0/0 across all three companies every time it has been queried), so this detector is a safety net for
+// a bug that slips past that enforcement (a manual insert, a migration backfill, a future poster change),
+// not an expected-to-fire check — which is also why it stays a single aggregate finding per company
+// (count + up to 10 sample ids) rather than one row per entry: normal operation is zero rows, and a
+// genuine regression is rare enough that per-JE granularity would only matter for the triage step, which
+// the sample ids already carry.
+export async function checkPerEntryBalanceForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const res = await client.query<{ unbalanced_count: string; unbalanced_ids: string[] | null }>(
+    `
+      WITH je AS (
+        SELECT j.id,
+               SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff,
+               COUNT(p.id) AS lines
+        FROM accounting.journal_entries j
+        LEFT JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = j.id
+        WHERE j.operating_company_id = $1::uuid AND j.status <> 'voided' AND COALESCE(j.is_sample_data, false) = false
+        GROUP BY j.id
+      )
+      SELECT
+        COUNT(*) FILTER (WHERE lines > 0 AND diff <> 0)::text AS unbalanced_count,
+        (ARRAY_AGG(id::text) FILTER (WHERE lines > 0 AND diff <> 0))[1:10] AS unbalanced_ids
+      FROM je
+    `,
+    [operatingCompanyId]
+  );
+  const unbalancedCount = Number(res.rows[0]?.unbalanced_count ?? 0);
+  const resourceScope: ResourceScope = { role: "journal_entry_balance", account_id: "", account_number: "" };
+
+  if (unbalancedCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "unbalanced_journal_entry",
+      severity: "critical",
+      runId,
+      resourceScope,
+      localValue: { unbalanced_count: unbalancedCount, sample_journal_entry_ids: res.rows[0]?.unbalanced_ids ?? [] },
+      thresholdSnapshot: { rule: "every_real_posted_journal_entry_debits_must_equal_credits", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "unbalanced_journal_entry", resourceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
@@ -391,5 +439,6 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
     await checkStrandedIntermediateForCompany(client, operatingCompanyId, runId);
     await checkSubledgerTieOutForCompany(client, operatingCompanyId, runId);
     await checkAskMyAccountantForCompany(client, operatingCompanyId, runId);
+    await checkPerEntryBalanceForCompany(client, operatingCompanyId, runId);
   }
 }
