@@ -1308,27 +1308,15 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             }
           }
         }
-        if (body.data.override_credit_limit && canOverride) {
-          void withCompanyScope(authUser.uuid, body.data.operating_company_id, async (client) => {
-            await appendCrudAudit(
-              client,
-              authUser.uuid,
-              "dispatch.loads.credit_limit_override",
-              {
-                customer_id: body.data.customer_id,
-                operating_company_id: body.data.operating_company_id,
-              },
-              "warning",
-              "CUSTVEND-PAR-1"
-            );
-          }).catch(() => {});
-        }
       }
 
       const result = await bookLoad({
         ...body.data,
         requestingUserUuid: authUser.uuid,
         requestingUserRole: authUser.role,
+        creditLimitOverrideAuthorized:
+          body.data.save_mode !== "draft" &&
+          Boolean(body.data.override_credit_limit && ["Owner", "Administrator", "Manager"].includes(authUser.role)),
       });
 
       if (result.kind === "error") {

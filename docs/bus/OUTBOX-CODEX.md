@@ -1812,3 +1812,5 @@ Codex | SHIPPED | LST-F7065 | PR=#17024 @ 9b5392782855 | Built=lists.modal.safet
 Codex | WORKING | CLS-F7066 | CLAIM=post.partial-optional-chain-vertical-crash-sweep | SOURCE=API collection readers across maintenance/customers/fuel/system | NEXT=6-site root fix+guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | CLS-F7066 | PR=#17029 @ 961ce5f6b695 | Built=customers/maintenance/fuel/system connectivity 4/4 | NEXT=retire stale maintenance protections | GO
 Codex | WORKING | MAINT-F7067 | CLAIM=post.maintenance-completed-protection-retirement | SOURCE=exact lifecycle guards already green | NEXT=zero-remainder ratchet+selftest+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7067 | PR=#17031 @ 17264a488557 | Built=retired 2 stale Maintenance protections | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7068 | CLAIM=post.dispatch-credit-override-audit-atomic | SOURCE=Book Load override fire-and-forget audit | NEXT=atomic audit+guard+selftest+FAST-MERGE | GO
