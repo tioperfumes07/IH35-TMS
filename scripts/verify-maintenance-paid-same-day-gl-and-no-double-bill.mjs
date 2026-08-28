@@ -35,8 +35,16 @@ function failures(sources) {
     out.push("two-section-service.ts: autoCreateExpenseFromWO not found — file shape changed, re-check this guard");
   } else {
     const fnBody = twoSection.slice(fnStart);
-    if (!/if\s*\(paymentAccountUuid\)/.test(fnBody)) {
-      out.push("two-section-service.ts: GL posting must be gated on paymentAccountUuid being present (matches the canonical route's has_payment_account check)");
+    // MAINT-MONEY-F7019 — PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE widened this gate from
+    // `paymentAccountUuid` alone to `paymentAccountUuid || wo.vendor_uuid`, matching the canonical
+    // POST /api/v1/expenses/:id/post route's own orphan rule (`!payment_account_uuid && !vendor_uuid`).
+    // A known vendor with no payment account is an A/P case, not an orphan — the old narrower gate
+    // meant every in_house/vendor_invoice WO completion with no payment account NEVER even tried to
+    // post, forever (live-proven gap: expense 57cabbab-f06a-4fa3-ad67-877eb2e64b0f sat
+    // posting_status=unposted from creation until that fix). Do not narrow this back to
+    // paymentAccountUuid alone — that is the exact regression this class exists to catch.
+    if (!/if\s*\(\s*paymentAccountUuid\s*\|\|\s*wo\.vendor_uuid\s*\)/.test(fnBody)) {
+      out.push("two-section-service.ts: GL posting must be gated on paymentAccountUuid || wo.vendor_uuid (matches the canonical route's !payment_account_uuid && !vendor_uuid orphan rule) — narrowing this back to paymentAccountUuid alone reintroduces PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE");
     }
     if (!/postSourceTransactionInClientTx\(/.test(fnBody)) {
       out.push("two-section-service.ts: autoCreateExpenseFromWO body must call postSourceTransactionInClientTx");
@@ -91,14 +99,25 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       mutate: (text) => text.replace(/const posting = await postSourceTransactionInClientTx\([\s\S]*?\);/, "const posting = { journal_entry_id: null };"),
     },
     {
-      name: "paymentAccountUuid gate removed",
+      name: "gate narrowed back to paymentAccountUuid alone (PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE regression)",
       file: TWO_SECTION,
-      mutate: (text) => text.replace("if (paymentAccountUuid) {", "if (true) {"),
+      mutate: (text) => text.replace("if (paymentAccountUuid || wo.vendor_uuid) {", "if (paymentAccountUuid) {"),
     },
     {
+      // `if (!(err instanceof PostingEngineError)) throw err;` appears TWICE in this file — once
+      // in the sibling autoCreateBillFromWO, once in autoCreateExpenseFromWO. A plain text.replace()
+      // always hits the FIRST (wrong) occurrence, silently leaving autoCreateExpenseFromWO's own
+      // swallow untouched — this guard's own selftest caught exactly that (planted defect escaped)
+      // before this fix. Scope the mutation to only the text from autoCreateExpenseFromWO onward.
       name: "PostingEngineError swallow removed (throws on any failure)",
       file: TWO_SECTION,
-      mutate: (text) => text.replace("if (!(err instanceof PostingEngineError)) throw err;", "throw err;"),
+      mutate: (text) => {
+        const fnStart = text.indexOf("export async function autoCreateExpenseFromWO");
+        if (fnStart === -1) return text;
+        const before = text.slice(0, fnStart);
+        const after = text.slice(fnStart).replace("if (!(err instanceof PostingEngineError)) throw err;", "throw err;");
+        return before + after;
+      },
     },
     {
       name: "posting_status stamp removed",
