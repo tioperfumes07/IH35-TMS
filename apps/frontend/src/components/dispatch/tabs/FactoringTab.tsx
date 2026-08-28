@@ -163,7 +163,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
   });
 
   // load (shared React Query key — deduped with drawer)
-  const loadQ = useLoad(loadId);
+  const loadQ = useLoad(loadId, operatingCompanyId);
   const load = loadQ.data;
 
   // documents for this load

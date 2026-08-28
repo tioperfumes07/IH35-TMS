@@ -451,9 +451,9 @@ export function BookLoadModalV4({
   // Block 7 — EDIT mode: load the existing load and prefill the wizard. form.reset(...keepDefaults)
   // marks nothing dirty, so the Save body (dirtyFields-gated) only contains what the user then changes.
   const editLoadQuery = useQuery({
-    queryKey: ["book-load-edit", editLoadId],
-    queryFn: () => getLoad(editLoadId as string),
-    enabled: Boolean(open && editLoadId),
+    queryKey: ["book-load-edit", operatingCompanyId, editLoadId],
+    queryFn: () => getLoad(editLoadId as string, operatingCompanyId),
+    enabled: Boolean(open && editLoadId && operatingCompanyId),
     staleTime: 0,
   });
   const editLoad: LoadDetail | undefined = editLoadQuery.data;

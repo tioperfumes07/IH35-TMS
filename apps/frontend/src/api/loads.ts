@@ -407,11 +407,11 @@ export function useLoadsList(filters: LoadsListFilters) {
   });
 }
 
-export function useLoad(id: string | null) {
+export function useLoad(id: string | null, operatingCompanyId: string | null) {
   return useQuery({
-    queryKey: ["loads", "detail", id],
-    queryFn: () => getLoad(id as string),
-    enabled: Boolean(id),
+    queryKey: ["loads", "detail", operatingCompanyId, id],
+    queryFn: () => getLoad(id as string, operatingCompanyId as string),
+    enabled: Boolean(id && operatingCompanyId),
     refetchInterval: 60000,
   });
 }

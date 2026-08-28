@@ -53,7 +53,7 @@ function policyProgress(policy: AutoDeductionPolicy) {
 export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: FinesDeductionsCardProps) {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  const loadQ = useLoad(loadId);
+  const loadQ = useLoad(loadId, operatingCompanyId);
   const driverId = loadQ.data?.assigned_primary_driver_id ?? "";
 
   const [selectedPending, setSelectedPending] = useState<EscrowPendingDeduction | null>(null);
