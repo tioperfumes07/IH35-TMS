@@ -217,6 +217,9 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
     queryFn: () => apiRequest<{ rows: Array<{ id: string; code: string; display_name: string }> }>(`/api/v1/catalogs/safety/accident-types?operating_company_id=${encodeURIComponent(operatingCompanyId)}&is_active=true&limit=200`),
     enabled: scopeReady,
   });
+  // SAF-F6979: a failed refetch must not leave React Query's last successful
+  // company-scoped accident catalog selectable in a new damage record.
+  const accidentTypeRows = accidentTypesQuery.isError ? [] : (accidentTypesQuery.data?.rows ?? []);
 
   const id = accidentId;
   const canMutate = Boolean(id) && !createMode;
@@ -452,16 +455,20 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                   // value) whenever a custom accident type was picked. Always resolve it on every
                   // change, falling back to "accident" for a non-canonical code — the same default
                   // this field's own initial state already applies to an unrecognized value.
-                  const row = accidentTypesQuery.data?.rows?.find((item) => item.id === next);
+                  const row = accidentTypeRows.find((item) => item.id === next);
                   const code = row?.code?.toLowerCase();
                   setRecordType(code === "damage" || code === "vandalism" ? code : "accident");
                 }}
-                options={(accidentTypesQuery.data?.rows ?? []).map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}
+                options={accidentTypeRows.map((row) => ({ value: row.id, label: row.display_name, type: row.code }))}
                 createKind="accident_type"
                 operatingCompanyId={operatingCompanyId}
                 loading={accidentTypesQuery.isLoading}
+                disabled={accidentTypesQuery.isError}
                 onOptionCreated={() => void accidentTypesQuery.refetch()}
               />
+              {accidentTypesQuery.isError ? (
+                <ListErrorState status={0} message="Accident types could not be loaded." onRetry={() => void accidentTypesQuery.refetch()} />
+              ) : null}
             </Field>
             <Field label="Service Type">
               <Combobox
