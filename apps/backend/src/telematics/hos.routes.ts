@@ -145,8 +145,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1::uuid
             AND driver_id = $2::uuid
             AND source = 'manual_edit'
-          ORDER BY started_at DESC
-          LIMIT 100
+          ORDER BY started_at DESC, id DESC
         `,
         [query.data.operating_company_id, params.data.driver_id]
       );

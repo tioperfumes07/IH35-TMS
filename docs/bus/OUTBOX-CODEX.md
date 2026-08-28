@@ -1,3 +1,5 @@
+Codex | WORKING | FINDING=HOS-F6954-MANUAL-EDIT-AUDIT-SILENT-100-CAP | SOURCE=hos.duty_status_events | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6953 | PR=#16919 @ 3dd5ae5162 | Built=complete-harsh-event-clips | Live=post-deploy UNVERIFIED | NEXT=HOS-F6954 | GO
 Codex | WORKING | FINDING=SAF-F6953-HARSH-EVENT-DASHCAM-SILENT-20-CAP | SOURCE=telematics.dashcam_clips | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLT-F6952 | PR=#16918 @ 0812b65f7c | Built=complete-current-fault-snapshot | Live=post-deploy UNVERIFIED | NEXT=SAF-F6953 | GO
 Codex | WORKING | FINDING=FLT-F6952-LIVE-TELEMETRY-SILENT-3-FAULT-CAP | SOURCE=complete-current-Samsara-fault-snapshot | NEXT=guard+FAST-MERGE | GO
