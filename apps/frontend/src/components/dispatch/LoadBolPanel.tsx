@@ -20,6 +20,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   const { pushToast } = useToast();
   const generateGenerationRef = useRef(0);
   const [generateError, setGenerateError] = useState<Error | null>(null);
+  const [downloadingBolId, setDownloadingBolId] = useState<string | null>(null);
   const summaryQuery = useQuery({
     queryKey: ["pod-bol-summary", companyId, loadId],
     queryFn: () => getLoadPodBolSummary(loadId, companyId),
@@ -41,8 +42,28 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
   useEffect(() => {
     generateGenerationRef.current += 1;
     setGenerateError(null);
+    setDownloadingBolId(null);
     generateMutation.reset();
   }, [companyId, loadId]);
+
+  async function downloadStoredBol(bolId: string) {
+    const input = {
+      bolId,
+      companyId,
+      generation: generateGenerationRef.current,
+    };
+    setDownloadingBolId(input.bolId);
+    try {
+      const result = await downloadBolDocument(input.bolId, input.companyId);
+      if (generateGenerationRef.current !== input.generation) return;
+      window.open(result.download_url, "_blank");
+    } catch (error) {
+      if (generateGenerationRef.current !== input.generation) return;
+      pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");
+    } finally {
+      if (generateGenerationRef.current === input.generation) setDownloadingBolId(null);
+    }
+  }
 
   const bols = summaryQuery.data?.bols ?? [];
   const pods = summaryQuery.data?.pods ?? [];
@@ -111,16 +132,10 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
                 type="button"
                 className="text-xs text-[#1f2a44] underline"
                 data-testid="bol-stored-download-button"
-                onClick={async () => {
-                  try {
-                    const result = await downloadBolDocument(bol.id, companyId);
-                    window.open(result.download_url, "_blank");
-                  } catch (error) {
-                    pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");
-                  }
-                }}
+                disabled={downloadingBolId !== null}
+                onClick={() => void downloadStoredBol(bol.id)}
               >
-                Download stored copy
+                {downloadingBolId === bol.id ? "Preparing…" : "Download stored copy"}
               </button>
             </li>
           ))}
