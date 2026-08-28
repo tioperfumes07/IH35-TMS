@@ -20,6 +20,7 @@
  *   adjustments  → accounting.cash_flow_adjustments (already correct)
  */
 import type pg from "pg";
+import { logger } from "../observability/structured-logger.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
@@ -363,8 +364,20 @@ export async function getDailyPrediction(
         settlement_id: row.id,
       });
     }
-  } catch {
-    // Degrade: omit driver_pay lines rather than fail the whole daily prediction.
+  } catch (err) {
+    // GO-0016-CASH-FLOW-DRIVER-PAY-SILENT-DROP: this used to `catch {}` with zero logging — a real
+    // driver_finance.driver_settlements query failure silently dropped every driver_pay line from
+    // the daily cash-flow prediction, indistinguishable from "no driver pay due today". Unlike
+    // reports/scheduled/runner.service.ts's own per-item catch (which at least counts failures into
+    // its returned summary), this one left no signal anywhere the failure had occurred. Degrade
+    // stays non-fatal on purpose (a broken driver-pay subquery must not take down the whole daily
+    // prediction, same reasoning as BANK-F9521/lane-profitability's monthly refresh) — but it must
+    // no longer be silent either.
+    logger.warn("cash-flow: driver_pay subquery failed — daily prediction is missing driver_pay lines", {
+      operating_company_id: operatingCompanyId,
+      date,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
   }
 
   // Bills due on this date (AP bills: insurance, fuel, factoring, etc.).
