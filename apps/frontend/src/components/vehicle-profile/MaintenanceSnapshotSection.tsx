@@ -20,7 +20,7 @@ export function MaintenanceSnapshotSection({
   unitId: string;
   activeFaultCount?: number;
   pendingFaultDraftCount?: number;
-  /** Recent WOs for this unit (wo_id · display_id · status); the open ones link per-row to WO detail. */
+  /** Complete canonical open-WO range for this unit (wo_id · display_id · status). */
   workOrders?: Array<Record<string, unknown>>;
 }) {
   const pmEntries = Object.entries(nextPmDue ?? {}).slice(0, 4);
