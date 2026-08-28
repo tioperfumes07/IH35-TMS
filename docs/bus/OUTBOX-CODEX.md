@@ -1,3 +1,5 @@
+Codex | WORKING | CUST-F7024 | CLAIM=post.customer-payment-history-complete-reader-guard | SOURCE=listAllCustomerPayments company-scoped pagination | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7023 | PR=#16981 @ f4c7db5997 | Built=dedicated company-scoped lifecycle guard 15/15 | NEXT=CUST-F7024 | GO
 Codex | WORKING | CUST-F7022 | CLAIM=post.customer-guard-stronger-runtime-contracts | SOURCE=CustomerProfileForm+Customers runtime | NEXT=normal+selftest+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7021 | PR=#16979 @ c63587d140 | Built=customer invoice reader + six implemented-tab guard alignment | guard=normal+selftest+aggregate+preflight exit0 | NEXT=customer full guard census | GO
 Codex | WORKING | CUST-F7023 | CLAIM=post.customer-lifecycle-guard-dedicated-reactivate | SOURCE=dedicated company-scoped POST lifecycle API | NEXT=guard+FAST-MERGE | GO

@@ -70,8 +70,8 @@ export function checkAll(readFile) {
   if (!hasRawEntityLabel && !hasEntityLinkOrTombstone) {
     failures.push(`${FILES.detailPage}: payment row must render its real display_id (entityLabel or EntityLinkOrTombstone), not a null-display_id fallback to raw uuid`);
   }
-  if (!/listCustomerPayments\(id, operatingCompanyId!/.test(detail)) {
-    failures.push(`${FILES.detailPage}: customerPaymentsQuery must call listCustomerPayments with operatingCompanyId`);
+  if (!/listAllCustomerPayments\(id, operatingCompanyId!/.test(detail)) {
+    failures.push(`${FILES.detailPage}: customerPaymentsQuery must call the complete listAllCustomerPayments reader with operatingCompanyId`);
   }
 
   return failures;
@@ -87,7 +87,7 @@ if (process.argv.includes("--selftest")) {
       'const listCustomerPaymentsQuerySchema = companyQuerySchema.extend({\n' +
       '  SELECT\n    p.id,\n    p.display_id,\n    p.payment_date::text AS date,',
     [FILES.detailPage]:
-      'queryFn: () => listCustomerPayments(id, operatingCompanyId!, { limit: 50 }),\n' +
+      'queryFn: () => listAllCustomerPayments(id, operatingCompanyId!),\n' +
       'render: (p) => <EntityLink kind="payment" id={p.id} label={entityLabel(p.display_id, p.id, "Payment")} />,',
   };
   const goodFailures = checkAll((f) => GOOD_FIXTURES[f] ?? null);
@@ -118,7 +118,7 @@ if (process.argv.includes("--selftest")) {
   const TOMBSTONE_GOOD = {
     ...GOOD_FIXTURES,
     [FILES.detailPage]:
-      'queryFn: () => listCustomerPayments(id, operatingCompanyId!, { limit: 50 }),\n' +
+      'queryFn: () => listAllCustomerPayments(id, operatingCompanyId!),\n' +
       'render: (p) => <EntityLinkOrTombstone kind="payment" id={p.id} name={p.display_id} noun="Payment" />,',
   };
   const tombstoneGoodFailures = checkAll((f) => TOMBSTONE_GOOD[f] ?? null);
