@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { companyBusinessDate, companyBusinessDateCompact } from "../company-business-date.js";
+import { companyBusinessDate, companyBusinessDateCompact, companyBusinessDateStartIso } from "../company-business-date.js";
 
 describe("company-business-date", () => {
   it("returns the Central calendar date, not UTC, at the evening boundary", () => {
@@ -66,5 +66,12 @@ describe("company-business-date", () => {
     expect(summerPreMidnight.toISOString().slice(0, 10)).toBe("2026-07-15");
     expect(companyBusinessDate(summerPreMidnight)).toBe("2026-07-14");
     expect(companyBusinessDate(new Date("2026-07-15T05:01:00Z"))).toBe("2026-07-15");
+  });
+});
+
+describe("companyBusinessDateStartIso", () => {
+  it("maps Central midnight with the correct seasonal offset", () => {
+    expect(companyBusinessDateStartIso("2026-01-12")).toBe("2026-01-12T06:00:00.000Z");
+    expect(companyBusinessDateStartIso("2026-06-01")).toBe("2026-06-01T05:00:00.000Z");
   });
 });

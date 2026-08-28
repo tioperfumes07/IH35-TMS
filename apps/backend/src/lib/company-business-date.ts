@@ -35,6 +35,33 @@ export function addBusinessDateDays(iso: string, days: number): string {
   return result.toISOString().slice(0, 10);
 }
 
+/** Convert a company business date to the UTC instant at America/Chicago midnight. */
+export function companyBusinessDateStartIso(iso: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) throw new Error("invalid company business date");
+  const [year, month, day] = iso.split("-").map(Number);
+  const targetAsUtc = Date.UTC(year, month - 1, day, 0, 0);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: COMPANY_TIME_ZONE,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  let guess = targetAsUtc;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const parts = formatter.formatToParts(new Date(guess));
+    const get = (type: string) => Number(parts.find((part) => part.type === type)?.value ?? "0");
+    const hour = get("hour") === 24 ? 0 : get("hour");
+    const shownAsUtc = Date.UTC(get("year"), get("month") - 1, get("day"), hour, get("minute"));
+    const correction = targetAsUtc - shownAsUtc;
+    if (correction === 0) break;
+    guess += correction;
+  }
+  return new Date(guess).toISOString();
+}
+
 export function businessDateDaysBetween(fromIso: string, toIso: string): number {
   const [fromYear, fromMonth, fromDate] = fromIso.split("-").map(Number);
   const [toYear, toMonth, toDate] = toIso.split("-").map(Number);

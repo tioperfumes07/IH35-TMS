@@ -2,6 +2,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { getCurrentClocks, getCurrentClocksForDrivers } from "../telematics/hos-clocks.service.js";
 import { assertDriverQualifiedForLoad } from "./driver-qualification.service.js";
+import { addBusinessDateDays, companyBusinessDate, companyBusinessDateStartIso } from "../lib/company-business-date.js";
 
 const CONFLICT_WINDOW_MS = 4 * 60 * 60 * 1000;
 
@@ -35,24 +36,12 @@ export type PlannerWeekPayload = {
   loads: PlannerLoadEvent[];
 };
 
-function parseWeekStart(input?: string): Date {
-  if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) {
-    const date = new Date(`${input}T00:00:00.000Z`);
-    if (!Number.isNaN(date.getTime())) return date;
-  }
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
-  return monday;
-}
-
-function addDaysUtc(date: Date, days: number): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
-}
-
-function toDateString(date: Date): string {
-  return date.toISOString().slice(0, 10);
+function plannerWeekStart(input?: string): string {
+  if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+  const today = companyBusinessDate();
+  const [year, month, day] = today.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return addBusinessDateDays(today, weekday === 0 ? -6 : 1 - weekday);
 }
 
 export function detectPlannerConflict(
@@ -121,12 +110,10 @@ export async function listDriverBlackoutsForDrivers(
 }
 
 export async function getPlannerWeek(userId: string, operatingCompanyId: string, weekStartInput?: string): Promise<PlannerWeekPayload> {
-  const weekStartDate = parseWeekStart(weekStartInput);
-  const weekEndDate = addDaysUtc(weekStartDate, 7);
-  const weekStart = toDateString(weekStartDate);
-  const weekEnd = toDateString(weekEndDate);
-  const weekStartIso = `${weekStart}T00:00:00.000Z`;
-  const weekEndIso = `${weekEnd}T00:00:00.000Z`;
+  const weekStart = plannerWeekStart(weekStartInput);
+  const weekEnd = addBusinessDateDays(weekStart, 7);
+  const weekStartIso = companyBusinessDateStartIso(weekStart);
+  const weekEndIso = companyBusinessDateStartIso(weekEnd);
 
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
@@ -330,10 +317,9 @@ export async function reschedulePlannerLoad(
       };
     }
 
-    const weekStartDate = parseWeekStart(parsedStart.toISOString().slice(0, 10));
-    const weekEndDate = addDaysUtc(weekStartDate, 7);
-    const weekStartIso = `${toDateString(weekStartDate)}T00:00:00.000Z`;
-    const weekEndIso = `${toDateString(weekEndDate)}T00:00:00.000Z`;
+    const weekStart = plannerWeekStart(companyBusinessDate(parsedStart));
+    const weekStartIso = companyBusinessDateStartIso(weekStart);
+    const weekEndIso = companyBusinessDateStartIso(addBusinessDateDays(weekStart, 7));
 
     const peerRes = await client.query(
       `
