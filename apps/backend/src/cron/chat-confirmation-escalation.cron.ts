@@ -11,7 +11,7 @@
 import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { dispatchDriverWebPush } from "../notifications/web-push-dispatcher.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import {
@@ -184,6 +184,9 @@ export function initializeChatConfirmationEscalationCron(app: FastifyInstance) {
   initialized = true;
   if (process.env.ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON === "false") {
     app.log.info("Chat confirmation escalation cron disabled via ENABLE_CHAT_CONFIRMATION_ESCALATION_CRON=false");
+    // GO-0017-L3: an early return is an outcome, not an absence — record it so
+    // _system.background_jobs stays fresh (refreshed on every boot) instead of frozen forever.
+    recordBackgroundJobDisabled(CRON_NAME).catch((err) => app.log.warn({ err }, `[background-job:${CRON_NAME}] failed to record disabled-outcome`));
     return;
   }
 
