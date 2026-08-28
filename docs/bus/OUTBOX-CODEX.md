@@ -1804,3 +1804,5 @@ Codex | WORKING | LEGAL-F7062 | CLAIM=post.legal-matter-identity-vertical | SOUR
 Codex | SHIPPED | LEGAL-F7062 | PR=#17020 @ a9635da4ad | Built=legal matter identity 3/3 leaves | NEXT=GO-0006 dispatch unique | GO
 Codex | ACK | GO-0006 | NOW=/dispatch-unique | SHA=healthz-not-required-code-guard | GO
 Codex | WORKING | DSP-F7063 | CLAIM=post.dispatch-in-shop-empty-state-guard-parser | SOURCE=DispatchBoard failed-feed exclusion | NEXT=semantic guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7063 | PR=#17021 @ 1d8922d282 | Built=honest in-shop/awaiting error guard | NEXT=HOS retry guard | GO
+Codex | WORKING | DSP-F7064 | CLAIM=post.dispatch-hos-single-retry-guard-parser | SOURCE=shared HOS error→one row-safe Retry | NEXT=semantic guard+selftest+FAST-MERGE | GO

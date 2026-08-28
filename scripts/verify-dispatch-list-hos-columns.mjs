@@ -43,13 +43,16 @@ function checkRecovery(source) {
   const requirements = [
     ["shared retry control", /function HosRetryButton[\s\S]*?data-hos-retry[\s\S]*?onRetry\(\)/],
     ["status dot query error", /function DriverHosStatusDot[\s\S]*?if \(q\.isError\) return <HosRetryButton compact onRetry=\{\(\) => void q\.refetch\(\)\}/],
-    ["clock value query error", /function DriverHosClockValue[\s\S]*?if \(q\.isError\) return <HosRetryButton onRetry=\{\(\) => void q\.refetch\(\)\}/],
+    ["clock value query error", /function DriverHosClockValue[\s\S]*?if \(q\.isError\) \{[\s\S]*?showRetryOnError \? <HosRetryButton onRetry=\{\(\) => void q\.refetch\(\)\} \/> : <span[\s\S]*?>—<\/span>[\s\S]*?\}/],
     ["legacy clock cells query error", /function DriverHosClockCells[\s\S]*?if \(q\.isError\)[\s\S]*?<HosRetryButton onRetry=\{\(\) => void q\.refetch\(\)\}/],
   ];
   return requirements.filter(([, pattern]) => !pattern.test(source)).map(([message]) => message);
 }
 const missing = checkRecovery(cells);
 if (missing.length) fail(`HOS read failures must stay visible and retryable across every shared consumer: ${missing.join(", ")}`);
+if (!/showRetryOnError=\{cIndex === 0\}/.test(list)) fail("DispatchList must render exactly one HOS retry control per failed row");
+const board = readFileSync(join(root, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"), "utf8");
+if (!/showRetryOnError=\{hosColIndex === 0\}/.test(board)) fail("DispatchBoard must render exactly one HOS retry control per failed row");
 const pillRecovery = (source) => /if \(hosQuery\.isError\)[\s\S]*?data-hos-pill-retry[\s\S]*?event\.stopPropagation\(\)[\s\S]*?hosQuery\.refetch\(\)/.test(source);
 if (!pillRecovery(pill)) {
   fail("DriverHosPill must expose a row-safe retry when its HOS read fails");
@@ -59,7 +62,7 @@ if (selftest) {
   const mutations = [
     cells.replace("data-hos-retry", "data-hos-hidden"),
     cells.replace("if (q.isError) return <HosRetryButton compact", "if (false) return <HosRetryButton compact"),
-    cells.replace("if (q.isError) return <HosRetryButton onRetry", "if (false) return <HosRetryButton onRetry"),
+    cells.replace("showRetryOnError ? <HosRetryButton onRetry", "false ? <HosRetryButton onRetry"),
     cells.replace(
       "if (q.isError) {\n    return (\n      <>\n        {HOS_COLUMNS.map",
       "if (false) {\n    return (\n      <>\n        {HOS_COLUMNS.map"
@@ -68,6 +71,8 @@ if (selftest) {
   for (let index = 0; index < mutations.length; index += 1) {
     if (checkRecovery(mutations[index]).length === 0) fail(`mutation ${index + 1} survived`);
   }
+  if (/showRetryOnError=\{cIndex === 0\}/.test(list.replace("cIndex === 0", "false"))) fail("list retry placement mutation survived");
+  if (/showRetryOnError=\{hosColIndex === 0\}/.test(board.replace("hosColIndex === 0", "false"))) fail("board retry placement mutation survived");
   const pillMutations = [
     pill.replace("if (hosQuery.isError)", "if (false)"),
     pill.replace("data-hos-pill-retry", "data-hos-pill-hidden"),
@@ -76,7 +81,7 @@ if (selftest) {
   for (let index = 0; index < pillMutations.length; index += 1) {
     if (pillRecovery(pillMutations[index])) fail(`pill mutation ${index + 1} survived`);
   }
-  const total = mutations.length + pillMutations.length;
+  const total = mutations.length + pillMutations.length + 2;
   console.log(`PASS verify-dispatch-list-hos-columns selftest ${total}/${total}`);
 } else {
   console.log("PASS verify-dispatch-list-hos-columns");
