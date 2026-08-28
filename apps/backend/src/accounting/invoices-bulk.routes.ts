@@ -4,6 +4,7 @@ import type { PoolClient } from "pg";
 import { z } from "zod";
 import { buildPatchChanges, appendCrudAudit } from "../audit/crud-audit.js";
 import { postInvoiceGlIfEnabled } from "./invoice-gl.service.js";
+import { fireRevrecLatchOnInvoiceIssued } from "./revrec-delivery-posting/poster.service.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
 import { enqueueTmsInvoicePushRequested } from "../qbo/tms-invoice-push-chain.service.js";
@@ -190,6 +191,20 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
         operatingCompanyId,
         actorUserId,
       });
+      // GO-0014 event2-silent-on-issued-invoices — this branch can land an invoice DIRECTLY on
+      // sent/paid/factored (a status jump, same reasoning as the postInvoiceGlAndAudit call right
+      // above it), but never called the revrec latch's Event 2 trigger at all: a load-linked invoice
+      // bulk-set to an issued status here got its OTHER poster (postInvoiceGlAndAudit) but never its
+      // Event 2 DR A/R / CR Unbilled JE, silently. Reuses the SAME helper invoice-send.service.ts's
+      // single-invoice /send path already fires — no second A/R poster invented.
+      if (oldRow.source_load_id) {
+        await fireRevrecLatchOnInvoiceIssued(client as object, {
+          operating_company_id: operatingCompanyId,
+          source_load_id: String(oldRow.source_load_id),
+          actor_user_id: actorUserId,
+          invoice_id: id,
+        });
+      }
     }
     await enqueueTmsInvoicePushRequested(pushClient, {
       operating_company_id: operatingCompanyId,
@@ -218,6 +233,19 @@ async function handleInvoiceBulk(ctx: BulkPerEntityContext<InvoiceBulkPayload>):
     // path (invoice-send.service.ts), so a bulk mark-sent of already-finalized invoices posts each
     // exactly once.
     await postInvoiceGlAndAudit(client, { invoiceId: id, operatingCompanyId, actorUserId });
+    // GO-0014 event2-silent-on-issued-invoices — this is the bulk counterpart of
+    // invoice-send.service.ts's single-invoice /send path, which already fires revrec Event 2 on
+    // issuance (OWNER DECISION B). This action reaches the exact same draft->sent transition through
+    // a separate writer and never called it, so a bulk-marked-sent, load-linked invoice's Event 2
+    // (DR A/R / CR Unbilled) JE never posted. Reuses the SAME helper -- no second A/R poster.
+    if (oldRow.source_load_id) {
+      await fireRevrecLatchOnInvoiceIssued(client as object, {
+        operating_company_id: operatingCompanyId,
+        source_load_id: String(oldRow.source_load_id),
+        actor_user_id: actorUserId,
+        invoice_id: id,
+      });
+    }
     if (updateRes.rows.length === 0) {
       return { ok: false, code: "E_UPDATE_FAILED", message: "Invoice mark sent failed" };
     }

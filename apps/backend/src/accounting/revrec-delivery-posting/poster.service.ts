@@ -25,6 +25,8 @@ import { createJournalEntry } from "../journal-entries.service.js";
 import { resolveRoleAccount } from "../coa-roles/resolver.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
+import { enqueueAfterCommit } from "../../lib/after-commit.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 export const REVENUE_RECOGNITION_POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -675,4 +677,63 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
     event: prepared.event,
     memo: prepared.memo,
   };
+}
+
+export type FireRevrecLatchOnInvoiceIssuedInput = {
+  operating_company_id: string;
+  source_load_id: string;
+  actor_user_id: string;
+  invoice_id: string;
+};
+
+/**
+ * GO-0014 event2-silent-on-issued-invoices — OWNER DECISION B's trigger
+ * (docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md) was wired into
+ * invoice-send.service.ts's single-invoice /send path only. accounting/invoices-bulk.routes.ts's
+ * `mark_sent` action and its `set_status` action (which can also land an invoice directly on
+ * 'paid'/'factored') set the SAME issued statuses `loadHasIssuedInvoice` reads, through a completely
+ * separate code path that never called postLoadRevenueLatch at all -- a load bulk-marked sent (or
+ * bulk-set straight to paid/factored) never got its Event 2 (DR A/R / CR Unbilled) JE, silently,
+ * with no error and no audit row naming the gap, exactly the "invisible by construction" shape
+ * LV-REVREC-NOT-FIRING (see lib/after-commit.ts) already named once for Event 1.
+ *
+ * §9.0.17 — ONE helper for this trigger, extracted out of invoice-send.service.ts's original inline
+ * block (byte-identical behavior) so every current and future call site shares it instead of
+ * re-copying the enqueue/fire/swallow-log shape per writer. Does NOT invent a second A/R poster --
+ * this calls the exact same postLoadRevenueLatch Event 2 already uses; the latch's own gates
+ * (already_posted, earn_missing_for_bill, missing_issued_invoice, ...) decide whether it actually
+ * posts, so calling this from a status writer that turns out not to be evidence-complete is a
+ * documented no-op, never a double-post.
+ *
+ * After-commit, same reasoning as firePostLoadRevenueLatch in delivery-evidence-latch.ts: the poster
+ * opens its OWN connection via withLuciaBypass and must not race the caller's own status-write
+ * transaction. Swallow-and-log: a latch failure must never fail an invoice status change that
+ * already succeeded (invoice-send.service.ts's existing before/after commit reasoning, unchanged).
+ */
+export async function fireRevrecLatchOnInvoiceIssued(
+  client: object,
+  input: FireRevrecLatchOnInvoiceIssuedInput
+): Promise<void> {
+  const fire = async () => {
+    try {
+      await postLoadRevenueLatch({
+        operating_company_id: input.operating_company_id,
+        load_id: input.source_load_id,
+        // resolveEvent() maps this literal to the "bill" event; postLoadRevenueLatch's own gates
+        // decide whether it actually posts -- this trigger does not assert the load's real dispatch
+        // status, same as every other call site of this helper.
+        target_status: "completed_docs_received",
+        entry_date_iso: companyBusinessDate(),
+        actor_user_id: input.actor_user_id,
+      });
+    } catch (err) {
+      console.warn(
+        { err, invoice_id: input.invoice_id, load_id: input.source_load_id },
+        "acct_option_b_revrec_latch_on_send_failed"
+      );
+    }
+  };
+  if (!enqueueAfterCommit(client, { label: `revrec-latch-on-send:${input.invoice_id}`, run: fire })) {
+    await fire();
+  }
 }
