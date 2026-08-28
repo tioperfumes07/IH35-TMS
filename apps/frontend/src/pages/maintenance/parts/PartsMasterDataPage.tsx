@@ -21,7 +21,7 @@ import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
-import { listVendors } from "../../../api/mdata";
+import { listAllVendors } from "../../../api/mdata";
 
 type PartDraft = {
   part_number: string;
@@ -71,7 +71,7 @@ export function PartsMasterDataPage() {
   // leaf), so this suggests real roster names without turning the field into an FK picker.
   const vendorsQuery = useQuery({
     queryKey: ["maintenance", "master-data", "parts-vendor-suggestions", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId }).then((r) => r.vendors ?? []),
+    queryFn: () => listAllVendors({ operating_company_id: companyId }).then((r) => r.vendors),
     enabled: Boolean(companyId) && createOpen,
     staleTime: 120_000,
   });

@@ -5,7 +5,7 @@ import { ParityTable, type ParityColumn } from "../components/parity/ParityTable
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listBills, listVendorBalances } from "../api/accounting";
-import { listVendors, listVendorPaymentMethods, type VendorPaymentMethod } from "../api/mdata";
+import { listAllVendors, listVendorPaymentMethods, type VendorPaymentMethod } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatUsdCents } from "../lib/money";
 import { Button } from "../components/Button";
@@ -168,7 +168,7 @@ export function VendorsPage() {
     // VEND-1: load the FULL vendor roster (the client-side table paginates/searches over it); without an
     // explicit limit the endpoint returns only the default 50.
     // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true }),
+    queryFn: () => listAllVendors({ operating_company_id: companyId, active_company_only: true }),
     enabled: Boolean(companyId),
   });
   const vendorsRoster = vendorsQuery.data?.vendors ?? [];
@@ -184,7 +184,7 @@ export function VendorsPage() {
   // the active-only roster below, unchanged).
   const inactiveVendorsQuery = useQuery({
     queryKey: ["vendors", "inactive", companyId],
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, status: "inactive" }),
+    queryFn: () => listAllVendors({ operating_company_id: companyId, status: "inactive" }),
     enabled: Boolean(companyId),
   });
   const inactiveVendorsRoster = inactiveVendorsQuery.data?.vendors ?? [];

@@ -108,6 +108,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T02:55:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.vendor-complete-rosters-nonmoney",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T03:02:00-05:00",
+      "go": "0004"
     }
   ]
 }

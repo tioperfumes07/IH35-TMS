@@ -335,7 +335,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           SELECT ${VENDOR_SELECT_COLUMNS}
           FROM ${fromClause}
           ${shiftedWhereClause}
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC, id DESC
           LIMIT $${fromValues.length - 1}
           OFFSET $${fromValues.length}
         `,
