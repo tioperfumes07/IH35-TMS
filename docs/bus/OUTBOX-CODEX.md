@@ -1,3 +1,5 @@
+Codex | WORKING | CUST-F7027 | CLAIM=post.customer-vendor-complete-roster-guard | SOURCE=listAllVendors company-scoped pagination | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7026 | PR=#16984 @ ae9bfa2d97 | Built=customer COI captured-scope aggregate 49/49 | NEXT=CUST-F7027 | GO
 Codex | WORKING | CUST-F7026 | CLAIM=post.customer-coi-snapshot-guard | SOURCE=COI submit captured company+customer generation | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7025 | PR=#16983 @ 838f4021d3 | Built=customer load/reverse tombstone-safe guard 12/12 | NEXT=CUST-F7026 | GO
 Codex | WORKING | CUST-F7025 | CLAIM=post.customer-load-guard-tombstone-links | SOURCE=quality+loads EntityLinkOrTombstone | NEXT=guard+FAST-MERGE | GO

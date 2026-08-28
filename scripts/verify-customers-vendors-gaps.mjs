@@ -75,10 +75,11 @@ function assertGuard(sources) {
   } else if (!customerRosterIsComplete && custLimit <= MIN_ROSTER_LIMIT) {
     errors.push(`${CUSTOMERS_PAGE}: listCustomers limit=${custLimit} truncates the roster (must exhaust total).`);
   }
+  const vendorRosterIsComplete = /listAllVendors\(\{[^}]*operating_company_id:\s*companyId[^}]*active_company_only:\s*true/.test(sources.vendorsPage);
   const vendLimit = listCallLimit(sources.vendorsPage, "listVendors");
-  if (vendLimit == null) {
-    errors.push(`${VENDORS_PAGE}: no listVendors({ ..., limit: N }) roster fetch found (default-50 cap risk).`);
-  } else if (vendLimit <= MIN_ROSTER_LIMIT) {
+  if (!vendorRosterIsComplete && vendLimit == null) {
+    errors.push(`${VENDORS_PAGE}: no listAllVendors scoped roster fetch found (default-page cap risk).`);
+  } else if (!vendorRosterIsComplete && vendLimit <= MIN_ROSTER_LIMIT) {
     errors.push(`${VENDORS_PAGE}: listVendors limit=${vendLimit} truncates the roster (must be > ${MIN_ROSTER_LIMIT}).`);
   }
 
@@ -169,7 +170,7 @@ function selftest() {
     <ActionButton onClick={() => setCreateOpen(true)}>+ Create Customer</ActionButton>
   `;
   const goodVendorsPage = `
-    queryFn: () => listVendors({ operating_company_id: companyId, limit: 5000, active_company_only: true }),
+    queryFn: () => listAllVendors({ operating_company_id: companyId, active_company_only: true }),
     <ActionButton onClick={() => setCreateOpen(true)}>+ Create Vendor</ActionButton>
   `;
   const goodCustomersRoute = `const q = z.object({ limit: z.coerce.number().int().min(1).max(5000).default(50), });`;
@@ -191,7 +192,7 @@ function selftest() {
   const cases = [
     { name: "all B20 invariants intact -> 0 errors", in: base, want: 0 },
     { name: "customers roster regressed to first page -> FAIL", in: { ...base, customersPage: goodCustomersPage.replace("listAllCustomers", "listCustomers") }, wantMin: 1 },
-    { name: "vendors roster lost explicit limit -> FAIL", in: { ...base, vendorsPage: goodVendorsPage.replace(", limit: 5000", "") }, wantMin: 1 },
+    { name: "vendors roster regressed to first page -> FAIL", in: { ...base, vendorsPage: goodVendorsPage.replace("listAllVendors", "listVendors") }, wantMin: 1 },
     { name: "backend customer cap regressed to max(200) -> FAIL", in: { ...base, customersRoute: goodCustomersRoute.replace("max(5000)", "max(200)") }, wantMin: 1 },
     { name: "mdata drops limit forwarding -> FAIL", in: { ...base, mdata: "// limit no longer forwarded" }, wantMin: 1 },
     { name: 'customers uses "+ Add Customer" -> FAIL', in: { ...base, customersPage: goodCustomersPage.replace("+ Create Customer", "+ Add Customer") }, wantMin: 1 },
