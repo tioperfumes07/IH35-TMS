@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { listOwnerOverrideLog } from "../../api/dispatch";
 import { Button } from "../../components/Button";
@@ -24,10 +25,16 @@ const overrideClassLabel = (row: { override_class: string | null; event_class: s
 export function OwnerOverrideLogPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const pageSize = 100;
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    setOffset(0);
+  }, [companyId]);
 
   const logQ = useQuery({
-    queryKey: ["dispatch", "owner-override-log", companyId],
-    queryFn: () => listOwnerOverrideLog(companyId, { limit: 100 }),
+    queryKey: ["dispatch", "owner-override-log", companyId, offset],
+    queryFn: () => listOwnerOverrideLog(companyId, { limit: pageSize, offset }),
     enabled: Boolean(companyId),
   });
 
@@ -36,6 +43,9 @@ export function OwnerOverrideLogPage() {
   }
 
   const rows = logQ.data?.overrides ?? [];
+  const total = logQ.data?.total ?? 0;
+  const page = Math.floor(offset / pageSize) + 1;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
   type Row = (typeof rows)[number];
 
   const columns: Array<ParityColumn<Row>> = [
@@ -89,8 +99,23 @@ export function OwnerOverrideLogPage() {
           emptyText="No owner overrides recorded."
           storageKey="dispatch-owner-override-log"
           exportFilename="owner-override-log"
+          hidePager
         />
       )}
+
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-testid="owner-override-log-server-pager">
+        <span>
+          {total === 0 ? "0" : `${offset + 1}–${Math.min(offset + pageSize, total)}`} of {total} overrides · Page {page} of {pageCount}
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" disabled={offset === 0 || logQ.isFetching} onClick={() => setOffset(Math.max(0, offset - pageSize))}>
+            Previous
+          </Button>
+          <Button size="sm" variant="secondary" disabled={offset + pageSize >= total || logQ.isFetching} onClick={() => setOffset(offset + pageSize)}>
+            Next
+          </Button>
+        </div>
+      </div>
 
       <div className="flex justify-end">
         <Button size="sm" variant="secondary" onClick={() => void logQ.refetch()}>

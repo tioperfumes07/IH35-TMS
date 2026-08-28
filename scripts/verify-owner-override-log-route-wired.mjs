@@ -33,6 +33,14 @@ const BACKEND_FILE = "apps/backend/src/audit/dispatch-overrides.routes.ts";
 const ROUTE_RE = /path="\/dispatch\/owner-override-log"/;
 const API_CALL_RE = /listOwnerOverrideLog/;
 const ENDPOINT_RE = /\/api\/v1\/dispatch\/owner-override-log/;
+const COMPLETE_HISTORY_PATTERNS = [
+  /queryKey:\s*\["dispatch",\s*"owner-override-log",\s*companyId,\s*offset\]/,
+  /listOwnerOverrideLog\(companyId,\s*\{\s*limit:\s*pageSize,\s*offset\s*\}\)/,
+  /const total = logQ\.data\?\.total \?\? 0/,
+  /data-testid="owner-override-log-server-pager"/,
+  /offset \+ pageSize >= total/,
+  /hidePager/,
+];
 
 export function checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pageSrc, backendSrc }) {
   const offenders = [];
@@ -45,6 +53,12 @@ export function checkOwnerOverrideLogWired({ manifestSrc, apiSrc, pageExists, pa
     offenders.push(`${PAGE_FILE}: page component not found`);
   } else if (!API_CALL_RE.test(pageSrc)) {
     offenders.push(`${PAGE_FILE}: page does not call listOwnerOverrideLog — looks like a placeholder, not a real consumer of the backend endpoint`);
+  } else {
+    for (const pattern of COMPLETE_HISTORY_PATTERNS) {
+      if (!pattern.test(pageSrc)) {
+        offenders.push(`${PAGE_FILE}: owner-override WORM history is not server-paged from the authoritative total/offset; older overrides can disappear silently (${pattern})`);
+      }
+    }
   }
   if (!ENDPOINT_RE.test(apiSrc)) {
     offenders.push(`${API_FILE}: no client function calling GET /api/v1/dispatch/owner-override-log`);
@@ -78,7 +92,14 @@ if (process.argv.includes("--selftest")) {
     manifestSrc: `<Route path="/dispatch/owner-override-log" element={<OwnerOverrideLogPage />} />`,
     apiSrc: `export function listOwnerOverrideLog(id) { return apiRequest(\`/api/v1/dispatch/owner-override-log?operating_company_id=\${id}\`); }`,
     pageExists: true,
-    pageSrc: `import { listOwnerOverrideLog } from "../../api/dispatch"; export function OwnerOverrideLogPage() { listOwnerOverrideLog("x"); }`,
+    pageSrc: `import { listOwnerOverrideLog } from "../../api/dispatch";
+      export function OwnerOverrideLogPage() {
+        const pageSize = 100; const offset = 0; const logQ = { data: { total: 1 } };
+        listOwnerOverrideLog(companyId, { limit: pageSize, offset });
+        const query = { queryKey: ["dispatch", "owner-override-log", companyId, offset] };
+        const total = logQ.data?.total ?? 0;
+        return <><ParityTable hidePager /><div data-testid="owner-override-log-server-pager">{offset + pageSize >= total}</div></>;
+      }`,
     backendSrc: realBackend,
   };
 
@@ -91,12 +112,14 @@ if (process.argv.includes("--selftest")) {
   const swallowFails = checkOwnerOverrideLogWired(swallowed).some((item) => item.includes("false empty override history"));
   const unbounded = { ...fixed, backendSrc: realBackend.replace('{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', "") };
   const rateLimitFails = checkOwnerOverrideLogWired(unbounded).some((item) => item.includes("lacks the canonical rate limit"));
+  const silentlyCapped = { ...fixed, pageSrc: fixed.pageSrc.replace(', offset]', ']') };
+  const capFails = checkOwnerOverrideLogWired(silentlyCapped).some((item) => item.includes("not server-paged"));
 
-  if (buggyFails && fixedPasses && swallowFails && rateLimitFails) {
-    console.log("verify:owner-override-log-route-wired selftest OK (route + query-swallow mutations caught)");
+  if (buggyFails && fixedPasses && swallowFails && rateLimitFails && capFails) {
+    console.log("verify:owner-override-log-route-wired selftest OK (route + query-swallow + silent-cap mutations caught)");
     process.exit(0);
   }
-  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses, swallowFails, rateLimitFails });
+  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses, swallowFails, rateLimitFails, capFails });
   process.exit(1);
 }
 
