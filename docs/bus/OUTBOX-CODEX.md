@@ -1,3 +1,5 @@
+Codex | WORKING | DRV-F7036 | CLAIM=post.driver-roster-complete-search-guard | SOURCE=listAllDrivers selected-company server search | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7033 | PR=#16992 @ c03262052e | Built=atomic suspend captured-scope guard 4/4 | NEXT=driver roster | GO
 Codex | WORKING | DRV-F7033 | CLAIM=post.driver-suspend-captured-scope-guard | SOURCE=atomic suspend captured driver+reason+generation | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7032 | PR=#16991 @ 033033aeae | Built=driver scheduler self-balance guard 8/8 | NEXT=driver census | GO
 Codex | WORKING | DRV-F7032 | CLAIM=post.driver-scheduler-self-balance-guard-extractor | SOURCE=driver-session exact self-balance route | NEXT=guard+FAST-MERGE | GO
