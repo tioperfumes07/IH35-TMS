@@ -1,3 +1,5 @@
+Codex | WORKING | INS-F6961 | CLAIM=post.insurance-expiry-company-date | vertical=policies+coverage-gaps | guard=2/2 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | FLT-F6960 | PR=#16925 @ b9cc775aa2 | Built=unit+trailer+reefer lifecycle business-date | NEXT=INS-F6961 | GO
 Codex | WORKING | FLT-F6960 | CLAIM=post.fleet-lifecycle-business-date | vertical=unit+trailer+reefer | guard=3/3 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DRV-F6958 | PR=#16924 @ 9d249de1e2 | Built=driver qualification+safety+layover business-date | routed=DRV-MONEY-F6959→CC-1 | NEXT=FLT-F6960 | GO
 Codex | WORKING | DRV-F6958 | CLAIM=post.driver-nonmoney-business-date | vertical=qualification+safety+layover | guard=6/6 | routed-money=CC-1 | NEXT=FAST-MERGE | GO

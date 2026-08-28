@@ -17,14 +17,14 @@ import { ApiError } from "../../api/client";
 import { useSearchParams } from "react-router-dom";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { companyToday } from "../../lib/businessDate";
 
 function toDate(value: string) {
   return new Date(`${value}T00:00:00.000Z`);
 }
 
 function daysUntil(value: string) {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const start = toDate(companyToday());
   return Math.floor((toDate(value).getTime() - start.getTime()) / 86400000);
 }
 

@@ -23,14 +23,14 @@ import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
+import { companyToday } from "../../lib/businessDate";
 
 function formatMoney(cents: number) {
   return formatUsdCents(cents);
 }
 
 function daysUntil(value: string) {
-  const now = new Date();
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const start = new Date(`${companyToday()}T00:00:00.000Z`);
   const target = new Date(`${value}T00:00:00.000Z`);
   return Math.floor((target.getTime() - start.getTime()) / 86400000);
 }
