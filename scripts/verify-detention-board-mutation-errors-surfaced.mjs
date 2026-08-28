@@ -51,6 +51,19 @@ export function checkDetentionBoardMutationErrors(src) {
       offenders.push(`${FILE}: ${name} has no onError — a rejected write will silently do nothing again.`);
     }
   }
+  if ((src.match(/mutationFn:\s*\(\)\s*=>/g) ?? []).length > 0) {
+    offenders.push(`${FILE}: a detention write still closes over mutable render scope instead of accepting submitted variables.`);
+  }
+  for (const required of [
+    "type DetentionAction = { eventId: string; companyId: string }",
+    "onSuccess: (_result, variables) => onAction(variables.companyId)",
+    "mutationFn: (submittedCompanyId: string) => syncDetentionFromArrivals(submittedCompanyId)",
+    '["dispatch", "detention-board", submittedCompanyId]',
+    "const actionPending = closeM.isPending || bridgeM.isPending || notifyM.isPending",
+    "syncM.mutate(companyId)",
+  ]) {
+    if (!src.includes(required)) offenders.push(`${FILE}: missing scope/lifecycle invariant: ${required}`);
+  }
   return offenders;
 }
 
@@ -102,6 +115,18 @@ if (process.argv.includes("--selftest")) {
 
   const buggyOffenders = checkDetentionBoardMutationErrors(buggy);
   const fixedOffenders = checkDetentionBoardMutationErrors(fixed);
+  const mutableScope = fixed.replace(
+    "mutationFn: (submittedCompanyId: string) => syncDetentionFromArrivals(submittedCompanyId)",
+    "mutationFn: () => syncDetentionFromArrivals(companyId)",
+  );
+  const wrongInvalidation = fixed.replaceAll(
+    '["dispatch", "detention-board", submittedCompanyId]',
+    '["dispatch", "detention-board", companyId]',
+  );
+  const concurrentRows = fixed.replace(
+    "const actionPending = closeM.isPending || bridgeM.isPending || notifyM.isPending",
+    "const actionPending = closeM.isPending",
+  );
   const cappedService = fixedService.replace(
     "ORDER BY de.status ASC, de.started_at ASC",
     "ORDER BY de.status ASC, de.started_at ASC LIMIT 200",
@@ -109,13 +134,18 @@ if (process.argv.includes("--selftest")) {
   const capFails = checkDetentionBoardCompleteRange(cappedService).some((item) => item.includes("silently caps"));
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && capFails && completePasses) {
+  const lifecycleMutationsFail = [mutableScope, wrongInvalidation, concurrentRows].every(
+    (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
+  );
+
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
   console.error("verify-detention-board-mutation-errors-surfaced selftest FAILED", {
     buggyOffenders,
     fixedOffenders,
+    lifecycleMutationsFail,
     capFails,
     completePasses,
   });
