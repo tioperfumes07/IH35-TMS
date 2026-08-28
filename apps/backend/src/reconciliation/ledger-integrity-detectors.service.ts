@@ -539,6 +539,85 @@ export async function checkFutureDatedEntriesForCompany(client: DbClient, operat
   }
 }
 
+// INV-11 REVERSAL SYMMETRY (detector 7 of the plan's 10): scripts/verify-gl-invariants.sql's own
+// INV-11 block ("expect reversal_of = reversed_by"). Two independent checks, both currently a clean
+// steady state (live-queried before building: 2181 real JEs, 117 marked reversed = 117 marked
+// reversal, 0 voided-in-place, 0 broken pointers either direction):
+//   voided_in_place    — a JE must NEVER be voided in place (voided_at set). The void-not-delete law
+//                         requires a REVERSAL (a new JE with reverses_je_id pointing back), never a
+//                         mutation of the original entry. A JE with voided_at set is that law broken.
+//   reversal pointer    — reversed_by_je_id and reverses_je_id are two ends of the SAME edge and must
+//                         agree: if A.reversed_by_je_id = B, then B.reverses_je_id must = A, and vice
+//                         versa. A one-sided pointer (set on one JE, not mirrored on the other) means
+//                         the reversal relationship is only half-recorded — auditable from one entry,
+//                         invisible from the other.
+export async function checkReversalIntegrityForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const voidedRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(id::text))[1:10] AS ids
+      FROM accounting.journal_entries
+      WHERE operating_company_id = $1::uuid AND voided_at IS NOT NULL AND COALESCE(is_sample_data, false) = false
+    `,
+    [operatingCompanyId]
+  );
+  const voidedCount = Number(voidedRes.rows[0]?.count ?? 0);
+  const voidedScope: ResourceScope = { role: "journal_entry_voided_in_place", account_id: "", account_number: "" };
+  if (voidedCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "journal_entry_voided_in_place",
+      severity: "critical",
+      runId,
+      resourceScope: voidedScope,
+      localValue: { count: voidedCount, sample_journal_entry_ids: voidedRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "journal_entry_must_be_reversed_never_voided_in_place", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "journal_entry_voided_in_place", voidedScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+
+  const brokenRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(id::text))[1:10] AS ids
+      FROM (
+        SELECT je.id
+        FROM accounting.journal_entries je
+        LEFT JOIN accounting.journal_entries rb
+          ON rb.id = je.reversed_by_je_id AND rb.operating_company_id = je.operating_company_id
+        WHERE je.operating_company_id = $1::uuid AND je.reversed_by_je_id IS NOT NULL
+          AND COALESCE(je.is_sample_data, false) = false
+          AND (rb.reverses_je_id IS DISTINCT FROM je.id)
+        UNION
+        SELECT je.id
+        FROM accounting.journal_entries je
+        LEFT JOIN accounting.journal_entries rv
+          ON rv.id = je.reverses_je_id AND rv.operating_company_id = je.operating_company_id
+        WHERE je.operating_company_id = $1::uuid AND je.reverses_je_id IS NOT NULL
+          AND COALESCE(je.is_sample_data, false) = false
+          AND (rv.reversed_by_je_id IS DISTINCT FROM je.id)
+      ) broken
+    `,
+    [operatingCompanyId]
+  );
+  const brokenCount = Number(brokenRes.rows[0]?.count ?? 0);
+  const brokenScope: ResourceScope = { role: "journal_entry_reversal_pointer", account_id: "", account_number: "" };
+  if (brokenCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "journal_entry_reversal_pointer_broken",
+      severity: "critical",
+      runId,
+      resourceScope: brokenScope,
+      localValue: { count: brokenCount, sample_journal_entry_ids: brokenRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "reversed_by_je_id_and_reverses_je_id_must_point_back_to_each_other", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "journal_entry_reversal_pointer_broken", brokenScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
@@ -550,5 +629,6 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
     await checkPerEntryBalanceForCompany(client, operatingCompanyId, runId);
     await checkNoGlDeltaForCompany(client, operatingCompanyId, runId);
     await checkFutureDatedEntriesForCompany(client, operatingCompanyId, runId);
+    await checkReversalIntegrityForCompany(client, operatingCompanyId, runId);
   }
 }
