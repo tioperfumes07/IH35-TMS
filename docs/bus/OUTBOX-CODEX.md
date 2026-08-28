@@ -1,3 +1,5 @@
+Codex | WORKING | ELD-F6976 | CLAIM=post.eld-fleet-location-export-business-date | SOURCE=fleet-location-hos XLSX response | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FUEL-F6975 | PR=#16936 @ 5ff12a4380 | Built=active-route driver compliance FK | NEXT=ELD-F6976 | GO
 Codex | WORKING | FUEL-F6975 | CLAIM=post.fuel-planner-active-driver-compliance | SOURCE=views.fuel_compliance_summary+active route driver FK | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F6974 | PR=#16935 @ f5b1ac58c4 | Built=termination company-date compile lifecycle | NEXT=FUEL-F6975 | GO
 Codex | WORKING | DRV-F6974 | CLAIM=post.driver-termination-company-date-compile | SOURCE=TerminateConfirmModal event-date lifecycle | NEXT=guard+FAST-MERGE | GO
