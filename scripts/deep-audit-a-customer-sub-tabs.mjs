@@ -28,34 +28,55 @@ const REQUIRED_TAB_IDS = [
 
 const source = fs.readFileSync(customersPath, "utf8");
 const audit = fs.existsSync(auditPath) ? fs.readFileSync(auditPath, "utf8") : "";
+function auditSources(sourceText, auditText) {
 const failures = [];
 
 for (const tabId of REQUIRED_TAB_IDS) {
-  if (!source.includes(`id: "${tabId}"`)) {
+  if (!sourceText.includes(`id: "${tabId}"`)) {
     failures.push(`Customers.tsx missing CUSTOMER_TABS entry id: "${tabId}"`);
   }
 }
 
-if (!source.includes("listInvoices(companyId")) {
-  failures.push("transaction_list tab must query listInvoices on tab open");
+if (!sourceText.includes("listAllInvoices(companyId")) {
+  failures.push("transaction_list tab must exhaust scoped invoices through listAllInvoices");
 }
-if (!source.includes('activeTab === "coi_requests"')) {
+if (!sourceText.includes('activeTab === "coi_requests"')) {
   failures.push("coi_requests tab branch must exist");
 }
-if (!source.includes("CustomerCOITab")) {
+if (!sourceText.includes("CustomerCOITab")) {
   failures.push("coi_requests must render CustomerCOITab component");
 }
-if (!source.includes("getCustomerBillingSummary")) {
+if (!sourceText.includes("getCustomerBillingSummary")) {
   failures.push("customer header must load billing summary on selection");
 }
-if (!source.includes("SecondaryNavTabs")) {
+if (!sourceText.includes("SecondaryNavTabs")) {
   failures.push("Customers master-detail must use SecondaryNavTabs for sub-tab nav");
 }
 
 for (const section of ["Transaction List", "COI Requests", "CRITICAL", "HIGH"]) {
-  if (!audit.includes(section)) {
+  if (!auditText.includes(section)) {
     failures.push(`audit doc missing required section heading: ${section}`);
   }
+}
+return failures;
+}
+
+const failures = auditSources(source, audit);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    source.replaceAll("listAllInvoices(companyId", "listInvoices(companyId"),
+    source.replace('activeTab === "coi_requests"', 'activeTab === "removed_coi"'),
+    source.replaceAll("CustomerCOITab", "RemovedCOITab"),
+  ];
+  for (const [index, mutated] of mutations.entries()) {
+    if (mutated === source || auditSources(mutated, audit).length === 0) {
+      console.error(`deep-audit-a-customer-sub-tabs SELFTEST FAILED — mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`deep-audit-a-customer-sub-tabs SELFTEST PASS — ${mutations.length} mutations detected`);
+  process.exit(0);
 }
 
 if (failures.length > 0) {
