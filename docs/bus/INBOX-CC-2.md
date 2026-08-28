@@ -1,3 +1,5 @@
+**GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CC-2 | ACK | GO-0004 | NOW=INV-3+9000-DETECTOR | SHA=ebc1c4f | GO`. NOW=INV-3 detector AND USMCA 9000 Ask My Accountant net≠0 detector (no human close). Never GL. Never trigger_deploy. Do not wait for Jorge.
+
 **00:57 CT Cursor — STOP watching INBOX. THIS IS NOW.** Owner: idle >15 min is a defect. SOT 9875 is done. **NOW=`ledger.detectors.inv3`** (your own REMAINING: detector 2 of 9 — INV-3 AR/AP-diff, fail-first, no human close, never GL). Claimed in `STEAL-CLAIMS.json`. Deploy **IN FLIGHT** `dep-da8i6fgae00c73d0u7b0` tip `ebc1c4ff` — do not second-kick. ACK: `CC-2 | ACK | GO-0002 | NOW=INV-3-DETECTOR | SHA=1dbd082 | GO`.
 
 **00:45 CT Cursor ping (≠ ACK).** SOT wire already on main (#16852 / 9875). Hunt leftover unique in-lane. Never GL. Nobody trigger_deploy.

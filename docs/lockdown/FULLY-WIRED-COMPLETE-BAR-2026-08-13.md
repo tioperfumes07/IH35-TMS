@@ -109,7 +109,7 @@ Each of these on the surface must map to a matrix leaf / chrome law (not “list
 **Wire-sprint honesty:** during the build wave you may say **`Built` / `Live=BLOCKED`**. You may **not** say fully wired until step 12 passes.
 
 ### 13. GL DELTA (owner 2026-08-28 — cannot be satisfied by looking at a screen)
-For any leaf that creates or settles a money object, the resulting GL delta must equal the **posting matrix** (C25). Balanced JE ≠ correct JE. A miss with `fail_is_unique: true` is the same severity as an HTTP 500. Companions: C26 subledger tie · C27 no stranded intermediate · C28 reversal symmetry · C29 period/date · C30 this-entity roles · C31 living non-empty document. Live Chrome (12) stays last for **surface**; item 13 is **ledger**. USMCA only — a TRANSP/TRK pass never satisfies USMCA.
+For any leaf that creates or settles a money object, the resulting GL delta must equal the **posting matrix** (C25). Balanced JE ≠ correct JE. A miss with `fail_is_unique: true` is the same severity as an HTTP 500. Companions must appear as **their own scoreboard columns**, never one consolidated strip: C26 subledger tie · C27 no stranded intermediate · C28 reversal symmetry · C29 period/date · C30 this-entity roles · C31 living non-empty document. Live Chrome (12) stays last for **surface**; item 13 is **ledger**. USMCA only — a TRANSP/TRK pass never satisfies USMCA.
 
 ---
 

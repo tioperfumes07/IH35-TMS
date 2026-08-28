@@ -21,6 +21,8 @@ Extend this table when a new ambiguous pair burns a seat. Do not invent a second
 | maintenance | `maintenance.*` | `maint.*` (RETIRE) | Schema rename. |
 | cancellation reasons | `catalogs.cancellation_reasons` | ad-hoc string / wrong catalog | Canonical list. |
 | units | `mdata.units` (`owner_company_id` / lease) | inventing `operating_company_id` / `display_id` on units | Units are not opco-scoped the way loads are. |
+| from-load invoice number | `accounting.invoices.display_id` = `mdata.loads.load_number` (`apps/backend/src/accounting/from-load.ts` ~170–180, owner 2026-08-24) | expecting every invoice to be `INV-YYYY-NNNN` | Historical INV-* rows stay. Manual/recurring/TONU still use the allocator. An `L-` from-load invoice is **not** a defect. |
+| seat loop done | Neon query-back of **rows the seat created** (GL + FKs + flags) | UI toast / wizard “submitted” | Same class as FW-13: the claim is the record, not the screen. |
 
 ## How to use
 

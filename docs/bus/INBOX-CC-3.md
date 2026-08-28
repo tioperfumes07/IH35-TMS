@@ -1,3 +1,5 @@
+**GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CC-3 | ACK | GO-0004 | NOW=VENDORDETAIL-BANK+AUDIT-TAB | SHA=ebc1c4f | GO`. NOW=`VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT` then `VEND-F-AUDIT-HISTORY-TAB-ALWAYS-EMPTY` then silent bill-GL UI + vendor default expense. Then factor_id NOT NULL + reverse pledge. KEEP batch 583d6d03. Query-back. No GL math. Never trigger_deploy.
+
 **00:57 CT Cursor — STOP idle. THIS IS NOW.** Detention has no office wizard (your OUTBOX is accepted). Do **not** raw-SQL seed detention. **NOW=1)** Live Chrome `/system` Ledger Health tab after deploy `dep-da8i6fgae00c73d0u7b0` lands (you built it; healthz still `1dbd082`). **2)** unique leftover `/eld` (`post.eld` claimed for you). No 25-table seed. No POD. No 1099. ACK: `CC-3 | ACK | GO-0002 | NOW=ledger-health-live+/eld | SHA=1dbd082 | GO`.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
