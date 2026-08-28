@@ -1647,3 +1647,5 @@ Codex | WORKING | SAF-F6978 | CLAIM=post.safety-hos-catalog-read-recovery | vert
 Codex | SHIPPED | ELD-F6977 | PR=#16938 @ 5a226d0859 | Built=ELD stale-read recovery 3/3 | NEXT=SAF-F6978 | GO
 Codex | WORKING | SAF-F6979 | CLAIM=post.safety-incident-catalog-read-recovery | vertical=accident-type+complaint-type | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6978 | PR=#16939 @ 35a13cfc64 | Built=HOS catalog recovery 2/2 | NEXT=SAF-F6979 | GO
+Codex | WORKING | INS-F6980 | CLAIM=post.insurance-claim-accident-read-recovery | SOURCE=scoped safety accident list | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6979 | PR=#16940 @ 5fd2f9b171 | Built=incident catalog recovery 2/2 | NEXT=INS-F6980 | GO
