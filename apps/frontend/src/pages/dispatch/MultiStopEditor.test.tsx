@@ -57,8 +57,10 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
 });
 
 vi.mock("../../api/catalogs-dispatch", () => ({
+  listAllDispatchCatalogRows: (client: { list: (filters: unknown) => Promise<unknown> }, filters: unknown) =>
+    client.list({ ...(filters as object), limit: 200, offset: 0 }),
   pickupTimeTypesCatalogClient: {
-    list: vi.fn().mockResolvedValue({ rows: [{ id: "pt1", display_name: "Appointment", code: "APPT" }] }),
+    list: vi.fn().mockResolvedValue({ rows: [{ id: "pt1", display_name: "Appointment", code: "APPT" }], total: 1 }),
   },
 }));
 

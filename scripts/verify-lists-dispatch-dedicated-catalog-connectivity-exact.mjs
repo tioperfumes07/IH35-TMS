@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["lists"],"cols":["connectivity"],"leaves":["catalog.dispatch.dispatch_flag_colors.list","catalog.dispatch.dispatch_flag_colors.create","catalog.dispatch.load_types.list","catalog.dispatch.load_types.create","catalog.dispatch.detention_reasons.list","catalog.dispatch.detention_reasons.create","catalog.dispatch.pickup_time_types.list","catalog.dispatch.pickup_time_types.create","catalog.dispatch.additional_charges.list","catalog.dispatch.additional_charges.create","catalog.dispatch.load_cancellation_reasons.list","catalog.dispatch.load_cancellation_reasons.create"],"task":"LISTS-F5958-DISPATCH-DEDICATED-CATALOG-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["connectivity","picker_law"],"leaves":["secondary.book_load","load.drawer.stops","dispatch.modal.book_load_modal_v4"],"task":"DSP-F7076-DISPATCH-CATALOG-PICKERS-COMPLETE-RANGE","vertical":"class-sweep"} */
 import fs from "node:fs";
 
 const SELF = "scripts/verify-lists-dispatch-dedicated-catalog-connectivity-exact.mjs";
@@ -9,6 +10,9 @@ const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
 const SHARED_PAGE = "apps/frontend/src/pages/lists/dispatch/DispatchCatalogListPage.tsx";
 const SHARED_API = "apps/frontend/src/api/catalogs-dispatch.ts";
 const SHARED_BACKEND = "apps/backend/src/catalogs/dispatch/shared.ts";
+const ACCESSORIAL_EDITOR = "apps/frontend/src/components/dispatch/AccessorialEditor.tsx";
+const MULTI_STOP_EDITOR = "apps/frontend/src/pages/dispatch/MultiStopEditor.tsx";
+const BOOK_LOAD_MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const SHARED = [
   ["load_types", "load-types", "LoadTypes", "loadTypesCatalogClient"],
   ["detention_reasons", "detention-reasons", "DetentionReasons", "detentionReasonsCatalogClient"],
@@ -39,12 +43,24 @@ export function audit(s = {}) {
   const sharedPage = s.sharedPage ?? read(SHARED_PAGE);
   const sharedApi = s.sharedApi ?? read(SHARED_API);
   const sharedBackend = s.sharedBackend ?? read(SHARED_BACKEND);
+  const accessorialEditor = s.accessorialEditor ?? read(ACCESSORIAL_EDITOR);
+  const multiStopEditor = s.multiStopEditor ?? read(MULTI_STOP_EDITOR);
+  const bookLoadModal = s.bookLoadModal ?? read(BOOK_LOAD_MODAL);
   const self = s.self ?? read(SELF);
   let matrix;
   try { matrix = JSON.parse(matrixText); } catch (error) { return [`Lists matrix invalid: ${error.message}`]; }
   if (!self.split("\n").includes(HEADER)) failures.push("exact Built header missing");
+  if (!self.includes("DSP-F7076-DISPATCH-CATALOG-PICKERS-COMPLETE-RANGE")) failures.push("dispatch picker complete-range Built header missing");
   if (!sharedPage.includes("client.list({") || !sharedPage.includes("operating_company_id: companyId") || !sharedPage.includes("client.create(companyId, body)") || !sharedPage.includes("invalidateQueries") || !sharedPage.includes("<CatalogEntryModal")) failures.push("shared Dispatch catalog page must scope list/create, reload, and mount the editor");
   if (!sharedApi.includes("operating_company_id=${encodeURIComponent(operatingCompanyId)}") || !sharedApi.includes('method: "POST"')) failures.push("shared Dispatch API must scope writes by company");
+  for (const token of ["listAllDispatchCatalogRows", "expectedTotal", "page.total !== expectedTotal", "page.rows.length === 0", "seen.has(row.id)", "offset += page.rows.length", "rows.length !== expectedTotal"]) {
+    if (!sharedApi.includes(token)) failures.push(`complete Dispatch catalog reader missing ${token}`);
+  }
+  if (!accessorialEditor.includes("listAllDispatchCatalogRows(additionalChargesCatalogClient") || /additionalChargesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(accessorialEditor)) failures.push("AccessorialEditor must exhaust additional-charges catalog");
+  if (!multiStopEditor.includes("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient") || /pickupTimeTypesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(multiStopEditor)) failures.push("MultiStopEditor must exhaust pickup-time-types catalog");
+  for (const client of ["pickupTimeTypesCatalogClient", "lumperProvidersCatalogClient", "loadTypesCatalogClient"]) {
+    if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
+  }
   for (const token of ["withCompanyScope(", 'app.get(basePath', 'app.post(basePath', "operating_company_id = $1::uuid", "INSERT INTO ${tableName}", "appendCrudAudit("]) if (!sharedBackend.includes(token)) failures.push(`shared Dispatch backend missing ${token}`);
 
   for (const [leafKey, slug, pageName, clientName] of SHARED) {
@@ -74,13 +90,18 @@ export function audit(s = {}) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), self: read(SELF) };
+  const original = { matrix: read(MATRIX), manifest: read(MANIFEST), sharedPage: read(SHARED_PAGE), sharedApi: read(SHARED_API), sharedBackend: read(SHARED_BACKEND), accessorialEditor: read(ACCESSORIAL_EDITOR), multiStopEditor: read(MULTI_STOP_EDITOR), bookLoadModal: read(BOOK_LOAD_MODAL), self: read(SELF) };
   const mutations = [
     ["matrix", original.matrix.replace('"id": "catalog.dispatch.load_types.list"', '"id": "catalog.dispatch.load_types.list.broken"')],
     ["manifest", original.manifest.replace('path="/lists/dispatch/load-types"', 'path="/lists/dispatch/load-types-broken"')],
     ["sharedPage", original.sharedPage.replace("client.create(companyId, body)", 'client.create("", body)')],
     ["sharedApi", original.sharedApi.replace('createDispatchCatalogClient("detention-reasons")', 'createDispatchCatalogClient("detention-reasons-broken")')],
     ["sharedBackend", original.sharedBackend.replaceAll("appendCrudAudit(", "appendMissingAudit(")],
+    ["sharedApi", original.sharedApi.replace("offset += page.rows.length", "offset += 200")],
+    ["sharedApi", original.sharedApi.replace("page.total !== expectedTotal", "page.total < expectedTotal")],
+    ["accessorialEditor", original.accessorialEditor.replace("listAllDispatchCatalogRows(additionalChargesCatalogClient", "additionalChargesCatalogClient.list")],
+    ["multiStopEditor", original.multiStopEditor.replace("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient", "pickupTimeTypesCatalogClient.list")],
+    ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
   ];
   for (const [key, mutant] of mutations) if (!audit({ ...original, [key]: mutant }).length) throw new Error(`mutation survived: ${key}`);
   for (const [leafKey, slug, pageName, clientName] of SHARED) {

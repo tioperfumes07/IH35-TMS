@@ -1828,3 +1828,5 @@ Codex | SHIPPED | MAINT-F7067 | PR=#17031 @ 17264a488557 | Built=retired 2 stale
 Codex | WORKING | DSP-F7068 | CLAIM=post.dispatch-credit-override-audit-atomic | SOURCE=Book Load override fire-and-forget audit | NEXT=atomic audit+guard+selftest+FAST-MERGE | GO
 Codex | WORKING | DSP-F7075 | CLAIM=post.dispatch-hos-validation-unavailable-visible | SOURCE=hos clocks→pre-dispatch validator | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7074 | PR=#17044 @ de04cbfd0d | Built=dispatch document histories complete range | NEXT=HOS validation truth | GO
+Codex | WORKING | DSP-F7076 | CLAIM=post.dispatch-catalog-pickers-complete-range | SOURCE=4 scoped catalogs total+offset→3 creator leaves | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7075 | PR=#17046 @ 8b525e4d89 | Built=dispatch pre-dispatch HOS failure visible | NEXT=catalog picker complete range | GO
