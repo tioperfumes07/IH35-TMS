@@ -133,7 +133,16 @@ export function WarrantyClaimsPage() {
     setFileClaimNumber("");
   }, [companyId]);
 
-  const claims = claimsQ.data?.rows ?? [];
+  useEffect(() => {
+    if (!claimsQ.isError) return;
+    setCreateOpen(false);
+    setFileTarget(null);
+    setDetectWoId("");
+    setClaimDraft(EMPTY_CLAIM);
+    setFileClaimNumber("");
+  }, [claimsQ.isError]);
+
+  const claims = claimsQ.isError ? [] : (claimsQ.data?.rows ?? []);
 
   const columns = useMemo<ParityColumn<MaintenanceWarrantyClaimRow>[]>(
     () => [
@@ -169,7 +178,7 @@ export function WarrantyClaimsPage() {
         breadcrumb={[{ label: "Maintenance" }, { label: "Warranty Claims" }]}
         backHref="/maintenance"
         actions={
-          <Button type="button" disabled={!companyId} onClick={() => setCreateOpen(true)}>
+          <Button type="button" disabled={!companyId || claimsQ.isError} onClick={() => setCreateOpen(true)}>
             + Create Claim
           </Button>
         }
@@ -191,13 +200,14 @@ export function WarrantyClaimsPage() {
             className="mt-1"
             dataField="warranty-detect-wo-input"
             dataTestId="warranty-detect-wo-input"
+            enabled={!claimsQ.isError}
           />
         </label>
         <div className="self-end">
           <Button
             type="button"
             variant="secondary"
-            disabled={!companyId || !detectWoId.trim() || detectMutation.isPending}
+            disabled={claimsQ.isError || !companyId || !detectWoId.trim() || detectMutation.isPending}
             onClick={() => detectMutation.mutate({ companyId, generation: actionGenerationRef.current, workOrderId: detectWoId })}
             data-testid="warranty-detect-from-wo"
           >
@@ -279,7 +289,7 @@ export function WarrantyClaimsPage() {
           </label>
           <Button
             type="button"
-            disabled={!claimDraft.part_description.trim() || createMutation.isPending}
+            disabled={claimsQ.isError || !claimDraft.part_description.trim() || createMutation.isPending}
             onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...claimDraft } })}
           >
             Save claim
@@ -311,7 +321,7 @@ export function WarrantyClaimsPage() {
           </label>
           <Button
             type="button"
-            disabled={!fileTarget || fileMutation.isPending}
+            disabled={claimsQ.isError || !fileTarget || fileMutation.isPending}
             onClick={() => {
               if (!fileTarget) return;
               fileMutation.mutate({ id: fileTarget.id, companyId, generation: actionGenerationRef.current, claimNumber: fileClaimNumber });

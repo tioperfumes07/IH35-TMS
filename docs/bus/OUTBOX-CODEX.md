@@ -1692,3 +1692,5 @@ Codex | SHIPPED | MAINT-F7001 | PR=#16960 @ c2b9518d5f | Built=maintenance vendo
 Codex | WORKING | MAINT-F7002 | CLAIM=post.maintenance-ap-vendor-list-label | SOURCE=catalogs.maintenance_vendors→mdata.vendors same-company JOIN | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7002 | PR=#16961 @ b168bb93f7 | Built=maintenance→AP vendor human forward label | Live=post-deploy UNVERIFIED | NEXT=maintenance vendor detail reverse-history census | GO
 Codex | WORKING | MAINT-F7003 | CLAIM=post.maintenance-vendor-detail-read-recovery | vertical=profile+WO-history+invoice-history+counts+pagers | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7003 | PR=#16962 @ fd4eb29cc8 | Built=vendor profile+WO/invoice reverse histories fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
+Codex | WORKING | MAINT-F7004 | CLAIM=post.maintenance-warranty-read-recovery | vertical=create+detect-WO+file-claim | NEXT=guard+FAST-MERGE | GO

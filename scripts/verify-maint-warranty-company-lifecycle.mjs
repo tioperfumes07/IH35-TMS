@@ -21,6 +21,13 @@ const tokens = [
   "createMutation.reset()",
   "fileMutation.reset()",
   "detectMutation.reset()",
+  "const claims = claimsQ.isError ? [] : (claimsQ.data?.rows ?? [])",
+  "if (!claimsQ.isError) return;",
+  "disabled={!companyId || claimsQ.isError}",
+  "enabled={!claimsQ.isError}",
+  "disabled={claimsQ.isError || !companyId || !detectWoId.trim() || detectMutation.isPending}",
+  "disabled={claimsQ.isError || !claimDraft.part_description.trim() || createMutation.isPending}",
+  "disabled={claimsQ.isError || !fileTarget || fileMutation.isPending}",
 ];
 
 function inspect(value) {
