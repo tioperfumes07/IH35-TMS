@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-2050 | PORT=MCP | NOW=/program | SHA=7eda992 | GO
 CASCADE | LIFECYCLE-SLICE | MODULE=dispatch | SHA=7eda992 | TEST=L-20260827-0850 | FLOW=BookLoad→SaveDraft→verify | RESULT=PASS · no silent fail · no dead click · customer_name=TIO PERFUMES · commodity stored · 0 console errors | LAUNCH-SAFE | GO
 CASCADE | ACK | GO-LAUNCH-SAFE | PORT=MCP | NOW=/dispatch+driver-hub | SHA=7eda992 | one lifecycle slice + unique FINDING · no U14 restamp · idle=defect | GO
 CASCADE | METER3-WALK | MODULE=dispatch | SHA=7eda992 | N=0 | NEXT=/driver-hub | GO
