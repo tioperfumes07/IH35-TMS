@@ -70,9 +70,9 @@ export function InvoiceDetailPage() {
   // ACCT-F5053 — when invoice.source_load_id is set, hop to load's driver/unit (do not invent invoice FKs).
   const sourceLoadId = detailQuery.data?.source_load_id ?? null;
   const sourceLoadQuery = useQuery({
-    queryKey: ["accounting", "invoice", "source-load", sourceLoadId],
-    queryFn: () => getLoad(String(sourceLoadId)),
-    enabled: Boolean(sourceLoadId),
+    queryKey: ["accounting", "invoice", "source-load", selectedCompanyId, sourceLoadId],
+    queryFn: () => getLoad(String(sourceLoadId), selectedCompanyId!),
+    enabled: Boolean(selectedCompanyId && sourceLoadId),
     staleTime: 60_000,
   });
 

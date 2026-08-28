@@ -136,9 +136,9 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
   });
 
   const loadDetailQuery = useQuery({
-    queryKey: ["cash-advances", "load-detail", loadId],
-    queryFn: () => getLoad(String(loadId)),
-    enabled: open && Boolean(loadId),
+    queryKey: ["cash-advances", "load-detail", operatingCompanyId, loadId],
+    queryFn: () => getLoad(String(loadId), operatingCompanyId),
+    enabled: open && Boolean(operatingCompanyId && loadId),
   });
 
   useEffect(() => {
