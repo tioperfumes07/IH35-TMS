@@ -16,6 +16,10 @@ const activeRoutesQuerySchema = companyQuerySchema.extend({
   offset: z.coerce.number().int().min(0).default(0),
 });
 
+const complianceSummaryQuerySchema = companyQuerySchema.extend({
+  driver_id: z.string().uuid().optional(),
+});
+
 const recommendationIdParamsSchema = z.object({
   id: z.string().uuid(),
 });
@@ -299,9 +303,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/planner/compliance/summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
-    const query = companyQuerySchema.safeParse(req.query ?? {});
+    const query = complianceSummaryQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
+    const driverId = query.data.driver_id ?? null;
 
     const summary = await withCompanyScope(authUser.uuid, companyId, async (client) => {
       const fleetRes = await client.query<{ pct: number; total_recs: number }>(
@@ -326,10 +331,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           LEFT JOIN mdata.drivers d ON d.id = c.driver_id
                                     AND d.operating_company_id = $1::uuid
           WHERE c.operating_company_id = $1::uuid
+            AND ($2::uuid IS NULL OR c.driver_id = $2::uuid)
           ORDER BY c.pct_followed DESC NULLS LAST
-          LIMIT 25
         `,
-        [companyId]
+        [companyId, driverId]
       );
       return {
         fleet_pct_followed: Number(fleetRes.rows[0]?.pct ?? 0),

@@ -104,12 +104,14 @@ export function sendFuelRecommendationToDriver(id: string, companyId: string) {
   );
 }
 
-export function getFuelComplianceSummary(companyId: string) {
+export function getFuelComplianceSummary(companyId: string, driverId?: string | null) {
+  const search = new URLSearchParams({ operating_company_id: companyId });
+  if (driverId) search.set("driver_id", driverId);
   return apiRequest<{
     fleet_pct_followed: number;
     fleet_total_recommendations: number;
     per_driver: Array<Record<string, unknown>>;
-  }>(`/api/v1/fuel/planner/compliance/summary?${q(companyId)}`);
+  }>(`/api/v1/fuel/planner/compliance/summary?${search}`);
 }
 
 export function getFuelSavingsSummary(companyId: string) {

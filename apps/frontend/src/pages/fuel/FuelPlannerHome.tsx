@@ -166,9 +166,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
     queryFn: () => getFuelPlannerSettings(companyId),
     enabled: Boolean(companyId),
   });
+  const complianceDriverId =
+    activeRoutesQuery.data?.routes.find((route) => route.id === selectedActiveRouteId)?.driver_id ??
+    activeRoutesQuery.data?.routes[0]?.driver_id ??
+    null;
   const complianceQuery = useQuery({
-    queryKey: ["fuel", "planner", "compliance", companyId],
-    queryFn: () => getFuelComplianceSummary(companyId),
+    queryKey: ["fuel", "planner", "compliance", companyId, complianceDriverId],
+    queryFn: () => getFuelComplianceSummary(companyId, complianceDriverId),
     enabled: Boolean(companyId),
   });
   const savingsQuery = useQuery({
@@ -268,7 +272,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
 
   const driverPct = useMemo(() => {
     const firstDriver = complianceQuery.data?.per_driver?.[0];
-    return Number(firstDriver?.pct_followed ?? 0);
+    return firstDriver ? Number(firstDriver.pct_followed ?? 0) : null;
   }, [complianceQuery.data?.per_driver]);
 
   const activeLabel = SUBNAV.find((item) => item.id === tab)?.label ?? "Fuel";
