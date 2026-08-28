@@ -1,3 +1,5 @@
+Codex | WORKING | FUEL-F6975 | CLAIM=post.fuel-planner-active-driver-compliance | SOURCE=views.fuel_compliance_summary+active route driver FK | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F6974 | PR=#16935 @ f5b1ac58c4 | Built=termination company-date compile lifecycle | NEXT=FUEL-F6975 | GO
 Codex | WORKING | DRV-F6974 | CLAIM=post.driver-termination-company-date-compile | SOURCE=TerminateConfirmModal event-date lifecycle | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F6973 | PR=#16934 @ b9bbdfd373 | Built=customer factoring reverse retry 4/4 | NEXT=DRV-F6974 | GO
 Codex | WORKING | CUST-F6973 | CLAIM=post.customer-factoring-reverse-error-recovery | vertical=assignment+dispatch-queue+recourse+submit-queue | SOURCE=customer-scoped factoring APIs | NEXT=guard+FAST-MERGE | GO

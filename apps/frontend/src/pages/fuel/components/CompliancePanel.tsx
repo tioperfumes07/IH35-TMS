@@ -2,7 +2,7 @@ type Props = {
   sentToDriverAt: string | null;
   fleetPct: number;
   fleetTotalRecommendations: number;
-  driverPct: number;
+  driverPct: number | null;
 };
 
 export function CompliancePanel({ sentToDriverAt, fleetPct, fleetTotalRecommendations, driverPct }: Props) {
@@ -10,7 +10,7 @@ export function CompliancePanel({ sentToDriverAt, fleetPct, fleetTotalRecommenda
     <div className="rounded-sm border border-slate-300 bg-white p-3 text-xs">
       <div className="mb-2 text-sm font-semibold text-slate-700">Compliance Tracker</div>
       <Row label="Sent to driver app" value={sentToDriverAt ? new Date(sentToDriverAt).toLocaleString() : "Not sent"} />
-      <Row label="Recommendations followed YTD (driver)" value={`${driverPct.toFixed(1)}%`} />
+      <Row label="Recommendations followed YTD (driver)" value={driverPct === null ? "Not available" : `${driverPct.toFixed(1)}%`} />
       <Row label="Recommendations followed YTD (fleet)" value={`${fleetPct.toFixed(1)}%`} />
       <Row label="Fleet recommendations tracked" value={`${fleetTotalRecommendations}`} />
       <Row label="Last week non-compliance count" value="Not available yet" />
