@@ -130,6 +130,12 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
+      // LIAB-F9927-SILENT-CATCH-SWEEP (fuel leg): fuel.loves_prices_daily is foundational (confirmed
+      // live, to_regclass non-null) — unlike fuel.recommended_stops/views.fuel_planner_active_routes
+      // above, which genuinely ARE conditional and correctly gate on hasRelation() first, this table
+      // has no such gate and was queried directly. MAX(updated_at) on an existing-but-empty table
+      // already returns NULL with no error, so the .catch() only ever fired on a real query failure —
+      // it never legitimately distinguished "never synced" (which needs no catch) from "query broke".
       const lovesSyncRes = await client.query<{ synced_at: string | null }>(
         `
           SELECT max(updated_at)::text AS synced_at
@@ -137,7 +143,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
           WHERE operating_company_id = $1::uuid
         `,
         [companyId]
-      ).catch(() => ({ rows: [{ synced_at: null }] }));
+      );
 
       return {
         active_plans: Number(activeRes.rows[0]?.count ?? 0),
