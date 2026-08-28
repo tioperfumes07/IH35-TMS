@@ -300,13 +300,18 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
-    const lookups = await withCurrentUser(authUser.uuid, async (client) => {
+    const listed = await withCurrentUser(authUser.uuid, async (client) => {
       const operatingCompanyId = await resolveOperatingCompanyId(
         client,
         authUser.uuid,
         parsedQuery.data.operating_company_id ?? null
       );
-      if (!operatingCompanyId) return [];
+      if (!operatingCompanyId) return { rows: [], total: 0 };
+
+      const totalRes = await client.query<{ total: number }>(
+        `SELECT COUNT(*)::int AS total FROM catalogs.fmcsa_lookups WHERE operating_company_id = $1::uuid`,
+        [operatingCompanyId]
+      );
 
       const res = await client.query(
         `
@@ -332,15 +337,21 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
             created_by_user_id
           FROM catalogs.fmcsa_lookups
           WHERE operating_company_id = $1::uuid
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC, id ASC
           LIMIT $2
           OFFSET $3
         `,
         [operatingCompanyId, parsedQuery.data.limit, parsedQuery.data.offset]
       );
-      return res.rows;
+      return { rows: res.rows, total: Number(totalRes.rows[0]?.total ?? 0) };
     });
 
-    return reply.send({ lookups });
+    return reply.send({
+      lookups: listed.rows,
+      total: listed.total,
+      limit: parsedQuery.data.limit,
+      offset: parsedQuery.data.offset,
+      has_more: parsedQuery.data.offset + listed.rows.length < listed.total,
+    });
   });
 }

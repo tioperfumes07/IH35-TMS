@@ -46,5 +46,33 @@ export function listFmcsaLookups(operatingCompanyId: string, params?: { limit?: 
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ lookups: FmcsaLookupResult[] }>(`/api/v1/catalogs/fmcsa/lookups${qs ? `?${qs}` : ""}`);
+  return apiRequest<{ lookups: FmcsaLookupResult[]; total: number; limit: number; offset: number; has_more: boolean }>(
+    `/api/v1/catalogs/fmcsa/lookups${qs ? `?${qs}` : ""}`
+  );
+}
+
+export async function listAllFmcsaLookups(operatingCompanyId: string) {
+  const pageSize = 200;
+  const lookups: FmcsaLookupResult[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+
+  for (;;) {
+    const page = await listFmcsaLookups(operatingCompanyId, { limit: pageSize, offset });
+    if (expectedTotal == null) expectedTotal = page.total;
+    if (page.total !== expectedTotal) throw new Error("FMCSA verification history changed during pagination. Retry.");
+    for (const lookup of page.lookups) {
+      if (seen.has(lookup.lookup_id)) throw new Error("FMCSA verification pagination returned a duplicate row. Retry.");
+      seen.add(lookup.lookup_id);
+      lookups.push(lookup);
+    }
+    if (!page.has_more) break;
+    if (page.lookups.length === 0) throw new Error("FMCSA verification pagination stopped before the reported total.");
+    offset += page.lookups.length;
+  }
+  if (lookups.length !== (expectedTotal ?? 0)) {
+    throw new Error(`FMCSA verification pagination returned ${lookups.length} of ${expectedTotal ?? 0} rows.`);
+  }
+  return { lookups, total: expectedTotal ?? 0 };
 }

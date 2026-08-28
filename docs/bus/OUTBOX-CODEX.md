@@ -1504,3 +1504,5 @@ Codex | WORKING | FINDING=DRIVERS-F6902-AUDIT-HISTORY-FIRST-200-ONLY | vertical=
 CODEX | WORKING | FINDING=CUST-F6911-RELATIONSHIP-HEALTH-FIRST-250-ONLY | SOURCE-OF-TRUTH=master_data.customer_relationship_scores→mdata.customers | NOW=exact scoped range+complete mounted customer health | GO
 Codex | SHIPPED | CUST-F6911 | PR=#16862 @ f9d340f548 | gate=exit0 | Built=complete company-scoped relationship health range | Live=post-deploy UNVERIFIED | NEXT=CUST-F6912 customer load history+picker exact range | GO
 Codex | WORKING | FINDING=CUST-F6912-LOAD-HISTORY-AND-RELATED-PICKER-FIRST-200-ONLY | SOURCE-OF-TRUTH=mdata.loads company+customer exact range | NOW=full Loads tab+Related Load picker | GO
+Codex | SHIPPED | CUST-F6912 | PR=#16864 @ a873e4a0dc | gate=exit0 | Built=complete customer load history+Related Load picker range | Live=post-deploy UNVERIFIED | NEXT=CUST-F6913 FMCSA history exact range | GO
+Codex | WORKING | FINDING=CUST-F6913-FMCSA-HISTORY-FIRST-25-ONLY | SOURCE-OF-TRUTH=catalogs.fmcsa_lookups company range | NOW=complete customer verification history | GO
