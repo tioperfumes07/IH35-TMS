@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DISPATCH_ACTIVE_LOAD_STATUSES } from "../dispatch/active-loads-count.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export type QueryableClient = {
   query: (query: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -49,10 +50,6 @@ export const updateLeavePolicySchema = z.object({
   carryover_vacation_days_max: z.number().int().min(0).max(365).optional(),
 });
 
-function utcTodayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function daysInclusive(startIso: string, endIso: string): number {
   const [ys, ms, ds] = startIso.split("-").map(Number);
   const [ye, me, de] = endIso.split("-").map(Number);
@@ -79,7 +76,7 @@ function enumerateDates(startIso: string, endIso: string): string[] {
 }
 
 function daysUntilStart(startIso: string): number {
-  const today = utcTodayIso();
+  const today = companyBusinessDate();
   return daysInclusive(today, startIso) - 1;
 }
 

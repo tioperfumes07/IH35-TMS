@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import type { DotAuditPdfPayload } from "./viewer.service.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 function escapeHtml(value: unknown): string {
   return String(value ?? "")
@@ -90,7 +91,7 @@ export async function renderEldAuditPdf(payload: DotAuditPdfPayload) {
     const driverSlug = String(payload.driver_name ?? payload.driver_uuid)
       .replace(/[^A-Za-z0-9_-]+/g, "_")
       .slice(0, 40);
-    const date = payload.period.to || new Date().toISOString().slice(0, 10);
+    const date = payload.period.to || companyBusinessDate();
     return {
       pdfBuffer,
       filename: `ELD_Edit_History_${driverSlug}_${date}.pdf`,
