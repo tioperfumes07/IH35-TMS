@@ -192,6 +192,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T05:28:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.fleet-table-complete-unified-roster",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T05:40:00-05:00",
+      "go": "0004"
     }
   ]
 }
