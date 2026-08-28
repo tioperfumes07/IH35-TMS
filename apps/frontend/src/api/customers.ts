@@ -21,6 +21,8 @@ export type CustomerPaymentListRow = {
   source_bank_transaction_id?: string | null;
   qbo_payment_id?: string | null;
   applied_to_invoices?: Array<{
+    /** CUST-MONEY-F6105: payment_applications.id -- the id the canonical unapply route needs. */
+    application_id: string;
     invoice_id: string;
     amount_cents: number;
     invoice_display_id: string;
@@ -76,11 +78,13 @@ export async function listAllCustomerPayments(customerId: string, operatingCompa
   }
 }
 
-export function unapplyCustomerPayment(customerId: string, paymentId: string) {
-  return apiRequest<{ ok: boolean }>(`/api/v1/customers/${customerId}/payments/${paymentId}/unapply`, {
-    method: "POST",
-  });
-}
+// CUST-MONEY-F6105: this used to POST /api/v1/customers/:customerId/payments/:paymentId/unapply --
+// a route no backend file ever mounted (a plain 404 on every click, silently swallowed by the
+// mutation's onError toast). The canonical, MOUNTED operation is company-scoped
+// DELETE /api/v1/accounting/payments/:paymentId/applications/:id (payment-applications.routes.ts),
+// already exposed as unapplyPayment() in api/accounting.ts. Re-exported here (not reimplemented) so
+// every existing caller of this module keeps working through one real, contract-checked path.
+export { unapplyPayment as unapplyCustomerPaymentApplication } from "./accounting";
 
 
 export function listCoiRequests(customerId: string, params: { operating_company_id: string; status?: CoiRequestStatus }) {

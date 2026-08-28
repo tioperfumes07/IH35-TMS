@@ -112,6 +112,11 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT json_agg(
               json_build_object(
+                -- CUST-MONEY-F6105: the frontend's Unapply action needs the application row's OWN id
+                -- to call the canonical DELETE /api/v1/accounting/payments/:paymentId/applications/:id
+                -- route (payment_applications.id, not invoice_id) -- without it there is no contract
+                -- path from this list to that route at all.
+                'application_id', pa.id,
                 'invoice_id', pa.invoice_id,
                 'amount_cents', pa.amount_cents,
                 'invoice_display_id', i.display_id
@@ -127,7 +132,10 @@ export async function registerCustomerPaymentsRoutes(app: FastifyInstance) {
             -- legitimate reference and is impossible to spot downstream.
             JOIN accounting.invoices i ON i.id = pa.invoice_id
                                       AND i.operating_company_id = p.operating_company_id
-            WHERE pa.payment_id = p.id
+            -- CUST-MONEY-F6105: also exclude already-unapplied rows -- otherwise a re-applied invoice
+            -- would show its OLD (unapplied) application alongside the new one, and the Unapply action
+            -- would try to unapply an application row that is already unapplied.
+            WHERE pa.payment_id = p.id AND pa.unapplied_at IS NULL
           ) apps ON true
           WHERE ${whereSql}
           ORDER BY p.payment_date DESC, p.created_at DESC
