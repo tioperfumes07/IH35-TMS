@@ -9,6 +9,7 @@ import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } f
 import { listVendorCredits } from "../api/vendor-credits";
 import { ApiError, apiRequest } from "../api/client";
 import { listVendorBillPayments, recordVendorBillPayment, type VendorBillPaymentListRow } from "../api/vendors";
+import { getAllAccounts } from "../api/banking";
 import { getVendor, updateVendor, deactivateVendor, reactivateVendor, listPaymentTermOptions } from "../api/mdata";
 import { listCatalogAccounts } from "../api/catalog-accounts";
 import { getVendorIntegrityHistory } from "../api/maintenance";
@@ -127,6 +128,7 @@ export function VendorDetailPage() {
   const [billPayDate, setBillPayDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [billPayAmount, setBillPayAmount] = useState("");
   const [billPayMethod, setBillPayMethod] = useState("ach");
+  const [billPayBankAccountId, setBillPayBankAccountId] = useState("");
   const [billPayRef, setBillPayRef] = useState("");
   const [billPayMemo, setBillPayMemo] = useState("");
   const [billPayAuto, setBillPayAuto] = useState(true);
@@ -239,6 +241,35 @@ export function VendorDetailPage() {
     retry: false,
   });
 
+  // VEND-F-VENDORDETAIL-PAYMENT-NEVER-SENDS-BANK-ACCOUNT: same account list + "which methods need a
+  // funding account" convention already shipped in PayBillModal.tsx (the single-bill pay flow) — this
+  // form (multi-bill vendor payment) never had the picker at all.
+  const bankAccountsQuery = useQuery({
+    queryKey: ["vendor-bill-pay", "accounts", companyId],
+    queryFn: () => getAllAccounts(companyId),
+    enabled: Boolean(companyId && billPayOpen),
+  });
+
+  const billPayBankOptions = useMemo(
+    () =>
+      (bankAccountsQuery.data?.accounts ?? []).map((account: Record<string, unknown>) => ({
+        value: String(account.id ?? ""),
+        label: String(account.display_name ?? account.account_name ?? "Account"),
+      })),
+    [bankAccountsQuery.data?.accounts]
+  );
+
+  const billPayNeedsBankAccount =
+    billPayMethod === "check" || billPayMethod === "ach" || billPayMethod === "wire" || billPayMethod === "credit_card";
+
+  // Default to the first account once the list arrives, but never overwrite an explicit selection.
+  useEffect(() => {
+    if (!billPayOpen) return;
+    if (billPayBankAccountId) return;
+    const firstId = billPayBankOptions[0]?.value;
+    if (firstId) setBillPayBankAccountId(firstId);
+  }, [billPayOpen, billPayBankAccountId, billPayBankOptions]);
+
   const saferStatusQuery = useQuery({
     queryKey: ["fmcsa-safer-status", "vendor", id, companyId],
     queryFn: () => {
@@ -329,6 +360,7 @@ export function VendorDetailPage() {
         date: billPayDate,
         amount_cents: billPayCents,
         method: billPayMethod,
+        bank_account_id: billPayNeedsBankAccount ? billPayBankAccountId : undefined,
         reference: billPayRef.trim() || undefined,
         memo: billPayMemo.trim() || undefined,
         applications: vendorBillPayBreakdown.applications,
@@ -340,6 +372,7 @@ export function VendorDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["vendor-bill-payments", id, companyId] });
       setBillPayOpen(false);
       setBillPayAmount("");
+      setBillPayBankAccountId("");
       setBillPayRef("");
       setBillPayMemo("");
       setBillPayDate(new Date().toISOString().slice(0, 10));
@@ -985,6 +1018,26 @@ export function VendorDetailPage() {
                     Reference
                     <input className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1" value={billPayRef} onChange={(e) => setBillPayRef(e.target.value)} />
                   </label>
+                  {billPayNeedsBankAccount ? (
+                    <label className="block">
+                      From bank account
+                      <SelectCombobox
+                        className="mt-0.5 w-full rounded-sm border border-gray-300 px-2 py-1"
+                        value={billPayBankAccountId}
+                        onChange={(e) => setBillPayBankAccountId(e.target.value)}
+                      >
+                        <option value="">Select account…</option>
+                        {billPayBankOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </SelectCombobox>
+                      {!billPayBankAccountId ? (
+                        <p className="mt-1 text-red-600">Required for {billPayMethod} payments.</p>
+                      ) : null}
+                    </label>
+                  ) : null}
                 </div>
                 <label className="block">
                   Memo
@@ -1062,7 +1115,12 @@ export function VendorDetailPage() {
                 <div className="flex justify-end gap-2">
                   <Button
                     size="sm"
-                    disabled={billPayCents <= 0 || billPayManualInvalid || recordVendorBillPayMutation.isPending}
+                    disabled={
+                      billPayCents <= 0 ||
+                      billPayManualInvalid ||
+                      (billPayNeedsBankAccount && !billPayBankAccountId) ||
+                      recordVendorBillPayMutation.isPending
+                    }
                     loading={recordVendorBillPayMutation.isPending}
                     onClick={() => void recordVendorBillPayMutation.mutateAsync()}
                   >

@@ -1,4 +1,9 @@
 {
+  "9877": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-vendor-detail-payment-sends-bank-account"
+  },
   "9876": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
