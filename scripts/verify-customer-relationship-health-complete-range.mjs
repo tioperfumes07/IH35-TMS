@@ -17,6 +17,7 @@ export function verify(sources = {}) {
   const service = sources.service ?? read(REL.service);
   const api = sources.api ?? read(REL.api);
   const view = sources.view ?? read(REL.view);
+  const atRiskRoute = routes.slice(routes.indexOf('app.get("/api/v1/customers/relationship-scores/at-risk"'));
   const checks = [
     ["route validates bounded offset", /offset: z\.coerce\.number\(\)\.int\(\)\.min\(0\)\.default\(0\)/.test(routes)],
     ["route returns exact total not page length", /count: listed\.total/.test(routes) && /total: listed\.total/.test(routes) && !/count: rows\.length/.test(routes)],
@@ -28,6 +29,8 @@ export function verify(sources = {}) {
     ["client fails on incomplete or duplicate range", /if \(seen\.has\(customer\.customer_uuid\)\) throw new Error\("Customer relationship score pagination returned a duplicate customer\."\)/.test(api) && /pagination stopped before the reported total/.test(api) && /customers\.length !== \(expectedTotal \?\? 0\)/.test(api)],
     ["mounted customer list uses complete helper", /queryFn: \(\) => listAllAtRiskCustomerRelationshipScores\(companyId\)/.test(view)],
     ["mounted customer list removes misleading capped notice", !/CappedListNotice/.test(view) && !/limit:\s*250/.test(view)],
+    ["at-risk route fails loud when canonical score table is unavailable", /if \(!\(await relationshipScoresTableExists\(client\)\)\) \{\s*return \{ error: "relationship_scores_unavailable" as const \};\s*\}[\s\S]*?listAtRiskRelationshipScores/.test(atRiskRoute) && /result\.error === "relationship_scores_unavailable"[\s\S]*?reply\.code\(503\)/.test(atRiskRoute)],
+    ["service never converts a missing canonical score table to an honest empty range", !/hasRelationshipScores[\s\S]*?return \{ rows: \[\], total: 0 \}/.test(service)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -40,6 +43,8 @@ if (process.argv.includes("--selftest")) {
     ["first page only", { ...live, api: live.api.replace("for (;;) {", "for (; offset === 0;) {") }],
     ["no duplicate protection", { ...live, api: live.api.replace("if (seen.has(customer.customer_uuid))", "if (false)") }],
     ["mounted capped reader", { ...live, view: live.view.replace("listAllAtRiskCustomerRelationshipScores(companyId)", "listAtRiskCustomerRelationshipScores({ operating_company_id: companyId, limit: 250 })") }],
+    ["missing table becomes empty", { ...live, service: live.service.replace("const totalRes =", 'const hasRelationshipScores = await tableExists(client, "master_data", "customer_relationship_scores");\n  if (!hasRelationshipScores) return { rows: [], total: 0 };\n\n  const totalRes =') }],
+    ["route skips canonical table availability", { ...live, routes: live.routes.replaceAll('if (!(await relationshipScoresTableExists(client))) {\n        return { error: "relationship_scores_unavailable" as const };\n      }', 'if (false) {\n        return { error: "relationship_scores_unavailable" as const };\n      }') }],
   ];
   for (const [name, mutated] of mutations) {
     if (verify(mutated).length === 0) throw new Error(`selftest did not catch ${name}`);
