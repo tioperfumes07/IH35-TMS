@@ -1700,3 +1700,5 @@ Codex | SHIPPED | MAINT-F7005 | PR=#16964 @ 72388ff0a5 | Built=inspections list+
 Codex | WORKING | MAINT-F7006 | CLAIM=post.maintenance-tire-program-read-recovery | vertical=brand-catalog+layout-actions+alerts+event-history | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7006 | PR=#16965 @ a0f3483bd6 | Built=tire brand+layout+alerts+events+five actions fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
 Codex | WORKING | MAINT-F7007 | CLAIM=post.pm-auto-engine-read-recovery | vertical=status+pause-resume+run-now+runs+reverse-action-log | NEXT=root-fix+guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7007 | PR=#16966 @ e9bc1e0701 | Built=PM status+pause/run+runs+reverse-log fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
+Codex | WORKING | MAINT-F7008 | CLAIM=post.maintenance-kpi-summary-read-recovery | vertical=downtime+MTBF+CPM+cost-per-truck+PM-compliance | NEXT=root-fix+guard+FAST-MERGE | GO

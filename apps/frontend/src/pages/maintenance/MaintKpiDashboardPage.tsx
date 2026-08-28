@@ -125,7 +125,7 @@ export function MaintKpiDashboardPage() {
   useEffect(() => { setPmPage(1); setDrillPage(1); }, [companyId, periodStart, periodEnd, unitId]);
   useEffect(() => { setPmPage(1); setDrillPage(1); }, [activeKpi]);
 
-  const summary = summaryQ.data;
+  const summary = summaryQ.isError ? undefined : summaryQ.data;
 
   const tiles = useMemo(
     () => [
@@ -246,6 +246,14 @@ export function MaintKpiDashboardPage() {
         </div>
       </div>
 
+      {summaryQ.isError ? (
+        <ListErrorState
+          title="Couldn't load maintenance KPI summary"
+          status={0}
+          message={(summaryQ.error as Error)?.message}
+          onRetry={() => void summaryQ.refetch()}
+        />
+      ) : (
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {tiles.map((tile) => (
           <KpiTile
@@ -260,6 +268,7 @@ export function MaintKpiDashboardPage() {
           />
         ))}
       </div>
+      )}
 
       <section className="rounded-sm border border-slate-200 bg-slate-50 p-3" data-testid="maint-kpi-pm-hub">
         <div className="text-xs font-semibold uppercase text-slate-900">PM compliance hub</div>

@@ -24,6 +24,13 @@ function fleetScopeFailures(source) {
   return failures;
 }
 
+function dashboardHonestyFailures(source) {
+  const failures = [];
+  if (!source.includes("const summary = summaryQ.isError ? undefined : summaryQ.data;")) failures.push("summary error must suppress retained KPI data");
+  if (!/summaryQ\.isError \? \([\s\S]*title="Couldn't load maintenance KPI summary"[\s\S]*onRetry=\{\(\) => void summaryQ\.refetch\(\)\}[\s\S]*\) : \([\s\S]*tiles\.map/.test(source)) failures.push("all five summary tiles need one retryable fail-closed boundary");
+  return failures;
+}
+
 function fail(msg) {
   console.error(`verify:maint-kpi-dashboard FAIL: ${msg}`);
   process.exit(1);
@@ -31,6 +38,7 @@ function fail(msg) {
 
 const failures = [];
 failures.push(...fleetScopeFailures(kpiRoutes));
+failures.push(...dashboardHonestyFailures(dashboard));
 const checks = [
   ["kpi routes file", fs.existsSync("apps/backend/src/maintenance/kpi.routes.ts")],
   ["summary endpoint", read("apps/backend/src/maintenance/kpi.routes.ts").includes('app.get("/api/v1/maintenance/kpi/summary"')],
@@ -70,7 +78,17 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:maint-kpi-dashboard SELFTEST PASS — ${mutations.length} mutations detected`);
+  const dashboardMutations = [
+    ["retained summary", dashboard.replace("const summary = summaryQ.isError ? undefined : summaryQ.data;", "const summary = summaryQ.data;")],
+    ["summary error boundary", dashboard.replace("{summaryQ.isError ? (", "{false ? (")],
+  ];
+  for (const [name, mutated] of dashboardMutations) {
+    if (mutated === dashboard || dashboardHonestyFailures(mutated).length === 0) {
+      console.error(`verify:maint-kpi-dashboard SELFTEST FAIL — ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify:maint-kpi-dashboard SELFTEST PASS — ${mutations.length + dashboardMutations.length} mutations detected`);
   process.exit(0);
 }
 
