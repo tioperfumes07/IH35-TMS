@@ -24,7 +24,7 @@ When you **discover**, **confirm**, or **route** a defect — including "not my 
 
 | Lock | Where | What |
 |------|--------|------|
-| **1 · Board** | `docs/audit/GUARD-WORKORDERS.md` | OPEN row: finding id · severity · owning lane · root cause · permanent-fix DoD · evidence |
+| **1 · Board** | `docs/audit/GUARD-WORKORDERS.md` | OPEN row: finding id · severity · owning lane · root cause · permanent-fix DoD · evidence · **plus** `SOURCE-OF-TRUTH:` / `I QUERIED:` / `NOT CHECKED:` (`docs/lockdown/FINDING-SOURCE-OF-TRUTH-BLOCK-LAW-2026-08-28.md`) |
 | **2 · Register** | `docs/audit/CC-3-FINDINGS-CHECKLIST.md` | ☐ row with same id · lane · severity (register = owner checklist) |
 | **3 · Routing** | Desktop `FINDINGS-OPEN-P1-ROUTING.md` | Table row: id · owner seat · task id · Status=OPEN · required action |
 | **4 · OUTBOX** | Your `OUTBOX-<SEAT>.md` | `FINDING` or `ROUTE` or `BLOCKED` one-liner naming id + owner + `board OPEN` |

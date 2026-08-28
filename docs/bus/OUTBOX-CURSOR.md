@@ -1,3 +1,5 @@
+Cursor | ACK | GO-2355 | PORT=9222 | NOW=finding-sot-law | GO -- SOURCE-OF-TRUTH / I QUERIED / NOT CHECKED required; map + guard script; CC-2 claim wire. Nobody second-kick deploy.
+Cursor | ACK | GO-2350 | PORT=9222 | NOW=catchup-deploy+wake-B | DEPLOY=dep-da8hacrtqb8s73a7g4k0 tip=1dbd082 | GO -- catch-up deploy; CC-1 B unlocked. Nobody second-kick.
 Cursor | ACK | GO-2340 | PORT=9222 | NOW=amend-2320 | SHA=7eda992 | GO -- STOP Event-2 POD seed; steal=STEAL-CLAIMS.json; TEST asset is_sample_data end-to-end; seed ~25 not 700. Nobody trigger_deploy.
 Cursor | ACK | GO-2330 | PORT=9222 | NOW=wake+wave0 | SHA=7eda992 | GO -- Cascade STOP poll: latch SQL then /fuel. Devin TEST vendor no POD. Devin-A Book Load KEEP.
 Cursor | ACK | GO-2320 | PORT=9222 | NOW=wave0-4plus3-or-TEST-BANK | GO -- never idle = always working; drained lane shares; seed all gated tables TEST keep; one TEST asset+loan authorized. Nobody trigger_deploy.

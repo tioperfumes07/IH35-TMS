@@ -10,9 +10,15 @@ Do **not** wrap it in `## Summary`. Start with `FINDING:`.
 
 **Fully wired claims:** if the PR claims module/product “complete” / “fully wired”, it must satisfy `docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md` (Live Chrome last). Otherwise `REMAINING:` must say `Live=BLOCKED` / not fully wired yet.
 
+**SOURCE-OF-TRUTH block (required when FINDING is not `N/A`):** three lines `SOURCE-OF-TRUTH:` / `I QUERIED:` / `NOT CHECKED:` — law `docs/lockdown/FINDING-SOURCE-OF-TRUTH-BLOCK-LAW-2026-08-28.md` · map `docs/specs/SOURCE-OF-TRUTH-MAP.md`. Mismatch LOOKALIKE = UNVERIFIED.
+
 ```
 FINDING: SAF-C01
 LANE: NON-FINANCIAL
+
+SOURCE-OF-TRUTH: <exact table/file the CODE reads> — proven at <file:line of the read>
+I QUERIED:       <exactly what I ran>
+NOT CHECKED:     <what this query did not cover>
 
 ROOT CAUSE: <one or more paragraphs naming the mechanism — measure on prod/code, do not invent>
 
