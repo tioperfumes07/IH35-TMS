@@ -11,7 +11,7 @@ const targets = {
   "scripts/verify-wave-a-customer-column.mjs":
     '"leafRe":"^(role\\\\.dispatcher|report\\\\.dispatch_margin|submit\\\\.queue)$"',
   "scripts/verify-wave-a-customer-remainder-column.mjs":
-    '"leafRe":"^(hub\\\\.names_search|cargo_claims\\\\.(list|create)|complaints\\\\.list)$"',
+    '"leaves":["hub.names_search","cargo_claims.list","cargo_claims.create","complaints.list"]',
 };
 const feedFile = "docs/specs/scoreboard/wire-sprint-built.json";
 
@@ -55,6 +55,13 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-wave-a-customer-built-claims-leaf-specific SELFTEST FAIL — aggregate-credit mutation escaped");
     process.exit(1);
   }
+  const exactLeaves = structuredClone(sources);
+  exactLeaves["scripts/verify-wave-a-customer-remainder-column.mjs"] =
+    exactLeaves["scripts/verify-wave-a-customer-remainder-column.mjs"].replace('"complaints.list"', '"complaints.list.removed"');
+  if (!audit(exactLeaves).some((failure) => failure.includes("exact leaf-specific"))) {
+    console.error("verify-wave-a-customer-built-claims-leaf-specific SELFTEST FAIL — exact-leaves mutation escaped");
+    process.exit(1);
+  }
   const feed = structuredClone(sources);
   const parsedFeed = JSON.parse(feed[feedFile]);
   parsedFeed.entries.push({ task: "WAVE-A-customer-all-modules", cols: ["customer"], leafRe: ".*" });
@@ -63,7 +70,7 @@ if (process.argv.includes("--selftest")) {
     console.error("verify-wave-a-customer-built-claims-leaf-specific SELFTEST FAIL — feed-entry mutation escaped");
     process.exit(1);
   }
-  console.log("verify-wave-a-customer-built-claims-leaf-specific SELFTEST PASS — blanket, aggregate-credit, and feed-entry mutations detected");
+  console.log("verify-wave-a-customer-built-claims-leaf-specific SELFTEST PASS — blanket, exact-leaves, aggregate-credit, and feed-entry mutations detected");
   process.exit(0);
 }
 

@@ -1779,3 +1779,5 @@ Codex | WORKING | CUST-F7050 | CLAIM=post.customer-loads-complete-reader-parity-
 Codex | SHIPPED | FLEET-F7049 | PR=#17006 @ 1cc365fa2d | Built=bulk soft lifecycle guard 63/63 | NEXT=customer loads parity | GO
 Codex | WORKING | CUST-F7051 | CLAIM=post.customer-transaction-list-complete-invoice-guard | SOURCE=Customers transaction_list→listAllInvoices | NEXT=guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7050 | PR=#17007 @ bb8314b8b8 | Built=customer complete loads guard | NEXT=transaction list completeness | GO
+Codex | WORKING | CUST-F7052 | CLAIM=post.customer-built-exact-leaves-meta-guard | SOURCE=customer Built meta-guard→explicit four-leaf claim | NEXT=guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7051 | PR=#17008 @ 980758b62e | Built=transaction completeness guard 3/3 | NEXT=customer Built honesty | GO
