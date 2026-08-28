@@ -14,7 +14,7 @@ function failures(candidate = files) {
   for (const [key, source] of Object.entries(candidate)) {
     if (!source.includes('entityLabel(unit.unit_number, unit.id, "Unit")')) found.push(`${key} lacks exact Unit identity fallback`);
     if (source.includes('entityLabel(unit.unit_number, unit.id, "Record")')) found.push(`${key} still exposes generic Record identity copy`);
-    if (!/listUnits\(\{[\s\S]{0,300}?operating_company_id:\s*operatingCompanyId/.test(source)) found.push(`${key} unit roster is not explicitly company scoped`);
+    if (!/listAllUnits\(\{[\s\S]{0,300}?operating_company_id:\s*operatingCompanyId[\s\S]{0,300}?include:\s*"trailers"/.test(source)) found.push(`${key} unit roster is not exhaustively company scoped with trailers`);
   }
   if (!candidate.modal.includes("unitIds: selectedUnitIds")) found.push("modal no longer submits selected canonical unit IDs");
   if (!candidate.wizard.includes("unit_ids: selectedUnitIds")) found.push("wizard no longer submits selected canonical unit IDs");
@@ -27,8 +27,10 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   const mutations = [
     ["modal", 'entityLabel(unit.unit_number, unit.id, "Unit")', 'entityLabel(unit.unit_number, unit.id, "Record")', "modal noun"],
     ["wizard", 'entityLabel(unit.unit_number, unit.id, "Unit")', 'entityLabel(unit.unit_number, unit.id, "Record")', "wizard noun"],
-    ["modal", "listUnits({\n        operating_company_id: operatingCompanyId", "listUnits({\n        operating_company_id: ''", "modal company scope"],
-    ["wizard", "listUnits({\n        operating_company_id: operatingCompanyId", "listUnits({\n        operating_company_id: ''", "wizard company scope"],
+    ["modal", "listAllUnits({\n        operating_company_id: operatingCompanyId", "listAllUnits({\n        operating_company_id: ''", "modal company scope"],
+    ["wizard", "listAllUnits({\n        operating_company_id: operatingCompanyId", "listAllUnits({\n        operating_company_id: ''", "wizard company scope"],
+    ["modal", 'include: "trailers"', 'include: undefined', "modal trailer coverage"],
+    ["wizard", 'include: "trailers"', 'include: undefined', "wizard trailer coverage"],
     ["modal", "unitIds: selectedUnitIds", "unitIds: []", "modal unit FK payload"],
     ["wizard", "unit_ids: selectedUnitIds", "unit_ids: []", "wizard unit FK payload"],
     ["modal", "toggleUnit(unit.id)", "toggleUnit(unit.unit_number)", "modal canonical selection"],
