@@ -7,7 +7,7 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { formatUsdCents } from "../lib/money";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { listInvoices, listPayments, type Invoice, type Payment } from "../api/accounting";
+import { listAllInvoices, listInvoices, listPayments, type Invoice, type Payment } from "../api/accounting";
 import { listAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday } from "../lib/businessDate";
 import { ApiError } from "../api/client";
@@ -513,7 +513,7 @@ export function CustomersPage() {
   );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", "open", companyId],
-    queryFn: () => listInvoices(companyId, { has_balance: true, limit: 500 }),
+    queryFn: () => listAllInvoices(companyId, { has_balance: true }),
     enabled: Boolean(companyId),
   });
   const paymentTermsQuery = useQuery({

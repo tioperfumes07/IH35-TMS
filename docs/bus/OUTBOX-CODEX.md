@@ -1513,3 +1513,5 @@ Codex | SHIPPED | INV-F6914 | PR=#16867 @ e5936cb655 | gate=exit0 | Built=dual-s
 CODEX | CLAIMING | leftover=post.maintenance-rm-status-range | GO=0002 | reason=mounted R&M board hard-caps canonical open-WO set at 80 without total/navigation | NOW=exact scoped count+server range | GO
 CODEX | WORKING | FINDING=MAINT-F6915-RM-STATUS-BOARD-SILENT-80-CAP | SOURCE-OF-TRUTH=maintenance.work_orders | leaf=home.rm_status_board:{work_order,unit,connectivity,reverse_link} | NOW=exact server range+guard | GO
 CODEX | ACK | GO-0004 | NOW=post.maintenance-rm-status-range claimed+working | SHA=ebc1c4f | GO
+Codex | SHIPPED | MAINT-F6915 | PR=#16870 @ 851f0d4918 | gate=exit0 | Built=maintenance home.rm_status_board exact total+range | Live=post-deploy UNVERIFIED | NEXT=CUST-F6916 | GO
+Codex | WORKING | FINDING=CUST-F6916-OPEN-BALANCE-ROLLUP-FIRST-500-ONLY | SOT=accounting.invoices has_balance exact range | NEXT=guard+FAST-MERGE | GO
