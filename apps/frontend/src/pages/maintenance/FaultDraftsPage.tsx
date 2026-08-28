@@ -113,17 +113,22 @@ export function FaultDraftsPage() {
     setSelectedId(null);
   }, [companyId]);
 
+  useEffect(() => {
+    if (draftsQuery.isError) setSelectedId(null);
+  }, [draftsQuery.isError]);
+
   const confirmDraft = (workOrderId: string) => {
+    if (draftsQuery.isError) return;
     confirmMutation.mutate({ workOrderId, companyId, generation: confirmGenerationRef.current });
   };
 
   const drafts = useMemo(() => {
-    const all = draftsQuery.data?.drafts ?? [];
+    const all = draftsQuery.isError ? [] : draftsQuery.data?.drafts ?? [];
     if (!effectiveUnitId) return all;
     return all.filter((d) => d.unit_id === effectiveUnitId);
   }, [draftsQuery.data?.drafts, effectiveUnitId]);
   const deepLinkUnitName = deepLinkUnitId
-    ? (draftsQuery.data?.drafts ?? []).find((draft) => draft.unit_id === deepLinkUnitId)?.unit_number ?? null
+    ? (draftsQuery.isError ? [] : draftsQuery.data?.drafts ?? []).find((draft) => draft.unit_id === deepLinkUnitId)?.unit_number ?? null
     : null;
   const selected = drafts.find((d) => d.id === selectedId) ?? null;
 
@@ -274,7 +279,7 @@ export function FaultDraftsPage() {
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={confirmMutation.isPending}
+                disabled={confirmMutation.isPending || draftsQuery.isError}
                 onClick={() => confirmDraft(selected.id)}
               >
                 Confirm &amp; open WO
