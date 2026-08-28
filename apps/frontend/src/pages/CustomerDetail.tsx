@@ -2193,39 +2193,49 @@ export function CustomerDetailPage() {
             <FreeTimeDetentionEditor customerUuid={id} operatingCompanyId={operatingCompanyId} canEdit={canEditFreeTimeDetention} />
           ) : null}
         <div className="grid gap-3 md:grid-cols-3">
-          <DataPanel title="Factoring Config">
-            <div className="space-y-1 text-sm text-gray-700">
-              <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
-              <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
-              <div>
-                Company Vendor:{" "}
-                {billingSummary?.factoring_company_vendor_id ? (
-                  <EntityLinkOrTombstone
-                    kind="vendor"
-                    id={billingSummary.factoring_company_vendor_id}
-                    name={billingSummary.factoring_company_vendor_name}
-                    noun="Vendor"
-                  />
-                ) : (
-                  "Not set"
-                )}
-              </div>
-            </div>
-          </DataPanel>
-          <DataPanel title="Credit Terms">
-            <div className="space-y-1 text-sm text-gray-700">
-              <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
-              <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
-              <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : formatCurrencyCents(billingSummary.outstanding_balance_cents)}</div>
-            </div>
-          </DataPanel>
-          <DataPanel title="Detention + Layover Defaults">
-            <div className="space-y-1 text-sm text-gray-700">
-              <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
-              <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
-              <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
-            </div>
-          </DataPanel>
+          {/* CUST-MONEY-F6984 — these three cards, and the Receivables Aging card below, all derive
+              from billingSummaryQuery.data. React Query RETAINS `data` from the last successful
+              fetch across a failed refetch, so a stale billingSummary kept factoring eligibility,
+              recourse, vendor, credit terms, outstanding balance, and detention/layover defaults on
+              screen -- looking current -- at the same time the ListErrorBanner above was telling the
+              user the load had failed. Gate on !isError, same shape as CUST-MONEY-F6278/F6985. */}
+          {!billingSummaryQuery.isError ? (
+            <>
+              <DataPanel title="Factoring Config">
+                <div className="space-y-1 text-sm text-gray-700">
+                  <div>Eligible: {billingSummary?.factoring_eligible ? "Yes" : "No"}</div>
+                  <div>Recourse: {billingSummary?.factoring_recourse_type ?? "Default"}</div>
+                  <div>
+                    Company Vendor:{" "}
+                    {billingSummary?.factoring_company_vendor_id ? (
+                      <EntityLinkOrTombstone
+                        kind="vendor"
+                        id={billingSummary.factoring_company_vendor_id}
+                        name={billingSummary.factoring_company_vendor_name}
+                        noun="Vendor"
+                      />
+                    ) : (
+                      "Not set"
+                    )}
+                  </div>
+                </div>
+              </DataPanel>
+              <DataPanel title="Credit Terms">
+                <div className="space-y-1 text-sm text-gray-700">
+                  <div>A/R Email: {billingSummary?.ar_email ?? "-"}</div>
+                  <div>Terms (days): {billingSummary?.credit_terms_days ?? "-"}</div>
+                  <div>Outstanding Balance: {billingSummary?.outstanding_balance_cents == null ? "-" : formatCurrencyCents(billingSummary.outstanding_balance_cents)}</div>
+                </div>
+              </DataPanel>
+              <DataPanel title="Detention + Layover Defaults">
+                <div className="space-y-1 text-sm text-gray-700">
+                  <div>Detention/hr: {billingSummary?.default_detention_rate ?? "-"}</div>
+                  <div>Free time hrs: {billingSummary?.default_free_time_hours ?? "-"}</div>
+                  <div>Layover/day: {billingSummary?.layover_config?.layover_charge_per_day ?? "-"}</div>
+                </div>
+              </DataPanel>
+            </>
+          ) : null}
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white">
             <button
               type="button"
@@ -2457,7 +2467,9 @@ export function CustomerDetailPage() {
           </div>
           <div className="md:col-span-3 rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Receivables Aging</div>
-            {!hasOpenInvoices ? (
+            {/* CUST-MONEY-F6984 — same billingSummaryQuery-retained-on-error gate as the three cards
+                above; aging is the field the board finding named explicitly. */}
+            {billingSummaryQuery.isError ? null : !hasOpenInvoices ? (
               <div className="text-sm text-gray-600">No open invoices.</div>
             ) : (
               <div className="space-y-1 text-sm text-gray-700">
