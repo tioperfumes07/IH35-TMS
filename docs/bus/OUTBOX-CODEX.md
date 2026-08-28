@@ -1,3 +1,5 @@
+Codex | WORKING | CUST-F7025 | CLAIM=post.customer-load-guard-tombstone-links | SOURCE=quality+loads EntityLinkOrTombstone | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7024 | PR=#16982 @ ef29b56c56 | Built=complete customer payment-history guard | NEXT=CUST-F7025 | GO
 Codex | WORKING | CUST-F7024 | CLAIM=post.customer-payment-history-complete-reader-guard | SOURCE=listAllCustomerPayments company-scoped pagination | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7023 | PR=#16981 @ f4c7db5997 | Built=dedicated company-scoped lifecycle guard 15/15 | NEXT=CUST-F7024 | GO
 Codex | WORKING | CUST-F7022 | CLAIM=post.customer-guard-stronger-runtime-contracts | SOURCE=CustomerProfileForm+Customers runtime | NEXT=normal+selftest+FAST-MERGE | GO
