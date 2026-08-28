@@ -1,14 +1,22 @@
-# FEED · CC-1 · GO-0013 · overwrite
+# FEED · CC-1 · GO-0014 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CC-1 | ACK | GO-0013 | NOW=ledger-finding-type-check | SHA=069d531 | GO`
+ACK: `CC-1 | ACK | GO-0014 | NOW=event2-silent-on-issued-invoices | SHA=069d531 | GO`
 
 ## NOW
-USMCA money monitor is dark. Land **one** additive migration that widens `_system.reconciliation_findings` `finding_type` CHECK: keep the 8 live values from `pg_get_constraintdef` (do not retype from TypeScript) and add the five detector literals. Number **`202613260000`** if still strictly above `origin/main` max **and** live `_system._schema_migrations` max (`202613241200` applied; repo already has `202613250100` unapplied on prod). Idempotent DROP+ADD CHECK. No ledger row rewrite. No new GL math.
+P0 live (Neon, lucia, real-only, USMCA `5c854333`, API `069d531`):
 
-Then **one** guard that parses `findingType:` literals from `ledger-integrity-detectors.service.ts` (and worker FindingType if needed) vs allowed list in `db/migrations/*.sql`. `--selftest` must plant the miss in a **migration copy**, not in the service. Claim-reserve ≡1 **before** authoring `NNNN-*.mjs`. Apply on Neon yourself after merge. Do not prod-only ALTER.
+- A/R GL **-$3,600.00** vs open invoices **$1,900.00** → **-$5,500.00**
+- A/P GL **-$1,227.90** vs open bills **$110.00** → **-$1,337.90**
+- Five invoices, all `has_je=false` for `source_transaction_type='invoice'`: INV-2026-00037/38/44/45, L-20260827-0857
 
-Do not rebuild G1 / dual-pay / F9519 / #17039.
+Invoice poster standing down is **by design** (`InvoiceRevrecLatchOwnsLoadError`). Latch Event 2 is the A/R path. **Do not write a second A/R poster.**
+
+POD is **already not** a posting block on live `069d531` (Option B `#16875` / ACCT-F9872 is in that tree). Do **not** rebuild Option B. Do **not** seed POD.
+
+**NOW:** prove why Event 2 still did not post for those five **issued** invoices; reuse `postLoadRevenueLatch` / existing poster; then **re-measure both A/R and A/P legs** on the same Neon basis. No new GL math.
+
+#17125 CHECK is applied — not your NOW. 9000 real-only $36.12 — not your NOW.
 
 ## Forbidden
-Prod-only patch. New GL math. 9000 fail-closed. Void-all. INV-10. QBO / TRANSP / TRK work. `trigger_deploy`. U14 restamp. Skip #15546.
+Second A/R poster. Invoice-poster “fix”. Prod-only ALTER. 9000 fail-closed. Void-all. QBO/TRANSP/TRK. `trigger_deploy`. U14 restamp.
