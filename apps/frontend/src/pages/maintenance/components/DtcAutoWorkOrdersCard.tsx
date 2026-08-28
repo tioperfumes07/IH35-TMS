@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceDtcAutoWorkOrders } from "../../../api/maintenance";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { useEffect, useState } from "react";
 
 type Props = {
   operatingCompanyId: string;
@@ -13,15 +14,27 @@ type Props = {
 };
 
 export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onOpen }: Props) {
+  const pageSize = 10;
+  const [page, setPage] = useState(0);
+  useEffect(() => setPage(0), [operatingCompanyId]);
   const query = useQuery({
-    queryKey: ["maintenance", "dtc-auto-wos", operatingCompanyId],
-    queryFn: () => getMaintenanceDtcAutoWorkOrders(operatingCompanyId),
+    queryKey: ["maintenance", "dtc-auto-wos", operatingCompanyId, page],
+    queryFn: () => getMaintenanceDtcAutoWorkOrders(operatingCompanyId, { limit: pageSize, offset: page * pageSize }),
     enabled: Boolean(operatingCompanyId),
   });
 
   const rows = query.data?.rows ?? [];
-  const visibleRows = rows.slice(0, 10);
   const totalCount = query.data?.total_count ?? rows.length;
+  const range = totalCount === 0 ? "0 of 0" : `${page * pageSize + 1}–${Math.min((page + 1) * pageSize, totalCount)} of ${totalCount}`;
+  const pager = (testId: string) => totalCount > pageSize ? (
+    <div className="flex items-center justify-between gap-2 border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid={testId}>
+      <span>{range}</span>
+      <div className="flex gap-1">
+        <button type="button" disabled={page === 0 || query.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</button>
+        <button type="button" disabled={(page + 1) * pageSize >= totalCount || query.isFetching} onClick={() => setPage((value) => value + 1)}>Next</button>
+      </div>
+    </div>
+  ) : null;
 
   if (query.isError) {
     return (
@@ -46,7 +59,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
         ) : (
           <div>
           <ul className="flex flex-col">
-            {visibleRows.map((row) => {
+            {rows.map((row) => {
               return (
                 <li key={row.id} className="border-t border-gray-100 px-2 py-1 first:border-t-0 text-[10px]">
                   <div className="flex items-center justify-between gap-1">
@@ -61,11 +74,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
               );
             })}
           </ul>
-          {totalCount > visibleRows.length ? (
-            <p className="border-t border-gray-100 px-2 py-1 text-[10px] text-slate-500" data-testid="dtc-auto-work-orders-compact-range">
-              Showing {visibleRows.length} of {totalCount} open DTC work orders.
-            </p>
-          ) : null}
+          {pager("dtc-auto-work-orders-compact-range")}
           </div>
         )}
       </section>
@@ -82,12 +91,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
         <p className="text-xs text-gray-500">No open auto-created DTC work orders.</p>
       ) : (
         <div className="space-y-2">
-          {totalCount > visibleRows.length ? (
-            <p className="text-xs text-slate-500" data-testid="dtc-auto-work-orders-range">
-              Showing {visibleRows.length} of {totalCount} open DTC work orders.
-            </p>
-          ) : null}
-          {visibleRows.map((row) => (
+          {rows.map((row) => (
             <div key={row.id} className="rounded-sm border border-gray-200 p-2 text-xs">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-gray-900">
@@ -98,6 +102,7 @@ export function DtcAutoWorkOrdersCard({ operatingCompanyId, compact = false, onO
               <p className="mt-1 text-gray-600">{row.description ?? "DTC fault"}</p>
             </div>
           ))}
+          {pager("dtc-auto-work-orders-range")}
         </div>
       )}
     </section>

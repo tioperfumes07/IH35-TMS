@@ -585,9 +585,12 @@ export function getMaintenanceRecentActivity(companyId: string) {
   );
 }
 
-export function getMaintenanceDtcAutoWorkOrders(companyId: string) {
-  return apiRequest<{ rows: DtcAutoWorkOrderRow[]; total_count: number }>(
-    `/api/v1/maintenance/dashboard/dtc-auto-work-orders?${query(companyId)}`
+export function getMaintenanceDtcAutoWorkOrders(companyId: string, range: { limit?: number; offset?: number } = {}) {
+  const params = new URLSearchParams({ operating_company_id: companyId });
+  params.set("limit", String(range.limit ?? 10));
+  params.set("offset", String(range.offset ?? 0));
+  return apiRequest<{ rows: DtcAutoWorkOrderRow[]; total_count: number; limit: number; offset: number }>(
+    `/api/v1/maintenance/dashboard/dtc-auto-work-orders?${params.toString()}`
   );
 }
 
