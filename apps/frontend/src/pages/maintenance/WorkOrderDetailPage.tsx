@@ -471,7 +471,7 @@ export function WorkOrderDetailPage() {
   const invoiceMismatch = deltaCents != null ? Math.abs(deltaCents) > 1 : false;
 
   const oosDowntimeEstimate = useMemo(() => {
-    if (!wo || !id) return null;
+    if (!wo || !id || severeEstimatesQ.isError) return null;
     const severity = String(wo.severity ?? "").trim().toLowerCase();
     if (severity !== "out_of_service" && severity !== "oos-severe" && severity !== "oos_severe") return null;
     const linked = (severeEstimatesQ.data?.data ?? []).find((row) => row.trigger_wo_id === id);
@@ -485,7 +485,12 @@ export function WorkOrderDetailPage() {
       combinedCents: downtimeCents + repairCents,
       dailyLossCents: OOS_DAILY_LOSS_CENTS,
     };
-  }, [wo, id, severeEstimatesQ.data]);
+  }, [wo, id, severeEstimatesQ.data, severeEstimatesQ.isError]);
+
+  const isOosSevere = useMemo(() => {
+    const severity = String(wo?.severity ?? "").trim().toLowerCase();
+    return severity === "out_of_service" || severity === "oos-severe" || severity === "oos_severe";
+  }, [wo?.severity]);
 
   const woNumber = String(entityLabel(wo?.display_id, id, "Work order"));
   // Edit target — map the loaded WO detail into the modal's edit shape (header + persisted cost lines).
@@ -591,6 +596,17 @@ export function WorkOrderDetailPage() {
         >
           Invoice {money.format(invoiceCents / 100)} vs Line items {money.format(linesCents / 100)} · Δ{" "}
           {money.format((deltaCents ?? 0) / 100)}
+        </div>
+      ) : null}
+
+      {isOosSevere && severeEstimatesQ.isError ? (
+        <div data-testid="wo-oos-estimate-error">
+          <ListErrorState
+            title="Couldn't load OOS downtime estimate"
+            status={0}
+            message={severeEstimatesQ.error instanceof Error ? severeEstimatesQ.error.message : undefined}
+            onRetry={() => void severeEstimatesQ.refetch()}
+          />
         </div>
       ) : null}
 
