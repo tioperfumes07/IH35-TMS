@@ -29,6 +29,18 @@ function transferKindFailures({ modal, entityPicker, createTrailer, pickerRegist
   return out;
 }
 
+function lifecycleFailures(service, routeSource) {
+  const out = [];
+  const requirePattern = (source, pattern, message) => {
+    if (!pattern.test(source)) out.push(message);
+  };
+  requirePattern(service, /status = 'pending_outbound'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "outbound confirmation must CAS and check pending_outbound");
+  requirePattern(service, /status = 'outbound_confirmed'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "inbound confirmation must CAS and check outbound_confirmed");
+  requirePattern(service, /UPDATE mdata\.equipment[\s\S]{0,240}RETURNING id::text[\s\S]{0,180}if \(!equipmentUpdate\.rows\[0\]\?\.id\) return \{ kind: "equipment_not_found" \}/, "inbound confirmation must reject a missing/cross-company equipment update");
+  requirePattern(routeSource, /result\.kind === "equipment_not_found"[\s\S]{0,80}reply\.code\(404\)/, "route must expose equipment_not_found without a generic 500");
+  return out;
+}
+
 function fail(message) {
   failures.push(message);
 }
@@ -95,6 +107,7 @@ contains("apps/backend/src/dispatch/equipment-transfer/routes.ts", routes, [
   { pattern: /registerEquipmentTransferRoutes/, label: "route register export" },
   { pattern: /requireAuth/, label: "requireAuth guard" },
 ]);
+failures.push(...lifecycleFailures(dualConfirm, routes));
 
 const indexTs = read("apps/backend/src/index.ts");
 contains("apps/backend/src/index.ts", indexTs, [
@@ -113,7 +126,7 @@ if (process.argv.includes("--selftest")) {
   const good = { modal: transferModal, entityPicker, createTrailer, pickerRegistry, equipmentRoutes, requestService, routes };
   const mutations = [
     { ...good, modal: good.modal.replace("equipmentKind={kind}", "") },
-    { ...good, modal: good.modal.replace('setEquipmentUuid("");', "") },
+    { ...good, modal: good.modal.replaceAll('setEquipmentUuid("");', "") },
     { ...good, pickerRegistry: good.pickerRegistry.replace("equipment_kind: opts?.equipmentKind", "") },
     { ...good, equipmentRoutes: good.equipmentRoutes.replace("equipment_type <> 'Chassis'", "equipment_type = 'Chassis'") },
     { ...good, requestService: good.requestService.replace('throw new Error("equipment_kind_mismatch")', "return input.equipment_uuid") },
@@ -122,6 +135,21 @@ if (process.argv.includes("--selftest")) {
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (transferKindFailures(mutation).length === 0) fail(`selftest mutation ${index + 1} escaped the subtype guard`);
+  }
+  const lifecycleMutations = [
+    dualConfirm.replace("AND status = 'pending_outbound'", ""),
+    dualConfirm.replace("AND status = 'outbound_confirmed'", ""),
+    dualConfirm.replace("RETURNING uuid::text", ""),
+    dualConfirm.replace('if (!transferUpdate.rows[0]?.uuid) return { kind: "invalid_status" };', ""),
+    dualConfirm.replace("RETURNING id::text", ""),
+    dualConfirm.replace('if (!equipmentUpdate.rows[0]?.id) return { kind: "equipment_not_found" };', ""),
+    routes.replaceAll('if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });', ""),
+  ];
+  for (const [index, mutation] of lifecycleMutations.entries()) {
+    const routeMutation = index === lifecycleMutations.length - 1;
+    if (lifecycleFailures(routeMutation ? dualConfirm : mutation, routeMutation ? mutation : routes).length === 0) {
+      fail(`selftest lifecycle mutation ${index + 1} escaped the guard`);
+    }
   }
 }
 const transfersPage = read("apps/frontend/src/pages/dispatch/EquipmentTransferRequests.tsx");
@@ -174,4 +202,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype mutations caught" : ""}`);
+console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype + 7 lifecycle mutations caught" : ""}`);

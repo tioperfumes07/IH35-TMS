@@ -92,6 +92,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       body.data.evidence_uuid
     );
     if (result.kind === "not_found") return reply.code(404).send({ error: "not_found" });
+    if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });
     if (result.kind === "driver_mismatch") return reply.code(403).send({ error: "driver_mismatch" });
     if (result.kind === "invalid_status") return reply.code(422).send({ error: "invalid_status" });
     return reply.send({ ok: true, uuid: result.uuid });
@@ -114,6 +115,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       body.data.evidence_uuid
     );
     if (result.kind === "not_found") return reply.code(404).send({ error: "not_found" });
+    if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });
     if (result.kind === "driver_mismatch") return reply.code(403).send({ error: "driver_mismatch" });
     if (result.kind === "invalid_status") return reply.code(422).send({ error: "invalid_status" });
     return reply.send({ ok: true, uuid: result.uuid });
