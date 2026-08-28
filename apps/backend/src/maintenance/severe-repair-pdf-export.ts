@@ -1,5 +1,6 @@
 import puppeteer from "puppeteer";
 import type { FleetRestoreCost, PerUnitBreakdownRow } from "./severe-repair-estimate.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 function money(cents: number) {
   return `$${(Number(cents || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -40,7 +41,7 @@ export async function renderSevereRepairInsurancePdf(input: {
 </head>
 <body>
   <h1>Severe Repair / OOS Fleet Restore Estimate</h1>
-  <p class="muted">Generated ${new Date().toISOString().slice(0, 10)} · Company ${input.operatingCompanyId.slice(0, 8)}</p>
+  <p class="muted">Generated ${companyBusinessDate()} · Company ${input.operatingCompanyId.slice(0, 8)}</p>
   <div class="summary">
     <div class="card"><strong>Total Estimated</strong><br/>${money(input.summary.total_estimated_cents)}</div>
     <div class="card"><strong>Total Actual</strong><br/>${money(input.summary.total_actual_cents)}</div>
@@ -63,7 +64,7 @@ export async function renderSevereRepairInsurancePdf(input: {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
     const pdf = await page.pdf({ format: "Letter", printBackground: true });
-    const date = new Date().toISOString().slice(0, 10);
+    const date = companyBusinessDate();
     return {
       pdfBuffer: Buffer.from(pdf),
       filename: `FleetRestore_${date}.pdf`,

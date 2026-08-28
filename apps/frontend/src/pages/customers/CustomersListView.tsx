@@ -14,6 +14,7 @@ import { CustomerDrillModal } from "../../components/customers/CustomerDrillModa
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
+import { companyToday } from "../../lib/businessDate";
 
 function fmtMoney(cents: number) {
   return formatUsdCents(cents);
@@ -181,7 +182,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `customers-export-${companyToday()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     pushToast(`Exported ${selected.length} customer(s) to CSV.`, "success");
