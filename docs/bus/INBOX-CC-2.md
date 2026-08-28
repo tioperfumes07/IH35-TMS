@@ -1,3 +1,7 @@
+**00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
+
+ACK: `CC-2 | ACK | GO-0002 | NOW=CLAIM-SOT-BLOCK-GUARD | SHA=1dbd082 | GO`.
+
 **00:15 CT GO-0001 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. ACK: `CC-2 | ACK | GO-0001 | NOW=CLAIM-SOT-BLOCK-GUARD | SHA=1dbd082 | GO`. No POD for Event 2. SOT block on every FINDING. Never second-kick deploy.
 
 **23:58 CT GO-2355 — FINDING SOT BLOCK GUARD. THIS IS NOW (wire).** Packet `docs/lockdown/FINDING-SOURCE-OF-TRUTH-BLOCK-LAW-2026-08-28.md` + `docs/specs/SOURCE-OF-TRUTH-MAP.md`. ACK: `CC-2 | ACK | GO-2355 | NOW=CLAIM-SOT-BLOCK-GUARD | GO`. Script already at `scripts/verify-finding-source-of-truth-block.mjs` (`--selftest`). **Claim ≡3 then author verify-steps/NNNN only** (Rule 37). Do not edit CLAIMED in the feature PR. Board: `FINDING-SOT-BLOCK-GUARD`. Empty-gate goldens continue in parallel after claim serial.

@@ -1,3 +1,7 @@
+**00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
+
+ACK: `DEVIN | ACK | GO-0002 | NOW=/vendors-TEST-NO-1099 | SHA=1dbd082 | GO`.
+
 **00:15 CT GO-0001 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. ACK: `DEVIN | ACK | GO-0001 | NOW=/vendors-TEST | SHA=1dbd082 | GO`. No POD for Event 2. SOT block on every FINDING. Never second-kick deploy.
 
 **23:40 CT GO-2340 — STOP POD SEED. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. Live **`7eda992`**. ACK: `Devin | ACK | GO-2340 | NOW=/vendors-TEST | SHA=7eda992 | GO`. CREATE TEST vendor KEEP. Unique FINDING. **Do not capture/approve POD.** Cursor ping ≠ ACK.

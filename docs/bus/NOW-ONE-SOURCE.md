@@ -1,3 +1,5 @@
+**00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
+
 **00:15 CT GO-0001 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. CC-1 B · CC-2 SOT wire · no POD seed.
 
 **23:58 CT GO-2355 — FINDING SOT BLOCK. THIS IS NOW for findings.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2355.md`. Every FINDING needs SOURCE-OF-TRUTH / I QUERIED / NOT CHECKED. CC-2 claims ≡3 to wire the guard.

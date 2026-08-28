@@ -1,3 +1,7 @@
+**00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
+
+ACK: `CURSOR | ACK | GO-0002 | NOW=lead+supersession | SHA=1dbd082 | GO`.
+
 **00:15 CT GO-0001 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. ACK: `CURSOR | ACK | GO-0001 | NOW=lead+palette | SHA=1dbd082 | GO`. No POD for Event 2. SOT block on every FINDING. Never second-kick deploy.
 
 **23:55 CT GO-2350.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2350.md`. ACK: `Cursor | ACK | GO-2350 | NOW=deploy+wake | GO`. Catch-up deploy in flight. Wake CC-1 B. Do not second-kick.

@@ -1,10 +1,11 @@
 # OWNER DECISIONS — FINAL (2026-07-26)
 
-**Status:** LOCKED. Complete answered set. Agents must not re-ask these. No CPA gate — owner decided.  
+**Status:** LOCKED. Complete answered set. Agents must not re-ask these. No CPA gate — owner decided (`OPERATING-FACT-no-CPA-owner-decides`).  
 **QBO write-back:** NEVER ON.  
 **Posting:** ON in all 3 entities (TRANSP / USMCA / TRK) for testing.  
-**Neon:** any agent (GUARD, Claude Coder, Cursor) may prepare + apply on Jorge’s word.  
-**PR merge:** Devin is the merger.
+**Neon / merge mechanics:** **SUPERSEDED-BY OWNER LAW 2026-08-03** — every coder has FULL Neon access and merges on green. Historical “Devin is the merger” / “Jorge’s word to apply” lines below are **not** current operating method. See `.cursor/rules/00-operating-method-LAW.mdc`.
+
+**E1 (tax) is the current withholding / 1099 ruling.** It supersedes `docs/LOCKED-DECISIONS-2026-07-05-ENTERPRISE.md` BLOCK-17/24 bullets and any “OPEN COMPLIANCE QUESTION for Jorge/CPA.”
 
 Only **F15** was open for wording; locked below as **hybrid**.
 
@@ -63,7 +64,7 @@ Only **F15** was open for wording; locked below as **hybrid**.
 
 | ID | Decision |
 |---|---|
-| **E1** | **A** — no withholding from anyone; W-8BEN on file + in Legal. |
+| **E1** | **A** — no withholding from anyone (Mexico B1/B2 drivers, Mexican mechanics, all). W-8BEN on driver file AND in Legal. **No 1042-S/1099.** |
 | **E2** | **C** — suggest + a person confirms. |
 | **E2b** | **1** — auto-block dispatch on a positive drug/alcohol test. |
 | **E3** | **A** — build state hire-doc storage now. |
