@@ -13,6 +13,7 @@ import { ExpectedAdjustmentsCallout } from "./book-load-v4/ExpectedAdjustmentsCa
 import { loadTrailerEquipmentCatalogClient, type DispatchCatalogRow } from "../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../../../components/ListErrorState";
 import type { EntityPickerOption } from "../../../components/parity/entityPickerRegistry";
 
 type Props = {
@@ -171,6 +172,13 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
+      {trailerEquipmentQuery.isError ? (
+        <ListErrorState
+          status={0}
+          message="Trailer requirements unavailable."
+          onRetry={() => void trailerEquipmentQuery.refetch()}
+        />
+      ) : null}
       {/* Exact Leaves dispatch.parity.book_load_equipment_section:driver|unit|trailer —
           pickers alone leave selected identities non-navigable; expose EntityLinks. */}
       {assignedUnitId || assignedTrailerUnitId || primaryDriverId || secondaryDriverId ? (
@@ -287,8 +295,14 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         <Field
           label="Team preset"
           input={
-            <SelectCombobox {...register("team_id")} className="h-7 min-w-[240px] text-xs">
-              <option value="">{teamsQuery.isLoading ? "Loading teams..." : "Optional team preset"}</option>
+            <SelectCombobox
+              {...register("team_id")}
+              className="h-7 min-w-[240px] text-xs"
+              disabled={teamsQuery.isLoading || teamsQuery.isError}
+            >
+              <option value="">
+                {teamsQuery.isLoading ? "Loading teams..." : teamsQuery.isError ? "Teams unavailable" : "Optional team preset"}
+              </option>
               {(teamsQuery.data?.teams ?? []).map((team) => (
                 <option key={team.id} value={team.id}>
                   {team.team_name}
@@ -298,6 +312,9 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           }
         />
       </div>
+      {teamsQuery.isError ? (
+        <ListErrorState status={0} message="Driver teams unavailable." onRetry={() => void teamsQuery.refetch()} />
+      ) : null}
       {/* RENDER-A-v2 §B: Driver pay rate / mi is TOP-LEVEL, half-row (standard field width). The separate
           "Reefer setpoint" field is REMOVED — the reefer panel's temperature IS the single setpoint. */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
