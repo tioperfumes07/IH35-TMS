@@ -431,6 +431,8 @@ export function TireProgramPage() {
               <>
                 <ParityTable
                   rows={eventRows}
+                  pageSize={EVENT_PAGE_SIZE}
+                  hidePager
                   columns={eventColumns}
                   rowKey={(row) => row.id}
                   loading={eventsQ.isPending}

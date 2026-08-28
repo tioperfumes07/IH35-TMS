@@ -125,6 +125,8 @@ export function VendorDetailPage() {
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Work Order History</h3>
         <ParityTable
           rows={woHistory}
+          pageSize={pageSize}
+          hidePager
           columns={woColumns}
           rowKey={(row) => String(row.id)}
           loading={detailQ.isLoading}
@@ -138,6 +140,8 @@ export function VendorDetailPage() {
         <h3 className="mb-2 text-sm font-semibold text-gray-900">Invoice History</h3>
         <ParityTable
           rows={invoiceHistory}
+          pageSize={pageSize}
+          hidePager
           columns={invoiceColumns}
           rowKey={(row) => `${String(row.work_order_id)}-${String(row.invoice_number)}`}
           loading={detailQ.isLoading}

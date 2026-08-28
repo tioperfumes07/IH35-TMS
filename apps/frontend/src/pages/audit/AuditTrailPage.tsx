@@ -431,6 +431,8 @@ export function AuditTrailPage() {
         ) : (
           <ParityTable
             rows={rows}
+            pageSize={PAGE_SIZE}
+            hidePager
             columns={COLUMNS}
             rowKey={(row) => row.event_id}
             loading={query.isLoading}
