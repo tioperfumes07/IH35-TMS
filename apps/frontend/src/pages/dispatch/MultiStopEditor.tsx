@@ -70,6 +70,7 @@ function SortableRow({
   operatingCompanyId,
   pickupTimeTypeOptions,
   pickupTimeTypesLoading,
+  pickupTimeTypesUnavailable,
   onPickupTimeTypeCreated,
   onChange,
   onRemove,
@@ -79,6 +80,7 @@ function SortableRow({
   operatingCompanyId: string;
   pickupTimeTypeOptions: Array<{ value: string; label: string; type?: string }>;
   pickupTimeTypesLoading: boolean;
+  pickupTimeTypesUnavailable: boolean;
   onPickupTimeTypeCreated: () => void;
   onChange: (key: string, patch: Partial<MultiStopRow>) => void;
   onRemove: (key: string) => void;
@@ -136,6 +138,7 @@ function SortableRow({
                 operatingCompanyId={operatingCompanyId}
                 placeholder="Select pickup type"
                 loading={pickupTimeTypesLoading}
+                disabled={pickupTimeTypesLoading || pickupTimeTypesUnavailable}
                 onOptionCreated={onPickupTimeTypeCreated}
               />
             </div>
@@ -349,6 +352,14 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
         total={pickupTimeTypesQuery.data?.total ?? null}
         hint="Type in the pickup-time field to narrow the catalog."
       />
+      {pickupTimeTypesQuery.isError ? (
+        <div className="space-y-1 rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700" role="alert">
+          <div>Could not load pickup and appointment types.</div>
+          <Button type="button" size="sm" variant="secondary" onClick={() => void pickupTimeTypesQuery.refetch()}>
+            Retry pickup types
+          </Button>
+        </div>
+      ) : null}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
@@ -360,6 +371,7 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
                 operatingCompanyId={operatingCompanyId}
                 pickupTimeTypeOptions={pickupTimeTypeOptions}
                 pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
                 onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
                 onChange={patchRow}
                 onRemove={removeRow}
