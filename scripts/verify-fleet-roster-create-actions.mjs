@@ -134,10 +134,10 @@ export function collectFailures({
   }
 
   // Backend routes still present (do not regress to orphaned create)
-  if (!unitsRoutes.includes('app.post("/api/v1/mdata/units"')) {
+  if (!/app\.post\(\s*"\/api\/v1\/mdata\/units"/.test(unitsRoutes)) {
     failures.push("units.routes must keep POST /api/v1/mdata/units");
   }
-  if (!equipmentRoutes.includes('app.post("/api/v1/mdata/equipment"')) {
+  if (!/app\.post\(\s*"\/api\/v1\/mdata\/equipment"/.test(equipmentRoutes)) {
     failures.push("equipment.routes must keep POST /api/v1/mdata/equipment");
   }
 

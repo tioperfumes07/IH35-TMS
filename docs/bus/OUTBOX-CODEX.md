@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7044 | CLAIM=post.fleet-roster-create-route-guard-extractor | SOURCE=unit+trailer creator→canonical POST routes | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7043 | PR=#17000 @ 69c021afe7 | Built=complete fleet roster total guard 8/8 | NEXT=create route guard | GO
 Codex | WORKING | FLEET-F7041 | CLAIM=post.fleet-unit-assignment-exact-filter-guard | SOURCE=unit profile reverse drill→paged assignment API→WO.unit_id | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7040 | PR=#16997 @ 74dacf7af7 | Built=fleet fault exact-count guard 5/5 | NEXT=fleet assignment filter | GO
 Codex | WORKING | FLEET-F7043 | CLAIM=post.fleet-unit-list-complete-total-guard | SOURCE=server total→stable all-pages unit reader→fleet counts | NEXT=guard+FAST-MERGE | GO
