@@ -48,6 +48,12 @@
       "seat": "CC-3",
       "claimed_at": "2026-08-28T00:57:00-05:00",
       "go": "0002"
+    },
+    {
+      "leftover_id": "post.inventory",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T01:15:00-05:00",
+      "go": "0002"
     }
   ]
 }

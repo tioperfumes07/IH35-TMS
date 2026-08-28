@@ -14,6 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
+import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
 
 function formatMoneyCents(cents: number | null | undefined) {
   return `$${(Number(cents ?? 0) / 100).toFixed(2)}`;
@@ -88,7 +89,7 @@ export function InventoryPurchasesPage() {
     if (!voidTarget) return;
     await voidPartsPurchase(voidTarget.id, companyId, reason);
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", companyId] });
-    await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", companyId] });
+    await invalidatePartsStockQueries(queryClient, companyId);
   }
 
   const columns: Array<ParityColumn<PartsPurchaseRow>> = [
