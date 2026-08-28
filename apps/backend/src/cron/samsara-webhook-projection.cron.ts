@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { projectSamsaraWebhookEventsForTenant } from "../integrations/samsara/webhook-projection.service.js";
 
 const CRON_NAME = "samsara.webhook_projection_cron";
@@ -41,6 +41,9 @@ export function initializeSamsaraWebhookProjectionCron(app: FastifyInstance) {
   initialized = true;
   if ((process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON ?? "true").trim() === "false") {
     app.log.info("Samsara webhook projection cron disabled via ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON=false");
+    // GO-0017-L3: an early return is an outcome, not an absence — record it so
+    // _system.background_jobs stays fresh (refreshed on every boot) instead of frozen forever.
+    recordBackgroundJobDisabled(CRON_NAME).catch((err) => app.log.warn({ err }, `[background-job:${CRON_NAME}] failed to record disabled-outcome`));
     return;
   }
 

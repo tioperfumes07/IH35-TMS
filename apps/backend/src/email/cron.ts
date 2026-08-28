@@ -2,7 +2,7 @@ import type { FastifyBaseLogger, FastifyInstance } from "fastify";
 import type pg from "pg";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { createEmailProviderFromEnv } from "./factory.js";
 import type { EmailAttachment } from "./provider.js";
@@ -293,6 +293,11 @@ export function initializeEmailCron(app: FastifyInstance) {
 
   if (process.env.EMAIL_CRON_ENABLED !== "true") {
     app.log.info("[email-cron] disabled (set EMAIL_CRON_ENABLED=true to enable)");
+    // GO-0017-L3: an early return is an outcome, not an absence — record it so
+    // _system.background_jobs stays fresh (refreshed on every boot) instead of frozen forever.
+    recordBackgroundJobDisabled("email.queue_processor").catch((err) =>
+      app.log.warn({ err }, "[background-job:email.queue_processor] failed to record disabled-outcome")
+    );
     return;
   }
 

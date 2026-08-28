@@ -1,9 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { scheduleMock, withLuciaBypassMock, wrapBackgroundJobTickMock, projectTickMock, clientQueryMock } = vi.hoisted(() => ({
+const {
+  scheduleMock,
+  withLuciaBypassMock,
+  wrapBackgroundJobTickMock,
+  recordBackgroundJobDisabledMock,
+  projectTickMock,
+  clientQueryMock,
+} = vi.hoisted(() => ({
   scheduleMock: vi.fn(),
   withLuciaBypassMock: vi.fn(),
   wrapBackgroundJobTickMock: vi.fn(),
+  recordBackgroundJobDisabledMock: vi.fn(),
   projectTickMock: vi.fn(),
   clientQueryMock: vi.fn(),
 }));
@@ -20,6 +28,7 @@ vi.mock("../auth/db.js", () => ({
 
 vi.mock("../lib/background-jobs.js", () => ({
   wrapBackgroundJobTick: wrapBackgroundJobTickMock,
+  recordBackgroundJobDisabled: recordBackgroundJobDisabledMock,
 }));
 
 vi.mock("../integrations/samsara/webhook-projection.service.js", () => ({
@@ -37,15 +46,34 @@ function makeApp() {
 }
 
 describe("samsara webhook projection cron", () => {
+  const originalEnableFlag = process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    delete process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
     withLuciaBypassMock.mockImplementation(async (fn: (client: unknown) => Promise<void>) => {
       await fn({ query: clientQueryMock });
     });
     wrapBackgroundJobTickMock.mockImplementation(async (_jobName: string, fn: () => Promise<void>) => {
       await fn();
     });
+    recordBackgroundJobDisabledMock.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    if (originalEnableFlag === undefined) delete process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON;
+    else process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = originalEnableFlag;
+  });
+
+  // GO-0017-L3-CRON-WRITES-OUTCOME: the disabled-via-env-var early return must record an outcome
+  // (not vanish silently) and must NOT schedule a real cron tick.
+  it("records a disabled-outcome and does not schedule when ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON=false", async () => {
+    process.env.ENABLE_SAMSARA_WEBHOOK_PROJECTION_CRON = "false";
+    const { initializeSamsaraWebhookProjectionCron } = await import("./samsara-webhook-projection.cron.js");
+    initializeSamsaraWebhookProjectionCron(makeApp() as never);
+    expect(scheduleMock).not.toHaveBeenCalled();
+    expect(recordBackgroundJobDisabledMock).toHaveBeenCalledWith("samsara.webhook_projection_cron");
   });
 
   it("throws on empty tenant context from tenant query", async () => {

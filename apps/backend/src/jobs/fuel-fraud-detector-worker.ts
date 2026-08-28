@@ -6,7 +6,7 @@ import type { FastifyInstance } from "fastify";
 import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
-import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { dispatchCriticalFuelFraudAlerts } from "../integrations/fuel/fraud-detector/alerter.service.js";
 import {
   evaluateTransactionRules,
@@ -124,6 +124,9 @@ export function initializeFuelFraudDetectorWorker(app: FastifyInstance): void {
     app.log.info(
       "Fuel fraud detector worker disabled (default OFF; set ENABLE_FUEL_FRAUD_DETECTOR_WORKER=true to enable)"
     );
+    // GO-0017-L3: an early return is an outcome, not an absence — record it so
+    // _system.background_jobs stays fresh (refreshed on every boot) instead of frozen forever.
+    recordBackgroundJobDisabled(CRON_NAME).catch((err) => app.log.warn({ err }, `[background-job:${CRON_NAME}] failed to record disabled-outcome`));
     return;
   }
 
