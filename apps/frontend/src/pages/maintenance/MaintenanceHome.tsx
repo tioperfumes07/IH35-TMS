@@ -197,6 +197,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     queryFn: () => getWorkOrder(String(selectedWorkOrderId), companyId),
     enabled: Boolean(companyId && selectedWorkOrderId),
   });
+  const loadedWorkOrderId = workOrderDetailQuery.isError
+    ? null
+    : String(workOrderDetailQuery.data?.id ?? "").trim() || null;
   const partsInventoryRowsQuery = useQuery({
     queryKey: maintenancePartsStockQueryKey(companyId),
     queryFn: () => listPartsInventory(companyId),
@@ -239,7 +242,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       ]);
       pushToast("R&M status updated", "success");
     },
-    onError: () => pushToast("Failed to update R&M status", "error"),
+    onError: (_error, args) => {
+      if (args.generation === statusGenerationRef.current) {
+        pushToast("Failed to update R&M status", "error");
+      }
+    },
   });
 
   useEffect(() => {
@@ -247,6 +254,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     statusMutation.reset();
     setSelectedWorkOrderId(null);
   }, [companyId]);
+
+  useEffect(() => {
+    statusGenerationRef.current += 1;
+    statusMutation.reset();
+  }, [selectedWorkOrderId]);
 
   // CLS-MONEY-KPI-FAKE-ZERO remainder (maintenance): never substitute a zero object when the
   // dashboard KPI fetch fails or has not arrived — MaintKpiRows/RMStatStrip render "—" for absent
@@ -679,11 +691,18 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       <WorkOrderDetailModal
         open={Boolean(selectedWorkOrderId)}
-        workOrder={(workOrderDetailQuery.data ?? null) as Record<string, unknown> | null}
+        workOrder={(workOrderDetailQuery.isError ? null : workOrderDetailQuery.data ?? null) as Record<string, unknown> | null}
+        loading={workOrderDetailQuery.isPending || workOrderDetailQuery.isFetching}
+        readError={workOrderDetailQuery.isError ? "Work order details could not be loaded. Retry before taking action." : null}
+        onRetry={() => void workOrderDetailQuery.refetch()}
         onComplete={
-          selectedWorkOrderId
+          selectedWorkOrderId &&
+          loadedWorkOrderId === selectedWorkOrderId &&
+          !workOrderDetailQuery.isError &&
+          !workOrderDetailQuery.isFetching &&
+          !statusMutation.isPending
             ? () => statusMutation.mutate({
-                id: selectedWorkOrderId,
+                id: loadedWorkOrderId,
                 status: "complete",
                 companyId,
                 generation: statusGenerationRef.current,
