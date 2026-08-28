@@ -58,6 +58,13 @@ function assertLive() {
   if (!/round-trip on edit/i.test(modal)) {
     problems.push(`${MODAL}: edit honesty must state commodity/weight/trip/reefer round-trip`);
   }
+  for (const token of [
+    "isEditMode && editLoadQuery.isError",
+    'message="Could not load persisted load details." onRetry={() => void editLoadQuery.refetch()}',
+    "if (isEditMode && !editLoad)",
+    "Load details must finish loading before changes can be saved.",
+    "form.formState.isSubmitting || (isEditMode && !editLoad)",
+  ]) if (!modal.includes(token)) problems.push(`${MODAL}: edit-prefill failure contract missing ${token}`);
 
   return problems;
 }
@@ -106,7 +113,25 @@ if (SELFTEST) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS — both planted regressions correctly caught; baseline clean`);
+  const brokenFailureLock = modal.replace("form.formState.isSubmitting || (isEditMode && !editLoad)", "form.formState.isSubmitting");
+  fs.writeFileSync(path.join(ROOT, MODAL), brokenFailureLock);
+  const failuresC = assertLive();
+  fs.writeFileSync(path.join(ROOT, MODAL), modal);
+  if (failuresC.length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — planted edit-prefill fail-open submit was NOT caught`);
+    process.exit(1);
+  }
+
+  const brokenRetry = modal.replace("onRetry={() => void editLoadQuery.refetch()}", "onRetry={() => undefined}");
+  fs.writeFileSync(path.join(ROOT, MODAL), brokenRetry);
+  const failuresD = assertLive();
+  fs.writeFileSync(path.join(ROOT, MODAL), modal);
+  if (failuresD.length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — planted edit-prefill dead Retry was NOT caught`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — four planted regressions correctly caught; baseline clean`);
   process.exit(0);
 }
 

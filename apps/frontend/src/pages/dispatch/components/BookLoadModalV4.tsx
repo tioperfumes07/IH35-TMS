@@ -1093,10 +1093,22 @@ export function BookLoadModalV4({
 
         <form
           className="flex flex-1 flex-col overflow-y-auto"
-          onSubmit={form.handleSubmit(async (values) => {
-            await submitLoad(values, "book_dispatch");
-          }, onInvalidSubmit)}
+          onSubmit={(event) => {
+            if (isEditMode && !editLoad) {
+              event.preventDefault();
+              setSubmitErrorMessage("Load details must finish loading before changes can be saved.");
+              return;
+            }
+            void form.handleSubmit(async (values) => {
+              await submitLoad(values, "book_dispatch");
+            }, onInvalidSubmit)(event);
+          }}
         >
+          {isEditMode && editLoadQuery.isError ? (
+            <div className="mx-3 mt-2">
+              <ListErrorBanner message="Could not load persisted load details." onRetry={() => void editLoadQuery.refetch()} />
+            </div>
+          ) : null}
           {submitErrorMessage ? (
             <div className="mx-3 mt-2 rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">{submitErrorMessage}</div>
           ) : null}
@@ -1823,7 +1835,7 @@ export function BookLoadModalV4({
                   Save draft
                 </Button>
               )}
-              <Button type="submit" disabled={form.formState.isSubmitting || repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
+              <Button type="submit" disabled={form.formState.isSubmitting || (isEditMode && !editLoad) || repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
                 {isEditMode ? "Save changes" : "Book + dispatch"}
               </Button>
             </div>
