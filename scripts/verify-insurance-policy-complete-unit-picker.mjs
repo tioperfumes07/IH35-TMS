@@ -22,6 +22,7 @@ function findings(read = (file) => fs.readFileSync(file, "utf8")) {
     if (!source.includes("listAllUnits({")) out.push(`${file}: covered-unit query must exhaust the scoped server range`);
     if (/listUnits\s*\(\s*\{[\s\S]{0,240}?limit:\s*200/.test(source)) out.push(`${file}: silent 200-row unit picker cap remains`);
     if (!source.includes("operating_company_id: operatingCompanyId")) out.push(`${file}: company scope must reach the unit reader`);
+    if (!source.includes('include: "trailers"')) out.push(`${file}: complete insurable fleet must include trailers`);
     if (!source.includes("selectedUnitIds")) out.push(`${file}: canonical selected ids must remain in the creator`);
   }
   return out;
@@ -35,6 +36,7 @@ if (process.argv.includes("--selftest")) {
     (file, source) => file.endsWith("PolicyCreateModal.tsx") ? source.replaceAll("listAllUnits", "listUnits") : source,
     (file, source) => file.endsWith("PolicyCreateWizard.tsx") ? source.replaceAll("operating_company_id: operatingCompanyId", "operating_company_id: undefined") : source,
     (file, source) => file.endsWith("PolicyCreateModal.tsx") ? source.replaceAll("selectedUnitIds", "removedUnitIds") : source,
+    (file, source) => file.endsWith("PolicyCreateModal.tsx") ? source.replace('include: "trailers",', "") : source,
     (file, source) => file === mdataFile ? source.replace("Omit<NonNullable<Parameters", "Omit<Parameters") : source,
     (file, source) => file === mdataFile ? source.replace('if (params.include_inactive) query.set("include_inactive", "true")', "") : source,
   ];

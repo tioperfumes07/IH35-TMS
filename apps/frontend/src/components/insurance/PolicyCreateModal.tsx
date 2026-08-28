@@ -153,6 +153,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
       const result = await listAllUnits({
         operating_company_id: operatingCompanyId,
         search: unitSearch || undefined,
+        include: "trailers",
       });
       return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
     },
