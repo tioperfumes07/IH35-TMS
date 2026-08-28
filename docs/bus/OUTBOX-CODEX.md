@@ -1714,3 +1714,5 @@ Codex | SHIPPED | MAINT-F7013 | PR=#16972 @ 1fc6917f89 | Built=WO cost-context f
 Codex | WORKING | MAINT-F7014 | CLAIM=post.maintenance-home-read-recovery | vertical=recent+completed WO histories+parts reorder | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7014 | PR=#16973 @ 6ae882eed4 | Built=Maintenance Home recent/completed+reorder read recovery | Live=post-deploy UNVERIFIED | NEXT=work-order detail drawer lifecycle census | GO
 Codex | WORKING | MAINT-F7015 | CLAIM=post.maintenance-work-order-detail-read-recovery | vertical=detail read+complete action scope | NEXT=root-fix+guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7015 | PR=#16974 @ 19deaf3d4a | Built=WO detail read+complete identity lifecycle | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining read/write boundary census | GO
+Codex | WORKING | MAINT-F7016 | CLAIM=post.maintenance-in-transit-triage-read-recovery | vertical=RM sidebar triage read+action state | NEXT=root-fix+guard+FAST-MERGE | GO

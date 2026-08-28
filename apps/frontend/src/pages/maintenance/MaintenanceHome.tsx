@@ -144,6 +144,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: 50, offset: 0 }),
     enabled: Boolean(companyId),
   });
+  useEffect(() => {
+    if (triageQuery.isError) setTriageIssue(null);
+  }, [triageQuery.isError]);
   const triageTableQuery = useQuery({
     queryKey: ["maintenance", "dashboard", "triage-table", companyId, triagePage],
     queryFn: () => getMaintenanceInTransitQueue(companyId, { limit: triagePageSize, offset: (triagePage - 1) * triagePageSize }),
@@ -451,11 +454,20 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 onOpen={(id) => setSelectedWorkOrderId(id)}
               />
             ) : null}
-            <InTransitTriageBand
-              issues={triageQuery.data?.issues ?? []}
-              totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
-              onTriage={(issue) => setTriageIssue(issue)}
-            />
+            {triageQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load in-transit triage queue"
+                status={0}
+                message={triageQuery.error instanceof Error ? triageQuery.error.message : undefined}
+                onRetry={() => void triageQuery.refetch()}
+              />
+            ) : (
+              <InTransitTriageBand
+                issues={triageQuery.data?.issues ?? []}
+                totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
+                onTriage={(issue) => setTriageIssue(issue)}
+              />
+            )}
             {severeAlertsQuery.isError ? (
               <ListErrorState
                 title="Couldn't load severe maintenance alerts"
