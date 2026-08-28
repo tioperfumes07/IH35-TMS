@@ -18,7 +18,7 @@ import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/
 import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
-import { listFmcsaLookups } from "../api/fmcsa";
+import { listAllFmcsaLookups } from "../api/fmcsa";
 import {
   createCustomerLane,
   createCustomerQualityEvent,
@@ -584,7 +584,7 @@ export function CustomerDetailPage() {
   });
   const fmcsaHistoryQuery = useQuery({
     queryKey: ["fmcsa-lookups", detailQuery.data?.operating_company_id ?? "none"],
-    queryFn: () => listFmcsaLookups(operatingCompanyId!, { limit: 25 }).then((res) => res.lookups),
+    queryFn: () => listAllFmcsaLookups(operatingCompanyId!).then((res) => res.lookups),
     enabled: fmcsaHistoryOpen && Boolean(operatingCompanyId),
   });
   // TMS Loads tab — reuse the shared loads list endpoint (mdata.loads), scoped to this customer +

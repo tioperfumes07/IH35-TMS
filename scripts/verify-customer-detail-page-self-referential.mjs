@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import "./verify-customer-load-history-complete-range.mjs";
+import "./verify-customer-fmcsa-history-complete-range.mjs";
 /** @matrix-built {"modules":["customers"],"cols":["customer"],"leafRe":"^detail\\.(profile|contacts|contacts\\.create|billing|billing\\.record_payment|quality|quality\\.create_event|lanes|lanes\\.create|documents|coi|contracts|portal_users|tasks|loads|pnl|audit|edit|fmcsa_verify)$","task":"LINK-F5165-CUSTOMER-DETAIL-SELF-REFERENTIAL"} */
 /** @matrix-built {"modules":["customers"],"cols":["connectivity"],"leaves":["detail.profile","detail.contacts","detail.contacts.create","detail.billing","detail.billing.record_payment","detail.quality","detail.quality.create_event","detail.lanes","detail.lanes.create","detail.documents","detail.contracts","detail.portal_users","detail.tasks","detail.loads","detail.pnl","detail.audit","detail.edit","detail.fmcsa_verify"],"task":"CUST-F5921-DETAIL-CONNECTIVITY-EXACT","vertical":"class-sweep"} */
 /**
@@ -78,7 +79,7 @@ export function audit(src, fmcsaSrc = "", requiredSrc = "", selfSrc = "", feedSr
     if (!pattern.test(src)) failures.push(`${FILE}: ${query} reverse GET failure must render exact-query retry`);
   }
   if (!/!fmcsaHistoryQuery\.isError\s*&&\s*fmcsaHistoryListState\.isEmpty/.test(src)) failures.push(`${FILE}: FMCSA failed GET must not render as empty history`);
-  if (!/listFmcsaLookups\(operatingCompanyId!, \{ limit: 25 \}\)/.test(src)) failures.push(`${FILE}: FMCSA history GET must use the selected operating company`);
+  if (!/listAllFmcsaLookups\(operatingCompanyId!\)/.test(src)) failures.push(`${FILE}: FMCSA history GET must use the selected operating company and complete range`);
   if (!/<FMCSAVerificationModal[\s\S]{0,180}operatingCompanyId=\{operatingCompanyId!\}/.test(src)) failures.push(`${FILE}: FMCSA lookup/link modal must receive selected operating company`);
   // LST-F3366 — FMCSA verify chrome: flat sections, no nested bordered cards inside Modal.
   if (fmcsaSrc) {
