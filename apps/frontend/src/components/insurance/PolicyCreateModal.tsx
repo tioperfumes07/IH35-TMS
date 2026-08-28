@@ -4,7 +4,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
-import { listUnits } from "../../api/mdata";
+import { listAllUnits } from "../../api/mdata";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
@@ -150,9 +150,8 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     queryKey: ["insurance", "policy-create", "units", operatingCompanyId, unitSearch],
     enabled: open && Boolean(operatingCompanyId),
     queryFn: async () => {
-      const result = await listUnits({
+      const result = await listAllUnits({
         operating_company_id: operatingCompanyId,
-        limit: 200,
         search: unitSearch || undefined,
       });
       return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
