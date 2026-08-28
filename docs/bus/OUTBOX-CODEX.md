@@ -1906,3 +1906,5 @@ Codex | WORKING | GO-0013 | DSP-F7115 border wizard scope snapshot | SOURCE-OF-T
 Codex | SHIPPED | DSP-F7114 | PR=#17133 | merge=9c6a91171c0b77129d2f8ff793c1637bae7445bd | guard=28/28+typecheck | NEXT=DSP-F7115 | GO
 Codex | WORKING | GO-0013 | DSP-F7116 stored BOL download scope snapshot | SOURCE-OF-TRUTH=dispatch.bol_documents | NEXT=guard+typecheck+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7115 | PR=#17134 | merge=0b6d911e111b2152857146d1e9ffc12d5ae4bcc3 | guard=33/33+typecheck | NEXT=DSP-F7116 | GO
+Codex | WORKING | DSP-F7123 dispatch subnav badge failure honesty | scope=11 queue reads · failed counts unknown · visible Retry | Live=BLOCKED | GO
+Codex | SHIPPED | DSP-F7122 | PR=#17152 @ 5cf2271508 | scope=load-id reservation exact company+generation ownership · Retry | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7123

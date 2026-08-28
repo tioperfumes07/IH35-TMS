@@ -1,5 +1,13 @@
-import { ChevronDown } from "lucide-react";
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { AlertTriangle, ChevronDown, RefreshCw } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useQueries } from "@tanstack/react-query";
 import { listFactoringCandidateInvoices } from "../../api/accounting";
@@ -18,11 +26,24 @@ import { listLatestPositions } from "../../api/telematics";
 import "../../components/forms/shared/HoverDropdownNav.css";
 
 type NavChild = { label: string; href: string; badgeKey?: string };
-type NavItem = { label: string; href?: string; badgeKey?: string; children?: readonly NavChild[] };
+type NavItem = {
+  label: string;
+  href?: string;
+  badgeKey?: string;
+  children?: readonly NavChild[];
+};
 
 const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
-  { label: "Load board", href: "/dispatch?view=kanban", badgeKey: "load_board" },
-  { label: "Assignments", href: "/dispatch/assignment-history", badgeKey: "assignments" },
+  {
+    label: "Load board",
+    href: "/dispatch?view=kanban",
+    badgeKey: "load_board",
+  },
+  {
+    label: "Assignments",
+    href: "/dispatch/assignment-history",
+    badgeKey: "assignments",
+  },
   { label: "At-Risk", href: "/dispatch/at-risk", badgeKey: "at_risk" },
   { label: "Detention", href: "/dispatch/detention", badgeKey: "detention" },
   { label: "Border", href: "/dispatch/border-crossing" },
@@ -38,8 +59,16 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
       { label: "Truck Planner", href: "/dispatch/planners/truck" },
       { label: "Loads Planner", href: "/dispatch/planners/loads" },
       { label: "Planner Calendar", href: "/dispatch/planner" },
-      { label: "Load Templates", href: "/dispatch/planner?panel=templates", badgeKey: "load_templates" },
-      { label: "Unassigned Units", href: "/dispatch?view=overview&panel=unassigned", badgeKey: "unassigned_units" },
+      {
+        label: "Load Templates",
+        href: "/dispatch/planner?panel=templates",
+        badgeKey: "load_templates",
+      },
+      {
+        label: "Unassigned Units",
+        href: "/dispatch?view=overview&panel=unassigned",
+        badgeKey: "unassigned_units",
+      },
       { label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" },
     ],
   },
@@ -53,8 +82,16 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   {
     label: "Documents",
     children: [
-      { label: "POD Review", href: "/dispatch/pod-review", badgeKey: "pod_review" },
-      { label: "OCR Queue", href: "/dispatch/ocr-queue", badgeKey: "ocr_queue" },
+      {
+        label: "POD Review",
+        href: "/dispatch/pod-review",
+        badgeKey: "pod_review",
+      },
+      {
+        label: "OCR Queue",
+        href: "/dispatch/ocr-queue",
+        badgeKey: "ocr_queue",
+      },
       { label: "Equipment transfers", href: "/dispatch/equipment-transfers" },
     ],
   },
@@ -70,7 +107,8 @@ function countDispatchNavDestinations(items: readonly NavItem[]): number {
 }
 
 /** HOME quick-jump badge — every dispatch queue / planner / document destination. */
-export const DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS);
+export const DISPATCH_HOME_QUICK_JUMP_COUNT =
+  countDispatchNavDestinations(DISPATCH_NAV_ITEMS);
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch": "Overview",
@@ -109,44 +147,69 @@ function itemOrChildActive(item: NavItem, activeHref?: string): boolean {
 }
 
 /** Map pathname + search to the active queue tab href. */
-export function dispatchSubNavActiveHref(pathname: string, search: string): string {
+export function dispatchSubNavActiveHref(
+  pathname: string,
+  search: string,
+): string {
   const params = new URLSearchParams(search);
   const view = params.get("view");
   const panel = params.get("panel");
   const bookLoad = params.get("book_load");
 
   if (pathname === "/dispatch/book-load" || bookLoad === "1") {
-    return bookLoad === "1" ? "/dispatch/book-load?book_load=1" : "/dispatch/book-load";
+    return bookLoad === "1"
+      ? "/dispatch/book-load?book_load=1"
+      : "/dispatch/book-load";
   }
   if (pathname === "/dispatch" || pathname === "/dispatch/loads") {
-    if (view === "overview" && panel === "unassigned") return "/dispatch?view=overview&panel=unassigned";
+    if (view === "overview" && panel === "unassigned")
+      return "/dispatch?view=overview&panel=unassigned";
     if (view === "overview") return "/dispatch?view=overview";
-    if (pathname === "/dispatch/loads" || view === "list") return "/dispatch?view=list";
+    if (pathname === "/dispatch/loads" || view === "list")
+      return "/dispatch?view=list";
     return "/dispatch?view=kanban";
   }
-  if (pathname.startsWith("/dispatch/planners/truck")) return "/dispatch/planners/truck";
-  if (pathname.startsWith("/dispatch/planners/loads")) return "/dispatch/planners/loads";
-  if (pathname.startsWith("/dispatch/planners")) return "/dispatch/planners/driver";
+  if (pathname.startsWith("/dispatch/planners/truck"))
+    return "/dispatch/planners/truck";
+  if (pathname.startsWith("/dispatch/planners/loads"))
+    return "/dispatch/planners/loads";
+  if (pathname.startsWith("/dispatch/planners"))
+    return "/dispatch/planners/driver";
   if (pathname === "/dispatch/planner") {
-    return panel === "templates" ? "/dispatch/planner?panel=templates" : "/dispatch/planner";
+    return panel === "templates"
+      ? "/dispatch/planner?panel=templates"
+      : "/dispatch/planner";
   }
-  if (pathname.startsWith("/dispatch/assignment-history")) return "/dispatch/assignment-history";
+  if (pathname.startsWith("/dispatch/assignment-history"))
+    return "/dispatch/assignment-history";
   if (pathname.startsWith("/dispatch/at-risk")) return "/dispatch/at-risk";
   if (pathname.startsWith("/dispatch/detention")) return "/dispatch/detention";
-  if (pathname.startsWith("/dispatch/border-crossing")) return "/dispatch/border-crossing";
-  if (pathname.startsWith("/dispatch/alerts/late-arrivals")) return "/dispatch/alerts/late-arrivals";
-  if (pathname.startsWith("/dispatch/geofencing")) return "/dispatch/geofencing";
-  if (pathname.startsWith("/accounting/factoring")) return "/accounting/factoring";
-  if (pathname.startsWith("/driver-finance/settlements")) return "/driver-finance/settlements";
-  if (pathname.startsWith("/accounting/pre-settlements")) return "/accounting/pre-settlements";
-  if (pathname.startsWith("/dispatch/pod-review")) return "/dispatch/pod-review";
+  if (pathname.startsWith("/dispatch/border-crossing"))
+    return "/dispatch/border-crossing";
+  if (pathname.startsWith("/dispatch/alerts/late-arrivals"))
+    return "/dispatch/alerts/late-arrivals";
+  if (pathname.startsWith("/dispatch/geofencing"))
+    return "/dispatch/geofencing";
+  if (pathname.startsWith("/accounting/factoring"))
+    return "/accounting/factoring";
+  if (pathname.startsWith("/driver-finance/settlements"))
+    return "/driver-finance/settlements";
+  if (pathname.startsWith("/accounting/pre-settlements"))
+    return "/accounting/pre-settlements";
+  if (pathname.startsWith("/dispatch/pod-review"))
+    return "/dispatch/pod-review";
   if (pathname.startsWith("/dispatch/ocr-queue")) return "/dispatch/ocr-queue";
   return pathname;
 }
 
-export function dispatchBreadcrumbLabel(pathname: string, search: string): string {
+export function dispatchBreadcrumbLabel(
+  pathname: string,
+  search: string,
+): string {
   const activeHref = dispatchSubNavActiveHref(pathname, search);
-  return BREADCRUMB_LABELS[activeHref] ?? BREADCRUMB_LABELS[pathname] ?? "Dispatch";
+  return (
+    BREADCRUMB_LABELS[activeHref] ?? BREADCRUMB_LABELS[pathname] ?? "Dispatch"
+  );
 }
 
 function CountBadge({ count }: { count: number | null | undefined }) {
@@ -243,13 +306,18 @@ function DropdownColumn({
         openViaKey.current = true;
         show();
       } else {
-        queueMicrotask(() => menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus());
+        queueMicrotask(() =>
+          menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus(),
+        );
       }
     }
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       if (!open) show();
-      else queueMicrotask(() => menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus());
+      else
+        queueMicrotask(() =>
+          menuRef.current?.querySelector<HTMLAnchorElement>("a")?.focus(),
+        );
     }
   };
 
@@ -261,9 +329,15 @@ function DropdownColumn({
         {item.href ? (
           // C-1 split control: the LABEL navigates to the default planner; the CHEVRON keeps the
           // click-to-toggle persistent submenu (locked decision #728 preserved — see test).
-          <Link role="menuitem" to={item.href} className={parentActive ? "active" : undefined}>
+          <Link
+            role="menuitem"
+            to={item.href}
+            className={parentActive ? "active" : undefined}
+          >
             {item.label}
-            {groupBadgeTotal > 0 ? <CountBadge count={groupBadgeTotal} /> : null}
+            {groupBadgeTotal > 0 ? (
+              <CountBadge count={groupBadgeTotal} />
+            ) : null}
           </Link>
         ) : null}
         <button
@@ -282,13 +356,21 @@ function DropdownColumn({
           {item.href ? null : (
             <>
               {item.label}
-              {groupBadgeTotal > 0 ? <CountBadge count={groupBadgeTotal} /> : null}
+              {groupBadgeTotal > 0 ? (
+                <CountBadge count={groupBadgeTotal} />
+              ) : null}
             </>
           )}
           <ChevronDown size={12} aria-hidden />
         </button>
         {open ? (
-          <ul ref={menuRef} id={menuId} role="menu" className="nav-dropdown" tabIndex={-1}>
+          <ul
+            ref={menuRef}
+            id={menuId}
+            role="menu"
+            className="nav-dropdown"
+            tabIndex={-1}
+          >
             {(item.children ?? []).map((child) => (
               <li key={child.href} role="none">
                 <Link
@@ -298,7 +380,9 @@ function DropdownColumn({
                   onClick={() => setOpen(false)}
                 >
                   {child.label}
-                  {child.badgeKey ? <CountBadge count={badges[child.badgeKey]} /> : null}
+                  {child.badgeKey ? (
+                    <CountBadge count={badges[child.badgeKey]} />
+                  ) : null}
                 </Link>
               </li>
             ))}
@@ -322,7 +406,11 @@ function LeafItem({
   const active = activeHref === item.href;
   return (
     <li role="none">
-      <Link role="menuitem" to={item.href} className={active ? "active" : undefined}>
+      <Link
+        role="menuitem"
+        to={item.href}
+        className={active ? "active" : undefined}
+      >
         {item.label}
         {item.badgeKey ? <CountBadge count={badges[item.badgeKey]} /> : null}
       </Link>
@@ -410,7 +498,8 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
       },
       {
         queryKey: ["dispatch-subnav", "pod", operatingCompanyId],
-        queryFn: () => getPodDocuments(operatingCompanyId, { status: "pending_review" }),
+        queryFn: () =>
+          getPodDocuments(operatingCompanyId, { status: "pending_review" }),
         enabled,
         refetchInterval: 60_000,
       },
@@ -423,61 +512,158 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
     ],
   });
 
+  const failedBadgeQueries = [
+    dashboardQ,
+    assignmentsQ,
+    atRiskQ,
+    detentionQ,
+    lateQ,
+    positionsQ,
+    factoringQ,
+    unassignedQ,
+    templatesQ,
+    podQ,
+    ocrQ,
+  ].filter((query) => query.isError);
+
   const badges = useMemo<Record<string, number | null | undefined>>(
     () => ({
-      load_board: enabled && !dashboardQ.isLoading ? Number(dashboardQ.data?.active_loads ?? 0) : null,
-      assignments: enabled && !assignmentsQ.isLoading ? (assignmentsQ.data?.rows?.length ?? 0) : null,
-      at_risk: enabled && !atRiskQ.isLoading ? (atRiskQ.data?.loads?.length ?? 0) : null,
-      detention: enabled && !detentionQ.isLoading ? Number(detentionQ.data?.active_count ?? detentionQ.data?.count ?? 0) : null,
-      late: enabled && !lateQ.isLoading ? Number(lateQ.data?.count ?? lateQ.data?.loads?.length ?? 0) : null,
-      live_map: enabled && !positionsQ.isLoading ? (positionsQ.data?.rows?.length ?? 0) : null,
-      factoring: enabled && !factoringQ.isLoading ? (factoringQ.data?.rows?.length ?? 0) : null,
-      unassigned_units: enabled && !unassignedQ.isLoading ? (unassignedQ.data?.units?.length ?? 0) : null,
-      load_templates: enabled && !templatesQ.isLoading ? (templatesQ.data?.templates?.length ?? 0) : null,
-      pod_review: enabled && !podQ.isLoading ? Number(podQ.data?.count ?? podQ.data?.documents?.length ?? 0) : null,
-      ocr_queue: enabled && !ocrQ.isLoading ? (ocrQ.data?.items?.length ?? 0) : null,
+      load_board:
+        enabled && !dashboardQ.isLoading && !dashboardQ.isError
+          ? Number(dashboardQ.data?.active_loads ?? 0)
+          : null,
+      assignments:
+        enabled && !assignmentsQ.isLoading && !assignmentsQ.isError
+          ? (assignmentsQ.data?.rows?.length ?? 0)
+          : null,
+      at_risk:
+        enabled && !atRiskQ.isLoading && !atRiskQ.isError
+          ? (atRiskQ.data?.loads?.length ?? 0)
+          : null,
+      detention:
+        enabled && !detentionQ.isLoading && !detentionQ.isError
+          ? Number(detentionQ.data?.active_count ?? detentionQ.data?.count ?? 0)
+          : null,
+      late:
+        enabled && !lateQ.isLoading && !lateQ.isError
+          ? Number(lateQ.data?.count ?? lateQ.data?.loads?.length ?? 0)
+          : null,
+      live_map:
+        enabled && !positionsQ.isLoading && !positionsQ.isError
+          ? (positionsQ.data?.rows?.length ?? 0)
+          : null,
+      factoring:
+        enabled && !factoringQ.isLoading && !factoringQ.isError
+          ? (factoringQ.data?.rows?.length ?? 0)
+          : null,
+      unassigned_units:
+        enabled && !unassignedQ.isLoading && !unassignedQ.isError
+          ? (unassignedQ.data?.units?.length ?? 0)
+          : null,
+      load_templates:
+        enabled && !templatesQ.isLoading && !templatesQ.isError
+          ? (templatesQ.data?.templates?.length ?? 0)
+          : null,
+      pod_review:
+        enabled && !podQ.isLoading && !podQ.isError
+          ? Number(podQ.data?.count ?? podQ.data?.documents?.length ?? 0)
+          : null,
+      ocr_queue:
+        enabled && !ocrQ.isLoading && !ocrQ.isError
+          ? (ocrQ.data?.items?.length ?? 0)
+          : null,
     }),
     [
       enabled,
       dashboardQ.isLoading,
+      dashboardQ.isError,
       dashboardQ.data,
       assignmentsQ.isLoading,
+      assignmentsQ.isError,
       assignmentsQ.data,
       atRiskQ.isLoading,
+      atRiskQ.isError,
       atRiskQ.data,
       detentionQ.isLoading,
+      detentionQ.isError,
       detentionQ.data,
       lateQ.isLoading,
+      lateQ.isError,
       lateQ.data,
       positionsQ.isLoading,
+      positionsQ.isError,
       positionsQ.data,
       factoringQ.isLoading,
+      factoringQ.isError,
       factoringQ.data,
       unassignedQ.isLoading,
+      unassignedQ.isError,
       unassignedQ.data,
       templatesQ.isLoading,
+      templatesQ.isError,
       templatesQ.data,
       podQ.isLoading,
+      podQ.isError,
       podQ.data,
       ocrQ.isLoading,
+      ocrQ.isError,
       ocrQ.data,
     ],
   );
 
   return (
     <div className="space-y-1" data-testid="dispatch-queues-subnav">
-      <nav className="hover-dropdown-nav" aria-label="Dispatch queue navigation (hover dropdown)">
+      {failedBadgeQueries.length > 0 ? (
+        <div
+          role="alert"
+          data-testid="dispatch-subnav-badge-error"
+          className="mx-2 flex items-center justify-between gap-3 rounded-md border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700"
+        >
+          <span className="inline-flex items-center gap-1.5">
+            <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5" />
+            Some queue counts are unavailable.
+          </span>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"
+            onClick={() => {
+              for (const query of failedBadgeQueries) void query.refetch();
+            }}
+          >
+            <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
+      ) : null}
+      <nav
+        className="hover-dropdown-nav"
+        aria-label="Dispatch queue navigation (hover dropdown)"
+      >
         <ul role="menubar">
           {DISPATCH_NAV_ITEMS.map((item) =>
             item.children?.length ? (
-              <DropdownColumn key={item.label} item={item} activeHref={activeHref} badges={badges} />
+              <DropdownColumn
+                key={item.label}
+                item={item}
+                activeHref={activeHref}
+                badges={badges}
+              />
             ) : (
-              <LeafItem key={item.label} item={item} activeHref={activeHref} badges={badges} />
+              <LeafItem
+                key={item.label}
+                item={item}
+                activeHref={activeHref}
+                badges={badges}
+              />
             ),
           )}
         </ul>
       </nav>
-      <nav aria-label="Breadcrumb" className="px-2 text-xs text-[#6B7280]" data-testid="dispatch-breadcrumb">
+      <nav
+        aria-label="Breadcrumb"
+        className="px-2 text-xs text-[#6B7280]"
+        data-testid="dispatch-breadcrumb"
+      >
         <Link to="/dispatch" className="text-[#1F2A44] hover:underline">
           Dispatch
         </Link>
