@@ -1,3 +1,5 @@
+Codex | SHIPPED | DSP-F7113 | PR=#17131 @ cc977cf05f | Built=load.drawer.stops immutable write lifecycle | NEXT=planner reschedule lifecycle | GO
+Codex | WORKING | DSP-F7114 | CLAIM=post.dispatch-planner-reschedule-scope-snapshot | SOURCE=company-scoped planner PATCH→week refresh | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0013 | NOW=/dispatch-usmca-unique | SHA=069d531 | GO
 Codex | WORKING | DSP-F7113 | CLAIM=post.dispatch-multistop-write-scope-snapshot | SOURCE=company+load scoped stop replacement→Load Detail Stops | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7080 | CLAIM=post.dispatch-planner-company-week-boundaries | SOURCE=company business dates→planner FE+BE week bounds | NEXT=guard+FAST-MERGE | GO

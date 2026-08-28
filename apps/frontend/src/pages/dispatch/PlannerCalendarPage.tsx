@@ -1,6 +1,6 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   getDispatchPlannerWeek,
@@ -33,8 +33,8 @@ function hosClass(status: PlannerDriverRow["hos_status"]): string {
   return "bg-slate-100 text-slate-700";
 }
 
-function PlannerLoadChip({ load }: { load: PlannerLoadEvent }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: load.id, data: { load } });
+function PlannerLoadChip({ load, disabled }: { load: PlannerLoadEvent; disabled: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: load.id, data: { load }, disabled });
   const style = transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` } : undefined;
   return (
     <div
@@ -60,15 +60,17 @@ function PlannerDayCell({
   loads,
   blackouts,
   showHosOverlay,
+  disabled,
 }: {
   driverId: string;
   day: string;
   loads: PlannerLoadEvent[];
   blackouts: PlannerDriverRow["blackouts"];
   showHosOverlay: boolean;
+  disabled: boolean;
 }) {
   const droppableId = `${driverId}:${day}`;
-  const { setNodeRef, isOver } = useDroppable({ id: droppableId, data: { driverId, day } });
+  const { setNodeRef, isOver } = useDroppable({ id: droppableId, data: { driverId, day }, disabled });
   const dayStart = new Date(`${day}T00:00:00.000Z`).getTime();
   const dayEnd = dayStart + 24 * 60 * 60 * 1000;
   const dayBlackouts = blackouts.filter((slot) => {
@@ -93,7 +95,7 @@ function PlannerDayCell({
         </div>
       ) : null}
       {loads.map((load) => (
-        <PlannerLoadChip key={load.id} load={load} />
+        <PlannerLoadChip key={load.id} load={load} disabled={disabled} />
       ))}
     </td>
   );
@@ -104,12 +106,16 @@ export function PlannerCalendarPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
+  const actionGenerationRef = useRef(0);
   const [weekStart, setWeekStart] = useState(() => plannerWeekStart());
   const [showHosOverlay, setShowHosOverlay] = useState(true);
   // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
   // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
   const [searchParams, setSearchParams] = useSearchParams();
   const templatesOpen = searchParams.get("panel") === "templates";
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+  }, [companyId]);
   const openTemplates = () => {
     const next = new URLSearchParams(searchParams);
     next.set("panel", "templates");
@@ -128,15 +134,12 @@ export function PlannerCalendarPage() {
   });
 
   const rescheduleM = useMutation({
-    mutationFn: (input: { loadId: string; startAt: string; driverId: string }) =>
+    mutationFn: (input: { loadId: string; startAt: string; driverId: string; companyId: string; generation: number }) =>
       patchDispatchPlannerLoadStartAt(input.loadId, {
-        operating_company_id: companyId,
+        operating_company_id: input.companyId,
         start_at: input.startAt,
         driver_id: input.driverId,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["dispatch", "planner-week", companyId] });
-    },
   });
 
   const days = useMemo(() => {
@@ -167,10 +170,14 @@ export function PlannerCalendarPage() {
       return;
     }
     const nextStartAt = `${target.day}T${load.start_at.slice(11)}`;
+    const input = { loadId: load.id, startAt: nextStartAt, driverId: target.driverId, companyId, generation: actionGenerationRef.current };
     try {
-      await rescheduleM.mutateAsync({ loadId: load.id, startAt: nextStartAt, driverId: target.driverId });
+      await rescheduleM.mutateAsync(input);
+      if (input.generation !== actionGenerationRef.current) return;
+      await queryClient.invalidateQueries({ queryKey: ["dispatch", "planner-week", input.companyId] });
       pushToast(`Rescheduled ${load.load_number}`, "success");
     } catch (error) {
+      if (input.generation !== actionGenerationRef.current) return;
       const message = error instanceof Error ? error.message : "Reschedule rejected";
       pushToast(message.includes("409") ? "Conflict blocked — driver already has a nearby load" : message, "error");
     }
@@ -285,8 +292,9 @@ export function PlannerCalendarPage() {
                           driverId={driver.id}
                           day={day}
                           loads={loadsByDriverDay.get(`${driver.id}:${day}`) ?? []}
-                          blackouts={driver.blackouts}
-                          showHosOverlay={showHosOverlay}
+                            blackouts={driver.blackouts}
+                            showHosOverlay={showHosOverlay}
+                            disabled={rescheduleM.isPending}
                         />
                       ))}
                     </tr>
