@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listCustomers, listPaymentTermOptions, type Customer, type UpdateCustomerInput } from "../../api/mdata";
+import { listAllCustomers, listPaymentTermOptions, type Customer, type UpdateCustomerInput } from "../../api/mdata";
 import { CappedListNotice } from "../CappedListNotice";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
@@ -59,7 +59,7 @@ export function CustomerEditModal({ open, customer, operatingCompanyId, saving =
   // D1-4: eligible parents = active, TOP-LEVEL customers in this company, excluding this customer itself.
   const parentCandidatesQuery = useQuery({
     queryKey: ["customer-parent-options", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000 }).then((r) => r.customers),
+    queryFn: () => listAllCustomers({ operating_company_id: companyId }).then((r) => r.customers),
     enabled: open && Boolean(companyId),
     staleTime: 60_000,
   });

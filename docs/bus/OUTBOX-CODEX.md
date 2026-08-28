@@ -1518,3 +1518,5 @@ Codex | WORKING | FINDING=CUST-F6916-OPEN-BALANCE-ROLLUP-FIRST-500-ONLY | SOT=ac
 Codex | SHIPPED | ACCT-F6916 | PR=#16873 @ 3417825e67 | gate=exit0 | Built=customers open-balance complete invoice range | Live=post-deploy UNVERIFIED | NEXT=ACCT-F6917 | GO
 Codex | WORKING | FINDING=ACCT-F6917-CUSTOMER-FINANCIAL-HISTORY-SILENT-PAGE-CAPS | leaves=transaction_list+statements+recurring_transactions+late_fees | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | ACCT-F6918 customer-detail billing complete range | CLAIM=post.customer-detail-billing-complete-range | NEXT=guard+gate+FAST-MERGE | GO
+Codex | SHIPPED | ACCT-F6918 | PR=#16881 | merge=0dac64226f | gate=exit0 | Live=post-deploy UNVERIFIED | NEXT=CUST-F6919 customer complete rosters | GO
+Codex | WORKING | ACCT-F6919 customer-column complete rosters | CLAIM=post.customer-column-complete-rosters | modules=customers+accounting | NEXT=guard+gate+FAST-MERGE | GO

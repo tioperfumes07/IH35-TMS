@@ -12,7 +12,7 @@ import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringT
 import { companyToday } from "../lib/businessDate";
 import { ApiError } from "../api/client";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./accounting/InvoicesListPage";
-import { createCustomer, getCustomerBillingSummary, listCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
+import { createCustomer, getCustomerBillingSummary, listAllCustomers, listPaymentTermOptions, type Customer, type CustomerBillingSummary } from "../api/mdata";
 import {
   CustomerProfileForm,
   emptyCustomerProfileValues,
@@ -467,7 +467,7 @@ export function CustomersPage() {
     // CUST-1: load the FULL customer roster (the client-side table below paginates/searches over it).
     // Without an explicit limit the endpoint returns only the default 50, hiding the rest of the roster.
     // PAGER-SERVERTOTAL-01: keep server `total` (COUNT) — never derive pager totalCount from .length.
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, active_company_only: true }),
+    queryFn: () => listAllCustomers({ operating_company_id: companyId, active_company_only: true }),
     enabled: Boolean(companyId),
   });
   const customersRoster = customersQuery.data?.customers ?? [];
@@ -482,7 +482,7 @@ export function CustomersPage() {
   // active-only roster below, unchanged).
   const inactiveCustomersQuery = useQuery({
     queryKey: ["customers", "inactive", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 5000, status: "inactive" }),
+    queryFn: () => listAllCustomers({ operating_company_id: companyId, status: "inactive" }),
     enabled: Boolean(companyId),
   });
   const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
