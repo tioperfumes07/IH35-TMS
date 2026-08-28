@@ -18,6 +18,7 @@ export function verify(sources = {}) {
     ["list sortable value fails honestly when the complete at-risk read fails", /health_tier_label: relationshipTierBadge\([\s\S]*?atRiskQuery\.isError && !c\.relationship_health_tier[\s\S]*?\)\.label/.test(list)],
     ["list rendered badge uses the same failure contract", /relationshipTierBadge\(tier, atRiskQuery\.isError && !row\.relationship_health_tier\)/.test(list)],
     ["list recomputes rows when query failure state changes", /atRiskCustomerIds, atRiskQuery\.isError/.test(list)],
+    ["filter summary cannot claim the failed range loaded", /<p className="text-xs text-slate-600">\s*\{atRiskQuery\.isError\s*\? "Relationship health is unavailable; retry the failed read above\."\s*: `Relationship health loaded for all/.test(list)],
     ["detail badge labels a failed read unavailable", /tierLabel\(score\?\.health_tier, Boolean\(error\)\)/.test(detail)],
     ["detail badge styles a failed read unavailable", /tierClass\(score\?\.health_tier, Boolean\(error\)\)/.test(detail)],
     ["detail preserves retry instead of hiding the failure", /!loading && error && onRetry \? <ListErrorState[\s\S]*?onRetry=\{onRetry\}/.test(detail)],
@@ -31,6 +32,7 @@ if (process.argv.includes("--selftest")) {
     ["list unavailable label removed", { ...live, list: live.list.replace('if (unavailable) return { label: "Unavailable"', 'if (false) return { label: "Unavailable"') }],
     ["sortable rows ignore read failure", { ...live, list: live.list.replace("atRiskQuery.isError && !c.relationship_health_tier", "false") }],
     ["rendered badge ignores read failure", { ...live, list: live.list.replace("atRiskQuery.isError && !row.relationship_health_tier", "false") }],
+    ["filter summary claims stale success", { ...live, list: live.list.replace('atRiskQuery.isError\n                  ? "Relationship health is unavailable; retry the failed read above."', 'false\n                  ? "Relationship health is unavailable; retry the failed read above."') }],
     ["detail error badge remains unknown", { ...live, detail: live.detail.replace("tierLabel(score?.health_tier, Boolean(error))", "tierLabel(score?.health_tier)") }],
   ];
   for (const [name, mutated] of mutations) {

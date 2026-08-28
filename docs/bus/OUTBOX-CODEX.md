@@ -1653,3 +1653,5 @@ Codex | WORKING | CLS-F6981 | CLAIM=post.nonmoney-suggest-load-fails-loud | vert
 Codex | SHIPPED | INS-F6980 | PR=#16941 @ 496bac990a | Built=claim accident read recovery 1/1 | NEXT=CLS-F6981 | GO
 Codex | WORKING | CUST-F6982 | CLAIM=post.customer-relationship-health-read-failure-honesty | vertical=customers list+detail | SOURCE=company-scoped relationship-score reads | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CLS-F6981 | PR=#16942 @ d7a8455fbd | Built=nonmoney suggest-load recovery 5/5 | NEXT=CUST-F6982 | GO
+Codex | WORKING | CUST-F6983 | CLAIM=post.customer-relationship-health-filter-summary-honesty | SOURCE=complete at-risk range status | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F6982 | PR=#16943 @ 094d9b0467 | Built=relationship-health failure honesty list+detail | NEXT=CUST-F6983 | GO
