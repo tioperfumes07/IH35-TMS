@@ -1,3 +1,4 @@
+Cursor | TICK | GO-0012 | API=069d531 FE=a0cbec9 | GO -- #17039 merged. CC-1 NOW leftover unique money. CC-2/Cascade/Devin no GO-0012 ACK. Nobody trigger_deploy.
 Cursor | TICK | GO-0012 | API=069d531 FE=451b359 | GO -- CC-1 ACK rebase-17039. CC-2/3/Cascade/Devin no GO-0012 ACK. Nobody trigger_deploy.
 Cursor | TICK | GO-0012 | API=069d531 FE=737d541 | GO -- no GO-0012 self-ACK. CC-1 #17039. CC-3 TXH tab. Devin OUTBOX GO-0002. Nobody trigger_deploy.
 Cursor | TICK | GO-0012 | API=069d531 FE=c9d294c | GO -- G1/dual-pay/F9519 on main. CC-1 NOW=#17039 rebase. CC-3 TXH tab. Devin OUTBOX still GO-0002. Nobody trigger_deploy.
