@@ -1709,3 +1709,4 @@ Codex | WORKING | MAINT-F7010 | CLAIM=post.unit-wear-retained-telemetry-on-error
 Codex | SHIPPED | MAINT-F7010 | PR=#16969 @ 060d7a0075 | Built=unit tires+brakes retained telemetry fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
 Codex | WORKING | MAINT-F7011 | CLAIM=post.wo-oos-estimate-read-honesty | SOURCE=severe repair estimate response | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7011 | PR=#16970 @ 6293e70fba | Built=WO OOS estimate failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
+Codex | WORKING | MAINT-F7013 | CLAIM=post.wo-cost-context-read-honesty | SOURCE=company cost-context catalogs | NEXT=root-fix+guard+FAST-MERGE | GO

@@ -10,6 +10,7 @@ const consumers = [
 ].map((file) => [file, fs.readFileSync(file, "utf8")]);
 
 function problems(b = backend, cs = consumers) {
+  const detail = cs.find(([file]) => file.endsWith("WorkOrderDetailPage.tsx"))?.[1] ?? "";
   const checks = [
     [!b.match(/LIMIT\s+(200|500)\b/), "all silent catalog caps removed"],
     [b.includes("ORDER BY account_name ASC, id ASC"), "account stable order"],
@@ -18,6 +19,8 @@ function problems(b = backend, cs = consumers) {
     [b.match(/ORDER BY rate_name ASC(?: NULLS LAST)?, id ASC/g)?.length === 2, "both labor sources stable"],
     [(b.match(/operating_company_id = \$1::uuid/g) ?? []).length >= 6, "every catalog query company-scoped"],
     [cs.every(([, source]) => source.includes("getWoCostContext")), "all five mounted consumers use canonical context"],
+    [/costQ\.isError \? \([\s\S]{0,260}title="Couldn't load work order cost context"[\s\S]{0,220}costQ\.refetch\(\)/.test(detail), "WO detail cost context exposes exact recovery"],
+    [/!costQ\.isError && costQ\.data \? \(/.test(detail), "WO detail failed read suppresses retained cost context"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
 }
@@ -32,6 +35,8 @@ if (process.argv.includes("--selftest")) {
     [backend.replace("ORDER BY rate_name ASC, id ASC", "ORDER BY rate_name ASC LIMIT 200"), consumers],
     [backend.replace("operating_company_id = $1::uuid", "TRUE"), consumers],
     [backend, consumers.map(([file, source], index) => [file, index === 0 ? source.replaceAll("getWoCostContext", "getLegacyContext") : source])],
+    [backend, consumers.map(([file, source]) => [file, file.endsWith("WorkOrderDetailPage.tsx") ? source.replace("costQ.refetch()", "/* planted defect */") : source])],
+    [backend, consumers.map(([file, source]) => [file, file.endsWith("WorkOrderDetailPage.tsx") ? source.replace("!costQ.isError && costQ.data", "costQ.data") : source])],
   ];
   const escaped = mutations.map((mutation, index) => problems(...mutation).length === 0 ? index + 1 : null).filter(Boolean);
   if (escaped.length) throw new Error(`${escaped.length} planted defect(s) escaped: ${escaped.join(",")}`);
