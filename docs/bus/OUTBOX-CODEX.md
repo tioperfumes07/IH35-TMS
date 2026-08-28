@@ -1712,3 +1712,5 @@ Codex | SHIPPED | MAINT-F7011 | PR=#16970 @ 6293e70fba | Built=WO OOS estimate f
 Codex | WORKING | MAINT-F7013 | CLAIM=post.wo-cost-context-read-honesty | SOURCE=company cost-context catalogs | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7013 | PR=#16972 @ 1fc6917f89 | Built=WO cost-context failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=maintenance home connectivity census | GO
 Codex | WORKING | MAINT-F7014 | CLAIM=post.maintenance-home-read-recovery | vertical=recent+completed WO histories+parts reorder | NEXT=root-fix+guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7014 | PR=#16973 @ 6ae882eed4 | Built=Maintenance Home recent/completed+reorder read recovery | Live=post-deploy UNVERIFIED | NEXT=work-order detail drawer lifecycle census | GO
+Codex | WORKING | MAINT-F7015 | CLAIM=post.maintenance-work-order-detail-read-recovery | vertical=detail read+complete action scope | NEXT=root-fix+guard+FAST-MERGE | GO

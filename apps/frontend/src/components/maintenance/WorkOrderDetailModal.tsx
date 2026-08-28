@@ -18,6 +18,9 @@ function money(cents: number) {
 type Props = {
   open: boolean;
   workOrder: Record<string, unknown> | null;
+  loading?: boolean;
+  readError?: string | null;
+  onRetry?: () => void;
   canRefreshDisplayId?: boolean;
   onRefreshDisplayId?: () => void;
   onComplete?: () => void;
@@ -62,7 +65,7 @@ function asEntityId(value: unknown): string | null {
   return null;
 }
 
-export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
+export function WorkOrderDetailModal({ open, workOrder, loading, readError, onRetry, canRefreshDisplayId, onRefreshDisplayId, onComplete, onClose }: Props) {
   const [addPartsLinkOpen, setAddPartsLinkOpen] = useState(false);
   const [partsPage, setPartsPage] = useState(0);
   const partsPageSize = 25;
@@ -90,12 +93,29 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
     }
   }, [partsLinksQuery.data?.rows.length, partsLinksQuery.isFetching, partsPage, partsTotal]);
 
-  if (!open || !workOrder) return null;
+  if (!open) return null;
+  if (!workOrder) {
+    return (
+      <Modal open={open} onClose={onClose} title="Work Order Details" modalKind="work_order_detail" sizePreset="md" resizable>
+        {readError ? (
+          <ListErrorBanner message={readError} onRetry={onRetry} />
+        ) : (
+          <div className="py-8 text-center text-sm text-slate-600" aria-live="polite">
+            {loading ? "Loading work order details…" : "Work order details are unavailable."}
+          </div>
+        )}
+      </Modal>
+    );
+  }
 
   const sourceType = String(workOrder.source_type ?? "—");
   const status = String(workOrder.status ?? "open");
   const isExternal = ["ES", "AC", "ET", "RT", "RS"].includes(sourceType);
-  const canMarkComplete = Boolean(workOrder.v5_suffix) && String(workOrder.v5_suffix) !== "PEND0";
+  const hasCompletionPrerequisite = Boolean(workOrder.v5_suffix) && String(workOrder.v5_suffix) !== "PEND0";
+  const canMarkComplete = Boolean(onComplete) && hasCompletionPrerequisite;
+  const completionUnavailableReason = !onComplete
+    ? "Work order action is unavailable until current details are loaded"
+    : "Cannot mark completed while V5 is PEND0";
   const roadsideResponse = Number(workOrder.roadside_response_minutes ?? 0);
   const roadsideTone =
     roadsideResponse <= 0
@@ -282,7 +302,7 @@ export function WorkOrderDetailModal({ open, workOrder, canRefreshDisplayId, onR
               Refresh Display ID
             </Button>
           ) : null}
-          <Button size="sm" onClick={onComplete} disabled={!canMarkComplete} title={canMarkComplete ? "" : "Cannot mark completed while V5 is PEND0"}>
+          <Button size="sm" onClick={onComplete} disabled={!canMarkComplete} title={canMarkComplete ? "" : completionUnavailableReason}>
             Mark Completed
           </Button>
         </div>
