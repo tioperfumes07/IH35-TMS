@@ -1842,3 +1842,4 @@ Codex | SHIPPED | DSP-F7075 | PR=#17046 @ 8b525e4d89 | Built=dispatch pre-dispat
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7081 | NOW=quicksave spine emit atomicity | SOURCE=quick-assign.service+quicksave.routes | GUARD=verify-a2-audit-emit-dispatch 3/3 | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7082 | NOW=Book Load create spine atomicity | GUARD=verify-a2 5/5 | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7083 | NOW=cancellation spine vertical completion | GUARD=verify-a2 9/9 | NEXT=FAST-MERGE | GO
+CODEX | WORKING | GO-0009 | FINDING=DSP-F7084 | NOW=pre-dispatch preview failure honesty | GUARD=predispatch-panel 2/2 | NEXT=FAST-MERGE | GO

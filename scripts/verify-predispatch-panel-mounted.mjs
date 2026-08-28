@@ -31,4 +31,36 @@ if (/<span[^>]*>GAP-14<\/span>/.test(panel)) fail('panel must not render the int
 // Panel must keep calling the live backend endpoint.
 if (!/dispatch\/validation\/pre-dispatch/.test(panel)) fail("panel must call /api/v1/dispatch/validation/pre-dispatch");
 
+function failureContractHolds(source) {
+  const catchStart = source.indexOf(".catch((err) => {");
+  const catchEnd = catchStart >= 0 ? source.indexOf(".finally(", catchStart) : -1;
+  const catchBlock = catchStart >= 0 && catchEnd > catchStart ? source.slice(catchStart, catchEnd) : "";
+  return (
+    catchBlock.includes("setError(") &&
+    catchBlock.includes("onValidationChange?.(false, false)") &&
+    !catchBlock.includes("onValidationChange?.(true, false)")
+  );
+}
+
+if (!failureContractHolds(panel)) {
+  fail("failed validation preview must report not-passing without fabricating a blocker");
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["failure reports passing", panel.replace("onValidationChange?.(false, false);", "onValidationChange?.(true, false);")],
+    ["failure drops parent signal", panel.replace("onValidationChange?.(false, false);", "")],
+  ];
+  let caught = 0;
+  for (const [name, source] of mutations) {
+    if (!failureContractHolds(source)) {
+      console.log(`PASS verify-predispatch-panel-mounted SELFTEST: ${name}`);
+      caught += 1;
+    } else {
+      fail(`selftest mutation survived: ${name}`);
+    }
+  }
+  if (caught !== mutations.length) fail(`selftest caught ${caught}/${mutations.length}`);
+}
+
 console.log("PASS verify-predispatch-panel-mounted");

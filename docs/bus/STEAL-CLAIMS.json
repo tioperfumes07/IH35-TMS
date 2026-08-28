@@ -1,4 +1,5 @@
 {
+  "post.dispatch-predispatch-preview-failure-honesty": "Codex 2026-08-28 DSP-F7084",
   "post.dispatch-cancellation-spine-atomicity": "Codex 2026-08-28 DSP-F7083",
   "post.dispatch-book-load-create-spine-atomicity": "Codex 2026-08-28 DSP-F7082",
   "post.dispatch-quicksave-spine-atomicity": "Codex 2026-08-28 DSP-F7081",

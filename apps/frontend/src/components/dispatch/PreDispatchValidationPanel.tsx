@@ -104,7 +104,11 @@ export function PreDispatchValidationPanel({
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "Validation check failed.");
         setResult(EMPTY_RESULT);
-        onValidationChange?.(true, false);
+        // A failed preview is not a passing preview. The server remains the submit-time authority,
+        // but telling the parent `true` made Section D render "All checks pass · ready to book"
+        // directly above this unavailable error. Preserve no fabricated blockers while making the
+        // readiness signal honestly unavailable/not-passing.
+        onValidationChange?.(false, false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
