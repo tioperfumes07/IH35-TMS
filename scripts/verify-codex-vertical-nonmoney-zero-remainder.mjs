@@ -88,8 +88,6 @@ const PROTECTED = new Set([
   // here (and stale protections fail) while their owning atomic PRs drain them; they grant no Built.
   // CLASS-F5973-TRUE-REMAINDER-FUEL drained 2026-08-23 (CC-2): all 5 fuel keys live-confirmed wired
   // on prod and covered by verify-fuel-class-f5973-remainder-wired.mjs — removed from PROTECTED.
-  "connectivity\tmaintenance:maintenance.modal.add_parts_link", // CC-3 maintenance FE lane.
-  "connectivity\tmaintenance:maintenance.modal.convert_issue_to_wo",
   "connectivity\tmaintenance:maintenance.modal.fault_rule",
   "connectivity\tmaintenance:maintenance.modal.triage",
   "connectivity\tmaintenance:maintenance.panel.road_service_active",

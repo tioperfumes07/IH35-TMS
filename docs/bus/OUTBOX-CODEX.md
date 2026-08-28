@@ -1810,3 +1810,5 @@ Codex | SHIPPED | DSP-F7064 | PR=#17022 @ 16573c14e0 | Built=row-safe HOS retry 
 Codex | WORKING | LST-F7065 | CLAIM=post.lists-safety-generic-modal-connectivity-exact | SOURCE=shared safety catalog modal scoped CRUD→reload | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | LST-F7065 | PR=#17024 @ 9b5392782855 | Built=lists.modal.safety_generic_catalog connectivity 1/1 | NEXT=partial optional-chain vertical | GO
 Codex | WORKING | CLS-F7066 | CLAIM=post.partial-optional-chain-vertical-crash-sweep | SOURCE=API collection readers across maintenance/customers/fuel/system | NEXT=6-site root fix+guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | CLS-F7066 | PR=#17029 @ 961ce5f6b695 | Built=customers/maintenance/fuel/system connectivity 4/4 | NEXT=retire stale maintenance protections | GO
+Codex | WORKING | MAINT-F7067 | CLAIM=post.maintenance-completed-protection-retirement | SOURCE=exact lifecycle guards already green | NEXT=zero-remainder ratchet+selftest+FAST-MERGE | GO
