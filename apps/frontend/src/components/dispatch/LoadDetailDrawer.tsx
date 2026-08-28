@@ -178,7 +178,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   };
   const auditQuery = useLoadAudit(loadId, operatingCompanyId);
   const updateMutation = useMutation({
-    mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
+    mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
+      updateLoad(id, operatingCompanyId, body),
     // DISP-F6320: every caller (dispatch flag select, factoring-package generate/email/mark-uploaded)
     // did `void updateMutation.mutateAsync(...).then(...)` with no `.catch()` and no onError here — a
     // failed PATCH silently did nothing: no toast, no revert explanation, .then()'s refetch/toast
@@ -294,9 +295,10 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   }, [activeTab, showCustomsTab]);
 
   async function persistPackageMeta(nextMeta: FactoringPackageMeta) {
-    if (!loadId) return;
+    if (!loadId || !load?.operating_company_id) return;
     await updateMutation.mutateAsync({
       id: loadId,
+      operatingCompanyId: load.operating_company_id,
       body: {
         notes: serializeFactoringPackageNotes(nextMeta, packageState.visibleNotes),
       },
@@ -447,7 +449,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                               value={load.dispatch_flag_color_id}
                               onChange={(value) => {
                                 if (!value) return;
-                                void updateMutation.mutateAsync({ id: load.id, body: { dispatch_flag_color_id: value } }).then(() => {
+                                void updateMutation.mutateAsync({ id: load.id, operatingCompanyId: load.operating_company_id, body: { dispatch_flag_color_id: value } }).then(() => {
                                   refetchLoad();
                                   void queryClient.invalidateQueries({ queryKey: ["loads"] });
                                 });

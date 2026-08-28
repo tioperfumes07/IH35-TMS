@@ -158,6 +158,45 @@ function check(src, mdataLoadsSrc, drawerSrc, loadApiSrc, factoringSrc, finesSrc
   if (!/useLoadAudit\(loadId, operatingCompanyId\)/.test(drawerSrc)) {
     problems.push(`${DRAWER}: audit reader must carry drawer company scope`);
   }
+
+  const patchStart = mdataLoadsSrc.indexOf('app.patch("/api/v1/mdata/loads/:id", { config');
+  const patchEnd = mdataLoadsSrc.indexOf('app.post("/api/v1/mdata/loads/:id/stops"', patchStart);
+  const mdataPatch = patchStart < 0 ? "" : mdataLoadsSrc.slice(patchStart, patchEnd < 0 ? patchStart + 30000 : patchEnd);
+  if (!/loadDetailQuerySchema\.safeParse\(req\.query \?\? \{\}\)/.test(mdataPatch)) {
+    problems.push(`${MDATA_LOADS}: generic PATCH must require company query scope`);
+  }
+  if (!/await assertCompanyMembership\(authUser\.uuid, scopedCompanyId\)/.test(mdataPatch)) {
+    problems.push(`${MDATA_LOADS}: generic PATCH must validate requested company membership`);
+  }
+  if (!/WHERE id = \$1[\s\S]*AND operating_company_id = \$2::uuid/.test(mdataPatch)) {
+    problems.push(`${MDATA_LOADS}: generic PATCH pre-read must bind exact company`);
+  }
+  if (!/const companyIdx = values\.length/.test(mdataPatch) || !/AND operating_company_id = \$\$\{companyIdx\}::uuid/.test(mdataPatch)) {
+    problems.push(`${MDATA_LOADS}: generic UPDATE must bind exact company in its dynamic parameter list`);
+  }
+  const auditCompanyStamps = mdataPatch.match(/operating_company_id: row\.operating_company_id/g)?.length ?? 0;
+  if (auditCompanyStamps < 5) {
+    problems.push(`${MDATA_LOADS}: every generic PATCH audit event must retain operating company (found ${auditCompanyStamps}/5)`);
+  }
+  const updateLoadStart = loadApiSrc.indexOf("export function updateLoad(");
+  const updateLoadEnd = loadApiSrc.indexOf("/**\n * Block 7", updateLoadStart);
+  const updateLoadClient = updateLoadStart < 0 ? "" : loadApiSrc.slice(updateLoadStart, updateLoadEnd);
+  if (!/export function updateLoad\(id: string, operatingCompanyId: string, body: Record<string, unknown>\)/.test(updateLoadClient)) {
+    problems.push(`${LOAD_API}: updateLoad must require company scope`);
+  }
+  if (!/\/mdata\/loads\/\$\{id\}\?\$\{query\.toString\(\)\}/.test(updateLoadClient)) {
+    problems.push(`${LOAD_API}: generic load PATCH must serialize operating_company_id`);
+  }
+  if (!/mutationFn: \(\{ id, operatingCompanyId, body \}/.test(drawerSrc) || !/updateLoad\(id, operatingCompanyId, body\)/.test(drawerSrc)) {
+    problems.push(`${DRAWER}: generic mutation must snapshot load/company/body together`);
+  }
+  if (!/if \(!loadId \|\| !load\?\.operating_company_id\) return/.test(drawerSrc)) {
+    problems.push(`${DRAWER}: package metadata write must fail closed without the loaded row company`);
+  }
+  const scopedUpdateCalls = drawerSrc.match(/updateMutation\.mutateAsync\(\{[\s\S]{0,180}?operatingCompanyId: load\.operating_company_id/g)?.length ?? 0;
+  if (scopedUpdateCalls < 2) {
+    problems.push(`${DRAWER}: both notes/package and dispatch-flag writes must submit immutable load company (found ${scopedUpdateCalls}/2)`);
+  }
   if (!/queryKey: \["loads", "detail", operatingCompanyId, id\]/.test(loadApiSrc)) {
     problems.push(`${LOAD_API}: load-detail cache key must include operating company before load id`);
   }
@@ -274,6 +313,9 @@ function main() {
         .replace("export function useLoadAudit(id: string | null, operatingCompanyId: string | null | undefined)", "export function useLoadAudit(id: string | null)")
         .replace('["loads", "audit", operatingCompanyId, id]', '["loads", "audit", id]')
         .replace("getLoadAudit(id as string, operatingCompanyId as string)", "getLoadAudit(id as string)");
+      const unscopedMutationApi = unscopedAuditApi
+        .replace("export function updateLoad(id: string, operatingCompanyId: string, body: Record<string, unknown>)", "export function updateLoad(id: string, body: Record<string, unknown>)")
+        .replace("/mdata/loads/${id}?${query.toString()}", "/mdata/loads/${id}");
       const unscopedConsumers = check(
         src,
         mdataLoadsSrc
@@ -284,11 +326,21 @@ function main() {
           .replace('const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});', 'const parsedQuery = { success: true, data: {} };')
           .replace('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
           .replace('FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid', 'FROM mdata.loads WHERE id = $1::uuid')
-          .replace('if (!ownedLoad.rows[0]) return null;', ''),
+          .replace('if (!ownedLoad.rows[0]) return null;', '')
+          .replaceAll('const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});', 'const parsedQuery = { success: true, data: {} };')
+          .replaceAll('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
+          .replaceAll('AND operating_company_id = $2::uuid', 'AND operating_company_id IN (SELECT org.user_accessible_company_ids())')
+          .replace('const companyIdx = values.length;', '')
+          .replace('AND operating_company_id = $${companyIdx}::uuid', 'AND operating_company_id IN (SELECT org.user_accessible_company_ids())')
+          .replaceAll('operating_company_id: row.operating_company_id,', ''),
         drawerSrc
           .replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)")
-          .replace("useLoadAudit(loadId, operatingCompanyId)", "useLoadAudit(loadId)"),
-        unscopedAuditApi,
+          .replace("useLoadAudit(loadId, operatingCompanyId)", "useLoadAudit(loadId)")
+          .replace("mutationFn: ({ id, operatingCompanyId, body }", "mutationFn: ({ id, body }")
+          .replace("updateLoad(id, operatingCompanyId, body)", "updateLoad(id, body)")
+          .replace("if (!loadId || !load?.operating_company_id) return", "if (!loadId) return")
+          .replaceAll("operatingCompanyId: load.operating_company_id,", ""),
+        unscopedMutationApi,
         factoringSrc.replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)"),
         finesSrc.replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)"),
         bookLoadSrc
@@ -307,7 +359,7 @@ function main() {
           .replace('["invoice-type-modal", "load-detail", operatingCompanyId, loadId]', '["invoice-type-modal", "load-detail", loadId]')
           .replace("getLoad(String(loadId), operatingCompanyId)", "getLoad(String(loadId))"),
       );
-      if (unscopedConsumers.length < 30) {
+      if (unscopedConsumers.length < 41) {
         console.error(`${LABEL} --selftest FAIL: planted unscoped vertical was not fully detected:\n${unscopedConsumers.join("\n")}`);
         process.exit(1);
       }
@@ -317,7 +369,7 @@ function main() {
         process.exit(1);
       }
       console.log(
-        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and thirty unscoped load-detail/audit mutations fail; fixed source passes`,
+        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and forty-one unscoped load read/audit/PATCH mutations fail; fixed source passes`,
       );
       return;
     } finally {
