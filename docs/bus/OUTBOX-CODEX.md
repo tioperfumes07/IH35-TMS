@@ -1649,3 +1649,5 @@ Codex | WORKING | SAF-F6979 | CLAIM=post.safety-incident-catalog-read-recovery |
 Codex | SHIPPED | SAF-F6978 | PR=#16939 @ 35a13cfc64 | Built=HOS catalog recovery 2/2 | NEXT=SAF-F6979 | GO
 Codex | WORKING | INS-F6980 | CLAIM=post.insurance-claim-accident-read-recovery | SOURCE=scoped safety accident list | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6979 | PR=#16940 @ 5fd2f9b171 | Built=incident catalog recovery 2/2 | NEXT=INS-F6980 | GO
+Codex | WORKING | CLS-F6981 | CLAIM=post.nonmoney-suggest-load-fails-loud | vertical=insurance+safety 5/5 | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | INS-F6980 | PR=#16941 @ 496bac990a | Built=claim accident read recovery 1/1 | NEXT=CLS-F6981 | GO

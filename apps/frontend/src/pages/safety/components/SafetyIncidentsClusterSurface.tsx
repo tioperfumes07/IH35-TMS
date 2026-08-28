@@ -29,6 +29,7 @@ import { formatUsdCents } from "../../../lib/money";
 import { DamageReportDetail } from "../damage-reports/DamageReportDetail";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { suggestExpenseLoad } from "../../../api/maintenance";
+import { LoadSuggestionReadError } from "../../../components/shared/LoadSuggestionReadError";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 
 // Declarative per-incident-type field keys. The COMMON set renders for every type;
@@ -832,6 +833,7 @@ export function SafetyIncidentsClusterSurface({ operatingCompanyId, config }: Pr
                       dataTestId={`${config.pageTestId}-unit`}
                       allowClear
                     />
+                    <LoadSuggestionReadError query={suggestionQuery} />
                   </div>
                 ) : (
                   <div className="mt-1 text-slate-800">

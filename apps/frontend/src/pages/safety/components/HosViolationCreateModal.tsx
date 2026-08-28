@@ -11,6 +11,7 @@ import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
+import { LoadSuggestionReadError } from "../../../components/shared/LoadSuggestionReadError";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
@@ -279,6 +280,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
                 Auto-filled from the active trip for this driver on the occurrence date.
               </p>
             ) : null}
+            <LoadSuggestionReadError query={suggestionQuery} />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600" htmlFor="hos-vio-source">

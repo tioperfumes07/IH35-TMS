@@ -19,6 +19,7 @@ import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { suggestExpenseLoad } from "../../api/maintenance";
+import { LoadSuggestionReadError } from "../../components/shared/LoadSuggestionReadError";
 import { Button } from "../../components/Button";
 import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -749,6 +750,9 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
             placeholder="Related load (optional)"
             dataTestId="safety-event-related-load-picker"
           />
+          <div className="sm:col-span-2">
+            <LoadSuggestionReadError query={suggestionQuery} />
+          </div>
           <label className="text-xs font-medium text-gray-700 sm:col-span-2">Location (DOT 390.15)</label>
           <input
             value={draft.location_text}

@@ -29,6 +29,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { DatePicker } from "../forms/DatePicker";
 import { apiRequest } from "../../api/client";
 import { ListErrorState } from "../ListErrorState";
+import { LoadSuggestionReadError } from "../shared/LoadSuggestionReadError";
 
 type Props = {
   open: boolean;
@@ -615,6 +616,7 @@ export function AccidentReportDrawer({ open, operatingCompanyId, accident, creat
                     Auto-filled from the active trip for this driver/unit on the incident date.
                   </p>
                 ) : null}
+                {createMode ? <LoadSuggestionReadError query={suggestionQuery} /> : null}
               </div>
             </Field>
 
