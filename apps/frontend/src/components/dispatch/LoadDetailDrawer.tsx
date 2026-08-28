@@ -410,6 +410,18 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         value: (
                           <span className="inline-flex flex-wrap items-center gap-1.5">
                             {STATUS_LABEL[load.status]}
+                            {autoStatusSwitchQuery.isError ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700">
+                                Auto-status audit unavailable
+                                <button
+                                  type="button"
+                                  className="underline"
+                                  onClick={() => void autoStatusSwitchQuery.refetch()}
+                                >
+                                  Retry
+                                </button>
+                              </span>
+                            ) : null}
                             {autoStatusSwitchForLoad ? (
                               <AutoStatusSwitchedBadge
                                 reason={autoStatusSwitchForLoad.reason}
