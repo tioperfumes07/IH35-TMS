@@ -99,7 +99,22 @@ export function BankingPlaidConnectionsPanel({
     [plaidQuery.data?.accounts, companyId]
   );
 
-  const groups = useMemo(() => groupByPlaidItem(filteredSource), [filteredSource]);
+  // BANK-PLAID-CHROME — this panel manages Plaid-linked bank feeds specifically (Reconnect / Sync
+  // now / Disconnect), so it must only ever list accounts that actually went through Plaid. An
+  // account with no plaid_item_id (e.g. the Relay Fuel Wallet, a non-Plaid internal wallet synced
+  // by a different mechanism, sync_status='active') was previously falling into groupByPlaidItem's
+  // `noid:` fallback bucket and rendering here as a connection: generic "Institution" name, a
+  // permanently red "Never synced" badge (derivePlaidConnectionBadgeLabel has no other status for
+  // last_synced_at=null), and — because itemId is null for a noid group — NO reconnect/sync action
+  // at all. That combination reads as a broken bank feed with no way to fix it, for an account that
+  // was never Plaid-connected in the first place. Excluding non-Plaid accounts here leaves them
+  // correctly visible everywhere else (Accounts tab, account tiles, transactions) unaffected.
+  const plaidLinkedSource = useMemo(
+    () => filteredSource.filter((a) => Boolean(a.plaid_item_id && a.plaid_item_id.trim().length > 0)),
+    [filteredSource]
+  );
+
+  const groups = useMemo(() => groupByPlaidItem(plaidLinkedSource), [plaidLinkedSource]);
   const visibleGroups = useMemo(() => {
     if (showInactive) return groups;
     return groups.filter((g) => g.accounts.some((a) => a.is_active));

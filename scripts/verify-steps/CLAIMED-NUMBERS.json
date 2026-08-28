@@ -1,4 +1,9 @@
 {
+  "9943": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-banking-plaid-connections-excludes-non-plaid-accounts"
+  },
   "9939": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
