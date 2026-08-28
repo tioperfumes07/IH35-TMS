@@ -32,6 +32,18 @@ function checkSource(modal) {
   assert(/kind="customer" id=\{customerId\} name=\{customerName\} noun="Customer"/.test(modal), "customer id must be coupled to its nullable human name");
   assert(/loadId=\{load\.id\}/.test(drawer), "LoadDetailDrawer must pass loadId");
   assert(/customerId=\{load\.customer_id\}/.test(drawer), "LoadDetailDrawer must pass customerId");
+  assert(/const scopeGenerationRef = useRef\(0\)/.test(modal), "modal must own a scope generation");
+  assert(/\[customerId, customerName, loadId, open, operatingCompanyId\]/.test(modal), "modal must reset on every mounted scope identity");
+  assert(/setName\(""\)[\s\S]*setErr\(null\)[\s\S]*setPending\(false\)/.test(modal), "scope reset must clear name, error, and pending state");
+  assert(/const submittedCompanyId = operatingCompanyId/.test(modal), "submit must snapshot company scope");
+  assert(/const submittedTemplateJson = \{[\s\S]*customer_id: templateCustomerId[\s\S]*customer_name: templateCustomerName/.test(modal), "submit must snapshot customer/template payload");
+  assert(/createLoadTemplate\(\{[\s\S]*operating_company_id: submittedCompanyId[\s\S]*name: submittedName[\s\S]*template_json: submittedTemplateJson/.test(modal), "writer must consume only the submitted scope snapshot");
+  assert(/scopeGenerationRef\.current !== submittedGeneration\) return/.test(modal), "late success must not close a replacement scope");
+  assert(/scopeGenerationRef\.current === submittedGeneration\) setErr\("Save failed"\)/.test(modal), "late failure must not contaminate a replacement scope");
+  assert(/<Modal open=\{open\} onClose=\{closeUnlessPending\}/.test(modal), "modal dismissal must be locked while saving");
+  assert(/<EntityPicker[\s\S]*disabled=\{pending\}[\s\S]*dataTestId="save-load-template-modal-customer"/.test(modal), "customer picker must be locked while saving");
+  assert(/<input value=\{name\}[^\n]*disabled=\{pending\}/.test(modal), "name must be locked while saving");
+  assert(/onClick=\{closeUnlessPending\} disabled=\{pending\}/.test(modal), "Cancel must be locked while saving");
 }
 
 function check() {
@@ -45,6 +57,17 @@ function selftest() {
     [/name=\{loadNumber\}/, "name={loadId}"],
     [/name=\{customerName\}/, "name={customerId}"],
     [/EntityLinkOrTombstone/, "EntityLink"],
+    [/const scopeGenerationRef = useRef\(0\)/, "const scopeGenerationRef = { current: 0 }"],
+    [/\[customerId, customerName, loadId, open, operatingCompanyId\]/, "[customerId, customerName, open]"],
+    [/setName\(""\)/, "setName(name)"],
+    [/const submittedCompanyId = operatingCompanyId/, "const submittedCompanyId = ''"],
+    [/template_json: submittedTemplateJson/, "template_json: initialJson"],
+    [/scopeGenerationRef\.current !== submittedGeneration\) return/, "false) return"],
+    [/scopeGenerationRef\.current === submittedGeneration\) setErr\("Save failed"\)/, 'true) setErr("Save failed")'],
+    [/<Modal open=\{open\} onClose=\{closeUnlessPending\}/, "<Modal open={open} onClose={onClose}"],
+    [/disabled=\{pending\}\n            placeholder="No customer/, 'disabled={false}\n            placeholder="No customer'],
+    [/onChange=\{\(ev\) => setName\(ev\.target\.value\)\} disabled=\{pending\}/, "onChange={(ev) => setName(ev.target.value)} disabled={false}"],
+    [/onClick=\{closeUnlessPending\} disabled=\{pending\}/, "onClick={onClose}"],
   ];
   for (const [pattern, replacement] of mutations) {
     const broken = original.replace(pattern, replacement);
