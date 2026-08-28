@@ -175,9 +175,17 @@ export async function assembleFactoringPacket(
 
     if (!invoiceId) {
       // Auto-create invoice from load — reuses existing invoice creation SQL path
-      const newInvRes = await client
-        .query<{ id: string }>(
-          `
+      //
+      // BANK-F9519-PACKET-ASSEMBLE-SILENT-INSERT-CATCH — this INSERT used to be wrapped in
+      // `.catch(() => ({ rows: [] }))`. The ON CONFLICT DO NOTHING below already produces a
+      // legitimate 0-rows outcome (invoice already exists — handled by the re-fetch), so a
+      // .catch() had nothing honest left to catch: it could only swallow a REAL error (a bad
+      // load id, a constraint violation, a DB hiccup) and misreport it as "conflict, re-fetch",
+      // which then silently produced a null invoiceId with no trace of what actually failed. A
+      // thrown error must propagate — the caller (the POD-approval route / the daily sweep cron)
+      // already handles a rejected assembleFactoringPacket call.
+      const newInvRes = await client.query<{ id: string }>(
+        `
           INSERT INTO accounting.invoices (
             operating_company_id,
             customer_id,
@@ -205,9 +213,8 @@ export async function assembleFactoringPacket(
           ON CONFLICT (source_load_id) DO NOTHING
           RETURNING id
           `,
-          [input.loadId, input.operatingCompanyId, input.userId],
-        )
-        .catch(() => ({ rows: [] as Array<{ id: string }> }));
+        [input.loadId, input.operatingCompanyId, input.userId],
+      );
 
       if (newInvRes.rows[0]) {
         invoiceId = newInvRes.rows[0].id;
@@ -298,16 +305,31 @@ export async function sweepAndAssemblePackets(
         skipped++;
         continue;
       }
-      const result = await assembleFactoringPacket({
-        loadId: row.id,
-        operatingCompanyId,
-        userId,
-        force: false,
-      });
-      if (result.ok) {
-        assembled++;
-      } else {
+      // BANK-F9519-PACKET-ASSEMBLE-SILENT-INSERT-CATCH's fix removed the inner .catch() so a real
+      // INSERT failure now propagates out of assembleFactoringPacket instead of being silently
+      // swallowed. This loop processes up to 500 loads per company per run — one bad row's
+      // exception must not abort the whole sweep and silently skip every remaining load, so this
+      // is the sweep's own required try/catch (the fire-and-forget caller in pod.routes.ts already
+      // has its own .catch(); this is the OTHER of the two call sites).
+      try {
+        const result = await assembleFactoringPacket({
+          loadId: row.id,
+          operatingCompanyId,
+          userId,
+          force: false,
+        });
+        if (result.ok) {
+          assembled++;
+        } else {
+          errored++;
+        }
+      } catch (err) {
         errored++;
+        console.error("[factoring-packet-sweep] assembleFactoringPacket failed", {
+          load_id: row.id,
+          operating_company_id: operatingCompanyId,
+          err,
+        });
       }
     }
 
