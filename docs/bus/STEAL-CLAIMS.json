@@ -779,6 +779,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T10:45:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.dispatch-in-shop-empty-state-guard-parser",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:55:00-05:00",
+      "go": "0006"
     }
   ]
 }

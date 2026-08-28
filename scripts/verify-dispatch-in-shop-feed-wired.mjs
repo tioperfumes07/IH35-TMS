@@ -11,6 +11,14 @@ const fail = (m) => {
   console.error(`FAIL verify-dispatch-in-shop-feed-wired: ${m}`);
   process.exit(1);
 };
+const selftest = process.argv.includes("--selftest");
+
+function placeholderSuppressesFailedFeeds(source) {
+  const condition = source.match(/\{section\.placeholder\s*&&([\s\S]*?)\?\s*\(/)?.[1] ?? "";
+  return /rows\.length\s*===\s*0/.test(condition)
+    && /!\(section\.key\s*===\s*"in_shop"\s*&&\s*inShopUnitsQuery\.isError\)/.test(condition)
+    && /!\(section\.key\s*===\s*"awaiting"\s*&&\s*unitsWithoutLoadQuery\.isError\)/.test(condition);
+}
 
 const api = read("apps/frontend/src/api/dispatch.ts");
 if (!api.includes("listDispatchInShopUnits")) fail("dispatch api must export listDispatchInShopUnits");
@@ -44,8 +52,20 @@ if (!board.includes("inShopUnitsQuery.isError")) {
 if (!board.includes("Couldn't load in-shop units")) {
   fail("in-shop feed failure must render an explicit error surface, not an empty placeholder");
 }
-if (!/section\.placeholder && rows\.length === 0 && !\(section\.key === "in_shop" && inShopUnitsQuery\.isError\)/.test(board)) {
+if (!placeholderSuppressesFailedFeeds(board)) {
   fail("No units in shop placeholder must only render after a successful in-shop query with empty rows");
+}
+
+if (selftest) {
+  const mutations = [
+    board.replace('!(section.key === "in_shop" && inShopUnitsQuery.isError) &&', "true &&"),
+    board.replace('!(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ?', "true ?"),
+  ];
+  if (mutations.some((source) => placeholderSuppressesFailedFeeds(source))) {
+    fail("selftest mutation escaped failed-feed empty-state exclusion");
+  }
+  console.log("PASS verify-dispatch-in-shop-feed-wired SELFTEST — 2/2 failed-feed empty-state mutations red");
+  process.exit(0);
 }
 
 console.log("PASS verify-dispatch-in-shop-feed-wired");
