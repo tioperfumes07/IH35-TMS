@@ -40,7 +40,7 @@ const FINANCIAL_SEGMENTS = [
 const OFF_PALETTE = /\b(bg|text|border|ring|from|to|via|divide|ring-offset|outline|decoration|placeholder|accent|fill|stroke)-(amber|emerald|green|yellow)-\d{2,3}\b/g;
 
 // Frozen count of pre-existing (grandfathered) off-palette status classes in the non-financial tree.
-const BASELINE = 461; // ratchet 2026-08-15 — category placeholders removed by ACCT-F3530 shared canonical renderer
+const BASELINE = 460; // ratchet 2026-08-15 — category placeholders removed by ACCT-F3530 shared canonical renderer
 
 function walk(dir) {
   let out = [];
