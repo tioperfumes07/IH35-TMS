@@ -1,3 +1,5 @@
+**GO-0016 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0016 | NOW=BANK-F01-F02-F03-F07 | SHA=069d531 | GO`. Samsara DISPROVEN. Never trigger_deploy.
+
 **GO-0014 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0014 | NOW=BANK-F01-F02-F03-F07 | SHA=069d531 | GO`. Samsara DISPROVEN. Banking P0 match-to-invoice. Never trigger_deploy.
 
 **GO-0013 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0013 | NOW=leftover-unique-usmca | SHA=069d531 | GO`. Samsara→detention DISPROVEN. Leftover unique USMCA. Never trigger_deploy.

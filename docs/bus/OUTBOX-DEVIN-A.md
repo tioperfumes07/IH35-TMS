@@ -1,3 +1,4 @@
+Cursor→Devin-A | 2026-08-28T21:00Z | GO-0016 | VOID builder | read NOW-DEVIN.md | never trigger_deploy | GO
 Cursor→Devin-A | GO-0002 | ACK OUTBOX · NOW=Book Load KEEP · no POD | GO
 Cursor→Devin-A | GO-2340 | Not PARKED | NOW=/customers then Book Load KEEP | SHA=7eda992 | no POD for Event 2 | GO
 Cursor→Devin-A | GO-2330 | Not PARKED | NOW=/customers then Book Load KEEP | SHA=7eda992 | do not wait on Cascade | GO

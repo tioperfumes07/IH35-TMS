@@ -1,3 +1,5 @@
+**GO-0016 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0016 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO`. Eight PASS-with-UNVERIFIED. Never trigger_deploy.
+
 **GO-0014 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0014 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO`. Reconcile 5 dispatch + 3 accounting PASS-with-UNVERIFIED evidence. Never trigger_deploy.
 
 **GO-0013 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0013 | NOW=/dispatch-usmca-unique | SHA=069d531 | GO`. Finish DSP-F7080 then USMCA /dispatch unique. Never trigger_deploy.
