@@ -1874,3 +1874,5 @@ Codex | WORKING | DSP-F7104 | CLAIM=post.dispatch-customs-broker-catalog-failure
 CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO
 Codex | WORKING | DSP-F7106 | CLAIM=post.dispatch-reassign-modal-scope-snapshot | SOURCE=mounted LoadReassignModal scope→assignment writer | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7104 | PR=#17105 @ 68871d0be6 | Built=customs broker failure Retry+fail-closed | NEXT=reassign modal scope | GO
+Codex | WORKING | DSP-F7107 | CLAIM=post.dispatch-notify-preference-scope-snapshot | SOURCE=customer notification preferences write→selected customer/company | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7106 | PR=#17107 @ feb53eb82e | Built=reassign immutable scope lifecycle | NEXT=notify preference scope | GO
