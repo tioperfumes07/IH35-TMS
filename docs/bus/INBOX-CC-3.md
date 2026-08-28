@@ -1,3 +1,5 @@
+**20:50 CT 2026-08-27 GO-2050 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `CC-3 | ACK | GO-2050 | PORT=9225 | NOW=/compliance | SHA=7eda992 | GO`. Finish `/compliance` `/inventory` `/users` `/help` unique leftover. Never steal money. Never `trigger_deploy`.
+
 **18:31 CT 2026-08-27 GO-1831.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `CC-3 | ACK | GO-1831 | PORT=9225 | NOW=/compliance | SHA=88a6e98 | GO`. Finish `/compliance` then `/inventory` `/users` `/help`. Never steal money. Never `trigger_deploy`. Deploy in flight.
 
 **17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK: `CC-3 | ACK | GO-1750 | PORT=9225 | NOW=/lists | SHA=88a6e98 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never steal money. U14 never restamp. **YOUR NOW:** `/lists` then `/legal` then leftover `/compliance` `/inventory` `/users` `/help`. Nested +Add new = Lists creator. Trip-pairing 404 already FIXED #16657 — re-verify only. Confirm CURRENT-LAW in packet.

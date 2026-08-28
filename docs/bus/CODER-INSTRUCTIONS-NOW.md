@@ -1,3 +1,5 @@
+**20:50 CT GO-2050:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md` — Cursor lead. ACK `GO-2050`. Idle = defect. Live `7eda992`. CC-1 A/R reclass (keep TESTs). Do not inherit TRANSP pass as USMCA certify.
+
 **18:31 CT GO-1831:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md` — Cursor lead. ACK `GO-1831`. Idle = defect. Live `88a6e98` until healthz moves. Deploy in flight. Codex/Devin/Cascade work NOW.
 
 **17:50 CT GO-1750:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md` — Cursor lead. ACK `GO-1750`. Idle = defect. Live `88a6e98`. Work YOUR NOW row immediately.

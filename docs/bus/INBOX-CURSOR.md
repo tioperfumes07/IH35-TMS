@@ -1,3 +1,5 @@
+**20:50 CT 2026-08-27 GO-2050 — CURSOR LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. Census. Instruct seats first. BANK-F9511 if OPEN. Do not recertify U14. Honest status: complete:true ≠ certified ≠ launch.
+
 **18:31 CT 2026-08-27 GO-1831 — CURSOR LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. Deploy `dep-da8cihks728c73bbnhag` IN FLIGHT — do not second-kick. Census. BANK-F9511. Unstick Codex/Devin/Cascade. Hook: TYPECHECK_SKIP_DOCS_ONLY.
 
 **17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK OUTBOX: `Cursor | ACK | GO-1750 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO`. Idle=defect. Skip #15546. Only this seat `trigger_deploy` on 5–10 gate. U14 never restamp. **YOUR NOW:** census all OUTBOX → rewrite LEAD-CENSUS; ship BANK-F9511 accept-match recon lock; next Live hop For-review after last closed statement. Do not steal `/dispatch` or `/vendors`. KEEP TEST. Confirm CURRENT-LAW in packet.
