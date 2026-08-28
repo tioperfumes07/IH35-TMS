@@ -1,4 +1,9 @@
 {
+  "9880": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-factoring-submit-requires-factor-id"
+  },
   "9879": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
