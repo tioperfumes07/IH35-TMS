@@ -1517,3 +1517,4 @@ Codex | SHIPPED | MAINT-F6915 | PR=#16870 @ 851f0d4918 | gate=exit0 | Built=main
 Codex | WORKING | FINDING=CUST-F6916-OPEN-BALANCE-ROLLUP-FIRST-500-ONLY | SOT=accounting.invoices has_balance exact range | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | ACCT-F6916 | PR=#16873 @ 3417825e67 | gate=exit0 | Built=customers open-balance complete invoice range | Live=post-deploy UNVERIFIED | NEXT=ACCT-F6917 | GO
 Codex | WORKING | FINDING=ACCT-F6917-CUSTOMER-FINANCIAL-HISTORY-SILENT-PAGE-CAPS | leaves=transaction_list+statements+recurring_transactions+late_fees | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | ACCT-F6918 customer-detail billing complete range | CLAIM=post.customer-detail-billing-complete-range | NEXT=guard+gate+FAST-MERGE | GO

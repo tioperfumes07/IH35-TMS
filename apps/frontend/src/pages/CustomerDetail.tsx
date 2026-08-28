@@ -12,10 +12,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
-import { listInvoices, type Invoice } from "../api/accounting";
+import { listAllInvoices, listInvoices, type Invoice } from "../api/accounting";
 import { listAllLoads, type DispatchLoadRow } from "../api/loads";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../api/reports";
-import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
+import { listAllCustomerPayments, recordCustomerPayment, unapplyCustomerPayment, type CustomerPaymentListRow } from "../api/customers";
 import { listUsStates } from "../api/catalogs";
 import { ApiError, apiRequest } from "../api/client";
 import { listAllFmcsaLookups } from "../api/fmcsa";
@@ -556,7 +556,7 @@ export function CustomerDetailPage() {
   });
   const paymentInvoicesQuery = useQuery({
     queryKey: ["customer-open-invoices-payment", id, operatingCompanyId],
-    queryFn: () => listInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices ?? []),
+    queryFn: () => listAllInvoices(operatingCompanyId!, { customer_id: id }).then((res) => res.invoices),
     enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
   });
   const customerPaymentsQuery = useQuery({
@@ -564,7 +564,7 @@ export function CustomerDetailPage() {
     // LINK-F5170: the backend requires operating_company_id (non-optional uuid); omitting it 400'd
     // every call, which `retry: false` + the empty-array fallback below silently rendered as
     // "No payments recorded" instead of the real error.
-    queryFn: () => listCustomerPayments(id, operatingCompanyId!, { limit: 50 }),
+    queryFn: () => listAllCustomerPayments(id, operatingCompanyId!),
     enabled: Boolean(id && operatingCompanyId && activeTab === "Billing & Receivables"),
     retry: false,
   });
