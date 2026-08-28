@@ -152,7 +152,11 @@ export function FreeTimeDetentionEditor(props: {
             onRetry={() => void termsQuery.refetch()}
           />
         ) : null}
-        {termsQuery.data ? (
+        {/* CUST-MONEY-F6985 — gate on !isError too: React Query RETAINS `data` from the last
+            successful fetch across a failed refetch, so a stale-but-truthy termsQuery.data kept
+            this money-bearing rate editor (and its Save button) fully live and editable on top of
+            values the app had just told the user it could not confirm were current. */}
+        {!termsQuery.isError && termsQuery.data ? (
           <div className="space-y-2 text-sm">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold text-gray-600">Free Time (minutes)</span>
@@ -225,7 +229,8 @@ export function FreeTimeDetentionEditor(props: {
             onRetry={() => void historyQuery.refetch()}
           />
         ) : null}
-        {historyQuery.data ? (
+        {/* CUST-MONEY-F6985 — same stale-retained-data gate for the history table. */}
+        {!historyQuery.isError && historyQuery.data ? (
           <ParityTable
             storageKey="customer-freetime-detention-history"
             tableTestId="customer-terms-history"
