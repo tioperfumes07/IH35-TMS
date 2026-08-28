@@ -76,8 +76,7 @@ export async function listOcrIntakeQueue(userId: string, operatingCompanyId: str
             status IN ('pending_ocr', 'processing', 'ready_review', 'failed')
             OR (status = 'converted' AND converted_load_id IS NOT NULL)
           )
-        ORDER BY created_at DESC
-        LIMIT 200
+        ORDER BY created_at DESC, id DESC
       `,
       [operatingCompanyId]
     );
@@ -226,7 +225,7 @@ async function fuzzyMatchCustomer(client: DbClient, operatingCompanyId: string, 
       FROM mdata.customers
       WHERE operating_company_id = $1::uuid
         AND deactivated_at IS NULL
-      LIMIT 500
+      ORDER BY customer_name ASC, id ASC
     `,
     [operatingCompanyId]
   );
