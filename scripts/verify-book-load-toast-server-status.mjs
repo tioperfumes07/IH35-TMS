@@ -31,6 +31,7 @@ const LABEL = "verify-book-load-toast-server-status";
 const MODAL = "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx";
 const HELPER = "apps/frontend/src/pages/dispatch/components/book-load-toast.ts";
 const STOPS_SECTION = "apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx";
+const ADDRESS_GEOCODE = "apps/frontend/src/components/dispatch/AddressGeocodeInput.tsx";
 const BOOK_SERVICE = "apps/backend/src/dispatch/book-load.service.ts";
 
 /** The exact shape that shipped the lie: a toast whose dispatched-claim is chosen by save mode. */
@@ -158,6 +159,30 @@ export function auditStopFieldsSent(sectionSrc, modalSrc, serviceSrc) {
   return problems;
 }
 
+/**
+ * DSP-F7077 — a rejected geocode lookup must not be indistinguishable from a legitimate empty result.
+ * The stop address remains editable, while an explicit recoverable state retries the same exact query.
+ */
+export function auditGeocodeFailureRecovery(src) {
+  const problems = [];
+  if (!/setError\(\s*["'`]Address suggestions are unavailable\./.test(src)) {
+    problems.push(`${ADDRESS_GEOCODE}: rejected geocode reads do not expose the canonical unavailable state.`);
+  }
+  if (!/role=["']alert["']/.test(src) || !/>\s*Retry\s*</.test(src)) {
+    problems.push(`${ADDRESS_GEOCODE}: the unavailable state has no visible Retry action.`);
+  }
+  if (!/setRetryGeneration\(\s*\(generation\)\s*=>\s*generation\s*\+\s*1\s*\)/.test(src)) {
+    problems.push(`${ADDRESS_GEOCODE}: Retry does not trigger a fresh lookup generation.`);
+  }
+  if (!/\[value,\s*enabled,\s*retryGeneration\]/.test(src)) {
+    problems.push(`${ADDRESS_GEOCODE}: retryGeneration is not part of the lookup effect dependencies.`);
+  }
+  if (/catch\s*\{\s*setResults\(\[\]\);?\s*\}/.test(src)) {
+    problems.push(`${ADDRESS_GEOCODE}: the shipped silent catch returned — outage still looks like zero matches.`);
+  }
+  return problems;
+}
+
 if (process.argv.includes("--selftest")) {
   const goodModal = `
     const serverStatus = typeof payload?.status === "string" ? String(payload.status) : null;
@@ -193,6 +218,11 @@ if (process.argv.includes("--selftest")) {
     if (serverStatus === "dispatched") return "Load booked and dispatched";
     return \`Load booked — \${label}\`;
   `;
+  const goodGeocode = `
+    catch { setResults([]); setOpen(false); setError("Address suggestions are unavailable. You can keep typing the address or retry."); }
+    useEffect(run, [value, enabled, retryGeneration]);
+    <div role="alert"><button onClick={() => setRetryGeneration((generation) => generation + 1)}>Retry</button></div>
+  `;
 
   const cases = [
     ["fixed modal", () => auditModal(goodModal), 0],
@@ -209,6 +239,11 @@ if (process.argv.includes("--selftest")) {
     ["stops: UI-only field with no backend column is NOT demanded", () => auditStopFieldsSent(stopSection, stopsGood, "postal_code?: string;"), 0],
     ["stops: payload mapping unreadable — must not pass vacuously", () => auditStopFieldsSent(stopSection, "nothing", stopService), 1],
     ["stops: no registered fields — must not pass vacuously", () => auditStopFieldsSent("", stopsGood, stopService), 1],
+    ["geocode outage is visible and retryable", () => auditGeocodeFailureRecovery(goodGeocode), 0],
+    ["GEOCODE BAR — shipped silent catch", () => auditGeocodeFailureRecovery(goodGeocode.replace(/catch \{[^}]+\}/, "catch { setResults([]); }")), 2],
+    ["geocode retry action removed", () => auditGeocodeFailureRecovery(goodGeocode.replace(">Retry<", ">Wait<")), 1],
+    ["geocode retry does not refetch", () => auditGeocodeFailureRecovery(goodGeocode.replace("generation + 1", "generation")), 1],
+    ["geocode retry omitted from dependencies", () => auditGeocodeFailureRecovery(goodGeocode.replace(", retryGeneration]", "]")), 1],
   ];
 
   let bad = 0;
@@ -224,7 +259,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-for (const rel of [MODAL, HELPER, STOPS_SECTION, BOOK_SERVICE]) {
+for (const rel of [MODAL, HELPER, STOPS_SECTION, BOOK_SERVICE, ADDRESS_GEOCODE]) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     console.error(`${LABEL} FAIL — missing ${rel}; scope is wrong, refusing to pass vacuously.`);
     process.exit(1);
@@ -239,6 +274,7 @@ const problems = [
     fs.readFileSync(path.join(ROOT, MODAL), "utf8"),
     fs.readFileSync(path.join(ROOT, BOOK_SERVICE), "utf8"),
   ),
+  ...auditGeocodeFailureRecovery(fs.readFileSync(path.join(ROOT, ADDRESS_GEOCODE), "utf8")),
 ];
 
 if (problems.length) {

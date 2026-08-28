@@ -28,17 +28,21 @@ export function AddressGeocodeInput({
   const { enabled } = useFeatureFlag("PCMILER_ENABLED");
   const [results, setResults] = useState<GeocodeResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryGeneration, setRetryGeneration] = useState(0);
   const cacheRef = useRef<Map<string, GeocodeResult[]>>(new Map());
   const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!enabled) {
       setResults([]);
+      setError(null);
       return;
     }
     const q = value.trim();
     if (q.length < MIN_CHARS) {
       setResults([]);
+      setError(null);
       return;
     }
     if (timerRef.current) window.clearTimeout(timerRef.current);
@@ -46,11 +50,13 @@ export function AddressGeocodeInput({
       const key = q.toLowerCase();
       const cached = cacheRef.current.get(key);
       if (cached) {
+        setError(null);
         setResults(cached);
         setOpen(cached.length > 0);
         return;
       }
       try {
+        setError(null);
         const resp = await geocodeSearch(q);
         const rs = resp.enabled ? resp.results ?? [] : [];
         cacheRef.current.set(key, rs);
@@ -58,12 +64,14 @@ export function AddressGeocodeInput({
         setOpen(rs.length > 0);
       } catch {
         setResults([]);
+        setOpen(false);
+        setError("Address suggestions are unavailable. You can keep typing the address or retry.");
       }
     }, DEBOUNCE_MS);
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
     };
-  }, [value, enabled]);
+  }, [value, enabled, retryGeneration]);
 
   return (
     <div className="relative">
@@ -99,6 +107,18 @@ export function AddressGeocodeInput({
             </li>
           ))}
         </ul>
+      ) : null}
+      {enabled && error ? (
+        <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-red-700" role="alert">
+          <span>{error}</span>
+          <button
+            type="button"
+            className="shrink-0 font-semibold underline underline-offset-2"
+            onClick={() => setRetryGeneration((generation) => generation + 1)}
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
     </div>
   );

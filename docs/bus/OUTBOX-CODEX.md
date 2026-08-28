@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7077 | CLAIM=post.dispatch-geocode-failure-retry | SOURCE=Trimble proxy geocodeSearch→Book Load stop address | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7076 | PR=#17047 @ d35dd2c419 | Built=dispatch catalog picker ranges complete | NEXT=geocode failure recovery | GO
 Codex | ACK | GO-0007 | NOW=/dispatch-unique | SHA=08d96f7 | GO
 Codex | WORKING | DSP-F7074 | CLAIM=post.dispatch-document-history-complete-range | SOURCE=docs.files total+offset→shared+load/factoring histories | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7073 | PR=#17043 @ e3827e6520 | Built=dispatch:home.list customer complete roster | NEXT=document histories | GO
