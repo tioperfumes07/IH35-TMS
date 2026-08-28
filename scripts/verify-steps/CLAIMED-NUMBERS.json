@@ -6591,5 +6591,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-revrec-latch-fires-on-bulk-invoice-issuance"
+  },
+  "9925": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-terms-history-fail-closed"
   }
 }
