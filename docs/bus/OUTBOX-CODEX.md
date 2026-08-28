@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7139 | CLAIM=detention-threshold-notify-check-send-race | SOURCE=dispatch.detention_events.customer_notified_at | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7138 | PR=#17222 @ f4789f1f11 | Built=arrival prompt exact dismissal persistence | NEXT=detention notify lifecycle | GO
 Codex | WORKING | DSP-F7138 | CLAIM=arrival-prompt-dismiss-arbitrary-uuid-false-success+not-persisted | SOURCE=dispatch.stop_arrivals+audit.audit_events | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7137 | PR=#17221 @ c968e8ab30 | Built=durable customer notify claim | NEXT=arrival prompt dismiss | GO
 Codex | WORKING | DSP-F7137 | CLAIM=customer-notify-check-send-insert-race-duplicates-provider-delivery | SOURCE=dispatch.notify_log pending/sent unique identity | NEXT=FAST-MERGE | GO
