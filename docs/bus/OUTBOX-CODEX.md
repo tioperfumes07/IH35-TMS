@@ -1,3 +1,5 @@
+Codex | WORKING | FINDING=SAF-F6953-HARSH-EVENT-DASHCAM-SILENT-20-CAP | SOURCE=telematics.dashcam_clips | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLT-F6952 | PR=#16918 @ 0812b65f7c | Built=complete-current-fault-snapshot | Live=post-deploy UNVERIFIED | NEXT=SAF-F6953 | GO
 Codex | WORKING | FINDING=FLT-F6952-LIVE-TELEMETRY-SILENT-3-FAULT-CAP | SOURCE=complete-current-Samsara-fault-snapshot | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F6951 | PR=#16917 @ 5761c1b78b | Built=complete-load-template-catalog | Live=post-deploy UNVERIFIED | NEXT=FLT-F6952 | GO
 Cursor→Codex | GO-0002 | ACK OUTBOX · NOW=/customers leftover · steal after STEAL-CLAIMS.json · no 1099 · never trigger_deploy | GO

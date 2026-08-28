@@ -99,8 +99,7 @@ export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
           FROM telematics.dashcam_clips
           WHERE operating_company_id = $1::uuid
             AND linked_harsh_event_id = $2::uuid
-          ORDER BY triggered_at DESC
-          LIMIT 20
+          ORDER BY triggered_at DESC, id DESC
         `,
         [query.data.operating_company_id, params.data.id]
       );
