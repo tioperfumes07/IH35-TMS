@@ -7,7 +7,9 @@
  *  4) list path filters soft_deleted_at (else soft-delete replace looks "unchanged")
  *  5) backend replace inserts postal_code + address fields
  *
- * --selftest mutates MultiStopEditor to drop the POST call and expects FAIL.
+ *  6) snapshot load/company/rows, suppress stale completion, and lock edits pending
+ *
+ * --selftest plants each lifecycle regression independently and expects FAIL.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -36,9 +38,16 @@ function checkSources({ editor, drawer, api, service, routes }) {
   try {
     assertWired("MultiStopEditor", editor, /replaceLoadStopsDispatch\s*\(/);
     assertWired("MultiStopEditor", editor, /Save stops/);
-    assertWired("MultiStopEditor", editor, /mutateAsync\s*\(/);
+    assertWired("MultiStopEditor", editor, /mut\.mutate\(\{ generation: actionGenerationRef\.current, loadId: submittedLoadId, companyId, body \}\)/);
     assertWired("MultiStopEditor", editor, /postal_code/);
     assertWired("MultiStopEditor", editor, /pushToast\([^)]*Could not save stops/);
+    assertWired("MultiStopEditor", editor, /mutationFn: async \(input: SaveStopsInput\)[\s\S]*?replaceLoadStopsDispatch\(input\.loadId, input\.body\)/);
+    assertWired("MultiStopEditor", editor, /onSuccess: async \(_result, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/);
+    assertWired("MultiStopEditor", editor, /onError: \(err, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/);
+    assertWired("MultiStopEditor", editor, /\["dispatch", "load-stops-refined", input\.loadId, input\.companyId\]/);
+    assertWired("MultiStopEditor", editor, /\["loads", "detail", input\.loadId\]/);
+    assertWired("MultiStopEditor", editor, /<fieldset[^>]*disabled=\{mut\.isPending\}[^>]*aria-busy=\{mut\.isPending\}/);
+    assertWired("MultiStopEditor", editor, /useSortable\(\{ id: row\.key, disabled \}\)/);
   } catch (e) {
     errors.push(String(e.message || e));
   }
@@ -72,18 +81,22 @@ function readAll() {
 }
 
 function selftest() {
-  const orig = fs.readFileSync(EDITOR, "utf8");
-  const broken = orig.replace(/return replaceLoadStopsDispatch\(loadId, body\);/, "return { ok: true, load_id: loadId };");
-  if (broken === orig) throw new Error("selftest: could not plant defect (replaceLoadStopsDispatch call missing)");
-  fs.writeFileSync(EDITOR, broken);
-  try {
-    const errors = checkSources(readAll());
+  const sources = readAll();
+  const mutations = [
+    ["submitted load snapshot", "replaceLoadStopsDispatch(input.loadId, input.body)", "replaceLoadStopsDispatch(loadId, input.body)"],
+    ["stale completion guard", "input.generation !== actionGenerationRef.current", "false"],
+    ["submitted company invalidation", '["dispatch", "load-stops-refined", input.loadId, input.companyId]', '["dispatch", "load-stops-refined", loadId, operatingCompanyId]'],
+    ["pending editor lock", 'disabled={mut.isPending} aria-busy={mut.isPending}', 'aria-busy={mut.isPending}'],
+    ["drag lock", "useSortable({ id: row.key, disabled })", "useSortable({ id: row.key })"],
+  ];
+  for (const [label, from, to] of mutations) {
+    const editor = sources.editor.replace(from, to);
+    if (editor === sources.editor) throw new Error(`selftest: could not plant ${label}`);
+    const errors = checkSources({ ...sources, editor });
     if (errors.length === 0) {
-      throw new Error("selftest: planted defect did not FAIL the guard");
+      throw new Error(`selftest: planted ${label} did not FAIL the guard`);
     }
-    console.log("selftest PASS — planted no-POST Save fails:", errors[0]);
-  } finally {
-    fs.writeFileSync(EDITOR, orig);
+    console.log(`selftest PASS — planted ${label} fails:`, errors[0]);
   }
 }
 
