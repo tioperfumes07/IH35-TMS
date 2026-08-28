@@ -1,3 +1,5 @@
+**GO-0021 THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0021.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. API `4e5db76`. GO-0020 credited closed. PROG-01 SKIP. ACCT-F9877 still owner-gated. Nobody `trigger_deploy`.
+
 **GO-0020 CC-1 A/P GATED.** Investigation complete (`ACCT-F9877`). Do not re-run `fbeb1974`. CC-1 NOW leftover USMCA money. Packet still `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0020.md`. API `4e5db76`. PROG-01 waits Jorge yes on `202613270000`. Nobody `trigger_deploy`.
 
 **GO-0020** L6 shipped Live=UNVERIFIED · vendor PATCH row-scope #17200 · RETIRE vendors VOID · A/P CC-1 · leftover unique other seats. API `4e5db76`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0020.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. PROG-01 waits Jorge yes on `202613270000`. Nobody `trigger_deploy`.

@@ -1,3 +1,5 @@
+**GO-0021 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0021 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO`. Unique FINDING. Never trigger_deploy.
+
 **GO-0020 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0020 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO`. Unique FINDING. Never trigger_deploy.
 
 **GO-0016 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0016 | NOW=vendors-0-of-7-prod-verified | SHA=069d531 | GO`. Unique FINDING. Never trigger_deploy.

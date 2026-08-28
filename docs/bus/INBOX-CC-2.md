@@ -1,3 +1,5 @@
+**GO-0021 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0021 | NOW=leftover-unique-reports-cash-flow-finance | SHA=4e5db76 | GO`. TASK RLS shipped. Never trigger_deploy.
+
 **GO-0020 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0020 | NOW=leftover-unique-L3-cron-honesty | SHA=4e5db76 | GO`. L2 closed. L3 cron honesty. Never trigger_deploy.
 
 **GO-0016 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0016 | NOW=silent-job-noop-unique | SHA=069d531 | GO`. L2 closed. Silent job no-ops unique. Never trigger_deploy.
