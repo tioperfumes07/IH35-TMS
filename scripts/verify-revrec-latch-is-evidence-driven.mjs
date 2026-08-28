@@ -35,7 +35,16 @@
  * completion document exists. Live-verified on prod: dispatch.pod_documents was 0 rows system-wide
  * while 3 USMCA loads — one real money, is_sample_data=false, $1,875.50 — already carried a posted
  * `bill` JE (DR A/R / CR Unbilled Revenue). Same class, same fix shape: a fail-closed gate keyed off
- * captured evidence (an approved dispatch.pod_documents row), not off status alone.
+ * captured evidence, not off status alone — ORIGINALLY an approved dispatch.pod_documents row.
+ *
+ * SUPERSEDED by OWNER DECISION B (2026-08-27 23:00 CT,
+ * docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md): dispatch.pod_documents never had a
+ * writer that reached prod, so that gate could never open — Event 2 could never fire for any load,
+ * open forever. Owner ruling: POD gates COLLECTION/FACTORING (unchanged, submission-queue.service.ts),
+ * never A/R recognition. Event 2's evidence is now "a real, non-void, ISSUED invoice exists for this
+ * load" (never draft/proforma alone) — still fail-closed, still evidence-driven, just a different
+ * evidence source. This guard's bill-branch checks below assert the NEW shape and lock against the
+ * OLD one silently coming back.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -84,29 +93,46 @@ export function auditPoster(src) {
     if (!code.includes(needle)) problems.push(`${POSTER} evidence query ${why} (missing: ${needle}).`);
   }
 
-  // ACCT-F5692 — Event 2 (bill) must refuse without an approved completion document, same shape as
-  // Event 1's evidence gate above. Scoped to sources that implement a bill-event branch at all, so an
-  // earn-only fixture (or a future poster that genuinely never handles Event 2) is not force-flagged
-  // for a code path it doesn't claim to implement — the REAL poster.service.ts always has both.
+  // OWNER DECISION B (2026-08-27 23:00 CT, docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md)
+  // — supersedes the original ACCT-F5692 shape (Event 2 required an approved dispatch.pod_documents
+  // row; that gate could never open — the table was 0 rows system-wide). Event 2 (bill) must instead
+  // refuse without a real, non-void, ISSUED invoice for the load — never draft/proforma alone.
+  // Scoped to sources that implement a bill-event branch at all, so an earn-only fixture (or a future
+  // poster that genuinely never handles Event 2) is not force-flagged for a code path it doesn't claim
+  // to implement — the REAL poster.service.ts always has both.
   if (/event === "bill"/.test(code)) {
-    if (!/dispatch\.pod_documents/.test(code)) {
+    if (!/accounting\.invoices/.test(code)) {
       problems.push(
-        `${POSTER} has no dispatch.pod_documents lookup — Event 2 (bill, completed_docs_received) ` +
-          `would post A/R with no completion document check at all.`
+        `${POSTER} has no accounting.invoices lookup — Event 2 (bill) would post A/R with no issued-` +
+          `invoice check at all.`
       );
       return problems;
     }
-    if (!/missing_pod_evidence/.test(code)) {
-      problems.push(`${POSTER} has no missing_pod_evidence gate — the bill path cannot refuse.`);
+    if (!/missing_issued_invoice/.test(code)) {
+      problems.push(`${POSTER} has no missing_issued_invoice gate — the bill path cannot refuse.`);
     }
-    if (!/event === "bill"[\s\S]{0,400}hasApprovedPodEvidence/.test(code)) {
+    if (!/event === "bill"[\s\S]{0,400}loadHasIssuedInvoice/.test(code)) {
       problems.push(
-        `${POSTER} defines the POD evidence lookup but does not apply it to the bill event — a dead ` +
-          `helper leaves Event 2 status-driven.`
+        `${POSTER} defines the issued-invoice lookup but does not apply it to the bill event — a dead ` +
+          `helper leaves Event 2 unevidenced.`
       );
     }
-    if (!code.includes("status = 'approved'")) {
-      problems.push(`${POSTER} POD evidence query must require status = 'approved', not any POD row.`);
+    if (!/status IN \('sent',\s*'partial',\s*'paid'/.test(code)) {
+      problems.push(
+        `${POSTER} issued-invoice query must require status IN ('sent','partial','paid',...) — never ` +
+          `draft/proforma alone.`
+      );
+    }
+    // Regression lock on the OLD gate: the whole point of Decision B is that hasApprovedPodEvidence()
+    // is no longer a posting BLOCK on Event 2. It may still be defined/exported (a future detector
+    // reuses it) and may still appear in prose/comments, but it must not be CALLED inside the bill
+    // branch — that would silently restore the unreachable gate.
+    if (/event === "bill"[\s\S]{0,600}hasApprovedPodEvidence\(/.test(code)) {
+      problems.push(
+        `${POSTER} calls hasApprovedPodEvidence() inside the bill branch — OWNER DECISION B removed ` +
+          `POD as a posting block on Event 2; that check belongs to factoring submission / a detector ` +
+          `only, never here.`
+      );
     }
   }
   return problems;
@@ -186,7 +212,7 @@ function selftest() {
   if (auditPoster(posterFixed).length !== 0)
     failures.push(`case3 FAIL — fixed poster flagged: ${auditPoster(posterFixed).join(" | ")}`);
 
-  // --- poster, ACCT-F5692 negative direction: bill event with no POD lookup at all ---
+  // --- poster, negative direction: bill event with no issued-invoice lookup at all ---
   const posterPreFixBill = `
     ${posterFixed}
     if (event === "bill") {
@@ -196,44 +222,61 @@ function selftest() {
     }
   `;
   if (auditPoster(posterPreFixBill).length === 0)
-    failures.push("case2b FAIL — bill event with no POD evidence check was NOT caught");
+    failures.push("case2b FAIL — bill event with no issued-invoice evidence check was NOT caught");
 
-  // --- poster, ACCT-F5692 dead-helper direction: defined but never applied to the bill event ---
+  // --- poster, dead-helper direction: defined but never applied to the bill event ---
   const posterDeadHelperBill = `
     ${posterFixed}
-    async function hasApprovedPodEvidence(c, o, l) {
-      const r = await c.query(\`SELECT true AS exists FROM dispatch.pod_documents pd
-        WHERE pd.load_id = $1::uuid AND pd.operating_company_id = $2::uuid
-          AND pd.status = 'approved' AND pd.archived_at IS NULL LIMIT 1\`);
-      return Boolean(r.rows[0]?.exists);
+    async function loadHasIssuedInvoice(c, o, l) {
+      const r = await c.query(\`SELECT id::text FROM accounting.invoices
+        WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND status IN ('sent', 'partial', 'paid', 'factored') LIMIT 1\`);
+      return Boolean(r.rows[0]?.id);
     }
-    const reason = "missing_pod_evidence";
+    const reason = "missing_issued_invoice";
     if (event === "bill") { doSomethingElse(); }
   `;
   if (
     !auditPoster(posterDeadHelperBill).some((p) => p.includes("does not apply it to the bill event"))
   )
-    failures.push("case2c FAIL — POD evidence helper defined but never applied to bill was NOT caught");
+    failures.push("case2c FAIL — issued-invoice helper defined but never applied to bill was NOT caught");
 
-  // --- poster, ACCT-F5692 positive direction: the fixed bill-gate shape must be clean ---
+  // --- poster, positive direction: the fixed bill-gate shape must be clean ---
   const posterFixedBill = `
     ${posterFixed}
-    async function hasApprovedPodEvidence(client, operatingCompanyId, loadId) {
-      const res = await client.query(\`SELECT true AS exists FROM dispatch.pod_documents pd
-        WHERE pd.load_id = $1::uuid AND pd.operating_company_id = $2::uuid
-          AND pd.status = 'approved' AND pd.archived_at IS NULL LIMIT 1\`, [loadId, operatingCompanyId]);
-      return Boolean(res.rows[0]?.exists);
+    async function loadHasIssuedInvoice(client, operatingCompanyId, loadId) {
+      const res = await client.query(\`SELECT id::text FROM accounting.invoices
+        WHERE source_load_id = $1::uuid AND operating_company_id = $2::uuid
+          AND voided_at IS NULL AND status IN ('sent', 'partial', 'paid', 'factored') LIMIT 1\`,
+        [loadId, operatingCompanyId]);
+      return Boolean(res.rows[0]?.id);
     }
     if (event === "bill") {
       const earnAmt = await earnAmountCents(client, o, l);
       if (earnAmt == null) return { gate: "earn_missing_for_bill" };
       amount = earnAmt;
-      const hasPod = await hasApprovedPodEvidence(client, o, l);
-      if (!hasPod) return { gate: "missing_pod_evidence" };
+      const issuedInvoice = await loadHasIssuedInvoice(client, o, l);
+      if (!issuedInvoice) return { gate: "missing_issued_invoice" };
     }
   `;
   if (auditPoster(posterFixedBill).length !== 0)
     failures.push(`case3b FAIL — fixed bill-gate poster flagged: ${auditPoster(posterFixedBill).join(" | ")}`);
+
+  // --- poster, OWNER DECISION B regression direction: the OLD POD-block shape must still be caught,
+  // even with the new issued-invoice gate present alongside it (a partial revert that keeps the new
+  // gate but resurrects the old one is exactly the silent regression this locks against) ---
+  const posterRegressedPodBlock = `
+    ${posterFixedBill.replace(
+      'if (!issuedInvoice) return { gate: "missing_issued_invoice" };',
+      'if (!issuedInvoice) return { gate: "missing_issued_invoice" };\n' +
+        "      const hasPod = await hasApprovedPodEvidence(client, o, l);\n" +
+        '      if (!hasPod) return { gate: "missing_pod_evidence" };'
+    )}
+  `;
+  if (
+    !auditPoster(posterRegressedPodBlock).some((p) => p.includes("OWNER DECISION B removed"))
+  )
+    failures.push("case3c FAIL — hasApprovedPodEvidence() restored inside the bill branch was NOT caught");
 
   // --- driver, negative direction: the exact pre-fix line ---
   const driverPreFix = `const nextLoadStatus = stop.stop_type === "delivery" ? "delivered_pending_docs" : "in_transit";`;

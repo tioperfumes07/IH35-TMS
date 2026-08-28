@@ -212,8 +212,8 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     expect(balance.credits).toBe(RATE_CENTS);
   });
 
-  it("Event 2 (bill) REFUSES without an approved POD, then POSTS a balanced DR A/R / CR Unbilled JE once one exists — through the real DB (ACCT-F5692)", async () => {
-    const { loadId, stopId } = await seedLoad();
+  it("Event 2 (bill) REFUSES (missing_issued_invoice) with no issued invoice, then POSTS a balanced DR A/R / CR Unbilled JE once one exists — WITH NO APPROVED POD REQUIRED — through the real DB (OWNER DECISION B, 2026-08-27 23:00 CT, supersedes ACCT-F5692's POD posting block)", async () => {
+    const { loadId } = await seedLoad();
 
     const earned = await postLoadRevenueLatch({
       operating_company_id: companyId,
@@ -224,8 +224,8 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     });
     expect(earned.posted, `earn refused: ${JSON.stringify(earned)}`).toBe(true);
 
-    // ACCT-F5692, proven through the REAL DB (not a mock): no approved POD exists yet, so Event 2
-    // must refuse and post nothing.
+    // OWNER DECISION B, proven through the REAL DB (not a mock): with earn posted but NO invoice at
+    // all for this load, Event 2 must refuse on the NEW evidence gate — never silently post.
     const refused = await postLoadRevenueLatch({
       operating_company_id: companyId,
       load_id: loadId,
@@ -233,10 +233,21 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
       entry_date_iso: new Date().toISOString(),
       actor_user_id: userId,
     });
-    expect(refused).toEqual({ posted: false, reason: "missing_pod_evidence" });
+    expect(refused).toEqual({ posted: false, reason: "missing_issued_invoice" });
     expect(await latchRow(loadId, "bill")).toBeNull();
 
-    await insertApprovedPod(loadId, stopId);
+    // Issue (send) an invoice for the load — no approved POD anywhere in this test. Decision B: the
+    // bill creates the receivable; POD gates factoring submission (submission-queue.service.ts's own
+    // independent has_approved_pod check), not A/R recognition itself.
+    const invoiceId = randomUUID();
+    await bypass(async () => {
+      await db.query(
+        `INSERT INTO accounting.invoices
+           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, sent_at)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'sent', now())`,
+        [invoiceId, companyId, customerId, `INV-2026-${loadId.slice(0, 5)}`, loadId]
+      );
+    });
 
     const billed = await postLoadRevenueLatch({
       operating_company_id: companyId,
@@ -245,7 +256,7 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
       entry_date_iso: new Date().toISOString(),
       actor_user_id: userId,
     });
-    expect(billed.posted, `bill refused after approved POD: ${JSON.stringify(billed)}`).toBe(true);
+    expect(billed.posted, `bill refused with an issued invoice and no approved POD: ${JSON.stringify(billed)}`).toBe(true);
     expect(billed.event).toBe("bill");
 
     const row = await latchRow(loadId, "bill");
@@ -262,9 +273,12 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     const { loadId, stopId } = await seedLoad();
     const invoiceId = randomUUID();
     await bypass(async () => {
+      // status='sent' — OWNER DECISION B: Event 2 now requires a real, ISSUED invoice (never
+      // draft/proforma alone) as its evidence gate; a draft-status row here would refuse the bill.
       await db.query(
-        `INSERT INTO accounting.invoices (id, operating_company_id, customer_id, display_id, source_load_id, due_date)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date)`,
+        `INSERT INTO accounting.invoices
+           (id, operating_company_id, customer_id, display_id, source_load_id, due_date, status, sent_at)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5::uuid, (now() + interval '30 days')::date, 'sent', now())`,
         [invoiceId, companyId, customerId, `INV-2026-${String(Number.parseInt(suffix, 16) % 100000).padStart(5, "0")}`, loadId]
       );
     });
@@ -278,6 +292,8 @@ describeIntegration("LV-REVREC-LEDGER-DBTEST — two-event revenue latch posts a
     });
     expect(earned.posted, `earn refused: ${JSON.stringify(earned)}`).toBe(true);
 
+    // insertApprovedPod is no longer required for Event 2 to post (Decision B); kept here to prove
+    // presence of POD evidence does not interfere with — nor is required by — the new gate.
     await insertApprovedPod(loadId, stopId);
     const billed = await postLoadRevenueLatch({
       operating_company_id: companyId,
