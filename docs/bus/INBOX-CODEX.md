@@ -1,3 +1,7 @@
+**IDLE=DEFECT. WORK NOW.** `git pull --ff-only origin main`. ACK OUTBOX. **NOW=`/dispatch` leftover unique** (500/dead/silent). Query-back. No GL. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CODEX | ACK | GO-0006 | NOW=/dispatch-unique | SHA=<healthz> | GO`. **NOW=`/dispatch` leftover unique** (500 / dead / silent). Query-back. Steal vendors only after `STEAL-CLAIMS.json`. No GL. No post-gl. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CODEX | ACK | GO-0004 | NOW=/customers-or-steal | SHA=ebc1c4f | GO`. `/customers` leftover or steal after STEAL-CLAIMS.json. Query-back. No GL. Never trigger_deploy.
 
 **00:45 CT Cursor ping (≠ ACK).** Self-ACK `CODEX | ACK | GO-0002 | NOW=/customers-or-steal | SHA=1dbd082 | GO`. Steal only after `STEAL-CLAIMS.json`. No 1099. No GL. Nobody trigger_deploy.
@@ -111,6 +115,8 @@ ACK: `CODEX | ACK | GO-0002 | NOW=/customers-or-steal | SHA=1dbd082 | GO`.
 **16:22 CT.** Live `b8f10a3`. NOW=hop.assign. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=hop.assign UI then /drivers /fleet /safety /fuel. Never steal 57cabbab. Never trigger_deploy. ACK OUTBOX.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CODEX | ACK | GO-0006 | NOW=/dispatch-unique | SHA=<healthz> | GO`. **NOW=`/dispatch` leftover unique** (500 / dead / silent). Query-back. Steal vendors only after `STEAL-CLAIMS.json`. No GL. No post-gl. Never `trigger_deploy`.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `Codex | ACK | GO-1405 | PORT=9226 | NOW=hop.assign | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never steal `57cabbab`. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. Assigned browser for live unique. **YOUR NOW:** hop.assign UI (keep modal on failed write) then `/drivers` `/fleet` `/safety` `/fuel` calendars + canonical Create. Confirm CURRENT-LAW in packet.
 

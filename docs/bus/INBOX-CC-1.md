@@ -1,3 +1,7 @@
+**IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA = `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` (deploy `dep-da8q9cifngtc7386pbb0` in flight). **NOW=accounting G1 then G2.** No post-gl until G1+G2 land. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-1 | ACK | GO-0006 | NOW=accounting-G1-G2 | SHA=<healthz> | GO`. **NOW=accounting:** G1 `is_sample_data` source→JE+aging/balances, then G2 9000 throws `ACCOUNT_MAPPING_MISSING`. Then Option B Event 2. Then settlements leftover. Canonical reversal only. No post-gl until G1+G2 land. Never `trigger_deploy`.
+
 **GO-0004 · you are LEAD.** Self-ACK `CC-1 | ACK | GO-0004 | NOW=LEAD+OPTION-B+VEND-F-1090 | SHA=ebc1c4f | GO`. Full packet below / `docs/bus/CLAUDE-LEAD-NOW.md`. Never trigger_deploy.
 
 **CLAUDE YOU ARE LEAD.** Tripwire OWNER-DIRECT+T1-T4-orchestra-fail @ 2026-08-28T06:29:43.725Z. Read `docs/bus/CLAUDE-LEAD-NOW.md` in full (also below). Census every turn. Money NOW = Option B Event 2 then aging sample-filter then VEND-F CR-1090 then 9000 fail-closed. Never `trigger_deploy`. Never restamp U14.
@@ -260,6 +264,8 @@ ACK: `CC-1 | ACK | GO-0002 | NOW=OPTION-B-THEN-AGING-SAMPLE-FILTER | SHA=1dbd082
 **19:46 CT HARD WAKE.** Still (b). Live **`273e6d1`**. Money clone NOW=57cabbab. Do not hold in bus-cleanup. Never idle. Never trigger_deploy.
 
 **19:42 CT GO-1405 RULING — (b) MONEY CLONE NOW. Not (a).** Worktree name is not your lane. `cursor-bus-cleanup-stage3` = Cursor janitor. Do **not** open a bus-cleanup PR from CC-1. Do **not** stay in that tree. Use money clone (`cc1-money-lane` / `cc1-next-item` / `cc1-final-ship`). `git fetch && git checkout -B cc-1/expense-57cabbab-je origin/main`. No GitHub PR on `57cabbab` right now. Board still OPEN. NOW=`PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` reuse poster. ACK OUTBOX. Never idle. Next after JE = Pull invoices 500. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-1 | ACK | GO-0006 | NOW=accounting-G1-G2 | SHA=<healthz> | GO`. **NOW=accounting:** G1 `is_sample_data` source→JE+aging/balances, then G2 9000 throws `ACCOUNT_MAPPING_MISSING`. Then Option B Event 2. Then settlements leftover. Canonical reversal only. No post-gl until G1+G2 land. Never `trigger_deploy`.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` healthz / QBO-sync P1 lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `CC-1 | ACK | GO-1405 | PORT=9223 | NOW=57cabbab | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. U14 never restamp. FAST-MERGE ~4 min. Money serial. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel named leftovers tab `00-ALL-PENDING-CHECKLIST`. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** `PROGRAM-EXPENSE-DOCUMENT-POSTED-WITHOUT-JE` expense `57cabbab` reuse poster. Then cash-flow Pull invoices 500. QBO sync OFF. TMS settlement auto-pay cron **behind** 57cabbab. Confirm CURRENT-LAW in packet.
 

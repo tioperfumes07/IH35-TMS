@@ -1,3 +1,5 @@
+**GO-0006 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. ACK `CURSOR | ACK | GO-0006 | NOW=lead+U6 | SHA=<healthz> | GO`. Census. FAST-MERGE this bus PR. Urgent 6 only. Do not steal CC-1 money. Deploy only 5–10. No post-gl.
+
 **GO-0004 · CLAUDE LEAD ACTIVE.** `LEAD-SEAT=CC-1`. You are NOT lead. Worker + deploy lieutenant. Read `docs/bus/CLAUDE-LEAD-NOW.md` §3. FAST-MERGE this bus PR then Cursor-lane only. Only you `trigger_deploy` when Claude’s census says the 5–10 gate. Do not steal money. Do not recertify U14. C25–C31 stay seven columns. ACK: `CURSOR | ACK | GO-0004 | NOW=worker+deploy-lt | SHA=ebc1c4f | GO`.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
@@ -113,6 +115,8 @@ ACK: `CURSOR | ACK | GO-0002 | NOW=lead+supersession | SHA=1dbd082 | GO`.
 **16:36 CT.** Owner merge+deploy. One Devin. Skip #15546. Census LEAD-CENSUS.md.
 
 **16:22 CT.** Live verify + one Devin. Census `LEAD-CENSUS.md`. Do not ping Devin-A. Deploy wait `dep-da7lh5ad0e5s73f938b0`.
+
+**GO-0006 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. ACK `CURSOR | ACK | GO-0006 | NOW=lead+U6 | SHA=<healthz> | GO`. Census. FAST-MERGE this bus PR. Urgent 6 only. Do not steal CC-1 money. Deploy only 5–10. No post-gl.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` healthz lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK OUTBOX: `Cursor | ACK | GO-1405 | PORT=9222 | NOW=DOCS-F6072 | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Only this seat `trigger_deploy` on 5–10 gate. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel: `docs/lockdown/USMCA-LIVE-CHROME-CERTIFY-INVENTORY-2026-08-26.xlsx`. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd` + `~/Desktop/IH35-CURSOR-AUDIT/`. **YOUR NOW:** census all OUTBOX → rewrite `LEAD-CENSUS.md`; **DOCS-F6072** unit/equipment 500 fix; customer create dead click; Safety-F6437 retry. Do not steal `57cabbab`. Confirm CURRENT-LAW in packet §CURRENT-LAW.
 

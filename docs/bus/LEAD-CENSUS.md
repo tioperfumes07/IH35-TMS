@@ -1,18 +1,19 @@
-# LEAD CENSUS — replace this table every lead turn
+# LEAD CENSUS
 
-**GO current:** GO-0004 (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0004.md`)
-**Turn:** 2026-08-28 01:23 CT · **LEAD-SEAT=CC-1** (owner: Cursor is not lead)
-**Live SHA:** `ebc1c4f` · nobody `trigger_deploy`
+**GO current:** GO-0006
+**Turn:** 2026-08-28T15:10Z · **LEAD-SEAT=CURSOR**
+**Live SHA before this deploy:** `ebc1c4f` · **deploy in flight:** `dep-da8q9cifngtc7386pbb0` commit `08d96f77` (owner on-demand catch-up)
+**Tip origin/main at trigger:** `08d96f77`
 
-Owner tripwire: Cursor failed orchestra (no query-back, consolidated columns). Claude must census next.
+Census from OUTBOX first lines (not pings):
+| Seat | GO-0006 self-ACK? | Last OUTBOX | Status |
+|------|-------------------|-------------|--------|
+| CC-1 | no | Cursor ping GO-1405 only | **IDLE** |
+| CC-2 | no | Cursor ping GO-1405; older FINDING | **IDLE** |
+| CC-3 | no | ACK GO-1405 lists-legal | **IDLE** (stale GO) |
+| Codex | no | Cursor ping GO-1405 | **IDLE** |
+| Cascade | no | ACK GO-1405 a62f0cb | **IDLE** (stale GO) |
+| Devin | no | Cursor ping GO-1405 vendors | **IDLE** — this packet starts 1h query-back |
+| Cursor | this PR | ACK GO-0006 | lead + deploy |
 
-| Seat | ACK GO-0004? | Idle? |
-|------|----------------|-------|
-| CC-1 | **NO yet** — INBOX just flipped to LEAD | Must self-ACK LEAD + start Option B / VEND-F P0 |
-| CC-2 | **NO** | INV-3 + 9000 detector |
-| CC-3 | **NO** | VendorDetail bank id + audit tab + factor_id |
-| Codex | **NO** | /customers or steal |
-| Cascade | **NO** | SQL + /fuel |
-| Devin | **NO** (sweep report is not ACK of GO-0004) | Query-back; Auto-mode pause is product; INBOX is atomic NOW |
-| Devin-A | **NO** | Book Load KEEP |
-| Cursor | **worker** | FAST-MERGE this bus PR · not lead |
+T1 not fired: owner named idle; this turn has a fresh census.

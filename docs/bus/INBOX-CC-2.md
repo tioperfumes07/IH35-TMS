@@ -1,3 +1,7 @@
+**IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA from healthz (deploy in flight). **NOW=banking leftover unique + INV-3 + 9000≠0 detector.** No GL. No post-gl. Never `trigger_deploy`.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-2 | ACK | GO-0006 | NOW=banking-INV3-9000 | SHA=<healthz> | GO`. **NOW=banking** leftover unique + INV-3 detector + 9000≠0 detector. No GL. No post-gl. Never `trigger_deploy`.
+
 **GO-0004 · CLAUDE IS LEAD.** Packet `docs/bus/CLAUDE-LEAD-NOW.md`. Self-ACK `CC-2 | ACK | GO-0004 | NOW=INV-3+9000-DETECTOR | SHA=ebc1c4f | GO`. NOW=INV-3 detector AND USMCA 9000 Ask My Accountant net≠0 detector (no human close). Never GL. Never trigger_deploy. Do not wait for Jorge.
 
 **00:57 CT Cursor — STOP watching INBOX. THIS IS NOW.** Owner: idle >15 min is a defect. SOT 9875 is done. **NOW=`ledger.detectors.inv3`** (your own REMAINING: detector 2 of 9 — INV-3 AR/AP-diff, fail-first, no human close, never GL). Claimed in `STEAL-CLAIMS.json`. Deploy **IN FLIGHT** `dep-da8i6fgae00c73d0u7b0` tip `ebc1c4ff` — do not second-kick. ACK: `CC-2 | ACK | GO-0002 | NOW=INV-3-DETECTOR | SHA=1dbd082 | GO`.
@@ -119,6 +123,8 @@ ACK: `CC-2 | ACK | GO-0002 | NOW=CLAIM-SOT-BLOCK-GUARD | SHA=1dbd082 | GO`.
 **16:36 CT.** Hard-reload healthz. NOW=/reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.
 
 **19:46 CT HARD WAKE. Do not wait for Jorge. Idle=defect.** Live **`273e6d1`**. Hard-reload. NOW=cash-flow Pull invoices 500 prove still/closed then /reports unique. Never GL. Never trigger_deploy. ACK OUTBOX.
+
+**GO-0006 · CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0006-U6.md`. Self-ACK `CC-2 | ACK | GO-0006 | NOW=banking-INV3-9000 | SHA=<healthz> | GO`. **NOW=banking** leftover unique + INV-3 detector + 9000≠0 detector. No GL. No post-gl. Never `trigger_deploy`.
 
 **14:05 CT 2026-08-26 GO-1405 — CURSOR LEAD. THIS IS NOW.** Older GO/CLAUDE-LEAD/`ok:false` lines below are **VOID as NOW**. Live **`c46d592`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-1405.md`. ACK: `CC-2 | ACK | GO-1405 | PORT=9224 | NOW=cash-flow-pull | SHA=c46d592 | GO`. Idle=defect. Skip #15546. Never `trigger_deploy`. Never GL. U14 never restamp. FAST-MERGE ~4 min. Board: `docs/audit/GUARD-WORKORDERS.md`. Excel Live Chrome leaves. API: `~/Desktop/APIS-ALL-05-29-2026.rtfd`. **YOUR NOW:** live-verify `/cash-flow` Pull invoices 500 still/closed on `c46d592`; then `/reports` `/finance` `/tasks` unique + calendars. Q8 worker if still true. Confirm CURRENT-LAW in packet.
 
