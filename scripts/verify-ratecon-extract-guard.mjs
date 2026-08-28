@@ -62,8 +62,31 @@ const HOOK = "apps/frontend/src/pages/dispatch/components/book-load-v4/useRateCo
 const DROPZONE = "apps/frontend/src/pages/dispatch/components/book-load-v4/OcrDropZone.tsx";
 const hook = read(HOOK);
 const dz = read(DROPZONE);
+function extractionLifecycleErrors(source) {
+  const lifecycleErrors = [];
+  if (!/const submittedGeneration = scopeGenerationRef\.current/.test(source) || !/const submittedCompanyId = operatingCompanyId/.test(source))
+    lifecycleErrors.push("useRateConExtraction must snapshot company and generation for each intake");
+  if ((source.match(/if \(!isCurrent\(\)\) return;/g) ?? []).length < 5)
+    lifecycleErrors.push("useRateConExtraction must suppress stale completion between every upload/extract stage");
+  if (!/activeGenerationRef\.current === submittedGeneration\) return/.test(source))
+    lifecycleErrors.push("useRateConExtraction must refuse concurrent intake at the shared hook boundary");
+  return lifecycleErrors;
+}
 if (!hook) errs.push(`missing shared extraction hook ${HOOK}`);
 else if (!/extractRateCon\s*\(/.test(hook)) errs.push("useRateConExtraction must call the real extractRateCon endpoint");
+else {
+  errs.push(...extractionLifecycleErrors(hook));
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      hook.replace("const submittedCompanyId = operatingCompanyId", "const submittedCompanyId = currentCompanyId"),
+      hook.replace("if (!isCurrent()) return;", ""),
+      hook.replace("if (activeGenerationRef.current === submittedGeneration) return;", ""),
+    ];
+    for (const [index, mutation] of mutations.entries()) {
+      if (extractionLifecycleErrors(mutation).length === 0) errs.push(`selftest mutation ${index + 1} survived`);
+    }
+  }
+}
 if (!dz) errs.push(`missing ${DROPZONE}`);
 else {
   if (!/from\s+["']\.\/useRateConExtraction["']/.test(dz)) errs.push("OcrDropZone must import the shared useRateConExtraction hook (one intake code path)");
