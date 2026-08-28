@@ -1201,6 +1201,7 @@ type CompanyScopedListParams = {
   // limit: client-side pickers must pass it — vendors/customers endpoints default to 50, so a >50 set
   // silently truncates the picker (same class as the driver/unit 50-cap). Endpoint max is 200.
   limit?: number;
+  offset?: number;
   // ITEM 3 = B (owner ruling 2026-07-11): opt-in flag passed ONLY by the Customers/Vendors LIST pages so
   // the list shows solely the ACTIVE company's records. Shared pickers/dropdowns MUST NOT pass this (they
   // legitimately need the per-call operating_company_id scope for cross-entity booking).
@@ -1215,6 +1216,7 @@ function appendCompanyScopedQuery(query: URLSearchParams, params: CompanyScopedL
   if (params.customer_type) query.set("customer_type", params.customer_type);
   if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
   if (params.limit != null) query.set("limit", String(params.limit));
+  if (params.offset != null) query.set("offset", String(params.offset));
   if (params.active_company_only) query.set("active_company_only", "true");
 }
 
@@ -1258,6 +1260,35 @@ export function listCustomers(params: CompanyScopedListParams = {}) {
     );
     return { customers, total: listEnvelopeTotal(payload, customers) };
   });
+}
+
+/**
+ * Exhaust a stable, scoped customer population for surfaces that present a complete roster.
+ * Search-as-you-type pickers should keep using listCustomers; complete lists and unsearched
+ * canonical selectors must not treat the server's max page as the end of the population.
+ */
+export async function listAllCustomers(
+  params: Omit<CompanyScopedListParams, "limit" | "offset"> = {},
+) {
+  const limit = 5000;
+  const customers: Customer[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+  while (true) {
+    const page = await listCustomers({ ...params, limit, offset });
+    if (expectedTotal == null) expectedTotal = page.total;
+    if (page.total !== expectedTotal) throw new Error("Customer roster changed during pagination. Retry.");
+    for (const customer of page.customers) {
+      if (!seen.has(customer.id)) {
+        seen.add(customer.id);
+        customers.push(customer);
+      }
+    }
+    if (customers.length >= expectedTotal) return { customers, total: expectedTotal };
+    if (page.customers.length === 0) throw new Error("Customer roster pagination stopped before the reported total.");
+    offset += page.customers.length;
+  }
 }
 
 export function getCustomerRelationshipScore(customerUuid: string, operatingCompanyId: string) {

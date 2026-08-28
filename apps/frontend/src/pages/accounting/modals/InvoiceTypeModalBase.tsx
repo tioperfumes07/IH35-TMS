@@ -15,7 +15,7 @@ import { useFormValidation } from "../../../components/forms/useFormValidation";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
-import { listCustomers } from "../../../api/mdata";
+import { listAllCustomers } from "../../../api/mdata";
 import { getLoad } from "../../../api/loads";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { addInvoiceLine, patchInvoice } from "../../../api/accounting";
@@ -120,7 +120,7 @@ export function InvoiceTypeModalBase({ open, operatingCompanyId, title, billToEn
     // indicate the list was cut. 5000 matches the convention already used by Customers.tsx,
     // CustomerDetail.tsx and NewCustomerDrawerForm. Server-side type-ahead remains B29's target
     // shape; this removes the live truncation now rather than leaving it until then.
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }),
+    queryFn: () => listAllCustomers({ operating_company_id: operatingCompanyId }),
     enabled: Boolean(operatingCompanyId) && open,
     staleTime: 60_000,
   });

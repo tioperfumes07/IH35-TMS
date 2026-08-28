@@ -622,9 +622,10 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
               WHEN customer_name ILIKE $${shiftedSearchContainsIdx} THEN 200
               ELSE 100
             END DESC,
-            created_at DESC
+            created_at DESC,
+            id DESC
           `
-          : "ORDER BY created_at DESC";
+          : "ORDER BY created_at DESC, id DESC";
       const res = await client.query(
         `
           SELECT ${CUSTOMER_SELECT_COLUMNS}

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createPayment, listCoaRoles, listInvoices, type Invoice, type PaymentMethod } from "../../api/accounting";
 import { getAllAccounts, getCoaAccounts } from "../../api/banking";
-import { listCustomers } from "../../api/mdata";
+import { listAllCustomers } from "../../api/mdata";
 import { Button } from "../../components/Button";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { UploadZone } from "../../components/UploadZone";
@@ -139,7 +139,7 @@ export function RecordPaymentModal({
     // indicate the list was cut. 5000 matches the convention already used by Customers.tsx,
     // CustomerDetail.tsx and NewCustomerDrawerForm. Server-side type-ahead remains B29's target
     // shape; this removes the live truncation now rather than leaving it until then.
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId, limit: 5000 }).then((res) => res.customers),
+    queryFn: () => listAllCustomers({ operating_company_id: operatingCompanyId }).then((res) => res.customers),
     enabled: open && Boolean(operatingCompanyId),
   });
 

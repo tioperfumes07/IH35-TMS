@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
-import { listCustomers } from "../../api/mdata";
+import { listAllCustomers } from "../../api/mdata";
 import { listInvoices, type Invoice } from "../../api/accounting";
 import {
   applyCreditMemo,
@@ -86,7 +86,7 @@ export function CreditMemosPage() {
 
   const customersQuery = useQuery({
     queryKey: ["customers", "picker", companyId],
-    queryFn: () => listCustomers({ operating_company_id: companyId, limit: 1000 }),
+    queryFn: () => listAllCustomers({ operating_company_id: companyId }),
     enabled: Boolean(companyId),
   });
   const customerOptions = useMemo(

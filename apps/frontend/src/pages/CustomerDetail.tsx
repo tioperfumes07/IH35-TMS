@@ -34,7 +34,7 @@ import {
   listCustomerLanes,
   listCustomerQualityEventReasons,
   listCustomerQualityEvents,
-  listCustomers,
+  listAllCustomers,
   listPaymentTermOptions,
   listCustomerContacts,
   reactivateCustomerContact,
@@ -517,7 +517,7 @@ export function CustomerDetailPage() {
   // this company, excluding this customer itself. Loaded only while editing.
   const parentCandidatesQuery = useQuery({
     queryKey: ["customer-parent-options", operatingCompanyId],
-    queryFn: () => listCustomers({ operating_company_id: operatingCompanyId!, limit: 5000 }).then((r) => r.customers),
+    queryFn: () => listAllCustomers({ operating_company_id: operatingCompanyId! }).then((r) => r.customers),
     enabled: Boolean(operatingCompanyId && editMode),
     staleTime: 60_000,
   });
