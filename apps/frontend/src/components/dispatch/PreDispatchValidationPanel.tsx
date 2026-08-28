@@ -68,6 +68,7 @@ export function PreDispatchValidationPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [acknowledgedRules, setAcknowledgedRules] = useState<Set<string>>(new Set());
+  const [retryGeneration, setRetryGeneration] = useState(0);
 
   // Re-run whenever any key input changes.
   const inputKey = useMemo(
@@ -76,6 +77,9 @@ export function PreDispatchValidationPanel({
   );
 
   useEffect(() => {
+    setLoading(false);
+    setError(null);
+    setAcknowledgedRules(new Set());
     // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
@@ -85,8 +89,6 @@ export function PreDispatchValidationPanel({
 
     let cancelled = false;
     setLoading(true);
-    setError(null);
-    setAcknowledgedRules(new Set());
 
     fetchPreDispatchValidation({
       operating_company_id: operatingCompanyId,
@@ -118,7 +120,7 @@ export function PreDispatchValidationPanel({
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inputKey]);
+  }, [inputKey, retryGeneration]);
 
   const handleAck = useCallback((ruleId: string) => {
     setAcknowledgedRules((prev) => {
@@ -168,7 +170,15 @@ export function PreDispatchValidationPanel({
 
       {error ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700">
-          Pre-dispatch check unavailable: {error}
+          <span>Pre-dispatch check unavailable: {error}</span>
+          <button
+            type="button"
+            className="ml-3 rounded-sm border border-slate-300 bg-white px-2 py-1 font-medium"
+            onClick={() => setRetryGeneration((generation) => generation + 1)}
+            disabled={loading}
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <ValidationPanel

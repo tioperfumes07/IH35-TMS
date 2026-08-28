@@ -42,18 +42,37 @@ function failureContractHolds(source) {
   );
 }
 
+function recoveryContractHolds(source) {
+  const effectStart = source.indexOf("useEffect(() => {");
+  const emptyStart = source.indexOf("if (!driverUuid && !unitUuid && !customerId)", effectStart);
+  const preEmptyBlock = effectStart >= 0 && emptyStart > effectStart ? source.slice(effectStart, emptyStart) : "";
+  return (
+    preEmptyBlock.includes("setLoading(false)") &&
+    preEmptyBlock.includes("setError(null)") &&
+    preEmptyBlock.includes("setAcknowledgedRules(new Set())") &&
+    /\[inputKey, retryGeneration\]/.test(source) &&
+    /onClick=\{\(\) => setRetryGeneration\(\(generation\) => generation \+ 1\)\}/.test(source) &&
+    />\s*Retry\s*</.test(source)
+  );
+}
+
 if (!failureContractHolds(panel)) {
   fail("failed validation preview must report not-passing without fabricating a blocker");
+}
+if (!recoveryContractHolds(panel)) {
+  fail("validation identity transitions must clear retired state and failed reads must expose exact Retry");
 }
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["failure reports passing", panel.replace("onValidationChange?.(false, false);", "onValidationChange?.(true, false);")],
     ["failure drops parent signal", panel.replace("onValidationChange?.(false, false);", "")],
+    ["empty identity stays loading", panel.replace("setLoading(false);", "")],
+    ["failed read has no retry", panel.replace(/onClick=\{\(\) => setRetryGeneration\([\s\S]*?\}\n/, "")],
   ];
   let caught = 0;
   for (const [name, source] of mutations) {
-    if (!failureContractHolds(source)) {
+    if (!failureContractHolds(source) || !recoveryContractHolds(source)) {
       console.log(`PASS verify-predispatch-panel-mounted SELFTEST: ${name}`);
       caught += 1;
     } else {
