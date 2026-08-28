@@ -257,7 +257,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                 ))}
               </div>
               <p className="text-xs text-slate-600">
-                Relationship health loaded for all {atRiskQuery.data?.total ?? 0} at-risk customers.
+                {atRiskQuery.isError
+                  ? "Relationship health is unavailable; retry the failed read above."
+                  : `Relationship health loaded for all ${atRiskQuery.data?.total ?? 0} at-risk customers.`}
               </p>
             </div>
           </CollapsedListFilters>
