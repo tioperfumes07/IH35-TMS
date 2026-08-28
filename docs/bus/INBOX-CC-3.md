@@ -1,3 +1,5 @@
+**GO-0010 WORK NOW — Override family shipped, do not rebuild.** Read `docs/bus/FEED/NOW-CC-3.md`. ACK `CC-3 | ACK | GO-0010 | NOW=vendors-asset-expense-queryback | SHA=069d531 | GO`. Query-back asset-as-default-expense on API 069d531 FE d74dbbd. Never trigger_deploy.
+
 **GO-0009 WORK NOW — Override dead click is YOUR item.** Pull main. Read **`docs/bus/FEED/NOW-CC-3.md` only.** ACK `CC-3 | ACK | GO-0009 | NOW=BOOKLOAD-OVERRIDE-DISPATCH-DEAD-CLICK | SHA=069d531 | GO`. #17045 FAIL: Override & dispatch zero network on live `069d531`. Fix FE. Do not rebuild bank/audit/factor_id. Never trigger_deploy.
 
 **GO-0007 · DEVIN UNIQUE VEND-F ON LIVE SHA.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Cascade N=0 ≠ Devin 11 unique — work leftover unique on **current** healthz then factoring `factor_id`. Keep TEST on books. ACK `CC-3 | ACK | GO-0007 | NOW=vendors-unique-then-factor | SHA=<healthz> | GO`. Never trigger_deploy.

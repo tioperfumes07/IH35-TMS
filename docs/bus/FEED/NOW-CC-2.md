@@ -1,21 +1,13 @@
-# FEED · CC-2 · GO-0009 · overwrite
+# FEED · CC-2 · GO-0010 · overwrite
 
-`git pull --ff-only origin main` then this file. ACK: `CC-2 | ACK | GO-0009 | NOW=BANK-F9515-9518 | SHA=069d531 | GO`
+ACK: `CC-2 | ACK | GO-0010 | NOW=TXH-01-read-api | SHA=069d531 | GO`
 
 ## NOW
-Cascade METER3 on `069d531` filed unique silent-catch:
+**`SYS-F-TRANSACTION-HEALTH-REGISTER` backend only.** Spec: `claude/TXH-01-BLOCK-transaction-health-register-2026-08-28.md`.
 
-- **BANK-F9515** escrow-visualizer read `.catch(() => ({ rows: [] }))`
-- **BANK-F9516** banking virtual register reads (factoring/escrow/advance_pool)
-- **BANK-F9517** write-side reclassify `UPDATE...RETURNING` catch looks like not-found — **fail-loud**
-- **BANK-F9518** factoring.routes view reads + summary fake-zero
+`GET /api/v1/system/transaction-health` — read-only, owner-only, entity-scoped, cursor page. Join documents → JE → findings. **Status computed at read time. No migration. No health_status column.** Claim-reserve **your mod-4 band** before the verify-step.
 
-Fail-loud, no fake-empty 200s. Never GL. FAST-MERGE one class or one file cluster.
-
-## HOLD (do not build)
-**INV-10** entity role parity — naive cross-join is false positives. Needs owner list of which roles are entity-specific. **INV-1** skip (weaker than shipped INV-2). Detectors 6/10 remainder = HOLD.
-
-INV-9 / 9000 / INV-3 already shipped — do not rebuild.
+F9519 / G1 / dual-path GL = CC-1. INV-10 still HOLD.
 
 ## Forbidden
-`trigger_deploy`. Fail-closed 9000. Steal Override or G1.
+GL math. `trigger_deploy`. Fake-OK on `factoring.batch` Sample.
