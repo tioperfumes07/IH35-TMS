@@ -3,6 +3,7 @@ import { TriSignalHoverDetail, type TriSignalResult } from "../../pages/dispatch
 type Props = {
   signal: TriSignalResult | null | undefined;
   loading?: boolean;
+  unavailable?: boolean;
 };
 
 function pillClass(signal: TriSignalResult["signal"]) {
@@ -17,9 +18,12 @@ function pillLabel(signal: TriSignalResult["signal"]) {
   return "ON TRACK";
 }
 
-export function TriSignalPill({ signal, loading }: Props) {
+export function TriSignalPill({ signal, loading, unavailable }: Props) {
   if (loading) {
     return <span className="text-[10px] text-gray-400">Signal …</span>;
+  }
+  if (unavailable) {
+    return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
   }
   if (!signal) {
     return <span className="text-[10px] text-gray-300">—</span>;

@@ -735,7 +735,11 @@ export function DispatchBoard({
     );
 
   const renderTriSignalCell = (load: DispatchLoadRow) => (
-    <TriSignalPill signal={triSignalByLoadId.get(load.id)} loading={triSignalsQuery.isLoading && Boolean(companyId)} />
+    <TriSignalPill
+      signal={triSignalByLoadId.get(load.id)}
+      loading={triSignalsQuery.isLoading && Boolean(companyId)}
+      unavailable={triSignalsQuery.isError}
+    />
   );
 
   const renderStatusCell = (load: DispatchLoadRow) => (
@@ -926,6 +930,15 @@ export function DispatchBoard({
 
     return (
       <section className="space-y-2">
+        {triSignalsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load status signals"
+            status={(triSignalsQuery.error as { status?: number } | null)?.status ?? 0}
+            message={userFacingApiError(triSignalsQuery.error, "Status-signal feed failed")}
+            onRetry={() => void triSignalsQuery.refetch()}
+            className="py-4"
+          />
+        ) : null}
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
             {loadCountSummary}

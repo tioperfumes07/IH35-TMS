@@ -1852,3 +1852,4 @@ Codex | WORKING | DSP-F7090 | CLAIM=post.dispatch-timeline-leave-failure-honesty
 Codex | WORKING | DSP-F7091 | CLAIM=post.dispatch-notify-preferences-read-failure-honesty | SOURCE=customer_notify_preferences→Notify Preferences panel | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7093 | CLAIM=post.dispatch-load-template-read-failure-honesty | SOURCE=dispatch.load_templates→Book Load picker+template library | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7094 | CLAIM=post.dispatch-multistop-pickup-type-failure-honesty | SOURCE=catalogs.pickup_time_types→MultiStopEditor rows | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7095 | CLAIM=post.dispatch-tri-signal-failure-honesty | SOURCE=active load tri-signals→Dispatch List+Table risk column | NEXT=guard+FAST-MERGE | GO
