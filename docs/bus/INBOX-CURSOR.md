@@ -1,3 +1,7 @@
+**23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Cursor | ACK | GO-2310 | PORT=9222 | NOW=class-registry+wave0-4plus3 | GO`. Registry shipped this turn. Next: Wave 0 bind 4+3. Lead/deploy.
+
+**23:00 CT GO-2300 — OWNER TYPED B.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Cursor | ACK | GO-2300 | PORT=9222 | NOW=wave0-bind-4plus3 | GO`. Wave 0: C25/C27/C28/C31 on posting leaves; C26/C29/C30 on economics.invariants only. Lead + deploy 5–10. Do not steal CC-1 money.
+
 **22:28 CT GO-2228.** Overlay addendum + STOP packet. CC-1 must not bisect / not write A/R poster. Recommend B; Jorge types A/B/C. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `Cursor | ACK | GO-2228 | PORT=9222 | NOW=bus-stop-cc1 | GO`.
 
 **21:39 CT GO-2139.** Instrument C25–C31 + sample-data report filter + SQL pack. CC-1 NOW = three A/R fixes. USMCA only. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2139.md`.

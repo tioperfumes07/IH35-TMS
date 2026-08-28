@@ -1,4 +1,8 @@
-**22:28 CT 2026-08-27 GO-2228 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. CC-1 NOW = void Event-2 A/R + unapplied-not-on-1100. Wave 2.2 BLOCKED ON OWNER A/B/C. Do not restore invoice A/R. U14 never restamp.
+**23:10 CT GO-2310 — EMPTY-GATE CLASS + PARALLEL WRITE. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. GO-2300 B still in force. Unverified work = defect. Idle while named-blocked = correct.
+
+**23:00 CT 2026-08-27 GO-2300 — OWNER TYPED B. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md` + `docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md`. CC-1 NOW = implement Event 2 on delivery+invoice (POD stays on factoring). Then void reverse + unapplied. GO-2228 A/B/C wait is **VOID as NOW**. U14 never restamp.
+
+**22:28 CT 2026-08-27 GO-2228 — SUPERSEDED BY GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. CC-1 NOW = void Event-2 A/R + unapplied-not-on-1100. Wave 2.2 BLOCKED ON OWNER A/B/C. Do not restore invoice A/R. U14 never restamp.
 
 **20:50 CT 2026-08-27 GO-2050 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. Idle=defect. U14 never restamp. CC-1 NOW=invoice A/R+cash legs (do not void). Opening JE entity = owner.
 

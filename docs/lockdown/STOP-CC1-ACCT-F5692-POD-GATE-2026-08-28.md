@@ -1,8 +1,10 @@
 # STOP CC-1 · THE A/R INSTRUCTION IS WRONG · ACCT-F5692 POD GATE
 
+**2026-08-27 23:00 CT — OWNER TYPED B.** Wave 2.2 is **unblocked**. Implement Option B per `docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md` + GO-2300. This file is **history of the STOP** (do not restore a second A/R poster). GO-2228 “blocked on A/B/C” is **void as NOW**.
+
 **Priority: CC-1 must not write an A/R poster.** Verified Cursor 2026-08-28 on prod Neon (`lucia`) + `origin/main@985fdc58` (overlay #16833). Canonical path: this file (not a `claude/` copy).
 
-GO packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`.
+GO packet (NOW): `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`.
 
 ---
 
@@ -16,7 +18,7 @@ Both seats previously told CC-1 to restore `DR 1100 / CR 1150`. **That leg was n
 
 **If CC-1 bisects 08-10→08-11 or writes a new invoice A/R poster, it recreates ACCT-F59.**
 
-Wave 2.1 bisect is **cancelled**. Wave **2.2 is BLOCKED ON OWNER (A / B / C)**, not on CC-1.
+Wave 2.1 bisect is **cancelled**. Wave **2.2 was blocked on A/B/C; owner typed B 2026-08-27.** Implement B. Still do **not** write a second A/R poster.
 
 ---
 
@@ -51,7 +53,7 @@ USMCA **4000** credit-net **$23,646.50 including sample**; **$7,426.50 excluding
 | **B** | Move the gate: A/R on delivery evidence **+ invoice issuance**. POD remains required for **factoring submission** (`has_approved_pod` already). | Fixes going-forward and can re-fire Event 2 for open invoiced loads. Matches QBO / NetSuite / McLeod: bill creates the receivable; POD gates collection/factoring. **Cursor recommendation = B.** |
 | **C** | Keep gate; owner per-load override | Manual forever. |
 
-**CC-1 must not implement A, B, or C until Jorge types the letter in chat.**
+**Owner typed B.** CC-1 implements B. Do not implement A or C.
 
 ---
 
@@ -63,7 +65,7 @@ Event 2 exists and is correct: revrec-delivery-posting/poster.service.ts
 buildBillEvent2Postings() -> DR ar_control / CR unbilled_revenue.
 Blocked by ACCT-F5692 hasApprovedPodEvidence(); dispatch.pod_documents = 0 rows system-wide.
 Latch: 12 earn (to 2026-08-25Z / 08-24 CT) vs 4 bill (to 08-08). Invoice poster stands down by design.
-2.2 is BLOCKED ON OWNER (option A/B/C). Start these two instead — unaffected:
+2.2 OWNER TYPED B — implement Option B first (GO-2300), then still:
   (1) void must reverse the Event-2 A/R leg — $9,995.50 on INV-00006/00019/00023
   (2) unapplied payment must not credit 1100 — $1,700 (PMT-2026-00006/00007)
 Then 17 duplicate role rows + UNIQUE (operating_company_id, role).
