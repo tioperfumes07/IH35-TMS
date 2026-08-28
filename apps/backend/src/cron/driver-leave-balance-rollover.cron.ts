@@ -18,13 +18,14 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const CRON_NAME = "safety.driver_leave_balance_rollover";
 
 let initialized = false;
 
 /** One tick: roll balances for `targetYear` (default = the year the cron fires in). */
-export async function runDriverLeaveBalanceRolloverTick(targetYear = new Date().getUTCFullYear()): Promise<number> {
+export async function runDriverLeaveBalanceRolloverTick(targetYear = Number(companyBusinessDate().slice(0, 4))): Promise<number> {
   const priorYear = targetYear - 1;
   let rolledTotal = 0;
 

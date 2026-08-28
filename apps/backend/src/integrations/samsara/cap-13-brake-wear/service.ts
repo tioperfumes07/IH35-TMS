@@ -3,6 +3,7 @@
  * Lining thickness tracking + replacement projection (PM, DVIR, brake service, Samsara).
  * DOT minimums: 6.4 mm steer · 3.2 mm drive (49 CFR §393.47).
  */
+import { addBusinessDateDays, businessDateDaysBetween, companyBusinessDate } from "../../../lib/company-business-date.js";
 
 export type BrakeMeasurementSource = "dvir" | "pm_inspection" | "brake_service" | "samsara_diagnostics";
 
@@ -239,7 +240,7 @@ function projectWithWearRate(
   }
   const remaining = latest.lining_thickness_mm - threshold;
   const daysUntil = Math.ceil(remaining / wearPerDay);
-  const projectedDate = new Date(Date.now() + daysUntil * MS_PER_DAY).toISOString().slice(0, 10);
+  const projectedDate = addBusinessDateDays(companyBusinessDate(), daysUntil);
   return {
     unit_uuid: latest.unit_uuid,
     brake_position: latest.brake_position,
@@ -277,7 +278,7 @@ export function projectReplacementFromMeasurements(
   const latest = sorted[sorted.length - 1]!;
   const currentThickness = latest.lining_thickness_mm;
   if (currentThickness <= threshold) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = companyBusinessDate();
     return {
       unit_uuid: unitUuid,
       brake_position: position,
@@ -303,7 +304,7 @@ export function projectReplacementFromMeasurements(
   const targetDay = (threshold - regression.intercept) / regression.slope;
   const latestDay = points[points.length - 1]!.x;
   const daysUntil = Math.max(0, Math.ceil(targetDay - latestDay));
-  const projectedDate = new Date(Date.now() + daysUntil * MS_PER_DAY).toISOString().slice(0, 10);
+  const projectedDate = addBusinessDateDays(companyBusinessDate(), daysUntil);
 
   return {
     unit_uuid: unitUuid,
@@ -421,7 +422,7 @@ export async function listProjectionsForUnit(
     days_until_replacement: row.projected_replacement_date
       ? Math.max(
           0,
-          Math.ceil((new Date(row.projected_replacement_date).getTime() - Date.now()) / MS_PER_DAY)
+          businessDateDaysBetween(companyBusinessDate(), row.projected_replacement_date)
         )
       : null,
   }));
@@ -472,7 +473,7 @@ export async function getAtRiskFleet(
     days_until_replacement: row.projected_replacement_date
       ? Math.max(
           0,
-          Math.ceil((new Date(row.projected_replacement_date).getTime() - Date.now()) / MS_PER_DAY)
+          businessDateDaysBetween(companyBusinessDate(), row.projected_replacement_date)
         )
       : null,
   }));

@@ -5,6 +5,7 @@
  */
 import type { PoolClient } from "pg";
 import { dotThresholdForPosition, type TreadMeasurement } from "./measurement.service.js";
+import { addBusinessDateDays, businessDateDaysBetween, companyBusinessDate } from "../../../lib/company-business-date.js";
 
 export type RegressionPoint = { x: number; y: number };
 
@@ -71,7 +72,7 @@ export function projectReplacementFromMeasurements(
   const latest = sorted[sorted.length - 1]!;
   const currentDepth = latest.tread_depth_32nds;
   if (currentDepth <= threshold) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = companyBusinessDate();
     return {
       unit_uuid: unitUuid,
       tire_position: position,
@@ -97,7 +98,7 @@ export function projectReplacementFromMeasurements(
   const targetDay = (threshold - regression.intercept) / regression.slope;
   const latestDay = points[points.length - 1]!.x;
   const daysUntil = Math.max(0, Math.ceil(targetDay - latestDay));
-  const projectedDate = new Date(Date.now() + daysUntil * MS_PER_DAY).toISOString().slice(0, 10);
+  const projectedDate = addBusinessDateDays(companyBusinessDate(), daysUntil);
 
   return {
     unit_uuid: unitUuid,
@@ -144,7 +145,7 @@ function projectWithWearRate(
   }
   const remaining = latest.tread_depth_32nds - threshold;
   const daysUntil = Math.ceil(remaining / wearPerDay);
-  const projectedDate = new Date(Date.now() + daysUntil * MS_PER_DAY).toISOString().slice(0, 10);
+  const projectedDate = addBusinessDateDays(companyBusinessDate(), daysUntil);
   return {
     unit_uuid: latest.unit_uuid,
     tire_position: latest.tire_position,
@@ -262,7 +263,7 @@ export async function listProjectionsForUnit(
       ? Math.max(
           0,
           Math.ceil(
-            (new Date(row.projected_replacement_date).getTime() - Date.now()) / MS_PER_DAY
+            businessDateDaysBetween(companyBusinessDate(), row.projected_replacement_date)
           )
         )
       : null,
@@ -330,7 +331,7 @@ export async function listAtRiskUnits(
       ? Math.max(
           0,
           Math.ceil(
-            (new Date(row.projected_replacement_date).getTime() - Date.now()) / MS_PER_DAY
+            businessDateDaysBetween(companyBusinessDate(), row.projected_replacement_date)
           )
         )
       : null,

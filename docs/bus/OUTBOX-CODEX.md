@@ -1,3 +1,5 @@
+Codex | WORKING | CLS-F6970 | CLAIM=post.nonmoney-backend-business-date | vertical=maintenance+scheduler+dispatch+integrity+samsara+compliance+OCR | guard=12/12 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | CLS-F6969 | PR=#16932 @ 9b4e9a6f06 | Built=nonmoney frontend company dates 13/13 | NEXT=CLS-F6970 | GO
 Codex | WORKING | CLS-F6969 | CLAIM=post.nonmoney-frontend-business-date | vertical=dispatch+docs+driver-hub+users+lists+reports+system | guard=13/13 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6968 | PR=#16931 @ e77a8d3328 | Built=safety company calendar+rate limits | NEXT=CLS-F6969 | GO
 Codex | WORKING | SAF-F6968 | CLAIM=post.safety-company-year | vertical=D&A year+quarter+scheduler balance+request-number | guard=7/7 | NEXT=FAST-MERGE | GO

@@ -10,6 +10,7 @@ import {
   type DriverMetricName,
 } from "./driver-metrics.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -21,7 +22,7 @@ const driverMetricsQuerySchema = companyQuerySchema.extend({
   asof: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .default(() => new Date().toISOString().slice(0, 10)),
+    .default(() => companyBusinessDate()),
   flag_ratio: z.coerce.number().positive().max(10).optional(),
 });
 
@@ -31,7 +32,7 @@ const leaderboardQuerySchema = companyQuerySchema.extend({
   asof: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
-    .default(() => new Date().toISOString().slice(0, 10)),
+    .default(() => companyBusinessDate()),
   direction: z.enum(["high", "low"]).default("high"),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   flag_ratio: z.coerce.number().positive().max(10).optional(),
