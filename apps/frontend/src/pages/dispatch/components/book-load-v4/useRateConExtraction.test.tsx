@@ -99,6 +99,54 @@ describe("useRateConExtraction", () => {
     expect((onPrefill.mock.calls[0][0] as { brokerMatch: { name: string } }).brokerMatch.name).toBe("ACME Broker");
   });
 
+  it("suppresses a prior-company extraction completion after scope changes", async () => {
+    let resolveExtraction!: (value: typeof fixtureResponse) => void;
+    extractRateCon.mockImplementationOnce(
+      () => new Promise<typeof fixtureResponse>((resolve) => { resolveExtraction = resolve; }),
+    );
+    const onPrefill = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ companyId }) => useRateConExtraction({ operatingCompanyId: companyId, onPrefill }),
+      { initialProps: { companyId: "oc-1" } },
+    );
+
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.handleFile(makePdf());
+    });
+    await waitFor(() => expect(extractRateCon).toHaveBeenCalledWith("oc-1", "file-1"));
+    rerender({ companyId: "oc-2" });
+    await act(async () => {
+      resolveExtraction(fixtureResponse);
+      await pending;
+    });
+
+    expect(onPrefill).not.toHaveBeenCalled();
+    expect(result.current.phase).toBe("idle");
+    expect(result.current.result).toBeNull();
+  });
+
+  it("refuses concurrent intake calls at the shared hook boundary", async () => {
+    let resolveExtraction!: (value: typeof fixtureResponse) => void;
+    extractRateCon.mockImplementationOnce(
+      () => new Promise<typeof fixtureResponse>((resolve) => { resolveExtraction = resolve; }),
+    );
+    const onPrefill = vi.fn();
+    const { result } = renderHook(() => useRateConExtraction({ operatingCompanyId: "oc-1", onPrefill }));
+
+    let first!: Promise<void>;
+    await act(async () => {
+      first = result.current.handleFile(makePdf());
+      await result.current.handleFile(makePdf());
+    });
+    await waitFor(() => expect(extractRateCon).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      resolveExtraction(fixtureResponse);
+      await first;
+    });
+    expect(onPrefill).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     ["ratecon_extract_disabled 409", "Rate-con extraction is turned off for this company."],
     ["413 too_large", "That file is too large (max 10 MB / 15 pages)."],

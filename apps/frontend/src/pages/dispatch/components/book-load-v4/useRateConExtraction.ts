@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { requestUploadUrlFromFile, confirmUpload } from "../../../../api/docs";
 import { extractRateCon, type RateConExtractResponse } from "../../../../api/ratecon";
 import { rateConExtractionToPrefill, type RateConPrefill } from "./rateConPrefill";
@@ -77,9 +77,26 @@ export function useRateConExtraction({
   const [phase, setPhase] = useState<RateConPhase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RateConExtractResponse | null>(null);
+  const scopeGenerationRef = useRef(0);
+  const activeGenerationRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+    activeGenerationRef.current = null;
+    setPhase("idle");
+    setError(null);
+    setResult(null);
+  }, [operatingCompanyId]);
 
   const handleFile = useCallback(
     async (file: File) => {
+      const submittedGeneration = scopeGenerationRef.current;
+      const submittedCompanyId = operatingCompanyId;
+      if (activeGenerationRef.current === submittedGeneration) return;
+      activeGenerationRef.current = submittedGeneration;
+      const isCurrent = () =>
+        scopeGenerationRef.current === submittedGeneration &&
+        activeGenerationRef.current === submittedGeneration;
       setError(null);
       setResult(null);
       try {
@@ -89,31 +106,40 @@ export function useRateConExtraction({
             mime_type: file.type || "application/pdf",
             // File under the SAME company the extract step reads from — otherwise a multi-company user's
             // upload lands under the lowest-UUID accessible company and extract 404s "file_not_found".
-            operating_company_id: operatingCompanyId,
+            operating_company_id: submittedCompanyId,
           }),
         );
+        if (!isCurrent()) return;
         const put = await fetch(up.presigned_url, {
           method: "PUT",
           body: file,
           headers: { "content-type": file.type || "application/pdf" },
         });
         if (!put.ok) throw new Error(`upload_failed_${put.status}`);
+        if (!isCurrent()) return;
         await step("confirm-upload", () => confirmUpload(up.file_id));
+        if (!isCurrent()) return;
 
         setPhase("extracting");
-        const res = await step("extract", () => extractRateCon(operatingCompanyId, up.file_id));
+        const res = await step("extract", () => extractRateCon(submittedCompanyId, up.file_id));
+        if (!isCurrent()) return;
         setResult(res);
         setPhase("done");
         onPrefill(rateConExtractionToPrefill(res.extraction), res);
       } catch (e) {
+        if (!isCurrent()) return;
         setError(rateConErrorMessage(e));
         setPhase("error");
+      } finally {
+        if (isCurrent()) activeGenerationRef.current = null;
       }
     },
     [operatingCompanyId, onPrefill],
   );
 
   const reset = useCallback(() => {
+    scopeGenerationRef.current += 1;
+    activeGenerationRef.current = null;
     setPhase("idle");
     setError(null);
     setResult(null);
