@@ -46,12 +46,30 @@ if (!/listQuerySchema[\s\S]*operating_company_id:\s*z\.string\(\)\.uuid\(\)\.opt
   fail("driver list query schema must include optional operating_company_id");
 }
 
-// Accept either the classic filters.push form OR the entity-scope-visible template form
-// (WHERE operating_company_id = $${ociIdx} in the SQL literal — required by verify-mdata-entity-scope).
+// Accept either the classic filters.push form OR the canonical list predicate. The latter exposes
+// drivers canonically owned by the selected company plus drivers with an active company authorization.
 const listScopedViaFilters = /filters\.push\(`operating_company_id = \$\$\{values\.length\}`\)/.test(text);
-const listScopedViaTemplate = /WHERE operating_company_id = \$\$\{ociIdx\}/.test(text);
+function hasCanonicalListScope(source) {
+  return (source.match(/WHERE \(operating_company_id = \$\$\{ociIdx\}::uuid OR EXISTS \(/g) ?? []).length === 2 &&
+    (source.match(/canonical_list_dca\.company_id = \$\$\{ociIdx\}::uuid/g) ?? []).length === 2 &&
+    (source.match(/canonical_list_dca\.is_authorized = true/g) ?? []).length === 2 &&
+    (source.match(/canonical_list_dca\.deactivated_at IS NULL/g) ?? []).length === 2;
+}
+const listScopedViaTemplate = hasCanonicalListScope(text);
 if (!listScopedViaFilters && !listScopedViaTemplate) {
   fail("driver list route must apply operating_company_id filter when provided");
+}
+
+if (process.argv.includes("--selftest")) {
+  for (const token of [
+    "WHERE (operating_company_id = $${ociIdx}::uuid OR EXISTS (",
+    "canonical_list_dca.company_id = $${ociIdx}::uuid",
+    "canonical_list_dca.is_authorized = true",
+    "canonical_list_dca.deactivated_at IS NULL",
+  ]) {
+    if (hasCanonicalListScope(text.split(token).join("REMOVED"))) fail(`selftest mutation escaped: ${token}`);
+  }
+  console.log("verify:driver-company-scope — selftest PASS (4/4)");
 }
 
 console.log("verify:driver-company-scope — OK");
