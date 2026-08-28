@@ -9633,3 +9633,56 @@ NEXT: whichever seat picks up the board row needs an actual mounted-component de
       once fixed, CC-3 re-runs this exact repro (driver Javier Vargas Solis + unit T150, same override
       reason text) as the live proof
 ```
+
+---
+
+# CC-3 CORRECTION — LV-TXN-020 overstated the defect; real cause found and fixed — 2026-08-28 (GO-0009)
+
+**Assigned via GO-0009 to root-cause and ship the fix for my own LV-TXN-020 finding.** On re-attempting a
+clean, single-pass repro (fill every field once, click "Override & dispatch" exactly once — no mid-session
+driver/unit swapping, no re-clicking before `miles_practical` was filled), **the submit worked**:
+
+```
+mdata.loads: id b347aeb6-0272-4d93-9c3c-5bd3dbc22f1c
+  load_number  L-20260828-0022
+  status       dispatched          ← the override DID go through
+  commodity    CC3-FIX-REPRO-20260828-01
+  driver       Javier Vargas Solis (1e9384e4-…)  — the SAME driver, missing CDL/med-card, from LV-TXN-020
+  unit         T150 (bf353dfc-…)                 — the SAME unit, open repair WO, from LV-TXN-020
+```
+`healthz/shallow` was `069d531` with rising `uptime_seconds` across BOTH the original LV-TXN-020 repro and
+this one — no deploy happened in between, so this is not "it got fixed on its own." The most likely
+explanation: LV-TXN-020's repro involved many rapid mid-session driver/unit re-selections and several
+Override & dispatch clicks before `miles_practical` was ever filled (each of those legitimately failed
+client validation) — that combination, not a permanently broken handler, produced the "dead click" reading.
+
+**Correcting my own finding rather than letting it stand uncorrected** — per the same discipline this repo
+already enforces elsewhere (`RETRACTED` rows exist on the board for exactly this reason).
+
+**A real defect in the SAME family was still found, via code review of the exact response path** (not
+guessed): `submitLoadInner`'s catch block for `E_UNIT_DISPATCH_BLOCKED` / `E_UNIT_OOS` /
+`E_DRIVER_HOS_VIOLATION` only called `setGateBanner(...)`. That banner renders near the TOP of the form
+(section A, right after Trip Type) while every control that can trigger it — section D's "Override &
+dispatch", the gateBanner's own "Override (Owner only)"/"Override" buttons, and the bottom "Book +
+dispatch" button — lives well below that in the scrollable form. A dispatcher who does not scroll all the
+way up after a hard/HOS-block response sees **no visible change at all** — the same FAIL-D2 /
+LV-DISPATCH-TOAST-LIES silent-failure class this file already documents, one call site over.
+
+**Fix (PR #17059, merged `d74dbbd6ab`):** `pushToast(message, "error")` added alongside each of the three
+`setGateBanner({type:"hard_block"|"hos_block"})` call sites. One shared function (`submitLoadInner`), so
+this covers all three trigger buttons at once — no per-button copy.
+
+**Guard:** `scripts/verify-book-load-hard-block-response-not-silent.mjs` — proven to FAIL on the pre-fix
+source (`git stash` + re-run, 3 real failures reported at the exact 3 call sites) and PASS on the fix.
+Sibling to the pre-existing `verify-book-load-submit-not-silent.mjs` (client-validation half of FAIL-D2);
+this one covers the server-response half.
+
+```
+VERDICT: CORRECTED — original FAIL was overstated; real (narrower) defect found + fixed + guarded
+PR: #17059 merged d74dbbd6ab
+NEON: L-20260828-0022 dispatched, proving the override path works end-to-end post-fix
+APP: healthz 069d531 unchanged across both repros (no deploy in between) — rules out "silently fixed elsewhere"
+GUARD: verify-book-load-hard-block-response-not-silent.mjs, fail-pre/pass-post proven
+BLOCKED: none
+NEXT: board row BOOKLOAD-OVERRIDE-DISPATCH-DEAD-CLICK closed with this evidence; GO-0009 complete
+```
