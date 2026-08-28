@@ -22,7 +22,8 @@ function audit(s) {
   if (!/kind="insurance_claim"[\s\S]{0,220}allowCreate[\s\S]{0,220}nestedInDrawer/.test(s.creator)) failures.push("lawsuit creator must offer nested canonical claim creation");
   if (!/insurance_claim:\s*\{[\s\S]{0,420}readTable:\s*"insurance\.claims"[\s\S]{0,180}writeTable:\s*"insurance\.claims"[\s\S]{0,260}inlineCreate:\s*\{\s*available:\s*true/.test(s.registry)) failures.push("claim picker registry must declare same-table inline create");
   if (!/import \{ ClaimCreateModal \}/.test(s.picker) || !/kind === "insurance_claim"[\s\S]{0,260}<ClaimCreateModal[\s\S]{0,260}handleCreated\(id, label\)/.test(s.picker)) failures.push("shared picker must delegate claim creation and auto-select its id/label");
-  if (!/onSuccess:\s*\(claim\)[\s\S]{0,160}onCreated\(claim\.id, claim\.claim_number\)/.test(s.claimCreator)) failures.push("claim creator must return the persisted canonical id and label");
+  const claimSuccessBody = s.claimCreator.match(/onSuccess:\s*\(claim,\s*input\)\s*=>\s*\{([\s\S]*?)\n\s*\},\n\s*onError:/)?.[1] ?? "";
+  if (!/onCreated\(claim\.id,\s*claim\.claim_number\)/.test(claimSuccessBody)) failures.push("claim creator must return the persisted canonical id and label");
   if (!/listLawsuitsQuerySchema[\s\S]{0,180}policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.schema)) failures.push("list schema must accept policy filter");
   if (!/claim\.policy_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("route must apply exact policy predicate through claim");
   if (!/claim\.tenant_id = lawsuit\.tenant_id[\s\S]{0,80}claim\.id = lawsuit\.claim_id/.test(s.route)) failures.push("policy reverse join must retain tenant match");
