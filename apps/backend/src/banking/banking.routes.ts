@@ -475,6 +475,15 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
 
+    // BANK-F9521: the 3 .catch()es below used to silently swallow into an empty result with NO log
+    // line at all — indistinguishable from "genuinely nothing to suggest". Unlike BANK-F9514/15/16/
+    // 17/18/20 (primary data, each with a real isError banner already built and waiting), suggestions
+    // are a deliberate best-effort enhancement — no frontend consumer here has (or should need) error
+    // UI for "no suggestion available", and hard-failing this endpoint would turn a soft nice-to-have
+    // into a broken categorization workflow for no product benefit. "Fail loud" for a genuinely
+    // optional feature means LOUD IN THE LOGS, not loud to the end user: each catch now logs via
+    // req.log.warn (the same pattern this file's own legitimate spine-event catches already use) so a
+    // real failure is observable/debuggable, while the UI still degrades gracefully to "no suggestions".
     const { suggestions, ruleMatch } = await withCompanyScope(user.uuid, companyId, async (client) => {
       const targetRes = await client
         .query<{ description: string | null; amount_cents: number; bank_account_id: string }>(
@@ -487,7 +496,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `,
           [params.data.id, companyId]
         )
-        .catch(() => ({ rows: [] as { description: string | null; amount_cents: number; bank_account_id: string }[] }));
+        .catch((err) => {
+          req.log.warn({ err, bank_transaction_id: params.data.id, companyId }, "banking_suggestions_target_lookup_failed");
+          return { rows: [] as { description: string | null; amount_cents: number; bank_account_id: string }[] };
+        });
       const target = targetRes.rows[0];
       if (!target) return { suggestions: [], ruleMatch: null };
       const res = await client
@@ -514,7 +526,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `,
           [companyId, Number(target.amount_cents ?? 0), `%${String(target.description ?? "").slice(0, 18)}%`]
         )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        .catch((err) => {
+          req.log.warn({ err, bank_transaction_id: params.data.id, companyId }, "banking_suggestions_similar_txn_lookup_failed");
+          return { rows: [] as Record<string, unknown>[] };
+        });
 
       // ACCT-F375 — accounting.banking_rules + banking-rules.engine.ts have
       // always WRITTEN suggested_account_id/suggested_vendor_id/suggested_confidence on
@@ -535,7 +550,10 @@ export async function registerBankingRoutes(app: FastifyInstance) {
           `,
           [companyId]
         )
-        .catch(() => ({ rows: [] as BankingRuleRow[] }));
+        .catch((err) => {
+          req.log.warn({ err, companyId }, "banking_suggestions_rules_lookup_failed");
+          return { rows: [] as BankingRuleRow[] };
+        });
       for (const rule of rulesRes.rows) {
         if (
           bankingRuleMatches(rule, {
