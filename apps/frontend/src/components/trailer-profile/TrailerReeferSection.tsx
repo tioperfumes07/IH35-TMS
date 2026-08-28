@@ -7,6 +7,7 @@ import {
   type MaintenanceReeferHoursLogRow,
 } from "../../api/maintenance";
 import { ListErrorState } from "../ListErrorState";
+import { companyToday } from "../../lib/businessDate";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { userFacingApiError } from "../../lib/api-error-message";
 
@@ -143,7 +144,7 @@ export function TrailerReeferSection({
       trailerId,
       generation: actionGenerationRef.current,
       lastServiceHours: specs.current_hours,
-      lastServiceDate: new Date().toISOString().slice(0, 10),
+      lastServiceDate: companyToday(),
     });
   };
 

@@ -4,6 +4,7 @@ import { Modal } from "../Modal";
 import { MoneyInput } from "../forms/MoneyInput";
 import { Button } from "../Button";
 import { putTrailerStatus, type TrailerStatus } from "../../api/fleet-trailers";
+import { companyToday } from "../../lib/businessDate";
 
 const STATUS_OPTIONS: Array<{ value: TrailerStatus; label: string }> = [
   { value: "InService", label: "Active (In Service)" },
@@ -15,7 +16,7 @@ const STATUS_OPTIONS: Array<{ value: TrailerStatus; label: string }> = [
 ];
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 type Props = {
