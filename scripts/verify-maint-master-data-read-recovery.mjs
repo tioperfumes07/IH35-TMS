@@ -22,6 +22,9 @@ function failures(sources) {
       [new RegExp(`${leaf.query}\\.isError[\\s\\S]*<ListErrorState[\\s\\S]*${leaf.query}\\.refetch\\(\\)`), "failed read must expose exact Retry instead of a false empty list"],
     ];
     for (const [pattern, message] of needs) if (!pattern.test(src)) out.push(`${leaf.name}: ${message}`);
+    if (leaf.name !== "parts" && !new RegExp(`!${leaf.query}\\.isError && !csvEnabled`).test(src)) {
+      out.push(`${leaf.name}: failed capability read must not claim CSV is authoritatively disabled`);
+    }
   }
   return out;
 }
@@ -44,6 +47,9 @@ if (process.argv.includes("--selftest")) {
       [leaf.name, sources[leaf.name].replace(`disabled={${q}} onClick`, "disabled={false} onClick")],
       [leaf.name, sources[leaf.name].replace(`if (!voiding || ${q}) return;`, "if (!voiding) return;")],
     );
+    if (leaf.name !== "parts") {
+      mutations.push([leaf.name, sources[leaf.name].replace(`!${q} && !csvEnabled`, "!csvEnabled")]);
+    }
   }
   mutations.push(["parts", sources.parts.replace("kpisQuery.isError ? (", "false ? (")]);
   let caught = 0;

@@ -273,7 +273,7 @@ export function VehiclesMasterDataPage() {
           }}>
             CSV Import
           </Button>
-          {!csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
+          {!vehiclesQuery.isError && !csvEnabled ? <span className="text-[11px] text-amber-700">CSV fallback disabled for projected entity</span> : null}
         </div>
         {vehiclesQuery.isError ? (
           <ListErrorState
