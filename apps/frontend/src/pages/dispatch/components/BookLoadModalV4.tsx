@@ -974,6 +974,13 @@ export function BookLoadModalV4({
           return;
         }
         if (code === "E_UNIT_DISPATCH_BLOCKED") {
+          // BOOKLOAD-OVERRIDE-DISPATCH-DEAD-CLICK — this gate response used to only set `gateBanner`,
+          // which renders at the TOP of the form (section A). The control that triggers it (section D's
+          // "Override & dispatch", or the bottom "Book + dispatch") lives well below that in the
+          // scrollable form, so a dispatcher who does not scroll up sees a click that appears to do
+          // nothing — the LV-DISPATCH-TOAST-LIES / FAIL-D2 silent-failure class, one call site over.
+          // pushToast is the same fix this file already applies to every other silent-return branch.
+          pushToast(message, "error");
           setGateBanner({
             type: "hard_block",
             message,
@@ -982,6 +989,7 @@ export function BookLoadModalV4({
           return;
         }
         if (code === "E_UNIT_OOS") {
+          pushToast(message, "error");
           setGateBanner({
             type: "hard_block",
             message,
@@ -990,6 +998,7 @@ export function BookLoadModalV4({
           return;
         }
         if (code === "E_DRIVER_HOS_VIOLATION") {
+          pushToast(message, "error");
           setGateBanner({
             type: "hos_block",
             message,
