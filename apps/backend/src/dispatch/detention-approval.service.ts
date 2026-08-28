@@ -432,7 +432,7 @@ export async function rejectDetentionRequest(
 ) {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const existing = await client.query(
-      `SELECT * FROM dispatch.detention_requests WHERE id = $1 AND operating_company_id = $2::uuid`,
+      `SELECT * FROM dispatch.detention_requests WHERE id = $1 AND operating_company_id = $2::uuid FOR UPDATE`,
       [requestId, operatingCompanyId]
     );
     const row = existing.rows[0];
@@ -447,11 +447,13 @@ export async function rejectDetentionRequest(
             reviewed_at = now(),
             rejection_reason = $3,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $4::uuid
+        WHERE id = $1 AND operating_company_id = $4::uuid AND status = 'pending_review'
         RETURNING *
       `,
       [requestId, userId, reason, operatingCompanyId]
     );
+    const rejectedRequest = updated.rows[0];
+    if (!rejectedRequest) return { ok: false as const, error: "not_pending" as const };
 
     await appendCrudAudit(
       client,
@@ -468,6 +470,6 @@ export async function rejectDetentionRequest(
       AUDIT_TAG
     );
 
-    return { ok: true as const, request: updated.rows[0] };
+    return { ok: true as const, request: rejectedRequest };
   });
 }

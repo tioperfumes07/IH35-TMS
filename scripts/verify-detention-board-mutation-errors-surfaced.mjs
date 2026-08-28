@@ -23,6 +23,7 @@ import process from "node:process";
 const repoRoot = process.cwd();
 const FILE = "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx";
 const SERVICE_FILE = "apps/backend/src/dispatch/detention.service.ts";
+const APPROVAL_SERVICE_FILE = "apps/backend/src/dispatch/detention-approval.service.ts";
 
 const IMPORTS_TOAST_RE = /import\s*\{\s*useToast\s*\}\s*from\s*["']\.\.\/\.\.\/components\/Toast["']/;
 const IMPORTS_ERROR_HELPER_RE = /import\s*\{[^}]*\buserFacingApiError\b[^}]*\}\s*from\s*["']\.\.\/\.\.\/lib\/api-error-message["']/;
@@ -84,10 +85,29 @@ export function checkDetentionBoardCompleteRange(src) {
   return offenders;
 }
 
+export function checkDetentionRejectLifecycle(src) {
+  const offenders = [];
+  const reject = src.slice(src.indexOf("export async function rejectDetentionRequest"));
+  if (!/SELECT \* FROM dispatch\.detention_requests[\s\S]*?operating_company_id = \$2::uuid FOR UPDATE/.test(reject)) {
+    offenders.push(`${APPROVAL_SERVICE_FILE}: detention reject must lock the canonical request before checking pending status.`);
+  }
+  if (!/WHERE id = \$1 AND operating_company_id = \$4::uuid AND status = 'pending_review'[\s\S]*?RETURNING \*/.test(reject)) {
+    offenders.push(`${APPROVAL_SERVICE_FILE}: detention reject UPDATE must compare-and-set pending_review.`);
+  }
+  if (!/const rejectedRequest = updated\.rows\[0\];[\s\S]*?if \(!rejectedRequest\) return \{ ok: false as const, error: "not_pending" as const \};[\s\S]*?appendCrudAudit/.test(reject)) {
+    offenders.push(`${APPROVAL_SERVICE_FILE}: detention reject must refuse a lost race before audit/success.`);
+  }
+  if (!/return \{ ok: true as const, request: rejectedRequest \};/.test(reject)) {
+    offenders.push(`${APPROVAL_SERVICE_FILE}: detention reject must return only a proven updated row.`);
+  }
+  return offenders;
+}
+
 export function run() {
   const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
   const serviceSrc = fs.readFileSync(path.join(repoRoot, SERVICE_FILE), "utf8");
-  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc)];
+  const approvalServiceSrc = fs.readFileSync(path.join(repoRoot, APPROVAL_SERVICE_FILE), "utf8");
+  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc), ...checkDetentionRejectLifecycle(approvalServiceSrc)];
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -112,6 +132,7 @@ if (process.argv.includes("--selftest")) {
   `;
   const fixed = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
   const fixedService = fs.readFileSync(path.join(repoRoot, SERVICE_FILE), "utf8");
+  const fixedApprovalService = fs.readFileSync(path.join(repoRoot, APPROVAL_SERVICE_FILE), "utf8");
 
   const buggyOffenders = checkDetentionBoardMutationErrors(buggy);
   const fixedOffenders = checkDetentionBoardMutationErrors(fixed);
@@ -133,12 +154,18 @@ if (process.argv.includes("--selftest")) {
   );
   const capFails = checkDetentionBoardCompleteRange(cappedService).some((item) => item.includes("silently caps"));
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
+  const rejectMutationsFail = [
+    fixedApprovalService.replace("operating_company_id = $2::uuid FOR UPDATE", "operating_company_id = $2::uuid"),
+    fixedApprovalService.replace(" AND status = 'pending_review'\n        RETURNING *", "\n        RETURNING *"),
+    fixedApprovalService.replace("if (!rejectedRequest) return { ok: false as const, error: \"not_pending\" as const };", "if (false) return { ok: false as const, error: \"not_pending\" as const };")
+  ].every((mutant) => checkDetentionRejectLifecycle(mutant).length > 0);
+  const rejectPasses = checkDetentionRejectLifecycle(fixedApprovalService).length === 0;
 
   const lifecycleMutationsFail = [mutableScope, wrongInvalidation, concurrentRows].every(
     (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
   );
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && rejectMutationsFail && rejectPasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
