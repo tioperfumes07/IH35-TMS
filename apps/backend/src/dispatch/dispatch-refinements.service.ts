@@ -192,15 +192,18 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         }
       }
 
-      await client.query(
+      const reassignmentUpdate = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET assigned_primary_driver_id = $2,
               updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $3::uuid
+          RETURNING id
         `,
-        [input.load_id, input.new_driver_id]
+        [input.load_id, input.new_driver_id, input.operating_company_id]
       );
+      if (!reassignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
       await client.query(
         `
