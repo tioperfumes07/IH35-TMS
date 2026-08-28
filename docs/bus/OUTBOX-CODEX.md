@@ -1,4 +1,6 @@
 CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7142 | CLAIM=ocr-finalize-not-ready+replay-reaudit | SOURCE=dispatch.ocr_intake_queue | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7141 | PR=#17232 @ 41bc93862a | Built=atomic in-transit resolve+notes | NEXT=OCR finalize lifecycle | GO
 Codex | WORKING | DSP-F7141 | CLAIM=intransit-resolve-notes-second-unchecked-write | SOURCE=dispatch.intransit_issues | NEXT=FAST-MERGE | GO
 Codex | WORKING | DSP-F7140 | CLAIM=driver-availability-missing-identity-fails-open | SOURCE=mdata.drivers+driver_company_authorizations | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7139 | PR=#17223 @ 19485dbf99 | Built=detention notification lock+claim | NEXT=driver availability truth | GO
