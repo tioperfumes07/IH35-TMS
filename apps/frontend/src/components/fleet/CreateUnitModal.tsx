@@ -88,10 +88,10 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
   });
   const companyOptions = useMemo(
     () =>
-      (companiesQuery.data ?? [])
+      (companiesQuery.isError ? [] : companiesQuery.data ?? [])
         .filter((c) => c.is_active)
         .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
-    [companiesQuery.data]
+    [companiesQuery.data, companiesQuery.isError]
   );
 
   const createMutation = useMutation({
@@ -239,6 +239,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(v) => set("owner_company_id", v ?? "")}
                 placeholder="Defaults to TRK"
                 loading={companiesQuery.isLoading}
+                disabled={companiesQuery.isError}
                 allowClear
                 dataField="owner_company_id"
               />
@@ -254,6 +255,7 @@ export function CreateUnitModal({ open, operatingCompanyId, onClose, onCreated }
                 onChange={(v) => set("currently_leased_to_company_id", v ?? "")}
                 placeholder="Select company"
                 loading={companiesQuery.isLoading}
+                disabled={companiesQuery.isError}
                 allowClear
                 dataField="currently_leased_to_company_id"
               />

@@ -175,10 +175,10 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
   });
   const companyOptions = useMemo(
     () =>
-      (companiesQuery.data ?? [])
+      (companiesQuery.isError ? [] : companiesQuery.data ?? [])
         .filter((c) => c.is_active)
         .map((c) => ({ value: c.id, label: companyPickerLabel(c) })),
-    [companiesQuery.data]
+    [companiesQuery.data, companiesQuery.isError]
   );
 
   const unit = profileQuery.data?.unit ?? null;
@@ -309,6 +309,7 @@ export function EditVehicleModal({ open, unitId, operatingCompanyId, rowPreview,
             onChange={(v) => setField(def.key, v ?? "")}
             placeholder="Select company"
             loading={companiesQuery.isLoading}
+            disabled={companiesQuery.isError}
             allowClear
             dataField={def.key}
           />
