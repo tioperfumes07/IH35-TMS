@@ -298,8 +298,9 @@ export function createLoad(body: CreateLoadWizardBody) {
   return apiRequest<LoadDetail>(`/api/v1/mdata/loads`, { method: "POST", body });
 }
 
-export function updateLoad(id: string, body: Record<string, unknown>) {
-  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}`, { method: "PATCH", body });
+export function updateLoad(id: string, operatingCompanyId: string, body: Record<string, unknown>) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}?${query.toString()}`, { method: "PATCH", body });
 }
 
 /**

@@ -1339,6 +1339,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedBody = updateLoadBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const scopedCompanyId = parsedQuery.data.operating_company_id;
+    await assertCompanyMembership(authUser.uuid, scopedCompanyId);
     const b = parsedBody.data;
     if (b.assigned_primary_driver_id && b.team_id) {
       return reply.code(400).send({ error: "solo_or_team_assignment_required_not_both" });
@@ -1372,6 +1376,8 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
     values.push(parsedParams.data.id);
     const idIdx = values.length;
+    values.push(scopedCompanyId);
+    const companyIdx = values.length;
 
     try {
       const updated = await withCurrentUser(authUser.uuid, async (client) => {
@@ -1385,10 +1391,10 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             WHERE id = $1
               -- Tier-1 entity-scope (money by-id IDOR): same loads_update_office role-only RLS gap.
               -- Office-role gated route → membership-scope guard (Owner = all, others = accessible).
-              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+              AND operating_company_id = $2::uuid
             LIMIT 1
           `,
-          [parsedParams.data.id]
+          [parsedParams.data.id, scopedCompanyId]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
@@ -1427,7 +1433,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             UPDATE mdata.loads
             SET ${setParts.join(", ")}
             WHERE id = $${idIdx}
-              AND operating_company_id IN (SELECT org.user_accessible_company_ids())
+              AND operating_company_id = $${companyIdx}::uuid
             RETURNING
               id, operating_company_id, load_number, customer_id, status, rate_total_cents, currency_code,
               assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
@@ -1450,6 +1456,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           {
             resource_id: row.id,
             resource_type: "mdata.loads",
+            operating_company_id: row.operating_company_id,
             changes,
           },
           "info",
@@ -1464,6 +1471,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             {
               resource_id: row.id,
               resource_type: "mdata.loads",
+              operating_company_id: row.operating_company_id,
               from_status: oldRow.status,
               to_status: row.status,
             },
@@ -1478,6 +1486,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
               {
                 resource_id: row.id,
                 resource_type: "mdata.loads",
+                operating_company_id: row.operating_company_id,
                 from_status: oldRow.status,
                 to_status: row.status,
               },
@@ -1509,6 +1518,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             {
               resource_id: row.id,
               resource_type: "mdata.loads",
+              operating_company_id: row.operating_company_id,
               assigned_unit_id: row.assigned_unit_id,
               assigned_primary_driver_id: row.assigned_primary_driver_id,
               assigned_secondary_driver_id: row.assigned_secondary_driver_id,
@@ -1527,6 +1537,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             {
               resource_id: row.id,
               resource_type: "mdata.loads",
+              operating_company_id: row.operating_company_id,
               soft_deleted_at: row.soft_deleted_at,
             },
             "warning",

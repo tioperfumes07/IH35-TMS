@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7127F | CLAIM=generic-load-patch-company-scope | SOURCE=mdata.loads→audit.audit_events | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127E | PR=#17176 @ adf3d82490 | Built=exact-company status fallback | NEXT=generic PATCH scope | GO
 Codex | WORKING | DSP-F7127E | CLAIM=load-status-exact-company-scope | SOURCE=mdata.loads status SELECT+UPDATE | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127D | PR=#17175 @ ed39bcb05b | Built=company-scoped load audit reverse | NEXT=status fallback scope | GO
 Codex | WORKING | DSP-F7127D | CLAIM=load-audit-company-ownership | SOURCE=mdata.loads→audit.audit_events | NEXT=guard+FAST-MERGE | GO
