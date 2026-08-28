@@ -90,10 +90,11 @@ export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
       {measurementsQ.isError ? <ListErrorState status={0} message="Tire measurements could not be loaded." onRetry={() => void measurementsQ.refetch()} /> : null}
       {projectionsQ.isError ? <ListErrorState status={0} message="Tire wear projections could not be loaded." onRetry={() => void projectionsQ.refetch()} /> : null}
 
-      {positions.length === 0 && !measurementsQ.isLoading && !measurementsQ.isError && !projectionsQ.isError ? (
-        <p className="text-xs text-gray-500">No tread measurements recorded for this unit yet.</p>
-      ) : (
-        <>
+      {!measurementsQ.isError && !projectionsQ.isError ? (
+        positions.length === 0 && !measurementsQ.isLoading && !projectionsQ.isLoading ? (
+          <p className="text-xs text-gray-500">No tread measurements recorded for this unit yet.</p>
+        ) : (
+          <div data-testid="unit-tires-telemetry">
           <div className="flex flex-wrap gap-1">
             {positions.map((position) => (
               <button
@@ -114,8 +115,9 @@ export function UnitTiresTab({ unitId, companyId }: UnitTiresTabProps) {
             threshold32nds={projection?.threshold_32nds ?? (activePosition.startsWith("STEER") ? 4 : 2)}
             projectedReplacementDate={projection?.projected_replacement_date}
           />
-        </>
-      )}
+          </div>
+        )
+      ) : null}
     </section>
   );
 }

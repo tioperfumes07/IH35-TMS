@@ -1704,3 +1704,5 @@ Codex | SHIPPED | MAINT-F7007 | PR=#16966 @ e9bc1e0701 | Built=PM status+pause/r
 Codex | WORKING | MAINT-F7008 | CLAIM=post.maintenance-kpi-summary-read-recovery | vertical=downtime+MTBF+CPM+cost-per-truck+PM-compliance | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7008 | PR=#16967 @ af9090691c | Built=five maintenance KPI summary tiles fail closed | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
 Codex | WORKING | MAINT-F7009 | CLAIM=post.pm-alert-lifecycle-guard-parser | SOURCE=MaintenanceAlertsCard company+range reset effect | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7009 | PR=#16968 @ 125e09dd6b | Built=PM-alert company+range lifecycle ratchet | Live=post-deploy UNVERIFIED | NEXT=maintenance connectivity census | GO
+Codex | WORKING | MAINT-F7010 | CLAIM=post.unit-wear-retained-telemetry-on-error | vertical=unit.detail.tires+unit.detail.brakes | NEXT=root-fix+guard+FAST-MERGE | GO

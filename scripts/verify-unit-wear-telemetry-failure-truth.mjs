@@ -19,7 +19,12 @@ function audit(source = files) {
     }
   }
   if (!/positions\.length === 0[\s\S]{0,180}!latestQ\.isError[\s\S]{0,100}!projectionsQ\.isError/.test(source.brakes)) failures.push("brakes error-before-empty");
-  if (!/positions\.length === 0[\s\S]{0,220}!measurementsQ\.isError[\s\S]{0,100}!projectionsQ\.isError/.test(source.tires)) failures.push("tires error-before-empty");
+  if (!/!measurementsQ\.isError && !projectionsQ\.isError \? \([\s\S]{0,500}data-testid="unit-tires-telemetry"/.test(source.tires)) {
+    failures.push("tires failed reads suppress retained telemetry");
+  }
+  if (!/!latestQ\.isError && !projectionsQ\.isError \? \([\s\S]{0,160}data-testid="unit-brakes-telemetry"/.test(source.brakes)) {
+    failures.push("brakes failed reads suppress retained telemetry");
+  }
   if (!/useEffect\(\(\) => \{\s*setSelectedPosition\(""\);\s*\}, \[unitId, companyId\]\)/.test(source.tires)) {
     failures.push("tires selected position resets on unit/company transition");
   }
@@ -33,6 +38,8 @@ if (process.argv.includes("--selftest")) {
     ["tires", "onRetry={() => void measurementsQ.refetch()}"],
     ["tires", "onRetry={() => void projectionsQ.refetch()}"],
     ["tires", 'setSelectedPosition("");'],
+    ["tires", '!measurementsQ.isError && !projectionsQ.isError ? ('],
+    ["brakes", '!latestQ.isError && !projectionsQ.isError ? ('],
   ];
   for (const [file, needle] of mutations) {
     const changed = { ...files, [file]: files[file].replace(needle, "") };

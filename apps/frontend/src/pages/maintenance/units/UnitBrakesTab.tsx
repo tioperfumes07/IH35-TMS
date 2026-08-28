@@ -116,7 +116,8 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
         </p>
       ) : null}
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {!latestQ.isError && !projectionsQ.isError ? (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-testid="unit-brakes-telemetry">
         {positions.map((position) => {
           const latest = latestQ.data?.rows?.find((r) => r.brake_position === position);
           const projection = projectionByPosition.get(position);
@@ -132,6 +133,7 @@ export function UnitBrakesTab({ unitId, companyId }: UnitBrakesTabProps) {
           );
         })}
       </div>
+      ) : null}
 
       <div className="rounded-sm border border-gray-200 bg-white">
         <div className="border-b border-gray-100 px-3 py-2">
