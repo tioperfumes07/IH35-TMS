@@ -270,6 +270,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T08:27:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.driver-hos-complete-manual-edit-audit",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T08:38:00-05:00",
+      "go": "0004"
     }
   ]
 }
