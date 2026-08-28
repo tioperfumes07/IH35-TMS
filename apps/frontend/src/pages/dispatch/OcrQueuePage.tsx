@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   convertOcrIntakeToBookLoad,
@@ -69,20 +69,22 @@ function RowActions({
 }: {
   item: OcrIntakeQueueItem;
   companyId: string;
-  onConvert: (itemId: string, prefill: Record<string, unknown>) => void;
-  onReprocessed: () => void;
+  onConvert: (itemId: string, prefill: Record<string, unknown>, companyId: string) => void;
+  onReprocessed: (companyId: string) => void;
 }) {
   const { pushToast } = useToast();
   // DISP-F6327: neither mutation had onError — no toast import anywhere in the file, no isError
   // check, fire-and-forget .mutate(). A rejected convert/reprocess silently did nothing.
   const convertM = useMutation({
-    mutationFn: () => convertOcrIntakeToBookLoad(item.id, { operating_company_id: companyId }),
-    onSuccess: (res) => onConvert(item.id, res.book_load_prefill),
+    mutationFn: (input: { itemId: string; companyId: string }) =>
+      convertOcrIntakeToBookLoad(input.itemId, { operating_company_id: input.companyId }),
+    onSuccess: (res, input) => onConvert(input.itemId, res.book_load_prefill, input.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not convert this OCR item to a load"), "error"),
   });
   const reprocessM = useMutation({
-    mutationFn: () => reprocessOcrIntakeItem(item.id, companyId),
-    onSuccess: () => onReprocessed(),
+    mutationFn: (input: { itemId: string; companyId: string }) =>
+      reprocessOcrIntakeItem(input.itemId, input.companyId),
+    onSuccess: (_data, input) => onReprocessed(input.companyId),
     onError: (err) => pushToast(userFacingApiError(err, "Could not reprocess this OCR item"), "error"),
   });
 
@@ -95,8 +97,8 @@ function RowActions({
         <button
           type="button"
           className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700"
-          disabled={convertM.isPending}
-          onClick={() => convertM.mutate()}
+          disabled={convertM.isPending || reprocessM.isPending}
+          onClick={() => convertM.mutate({ itemId: item.id, companyId })}
           data-testid={`ocr-convert-${item.id}`}
         >
           Convert to load
@@ -106,8 +108,8 @@ function RowActions({
         <button
           type="button"
           className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1 text-xs text-slate-700"
-          disabled={reprocessM.isPending}
-          onClick={() => reprocessM.mutate()}
+          disabled={convertM.isPending || reprocessM.isPending}
+          onClick={() => reprocessM.mutate({ itemId: item.id, companyId })}
           data-testid={`ocr-reprocess-${item.id}`}
         >
           {reprocessM.isPending ? "Reprocessing…" : "Reprocess OCR"}
@@ -120,11 +122,19 @@ function RowActions({
 export function OcrQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const companyIdRef = useRef(companyId);
+  companyIdRef.current = companyId;
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [bookOpen, setBookOpen] = useState(false);
   const [bookPrefill, setBookPrefill] = useState<Record<string, unknown> | null>(null);
-  const [bookSourceItemId, setBookSourceItemId] = useState<string | null>(null);
+  const [bookSource, setBookSource] = useState<{ itemId: string; companyId: string } | null>(null);
+
+  useEffect(() => {
+    setBookOpen(false);
+    setBookPrefill(null);
+    setBookSource(null);
+  }, [companyId]);
 
   const queueQ = useQuery({
     queryKey: ["dispatch", "ocr-intake-queue", companyId],
@@ -140,11 +150,12 @@ export function OcrQueuePage() {
   const items = queueQ.data?.items ?? [];
   type OcrRow = (typeof items)[number];
 
-  const handleConvert = (itemId: string, prefill: Record<string, unknown>) => {
-    setBookSourceItemId(itemId);
+  const handleConvert = (itemId: string, prefill: Record<string, unknown>, submittedCompanyId: string) => {
+    if (companyIdRef.current !== submittedCompanyId) return;
+    setBookSource({ itemId, companyId: submittedCompanyId });
     setBookPrefill(prefill);
     setBookOpen(true);
-    void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+    void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", submittedCompanyId] });
   };
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row convert action preserved
@@ -193,8 +204,8 @@ export function OcrQueuePage() {
           item={item}
           companyId={companyId}
           onConvert={handleConvert}
-          onReprocessed={() => {
-            void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+          onReprocessed={(submittedCompanyId) => {
+            void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", submittedCompanyId] });
           }}
         />
       ),
@@ -241,28 +252,31 @@ export function OcrQueuePage() {
       )}
 
       <BookLoadModal
+        key={bookSource?.companyId ?? companyId}
         open={bookOpen}
-        operatingCompanyId={companyId}
+        operatingCompanyId={bookSource?.companyId ?? companyId}
         templatePrefillJson={bookPrefill}
         onClose={() => {
           setBookOpen(false);
           setBookPrefill(null);
-          setBookSourceItemId(null);
+          setBookSource(null);
         }}
         onCreated={(created) => {
-          if (!created?.id || !bookSourceItemId) return;
+          if (!created?.id || !bookSource) return;
           // DISP-F6327: the load is already created by this point — a failed finalize here
           // silently leaves the OCR queue item unmarked as converted with zero explanation, a
           // real data-consistency gap (load exists, queue item looks stuck) not just a UX one.
-          void finalizeOcrIntakeConversion(bookSourceItemId, {
-            operating_company_id: companyId,
+          void finalizeOcrIntakeConversion(bookSource.itemId, {
+            operating_company_id: bookSource.companyId,
             load_id: created.id,
           })
             .then(() => {
               setBookOpen(false);
               setBookPrefill(null);
-              setBookSourceItemId(null);
-              void queryClient.invalidateQueries({ queryKey: ["dispatch", "ocr-intake-queue", companyId] });
+              setBookSource(null);
+              void queryClient.invalidateQueries({
+                queryKey: ["dispatch", "ocr-intake-queue", bookSource.companyId],
+              });
             })
             .catch((err) => {
               pushToast(
