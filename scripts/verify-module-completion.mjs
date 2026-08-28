@@ -281,7 +281,7 @@ export function runAll(opts = {}) {
   }
   if (!opts.skipLiveVerified) {
     try {
-      const healthzSha = fetchHealthzVersionSync();
+      const healthzSha = fetchHealthzVersionSync(undefined, { forceCurl: true });
       problems.push(
         ...assertLiveVerifiedStamps({
           stamps: collectLiveVerifiedStamps(manifests),
@@ -428,6 +428,50 @@ if (isMain && SELFTEST) {
     gitRoot: ROOT,
   });
   if (okP.length) failures.push(`L6 ancestor stamp should pass, got: ${okP.join("; ")}`);
+
+  const realStamps = collectLiveVerifiedStamps(loadManifests());
+  if (!realStamps.length) {
+    failures.push("L6 selftest: real manifests have zero stamps — empty scope must FAIL not exit 0");
+  }
+
+  const stripped = loadManifests().map(({ file, data }) => ({
+    file,
+    data: {
+      ...data,
+      items: (data.items || []).map((it) => {
+        const copy = { ...it };
+        delete copy.live_verified_sha;
+        delete copy.live_verified_at;
+        return copy;
+      }),
+    },
+  }));
+  const strippedP = assertLiveVerifiedStamps({
+    stamps: collectLiveVerifiedStamps(stripped),
+    healthzSha: head,
+    gitRoot: ROOT,
+  });
+  if (!strippedP.some((x) => x.includes("empty scope"))) {
+    failures.push("L6 selftest: stripping stamps did not FAIL");
+  }
+
+  const savedCi = process.env.CI;
+  const savedEnvSha = process.env.IH35_HEALTHZ_SHA;
+  process.env.CI = "true";
+  process.env.IH35_HEALTHZ_SHA = "deadbeef";
+  let envHole = "";
+  try {
+    envHole = fetchHealthzVersionSync();
+  } catch (e) {
+    envHole = String(e.message || e);
+  }
+  if (savedCi === undefined) delete process.env.CI;
+  else process.env.CI = savedCi;
+  if (savedEnvSha === undefined) delete process.env.IH35_HEALTHZ_SHA;
+  else process.env.IH35_HEALTHZ_SHA = savedEnvSha;
+  if (envHole === "deadbeef") {
+    failures.push("L6 env hole: CI=true still honored IH35_HEALTHZ_SHA=deadbeef");
+  }
 
   if (failures.length) {
     console.error(`${LABEL} --selftest FAIL`, failures);
