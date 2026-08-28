@@ -1686,3 +1686,5 @@ Codex | SHIPPED | MAINT-F6998 | PR=#16957 @ 321e9b46c9 | Built=parts+vehicles+dr
 Codex | WORKING | MAINT-F6999 | CLAIM=post.maintenance-parts-kpi-read-honesty | SOURCE=company-scoped parts KPI reader | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | MAINT-F7000 | CLAIM=post.maintenance-csv-capability-read-honesty | vertical=vehicles+drivers | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6999 | PR=#16958 @ 5e378f69f6 | Built=parts KPI failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=MAINT-F7000 | GO
+Codex | SHIPPED | MAINT-F7000 | PR=#16959 @ 7d4c6b9156 | Built=vehicles+drivers CSV capability honesty | Live=post-deploy UNVERIFIED | NEXT=maintenance service-location/vendor census | GO
+Codex | WORKING | MAINT-F7001 | CLAIM=post.maintenance-vendor-read-recovery | vertical=roster+AP-link picker+write lifecycle | NEXT=guard+FAST-MERGE | GO

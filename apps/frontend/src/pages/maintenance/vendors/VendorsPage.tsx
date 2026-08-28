@@ -93,10 +93,10 @@ export function VendorsPage() {
 
   const apVendorOptions = useMemo(
     () =>
-      (apVendorsQ.data?.vendors ?? [])
+      (apVendorsQ.isError ? [] : (apVendorsQ.data?.vendors ?? []))
         .map((vendor) => ({ value: vendor.id, label: entityLabel(vendor.name, vendor.id, "Vendor") }))
         .sort((a, b) => a.label.localeCompare(b.label)),
-    [apVendorsQ.data?.vendors]
+    [apVendorsQ.data?.vendors, apVendorsQ.isError]
   );
 
   // CLS-SILENT-CAP. The comment above already records that `limit: 1000` "dropped vendors past page 1",
@@ -107,21 +107,21 @@ export function VendorsPage() {
   const apVendorCap = useMemo(
     () =>
       listCapInfo(
-        apVendorsQ.data?.vendors?.length ?? 0,
+        apVendorsQ.isError ? 0 : (apVendorsQ.data?.vendors?.length ?? 0),
         apVendorSearch ? AP_VENDOR_SEARCH_CAP : AP_VENDOR_BROWSE_CAP,
-        apVendorsQ.data?.total ?? null,
+        apVendorsQ.isError ? null : (apVendorsQ.data?.total ?? null),
       ),
-    [apVendorsQ.data, apVendorSearch]
+    [apVendorsQ.data, apVendorsQ.isError, apVendorSearch]
   );
   const apVendorCapNotice = capNotice(apVendorCap, "vendors");
 
   const apVendorLabelById = useMemo(() => {
     const map = new Map<string, string>();
-    for (const vendor of apVendorsQ.data?.vendors ?? []) {
+    for (const vendor of apVendorsQ.isError ? [] : (apVendorsQ.data?.vendors ?? [])) {
       map.set(vendor.id, entityLabel(vendor.name, vendor.id, "Vendor"));
     }
     return map;
-  }, [apVendorsQ.data?.vendors]);
+  }, [apVendorsQ.data?.vendors, apVendorsQ.isError]);
 
   const refresh = async (submittedCompanyId: string) => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", submittedCompanyId] });
@@ -221,6 +221,21 @@ export function VendorsPage() {
     setDraft(EMPTY_DRAFT);
   }, [companyId]);
 
+  useEffect(() => {
+    if (!listQ.isError) return;
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    archiveMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setArchiveTarget(null);
+    setCsvFile(null);
+    setApVendorSearch("");
+    setDraft(EMPTY_DRAFT);
+  }, [listQ.isError]);
+
   const rows = useMemo(() => listQ.data?.rows ?? [], [listQ.data?.rows]);
   const csvEnabled = listQ.data?.csv_import_enabled ?? false;
 
@@ -299,7 +314,7 @@ export function VendorsPage() {
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search vendors"
           />
-          <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+          <Button size="sm" variant="secondary" disabled={listQ.isError} onClick={() => setCreateOpen(true)}>
             + Create Vendor
           </Button>
         </div>
@@ -307,8 +322,8 @@ export function VendorsPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <input type="file" accept=".csv,text/csv" disabled={!csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+          <input type="file" accept=".csv,text/csv" disabled={listQ.isError || !csvEnabled} onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)} className="text-xs" />
+          <Button size="sm" variant="secondary" disabled={listQ.isError || !csvEnabled || !csvFile} onClick={() => {
             if (!csvFile) return;
             importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
           }}>
@@ -356,6 +371,14 @@ export function VendorsPage() {
                 {apVendorCapNotice}
               </p>
             ) : null}
+            {apVendorsQ.isError ? (
+              <ListErrorState
+                title="Couldn't load A/P vendors"
+                status={0}
+                message={(apVendorsQ.error as Error)?.message}
+                onRetry={() => void apVendorsQ.refetch()}
+              />
+            ) : null}
             <ReferenceSelect
               options={apVendorOptions}
               value={draft.mdata_vendor_id}
@@ -365,6 +388,7 @@ export function VendorsPage() {
               operatingCompanyId={companyId}
               onSearch={setApVendorSearch}
               loading={apVendorsQ.isLoading}
+              disabled={apVendorsQ.isError}
               onOptionCreated={(opt) => {
                 void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "maint-vendor-link", companyId] });
                 setDraft((p) => ({ ...p, mdata_vendor_id: opt.value }));
@@ -377,7 +401,7 @@ export function VendorsPage() {
           </div>
           <input className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" placeholder="Type" value={draft.type} onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value }))} />
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.display_name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
+          <Button disabled={listQ.isError || apVendorsQ.isError || !draft.display_name || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -395,6 +419,14 @@ export function VendorsPage() {
                 {apVendorCapNotice}
               </p>
             ) : null}
+              {apVendorsQ.isError ? (
+                <ListErrorState
+                  title="Couldn't load A/P vendors"
+                  status={0}
+                  message={(apVendorsQ.error as Error)?.message}
+                  onRetry={() => void apVendorsQ.refetch()}
+                />
+              ) : null}
               <ReferenceSelect
                 options={apVendorOptions}
                 value={editing.mdata_vendor_id}
@@ -404,6 +436,7 @@ export function VendorsPage() {
                 operatingCompanyId={companyId}
                 onSearch={setApVendorSearch}
                 loading={apVendorsQ.isLoading}
+                disabled={apVendorsQ.isError}
                 onOptionCreated={(opt) => {
                   void queryClient.invalidateQueries({ queryKey: ["mdata", "vendors", "maint-vendor-link", companyId] });
                   setEditing((p) => (p ? { ...p, mdata_vendor_id: opt.value } : p));
@@ -415,7 +448,7 @@ export function VendorsPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.contact_phone ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, contact_phone: e.target.value || null } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value || null } : p))} />
-            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={listQ.isError || apVendorsQ.isError || updateMutation.isPending}>
               Save Changes
             </Button>
           </div>
@@ -430,7 +463,7 @@ export function VendorsPage() {
         submitLabel="Archive"
         onClose={() => setArchiveTarget(null)}
         onSubmit={async (reason) => {
-          if (!archiveTarget) return;
+          if (!archiveTarget || listQ.isError) return;
           await archiveMutation.mutateAsync({ id: archiveTarget.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />

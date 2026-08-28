@@ -6,6 +6,7 @@ const leaves = [
   { name: "vehicles", file: "apps/frontend/src/pages/maintenance/vehicles/VehiclesMasterDataPage.tsx", query: "vehiclesQuery" },
   { name: "drivers", file: "apps/frontend/src/pages/maintenance/drivers/DriversMasterDataPage.tsx", query: "driversQuery" },
 ];
+const vendorSource = readFileSync("apps/frontend/src/pages/maintenance/vendors/VendorsPage.tsx", "utf8");
 
 function failures(sources) {
   const out = [];
@@ -31,6 +32,17 @@ function failures(sources) {
 
 const sources = Object.fromEntries(leaves.map((leaf) => [leaf.name, readFileSync(leaf.file, "utf8")]));
 const liveFailures = failures(sources);
+const vendorChecks = [
+  [/if \(!listQ\.isError\) return;[\s\S]*setCreateOpen\(false\)[\s\S]*setEditing\(null\)[\s\S]*setArchiveTarget\(null\)[\s\S]*setCsvFile\(null\)/, "vendor failed roster read must close retained writes"],
+  [/disabled=\{listQ\.isError\}[^>]*onClick=\{\(\) => setCreateOpen\(true\)/, "vendor Create must disable on failed roster read"],
+  [/disabled=\{listQ\.isError \|\| !csvEnabled \|\| !csvFile\}/, "vendor CSV Import must disable on failed roster read"],
+  [/apVendorsQ\.isError \? \[\] : \(apVendorsQ\.data\?\.vendors \?\? \[\]\)/, "failed AP read must suppress retained vendor options"],
+  [/apVendorsQ\.isError[\s\S]*Couldn't load A\/P vendors[\s\S]*apVendorsQ\.refetch\(\)/, "failed AP read must expose exact Retry"],
+  [/disabled=\{apVendorsQ\.isError\}/, "AP picker must disable on failed read"],
+  [/disabled=\{listQ\.isError \|\| apVendorsQ\.isError \|\| !draft\.display_name/, "vendor create must fail closed on both reads"],
+  [/if \(!archiveTarget \|\| listQ\.isError\) return;/, "vendor archive must fail closed on roster error"],
+];
+for (const [pattern, message] of vendorChecks) if (!pattern.test(vendorSource)) liveFailures.push(`vendors: ${message}`);
 if (!/kpisQuery\.isError[\s\S]*Couldn't load parts inventory summary[\s\S]*kpisQuery\.refetch\(\)/.test(sources.parts)) {
   liveFailures.push("parts: KPI read failure must replace false-zero summary with exact Retry");
 }
@@ -52,8 +64,15 @@ if (process.argv.includes("--selftest")) {
     }
   }
   mutations.push(["parts", sources.parts.replace("kpisQuery.isError ? (", "false ? (")]);
+  for (const [pattern] of vendorChecks) {
+    mutations.push(["vendors", vendorSource.replace(new RegExp(pattern.source, "g"), "/* planted defect */")]);
+  }
   let caught = 0;
   for (const [name, mutated] of mutations) {
+    if (name === "vendors") {
+      if (vendorChecks.some(([pattern]) => !pattern.test(mutated))) caught += 1;
+      continue;
+    }
     const next = { ...sources, [name]: mutated };
     const nextFailures = failures(next);
     if (!/kpisQuery\.isError[\s\S]*Couldn't load parts inventory summary[\s\S]*kpisQuery\.refetch\(\)/.test(next.parts)) {
