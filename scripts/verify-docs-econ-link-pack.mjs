@@ -24,6 +24,9 @@ function inspect(writer, page) {
   if (!/INSERT INTO docs\.file_links[\s\S]*ON CONFLICT \(file_id, entity_type, entity_id\)/.test(writer)) {
     problems.push("writer must persist idempotent docs.file_links in the same transaction");
   }
+  if (!/const loadLinkUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,420}UPDATE mdata\.loads[\s\S]{0,240}AND operating_company_id = \$3::uuid[\s\S]{0,100}RETURNING id[\s\S]{0,180}input\.operating_company_id[\s\S]{0,160}if \(!loadLinkUpdate\.rows\[0\]\?\.id\) throw new Error\("E_LOAD_NOT_FOUND"\)/.test(writer)) {
+    problems.push("driver instructions backlink must bind company and prove the canonical load row changed");
+  }
   if (!/links\.map\(\(link\)[\s\S]*<EntityLink[\s\S]*id=\{link\.entity_id\}/.test(page)) {
     problems.push("Docs Entity column must render every persisted link with EntityLink");
   }
@@ -46,6 +49,8 @@ function main() {
       writer.replace("code = 'dispatch_instructions'", "code = 'other'"),
       writer.replace('[fileId, "driver", load.assigned_primary_driver_id]', '[fileId, "load", load.id]'),
       writer.replace("INSERT INTO docs.file_links", "INSERT INTO docs.missing_links"),
+      writer.replace("AND operating_company_id = $3::uuid", "AND TRUE"),
+      writer.replace("if (!loadLinkUpdate.rows[0]?.id)", "if (false)"),
     ];
     const detected = mutations.filter((mutant) => inspect(mutant, page).length > 0).length;
     const pageMutant = page.replace("links.map((link)", "links.slice(0, 1).map((link)");
@@ -53,7 +58,7 @@ function main() {
       console.error(`${LABEL}: selftest FAIL`);
       process.exit(1);
     }
-    console.log(`${LABEL}: selftest 4/4`);
+    console.log(`${LABEL}: selftest 6/6`);
   }
   console.log(`${LABEL}: PASS`);
 }

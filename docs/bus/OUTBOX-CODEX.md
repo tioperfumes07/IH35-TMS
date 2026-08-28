@@ -1942,3 +1942,5 @@ Codex | WORKING | DSP-F7127L | CLAIM=Samsara-auto-status-exact-company-write | S
 Codex | SHIPPED | DSP-F7127K | PR=#17189 @ 565104f02b | Built=combined Quick Assign exact-company write | NEXT=Samsara auto-status | GO
 Codex | WORKING | DSP-F7127M | CLAIM=manual-reassign-exact-company-write | SOURCE=mdata.loads→load_assignment_history | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127L | PR=#17190 @ b8ab2d09c5 | Built=Samsara status exact-company write | NEXT=manual reassign | GO
+Codex | WORKING | DSP-F7127N | CLAIM=load-distribution-exact-company-backlink | SOURCE=docs.files/file_links→mdata.loads | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127M | PR=#17191 @ 5f182e24f2 | Built=manual reassign exact-company write | NEXT=load distribution | GO
