@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   createDispatchIntransitIssue,
@@ -44,7 +44,17 @@ export function InTransitIssuesPage() {
   const [description, setDescription] = useState("");
   const [severity, setSeverity] = useState<"info" | "warning" | "severe">("warning");
   const [error, setError] = useState("");
+  const createGenerationRef = useRef(0);
   const { pushToast } = useToast();
+
+  useEffect(() => {
+    createGenerationRef.current += 1;
+    setLoadId("");
+    setCategory("mechanical");
+    setDescription("");
+    setSeverity("warning");
+    setError("");
+  }, [companyId, createOpen]);
 
   function patchListSearchParam(next: { driverId: string; loadId: string; unitId: string }) {
     const p = new URLSearchParams(searchParams);
@@ -116,26 +126,38 @@ export function InTransitIssuesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: {
+      generation: number;
+      companyId: string;
+      loadId: string;
+      category: string;
+      description: string;
+      severity: "info" | "warning" | "severe";
+    }) =>
       createDispatchIntransitIssue({
-        operating_company_id: companyId,
-        load_id: loadId.trim(),
-        issue_category: category,
-        issue_description: description.trim(),
-        severity,
+        operating_company_id: input.companyId,
+        load_id: input.loadId,
+        issue_category: input.category,
+        issue_description: input.description,
+        severity: input.severity,
       }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", companyId] });
+    onSuccess: (_created, input) => {
+      if (input.generation !== createGenerationRef.current) return;
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", input.companyId] });
       setCreateOpen(false);
       setLoadId("");
       setDescription("");
     },
-    onError: () => setError("Failed to create issue."),
+    onError: (_cause, input) => {
+      if (input.generation === createGenerationRef.current) setError("Failed to create issue.");
+    },
   });
 
   const resolveMutation = useMutation({
-    mutationFn: (issueId: string) => resolveDispatchIntransitIssue(issueId, { operating_company_id: companyId }),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", companyId] }),
+    mutationFn: (input: { issueId: string; companyId: string }) =>
+      resolveDispatchIntransitIssue(input.issueId, { operating_company_id: input.companyId }),
+    onSuccess: (_resolved, input) =>
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "intransit-issues", input.companyId] }),
     // DISP-F6329: createMutation's onError sets the local `error` state, but that state only
     // renders inside the "Create In-Transit Issue" modal — invisible from the table's "Resolve"
     // button. A rejected resolve silently did nothing. Use a toast here instead, since the table
@@ -177,7 +199,7 @@ export function InTransitIssuesPage() {
               size="sm"
               variant="secondary"
               loading={resolveMutation.isPending}
-              onClick={() => resolveMutation.mutate(issue.id)}
+              onClick={() => resolveMutation.mutate({ issueId: issue.id, companyId })}
             >
               Resolve
             </Button>
@@ -302,7 +324,7 @@ export function InTransitIssuesPage() {
         />
       )}
 
-      <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create In-Transit Issue">
+      <Modal variant="drawer" open={createOpen} onClose={() => { if (!createMutation.isPending) setCreateOpen(false); }} title="Create In-Transit Issue">
         <form
           className="space-y-3"
           onSubmit={(event) => {
@@ -312,7 +334,14 @@ export function InTransitIssuesPage() {
               setError("Load ID and description (≥10 chars) are required.");
               return;
             }
-            createMutation.mutate();
+            createMutation.mutate({
+              generation: createGenerationRef.current,
+              companyId,
+              loadId: loadId.trim(),
+              category,
+              description: description.trim(),
+              severity,
+            });
           }}
         >
           <div className="flex flex-col gap-1">
@@ -325,12 +354,14 @@ export function InTransitIssuesPage() {
               value={loadId || null}
               onChange={(next) => setLoadId(next ?? "")}
               placeholder="Select load"
+              disabled={createMutation.isPending}
             />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Category</label>
             <select
               value={category}
+              disabled={createMutation.isPending}
               onChange={(event) => setCategory(event.target.value)}
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
@@ -344,6 +375,7 @@ export function InTransitIssuesPage() {
             <label className="text-xs font-semibold text-gray-600">Severity</label>
             <select
               value={severity}
+              disabled={createMutation.isPending}
               onChange={(event) => setSeverity(event.target.value as typeof severity)}
               className="rounded-sm border border-gray-300 h-9 px-2 text-[13px]"
             >
@@ -356,6 +388,7 @@ export function InTransitIssuesPage() {
             <label className="text-xs font-semibold text-gray-600">Description</label>
             <textarea
               value={description}
+              disabled={createMutation.isPending}
               onChange={(event) => setDescription(event.target.value)}
               className="rounded-sm border border-gray-300 px-2 py-1.5 text-[13px]"
               rows={4}
@@ -363,7 +396,7 @@ export function InTransitIssuesPage() {
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)}>
+            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)} disabled={createMutation.isPending}>
               Cancel
             </Button>
             <Button type="submit" loading={createMutation.isPending}>
