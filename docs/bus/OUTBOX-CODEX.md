@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7122 | CLAIM=dispatch.live-load-reservation-scope | SOURCE=dispatch.load_id_reservations company-owned reserve→release | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7121 | PR=#17151 @ a4b8b53fe9 | Built=Rate-Con immutable company intake | NEXT=load-number reservation lifecycle | GO
 Codex | WORKING | DSP-F7121 | CLAIM=dispatch.ratecon-immutable-intake | SOURCE=docs upload→confirm→company extract→editable Book Load draft | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7120 | PR=#17150 @ c2bd5e34dd | Built=pre-dispatch empty-identity recovery+Retry | NEXT=rate-con intake lifecycle | GO
 Codex | WORKING | DSP-F7120 | CLAIM=dispatch.pre-dispatch-read-recovery | SOURCE=canonical validation POST selected assignment scope | NEXT=guard+FAST-MERGE | GO
