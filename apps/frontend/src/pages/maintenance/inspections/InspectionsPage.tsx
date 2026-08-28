@@ -22,6 +22,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { Combobox } from "../../../components/Combobox";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useSearchParams } from "react-router-dom";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type InspectionDraft = {
   unit_id: string;
@@ -231,6 +232,14 @@ export function InspectionsPage() {
     setSearch("");
   }, [companyId]);
 
+  useEffect(() => {
+    if (!listQ.isError) return;
+    setCreateOpen(false);
+    setEditing(null);
+    setDraft(EMPTY_DRAFT);
+    setPhotoFile(null);
+  }, [listQ.isError]);
+
   const openEdit = (row: MaintenanceInspectionRow) => {
     setEditing(row);
     setDraft({
@@ -250,8 +259,8 @@ export function InspectionsPage() {
   };
 
   const formOpen = createOpen || Boolean(editing);
-  const rows = listQ.data?.rows ?? [];
-  const totalCount = listQ.data?.total_count ?? 0;
+  const rows = listQ.isError ? [] : (listQ.data?.rows ?? []);
+  const totalCount = listQ.isError ? 0 : (listQ.data?.total_count ?? 0);
   const pageCount = Math.max(1, Math.ceil(totalCount / INSPECTIONS_PAGE_SIZE));
 
   useEffect(() => {
@@ -317,14 +326,22 @@ export function InspectionsPage() {
         breadcrumb={[{ label: "Maintenance" }, { label: "Inspections" }]}
         backHref="/maintenance"
         actions={
-          <Button type="button" onClick={() => { setCreateOpen(true); setDraft(EMPTY_DRAFT); setPhotoFile(null); }}>
+          <Button type="button" disabled={listQ.isError} onClick={() => { setCreateOpen(true); setDraft(EMPTY_DRAFT); setPhotoFile(null); }}>
             + Create Inspection
           </Button>
         }
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
-        <ParityTable
+        {listQ.isError ? (
+          <ListErrorState
+            title="Couldn't load inspections"
+            status={0}
+            message={(listQ.error as Error)?.message}
+            onRetry={() => void listQ.refetch()}
+          />
+        ) : (
+        <><ParityTable
           rows={rows}
           columns={columns}
           rowKey={(row) => String(row.id)}
@@ -365,7 +382,8 @@ export function InspectionsPage() {
               Next
             </Button>
           </div>
-        </div>
+        </div></>
+        )}
       </div>
 
       <Modal
@@ -534,7 +552,7 @@ export function InspectionsPage() {
                 }
                 createMutation.mutate(input);
               }}
-              disabled={!draft.unit_id || createMutation.isPending || updateMutation.isPending}
+              disabled={listQ.isError || !draft.unit_id || createMutation.isPending || updateMutation.isPending}
             >
               {editing ? "Save Inspection" : "Create Inspection"}
             </Button>
