@@ -1,3 +1,5 @@
+Codex | WORKING | SAF-F6962 | CLAIM=post.safety-company-business-date | vertical=expiry-badge+risk-cards+training+meetings | guard=4/4 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | INS-F6961 | PR=#16926 @ 2bfedc06ab | Built=policies+coverage-gaps expiry business-date | NEXT=SAF-F6962 | GO
 Codex | WORKING | INS-F6961 | CLAIM=post.insurance-expiry-company-date | vertical=policies+coverage-gaps | guard=2/2 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | FLT-F6960 | PR=#16925 @ b9cc775aa2 | Built=unit+trailer+reefer lifecycle business-date | NEXT=INS-F6961 | GO
 Codex | WORKING | FLT-F6960 | CLAIM=post.fleet-lifecycle-business-date | vertical=unit+trailer+reefer | guard=3/3 | NEXT=FAST-MERGE | GO

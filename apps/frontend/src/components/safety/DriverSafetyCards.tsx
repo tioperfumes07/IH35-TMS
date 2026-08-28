@@ -28,6 +28,7 @@ import { listAllDrivers } from "../../api/mdata";
 import { getSafetyEventsFiltered, listDaEnrollments } from "../../api/safety";
 import type { SafetyActivityWindow, SafetyDriverFilter } from "./SafetyDashboardFilter";
 import { Combobox } from "../Combobox";
+import { companyToday } from "../../lib/businessDate";
 
 type Props = {
   companyId: string;
@@ -66,8 +67,8 @@ function daysUntil(dateStr: string | null | undefined): number | null {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
   const expiryUtc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const now = new Date();
-  const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const [year, month, day] = companyToday().split("-").map(Number);
+  const nowUtc = Date.UTC(year, month - 1, day);
   return Math.floor((expiryUtc - nowUtc) / DAY_MS);
 }
 
