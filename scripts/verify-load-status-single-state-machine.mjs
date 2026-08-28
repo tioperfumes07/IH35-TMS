@@ -86,6 +86,12 @@ export function auditDetector(src) {
   if (iValidate > write.index) {
     problems.push(`${DETECTOR} validates AFTER the status UPDATE — the row is already changed by then.`);
   }
+  if (!/UPDATE\s+mdata\.loads[\s\S]{0,300}AND\s+operating_company_id\s*=\s*\$3::uuid[\s\S]{0,100}RETURNING\s+id/i.test(code)) {
+    problems.push(`${DETECTOR} status UPDATE must bind the selected company and return the changed row.`);
+  }
+  if (!/if\s*\(!statusUpdate\.rows\[0\]\?\.id\)\s*return\s*\{\s*applied:\s*false,\s*skipped:\s*["']load_not_found["']\s*\}/.test(code)) {
+    problems.push(`${DETECTOR} must stop before event/audit writes when the scoped status UPDATE changes no row.`);
+  }
   return problems;
 }
 
@@ -169,14 +175,28 @@ function selftest() {
   const detectorFixed = `
     const transition = validateLoadStopStatusWrite(current.status, newStatus);
     if (!transition.ok) return { applied: false, skipped: "invalid_load_state" };
-    await client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1::uuid", [loadUuid, newStatus]);
+    const statusUpdate = await client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1::uuid AND operating_company_id = $3::uuid RETURNING id", [loadUuid, newStatus, operatingCompanyId]);
+    if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };
   `;
   if (auditDetector(detectorFixed).length !== 0)
     failures.push(`case2 FAIL — the fixed detector was flagged: ${auditDetector(detectorFixed).join(" | ")}`);
 
+  // case2b — state validation alone is insufficient if the canonical write drops company scope.
+  const detectorUnscoped = detectorFixed
+    .replace(" AND operating_company_id = $3::uuid RETURNING id", " RETURNING id");
+  if (!auditDetector(detectorUnscoped).some((p) => p.includes("bind the selected company")))
+    failures.push("case2b FAIL — a UUID-only GPS status write was NOT caught");
+
+  // case2c — a scoped write must be checked before emitting event/audit evidence.
+  const detectorUnchecked = detectorFixed
+    .replace('if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };', "");
+  if (!auditDetector(detectorUnchecked).some((p) => p.includes("changes no row")))
+    failures.push("case2c FAIL — an unchecked scoped GPS status write was NOT caught");
+
   // case3 — validated but AFTER the write: the row already moved.
   const detectorAfter = `
-    await client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1::uuid", [loadUuid, newStatus]);
+    const statusUpdate = await client.query("UPDATE mdata.loads SET status = $2 WHERE id = $1::uuid AND operating_company_id = $3::uuid RETURNING id", [loadUuid, newStatus, operatingCompanyId]);
+    if (!statusUpdate.rows[0]?.id) return { applied: false, skipped: "load_not_found" };
     const transition = validateLoadStopStatusWrite(current.status, newStatus);
   `;
   if (!auditDetector(detectorAfter).some((p) => p.includes("validates AFTER")))
