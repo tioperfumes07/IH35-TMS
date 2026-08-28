@@ -1,4 +1,10 @@
 {
+  "9883": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-banking-factoring-timeline-no-silent-catch",
+    "note": "9881 was claimed first but is n%4=1 (ODD) — verify-verify-step-lane-band.mjs requires cc-2 to claim ≡3 (mod 4); 9883 is the correct number, 9881 stays reserved-but-unused"
+  },
   "9881": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
