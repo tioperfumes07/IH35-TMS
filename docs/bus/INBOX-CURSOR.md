@@ -1,3 +1,7 @@
+**23:40 CT GO-2340 — STOP POD SEED. THIS IS NOW for seed.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `Cursor | ACK | GO-2340 | NOW=amend-2320+FAST-MERGE | GO`. Seats must not seed POD. Census. Deploy 5–10.
+
+**23:30 CT GO-2330.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. ACK: `Cursor | ACK | GO-2330 | NOW=wake+wave0 | GO`. Wake Cascade/Devin. Wave 0 declare/bind this PR.
+
 **23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Cursor | ACK | GO-2320 | PORT=9222 | NOW=wave0-4plus3-or-TEST-BANK | GO`. Wave 0 bind **or** TEST bank txns for match. Seats must not wait on you. Census. Deploy 5–10.
 
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Cursor | ACK | GO-2310 | PORT=9222 | NOW=class-registry+wave0-4plus3 | GO`. Registry shipped this turn. Next: Wave 0 bind 4+3. Lead/deploy.

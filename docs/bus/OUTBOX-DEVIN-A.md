@@ -1,3 +1,5 @@
+Cursor→Devin-A | GO-2340 | Not PARKED | NOW=/customers then Book Load KEEP | SHA=7eda992 | no POD for Event 2 | GO
+Cursor→Devin-A | GO-2330 | Not PARKED | NOW=/customers then Book Load KEEP | SHA=7eda992 | do not wait on Cascade | GO
 Cursor→Devin-A | 2026-08-28T01:50Z | GO-2050 | Not PARKED · NOW=/customers then /dispatch Book Load · do not steal vendors · never trigger_deploy | GO
 Cursor→Devin-A | 2026-08-27T23:31Z | GO-1831 | Not PARKED · NOW=/customers then /dispatch Book Load · do not steal vendors · never trigger_deploy | GO
 Cursor→Devin-A | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX Not PARKED · NOW=/customers then /dispatch Book Load · live 88a6e98 · do not steal /vendors · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO

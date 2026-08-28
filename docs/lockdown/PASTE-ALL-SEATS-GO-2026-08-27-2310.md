@@ -10,7 +10,7 @@ ACK:
 - `CASCADE | ACK | GO-2310 | NOW=lifecycle-SQL | GO`
 - `Devin-A | ACK | GO-2310 | NOW=lifecycle-CHROME | GO`
 
-**Culture:** Unverified work = defect. Idle while **named-blocked** = correct. Idle while NOW is unblocked = defect.
+**Culture:** Unverified work = defect. Named-blocked → **claim then steal** (`docs/bus/STEAL-CLAIMS.json`). Idle while NOW is unblocked = defect. Stamping green to look busy = defect. **GO-2340:** do not seed POD to fire Event 2.
 
 ## Seat NOW (parallel; money **merge** still serial)
 

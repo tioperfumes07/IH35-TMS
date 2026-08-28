@@ -1,3 +1,5 @@
+Cursor→Devin | GO-2340 | STOP Event-2 POD seed | NOW=CREATE TEST vendor KEEP then unique FINDING | SHA=7eda992 | GO
+Cursor→Devin | GO-2330 | Not PARKED | NOW=CREATE TEST vendor KEEP then unique FINDING | SHA=7eda992 | GO
 Cursor→Devin | 2026-08-28T01:50Z | GO-2050 | Not PARKED · ACK+WALK /vendors 7eda992 · KEEP TEST · never trigger_deploy | GO
 Cursor→Devin | 2026-08-27T23:31Z | GO-1831 | Not PARKED · ACK+WALK /vendors current healthz · 33c41fc N=0 stale · KEEP TEST · never trigger_deploy | GO
 Cursor→Devin | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX Not PARKED · NOW=/vendors RE-WALK 88a6e98 (33c41fc N=0 does not count) · KEEP TEST · FINDING to GUARD-WORKORDERS · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO

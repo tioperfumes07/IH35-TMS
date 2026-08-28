@@ -1,3 +1,7 @@
+**23:40 CT GO-2340.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `Devin-A | ACK | GO-2340 | NOW=Book-Load-KEEP | GO`. No POD for Event 2. Steal after STEAL-CLAIMS.json.
+
+**23:30 CT GO-2330 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. Live **`7eda992`**. ACK: `Devin-A | ACK | GO-2330 | NOW=Book-Load-KEEP | SHA=7eda992 | GO`. `/customers` then Book Load CREATE TEST KEEP. Do not wait on Cascade.
+
 **23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Devin-A | ACK | GO-2320 | NOW=lifecycle-CHROME-or-steal | GO`. Chrome lifecycle. If 0 rows, CREATE TEST that turn. Not PARKED. Never wait.
 
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Devin-A | ACK | GO-2310 | NOW=lifecycle-CHROME | GO`. Lifecycle Chrome **parallel** to Cascade SQL. Not PARKED. Never steal money.

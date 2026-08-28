@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SHARED = path.join(ROOT, "docs/specs/scoreboard/columns.shared.json");
-const NEED = ["gl_delta", "subledger_tie", "lifecycle_complete", "reversal_symmetry", "period_guard", "entity_isolation", "non_empty_proof"];
+const NEED = ["gl_delta", "subledger_tie", "lifecycle_complete", "reversal_symmetry", "period_guard", "entity_isolation", "non_empty_proof", "scenario.ap", "scenario.dispatch"];
 
 function ids() {
   const j = JSON.parse(fs.readFileSync(SHARED, "utf8"));

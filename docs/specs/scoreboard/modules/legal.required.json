@@ -2,7 +2,7 @@
   "module": "legal",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Legal module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Legal module",
     "nav": "apps/frontend/src/pages/legal/LegalModuleTabs.tsx",
     "routes": "/legal/*"
   },
@@ -206,7 +206,8 @@
       "route_hint": "/legal/matters",
       "required": [
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
       ]
     },
     {
@@ -220,7 +221,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
       ]
     },
     {
@@ -232,7 +234,8 @@
         "driver",
         "unit",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "legal_matter"
       ]
     },
     {
@@ -358,7 +361,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/legal/matters",
       "surface_kind": "toolbar",
       "required": [
@@ -370,7 +373,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/legal/matters",
       "surface_kind": "toolbar",
       "required": [
@@ -382,7 +385,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/legal/matters",
       "surface_kind": "toolbar",
       "required": [
@@ -394,7 +397,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/legal/matters",
       "surface_kind": "toolbar",
       "required": [
@@ -416,11 +419,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "load_column_2026_08_13": {
       "finding": "VERTICAL-LOAD-REMAINDER-WIRE-GAPS",
-      "note": "legal.matters has related_driver/unit/claim FKs but no load_id column — Required load was inflation.",
+      "note": "legal.matters has related_driver/unit/claim FKs but no load_id column \u2014 Required load was inflation.",
       "drops": [
         {
           "id": "matters.list",
@@ -648,7 +651,7 @@
     },
     "money_cells_2026_08_14_ap_bill_overclaim": {
       "finding": "OWNER-EXECUTION-PLAN-SS2-ACCT-F5160",
-      "note": "ap_bill required on matters.create, verified live it does not own it. LegalMatterNewPage.tsx / LegalMatterFormFields.tsx is a create-only form with zero bill_id/vendor_id references — linked legal costs (accounting.ts LegalMatterLinkedCosts, a real bills array) render on the separate matters.detail leaf post-creation, which this sweep did not find flagged/gapped.",
+      "note": "ap_bill required on matters.create, verified live it does not own it. LegalMatterNewPage.tsx / LegalMatterFormFields.tsx is a create-only form with zero bill_id/vendor_id references \u2014 linked legal costs (accounting.ts LegalMatterLinkedCosts, a real bills array) render on the separate matters.detail leaf post-creation, which this sweep did not find flagged/gapped.",
       "drops": [
         {
           "id": "matters.create",
@@ -660,7 +663,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "2 of 5 legal leaves are genuine: contracts.list/create resolve a real customer signer/party via EntityLink kind=\"customer\" and a real customer picker. matters.list/create/detail never reference a customer — legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer.",
+      "note": "2 of 5 legal leaves are genuine: contracts.list/create resolve a real customer signer/party via EntityLink kind=\"customer\" and a real customer picker. matters.list/create/detail never reference a customer \u2014 legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer.",
       "drops": [
         {
           "id": "matters.list",
@@ -684,7 +687,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 5 legal leaves flagged here are false: all 3 matters.* leaves (list/create/detail) have zero vendor fields — legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer. contracts.list/create (not touched here — already correctly not flagged) both genuinely resolve a real vendor party via a real vendor ReferenceSelect and EntityLink kind=\"vendor\" signer resolution.",
+      "note": "3 of 5 legal leaves flagged here are false: all 3 matters.* leaves (list/create/detail) have zero vendor fields \u2014 legal matters use free-text \"opposing party\" and link only driver/claim/lawsuit/unit/trailer. contracts.list/create (not touched here \u2014 already correctly not flagged) both genuinely resolve a real vendor party via a real vendor ReferenceSelect and EntityLink kind=\"vendor\" signer resolution.",
       "drops": [
         {
           "id": "matters.list",
@@ -708,7 +711,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 5 legal leaves are false: matters.list's column set has no unit field despite the underlying matter row carrying unit_id (used only on the detail view); both truck_lease_creator entries (same TruckLeaseCreatorModal.tsx) capture vehicle data as uncontrolled free text, never a real unit_id FK, despite the \"truck lease\" name. matters.create and matters.detail (not touched here — already correctly not flagged) both genuinely have a real EntityPicker kind=\"unit\"/EntityLink kind=\"unit\".",
+      "note": "3 of 5 legal leaves are false: matters.list's column set has no unit field despite the underlying matter row carrying unit_id (used only on the detail view); both truck_lease_creator entries (same TruckLeaseCreatorModal.tsx) capture vehicle data as uncontrolled free text, never a real unit_id FK, despite the \"truck lease\" name. matters.create and matters.detail (not touched here \u2014 already correctly not flagged) both genuinely have a real EntityPicker kind=\"unit\"/EntityLink kind=\"unit\".",
       "drops": [
         {
           "id": "matters.list",
@@ -732,7 +735,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 1 legal leaf. Verified live — LegalMattersListPage.tsx (221 lines) has zero driver references — only matter_number/type/status/severity/SOL columns, no related_driver column, despite matters.detail genuinely carrying related_driver_id.",
+      "note": "driver blanket-required on 1 legal leaf. Verified live \u2014 LegalMattersListPage.tsx (221 lines) has zero driver references \u2014 only matter_number/type/status/severity/SOL columns, no related_driver column, despite matters.detail genuinely carrying related_driver_id.",
       "drops": [
         {
           "id": "matters.list",

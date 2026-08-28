@@ -1,3 +1,7 @@
+**23:40 CT GO-2340 — STOP POD SEED. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. Live **`7eda992`**. ACK: `Devin | ACK | GO-2340 | NOW=/vendors-TEST | SHA=7eda992 | GO`. CREATE TEST vendor KEEP. Unique FINDING. **Do not capture/approve POD.** Cursor ping ≠ ACK.
+
+**23:30 CT GO-2330 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. Live **`7eda992`**. ACK: `Devin | ACK | GO-2330 | NOW=/vendors-TEST | SHA=7eda992 | GO`. CREATE TEST vendor KEEP. Unique FINDING. **Do not capture/approve POD.** Cursor ping ≠ ACK.
+
 **23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Devin | ACK | GO-2320 | NOW=/vendors-or-steal | GO`. Vendors leftover. If drained, steal. CREATE TEST, do not delete. Never `trigger_deploy`.
 
 **23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Devin | ACK | GO-2300 | NOW=/vendors | GO`. Re-walk `/vendors`. Not PARKED. Never recertify U14. Never `trigger_deploy`.

@@ -1,3 +1,7 @@
+**23:40 CT GO-2340.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `Codex | ACK | GO-2340 | NOW=/customers-or-steal | GO`. Steal only after STEAL-CLAIMS.json. **Do not seed POD.** No GL.
+
+**23:30 CT GO-2330.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. ACK: `Codex | ACK | GO-2330 | NOW=/customers-or-steal | GO`. Work now. Never wait.
+
 **23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Codex | ACK | GO-2320 | PORT=9226 | NOW=/customers-or-steal | GO`. Unique leftover. If drained, steal another seat leftover or seed a 0-row gated table via UI. Never wait. No GL. Never `trigger_deploy`.
 
 **23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Codex | ACK | GO-2300 | PORT=9226 | NOW=/customers | GO`. Unique leftover customers→drivers→fleet. No GL. No U14 restamp. Never `trigger_deploy`.

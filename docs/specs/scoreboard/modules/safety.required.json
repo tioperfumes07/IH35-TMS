@@ -2,7 +2,7 @@
   "module": "safety",
   "entity_default": "USMCA",
   "source": {
-    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md — Safety module",
+    "arch_design": "docs/specs/IH35_ARCHITECTURAL_DESIGN.md \u2014 Safety module",
     "nav": "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts",
     "routes": "apps/frontend/src/routes/manifest.tsx /safety/*"
   },
@@ -318,7 +318,8 @@
         "load",
         "connectivity",
         "reverse_link",
-        "picker_law"
+        "picker_law",
+        "accident"
       ]
     },
     {
@@ -337,7 +338,8 @@
         "picker_law",
         "qbo_chrome",
         "connectivity",
-        "reverse_link"
+        "reverse_link",
+        "accident"
       ]
     },
     {
@@ -926,7 +928,7 @@
     {
       "id": "chrome.toolbar_search",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Search (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 Search (CLS-LIST-TOOLBAR)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -938,7 +940,7 @@
     {
       "id": "chrome.toolbar_range",
       "tab": "Chrome controls",
-      "sub": "List toolbar — date/amount range (CLS-LIST-TOOLBAR)",
+      "sub": "List toolbar \u2014 date/amount range (CLS-LIST-TOOLBAR)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -950,7 +952,7 @@
     {
       "id": "chrome.toolbar_gear",
       "tab": "Chrome controls",
-      "sub": "List toolbar — column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 column gear + Apply (CLS-LIST-TOOLBAR / FILTER-GEAR-APPLY)",
       "route_hint": "/safety",
       "surface_kind": "toolbar",
       "required": [
@@ -962,7 +964,7 @@
     {
       "id": "chrome.toolbar_filter",
       "tab": "Chrome controls",
-      "sub": "List toolbar — Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
+      "sub": "List toolbar \u2014 Filters panel + Apply (CLS-FILTER-GEAR-APPLY)",
       "route_hint": "/safety/integrity-reports",
       "surface_kind": "toolbar",
       "required": [
@@ -1053,11 +1055,11 @@
         "invoice",
         "bank"
       ],
-      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; §B9 link columns added."
+      "note": "Inventoried Modal/Drawer/Panel/Wizard/Sheet/Dialog/Flyout/Popover + ParityDrawer sites; \u00a7B9 link columns added."
     },
     "reverse_link_2026_08_13_panel": {
       "finding": "VERTICAL-REVERSE-LINK-SAFETY-REMAINDER",
-      "note": "DriverSafetyProfilePanel is placeholder chrome (DRV-0000) without a live driver FK — reverse_link Required was inflation until profile is load-bearing.",
+      "note": "DriverSafetyProfilePanel is placeholder chrome (DRV-0000) without a live driver FK \u2014 reverse_link Required was inflation until profile is load-bearing.",
       "drops": [
         {
           "id": "safety.panel.driver_safety_profile",
@@ -1345,7 +1347,7 @@
     },
     "trailer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5163-TRAILER-COLUMN-VERTICAL-SWEEP",
-      "note": "3 of 7 safety leaves are false: accidents.list's column set (Driver/Unit/Load/Vendor/Claim) has no trailer column even though the underlying accident record and its create drawer genuinely capture trailer_id; photo_comparison.list and permits.list have zero trailer/equipment_id concept anywhere in their frontend or backend models. accidents.create, damage_reports.list/create, and trailer_interchanges.list KEEP the Required marking — all render/capture real trailer_id via EntityPicker kind=\"trailer\" or EntityLink kind=\"trailer\" in AccidentReportDrawer.tsx / SafetyIncidentsClusterSurface.tsx (the shared component behind damage reports and trailer interchanges, which requires trailer_id on interchange records by contract).",
+      "note": "3 of 7 safety leaves are false: accidents.list's column set (Driver/Unit/Load/Vendor/Claim) has no trailer column even though the underlying accident record and its create drawer genuinely capture trailer_id; photo_comparison.list and permits.list have zero trailer/equipment_id concept anywhere in their frontend or backend models. accidents.create, damage_reports.list/create, and trailer_interchanges.list KEEP the Required marking \u2014 all render/capture real trailer_id via EntityPicker kind=\"trailer\" or EntityLink kind=\"trailer\" in AccidentReportDrawer.tsx / SafetyIncidentsClusterSurface.tsx (the shared component behind damage reports and trailer interchanges, which requires trailer_id on interchange records by contract).",
       "drops": [
         {
           "id": "accidents.list",
@@ -1369,7 +1371,7 @@
     },
     "customer_column_2026_08_14_overclaim": {
       "finding": "LINK-F5165-CUSTOMER-COLUMN-VERTICAL-SWEEP",
-      "note": "2 of 5 safety leaves flagged here are false: accidents.create links driver/unit/load/vendor but never customer; trailer_interchanges.list captures only a free-text interchange_party string. cargo_claims.list/create and complaints.list (not touched — already correctly not flagged here) are the genuine ones.",
+      "note": "2 of 5 safety leaves flagged here are false: accidents.create links driver/unit/load/vendor but never customer; trailer_interchanges.list captures only a free-text interchange_party string. cargo_claims.list/create and complaints.list (not touched \u2014 already correctly not flagged here) are the genuine ones.",
       "drops": [
         {
           "id": "accidents.create",
@@ -1387,7 +1389,7 @@
     },
     "vendor_column_2026_08_14_overclaim": {
       "finding": "LINK-F5166-VENDOR-COLUMN-VERTICAL-SWEEP",
-      "note": "4 of 5 safety leaves flagged here are false: cargo_claims.create, both external_fines leaves, and permits.list have zero vendor references (permits only has a unit picker). accidents.create (not touched here — already correctly not flagged) genuinely has a real \"Repair Vendor\" ReferenceSelect(createKind=\"vendor\") plus a real EntityLink kind=\"vendor\" on the list.",
+      "note": "4 of 5 safety leaves flagged here are false: cargo_claims.create, both external_fines leaves, and permits.list have zero vendor references (permits only has a unit picker). accidents.create (not touched here \u2014 already correctly not flagged) genuinely has a real \"Repair Vendor\" ReferenceSelect(createKind=\"vendor\") plus a real EntityLink kind=\"vendor\" on the list.",
       "drops": [
         {
           "id": "cargo_claims.create",
@@ -1417,7 +1419,7 @@
     },
     "unit_column_2026_08_14_overclaim": {
       "finding": "LINK-F5167-UNIT-COLUMN-VERTICAL-SWEEP",
-      "note": "7 of 19 safety leaves are false: hos.list/hos_violations.list/dot_compliance.list only render EntityLink kind=\"driver\"; cert_expiry.list has zero unit/vehicle/truck references; internal_fines.create only has driver/load pickers, no unit; external_fines.list omits the unit column its own create modal captures; insurance_tab.list (InsuranceLanding.tsx) is an aggregate KPI dashboard with unit linkage only on downstream drill-through pages, not this leaf itself. The other 12 leaves KEEP the Required marking — real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in IdvrPage.tsx, DOTInspectionsTab.tsx, SafetyEventsPage.tsx, AccidentsPage.tsx/AccidentReportDrawer.tsx, SafetyIncidentsClusterSurface.tsx (damage reports), PhotoComparisonPage.tsx, FineCreateModal.tsx (external_fines.create — the create modal itself, distinct from its list leaf), GeofenceBreachesTab.tsx, Permits.tsx, and PositionHistoryPage.tsx.",
+      "note": "7 of 19 safety leaves are false: hos.list/hos_violations.list/dot_compliance.list only render EntityLink kind=\"driver\"; cert_expiry.list has zero unit/vehicle/truck references; internal_fines.create only has driver/load pickers, no unit; external_fines.list omits the unit column its own create modal captures; insurance_tab.list (InsuranceLanding.tsx) is an aggregate KPI dashboard with unit linkage only on downstream drill-through pages, not this leaf itself. The other 12 leaves KEEP the Required marking \u2014 real EntityLink kind=\"unit\"/EntityPicker kind=\"unit\" confirmed in IdvrPage.tsx, DOTInspectionsTab.tsx, SafetyEventsPage.tsx, AccidentsPage.tsx/AccidentReportDrawer.tsx, SafetyIncidentsClusterSurface.tsx (damage reports), PhotoComparisonPage.tsx, FineCreateModal.tsx (external_fines.create \u2014 the create modal itself, distinct from its list leaf), GeofenceBreachesTab.tsx, Permits.tsx, and PositionHistoryPage.tsx.",
       "drops": [
         {
           "id": "hos.list",
@@ -1465,7 +1467,7 @@
     },
     "driver_column_2026_08_14_overclaim": {
       "finding": "LINK-F5168-DRIVER-COLUMN-VERTICAL-SWEEP",
-      "note": "driver blanket-required on 10 safety leaves. Verified live — ExpiryDashboard.tsx (cert_expiry.list) renders driver_uuid/driver_name only as plain entityLabel() text, no EntityLink import at all; GeofenceBreachesTab.tsx (geofence_alerts.list) has zero \"driver\", only kind=\"unit\"/\"geofence\"/\"customer\"; InsuranceLanding.tsx (insurance_tab.list) is a zero-driver aggregate KPI landing dashboard; PositionHistoryPage.tsx (position_history.list) has zero \"driver\", only kind=\"unit\"/\"user\"; CompanyViolationTypeModal.tsx (safety.modal.company_violation_type) is a pure catalog-CRUD modal (classic catalog false-positive); CompanyViolationCreateModal.tsx (safety.modal.company_violation_create) is a company-level DOT/FMCSA violation record with zero driver field; EscrowForfeitModal.tsx (safety.modal.escrow_forfeit/safety.parity.escrow_forfeit) uses row.id functionally for a lookup call but shows only plain entityLabel() text in the modal title, never a rendered EntityLink/EntityPicker; FineConvertConfirmModal.tsx (safety.modal.fine_convert_confirm) takes only a pre-resolved driverLabel string prop, no driver_id/uuid field; DriverSafetyProfilePanel.tsx (safety.panel.driver_safety_profile) is placeholder chrome with plain-text driverName/driverDisplayId props, no real driver FK — matches this same file's own reverse_link drop note.",
+      "note": "driver blanket-required on 10 safety leaves. Verified live \u2014 ExpiryDashboard.tsx (cert_expiry.list) renders driver_uuid/driver_name only as plain entityLabel() text, no EntityLink import at all; GeofenceBreachesTab.tsx (geofence_alerts.list) has zero \"driver\", only kind=\"unit\"/\"geofence\"/\"customer\"; InsuranceLanding.tsx (insurance_tab.list) is a zero-driver aggregate KPI landing dashboard; PositionHistoryPage.tsx (position_history.list) has zero \"driver\", only kind=\"unit\"/\"user\"; CompanyViolationTypeModal.tsx (safety.modal.company_violation_type) is a pure catalog-CRUD modal (classic catalog false-positive); CompanyViolationCreateModal.tsx (safety.modal.company_violation_create) is a company-level DOT/FMCSA violation record with zero driver field; EscrowForfeitModal.tsx (safety.modal.escrow_forfeit/safety.parity.escrow_forfeit) uses row.id functionally for a lookup call but shows only plain entityLabel() text in the modal title, never a rendered EntityLink/EntityPicker; FineConvertConfirmModal.tsx (safety.modal.fine_convert_confirm) takes only a pre-resolved driverLabel string prop, no driver_id/uuid field; DriverSafetyProfilePanel.tsx (safety.panel.driver_safety_profile) is placeholder chrome with plain-text driverName/driverDisplayId props, no real driver FK \u2014 matches this same file's own reverse_link drop note.",
       "drops": [
         {
           "id": "cert_expiry.list",
