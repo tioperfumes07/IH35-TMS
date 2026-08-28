@@ -1,3 +1,5 @@
+**GO-0013 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0013 | NOW=usmca-unique-FINDING-vendors | SHA=069d531 | GO`. PREPEND OUTBOX. Cascade frozen — unique FINDING USMCA /vendors. KEEP TEST. Never trigger_deploy.
+
 **GO-0013 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0013 | NOW=usmca-queryback-keep-test | SHA=069d531 | GO`. PREPEND OUTBOX. KEEP TEST. Do not stamp G1 FIXED on live API 069d531. Never trigger_deploy.
 
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0012 | NOW=queryback-override-FE | SHA=069d531 | GO`. PREPEND OUTBOX. G1 on main not live API. Never trigger_deploy.
