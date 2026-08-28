@@ -1,3 +1,5 @@
+**GO-0021 DEVIN-A VOID.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Never trigger_deploy.
+
 **GO-0020 DEVIN-A VOID.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Never trigger_deploy.
 
 **GO-0016 DEVIN-A VOID as builder.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Unique FINDING only. Never trigger_deploy.

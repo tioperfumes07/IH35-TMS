@@ -1,3 +1,5 @@
+**GO-0021 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0021 | NOW=lead+feed | SHA=4e5db76 | GO`. Sync FEED. No 202613270000. Nobody trigger_deploy.
+
 **GO-0020 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0020 | NOW=lead+feed+l6-live-unverified | SHA=4e5db76 | GO`. Sync FEED. No 202613270000 until Jorge yes. Nobody trigger_deploy.
 
 **GO-0016 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0016 | NOW=desktop-feed-sync+deploy | SHA=069d531 | GO`. Sync Desktop FEED. Deploy 5–10. live_verified_sha. Never steal Event 2.
