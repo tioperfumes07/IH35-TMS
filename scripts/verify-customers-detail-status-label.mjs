@@ -33,8 +33,8 @@ function analyze(pageSrc, helperSrc, detailSrc) {
   if (/label="Type"\s+value=\{dash\(customer\.customer_type\)\}/.test(pageSrc)) {
     failures.push("Customers.tsx must not dash(customer.customer_type) for Type display");
   }
-  if (!/label="Status"\s+value=\{customerStatusLabel\(customer\.status\)\}/.test(pageSrc)) {
-    failures.push("Customers.tsx Status DetailRow must call customerStatusLabel(customer.status)");
+  if (!/label="Status"\s+value=\{customerStatusLabel\(customer\.deactivated_at != null \? "inactive" : customer\.status\)\}/.test(pageSrc)) {
+    failures.push("Customers.tsx Status DetailRow must give deactivated_at precedence through customerStatusLabel");
   }
   if (/label="Status"\s+value=\{dash\(customer\.status\)\}/.test(pageSrc)) {
     failures.push("Customers.tsx must not dash(customer.status) for Status display");
@@ -75,7 +75,7 @@ function fail(msg) {
 function selftest() {
   const goodPage = `
     import { customerStatusLabel } from "../lib/customerStatusLabel";
-    <DetailRow label="Status" value={customerStatusLabel(customer.status)} />
+    <DetailRow label="Status" value={customerStatusLabel(customer.deactivated_at != null ? "inactive" : customer.status)} />
     <DetailRow label="Type" value={customerTypeLabel(customer.customer_type)} />
   `;
   const badPage = `
