@@ -6,6 +6,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { countOpenWorkOrdersForUnit } from "../kpi/canonical-kpis.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import {
   resolveDefaultOperatingCompanyId,
   resolveOperatingCompanyId,
@@ -578,7 +579,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         typeof b.status === "string" &&
         ARCHIVE_STATUSES.has(b.status)
       ) {
-        add("deactivated_at", new Date().toISOString().slice(0, 10));
+        add("deactivated_at", companyBusinessDate());
       } else if (
         "status" in b &&
         typeof b.status === "string" &&

@@ -276,6 +276,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T08:38:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.mdata-business-date-not-utc",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T08:49:00-05:00",
+      "go": "0004"
     }
   ]
 }

@@ -4,6 +4,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 const qualificationIdParamSchema = z.object({ id: z.string().uuid(), qual_id: z.string().uuid() });
@@ -279,7 +280,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
           [
             parsedParams.data.id,
             parsedBody.data.equipment_type_id,
-            parsedBody.data.qualified_at ?? new Date().toISOString().slice(0, 10),
+            parsedBody.data.qualified_at ?? companyBusinessDate(),
             parsedBody.data.notes ?? null,
             authUser.uuid,
           ]
@@ -320,7 +321,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 qualification.id,
                 rate.line_item_template_id,
                 rate.amount,
-                parsedBody.data.qualified_at ?? new Date().toISOString().slice(0, 10),
+                parsedBody.data.qualified_at ?? companyBusinessDate(),
                 rate.change_reason ?? "initial_hire",
                 rate.change_notes ?? "Initial agreed rate at qualification creation",
                 authUser.uuid,
@@ -638,7 +639,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
           return reply.code(400).send({ error: "line_item_template_not_in_equipment_type" });
         }
 
-        const effectiveFrom = parsedBody.data.effective_from ?? new Date().toISOString().slice(0, 10);
+        const effectiveFrom = parsedBody.data.effective_from ?? companyBusinessDate();
         const currentRes = await client.query(
           `
             SELECT id, amount, effective_from
@@ -762,7 +763,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "driver_qualification_not_found" });
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = companyBusinessDate();
       await client.query(
         `
           UPDATE mdata.driver_pay_rates

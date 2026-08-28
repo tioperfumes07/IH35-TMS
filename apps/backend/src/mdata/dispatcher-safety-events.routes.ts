@@ -5,6 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId, OperatingCompanyMembershipError } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type ScopeClient = { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> };
 const RL_READ = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
@@ -204,7 +205,7 @@ function isOwner(role: string): boolean {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return companyBusinessDate();
 }
 
 async function ensureTrackableDispatcherUser(client: { query: (sql: string, params: unknown[]) => Promise<{ rows: Array<Record<string, unknown>> }> }, userId: string) {

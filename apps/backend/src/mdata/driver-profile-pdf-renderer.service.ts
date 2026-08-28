@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DriverProfilePdfInput = {
   lastName: string;
@@ -21,7 +22,7 @@ export async function renderDriverProfilePdf(input: DriverProfilePdfInput) {
 </head>
 <body>
   <h1>Driver Profile — ${input.lastName}</h1>
-  <p class="muted">Exported ${new Date().toISOString().slice(0, 10)}</p>
+  <p class="muted">Exported ${companyBusinessDate()}</p>
   ${input.htmlSections}
 </body>
 </html>`;
@@ -35,7 +36,7 @@ export async function renderDriverProfilePdf(input: DriverProfilePdfInput) {
     await page.setContent(html, { waitUntil: "load" });
     const pdf = await page.pdf({ format: "Letter", printBackground: true });
     const pdfBuffer = Buffer.from(pdf);
-    const date = new Date().toISOString().slice(0, 10);
+    const date = companyBusinessDate();
     return {
       pdfBuffer,
       filename: `DriverProfile_${input.lastName}_${date}.pdf`,
