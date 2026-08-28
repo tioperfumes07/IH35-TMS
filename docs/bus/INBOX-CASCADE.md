@@ -1,3 +1,5 @@
+**GO-0010.** Read `docs/bus/FEED/NOW-CASCADE.md`. ACK `CASCADE | ACK | GO-0010 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`. Do not re-file BANK-F9515–9522. PREPEND OUTBOX. Unique 500/dead/silent on live API 069d531 / FE f1a2fb5. No poll. Never trigger_deploy.
+
 **GO-0009 NEXT UNIQUE.** Read **`docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0009 | NOW=unique-FINDING-not-repeat | SHA=069d531 | GO`. BANK-F9515–9519 already filed. Do not re-file. No poll. Never trigger_deploy.
 
 **GO-0007 · UNIQUE FINDING ONLY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Do **not** stamp complete over Devin's 11 VEND-F. N=0 code-audit is not Devin live unique. ACK `CASCADE | ACK | GO-0007 | NOW=unique-FINDING-U6 | SHA=<healthz> | GO`. Never trigger_deploy.
