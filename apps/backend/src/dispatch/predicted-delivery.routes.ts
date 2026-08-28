@@ -32,7 +32,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dispatch/loads/:load_id/confirm-predicted-delivery", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/dispatch/loads/:load_id/confirm-predicted-delivery", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!requireAuth(req, reply)) return;
     const user = req.user!;
     const params = paramsSchema.safeParse(req.params ?? {});
@@ -58,21 +58,26 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
         `SELECT predicted_delivery_date::text AS predicted_delivery_date
          FROM mdata.loads
          WHERE id = $1::uuid AND operating_company_id = $2::uuid
-         LIMIT 1`,
+         LIMIT 1
+         FOR UPDATE`,
         [params.data.load_id, body.data.operating_company_id]
       );
       if (!cur.rows[0]) return { kind: "not_found" as const };
       const oldDate = cur.rows[0].predicted_delivery_date;
 
       // Update the PREDICTION only (scheduling/forecast). No invoice/AR/QBO write anywhere here.
-      await client.query(
+      const updated = await client.query<{ id: string }>(
         `UPDATE mdata.loads
             SET predicted_delivery_date = $3::timestamptz,
                 predicted_source = 'dispatcher_confirmed',
                 predicted_updated_at = now()
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND predicted_delivery_date IS DISTINCT FROM $3::timestamptz
+          RETURNING id::text`,
         [params.data.load_id, body.data.operating_company_id, body.data.new_predicted_date]
       );
+      if (!updated.rows[0]?.id) return { kind: "unchanged" as const, load_id: params.data.load_id, predicted_delivery_date: oldDate };
 
       // Append-only audit: every confirmed shift is logged (who/old/new/signals/when).
       await client.query(
@@ -96,6 +101,7 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
 
     if (result.kind === "disabled") return reply.code(409).send({ error: "feature_disabled", flag: CASH_FOLLOWS_ETA_FLAG });
     if (result.kind === "not_found") return reply.code(404).send({ error: "load_not_found" });
+    if (result.kind === "unchanged") return reply.send(result);
     return reply.send(result);
   });
 }
