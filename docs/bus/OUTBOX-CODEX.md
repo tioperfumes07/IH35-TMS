@@ -1771,3 +1771,5 @@ Codex | WORKING | MAINT-F7018 | CLAIM=post.maintenance-lifecycle-ratchet-alignme
 Codex | SHIPPED | MAINT-F7018 | PR=#16977 @ 5fa3c6da3c | Built=3 Maintenance connectivity ratchets restored+15 mutation kills | Live=runtime unchanged | NEXT=route cross-lane guard reds then next unique | GO
 Codex | SHIPPED | MAINT-F7019/F7020 ROUTING | PR=#16978 @ 52d748b6d0 | routed=CC-1+CC-3 board OPEN+OUTBOX | NEXT=customers guard census | GO
 Codex | WORKING | CUST-F7021 | CLAIM=post.customers-guard-current-surface-alignment | vertical=transaction list+detail tabs | NEXT=guard repair+FAST-MERGE | GO
+Codex | WORKING | FLEET-F7048 | CLAIM=post.fleet-roster-trailer-kind-canonical-reader-guard | SOURCE=both listAllUnits trailer queries→kind tabs/actions | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7047 | PR=#17004 @ 9874b56c2a | Built=canonical type filter guard 23/23 | NEXT=trailer kind vertical | GO

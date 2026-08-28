@@ -2,7 +2,7 @@
 /** @matrix-built {"modules":["fleet"],"cols":["trailer"],"leafRe":"^(home\\.roster|roster\\.kind\\.(all|trailers)|roster\\.filter\\.(type|status_active)|roster\\.bulk\\.(status|type|inactivate)|roster\\.row\\.edit_unit)$","task":"LINK-F5163-FLEET-ROSTER-TRAILER-KIND"} */
 /**
  * OWNER-EXECUTION-PLAN vertical trailer-column sweep (2026-08-14): FleetTablePage.tsx's roster
- * unifies truck+trailer rows from a single `include=trailers` query and genuinely kind-branches
+ * unifies truck+trailer rows through the canonical complete reader with `include: "trailers"` and genuinely kind-branches
  * (KIND_TABS "Trailers" tab, kindFilter, type-filter options, active-status filter apply uniformly
  * to trailer rows). FleetTable.tsx's bulk actions and row-edit genuinely kind-branch on row.kind
  * ("trailer" -> equipment endpoints/TRAILER_EQUIPMENT_TYPE_OPTIONS; else -> unit endpoints).
@@ -25,8 +25,9 @@ export function audit(src) {
   if (!/\{ key: "trailer", label: "Trailers" \}/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: KIND_TABS must include a real "Trailers" tab`);
   }
-  if (!/include=trailers/.test(src.tablePage)) {
-    failures.push(`${FILES.tablePage}: roster query must request trailer rows (include=trailers)`);
+  const trailerReaderCalls = src.tablePage.match(/listAllUnits\(\{[\s\S]*?include: "trailers"[\s\S]*?\}\)/g) ?? [];
+  if (trailerReaderCalls.length < 2) {
+    failures.push(`${FILES.tablePage}: both complete roster queries must request trailer rows through listAllUnits`);
   }
   if (!/kindFilter && r\.kind !== kindFilter/.test(src.tablePage)) {
     failures.push(`${FILES.tablePage}: roster.kind.trailers filter must apply to real row.kind`);
@@ -58,7 +59,8 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["kind-tab", "tablePage", /\{ key: "trailer", label: "Trailers" \}/, '{ key: "trailer_x", label: "Trailers" }'],
-    ["include-trailers", "tablePage", /include=trailers/g, "include=none"],
+    ["complete-unfiltered-reader", "tablePage", /listAllUnits\(\{ operating_company_id: operatingCompanyId, include: "trailers" \}\)/, 'listAllUnits({ operating_company_id: operatingCompanyId })'],
+    ["complete-filtered-reader", "tablePage", /include: "trailers",\n        type:/, 'include: undefined,\n        type:'],
     ["kind-filter", "tablePage", /kindFilter && r\.kind !== kindFilter/, "false"],
     ["bulk-inactivate-route", "table", /row\.kind === "trailer" \? "equipment" : "units"/, '"units"'],
     ["bulk-split", "table", /const trailers = selectedRows\.filter\(\(row\) => row\.kind === "trailer"\)/, "const trailers = []"],
