@@ -745,6 +745,8 @@ export function getArrivingSoon(params: {
   severity_min?: "info" | "warning" | "severe";
   limit?: number;
   offset?: number;
+  recent_limit?: number;
+  recent_offset?: number;
 }) {
   const qs = new URLSearchParams();
   qs.set("operating_company_id", params.operating_company_id);
@@ -754,7 +756,9 @@ export function getArrivingSoon(params: {
   if (params.severity_min) qs.set("severity_min", params.severity_min);
   if (params.limit != null) qs.set("limit", String(params.limit));
   if (params.offset != null) qs.set("offset", String(params.offset));
-  return apiRequest<{ cards: ArrivingSoonCard[]; counts: Record<string, number>; recent_conversions: ArrivingSoonConversion[] }>(
+  if (params.recent_limit != null) qs.set("recent_limit", String(params.recent_limit));
+  if (params.recent_offset != null) qs.set("recent_offset", String(params.recent_offset));
+  return apiRequest<{ cards: ArrivingSoonCard[]; counts: Record<string, number>; recent_conversions: ArrivingSoonConversion[]; recent_conversions_total_count: number; recent_conversions_limit: number; recent_conversions_offset: number }>(
     `/api/v1/maintenance/arriving-soon?${qs.toString()}`
   );
 }
