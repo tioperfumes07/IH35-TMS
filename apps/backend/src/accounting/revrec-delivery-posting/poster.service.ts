@@ -415,14 +415,24 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
 
     // ACCT-F59 / FAIL-A1 — THE OTHER DIRECTION. The invoice poster already refuses when this latch has
     // fired (loadHasStandingBillLatch, ACCT-F205). Nothing refused the reverse, and the reverse is the
-    // one that actually happened: on prod, JE 7f2fff09 (source `invoice`) posted at 07:14:33.413 and
-    // f19cdf41 (this latch) at 07:14:33.836 — 423ms later. The invoice went FIRST. Both credit 4000
-    // Income 187550 and neither is reversed, so USMCA income is overstated $1,875.50 on real money
-    // (INV-2026-00006 is is_sample_data=false).
+    // one that actually happened: on prod, JE 7f2fff09 (source `invoice`, INV-2026-00006) posted at
+    // 07:14:33.413 and f19cdf41 (this latch's Event 1 earn) at 07:14:33.836 — 423ms later. The invoice
+    // went FIRST.
     //
-    // A one-directional interlock is not an interlock, it is a coin flip on ordering. Today's clean
-    // Delivered wave does NOT prove this closed — that run happened to post the invoice BETWEEN Event 1
-    // and Event 2, which is the direction already covered. This is the untested half.
+    // CORRECTED 2026-08-28 (GO-2228/ACCT-F59, this comment was stale) — the invoice-side duplicate
+    // (7f2fff09) WAS since reversed: JE aaad9534, memo "Void reversal of invoice ...: ACCT-F59:
+    // duplicate revenue — invoice". What remained standing after that reversal was the OTHER half —
+    // this latch's own Event 2 "bill" JEs (a5aa127d/d147470a/98e299dc, DR ar_control/CR
+    // unbilled_revenue) for the same class of double-counted loads — since the invoice poster refusing
+    // to fire going-forward does not retroactively undo a bill JE that already posted. Those three were
+    // reversed via voidJournalEntry (the same reversing-JE mechanism, no new GL math) on 2026-08-28,
+    // returning $9,995.50 from A/R (1100) to Unbilled Revenue (1150) — correct, since Event 1 revenue
+    // still stands and the loads are earned-not-billed now that their invoice-side A/R was reversed.
+    //
+    // A one-directional interlock is still not an interlock on its own — it is a coin flip on ordering.
+    // This gate (loadHasStandingInvoiceGl below) is what closes the reverse direction going forward;
+    // the three historical bill JEs above were the one-time cleanup for postings made before this gate
+    // existed.
     const invoicePostedLoad = await loadHasStandingInvoiceGl(
       client,
       input.operating_company_id,
