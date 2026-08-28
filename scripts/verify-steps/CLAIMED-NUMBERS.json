@@ -1,4 +1,9 @@
 {
+  "9871": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-book-load-modal-z-index-above-drawer"
+  },
   "9867": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
