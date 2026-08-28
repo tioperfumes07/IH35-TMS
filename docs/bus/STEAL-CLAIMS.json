@@ -1,4 +1,5 @@
 {
+  "post.dispatch-bol-summary-failure-honesty": "Codex 2026-08-28 DSP-F7086",
   "post.dispatch-overview-unassigned-units-error-honesty": "Codex 2026-08-28 DSP-F7085",
   "post.dispatch-predispatch-preview-failure-honesty": "Codex 2026-08-28 DSP-F7084",
   "post.dispatch-cancellation-spine-atomicity": "Codex 2026-08-28 DSP-F7083",

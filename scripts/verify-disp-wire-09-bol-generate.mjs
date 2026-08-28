@@ -10,6 +10,7 @@
  *   (e) LoadBolPanel missing bol-generate-button / not used on PodReview + LoadDetailDrawer
  *   (f) Stored-copy download rejects silently instead of surfacing an operator error
  *   (g) Generate BOL closes over a mutable load/company or applies stale completion state
+ *   (h) Summary loading/failure masquerades as zero POD/BOL history or permits duplicate generation
  *
  * Mutation-tested both directions.
  *
@@ -90,6 +91,12 @@ export function auditBolWire(sources) {
   }
   if (!/generateMutation\.mutate\(\{\s*loadId,\s*companyId,\s*generation: generateGenerationRef\.current,\s*\}\)/.test(panel)) {
     problems.push(`${PATHS.panel}: Generate BOL click must snapshot the visible load/company intent`);
+  }
+  if (!/disabled=\{[\s\S]{0,180}summaryQuery\.isLoading\s*\|\|[\s\S]{0,80}summaryQuery\.isError\s*\|\|[\s\S]{0,180}generateMutation\.isPending/.test(panel)) {
+    problems.push(`${PATHS.panel}: Generate BOL must stay disabled while canonical POD/BOL history is unknown`);
+  }
+  if (!/summaryQuery\.isLoading[\s\S]{0,180}Loading POD and BOL history[\s\S]{0,180}summaryQuery\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,240}POD and BOL history unavailable\.[\s\S]{0,180}summaryQuery\.refetch\(\)[\s\S]{0,360}pods\.length[\s\S]{0,160}bols\.length/.test(panel)) {
+    problems.push(`${PATHS.panel}: summary loading/error must render before canonical POD/BOL counts with exact retry`);
   }
   if (!/data-testid=["']bol-stored-download-button["'][\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,360}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
@@ -173,6 +180,24 @@ function selftest() {
           panel: mutate(real.panel, 'data-testid="bol-generate-button"', 'data-testid="bol-generate-GONE"', "btn"),
         }),
       expect: "bol-generate-button",
+    },
+    {
+      label: "summary failure masquerades as empty history",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(real.panel, "summaryQuery.isError ? (", "false ? (", "summary failure"),
+        }),
+      expect: "summary loading/error must render",
+    },
+    {
+      label: "generate enabled while summary failed",
+      run: () =>
+        auditBolWire({
+          ...real,
+          panel: mutate(real.panel, "summaryQuery.isError ||", "false ||", "summary generate gate"),
+        }),
+      expect: "Generate BOL must stay disabled",
     },
     {
       label: "stored download rejection handler removed",

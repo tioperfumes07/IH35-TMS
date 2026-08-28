@@ -1844,3 +1844,4 @@ CODEX | WORKING | GO-0009 | FINDING=DSP-F7082 | NOW=Book Load create spine atomi
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7083 | NOW=cancellation spine vertical completion | GUARD=verify-a2 9/9 | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-0009 | FINDING=DSP-F7084 | NOW=pre-dispatch preview failure honesty | GUARD=predispatch-panel 2/2 | NEXT=FAST-MERGE | GO
 Codex | WORKING | DSP-F7085 | CLAIM=post.dispatch-overview-unassigned-units-error-honesty | SOURCE=units-without-load query→overview KPI+panel | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7086 | CLAIM=post.dispatch-bol-summary-failure-honesty | SOURCE=POD+BOL summary→shared Pod Review+Load Detail panel | NEXT=guard+FAST-MERGE | GO
