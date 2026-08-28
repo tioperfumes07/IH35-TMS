@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * CUST-S02 — Customer Transaction List must load accounting.invoices via listInvoices
+ * CUST-S02 — Customer Transaction List must load the complete accounting.invoices range via listAllInvoices
  * (not a silent empty / fixture). Neon lucia 2026-08-03: 11981 invoices, all with customer_id.
  *
  *   node scripts/verify-cust-s02-transaction-list-invoices.mjs
@@ -21,17 +21,17 @@ function assert(files) {
   const page = files[PAGE] ?? "";
   const api = files[API] ?? "";
 
-  if (!/listInvoices/.test(api) || !/\/api\/v1\/.*invoice/i.test(api)) {
-    problems.push(`${API}: must export listInvoices hitting invoice API`);
+  if (!/listAllInvoices/.test(api) || !/\/api\/v1\/.*invoice/i.test(api)) {
+    problems.push(`${API}: must export listAllInvoices hitting invoice API`);
   }
-  if (!/import \{[^}]*listInvoices/.test(page) && !/listInvoices/.test(page)) {
-    problems.push(`${PAGE}: must import/use listInvoices`);
+  if (!/import \{[^}]*listAllInvoices/.test(page)) {
+    problems.push(`${PAGE}: must import listAllInvoices`);
   }
   if (!/transaction_list/.test(page)) {
     problems.push(`${PAGE}: missing transaction_list tab`);
   }
-  if (!/listInvoices\(/.test(page)) {
-    problems.push(`${PAGE}: transaction list must call listInvoices(`);
+  if (!/queryKey: \["customers", "transactions"[\s\S]*?listAllInvoices\(companyId, \{[\s\S]*?customer_id: selectedCustomer!\.id/.test(page)) {
+    problems.push(`${PAGE}: transaction list must call company/customer-scoped listAllInvoices(`);
   }
   if (/FAKE_INVOICES|fixtureInvoices|MOCK_INVOICES/.test(page)) {
     problems.push(`${PAGE}: must not use fixture invoices`);
@@ -44,9 +44,9 @@ const files = Object.fromEntries(
 );
 
 if (SELFTEST) {
-  const planted = { ...files, [PAGE]: files[PAGE].replace(/listInvoices\(/g, "listSomethingElse(") };
+  const planted = { ...files, [PAGE]: files[PAGE].replace(/listAllInvoices\(/g, "listSomethingElse(") };
   const caught = assert(planted);
-  if (!caught.some((p) => /listInvoices\(/.test(p))) {
+  if (!caught.some((p) => /listAllInvoices\(/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL`, caught);
     process.exit(1);
   }
@@ -60,5 +60,5 @@ if (problems.length) {
   for (const p of problems) console.error("  - " + p);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — Transaction List wired to listInvoices (Neon invoices=11981 all with customer_id)`);
+console.log(`${LABEL}: OK — Transaction List wired to company/customer-scoped listAllInvoices`);
 process.exit(0);
