@@ -983,8 +983,15 @@ export function WorkOrderDetailPage() {
         <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900">WO cost context (live)</summary>
         <div className="border-t border-gray-100 px-3 py-2 text-xs text-gray-700">
           {costQ.isLoading ? <p>Loading…</p> : null}
-          {costQ.isError ? <p className="text-red-600">Could not load cost context.</p> : null}
-          {costQ.data ? (
+          {costQ.isError ? (
+            <ListErrorState
+              title="Couldn't load work order cost context"
+              status={0}
+              message={costQ.error instanceof Error ? costQ.error.message : undefined}
+              onRetry={() => void costQ.refetch()}
+            />
+          ) : null}
+          {!costQ.isError && costQ.data ? (
             <ul className="list-inside list-disc space-y-1">
               <li>Expense categories (Section A): {costQ.data.expense_categories.length}</li>
               <li>Items (Section B): {costQ.data.items.length}</li>
