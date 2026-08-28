@@ -28,9 +28,9 @@ const KEEP = ["detail.quality", "detail.loads"];
 const DROP = ["detail.billing", "detail.lanes", "detail.lanes.create", "detail.contracts", "detail.pnl"];
 
 const WIRING = [
-  [DETAIL, /kind="load"[\s\S]{0,80}id=\{event\.related_load_id\}/],
-  [DETAIL, /kind="load"[\s\S]{0,80}id=\{load\.id\}/],
-  [DETAIL, /listLoads\(\{\s*customer_id: id,/],
+  [DETAIL, /<EntityLinkOrTombstone\s+kind="load"[\s\S]{0,80}id=\{event\.related_load_id\}/],
+  [DETAIL, /<EntityLinkOrTombstone\s+kind="load"[\s\S]{0,80}id=\{load\.id\}/],
+  [DETAIL, /listAllLoads\(\{\s*customer_id: id,/],
   [DETAIL, /operating_company_id: operatingCompanyId \? \[operatingCompanyId\] : undefined,/],
   [DETAIL, /activeTab === "Loads"/],
   [DETAIL, /onRowClick=\{\(load\) => navigate\(`\/dispatch\/loads\/\$\{load\.id\}`\)\}/],
@@ -70,7 +70,7 @@ export function verify(source) {
   }
 
   for (const [file, pattern] of WIRING) {
-    if (!pattern.test(source.detail || "")) failures.push(`${file}: missing real EntityLink kind="load" wiring`);
+    if (!pattern.test(source.detail || "")) failures.push(`${file}: missing real EntityLinkOrTombstone kind="load" wiring`);
   }
   for (const pattern of PRODUCER_WIRING) {
     if (!pattern.test(source.loadsRoute || "")) failures.push(`${LOADS_ROUTE}: customer-filtered load list must preserve archived customer history through the same-company resolver`);
