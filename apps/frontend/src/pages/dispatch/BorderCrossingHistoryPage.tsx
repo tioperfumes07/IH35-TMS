@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -39,12 +39,25 @@ export function BorderCrossingHistoryPage() {
   const [loading, setLoading] = useState(false);
   // C-07: never swallow fetch failures into an empty table (looks like "no crossings").
   const [loadError, setLoadError] = useState<string | null>(null);
+  const scopeGenerationRef = useRef(0);
+  const [retryGeneration, setRetryGeneration] = useState(0);
+
+  const retryHistory = useCallback(() => {
+    setRetryGeneration((generation) => generation + 1);
+  }, []);
 
   useEffect(() => {
-    if (!selectedCompanyId) return;
-    setLoading(true);
+    const submittedGeneration = ++scopeGenerationRef.current;
+    const submittedCompanyId = selectedCompanyId;
+    setRows([]);
+    setSelected(null);
     setLoadError(null);
-    void fetch(resolveApiUrl(`/api/v1/border-crossing/history?operating_company_id=${encodeURIComponent(selectedCompanyId)}`),
+    if (!submittedCompanyId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void fetch(resolveApiUrl(`/api/v1/border-crossing/history?operating_company_id=${encodeURIComponent(submittedCompanyId)}`),
       { credentials: "include" }
     )
       .then(async (res) => {
@@ -54,16 +67,20 @@ export function BorderCrossingHistoryPage() {
         return res.json() as Promise<{ crossings?: CrossingRow[] }>;
       })
       .then((data) => {
+        if (scopeGenerationRef.current !== submittedGeneration) return;
         const nextRows = data.crossings ?? [];
         setRows(nextRows);
         if (deepLinkCrossingId) setSelected(nextRows.find((row) => row.id === deepLinkCrossingId) ?? null);
       })
       .catch((err: unknown) => {
+        if (scopeGenerationRef.current !== submittedGeneration) return;
         setRows([]);
         setLoadError(err instanceof Error ? err.message : "Failed to load border crossing history");
       })
-      .finally(() => setLoading(false));
-  }, [deepLinkCrossingId, selectedCompanyId]);
+      .finally(() => {
+        if (scopeGenerationRef.current === submittedGeneration) setLoading(false);
+      });
+  }, [deepLinkCrossingId, retryGeneration, selectedCompanyId]);
 
   const pdfUrl =
     selected && selectedCompanyId
@@ -123,7 +140,15 @@ export function BorderCrossingHistoryPage() {
             data-testid="border-crossing-history-error"
             role="alert"
           >
-            {loadError}
+            <span>{loadError}</span>
+            <button
+              type="button"
+              className="ml-3 rounded-sm border border-red-300 bg-white px-2 py-1 font-medium"
+              onClick={retryHistory}
+              disabled={loading}
+            >
+              Retry
+            </button>
           </div>
         ) : (
         <ParityTable<CrossingRow>
