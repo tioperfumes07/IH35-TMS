@@ -240,7 +240,7 @@ export function PolicyDetail() {
   const coverageTypeName =
     insuranceTypeLabel(
       policy.coverage_type,
-      policy.coverage_type_name ?? typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name,
+      policy.coverage_type_name ?? (typesQuery.isError ? undefined : typesQuery.data?.find((entry) => entry.code === policy.coverage_type)?.name),
     );
 
   const openEditPanel = () => {
