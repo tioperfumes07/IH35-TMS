@@ -240,6 +240,7 @@ async function findReturningDispatcherMatches(
   if (!normalizedEmail) {
     return {
       returning_dispatcher: false,
+      total_count: 0,
       matched_events: [],
       severity_summary: { severe_count: 0, warning_count: 0, info_count: 0 },
     };
@@ -259,6 +260,10 @@ async function findReturningDispatcherMatches(
         e.cost_recovery_status,
         e.voided_at IS NOT NULL AS voided,
         e.dispatcher_email_snapshot,
+        COUNT(*) OVER()::int AS total_count,
+        COUNT(*) FILTER (WHERE e.severity = 'severe') OVER()::int AS severe_count,
+        COUNT(*) FILTER (WHERE e.severity = 'warning') OVER()::int AS warning_count,
+        COUNT(*) FILTER (WHERE e.severity = 'info') OVER()::int AS info_count,
         er.code AS error_reason_code,
         er.label AS error_reason_label
       FROM mdata.dispatcher_safety_events e
@@ -289,18 +294,17 @@ async function findReturningDispatcherMatches(
     voided: Boolean(row.voided),
   }));
 
-  const severitySummary = matchedEvents.reduce(
-    (acc, event) => {
-      if (event.severity === "severe") acc.severe_count += 1;
-      else if (event.severity === "warning") acc.warning_count += 1;
-      else acc.info_count += 1;
-      return acc;
-    },
-    { severe_count: 0, warning_count: 0, info_count: 0 }
-  );
+  const countRow = res.rows[0];
+  const totalCount = Number(countRow?.total_count ?? 0);
+  const severitySummary = {
+    severe_count: Number(countRow?.severe_count ?? 0),
+    warning_count: Number(countRow?.warning_count ?? 0),
+    info_count: Number(countRow?.info_count ?? 0),
+  };
 
   return {
     returning_dispatcher: matchedEvents.length > 0,
+    total_count: totalCount,
     matched_events: matchedEvents,
     severity_summary: severitySummary,
   };

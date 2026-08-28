@@ -543,6 +543,7 @@ export function UsersPage() {
         const details = error.data as ReturningDispatcherDetectionResult & { error: string };
         setReturningDetection({
           returning_dispatcher: true,
+          total_count: details.total_count ?? details.matched_events?.length ?? 0,
           matched_events: details.matched_events ?? [],
           severity_summary: details.severity_summary ?? { severe_count: 0, warning_count: 0, info_count: 0 },
         });
@@ -813,7 +814,7 @@ export function UsersPage() {
                 Returning dispatcher detected — review required
               </p>
               <p className="mt-1">
-                {returningDetection.matched_events.length} prior safety event{returningDetection.matched_events.length !== 1 ? "s" : ""}:{" "}
+                {returningDetection.total_count} prior safety event{returningDetection.total_count !== 1 ? "s" : ""}:{" "}
                 {returningDetection.severity_summary.severe_count} severe, {returningDetection.severity_summary.warning_count} warning,{" "}
                 {returningDetection.severity_summary.info_count} info
               </p>
