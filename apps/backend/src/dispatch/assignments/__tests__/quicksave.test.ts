@@ -25,6 +25,31 @@ const DRIVER = "22222222-2222-4222-8222-222222222222";
 type QueryLog = string[];
 
 /**
+ * DISPATCH-ASSIGNMENTS-QUICKSAVE-COMMIT-ROLLBACK-TEST-FAILURE: `withCurrentUser` is fully mocked
+ * above (`vi.mock("../../../auth/db.js", ...)`), which means the real transaction wrapper —
+ * `client.query("BEGIN")` / `"COMMIT"` on success / `"ROLLBACK"` on throw (see
+ * `apps/backend/src/auth/db.ts`, `withCurrentUser`) — never runs in these tests. Every
+ * `mockImplementation` below used to be a bare `(_uid, fn) => fn(client)` passthrough, so no
+ * BEGIN/COMMIT/ROLLBACK statement ever reached the query log — while two assertions still expected
+ * to find one. This mock restores that fidelity so the mocked transaction boundary matches the real
+ * one `reassignDriver`/`reassignUnit`/`reassignTrailer` actually rely on (none of them issue their
+ * own BEGIN/COMMIT/ROLLBACK — that responsibility belongs entirely to `withCurrentUser`).
+ */
+function withTransactionMock<C extends { query: (sql: string, values?: unknown[]) => Promise<unknown> }>(client: C) {
+  return async (_uid: string, fn: (c: C) => Promise<unknown>) => {
+    await client.query("BEGIN");
+    try {
+      const result = await fn(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw err;
+    }
+  };
+}
+
+/**
  * Build a fake PoolClient. `credRow` is what the shared qualification gate query returns for the
  * driver (expired CDL / missing medical / hazmat-unqualified, etc.). The gate is NOT mocked — this
  * proves reassignDriver actually delegates to it and blocks.
@@ -89,7 +114,7 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
   it("BLOCKS an expired-CDL driver with E_DRIVER_NOT_QUALIFIED and never writes the assignment", async () => {
     const log: QueryLog = [];
     const client = makeClient({ ...QUALIFIED, cdl_expired: true, cdl_expires_at: "2020-01-01" }, log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(withTransactionMock(client));
 
     const { reassignDriver } = await import("../quicksave.service.js");
     await expect(
@@ -103,7 +128,7 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
   it("BLOCKS a missing-medical-card driver", async () => {
     const log: QueryLog = [];
     const client = makeClient({ ...QUALIFIED, med_missing: true, med_expiry_date: null }, log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(withTransactionMock(client));
 
     const { reassignDriver } = await import("../quicksave.service.js");
     await expect(
@@ -115,7 +140,7 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
   it("BLOCKS a hazmat-unqualified driver on a hazmat load", async () => {
     const log: QueryLog = [];
     const client = makeClient({ ...QUALIFIED, hazmat_blocked: true, hazmat_endorsement_expires_at: null }, log, true);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(withTransactionMock(client));
 
     const { reassignDriver } = await import("../quicksave.service.js");
     await expect(
@@ -127,7 +152,7 @@ describe("DISP-2 quicksave reassignDriver applies the shared driver-qualificatio
   it("ALLOWS a fully-qualified driver (writes the assignment + commits)", async () => {
     const log: QueryLog = [];
     const client = makeClient({ ...QUALIFIED }, log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(withTransactionMock(client));
 
     const { reassignDriver } = await import("../quicksave.service.js");
     const result = await reassignDriver(USER, { operating_company_id: OPCO, load_uuid: LOAD, driver_uuid: DRIVER });
@@ -190,7 +215,7 @@ describe("DISP-F6157: quicksave must never write the co-driver uuid into a *_tra
   it("reassignUnit: carries the canonical trailer through unchanged, never the co-driver uuid", async () => {
     const log: QueryLog = [];
     const { client, insertedValues } = makeClientWithCoDriverAndTrailer(log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    withCurrentUserMock.mockImplementation(withTransactionMock(client));
 
     const { reassignUnit } = await import("../quicksave.service.js");
     await reassignUnit(USER, { operating_company_id: OPCO, load_uuid: LOAD, unit_uuid: UNIT });
