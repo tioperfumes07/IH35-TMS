@@ -21,7 +21,7 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
     refetchInterval: 60_000,
   });
 
-  const rows = query.data?.rows ?? [];
+  const rows = query.isError ? [] : query.data?.rows ?? [];
 
   const columns = useMemo<Array<ParityColumn<FleetLocationHosRow>>>(
     () => [
