@@ -743,6 +743,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T15:25:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.insurance-claim-created-label-semantic-guard",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:05:00-05:00",
+      "go": "0004"
     }
   ]
 }

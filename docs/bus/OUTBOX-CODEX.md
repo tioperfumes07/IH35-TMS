@@ -1789,3 +1789,5 @@ Codex | WORKING | DSP-F7055 | CLAIM=post.dispatch-assign-driver-complete-roster-
 Codex | SHIPPED | SAF-F7054 | PR=#17011 @ c9af709f3a | Built=authorized D&A labels 13/13 | NEXT=dispatch driver picker | GO
 Codex | WORKING | INS-F7056 | CLAIM=post.insurance-policy-unit-complete-roster-guard | SOURCE=policy modal+wizard→listAllUnits company+trailers | NEXT=guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7055 | PR=#17012 @ 5c4a854000 | Built=honest created-driver HOS 8/8 | NEXT=insurance unit picker | GO
+Codex | SHIPPED | INS-F7056 | PR=#17013 @ 5f20fcb700 | Built=policy unit complete roster guard 10/10 | NEXT=lawsuit claim creator guard | GO
+Codex | WORKING | INS-F7057 | CLAIM=post.insurance-claim-created-label-semantic-guard | SOURCE=ClaimCreateModal onSuccess→persisted id+claim_number | NEXT=guard+selftest+FAST-MERGE | GO
