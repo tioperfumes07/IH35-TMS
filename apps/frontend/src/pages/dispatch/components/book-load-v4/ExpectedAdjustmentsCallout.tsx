@@ -1,8 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { UseFormRegister, UseFormSetValue, UseFormWatch } from "react-hook-form";
-import { detentionReasonsCatalogClient } from "../../../../api/catalogs-dispatch";
-import { CappedListNotice } from "../../../../components/CappedListNotice";
+import { detentionReasonsCatalogClient, listAllDispatchCatalogRows } from "../../../../api/catalogs-dispatch";
 import { ReferenceSelect } from "../../../../components/parity/ReferenceSelect";
 
 type Props = {
@@ -20,10 +19,9 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
   const detentionReasonsQuery = useQuery({
     queryKey: ["book-load", "detention-reasons", operatingCompanyId],
     queryFn: () =>
-      detentionReasonsCatalogClient.list({
+      listAllDispatchCatalogRows(detentionReasonsCatalogClient, {
         operating_company_id: operatingCompanyId,
         is_active: "true",
-        limit: 200,
       }),
     enabled: Boolean(operatingCompanyId),
   });
@@ -85,14 +83,6 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                   void detentionReasonsQuery.refetch();
                   void queryClient.invalidateQueries({ queryKey: ["book-load", "detention-reasons", operatingCompanyId] });
                 }}
-              />
-              {/* CLS-SILENT-CAP: detention reason picker caps at 200; surfacing truncation so a reason past the cap is not silently missing. */}
-              <CappedListNotice
-                shown={detentionReasonOptions.length}
-                limit={200}
-                total={detentionReasonsQuery.data?.total ?? null}
-                hint="Type to search for a reason that is not listed."
-                className="text-[11px] text-slate-600"
               />
             </div>
           ) : null}
