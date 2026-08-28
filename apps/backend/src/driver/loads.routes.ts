@@ -474,9 +474,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     if (!driver) return;
 
     const updated = await withCurrentUser(req.user!.uuid, async (client) => {
-      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null }>(
+      const stopRes = await client.query<{ id: string; stop_type: string; status: string; load_status: string; latitude: number | null; longitude: number | null; operating_company_id: string }>(
         `
-          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude
+          SELECT s.id, s.stop_type::text, s.status::text, l.status::text AS load_status, loc.latitude, loc.longitude,
+                 l.operating_company_id::text AS operating_company_id
           FROM mdata.load_stops s
           JOIN mdata.loads l ON l.id = s.load_id
           LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = l.operating_company_id
@@ -484,6 +485,16 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             AND s.load_id = $2
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
+            AND (
+              l.operating_company_id = (SELECT d.operating_company_id FROM mdata.drivers d WHERE d.id = $3)
+              OR EXISTS (
+                SELECT 1 FROM mdata.driver_company_authorizations driver_loads_arrive_dca
+                WHERE driver_loads_arrive_dca.driver_id = $3
+                  AND driver_loads_arrive_dca.company_id = l.operating_company_id
+                  AND driver_loads_arrive_dca.is_authorized = true
+                  AND driver_loads_arrive_dca.deactivated_at IS NULL
+              )
+            )
           LIMIT 1
         `,
         [params.data.stopId, params.data.id, driver.id]
@@ -510,7 +521,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         [params.data.stopId]
       );
 
-      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+      await client.query(
+        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
+        [params.data.id, nextLoadStatus, stop.operating_company_id]
+      );
 
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
@@ -615,7 +629,10 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         [params.data.stopId]
       );
 
-      await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [params.data.id, nextLoadStatus]);
+      await client.query(
+        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
+        [params.data.id, nextLoadStatus, stop.operating_company_id]
+      );
 
       // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
       // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be
