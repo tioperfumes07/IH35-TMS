@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["legal"],"cols":["legal_matter"],"leaves":["matters.list","matters.create","matters.detail"],"task":"LEGAL-F7062-MATTER-IDENTITY-VERTICAL","vertical":"column-wave"} */
 /**
  * verify-legal-matters-list-row-deeplink.mjs
  *
@@ -24,9 +25,11 @@ const LABEL = "verify-legal-matters-list-row-deeplink";
 const LIST_PAGE = "apps/frontend/src/pages/legal/matters/LegalMattersListPage.tsx";
 const ENTITY_LINK = "apps/frontend/src/components/shared/EntityLink.tsx";
 const MANIFEST = "apps/frontend/src/routes/manifest.tsx";
+const NEW_PAGE = "apps/frontend/src/pages/legal/matters/LegalMatterNewPage.tsx";
+const DETAIL_PAGE = "apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx";
 
 /** Pure checks — takes text so --selftest can inject fixtures. */
-export function check({ listPage, entityLink, manifest }) {
+export function check({ listPage, entityLink, manifest, newPage, detailPage }) {
   const f = [];
 
   if (!listPage) {
@@ -59,6 +62,12 @@ export function check({ listPage, entityLink, manifest }) {
   } else if (!/path\s*=\s*["']\/legal\/matters\/:id["']/.test(manifest)) {
     f.push(`${MANIFEST}: must register /legal/matters/:id detail route`);
   }
+  if (!/legalMattersApi\.create\(companyId, formStateToCreatePayload\(form\)\)/.test(newPage ?? "") || !/onSuccess: \(data\) => navigate\(`\/legal\/matters\/\$\{String\(data\.matter\.id \?\? ""\)\}`\)/.test(newPage ?? "")) {
+    f.push(`${NEW_PAGE}: create must write under the selected company and navigate to the persisted matter id`);
+  }
+  if (!/queryFn: \(\) => legalMattersApi\.get\(companyId, id\)/.test(detailPage ?? "") || !/title=\{matter \? String\(matter\.matter_number \?\? "Matter"\) : "Matter"\}/.test(detailPage ?? "")) {
+    f.push(`${DETAIL_PAGE}: detail must read exact company/id and render the human matter number`);
+  }
 
   return f;
 }
@@ -75,6 +84,8 @@ export function run() {
     listPage: read(LIST_PAGE),
     entityLink: read(ENTITY_LINK),
     manifest: read(MANIFEST),
+    newPage: read(NEW_PAGE),
+    detailPage: read(DETAIL_PAGE),
   });
 }
 
@@ -96,15 +107,19 @@ if (process.argv.includes("--selftest")) {
       return \`/legal/matters/\${id}\`;
   `;
   const goodManifest = `path="/legal/matters/:id"`;
+  const goodNew = `legalMattersApi.create(companyId, formStateToCreatePayload(form)); onSuccess: (data) => navigate(\`/legal/matters/\${String(data.matter.id ?? "")}\`)`;
+  const goodDetail = `queryFn: () => legalMattersApi.get(companyId, id); title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}`;
 
   const checks = [
-    ["healthy wiring pass", check({ listPage: goodList, entityLink: goodEntity, manifest: goodManifest }).length === 0],
+    ["healthy wiring pass", check({ listPage: goodList, entityLink: goodEntity, manifest: goodManifest, newPage: goodNew, detailPage: goodDetail }).length === 0],
     [
       "missing onRowClick caught",
       check({
         listPage: goodList.replace("onRowClick={(row)", "onRowClickDisabled={(row)"),
         entityLink: goodEntity,
         manifest: goodManifest,
+        newPage: goodNew,
+        detailPage: goodDetail,
       }).some((x) => x.includes("onRowClick")),
     ],
     [
@@ -113,6 +128,8 @@ if (process.argv.includes("--selftest")) {
         listPage: goodList.replace("if (path) navigate(path)", "if (path) return"),
         entityLink: goodEntity,
         manifest: goodManifest,
+        newPage: goodNew,
+        detailPage: goodDetail,
       }).some((x) => x.includes("matterDetailPath UUID guard")),
     ],
     [
@@ -121,6 +138,8 @@ if (process.argv.includes("--selftest")) {
         listPage: goodList.replace('kind="matter"', 'kind="invoice"'),
         entityLink: goodEntity,
         manifest: goodManifest,
+        newPage: goodNew,
+        detailPage: goodDetail,
       }).some((x) => x.includes('kind="matter"')),
     ],
     [
@@ -129,8 +148,12 @@ if (process.argv.includes("--selftest")) {
         listPage: goodList,
         entityLink: goodEntity,
         manifest: `path="/legal/matters"`,
+        newPage: goodNew,
+        detailPage: goodDetail,
       }).some((x) => x.includes("/legal/matters/:id")),
     ],
+    ["create identity caught", check({ listPage: goodList, entityLink: goodEntity, manifest: goodManifest, newPage: goodNew.replace("data.matter.id", "null"), detailPage: goodDetail }).some((x) => x.includes("persisted matter id"))],
+    ["detail identity caught", check({ listPage: goodList, entityLink: goodEntity, manifest: goodManifest, newPage: goodNew, detailPage: goodDetail.replace("companyId, id", "companyId, ''") }).some((x) => x.includes("exact company/id"))],
   ];
 
   const failed = checks.filter(([, ok]) => !ok);
@@ -152,7 +175,7 @@ if (isMain) {
     process.exit(1);
   }
   console.log(
-    `${LABEL}: OK — LegalMattersListPage onRowClick + EntityLink matter → /legal/matters/:id`,
+    `${LABEL}: OK — legal matter create→list→exact detail preserves canonical id and human number`,
   );
   process.exit(0);
 }
