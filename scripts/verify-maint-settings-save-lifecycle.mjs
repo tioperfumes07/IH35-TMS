@@ -15,6 +15,9 @@ function inspect(value) {
     [/companyId: operatingCompanyId[\s\S]*generation: saveGenerationRef\.current[\s\S]*pm_interval_days_default: Number\(pmIntervalDays\)[\s\S]*default_shop_location: defaultShopLocation\.trim\(\)[\s\S]*bay_assignment_policy: bayAssignmentPolicy\.trim\(\)[\s\S]*notification_email_enabled: notificationEmailEnabled/, "submitter does not snapshot complete settings payload"],
     [/onSubmit=\{\(event\) => \{[\s\S]*saveSettings\(\)/, "mounted form bypasses guarded submitter"],
     [/saveMutation\.isError[\s\S]*Save failed/, "save failure is not surfaced"],
+    [/const saveSettings[\s\S]*if \(settingsQuery\.isError\) return;/, "save remains callable during failed settings read"],
+    [/settingsQuery\.isError \? \([\s\S]*ListErrorState[\s\S]*onRetry=\{\(\) => void settingsQuery\.refetch\(\)\}/, "failed settings read lacks exact Retry"],
+    [/\{!settingsQuery\.isError \? <>[\s\S]*maintenance-settings-save[\s\S]*<\/\> : null\}/, "failed settings read leaves defaults and Save visible"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   return failures;
@@ -31,6 +34,9 @@ if (process.argv.includes("--selftest")) {
     ["notification_email_enabled: notificationEmailEnabled", "notification_email_enabled: true"],
     ["saveSettings();", "saveMutation.mutate();"],
     ["saveMutation.isError", "false"],
+    ["if (settingsQuery.isError) return;", "if (false) return;"],
+    ["onRetry={() => void settingsQuery.refetch()}", "onRetry={undefined}"],
+    ["{!settingsQuery.isError ? <>", "{true ? <>"],
   ];
   for (const [before, after] of mutations) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);

@@ -1676,3 +1676,5 @@ Codex | SHIPPED | INS-F6993 | PR=#16952 @ 988e6057b7 | Built=policy list+detail 
 Codex | WORKING | MAINT-F6994 | CLAIM=post.maintenance-fault-rule-read-recovery | vertical=create+edit+save+retry | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6994 | PR=#16953 @ 4cf005f2ae | Built=fault rules create+edit+save+retry | Live=post-deploy UNVERIFIED | NEXT=fault-drafts recovery census | GO
 Codex | WORKING | MAINT-F6995 | CLAIM=post.maintenance-fault-draft-read-recovery | vertical=rows+review+confirm+retry | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6995 | PR=#16954 @ 7fb87a8ab5 | Built=fault drafts rows+review+confirm+retry | Live=post-deploy UNVERIFIED | NEXT=maintenance recovery census | GO
+Codex | WORKING | MAINT-F6996 | CLAIM=post.maintenance-settings-read-recovery | vertical=hydrate+edit+save+retry | NEXT=guard+FAST-MERGE | GO

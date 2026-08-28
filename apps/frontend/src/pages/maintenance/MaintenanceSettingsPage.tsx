@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { getMaintenanceSettings, updateMaintenanceSettings } from "../../api/maintenance";
 import { Button } from "../../components/Button";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -61,6 +62,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
   });
 
   const saveSettings = () => {
+    if (settingsQuery.isError) return;
     saveMutation.mutate({
       companyId: operatingCompanyId,
       generation: saveGenerationRef.current,
@@ -88,15 +90,14 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
         </p>
       ) : null}
       {settingsQuery.isError ? (
-        <p className="rounded-sm border border-slate-300 bg-slate-50 p-3 text-xs text-slate-700" role="alert">
-          Maintenance settings failed to load for this entity — this is not an empty configuration.
-        </p>
+        <ListErrorState title="Couldn't load maintenance settings" status={0} message={(settingsQuery.error as Error)?.message} onRetry={() => void settingsQuery.refetch()} />
       ) : null}
       {!settingsQuery.isLoading && !settingsQuery.isError && !settings ? (
         <p className="text-xs text-slate-500">
           No maintenance settings row yet for this entity — save defaults below to create one.
         </p>
       ) : null}
+      {!settingsQuery.isError ? <>
       <section className="overflow-hidden rounded-sm border border-slate-300 bg-white">
         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-700">Maintenance settings</h2>
@@ -182,6 +183,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
           Save
         </Button>
       </div>
+      </> : null}
     </form>
   );
 }
