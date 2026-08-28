@@ -328,6 +328,7 @@ import { registerFinanceLoanWizardRoutes } from "./finance/loan-wizard/routes.js
 import { registerFinanceCalculatorRoutes } from "./finance/calculator/routes.js";
 import { registerFinanceAmortizationRoutes } from "./finance/amortization/routes.js";
 import { registerFinanceScenariosRoutes } from "./finance/scenarios/routes.js";
+import { registerBreakEvenRoutes } from "./accounting/break-even.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
 import { registerSpineEventsRoutes } from "./audit/spine-events.routes.js";
@@ -1126,6 +1127,7 @@ async function main() {
   await registerFinanceCalculatorRoutes(app);
   await registerFinanceAmortizationRoutes(app);
   await registerFinanceScenariosRoutes(app);
+  await registerBreakEvenRoutes(app);
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
   await registerSpineEventsRoutes(app);
