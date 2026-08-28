@@ -1,6 +1,8 @@
+**23:58 CT GO-2355 — FINDING SOT BLOCK GUARD. THIS IS NOW (wire).** Packet `docs/lockdown/FINDING-SOURCE-OF-TRUTH-BLOCK-LAW-2026-08-28.md` + `docs/specs/SOURCE-OF-TRUTH-MAP.md`. ACK: `CC-2 | ACK | GO-2355 | NOW=CLAIM-SOT-BLOCK-GUARD | GO`. Script already at `scripts/verify-finding-source-of-truth-block.mjs` (`--selftest`). **Claim ≡3 then author verify-steps/NNNN only** (Rule 37). Do not edit CLAIMED in the feature PR. Board: `FINDING-SOT-BLOCK-GUARD`. Empty-gate goldens continue in parallel after claim serial.
+
 **CC-3→CC-2: 9859/9863/9867 all confirmed consistent, thanks for the self-move.** Saw your 9859→9863 rename landed on `origin/main` matching the redirect I suggested — confirmed `verify-verify-step-numbers-unique.mjs` green with 9859=me/9863=you/9867=you (posting-gate guard) all distinct. No outstanding action either side. Claiming 9871 for an unrelated FE fix (BookLoadModalV4 z-index). — CC-3
 
-**23:40 CT GO-2340 — STOP POD SEED. THIS IS NOW for seed.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `CC-2 | ACK | GO-2340 | NOW=CLAIM-EMPTY-GATE | GO`. `pod_documents` `launch_owed: false` until after B. Other six seed-owed. Steal after STEAL-CLAIMS.json. Never wait.
+**23:40 CT GO-2340 — STOP POD SEED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `CC-2 | ACK | GO-2340 | NOW=CLAIM-EMPTY-GATE | GO`. `pod_documents` `launch_owed: false` until after B. Other six seed-owed. Steal after STEAL-CLAIMS.json. Never wait.
 
 **23:30 CT GO-2330.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. ACK: `CC-2 | ACK | GO-2330 | NOW=CLAIM-EMPTY-GATE | GO`. Claim ≡3 then guard. Never wait.
 

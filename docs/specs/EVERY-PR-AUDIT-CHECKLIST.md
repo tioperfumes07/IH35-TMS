@@ -67,6 +67,18 @@ Scoreboards: `docs/module-completion/accounting.md` · `banking.md`.
 
 ---
 
+## 3b · SOURCE-OF-TRUTH block (FINDING not `N/A`)
+
+Required labelled lines (law `docs/lockdown/FINDING-SOURCE-OF-TRUTH-BLOCK-LAW-2026-08-28.md`):
+
+```
+SOURCE-OF-TRUTH: <exact table/file the CODE reads> — proven at <file:line>
+I QUERIED:       <exactly what I ran>
+NOT CHECKED:     <what this query did not cover>
+```
+
+LOOKALIKE map: `docs/specs/SOURCE-OF-TRUTH-MAP.md`. Mismatch = UNVERIFIED.
+
 ## 4 · Evidence block (Rule 16)
 
 ```
