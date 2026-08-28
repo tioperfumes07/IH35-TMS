@@ -27,9 +27,14 @@ function audit(s) {
   // The driver drill is defined in debtAlertColumns and consumed by the cash-advance
   // ParityTable. Keep these as separate structural assertions: a proximity window from
   // the tab branch to the column renderer breaks whenever harmless table chrome grows.
+  // DRV-MONEY-F7034 — the tab branch grew a debt-loading error state (DRV-MONEY-F6110) that
+  // pushed this gap from ~1200 to 1306 chars with the wiring still fully intact; this guard's
+  // own comment predicted exactly this failure mode. Widened with headroom for further chrome
+  // growth — the "advance-tab-binding" selftest mutation below still catches a real disconnect
+  // (it removes the "cash_advances" literal entirely, which fails at any window size).
   if (
     !/cashAdvanceRequestsOfficeApi\.list\(selectedCompanyId!\)/.test(s.drivers) ||
-    !/subnavTab === "cash_advances"[\s\S]{0,1200}columns=\{debtAlertColumns\}/.test(s.drivers) ||
+    !/subnavTab === "cash_advances"[\s\S]{0,2000}columns=\{debtAlertColumns\}/.test(s.drivers) ||
     !/const debtAlertColumns:[\s\S]{0,700}<EntityLink kind="driver"/.test(s.drivers)
   ) {
     failures.push("cash-advance driver reverse/scope missing");
