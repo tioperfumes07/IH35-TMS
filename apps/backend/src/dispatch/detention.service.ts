@@ -263,25 +263,31 @@ export async function closeDetentionEvent(
   });
 }
 
-export async function bridgeDetentionToBilling(
+// DSP-MONEY-F7132A — extracted so approveDetentionRequest (detention-approval.service.ts) can run
+// this bridge INSIDE the same locked transaction as its own status check/flip, instead of as a
+// separate, already-committed transaction between the pending_review read and the final invoiced
+// write. Body is byte-identical to the previous bridgeDetentionToBilling; the only change is taking
+// an existing client instead of opening a new one. bridgeDetentionToBilling below is now a thin
+// wrapper so detention.routes.ts's own standalone bridge-billing caller is unaffected.
+export async function bridgeDetentionToBillingInClientTx(
+  client: PoolClient,
   userId: string,
   operatingCompanyId: string,
   eventId: string
 ) {
-  return withCompany(userId, operatingCompanyId, async (client) => {
-    const existing = await client.query(
-      `
-        SELECT de.*, l.rate_total_cents, l.quicksave_pending_fields
-        FROM dispatch.detention_events de
-        JOIN mdata.loads l ON l.id = de.load_id
-                          AND l.operating_company_id = de.operating_company_id
-        WHERE de.id = $1 AND de.operating_company_id = $2::uuid
-      `,
-      [eventId, operatingCompanyId]
-    );
-    const row = existing.rows[0];
-    if (!row) return { ok: false as const, error: "not_found" as const };
-    if (row.status === "billed") return { ok: false as const, error: "already_billed" as const };
+  const existing = await client.query(
+    `
+      SELECT de.*, l.rate_total_cents, l.quicksave_pending_fields
+      FROM dispatch.detention_events de
+      JOIN mdata.loads l ON l.id = de.load_id
+                        AND l.operating_company_id = de.operating_company_id
+      WHERE de.id = $1 AND de.operating_company_id = $2::uuid
+    `,
+    [eventId, operatingCompanyId]
+  );
+  const row = existing.rows[0];
+  if (!row) return { ok: false as const, error: "not_found" as const };
+  if (row.status === "billed") return { ok: false as const, error: "already_billed" as const };
 
     const billable =
       Number(row.accrued_minutes ?? 0) > 0
@@ -374,8 +380,20 @@ export async function bridgeDetentionToBilling(
       "B21-D5"
     );
 
-    return { ok: true as const, event: updated.rows[0], bridge };
-  });
+  return { ok: true as const, event: updated.rows[0], bridge };
+}
+
+/** Thin wrapper preserving the original standalone-transaction behavior for its other caller
+ * (detention.routes.ts's bridge-billing route). approveDetentionRequest calls the InClientTx form
+ * above directly so the row lock it holds spans this bridge too. */
+export async function bridgeDetentionToBilling(
+  userId: string,
+  operatingCompanyId: string,
+  eventId: string
+) {
+  return withCompany(userId, operatingCompanyId, (client) =>
+    bridgeDetentionToBillingInClientTx(client, userId, operatingCompanyId, eventId)
+  );
 }
 
 export async function notifyCustomerDetentionThreshold(
