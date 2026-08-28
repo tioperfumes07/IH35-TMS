@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BOARD_PATH = path.join(root, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
+const OVERVIEW_PATH = path.join(root, "apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
 const TABLE_PATH = path.join(
   root,
   "apps/frontend/src/pages/dispatch/components/UnitsWithoutLoadTable.tsx"
@@ -42,8 +43,9 @@ const SECTION_RE =
 const ASSIGNMENT_RE =
   /<UnitsWithoutLoadTable[\s\S]{0,300}errorState=\{dataTableErrorState\(unitsWithoutLoadQuery\.error/;
 const FORWARD_RE = /<DataTable[\s\S]{0,200}errorState=\{errorState\}/;
+const OVERVIEW_RE = /unitsWithoutLoadQ\.isLoading[\s\S]{0,180}unitsWithoutLoadQ\.isError[\s\S]{0,220}PanelError\("Couldn't load unassigned units\.",[\s\S]{0,120}unitsWithoutLoadQ\.refetch\(\)[\s\S]{0,180}unitsWithoutLoad\.length === 0/;
 
-export function checkUnassignedUnitsErrorState(boardSrc, tableSrc) {
+export function checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc) {
   const problems = [];
 
   if (!SECTION_RE.test(boardSrc)) {
@@ -62,6 +64,10 @@ export function checkUnassignedUnitsErrorState(boardSrc, tableSrc) {
     problems.push(
       "UnitsWithoutLoadTable.tsx does not forward its errorState prop into <DataTable errorState={errorState} ...> — even if the caller passes one, it would never reach the rendered table"
     );
+  }
+
+  if (!OVERVIEW_RE.test(overviewSrc)) {
+    problems.push("DispatchOverview.tsx must render a retryable unitsWithoutLoadQ error before its honest-empty branch");
   }
 
   return problems;
@@ -85,23 +91,25 @@ if (process.argv.includes("--selftest")) {
       return <DataTable rows={rows} loading={loading} emptyText="All units currently have active loads." />;
     }
   `;
-  const badProblems = checkUnassignedUnitsErrorState(badBoard, badTable);
-  if (badProblems.length !== 3) {
+  const badOverview = `unitsWithoutLoadQ.isLoading ? <PanelLoading /> : unitsWithoutLoad.length === 0 ? PanelEmpty("All units currently have active loads.") : <PanelRows />`;
+  const badProblems = checkUnassignedUnitsErrorState(badBoard, badTable, badOverview);
+  if (badProblems.length !== 4) {
     failures.push(
-      `the real pre-fix defect verbatim expected 3 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
+      `the full pre-fix defect expected 4 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
     );
   }
 
   const goodBoard = fs.readFileSync(BOARD_PATH, "utf8");
   const goodTable = fs.readFileSync(TABLE_PATH, "utf8");
-  const goodProblems = checkUnassignedUnitsErrorState(goodBoard, goodTable);
+  const goodOverview = fs.readFileSync(OVERVIEW_PATH, "utf8");
+  const goodProblems = checkUnassignedUnitsErrorState(goodBoard, goodTable, goodOverview);
   if (goodProblems.length !== 0) {
     failures.push(`the real fixed files were flagged: ${goodProblems.join("; ")}`);
   }
 
   // Partial regression: DataTable forwarding fixed, but the two DispatchBoard.tsx wiring sites
   // still missing — proves the three checks are independent.
-  const partialProblems = checkUnassignedUnitsErrorState(badBoard, goodTable);
+  const partialProblems = checkUnassignedUnitsErrorState(badBoard, goodTable, goodOverview);
   if (partialProblems.length !== 2) {
     failures.push(
       `a partial fix (table forwarding present, board wiring still missing) expected 2 problems, got ${partialProblems.length}: ${partialProblems.join("; ")}`
@@ -122,12 +130,13 @@ if (process.argv.includes("--selftest")) {
 
 const boardSrc = fs.readFileSync(BOARD_PATH, "utf8");
 const tableSrc = fs.readFileSync(TABLE_PATH, "utf8");
-const problems = checkUnassignedUnitsErrorState(boardSrc, tableSrc);
+const overviewSrc = fs.readFileSync(OVERVIEW_PATH, "utf8");
+const problems = checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc);
 if (problems.length) {
   console.error(`${LABEL} FAIL — ${problems.length} problem(s):`);
   for (const p of problems) console.error("  ✗ " + p);
   process.exit(1);
 }
 console.log(
-  `${LABEL} OK — DispatchBoard.tsx's unitsWithoutLoadQuery renders a real error state on failure in both the List/Table and Assignment views, matching the file's own inShopUnitsQuery pattern.`
+  `${LABEL} OK — dispatch board and overview render retryable unassigned-unit errors before honest empty states.`
 );

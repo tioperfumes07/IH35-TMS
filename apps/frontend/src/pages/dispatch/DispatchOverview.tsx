@@ -329,6 +329,8 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
           {unitsWithoutLoadQ.isLoading ? (
             <PanelLoading />
+          ) : unitsWithoutLoadQ.isError ? (
+            PanelError("Couldn't load unassigned units.", () => void unitsWithoutLoadQ.refetch())
           ) : unitsWithoutLoad.length === 0 ? (
             PanelEmpty("All units currently have active loads.")
           ) : (
