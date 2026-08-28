@@ -136,7 +136,6 @@ export async function listIntransitIssues(
                                  )
         WHERE ${clauses.join(" AND ")}
         ORDER BY i.reported_at DESC
-        LIMIT 200
       `,
       values
     );
