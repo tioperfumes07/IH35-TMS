@@ -411,7 +411,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
               dispatch_block_source_type = 'maintenance_arriving_soon',
               updated_at = now()
             WHERE u.id = $1
-              AND u.operating_company_id = $4::uuid
+              AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $4::uuid
               AND EXISTS (
                 SELECT 1
                 FROM mdata.loads l
