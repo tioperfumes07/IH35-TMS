@@ -4,14 +4,16 @@
 
 Do **not** restamp the U14 exclusive table. Work **leftover unique** (500 / dead / silent) + Live Chrome on **current** healthz until each of the six is CERTIFIED COMPLETE (Fully-Wired 1–12 + Live Chrome + zero unique OPEN leftover).
 
-**USMCA `post-gl` FROZEN** until CC-1 lands G1 (`is_sample_data` → JE + aging/balances) **and** G2 (unmapped category throws `ACCOUNT_MAPPING_MISSING`, never silent 9000). KEEP TEST. Do not void. No `BILL-2026-TEST-SHA-*`. Deploy proof = healthz only.
+**SUPERSEDED-AS-NOW by GO-0007** (`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`). G2 is **not** fail-closed `ACCOUNT_MAPPING_MISSING`. G1 = label. KEEP TEST on books. Void only to test void/reversal. Cutover $0 OB / negative bank = not a defect.
+
+**USMCA `post-gl` FROZEN** until CC-1 lands G1 (`is_sample_data` writers → JE + aging/balances). G2 = 9000 **detector** (CC-2 #16884), never silent, never refuse-the-bill. KEEP TEST on the books. No `BILL-2026-TEST-SHA-*`. Deploy proof = healthz only.
 
 ## Urgent 6 (this wave only)
 
 | # | Module | Seat NOW |
 |---|--------|----------|
-| 1 | **accounting** | **CC-1** — G1 then G2 then Option B Event 2. Canonical reversal only. |
-| 2 | **banking** | **CC-2** — leftover unique + INV-3 + 9000≠0 detector. No GL math. |
+| 1 | **accounting** | **CC-1** — **G1 only** then Option B Event 2. Canonical reversal only. No 9000 fail-closed. |
+| 2 | **banking** | **CC-2** — leftover unique + INV-3 + 9000≠0 detector (G2 = silence). No GL math. |
 | 3 | **settlements** | **CC-1** after accounting G1/G2 hop is in a PR (serial money). |
 | 4 | **factoring** | **CC-3** — `factor_id` NOT NULL at submit + reverse `factoring_status` if still broken on live SHA. Code only until freeze lifts. |
 | 5 | **dispatch** | **Codex** — leftover unique 500/dead/silent on `/dispatch`. Query-back. No GL. |

@@ -116,6 +116,28 @@ export function assertStandingDirectivePresent(root = ROOT) {
     if (!/QUERY-BACK/i.test(body) || !/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28/i.test(body)) {
       problems.push(`${DIRECTIVE}: must include QUERY-BACK + QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28`);
     }
+    if (!/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must include TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28`);
+    }
+    if (!/is_sample_data/i.test(body) || !/detector/i.test(body)) {
+      problems.push(`${DIRECTIVE}: must lock G1 is_sample_data label + 9000 detector (not fail-closed)`);
+    }
+  }
+
+  const g1Law = "docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md";
+  if (!fs.existsSync(path.join(root, g1Law))) {
+    problems.push(`MISSING ${g1Law}`);
+  } else {
+    const g1 = fs.readFileSync(path.join(root, g1Law), "utf8");
+    if (!/PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16/i.test(g1)) {
+      problems.push(`${g1Law}: must cite PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16`);
+    }
+    if (!/nobody builds fail-closed/i.test(g1)) {
+      problems.push(`${g1Law}: must forbid 9000 fail-closed as the G2 fix`);
+    }
+    if (!/Keep on the books/i.test(g1)) {
+      problems.push(`${g1Law}: must lock keep-on-books / no void-all-TEST`);
+    }
   }
 
   const queryBackLaw = "docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md";

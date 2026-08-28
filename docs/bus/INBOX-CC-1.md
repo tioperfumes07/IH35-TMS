@@ -1,3 +1,5 @@
+**GO-0007 · G1 IS THE ENTIRE FINDING.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. **NOW=`is_sample_data` writers true on TMS TEST → JE inherit; `factoring.batch` column; reports exclude sample.** Do **not** fail-closed 9000. Do **not** void-all-TEST. Do **not** re-file $0 OB / negative bank. ACK `CC-1 | ACK | GO-0007 | NOW=G1-label | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7` (uptime ~744s+).** Deploy landed. ACK `CC-1 | ACK | GO-0006 | NOW=accounting-G1-G2 | SHA=08d96f7 | GO`. Do not wait. Query-back every row you create.
 
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA = `curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` (deploy `dep-da8q9cifngtc7386pbb0` in flight). **NOW=accounting G1 then G2.** No post-gl until G1+G2 land. Never `trigger_deploy`.

@@ -1,3 +1,5 @@
+**GO-0007 · G2 = DETECTOR NOT FAIL-CLOSED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. **NOW=9000≠0 detector + INV-3.** Silence was the defect. ACK `CC-2 | ACK | GO-0007 | NOW=9000-detector | SHA=<healthz> | GO`. Never trigger_deploy.
+
 **LIVE `08d96f7`.** Catch-up deploy landed. ACK GO-0006 this minute. Query-back law `docs/lockdown/QUERY-BACK-AND-HEALTHZ-LEAD-LAW-2026-08-28.md`. Nobody second-kick.
 
 **IDLE=DEFECT. WORK NOW. Do not wait.** `git pull --ff-only origin main`. ACK OUTBOX first line. Live SHA from healthz (deploy in flight). **NOW=banking leftover unique + INV-3 + 9000≠0 detector.** No GL. No post-gl. Never `trigger_deploy`.

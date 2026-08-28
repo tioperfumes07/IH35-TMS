@@ -637,6 +637,27 @@
     "type": "enforced"
   },
   {
+    "id": "LAW-2026-08-28-G1-LABEL-CUTOVER-FALSE-ALARM",
+    "title": "G1 is is_sample_data labeling not test-in-prod; opening $0 OB and negative TEST bank are cutover design; 9000 detector not fail-closed; keep TEST on books; void only to test void or true need; no CPA",
+    "source_file": "docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md",
+    "guard": "scripts/verify-standing-directive-present.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-28-MODULE-PROGRESS-NOT-N-OF-N-WITH-REMAINING",
+    "title": "MODULE_PROGRESS N of N is illegal while REMAINING is non-empty; MODULE_PROGRESS requires Live=",
+    "source_file": "docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md",
+    "guard": "scripts/verify-module-progress-not-authored.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-28-NO-BULK-TEST-VOID",
+    "title": "No bulk void/delete of TEST rows keyed on is_sample_data or TEST/SAMPLE memo; keep on books",
+    "source_file": "docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md",
+    "guard": "scripts/verify-no-bulk-test-void.mjs",
+    "type": "enforced"
+  },
+  {
     "id": "LAW-2026-08-14-LINK-GEOFENCE-ENTITYLINK-DRILL",
     "title": "geofences gain a real EntityLink kind \u2014 EntityLink.tsx kind=geofence resolves to /dispatch/geofencing?geofence_id=, GeofencesPage.tsx reads that param and highlights the row (was previously write-only, no consumer), GeofenceBreachesTab.tsx's geofence label drills through instead of rendering dead text",
     "source_file": "apps/frontend/src/components/shared/EntityLink.tsx",

@@ -14,4 +14,6 @@ Lead **re-reads** `GET /api/v1/healthz/shallow` `version` every lead turn. INBOX
 
 **Money:** WORM reverse via `reverseJournalEntryNoFlip`. No owner-gate on TRANSP 6103 after 2026-08-28 owner order.
 
+**G2/9000:** detector (CC-2), not fail-closed. **G1:** `is_sample_data` writers. Cutover $0 OB / negative TEST bank = not a defect (`docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`).
+
 Presence: this file + `scripts/verify-economic-columns-c25-c31-present.mjs` + standing directive §3.

@@ -8,7 +8,7 @@ alwaysApply: true
 **Canonical:** `docs/lockdown/CREATE-TEST-THEN-VOID-LAW-2026-08-22.md`
 
 - Empty TMS tables are **expected**. They are **not** a certify blocker and **not** a reason to end a Live Chrome pass.
-- **Create labeled TEST DATA** through the live wizard (save → canonical → reload). **All seats have permission.** **Do not void until launch** — reuse TEST vendors/customers/loads. One void-and-clean pass after launch.
+- **Create labeled TEST DATA** through the live wizard (save → canonical → reload). **All seats have permission.** **Keep TEST on the books** — do not void-all-TEST (empty-table regression). **Void only** to test void/reversal or when the document must be voided. **G1:** `is_sample_data` must be true (`docs/lockdown/TEST-LABEL-G1-AND-CUTOVER-FALSE-ALARM-LAW-2026-08-28.md`). $1,200 placeholders are sanctioned. $0 opening balances / negative TEST bank are **not** defects.
 - **Disabled +Create / Record Payment** → select the required row or **create the TEST document**. Do not report “disabled” as the finding unless the picker is empty **after** you tried create, or the API errors.
 - Forbidden every session: telling the owner “no transactions / cannot certify” without creating the test hop that same turn.
 - **Banking:** create TEST expenses, match, reconcile, test the ledger (`docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`).
