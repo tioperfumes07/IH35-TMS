@@ -147,7 +147,7 @@ export function TerminateConfirmModal({
           <label htmlFor="terminate-event-date" className="text-xs font-semibold text-gray-600">Event date</label>
           <DatePicker
             id="terminate-event-date"
-            max={todayIso()}
+            max={companyToday()}
             value={eventDate}
             onChange={setEventDate}
             className="h-9"

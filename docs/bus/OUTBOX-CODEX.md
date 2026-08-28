@@ -1,3 +1,5 @@
+Codex | WORKING | DRV-F6974 | CLAIM=post.driver-termination-company-date-compile | SOURCE=TerminateConfirmModal event-date lifecycle | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F6973 | PR=#16934 @ b9bbdfd373 | Built=customer factoring reverse retry 4/4 | NEXT=DRV-F6974 | GO
 Codex | WORKING | CUST-F6973 | CLAIM=post.customer-factoring-reverse-error-recovery | vertical=assignment+dispatch-queue+recourse+submit-queue | SOURCE=customer-scoped factoring APIs | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CLS-F6970 | PR=#16933 @ fc37649400 | Built=nonmoney backend company dates 12/12 | routed-money=CC-1 | NEXT=CUST-F6973 | GO
 Codex | WORKING | CLS-F6970 | CLAIM=post.nonmoney-backend-business-date | vertical=maintenance+scheduler+dispatch+integrity+samsara+compliance+OCR | guard=12/12 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
