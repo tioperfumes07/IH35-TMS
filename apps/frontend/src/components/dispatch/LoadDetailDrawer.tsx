@@ -176,7 +176,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     void dispatchLoadQuery.refetch();
     void mdataLoadQuery.refetch();
   };
-  const auditQuery = useLoadAudit(loadId);
+  const auditQuery = useLoadAudit(loadId, operatingCompanyId);
   const updateMutation = useMutation({
     mutationFn: ({ id, body }: { id: string; body: Record<string, unknown> }) => updateLoad(id, body),
     // DISP-F6320: every caller (dispatch flag select, factoring-package generate/email/mark-uploaded)

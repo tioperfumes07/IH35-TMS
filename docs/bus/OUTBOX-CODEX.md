@@ -1,3 +1,4 @@
+Codex | WORKING | DSP-F7127D | CLAIM=load-audit-company-ownership | SOURCE=mdata.loads→audit.audit_events | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127C | PR=#17173 @ a313eb8bb3 | Built=canonical company-scoped load detail contract | NEXT=reread GO-0016 + next unique | GO
 Codex | WORKING | DSP-F7127C | CLAIM=canonical-load-detail-scope-contract | SOURCE=mdata.loads company+id GET | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7127B | CLAIM=load-detail-company-scope-remainder | SOURCE=mdata.loads exact opco detail across cash-advance+invoice | NEXT=guard+FAST-MERGE | GO

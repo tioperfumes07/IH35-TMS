@@ -93,6 +93,22 @@ function check(src, mdataLoadsSrc, drawerSrc, loadApiSrc, factoringSrc, finesSrc
     problems.push(`${MDATA_LOADS}: canonical detail SQL parameters must not restore a null company fallback`);
   }
 
+  const auditStart = mdataLoadsSrc.indexOf('app.get("/api/v1/mdata/loads/:id/audit"');
+  const auditEnd = mdataLoadsSrc.indexOf('app.patch("/api/v1/mdata/loads/:id/status"', auditStart);
+  const auditDetail = auditStart < 0 ? "" : mdataLoadsSrc.slice(auditStart, auditEnd < 0 ? auditStart + 10000 : auditEnd);
+  if (!/loadDetailQuerySchema\.safeParse\(req\.query \?\? \{\}\)/.test(auditDetail)) {
+    problems.push(`${MDATA_LOADS}: load audit GET must require the same company query contract`);
+  }
+  if (!/await assertCompanyMembership\(authUser\.uuid, scopedCompanyId\)/.test(auditDetail)) {
+    problems.push(`${MDATA_LOADS}: load audit GET must validate requested company membership`);
+  }
+  if (!/FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(auditDetail)) {
+    problems.push(`${MDATA_LOADS}: load audit GET must prove load ownership before reading audit events`);
+  }
+  if (!/if \(!ownedLoad\.rows\[0\]\) return null/.test(auditDetail) || !/if \(!result\) return reply\.code\(404\)/.test(auditDetail)) {
+    problems.push(`${MDATA_LOADS}: load audit GET must fail closed when the company does not own the load`);
+  }
+
   // Drawer: ALWAYS race mdata with dispatch (not wait for dispatchFailed). Error-only gating
   // left Overview on "Loading load overview..." while a slow dispatch GET hung 20s+
   // (LV-CUSTOMERS-LOADS-DRAWER-INDEFINITE-LOADING). Prefer dispatch data when present.
@@ -123,6 +139,24 @@ function check(src, mdataLoadsSrc, drawerSrc, loadApiSrc, factoringSrc, finesSrc
   }
   if (!/new URLSearchParams\(\{ operating_company_id: operatingCompanyId \}\)/.test(loadApiSrc)) {
     problems.push(`${LOAD_API}: getLoad must always serialize operating_company_id`);
+  }
+  if (!/export function getLoadAudit\(id: string, operatingCompanyId: string\)/.test(loadApiSrc)) {
+    problems.push(`${LOAD_API}: getLoadAudit must require operating-company scope`);
+  }
+  if (!/\/audit\?\$\{query\.toString\(\)\}/.test(loadApiSrc)) {
+    problems.push(`${LOAD_API}: getLoadAudit must serialize operating_company_id`);
+  }
+  if (!/export function useLoadAudit\(id: string \| null, operatingCompanyId: string \| null \| undefined\)/.test(loadApiSrc)) {
+    problems.push(`${LOAD_API}: useLoadAudit must require company context`);
+  }
+  if (!/queryKey: \["loads", "audit", operatingCompanyId, id\]/.test(loadApiSrc)) {
+    problems.push(`${LOAD_API}: load-audit cache identity must include company`);
+  }
+  if (!/getLoadAudit\(id as string, operatingCompanyId as string\)/.test(loadApiSrc) || !/enabled: Boolean\(id && operatingCompanyId\)/.test(loadApiSrc)) {
+    problems.push(`${LOAD_API}: load-audit query must fail closed until company exists`);
+  }
+  if (!/useLoadAudit\(loadId, operatingCompanyId\)/.test(drawerSrc)) {
+    problems.push(`${DRAWER}: audit reader must carry drawer company scope`);
   }
   if (!/queryKey: \["loads", "detail", operatingCompanyId, id\]/.test(loadApiSrc)) {
     problems.push(`${LOAD_API}: load-detail cache key must include operating company before load id`);
@@ -234,15 +268,27 @@ function main() {
         .replace('["loads", "detail", operatingCompanyId, id]', '["loads", "detail", id]')
         .replace("getLoad(id as string, operatingCompanyId as string)", "getLoad(id as string)")
         .replace("Boolean(id && operatingCompanyId)", "Boolean(id)");
+      const unscopedAuditApi = unscopedApi
+        .replace("export function getLoadAudit(id: string, operatingCompanyId: string)", "export function getLoadAudit(id: string)")
+        .replace("/audit?${query.toString()}", "/audit")
+        .replace("export function useLoadAudit(id: string | null, operatingCompanyId: string | null | undefined)", "export function useLoadAudit(id: string | null)")
+        .replace('["loads", "audit", operatingCompanyId, id]', '["loads", "audit", id]')
+        .replace("getLoadAudit(id as string, operatingCompanyId as string)", "getLoadAudit(id as string)");
       const unscopedConsumers = check(
         src,
         mdataLoadsSrc
           .replace("operating_company_id: z.string().uuid()", "operating_company_id: optionalUuidQueryFilter")
           .replace("await assertCompanyMembership(authUser.uuid, scopedCompanyId)", "if (scopedCompanyId) await assertCompanyMembership(authUser.uuid, scopedCompanyId)")
           .replace("AND l.operating_company_id = $2::uuid", "AND ($2::uuid IS NULL OR l.operating_company_id = $2::uuid)")
-          .replace("[parsedParams.data.id, scopedCompanyId]", "[parsedParams.data.id, scopedCompanyId ?? null]"),
-        drawerSrc.replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)"),
-        unscopedApi,
+          .replace("[parsedParams.data.id, scopedCompanyId]", "[parsedParams.data.id, scopedCompanyId ?? null]")
+          .replace('const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});', 'const parsedQuery = { success: true, data: {} };')
+          .replace('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
+          .replace('FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid', 'FROM mdata.loads WHERE id = $1::uuid')
+          .replace('if (!ownedLoad.rows[0]) return null;', ''),
+        drawerSrc
+          .replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)")
+          .replace("useLoadAudit(loadId, operatingCompanyId)", "useLoadAudit(loadId)"),
+        unscopedAuditApi,
         factoringSrc.replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)"),
         finesSrc.replace("useLoad(loadId, operatingCompanyId)", "useLoad(loadId)"),
         bookLoadSrc
@@ -261,7 +307,7 @@ function main() {
           .replace('["invoice-type-modal", "load-detail", operatingCompanyId, loadId]', '["invoice-type-modal", "load-detail", loadId]')
           .replace("getLoad(String(loadId), operatingCompanyId)", "getLoad(String(loadId))"),
       );
-      if (unscopedConsumers.length < 22) {
+      if (unscopedConsumers.length < 30) {
         console.error(`${LABEL} --selftest FAIL: planted unscoped vertical was not fully detected:\n${unscopedConsumers.join("\n")}`);
         process.exit(1);
       }
@@ -271,7 +317,7 @@ function main() {
         process.exit(1);
       }
       console.log(
-        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and twenty-two unscoped load-detail mutations fail; fixed source passes`,
+        `${LABEL} --selftest OK — planted INNER JOIN, gated fallback, and thirty unscoped load-detail/audit mutations fail; fixed source passes`,
       );
       return;
     } finally {
