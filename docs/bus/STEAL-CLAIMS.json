@@ -1,6 +1,7 @@
 {
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",
   "claims": [
+    { "leftover_id": "post.dispatch-hos-validation-unavailable-visible", "seat": "CODEX", "claimed_at": "2026-08-28T22:05:00-05:00", "go": "0007" },
     { "leftover_id": "post.dispatch-document-history-complete-range", "seat": "CODEX", "claimed_at": "2026-08-28T21:45:00-05:00", "go": "0007" },
     { "leftover_id": "post.dispatch-customer-filter-complete-roster", "seat": "CODEX", "claimed_at": "2026-08-28T21:32:00-05:00", "go": "0006" },
     { "leftover_id": "post.dispatch-layover-history-complete-range", "seat": "CODEX", "claimed_at": "2026-08-28T21:18:00-05:00", "go": "0006" },
