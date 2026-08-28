@@ -1,4 +1,9 @@
 {
+  "9879": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-bank-split-vendor-prefills-default-expense-account"
+  },
   "9878": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
