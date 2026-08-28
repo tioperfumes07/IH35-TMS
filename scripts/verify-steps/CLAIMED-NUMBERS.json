@@ -6631,5 +6631,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-detention-approval-serialized-lifecycle"
+  },
+  "9949": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-rate-effective-date-company-business-date"
   }
 }
