@@ -28,6 +28,9 @@ function failures(sources) {
 
 const sources = Object.fromEntries(leaves.map((leaf) => [leaf.name, readFileSync(leaf.file, "utf8")]));
 const liveFailures = failures(sources);
+if (!/kpisQuery\.isError[\s\S]*Couldn't load parts inventory summary[\s\S]*kpisQuery\.refetch\(\)/.test(sources.parts)) {
+  liveFailures.push("parts: KPI read failure must replace false-zero summary with exact Retry");
+}
 if (liveFailures.length) {
   console.error(`verify-maint-master-data-read-recovery FAIL\n${liveFailures.join("\n")}`);
   process.exit(1);
@@ -42,10 +45,15 @@ if (process.argv.includes("--selftest")) {
       [leaf.name, sources[leaf.name].replace(`if (!voiding || ${q}) return;`, "if (!voiding) return;")],
     );
   }
+  mutations.push(["parts", sources.parts.replace("kpisQuery.isError ? (", "false ? (")]);
   let caught = 0;
   for (const [name, mutated] of mutations) {
     const next = { ...sources, [name]: mutated };
-    if (failures(next).length) caught += 1;
+    const nextFailures = failures(next);
+    if (!/kpisQuery\.isError[\s\S]*Couldn't load parts inventory summary[\s\S]*kpisQuery\.refetch\(\)/.test(next.parts)) {
+      nextFailures.push("parts KPI honesty missing");
+    }
+    if (nextFailures.length) caught += 1;
   }
   if (caught !== mutations.length) {
     console.error(`verify-maint-master-data-read-recovery --selftest FAIL (${caught}/${mutations.length})`);

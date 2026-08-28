@@ -1682,3 +1682,5 @@ Codex | SHIPPED | MAINT-F6996 | PR=#16955 @ 4bab27c068 | Built=settings hydrate+
 Codex | WORKING | MAINT-F6997 | CLAIM=post.maintenance-wo-parts-link-read-recovery | vertical=exact-range+add+drawer+retry | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6997 | PR=#16956 @ 1a2396c69e | Built=WO parts exact-range+add+drawer+retry | Live=post-deploy UNVERIFIED | NEXT=maintenance linkage recovery census | GO
 Codex | WORKING | MAINT-F6998 | CLAIM=post.maintenance-master-data-read-recovery | vertical=parts+vehicles+drivers create/import/edit/void | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F6998 | PR=#16957 @ 321e9b46c9 | Built=parts+vehicles+drivers failed-read write recovery | Live=post-deploy UNVERIFIED | NEXT=MAINT-F6999 parts KPI honesty | GO
+Codex | WORKING | MAINT-F6999 | CLAIM=post.maintenance-parts-kpi-read-honesty | SOURCE=company-scoped parts KPI reader | NEXT=guard+FAST-MERGE | GO

@@ -257,20 +257,28 @@ export function PartsMasterDataPage() {
         }
       />
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-gray-500">Total Parts</div>
-          <div className="text-sm font-semibold">{kpisQuery.data?.total_parts ?? 0}</div>
+      {kpisQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load parts inventory summary"
+          {...formatQueryErrorDetail(kpisQuery.error)}
+          onRetry={() => void kpisQuery.refetch()}
+        />
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
+            <div className="text-gray-500">Total Parts</div>
+            <div className="text-sm font-semibold">{kpisQuery.data?.total_parts ?? 0}</div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
+            <div className="text-gray-500">Low Stock</div>
+            <div className="text-sm font-semibold">{kpisQuery.data?.low_stock_count ?? 0}</div>
+          </div>
+          <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
+            <div className="text-gray-500">Total Inventory Value</div>
+            <div className="text-sm font-semibold">${Number(kpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}</div>
+          </div>
         </div>
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-gray-500">Low Stock</div>
-          <div className="text-sm font-semibold">{kpisQuery.data?.low_stock_count ?? 0}</div>
-        </div>
-        <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs">
-          <div className="text-gray-500">Total Inventory Value</div>
-          <div className="text-sm font-semibold">${Number(kpisQuery.data?.total_inventory_value ?? 0).toLocaleString()}</div>
-        </div>
-      </div>
+      )}
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-3 flex items-center gap-2">
