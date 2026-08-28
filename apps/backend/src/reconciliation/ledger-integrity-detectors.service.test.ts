@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   checkAskMyAccountantForCompany,
+  checkNoGlDeltaForCompany,
   checkPerEntryBalanceForCompany,
   checkSubledgerTieOutForCompany,
 } from "./ledger-integrity-detectors.service.js";
@@ -23,6 +24,8 @@ function makeClient(opts: {
   askAccounts?: Array<{ account_id: string; account_number: string; account_name: string }>;
   openFindingId?: string | null;
   unbalanced?: { count: number; ids: string[] };
+  noGlDeltaInvoices?: { count: number; ids: string[] };
+  noGlDeltaBills?: { count: number; ids: string[] };
 }) {
   const calls: Call[] = [];
   const controlAccounts = opts.controlAccounts ?? {};
@@ -35,6 +38,14 @@ function makeClient(opts: {
       if (sql.includes("WITH je AS") && sql.includes("FROM accounting.journal_entries j")) {
         const unbalanced = opts.unbalanced ?? { count: 0, ids: [] };
         return { rows: [{ unbalanced_count: String(unbalanced.count), unbalanced_ids: unbalanced.ids }] };
+      }
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("NOT EXISTS")) {
+        const d = opts.noGlDeltaInvoices ?? { count: 0, ids: [] };
+        return { rows: [{ count: String(d.count), ids: d.ids }] };
+      }
+      if (sql.includes("FROM accounting.bills b") && sql.includes("NOT EXISTS")) {
+        const d = opts.noGlDeltaBills ?? { count: 0, ids: [] };
+        return { rows: [{ count: String(d.count), ids: d.ids }] };
       }
       if (sql.includes("FROM accounting.chart_of_accounts_roles")) {
         const role = values?.[1] as "ar_control" | "ap_control" | undefined;
@@ -200,6 +211,61 @@ describe("ledger-integrity-detectors.service — INV-2 per-entry balance", () =>
     const client = makeClient({ unbalanced: { count: 0, ids: [] } });
 
     await checkPerEntryBalanceForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
+    expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
+  });
+});
+
+describe("ledger-integrity-detectors.service — INV-4 documents with no GL delta", () => {
+  it("files a document_no_gl_delta finding for TMS-native invoices with zero postings", async () => {
+    const client = makeClient({ noGlDeltaInvoices: { count: 3, ids: ["inv-1", "inv-2", "inv-3"] } });
+
+    await checkNoGlDeltaForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1); // bills leg has nothing to report
+    const values = inserts[0].values as unknown[];
+    expect(values[1]).toBe("document_no_gl_delta");
+    expect(values[2]).toBe("critical");
+    expect(JSON.parse(values[5] as string)).toMatchObject({
+      document_type: "invoice",
+      count: 3,
+      sample_ids: ["inv-1", "inv-2", "inv-3"],
+    });
+  });
+
+  it("files a document_no_gl_delta finding for TMS-native bills with zero postings", async () => {
+    const client = makeClient({ noGlDeltaBills: { count: 2, ids: ["bill-1", "bill-2"] } });
+
+    await checkNoGlDeltaForCompany(client as never, COMPANY, "run-1");
+
+    const inserts = client.calls.filter((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"));
+    expect(inserts).toHaveLength(1);
+    const values = inserts[0].values as unknown[];
+    expect(JSON.parse(values[5] as string)).toMatchObject({
+      document_type: "bill",
+      count: 2,
+      sample_ids: ["bill-1", "bill-2"],
+    });
+  });
+
+  it("auto-resolves the invoice-leg finding once every real invoice has a posting again", async () => {
+    const client = makeClient({ noGlDeltaInvoices: { count: 0, ids: [] }, openFindingId: "finding-4" });
+
+    await checkNoGlDeltaForCompany(client as never, COMPANY, "run-1");
+
+    expect(client.calls.some((c) => c.sql.includes("INSERT INTO _system.reconciliation_findings"))).toBe(false);
+    const resolveCalls = client.calls.filter((c) => c.sql.includes("status = 'resolved'"));
+    // both legs are 0 here, so both the invoice AND bill scope resolve the same stubbed open finding
+    expect(resolveCalls.length).toBeGreaterThanOrEqual(1);
+    expect(resolveCalls[0].values).toEqual(["finding-4"]);
+  });
+
+  it("does nothing when both legs are clean and nothing is open (the expected steady state for most classes)", async () => {
+    const client = makeClient({});
+
+    await checkNoGlDeltaForCompany(client as never, COMPANY, "run-1");
 
     expect(client.calls.some((c) => c.sql.includes("INSERT"))).toBe(false);
     expect(client.calls.some((c) => c.sql.includes("UPDATE"))).toBe(false);
