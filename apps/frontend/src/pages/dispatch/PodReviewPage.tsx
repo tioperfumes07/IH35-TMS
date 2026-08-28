@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
 import { LoadBolPanel } from "../../components/dispatch/LoadBolPanel";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -20,17 +20,48 @@ function PodRowActions({
 }: {
   doc: PodDocumentSummary;
   companyId: string;
-  onReviewed: () => void;
+  onReviewed: (submittedCompanyId: string) => void;
 }) {
   const { pushToast } = useToast();
+  const generationRef = useRef(0);
+  const scopeKey = `${companyId}:${doc.id}`;
+  const scopeKeyRef = useRef(scopeKey);
+
+  useEffect(() => {
+    generationRef.current += 1;
+    scopeKeyRef.current = scopeKey;
+  }, [scopeKey]);
+
   // DISP-F6328: no toast import anywhere in the file, no isError check, fire-and-forget
   // .mutate(). A rejected Approve/Reject silently did nothing.
   const reviewMutation = useMutation({
-    mutationFn: (status: "approved" | "rejected") =>
-      reviewPodDocument(doc.id, { operating_company_id: companyId, status }),
-    onSuccess: onReviewed,
-    onError: (err) => pushToast(userFacingApiError(err, "Could not save the POD review"), "error"),
+    mutationFn: (input: {
+      companyId: string;
+      documentId: string;
+      generation: number;
+      scopeKey: string;
+      status: "approved" | "rejected";
+    }) => reviewPodDocument(input.documentId, { operating_company_id: input.companyId, status: input.status }),
+    onSuccess: (_result, input) => {
+      if (input.generation !== generationRef.current || input.scopeKey !== scopeKeyRef.current) return;
+      onReviewed(input.companyId);
+    },
+    onError: (err, input) => {
+      if (input.generation !== generationRef.current || input.scopeKey !== scopeKeyRef.current) return;
+      pushToast(userFacingApiError(err, "Could not save the POD review"), "error");
+    },
   });
+
+  const submitReview = (status: "approved" | "rejected") => {
+    if (reviewMutation.isPending) return;
+    reviewMutation.mutate({
+      companyId,
+      documentId: doc.id,
+      generation: generationRef.current,
+      scopeKey: scopeKeyRef.current,
+      status,
+    });
+  };
 
   if (doc.status !== "pending_review") {
     return <span className="text-xs text-slate-500">{doc.review_notes ?? "Reviewed"}</span>;
@@ -43,7 +74,7 @@ function PodRowActions({
         className="rounded-sm border px-2 py-1 text-xs"
         data-testid={`pod-approve-${doc.id}`}
         disabled={reviewMutation.isPending}
-        onClick={() => reviewMutation.mutate("approved")}
+        onClick={() => submitReview("approved")}
       >
         Approve
       </button>
@@ -52,7 +83,7 @@ function PodRowActions({
         className="rounded-sm border px-2 py-1 text-xs"
         data-testid={`pod-reject-${doc.id}`}
         disabled={reviewMutation.isPending}
-        onClick={() => reviewMutation.mutate("rejected")}
+        onClick={() => submitReview("rejected")}
       >
         Reject
       </button>
@@ -124,7 +155,9 @@ export function PodReviewPage() {
           <PodRowActions
             doc={doc}
             companyId={companyId}
-            onReviewed={() => void queryClient.invalidateQueries({ queryKey: ["pod-documents"] })}
+            onReviewed={(submittedCompanyId) =>
+              void queryClient.invalidateQueries({ queryKey: ["pod-documents", submittedCompanyId] })
+            }
           />
         ),
       },
