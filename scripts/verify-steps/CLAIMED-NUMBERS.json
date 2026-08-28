@@ -1,4 +1,9 @@
 {
+  "9911": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-lane-profitability-monthly-refresh-no-silent-catch"
+  },
   "9907": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
