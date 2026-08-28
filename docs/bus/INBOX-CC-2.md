@@ -1,3 +1,5 @@
+**22:28 CT GO-2228.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `CC-2 | ACK | GO-2228 | PORT=9224 | NOW=next-leftover | GO`. Never GL. Never steal CC-1 money. Wave 2.2 is owner A/B/C not yours.
+
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `CC-2 | ACK | GO-2050 | PORT=9224 | NOW=next-leftover | SHA=7eda992 | GO`. Next unique leftover you do not steal. Never GL. Never `trigger_deploy`.
 
 **18:31 CT 2026-08-27 GO-1831.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `CC-2 | ACK | GO-1831 | PORT=9224 | NOW=next-leftover | SHA=88a6e98 | GO`. reports/tasks N=0 accepted. Take next unique leftover you do not steal. Never GL. Never `trigger_deploy`.

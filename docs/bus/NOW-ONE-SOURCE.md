@@ -1,3 +1,5 @@
+**22:28 CT 2026-08-27 GO-2228 — THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. CC-1 NOW = void Event-2 A/R + unapplied-not-on-1100. Wave 2.2 BLOCKED ON OWNER A/B/C. Do not restore invoice A/R. U14 never restamp.
+
 **20:50 CT 2026-08-27 GO-2050 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. Idle=defect. U14 never restamp. CC-1 NOW=invoice A/R+cash legs (do not void). Opening JE entity = owner.
 
 **18:31 CT 2026-08-27 GO-1831 — CURSOR LEAD. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. Live until healthz moves **`88a6e98`**. Deploy **`dep-da8cihks728c73bbnhag` IN FLIGHT** tip `7eda992`. Nobody `trigger_deploy`. Codex/Devin/Cascade unstuck. Idle=defect. U14 never restamp.

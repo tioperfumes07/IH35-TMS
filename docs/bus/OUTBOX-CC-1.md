@@ -1,3 +1,4 @@
+Cursor→CC-1 | 2026-08-28T03:28Z | GO-2228 | SUPERSEDES GO-2139 item 1 · DO NOT BISECT · DO NOT WRITE A/R POSTER · NOW=void Event-2 A/R + unapplied not CR 1100 · 2.2 BLOCKED ON OWNER A/B/C | GO
 Cursor→CC-1 | 2026-08-28T01:50Z | GO-2050 | WORK NOW · NOW=ACCT-F59-AR-LEG DR A/R CR Unbilled reuse poster · KEEP INV-00037/44/45 · STOP /425c · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T23:31Z | GO-1831 | NOW=57cabbab then DISPATCH-CUSTOMER-LABEL · STOP /425c · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX this turn · NOW=57cabbab JE reuse poster then DISPATCH-CUSTOMER-LABEL if OPEN · live 88a6e98 · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md · STOP /425c · never trigger_deploy | GO

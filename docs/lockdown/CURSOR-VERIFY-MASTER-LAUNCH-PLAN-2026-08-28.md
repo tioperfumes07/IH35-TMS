@@ -23,7 +23,7 @@ Instrument: `scripts/verify-gl-invariants.sql`. Opening-balance vs QBO **UNVERIF
 - **Monitor:** 10 detectors on `_system.reconciliation_findings`, `ledger.integrity_cron`, Ledger Health **no human close**, owner `force_ack` on critical. Triage 184 Samsara criticals or written accept.
 - **LAW-6 no CPA. LAW-8 USMCA only.** TRANSP/TRK are not the operating bar.
 - **Wave order 1→2→3 then 4.** Guards must **fail first**. Cash-flow/finance **last**.
-- **Seats:** CC-1 Wave 2 only (GL). CC-2 guards+detectors (mod-4 ≡3, claim-before-write). CC-3 UI+stranded/roles guards. Cascade/Devin/Codex audit, no GL math, no `trigger_deploy`. Owner: branch protection + correcting entry + HOLDs.
+- **Seats:** CC-1 Wave 2 money **except 2.2 until Jorge types A/B/C**. CC-2 guards+detectors (mod-4 ≡3, claim-before-write). CC-3 UI+stranded/roles guards. Cascade/Devin/Codex audit, no GL math, no `trigger_deploy`. Owner: branch protection + correcting entry + HOLDs + **ACCT-F5692 A/B/C**.
 
 ## 2. Disagree / correct (do not follow the stale numbers)
 
@@ -62,3 +62,19 @@ Replace plan §10 item 8 (“all §6 money leaves walked”) with:
 - LAW-5 self-closing findings into lockdown + a guard that forbids human resolve on `integration='ledger'`.
 
 **If we agree on §1 + §3 and the corrections in §2, this is the plan.**
+
+---
+
+## 5. ADDENDUM 2026-08-28 — overlay accepted; Wave 2.2 blocked on owner
+
+Claude accepted 904/2,699, U14 `gl_je` 80, 217 money cells, one-lifecycle-slice tomorrow. `origin/main` after overlay: **`985fdc58`** (#16833).
+
+**Wave 2.1 bisect is cancelled.** Nothing was removed. Event 2 is `buildBillEvent2Postings()` gated by **ACCT-F5692**. See `docs/lockdown/STOP-CC1-ACCT-F5692-POD-GATE-2026-08-28.md`.
+
+**Wave 2.2 BLOCKED ON OWNER A/B/C** (POD gate placement). Cursor recommendation **B** (A/R on delivery + invoice; POD stays on factoring). Do not implement until Jorge types the letter.
+
+**CC-1 starts now (unaffected):** void Event-2 A/R reverse ($9,995.50) · unapplied must not CR 1100 ($1,700) · role UNIQUE after 17-dupe clean · stale `poster.service.ts` F59 comment (JE `aaad9534`).
+
+**Stranded intermediate:** Claude **$19,025.40** = 1150 $13,651 + 1090 $5,374.40 **including sample** (confirmed). Operating (exclude sample, post-#16832): **$9,705.40**. Detector covers `unbilled_revenue`, `undeposited_funds`, **and** `cash_clearing`, labeled sample vs operating.
+
+**Do not:** GO-2139 item 1 · restore invoice A/R · recertify U14 · void INV-37/38/44/45 · role activation migration.

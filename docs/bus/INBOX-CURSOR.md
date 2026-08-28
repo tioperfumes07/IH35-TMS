@@ -1,3 +1,5 @@
+**22:28 CT GO-2228.** Overlay addendum + STOP packet. CC-1 must not bisect / not write A/R poster. Recommend B; Jorge types A/B/C. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `Cursor | ACK | GO-2228 | PORT=9222 | NOW=bus-stop-cc1 | GO`.
+
 **21:39 CT GO-2139.** Instrument C25–C31 + sample-data report filter + SQL pack. CC-1 NOW = three A/R fixes. USMCA only. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2139.md`.
 
 **20:50 CT 2026-08-27 GO-2050 — CURSOR LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. Census. Instruct seats first. BANK-F9511 if OPEN. Do not recertify U14. Honest status: complete:true ≠ certified ≠ launch.
