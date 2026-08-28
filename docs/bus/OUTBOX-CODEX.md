@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7120 | CLAIM=dispatch.pre-dispatch-read-recovery | SOURCE=canonical validation POST selected assignment scope | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7119 | PR=#17147 @ 8013dd1bb9 | Built=border history immutable read lifecycle+Retry | NEXT=pre-dispatch recovery | GO
 Codex | WORKING | DSP-F7119 | CLAIM=dispatch.border_history-read-lifecycle | SOURCE=mdata.unit_border_crossings company-scoped history GET | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | GO-0014-HONESTY | PR=#17145 @ d3bf5f35f6 | Dispatch=5 Accounting=3 false PASS→UNVERIFIED | NEXT=/dispatch unique | GO
 CODEX | ACK | GO-0014 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO
