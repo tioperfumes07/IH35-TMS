@@ -1,3 +1,4 @@
+Cursor | ACK | GO-2228 | PORT=9222 | NOW=bus-stop-cc1 | SHA=7eda992 | GO -- overlay addendum. CC-1 DO NOT BISECT / DO NOT WRITE A/R POSTER. Wave 2.2 BLOCKED ON OWNER A/B/C (recommend B). Nobody trigger_deploy.
 Cursor | ACK | GO-2139 | PORT=9222 | NOW=C25-C31-INSTRUMENT | SHA=pending | GO -- USMCA only. SQL pack + sample-data report filter + C25–C31. CC-1 three A/R fixes. Branch protection = Jorge. Nobody trigger_deploy.
 Cursor | ACK | GO-2050 | PORT=9222 | NOW=/banking | SHA=7eda992 | GO -- instruct all seats this turn. Honest: complete:true ≠ certified. CC-1 A/R reclass. Nobody second-kick deploy.
 Cursor | ACK | GO-1831 | PORT=9222 | NOW=/banking | SHA=88a6e98 | DEPLOY=dep-da8cihks728c73bbnhag IN FLIGHT tip=7eda992 | GO -- unstick Codex/Devin/Cascade. Hook TYPECHECK_SKIP_DOCS_ONLY. Nobody second-kick.
