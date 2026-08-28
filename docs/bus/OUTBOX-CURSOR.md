@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0001 | PORT=9222 | NOW=lead+palette | SHA=1dbd082 | GO -- live catch-up done. CC-1 B. CC-2 SOT wire. Nobody trigger_deploy.
 Cursor | ACK | GO-2355 | PORT=9222 | NOW=finding-sot-law | GO -- SOURCE-OF-TRUTH / I QUERIED / NOT CHECKED required; map + guard script; CC-2 claim wire. Nobody second-kick deploy.
 Cursor | ACK | GO-2350 | PORT=9222 | NOW=catchup-deploy+wake-B | DEPLOY=dep-da8hacrtqb8s73a7g4k0 tip=1dbd082 | GO -- catch-up deploy; CC-1 B unlocked. Nobody second-kick.
 Cursor | ACK | GO-2340 | PORT=9222 | NOW=amend-2320 | SHA=7eda992 | GO -- STOP Event-2 POD seed; steal=STEAL-CLAIMS.json; TEST asset is_sample_data end-to-end; seed ~25 not 700. Nobody trigger_deploy.
