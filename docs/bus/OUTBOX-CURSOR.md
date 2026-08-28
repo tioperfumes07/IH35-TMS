@@ -1,3 +1,5 @@
+Cursor | ACK | GO-0022 | PORT=9222 | NOW=lead-drain-census-deploy | SHA=4e5db76 | GO -- DRAIN Urgent 6 until launch-ready. Idle seats = ping. Nobody else trigger_deploy.
+
 Cursor | ACK | GO-0021 | PORT=9222 | NOW=lead+feed | SHA=4e5db76 | GO -- GO-0020 credited. PROG-01 SKIP. 9877 still owner-gated. Nobody trigger_deploy.
 
 Cursor | ACK | GO-0020 | PORT=9222 | NOW=cc1-ap-gated-9877 | SHA=4e5db76 | GO -- CC-1 ACCT-F9877 root-caused; uq_je_reverses_je_id rehearsal blocked; owner A/B. CC-1 NOW leftover USMCA money not 9877. Nobody trigger_deploy.

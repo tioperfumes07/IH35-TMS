@@ -1,14 +1,15 @@
-# FEED · DEVIN · GO-0021 · overwrite
+# FEED · DEVIN · GO-0022 · DRAIN (overwrite)
 
 `git pull --ff-only origin main`
-ACK: `DEVIN | ACK | GO-0021 | NOW=vendors-unique-leftover | SHA=4e5db76 | GO`
+ACK: `DEVIN | ACK | GO-0022 | NOW=drain-vendors | SHA=<healthz> | GO`
 
-PREPEND ACK as OUTBOX line 1. Folder = `/Users/jorgemunoz/IH35-TMS-devin`. One Devin. Devin-A VOID.
+PREPEND ACK OUTBOX line 1. Folder = `/Users/jorgemunoz/IH35-TMS-devin`. One Devin. Devin-A VOID.
+
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
 
 **FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`.
 
-## NOW
-PATCH `#17200` already on main. **KEEP TEST.** Unique leftover `/vendors` only (500 / dead / silent) if still true vs main. ACCT-F5436 = **owner A/B** — do not SQL-deactivate. Do not rebuild PATCH with `b.operating_company_id`.
+## DRAIN (not one task)
+**`/vendors`** unique leftover until 0 on current live SHA. KEEP TEST. PATCH `#17200` already on main — do not rebuild with `b.operating_company_id`. No SQL INSERT vendors. No COMPLETE stamp. No second Devin.
 
-## Forbidden
-SQL INSERT vendors. Second Devin. `trigger_deploy`. U14 restamp. COMPLETE. TRANSP/TRK/QBO.
+Next finding starts **same turn**. Stale GO-0017 ACK = defect until this ACK is line 1.

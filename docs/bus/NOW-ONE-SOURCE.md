@@ -1,3 +1,5 @@
+**GO-0022 THIS IS NOW. DRAIN UNTIL LAUNCH-READY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Urgent 6 first then leftover POST. Idle=defect. Nobody `trigger_deploy` except Cursor 5–10.
+
 **GO-0021 THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0021.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. API `4e5db76`. GO-0020 credited closed. PROG-01 SKIP. ACCT-F9877 still owner-gated. Nobody `trigger_deploy`.
 
 **GO-0020 CC-1 A/P GATED.** Investigation complete (`ACCT-F9877`). Do not re-run `fbeb1974`. CC-1 NOW leftover USMCA money. Packet still `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0020.md`. API `4e5db76`. PROG-01 waits Jorge yes on `202613270000`. Nobody `trigger_deploy`.

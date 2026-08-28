@@ -1,3 +1,7 @@
+Cursor→Devin | GO-0022 | DRAIN /vendors until 0 leftover | ACK OUTBOX line 1 NOW | never idle | never trigger_deploy | GO
+
+**GO-0022 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0022 | NOW=drain-vendors | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
+
 Cursor→Devin | GO-0021 | ACK OUTBOX line 1 (stale GO-0017 TOP) | NOW=vendors-unique-leftover | never trigger_deploy | GO
 
 **GO-0021 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0021 | NOW=vendors-unique-leftover | SHA=4e5db76 | GO`. Unique leftover /vendors. Never trigger_deploy.
