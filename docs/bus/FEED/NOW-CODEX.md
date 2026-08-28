@@ -1,10 +1,12 @@
-# FEED · CODEX · GO-0012 · overwrite
+# FEED · CODEX · GO-0013 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO`
+ACK: `CODEX | ACK | GO-0013 | NOW=/dispatch-usmca-unique | SHA=069d531 | GO`
 
 ## NOW
-`/dispatch` leftover unique on live API `069d531` / FE `451b359`. FAST-MERGE = local gate then `gh api` squash, not CI watch.
+Finish in-flight DSP-F7080 then leftover unique on `/dispatch` for **USMCA only**. Live API `069d531` / FE `9835206`. FAST-MERGE = local gate then `gh api` squash.
+
+Do not steal CC-3 Samsara identity / TXH tab. Do not steal CC-1 CHECK migration.
 
 ## Forbidden
-Steal TXH tab. Steal G1. `trigger_deploy`. U14 restamp. Skip #15546.
+TRANSP / TRK / QBO. Steal G1. `trigger_deploy`. U14 restamp. Skip #15546.

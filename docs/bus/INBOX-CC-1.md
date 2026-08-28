@@ -1,3 +1,5 @@
+**GO-0013 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0013 | NOW=ledger-finding-type-check | SHA=069d531 | GO`. Widen CHECK + dual-artifact guard. Apply on Neon. No prod-only ALTER. USMCA-only. Never trigger_deploy.
+
 **GO-0012 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0012 | NOW=leftover-unique-money | SHA=069d531 | GO`. #17039 merged. Never trigger_deploy.
 
 **GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md` (one page).** ACK `CC-1 | ACK | GO-0012 | NOW=rebase-17039 | SHA=069d531 | GO`. G1/dual-pay/F9519 on main. Never trigger_deploy.
