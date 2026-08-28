@@ -11,6 +11,7 @@
  *   (f) Stored-copy download rejects silently instead of surfacing an operator error
  *   (g) Generate BOL closes over a mutable load/company or applies stale completion state
  *   (h) Summary loading/failure masquerades as zero POD/BOL history or permits duplicate generation
+ *   (i) Stored-copy download applies a signed URL/error after load/company scope replacement
  *
  * Mutation-tested both directions.
  *
@@ -98,8 +99,22 @@ export function auditBolWire(sources) {
   if (!/summaryQuery\.isLoading[\s\S]{0,180}Loading POD and BOL history[\s\S]{0,180}summaryQuery\.isError[\s\S]{0,260}<ListErrorState[\s\S]{0,240}POD and BOL history unavailable\.[\s\S]{0,180}summaryQuery\.refetch\(\)[\s\S]{0,360}pods\.length[\s\S]{0,160}bols\.length/.test(panel)) {
     problems.push(`${PATHS.panel}: summary loading/error must render before canonical POD/BOL counts with exact retry`);
   }
-  if (!/data-testid=["']bol-stored-download-button["'][\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,360}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
+  if (!/async function downloadStoredBol\([\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,420}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
+  }
+  if (!/const input = \{[\s\S]{0,120}bolId,[\s\S]{0,120}companyId,[\s\S]{0,120}generation: generateGenerationRef\.current/.test(panel)
+      || !/downloadBolDocument\(input\.bolId, input\.companyId\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: stored BOL download must snapshot document/company/generation at click`);
+  }
+  if ((panel.match(/generateGenerationRef\.current !== input\.generation/g) ?? []).length < 2
+      || !/generateGenerationRef\.current === input\.generation\) setDownloadingBolId\(null\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: stored BOL download must suppress stale URL/error/finally callbacks`);
+  }
+  if (!/setDownloadingBolId\(null\);[\s\S]{0,100}generateMutation\.reset\(\);[\s\S]{0,80}\[companyId, loadId\]/.test(panel)) {
+    problems.push(`${PATHS.panel}: stored BOL download state must retire on load/company transition`);
+  }
+  if (!/data-testid=["']bol-stored-download-button["'][\s\S]{0,180}disabled=\{downloadingBolId !== null\}[\s\S]{0,180}downloadStoredBol\(bol\.id\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: stored BOL buttons must lock against duplicate signed-URL requests`);
   }
   if (!/<LoadBolPanel\b/.test(podReview)) {
     problems.push(`${PATHS.podReview}: Pod Review must mount <LoadBolPanel /> (entry kept)`);
@@ -212,6 +227,26 @@ function selftest() {
           ),
         }),
       expect: "stored BOL download must surface",
+    },
+    {
+      label: "stored download consumes mutable company",
+      run: () => auditBolWire({ ...real, panel: mutate(real.panel, "downloadBolDocument(input.bolId, input.companyId)", "downloadBolDocument(input.bolId, companyId)", "download scope") }),
+      expect: "snapshot document/company/generation",
+    },
+    {
+      label: "stored download stale success accepted",
+      run: () => auditBolWire({ ...real, panel: mutate(real.panel, "if (generateGenerationRef.current !== input.generation) return;", "void input.generation;", "download stale success") }),
+      expect: "suppress stale URL/error/finally",
+    },
+    {
+      label: "stored download pending state survives scope transition",
+      run: () => auditBolWire({ ...real, panel: mutate(real.panel, "setDownloadingBolId(null);", "void downloadingBolId;", "download scope reset") }),
+      expect: "download state must retire",
+    },
+    {
+      label: "stored download duplicate request lock removed",
+      run: () => auditBolWire({ ...real, panel: mutate(real.panel, "disabled={downloadingBolId !== null}", "disabled={false}", "download lock") }),
+      expect: "lock against duplicate",
     },
     {
       label: "generate input falls back to mutable props",
