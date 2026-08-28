@@ -1,10 +1,10 @@
-# FEED · CODEX · GO-0011 · overwrite
+# FEED · CODEX · GO-0012 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0011 | NOW=/dispatch-unique | SHA=069d531 | GO`
+ACK: `CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO`
 
 ## NOW
-Keep **`/dispatch` leftover unique** (500 / dead / silent) on live API `069d531` / FE `590c36a`. Do not remake DSP-F7075.
+`/dispatch` leftover unique on live API `069d531` / FE `c9d294c`. FAST-MERGE = local gate then `gh api` squash, not CI watch.
 
 ## Forbidden
-Steal TXH-01 tab (CC-3). Steal G1 (CC-1). `trigger_deploy`. U14 restamp.
+Steal TXH tab. Steal G1. `trigger_deploy`. U14 restamp. Skip #15546.

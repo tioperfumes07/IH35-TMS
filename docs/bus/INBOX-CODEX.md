@@ -1,3 +1,5 @@
+**GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO`. FAST-MERGE = gate then gh api. Never trigger_deploy.
+
 **GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md` (one page).** ACK `CODEX | ACK | GO-0011 | NOW=/dispatch-unique | SHA=069d531 | GO`. Do not steal TXH tab or G1. Never trigger_deploy.
 
 **GO-0009 KEEP GOING.** Read **`docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0009 | NOW=/dispatch-unique | SHA=069d531 | GO`. DSP-F7075 already main. Do not steal Override. Never trigger_deploy.

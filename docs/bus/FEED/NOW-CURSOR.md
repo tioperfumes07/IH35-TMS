@@ -1,5 +1,5 @@
-# FEED · CURSOR · GO-0011 · overwrite
+# FEED · CURSOR · GO-0012 · overwrite
 
-Lead. Census OUTBOX vs GO every turn. Overwrite `docs/bus/FEED/NOW-<SEAT>.md` (one page). Prepend INBOX TOP. FAST-MERGE bus. One paste box per seat to Jorge — never split ACK vs NOW.
+Lead. Census OUTBOX vs GO. Overwrite FEED one page. One paste box per seat. FAST-MERGE bus via `gh api` after local gate. Do not wait on GitHub CI.
 
-Live API `069d531` · FE `590c36a`. Nobody second-kick until 5–10 PRs **and** 5–10 min. Skip #15546. One Devin. U14 never restamp.
+Live API `069d531` · FE `c9d294c`. G1 on main, not on live API yet — nobody `trigger_deploy`. Skip #15546. One Devin. U14 never restamp.
