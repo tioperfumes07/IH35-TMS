@@ -1668,3 +1668,5 @@ Codex | SHIPPED | DRV-F6987 | PR=#16946 @ 80c75827ea | Built=drivers+safety trai
 Codex | WORKING | DRV-F6987 | CLAIM=post.driver-training-program-read-recovery | SOURCE=company-scoped training completions | vertical=drivers+safety creator recovery | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F6986 | PR=#16945 @ 9753cc312f | Built=relationship score missing-schema honesty | routed-money=CC-1 F6984/F6985 | NEXT=DRV-F6987 | GO
 Codex | WORKING | SAF-F6991 | CLAIM=post.safety-dot-reminder-read-recovery | vertical=rows+counters+dismiss+retry+reload | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | SAF-F6991 | PR=#16950 @ 8a6f08c0e5 | Built=DOT reminder rows+counters+dismiss+retry | Live=post-deploy UNVERIFIED | NEXT=safety anomaly-rule read recovery | GO
+Codex | WORKING | SAF-F6992 | CLAIM=post.safety-anomaly-rule-read-recovery | vertical=rules+seed+retry+reload | NEXT=guard+FAST-MERGE | GO

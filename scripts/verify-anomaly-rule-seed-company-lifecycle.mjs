@@ -12,6 +12,8 @@ function inspect(value) {
     [/input\.generation === actionGenerationRef\.current/, "stale error is visible"],
     [/actionGenerationRef\.current \+= 1[\s\S]*seed\.reset\(\)/, "company transition does not reset seed"],
     [/seed\.mutate\(\{ companyId: operatingCompanyId, generation: actionGenerationRef\.current \}\)/, "click does not snapshot company"],
+    [/disabled=\{seed\.isPending \|\| q\.isError\}/, "seed remains enabled while the canonical rules read is failed"],
+    [/q\.isError \? \([\s\S]*ListErrorState[\s\S]*onRetry=\{\(\) => void q\.refetch\(\)\}[\s\S]*\) : \([\s\S]*<ul/, "failed rules read does not replace retained rows with exact Retry"],
   ];
   return checks.filter(([pattern]) => !pattern.test(value)).map(([, message]) => message);
 }
@@ -23,6 +25,8 @@ if (process.argv.includes("--selftest")) {
     "input.generation !== actionGenerationRef.current",
     "actionGenerationRef.current += 1",
     "seed.mutate({ companyId: operatingCompanyId, generation: actionGenerationRef.current })",
+    "seed.isPending || q.isError",
+    "onRetry={() => void q.refetch()}",
   ];
   for (const token of tokens) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
