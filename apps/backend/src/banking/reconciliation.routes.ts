@@ -556,6 +556,12 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       const reconcilingItems = ageUnclearedTransactions(unmatchedTransactions);
       const escalatedReconcilingItems = reconcilingItems.filter((item) => item.escalated);
 
+      // BANK-F9520: the `loads` query below used to .catch(() => []) — same fake-empty class as
+      // BANK-F9514/9515/9516/9518, feeding ReconciliationWorkspace.tsx's already-built
+      // workspaceQuery.isError banner a healthy-looking empty page instead of a real error.
+      // mdata.loads is foundational and unconditionally migrated — unlike bills/driver-pay-settlements/
+      // driver-finance-settlements just below, it never had a relationExists() guard in front of it,
+      // so there was never a legitimate "might not exist" case for the catch.
       const loads = await client
         .query(
           `
@@ -569,9 +575,11 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
           `,
           [companyId, session.period_start, session.period_end]
         )
-        .then((res) => res.rows)
-        .catch(() => [] as Record<string, unknown>[]);
+        .then((res) => res.rows);
 
+      // Same class, same fix, on the 3 branches below: each already gates on relationExists() for the
+      // genuine "table might not exist" case, so the .catch() after a passed existence check was only
+      // ever swallowing a REAL query failure on a table already confirmed to be there.
       const hasBills = await relationExists("accounting.bills");
       const bills = hasBills
         ? await client
@@ -588,7 +596,6 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               [companyId, session.period_start, session.period_end]
             )
             .then((res) => res.rows)
-            .catch(() => [] as Record<string, unknown>[])
         : [];
 
       const hasDriverPaySettlements = await relationExists("driver_pay.settlements");
@@ -608,7 +615,6 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
               [companyId, session.period_start, session.period_end]
             )
             .then((res) => res.rows)
-            .catch(() => [] as Record<string, unknown>[])
         : hasDriverFinanceSettlements
           ? await client
               .query(
@@ -624,7 +630,6 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
                 [companyId, session.period_start, session.period_end]
               )
               .then((res) => res.rows)
-              .catch(() => [] as Record<string, unknown>[])
           : [];
 
       // BANK-F5987 — banking.bank_accounts has no `mask` column; the canonical column (see

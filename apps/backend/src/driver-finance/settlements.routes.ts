@@ -504,17 +504,23 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
       // Confirmed reachable, not academic: this table is populated whenever the flag is on, which it
       // is; a settlement detail page reader had no way to see or drill into the real bills/JEs its
       // own posting created.
-      const linkedBillsRes = await client
-        .query(
-          `
+      // BANK-F9522: this used to .catch(() => ({ rows: [] })) — same fake-empty class as the banking
+      // silent-catch sweep (BANK-F9514-9518/9520). driver_finance.driver_settlement_gl_bills is
+      // foundational (migration 202607060900) and populated whenever SETTLEMENT_GL_POSTING_ENABLED is
+      // on, which it is for all 3 entities — a query failure here is real, not "table doesn't exist
+      // yet". This whole detail payload already flows through SettlementDetailPage.tsx's
+      // detailQuery.isError early-return (its own DETAILQUERY-SILENT-FALSE-EMPTY comment documents
+      // exactly this defect class for the settlement detail route as a whole) — letting the failure
+      // propagate is what makes that existing error UI reachable for this specific query too.
+      const linkedBillsRes = await client.query(
+        `
             SELECT accounting_bill_id::text, bill_journal_entry_id::text, load_number
             FROM driver_finance.driver_settlement_gl_bills
             WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
             ORDER BY created_at ASC
           `,
-          [params.data.id, companyId]
-        )
-        .catch(() => ({ rows: [] as Array<Record<string, unknown>> }));
+        [params.data.id, companyId]
+      );
       return {
         ...row,
         lines: linesRes.rows,
