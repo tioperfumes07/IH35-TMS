@@ -1,3 +1,4 @@
+CASCADE | METER3-WALK | MODULE=Urgent6-accounting-banking-settlements-factoring-dispatch-vendors | SHA=08d96f7 | N=0 | Code-audit: all prior findings FIXED (VEND-F-PAYMENT-BANK-ACCOUNT, VEND-F-AUDIT-HISTORY-TAB, DISPATCH-CUSTOMER-LABEL, BANK-F01/F03/F5987/KPI-FAKE-ZERO, BANK-F9513-FACTORING-NULL-FACTOR) | No new silent failures, dead endpoints, or fail-open paths | GO
 CASCADE | ACK | GO-0006 | NOW=unique-FINDING-U6 | SHA=08d96f7 | GO
 CASCADE | ACK | GO-0004 | NOW=latch-SQL+/fuel | SHA=ebc1c4f | GO
 CASCADE | METER3-WALK | MODULE=program | SHA=ebc1c4f | N=0 | 0 console errors | GO
