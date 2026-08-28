@@ -161,6 +161,20 @@ export function VehiclesMasterDataPage() {
     setDraft(EMPTY_DRAFT);
   }, [companyId]);
 
+  useEffect(() => {
+    if (!vehiclesQuery.isError) return;
+    actionGenerationRef.current += 1;
+    createMutation.reset();
+    updateMutation.reset();
+    importMutation.reset();
+    voidMutation.reset();
+    setCreateOpen(false);
+    setEditing(null);
+    setCsvFile(null);
+    setVoiding(null);
+    setDraft(EMPTY_DRAFT);
+  }, [vehiclesQuery.isError]);
+
   const rows = useMemo(() => vehiclesQuery.data?.rows ?? [], [vehiclesQuery.data?.rows]);
   const csvEnabled = vehiclesQuery.data?.csv_import_enabled ?? false;
 
@@ -237,7 +251,7 @@ export function VehiclesMasterDataPage() {
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search vehicles"
             />
-            <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+            <Button size="sm" variant="secondary" disabled={vehiclesQuery.isError} onClick={() => setCreateOpen(true)}>
               + Create
             </Button>
           </div>
@@ -249,11 +263,11 @@ export function VehiclesMasterDataPage() {
           <input
             type="file"
             accept=".csv,text/csv"
-            disabled={!csvEnabled}
+            disabled={vehiclesQuery.isError || !csvEnabled}
             onChange={(event) => setCsvFile(event.target.files?.[0] ?? null)}
             className="text-xs"
           />
-          <Button size="sm" variant="secondary" disabled={!csvEnabled || !csvFile} onClick={() => {
+          <Button size="sm" variant="secondary" disabled={vehiclesQuery.isError || !csvEnabled || !csvFile} onClick={() => {
             if (!csvFile) return;
             importMutation.mutate({ companyId, generation: actionGenerationRef.current, file: csvFile });
           }}>
@@ -303,7 +317,7 @@ export function VehiclesMasterDataPage() {
             <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" placeholder="Plate" value={draft.plate} onChange={(e) => setDraft((p) => ({ ...p, plate: e.target.value }))} />
           </div>
           <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} placeholder="Notes" value={draft.notes} onChange={(e) => setDraft((p) => ({ ...p, notes: e.target.value }))} />
-          <Button disabled={!draft.unit_display_id || !draft.vin || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
+          <Button disabled={vehiclesQuery.isError || !draft.unit_display_id || !draft.vin || createMutation.isPending} onClick={() => createMutation.mutate({ companyId, generation: actionGenerationRef.current, draft: { ...draft } })}>
             Save
           </Button>
         </div>
@@ -325,7 +339,7 @@ export function VehiclesMasterDataPage() {
               <input className="h-8 rounded-sm border border-gray-300 px-2 text-xs" value={editing.plate ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, plate: e.target.value } : p))} />
             </div>
             <textarea className="w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" rows={3} value={editing.notes ?? ""} onChange={(e) => setEditing((p) => (p ? { ...p, notes: e.target.value } : p))} />
-            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={updateMutation.isPending}>Save Changes</Button>
+            <Button onClick={() => updateMutation.mutate({ companyId, generation: actionGenerationRef.current, row: { ...editing } })} disabled={vehiclesQuery.isError || updateMutation.isPending}>Save Changes</Button>
           </div>
         ) : null}
       </Modal>
@@ -339,7 +353,7 @@ export function VehiclesMasterDataPage() {
         submitLabel="Void"
         onClose={() => setVoiding(null)}
         onSubmit={async (reason) => {
-          if (!voiding) return;
+          if (!voiding || vehiclesQuery.isError) return;
           await voidMutation.mutateAsync({ id: voiding.id, companyId, generation: actionGenerationRef.current, reason });
         }}
       />
