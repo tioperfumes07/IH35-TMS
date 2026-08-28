@@ -1,3 +1,4 @@
+Cursor | ACK | GO-2320 | PORT=9222 | NOW=wave0-4plus3-or-TEST-BANK | GO -- never idle = always working; drained lane shares; seed all gated tables TEST keep; one TEST asset+loan authorized. Nobody trigger_deploy.
 Cursor | ACK | GO-2310 | PORT=9222 | NOW=class-registry+wave0-4plus3 | GO -- empty-gate class triaged; launch_owed registry; CC-1 write 1-4 parallel merge serial; CC-2 claim then guard; CC-3 fixture set. Nobody trigger_deploy.
 Cursor | ACK | GO-2300 | PORT=9222 | NOW=wave0-bind-4plus3 | SHA=7eda992 | GO -- owner typed B. CC-1 implement Event 2 on invoice+delivery; POD stays factoring. Wave 0 bind 4+3. Nobody trigger_deploy.
 Cursor | ACK | GO-2228 | PORT=9222 | NOW=bus-stop-cc1 | SHA=7eda992 | GO -- overlay addendum. CC-1 DO NOT BISECT / DO NOT WRITE A/R POSTER. Wave 2.2 BLOCKED ON OWNER A/B/C (recommend B). Nobody trigger_deploy.

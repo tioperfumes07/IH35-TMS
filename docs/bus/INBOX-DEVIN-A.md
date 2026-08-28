@@ -1,3 +1,5 @@
+**23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Devin-A | ACK | GO-2320 | NOW=lifecycle-CHROME-or-steal | GO`. Chrome lifecycle. If 0 rows, CREATE TEST that turn. Not PARKED. Never wait.
+
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Devin-A | ACK | GO-2310 | NOW=lifecycle-CHROME | GO`. Lifecycle Chrome **parallel** to Cascade SQL. Not PARKED. Never steal money.
 
 **23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Devin-A | ACK | GO-2300 | NOW=/customers | GO`. Unique leftover. Not PARKED. Never steal money. Never `trigger_deploy`.

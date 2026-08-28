@@ -1,3 +1,5 @@
+**23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `Cursor | ACK | GO-2320 | PORT=9222 | NOW=wave0-4plus3-or-TEST-BANK | GO`. Wave 0 bind **or** TEST bank txns for match. Seats must not wait on you. Census. Deploy 5–10.
+
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Cursor | ACK | GO-2310 | PORT=9222 | NOW=class-registry+wave0-4plus3 | GO`. Registry shipped this turn. Next: Wave 0 bind 4+3. Lead/deploy.
 
 **23:00 CT GO-2300 — OWNER TYPED B.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Cursor | ACK | GO-2300 | PORT=9222 | NOW=wave0-bind-4plus3 | GO`. Wave 0: C25/C27/C28/C31 on posting leaves; C26/C29/C30 on economics.invariants only. Lead + deploy 5–10. Do not steal CC-1 money.
