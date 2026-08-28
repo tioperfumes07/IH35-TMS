@@ -1,5 +1,5 @@
 import * as client from "./client";
-import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPayment } from "./customers";
+import { listCustomerPayments, recordCustomerPayment, unapplyCustomerPaymentApplication } from "./customers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("customer payments API client", () => {
@@ -39,9 +39,12 @@ describe("customer payments API client", () => {
     expect(spy).toHaveBeenCalledWith("/api/v1/customers/cust-1/payments?operating_company_id=opco-1&limit=25");
   });
 
-  it("unapplyCustomerPayment POSTs", async () => {
+  // CUST-MONEY-F6105: the old POST /customers/:id/payments/:paymentId/unapply route was never
+  // mounted by any backend file (a guaranteed 404 on every real click). Unapply now goes through the
+  // canonical, MOUNTED DELETE /api/v1/accounting/payments/:paymentId/applications/:id route.
+  it("unapplyCustomerPaymentApplication DELETEs the canonical payment-application route", async () => {
     const spy = vi.spyOn(client, "apiRequest").mockResolvedValue({ ok: true } as never);
-    await unapplyCustomerPayment("cust-1", "pay-1");
-    expect(spy).toHaveBeenCalledWith("/api/v1/customers/cust-1/payments/pay-1/unapply", { method: "POST" });
+    await unapplyCustomerPaymentApplication("pay-1", "app-1", "opco-1");
+    expect(spy).toHaveBeenCalledWith("/api/v1/accounting/payments/pay-1/applications/app-1?operating_company_id=opco-1", { method: "DELETE" });
   });
 });

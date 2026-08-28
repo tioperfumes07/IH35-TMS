@@ -60,11 +60,21 @@ vi.mock("../api/forecast", async (importOriginal) => {
   };
 });
 
-vi.mock("../api/customers", () => ({
-  listCustomerPayments: vi.fn(),
-  recordCustomerPayment: vi.fn(),
-  unapplyCustomerPayment: vi.fn(),
-}));
+vi.mock("../api/customers", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../api/customers")>();
+  return {
+    ...actual,
+    listCustomerPayments: vi.fn(),
+    // CustomerDetail.tsx's query calls listAllCustomerPayments, not listCustomerPayments directly --
+    // this module's REAL listAllCustomerPayments closes over its OWN internal reference to
+    // listCustomerPayments, which vi.mock's per-export override below does not redirect (a real
+    // ESM/vitest live-binding gap, not something spreading `actual` fixes), so it needs its own
+    // mock rather than composing through the mocked listCustomerPayments.
+    listAllCustomerPayments: vi.fn(),
+    recordCustomerPayment: vi.fn(),
+    unapplyCustomerPaymentApplication: vi.fn(),
+  };
+});
 
 vi.mock("../api/catalogs", () => ({
   listUsStates: vi.fn().mockResolvedValue({ states: [] }),
@@ -141,6 +151,7 @@ describe("CustomerDetail cash application", () => {
       ],
     });
     vi.mocked(customersApi.listCustomerPayments).mockResolvedValue({ rows: [], total: 0 });
+    vi.mocked(customersApi.listAllCustomerPayments).mockResolvedValue({ rows: [], total: 0 });
     vi.mocked(customersApi.recordCustomerPayment).mockResolvedValue({ ok: true });
     vi.mocked(forecastApi.listForecastEntries).mockResolvedValue({ entries: [] });
     vi.mocked(mdataApi.listPaymentTermOptions).mockResolvedValue({
@@ -155,7 +166,7 @@ describe("CustomerDetail cash application", () => {
   });
 
   it("shows backend pending when listCustomerPayments 404", async () => {
-    vi.mocked(customersApi.listCustomerPayments).mockRejectedValue(new ApiError(404, {}));
+    vi.mocked(customersApi.listAllCustomerPayments).mockRejectedValue(new ApiError(404, {}));
     render(wrap(<CustomerDetailPage />));
     await waitFor(() => expect(screen.getByText(/Backend pending/i)).toBeInTheDocument());
   });
