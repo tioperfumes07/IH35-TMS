@@ -58,7 +58,16 @@ describe("fuel/fuel-transactions.routes RANK3-FUEL-OFFICE-POST-CREATE", () => {
   });
 
   it("always stamps source='manual' — never disguised as an import", () => {
-    expect(routes).toContain("'manual', $16, true, $17, $18::uuid");
+    expect(routes).toContain("'manual', $16, $18, $17, $19::uuid");
+  });
+
+  // CLS-LINKAGE-ONEWAY / verify-disp-wire-06-load-expense-link (2026-08-28): load_required was
+  // previously hardcoded `true` for every manual row, so a legitimately exempt entry (no load_id,
+  // a stated load_exemption_reason — e.g. yard fuel, no active trip) still claimed it needed a
+  // load it will never get, tripping the live guard on a real row. It must mirror load_id.
+  it("derives load_required from whether a load_id was actually given, never hardcoded true", () => {
+    expect(routes).toContain("Boolean(b.load_id)");
+    expect(routes).not.toContain("'manual', $16, true, $17, $18::uuid");
   });
 
   it("writes trailer_id (rank 1) scoped to the requesting company via mdata.equipment ownership", () => {

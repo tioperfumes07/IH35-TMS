@@ -401,7 +401,7 @@ export async function importFuelCardTransactionsForCompany(
           VALUES (
             $1, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7,
             $8, $9, $10, $11, $12, $13, 'import', $14, NULLIF($15, ''), now(),
-            true, $16, $17
+            $18, $16, $17
           )
           ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING
           RETURNING id::text
@@ -424,6 +424,11 @@ export async function importFuelCardTransactionsForCompany(
           notes,
           loadExemptionReason,
           opts?.userId ?? null,
+          // load_required mirrors whether resolveLoadId() actually found a load — previously this
+          // was hardcoded `true` for every imported row, so a legitimately unattributed row (real
+          // loadExemptionReason set above) still claimed it needed a load it will never get
+          // (CLS-LINKAGE-ONEWAY / verify-disp-wire-06-load-expense-link).
+          Boolean(loadId),
         ]
       )
       .catch((err) => {
