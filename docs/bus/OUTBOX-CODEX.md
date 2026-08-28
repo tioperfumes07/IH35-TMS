@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7132 | CLAIM=detention-reject-race-silent-success | SOURCE=dispatch.detention_requests | routed=CC-1 approval sibling | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7131 | PR=#17203 @ dfeafd8877 | Built=POD review lock+result truth | NEXT=detention reject lifecycle | GO
 Codex | WORKING | DSP-F7131 | CLAIM=POD-review-race-silent-success | SOURCE=dispatch.pod_documents | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7130 | PR=#17197 @ 9e2cb3e795 | Built=layover PATCH zero-row truth | NEXT=POD review race | GO
 CODEX | ACK | GO-0017 | NOW=dispatch-unique-500-only | SHA=4e5db76 | GO
