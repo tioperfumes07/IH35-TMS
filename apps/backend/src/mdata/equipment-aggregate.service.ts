@@ -133,7 +133,6 @@ export async function buildEquipmentAggregate(
         ORDER BY l.id, lah.assigned_at DESC, lah.created_at DESC
       ) linked
       ORDER BY linked.updated_at DESC, linked.assigned_at DESC
-      LIMIT 20
     `,
     [equipmentId, operatingCompanyId]
   );
@@ -249,7 +248,6 @@ export async function buildEquipmentAggregate(
         AND w.voided_at IS NULL
         AND w.status NOT IN ('complete', 'completed', 'cancelled')
       ORDER BY COALESCE(w.updated_at, w.opened_at) DESC NULLS LAST
-      LIMIT 20
     `,
     [equipmentId, operatingCompanyId]
   );

@@ -138,6 +138,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T03:35:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.trailer-profile-complete-reverse-ranges",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T03:42:00-05:00",
+      "go": "0004"
     }
   ]
 }
