@@ -134,7 +134,10 @@ export function HOSViolationsTab() {
     enabled: Boolean(companyId),
   });
 
-  const violationTypeRows = violationTypesQuery.data?.rows ?? [];
+  // SAF-F6978: React Query retains the last successful catalog page after a rejected
+  // refetch. Never leave those stale DOT codes selectable while the current scoped
+  // read is failed; the error banner + Retry below is the only operational truth.
+  const violationTypeRows = violationTypesQuery.isError ? [] : (violationTypesQuery.data?.rows ?? []);
 
   const violationTypeOptions = useMemo(
     () =>
@@ -319,6 +322,7 @@ export function HOSViolationsTab() {
           createdValueField="code"
           placeholder="Violation type"
           loading={violationTypesQuery.isLoading}
+          disabled={violationTypesQuery.isError}
           onSearch={setViolationTypeSearch}
           onOptionCreated={() => {
             void queryClient.invalidateQueries({ queryKey: ["catalogs", "dot-violation-types", "hos", companyId] });

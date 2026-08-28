@@ -10,6 +10,7 @@ import { DateTimePicker } from "../../../components/forms/DateTimePicker";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
 
@@ -95,7 +96,9 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
     enabled: open && Boolean(operatingCompanyId),
   });
 
-  const violationTypeRows = violationTypesQuery.data?.rows ?? [];
+  // SAF-F6978: a failed company-scoped refetch must not leave React Query's cached
+  // DOT codes selectable. Empty the choices and require an explicit successful Retry.
+  const violationTypeRows = violationTypesQuery.isError ? [] : (violationTypesQuery.data?.rows ?? []);
 
   const violationTypeOptions = useMemo(
     () =>
@@ -232,7 +235,7 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
               createdValueField="code"
               placeholder={violationTypesQuery.isLoading ? "Loading types…" : "Select violation type"}
               loading={violationTypesQuery.isLoading}
-              disabled={!operatingCompanyId || violationTypesQuery.isLoading}
+              disabled={!operatingCompanyId || violationTypesQuery.isLoading || violationTypesQuery.isError}
               onSearch={setViolationTypeSearch}
               onOptionCreated={() => {
                 void queryClient.invalidateQueries({
@@ -318,6 +321,12 @@ export function HosViolationCreateModal({ open, operatingCompanyId, onClose, onC
             />
           </div>
         </div>
+        {violationTypesQuery.isError ? (
+          <ListErrorBanner
+            message="Violation types could not be loaded. Retry before creating an HOS violation."
+            onRetry={() => void violationTypesQuery.refetch()}
+          />
+        ) : null}
         {mutation.isError && mutation.variables?.generation === lifecycleGenerationRef.current ? (
           <div className="rounded-sm border border-red-300 bg-red-50 px-2 py-1.5 text-xs text-red-900" role="alert">
             {mutation.error instanceof Error ? mutation.error.message : "Create failed. Please try again."}
