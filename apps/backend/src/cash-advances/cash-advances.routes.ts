@@ -115,6 +115,17 @@ async function withCompanyScope<T>(
   });
 }
 
+// LIAB-F9927-SILENT-CATCH-SWEEP (cash-advances leg): 7 of the 8 .catch(() => ({ rows: [] })) sites in
+// this file were the same fake-empty-200 class as liabilities.routes.ts (#17110) and the
+// banking/factoring/settlements sweep (BANK-F9514-9522) — dashboard/kpis, list, unpaid-bills, the two
+// GET /:id reads (advance + deduction schedule), the settlement-history read, and mark-disbursed's
+// re-fetch. views.cash_advances_*/driver_finance.* are foundational, not conditionally-created, so a
+// caught error was always a real failure, never a legitimate "table doesn't exist yet" case. Letting
+// the query throw is the fix — Fastify's async error handling turns it into a proper 500. The 8th site
+// (PATCH /:id/reverse's settlement-deduction-count guard) is NOT touched here — it gates a live
+// financial write path (a broken guard there currently means the "block reversal after settlement
+// deductions" check never fires), already flagged HOLD below as Rule 13 financial law, and routed to
+// the board as its own CC-1 finding rather than bundled into this non-financial read-honesty sweep.
 export async function registerCashAdvancesRoutes(app: FastifyInstance) {
   app.get("/api/v1/cash-advances/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -132,8 +143,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows[0] ?? null;
     });
     return (
@@ -182,8 +192,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 500
           `,
           values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { advances: rows };
@@ -231,8 +240,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 200
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { bills: rows };
@@ -257,8 +265,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const row = advanceRes.rows[0];
       if (!row) return null;
       const scheduleRes = await client
@@ -271,8 +278,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 50
           `,
           [row.liability_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       // FIX (Law §9 2026-07-22, GAP not patch): the old query filtered
       // driver_finance.settlement_lines WHERE liability_id = $1 — that column has never existed on
       // settlement_lines (verified: migrations 0191 create + 202607430000 additive columns; only
@@ -300,8 +306,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             ORDER BY created_at DESC
           `,
           [row.driver_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return {
         ...row,
         deduction_schedule: scheduleRes.rows,
@@ -480,8 +485,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [advance.id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return { code: 200 as const, data: detailRes.rows[0] ?? { id: advance.id, disbursement_status: "disbursed" } };
     });
 
@@ -521,6 +525,8 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
       // live financial gate's query semantics without owner/CPA review is out of scope for a
       // frontend-linkage PR (Rule 13 financial law). Tracked as REMAINING — needs an explicit backend
       // fix (or the Phase-2 settlement_lines repoint) reviewed as a financial change, not bundled here.
+      // Filed on the board 2026-08-28 as CASH-ADV-F9930-REVERSE-GUARD-NEVER-BLOCKS (CC-1 money lane) —
+      // this comment predates the finding ID; see docs/audit/GUARD-WORKORDERS.md.
       const settlementUseRes = await client
         .query(
           `
