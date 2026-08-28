@@ -1908,3 +1908,5 @@ Codex | WORKING | GO-0013 | DSP-F7116 stored BOL download scope snapshot | SOURC
 Codex | SHIPPED | DSP-F7115 | PR=#17134 | merge=0b6d911e111b2152857146d1e9ffc12d5ae4bcc3 | guard=33/33+typecheck | NEXT=DSP-F7116 | GO
 Codex | WORKING | DSP-F7123 dispatch subnav badge failure honesty | scope=11 queue reads · failed counts unknown · visible Retry | Live=BLOCKED | GO
 Codex | SHIPPED | DSP-F7122 | PR=#17152 @ 5cf2271508 | scope=load-id reservation exact company+generation ownership · Retry | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7123
+Codex | WORKING | DSP-F7124 notify sync immutable company scope | leaf=settings.notify:customer+connectivity | Live=BLOCKED | GO
+Codex | SHIPPED | DSP-F7123 | PR=#17154 @ d56cc78dc7 | scope=11 dispatch subnav queue failures honest+Retry | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7124
