@@ -1,3 +1,5 @@
+**VOID — NOT A SEAT. OWNER 2026-08-28: one Devin.** Do not ACK as DEVIN-A. Read `docs/bus/FEED/NOW-DEVIN.md` only. Same NOW as Devin. Never trigger_deploy.
+
 **GO-0009.** Read **`docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0009 | NOW=reproduce-Override | SHA=069d531 | GO`. Auditor not builder. Never trigger_deploy.
 
 **GO-0007 · Book Load KEEP.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0007-G1-LABEL.md`. Query-back. Keep TEST on books. ACK `DEVIN-A | ACK | GO-0007 | NOW=Book-Load-KEEP | SHA=<healthz> | GO`. Never trigger_deploy.
