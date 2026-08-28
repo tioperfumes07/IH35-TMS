@@ -268,7 +268,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   });
   const loadExpensesQuery = useQuery({
     queryKey: ["load-expenses", load?.id, load?.operating_company_id],
-    queryFn: () => listLoadExpenses(load!.operating_company_id, load!.id, { limit: 50 }),
+    queryFn: () => listLoadExpenses(load!.operating_company_id, load!.id, { limit: 1 }),
     enabled: Boolean(load?.id && load?.operating_company_id && activeTab === "Overview"),
   });
   const linkedInvoice = useMemo(() => {
@@ -455,7 +455,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         ? "…"
                         : loadExpensesQuery.isError
                           ? "unavailable"
-                          : (loadExpensesQuery.data?.rows?.length ?? 0)}
+                          : (loadExpensesQuery.data?.total ?? 0)}
                     </span>
                     {load.operating_company_id ? (
                       <button

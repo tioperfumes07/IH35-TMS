@@ -737,7 +737,7 @@ export function listLoadExpenses(operatingCompanyId: string, loadId: string, par
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ rows: ExpenseListRow[] }>(
+  return apiRequest<{ rows: ExpenseListRow[]; total: number; limit: number; offset: number }>(
     withCompany(`/api/v1/loads/${encodeURIComponent(loadId)}/expenses${qs ? `?${qs}` : ""}`, operatingCompanyId)
   );
 }

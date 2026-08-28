@@ -64,6 +64,9 @@ export function staticChecks(sources = {}) {
   if (!/\/api\/v1\/loads\/:id\/expenses/.test(expenses)) {
     problems.push("thin reverse route GET /api/v1/loads/:id/expenses required");
   }
+  if (!/SELECT COUNT\(\*\)::int AS total[\s\S]{0,180}e\.operating_company_id = \$1::uuid[\s\S]{0,100}e\.load_id = \$2::uuid/.test(expenses)) {
+    problems.push("load expenses reverse route must return an authoritative company+load-scoped total");
+  }
   if (!/resolveLoadId/.test(bridge) || !/resolveVendorId/.test(bridge)) {
     problems.push("relay-fuel-canonical-bridge must resolve load_id/vendor_id via import helpers");
   }
@@ -98,6 +101,9 @@ export function staticChecks(sources = {}) {
   if (!/export function listLoadInvoices/.test(feApi) || !/export function listLoadExpenses/.test(feApi)) {
     problems.push("FE accounting API must export listLoadInvoices + listLoadExpenses");
   }
+  if (!/listLoadExpenses[\s\S]{0,500}total:\s*number/.test(feApi)) problems.push("FE load-expenses response must carry total");
+  if (!/loadExpensesQuery\.data\?\.total\s*\?\?\s*0/.test(drawer)) problems.push("LoadDetailDrawer linked-expense count must use authoritative total");
+  if (/loadExpensesQuery\.data\?\.rows\?\.length/.test(drawer)) problems.push("LoadDetailDrawer must not present one page length as linked-expense total");
   return problems;
 }
 
@@ -126,6 +132,12 @@ function selftest() {
   const redDrawer = staticChecks({ drawer: nakedTitle });
   if (!redDrawer.some((p) => /EntityLink|naked Load/.test(p))) {
     console.error(`${LABEL} SELFTEST FAIL: planted naked load title regression not caught`);
+    process.exit(1);
+  }
+  const cappedCount = drawer.replace("loadExpensesQuery.data?.total ?? 0", "loadExpensesQuery.data?.rows?.length ?? 0");
+  const redCount = staticChecks({ drawer: cappedCount });
+  if (!redCount.some((p) => /authoritative total|page length/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL: planted capped expense count regression not caught`);
     process.exit(1);
   }
   const green = staticChecks();
