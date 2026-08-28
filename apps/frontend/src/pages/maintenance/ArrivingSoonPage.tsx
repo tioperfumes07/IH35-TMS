@@ -81,9 +81,11 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
   const [selectedCard, setSelectedCard] = useState<ArrivingSoonCardType | null>(null);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+  const [recentPage, setRecentPage] = useState(1);
+  const recentPageSize = 12;
 
   const query = useQuery({
-    queryKey: ["maintenance", "arriving-soon", operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard, page],
+    queryKey: ["maintenance", "arriving-soon", operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard, page, recentPage],
     queryFn: () =>
       getArrivingSoon({
         operating_company_id: operatingCompanyId,
@@ -93,6 +95,8 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
         include_non_yard_destination: includeNonYard,
         limit: pageSize,
         offset: (page - 1) * pageSize,
+        recent_limit: recentPageSize,
+        recent_offset: (recentPage - 1) * recentPageSize,
       }),
     enabled: Boolean(operatingCompanyId),
     refetchInterval: 60_000,
@@ -107,8 +111,15 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
     setPage(1);
   }, [operatingCompanyId, withinHours, severityMin, includeAlreadyArrived, includeNonYard]);
 
+  useEffect(() => setRecentPage(1), [operatingCompanyId]);
+
   const cards = query.data?.cards ?? [];
   const recentConversions = query.data?.recent_conversions ?? [];
+  const recentConversionsTotal = query.data?.recent_conversions_total_count ?? 0;
+  const recentPageCount = Math.max(1, Math.ceil(recentConversionsTotal / recentPageSize));
+  useEffect(() => {
+    if (recentPage > recentPageCount) setRecentPage(recentPageCount);
+  }, [recentPage, recentPageCount]);
   const counts = query.data?.counts ?? { total: 0, severe: 0, warning: 0, info: 0, already_arrived: 0 };
   // MAINT-S03 — settled-only empty (never mid-fetch false-empty; never empty-on-error).
   const listLoading =
@@ -248,6 +259,13 @@ export function ArrivingSoonPage({ operatingCompanyId }: Props) {
               </li>
             ))}
           </ul>
+          {recentConversionsTotal > recentPageSize ? (
+            <div className="mt-2 flex items-center justify-end gap-2 text-xs" data-testid="maint-arriving-soon-recent-conversions-pager">
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={recentPage <= 1 || query.isFetching} onClick={() => setRecentPage((current) => Math.max(1, current - 1))}>Previous</button>
+              <span>Page {recentPage} of {recentPageCount} · {recentConversionsTotal} conversions</span>
+              <button type="button" className="rounded-sm border px-2 py-1 disabled:opacity-50" disabled={recentPage >= recentPageCount || query.isFetching} onClick={() => setRecentPage((current) => Math.min(recentPageCount, current + 1))}>Next</button>
+            </div>
+          ) : null}
         </section>
       ) : null}
 

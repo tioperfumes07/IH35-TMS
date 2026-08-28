@@ -16,6 +16,8 @@ const listQuerySchema = companyQuerySchema.extend({
   severity_min: z.enum(["info", "warning", "severe"]).default("info"),
   limit: z.coerce.number().int().min(1).max(100).default(25),
   offset: z.coerce.number().int().min(0).default(0),
+  recent_limit: z.coerce.number().int().min(1).max(100).default(12),
+  recent_offset: z.coerce.number().int().min(0).default(0),
 });
 
 const loadParamsSchema = z.object({
@@ -180,13 +182,31 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
            AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = wo.operating_company_id
           WHERE ii.promoted_to_wo_id IS NOT NULL
             AND wo.opened_at >= now() - interval '7 days'
-          ORDER BY wo.opened_at DESC
-          LIMIT 12
+          ORDER BY wo.opened_at DESC, ii.id DESC
+          LIMIT $2 OFFSET $3
         `,
+        [q.operating_company_id, q.recent_limit, q.recent_offset]
+      );
+
+      const convertedCountRes = await client.query(
+        `SELECT COUNT(*)::int AS total_count
+         FROM dispatch.intransit_issues ii
+         JOIN maintenance.work_orders wo
+           ON wo.id = ii.promoted_to_wo_id
+          AND wo.operating_company_id = $1::uuid
+         WHERE ii.promoted_to_wo_id IS NOT NULL
+           AND wo.opened_at >= now() - interval '7 days'`,
         [q.operating_company_id]
       );
 
-      return { cards, counts, recent_conversions: convertedRes.rows };
+      return {
+        cards,
+        counts,
+        recent_conversions: convertedRes.rows,
+        recent_conversions_total_count: Number(convertedCountRes.rows[0]?.total_count ?? 0),
+        recent_conversions_limit: q.recent_limit,
+        recent_conversions_offset: q.recent_offset,
+      };
     });
 
     return payload;

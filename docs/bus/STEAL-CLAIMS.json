@@ -222,6 +222,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T06:31:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-arriving-soon-conversion-history",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T06:42:00-05:00",
+      "go": "0004"
     }
   ]
 }
