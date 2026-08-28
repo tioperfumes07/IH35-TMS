@@ -63,8 +63,8 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
   });
 
   const programNames = useMemo(
-    () => deriveProgramNames(programsQuery.data?.training_completions ?? []),
-    [programsQuery.data?.training_completions]
+    () => deriveProgramNames(programsQuery.isError ? [] : programsQuery.data?.training_completions ?? []),
+    [programsQuery.data?.training_completions, programsQuery.isError]
   );
 
   const programOptions = useMemo(
@@ -98,6 +98,10 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
 
   const submit = async () => {
     setError("");
+    if (programsQuery.isError) {
+      setError("Existing training programs are unavailable. Retry the program list before creating a record.");
+      return;
+    }
     if (!resolvedTrainingName) {
       setError("Training program is required.");
       return;
@@ -166,6 +170,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
             }}
             placeholder="Select program"
             loading={programsQuery.isLoading}
+            disabled={programsQuery.isError}
             allowAddNew={{
               label: "+ Add new program",
               onAdd: () => {
@@ -233,7 +238,7 @@ export function AddTrainingModal({ open, driverId, companyId, driverName, onClos
           <Button type="button" variant="secondary" onClick={attemptClose} disabled={pending}>
             Cancel
           </Button>
-          <Button type="submit" loading={pending} data-testid="add-training-submit">
+          <Button type="submit" loading={pending} disabled={programsQuery.isError} data-testid="add-training-submit">
             Create Record
           </Button>
         </div>
