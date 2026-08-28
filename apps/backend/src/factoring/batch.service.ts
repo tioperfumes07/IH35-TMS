@@ -42,7 +42,8 @@ export class FactoringBatchError extends Error {
       | "batch_not_found"
       | "invalid_status_transition"
       | "batch_already_submitted"
-      | "batch_already_funded",
+      | "batch_already_funded"
+      | "batch_factor_id_missing",
     readonly statusCode: number,
     readonly details?: Record<string, unknown>
   ) {
@@ -247,7 +248,7 @@ export async function submitBatch(
 ): Promise<FactoringBatchRow> {
   const current = await deps.client.query<Record<string, unknown>>(
     `
-      SELECT id::text, status
+      SELECT id::text, status, factor_id::text
       FROM factoring.batch
       WHERE id = $1::uuid
         AND tenant_id = $2::uuid
@@ -265,6 +266,16 @@ export async function submitBatch(
       from: String(currentRow.status),
       to: "submitted",
     });
+  }
+  // BANK-F9513-FACTORING-SUBMIT-NULL-FACTOR — createDraftBatch resolves factor_id from
+  // getFactorForCustomer(customer_id, as_of_date) and happily writes a NULL factor_id when a
+  // customer has no factoring-company assignment (or none active as-of that date) — see
+  // `resolvedFactorId = factorPairs[0]?.factor_id ?? null` above. submitBatch previously had no
+  // gate on this, so a draft could move straight to `submitted` — the status the funding/reserve
+  // pipeline treats as "actively pledged to a factor" — with no factor on record at all. A batch
+  // "submitted to nobody" cannot actually be funded/reconciled downstream.
+  if (!currentRow.factor_id) {
+    throw new FactoringBatchError("batch_factor_id_missing", 409);
   }
 
   const updated = await deps.client.query<Record<string, unknown>>(
