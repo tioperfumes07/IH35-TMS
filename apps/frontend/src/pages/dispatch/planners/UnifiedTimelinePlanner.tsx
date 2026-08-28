@@ -73,7 +73,7 @@ function loadSpan(load: PlannerLoadEvent, days: string[], startIdx: number): num
   return Math.max(1, lastIdx - startIdx + 1);
 }
 
-function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" }) {
+function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" | "Unknown" }) {
   // §7-safe — slate only (no green/blue). On-leave gets the single allowed amber accent.
   const cls =
     status === "On-leave"
@@ -133,8 +133,9 @@ export function UnifiedTimelinePlanner() {
     return s;
   }, [leaveByCell]);
 
-  const statusFor = (driver: PlannerDriverRow): "Available" | "On-load" | "On-leave" => {
+  const statusFor = (driver: PlannerDriverRow): "Available" | "On-load" | "On-leave" | "Unknown" => {
     if ((loadsByDriver.get(driver.id)?.length ?? 0) > 0) return "On-load";
+    if (leaveQuery.isError) return "Unknown";
     if (driverHasLeave.has(driver.id)) return "On-leave";
     return "Available";
   };
@@ -162,6 +163,12 @@ export function UnifiedTimelinePlanner() {
 
   return (
     <div data-testid="dispatch-unified-timeline-page" className="space-y-2">
+      {leaveQuery.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(leaveQuery.error, "Could not load driver leave and availability")}
+          onRetry={() => void leaveQuery.refetch()}
+        />
+      ) : null}
       <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-max border-collapse text-[10px]">
           <thead>
