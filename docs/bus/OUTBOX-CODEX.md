@@ -1,5 +1,7 @@
 Codex | WORKING | FLEET-F7041 | CLAIM=post.fleet-unit-assignment-exact-filter-guard | SOURCE=unit profile reverse drill→paged assignment API→WO.unit_id | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7040 | PR=#16997 @ 74dacf7af7 | Built=fleet fault exact-count guard 5/5 | NEXT=fleet assignment filter | GO
+Codex | WORKING | FLEET-F7043 | CLAIM=post.fleet-unit-list-complete-total-guard | SOURCE=server total→stable all-pages unit reader→fleet counts | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7042 | PR=#16999 @ ecb7c3b571 | Built=unit parts exact range guard 9/9 | NEXT=unit list total | GO
 Codex | WORKING | FLEET-F7042 | CLAIM=post.fleet-unit-parts-history-exact-range-guard | SOURCE=scoped count+paged unit reverse history | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7041 | PR=#16998 @ 79a354fda2 | Built=unit assignment exact filter guard 8/8 | NEXT=unit parts exact range | GO
 Codex | WORKING | FLEET-F7040 | CLAIM=post.fleet-fault-summary-exact-count-guard | SOURCE=exact scoped fault totals + fail-closed profile | NEXT=guard+FAST-MERGE | GO
