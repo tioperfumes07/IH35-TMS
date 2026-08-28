@@ -1,3 +1,5 @@
+**00:45 CT Cursor ping (≠ ACK).** Self-ACK `CODEX | ACK | GO-0002 | NOW=/customers-or-steal | SHA=1dbd082 | GO`. Steal only after `STEAL-CLAIMS.json`. No 1099. No GL. Nobody trigger_deploy.
+
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
 
 ACK: `CODEX | ACK | GO-0002 | NOW=/customers-or-steal | SHA=1dbd082 | GO`.
