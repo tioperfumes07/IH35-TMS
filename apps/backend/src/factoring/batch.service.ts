@@ -291,6 +291,28 @@ export async function submitBatch(
   );
 
   if (!updated.rows[0]) throw new FactoringBatchError("batch_not_found", 404);
+
+  // FACTORING-BATCH-NEVER-WRITES-FACTORING-STATUS-NO-REVERSE-PATH (half 1 of 2) — accounting.invoices
+  // already carries a full factoring_status lifecycle (not_factored -> submitted -> advanced ->
+  // reserve_held -> collected/released/recourse_returned, live CHECK-constrained) that
+  // faro-csv-import.ts's own CSV ingest flow already writes to. submitBatch never wrote it, so an
+  // invoice pledged here still read factoring_status=not_factored — and
+  // submission-queue.service.ts's OWN eligibility gate (`COALESCE(factoring_status,'not_factored')
+  // = 'not_factored'`) would still offer it up as eligible in a completely separate flow, a real
+  // cross-flow double-pledge. Mirrors faro-csv-import.ts's own guarded UPDATE shape (only ever
+  // advances forward from not_factored — never regresses a further-along invoice).
+  await deps.client.query(
+    `
+      UPDATE accounting.invoices
+      SET factoring_status = 'submitted',
+          updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND id = ANY($2::uuid[])
+        AND COALESCE(factoring_status, 'not_factored') = 'not_factored'
+    `,
+    [tenantId, updated.rows[0].invoice_ids]
+  );
+
   return mapBatchRow(updated.rows[0]);
 }
 
@@ -334,6 +356,24 @@ export async function fundBatch(
   );
 
   if (!updated.rows[0]) throw new FactoringBatchError("batch_not_found", 404);
+
+  // FACTORING-BATCH-NEVER-WRITES-FACTORING-STATUS-NO-REVERSE-PATH (half 1 of 2, funded leg) —
+  // 'advanced' is the same terminal value faro-csv-import.ts's own ingest flow writes once cash
+  // has actually moved to the carrier. Only ever advances forward from 'submitted' (never
+  // regresses reserve_held/collected/released/recourse_returned) — same guarded shape as the
+  // submitBatch leg above and faro-csv-import.ts's own UPDATE.
+  await deps.client.query(
+    `
+      UPDATE accounting.invoices
+      SET factoring_status = 'advanced',
+          updated_at = now()
+      WHERE operating_company_id = $1::uuid
+        AND id = ANY($2::uuid[])
+        AND COALESCE(factoring_status, 'not_factored') = 'submitted'
+    `,
+    [tenantId, updated.rows[0].invoice_ids]
+  );
+
   await autoPostOverageOnSettle(batchId, actualFundedCents, tenantId, { client: deps.client });
   return mapBatchRow(updated.rows[0]);
 }
