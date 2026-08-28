@@ -66,11 +66,11 @@ export function run() {
     errors.push(`${ROUTE}: status SELECT and UPDATE must both bind exact requested company`);
   }
   if (
-    !/UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/.test(
+    !/const transitionUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,240}UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid\s+RETURNING id[\s\S]{0,180}if \(!transitionUpdate\.rows\[0\]\?\.id\) return \{ error: "not_found" as const \}/.test(
       dispatchTransitionRoute
     )
   ) {
-    errors.push(`${DISPATCH_ROUTE}: dispatch transition UPDATE must bind the exact requested company`);
+    errors.push(`${DISPATCH_ROUTE}: dispatch transition UPDATE must bind company and prove the row changed before side effects`);
   }
 
   return errors;
@@ -96,10 +96,12 @@ function selftest() {
       .replaceAll('await assertCompanyMembership(authUser.uuid, scopedCompanyId);', '')
       .replaceAll("operating_company_id = $2::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())")
       .replaceAll("operating_company_id = $3::uuid", "operating_company_id IN (SELECT org.user_accessible_company_ids())");
-    const brokenDispatchRoute = dispatchRouteBackup.replace(
-      "AND operating_company_id = $3::uuid",
-      "AND operating_company_id IN (SELECT org.user_accessible_company_ids())"
-    );
+    const brokenDispatchRoute = dispatchRouteBackup
+      .replace(
+        "AND operating_company_id = $3::uuid\n         RETURNING id",
+        "AND operating_company_id IN (SELECT org.user_accessible_company_ids())\n         RETURNING id"
+      )
+      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)");
     fs.writeFileSync(apiPath, broken, "utf8");
     fs.writeFileSync(routePath, brokenRoute, "utf8");
     fs.writeFileSync(dispatchRoutePath, brokenDispatchRoute, "utf8");

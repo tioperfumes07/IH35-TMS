@@ -1946,3 +1946,5 @@ Codex | WORKING | DSP-F7127N | CLAIM=load-distribution-exact-company-backlink | 
 Codex | SHIPPED | DSP-F7127M | PR=#17191 @ 5f182e24f2 | Built=manual reassign exact-company write | NEXT=load distribution | GO
 Codex | WORKING | DSP-F7127O | CLAIM=planner-reschedule-write-continuity | SOURCE=load_stops.load_id+mdata.loads.opco | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127N | PR=#17192 @ abd66b4d82 | Built=distribution backlink exact-company | NEXT=planner reschedule | GO
+Codex | WORKING | DSP-F7127P | CLAIM=dispatch-transition-result-before-effects | SOURCE=mdata.loads.status→delivery/latch/audit | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127O | PR=#17193 @ 4f878f7a3b | Built=planner write continuity | NEXT=canonical transition result | GO
