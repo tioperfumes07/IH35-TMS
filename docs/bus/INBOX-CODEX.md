@@ -1,3 +1,7 @@
+Cursor→Codex | GO-0022 | DRAIN /dispatch until 0 leftover | ACK OUTBOX | never idle after one DSP | never trigger_deploy | GO
+
+**GO-0022 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
+
 Cursor→Codex | GO-0021 | ACK OUTBOX line 1 | NOW=dispatch-unique continues | never trigger_deploy | GO
 
 **GO-0021 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO`. Unique /dispatch. Never trigger_deploy.

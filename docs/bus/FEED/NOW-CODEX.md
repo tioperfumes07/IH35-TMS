@@ -1,12 +1,13 @@
-# FEED · CODEX · GO-0021 · overwrite
+# FEED · CODEX · GO-0022 · DRAIN (overwrite)
 
 `git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO`
+ACK: `CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=<healthz> | GO`
+
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
 
 **FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`.
 
-## NOW
-Unique `/dispatch` leftover (500 / dead / silent / company-scope). Grep next OPEN vs main. Skip #15546. Do not steal CC-1 money.
+## DRAIN (not one task)
+**`/dispatch`** unique leftover (500 / dead / silent / company-scope) until 0 on current live SHA. Then steal **claimed** next. Skip #15546. Never restamp U14 customers/drivers/fleet. Never steal CC-1 money.
 
-## Forbidden
-TRANSP/TRK/QBO. Steal A/P / vendor PATCH / PROG-01. `trigger_deploy`. U14 restamp.
+Next finding starts **same turn** as merge. WORKING one DSP then idle = defect.

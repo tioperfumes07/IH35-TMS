@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0022 | DRAIN factoring then CUST-CRM | ACK OUTBOX | never steal /vendors | never idle | never trigger_deploy | GO
+
+**GO-0022 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0022 | NOW=drain-factoring-then-crm | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
+
 **GO-0021 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0021 | NOW=leftover-unique-cust-crm-or-post | SHA=4e5db76 | GO`. Banking sweep credited. Never trigger_deploy.
 
 **GO-0020 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0020 | NOW=leftover-unique-banking-depreciation | SHA=4e5db76 | GO`. Do not ship b.operating_company_id PATCH (#17200 shipped). Never trigger_deploy.

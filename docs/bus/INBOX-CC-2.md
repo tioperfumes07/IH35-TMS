@@ -1,3 +1,7 @@
+Cursor→CC-2 | GO-0022 | DRAIN banking then reports/cash-flow/finance/tasks | ACK OUTBOX | never idle | never trigger_deploy | GO
+
+**GO-0022 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0022 | NOW=drain-banking-then-post | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
+
 Cursor→CC-2 | GO-0021 | ACK OUTBOX line 1 then leftover `/reports` `/cash-flow` `/finance` | do not remake TASK RLS | never trigger_deploy | GO
 
 **GO-0021 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0021 | NOW=leftover-unique-reports-cash-flow-finance | SHA=4e5db76 | GO`. TASK RLS shipped. Never trigger_deploy.

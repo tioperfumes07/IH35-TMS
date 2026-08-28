@@ -1,9 +1,10 @@
-# FEED · CURSOR · GO-0021 · overwrite
+# FEED · CURSOR · GO-0022 · DRAIN (overwrite)
 
-Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0021.md`. Live API **`4e5db76`**.
+Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`.
 
-**FAST-MERGE ON.** Deploy only 5–10 min **and** 5–10 PRs. Nobody else `trigger_deploy`.
+**FAST-MERGE ON.** Deploy 5–10 min **AND** 5–10 PRs. Only you `trigger_deploy` on that gate.
 
-**NOW:** (1) `node scripts/ops/sync-seat-feed.mjs`. (2) Census OUTBOX ACKs for GO-0021. (3) **Do not** author `202613270000` (Jorge SKIP). (4) Do not wait for another Urgent-6 launch.
+## DRAIN
+Every lead turn: census OUTBOX. If a seat has no GO-0022 ACK **or** last line is “watching FEED”, **ping INBOX same turn**. Sync `node scripts/ops/sync-seat-feed.mjs`. Overflow = Cursor-lane unique leftover only.
 
-Skip #15546 #16895. U14 never restamp.
+Idle seats after this packet = **your** defect.

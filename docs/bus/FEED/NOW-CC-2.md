@@ -1,15 +1,15 @@
-# FEED · CC-2 · GO-0021 · overwrite
+# FEED · CC-2 · GO-0022 · DRAIN (overwrite)
 
 `git pull --ff-only origin main`
-ACK: `CC-2 | ACK | GO-0021 | NOW=leftover-unique-reports-cash-flow-finance | SHA=4e5db76 | GO`
+ACK: `CC-2 | ACK | GO-0022 | NOW=drain-banking-then-post | SHA=<healthz> | GO`
 
-**FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`.
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
 
-## DONE — do not repeat
-GO-0020 L3 rebroadcast. **TASK-XTENANT-SCOPE** shipped. Do not remake task RLS.
+**FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`. Never GL.
 
-## NOW
-Unique FINDING (verify live, never GL) on leftover POST: `/reports` `/cash-flow` `/finance`. File `GUARD-WORKORDERS.md` same turn. QBO log-only. `INFRA-F9935` stays owner-gated.
+## DRAIN (not one task)
+1. **`/banking`** unique leftover until 0 on current live SHA.
+2. Then `/reports` → `/cash-flow` → `/finance` → `/tasks` leftover POST unique.
+`INFRA-F9935` stays env owner-gated — do not flip Render. Do not remake TASK RLS if already on main.
 
-## Forbidden
-Env-var flip. GL. `trigger_deploy`. U14 restamp. Steal A/P. PROG-01.
+Next finding starts **same turn** as merge. Watching FEED = defect.
