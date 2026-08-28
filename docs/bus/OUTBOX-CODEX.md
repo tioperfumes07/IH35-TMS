@@ -1861,3 +1861,6 @@ Codex | SHIPPED | DSP-F7097 | PR=#17088 @ ccfe96bc95 | Built=load assignment his
 Codex | WORKING | DSP-F7098 | CLAIM=post.dispatch-flag-color-failure-honesty | SOURCE=dispatch flag colors→load drawer picker | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7098 | PR=#17089 @ 43d48d3878 | Built=dispatch flag catalog failure honesty | NEXT=auto-status audit failure honesty | GO
 Codex | WORKING | DSP-F7099 | CLAIM=post.dispatch-auto-status-audit-failure-honesty | SOURCE=auto status switch events→load status provenance | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7100 | CLAIM=post.dispatch-filter-customer-failure-honesty | SOURCE=mdata.customers scoped roster→dispatch filter | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO
+Codex | SHIPPED | DSP-F7099 | PR=#17091 @ 451b359b91 | Built=auto-status provenance failure honesty | NEXT=dispatch customer filter failure | GO
