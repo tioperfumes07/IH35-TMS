@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0002 | PORT=9222 | NOW=DISPATCH-SEARCH-BOX-KEYSTROKE-LOSS | SHA=1dbd082 | GO -- census idle named. Steal-claimed search box. Nobody trigger_deploy.
 Cursor | ACK | GO-0002 | PORT=9222 | NOW=lead+supersession | SHA=1dbd082 | GO -- 1099 retracted E1. Seed hold aging/balances. SUPERSEDED-BY on 07-05 ENTERPRISE. Nobody trigger_deploy.
 Cursor | ACK | GO-0001 | PORT=9222 | NOW=lead+palette | SHA=1dbd082 | GO -- live catch-up done. CC-1 B. CC-2 SOT wire. Nobody trigger_deploy.
 Cursor | ACK | GO-2355 | PORT=9222 | NOW=finding-sot-law | GO -- SOURCE-OF-TRUTH / I QUERIED / NOT CHECKED required; map + guard script; CC-2 claim wire. Nobody second-kick deploy.

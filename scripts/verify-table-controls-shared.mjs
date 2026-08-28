@@ -6,6 +6,20 @@ import { readFileSync, existsSync } from "node:fs";
 
 const failures = [];
 
+const SEARCH = "apps/frontend/src/components/table/TableSearch.tsx";
+const searchSrc = existsSync(SEARCH) ? readFileSync(SEARCH, "utf8") : "";
+if (!searchSrc) {
+  failures.push(`${SEARCH}: missing`);
+} else {
+  // DISPATCH-SEARCH-BOX-KEYSTROKE-LOSS — visible value is local; parent emit is debounced.
+  if (!/useState\(value\)/.test(searchSrc) || !/lastEmittedRef/.test(searchSrc) || !/EMIT_MS/.test(searchSrc)) {
+    failures.push(`${SEARCH}: must keep a local buffer (useState) + lastEmittedRef + EMIT_MS debounce; do not bind value={value} to a per-keystroke URL parent`);
+  }
+  if (/onInput=\{\(e\) => onChange/.test(searchSrc) && /onChange=\{\(e\) => onChange/.test(searchSrc)) {
+    failures.push(`${SEARCH}: dual onChange+onInput both calling parent onChange reintroduces keystroke loss`);
+  }
+}
+
 const REQUIRED = [
   "apps/frontend/src/components/table/TableControls.tsx",
   "apps/frontend/src/components/table/ColumnChooser.tsx",
@@ -62,6 +76,18 @@ for (const consumer of [
   if (/useColumnWidths|ResizableTh/.test(src)) {
     failures.push(`${consumer}: still uses bespoke useColumnWidths/ResizableTh — should use shared TableHeaderCell`);
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = searchSrc.replaceAll("lastEmittedRef", "notTheBuffer");
+  const plantedFails =
+    !/useState\(value\)/.test(planted) || !/lastEmittedRef/.test(planted) || !/EMIT_MS/.test(planted);
+  if (!plantedFails) {
+    console.error("selftest: planted TableSearch without lastEmittedRef must fail the buffer check");
+    process.exit(1);
+  }
+  console.log("verify:table-controls-shared --selftest OK");
+  process.exit(0);
 }
 
 if (failures.length) {

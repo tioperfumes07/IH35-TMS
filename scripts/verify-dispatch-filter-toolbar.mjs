@@ -24,6 +24,9 @@ if (s) {
     failures.push(`${F}: must reuse the shared table-controls (TableSearch/ColumnChooser/CollapsedListFilters) from components/table`);
   }
   if (!/TableSearch/.test(s)) failures.push(`${F}: slim toolbar must use the shared TableSearch`);
+  if (!/onSearchChange/.test(s) || !/useCallback/.test(s)) {
+    failures.push(`${F}: TableSearch onChange must be a stable useCallback (onSearchChange), not an inline arrow that rebinds native listeners`);
+  }
   if (!/CollapsedListFilters/.test(s)) {
     failures.push(`${F}: must delegate to the shared CollapsedListFilters gold pattern, not a bespoke popover`);
   }
