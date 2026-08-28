@@ -50,6 +50,16 @@ async function withCompanyScope<T>(
   });
 }
 
+// LIAB-F9927-SILENT-CATCH-SWEEP: every route below used to .catch(() => ({ rows: [] })) its own
+// query — the same fake-empty-200 class as the banking/factoring/settlements sweep (BANK-F9514-9522).
+// Four GET reads returned an honest-looking empty list / $0-KPI row on a real DB failure; three PATCH
+// mutations (hold/resume/mark-paid-off) went further and turned a genuine UPDATE failure into a 404
+// "liability_not_found" — an operator retrying a hold/resume/payoff on a real, existing liability had
+// no way to tell "this liability doesn't exist" from "the write just failed". driver_finance.* and
+// views.liabilities_* are foundational, not conditionally-created tables (no relationExists() guard
+// ever gated any of these queries), so a caught error here was always a real failure, never an
+// expected "table doesn't exist yet" case. Letting the query throw is the fix — Fastify's own async
+// error handling turns the uncaught rejection into a proper 500, not a false-positive empty/not-found.
 export async function registerLiabilitiesRoutes(app: FastifyInstance) {
   app.get("/api/v1/liabilities/dashboard/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
@@ -67,8 +77,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows[0] ?? null;
     });
     return (
@@ -100,8 +109,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             LIMIT 500
           `,
           [companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { liabilities: rows };
@@ -126,8 +134,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             ORDER BY created_at DESC
           `,
           [companyId, params.data.driver_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return res.rows;
     });
     return { liabilities: rows };
@@ -152,8 +159,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const liability = rowRes.rows[0];
       if (!liability) return null;
       // FIX (Law §9 2026-07-22, GAP not patch — same root cause as cash-advances.routes.ts GET /:id):
@@ -177,8 +183,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             ORDER BY created_at DESC
           `,
           [liability.driver_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       return { ...liability, settlement_history: settlementsRes.rows, settlement_history_is_driver_level: true };
     });
     if (!detail) return reply.code(404).send({ error: "liability_not_found" });
@@ -207,8 +212,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             LIMIT 1
           `,
           [params.data.id, companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       const liability = res.rows[0];
       if (!liability) return null;
 
@@ -244,7 +248,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.patch("/api/v1/liabilities/:id/hold", async (req, reply) => {
+  app.patch("/api/v1/liabilities/:id/hold", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -267,8 +271,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             RETURNING id
           `,
           [params.data.id, body.data.reason]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       if (!res.rows[0]) return false;
       await appendCrudAudit(
         client,
@@ -288,7 +291,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.patch("/api/v1/liabilities/:id/resume", async (req, reply) => {
+  app.patch("/api/v1/liabilities/:id/resume", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -309,8 +312,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             RETURNING id
           `,
           [params.data.id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       if (!res.rows[0]) return false;
       await appendCrudAudit(
         client,
@@ -352,8 +354,7 @@ export async function registerLiabilitiesRoutes(app: FastifyInstance) {
             RETURNING id
           `,
           [params.data.id, companyId]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        );
       if (!res.rows[0]) return false;
       await appendCrudAudit(
         client,
