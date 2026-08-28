@@ -8,7 +8,16 @@ export type LivePosition = {
   speed_mph?: number | null;
 };
 
-export function LoadLivePositionCell({ position, loadId }: { position: LivePosition | null; loadId: string }) {
+export function LoadLivePositionCell({
+  position,
+  loadId,
+  unavailable = false,
+}: {
+  position: LivePosition | null;
+  loadId: string;
+  unavailable?: boolean;
+}) {
+  if (unavailable) return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
   if (!position) return <span className="text-[10px] text-slate-400">No GPS</span>;
   return (
     <div className="flex flex-col gap-0.5 text-[10px]" data-testid="load-live-gps-cell">

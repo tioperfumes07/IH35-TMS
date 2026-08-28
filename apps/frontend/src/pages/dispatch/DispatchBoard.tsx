@@ -869,6 +869,9 @@ export function DispatchBoard({
       key: "location",
       header: "Location",
       cell: (load) => {
+        if (fleetLocationQuery.isError) {
+          return <span className="text-[10px] font-semibold text-amber-700">Unavailable</span>;
+        }
         const loc = load.assigned_unit_id ? locationByUnit[load.assigned_unit_id] : undefined;
         const text = loc ? [loc.city, loc.state].filter(Boolean).join(", ") : "";
         return text ? <span className="text-xs text-slate-700">{text}</span> : <span className="text-[10px] text-slate-400">—</span>;
@@ -892,7 +895,17 @@ export function DispatchBoard({
     },
     { key: "linehaul", header: "Linehaul", cell: (load) => formatMoneyCents(linehaulCents(load), load.currency_code) },
     { key: "status_signal", header: "Status signal", cell: (load) => renderTriSignalCell(load) },
-    { key: "live_gps", header: "Live GPS", cell: (load) => <LoadLivePositionCell position={positionByLoad[load.id] ?? null} loadId={load.id} /> },
+    {
+      key: "live_gps",
+      header: "Live GPS",
+      cell: (load) => (
+        <LoadLivePositionCell
+          position={positionByLoad[load.id] ?? null}
+          loadId={load.id}
+          unavailable={loadPositionsQuery.isError}
+        />
+      ),
+    },
     { key: "risk", header: "Risk", cell: (load) => <RiskCell load={load} /> },
     { key: "status", header: "Status", cell: (load) => renderStatusCell(load) },
     { key: "driver_status", header: "Driver Status", cell: (load) => <DriverStatusColumn load={load} /> },
@@ -936,6 +949,24 @@ export function DispatchBoard({
             status={(triSignalsQuery.error as { status?: number } | null)?.status ?? 0}
             message={userFacingApiError(triSignalsQuery.error, "Status-signal feed failed")}
             onRetry={() => void triSignalsQuery.refetch()}
+            className="py-4"
+          />
+        ) : null}
+        {loadPositionsQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load live GPS"
+            status={(loadPositionsQuery.error as { status?: number } | null)?.status ?? 0}
+            message={userFacingApiError(loadPositionsQuery.error, "Live GPS feed failed")}
+            onRetry={() => void loadPositionsQuery.refetch()}
+            className="py-4"
+          />
+        ) : null}
+        {fleetLocationQuery.isError ? (
+          <ListErrorState
+            title="Couldn't load fleet locations"
+            status={(fleetLocationQuery.error as { status?: number } | null)?.status ?? 0}
+            message={userFacingApiError(fleetLocationQuery.error, "Fleet location feed failed")}
+            onRetry={() => void fleetLocationQuery.refetch()}
             className="py-4"
           />
         ) : null}
