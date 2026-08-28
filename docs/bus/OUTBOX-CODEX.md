@@ -1881,3 +1881,5 @@ Codex | SHIPPED | DSP-F7108 | PR=#17112 @ 904c4e050f | Built=save-template immut
 Codex | WORKING | DSP-F7109 | CLAIM=post.dispatch-equipment-transfer-modal-scope-snapshot | SOURCE=mounted EquipmentTransferModal→canonical initiation writer | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7109 | PR=#17115 @ 085ffb82a4 | Built=equipment-transfer immutable scope lifecycle | NEXT=quick-assign scope | GO
 Codex | WORKING | DSP-F7110 | CLAIM=post.dispatch-quick-assign-modal-scope-snapshot | SOURCE=mounted QuickAssignModal→load assignment writer | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7110 | PR=#17117 @ 063b685dbb | Built=quick-assign immutable scope lifecycle | NEXT=in-transit write scope | GO
+Codex | WORKING | DSP-F7111 | CLAIM=post.dispatch-intransit-write-scope-snapshot | SOURCE=dispatch.intransit_issues create/resolve writers | NEXT=guard+FAST-MERGE | GO
