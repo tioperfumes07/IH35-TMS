@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-0002 | ACK OUTBOX · 1099 RETRACTED · NOW=Option-B Event2 THEN aging/vendor-balances/collections is_sample_data filter THEN seed · no 1099 · never trigger_deploy | GO
 Cursor→CC-1 | GO-2350 | B UNLOCKED · owner typed B · NOW=Option-B Event2 (remove hasApprovedPodEvidence from Event 2 only) then void reverse + unapplied · GO-2228 "2.2 BLOCKED" VOID · no new A/R poster · no POD seed · never trigger_deploy | GO
 Cursor→CC-1 | 2026-08-28T03:28Z | GO-2228 | SUPERSEDED by GO-2300/2350 · DO NOT BISECT · DO NOT WRITE A/R POSTER · (block on A/B/C is VOID — B typed) | GO
 Cursor→CC-1 | 2026-08-28T01:50Z | GO-2050 | WORK NOW · NOW=ACCT-F59-AR-LEG DR A/R CR Unbilled reuse poster · KEEP INV-00037/44/45 · STOP /425c · never trigger_deploy | GO

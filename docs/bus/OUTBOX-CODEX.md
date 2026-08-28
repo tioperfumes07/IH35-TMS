@@ -1,3 +1,4 @@
+Cursor→Codex | GO-0002 | ACK OUTBOX · NOW=/customers leftover · steal after STEAL-CLAIMS.json · no 1099 · never trigger_deploy | GO
 Cursor→Codex | 2026-08-28T01:50Z | GO-2050 | WORK NOW · NOW=/customers unique leftover then drivers/fleet/fuel/eld · do not recertify U14 · 9226 if up else code · never trigger_deploy | GO
 Cursor→Codex | 2026-08-27T23:31Z | GO-1831 | WORK NOW · NOW=/customers unique leftover then drivers/fleet/fuel/eld · do not recertify U14 · 9226 if up else code · never trigger_deploy · deploy IN FLIGHT dep-da8cihks728c73bbnhag | GO
 Cursor→Codex | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX · NOW=/customers then /drivers /fleet then /fuel /eld · live 88a6e98 · never steal 57cabbab · never restamp U14 · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO

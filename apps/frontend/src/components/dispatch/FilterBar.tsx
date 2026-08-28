@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomers } from "../../api/mdata";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -94,6 +94,13 @@ export function FilterBar({
     enabled: Boolean(operatingCompanyId),
   });
 
+  const onSearchChange = useCallback(
+    (search: string) => {
+      onChange({ ...value, search });
+    },
+    [onChange, value],
+  );
+
   const customerOptions = useMemo(
     () =>
       (customersQuery.data?.customers ?? []).map((c) => ({
@@ -126,7 +133,7 @@ export function FilterBar({
         searchSlot={
           <TableSearch
             value={value.search}
-            onChange={(search) => onChange({ ...value, search })}
+            onChange={onSearchChange}
             placeholder="Load #, customer, stop city…"
             className="w-64"
           />
