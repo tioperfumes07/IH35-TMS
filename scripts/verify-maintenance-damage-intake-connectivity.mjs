@@ -18,7 +18,7 @@ function failures(routeSource = routes) {
     ["mounted triage", home.includes("<TriageModal")],
     ["dual actions", modal.includes("onConvertToWo(issue)") && modal.includes("onConvertToDamage(issue)")],
     ["scoped damage client", api.includes("convertInTransitIssueToDamage") && api.includes("convert-to-damage?${query(companyId)}")],
-    ["damage route", routeSource.includes('app.post("/api/v1/maintenance/triage/:issue_id/convert-to-damage"')],
+    ["damage route", /app\.post\(\s*"\/api\/v1\/maintenance\/triage\/:issue_id\/convert-to-damage"/.test(routeSource)],
     ["company transaction", routeSource.includes("withCompany(user.uuid, query.data.operating_company_id")],
     ["canonical damage insert", routeSource.includes("INSERT INTO safety.incidents") && routeSource.includes("driver_id, unit_id, load_id, photo_keys")],
     ["source lineage", routeSource.includes("promoted_to_damage_report_id = $2")],
@@ -30,6 +30,7 @@ function failures(routeSource = routes) {
 }
 if (process.argv.includes("--selftest")) {
   const mutations = [
+    [routes.replace('"/api/v1/maintenance/triage/:issue_id/convert-to-damage"', '"/api/v1/maintenance/triage/:issue_id/missing-damage-route"'), "damage route"],
     [routes.replace("INSERT INTO safety.incidents", "INSERT INTO maintenance.fake_damage"), "canonical damage insert"],
     ...["maintenance.work_order.created", "safety.incident.created"].map((event) => {
       const eventIndex = routes.indexOf(`\"${event}\"`);
