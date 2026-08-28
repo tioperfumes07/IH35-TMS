@@ -1,3 +1,5 @@
+**21:39 CT GO-2139.** Instrument C25–C31 + sample-data report filter + SQL pack. CC-1 NOW = three A/R fixes. USMCA only. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2139.md`.
+
 **20:50 CT 2026-08-27 GO-2050 — CURSOR LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. Census. Instruct seats first. BANK-F9511 if OPEN. Do not recertify U14. Honest status: complete:true ≠ certified ≠ launch.
 
 **18:31 CT 2026-08-27 GO-1831 — CURSOR LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. Deploy `dep-da8cihks728c73bbnhag` IN FLIGHT — do not second-kick. Census. BANK-F9511. Unstick Codex/Devin/Cascade. Hook: TYPECHECK_SKIP_DOCS_ONLY.

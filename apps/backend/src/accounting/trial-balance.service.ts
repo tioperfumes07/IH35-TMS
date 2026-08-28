@@ -69,6 +69,7 @@ export async function getTrialBalanceReport(input: {
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
+          AND COALESCE(je.is_sample_data, false) = false
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
         GROUP BY p.account_id, a.account_number, a.account_name, a.account_type
         ORDER BY a.account_number ASC NULLS LAST, a.account_name ASC

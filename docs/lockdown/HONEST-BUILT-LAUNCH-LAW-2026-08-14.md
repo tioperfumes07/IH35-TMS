@@ -16,8 +16,9 @@ If a seat claims done from a stale INBOX, an old HTML artifact, a green scoreboa
 
 > **Launch-ready without Live Chrome** = Fully-Wired items **1–11** true for **every** module / leaf / owed control, with Box 3 **Built** proven by **leaf-specific** guards only.  
 > **Live Chrome (item 12) is last.** Soft “yes / wired / done / money complete” without that = process defect.  
-> **Do not add scoreboard columns** on Required.json or a 5th Verified Box. Fix lying Built.  
-> **Owner 2026-08-21:** the Program **system** scoreboard MUST show **launch-ladder columns** (Wave · Vertical COL · FAST-MERGE · FW 1–11 · Live 12 · Certify) so seats cannot forget Urgent 6 → rest of urgent. That is not a 5th Box and not a new Required leaf.
+> **Do not add scoreboard columns** as a 5th Verified Box or `leafRe:.*` theater. Fix lying Built.  
+> **Owner 2026-08-28:** C25–C31 (`gl_delta` … `non_empty_proof`) **are** Required economic columns. They prove the ledger moved correctly. They are not a 5th Box.  
+> **Owner 2026-08-21:** the Program **system** scoreboard MUST show **launch-ladder columns** (Wave · Vertical COL · FAST-MERGE · FW 1–11 · Live 12 · Certify) so seats cannot forget Urgent 6 → rest of urgent. That is not a 5th Box.
 
 ---
 

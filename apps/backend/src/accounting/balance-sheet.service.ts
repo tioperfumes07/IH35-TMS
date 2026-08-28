@@ -75,6 +75,7 @@ export async function getBalanceSheetReport(input: {
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
+          AND COALESCE(je.is_sample_data, false) = false
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Asset', 'Liability', 'Equity')
@@ -151,6 +152,7 @@ export async function getBalanceSheetReport(input: {
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
+          AND COALESCE(je.is_sample_data, false) = false
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))
           AND je.entry_date <= $2::date
           AND a.account_type IN ('Income', 'OtherIncome', 'CostOfGoodsSold', 'Expense', 'OtherExpense')

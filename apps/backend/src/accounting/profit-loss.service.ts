@@ -78,6 +78,7 @@ export async function getProfitLossReport(input: {
          AND a.operating_company_id = p.operating_company_id
         WHERE p.operating_company_id = $1::uuid
           AND je.status <> 'voided'
+          AND COALESCE(je.is_sample_data, false) = false
           AND (p.posting_batch_id IS NULL OR pb.batch_status IN ('posted', 'reversed'))${dateSql}
           -- ACCT-F5656 — a period-close's own closing entry zeroes every revenue/expense account by
           -- posting the mirror-image of that period's activity (Dr revenue / Cr expense, net to

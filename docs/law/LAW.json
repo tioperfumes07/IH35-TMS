@@ -617,9 +617,16 @@
   },
   {
     "id": "LAW-2026-08-13-FULLY-WIRED-COMPLETE-BAR",
-    "title": "FULLY WIRED = complete 12-item bar (create\u2192canonical \u00b7 money \u00b7 F+R \u00b7 matrix \u00b7 surface bar every control\u2192matrix \u00b7 chrome \u00b7 pickers \u00b7 RLS \u00b7 guard \u00b7 Live Chrome LAST) \u2014 soft yes to owner without this list is a defect",
+    "title": "FULLY WIRED = complete 12-item bar (create\u2192canonical \u00b7 money \u00b7 F+R \u00b7 matrix \u00b7 surface bar every control\u2192matrix \u00b7 chrome \u00b7 pickers \u00b7 RLS \u00b7 guard \u00b7 Live Chrome LAST) plus item 13 GL delta (C25\u2013C31) \u2014 soft yes to owner without this list is a defect",
     "source_file": "docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md",
     "guard": "scripts/verify-fully-wired-complete-bar-present.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-28-ECONOMIC-COLUMNS-C25-C31",
+    "title": "C25\u2013C31 economic columns must exist in columns.shared.json (GL delta / subledger / lifecycle / reversal / period / entity / living doc). Chrome walks cannot satisfy them.",
+    "source_file": "docs/specs/scoreboard/columns.economic.json",
+    "guard": "scripts/verify-economic-columns-c25-c31-present.mjs",
     "type": "enforced"
   },
   {

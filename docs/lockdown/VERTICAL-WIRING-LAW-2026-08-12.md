@@ -16,7 +16,7 @@
 
 ## 1. The one-line law
 
-> **Vertical = one matrix COLUMN ID (or one CODEBASE CLASS). Owner sequence: (1) finish every missing Required cell for that column on the priority 10 modules · (2) then finish that same column across ALL remaining modules that owe it — every tab/leaf/drawer/popup — until full-module audit is 100%. Never stop at P10. Never module-deep horizontal.**
+> **Owner 2026-08-28 (resolves three conflicting defs):** **fix horizontally at the mechanism** (one poster / one billing-leg / one void-reversal). **Verify vertically along the USMCA money lifecycle** (create → canonical → GL delta → subledger tie → cash). Column-wave remains how chrome/wiring is swept. Module-at-a-time Live Chrome is last and is **not** a ledger PASS. TRANSP/TRK are test/legacy, not the operating bar.
 
 ---
 
