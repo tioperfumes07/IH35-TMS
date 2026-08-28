@@ -1,4 +1,9 @@
 {
+  "9878": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-audit-history-entity-type-resource-type-parity"
+  },
   "9877": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
