@@ -1773,3 +1773,5 @@ Codex | SHIPPED | MAINT-F7019/F7020 ROUTING | PR=#16978 @ 52d748b6d0 | routed=CC
 Codex | WORKING | CUST-F7021 | CLAIM=post.customers-guard-current-surface-alignment | vertical=transaction list+detail tabs | NEXT=guard repair+FAST-MERGE | GO
 Codex | WORKING | FLEET-F7048 | CLAIM=post.fleet-roster-trailer-kind-canonical-reader-guard | SOURCE=both listAllUnits trailer queries→kind tabs/actions | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7047 | PR=#17004 @ 9874b56c2a | Built=canonical type filter guard 23/23 | NEXT=trailer kind vertical | GO
+Codex | WORKING | FLEET-F7049 | CLAIM=post.fleet-bulk-inactivate-guard-extractor | SOURCE=bounded inactivateMutation→soft endpoints→partial truth | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7048 | PR=#17005 @ 15ad52bf6c | Built=trailer kind vertical guard 7/7 | NEXT=bulk inactivate lifecycle | GO
