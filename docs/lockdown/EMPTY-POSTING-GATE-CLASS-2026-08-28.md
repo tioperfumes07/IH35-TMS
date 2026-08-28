@@ -1,6 +1,6 @@
 # EMPTY POSTING-GATE CLASS (2026-08-28)
 
-**Answered = closed for triage method. Per-row launch_owed can change only if Jorge types it.**
+**SUPERSEDED for “KEEP GATE · N/A”:** owner 2026-08-27 23:15 typed **seed every gated table** (`docs/lockdown/OWNER-NEVER-IDLE-SEED-EVERY-TABLE-2026-08-27.md`). All seven `launch_owed: true`. KEEP GATE rows below are **history only**.
 
 Claude enumerated seven money paths gated on **zero-row** tables (prod, `bypass_rls=lucia`). Blast radius: name-matched tables in accounting/factoring/factor/dispatch/banking/driver_finance — **not** every poster gate chain. The list may be longer; the guard must auto-discover, not freeze this table as complete.
 
@@ -24,16 +24,9 @@ Barely exercised (1–2 rows) stay on the detector list, not this seven: escrow_
 
 ## Guard (do **not** ship the naive rule)
 
-**Illegal:** `fail if any money poster hard-blocks on a table with 0 rows`. That reddens equipment loans / Faro / tax forever and trains people to seed fake assets.
+**Owner 23:15:** gated tables must not stay at 0. Seed labeled TEST (including one TEST asset). Do not delete.
 
-**Legal:** `scripts/verify-no-posting-gate-on-empty-table.mjs` (CC-2, claim ≡3 **then** author) fails when:
-
-1. A poster gate is backed by table T, **and**
-2. T is marked `launch_owed: true` for USMCA in `docs/specs/scoreboard/posting-gate-tables.json`, **and**
-3. T has 0 rows for that opco (lucia + completeness discriminator), **and**
-4. The gate is still a **hard block** (not a detector / N/A).
-
-`launch_owed: false` = KEEP GATE. Adding a new hard block on a launch_owed table = red.
+**Legal guard:** `verify-no-posting-gate-on-empty-table.mjs` (CC-2, claim ≡3 then author) fails when a table in `posting-gate-tables.json` with `launch_owed: true` has 0 USMCA rows (lucia + completeness discriminator). All seven rows are `launch_owed: true`. Do not invent a KEEP_GATE_NA exception without a new owner letter.
 
 ## ~15 posting types (C25 is the type, not the leaf)
 

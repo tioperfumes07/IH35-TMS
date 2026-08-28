@@ -1,3 +1,5 @@
+**23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `CC-3 | ACK | GO-2320 | PORT=9225 | NOW=SEED-POD-DETENTION-BATCH | GO`. Create labeled TEST POD (approve), detention, factoring batch through wizards. KEEP. Do not delete. If drained, help another seat. Never `trigger_deploy`.
+
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `CC-3 | ACK | GO-2310 | PORT=9225 | NOW=USMCA-FIXTURE-SET | GO`. One keep-TEST fixture set. Do **not** void. Do **not** seed equipment loans/Faro/tax. Never `trigger_deploy`.
 
 **23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `CC-3 | ACK | GO-2300 | PORT=9225 | NOW=/lists | GO`. Lists/legal unique chrome. Never steal money. Never `trigger_deploy`.
