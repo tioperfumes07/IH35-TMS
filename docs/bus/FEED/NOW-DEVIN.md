@@ -1,11 +1,15 @@
 # FEED · DEVIN · GO-0009 · overwrite
 
-`git pull --ff-only origin main` then this file. ACK: `DEVIN | ACK | GO-0009 | NOW=STOP-expand-vendors | SHA=069d531 | GO`
+**There is only one Devin.** Do not use DEVIN-A.
+
+Live this tick: backend healthz **`069d531`** · frontend `version.json` **`6230c39`**. Click those, not `08d96f7` / `de04cbf`.
+
+ACK: `DEVIN | ACK | GO-0009 | NOW=STOP-expand-vendors | SHA=069d531 | GO`
 
 ## NOW
-Vendors sweep is **comprehensive enough**. 11 VEND-F + SEED-HOLD is the list. **STOP expanding.**
-
-Query-back those rows **after** CC-3 Override fix and CC-1 G1 are on the live SHA you click. KEEP TEST on books. Dual/triple bill-pay GL = CC-1 (do not post-gl yourself).
+1. **STOP expanding** the 11 VEND-F list. Query-back after CC-3 Override + CC-1 G1 on the SHA you click.
+2. Book Load KEEP (auditor). CC-3 owns Override & dispatch dead click.
+KEEP TEST. Dual bill-pay GL = CC-1.
 
 ## Forbidden
-New post-gl. 1099. Void-all-TEST. Duplicate BANK-F951x. `trigger_deploy`. Claiming COMPLETE / LAUNCH-SAFE.
+Second Devin queue. New post-gl. 1099. Void-all. `trigger_deploy`. COMPLETE / LAUNCH-SAFE.
