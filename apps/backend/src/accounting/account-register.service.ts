@@ -196,7 +196,8 @@ export async function getAccountRegister(
 
   const params: unknown[] = [input.operating_company_id, input.account_id, input.from_date, input.to_date];
   let where = `p.operating_company_id = $1::uuid AND p.account_id = $2::uuid
-      AND je.entry_date >= $3::date AND je.entry_date <= $4::date AND je.status <> 'voided'`;
+      AND je.entry_date >= $3::date AND je.entry_date <= $4::date AND je.status <> 'voided'
+      AND COALESCE(je.is_sample_data, false) = false`;
   if (input.type) {
     params.push(input.type);
     where += ` AND p.source_transaction_type = $${params.length}`;

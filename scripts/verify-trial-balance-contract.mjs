@@ -58,6 +58,11 @@ try {
   );
   assertMatches(
     service,
+    /COALESCE\(je\.is_sample_data,\s*false\)\s*=\s*false/,
+    "Trial balance must exclude is_sample_data (keep rows, stop counting them in reports)",
+  );
+  assertMatches(
+    service,
     /p\.posting_batch_id IS NULL OR pb\.batch_status IN \('posted', 'reversed'\)/,
     "Trial balance must use reversal-safe posting batch filter",
   );

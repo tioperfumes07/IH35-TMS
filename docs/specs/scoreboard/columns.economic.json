@@ -1,0 +1,84 @@
+{
+  "_comment": "IH35-TMS · ECONOMIC VERIFICATION COLUMNS C25-C31. Appended to docs/specs/scoreboard/columns.shared.json. C13-C19 prove a money OBJECT exists; C25-C31 prove the LEDGER MOVED CORRECTLY. None can be satisfied by looking at a screen.",
+  "_authored": "2026-08-28",
+  "_rationale": "accounting was stamped 14/14 CERTIFIED and 39-of-39 while INV-2026-00037/00044/00045 sat marked PAID with no invoice-sourced GL. Under C01-C24 that is a legitimate PASS. It is a FAIL under C25.",
+  "columns": [
+    {
+      "id": "gl_delta",
+      "n": "C25",
+      "group": "economics",
+      "label": "GL delta matches posting matrix",
+      "proves": "The journal entry this leaf produced hits the EXACT accounts and signs the posting matrix specifies for this transaction type. Balanced is not correct — DR Unbilled / CR Revenue balances and is wrong for an issued invoice.",
+      "evidence": "Neon: the JE's account_number + debit_or_credit per line, compared to the signed posting matrix row.",
+      "auto_check": "verify-gl-delta-matches-matrix.mjs",
+      "fail_is_unique": true
+    },
+    {
+      "id": "subledger_tie",
+      "n": "C26",
+      "group": "economics",
+      "label": "Subledger ties to control account",
+      "proves": "After this leaf's action the module's subledger still equals its GL control account, to the cent.",
+      "evidence": "INV-3 in scripts/verify-gl-invariants.sql — ar_difference = 0.00 AND ap_difference = 0.00.",
+      "auto_check": "verify-subledger-tieout.mjs",
+      "fail_is_unique": true
+    },
+    {
+      "id": "lifecycle_complete",
+      "n": "C27",
+      "group": "economics",
+      "label": "No stranded intermediate",
+      "proves": "Every downstream leg fired. invoice -> A/R -> cash. bill -> A/P -> payment. settlement -> liability -> cash. Nothing left parked in Unbilled Revenue, Undeposited Funds or Cash Clearing.",
+      "evidence": "INV-6 — those three system_purpose accounts net to 0.00 for closed documents.",
+      "auto_check": "verify-no-stranded-intermediate.mjs",
+      "fail_is_unique": true
+    },
+    {
+      "id": "reversal_symmetry",
+      "n": "C28",
+      "group": "economics",
+      "label": "Void produces a linked equal-and-opposite entry",
+      "proves": "Voiding produces a reversing JE linked by reverses_je_id / reversed_by_je_id, net GL effect returns to zero, and no JE is ever voided in place.",
+      "evidence": "INV-11 — je_voided_in_place = 0 and the two link counts match.",
+      "auto_check": "verify-reversal-symmetry.mjs",
+      "fail_is_unique": false
+    },
+    {
+      "id": "period_guard",
+      "n": "C29",
+      "group": "economics",
+      "label": "Respects period lock and date policy",
+      "proves": "The entry cannot post into a closed period, and cannot be dated beyond the approved future horizon.",
+      "evidence": "INV-8 + INV-9 — at least one period closed with a lock date; future_dated = 0.",
+      "auto_check": "verify-period-and-date-guard.mjs",
+      "fail_is_unique": true
+    },
+    {
+      "id": "entity_isolation",
+      "n": "C30",
+      "group": "economics",
+      "label": "Entity-pure posting and live role bindings",
+      "proves": "The posting used ONLY accounts belonging to this operating_company_id, AND every chart_of_accounts_role its poster resolves is active in THIS entity. A TRANSP or TRK pass never satisfies this for USMCA.",
+      "evidence": "INV-10b/10c — no role required by an enabled posting flag is inactive or duplicate-order-dependent in this entity.",
+      "auto_check": "verify-posting-flag-has-roles.mjs",
+      "fail_is_unique": true
+    },
+    {
+      "id": "non_empty_proof",
+      "n": "C31",
+      "group": "economics",
+      "label": "Proven against a living document",
+      "proves": "Certified against at least one real, non-voided, non-sample document. An honest-empty render is a valid FIRST test and is never sufficient alone.",
+      "evidence": "The row id of the living document, plus its GL entry id. 'honest empty' alone = UNVERIFIED, not PASS.",
+      "auto_check": "verify-non-empty-certification.mjs",
+      "fail_is_unique": false,
+      "note": "Closes the 'verified against 0 rows' pattern."
+    }
+  ],
+  "law_amendments_required": [
+    "FULLY-WIRED-COMPLETE-BAR: add item 13 — GL DELTA.",
+    "CREATE-TEST-THEN-VOID: keep TEST rows; exclude is_sample_data from financial reports immediately.",
+    "VERTICAL-WIRING-LAW: fix horizontally at the mechanism, verify vertically along the money lifecycle.",
+    "Branch protection this week before CC-1 A/R merge."
+  ]
+}
