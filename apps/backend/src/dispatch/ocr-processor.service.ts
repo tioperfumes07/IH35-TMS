@@ -276,7 +276,7 @@ export async function finalizeOcrIntakeConversion(
   operatingCompanyId: string,
   itemId: string,
   loadId: string
-): Promise<{ ok: true; item: OcrIntakeQueueRow } | { ok: false; error: "not_found" | "load_not_found" | "already_converted" }> {
+): Promise<{ ok: true; item: OcrIntakeQueueRow } | { ok: false; error: "not_found" | "load_not_found" | "already_converted" | "not_ready" }> {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const intakeRes = await client.query(
       `SELECT * FROM dispatch.ocr_intake_queue WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1 FOR UPDATE`,
@@ -284,9 +284,13 @@ export async function finalizeOcrIntakeConversion(
     );
     const row = intakeRes.rows[0] as Record<string, unknown> | undefined;
     if (!row) return { ok: false as const, error: "not_found" as const };
-    if (row.converted_load_id && String(row.converted_load_id) !== loadId) {
-      return { ok: false as const, error: "already_converted" as const };
+    if (row.converted_load_id) {
+      if (String(row.converted_load_id) !== loadId) {
+        return { ok: false as const, error: "already_converted" as const };
+      }
+      return { ok: true as const, item: mapRow(row) };
     }
+    if (String(row.status) !== "ready_review") return { ok: false as const, error: "not_ready" as const };
 
     const loadRes = await client.query(
       `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
@@ -297,10 +301,14 @@ export async function finalizeOcrIntakeConversion(
     const updated = await client.query(
       `UPDATE dispatch.ocr_intake_queue
           SET status = 'converted', converted_load_id = $3::uuid, updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2::uuid
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND status = 'ready_review'
+          AND converted_load_id IS NULL
         RETURNING *`,
       [itemId, operatingCompanyId, loadId]
     );
+    if (!updated.rows[0]) return { ok: false as const, error: "already_converted" as const };
     await appendCrudAudit(
       client,
       userId,

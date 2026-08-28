@@ -54,6 +54,16 @@ function processorClaimSignals(processor) {
   return failures;
 }
 
+function finalizeLifecycleSignals(processor) {
+  const failures = [];
+  const section = processor.slice(processor.indexOf("export async function finalizeOcrIntakeConversion"), processor.indexOf("/** Re-export for tests"));
+  if (!/if \(row\.converted_load_id\)[\s\S]*String\(row\.converted_load_id\) !== loadId[\s\S]*already_converted[\s\S]*return \{ ok: true as const, item: mapRow\(row\) \}/.test(section)) failures.push("same-load finalize replay must be idempotent without another audit");
+  if (!/String\(row\.status\) !== "ready_review"[\s\S]*error: "not_ready"/.test(section)) failures.push("finalize must reject items that are not ready for review");
+  if (!/SET status = 'converted'[\s\S]*operating_company_id = \$2::uuid[\s\S]*status = 'ready_review'[\s\S]*converted_load_id IS NULL[\s\S]*RETURNING \*/.test(section)) failures.push("finalize write must compare-and-set exact company, ready status, and empty conversion FK");
+  if (!/if \(!updated\.rows\[0\]\) return \{ ok: false as const, error: "already_converted" as const \}/.test(section)) failures.push("finalize must reject a lost conversion claim before audit");
+  return failures;
+}
+
 function main() {
   const migration = read(paths.migration);
   const page = read(paths.page);
@@ -83,6 +93,7 @@ function main() {
   if (!processor.includes("processOcrIntakeQueueItem")) failures.push("processor must run async OCR extraction");
   failures.push(...processorFailureSignals(processor));
   failures.push(...processorClaimSignals(processor));
+  failures.push(...finalizeLifecycleSignals(processor));
   if (!processor.includes("book_load_prefill")) failures.push("processor must build book load prefill on convert");
   if (!index.includes("registerDispatchOcrIntakeRoutes")) failures.push("backend index must register ocr intake routes");
 
@@ -131,7 +142,14 @@ function main() {
       fail("selftest unnamed scheduler mutation escaped");
     }
     if (!claimMutants.every((mutant) => processorClaimSignals(mutant).length > 0)) fail("selftest claim mutation escaped");
-    console.log("verify:dispatch-ocr-queue SELFTEST PASS (8/8 planted defects rejected)");
+    const finalizeMutants = [
+      processor.replace('if (String(row.status) !== "ready_review") return { ok: false as const, error: "not_ready" as const };', ""),
+      processor.replace("AND status = 'ready_review'", "AND status IS NOT NULL"),
+      processor.replace("AND converted_load_id IS NULL", ""),
+      processor.replace('if (!updated.rows[0]) return { ok: false as const, error: "already_converted" as const };', ""),
+    ];
+    if (!finalizeMutants.every((mutant) => finalizeLifecycleSignals(mutant).length > 0)) fail("selftest finalize lifecycle mutation escaped");
+    console.log("verify:dispatch-ocr-queue SELFTEST PASS (12/12 planted defects rejected)");
   }
 }
 
