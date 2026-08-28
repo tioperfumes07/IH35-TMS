@@ -26,6 +26,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { StatusBadge } from "../components/StatusBadge";
+import { companyToday } from "../lib/businessDate";
 import { useToast } from "../components/Toast";
 import { SaveDropdown } from "../components/forms/SaveDropdown";
 import { useBulkSelection } from "../hooks/useBulkSelection";
@@ -613,7 +614,7 @@ export function UsersPage() {
     const href = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = href;
-    anchor.download = `IH35-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `IH35-users-${companyToday()}.csv`;
     anchor.click();
     URL.revokeObjectURL(href);
   };

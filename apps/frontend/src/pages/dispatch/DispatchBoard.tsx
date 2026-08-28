@@ -4,6 +4,7 @@ import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
+import { companyToday } from "../../lib/businessDate";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
@@ -614,7 +615,7 @@ export function DispatchBoard({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `dispatch-loads-selected-${new Date().toISOString().slice(0, 10)}.csv`;
+    anchor.download = `dispatch-loads-selected-${companyToday()}.csv`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

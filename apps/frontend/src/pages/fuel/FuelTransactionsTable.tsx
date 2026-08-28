@@ -4,6 +4,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
+import { companyToday } from "../../lib/businessDate";
 
 export type FuelTransactionRow = {
   id: string;
@@ -60,7 +61,7 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `fuel-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `fuel-transactions-${companyToday()}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

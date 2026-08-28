@@ -1,3 +1,5 @@
+Codex | WORKING | CLS-F6967 | CLAIM=post.export-business-date-remainder | vertical=safety+dispatch+vendors+users+fuel | guard=13/13 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | CLS-F6966 | PR=#16929 @ 3f96d8dbfd | Built=customers+drivers+maintenance export dates | REMAINDER=CLS-F6967 | GO
 Codex | WORKING | SAF-F6963 | CLAIM=post.safety-insurance-backend-business-date | vertical=coverage+ELD+scoring+expiry+D&A+scheduler | guard=6/6 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6962 | PR=#16927 @ f1da59f206 | Built=expiry+cards+training+meetings business-date | NEXT=SAF-F6963 | GO
 Codex | WORKING | SAF-F6962 | CLAIM=post.safety-company-business-date | vertical=expiry-badge+risk-cards+training+meetings | guard=4/4 | NEXT=FAST-MERGE | GO

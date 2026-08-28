@@ -4,6 +4,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
 import { entityLabel } from "../../../lib/entity-label";
+import { companyToday } from "../../../lib/businessDate";
 
 type SafetyEventRow = Record<string, unknown>;
 
@@ -47,7 +48,7 @@ function exportSelectedCsv(selected: SafetyEventRow[], pushToast: (message: stri
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `safety-events-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `safety-events-${companyToday()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   pushToast(`Exported ${selected.length} safety event${selected.length === 1 ? "" : "s"}.`, "success");
