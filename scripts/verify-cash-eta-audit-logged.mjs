@@ -15,6 +15,15 @@ const fail = (m) => {
 
 const route = read("apps/backend/src/dispatch/predicted-delivery.routes.ts");
 
+const requiredLifecycle = [
+  [/FOR UPDATE/, "must lock the canonical load before reading the old prediction"],
+  [/predicted_delivery_date IS DISTINCT FROM \$3::timestamptz/, "must suppress replayed identical predictions"],
+  [/RETURNING id::text/, "must return write evidence"],
+  [/if \(!updated\.rows\[0\]\?\.id\) return \{ kind: "unchanged" as const/, "must stop before audit when no prediction changed"],
+];
+const lifecycleIssues = (content) => requiredLifecycle.filter(([pattern]) => !pattern.test(content));
+for (const [, message] of lifecycleIssues(route)) fail(message);
+
 const updateIdx = route.indexOf("UPDATE\n            SET predicted_delivery_date");
 const updateAt = route.search(/UPDATE\s+mdata\.loads/);
 const insertAt = route.indexOf("INSERT INTO forecast.predicted_delivery_changes");
@@ -29,4 +38,10 @@ for (const col of ["old_predicted_date", "new_predicted_date", "confirmed_by_use
   if (!route.includes(col)) fail(`audit write must record ${col}`);
 }
 void updateIdx;
+if (process.argv.includes("--selftest")) {
+  const mutants = requiredLifecycle.map(([pattern]) => route.replace(pattern, ""));
+  if (!mutants.every((mutant) => lifecycleIssues(mutant).length > 0)) fail("selftest mutation escaped lifecycle guard");
+  console.log(`PASS verify-cash-eta-audit-logged SELFTEST — ${mutants.length} lifecycle defects caught`);
+  process.exit(0);
+}
 console.log("PASS verify-cash-eta-audit-logged");
