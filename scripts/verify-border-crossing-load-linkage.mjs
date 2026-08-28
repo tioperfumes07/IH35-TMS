@@ -25,6 +25,8 @@ function audit(s) {
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id, driver_id, load_id/.test(s.writer)) failures.push("writer load persistence missing");
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.load_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact load history filter missing");
   if (!/load_id: loadId/.test(s.customs) || !/ListErrorBanner/.test(s.customs)) failures.push("customs tab must request exact load and show errors");
+  if (!/brokersQuery\.isError[\s\S]{0,180}Couldn't load customs brokers for this company\.[\s\S]{0,120}brokersQuery\.refetch\(\)/.test(s.customs)) failures.push("customs broker catalog failure must show exact retry");
+  if (!/disabled=\{brokersQuery\.isError\}/.test(s.customs)) failures.push("customs broker picker must fail closed when its catalog fails");
   if (!/kind=["']border_crossing["']/.test(s.customs) || !/row\.id === deepLinkCrossingId/.test(s.history)) failures.push("reverse drill must select canonical history row");
   if (!/<CustomsTab loadId=\{load\.id\} operatingCompanyId=\{load\.operating_company_id\}/.test(s.drawer)) failures.push("load drawer customs mount missing");
   if (/drawer-customs-tab-stub|content ships in Block 8/.test(s.customs)) failures.push("customs tab must not remain a stub");
@@ -39,6 +41,8 @@ if (process.argv.includes("--selftest")) {
     ["filter", "historyRoute", /filters\.push\(`ubc\.load_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
     ["reverse", "customs", /load_id: loadId/, "load_id: operatingCompanyId"],
     ["error", "customs", /ListErrorBanner/g, "MissingErrorBanner"],
+    ["broker retry", "customs", /onRetry=\{\(\) => void brokersQuery\.refetch\(\)\}/, "onRetry={undefined}"],
+    ["broker fail closed", "customs", /disabled=\{brokersQuery\.isError\}/, "disabled={false}"],
     ["drill", "customs", /kind=["']border_crossing["']/, 'kind="load"'],
     ["mount", "drawer", /<CustomsTab loadId=\{load\.id\}/, "<CustomsTab loadId={undefined}"],
   ];
