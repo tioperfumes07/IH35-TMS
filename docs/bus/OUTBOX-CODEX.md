@@ -1,5 +1,7 @@
 Codex | WORKING | CUST-F7022 | CLAIM=post.customer-guard-stronger-runtime-contracts | SOURCE=CustomerProfileForm+Customers runtime | NEXT=normal+selftest+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F7021 | PR=#16979 @ c63587d140 | Built=customer invoice reader + six implemented-tab guard alignment | guard=normal+selftest+aggregate+preflight exit0 | NEXT=customer full guard census | GO
+Codex | WORKING | CUST-F7023 | CLAIM=post.customer-lifecycle-guard-dedicated-reactivate | SOURCE=dedicated company-scoped POST lifecycle API | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | CUST-F7022 | PR=#16980 @ 043cf82263 | Built=customer stronger-runtime guard contracts 3/3 | NEXT=CUST-F7023 | GO
 Codex | WORKING | ELD-F6977 | CLAIM=post.eld-read-error-suppresses-stale-rows | vertical=live-duty+violations+unidentified | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | ELD-F6976 | PR=#16937 @ 53dd1e460c | Built=fleet-location HOS export company date | NEXT=ELD-F6977 | GO
 Codex | WORKING | ELD-F6976 | CLAIM=post.eld-fleet-location-export-business-date | SOURCE=fleet-location-hos XLSX response | NEXT=guard+FAST-MERGE | GO

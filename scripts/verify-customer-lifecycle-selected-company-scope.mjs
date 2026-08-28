@@ -28,7 +28,7 @@ const checks = [
   ["api", apiHandler, "deactivateCustomer(id: string, operatingCompanyId: string)"],
   ["api", apiHandler, "deactivate?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
   ["api", apiHandler, "reactivateCustomer(id: string, operatingCompanyId: string)"],
-  ["api", apiHandler, "operating_company_id: operatingCompanyId, deactivated_at: null"],
+  ["api", apiHandler, "reactivate?operating_company_id=${encodeURIComponent(operatingCompanyId)}"],
   ["page", page, "deactivateCustomer(id, selectedCompanyId ?? operatingCompanyId ?? \"\")"],
   ["page", page, "reactivateCustomer(id, selectedCompanyId ?? operatingCompanyId ?? \"\")"],
 ];
@@ -51,7 +51,7 @@ if (process.argv.includes("--selftest")) {
   const positiveChecks = checks.filter(([, , token]) => token !== 'if ("operating_company_id" in b)');
   let caught = 0;
   for (const [key, , token] of positiveChecks) {
-    const mutated = { ...good, [key]: good[key].replace(token, "REMOVED") };
+    const mutated = { ...good, [key]: good[key].split(token).join("REMOVED") };
     if (mutated[key] !== good[key] && audit(mutated).includes(token)) caught++;
   }
   const reassignment = { ...good, patch: `${good.patch}\nif ("operating_company_id" in b) add("operating_company_id", b.operating_company_id);` };
