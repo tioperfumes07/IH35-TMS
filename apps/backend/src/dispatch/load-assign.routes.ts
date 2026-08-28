@@ -35,6 +35,12 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
 
     const availability = await canAssignLoadToDriver(driverId, tenantId);
     if (!availability.ok) {
+      if (availability.code === "E_DRIVER_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_DRIVER_NOT_FOUND",
+          message: availability.blocker ?? "Driver was not found for this operating company",
+        });
+      }
       if (availability.code === "E_DRIVER_HOS_VIOLATION") {
         // HOS cannot be cleared with override_repair_block — that flag is repair-only.
         const message = availability.blocker ?? "Driver is in HOS violation";

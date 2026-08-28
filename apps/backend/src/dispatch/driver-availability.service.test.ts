@@ -41,7 +41,7 @@ describe("canAssignLoadToDriver", () => {
     });
   });
 
-  it("returns ok=true when no active work order exists", async () => {
+  it("returns E_DRIVER_NOT_FOUND when the selected-company driver identity is absent", async () => {
     const db = {
       async query<T = Record<string, unknown>>(_sql: string, _values?: unknown[]): Promise<{ rows: T[] }> {
         return { rows: [] };
@@ -54,12 +54,36 @@ describe("canAssignLoadToDriver", () => {
       db
     );
 
+    expect(result).toEqual({
+      ok: false,
+      code: "E_DRIVER_NOT_FOUND",
+      blocker: "Driver was not found for this operating company",
+    });
+  });
+
+  it("returns ok=true when an authorized driver has no HOS feed and no active work order", async () => {
+    let call = 0;
+    const db = {
+      async query<T = Record<string, unknown>>(): Promise<{ rows: T[] }> {
+        call += 1;
+        if (call === 1) return { rows: [{ driver_id: "driver-1", is_in_violation: false }] as T[] };
+        return { rows: [] };
+      },
+    };
+    const result = await canAssignLoadToDriver(
+      "11111111-1111-1111-1111-111111111111",
+      "22222222-2222-2222-2222-222222222222",
+      db
+    );
     expect(result).toEqual({ ok: true });
   });
 
   it("returns blocker when an active work order exists", async () => {
+    let call = 0;
     const db = {
       async query<T = Record<string, unknown>>(_sql: string, _values?: unknown[]): Promise<{ rows: T[] }> {
+        call += 1;
+        if (call === 1) return { rows: [{ driver_id: "driver-1", is_in_violation: false }] as T[] };
         return {
           rows: [
             {
@@ -94,8 +118,11 @@ describe("canAssignLoadToDriver", () => {
   });
 
   it("treats completed work order as assignable", async () => {
+    let call = 0;
     const db = {
       async query<T = Record<string, unknown>>(_sql: string, _values?: unknown[]): Promise<{ rows: T[] }> {
+        call += 1;
+        if (call === 1) return { rows: [{ driver_id: "driver-1", is_in_violation: false }] as T[] };
         return {
           rows: [
             {
@@ -117,22 +144,13 @@ describe("canAssignLoadToDriver", () => {
     expect(result).toEqual({ ok: true });
   });
 
-  it("enforces tenant scope in query params", async () => {
-    let capturedTenant: string | null = null;
+  it("enforces tenant scope in the canonical identity query", async () => {
+    const capturedTenants: string[] = [];
     const db = {
       async query<T = Record<string, unknown>>(_sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
-        capturedTenant = String(values?.[1] ?? "");
-        if (capturedTenant === "tenant-a") {
-          return {
-            rows: [
-              {
-                id: "WO-TENANT-A",
-                asset_id: "UNIT-A",
-                status: "in_progress",
-              },
-            ] as T[],
-          };
-        }
+        const tenant = String(values?.[1] ?? "");
+        capturedTenants.push(tenant);
+        if (_sql.includes("FROM mdata.drivers d")) return { rows: [{ driver_id: "driver-1", is_in_violation: false }] as T[] };
         return { rows: [] };
       },
     };
@@ -148,8 +166,9 @@ describe("canAssignLoadToDriver", () => {
       db
     );
 
-    expect(tenantA.ok).toBe(false);
+    expect(tenantA).toEqual({ ok: true });
     expect(tenantB).toEqual({ ok: true });
-    expect(capturedTenant).toBe("tenant-b");
+    expect(capturedTenants).toContain("tenant-a");
+    expect(capturedTenants).toContain("tenant-b");
   });
 });

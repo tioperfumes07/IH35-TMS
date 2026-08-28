@@ -8,7 +8,7 @@ export type DriverAssignmentAvailability = {
   ok: boolean;
   blocker?: string;
   /** When set, callers can map to a stable error code (e.g. E_DRIVER_HOS_VIOLATION). */
-  code?: "E_DRIVER_HOS_VIOLATION" | "E_DRIVER_REPAIR_BLOCK";
+  code?: "E_DRIVER_NOT_FOUND" | "E_DRIVER_HOS_VIOLATION" | "E_DRIVER_REPAIR_BLOCK";
   work_order_id?: string;
   asset_id?: string | null;
   /** FAIL-U1: operator-facing labels. The ids above stay for programmatic callers; these are what
@@ -38,12 +38,13 @@ export async function canAssignLoadToDriver(
       is_in_violation: boolean;
     }>(
       `
-        SELECT hos.full_name::text AS full_name,
+        SELECT d.id::text AS driver_id,
+               hos.full_name::text AS full_name,
                hos.display_id::text AS display_id,
                COALESCE(hos.is_in_violation, false) AS is_in_violation
-        FROM views.drivers_with_hos_status hos
-        JOIN mdata.drivers d ON d.id = hos.id
-        WHERE hos.id = $1
+        FROM mdata.drivers d
+        LEFT JOIN views.drivers_with_hos_status hos ON hos.id = d.id
+        WHERE d.id = $1
           AND (
             d.operating_company_id = $2::uuid
             OR EXISTS (
@@ -59,6 +60,13 @@ export async function canAssignLoadToDriver(
       [driverId, tenantId]
     );
     const hos = hosRes.rows[0];
+    if (!hos) {
+      return {
+        ok: false,
+        code: "E_DRIVER_NOT_FOUND",
+        blocker: "Driver was not found for this operating company",
+      };
+    }
     if (hos?.is_in_violation) {
       const who = hos.full_name || hos.display_id || "Driver";
       return {

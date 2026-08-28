@@ -11,7 +11,8 @@
  *
  * Asserts the service selects the labels and the panel prefers them.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 
 const SVC = "apps/backend/src/dispatch/driver-availability.service.ts";
 const UI = "apps/frontend/src/pages/dispatch/LoadCreateModal.tsx";
@@ -31,9 +32,18 @@ if (/activeWo\.display_id\s*\|\|\s*activeWo\.id/.test(svc) || /activeWo\.unit_nu
 if (!/is_in_violation/.test(svc) || !/E_DRIVER_HOS_VIOLATION/.test(svc)) {
   fail.push(`${SVC}: must check drivers_with_hos_status.is_in_violation and return E_DRIVER_HOS_VIOLATION`);
 }
+if (!/FROM\s+mdata\.drivers\s+d[\s\S]*LEFT JOIN\s+views\.drivers_with_hos_status\s+hos/i.test(svc)) {
+  fail.push(`${SVC}: canonical driver identity must lead the HOS query`);
+}
+if (!/if\s*\(!hos\)[\s\S]{0,180}code:\s*"E_DRIVER_NOT_FOUND"/.test(svc)) {
+  fail.push(`${SVC}: missing/cross-company driver must fail closed as E_DRIVER_NOT_FOUND`);
+}
 const route = readFileSync("apps/backend/src/dispatch/load-assign.routes.ts", "utf8");
 if (!/E_DRIVER_HOS_VIOLATION/.test(route)) {
   fail.push("apps/backend/src/dispatch/load-assign.routes.ts: quick-assign must surface E_DRIVER_HOS_VIOLATION with message");
+}
+if (!/E_DRIVER_NOT_FOUND[\s\S]{0,180}reply\.code\(404\)/.test(route)) {
+  fail.push("apps/backend/src/dispatch/load-assign.routes.ts: quick-assign must map missing driver to 404");
 }
 
 const ui = readFileSync(UI, "utf8");
@@ -69,3 +79,24 @@ if (fail.length) {
   process.exit(1);
 }
 console.log("PASS verify-dispatch-blocker-labels — repair blocker names the WO and the truck");
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    svc
+      .replace("FROM mdata.drivers d", "FROM views.drivers_with_hos_status hos")
+      .replace("LEFT JOIN views.drivers_with_hos_status hos ON hos.id = d.id", "JOIN mdata.drivers d ON d.id = hos.id"),
+    svc.replace('code: "E_DRIVER_NOT_FOUND"', 'code: "E_DRIVER_REPAIR_BLOCK"'),
+  ];
+  let rejected = 0;
+  for (const mutated of mutations) {
+    writeFileSync(SVC, mutated);
+    const result = spawnSync(process.execPath, [process.argv[1]], { encoding: "utf8" });
+    writeFileSync(SVC, svc);
+    if (result.status !== 0) rejected += 1;
+  }
+  if (rejected !== mutations.length) {
+    console.error(`FAIL verify-dispatch-blocker-labels selftest: ${rejected}/${mutations.length} defects rejected`);
+    process.exit(1);
+  }
+  console.log(`PASS verify-dispatch-blocker-labels selftest (${rejected}/${mutations.length})`);
+}

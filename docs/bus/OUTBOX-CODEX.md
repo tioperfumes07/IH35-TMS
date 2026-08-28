@@ -1,3 +1,6 @@
+CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7140 | CLAIM=driver-availability-missing-identity-fails-open | SOURCE=mdata.drivers+driver_company_authorizations | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7139 | PR=#17223 @ 19485dbf99 | Built=detention notification lock+claim | NEXT=driver availability truth | GO
 Codex | WORKING | DSP-F7139 | CLAIM=detention-threshold-notify-check-send-race | SOURCE=dispatch.detention_events.customer_notified_at | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7138 | PR=#17222 @ f4789f1f11 | Built=arrival prompt exact dismissal persistence | NEXT=detention notify lifecycle | GO
 Codex | WORKING | DSP-F7138 | CLAIM=arrival-prompt-dismiss-arbitrary-uuid-false-success+not-persisted | SOURCE=dispatch.stop_arrivals+audit.audit_events | NEXT=FAST-MERGE | GO
