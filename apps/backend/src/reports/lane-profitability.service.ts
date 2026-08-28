@@ -1,4 +1,5 @@
 import type { PoolClient } from "pg";
+import { logger } from "../observability/structured-logger.js";
 
 /** Bound parameters per lane_profitability_cache INSERT row (excludes NOW()). */
 export const LANE_CACHE_INSERT_BINDS_PER_ROW = 19;
@@ -375,7 +376,19 @@ export async function refreshLaneProfitabilityCache(
     }
   }
 
-  await client.query(`SELECT reports.refresh_lane_metrics_monthly()`).catch(() => undefined);
+  // LIAB-F9927-SILENT-CATCH-SWEEP (reports leg): this used to .catch(() => undefined) with zero
+  // logging — reports.refresh_lane_metrics_monthly() is a foundational, always-present function
+  // (confirmed live), and this call refreshes a SEPARATE monthly rollup than the per-period cache
+  // this function already wrote above (that write is unaffected by this call's outcome). A hard
+  // throw here would break the whole lane-profitability response for a secondary refresh's failure
+  // — genuinely best-effort, same class as BANK-F9521 (banking suggestions), fixed the same way:
+  // fail loud IN THE LOGS, not silently, so a stuck monthly rollup is visible instead of invisible.
+  await client.query(`SELECT reports.refresh_lane_metrics_monthly()`).catch((err) => {
+    logger.warn("lane-profitability: refresh_lane_metrics_monthly() failed — monthly rollup left stale", {
+      operating_company_id: operatingCompanyId,
+      error_stack: err instanceof Error ? err.stack : String(err),
+    });
+  });
 
   return lanes.length;
 }

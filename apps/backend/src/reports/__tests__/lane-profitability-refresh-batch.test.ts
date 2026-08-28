@@ -301,4 +301,35 @@ describe("refreshLaneProfitabilityCache — bind-budget multi-row INSERT (G5-4)"
     expect(deleted).toBe(true);
     expect(metricsCalled).toBe(false);
   });
+
+  // LIAB-F9927-SILENT-CATCH-SWEEP (reports leg): refresh_lane_metrics_monthly() failing must NOT
+  // fail the whole cache refresh (it's a separate, best-effort monthly rollup) — but it must no
+  // longer be swallowed with zero visibility either. Same class as BANK-F9521's fail-loud-in-logs.
+  it("does not fail the cache refresh when refresh_lane_metrics_monthly() itself fails, but logs it", async () => {
+    const warnCalls: unknown[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnCalls.push(args);
+    };
+    try {
+      const client = {
+        query: async (sql: string, _params: unknown[] = []) => {
+          if (/WITH pickup AS/.test(sql)) return { rows: [lane({ origin_city: "A", destination_city: "B" })] };
+          if (/DELETE FROM reports\.lane_profitability_cache/.test(sql)) return { rows: [] };
+          if (/INSERT INTO reports\.lane_profitability_cache/.test(sql)) return { rows: [] };
+          if (/refresh_lane_metrics_monthly/.test(sql)) throw new Error("planted_monthly_refresh_failure");
+          return { rows: [] };
+        },
+      } as unknown as PoolClient;
+
+      const total = await refreshLaneProfitabilityCache(client, "opco-1", "2026-01-01", "2026-01-31");
+      expect(total).toBe(1);
+      expect(warnCalls).toHaveLength(1);
+      const logged = String(warnCalls[0]);
+      expect(logged).toMatch(/refresh_lane_metrics_monthly/);
+      expect(logged).toMatch(/opco-1/);
+    } finally {
+      console.warn = originalWarn;
+    }
+  });
 });
