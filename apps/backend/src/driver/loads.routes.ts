@@ -394,6 +394,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
             AND s.stop_type = 'pickup'
           ORDER BY s.sequence_number ASC
           LIMIT 1
+          FOR UPDATE OF s, l
         `,
         [params.data.id, load.operating_company_id]
       );
@@ -627,6 +628,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
               )
             )
           LIMIT 1
+          FOR UPDATE OF s, l
         `,
         [params.data.stopId, params.data.id, driver.id]
       );
@@ -663,20 +665,30 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         if (distance > 25) return { error: "outside_geofence" as const, distance };
       }
 
-      await client.query(
+      const departureUpdate = await client.query(
         `
           UPDATE mdata.load_stops
           SET actual_departure_at = now(),
               status = 'departed'
           WHERE id = $1
+            AND load_id = $2
+            AND actual_departure_at IS NULL
+          RETURNING id
         `,
-        [params.data.stopId]
+        [params.data.stopId, params.data.id]
       );
+      if (!departureUpdate.rows[0]?.id) return { error: "departure_already_recorded" as const };
 
-      await client.query(
-        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
-        [params.data.id, nextLoadStatus, stop.operating_company_id]
+      const loadUpdate = await client.query(
+        `UPDATE mdata.loads
+         SET status = $2
+         WHERE id = $1
+           AND operating_company_id = $3::uuid
+           AND status::text = $4
+         RETURNING id`,
+        [params.data.id, nextLoadStatus, stop.operating_company_id, stop.load_status]
       );
+      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
 
       // CLS-DISP-WIRE-07 — latch revenue on the DRIVER's delivery departure, not only the office
       // transition. No-op unless nextLoadStatus is a delivery-evidence status, and it can only be
@@ -712,6 +724,8 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       if (updated.error === "invalid_stop_state") return reply.code(400).send({ error: "invalid_stop_state" });
       if (updated.error === "invalid_load_state")
         return reply.code(409).send({ error: "invalid_load_state", from: updated.from, to: updated.to });
+      if (updated.error === "departure_already_recorded" || updated.error === "load_transition_conflict")
+        return reply.code(409).send({ error: updated.error });
       return reply.code(403).send({ error: "forbidden" });
     }
     return updated;
