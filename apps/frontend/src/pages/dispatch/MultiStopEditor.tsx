@@ -2,7 +2,7 @@ import { DndContext, type DragEndEvent, KeyboardSensor, PointerSensor, closestCe
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { listAllDispatchCatalogRows, pickupTimeTypesCatalogClient } from "../../api/catalogs-dispatch";
 import { getLoadStopsForDispatch, replaceLoadStopsDispatch, type RefinedLoadStop } from "../../api/dispatch";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
@@ -74,6 +74,7 @@ function SortableRow({
   onPickupTimeTypeCreated,
   onChange,
   onRemove,
+  disabled,
 }: {
   row: MultiStopRow;
   index: number;
@@ -84,8 +85,9 @@ function SortableRow({
   onPickupTimeTypeCreated: () => void;
   onChange: (key: string, patch: Partial<MultiStopRow>) => void;
   onRemove: (key: string) => void;
+  disabled: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.key });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.key, disabled });
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -101,6 +103,7 @@ function SortableRow({
           {...attributes}
           {...listeners}
           aria-label="Drag to reorder"
+          disabled={disabled}
         >
           ::
         </button>
@@ -213,6 +216,11 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [rows, setRows] = useState<MultiStopRow[]>([]);
+  const actionGenerationRef = useRef(0);
+
+  useEffect(() => {
+    actionGenerationRef.current += 1;
+  }, [loadId, operatingCompanyId]);
 
   const q = useQuery({
     queryKey: ["dispatch", "load-stops-refined", loadId, operatingCompanyId],
@@ -260,46 +268,61 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
     return { dist, hrs };
   }, [rows.length]);
 
+  type SaveStopsInput = {
+    generation: number;
+    loadId: string;
+    companyId: string;
+    body: Parameters<typeof replaceLoadStopsDispatch>[1];
+  };
+
   const mut = useMutation({
-    mutationFn: async () => {
-      const body = {
-        operating_company_id: operatingCompanyId,
-        stops: rows.map((r, idx) => {
-          const lat = r.latitude.trim() === "" ? null : Number(r.latitude);
-          const lng = r.longitude.trim() === "" ? null : Number(r.longitude);
-          return {
-            sequence_number: idx + 1,
-            stop_type: r.stop_type,
-            location_address: r.location_address || null,
-            city: r.city || null,
-            state: r.state || null,
-            country: r.country || "US",
-            postal_code: r.postal_code || null,
-            address_line1: r.location_address || null,
-            latitude: lat != null && Number.isFinite(lat) ? lat : null,
-            longitude: lng != null && Number.isFinite(lng) ? lng : null,
-            window_start: padIsoLocal(r.window_start),
-            window_end: padIsoLocal(r.window_end),
-            notes: r.notes || null,
-            signature_required: r.signature_required,
-            photo_required: r.photo_required,
-            pickup_time_type_id: r.pickup_time_type_id || null,
-          };
-        }),
-      };
-      if (body.stops.length < 2) throw new Error("need_two_stops");
-      return replaceLoadStopsDispatch(loadId, body);
+    mutationFn: async (input: SaveStopsInput) => {
+      if (input.body.stops.length < 2) throw new Error("need_two_stops");
+      return replaceLoadStopsDispatch(input.loadId, input.body);
     },
-    onSuccess: async () => {
+    onSuccess: async (_result, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       pushToast("Stops saved", "success");
-      await qc.invalidateQueries({ queryKey: ["dispatch", "load-stops-refined", loadId, operatingCompanyId] });
-      await qc.invalidateQueries({ queryKey: ["loads", "detail", loadId] });
+      await qc.invalidateQueries({ queryKey: ["dispatch", "load-stops-refined", input.loadId, input.companyId] });
+      await qc.invalidateQueries({ queryKey: ["loads", "detail", input.loadId] });
     },
-    onError: (err) => {
+    onError: (err, input) => {
+      if (input.generation !== actionGenerationRef.current) return;
       const msg = String((err as Error)?.message ?? "");
       pushToast(msg === "need_two_stops" ? "Need at least 2 stops to save" : "Could not save stops", "error");
     },
   });
+
+  const saveStops = () => {
+    const companyId = operatingCompanyId;
+    const submittedLoadId = loadId;
+    const body: Parameters<typeof replaceLoadStopsDispatch>[1] = {
+      operating_company_id: companyId,
+      stops: rows.map((r, idx) => {
+        const lat = r.latitude.trim() === "" ? null : Number(r.latitude);
+        const lng = r.longitude.trim() === "" ? null : Number(r.longitude);
+        return {
+          sequence_number: idx + 1,
+          stop_type: r.stop_type,
+          location_address: r.location_address || null,
+          city: r.city || null,
+          state: r.state || null,
+          country: r.country || "US",
+          postal_code: r.postal_code || null,
+          address_line1: r.location_address || null,
+          latitude: lat != null && Number.isFinite(lat) ? lat : null,
+          longitude: lng != null && Number.isFinite(lng) ? lng : null,
+          window_start: padIsoLocal(r.window_start),
+          window_end: padIsoLocal(r.window_end),
+          notes: r.notes || null,
+          signature_required: r.signature_required,
+          photo_required: r.photo_required,
+          pickup_time_type_id: r.pickup_time_type_id || null,
+        };
+      }),
+    };
+    mut.mutate({ generation: actionGenerationRef.current, loadId: submittedLoadId, companyId, body });
+  };
 
   const patchRow = (key: string, patch: Partial<MultiStopRow>) => {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -360,35 +383,38 @@ export function MultiStopEditor({ loadId, operatingCompanyId }: Props) {
           </Button>
         </div>
       ) : null}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2">
-            {rows.map((row, index) => (
-              <SortableRow
-                key={row.key}
-                row={row}
-                index={index}
-                operatingCompanyId={operatingCompanyId}
-                pickupTimeTypeOptions={pickupTimeTypeOptions}
-                pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
-                pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
-                onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
-                onChange={patchRow}
-                onRemove={removeRow}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      </DndContext>
-      <Button type="button" size="sm" variant="secondary" onClick={addStop}>
-        + Create stop
-      </Button>
-      <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
-        Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
-      </div>
-      <Button type="button" size="sm" loading={mut.isPending} onClick={() => void mut.mutateAsync()}>
-        Save stops
-      </Button>
+      <fieldset className="space-y-2" disabled={mut.isPending} aria-busy={mut.isPending}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={rows.map((r) => r.key)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {rows.map((row, index) => (
+                <SortableRow
+                  key={row.key}
+                  row={row}
+                  index={index}
+                  operatingCompanyId={operatingCompanyId}
+                  pickupTimeTypeOptions={pickupTimeTypeOptions}
+                  pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                  pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
+                  onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
+                  onChange={patchRow}
+                  onRemove={removeRow}
+                  disabled={mut.isPending}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+        <Button type="button" size="sm" variant="secondary" onClick={addStop}>
+          + Create stop
+        </Button>
+        <div className="rounded-sm border border-gray-100 bg-gray-50 p-2 text-xs text-gray-700">
+          Est. leg miles: ~{totals.dist} · Est. hours: ~{totals.hrs.toFixed(1)}
+        </div>
+        <Button type="button" size="sm" loading={mut.isPending} onClick={saveStops}>
+          Save stops
+        </Button>
+      </fieldset>
     </div>
   );
 }

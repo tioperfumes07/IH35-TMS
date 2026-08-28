@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0013 | NOW=/dispatch-usmca-unique | SHA=069d531 | GO
+Codex | WORKING | DSP-F7113 | CLAIM=post.dispatch-multistop-write-scope-snapshot | SOURCE=company+load scoped stop replacement→Load Detail Stops | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7080 | CLAIM=post.dispatch-planner-company-week-boundaries | SOURCE=company business dates→planner FE+BE week bounds | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | ACCT-F7079 | PR=#17054 @ 8bf8e4800d | Built=load expense authoritative reverse count | NEXT=planner business week | GO
 Codex | WORKING | DSP-F7079 | CLAIM=post.dispatch-load-expense-authoritative-count | SOURCE=accounting.expenses exact opco+load total→Load Detail | NEXT=guard+FAST-MERGE | GO
