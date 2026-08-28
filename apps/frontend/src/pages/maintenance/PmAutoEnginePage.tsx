@@ -66,8 +66,15 @@ export function PmAutoEnginePage() {
     runNowM.reset();
   }, [companyId]);
 
-  const isPaused = Boolean(dashboardQ.data?.settings?.is_paused);
-  const runs = dashboardQ.data?.runs ?? [];
+  useEffect(() => {
+    if (!dashboardQ.isError) return;
+    settingsM.reset();
+    runNowM.reset();
+  }, [dashboardQ.isError]);
+
+  const isPaused = !dashboardQ.isError && Boolean(dashboardQ.data?.settings?.is_paused);
+  const runs = dashboardQ.isError ? [] : (dashboardQ.data?.runs ?? []);
+  const recentLog = dashboardQ.isError ? [] : (dashboardQ.data?.recent_log ?? []);
 
   const runColumns = useMemo<ParityColumn<PmAutoEngineRunRow>[]>(
     () => [
@@ -93,12 +100,12 @@ export function PmAutoEnginePage() {
             <Button
               type="button"
               variant="secondary"
-              disabled={!companyId || settingsM.isPending}
+              disabled={!companyId || dashboardQ.isError || settingsM.isPending}
               onClick={() => settingsM.mutate({ companyId, generation: actionGenerationRef.current, isPaused: !isPaused })}
             >
               {isPaused ? "Resume engine" : "Pause engine"}
             </Button>
-            <Button type="button" disabled={!companyId || runNowM.isPending || isPaused} onClick={() => runNowM.mutate({ companyId, generation: actionGenerationRef.current })}>
+            <Button type="button" disabled={!companyId || dashboardQ.isError || runNowM.isPending || isPaused} onClick={() => runNowM.mutate({ companyId, generation: actionGenerationRef.current })}>
               Run now
             </Button>
           </div>
@@ -107,7 +114,7 @@ export function PmAutoEnginePage() {
 
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <div className="mb-2 text-xs text-gray-600">
-          Status: {isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.data?.lookahead_miles ?? "—"} mi
+          Status: {dashboardQ.isError ? "Unavailable" : isPaused ? "Paused" : "Active"} · Lookahead {dashboardQ.isError ? "—" : (dashboardQ.data?.lookahead_miles ?? "—")} mi
         </div>
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Recent runs</h3>
         {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No engine runs recorded yet." — an outage presenting
@@ -131,10 +138,10 @@ export function PmAutoEnginePage() {
         )}
       </div>
 
-      <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
+      {!dashboardQ.isError ? <div className="rounded-sm border border-gray-200 bg-white p-3 text-sm">
         <h3 className="mb-2 text-xs font-semibold uppercase text-gray-600">Action log</h3>
         <ul className="space-y-1 text-xs">
-          {(dashboardQ.data?.recent_log ?? []).map((entry) => (
+          {recentLog.map((entry) => (
             <li key={entry.id} className="border-t border-gray-100 pt-1 first:border-0 first:pt-0">
               <span className="font-medium">{entry.action}</span> —{" "}
               <EntityLinkOrTombstone
@@ -152,11 +159,11 @@ export function PmAutoEnginePage() {
               ) : ""}
             </li>
           ))}
-          {(dashboardQ.data?.recent_log ?? []).length === 0 ? (
+          {recentLog.length === 0 ? (
             <li className="text-gray-500">No auto-engine actions yet.</li>
           ) : null}
         </ul>
-      </div>
+      </div> : null}
     </div>
   );
 }
