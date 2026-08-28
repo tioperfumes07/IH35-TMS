@@ -179,7 +179,7 @@ function isModalishLeaf(id: string, tab: string, sub?: string): boolean {
 
 /** Instant paint when the API 502s/hangs — Required counts only; Built/Live/Clicked stay 0. */
 export function buildSystemMatrixRequiredFallback(): SystemPayload {
-  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "other"];
+  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "other"];
   const colMeta = new Map<string, SystemColumn>();
   const modules: SystemModuleRow[] = [];
   let sysReq = 0;
@@ -509,7 +509,7 @@ export function ModuleMatrixSystemView() {
           Five scenario events are not a 5th Box and not new Required.json leaves (maps
           frozen). They are named hops on Program: revrec · invoice+evidence · bank-path · real fuel ·
           factoring advance. CC-1 still owes them when Miss C is 0.
-          Do not add a 5th Verified Box. Owner 2026-08-28: C25–C31 economic columns are Required (ledger, not chrome). Ignore Box 4 keyword fan-out. Money
+          Do not add a 5th Verified Box. Owner 2026-08-28: C25–C31 are seven Required columns (group economics), not one consolidated “13 GL Δ” strip. Ignore Box 4 keyword fan-out. Money
           cells count in Frozen / Miss C / READY. Miss C = Required cells that are not Box 4 Live (Clicked
           100% does not zero Miss C). READY Live✓ when Miss C = 0.
           Launch ladder columns (Wave / Vertical COL / FAST-MERGE / FW 1–11 / Live 12 / Certify) sit on

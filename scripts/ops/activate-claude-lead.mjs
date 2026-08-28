@@ -20,11 +20,11 @@ const reason = parseReason(process.argv);
 const when = new Date().toISOString();
 
 const packet = fs.readFileSync(path.join(ROOT, "docs/bus/CLAUDE-LEAD-NOW.md"), "utf8");
-const cursorWorker = `**23:32+ CT CLAUDE LEAD ACTIVE.** \`LEAD-SEAT=CC-1\`. You are NOT lead. Worker + deploy lieutenant. Paste: \`docs/bus/CLAUDE-LEAD-NOW.md\` §3. FAST-MERGE Cursor-lane only. Only you \`trigger_deploy\` when Claude’s census says the 5–10 gate. Do not steal \`57cabbab\`. Do not recertify U14. Tripwire reason: ${reason}.
+const cursorWorker = `**CLAUDE LEAD ACTIVE.** \`LEAD-SEAT=CC-1\`. You are NOT lead. Worker + deploy lieutenant. Read \`docs/bus/CLAUDE-LEAD-NOW.md\` §3. FAST-MERGE Cursor-lane only. Only you \`trigger_deploy\` when Claude’s census says the 5–10 gate. Do not steal money. Do not recertify U14. C25–C31 stay seven columns. Tripwire reason: ${reason}.
 
 `;
 
-const cc1Top = `**CLAUDE YOU ARE LEAD.** Tripwire ${reason} @ ${when}. Read \`docs/bus/CLAUDE-LEAD-NOW.md\` in full (also below). Census every turn. Money NOW still \`57cabbab\` unless you rewrite it. Never \`trigger_deploy\`. Never restamp U14.
+const cc1Top = `**CLAUDE YOU ARE LEAD.** Tripwire ${reason} @ ${when}. Read \`docs/bus/CLAUDE-LEAD-NOW.md\` in full (also below). Census every turn. Money NOW = Option B Event 2 then aging sample-filter then VEND-F CR-1090 then 9000 fail-closed. Never \`trigger_deploy\`. Never restamp U14.
 
 ---
 ${packet}
@@ -36,7 +36,7 @@ PREVIOUS INBOX FOLLOWS
 function prepend(rel, block) {
   const abs = path.join(ROOT, rel);
   const cur = fs.readFileSync(abs, "utf8");
-  if (cur.startsWith("**CLAUDE YOU ARE LEAD.**") || cur.includes("CLAUDE LEAD ACTIVE")) {
+  if (cur.startsWith("**CLAUDE YOU ARE LEAD.**") || cur.startsWith("**GO-0004 · CLAUDE LEAD ACTIVE.**") || cur.startsWith("**CLAUDE LEAD ACTIVE.**")) {
     console.log(`skip prepend (already activated): ${rel}`);
     return;
   }
@@ -63,7 +63,7 @@ prepend("docs/bus/INBOX-CURSOR.md", cursorWorker);
 const outboxLine = `Cursor | TRIPWIRE | ${when} | reason=${reason} | LEAD=CC-1 | PACKET=docs/bus/CLAUDE-LEAD-NOW.md | GO — Claude is lead. Cursor worker. FAST-MERGE this bus change. Nobody trigger_deploy.
 `;
 prepend("docs/bus/OUTBOX-CURSOR.md", outboxLine);
-prepend("docs/bus/OUTBOX-CC-1.md", `Cursor→CC-1 | ${when} | LEAD | YOU ARE LEAD · read CLAUDE-LEAD-NOW.md · census now · money 57cabbab · never trigger_deploy | GO
+prepend("docs/bus/OUTBOX-CC-1.md", `Cursor→CC-1 | ${when} | LEAD | YOU ARE LEAD · read CLAUDE-LEAD-NOW.md · census now · Option B then vendor P0s · never trigger_deploy | GO
 `);
 
 console.log(`activate-claude-lead OK reason=${reason}`);

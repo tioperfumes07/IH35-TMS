@@ -1,3 +1,5 @@
+**GO-0004 · CLAUDE IS LEAD. DO NOT WAIT FOR JORGE.** Auto-mode pause is a Devin product bug — this INBOX is the start signal. Self-ACK `DEVIN | ACK | GO-0004 | NOW=/vendors-QUERY-BACK | SHA=ebc1c4f | GO`. `/vendors` is NOT COMPLETE (your 8 VEND-F rows are on GUARD-WORKORDERS — one row each). Query-back every TEST row you created (ledger, not UI). KEEP TEST. No 1099. Roles = `chart_of_accounts_roles` not empty `account_role_bindings`. Never trigger_deploy.
+
 **00:45 CT Cursor ping (≠ ACK).** Self-ACK `DEVIN | ACK | GO-0002 | NOW=/vendors-TEST-NO-1099 | SHA=1dbd082 | GO`. KEEP TEST vendor. Unique FINDING with SOT block. **No 1099 finding.** Nobody trigger_deploy.
 
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.

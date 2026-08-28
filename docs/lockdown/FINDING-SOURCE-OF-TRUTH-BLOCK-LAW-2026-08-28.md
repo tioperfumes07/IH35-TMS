@@ -38,6 +38,12 @@ Rules:
 
 **CC-2 owns wire-up:** claim ≡3 → `scripts/verify-steps/NNNN-verify-finding-source-of-truth-block.mjs` (Rule 25/37). Until that step is on main, the script is shippable and runnable locally; CI enforces after CC-2 lands the step.
 
+## Loop complete = query-back (not a 16th always-apply rule)
+
+A seat's loop is **not** complete when the UI said success. After every create/submit/post, query **every row you just wrote** on Neon (bypass in the same transaction) and report what the **ledger / canonical tables** say — `factor_id`, reverse FKs, GL accounts, `is_sample_data`, display_id. That is Fully-Wired item 13 applied to the seat's own output. Encode in GO/INBOX, not a new Cursor rule file.
+
+Would have caught: CC-3 FACT-F1–F4; Devin unverified mappings; Claude F1 silent-fallback overclaim.
+
 ## Companion
 
 - Map: `docs/specs/SOURCE-OF-TRUTH-MAP.md`
