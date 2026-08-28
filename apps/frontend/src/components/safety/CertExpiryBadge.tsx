@@ -1,3 +1,5 @@
+import { companyToday } from "../../lib/businessDate";
+
 type Props = {
   label: string;
   expiresAt: string | null | undefined;
@@ -6,9 +8,9 @@ type Props = {
 function getDaysUntil(expiresAt: string): number | null {
   const expiry = new Date(expiresAt);
   if (Number.isNaN(expiry.getTime())) return null;
-  const now = new Date();
   const expiryUtc = Date.UTC(expiry.getUTCFullYear(), expiry.getUTCMonth(), expiry.getUTCDate());
-  const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const [year, month, day] = companyToday().split("-").map(Number);
+  const nowUtc = Date.UTC(year, month - 1, day);
   return Math.floor((expiryUtc - nowUtc) / (24 * 60 * 60 * 1000));
 }
 

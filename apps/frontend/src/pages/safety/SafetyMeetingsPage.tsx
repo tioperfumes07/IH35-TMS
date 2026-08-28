@@ -251,7 +251,7 @@ export function SafetyMeetingsPage({ operatingCompanyId }: Props) {
               id="safety-meeting-date"
               value={meetingDate}
               onChange={setMeetingDate}
-              max={new Date().toISOString().slice(0, 10)}
+              max={companyToday()}
               className="mt-1 block w-full"
               data-testid="safety-meeting-date"
             />

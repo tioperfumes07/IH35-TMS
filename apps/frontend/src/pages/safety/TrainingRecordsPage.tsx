@@ -313,7 +313,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
               id="training-record-completed-date"
               value={completedAt}
               onChange={setCompletedAt}
-              max={new Date().toISOString().slice(0, 10)}
+              max={companyToday()}
               className="mt-1 block w-full"
               data-testid="training-record-completed"
             />
