@@ -8,6 +8,7 @@ import { MoneyInput } from "../forms/MoneyInput";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 /** Pull a human message out of a cancel API failure (validation_error details, field message, or text). */
 function extractCancelError(err: unknown): string {
@@ -127,6 +128,7 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
             createdValueField="code"
             placeholder="Select reason"
             loading={reasonsQuery.isLoading}
+            disabled={reasonsQuery.isLoading || reasonsQuery.isError}
             onOptionCreated={(opt) => {
               setCreatedReasons((prev) => [
                 ...prev,
@@ -140,6 +142,13 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
               void reasonsQuery.refetch();
             }}
           />
+          {reasonsQuery.isError ? (
+            <ListErrorState
+              status={0}
+              message="Cancellation reasons unavailable."
+              onRetry={() => void reasonsQuery.refetch()}
+            />
+          ) : null}
         </div>
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-600">Notes</label>
