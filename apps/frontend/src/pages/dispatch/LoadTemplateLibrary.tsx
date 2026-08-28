@@ -9,6 +9,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useStagedListFilters } from "../../components/table";
 import { useSearchParams } from "react-router-dom";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const EMPTY_FILTERS = {
   customerId: "",
@@ -212,7 +213,7 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
       <SelectCombobox
         className="mt-0.5 font-normal"
         defaultValue=""
-        disabled={q.isLoading || templates.length === 0}
+        disabled={q.isLoading || q.isError || templates.length === 0}
         onChange={(e) => {
           const id = e.target.value;
           const row = templates.find((t) => t.id === id);
@@ -220,13 +221,18 @@ export function LoadTemplatePicker({ operatingCompanyId, onSelectTemplate }: Pic
           e.target.value = "";
         }}
       >
-        <option value="">{templates.length === 0 ? "No templates yet" : "Choose template…"}</option>
+        <option value="">{q.isError ? "Templates unavailable" : templates.length === 0 ? "No templates yet" : "Choose template…"}</option>
         {templates.map((t) => (
           <option key={t.id} value={t.id}>
             {t.name}
           </option>
         ))}
       </SelectCombobox>
+      {q.isError ? (
+        <button type="button" className="mt-1 text-left text-[10px] font-semibold text-red-700 underline" onClick={() => void q.refetch()}>
+          Retry template list
+        </button>
+      ) : null}
     </label>
   );
 }
@@ -329,7 +335,10 @@ export function LoadTemplateLibrary({ open, onClose, operatingCompanyId }: Libra
           </div>
         </div>
         {q.isLoading ? <div className="text-gray-500">Loading…</div> : null}
-        {!q.isLoading && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
+        {q.isError ? (
+          <ListErrorState title="Couldn't load saved templates" status={0} message={undefined} onRetry={() => void q.refetch()} />
+        ) : null}
+        {!q.isLoading && !q.isError && rows.length === 0 ? <div className="text-gray-500">No saved templates. Use “Save as template” on a load.</div> : null}
         {rows.map((t) => (
           <div key={t.id} className="rounded-sm border border-gray-200 p-2" data-load-template-id={t.id}>
             <div className="font-semibold text-gray-800">{t.name}</div>
