@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7047 | CLAIM=post.fleet-type-filter-canonical-reader-guard | SOURCE=URL parser→staged Apply→listAllUnits type→listUnits query | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7046 | PR=#17003 @ 4e8c5cdbb7 | Built=unified trailer roster guard 7/7 | NEXT=fleet type filter | GO
 Codex | WORKING | FLEET-F7046 | CLAIM=post.fleet-unified-trailer-complete-reader-guard | SOURCE=listAllUnits+include trailers both roster queries | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7045 | PR=#17002 @ 7930fe4cea | Built=trailer captured-scope guard 23/23 | NEXT=unified trailer roster | GO
 Codex | WORKING | FLEET-F7045 | CLAIM=post.fleet-trailer-modal-captured-scope-guard | SOURCE=captured trailer create/edit payloads | NEXT=guard+FAST-MERGE | GO
