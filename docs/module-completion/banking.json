@@ -325,7 +325,8 @@
           "BANK-SURF-03"
         ],
         "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-03): transfers=0; PR #3445 [HOLD] not yet merged.",
-        "fix_block": "BANK-ECON-03/BANK-SURF-03"
+        "fix_block": "BANK-ECON-03/BANK-SURF-03",
+        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) — re-measured per GO-0020's 'BANK-F only if still OPEN vs main' instruction: `pg_stat_user_tables` shows `banking.transfers` n_live_tup=5 (not 0). Live UI confirms a working transfer flow (Banking Home 'View Transfers' / '+ Record Transfer'). The zero-density claim no longer holds; not re-litigating whether 5 is now sufficient density (an economics question, not this pass's scope)."
       },
       {
         "id": "BANK-F03",
@@ -338,7 +339,8 @@
           "BANK-SURF-04"
         ],
         "seed_claim": "banking.md BANK-ECON-04: sessions=0 on prod; root cause (bank_accounts RLS lucia-bypass escape missing) proven on throwaway Postgres; fix HELD pending owner Neon-apply.",
-        "fix_block": "BANK-ECON-04/BANK-SURF-04"
+        "fix_block": "BANK-ECON-04/BANK-SURF-04",
+        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) — re-measured: `pg_stat_user_tables` shows `banking.reconciliation_sessions` n_live_tup=5 (not 0). Live-clicked `/banking/reconciliation` (USMCA): real Beginning Balance $93.68 -> Ending $1,293.68, 'Last reconciled Aug 23, 2026', CSV worklist upload live. The RLS-blocked/zero-flow claim no longer holds on current main."
       },
       {
         "id": "BANK-F04",
