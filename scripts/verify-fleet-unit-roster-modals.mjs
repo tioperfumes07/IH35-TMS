@@ -53,6 +53,11 @@ const REVERSE_LEAVES = [
 
 export function audit(src) {
   const failures = [];
+  const inactivateStart = src.table.indexOf("const inactivateMutation = useMutation({");
+  const inactivateEnd = src.table.indexOf("const reactivateMutation = useMutation({", inactivateStart);
+  const inactivateBody = inactivateStart >= 0 && inactivateEnd > inactivateStart
+    ? src.table.slice(inactivateStart, inactivateEnd)
+    : "";
   const required = JSON.parse(src.required);
   const reverseAudit = required.honesty_audit?.reverse_link_column_2026_08_14;
   const nonEntityReverseIds = [
@@ -100,7 +105,11 @@ export function audit(src) {
   if (!/if \(patch\.equipment_type\)/.test(src.table) || !/else if \(patch\.vehicle_type\)/.test(src.table)) {
     failures.push(`${FILES.table}: roster.bulk.type must normalize unit/trailer type changes`);
   }
-  if (!/Promise\.allSettled\([\s\S]{0,500}?`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate`[\s\S]{0,80}?method: "POST"/.test(src.table) || /method:\s*["']DELETE["']/.test(src.table)) {
+  if (!/Promise\.allSettled\(/.test(inactivateBody) ||
+      !/row\.kind === "trailer" \? "equipment" : "units"/.test(inactivateBody) ||
+      !/`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate\?operating_company_id=\$\{encodeURIComponent\(input\.companyId\)\}`/.test(inactivateBody) ||
+      !/method: "POST"/.test(inactivateBody) ||
+      /method:\s*["']DELETE["']/.test(inactivateBody)) {
     failures.push(`${FILES.table}: roster.bulk.inactivate must retain rows through canonical soft-deactivate endpoints`);
   }
   if (!/function fleetProfilePath\(row: FleetRow\): string \{/.test(src.table)) {
@@ -173,9 +182,10 @@ export function audit(src) {
     if (!/companiesQuery\.isError[\s\S]{0,500}title="Couldn't load company choices"[\s\S]{0,500}companiesQuery\.refetch\(\)/.test(body)) {
       failures.push(`${rel}: failed company roster GET must render an exact retry instead of an empty picker`);
     }
-    const failsClosedDirectly = /disabled=\{[^}]*companiesQuery\.isError/.test(body);
+    const failsClosedDirectly = /<Button[\s\S]{0,500}?disabled=\{[^}]*companiesQuery\.isError[^}]*\}/.test(body);
     const failsClosedViaCanSubmit = /const canSubmit =[^;\n]*!companiesQuery\.isError/.test(body) && /disabled=\{!canSubmit\}/.test(body);
-    if (!failsClosedDirectly && !failsClosedViaCanSubmit) {
+    const declaresCanSubmit = /const canSubmit =/.test(body);
+    if ((declaresCanSubmit && !failsClosedViaCanSubmit) || (!declaresCanSubmit && !failsClosedDirectly)) {
       failures.push(`${rel}: create/save must fail closed while the company roster GET is failed`);
     }
   }
@@ -224,14 +234,16 @@ if (process.argv.includes("--selftest")) {
     ["trailer-bulk-mutation", "table", /const trailerBulkMutation = useMutation\(\{/, "const trailerBulkMutationUnused = useMutation({"],
     ["bulk-status", "table", /if \(patch\.status\) trailerPatch\.status = patch\.status/, "if (false) trailerPatch.status = patch.status"],
     ["bulk-type", "table", /if \(patch\.equipment_type\)/, "if (false)"],
-    ["bulk-inactivate", "table", /`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate`/, "`/api/v1/mdata/${resource}/${row.id}/delete`"],
+    ["bulk-inactivate", "table", /`\/api\/v1\/mdata\/\$\{resource\}\/\$\{row\.id\}\/deactivate\?/, "`/api/v1/mdata/${resource}/${row.id}/delete?"],
+    ["bulk-inactivate-company-scope", "table", /deactivate\?operating_company_id=\$\{encodeURIComponent\(input\.companyId\)\}/, "deactivate"],
+    ["bulk-inactivate-kind-route", "table", /row\.kind === "trailer" \? "equipment" : "units"/, 'row.kind === "trailer" ? "units" : "units"'],
     ["profile-path-fn", "table", /function fleetProfilePath\(row: FleetRow\): string \{/, "function fleetProfilePathUnused(row: FleetRow): string {"],
     ["edit-unit-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind !== "trailer"\}/, "open={false}"],
     ["create-unit-call", "createUnit", /return createUnit\(\{/, "return createSomethingElse({"],
-    ["create-unit-company-error", "createUnit", /companiesQuery\.isError/, "false"],
+    ["create-unit-company-error", "createUnit", /&& !companiesQuery\.isError;/, ";"],
     ["create-trailer-company-retry", "createTrailer", /companiesQuery\.refetch\(\)/, "Promise.resolve()"],
     ["edit-trailer-company-fail-closed", "editTrailer", /disabled=\{profileQuery\.isError \|\| companiesQuery\.isError\}/, "disabled={profileQuery.isError}"],
-    ["edit-vehicle-company-error", "editVehicle", /companiesQuery\.isError/, "false"],
+    ["edit-vehicle-company-error", "editVehicle", /disabled=\{saveMutation\.isPending \|\| profileQuery\.isError \|\| companiesQuery\.isError \|\| !unitId\}/, "disabled={saveMutation.isPending || profileQuery.isError || !unitId}"],
     ["create-trailer-call", "createTrailer", /return createEquipment\(\{/, "return createSomethingElse({"],
     ["edit-vehicle-patch", "editVehicle", /patchUnit\(input\.unitId, input\.companyId, input\.patch\)/, "patchUnit(input.unitId, '', input.patch)"],
     ["edit-trailer-branch", "table", /open=\{editingUnitId !== null && editingRow\?\.kind === "trailer"\}/, "open={false}"],
