@@ -58,6 +58,18 @@ export function auditFe(src) {
   if (!/userFacingApiError\(\s*mut\.error/.test(src)) {
     problems.push(`${FE}: userFacingApiError must wrap mut.error`);
   }
+  if (!/scopeGenerationRef\.current \+= 1[\s\S]{0,240}setDriverId\(""\)[\s\S]{0,240}mut\.reset\(\)/.test(src)) {
+    problems.push(`${FE}: load/company/open transition must retire driver selection and mutation state`);
+  }
+  if (!/mut\.mutate\(\{\s*loadId,\s*operatingCompanyId,\s*driverId,\s*reasonCode,\s*notes,\s*generation: scopeGenerationRef\.current\s*\}\)/.test(src)) {
+    problems.push(`${FE}: reassign submit must snapshot load/company/driver/generation`);
+  }
+  if (!/input\.generation !== scopeGenerationRef\.current \|\| input\.loadId !== loadId \|\| input\.operatingCompanyId !== operatingCompanyId/.test(src)) {
+    problems.push(`${FE}: stale reassign completion must not close or refresh a new scope`);
+  }
+  if (!/const closeIfIdle[\s\S]{0,100}!mut\.isPending/.test(src) || !/<Modal open=\{open\} onClose=\{closeIfIdle\}/.test(src)) {
+    problems.push(`${FE}: pending reassign must lock modal dismissal`);
+  }
   return problems;
 }
 
@@ -91,10 +103,27 @@ function selftest() {
   }
   const goodRt = `if (msg === "E_DRIVER_NOT_FOUND") { return reply.code(404).send({ error: "E_DRIVER_NOT_FOUND", message: "Selected driver was not found for this operating company." }); }`;
   if (auditRoutes(goodRt).length) failures.push(`routes good: ${auditRoutes(goodRt)}`);
-  const goodFe = `userFacingApiError(mut.error, "Could not reassign. Check permissions and try again.")`;
+  const goodFe = `
+    userFacingApiError(mut.error, "Could not reassign. Check permissions and try again.")
+    scopeGenerationRef.current += 1; setDriverId(""); setReasonCode(REASSIGN_REASON_CODES[0].value); setNotes(""); setGateBlocked(false); mut.reset();
+    mut.mutate({ loadId, operatingCompanyId, driverId, reasonCode, notes, generation: scopeGenerationRef.current });
+    if (input.generation !== scopeGenerationRef.current || input.loadId !== loadId || input.operatingCompanyId !== operatingCompanyId) return;
+    const closeIfIdle = () => { if (!mut.isPending) onClose(); };
+    <Modal open={open} onClose={closeIfIdle} />
+  `;
   if (auditFe(goodFe).length) failures.push(`fe good: ${auditFe(goodFe)}`);
   const badFe = `<div className="text-xs text-red-600">Could not reassign. Check permissions and try again.</div>`;
   if (!auditFe(badFe).some((p) => p.includes("hardcodes"))) failures.push("fe hardcode not detected");
+  const feMutations = [
+    ["reset", "setDriverId(\"\")", "setDriverId(driverId)"],
+    ["snapshot", "generation: scopeGenerationRef.current", "generation: 0"],
+    ["stale completion", "input.generation !== scopeGenerationRef.current", "false"],
+    ["pending dismissal", "<Modal open={open} onClose={closeIfIdle}", "<Modal open={open} onClose={onClose}"],
+  ];
+  for (const [label, before, after] of feMutations) {
+    const mutated = goodFe.replace(before, after);
+    if (mutated === goodFe || auditFe(mutated).length === 0) failures.push(`FE ${label} mutation stayed green`);
+  }
 
   const real = [
     ...auditService(readFileSync(join(ROOT, SERVICE), "utf8")),
