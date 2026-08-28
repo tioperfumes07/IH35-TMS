@@ -12,8 +12,8 @@ import {
   createDriverTeam,
   deactivateDriverTeam,
   getDriverTeam,
+  listAllDrivers,
   listDriverTeams,
-  listDrivers,
   type DriverTeamSplitMethod,
   updateDriverTeam,
 } from "../api/mdata";
@@ -288,11 +288,10 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
     queryKey: ["drivers", { companyId: selectedCompanyId, search, listScope: "all-statuses" }],
     enabled: Boolean(selectedCompanyId),
     queryFn: () =>
-      listDrivers({
+      listAllDrivers({
         operating_company_id: selectedCompanyId,
         status: "All",
         search,
-        limit: 200, // GO-LIVE Block 1A: fetch the full roster (was capped at 50) so the DataTable pager + KPIs reflect the real total
       }).then((result) => result.drivers),
   });
 
