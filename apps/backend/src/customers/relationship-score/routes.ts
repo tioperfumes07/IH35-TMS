@@ -106,6 +106,9 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
       if (!operatingCompanyId) return { error: "operating_company_id_required" as const };
 
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      if (!(await relationshipScoresTableExists(client))) {
+        return { error: "relationship_scores_unavailable" as const };
+      }
       const listed = await listAtRiskRelationshipScores(
         client,
         operatingCompanyId,
@@ -124,6 +127,9 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
     });
 
     if ("error" in result) {
+      if (result.error === "relationship_scores_unavailable") {
+        return reply.code(503).send({ error: result.error });
+      }
       return reply.code(400).send({ error: result.error });
     }
     return result;

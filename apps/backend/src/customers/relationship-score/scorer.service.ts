@@ -411,9 +411,6 @@ export async function listAtRiskRelationshipScores(
   }>;
   total: number;
 }> {
-  const hasRelationshipScores = await tableExists(client, "master_data", "customer_relationship_scores");
-  if (!hasRelationshipScores) return { rows: [], total: 0 };
-
   const totalRes = await client.query<{ total: number }>(
     `
       SELECT COUNT(*)::int AS total
