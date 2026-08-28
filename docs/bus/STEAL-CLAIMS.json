@@ -1,4 +1,5 @@
 {
+  "post.dispatch-planner-reschedule-scope-snapshot": "Codex 2026-08-28 DSP-F7114",
   "post.dispatch-multistop-write-scope-snapshot": "Codex 2026-08-28 DSP-F7113",
   "post.dispatch-notify-preference-scope-snapshot": "Codex 2026-08-28 DSP-F7107",
   "post.dispatch-reassign-modal-scope-snapshot": "Codex 2026-08-28 DSP-F7106",
@@ -869,6 +870,12 @@
       "leftover_id": "post.dispatch-multistop-write-scope-snapshot",
       "seat": "CODEX",
       "claimed_at": "2026-08-28T14:35:00-05:00",
+      "go": "0013"
+    },
+    {
+      "leftover_id": "post.dispatch-planner-reschedule-scope-snapshot",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T14:45:00-05:00",
       "go": "0013"
     }
   ]
