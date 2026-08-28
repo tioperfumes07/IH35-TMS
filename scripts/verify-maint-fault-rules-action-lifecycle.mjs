@@ -17,6 +17,9 @@ function inspect(value) {
     [/values: \{ \.\.\.values \}, companyId, generation: actionGenerationRef\.current/, "save caller does not snapshot values/company/generation"],
     [/archiveMutation\.mutate\(\{ id, companyId, generation: actionGenerationRef\.current \}\)/, "archive caller does not snapshot rule/company/generation"],
     [/onClick=\{\(\) => archiveRule\(row\.id\)\}[\s\S]*onSave=\{saveRule\}/, "mounted save/archive bypass guarded submitters"],
+    [/if \(!rulesQuery\.isError\) return;[\s\S]*setModalOpen\(false\)[\s\S]*setEditRule\(null\)[\s\S]*\[rulesQuery\.isError\]/, "failed rules read does not close retained edit/create state"],
+    [/const saveRule[\s\S]*if \(rulesQuery\.isError\) return;/, "save remains callable while rules are unavailable"],
+    [/disabled=\{rulesQuery\.isError\}[\s\S]*\+ Create Rule/, "create remains enabled while rules are unavailable"],
   ];
   for (const [pattern, message] of checks) if (!pattern.test(value)) failures.push(message);
   return failures;
@@ -34,6 +37,9 @@ if (process.argv.includes("--selftest")) {
     ["values: { ...values }, companyId, generation: actionGenerationRef.current", "values, companyId: '', generation: 0"],
     ["archiveRule(row.id)", "archiveMutation.mutate(row.id)"],
     ["onSave={saveRule}", "onSave={(values) => saveMutation.mutate(values)}"],
+    ["if (!rulesQuery.isError) return;", "if (true) return;"],
+    ["if (rulesQuery.isError) return;", "if (false) return;"],
+    ["disabled={rulesQuery.isError}", "disabled={false}"],
   ];
   for (const [before, after] of mutations) {
     if (!source.includes(before)) throw new Error(`selftest fixture missing: ${before}`);

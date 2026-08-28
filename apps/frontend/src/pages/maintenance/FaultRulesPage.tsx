@@ -82,7 +82,14 @@ export function FaultRulesPage() {
     setEditRule(null);
   }, [companyId]);
 
+  useEffect(() => {
+    if (!rulesQuery.isError) return;
+    setModalOpen(false);
+    setEditRule(null);
+  }, [rulesQuery.isError]);
+
   const saveRule = (values: FaultRuleFormValues & { id?: string }) => {
+    if (rulesQuery.isError) return;
     saveMutation.mutate({ values: { ...values }, companyId, generation: actionGenerationRef.current });
   };
 
@@ -145,6 +152,7 @@ export function FaultRulesPage() {
         {/* ARCHIVE-not-DELETE (B25): prior CTA "+ Add rule" — Sunset: 2026-09. Canonical: + Create Rule. */}
         <Button
           size="sm"
+          disabled={rulesQuery.isError}
           onClick={() => {
             setEditRule(null);
             setModalOpen(true);
