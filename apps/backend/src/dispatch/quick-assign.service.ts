@@ -235,7 +235,7 @@ export async function quickAssignLoad(
       // The trailer's only real sink is dispatch.load_assignment_history.new_trailer_id (recorded below).
       // The pending-fields tracking key intentionally keeps its legacy "assigned_secondary_driver_id"
       // label so the frontend draft/complete contract is unchanged.
-      await client.query(
+      const assignmentUpdate = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET assigned_primary_driver_id = $2,
@@ -245,6 +245,8 @@ export async function quickAssignLoad(
               quicksave_completed_at = CASE WHEN $4 = false THEN now() ELSE NULL END,
               updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $6::uuid
+          RETURNING id
         `,
         [
           input.load_id,
@@ -252,8 +254,10 @@ export async function quickAssignLoad(
           input.unit_id ?? null,
           pendingFields.length > 0,
           pendingFields.length > 0 ? JSON.stringify(pendingFields) : null,
+          input.operating_company_id,
         ],
       );
+      if (!assignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
       const previousTrailerId = await resolveCurrentTrailerId(
         client,
