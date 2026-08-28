@@ -1017,7 +1017,17 @@ export function BookLoadModalV4({
     <>
     <style>{BOOK_LOAD_CORRECT_DESIGN_CSS}</style>
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-6"
+      // BOOK-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER: this modal is opened both standalone ("+ Book Load")
+      // and from inside LoadDetailDrawer's per-section "Edit ▸" (LoadDetailDrawer.tsx sets editLoadId
+      // and leaves the drawer mounted underneath). The drawer's own panel renders at z-[210] (see
+      // LoadDetailDrawer.tsx), so the old z-50 here painted a full 4 tiers BELOW it — a fully rendered,
+      // interactive, but completely invisible/unclickable form (confirmed live: elementFromPoint on the
+      // input's own on-screen coordinates returned the drawer's read-only text, not this modal).
+      // Same root cause and same fix tier Modal.tsx already applied for the identical
+      // CANCEL-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER bug (z-[215], "above every other z-[N] tier including
+      // the highest drawer") — this hand-rolled portal never got the same treatment. z-[216] keeps it
+      // unambiguously topmost even alongside a Modal.tsx-based dialog.
+      className="fixed inset-0 z-[216] flex items-start justify-center overflow-y-auto px-4 py-6"
       style={{ background: "rgba(15, 19, 32, 0.6)" }}
       onMouseDown={attemptBookLoadClose}
     >
