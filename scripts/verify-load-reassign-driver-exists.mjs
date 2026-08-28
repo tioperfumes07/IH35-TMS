@@ -35,6 +35,9 @@ export function auditService(src) {
     "reassign_driver_dca.is_authorized = true",
     "reassign_driver_dca.deactivated_at IS NULL",
   ]) if (!src.includes(token)) problems.push(`${SERVICE}: missing shared-driver membership ${token}`);
+  if (!/const reassignmentUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,450}UPDATE mdata\.loads[\s\S]{0,250}AND operating_company_id = \$3::uuid[\s\S]{0,100}RETURNING id[\s\S]{0,220}input\.operating_company_id[\s\S]{0,160}if \(!reassignmentUpdate\.rows\[0\]\?\.id\) throw new Error\("E_LOAD_NOT_FOUND"\)/.test(src)) {
+    problems.push(`${SERVICE}: canonical reassign UPDATE must bind company and prove the load row changed before history/audit`);
+  }
   return problems;
 }
 
@@ -82,9 +85,15 @@ function selftest() {
     OR EXISTS (SELECT 1 FROM mdata.driver_company_authorizations reassign_driver_dca
       WHERE reassign_driver_dca.driver_id = d.id
       AND reassign_driver_dca.company_id = $2::uuid
-      AND reassign_driver_dca.is_authorized = true
-      AND reassign_driver_dca.deactivated_at IS NULL)
+    AND reassign_driver_dca.is_authorized = true
+    AND reassign_driver_dca.deactivated_at IS NULL)
     if (!driverExists.rows[0]) throw new Error("E_DRIVER_NOT_FOUND");
+    const reassignmentUpdate = await client.query<{ id: string }>(
+      "UPDATE mdata.loads SET assigned_primary_driver_id = $2 WHERE id = $1 " +
+      "AND operating_company_id = $3::uuid RETURNING id",
+      [input.load_id, input.new_driver_id, input.operating_company_id]
+    );
+    if (!reassignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
   `;
   if (auditService(goodSvc).length) failures.push(`svc good: ${auditService(goodSvc)}`);
   const sharedMutations = [
@@ -97,6 +106,14 @@ function selftest() {
   for (const [label, before, after] of sharedMutations) {
     const mutated = goodSvc.replace(before, after);
     if (mutated === goodSvc || auditService(mutated).length === 0) failures.push(`shared ${label} mutation stayed green`);
+  }
+  const writeMutations = [
+    ["write company", "AND operating_company_id = $3::uuid", "AND TRUE"],
+    ["write result", "if (!reassignmentUpdate.rows[0]?.id)", "if (false)"],
+  ];
+  for (const [label, before, after] of writeMutations) {
+    const mutated = goodSvc.replace(before, after);
+    if (mutated === goodSvc || auditService(mutated).length === 0) failures.push(`${label} mutation stayed green`);
   }
   if (!auditService("UPDATE mdata.loads").some((p) => p.includes("E_DRIVER_NOT_FOUND"))) {
     failures.push("svc bad not detected");
@@ -135,7 +152,7 @@ function selftest() {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: selftest PASS — ${sharedMutations.length}/${sharedMutations.length} shared-driver mutations rejected`);
+  console.log(`${LABEL}: selftest PASS — ${sharedMutations.length + writeMutations.length}/${sharedMutations.length + writeMutations.length} shared-driver/write mutations rejected`);
 }
 
 function main() {

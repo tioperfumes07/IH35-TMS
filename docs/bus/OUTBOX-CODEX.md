@@ -1940,3 +1940,5 @@ Codex | WORKING | DSP-F7125 OCR conversion immutable item+company lifecycle | le
 Codex | SHIPPED | DSP-F7124 | PR=#17156 @ ad1a81873e | leaf=settings.notify immutable sync company | guard=PASS+selftest | Live=BLOCKED | NEXT=DSP-F7125
 Codex | WORKING | DSP-F7127L | CLAIM=Samsara-auto-status-exact-company-write | SOURCE=mdata.loads→auto_status_switch_events | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127K | PR=#17189 @ 565104f02b | Built=combined Quick Assign exact-company write | NEXT=Samsara auto-status | GO
+Codex | WORKING | DSP-F7127M | CLAIM=manual-reassign-exact-company-write | SOURCE=mdata.loads→load_assignment_history | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7127L | PR=#17190 @ b8ab2d09c5 | Built=Samsara status exact-company write | NEXT=manual reassign | GO
