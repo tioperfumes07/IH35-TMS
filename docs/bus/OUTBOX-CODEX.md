@@ -1791,3 +1791,5 @@ Codex | WORKING | INS-F7056 | CLAIM=post.insurance-policy-unit-complete-roster-g
 Codex | SHIPPED | DSP-F7055 | PR=#17012 @ 5c4a854000 | Built=honest created-driver HOS 8/8 | NEXT=insurance unit picker | GO
 Codex | SHIPPED | INS-F7056 | PR=#17013 @ 5f20fcb700 | Built=policy unit complete roster guard 10/10 | NEXT=lawsuit claim creator guard | GO
 Codex | WORKING | INS-F7057 | CLAIM=post.insurance-claim-created-label-semantic-guard | SOURCE=ClaimCreateModal onSuccess→persisted id+claim_number | NEXT=guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | INS-F7057 | PR=#17014 @ 75d448a90c | Built=semantic created-label guard 17/17 | NEXT=insurance schema route parser | GO
+Codex | WORKING | INS-F7058 | CLAIM=post.insurance-schema-mounted-route-parser | SOURCE=policy.routes mounted multiline create route | NEXT=class parser+selftest+FAST-MERGE | GO

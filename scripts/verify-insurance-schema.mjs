@@ -10,6 +10,25 @@ const sharedPath = path.resolve(ROOT, "apps/backend/src/insurance/policy.shared.
 const routesPath = path.resolve(ROOT, "apps/backend/src/insurance/policy.routes.ts");
 const indexPath = path.resolve(ROOT, "apps/backend/src/index.ts");
 
+function hasRoute(source, method, routePath) {
+  const escapedPath = routePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`app\\.${method}\\s*\\(\\s*["']${escapedPath}["']`).test(source);
+}
+
+if (process.argv.includes("--selftest")) {
+  const multiline = `app.post(\n  "/api/v1/insurance/policies",\n  { config: {} },\n  async () => {}\n);`;
+  if (!hasRoute(multiline, "post", "/api/v1/insurance/policies")) {
+    console.error("verify:insurance-schema SELFTEST FAILED — multiline mounted route escaped");
+    process.exit(1);
+  }
+  if (hasRoute(multiline.replace("/api/v1/insurance/policies", "/api/v1/insurance/missing"), "post", "/api/v1/insurance/policies")) {
+    console.error("verify:insurance-schema SELFTEST FAILED — missing route was accepted");
+    process.exit(1);
+  }
+  console.log("verify:insurance-schema SELFTEST OK — multiline route recognized; missing route rejected");
+  process.exit(0);
+}
+
 function readIfExists(filePath) {
   return fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
 }
@@ -43,13 +62,13 @@ if (!shared.includes("INSURANCE_COVERAGE_TYPES")) failures.push("missing_INSURAN
 
 const routes = readIfExists(routesPath);
 if (!routes.includes("/api/v1/insurance/policies")) failures.push("missing_insurance_policies_routes");
-if (!routes.includes('app.get("/api/v1/insurance/policies"')) failures.push("missing_insurance_policies_list_route");
-if (!routes.includes('app.post("/api/v1/insurance/policies"')) failures.push("missing_insurance_policies_create_route");
-if (!routes.includes('app.patch("/api/v1/insurance/policies/:id"')) failures.push("missing_insurance_policies_patch_route");
-if (!routes.includes('app.delete("/api/v1/insurance/policies/:id"')) failures.push("missing_insurance_policies_delete_route");
-if (!routes.includes('app.post("/api/v1/insurance/policies/:policy_id/units"'))
+if (!hasRoute(routes, "get", "/api/v1/insurance/policies")) failures.push("missing_insurance_policies_list_route");
+if (!hasRoute(routes, "post", "/api/v1/insurance/policies")) failures.push("missing_insurance_policies_create_route");
+if (!hasRoute(routes, "patch", "/api/v1/insurance/policies/:id")) failures.push("missing_insurance_policies_patch_route");
+if (!hasRoute(routes, "delete", "/api/v1/insurance/policies/:id")) failures.push("missing_insurance_policies_delete_route");
+if (!hasRoute(routes, "post", "/api/v1/insurance/policies/:policy_id/units"))
   failures.push("missing_insurance_policy_unit_create_route");
-if (!routes.includes('app.get("/api/v1/assets/:id/coverage"')) failures.push("missing_asset_coverage_route");
+if (!hasRoute(routes, "get", "/api/v1/assets/:id/coverage")) failures.push("missing_asset_coverage_route");
 if (!routes.includes("FROM mdata.assets")) failures.push("missing_asset_reference_validation");
 if (!routes.includes("gap_types")) failures.push("missing_coverage_gap_types_payload");
 
