@@ -71,6 +71,61 @@ describe("audit events list routes (BULK-6)", () => {
     expect(built.values).toContain(BULK_CALL);
   });
 
+  // VEND-F-AUDIT-HISTORY-TAB-ALWAYS-EMPTY — most CRUD writers tag their audit payload
+  // resource_type/resource_id (e.g. "mdata.vendors"), not entity_type/entity_id ("vendor"). The
+  // entity-detail Audit History tab must match either naming convention.
+  describe("entity_type/entity_id OR resource_type/resource_id (mismatched CRUD-writer naming)", () => {
+    it("OR-matches the mapped resource_type candidates for a known short entity_type", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_type: "vendor",
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("e.payload->>'entity_type' = $2 OR e.payload->>'resource_type' = ANY($3::text[])");
+      expect(built.values).toContain("vendor");
+      expect(built.values).toContainEqual(["mdata.vendors"]);
+    });
+
+    it("falls back to a bare entity_type match for an entity_type with no known mapping", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_type: "some_future_entity_nobody_mapped_yet",
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("e.payload->>'entity_type' = $2");
+      expect(built.sql).not.toContain("resource_type");
+    });
+
+    it("OR-matches entity_id against resource_id", () => {
+      const ENTITY_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_id: ENTITY_ID,
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("(e.payload->>'entity_id' = $2 OR e.payload->>'resource_id' = $2)");
+      expect(built.values).toContain(ENTITY_ID);
+    });
+
+    it("maps every EntityAuditHistoryTab caller's entityType (vendor/customer/driver/equipment/unit/work_order/load)", () => {
+      // Guards against a new caller being added to a *.tsx page without a matching map entry —
+      // if this list and the frontend's actual callers ever drift, the map itself (checked by the
+      // static guard below) is where a future finder should add the missing entry.
+      for (const entityType of ["vendor", "customer", "driver", "equipment", "unit", "work_order", "load"]) {
+        const built = buildAuditEventsListQuery({
+          operating_company_id: COMPANY,
+          entity_type: entityType,
+          limit: 50,
+          offset: 0,
+        });
+        expect(built.sql).toContain("resource_type");
+      }
+    });
+  });
+
   // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE
   describe("base company predicate vs. NULL-company (company-agnostic) events", () => {
     const ACTOR_UUID = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";

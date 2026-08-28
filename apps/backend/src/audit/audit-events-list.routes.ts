@@ -102,6 +102,34 @@ function summarizePayload(eventClass: string, payload: unknown): string {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// VEND-F-AUDIT-HISTORY-TAB-ALWAYS-EMPTY: EntityAuditHistoryTab.tsx callers pass a short, singular
+// `entityType` (e.g. "vendor") that this route matches against `payload->>'entity_type'`. But the
+// large majority of CRUD writers (appendCrudAudit call sites in mdata/vendors.routes.ts,
+// customers.routes.ts, drivers.routes.ts, units.routes.ts, fleet/trailer.routes.ts,
+// maintenance/work-orders.routes.ts, dispatch load writers, etc. — confirmed by repo-wide grep:
+// 682 `resource_type:` payload writes vs 226 `entity_type:` writes) tag their payload
+// `resource_type`/`resource_id` instead, using a dotted schema.table string
+// ("mdata.vendors", not "vendor"). Since the two naming conventions never matched, EVERY
+// entity-detail "Audit History" tab whose backing CRUD writer uses resource_type — which is
+// most of them — showed a permanent, indistinguishable-from-honest "No audit events found" even
+// though real rows exist. This is the resource_type equivalent for entity-detail audit history of
+// the entity_id-vs-actor_user_uuid mismatch already fixed for the User Activity tab above
+// (AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE) — same bug shape, different field pair.
+//
+// Map every EntityAuditHistoryTab caller's `entityType` value to the resource_type string(s) its
+// real CRUD writer(s) actually use, so the filter can OR-match either naming convention without
+// requiring a rewrite of every existing writer. Additive only — extend this map when a new
+// EntityAuditHistoryTab caller is added; never remove an existing mapping.
+const ENTITY_TYPE_TO_RESOURCE_TYPES: Record<string, string[]> = {
+  vendor: ["mdata.vendors"],
+  customer: ["mdata.customers"],
+  driver: ["mdata.drivers"],
+  equipment: ["mdata.equipment"],
+  unit: ["mdata.units"],
+  work_order: ["maintenance.work_orders"],
+  load: ["mdata.loads"],
+};
+
 export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: string; values: unknown[] } {
   const values: unknown[] = [input.operating_company_id];
   // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE — base company filter is built below, once the
@@ -125,11 +153,20 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
   }
   if (input.entity_type) {
     values.push(input.entity_type);
-    filters.push(`e.payload->>'entity_type' = $${values.length}`);
+    const entityTypeParam = values.length;
+    const resourceTypeCandidates = ENTITY_TYPE_TO_RESOURCE_TYPES[input.entity_type];
+    if (resourceTypeCandidates && resourceTypeCandidates.length > 0) {
+      values.push(resourceTypeCandidates);
+      filters.push(
+        `(e.payload->>'entity_type' = $${entityTypeParam} OR e.payload->>'resource_type' = ANY($${values.length}::text[]))`
+      );
+    } else {
+      filters.push(`e.payload->>'entity_type' = $${entityTypeParam}`);
+    }
   }
   if (input.entity_id) {
     values.push(input.entity_id);
-    filters.push(`e.payload->>'entity_id' = $${values.length}`);
+    filters.push(`(e.payload->>'entity_id' = $${values.length} OR e.payload->>'resource_id' = $${values.length})`);
   }
   if (input.actor) {
     // USER-ACTIVITY-AUDIT-REVERSE-FALSE-EMPTY — this used ONE wildcard-wrapped parameter
