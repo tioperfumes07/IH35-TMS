@@ -17,26 +17,14 @@ import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { addDaysIso, companyToday } from "../../lib/businessDate";
 
-function dayKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
-
-function parseWeekStart(input?: string): Date {
-  if (input) {
-    const parsed = new Date(`${input}T00:00:00.000Z`);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diff));
+function plannerWeekStart(input?: string): string {
+  if (input && /^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+  const today = companyToday();
+  const [year, month, day] = today.split("-").map(Number);
+  const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
+  return addDaysIso(today, weekday === 0 ? -6 : 1 - weekday);
 }
 
 function hosClass(status: PlannerDriverRow["hos_status"]): string {
@@ -116,7 +104,7 @@ export function PlannerCalendarPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [weekStart, setWeekStart] = useState(() => dayKey(parseWeekStart()));
+  const [weekStart, setWeekStart] = useState(() => plannerWeekStart());
   const [showHosOverlay, setShowHosOverlay] = useState(true);
   // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
   // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
@@ -152,8 +140,7 @@ export function PlannerCalendarPage() {
   });
 
   const days = useMemo(() => {
-    const start = parseWeekStart(weekStart);
-    return Array.from({ length: 7 }, (_, index) => dayKey(addDays(start, index)));
+    return Array.from({ length: 7 }, (_, index) => addDaysIso(weekStart, index));
   }, [weekStart]);
 
   const loadsByDriverDay = useMemo(() => {
@@ -212,14 +199,14 @@ export function PlannerCalendarPage() {
             <button
               type="button"
               className="rounded-sm border px-3 py-1.5 text-sm"
-              onClick={() => setWeekStart(dayKey(addDays(parseWeekStart(weekStart), -7)))}
+              onClick={() => setWeekStart(addDaysIso(weekStart, -7))}
             >
               Previous week
             </button>
             <button
               type="button"
               className="rounded-sm border px-3 py-1.5 text-sm"
-              onClick={() => setWeekStart(dayKey(addDays(parseWeekStart(weekStart), 7)))}
+              onClick={() => setWeekStart(addDaysIso(weekStart, 7))}
             >
               Next week
             </button>
