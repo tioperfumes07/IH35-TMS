@@ -1024,8 +1024,17 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if (!authUser) return;
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const scopedCompanyId = parsedQuery.data.operating_company_id;
+    await assertCompanyMembership(authUser.uuid, scopedCompanyId);
 
-    const rows = await withCurrentUser(authUser.uuid, async (client) => {
+    const result = await withCurrentUser(authUser.uuid, async (client) => {
+      const ownedLoad = await client.query(
+        `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [parsedParams.data.id, scopedCompanyId],
+      );
+      if (!ownedLoad.rows[0]) return null;
       const res = await client.query(
         `
           SELECT uuid, created_at, event_class, severity, payload, actor_user_uuid, source
@@ -1044,10 +1053,11 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         `,
         [parsedParams.data.id]
       );
-      return res.rows;
+      return { events: res.rows };
     });
 
-    return { events: rows };
+    if (!result) return reply.code(404).send({ error: "mdata_load_not_found" });
+    return result;
   });
 
   app.patch("/api/v1/mdata/loads/:id/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

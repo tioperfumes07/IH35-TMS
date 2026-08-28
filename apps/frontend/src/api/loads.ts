@@ -289,8 +289,9 @@ export function getLoad(id: string, operatingCompanyId: string) {
   return apiRequest<LoadDetail>(`/api/v1/mdata/loads/${id}?${query.toString()}`);
 }
 
-export function getLoadAudit(id: string) {
-  return apiRequest<{ events: LoadAuditEvent[] }>(`/api/v1/mdata/loads/${id}/audit`);
+export function getLoadAudit(id: string, operatingCompanyId: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ events: LoadAuditEvent[] }>(`/api/v1/mdata/loads/${id}/audit?${query.toString()}`);
 }
 
 export function createLoad(body: CreateLoadWizardBody) {
@@ -435,11 +436,11 @@ export function useDispatchLoad(id: string | null, operatingCompanyId: string | 
   });
 }
 
-export function useLoadAudit(id: string | null) {
+export function useLoadAudit(id: string | null, operatingCompanyId: string | null | undefined) {
   return useQuery({
-    queryKey: ["loads", "audit", id],
-    queryFn: () => getLoadAudit(id as string).then((value) => value.events),
-    enabled: Boolean(id),
+    queryKey: ["loads", "audit", operatingCompanyId, id],
+    queryFn: () => getLoadAudit(id as string, operatingCompanyId as string).then((value) => value.events),
+    enabled: Boolean(id && operatingCompanyId),
     refetchInterval: 60000,
   });
 }
