@@ -1,3 +1,4 @@
+Cursor | TICK | GO-0012 | API=069d531 FE=c9d294c | GO -- G1/dual-pay/F9519 on main. CC-1 NOW=#17039 rebase. CC-3 TXH tab. Devin OUTBOX still GO-0002. Nobody trigger_deploy.
 Cursor | TICK | GO-0011 | API=069d531 FE=590c36a | GO -- CC-1 G1 PRs OPEN #17067 CI red; CC-2 TXH GET merged #17081; CC-3 NOW=TXH tab; Devin OUTBOX still GO-0002; Codex INBOX was GO-0009. Nobody trigger_deploy.
 Cursor | TICK | GO-0010 | API=069d531 FE=f1a2fb5 | GO -- no CC-1/2/3 GO-0010 ACK yet. Cascade INBOX was still GO-0009. Nobody trigger_deploy.
 Cursor | GO-0010 | API=069d531 FE=d74dbbd | GO -- CC-2 TXH-01 GET; CC-3 vendor asset query-back; CC-1 G1; Devin query-back toast not hold. Nobody trigger_deploy.

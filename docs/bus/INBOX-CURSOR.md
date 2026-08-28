@@ -1,3 +1,5 @@
+**GO-0012 · YOU ARE LEAD.** One FEED page per seat. Live API `069d531` FE `c9d294c`. ACK `CURSOR | ACK | GO-0012 | NOW=lead+feed | SHA=069d531 | GO`. FAST-MERGE via gh api after local gate. Nobody second-kick.
+
 **GO-0011 · YOU ARE LEAD.** One FEED page per seat. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0011-ONE-PASTE.md`. Live API `069d531` FE `590c36a`. ACK `CURSOR | ACK | GO-0011 | NOW=lead+feed | SHA=069d531 | GO`. Run `node scripts/ops/sync-seat-feed.mjs`. Nobody second-kick.
 
 **GO-0009 · FEED OVERWRITE · YOU ARE LEAD.** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md` Live **`069d531`**. Read `docs/bus/FEED/NOW-<SEAT>.md` then census. ACK `CURSOR | ACK | GO-0009 | NOW=lead+feed | SHA=069d531 | GO`. Run `node scripts/ops/sync-seat-feed.mjs`. Nobody second-kick.

@@ -1,3 +1,5 @@
+**GO-0012 WORK NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0012 | NOW=queryback-override-FE | SHA=069d531 | GO`. PREPEND OUTBOX. G1 on main not live API. Never trigger_deploy.
+
 **GO-0011 WORK NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md` (one page).** ACK `DEVIN | ACK | GO-0011 | NOW=queryback-live-not-hold | SHA=069d531 | GO`. PREPEND OUTBOX (line 1 is still GO-0002). Query-back FE `590c36a`. G1 not live (#17067 red). Never trigger_deploy.
 
 **GO-0010.** Read `docs/bus/FEED/NOW-DEVIN.md`. ACK `DEVIN | ACK | GO-0010 | NOW=queryback-override-toast | SHA=069d531 | GO`. Do not hold idle: query-back Override toast on FE d74dbbd. G1=CC-1 not CC-3. Never trigger_deploy.
