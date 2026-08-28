@@ -68,6 +68,14 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
             AND a.confirmed_at IS NULL
             AND a.triggered_at >= now() - interval '30 minutes'
             AND l.soft_deleted_at IS NULL
+            AND NOT EXISTS (
+              SELECT 1
+              FROM audit.audit_events dismissed
+              WHERE dismissed.event_class = 'dispatch.stop_arrival_dismissed'
+                AND dismissed.payload->>'resource_id' = a.id::text
+                AND dismissed.payload->>'operating_company_id' = a.operating_company_id::text
+                AND dismissed.payload->>'driver_id' = a.driver_id::text
+            )
           ORDER BY a.triggered_at DESC
           LIMIT 10
         `,
@@ -161,15 +169,40 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     const body = dismissBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
-    await withCurrentUser(user.uuid, async (client) => {
+    const dismissed = await withCurrentUser(user.uuid, async (client) => {
       const companyRes = await client.query<{ operating_company_id: string | null }>(
         `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
         [driver.id]
       );
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
-      if (!operatingCompanyId) return;
+      if (!operatingCompanyId) return false;
 
       await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
+      // DSP-F7138: dismissal is an append-only lifecycle event. Serialize by prompt id, prove the
+      // prompt belongs to this driver/company and is still pending, and make replay idempotent.
+      // Previously this endpoint audited ANY UUID and always returned 200; the prompt then remained
+      // in the canonical GET because that reader did not consume dismissal evidence.
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [params.data.id]);
+      const prompt = await client.query<{ id: string; already_dismissed: boolean }>(
+        `SELECT a.id::text AS id,
+                EXISTS (
+                  SELECT 1 FROM audit.audit_events ae
+                  WHERE ae.event_class = 'dispatch.stop_arrival_dismissed'
+                    AND ae.payload->>'resource_id' = a.id::text
+                    AND ae.payload->>'operating_company_id' = a.operating_company_id::text
+                    AND ae.payload->>'driver_id' = a.driver_id::text
+                ) AS already_dismissed
+           FROM dispatch.stop_arrivals a
+          WHERE a.id = $1::uuid
+            AND a.operating_company_id = $2::uuid
+            AND a.driver_id = $3::uuid
+            AND a.confirmed_at IS NULL
+          LIMIT 1`,
+        [params.data.id, operatingCompanyId, driver.id]
+      );
+      if (!prompt.rows[0]) return false;
+      if (prompt.rows[0].already_dismissed) return true;
+
       await appendCrudAudit(
         client,
         user.uuid,
@@ -177,13 +210,16 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
         {
           resource_type: "dispatch.stop_arrivals",
           resource_id: params.data.id,
+          operating_company_id: operatingCompanyId,
           driver_id: driver.id,
           reason: body.data.reason ?? null,
         },
         "info"
       );
+      return true;
     });
 
+    if (!dismissed) return reply.code(404).send({ error: "arrival_prompt_not_found" });
     return { ok: true };
   });
 }
