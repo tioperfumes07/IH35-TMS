@@ -431,6 +431,78 @@ export async function checkPerEntryBalanceForCompany(client: DbClient, operating
   }
 }
 
+// INV-4 DOCUMENTS WITH NO GL DELTA (detector 5 of the plan's 10): scripts/verify-gl-invariants.sql's
+// own INV-4 block ("expect 0 rows"), extended with the natural AP-side counterpart (the audited SQL
+// only covers invoices; a TMS-native bill in a real, non-draft, non-voided status with zero GL
+// postings is the identical defect shape on the other side of the ledger). source_system='tms' scopes
+// this to documents this app itself is responsible for posting — a QBO-imported document with no local
+// posting is expected (TMS never posts QBO's own history), not a defect. Unlike the balance detectors,
+// this one is NOT currently a steady 0/0/0: live-queried before building, USMCA has 2 real unpaid bills
+// (BILL-2026-00018 $750.00, BILL-2026-00019 $300.00, both created today) sitting with zero postings —
+// this detector will open real findings on its very first tick.
+export async function checkNoGlDeltaForCompany(client: DbClient, operatingCompanyId: string, runId: string): Promise<void> {
+  const invoiceRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(i.id::text))[1:10] AS ids
+      FROM accounting.invoices i
+      WHERE i.operating_company_id = $1::uuid AND i.source_system = 'tms' AND i.voided_at IS NULL
+        AND i.status IN ('sent', 'partial', 'paid') AND COALESCE(i.is_sample_data, false) = false
+        AND NOT EXISTS (
+          SELECT 1 FROM accounting.journal_entry_postings p
+          WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text
+        )
+    `,
+    [operatingCompanyId]
+  );
+  const invoiceCount = Number(invoiceRes.rows[0]?.count ?? 0);
+  const invoiceScope: ResourceScope = { role: "invoice", account_id: "", account_number: "" };
+  if (invoiceCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "document_no_gl_delta",
+      severity: "critical",
+      runId,
+      resourceScope: invoiceScope,
+      localValue: { document_type: "invoice", count: invoiceCount, sample_ids: invoiceRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "tms_native_sent_partial_paid_invoice_must_have_a_gl_posting", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "document_no_gl_delta", invoiceScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+
+  const billRes = await client.query<{ count: string; ids: string[] | null }>(
+    `
+      SELECT COUNT(*)::text AS count, (ARRAY_AGG(b.id::text))[1:10] AS ids
+      FROM accounting.bills b
+      WHERE b.operating_company_id = $1::uuid AND b.source_system = 'tms'
+        AND b.voided_at IS NULL AND b.revoked_at IS NULL
+        AND b.status IN ('unpaid', 'partial', 'partially_paid', 'paid') AND COALESCE(b.is_sample_data, false) = false
+        AND NOT EXISTS (
+          SELECT 1 FROM accounting.journal_entry_postings p
+          WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
+        )
+    `,
+    [operatingCompanyId]
+  );
+  const billCount = Number(billRes.rows[0]?.count ?? 0);
+  const billScope: ResourceScope = { role: "bill", account_id: "", account_number: "" };
+  if (billCount > 0) {
+    await persistLedgerFinding(client, {
+      operatingCompanyId,
+      findingType: "document_no_gl_delta",
+      severity: "critical",
+      runId,
+      resourceScope: billScope,
+      localValue: { document_type: "bill", count: billCount, sample_ids: billRes.rows[0]?.ids ?? [] },
+      thresholdSnapshot: { rule: "tms_native_unpaid_partial_paid_bill_must_have_a_gl_posting", threshold_cents: 0 },
+    });
+  } else {
+    const open = await findOpenLedgerFinding(client, operatingCompanyId, "document_no_gl_delta", billScope);
+    if (open) await autoResolveLedgerFinding(client, open.id);
+  }
+}
+
 export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
   const companies = await listActiveCompanies(client);
   for (const operatingCompanyId of companies) {
@@ -440,5 +512,6 @@ export async function runLedgerIntegrityTick(client: DbClient): Promise<void> {
     await checkSubledgerTieOutForCompany(client, operatingCompanyId, runId);
     await checkAskMyAccountantForCompany(client, operatingCompanyId, runId);
     await checkPerEntryBalanceForCompany(client, operatingCompanyId, runId);
+    await checkNoGlDeltaForCompany(client, operatingCompanyId, runId);
   }
 }
