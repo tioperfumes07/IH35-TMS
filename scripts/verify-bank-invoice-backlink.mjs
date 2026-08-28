@@ -31,6 +31,17 @@ import { readFileSync } from "node:fs";
 const LABEL = "verify-bank-invoice-backlink";
 const SVC = "apps/backend/src/accounting/payments/bank-invoice-backlink.service.ts";
 const CALLER = "apps/backend/src/accounting/payments/apply.service.ts";
+// GO-0014 / BANK-F01-F02-F03-F07 query-back (CC-3 2026-08-28) — this guard covered only the FIRST call
+// site. match.service.ts's own inline comment (ACCT-F5620, "re-applied a 3rd time — see
+// DEVIN-A-STALE-BRANCH-REPEATEDLY-DELETES-MERGED-CODE-FIXES") documents that the SECOND call site —
+// the reconciliation-accept re-attempt, needed because every live USMCA case applies a payment to its
+// invoice BEFORE bank-matching it, so the apply-time attempt always fires with no source bank
+// transaction yet — is the one that keeps getting silently deleted, which is exactly why hop.bank
+// measured 0 even after the writer first shipped. Live-verified 2026-08-28 (Neon, lucia bypass):
+// exactly 1 `banking.bank_transactions` row has `matched_invoice_id` set on all of prod, and it is the
+// reconciliation-accept path's own output (created 2026-08-26) — the density this guard exists to
+// protect is still that thin, so a second silent deletion would be invisible again without this check.
+const RECON_CALLER = "apps/backend/src/accounting/bank-recon/match.service.ts";
 
 function stripCommentsAndStrings(src) {
   return src
@@ -48,9 +59,11 @@ function check(sources) {
   const errors = [];
   const svcRaw = sources[SVC] ?? "";
   const callerRaw = sources[CALLER] ?? "";
+  const reconCallerRaw = sources[RECON_CALLER] ?? "";
   const svc = stripCommentsAndStrings(svcRaw);
   const svcStr = stripCommentsOnly(svcRaw);
   const caller = stripCommentsAndStrings(callerRaw);
+  const reconCaller = stripCommentsAndStrings(reconCallerRaw);
 
   if (!svcRaw) {
     errors.push(`${SVC}: missing — matched_invoice_id would have no writer at all again (hop.bank unreachable).`);
@@ -65,6 +78,25 @@ function check(sources) {
     errors.push(
       `${CALLER}: does not CALL backlinkBankTransactionToInvoice — the writer exists but is unreachable, ` +
         `so matched_invoice_id silently goes back to never being set.`
+    );
+  }
+
+  // 1b. The reconciliation-accept re-attempt (ACCT-F5620) must also still call the same backlink.
+  // Every live USMCA payment is applied to its invoice BEFORE being bank-matched, so the apply-path
+  // call above always fires with no source bank transaction yet and can never link anything by
+  // itself — this second call site is the one that actually produces every real matched_invoice_id on
+  // prod, and it is the one that has been silently deleted before (this exact comment says "3rd time").
+  if (!reconCallerRaw) {
+    errors.push(
+      `${RECON_CALLER}: missing — the reconciliation-accept re-attempt is gone, so matched_invoice_id ` +
+        `can only ever be set on the apply-time call, which fires before a source bank transaction ` +
+        `exists on every live ordering and therefore links nothing.`
+    );
+  } else if (!/backlinkBankTransactionToInvoice\s*\(/.test(reconCaller)) {
+    errors.push(
+      `${RECON_CALLER}: does not CALL backlinkBankTransactionToInvoice in its reconciliation-accept ` +
+        `path — this is the re-attempt that fires AFTER source_bank_transaction_id is finally set; ` +
+        `without it hop.bank silently returns to 0 even though the apply-path call still exists.`
     );
   }
 
@@ -104,7 +136,7 @@ function check(sources) {
 
 function loadAll() {
   const out = {};
-  for (const f of [SVC, CALLER]) {
+  for (const f of [SVC, CALLER, RECON_CALLER]) {
     try {
       out[f] = readFileSync(f, "utf8");
     } catch {
@@ -125,6 +157,8 @@ function selftest() {
   const mutations = [
     ["writer deleted", (s) => ({ ...s, [SVC]: "" })],
     ["call removed from apply path", (s) => ({ ...s, [CALLER]: s[CALLER].split("backlinkBankTransactionToInvoice").join("noopLink") })],
+    ["recon-accept re-attempt file deleted", (s) => ({ ...s, [RECON_CALLER]: "" })],
+    ["recon-accept re-attempt call removed", (s) => ({ ...s, [RECON_CALLER]: s[RECON_CALLER].split("backlinkBankTransactionToInvoice").join("noopLink") })],
     ["update loses entity scope", (s) => ({ ...s, [SVC]: s[SVC].replace("AND operating_company_id = $4::uuid", "") })],
     ["repoints an existing match", (s) => ({ ...s, [SVC]: s[SVC].replace("AND matched_invoice_id IS NULL", "") })],
     ["guesses on multi-invoice", (s) => ({ ...s, [SVC]: s[SVC].replace("unique.length !== 1", "false") })],
