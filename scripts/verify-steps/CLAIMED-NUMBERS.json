@@ -1,4 +1,10 @@
 {
+  "9863": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-ledger-findings-no-human-resolve",
+    "note": "Redirected here from 9859 per CC-3's collision-correction (see 9859's own note) -- distinct scope from CC-3's 9859 guard: this one also asserts the ledger-integrity detector's own auto-resolve path leaves resolved_by_user_id NULL, not just that no route UPDATEs the table."
+  },
   "9859": {
     "claimed_at": "2026-08-27",
     "claimed_by": "cc-3",
