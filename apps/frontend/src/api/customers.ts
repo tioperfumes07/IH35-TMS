@@ -56,10 +56,24 @@ export function recordCustomerPayment(
 // Every call through this function omitted it, so the request 400'd unconditionally; the query's
 // `retry: false` + the caller's `data?.rows ?? []` fallback rendered that as "No payments recorded"
 // — an always-empty screen that read as legitimately-zero data, not a broken request.
-export function listCustomerPayments(customerId: string, operatingCompanyId: string, params: { limit?: number } = {}) {
+export function listCustomerPayments(customerId: string, operatingCompanyId: string, params: { limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
   if (params.limit != null) qs.set("limit", String(params.limit));
+  if (params.offset != null) qs.set("offset", String(params.offset));
   return apiRequest<{ rows: CustomerPaymentListRow[]; total: number }>(`/api/v1/customers/${customerId}/payments?${qs.toString()}`);
+}
+
+/** Exhaust the exact scoped customer-payment range for mounted payment history. */
+export async function listAllCustomerPayments(customerId: string, operatingCompanyId: string) {
+  const limit = 500;
+  const rows: CustomerPaymentListRow[] = [];
+  let offset = 0;
+  while (true) {
+    const page = await listCustomerPayments(customerId, operatingCompanyId, { limit, offset });
+    rows.push(...page.rows);
+    if (rows.length >= page.total || page.rows.length === 0) return { rows, total: page.total };
+    offset += page.rows.length;
+  }
 }
 
 export function unapplyCustomerPayment(customerId: string, paymentId: string) {
