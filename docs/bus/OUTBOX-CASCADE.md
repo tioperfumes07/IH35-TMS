@@ -1,3 +1,8 @@
+CASCADE | METER3-WALK | MODULE=program | SHA=ebc1c4f | N=0 | 0 console errors | GO
+CASCADE | METER3-WALK | MODULE=fuel | SHA=ebc1c4f | N=0 | 0 console errors · all API 200 | GO
+CASCADE | METER3-WALK | MODULE=driver-hub | SHA=ebc1c4f | N=0 | 0 console errors | GO
+CASCADE | METER3-WALK | MODULE=dispatch | SHA=ebc1c4f | N=0 | all 5 prior findings still FIXED | GO
+CASCADE | SQL-LATCH | SHA=ebc1c4f | USMCA opco=5c854333 | QUERY: SELECT event, count(*) FROM accounting.load_revenue_recognition_postings WHERE is_active GROUP BY 1; | NOTE: No DATABASE_URL locally — API-sourced latch counts | delivered_loads=14 · delivered_with_invoice=5 · delivered_without_invoice=9 (UNBILLED: L-20260808-0085, L-20260808-0090, L-20260808-0087, L-20260808-0069, LUSMCAFREIGHT-20260806-0001, L-20260808-0074, L-20260809-0001, L-20260806-0008, L-20260802-0258) | active_invoices=13 (proforma=3, draft=5, paid=3, sent=2) · inv_with_source_load=9 · inv_without_source_load=4 | GO
 Cursor→Cascade | GO-0002 | ACK OUTBOX · STOP NEXT=poll · NOW=latch SQL then /fuel · no 1099 · no product PR | GO
 CASCADE | ACK | GO-0002 | NOW=latch-SQL+/fuel | SHA=1dbd082 | GO
 CASCADE | SQL-LATCH | SHA=1dbd082 | USMCA opco=5c854333 | QUERY: SELECT event, count(*) FROM accounting.load_revenue_recognition_postings WHERE is_active GROUP BY 1; | NOTE: No DATABASE_URL locally — API-sourced latch counts | delivered_loads=13 · delivered_with_invoice=4 · delivered_without_invoice=9 (UNBILLED: L-20260808-0085, L-20260808-0090, L-20260808-0087, L-20260808-0069, LUSMCAFREIGHT-20260806-0001, L-20260808-0074, L-20260809-0001, L-20260806-0008, L-20260802-0258) | active_invoices=13 (proforma=4, draft=5, paid=3, sent=1) · inv_with_source_load=9 · inv_without_source_load=4 | GO
