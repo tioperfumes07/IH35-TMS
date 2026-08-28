@@ -422,21 +422,33 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       {
                         label: "Dispatch flag",
                         value: canEdit ? (
-                          <ReferenceSelect
-                            value={load.dispatch_flag_color_id}
-                            onChange={(value) => {
-                              if (!value) return;
-                              void updateMutation.mutateAsync({ id: load.id, body: { dispatch_flag_color_id: value } }).then(() => {
-                                refetchLoad();
-                                void queryClient.invalidateQueries({ queryKey: ["loads"] });
-                              });
-                            }}
-                            options={(flagColorsQuery.data?.flags ?? []).map((flag) => ({ value: flag.id, label: flag.display_name }))}
-                            createKind="dispatch_flag_color"
-                            operatingCompanyId={load.operating_company_id}
-                            addNewLabel="+ Add new dispatch flag"
-                            onOptionCreated={() => void flagColorsQuery.refetch()}
-                          />
+                          <div className="space-y-2">
+                            {flagColorsQuery.isError ? (
+                              <ListErrorState
+                                title="Couldn't load dispatch flags"
+                                status={(flagColorsQuery.error as { status?: number } | null)?.status ?? 0}
+                                message={userFacingApiError(flagColorsQuery.error, "Dispatch flag catalog failed")}
+                                onRetry={() => void flagColorsQuery.refetch()}
+                              />
+                            ) : null}
+                            <ReferenceSelect
+                              value={load.dispatch_flag_color_id}
+                              onChange={(value) => {
+                                if (!value) return;
+                                void updateMutation.mutateAsync({ id: load.id, body: { dispatch_flag_color_id: value } }).then(() => {
+                                  refetchLoad();
+                                  void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                                });
+                              }}
+                              options={(flagColorsQuery.data?.flags ?? []).map((flag) => ({ value: flag.id, label: flag.display_name }))}
+                              createKind="dispatch_flag_color"
+                              operatingCompanyId={load.operating_company_id}
+                              addNewLabel="+ Add new dispatch flag"
+                              disabled={flagColorsQuery.isLoading || flagColorsQuery.isError}
+                              loading={flagColorsQuery.isLoading}
+                              onOptionCreated={() => void flagColorsQuery.refetch()}
+                            />
+                          </div>
                         ) : (load.flag_display_name ?? load.flag_code),
                       },
                       { label: "Customer WO #", value: load.customer_wo_number ?? "—" },
