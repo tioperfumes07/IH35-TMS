@@ -6641,5 +6641,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-driver-rate-effective-date-company-business-date"
+  },
+  "9953": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-customer-pnl-trailing-window-company-business-date"
   }
 }
