@@ -1272,14 +1272,55 @@ export function getCustomerRelationshipScore(customerUuid: string, operatingComp
 export function listAtRiskCustomerRelationshipScores(params: {
   operating_company_id: string;
   limit?: number;
+  offset?: number;
 }) {
   const query = new URLSearchParams();
   query.set("operating_company_id", params.operating_company_id);
   if (params.limit) query.set("limit", String(params.limit));
+  if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
-  return apiRequest<{ operating_company_id: string; count: number; customers: AtRiskCustomerRelationshipScore[] }>(
+  return apiRequest<{
+    operating_company_id: string;
+    count: number;
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+    customers: AtRiskCustomerRelationshipScore[];
+  }>(
     `/api/v1/customers/relationship-scores/at-risk${qs ? `?${qs}` : ""}`
   );
+}
+
+export async function listAllAtRiskCustomerRelationshipScores(operatingCompanyId: string) {
+  const pageSize = 250;
+  const customers: AtRiskCustomerRelationshipScore[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+
+  for (;;) {
+    const page = await listAtRiskCustomerRelationshipScores({
+      operating_company_id: operatingCompanyId,
+      limit: pageSize,
+      offset,
+    });
+    if (expectedTotal == null) expectedTotal = page.total;
+    if (page.total !== expectedTotal) throw new Error("Customer relationship score total changed during pagination. Retry.");
+    for (const customer of page.customers) {
+      if (seen.has(customer.customer_uuid)) throw new Error("Customer relationship score pagination returned a duplicate customer.");
+      seen.add(customer.customer_uuid);
+      customers.push(customer);
+    }
+    if (!page.has_more) break;
+    if (page.customers.length === 0) throw new Error("Customer relationship score pagination stopped before the reported total.");
+    offset += page.customers.length;
+  }
+
+  if (customers.length !== (expectedTotal ?? 0)) {
+    throw new Error(`Customer relationship score pagination returned ${customers.length} of ${expectedTotal ?? 0} rows.`);
+  }
+  return { operating_company_id: operatingCompanyId, total: expectedTotal ?? 0, customers };
 }
 
 export function createCustomer(body: CreateCustomerInput) {

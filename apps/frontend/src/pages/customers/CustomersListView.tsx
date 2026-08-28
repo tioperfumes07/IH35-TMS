@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { getCustomerBillingSummary, listAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
+import { getCustomerBillingSummary, listAllAtRiskCustomerRelationshipScores, type Customer } from "../../api/mdata";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
 import { bulkUpdate } from "../../api/bulk";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -13,7 +13,6 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { CustomerDrillModal } from "../../components/customers/CustomerDrillModal";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { CappedListNotice } from "../../components/CappedListNotice";
 import { ListErrorState } from "../../components/ListErrorState";
 
 function fmtMoney(cents: number) {
@@ -83,7 +82,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
 
   const atRiskQuery = useQuery({
     queryKey: ["customers-relationship-at-risk", companyId],
-    queryFn: () => listAtRiskCustomerRelationshipScores({ operating_company_id: companyId, limit: 250 }),
+    queryFn: () => listAllAtRiskCustomerRelationshipScores(companyId),
     enabled: Boolean(companyId),
   });
   const atRiskCustomerIds = useMemo(
@@ -252,13 +251,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   </button>
                 ))}
               </div>
-              <CappedListNotice
-                shown={atRiskQuery.data?.customers?.length ?? 0}
-                limit={250}
-                total={atRiskQuery.data?.count}
-                hint="At-risk relationship scores load one page — open customer detail for the full score."
-                className="text-xs text-slate-600"
-              />
+              <p className="text-xs text-slate-600">
+                Relationship health loaded for all {atRiskQuery.data?.total ?? 0} at-risk customers.
+              </p>
             </div>
           </CollapsedListFilters>
         }

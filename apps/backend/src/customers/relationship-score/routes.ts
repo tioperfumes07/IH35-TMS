@@ -20,6 +20,7 @@ const singleQuerySchema = z.object({
 const atRiskQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   limit: z.coerce.number().int().min(1).max(250).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
@@ -105,8 +106,21 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
       if (!operatingCompanyId) return { error: "operating_company_id_required" as const };
 
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-      const rows = await listAtRiskRelationshipScores(client, operatingCompanyId, parsedQuery.data.limit);
-      return { operating_company_id: operatingCompanyId, count: rows.length, customers: rows };
+      const listed = await listAtRiskRelationshipScores(
+        client,
+        operatingCompanyId,
+        parsedQuery.data.limit,
+        parsedQuery.data.offset
+      );
+      return {
+        operating_company_id: operatingCompanyId,
+        count: listed.total,
+        total: listed.total,
+        limit: parsedQuery.data.limit,
+        offset: parsedQuery.data.offset,
+        has_more: parsedQuery.data.offset + listed.rows.length < listed.total,
+        customers: listed.rows,
+      };
     });
 
     if ("error" in result) {

@@ -1501,3 +1501,4 @@ Codex | SHIPPED | SAFETY-F6900 | PR=#16766 @ 249e9b1258 | Built=Driver Scheduler
 Codex | WORKING | FINDING=MAINT-F6901-WO-PARTS-LINKS-FIRST-PAGE-ONLY | vertical=WO exact parts reverse range+vendor/economic labels | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F6901 | PR=#16767 @ 64e0b709f7 | Built=WO exact parts reverse range+vendor/economic labels | Live=post-deploy UNVERIFIED | NEXT=DRIVERS-F6902 audit history | GO
 Codex | WORKING | FINDING=DRIVERS-F6902-AUDIT-HISTORY-FIRST-200-ONLY | vertical=driver audit exact range+filters+actor reverse | NEXT=guard+FAST-MERGE | GO
+CODEX | WORKING | FINDING=CUST-F6911-RELATIONSHIP-HEALTH-FIRST-250-ONLY | SOURCE-OF-TRUTH=master_data.customer_relationship_scores→mdata.customers | NOW=exact scoped range+complete mounted customer health | GO

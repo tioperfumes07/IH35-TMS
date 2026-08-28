@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import "./verify-customer-relationship-health-complete-range.mjs";
 
 const ROOT = process.cwd();
 const failures = [];
