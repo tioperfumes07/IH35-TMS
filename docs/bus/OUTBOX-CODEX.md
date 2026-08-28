@@ -1522,3 +1522,6 @@ Codex | SHIPPED | ACCT-F6918 | PR=#16881 | merge=0dac64226f | gate=exit0 | Live=
 Codex | WORKING | ACCT-F6919 customer-column complete rosters | CLAIM=post.customer-column-complete-rosters | modules=customers+accounting | NEXT=guard+gate+FAST-MERGE | GO
 CODEX | CLAIMING | leftover=post.lists-brokers-complete-range | GO=0004 | leaf=names.brokers | reason=mounted broker directory reports rows.length as total from default first customer page | NOW=canonical exhaustive customer scan+guard | GO
 CODEX | WORKING | FINDING=LST-F6920-BROKERS-DIRECTORY-SILENT-DEFAULT-PAGE | SOURCE-OF-TRUTH=mdata.customers customer_type=broker | leaf=names.brokers:{customer,connectivity,reverse_link,qbo_chrome} | NOW=root-fix+mutation-guard | GO
+Codex | SHIPPED | LST-F6920 | PR=#16883 @ 46541bb5b9 | gate=exit0 | Built=lists names.brokers complete customer range | Live=post-deploy UNVERIFIED | NEXT=DRV-F6921 | GO
+CODEX | CLAIMING | leftover=post.drivers-home-complete-roster | GO=0004 | leaf=home.roster | reason=/drivers master roster tabs+KPIs derive from one 200-row page | NOW=canonical exhaustive driver scan+guard | GO
+CODEX | WORKING | FINDING=DRV-F6921-DRIVERS-HOME-SILENT-200-ROSTER | SOURCE-OF-TRUTH=mdata.drivers | leaf=home.roster:{driver,connectivity,reverse_link,qbo_chrome} | GO
