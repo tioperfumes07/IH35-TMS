@@ -34,7 +34,7 @@ else pass("dispatch-spine-emit.ts does not bypass log_event()");
 const mutatingFiles = [
   { file: "apps/backend/src/dispatch/loads.routes.ts",        events: ["load.created", "load.status_changed", "load.chargeback_flagged"] },
   { file: "apps/backend/src/dispatch/cancellation.routes.ts", events: ["load.cancelled", "load.cancellation_approved"] },
-  { file: "apps/backend/src/dispatch/quicksave.routes.ts",    events: ["load.assigned_to_driver", "load.quicksave_draft_completed"] },
+  { file: "apps/backend/src/dispatch/quick-assign.service.ts", events: ["load.assigned_to_driver", "load.quicksave_draft_completed"] },
 ];
 
 for (const { file, events } of mutatingFiles) {
@@ -48,6 +48,68 @@ for (const { file, events } of mutatingFiles) {
     if (!src.includes(ev)) fail(`${file}: missing emit for event type "${ev}"`);
     else pass(`${file}: emits "${ev}"`);
   }
+}
+
+// 3b. Presence is not enough: Quick Assign used to commit first and then launch both emits as
+// detached, swallowed route callbacks. Require awaited emits inside the service transaction and
+// prohibit route-level copies, which would restore the partial-success window.
+const quickAssignSrc = read("apps/backend/src/dispatch/quick-assign.service.ts");
+const quicksaveRouteSrc = read("apps/backend/src/dispatch/quicksave.routes.ts");
+function quickAssignAtomicityFailures(serviceSrc, routeSrc) {
+  const failures = [];
+  for (const eventType of ["load.assigned_to_driver", "load.quicksave_draft_completed"]) {
+    const awaitedEvent = new RegExp(
+      `await\\s+emitDispatchSpineEvent\\(client,[\\s\\S]{0,500}?event_type:\\s*["']${eventType.replaceAll(".", "\\.")}["']`,
+    );
+    if (!awaitedEvent.test(serviceSrc)) failures.push(`${eventType} not awaited in service transaction`);
+  }
+  if (/emitDispatchSpineEvent|spine_emit_load_(?:assigned_to_driver|quicksave_draft_completed)_failed/.test(routeSrc)) {
+    failures.push("route contains detached/swallowed spine emit");
+  }
+  return failures;
+}
+
+const atomicityFailures = quickAssignAtomicityFailures(quickAssignSrc, quicksaveRouteSrc);
+if (atomicityFailures.length > 0) {
+  for (const message of atomicityFailures) fail(`quick-assign atomicity: ${message}`);
+} else {
+  pass("quick-assign + draft-complete spine events are awaited in-transaction; route has no detached copy");
+}
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    {
+      name: "assignment emit loses await",
+      service: quickAssignSrc.replace(
+        /await emitDispatchSpineEvent\(client, \{([\s\S]{0,300}?event_type: "load\.assigned_to_driver")/,
+        "void emitDispatchSpineEvent(client, {$1",
+      ),
+      route: quicksaveRouteSrc,
+    },
+    {
+      name: "draft-complete emit loses await",
+      service: quickAssignSrc.replace(
+        /await emitDispatchSpineEvent\(client, \{([\s\S]{0,300}?event_type: "load\.quicksave_draft_completed")/,
+        "emitDispatchSpineEvent(client, {$1",
+      ),
+      route: quicksaveRouteSrc,
+    },
+    {
+      name: "route restores swallowed post-commit emit",
+      service: quickAssignSrc,
+      route: `${quicksaveRouteSrc}\nvoid emitDispatchSpineEvent(client, {}).catch(() => undefined);`,
+    },
+  ];
+  let caught = 0;
+  for (const mutation of mutations) {
+    if (quickAssignAtomicityFailures(mutation.service, mutation.route).length > 0) {
+      console.log(`[verify-a2] SELFTEST PASS: ${mutation.name}`);
+      caught += 1;
+    } else {
+      fail(`SELFTEST mutation survived: ${mutation.name}`);
+    }
+  }
+  if (caught === mutations.length) pass(`SELFTEST caught ${caught}/${mutations.length} planted regressions`);
 }
 
 // 4. DispatchSpineEvent union must cover all expected types

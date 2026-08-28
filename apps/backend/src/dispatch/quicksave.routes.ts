@@ -1,8 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import { withCurrentUser } from "../auth/db.js";
-import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import {
   completeQuicksaveDraft,
   getAssignmentHistory,
@@ -97,20 +95,6 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
         ...body.data,
         load_id: params.data.id,
       });
-      void withCurrentUser(user.uuid, (client) =>
-        emitDispatchSpineEvent(client, {
-          operating_company_id: body.data.operating_company_id,
-          actor_user_id: user.uuid,
-          event_type: "load.assigned_to_driver",
-          load_id: params.data.id,
-          payload: { driver_id: body.data.driver_id, unit_id: body.data.unit_id ?? null },
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
-          "spine_emit_load_assigned_to_driver_failed"
-        )
-      );
       return result;
     } catch (error) {
       const mapped = mapQuickAssignError(error);
@@ -132,19 +116,6 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
         load_id: params.data.id,
         fields: body.data.fields,
       });
-      void withCurrentUser(user.uuid, (client) =>
-        emitDispatchSpineEvent(client, {
-          operating_company_id: body.data.operating_company_id,
-          actor_user_id: user.uuid,
-          event_type: "load.quicksave_draft_completed",
-          load_id: params.data.id,
-        })
-      ).catch((err) =>
-        req.log.warn(
-          { err, load_id: params.data.id, company_id: body.data.operating_company_id },
-          "spine_emit_load_quicksave_draft_completed_failed"
-        )
-      );
       return result;
       } catch (error) {
               if (String((error as Error)?.message ?? "") === "E_LOAD_NOT_FOUND") {
