@@ -31,7 +31,7 @@ const TARGETS = [
       ['"Per-Customer P&L"', "Per-Customer P&L tab registered in the tabs array"],
       ['activeTab === "Loads"', "Loads tab render block"],
       ['activeTab === "Per-Customer P&L"', "Per-Customer P&L tab render block"],
-      ["listLoads(", "Loads tab reuses the shared loads endpoint (listLoads)"],
+      ["listAllLoads(", "Loads tab exhausts the shared scoped loads endpoint (listAllLoads)"],
       ["getCustomerProfitability(", "P&L tab reuses the existing profitability report endpoint"],
     ],
   },
@@ -58,7 +58,7 @@ export function assertGuard({ file, source, requires }) {
 
 function selftest() {
   const goodDetail = `const tabs = ["Profile","Tasks","Loads","Per-Customer P&L"];
-    listLoads({ customer_id: id }); getCustomerProfitability({ operating_company_id });
+    listAllLoads({ operating_company_id, customer_id: id }); getCustomerProfitability({ operating_company_id });
     {activeTab === "Loads" ? (<x/>) : null}
     {activeTab === "Per-Customer P&L" ? (<y/>) : null}`;
   const goodList = `type FilterChip = "all" | "with_open";
@@ -70,6 +70,7 @@ function selftest() {
     { n: "list good → 0", args: { file: "l", source: goodList, requires: TARGETS[1].requires }, want: 0 },
     { n: "detail missing Loads tab", args: { file: "d", source: goodDetail.replace('"Loads"', '"Nope"').replace('activeTab === "Loads"', 'activeTab === "Nope"'), requires: TARGETS[0].requires }, min: 1 },
     { n: "detail missing P&L endpoint", args: { file: "d", source: goodDetail.replace("getCustomerProfitability(", "someOtherThing("), requires: TARGETS[0].requires }, min: 1 },
+    { n: "detail regresses to one loads page", args: { file: "d", source: goodDetail.replace("listAllLoads(", "listLoads("), requires: TARGETS[0].requires }, min: 1 },
     { n: "list missing Overdue column", args: { file: "l", source: goodList.replace('label: "Overdue"', 'label: "Other"'), requires: TARGETS[1].requires }, min: 1 },
     { n: "list missing With open chip", args: { file: "l", source: goodList.replace('id: "with_open", label: "With open"', 'id: "x", label: "X"'), requires: TARGETS[1].requires }, min: 1 },
   ];
