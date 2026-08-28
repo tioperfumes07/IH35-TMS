@@ -4,6 +4,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 
 // ── Driver master-list CSV importer (rehire database) ────────────────────────────────────────────────
 // Bulk-creates ex/active driver CONTACT profiles from the owner's "Driver Master Contacts List" export so
@@ -289,7 +290,46 @@ export async function registerDriversImportRoutes(app: FastifyInstance) {
             [r.first_name, r.last_name, r.phone, r.cdl_number, r.hire_date, r.hire_date ? "file_import" : null, r.termination_date, r.status, note, operatingCompanyId, user.uuid]
           );
           await client.query("RELEASE SAVEPOINT drv_import_row");
-          if ((ins.rows as unknown[]).length > 0) created += 1;
+          const newDriverId = (ins.rows as Array<{ id: string }>)[0]?.id;
+          if (newDriverId) {
+            created += 1;
+            // LIAB-F9927-SILENT-CATCH-SWEEP (USMCA leg, GO-0013): live-measured on USMCA
+            // (2026-08-28) — 4 real Active drivers, all imported through THIS route on the same
+            // batch timestamp, had no mdata.vendors payee. Same root cause already fixed on the
+            // individual hire path in drivers.routes.ts ("drivers are 1099 contractors and A/P
+            // reaches them only through mdata.vendors"), never applied here. Terminated rows (the
+            // rehire-history contacts this importer exists for) are intentionally skipped — they
+            // get provisioned again through the normal hire flow if actually rehired, not here.
+            // Best-effort and audited, exactly like the hire path: a payee problem must never fail
+            // the import, but it must never be silent either.
+            if (r.status === "Active") {
+              try {
+                await ensureDriverVendor(client, {
+                  operatingCompanyId,
+                  driverId: newDriverId,
+                  displayName: `${r.first_name} ${r.last_name}`.trim(),
+                  phone: r.phoneMissing ? null : r.phone,
+                  email: null,
+                  actorUserId: user.uuid,
+                });
+              } catch (err) {
+                await appendCrudAudit(
+                  client,
+                  user.uuid,
+                  "mdata.vendors.driver_payee_provision_failed",
+                  {
+                    resource_type: "mdata.drivers",
+                    resource_id: newDriverId,
+                    operating_company_id: operatingCompanyId,
+                    source: "driver_master_contacts_csv",
+                    error: String((err as Error)?.message ?? err),
+                  },
+                  "warning",
+                  "DRIVER-VENDOR-ON-HIRE"
+                ).catch(() => undefined);
+              }
+            }
+          }
         } catch {
           await client.query("ROLLBACK TO SAVEPOINT drv_import_row");
           rowErrors += 1;
