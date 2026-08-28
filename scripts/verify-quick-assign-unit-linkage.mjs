@@ -30,6 +30,7 @@ function audit(s) {
   if ((s.service.match(/E_UNIT_NOT_FOUND/g) ?? []).length < 2 || (s.service.match(/deactivated_at IS NULL/g) ?? []).length < 2) failures.push("both create paths must reject missing, foreign, or inactive units");
   if (!/COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$2/.test(s.service) || !/COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/.test(s.service)) failures.push("both unit validations must be company scoped");
   if (!/assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/.test(s.service) || !/previous_unit_id, new_unit_id/.test(s.service)) failures.push("canonical unit FK sinks missing");
+  if (!/const assignmentUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,650}AND operating_company_id = \$6::uuid[\s\S]{0,120}RETURNING id[\s\S]{0,500}input\.operating_company_id[\s\S]{0,180}if \(!assignmentUpdate\.rows\[0\]\?\.id\) throw new Error\("E_LOAD_NOT_FOUND"\)/.test(s.service)) failures.push("combined driver/unit quick-assign write must bind company and prove the row changed");
   if (!/code === "E_UNIT_NOT_FOUND"[\s\S]{0,120}status: 404/.test(s.routes)) failures.push("unit rejection route mapping missing");
   if (!/l\.assigned_unit_id = \$1::uuid/.test(s.aggregate) || !/l\.operating_company_id = \$2::uuid/.test(s.aggregate)) failures.push("exact entity-scoped unit reverse query missing");
   if (!/l\.status::text NOT IN \('delivered', 'cancelled', 'void', 'completed', 'closed'\)/.test(s.aggregate)) failures.push("unit current-load reverse must exclude every terminal load state, including closed");
@@ -59,6 +60,8 @@ if (process.argv.includes("--selftest")) {
     ["scope1", "service", /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$2/, "TRUE"],
     ["scope2", "service", /COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/g, "TRUE"],
     ["sink", "service", /assigned_unit_id = COALESCE\(\$3, assigned_unit_id\)/g, "assigned_unit_id = assigned_unit_id"],
+    ["write-scope", "service", /AND operating_company_id = \$6::uuid/, ""],
+    ["write-result", "service", /if \(!assignmentUpdate\.rows\[0\]\?\.id\)/, "if (false)"],
     ["route", "routes", /code === "E_UNIT_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
     ["reverse", "aggregate", /l\.assigned_unit_id = \$1::uuid/g, "TRUE"],
     ["closed-terminal", "aggregate", /, 'closed'\)/, ")"],
