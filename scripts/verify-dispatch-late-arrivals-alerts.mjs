@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /** @matrix-built {"modules":["dispatch"],"cols":["driver","reverse_link"],"leaves":["queues.late"],"task":"DRV-F6201-LATE-ARRIVAL-SHARED-DRIVER-LABEL","vertical":"column-wave"} */
+/** @matrix-built {"modules":["reports"],"cols":["connectivity"],"leaves":["report.late_arrival"],"task":"DSP-F7071-LATE-ARRIVAL-ANALYTICS-COMPLETE-RANGE","vertical":"class-sweep"} */
 /**
  * Block B21-D6: Dispatch alerts late-arrivals endpoint + UI card drill-down.
  */
@@ -24,6 +25,24 @@ const paths = {
 
 const sharedDriverScope = /FROM mdata\.driver_company_authorizations late_arrivals_list_dca[\s\S]{0,180}late_arrivals_list_dca\.driver_id = d\.id[\s\S]{0,140}late_arrivals_list_dca\.company_id = l\.operating_company_id[\s\S]{0,140}late_arrivals_list_dca\.is_authorized = true[\s\S]{0,140}late_arrivals_list_dca\.deactivated_at IS NULL/;
 const analyticsSharedDriverScope = /driver_company_authorizations late_arrival_analytics_dca[\s\S]{0,360}late_arrival_analytics_dca\.driver_id = d\.id[\s\S]{0,180}late_arrival_analytics_dca\.company_id = sa\.operating_company_id[\s\S]{0,180}late_arrival_analytics_dca\.is_authorized = true[\s\S]{0,180}late_arrival_analytics_dca\.deactivated_at IS NULL/;
+
+function completeRangeFailures(source) {
+  const aggregateReaders = source.match(/ORDER BY late_count DESC, entity_label ASC[\s\S]{0,80}/g) ?? [];
+  return [
+    aggregateReaders.length !== 2
+      ? "late-arrival analytics must retain both deterministic aggregate readers"
+      : null,
+    aggregateReaders.some((reader) => /\bLIMIT\s+\d+/i.test(reader))
+      ? "late-arrival analytics silently cap grouped report rows"
+      : null,
+    !/SELECT id::text FROM org\.companies WHERE is_active = true ORDER BY id/.test(source)
+      ? "late-arrival worker must scan every active company deterministically"
+      : null,
+    /org\.companies WHERE is_active = true[^`]*\bLIMIT\s+\d+/i.test(source)
+      ? "late-arrival worker silently caps active companies"
+      : null,
+  ].filter(Boolean);
+}
 
 function read(filePath) {
   if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
@@ -61,6 +80,7 @@ function main() {
   if (!analyticsSharedDriverScope.test(analyticsService)) {
     failures.push("late-arrival analytics driver label must admit active canonical selected-company authorization");
   }
+  failures.push(...completeRangeFailures(analyticsService));
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
   }
@@ -108,7 +128,14 @@ function main() {
     for (const [index, mutated] of analyticsMutations.entries()) {
       if (mutated === analyticsService || analyticsSharedDriverScope.test(mutated)) fail(`analytics shared-driver mutation ${index + 1} escaped`);
     }
-    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 5/5 shared-driver mutations red");
+    const rangeMutations = [
+      analyticsService.replace("ORDER BY late_count DESC, entity_label ASC", "ORDER BY late_count DESC, entity_label ASC LIMIT 500"),
+      analyticsService.replace("WHERE is_active = true ORDER BY id", "WHERE is_active = true LIMIT 200"),
+    ];
+    for (const [index, mutated] of rangeMutations.entries()) {
+      if (mutated === analyticsService || completeRangeFailures(mutated).length === 0) fail(`complete-range mutation ${index + 1} escaped`);
+    }
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 7/7 shared-driver/complete-range mutations red");
     return;
   }
 
