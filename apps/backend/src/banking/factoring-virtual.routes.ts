@@ -107,9 +107,19 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
               AND i.source_load_id = $${values.length}::uuid
           )`;
       }
-      const res = await client
-        .query(
-          `
+      // BANK-FACTORING-TIMELINE-SILENT-QUERY-SWALLOW: this used to .catch(() => ({ rows: [] })) here,
+      // turning ANY query failure (schema drift on accounting.factoring_advances, an RLS/permission
+      // change, a transient connection error) into a normal 200 with an empty timeline —
+      // indistinguishable from "genuinely zero advances". accounting.factoring_advances is a
+      // foundational table (migration 0061, not conditionally created — unlike the sibling
+      // views.factoring_balance_invoice_linkage check above, which legitimately needs the to_regclass
+      // guard), so there is no "table might not exist yet" case here to defend against. The frontend
+      // (BankingHome.tsx) already has a real factoringTimelineQuery.isError branch built specifically
+      // for this failure — it could just never fire, because the backend never returned an error
+      // status. Letting the query reject here (Fastify's default handler turns it into a 500) is what
+      // makes that existing error UI reachable.
+      const res = await client.query(
+        `
             SELECT
               fa.id::text AS id,
               fa.display_id,
@@ -124,9 +134,8 @@ export async function registerBankingFactoringVirtualRoutes(app: FastifyInstance
             ORDER BY COALESCE(fa.advanced_at, fa.created_at) DESC NULLS LAST
             LIMIT 25
           `,
-          values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        values
+      );
       return res.rows;
     });
     return { timeline };
