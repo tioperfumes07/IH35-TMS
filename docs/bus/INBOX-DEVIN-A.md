@@ -1,3 +1,5 @@
+**00:15 CT GO-0001 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0001.md`. Live **`1dbd082`**. ACK: `DEVIN-A | ACK | GO-0001 | NOW=Book-Load-KEEP | SHA=1dbd082 | GO`. No POD for Event 2. SOT block on every FINDING. Never second-kick deploy.
+
 **23:40 CT GO-2340.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `Devin-A | ACK | GO-2340 | NOW=Book-Load-KEEP | GO`. No POD for Event 2. Steal after STEAL-CLAIMS.json.
 
 **23:30 CT GO-2330 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. Live **`7eda992`**. ACK: `Devin-A | ACK | GO-2330 | NOW=Book-Load-KEEP | SHA=7eda992 | GO`. `/customers` then Book Load CREATE TEST KEEP. Do not wait on Cascade.
