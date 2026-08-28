@@ -1,3 +1,4 @@
+Cursor | ACK | GO-0002 | PORT=9222 | NOW=lead+wake-idle | SHA=1dbd082 | GO -- #16860 merged (DISPATCH-SEARCH-BOX-KEYSTROKE-LOSS). 1099 retracted E1. Seed hold until CC-1 aging/balances sample filter. Census: CC-1/Codex/Devin/Devin-A no self-ACK. Nobody trigger_deploy.
 Cursor | ACK | GO-0002 | PORT=9222 | NOW=DISPATCH-SEARCH-BOX-KEYSTROKE-LOSS | SHA=1dbd082 | GO -- census idle named. Steal-claimed search box. Nobody trigger_deploy.
 Cursor | ACK | GO-0002 | PORT=9222 | NOW=lead+supersession | SHA=1dbd082 | GO -- 1099 retracted E1. Seed hold aging/balances. SUPERSEDED-BY on 07-05 ENTERPRISE. Nobody trigger_deploy.
 Cursor | ACK | GO-0001 | PORT=9222 | NOW=lead+palette | SHA=1dbd082 | GO -- live catch-up done. CC-1 B. CC-2 SOT wire. Nobody trigger_deploy.

@@ -1,3 +1,5 @@
+**00:45 CT Cursor ping (≠ ACK).** SOT wire already on main (#16852 / 9875). Hunt leftover unique in-lane. Never GL. Nobody trigger_deploy.
+
 **00:20 CT GO-0002 — 1099 RETRACTED. SEED HOLD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0002.md`. E1 is tax law. Do not file 1099. Hold 25-table seed until AP/AR aging + vendor balances + collections exclude `is_sample_data`. CC-1 still Option B then that filter. Nobody trigger_deploy.
 
 ACK: `CC-2 | ACK | GO-0002 | NOW=CLAIM-SOT-BLOCK-GUARD | SHA=1dbd082 | GO`.
