@@ -1,11 +1,11 @@
 {
   "meta": {
-    "generatedAt": "2026-08-22T11:55:21-05:00",
-    "sourceSha": "9f55edbda",
-    "deployedSha": "58044c6",
+    "generatedAt": "2026-08-28T18:31:34-05:00",
+    "sourceSha": "109258d3a",
+    "deployedSha": "4e5db76",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2127,
-    "failOpen": 0,
+    "ledgerRows": 2136,
+    "failOpen": 5,
     "defects": 19
   },
   "modules": [
@@ -171,10 +171,10 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "39/39",
+      "build": "36/39",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "AUDIT",
         "FAIL",
@@ -206,7 +206,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "UNV",
           "AUDIT",
           "FAIL",
@@ -227,7 +227,7 @@
       "build": "7/7",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "FIX",
         "AUDIT",
@@ -259,7 +259,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "FIX",
           "AUDIT",
@@ -436,7 +436,7 @@
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "37/37",
+      "build": "32/37",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -704,7 +704,7 @@
       "build": "9/9",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FIX",
         "AUDIT",
@@ -736,7 +736,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FIX",
           "AUDIT",
@@ -754,7 +754,7 @@
     {
       "tier": "2",
       "module": "system",
-      "build": "6/6",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2121,94 +2121,94 @@
   },
   "recentActivity": [
     {
-      "number": 14301,
-      "title": "FINDING: OUTBOX-CC-2-50087-STATUS LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "CASCADE | FINDING | COMPLIANCE-SILENT-NO-OP-NOTIFICATION-RULES-DELETE | GO-0021 | docs-only row 50096",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:56 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14301",
-      "sha": "9cee5e341",
-      "committedAtIso": "2026-08-22T11:56:34-05:00"
+      "mergedAtCt": "08/28/2026, 06:31 PM CT",
+      "url": "",
+      "sha": "7ad41401c",
+      "committedAtIso": "2026-08-28T18:31:58-05:00"
     },
     {
       "number": 0,
-      "title": "Claude-3- CLAIM-RESERVE: verify-step 4326 (verify-catalog-conflict-check-code-column-aliased)",
+      "title": "FINDING: COMPLIANCE-SILENT-NO-OP-NOTIFICATION-RULES-DELETE — compliance-notification-rules.routes.ts:156-163 soft-delete UPDATE without RETURNING or rowCount check",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:56 AM CT",
+      "mergedAtCt": "08/28/2026, 06:31 PM CT",
       "url": "",
-      "sha": "c75d6ce5e",
-      "committedAtIso": "2026-08-22T11:56:26-05:00"
+      "sha": "109258d3a",
+      "committedAtIso": "2026-08-28T18:31:34-05:00"
     },
     {
-      "number": 14300,
-      "title": "FINDING: SWEEP-SETTLEMENTS-FACTORING-DISPATCH-VENDORS-ACCTF5793-STATUS LANE: NON-FINANCIAL",
+      "number": 17227,
+      "title": "FINDING: DSP-F7140 fail closed on missing driver identity",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14300",
-      "sha": "953a43bc4",
-      "committedAtIso": "2026-08-22T11:55:58-05:00"
+      "mergedAtCt": "08/28/2026, 06:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17227",
+      "sha": "168ac5de3",
+      "committedAtIso": "2026-08-28T18:31:11-05:00"
     },
     {
-      "number": 14299,
-      "title": "FINDING: MAINT-F5890-HIDDEN-SURFACE-REVERSE-REGEX-LACKS-EVIDENCE-RATCHET",
+      "number": 17226,
+      "title": "FINDING: GO-0021-LEAD-CENSUS",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14299",
-      "sha": "cdbf4e3fc",
-      "committedAtIso": "2026-08-22T11:55:34-05:00"
+      "mergedAtCt": "08/28/2026, 06:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17226",
+      "sha": "43551f950",
+      "committedAtIso": "2026-08-28T18:29:50-05:00"
     },
     {
-      "number": 14298,
-      "title": "FINDING: FULL-NONSTOP-SWEEP-29-MODULES-50087 LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "DEVIN GO-0021: VEND-F-DEACTIVATE-REACTIVATE-PATCH-GRANTLESS-404-OWNER-NO-UCA",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14298",
-      "sha": "9f55edbda",
-      "committedAtIso": "2026-08-22T11:55:21-05:00"
+      "mergedAtCt": "08/28/2026, 06:29 PM CT",
+      "url": "",
+      "sha": "09ea15ce7",
+      "committedAtIso": "2026-08-28T18:29:44-05:00"
     },
     {
-      "number": 14296,
-      "title": "FINDING: ACCT-F5793-VENDORS-MASTER-LIST-NEVER-FETCHES-INACTIVE LANE: NON-FINANCIAL",
+      "number": 17225,
+      "title": "CC-3 ACK GO-0021",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14296",
-      "sha": "d615c19e2",
-      "committedAtIso": "2026-08-22T11:54:54-05:00"
+      "mergedAtCt": "08/28/2026, 06:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17225",
+      "sha": "a023ca260",
+      "committedAtIso": "2026-08-28T18:29:02-05:00"
     },
     {
-      "number": 14295,
-      "title": "FINDING: ACCT-F5793-CLAIM LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "CASCADE | ACK | GO-0021 | docs-only ACK",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14295",
-      "sha": "137f625dc",
-      "committedAtIso": "2026-08-22T11:53:33-05:00"
+      "mergedAtCt": "08/28/2026, 06:28 PM CT",
+      "url": "",
+      "sha": "8a0d61bb1",
+      "committedAtIso": "2026-08-28T18:28:40-05:00"
     },
     {
-      "number": 14293,
-      "title": "FINDING: CLASS-F5889-PRIMARY-RECORD-SELECTOR-CROSS-MODULE-COLUMN-OVERCLAIM",
+      "number": 0,
+      "title": "CASCADE | ACK | GO-0021 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14293",
-      "sha": "5994534c4",
-      "committedAtIso": "2026-08-22T11:52:26-05:00"
+      "mergedAtCt": "08/28/2026, 06:28 PM CT",
+      "url": "",
+      "sha": "053322800",
+      "committedAtIso": "2026-08-28T18:28:25-05:00"
     },
     {
-      "number": 14291,
-      "title": "FINDING: CLASS-F5888-SELECTED-RECORD-REGEX-CROSS-MODULE-COLUMN-OVERCLAIM",
+      "number": 0,
+      "title": "CC-1 ACK GO-0021",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14291",
-      "sha": "b84e0de4b",
-      "committedAtIso": "2026-08-22T11:48:25-05:00"
+      "mergedAtCt": "08/28/2026, 06:28 PM CT",
+      "url": "",
+      "sha": "418a83bd2",
+      "committedAtIso": "2026-08-28T18:28:07-05:00"
     },
     {
-      "number": 14290,
-      "title": "FINDING: CUSTOMERS-INACTIVE-LIVE-REVERIFY-ACCTF5792-STATUS LANE: NON-FINANCIAL",
+      "number": 0,
+      "title": "FINDING: N/A — OUTBOX status GO-0021 ACK",
       "state": "merged",
-      "mergedAtCt": "08/22/2026, 11:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/14290",
-      "sha": "c532567d7",
-      "committedAtIso": "2026-08-22T11:47:30-05:00"
+      "mergedAtCt": "08/28/2026, 06:27 PM CT",
+      "url": "",
+      "sha": "34837854d",
+      "committedAtIso": "2026-08-28T18:27:58-05:00"
     }
   ]
 }

@@ -28,12 +28,12 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "meta": {
-    "generatedAt": "2026-08-22T11:55:21-05:00",
-    "sourceSha": "9f55edbda",
-    "deployedSha": "58044c6",
+    "generatedAt": "2026-08-28T18:31:34-05:00",
+    "sourceSha": "109258d3a",
+    "deployedSha": "4e5db76",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2127,
-    "failOpen": 0,
+    "ledgerRows": 2136,
+    "failOpen": 5,
     "defects": 19
   },
   "modules": [
@@ -199,10 +199,10 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "accounting",
-      "build": "39/39",
+      "build": "36/39",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "AUDIT",
         "FAIL",
@@ -234,7 +234,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "UNV",
           "AUDIT",
           "FAIL",
@@ -255,7 +255,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "7/7",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "FIX",
         "AUDIT",
@@ -287,7 +287,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "FIX",
           "AUDIT",
@@ -464,7 +464,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "37/37",
+      "build": "32/37",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -732,7 +732,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "9/9",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FIX",
         "AUDIT",
@@ -764,7 +764,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FIX",
           "AUDIT",
@@ -782,7 +782,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "system",
-      "build": "6/6",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
