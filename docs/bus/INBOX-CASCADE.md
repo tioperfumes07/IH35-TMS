@@ -1,3 +1,7 @@
+**23:40 CT GO-2340.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md`. ACK: `CASCADE | ACK | GO-2340 | NOW=latch-SQL+/fuel | GO`. No POD seed. Steal leftover after STEAL-CLAIMS.json (`post.fuel` already yours). FORBIDDEN NEXT=poll.
+
+**23:30 CT GO-2330 — STOP POLL. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. Live **`7eda992`**. ACK: `CASCADE | ACK | GO-2330 | NOW=latch-SQL+/fuel | SHA=7eda992 | GO`. **FORBIDDEN NEXT=poll.** SQL earn vs bill then `/fuel` unique FINDING. CREATE TEST. No product PR.
+
 **23:15 CT GO-2320.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md`. ACK: `CASCADE | ACK | GO-2320 | NOW=lifecycle-SQL-or-steal | GO`. Lifecycle SQL. If blocked, unique FINDING elsewhere. Do not sit. No product PR.
 
 **23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `CASCADE | ACK | GO-2310 | NOW=lifecycle-SQL | GO`. Lifecycle proof in SQL (JE lines). Parallel to Devin-A Chrome. After B live for Event 2. No product PR.

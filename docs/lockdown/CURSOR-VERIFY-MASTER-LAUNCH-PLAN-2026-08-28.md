@@ -78,3 +78,5 @@ Claude accepted 904/2,699, U14 `gl_je` 80, 217 money cells, one-lifecycle-slice 
 **Stranded intermediate:** Claude **$19,025.40** = 1150 $13,651 + 1090 $5,374.40 **including sample** (confirmed). Operating (exclude sample, post-#16832): **$9,705.40**. Detector covers `unbilled_revenue`, `undeposited_funds`, **and** `cash_clearing`, labeled sample vs operating.
 
 **Do not:** GO-2139 item 1 · restore invoice A/R · recertify U14 · void INV-37/38/44/45 · role activation migration.
+
+**GO-2340 (2026-08-27 23:40):** Do **not** seed `dispatch.pod_documents` to make Event 2 fire. Steal leftover only after `docs/bus/STEAL-CLAIMS.json`. TEST asset chain must carry `is_sample_data` through depreciation JEs. Seed ~25 gated/C31 tables, not ~700.

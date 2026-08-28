@@ -1,3 +1,7 @@
+**23:40 CT GO-2340 — STOP POD SEED. THIS IS NOW for seed.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2340.md` + `docs/lockdown/GO-2320-AMENDMENT-POD-SEED-STEAL-CLAIM-2026-08-27.md`. ACK: `CC-1 | ACK | GO-2340 | NOW=1-4-THEN-B | GO`. **Do not seed POD.** TEST asset only with `is_sample_data` on asset+note+depreciation/interest JEs (extend F210). Steal after `docs/bus/STEAL-CLAIMS.json`.
+
+**23:30 CT GO-2330.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2330.md`. ACK: `CC-1 | ACK | GO-2330 | NOW=1-4-THEN-B | GO`. Same money NOW. If blocked seed TEST asset. Never wait.
+
 **23:15 CT GO-2320 — NEVER IDLE. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2320.md` + `docs/lockdown/OWNER-NEVER-IDLE-SEED-EVERY-TABLE-2026-08-27.md`. ACK: `CC-1 | ACK | GO-2320 | PORT=9223 | NOW=1-4-THEN-B-THEN-TEST-ASSET | GO`. Keep writing 1–4 + B. **If merge-blocked, seed TEST asset/loan/bank txn or next 0-row gated table — do not wait for Cursor.** One money PR merge at a time. KEEP TEST. Do not delete. Never `trigger_deploy`.
 
 **23:10 CT GO-2310 — PARALLEL WRITE. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `CC-1 | ACK | GO-2310 | PORT=9223 | NOW=VOID-UNAPPLIED-ROLES-THEN-B | GO`. Write 1–4 (void reverse, unapplied, role UNIQUE, stale comment) overlapping locally; **one money PR merge at a time**. Then B (GO-2300). No new A/R poster. Never `trigger_deploy`.

@@ -75,6 +75,8 @@ const MATRIX_COLUMN_SHORT: Record<string, string> = {
   reverse_link: "REV LINK",
   "scenario.maintenance": "MAINT WO",
   "scenario.insurance": "INS CLM",
+  "scenario.ap": "AP BILL",
+  "scenario.dispatch": "DISPATCH",
   claim: "CLAIM",
   work_order: "WO",
   accident: "ACCDNT",

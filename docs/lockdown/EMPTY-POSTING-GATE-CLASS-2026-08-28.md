@@ -1,6 +1,6 @@
 # EMPTY POSTING-GATE CLASS (2026-08-28)
 
-**SUPERSEDED for “KEEP GATE · N/A”:** owner 2026-08-27 23:15 typed **seed every gated table** (`docs/lockdown/OWNER-NEVER-IDLE-SEED-EVERY-TABLE-2026-08-27.md`). All seven `launch_owed: true`. KEEP GATE rows below are **history only**.
+**SUPERSEDED for “KEEP GATE · N/A”:** owner 2026-08-27 23:15 typed **seed gated tables**. **GO-2340:** `dispatch.pod_documents` is **`launch_owed: false` until after B**. The other six stay seed-owed. KEEP GATE rows below are **history**. Bound: ~25 tables, not ~700.
 
 Claude enumerated seven money paths gated on **zero-row** tables (prod, `bypass_rls=lucia`). Blast radius: name-matched tables in accounting/factoring/factor/dispatch/banking/driver_finance — **not** every poster gate chain. The list may be longer; the guard must auto-discover, not freeze this table as complete.
 
@@ -26,7 +26,7 @@ Barely exercised (1–2 rows) stay on the detector list, not this seven: escrow_
 
 **Owner 23:15:** gated tables must not stay at 0. Seed labeled TEST (including one TEST asset). Do not delete.
 
-**Legal guard:** `verify-no-posting-gate-on-empty-table.mjs` (CC-2, claim ≡3 then author) fails when a table in `posting-gate-tables.json` with `launch_owed: true` has 0 USMCA rows (lucia + completeness discriminator). All seven rows are `launch_owed: true`. Do not invent a KEEP_GATE_NA exception without a new owner letter.
+**Legal guard:** `verify-no-posting-gate-on-empty-table.mjs` (CC-2, claim ≡3 then author) fails when a table in `posting-gate-tables.json` with `launch_owed: true` has 0 USMCA rows (lucia + completeness discriminator). **`pod_documents` is launch_owed false until B.** Do not fail CI because that table is empty before B.
 
 ## ~15 posting types (C25 is the type, not the leaf)
 
@@ -41,6 +41,6 @@ USMCA depreciation / equipment loan golden tests = **N/A** until a real asset ex
 - CC-1 **merge** stays one money PR. **Writing** items 1–4 (void reverse, unapplied, role UNIQUE, stale comment) may overlap on local branches; B is unlocked and is the fifth land.
 - One labeled USMCA fixture set, **keep-TEST**, never void for proof (CC-3).
 - Lifecycle: SQL (Cascade) and Chrome (Devin-A) **in parallel**.
-- **Unverified work = defect. Idle while named-blocked = correct.** Idle while a unique FINDING or an unblocked NOW exists = still defect.
+- **Unverified work = defect.** Drained/blocked lane **claims then steals** (`docs/bus/STEAL-CLAIMS.json`). Idle while a unique FINDING or an unblocked NOW exists = still defect. Stamping green to look busy = still defect.
 
 Companion: `docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md`. GO: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`.

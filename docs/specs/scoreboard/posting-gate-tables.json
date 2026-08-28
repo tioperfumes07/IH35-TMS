@@ -1,13 +1,13 @@
 {
   "operating_company": "USMCA",
-  "note": "Owner 2026-08-27 23:15: do not leave gated tables at 0 rows. Seed labeled TEST; do not delete. launch_owed true on all seven. CC-2 extends by tracing posters.",
+  "note": "GO-2340: do not seed pod_documents until after B. Other six launch_owed true. Seed ~25 not ~700. CC-2 extends by tracing posters.",
   "tables": [
     {
       "table": "dispatch.pod_documents",
-      "path": "factoring has_approved_pod (Event 2 relocated by owner B)",
-      "launch_owed": true,
-      "triage": "SEED",
-      "reason": "TEST approved POD so factoring submit is not gated on 0"
+      "path": "factoring has_approved_pod only AFTER Event 2 Option B ships",
+      "launch_owed": false,
+      "triage": "AFTER_B_FACTORING_ONLY",
+      "reason": "Seeding an approved POD unblocks one load and hides that Event 2 still has hasApprovedPodEvidence(). Factoring seed after B is live."
     },
     {
       "table": "factoring.batch",
