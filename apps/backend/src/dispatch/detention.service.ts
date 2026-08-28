@@ -402,6 +402,13 @@ export async function notifyCustomerDetentionThreshold(
   eventId: string
 ) {
   return withCompany(userId, operatingCompanyId, async (client) => {
+    // Serialize the externally visible notification lifecycle per canonical event. Without
+    // this lock, two requests can both observe customer_notified_at IS NULL and send the
+    // same threshold email before either one stamps the row.
+    await client.query(
+      `SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`,
+      [`dispatch.detention.customer-notify:${operatingCompanyId}:${eventId}`]
+    );
     const res = await client.query(
       `
         SELECT de.*, l.load_number, c.customer_name, c.ar_email
@@ -411,6 +418,7 @@ export async function notifyCustomerDetentionThreshold(
         JOIN mdata.customers c ON c.id = l.customer_id
                               AND c.operating_company_id = l.operating_company_id
         WHERE de.id = $1 AND de.operating_company_id = $2::uuid
+        FOR UPDATE OF de
       `,
       [eventId, operatingCompanyId]
     );
@@ -436,6 +444,18 @@ export async function notifyCustomerDetentionThreshold(
     if (!email) return { ok: false as const, error: "no_customer_email" as const };
 
     const amount = computeDetentionAccrualCents(billable, Number(row.rate_per_hour_cents ?? 0));
+    const claimed = await client.query<{ customer_notified_at: string }>(
+      `UPDATE dispatch.detention_events
+          SET customer_notified_at = now(), updated_at = now()
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND customer_notified_at IS NULL
+      RETURNING customer_notified_at::text`,
+      [eventId, operatingCompanyId]
+    );
+    const notification = claimed.rows[0];
+    if (!notification) return { ok: false as const, error: "already_notified" as const };
+
     await sendEmail({
       sender: "dispatch",
       to: email,
@@ -446,11 +466,6 @@ export async function notifyCustomerDetentionThreshold(
       eventClass: "dispatch.detention.customer_threshold_notified",
       actorUserId: userId,
     });
-
-    await client.query(
-      `UPDATE dispatch.detention_events SET customer_notified_at = now(), updated_at = now() WHERE id = $1`,
-      [eventId]
-    );
 
     await appendCrudAudit(
       client,
@@ -467,7 +482,7 @@ export async function notifyCustomerDetentionThreshold(
       "B21-D5"
     );
 
-    return { ok: true as const, notified_at: new Date().toISOString() };
+    return { ok: true as const, notified_at: notification.customer_notified_at };
   });
 }
 

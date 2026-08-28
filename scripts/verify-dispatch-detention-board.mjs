@@ -59,6 +59,23 @@ function main() {
   if (!service.includes("dispatch.stop_arrivals")) failures.push("detention service must sync from stop_arrivals");
   if (!service.includes("accessorial_bridge_rows")) failures.push("detention service must bridge to accessorial rows");
   if (!service.includes("sendEmail")) failures.push("detention service must notify customer via email");
+  if (!service.includes("pg_advisory_xact_lock") || !service.includes("dispatch.detention.customer-notify:")) {
+    failures.push("customer threshold notification must serialize the external-send lifecycle per company event");
+  }
+  if (!service.includes("FOR UPDATE OF de")) {
+    failures.push("customer threshold notification must lock the canonical detention row before eligibility evaluation");
+  }
+  if (!service.includes("AND customer_notified_at IS NULL") || !service.includes("RETURNING customer_notified_at::text")) {
+    failures.push("customer threshold notification must claim the exact company row before sending");
+  }
+  const claimPos = service.indexOf("RETURNING customer_notified_at::text");
+  const sendPos = service.indexOf("await sendEmail", claimPos);
+  if (claimPos < 0 || sendPos < claimPos) {
+    failures.push("customer threshold notification must durably claim before the external send");
+  }
+  if (!service.includes('error: "already_notified"')) {
+    failures.push("customer threshold notification must reject a lost notification claim");
+  }
   if (!index.includes("registerDispatchDetentionRoutes")) failures.push("backend index must register detention routes");
 
   if (!dispatchApi.includes("getDetentionBoard")) failures.push("dispatch API must export getDetentionBoard");
@@ -80,4 +97,28 @@ function main() {
   console.log("verify:dispatch-detention-board PASS");
 }
 
-main();
+if (process.argv.includes("--selftest")) {
+  const original = fs.readFileSync(paths.service, "utf8");
+  const mutations = [
+    ["advisory lifecycle lock", original.replace("pg_advisory_xact_lock", "pg_advisory_xact_unlock")],
+    ["canonical row lock", original.replace("FOR UPDATE OF de", "")],
+    ["exact claim predicate", original.replace("AND customer_notified_at IS NULL", "AND customer_notified_at IS NOT NULL")],
+    ["claim identity", original.replace("RETURNING customer_notified_at::text", "RETURNING id::text")],
+  ];
+  let rejected = 0;
+  for (const [, mutated] of mutations) {
+    fs.writeFileSync(paths.service, mutated);
+    try {
+      const result = await import(`node:child_process`).then(({ spawnSync }) =>
+        spawnSync(process.execPath, [process.argv[1]], { cwd: ROOT, encoding: "utf8" })
+      );
+      if (result.status !== 0) rejected += 1;
+    } finally {
+      fs.writeFileSync(paths.service, original);
+    }
+  }
+  if (rejected !== mutations.length) fail(`selftest rejected ${rejected}/${mutations.length} planted defects`);
+  console.log(`verify:dispatch-detention-board selftest PASS (${rejected}/${mutations.length})`);
+} else {
+  main();
+}
