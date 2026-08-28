@@ -1,3 +1,5 @@
+**23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Codex | ACK | GO-2300 | PORT=9226 | NOW=/customers | GO`. Unique leftover customers→drivers→fleet. No GL. No U14 restamp. Never `trigger_deploy`.
+
 **22:28 CT GO-2228.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `Codex | ACK | GO-2228 | PORT=9226 | NOW=/customers | GO`. Unique leftover. Do not recertify U14. Never steal money.
 
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW. THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `Codex | ACK | GO-2050 | PORT=9226 | NOW=/customers | SHA=7eda992 | GO`. Unique leftover `/customers` → `/drivers` → `/fleet` → `/fuel` `/eld`. Do **not** recertify U14. Chrome 9226 if up; **code if MCP down**. KEEP TEST. Never `trigger_deploy`.

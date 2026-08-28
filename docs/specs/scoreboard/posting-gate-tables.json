@@ -1,0 +1,55 @@
+{
+  "operating_company": "USMCA",
+  "note": "launch_owed=false means KEEP GATE when empty. Blast radius: Claude name-match 2026-08-28; CC-2 extends by tracing posters.",
+  "tables": [
+    {
+      "table": "dispatch.pod_documents",
+      "path": "revrec Event 2",
+      "launch_owed": false,
+      "triage": "RELOCATED",
+      "reason": "Owner B — POD gates factoring not A/R"
+    },
+    {
+      "table": "factoring.batch",
+      "path": "factoring batch posting",
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "USMCA factoring hop needs a living TEST batch"
+    },
+    {
+      "table": "factor.faro_daily_imports",
+      "path": "Faro import recon",
+      "launch_owed": false,
+      "triage": "KEEP_GATE_NA",
+      "reason": "Faro TRANSP history; do not fake imports"
+    },
+    {
+      "table": "dispatch.detention_evidence",
+      "path": "detention billing",
+      "launch_owed": true,
+      "triage": "SEED",
+      "reason": "ops money; empty evidence silent no-post"
+    },
+    {
+      "table": "banking.equipment_loans",
+      "path": "equipment loan posting",
+      "launch_owed": false,
+      "triage": "KEEP_GATE_NA",
+      "reason": "USMCA owns no assets today"
+    },
+    {
+      "table": "accounting.related_party_loan_schedule",
+      "path": "RP interest accrual",
+      "launch_owed": false,
+      "triage": "KEEP_GATE_NA",
+      "reason": "no RP loan to accrue"
+    },
+    {
+      "table": "accounting.tax_document",
+      "path": "tax document",
+      "launch_owed": false,
+      "triage": "KEEP_GATE_NA",
+      "reason": "not Horizon 1"
+    }
+  ]
+}

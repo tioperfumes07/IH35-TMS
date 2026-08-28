@@ -71,9 +71,9 @@ Claude accepted 904/2,699, U14 `gl_je` 80, 217 money cells, one-lifecycle-slice 
 
 **Wave 2.1 bisect is cancelled.** Nothing was removed. Event 2 is `buildBillEvent2Postings()` gated by **ACCT-F5692**. See `docs/lockdown/STOP-CC1-ACCT-F5692-POD-GATE-2026-08-28.md`.
 
-**Wave 2.2 BLOCKED ON OWNER A/B/C** (POD gate placement). Cursor recommendation **B** (A/R on delivery + invoice; POD stays on factoring). Do not implement until Jorge types the letter.
+**Wave 2.2 OWNER TYPED B (2026-08-27 23:00 CT).** Law: `docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md`. CC-1 implements B now, then void Event-2 reverse + unapplied-off-1100.
 
-**CC-1 starts now (unaffected):** void Event-2 A/R reverse ($9,995.50) · unapplied must not CR 1100 ($1,700) · role UNIQUE after 17-dupe clean · stale `poster.service.ts` F59 comment (JE `aaad9534`).
+**CC-1 after B:** void Event-2 A/R reverse ($9,995.50) · unapplied must not CR 1100 ($1,700) · role UNIQUE after 17-dupe clean · stale `poster.service.ts` F59 comment (JE `aaad9534`).
 
 **Stranded intermediate:** Claude **$19,025.40** = 1150 $13,651 + 1090 $5,374.40 **including sample** (confirmed). Operating (exclude sample, post-#16832): **$9,705.40**. Detector covers `unbilled_revenue`, `undeposited_funds`, **and** `cash_clearing`, labeled sample vs operating.
 

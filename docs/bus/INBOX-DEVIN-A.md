@@ -1,3 +1,7 @@
+**23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `Devin-A | ACK | GO-2310 | NOW=lifecycle-CHROME | GO`. Lifecycle Chrome **parallel** to Cascade SQL. Not PARKED. Never steal money.
+
+**23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Devin-A | ACK | GO-2300 | NOW=/customers | GO`. Unique leftover. Not PARKED. Never steal money. Never `trigger_deploy`.
+
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `Devin-A | ACK | GO-2050 | PORT=9227 | NOW=/customers | SHA=7eda992 | GO`. **NOW `/customers` then `/dispatch` Book Load.** Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`.
 
 **18:31 CT 2026-08-27 GO-1831 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `Devin-A | ACK | GO-1831 | PORT=9227 | NOW=/customers | SHA=88a6e98 | GO`. **NOW `/customers` then `/dispatch` Book Load.** Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`.

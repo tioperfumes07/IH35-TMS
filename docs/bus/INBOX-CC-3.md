@@ -1,3 +1,7 @@
+**23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md`. ACK: `CC-3 | ACK | GO-2310 | PORT=9225 | NOW=USMCA-FIXTURE-SET | GO`. One keep-TEST fixture set. Do **not** void. Do **not** seed equipment loans/Faro/tax. Never `trigger_deploy`.
+
+**23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `CC-3 | ACK | GO-2300 | PORT=9225 | NOW=/lists | GO`. Lists/legal unique chrome. Never steal money. Never `trigger_deploy`.
+
 **22:28 CT GO-2228.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `CC-3 | ACK | GO-2228 | PORT=9225 | NOW=/compliance | GO`. Never steal money.
 
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `CC-3 | ACK | GO-2050 | PORT=9225 | NOW=/compliance | SHA=7eda992 | GO`. Finish `/compliance` `/inventory` `/users` `/help` unique leftover. Never steal money. Never `trigger_deploy`.

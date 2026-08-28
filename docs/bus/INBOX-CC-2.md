@@ -1,3 +1,7 @@
+**23:10 CT GO-2310.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2310.md` + `docs/lockdown/EMPTY-POSTING-GATE-CLASS-2026-08-28.md`. ACK: `CC-2 | ACK | GO-2310 | PORT=9224 | NOW=CLAIM-THEN-EMPTY-GATE-GUARD+15-GOLDEN | GO`. Claim ≡3 first. Guard uses posting-gate-tables.json launch_owed — **not** fail all 0-row tables. Never `trigger_deploy`.
+
+**23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `CC-2 | ACK | GO-2300 | PORT=9224 | NOW=ledger-detectors | GO`. Fail-first detectors 1150+1090+clearing. No human close. Never steal CC-1 money. Never `trigger_deploy`.
+
 **22:28 CT GO-2228.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2228.md`. ACK: `CC-2 | ACK | GO-2228 | PORT=9224 | NOW=next-leftover | GO`. Never GL. Never steal CC-1 money. Wave 2.2 is owner A/B/C not yours.
 
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `CC-2 | ACK | GO-2050 | PORT=9224 | NOW=next-leftover | SHA=7eda992 | GO`. Next unique leftover you do not steal. Never GL. Never `trigger_deploy`.

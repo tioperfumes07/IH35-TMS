@@ -1,3 +1,5 @@
+**23:00 CT GO-2300.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2300.md`. ACK: `Devin | ACK | GO-2300 | NOW=/vendors | GO`. Re-walk `/vendors`. Not PARKED. Never recertify U14. Never `trigger_deploy`.
+
 **20:50 CT 2026-08-27 GO-2050 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `Devin | ACK | GO-2050 | NOW=/vendors | SHA=7eda992 | GO`. Cursor ping ≠ ACK. **NOW re-walk `/vendors` on `7eda992`**. KEEP TEST. FINDING to board. Never recertify U14. Never `trigger_deploy`.
 
 **18:31 CT 2026-08-27 GO-1831 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `Devin | ACK | GO-1831 | NOW=/vendors | SHA=88a6e98 | GO`. Cursor ping ≠ ACK. **NOW re-walk `/vendors` on current healthz** (33c41fc N=0 does not count). KEEP TEST. FINDING to board. Never recertify U14. Never `trigger_deploy`.
