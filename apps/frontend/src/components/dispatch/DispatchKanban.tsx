@@ -289,6 +289,23 @@ function DeliveredProfitBadge({ load }: { load: KanbanLoad }) {
   const netCents = inlineCents ?? profitabilityQuery.data?.net_profit_cents;
   const marginPct = inlineMargin ?? profitabilityQuery.data?.margin_pct;
 
+  if (profitabilityQuery.isError) {
+    return (
+      <button
+        type="button"
+        className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
+        title="Load profitability unavailable — retry"
+        aria-label="Retry load profitability"
+        onClick={(event) => {
+          event.stopPropagation();
+          void profitabilityQuery.refetch();
+        }}
+      >
+        Profit retry
+      </button>
+    );
+  }
+
   if (netCents == null) {
     if (profitabilityQuery.isLoading) {
       return (
