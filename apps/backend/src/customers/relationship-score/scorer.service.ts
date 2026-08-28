@@ -398,19 +398,34 @@ export async function upsertRelationshipScore(
 export async function listAtRiskRelationshipScores(
   client: DbClient,
   operatingCompanyId: string,
-  limit: number
-): Promise<
-  Array<{
+  limit: number,
+  offset: number
+): Promise<{
+  rows: Array<{
     customer_uuid: string;
     customer_name: string;
     customer_code: string | null;
     overall_health_score: number;
     health_tier: RelationshipTier;
     computed_at: string;
-  }>
-> {
+  }>;
+  total: number;
+}> {
   const hasRelationshipScores = await tableExists(client, "master_data", "customer_relationship_scores");
-  if (!hasRelationshipScores) return [];
+  if (!hasRelationshipScores) return { rows: [], total: 0 };
+
+  const totalRes = await client.query<{ total: number }>(
+    `
+      SELECT COUNT(*)::int AS total
+      FROM master_data.customer_relationship_scores s
+      JOIN mdata.customers c ON c.id = s.customer_uuid
+                             AND c.operating_company_id = $1::uuid
+      WHERE s.operating_company_id = $1::uuid
+        AND s.health_tier = 'at_risk'
+        AND c.deactivated_at IS NULL
+    `,
+    [operatingCompanyId]
+  );
 
   const res = await client.query<{
     customer_uuid: string;
@@ -434,11 +449,12 @@ export async function listAtRiskRelationshipScores(
       WHERE s.operating_company_id = $1::uuid
         AND s.health_tier = 'at_risk'
         AND c.deactivated_at IS NULL
-      ORDER BY s.overall_health_score ASC, c.customer_name ASC
+      ORDER BY s.overall_health_score ASC, c.customer_name ASC, s.customer_uuid ASC
       LIMIT $2::int
+      OFFSET $3::int
     `,
-    [operatingCompanyId, limit]
+    [operatingCompanyId, limit, offset]
   );
 
-  return res.rows;
+  return { rows: res.rows, total: Number(totalRes.rows[0]?.total ?? 0) };
 }
