@@ -1797,3 +1797,5 @@ Codex | SHIPPED | INS-F7058 | PR=#17015 @ 9025f33a0c | Built=mounted route parse
 Codex | WORKING | INS-F7059 | CLAIM=post.insurance-claim-identity-vertical | SOURCE=claims.list self drill+claims.create persisted identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | INS-F7059 | PR=#17016 @ 08d96f771c | Built=claim identity 2/2 leaves | NEXT=policy identity vertical | GO
 Codex | WORKING | INS-F7060 | CLAIM=post.insurance-policy-identity-vertical | SOURCE=policy create→list→exact detail identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
+Codex | SHIPPED | INS-F7060 | PR=#17017 @ 198ef5037d | Built=policy identity 3/3 leaves | NEXT=accident identity vertical | GO
+Codex | WORKING | SAF-F7061 | CLAIM=post.safety-accident-identity-vertical | SOURCE=accident create→list→exact detail identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO
