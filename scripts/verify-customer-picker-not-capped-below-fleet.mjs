@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "./verify-customer-complete-roster-consumers.mjs";
 /**
  * GUARD — a customer picker must not be capped below the real customer count.
  *

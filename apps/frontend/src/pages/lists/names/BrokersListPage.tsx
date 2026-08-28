@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { listCustomers, type Customer } from "../../../api/mdata";
+import { listAllCustomers, type Customer } from "../../../api/mdata";
 import { DataTable } from "../../../components/DataTable";
 import { Button } from "../../../components/Button";
 import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
@@ -27,7 +27,7 @@ export function BrokersListPage() {
   const query = useQuery({
     queryKey: ["names", "brokers", companyId, search],
     queryFn: () =>
-      listCustomers({
+      listAllCustomers({
         operating_company_id: companyId,
         customer_type: "broker",
         search: search || undefined,

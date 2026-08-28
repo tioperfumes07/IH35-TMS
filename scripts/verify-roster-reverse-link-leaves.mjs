@@ -33,7 +33,7 @@ function audit(s) {
     const route = new RegExp(`path="${path}"[\\s\\S]{0,180}<Navigate to="${target}" replace`);
     if (!route.test(s.routes)) failures.push(`${path} canonical roster redirect missing`);
   }
-  if (!/listCustomers\(\{ operating_company_id: companyId, limit: 5000, active_company_only: true \}\)/.test(s.customers)) failures.push("customer roster company scope missing");
+  if (!/listAllCustomers\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.customers)) failures.push("customer roster complete company scope missing");
   if (!/listVendors\(\{ operating_company_id: companyId, limit: 5000, active_company_only: true \}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
   if (!/onRowClick=\{\(row\) => onSelectCustomer\?\.\(row\.id\)\}/.test(s.customerList)) failures.push("customer list row drill missing");
   if (!/onRowClick=\{\(row\) => onSelectVendor\?\.\(row\.id\)\}/.test(s.vendorList)) failures.push("vendor list row drill missing");
