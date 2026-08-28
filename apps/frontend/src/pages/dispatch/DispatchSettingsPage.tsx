@@ -161,8 +161,8 @@ export function DispatchSettingsPage() {
           </p>
           {prefsQuery.isError ? (
             <p className="mb-3 text-xs text-red-700" data-testid="dispatch-settings-prefs-error">
-              Couldn&apos;t load your saved default view — showing "Dispatch Home" until this loads. Choosing an
-              option below will still save.
+              Couldn&apos;t load your saved default view. Retry before changing it so an unknown saved preference
+              is not overwritten.
             </p>
           ) : null}
           <div className="space-y-2">
@@ -172,7 +172,7 @@ export function DispatchSettingsPage() {
                 name="dispatch_default_view"
                 value="home"
                 checked={defaultView === "home"}
-                disabled={prefsQuery.isLoading || saveViewM.isPending}
+                disabled={prefsQuery.isLoading || prefsQuery.isError || saveViewM.isPending}
                 data-testid="dispatch-default-view-home"
                 onChange={() => saveViewM.mutate("home")}
               />
@@ -184,7 +184,7 @@ export function DispatchSettingsPage() {
                 name="dispatch_default_view"
                 value="loads"
                 checked={defaultView === "loads"}
-                disabled={prefsQuery.isLoading || saveViewM.isPending}
+                disabled={prefsQuery.isLoading || prefsQuery.isError || saveViewM.isPending}
                 data-testid="dispatch-default-view-loads"
                 onChange={() => saveViewM.mutate("loads")}
               />
