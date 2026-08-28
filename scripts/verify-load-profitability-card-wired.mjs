@@ -19,4 +19,13 @@ const card = readFileSync("apps/frontend/src/components/dispatch/tabs/Settlement
 if (!/getLoadProfitability/.test(card)) fail("real profitability card must call getLoadProfitability");
 if (!/net_profit_cents/.test(card) || !/revenue_cents/.test(card)) fail("real profitability card must render the revenue/net breakdown");
 
-console.log("OK verify-load-profitability-card-wired: drawer renders the real per-load profitability card.");
+const kanban = readFileSync("apps/frontend/src/components/dispatch/DispatchKanban.tsx", "utf8");
+if (!/function DeliveredProfitBadge/.test(kanban)) fail("DispatchKanban must keep DeliveredProfitBadge");
+if (!/profitabilityQuery\.isError/.test(kanban)) {
+  fail("DeliveredProfitBadge must branch on profitabilityQuery.isError (rejected fetch must not look like missing profit)");
+}
+if (!/Profit retry/.test(kanban) || !/profitabilityQuery\.refetch/.test(kanban)) {
+  fail("DeliveredProfitBadge error branch must offer Profit retry → refetch");
+}
+
+console.log("OK verify-load-profitability-card-wired: drawer card + kanban profit badge fail-loud on query error.");
