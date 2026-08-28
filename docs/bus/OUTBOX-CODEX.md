@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7079 | CLAIM=post.dispatch-load-expense-authoritative-count | SOURCE=accounting.expenses exact opco+load total→Load Detail | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7078 | PR=#17051 @ e1fe7a79c1 | Built=detention reason picker complete range | NEXT=load expense count | GO
 CODEX | ACK | GO-0009 | NOW=/dispatch-unique | SHA=069d531 | GO
 Codex | WORKING | DSP-F7078 | CLAIM=post.dispatch-detention-reason-picker-complete-range | SOURCE=catalogs.detention_reasons total+offset→Expected Adjustments picker | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7077 | PR=#17049 @ 087eba83ed | Built=Book Load geocode failure retry | NEXT=detention reason picker | GO

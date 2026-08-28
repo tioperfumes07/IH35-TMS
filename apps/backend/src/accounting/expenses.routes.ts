@@ -1456,16 +1456,30 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
 
     const result = await withCompanyScope(String(user.uuid), q.operating_company_id, async (client) => {
       if (!(await relationExists(client, "accounting.expenses"))) return { unavailable: true as const };
+      const countValues: unknown[] = [q.operating_company_id, params.data.id];
+      let statusClause = "";
+      if (q.status) {
+        countValues.push(q.status);
+        statusClause = `AND e.status = $${countValues.length}`;
+      }
+      const countResult = await client.query(
+        `SELECT COUNT(*)::int AS total
+         FROM accounting.expenses e
+         WHERE e.operating_company_id = $1::uuid
+           AND e.load_id = $2::uuid
+           ${statusClause}`,
+        countValues
+      );
       const rows = await queryExpensesList(client, q.operating_company_id, {
         loadId: params.data.id,
         status: q.status,
         limit: q.limit,
         offset: q.offset,
       });
-      return { rows };
+      return { rows, total: Number(countResult.rows[0]?.total ?? 0), limit: q.limit, offset: q.offset };
     });
 
-    if ("unavailable" in result) return reply.code(200).send({ rows: [] });
+    if ("unavailable" in result) return reply.code(200).send({ rows: [], total: 0, limit: q.limit, offset: q.offset });
     return reply.code(200).send(result);
   });
 }
