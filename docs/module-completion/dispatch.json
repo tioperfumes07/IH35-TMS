@@ -1,7 +1,7 @@
 {
   "module": "dispatch",
   "title": "Dispatch — acceptance checklist",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-08-10T18:05:00.000Z",
   "live_sha": "1fe7c3b",
   "desktop_audit": null,
@@ -273,10 +273,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "PASS 2026-08-09 — apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx renders the driver's name in the header, entity-scopes via operating_company_id (DriverLayoverHistory's fetch includes operating_company_id + driver in the query string), and honestly names 3 empty/blocked states: no company selected, no driver in the route, and (inside ParityTable) \"No layovers detected in this period.\" for a real zero-row result — never a bare number or silent blank. Fetch failure shows ListErrorState with retry. Regression test: DriverLayoverHistoryPage.test.tsx (4 tests, all green) covers render+scope, honest-zero, no-driver, and honest-error. | NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/drivers/DriverLayoverHistoryPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PROD-VERIFIED 2026-08-09 Neon br-fancy-credit-akjnd07a + lucia bypass + USMCA opco 5c854333-6ea5-4faa-af31-67cb272fef80: dispatch.driver_layovers usmca_n=1 (uuid=1fd3131e-fe0e-4b97-951a-2074434979ba driver_uuid=a32a35c8-7cd5-4368-83f0-35e185092433 Neftali Coronado Urbano; previous_load=495793b8… L-0074 class; next_load=5c2d7446… L-20260809-0001; duration_hours=22.19). Route /dispatch/layovers/driver/:driverId → DriverLayoverHistoryPage; API GET /api/v1/dispatch/layovers?operating_company_id&driver registered (routes.ts). USMCA active drivers=16. healthz/shallow version=49ff971.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DISP-S20",
@@ -371,10 +371,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — PlannerCalendarPage company-gated getDispatchPlannerWeek; need-company + drivers honest empty + ListErrorBanner; guard scripts/verify-disp-s26-planner-surface.mjs --selftest exit 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DISP-S27",
@@ -483,10 +483,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — DispatchSettingsPage need-company + ListErrorBanner on prefs; guard pack --selftest exit 0. | PASS 2026-08-09 — apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx renders 4 preference sections (default view, sort, alert thresholds, auto-routing). Default view is a per-user preference (GET/PATCH /api/v1/dispatch/preferences — auth-session scoped, not company-scoped by design, same as any other user-settings surface); sort/thresholds/auto-routing are stored in localStorage, both intentionally not entity data (no backing table that could be \"empty\"). FIXED a swallowed-error gap: getDispatchPreferences failing silently fell back to the \"home\" default with no indication the saved preference never loaded. Added a named error message (\"Couldn't load your saved default view...\") shown on fetch failure. Regression test: DispatchSettingsPage.test.tsx (4 tests, all green) covers render, prefs-load, PATCH-persist, and the new honest-error case.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DISP-S35",
@@ -497,10 +497,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "NOT YET VERIFIED — status stays OPEN. Page component: apps/frontend/src/pages/Dispatch.tsx (resolved from routes/manifest.tsx, local wrappers followed). PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — /dispatch/settlements quicklink honest empty + need-company; Driver Finance is the list home; guard pack --selftest exit 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DISP-S36",
@@ -511,10 +511,10 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
+      "status": "UNVERIFIED",
       "evidence": "NOT YET VERIFIED — status stays OPEN. Page component UNRESOLVED from the route manifest — resolve before verifying. PASS REQUIRES, on TRANSP + TRK + USMCA: (1) the route renders without error or blank frame; (2) every data call it fires carries operating_company_id for the active entity and returns 2xx; (3) when the backing table has no rows for that entity the surface shows an HONEST EMPTY STATE — named, explaining what would populate it — never a silent blank, a spinner that never resolves, a zero presented as a fact, or a swallowed error. Row density is NOT required and NOT sufficient. Prior bar and why it changed: see the module note and docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. | PASS 2026-08-09 — TripPairingBoardPage need-company + ListErrorBanner + board honest empty; company-gated getTripPairingBoard; guard pack --selftest exit 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "DISP-S37",

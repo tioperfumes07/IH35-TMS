@@ -36,6 +36,10 @@ const WRITE_MD = process.argv.includes("--write-md");
 
 const REQUIRED_ITEM_KEYS = ["id", "title", "layers", "spec", "status", "evidence"];
 const STATUSES = new Set(["PASS", "HOLD", "OPEN", "FAIL", "UNVERIFIED"]);
+const HONESTY_RATCHET_IDS = new Set([
+  "DISP-S19", "DISP-S26", "DISP-S34", "DISP-S35", "DISP-S36",
+  "ACCT-SURF-02", "ACCT-SURF-04", "ACCT-R-04",
+]);
 
 const sh = (cmd) => {
   try {
@@ -102,6 +106,13 @@ export function assertManifestShape(file, data, opts = {}) {
       problems.push(
         `${file}: item ${it.id} status HOLD but missing owner_hold+tracker+future_block (non-qualifying HOLD)`
       );
+    }
+    if (
+      HONESTY_RATCHET_IDS.has(it.id) &&
+      it.status === "PASS" &&
+      /NOT YET VERIFIED|\bUNVERIFIED\b|status stays OPEN/i.test(String(it.evidence || ""))
+    ) {
+      problems.push(`${file}: item ${it.id} cannot be PASS while its evidence is explicitly UNVERIFIED/OPEN`);
     }
   }
   const { N, M, open } = scoreManifest(data);
@@ -296,6 +307,15 @@ if (isMain && SELFTEST) {
   };
   const p1 = assertManifestShape("test.json", bad, { openWaveIds: [] });
   if (!p1.some((x) => x.includes("complete:true ILLEGAL"))) failures.push("complete-illegal not caught");
+
+  const plantedEvidenceContradiction = assertManifestShape("accounting.json", {
+    module: "accounting",
+    complete: true,
+    items: [{ ...passItem("ACCT-SURF-02"), evidence: "Live browser UNVERIFIED" }],
+  }, { openWaveIds: [] });
+  if (!plantedEvidenceContradiction.some((x) => x.includes("cannot be PASS"))) {
+    failures.push("PASS-vs-UNVERIFIED evidence contradiction not caught");
+  }
 
   const good = {
     module: "accounting",

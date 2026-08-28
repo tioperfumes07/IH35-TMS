@@ -1,3 +1,6 @@
+CODEX | ACK | GO-0014 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO
+Codex | WORKING | GO-0014 | honest-status=8 PASS→UNVERIFIED | Dispatch=5 Accounting=3 | NEXT=ratchet+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7118 | PR=#17142 @ 5911a8c92a | Built=settings canonical read-before-write | NEXT=GO-0014 evidence honesty | GO
 Codex | WORKING | DSP-F7118 | CLAIM=post.dispatch-settings-read-before-write | SOURCE=user dispatch preference GET→PATCH | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7117 | PR=#17141 @ f026169b84 | Built=POD review immutable scope lifecycle | NEXT=settings read-before-write | GO
 Codex | WORKING | DSP-F7117 | CLAIM=post.dispatch-pod-review-scope-snapshot | SOURCE=dispatch.pod_documents company+document review→scoped roster refresh | NEXT=guard+FAST-MERGE | GO
