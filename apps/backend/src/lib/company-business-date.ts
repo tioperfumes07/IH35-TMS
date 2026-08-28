@@ -26,3 +26,19 @@ export function companyBusinessDate(date: Date = new Date()): string {
 export function companyBusinessDateCompact(date: Date = new Date()): string {
   return companyBusinessDate(date).replace(/-/g, "");
 }
+
+// Add whole calendar days to a business date without crossing through a timezone-bearing instant.
+// UTC is used only as arithmetic over YYYY-MM-DD parts, so DST cannot shorten/extend the range.
+export function addBusinessDateDays(iso: string, days: number): string {
+  const [year, month, date] = iso.split("-").map(Number);
+  const result = new Date(Date.UTC(year, month - 1, date) + days * 86_400_000);
+  return result.toISOString().slice(0, 10);
+}
+
+export function businessDateDaysBetween(fromIso: string, toIso: string): number {
+  const [fromYear, fromMonth, fromDate] = fromIso.split("-").map(Number);
+  const [toYear, toMonth, toDate] = toIso.split("-").map(Number);
+  return Math.round(
+    (Date.UTC(toYear, toMonth - 1, toDate) - Date.UTC(fromYear, fromMonth - 1, fromDate)) / 86_400_000
+  );
+}

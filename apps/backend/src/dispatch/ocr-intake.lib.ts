@@ -1,4 +1,5 @@
 import type { ParsedRateConfirmation } from "../ocr/ocr.service.js";
+import { addBusinessDateDays, companyBusinessDate } from "../lib/company-business-date.js";
 
 export type OcrIntakeStatus = "pending_ocr" | "processing" | "ready_review" | "failed" | "converted" | "archived";
 
@@ -49,8 +50,8 @@ export function heuristicExtractFromFilename(filename: string, r2Key: string): O
   const parts = stem.split(/[_\-\s]+/).filter(Boolean);
   const maybeRate = parts.find((part) => /^\d{3,6}$/.test(part));
   const rateCents = maybeRate ? Number(maybeRate) * 100 : 0;
-  const today = new Date().toISOString().slice(0, 10);
-  const deliveryDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const today = companyBusinessDate();
+  const deliveryDate = addBusinessDateDays(today, 1);
   const customerRaw = parts.slice(0, Math.min(2, parts.length)).join(" ") || "Unknown Customer";
   return {
     customer_name_raw: customerRaw,

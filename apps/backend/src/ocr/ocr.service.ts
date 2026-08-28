@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
+import { addBusinessDateDays, companyBusinessDate } from "../lib/company-business-date.js";
 
 export type ParsedRateConfirmation = {
   confidence_score: number;
@@ -85,9 +86,9 @@ export async function parseRateConfirmation(
     const parts = stem.split(/[_\-\s]+/).filter(Boolean);
     const maybeRate = parts.find((part) => /^\d{3,6}$/.test(part));
     const rateCents = maybeRate ? Number(maybeRate) * 100 : 0;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = companyBusinessDate();
     const pickupDate = today;
-    const deliveryDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const deliveryDate = addBusinessDateDays(today, 1);
     const customerRaw = parts.slice(0, Math.min(2, parts.length)).join(" ") || "Unknown Customer";
     const customerId = await fuzzyMatchCustomer(client, input.operatingCompanyId, customerRaw);
     const confidence = customerId ? 0.82 : 0.62;

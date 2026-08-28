@@ -1,3 +1,5 @@
+import { companyBusinessDate } from "../lib/company-business-date.js";
+
 export type MaintPmScheduleDueInput = {
   interval_miles: number | null;
   interval_days: number | null;
@@ -87,7 +89,7 @@ function daysBetweenUtc(todayIso: string, targetDate: string | null): number | n
 export function evaluatePmDue(
   schedule: MaintPmScheduleDueInput,
   currentOdometerMi: number | null,
-  todayIso = new Date().toISOString().slice(0, 10)
+  todayIso = companyBusinessDate()
 ): MaintPmDueEvaluation {
   const next_due_miles = schedule.next_due_miles ?? computeNextDueMiles(schedule.last_done_miles, schedule.interval_miles);
   const next_due_date = schedule.next_due_date ?? computeNextDueDate(schedule.last_done_date, schedule.interval_days);

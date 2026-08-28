@@ -16,6 +16,7 @@ import {
   type TestResultType,
 } from "./drug-alcohol-results.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const companyQuery = z.object({
   operating_company_id: z.string().uuid(),
@@ -78,7 +79,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-    const year = parsed.data.year ?? new Date().getUTCFullYear();
+    const year = parsed.data.year ?? Number(companyBusinessDate().slice(0, 4));
     const status = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
       fetchAnnualRateStatus(client as never, parsed.data.operating_company_id, year)
     );

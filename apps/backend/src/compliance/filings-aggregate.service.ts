@@ -11,6 +11,7 @@ import { getCurrentQuarterInfo } from "../reports/shared.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
 import { upcomingForm2290Deadline } from "./form-2290-generator.js";
 import { upcomingPropertyTaxRenditionDeadline } from "./property-tax/property-tax.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -111,7 +112,7 @@ async function loadForm2290Item(client: DbClient, operatingCompanyId: string, en
   const latest = res.rows[0];
   const currentPeriodFiled =
     latest &&
-    latest.tax_period_end >= new Date().toISOString().slice(0, 10) &&
+    latest.tax_period_end >= companyBusinessDate() &&
     ["submitted", "accepted"].includes(latest.filing_status);
   if (currentPeriodFiled) return null;
 

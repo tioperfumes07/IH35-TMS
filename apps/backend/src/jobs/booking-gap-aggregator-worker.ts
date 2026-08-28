@@ -5,6 +5,7 @@
 import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { aggregateForPeriod } from "../dispatch/analytics/booking-gap.service.js";
+import { addBusinessDateDays, companyBusinessDate } from "../lib/company-business-date.js";
 
 const WORKER_NAME = "dispatch.booking_gap_aggregator";
 const DEFAULT_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -17,8 +18,8 @@ function intervalMs(): number {
 }
 
 async function tick(app: FastifyInstance) {
-  const to = new Date().toISOString().slice(0, 10);
-  const from = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const to = companyBusinessDate();
+  const from = addBusinessDateDays(to, -7);
 
   const processed = await withLuciaBypass(async (client) => {
     const companies = await client.query<{ id: string }>(
