@@ -1528,3 +1528,6 @@ CODEX | WORKING | FINDING=DRV-F6921-DRIVERS-HOME-SILENT-200-ROSTER | SOURCE-OF-T
 Codex | SHIPPED | DRV-F6921 | PR=#16886 @ 9a312c8bb9 | gate=exit0 | Built=drivers home.roster full canonical range | Live=post-deploy UNVERIFIED | NEXT=DSP-F6922 | GO
 CODEX | CLAIMING | leftover=post.active-dispatch-load-complete-range | GO=0004 | leaves=drivers.home.active_movement+dispatch.overview.oos | reason=client-derived availability/OOS filter read first 200/50 active loads only | NOW=shared exhaustive load scanner+guard | GO
 CODEX | WORKING | FINDING=DSP-F6922-ACTIVE-LOAD-DERIVED-STATE-SILENT-PAGE | SOURCE-OF-TRUTH=views.dispatch_load_with_driver_status | cols=load+driver+unit+connectivity+reverse_link | GO
+Codex | SHIPPED | DSP-F6922 | PR=#16887 @ f0c3f1405a | gate=exit0 | Built=drivers active movement+dispatch OOS complete load range | Live=post-deploy UNVERIFIED | NEXT=FLT-F6923 | GO
+CODEX | CLAIMING | leftover=post.truck-planner-complete-unit-roster | GO=0004 | leaf=dispatch.planner.trucks | reason=canonical schedule grid merges one 500-row default unit page as full fleet | NOW=exhaustive unit scanner+guard | GO
+CODEX | WORKING | FINDING=FLT-F6923-TRUCK-PLANNER-SILENT-500-UNIT-ROSTER | SOURCE-OF-TRUTH=mdata.units owner/leased company scope | cols=unit+driver+connectivity+reverse_link | GO

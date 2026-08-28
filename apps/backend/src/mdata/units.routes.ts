@@ -276,7 +276,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             created_at, updated_at, deactivated_at, created_by_user_id, updated_by_user_id
           FROM mdata.units
           ${whereClause}
-          ORDER BY created_at DESC
+          ORDER BY created_at DESC, id DESC
           LIMIT $${values.length - 1}
           OFFSET $${values.length}
         `,

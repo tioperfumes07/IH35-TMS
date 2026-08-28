@@ -102,6 +102,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T02:49:00-05:00",
       "go": "0004"
+    },
+    {
+      "leftover_id": "post.truck-planner-complete-unit-roster",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T02:55:00-05:00",
+      "go": "0004"
     }
   ]
 }
