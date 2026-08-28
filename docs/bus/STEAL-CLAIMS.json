@@ -839,6 +839,12 @@
       "seat": "CODEX",
       "claimed_at": "2026-08-28T11:05:00-05:00",
       "go": "0006"
+    },
+    {
+      "leftover_id": "post.dispatch-save-template-modal-scope-snapshot",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T12:20:00-05:00",
+      "go": "0012"
     }
   ]
 }

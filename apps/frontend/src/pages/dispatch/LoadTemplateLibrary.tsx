@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import { listLoadTemplates, createLoadTemplate, type LoadTemplateRow } from "../../api/dispatch";
 import { Button } from "../../components/Button";
@@ -378,13 +378,22 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
   // a read-only inherited value left the operator no way to save a cross-customer / generic template.
   const [templateCustomerId, setTemplateCustomerId] = useState<string | null>(customerId ?? null);
   const [templateCustomerName, setTemplateCustomerName] = useState<string | null>(customerName ?? null);
+  const scopeGenerationRef = useRef(0);
   useEffect(() => {
+    scopeGenerationRef.current += 1;
+    setName("");
+    setErr(null);
+    setPending(false);
     setTemplateCustomerId(customerId ?? null);
     setTemplateCustomerName(customerName ?? null);
-  }, [customerId, customerName, open]);
+  }, [customerId, customerName, loadId, open, operatingCompanyId]);
+
+  const closeUnlessPending = () => {
+    if (!pending) onClose();
+  };
 
   return (
-    <Modal open={open} onClose={onClose} title="Save load as template">
+    <Modal open={open} onClose={closeUnlessPending} title="Save load as template">
       <form
         className="space-y-2"
         onSubmit={async (e) => {
@@ -394,24 +403,30 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             setErr("Name required");
             return;
           }
+          const submittedGeneration = scopeGenerationRef.current;
+          const submittedCompanyId = operatingCompanyId;
+          const submittedName = name.trim();
+          const submittedTemplateJson = {
+            ...initialJson,
+            customer_id: templateCustomerId || undefined,
+            customer_name: templateCustomerName || undefined,
+          };
+          const submittedOnSaved = onSaved;
+          const submittedOnClose = onClose;
           setPending(true);
           try {
             await createLoadTemplate({
-              operating_company_id: operatingCompanyId,
-              name: name.trim(),
-              template_json: {
-                ...initialJson,
-                customer_id: templateCustomerId || undefined,
-                customer_name: templateCustomerName || undefined,
-              },
+              operating_company_id: submittedCompanyId,
+              name: submittedName,
+              template_json: submittedTemplateJson,
             });
-            onSaved?.();
-            onClose();
-            setName("");
+            if (scopeGenerationRef.current !== submittedGeneration) return;
+            submittedOnSaved?.();
+            submittedOnClose();
           } catch {
-            setErr("Save failed");
+            if (scopeGenerationRef.current === submittedGeneration) setErr("Save failed");
           } finally {
-            setPending(false);
+            if (scopeGenerationRef.current === submittedGeneration) setPending(false);
           }
         }}
       >
@@ -447,6 +462,7 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
             }}
             allowCreate={false}
             allowClear
+            disabled={pending}
             placeholder="No customer (generic template)"
             className="mt-1"
             dataTestId="save-load-template-modal-customer"
@@ -454,11 +470,11 @@ export function SaveLoadTemplateModal({ open, onClose, operatingCompanyId, initi
         </label>
         <label className="text-xs font-semibold text-gray-600">
           Template name
-          <input value={name} onChange={(ev) => setName(ev.target.value)} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm" />
+          <input value={name} onChange={(ev) => setName(ev.target.value)} disabled={pending} className="mt-0.5 h-9 w-full rounded-sm border border-gray-300 px-2 text-sm disabled:opacity-60" />
         </label>
         {err ? <div className="text-xs text-red-600">{err}</div> : null}
         <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="secondary" size="sm" onClick={onClose}>
+          <Button type="button" variant="secondary" size="sm" onClick={closeUnlessPending} disabled={pending}>
             Cancel
           </Button>
           <Button type="submit" size="sm" loading={pending}>
