@@ -295,6 +295,33 @@ export function listDispatchLoads(query: DispatchLoadListQuery) {
   return apiRequest<{ loads: DispatchLoad[]; total_count: number; has_more: boolean }>(`/api/v1/dispatch/loads?${params.toString()}`);
 }
 
+/**
+ * Exhaust a stable company-scoped dispatch-load population for consumers that compute complete
+ * operational state after the read (for example driver availability and OOS filtering).
+ * Preview panels with an explicit View all route should keep using listDispatchLoads directly.
+ */
+export async function listAllDispatchLoads(query: Omit<DispatchLoadListQuery, "limit" | "offset">) {
+  const limit = 200;
+  const loads: DispatchLoad[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+  while (true) {
+    const page = await listDispatchLoads({ ...query, limit, offset });
+    if (expectedTotal == null) expectedTotal = page.total_count;
+    if (page.total_count !== expectedTotal) throw new Error("Dispatch load population changed during pagination. Retry.");
+    for (const load of page.loads) {
+      if (!seen.has(load.id)) {
+        seen.add(load.id);
+        loads.push(load);
+      }
+    }
+    if (offset + page.loads.length >= expectedTotal) return { loads, total_count: expectedTotal, has_more: false };
+    if (page.loads.length === 0) throw new Error("Dispatch load pagination stopped before the reported total.");
+    offset += page.loads.length;
+  }
+}
+
 export function getDispatchDashboard(operatingCompanyId: string) {
   return apiRequest<DispatchKpis>(`/api/v1/dispatch/dashboard?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
 }

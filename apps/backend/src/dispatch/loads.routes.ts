@@ -764,7 +764,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             LIMIT 1
           ) inv ON true
           ${whereClause}
-          ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC
+          ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC, l.id DESC
           LIMIT $${limitIdx}
           OFFSET $${offsetIdx}
         `,
