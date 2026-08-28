@@ -141,16 +141,16 @@ export function NotifyPreferencesPage() {
   });
 
   const saveM = useMutation({
-    mutationFn: (patch: Partial<Omit<CustomerNotifyPreferences, "customer_id">>) =>
-      updateCustomerNotifyPreferences(customerId, { operating_company_id: companyId, ...patch }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", companyId, customerId] });
+    mutationFn: (input: { companyId: string; customerId: string; patch: Partial<Omit<CustomerNotifyPreferences, "customer_id">> }) =>
+      updateCustomerNotifyPreferences(input.customerId, { operating_company_id: input.companyId, ...input.patch }),
+    onSuccess: (_data, input) => {
+      queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", input.companyId, input.customerId] });
     },
-    onError: (error) => {
+    onError: (error, input) => {
       // Previously silent: a failed toggle looked like it saved. Surface the error and refetch so the
       // toggle reverts to the true persisted state.
       pushToast(userFacingApiError(error, "Could not save notification preference"), "error");
-      queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", companyId, customerId] });
+      queryClient.invalidateQueries({ queryKey: ["customer-notify-prefs", input.companyId, input.customerId] });
     },
   });
 
@@ -182,7 +182,7 @@ export function NotifyPreferencesPage() {
               operatingCompanyId={companyId}
               value={customerId || null}
               onChange={(next) => setCustomerId(next ?? "")}
-              enabled={Boolean(companyId)}
+              enabled={Boolean(companyId) && !saveM.isPending}
               allowCreate
               placeholder="Select customer"
             />
@@ -215,13 +215,13 @@ export function NotifyPreferencesPage() {
           <div className="rounded-sm border p-4" data-testid="notify-preferences-panel">
             <h2 className="mb-3 font-semibold">Notify preferences</h2>
             <div className="space-y-2">
-              <PrefToggle label="Opt in to customer ETA alerts" checked={prefs.opt_in} onChange={(v) => saveM.mutate({ opt_in: v })} />
-              <PrefToggle label="Email channel" checked={prefs.notify_email} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_email: v })} />
-              <PrefToggle label="SMS channel" checked={prefs.notify_sms} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_sms: v })} />
-              <PrefToggle label="Departed" checked={prefs.notify_on_departed} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_on_departed: v })} />
-              <PrefToggle label="Arrived" checked={prefs.notify_on_arrived} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_on_arrived: v })} />
-              <PrefToggle label="Near arrival" checked={prefs.notify_on_near_arrival} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_on_near_arrival: v })} />
-              <PrefToggle label="Delayed" checked={prefs.notify_on_delayed} disabled={!prefs.opt_in} onChange={(v) => saveM.mutate({ notify_on_delayed: v })} />
+              <PrefToggle label="Opt in to customer ETA alerts" checked={prefs.opt_in} disabled={saveM.isPending} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { opt_in: v } })} />
+              <PrefToggle label="Email channel" checked={prefs.notify_email} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_email: v } })} />
+              <PrefToggle label="SMS channel" checked={prefs.notify_sms} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_sms: v } })} />
+              <PrefToggle label="Departed" checked={prefs.notify_on_departed} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_departed: v } })} />
+              <PrefToggle label="Arrived" checked={prefs.notify_on_arrived} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_arrived: v } })} />
+              <PrefToggle label="Near arrival" checked={prefs.notify_on_near_arrival} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_near_arrival: v } })} />
+              <PrefToggle label="Delayed" checked={prefs.notify_on_delayed} disabled={saveM.isPending || !prefs.opt_in} onChange={(v) => saveM.mutate({ companyId, customerId, patch: { notify_on_delayed: v } })} />
             </div>
           </div>
           <div className="rounded-sm border p-4 text-sm text-slate-600">
