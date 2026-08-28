@@ -68,6 +68,7 @@ import {
 } from "../../../components/dispatch/accessorial-editor-lib";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 /**
  * FAIL-D2 — human labels for the fields a blocked submit names back to the dispatcher. Only the
@@ -1351,15 +1352,14 @@ export function BookLoadModalV4({
                           placeholder="Search customers…"
                           onSearch={setCustomerSearch}
                           loading={customersQuery.isLoading}
+                          disabled={customersQuery.isLoading || customersQuery.isError}
                           onOptionCreated={(opt) => {
                             void queryClient.invalidateQueries({ queryKey: ["book-load-v4-customers"] });
                             form.setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
                             form.setValue("customer_name", opt.label, { shouldDirty: true, shouldValidate: false });
                           }}
                         />
-                        {customersQuery.isError ? (
-                          <span className="mt-0.5 block normal-case tracking-normal text-red-600">Could not load customers. Retry search.</span>
-                        ) : null}
+                        {customersQuery.isError ? <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} /> : null}
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
@@ -1400,8 +1400,10 @@ export function BookLoadModalV4({
                           operatingCompanyId={operatingCompanyId}
                           placeholder="Select load type"
                           loading={loadTypesQuery.isLoading}
+                          disabled={loadTypesQuery.isLoading || loadTypesQuery.isError}
                           onOptionCreated={() => void loadTypesQuery.refetch()}
                         />
+                        {loadTypesQuery.isError ? <ListErrorBanner message="Could not load load types." onRetry={() => void loadTypesQuery.refetch()} /> : null}
                       </div>
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
@@ -1518,6 +1520,7 @@ export function BookLoadModalV4({
                     return (
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
                         <p className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
+                        {lumperProvidersQuery.isError ? <ListErrorBanner message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()} /> : null}
                         {withLumper.map(({ s, i }) => (
                           <div key={i} className="grid grid-cols-1 items-end gap-2 rounded-sm border border-gray-200 p-1 md:grid-cols-4">
                             <div className="text-[10px] font-semibold text-gray-600">
@@ -1542,6 +1545,7 @@ export function BookLoadModalV4({
                                 createKind="lumper_provider"
                                 operatingCompanyId={operatingCompanyId}
                                 loading={lumperProvidersQuery.isLoading}
+                                disabled={lumperProvidersQuery.isLoading || lumperProvidersQuery.isError}
                                 placeholder="Select provider"
                                 onOptionCreated={() => void lumperProvidersQuery.refetch()}
                               />
@@ -1645,6 +1649,8 @@ export function BookLoadModalV4({
                   operatingCompanyId={operatingCompanyId}
                   pickupTimeTypeOptions={pickupTimeTypeOptions}
                   pickupTimeTypesLoading={pickupTimeTypesQuery.isLoading}
+                  pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}
+                  onPickupTimeTypesRetry={() => void pickupTimeTypesQuery.refetch()}
                   onPickupTimeTypeCreated={() => void pickupTimeTypesQuery.refetch()}
                   control={form.control as never}
                   register={form.register as never}

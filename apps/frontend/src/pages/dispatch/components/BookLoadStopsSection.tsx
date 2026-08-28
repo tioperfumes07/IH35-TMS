@@ -8,11 +8,14 @@ import { TimePicker } from "../../../components/forms/TimePicker";
 import { AddressGeocodeInput } from "../../../components/dispatch/AddressGeocodeInput";
 import { stopGeocodePatches } from "./book-load-stop-geocode";
 import { TimeWindowDropdown } from "./book-load-v4/TimeWindowDropdown";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 type Props = {
   operatingCompanyId?: string;
   pickupTimeTypeOptions?: Array<{ value: string; label: string; type?: string }>;
   pickupTimeTypesLoading?: boolean;
+  pickupTimeTypesUnavailable?: boolean;
+  onPickupTimeTypesRetry?: () => void;
   onPickupTimeTypeCreated?: () => void;
   control: Control<any>;
   register: UseFormRegister<any>;
@@ -30,6 +33,8 @@ export function BookLoadStopsSection({
   operatingCompanyId = "",
   pickupTimeTypeOptions = [],
   pickupTimeTypesLoading = false,
+  pickupTimeTypesUnavailable = false,
+  onPickupTimeTypesRetry,
   onPickupTimeTypeCreated,
   control,
   register,
@@ -74,6 +79,9 @@ export function BookLoadStopsSection({
 
   return (
     <section className="space-y-2">
+      {pickupTimeTypesUnavailable ? (
+        <ListErrorBanner message="Could not load pickup and appointment types." onRetry={onPickupTimeTypesRetry} />
+      ) : null}
       <div className="space-y-2">
         {fields.map((field, index) => {
           const isPickup = String(currentStops[index]?.stop_type ?? (index % 2 === 0 ? "pickup" : "delivery")) === "pickup";
@@ -225,6 +233,7 @@ export function BookLoadStopsSection({
                               operatingCompanyId={operatingCompanyId}
                               placeholder="Select pickup type"
                               loading={pickupTimeTypesLoading}
+                              disabled={pickupTimeTypesLoading || pickupTimeTypesUnavailable}
                               onOptionCreated={onPickupTimeTypeCreated}
                             />
                           )}
