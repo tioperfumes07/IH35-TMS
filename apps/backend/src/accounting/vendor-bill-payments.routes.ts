@@ -8,6 +8,8 @@ import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope 
 import { assertBankAccountUsable } from "../banking/bank-account-visibility.js";
 import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents } from "./bills.service.js";
+import { postSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 
 const vendorIdParamsSchema = z.object({
   id: z.string().trim().min(1),
@@ -212,6 +214,13 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
       if (!checkNumber) return reply.code(400).send({ error: "check_number_required" });
     }
 
+    // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — this route never called the poster at all: a
+    // vendor bill payment recorded here moved bank cash (updateBankBalance below) and marked the
+    // bill paid with ZERO journal entry, unlike bills.service.ts's payBill() (the PayBillModal
+    // path), which has posted DR ap_control / CR bank atomically since P1-BILLPAY-GL. Same flag,
+    // same poster, same "flag-OFF must still pay" contract — reused verbatim, no new GL math.
+    const glPostingEnabled = await isBillPaymentGlPostingEnabled(query.data.operating_company_id, user.uuid);
+
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         if (body.data.bank_account_id) {
@@ -332,6 +341,24 @@ export async function registerVendorBillPaymentsRoutes(app: FastifyInstance) {
             `,
             [applyRow.bill_id, newPaidCents, newPaidCents / 100, storageStatus]
           );
+
+          // VEND-F-VENDOR-BILL-PAYMENT-NEVER-POSTS-GL — same gate + same poster as
+          // bills.service.ts's payBill(): parallel books never post a TMS Bill→GL leg for a
+          // QBO-origin bill (would throw BILL_AP_NOT_POSTED / invent a second JE); posting inside
+          // THIS transaction means a posting failure rolls back the payment + bill update together,
+          // so bank and GL can never diverge. Flag-OFF still pays — no regression to bill-paying.
+          const isQboBill = String(billRaw.source_system ?? "").toLowerCase() === "qbo";
+          if (glPostingEnabled && !isQboBill) {
+            await postSourceTransactionInClientTx(
+              client,
+              {
+                operating_company_id: query.data.operating_company_id,
+                source_transaction_type: "bill_payment",
+                source_transaction_id: paymentId,
+              },
+              { userId: user.uuid }
+            );
+          }
 
           await enqueueAccountingOutbox(client, query.data.operating_company_id, "qbo.vendor_bill_payment.created", "vendor_bill_payment", paymentId, {
             bill_payment_id: paymentId,
