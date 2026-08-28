@@ -6,6 +6,7 @@ import {
   type BolDocumentSummary,
 } from "../../api/dispatch";
 import { useToast } from "../Toast";
+import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useRef, useState } from "react";
 
@@ -63,6 +64,8 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
             className="rounded-sm bg-[#1f2a44] px-3 py-1 text-sm text-white"
             data-testid="bol-generate-button"
             disabled={
+              summaryQuery.isLoading ||
+              summaryQuery.isError ||
               generateMutation.isPending &&
               generateMutation.variables?.companyId === companyId &&
               generateMutation.variables?.loadId === loadId
@@ -79,15 +82,25 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
           </button>
         </div>
       </div>
-      <p className="mb-2 text-xs text-slate-600">
-        {pods.length} POD(s) · {bols.length} generated BOL(s)
-      </p>
       {generateError ? (
         <p className="mb-2 text-xs text-[#dc2626]" data-testid="bol-generate-error">
           {generateError.message || "BOL generate failed"}
         </p>
       ) : null}
-      {bols.length > 0 ? (
+      {summaryQuery.isLoading ? (
+        <p className="text-sm text-slate-600">Loading POD and BOL history…</p>
+      ) : summaryQuery.isError ? (
+        <ListErrorState
+          status={0}
+          message="POD and BOL history unavailable."
+          onRetry={() => void summaryQuery.refetch()}
+        />
+      ) : (
+        <>
+          <p className="mb-2 text-xs text-slate-600">
+            {pods.length} POD(s) · {bols.length} generated BOL(s)
+          </p>
+          {bols.length > 0 ? (
         <ul className="space-y-1 text-sm text-[#334155]">
           {bols.map((bol: BolDocumentSummary) => (
             <li key={bol.id} className="flex items-center justify-between gap-2">
@@ -112,8 +125,10 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="text-sm text-slate-600">No stored BOL yet — generate from load data.</p>
+          ) : (
+            <p className="text-sm text-slate-600">No stored BOL yet — generate from load data.</p>
+          )}
+        </>
       )}
     </div>
   );
