@@ -606,9 +606,12 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               <div className="text-xs text-gray-500">Source: Parts &amp; Stock</div>
             </div>
             {partsReorderQuery.isError ? (
-              <div className="rounded-sm border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-                Reorder list endpoint unavailable in this environment.
-              </div>
+              <ListErrorState
+                title="Couldn't load parts reorder flags"
+                status={0}
+                message={partsReorderQuery.error instanceof Error ? partsReorderQuery.error.message : undefined}
+                onRetry={() => void partsReorderQuery.refetch()}
+              />
             ) : (
               <ParityTable
                 rows={partsReorderRows}
@@ -625,6 +628,14 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "settings" ? <MaintenanceSettingsPage operatingCompanyId={companyId} /> : null}
 
+      {recentQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load recent maintenance activity"
+          status={0}
+          message={recentQuery.error instanceof Error ? recentQuery.error.message : undefined}
+          onRetry={() => void recentQuery.refetch()}
+        />
+      ) : (
       <RecentActivityRow
         recent={recentQuery.data?.recent ?? []}
         completed={recentQuery.data?.completed ?? []}
@@ -638,6 +649,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         onCompletedPageChange={setCompletedWoPage}
         onOpen={(id) => setSelectedWorkOrderId(id)}
       />
+      )}
 
       <TriageModal
         open={Boolean(triageIssue)}

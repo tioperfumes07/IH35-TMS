@@ -17,7 +17,7 @@ function failures(source = live) {
     ["home forwards recent total", source.home.includes("recentTotalCount={recentQuery.data?.recent_total_count")],
     ["home forwards completed total", source.home.includes("completedTotalCount={recentQuery.data?.completed_total_count")],
     ["shared table receives total", source.row.includes("totalCount: number") && source.row.includes("totalCount > rows.length")],
-    ["visible exact range", source.row.includes('data-testid="maintenance-recent-activity-range"') && source.row.includes("Showing {rows.length} of {totalCount} work orders")],
+    ["visible exact range", source.row.includes('data-testid="maintenance-recent-activity-range"') && source.row.includes("{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount} work orders.")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
 
@@ -30,13 +30,14 @@ if (process.argv.includes("--selftest")) {
     { ...live, home: live.home.replace("completedTotalCount={recentQuery.data?.completed_total_count", "completedTotalCount={recentQuery.data?.completed.length") },
     { ...live, row: live.row.replace("totalCount > rows.length", "false") },
     { ...live, row: live.row.replace('data-testid="maintenance-recent-activity-range"', 'data-testid="missing"') },
+    { ...live, row: live.row.replace("{page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalCount)} of {totalCount} work orders.", "Showing {rows.length} rows") },
   ];
   const escaped = mutations.map((source, index) => failures(source).length ? null : index + 1).filter(Boolean);
   if (escaped.length) {
     console.error(`verify-maintenance-recent-activity-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-maintenance-recent-activity-range SELFTEST PASS — 7/7 mutations red");
+  console.log("verify-maintenance-recent-activity-range SELFTEST PASS — 8/8 mutations red");
   process.exit(0);
 }
 
