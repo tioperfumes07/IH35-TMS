@@ -434,6 +434,28 @@ export function listInvoices(
   }>(withCompany(`/api/v1/accounting/invoices${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
+/**
+ * Fetch every invoice matching a filter without silently treating one server page as a complete
+ * financial population. Intended for bounded client-side rollups that cannot use a summary route.
+ */
+export async function listAllInvoices(
+  operatingCompanyId: string,
+  params: Omit<Parameters<typeof listInvoices>[1], "limit" | "offset"> = {}
+) {
+  const limit = 500;
+  const invoices: Invoice[] = [];
+  let offset = 0;
+  while (true) {
+    const page = await listInvoices(operatingCompanyId, { ...params, limit, offset });
+    invoices.push(...page.invoices);
+    const total = page.total ?? invoices.length;
+    if (invoices.length >= total || page.invoices.length === 0 || page.has_more === false) {
+      return { invoices, total };
+    }
+    offset += page.invoices.length;
+  }
+}
+
 /** WAVE-H2 reverse drill — load → invoices. */
 export function listLoadInvoices(operatingCompanyId: string, loadId: string, params: { limit?: number; offset?: number } = {}) {
   const query = new URLSearchParams();

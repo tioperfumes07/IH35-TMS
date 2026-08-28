@@ -33,6 +33,7 @@ const TARGET_REL = "apps/frontend/src/pages/Customers.tsx";
 const LIST_REL = "apps/frontend/src/pages/customers/CustomersListView.tsx";
 const SIDEBAR_REL = "apps/frontend/src/pages/customers/CustomerListSidebar.tsx";
 const DRILL_REL = "apps/frontend/src/components/customers/CustomerDrillModal.tsx";
+const ACCOUNTING_API_REL = "apps/frontend/src/api/accounting.ts";
 
 function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -64,8 +65,8 @@ export function assertOpenByCustomerExcludesVoid(source) {
     }
   }
 
-  if (!/listInvoices\(companyId,\s*\{\s*has_balance:\s*true/.test(source)) {
-    errors.push("allInvoicesQuery must pass has_balance: true so drafts cannot inflate Open Balance");
+  if (!/listAllInvoices\(companyId,\s*\{\s*has_balance:\s*true/.test(source)) {
+    errors.push("allInvoicesQuery must exhaust the has_balance invoice range so drafts and page caps cannot distort Open Balance");
   }
 
   if (!/key:\s*["']balance["'][^\n]*render:\s*\(r\)\s*=>\s*fmtMoney\(invoiceOpenCentsForDisplay\(r\)\)/.test(source)) {
@@ -76,6 +77,17 @@ export function assertOpenByCustomerExcludesVoid(source) {
     errors.push("customer transaction-list Balance regressed to raw amount_open_cents (voids display as open)");
   }
 
+  return errors;
+}
+
+export function assertCompleteInvoiceRange(apiSource) {
+  const errors = [];
+  const helper = apiSource.match(/export async function listAllInvoices\([\s\S]*?\n}\n/);
+  if (!helper) return ["listAllInvoices helper is missing"];
+  const body = helper[0];
+  for (const required of ["while (true)", "limit, offset", "invoices.push(...page.invoices)", "invoices.length >= total", "page.invoices.length === 0", "offset += page.invoices.length"]) {
+    if (!body.includes(required)) errors.push(`listAllInvoices missing complete-range contract: ${required}`);
+  }
   return errors;
 }
 
@@ -118,6 +130,9 @@ function selftest() {
   if (liveErrors.length) problems.push(`live source rejected: ${liveErrors.join("; ")}`);
   const failureTruthErrors = assertOpenBalanceFailureTruth(sources);
   if (failureTruthErrors.length) problems.push(`live failure truth rejected: ${failureTruthErrors.join("; ")}`);
+  const api = read(ACCOUNTING_API_REL);
+  const rangeErrors = assertCompleteInvoiceRange(api);
+  if (rangeErrors.length) problems.push(`live range helper rejected: ${rangeErrors.join("; ")}`);
 
   const cases = [
     [
@@ -145,12 +160,12 @@ function selftest() {
       "transaction-list Balance",
     ],
     [
-      "allInvoicesQuery dropped has_balance filter",
+      "allInvoicesQuery reverted to one capped page",
       live.replace(
-        "listInvoices(companyId, { has_balance: true, limit: 500 })",
-        "listInvoices(companyId)"
+        "listAllInvoices(companyId, { has_balance: true })",
+        "listInvoices(companyId, { has_balance: true, limit: 500 })"
       ),
-      "has_balance: true",
+      "exhaust the has_balance invoice range",
     ],
   ];
 
@@ -183,13 +198,24 @@ function selftest() {
       problems.push(`failure-truth mutation was not caught for ${file}: ${needle}`);
     }
   }
+  for (const [needle, expectFragment] of [
+    ["invoices.push(...page.invoices)", "invoices.push"],
+    ["offset += page.invoices.length", "offset +="],
+    ["page.invoices.length === 0", "page.invoices.length"],
+  ]) {
+    const mutated = api.replace(needle, "BROKEN_COMPLETE_RANGE");
+    const found = assertCompleteInvoiceRange(mutated);
+    if (!found.some((error) => error.includes(expectFragment))) {
+      problems.push(`complete-range mutation was not caught: ${needle}`);
+    }
+  }
 
   if (problems.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
     for (const p of problems) console.error("  •", p);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — live source clean; ${cases.length + 7} planted regressions caught`);
+  console.log(`${LABEL} SELFTEST PASS — live source clean; ${cases.length + 10} planted regressions caught`);
 }
 
 function main() {
@@ -200,6 +226,7 @@ function main() {
 
   const errors = assertOpenByCustomerExcludesVoid(read(TARGET_REL));
   errors.push(...assertOpenBalanceFailureTruth(Object.fromEntries([TARGET_REL, LIST_REL, SIDEBAR_REL, DRILL_REL].map((rel) => [rel, read(rel)]))));
+  errors.push(...assertCompleteInvoiceRange(read(ACCOUNTING_API_REL)));
   if (errors.length) {
     console.error(`${LABEL} FAILED\n- ${errors.join("\n- ")}`);
     process.exit(1);
