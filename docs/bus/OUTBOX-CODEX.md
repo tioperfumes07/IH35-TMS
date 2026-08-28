@@ -1857,3 +1857,5 @@ Codex | SHIPPED | DSP-F7095 | PR=#17083 @ 1af1b36ef0 | Built=dispatch status-sig
 Codex | WORKING | DSP-F7096 | CLAIM=post.dispatch-telemetry-failure-honesty | SOURCE=load positions+fleet location→Dispatch List+Table | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7096 | PR=#17085 @ 45ef9bfe23 | Built=dispatch telemetry failure honesty | NEXT=assignment history failure honesty | GO
 Codex | WORKING | DSP-F7097 | CLAIM=post.dispatch-load-assignment-history-failure-honesty | SOURCE=load assignment history→drawer reverse trail | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7097 | PR=#17088 @ ccfe96bc95 | Built=load assignment history failure honesty | NEXT=dispatch flag catalog failure honesty | GO
+Codex | WORKING | DSP-F7098 | CLAIM=post.dispatch-flag-color-failure-honesty | SOURCE=dispatch flag colors→load drawer picker | NEXT=guard+FAST-MERGE | GO
