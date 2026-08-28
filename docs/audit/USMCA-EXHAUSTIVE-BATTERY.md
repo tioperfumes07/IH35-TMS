@@ -130,7 +130,7 @@ after creation; a GL/posting failure goes to CC-1.
 |---|---|---|---|---|---|
 | create | `/api/v1/accounting/1099-corrections` | `apps/backend/src/accounting/p7-wave2.routes.ts:471` | — | — | — |
 | nested | `/api/v1/accounting/bill-payments/:id/post-gl` | `apps/backend/src/accounting/bill-payment-gl.routes.ts:19` | — | — | — |
-| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:260` | — | — | — |
+| create | `/api/v1/accounting/bills` | `apps/backend/src/accounting/bills.routes.ts:260` | **y** | **y** | — CC-3 2026-08-28: `061bf94d-…` BILL-2026-00023 $50, DR 5400/CR 2000 balanced, voided cleanly (net 0). See LIVE-TXN-BATTERY LV-TXN-017. |
 | nested | `/api/v1/accounting/bills/:id/allocate` | `apps/backend/src/accounting/bills.routes.ts:521` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/pay` | `apps/backend/src/accounting/bills.routes.ts:330` | — | — | — |
 | nested | `/api/v1/accounting/bills/:id/post-gl` | `apps/backend/src/accounting/bill-gl-draft.routes.ts:102` | — | — | — |
@@ -975,10 +975,14 @@ this table to CC-3/GUARD to confirm USMCA's GL nets to ZERO for all battery acti
 | 18 | `catalogs.file_categories` | file category | `8a308ecc-373f-4b36-9d24-8ffe5aa4c105` | — | **y** | pending CC-3 | — |
 | 19 | `mdata.maintenance_parts` | maintenance part | `a1259683-b656-4f52-8bd9-b4e0b91a9dad` | — | **y** | pending CC-3 | — |
 | 20 | `mdata.loads` | **LOAD (operating path)** `LUSMCAFREIGHT-20260807-0001` | `8d576d23-9b82-4474-b76f-d2640e6e13f7` | — draft, no JE yet | **y** | pending CC-3 | — |
+| 21 | `accounting.bills` | **vendor bill (money — first JE-posting surface)** `BILL-2026-00023` | `061bf94d-bab4-4e10-aa5e-e126b47dbc72` | `bb5b9b63-da45-4b16-a068-dc7066f459ff` | **y** | **y — VOIDED 2026-08-28** | — |
 
-**All 9 are catalog/master rows — none posts a journal entry, so USMCA's GL is untouched so far.** The
-`registered` column stays `pending CC-3` until GL/linkage verification; money surfaces come next and
-those WILL post JEs.
+**All 9 catalog/master rows above (1-20) — none posts a journal entry, so USMCA's GL was untouched by them.**
+Row 21 (2026-08-28, CC-3) is the first MONEY surface exercised: DR 5400 Truck Repairs & Maintenance / CR 2000
+Accounts Payable (A/P), $50.00, balanced. **Already voided** the same session (reversing JE
+`85d414c2-a3b9-4757-ab1e-6d168e86cc88`, both accounts net to $0) — full evidence in
+`docs/audit/LIVE-TXN-BATTERY-2026-08-06.md` LV-TXN-017. Rows 1-20's `registered` column stays `pending CC-3`
+(unchanged by this session; those are the 2026-08-07 masters wave, already deactivated 2026-08-17).
 
 ### WIRING BUG FOUND BY THE BATTERY — `GET /api/v1/mdata/loads/:id` 500'd for EVERY load
 

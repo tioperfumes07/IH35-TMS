@@ -9327,3 +9327,83 @@ NEON: load 678fc733-f661-4aeb-b7c3-fb0978bdf61d LUSMCAFREIGHT-20260806-0001 (USM
 APP: healthz/shallow = a11f6c7; FE bundle carries #4769's mapping + transition URL
 BLOCKED: none — finding routed to CC-1 via board + register, not via the owner
 ```
+
+---
+
+# CC-3 LIVE-TXN — LV-TXN-017 — USMCA Vendor Bill create → GL post → Void reversal — 2026-08-28
+
+**Sync:** `git fetch origin` + `git pull --ff-only` clean at session start, `main` == `origin/main` @ `0dac64226f`.
+Branch `cc3/live-txn-bill-usmca-20260828`. No open PR overlapped `accounting/bills` (`gh pr list --state open`
+showed only `chore/tracker-artifacts-sync`, unrelated). Prod project `tiny-field-89581227`, branch
+`br-fancy-credit-akjnd07a` confirmed via `list_projects`/`describe_project` (name="production", `default=true`,
+`primary=true`) before any query.
+
+**Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`.** Created live through the app UI as the authenticated
+Owner session (`tioperfumes07@gmail.com`, entity switcher already on "USMCA Freight Solutions Inc") — not a raw
+SQL insert, so the real route/validation/posting path is what's under test.
+
+## VERDICT: **PASS** — create, GL post, and void-reversal all correct
+
+**Created:** `Accounting → Bills → + Create → Vendor Bill`, vendor = existing test vendor `Juan USMCA-Battery`
+(`4ee62ec6-cd4e-46a4-9d6f-cdd17e15c0a6`, reused per the CREATE-TEST-THEN-VOID law rather than minting a new
+one), A/P account = `Accounts Payable (A/P)`, one category line `Repairs & maintenance` $50.00, memo marker
+`CC3-LIVETXN-20260828-BILL-01`. Server returned `BILL-2026-00023`.
+
+**Live proof — bill row (Neon, `app.bypass_rls='lucia'`):**
+```
+id           061bf94d-bab4-4e10-aa5e-e126b47dbc72
+display_id   BILL-2026-00023
+amount_cents 5000
+status       unpaid → void (after void step below)
+operating_company_id 5c854333-… (USMCA, correct)
+```
+
+**Live proof — GL posted, balanced, correct accounts, both-way linked** (`journal_entry_postings.source_transaction_id`
+= the bill UUID, `source_transaction_type='bill'`):
+```
+JE bb5b9b63-da45-4b16-a068-dc7066f459ff  entry_date 2026-08-28  source=auto  USMCA
+  DR 5400 Truck Repairs & Maintenance   $50.00
+  CR 2000 Accounts Payable (A/P)        $50.00
+```
+2 lines, 1 entity, `DR = CR`. The bill detail page's own reverse-link (`08/28/2026 — Bill BILL-2026-00023
+posting` → `/accounting/journal-entries/bb5b9b63-…`) matches the Neon row exactly — UI and DB agree.
+
+**Void step (explicit instruction — void exactly one row by UUID, not display_id):** clicked `Void` on the
+same bill, reason required and supplied (min-3-char gate enforced), confirmed. Toast: "Bill voided"; page
+badge flips to `VOIDED`.
+
+**Live proof — void state authoritative (ACCT-F174, confirmed still correct 3 weeks after that fix) AND the
+reversal nets the GL to zero — never a DELETE:**
+```
+accounting.bills: status='void' AND voided_at=2026-08-28T07:40:35Z BOTH set (the marker-without-status /
+  status-without-marker split this constraint exists for did NOT reappear)
+void_reason = the exact text typed in the UI (WORM, stored not discarded)
+
+Reversing JE 85d414c2-a3b9-4757-ab1e-6d168e86cc88  reverses_je_id = bb5b9b63-…  (linked, not orphaned)
+  CR 5400 Truck Repairs & Maintenance   $50.00   (opposite of the original DR)
+  DR 2000 Accounts Payable (A/P)        $50.00   (opposite of the original CR)
+
+Net per account across BOTH journal entries for this bill:
+  5400 Truck Repairs & Maintenance:  net_cents = 0
+  2000 Accounts Payable (A/P):       net_cents = 0
+```
+GL nets to zero for this transaction's full lifecycle. Original JE was never edited or deleted — a second,
+linked, opposite entry was posted, exactly per the void-not-delete / WORM law.
+
+## Register updated
+`docs/audit/USMCA-EXHAUSTIVE-BATTERY.md` — `accounting` → `POST /api/v1/accounting/bills` row marked
+created=y/registered=y, and this UUID appended to the MANIFEST (already voided, so no further action owed
+on it there).
+
+```
+VERDICT: PASS
+PR: (this branch, CC-3 self-merge on green per §1)
+NEON: bill 061bf94d-bab4-4e10-aa5e-e126b47dbc72 BILL-2026-00023, USMCA, $50.00
+      JE bb5b9b63-da45-4b16-a068-dc7066f459ff (original) / 85d414c2-a3b9-4757-ab1e-6d168e86cc88 (reversal)
+      both accounts net 0 after void; status='void' + voided_at both set (authoritative)
+APP: live UI create + void, both confirmed in Neon; no schema landmine hit (commodity/cargo_weight_lbs now
+     exist on mdata.loads — the LV-TXN item 2026-08-07 phantom-column defect is fixed and did not recur here)
+BLOCKED: none
+NEXT: continue the accounting money-surface sweep (invoices, expenses, driver settlements) per the dependency
+      order in USMCA-EXHAUSTIVE-BATTERY.md §Dependency order
+```
