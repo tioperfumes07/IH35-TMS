@@ -1,7 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Download, AlertTriangle } from "lucide-react";
 import { listAuditEvents, type AuditEventListItem } from "../../api/audit";
 import { Button } from "../Button";
@@ -115,6 +115,8 @@ const COLUMNS: Array<ParityColumn<EventWithPayload>> = [
 ];
 
 export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId }: EntityAuditHistoryTabProps) {
+  const pageSize = 50;
+  const [page, setPage] = useState(0);
   // LV-AUDIT-HISTORY-STATUS-SOURCE-SINGLE-SELECT: arrays, not a single string — the filter bar below
   // renders these via MultiSelectDropdown so "Active OR Inactive" / "Dispatch OR Safety" filters in
   // one pass instead of forcing a re-query per value.
@@ -129,6 +131,10 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
   const fromIso = fromDate ? new Date(`${fromDate}T00:00:00`).toISOString() : undefined;
   const toIso = toDate ? new Date(`${toDate}T23:59:59`).toISOString() : undefined;
 
+  useEffect(() => {
+    setPage(0);
+  }, [entityType, entityId, operatingCompanyId, eventTypeFilter, fromIso, toIso, actorFilter, statusFilter, sourceFilter, voidsOnly]);
+
   const auditQuery = useQuery({
     queryKey: [
       "entity-audit-events",
@@ -142,6 +148,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
       statusFilter,
       sourceFilter,
       voidsOnly,
+      page,
     ],
     queryFn: () =>
       listAuditEvents({
@@ -155,7 +162,8 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         voidsOnly,
         from: fromIso,
         to: toIso,
-        limit: 200,
+        limit: pageSize,
+        offset: page * pageSize,
       }),
     enabled: Boolean(entityId) && Boolean(operatingCompanyId),
   });
@@ -310,9 +318,19 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
         />
       )}
 
-      {auditQuery.data && auditQuery.data.total_count > 200 ? (
-        <div className="text-xs text-gray-500">
-          Showing {events.length} of {auditQuery.data.total_count} events. Refine filters to narrow results.
+      {auditQuery.data && auditQuery.data.total_count > pageSize ? (
+        <div className="flex items-center justify-between gap-3 text-xs text-gray-600" data-testid={`${entityType}-audit-history-pager`}>
+          <span>
+            {page * pageSize + 1}–{Math.min((page + 1) * pageSize, auditQuery.data.total_count)} of {auditQuery.data.total_count} events
+          </span>
+          <div className="flex gap-2">
+            <Button size="sm" variant="secondary" disabled={page === 0 || auditQuery.isFetching} onClick={() => setPage((value) => Math.max(0, value - 1))}>
+              Previous
+            </Button>
+            <Button size="sm" variant="secondary" disabled={(page + 1) * pageSize >= auditQuery.data.total_count || auditQuery.isFetching} onClick={() => setPage((value) => value + 1)}>
+              Next
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>
