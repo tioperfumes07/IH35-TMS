@@ -1,3 +1,5 @@
+Codex | WORKING | FLT-F6960 | CLAIM=post.fleet-lifecycle-business-date | vertical=unit+trailer+reefer | guard=3/3 | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DRV-F6958 | PR=#16924 @ 9d249de1e2 | Built=driver qualification+safety+layover business-date | routed=DRV-MONEY-F6959→CC-1 | NEXT=FLT-F6960 | GO
 Codex | WORKING | DRV-F6958 | CLAIM=post.driver-nonmoney-business-date | vertical=qualification+safety+layover | guard=6/6 | routed-money=CC-1 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | CUST-F6957 | PR=#16923 @ ab4dbc9042 | Built=customer+driver+report late-arrival business-date | Live=post-deploy UNVERIFIED | NEXT=DRV-F6958 | GO
 Codex | WORKING | CUST-F6957 | CLAIM=post.late-arrival-company-business-date | vertical=customers+drivers+reports | guard=10/10 | NEXT=FAST-MERGE | GO

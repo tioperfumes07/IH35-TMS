@@ -6,6 +6,7 @@ import { Button } from "../Button";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { patchUnit } from "../../api/mdata";
 import { ApiError } from "../../api/client";
+import { companyToday } from "../../lib/businessDate";
 
 export type UnitLifecycleStatus =
   | "InService"
@@ -25,7 +26,7 @@ const STATUS_OPTIONS: Array<{ value: UnitLifecycleStatus; label: string }> = [
 ];
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  return companyToday();
 }
 
 export function StatusChangeModal({
