@@ -527,6 +527,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
               )
             )
           LIMIT 1
+          FOR UPDATE OF s, l
         `,
         [params.data.stopId, params.data.id, driver.id]
       );
@@ -542,20 +543,30 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         if (distance > 25) return { error: "outside_geofence" as const, distance };
       }
 
-      await client.query(
+      const arrivalUpdate = await client.query(
         `
           UPDATE mdata.load_stops
           SET actual_arrival_at = now(),
               status = 'arrived'
           WHERE id = $1
+            AND load_id = $2
+            AND actual_arrival_at IS NULL
+          RETURNING id
         `,
-        [params.data.stopId]
+        [params.data.stopId, params.data.id]
       );
+      if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };
 
-      await client.query(
-        `UPDATE mdata.loads SET status = $2 WHERE id = $1 AND operating_company_id = $3::uuid`,
-        [params.data.id, nextLoadStatus, stop.operating_company_id]
+      const loadUpdate = await client.query(
+        `UPDATE mdata.loads
+         SET status = $2
+         WHERE id = $1
+           AND operating_company_id = $3::uuid
+           AND status::text = $4
+         RETURNING id`,
+        [params.data.id, nextLoadStatus, stop.operating_company_id, stop.load_status]
       );
+      if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };
 
       return { lifecycle_stage: lifecycleFromLoadStatus(nextLoadStatus) };
     });
@@ -564,6 +575,8 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
       if (updated.error === "outside_geofence") return reply.code(400).send({ error: "outside_geofence", distance_miles: updated.distance });
       if (updated.error === "invalid_load_state")
         return reply.code(409).send({ error: "invalid_load_state", from: updated.from, to: updated.to });
+      if (updated.error === "arrival_already_recorded" || updated.error === "load_transition_conflict")
+        return reply.code(409).send({ error: updated.error });
       return reply.code(403).send({ error: "forbidden" });
     }
     return updated;

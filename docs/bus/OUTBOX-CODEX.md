@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7134 | CLAIM=driver-load-arrival-unchecked-lifecycle | SOURCE=mdata.load_stops+mdata.loads | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7133 | PR=#17208 @ 945e6cfa65 | Built=driver-PWA arrival lock+CAS truth | NEXT=driver load arrival | GO
 CODEX | ACK | GO-0020 | NOW=dispatch-unique | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7133 | CLAIM=driver-PWA-arrival-unchecked-lifecycle | SOURCE=mdata.load_stops+mdata.loads | routed=CC-1 departure sibling | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7132 | PR=#17205 @ f9050f141f | Built=detention Reject lock+CAS truth | NEXT=driver PWA arrival | GO
