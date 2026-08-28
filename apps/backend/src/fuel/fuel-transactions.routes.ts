@@ -381,7 +381,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           )
           VALUES (
             $1::uuid, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
-            $10, $11, $12, $13, $14, $15, 'manual', $16, true, $17, $18::uuid
+            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid
           )
           RETURNING id::text AS id
         `,
@@ -403,6 +403,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           b.transaction_reference ?? null,
           b.notes ?? null,
           b.load_id ? null : b.load_exemption_reason,
+          // load_required tracks "still owes a load" — false only when the row is legitimately
+          // exempt (no load_id, exemption reason given per the G18 refine above); previously this
+          // was hardcoded `true` for every manual row, so an exempt entry (e.g. yard fuel, no
+          // active trip) still claimed it needed a load it will never get (CLS-LINKAGE-ONEWAY /
+          // verify-disp-wire-06-load-expense-link).
+          Boolean(b.load_id),
           authUser.uuid,
         ]
       )) as { rows: Array<{ id: string }> };
