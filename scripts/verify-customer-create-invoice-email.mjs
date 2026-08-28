@@ -27,6 +27,11 @@ function assert(cond, msg) {
 }
 
 function checkQuickCreateSource(rel, src) {
+  if (/NewCustomerDrawerForm/.test(src)) {
+    assert(/kind === "customer"[\s\S]{0,500}<NewCustomerDrawerForm/.test(src), `${rel}: customer quick create must delegate to NewCustomerDrawerForm`);
+    assert(!/createQboCustomer/.test(src), `${rel}: must not call createQboCustomer`);
+    return;
+  }
   assert(/createCustomer\s*\(/.test(src), `${rel}: must call createCustomer(...)`);
   assert(!/createQboCustomer/.test(src), `${rel}: must not call createQboCustomer`);
   assert(/\bar_email\s*:/.test(src), `${rel}: createCustomer must pass ar_email`);
@@ -71,8 +76,10 @@ function checkTree() {
   // P43: billing locality must survive both create surfaces and edit/reload. The DB columns existed,
   // but omitting them from the API contract made the fields structurally unwritable.
   for (const field of ["billing_city", "billing_zip"]) {
-    assert(new RegExp(`${field}:\\s*trimOrUndef\\(v\\.${field}\\)`).test(profile), `${PROFILE}: create payload must carry ${field}`);
-    assert(new RegExp(`${field}:\\s*trimOrNull\\(v\\.${field}\\)`).test(profile), `${PROFILE}: update payload must carry ${field}`);
+    const createNormalizer = field === "billing_city" ? "properOrUndef" : "trimOrUndef";
+    const updateNormalizer = field === "billing_city" ? "properOrNull" : "trimOrNull";
+    assert(new RegExp(`${field}:\\s*${createNormalizer}\\(v\\.${field}\\)`).test(profile), `${PROFILE}: create payload must carry ${field}`);
+    assert(new RegExp(`${field}:\\s*${updateNormalizer}\\(v\\.${field}\\)`).test(profile), `${PROFILE}: update payload must carry ${field}`);
     assert(new RegExp(`${field}:\\s*z\\.string`).test(backend), `${BACKEND}: schemas must accept ${field}`);
   }
   assert(/addOptional\("billing_city", b\.billing_city\)/.test(backend), `${BACKEND}: create must persist billing_city`);

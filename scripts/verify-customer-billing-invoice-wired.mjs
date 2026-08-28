@@ -52,7 +52,7 @@ const CHECKS = [
   {
     name: "CUST-MONEY-F6312 Recurring tab lists accounting.recurring_templates for this customer",
     file: "apps/frontend/src/pages/Customers.tsx",
-    pattern: /listAccountingRecurringTemplates/,
+    pattern: /listAllAccountingRecurringTemplates\(companyId,\s*\{[\s\S]{0,180}customer_id:\s*selectedCustomer!?\.id/,
   },
   {
     name: "CUST-MONEY-F6312 Late Fees tab is overdue AR only — no invented late-fee dollar",
@@ -95,7 +95,7 @@ if (process.argv.includes("--selftest")) {
   const GOOD_FIXTURES = {
     "apps/frontend/src/pages/Customers.tsx": `
       onClick={() => navigate(\`/accounting/invoices?customer_id=\${selectedCustomer.id}\`)}
-      listAccountingRecurringTemplates
+      listAllAccountingRecurringTemplates(companyId, { customer_id: selectedCustomer.id })
       {activeTab === "statements" ? (
       There is no customer late-fee rule table.
       const COMING_STATE_COPY: Partial<Record<CustomerTabId, string>> = {
