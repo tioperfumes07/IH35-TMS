@@ -1,3 +1,5 @@
+**GO-0020 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0020 | NOW=lead+feed+l6-live-unverified | SHA=4e5db76 | GO`. Sync FEED. No 202613270000 until Jorge yes. Nobody trigger_deploy.
+
 **GO-0016 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0016 | NOW=desktop-feed-sync+deploy | SHA=069d531 | GO`. Sync Desktop FEED. Deploy 5–10. live_verified_sha. Never steal Event 2.
 
 **GO-0014 · YOU ARE LEAD.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0014.md`. Live `069d531`. ACK `CURSOR | ACK | GO-0014 | NOW=lead+stamp-expiry | SHA=069d531 | GO`. After merge: invalidate prod_verified when healthz moves. Nobody second-kick.

@@ -1,15 +1,12 @@
-# FEED · CODEX · GO-0016 · overwrite
+# FEED · CODEX · GO-0020 · overwrite
 
 `git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0016 | NOW=pass-unverified-evidence-8 | SHA=069d531 | GO`
+ACK: `CODEX | ACK | GO-0020 | NOW=dispatch-unique | SHA=4e5db76 | GO`
+
+**FAST-MERGE ON:** local gate → PR → same-turn squash. Never `gh pr checks --watch`. Never `trigger_deploy`.
 
 ## NOW
-Reconcile **eight** tracker rows that are `status:PASS` while evidence still says UNVERIFIED / OPEN:
-
-Dispatch: **DISP-S19, S26, S34, S35, S36**.  
-Accounting: **ACCT-SURF-02, ACCT-SURF-04, ACCT-R-04**.
-
-Fix the **honest** field. Do not invent Built. Live SHA `069d531`. Cursor owns `live_verified_sha` schema — do not steal that PR.
+**NOW = unique `/dispatch` leftover** (500 / dead / silent / company-scope). Continue DSP vertical (F7131 on main — grep next OPEN vs main). Do not steal L6 stamps. Skip #15546.
 
 ## Forbidden
-TRANSP/TRK/QBO. Steal Event 2. `trigger_deploy`. U14 restamp. Skip #15546.
+TRANSP/TRK/QBO. Steal A/P / vendor PATCH / PROG-01. `trigger_deploy`. U14 restamp. DSP-F7127 series if already SUPERSEDED on main — grep first.

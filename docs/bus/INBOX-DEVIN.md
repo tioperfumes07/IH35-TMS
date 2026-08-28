@@ -1,3 +1,5 @@
+**GO-0020 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0020 | NOW=vendors-unique-leftover | SHA=4e5db76 | GO`. PATCH shipped #17200. Unique leftover only. Never trigger_deploy.
+
 **GO-0016 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0016 | NOW=ensure-drivers-payee | SHA=069d531 | GO`. POST ensure-drivers ×4. No SQL. Never trigger_deploy.
 
 **GO-0014 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0014 | NOW=ensure-drivers-payee | SHA=069d531 | GO`. PREPEND OUTBOX. POST /api/v1/mdata/vendors/ensure-drivers for 4 USMCA drivers. No SQL-patch. Never trigger_deploy.
