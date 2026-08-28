@@ -1716,3 +1716,5 @@ Codex | SHIPPED | MAINT-F7014 | PR=#16973 @ 6ae882eed4 | Built=Maintenance Home 
 Codex | WORKING | MAINT-F7015 | CLAIM=post.maintenance-work-order-detail-read-recovery | vertical=detail read+complete action scope | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7015 | PR=#16974 @ 19deaf3d4a | Built=WO detail read+complete identity lifecycle | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining read/write boundary census | GO
 Codex | WORKING | MAINT-F7016 | CLAIM=post.maintenance-in-transit-triage-read-recovery | vertical=RM sidebar triage read+action state | NEXT=root-fix+guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7016 | PR=#16975 @ 9358c19249 | Built=RM sidebar triage failed-read action lifecycle+exact ranges | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining unique census | GO
+Codex | WORKING | MAINT-F7017 | CLAIM=post.maintenance-rm-status-single-flight-ratchet | vertical=RM board transition actions+guard | NEXT=root-fix+guard+FAST-MERGE | GO

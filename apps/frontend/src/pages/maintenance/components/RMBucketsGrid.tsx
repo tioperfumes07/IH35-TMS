@@ -8,6 +8,7 @@ type Props = {
   roadside: WorkOrder[];
   onOpen: (id: string) => void;
   onAdvanceStatus?: (id: string, nextStatus: "in_progress" | "waiting_parts" | "complete") => void;
+  statusActionPending?: boolean;
   onCreateRoadside?: () => void;
 };
 
@@ -46,11 +47,13 @@ function KanbanCard({
   accent,
   onOpen,
   onAdvanceStatus,
+  statusActionPending = false,
 }: {
   row: WorkOrder;
   accent: string;
   onOpen: (id: string) => void;
   onAdvanceStatus?: (id: string, nextStatus: "in_progress" | "waiting_parts" | "complete") => void;
+  statusActionPending?: boolean;
 }) {
   const age = ageDays(row.opened_at);
   const description = row.description ?? row.wo_type;
@@ -86,16 +89,16 @@ function KanbanCard({
       </div>
       {onAdvanceStatus && row.status !== "complete" ? (
         <div className="flex gap-1 border-t border-gray-100 px-2 py-1">
-          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "in_progress")}>In-Progress</button>
-          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "waiting_parts")}>Waiting</button>
-          <button type="button" className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700" onClick={() => onAdvanceStatus(row.id, "complete")}>Resolved</button>
+          <button type="button" disabled={statusActionPending} className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => onAdvanceStatus(row.id, "in_progress")}>In-Progress</button>
+          <button type="button" disabled={statusActionPending} className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => onAdvanceStatus(row.id, "waiting_parts")}>Waiting</button>
+          <button type="button" disabled={statusActionPending} className="rounded-sm border border-gray-300 px-1 text-[9px] font-semibold text-gray-700 disabled:cursor-not-allowed disabled:opacity-50" onClick={() => onAdvanceStatus(row.id, "complete")}>Resolved</button>
         </div>
       ) : null}
     </div>
   );
 }
 
-export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceStatus, onCreateRoadside }: Props) {
+export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceStatus, statusActionPending = false, onCreateRoadside }: Props) {
   // The board payload arrives location-bucketed; the approved kanban groups by workflow status, so merge
   // (dedup by id) and regroup. Existing location data is preserved — nothing dropped (additive).
   const byId = new Map<string, WorkOrder>();
@@ -127,7 +130,7 @@ export function RMBucketsGrid({ inHouse, external, roadside, onOpen, onAdvanceSt
             </div>
             <div className="max-h-112 space-y-1 overflow-y-auto p-1.5">
               {col.rows.map((row) => (
-                <KanbanCard key={row.id} row={row} accent={col.accent} onOpen={onOpen} onAdvanceStatus={onAdvanceStatus} />
+                <KanbanCard key={row.id} row={row} accent={col.accent} onOpen={onOpen} onAdvanceStatus={onAdvanceStatus} statusActionPending={statusActionPending} />
               ))}
               {col.rows.length === 0 ? <div className="px-1 py-2 text-center text-[10px] text-gray-400">—</div> : null}
             </div>
