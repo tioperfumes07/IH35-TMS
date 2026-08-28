@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7131 | CLAIM=POD-review-race-silent-success | SOURCE=dispatch.pod_documents | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7130 | PR=#17197 @ 9e2cb3e795 | Built=layover PATCH zero-row truth | NEXT=POD review race | GO
 CODEX | ACK | GO-0017 | NOW=dispatch-unique-500-only | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7130 | CLAIM=layover-PATCH-zero-row-silent-success | SOURCE=dispatch.driver_layovers | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7127K | CLAIM=combined-quick-assign-exact-company-write | SOURCE=mdata.loads→load_assignment_history | NEXT=guard+FAST-MERGE | GO

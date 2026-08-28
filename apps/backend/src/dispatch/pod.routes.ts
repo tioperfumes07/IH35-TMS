@@ -245,7 +245,10 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     return { documents: rows, count: rows.length };
   });
 
-  app.post("/api/v1/dispatch/pod-documents/:id/review", async (req, reply) => {
+  app.post(
+    "/api/v1/dispatch/pod-documents/:id/review",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -262,6 +265,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
             AND operating_company_id = $2::uuid
             AND archived_at IS NULL
           LIMIT 1
+          FOR UPDATE
         `,
         [params.data.id, body.data.operating_company_id]
       );
@@ -283,11 +287,13 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
         `,
         [params.data.id, body.data.operating_company_id, body.data.status, user.uuid, body.data.review_notes ?? null]
       );
+      const reviewedPod = res.rows[0];
+      if (!reviewedPod) return { error: "pod_review_conflict" as const };
       await appendCrudAudit(client, user.uuid, "dispatch.pod.reviewed", {
         pod_id: params.data.id,
         status: body.data.status,
       });
-      return { pod: res.rows[0] };
+      return { pod: reviewedPod };
     });
 
     if (!updated) return reply.code(404).send({ error: "pod_not_found" });
@@ -314,7 +320,8 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     }
 
     return updated;
-  });
+    }
+  );
 
   app.get("/api/v1/dispatch/loads/:loadId/pod-bol", async (req, reply) => {
     const user = currentAuthUser(req, reply);
