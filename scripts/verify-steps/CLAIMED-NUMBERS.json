@@ -1,4 +1,9 @@
 {
+  "9875": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-2",
+    "purpose": "verify-finding-source-of-truth-block"
+  },
   "9871": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
