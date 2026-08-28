@@ -8,7 +8,7 @@ const source = fs.readFileSync(path, "utf8");
 const selftest = process.argv.includes("--selftest");
 const checks = [
   ["R&M outage is explicit and retryable", /rmStatusQuery\.isError\s*\?\s*\(\s*<ListErrorState[\s\S]*?title="Couldn't load R&M status board"[\s\S]*?onRetry=\{\(\) => void rmStatusQuery\.refetch\(\)\}/],
-  ["bucket grid is success-only and company-scoped", /\)\s*:\s*\(\s*<RMBucketsGrid[\s\S]*?onAdvanceStatus=\{\(id, status\) => statusMutation\.mutate\(\{\s*id,\s*status,\s*companyId,\s*generation: statusGenerationRef\.current,\s*\}\)\}/],
+  ["bucket grid is success-only, single-flight, and company-scoped", /\)\s*:\s*\(\s*<RMBucketsGrid[\s\S]*?statusActionPending=\{statusMutation\.isPending\}[\s\S]*?onAdvanceStatus=\{\(id, status\) => \{\s*if \(statusMutation\.isPending\) return;\s*statusMutation\.mutate\(\{\s*id,\s*status,\s*companyId,\s*generation: statusGenerationRef\.current,\s*\}\);/],
   ["roadside actions are suppressed on error", /!rmStatusQuery\.isError\s*\?\s*\(\s*<RoadServiceActivePanel/],
   ["all bucket sources remain canonical", /inHouse=\{rmStatusQuery\.data\?\.in_house \?\? \[\]\}[\s\S]*?external=\{rmStatusQuery\.data\?\.external \?\? \[\]\}[\s\S]*?roadside=\{rmStatusQuery\.data\?\.roadside \?\? \[\]\}/],
 ];

@@ -1718,3 +1718,5 @@ Codex | SHIPPED | MAINT-F7015 | PR=#16974 @ 19deaf3d4a | Built=WO detail read+co
 Codex | WORKING | MAINT-F7016 | CLAIM=post.maintenance-in-transit-triage-read-recovery | vertical=RM sidebar triage read+action state | NEXT=root-fix+guard+FAST-MERGE | GO
 Codex | SHIPPED | MAINT-F7016 | PR=#16975 @ 9358c19249 | Built=RM sidebar triage failed-read action lifecycle+exact ranges | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining unique census | GO
 Codex | WORKING | MAINT-F7017 | CLAIM=post.maintenance-rm-status-single-flight-ratchet | vertical=RM board transition actions+guard | NEXT=root-fix+guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7017 | PR=#16976 @ d1d5c46ff0 | Built=RM board transitions single-flight+lifecycle ratchet restored | Live=post-deploy UNVERIFIED | NEXT=maintenance remaining unique census | GO
+Codex | WORKING | MAINT-F7018 | CLAIM=post.maintenance-lifecycle-ratchet-alignment | vertical=RM failure exclusion+parts adjustment scope | NEXT=guard repair+FAST-MERGE | GO
