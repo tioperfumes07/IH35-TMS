@@ -399,13 +399,20 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const input = parsed.data;
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      const ocId = scopeParsed.data.operating_company_id;
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS (never ENABLE ROW LEVEL SECURITY'd — confirmed
+      // against every migration that touches this schema) — the SET_TASK_SCOPE_SQL GUCs above are a
+      // no-op for this table. operating_company_id in the WHERE clause is the ONLY isolation.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const updates: string[] = ["status = $1"];
-      const params: (string | number | null)[] = [input.status, id];
-      let paramIdx = 3;
+      const params: (string | number | null)[] = [input.status, id, ocId];
+      let paramIdx = 4;
 
       if (input.status === "in_progress") updates.push("started_at = COALESCE(started_at, NOW())");
       if (input.status === "completed") {
@@ -413,8 +420,9 @@ export default async function taskRoutes(fastify: FastifyInstance) {
         if (input.actual_minutes !== undefined) { updates.push(`actual_minutes = $${paramIdx++}`); params.push(input.actual_minutes); }
       }
 
-      const sql = `UPDATE tasks.task SET ${updates.join(", ")} WHERE task_id = $2 RETURNING *`;
+      const sql = `UPDATE tasks.task SET ${updates.join(", ")} WHERE task_id = $2 AND operating_company_id = $3::uuid RETURNING *`;
       const result = await (client as Queryable).query(sql, params);
+      if (result.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       return { task: result.rows[0] };
     });
@@ -430,16 +438,18 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
 
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
+      const ocId = scopeParsed.data.operating_company_id;
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
 
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
       const sql = `
         SELECT t.*, u.email as assigned_to_email, ab.email as assigned_by_email
         FROM tasks.task t
         LEFT JOIN identity.users u ON u.id = t.assigned_to_user_id
         LEFT JOIN identity.users ab ON ab.id = t.assigned_by_user_id
-        WHERE t.task_id = $1 AND t.is_active = true
+        WHERE t.task_id = $1 AND t.operating_company_id = $2::uuid AND t.is_active = true
       `;
-      const result = await (client as Queryable).query(sql, [id]);
+      const result = await (client as Queryable).query(sql, [id, ocId]);
 
       if (result.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       return { task: result.rows[0] };
@@ -501,13 +511,18 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      const ocId = scopeParsed.data.operating_company_id;
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       const res = await (client as Queryable).query(
         `SELECT id, task_id, role, target_type, target_id, note, created_at, created_by_user_id
-         FROM tasks.task_link WHERE task_id = $1 AND is_active = true ORDER BY created_at ASC`,
-        [id]
+         FROM tasks.task_link WHERE task_id = $1 AND operating_company_id = $2::uuid AND is_active = true ORDER BY created_at ASC`,
+        [id, ocId]
       );
       return { links: res.rows };
     });
@@ -529,7 +544,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1 AND is_active = true`, [id]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid AND is_active = true`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const linkRes = await (client as Queryable).query(
@@ -556,9 +575,9 @@ export default async function taskRoutes(fastify: FastifyInstance) {
                  completed_at = COALESCE(completed_at, NOW()),
                  completion_confirmed_by = $2,
                  progress_pct = 100
-           WHERE task_id = $1 AND status <> 'completed'
+           WHERE task_id = $1 AND operating_company_id = $3::uuid AND status <> 'completed'
            RETURNING *`,
-          [id, user.uuid]
+          [id, user.uuid, ocId]
         );
         task = upd.rows[0] ?? null;
       }
@@ -578,10 +597,12 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = UpdateProgressSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     return withCurrentUser(user.uuid, async (client) => {
-      await client.query(SET_TASK_SCOPE_SQL, [scopeParsed.data.operating_company_id]);
+      const ocId = scopeParsed.data.operating_company_id;
+      await client.query(SET_TASK_SCOPE_SQL, [ocId]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
       const res = await (client as Queryable).query(
-        `UPDATE tasks.task SET progress_pct = $1, updated_at = NOW() WHERE task_id = $2 RETURNING task_id, progress_pct`,
-        [parsed.data.progress_pct, id]
+        `UPDATE tasks.task SET progress_pct = $1, updated_at = NOW() WHERE task_id = $2 AND operating_company_id = $3::uuid RETURNING task_id, progress_pct`,
+        [parsed.data.progress_pct, id, ocId]
       );
       if (res.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
       return { task: res.rows[0] };
@@ -603,7 +624,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const res = await (client as Queryable).query(
@@ -634,7 +659,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const ins = await (client as Queryable).query(
@@ -676,7 +705,11 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
-      const existsRes = await (client as Queryable).query(`SELECT task_id FROM tasks.task WHERE task_id = $1`, [id]);
+      // TASK-XTENANT-SCOPE: tasks.task has NO RLS — operating_company_id must be filtered here.
+      const existsRes = await (client as Queryable).query(
+        `SELECT task_id FROM tasks.task WHERE task_id = $1 AND operating_company_id = $2::uuid`,
+        [id, ocId]
+      );
       if (existsRes.rows.length === 0) { reply.status(404); return { error: "Task not found" }; }
 
       const res = await (client as Queryable).query(
