@@ -14,8 +14,8 @@ export function verify(sources = {}) {
     ["counts share scoped where", /FROM maintenance\.samsara_fault_code_history h[\s\S]*?WHERE \$\{where\}/.test(route)],
     ["stable bounded rows", /ORDER BY h\.occurred_at DESC, h\.id DESC[\s\S]*?LIMIT/.test(route)],
     ["route returns counts", /total_count: Number\(countRow\?\.total_count/.test(route) && /auto_wo_count: Number\(countRow\?\.auto_wo_count/.test(route)],
-    ["profile consumes exact active count", /activeFaultCount=\{faultSummaryQuery\.data\?\.total_count \?\? 0\}/.test(profile)],
-    ["profile consumes exact auto-WO count", /pendingFaultDraftCount=\{faultSummaryQuery\.data\?\.auto_wo_count \?\? 0\}/.test(profile)],
+    ["profile consumes exact active count", /activeFaultCount=\{faultSummaryQuery\.isError \? 0 : faultSummaryQuery\.data\?\.total_count \?\? 0\}/.test(profile)],
+    ["profile consumes exact auto-WO count", /pendingFaultDraftCount=\{faultSummaryQuery\.isError \? 0 : faultSummaryQuery\.data\?\.auto_wo_count \?\? 0\}/.test(profile)],
     ["profile no longer counts a capped page", !/activeFaultCount=\{faultSummaryQuery\.data\?\.items\?\.length/.test(profile) && !/limit=100/.test(profile)],
   ];
   return checks.filter(([, ok]) => !ok).map(([name]) => name);
@@ -27,6 +27,8 @@ if (process.argv.includes("--selftest")) {
     ["capped active count", { ...live, profile: live.profile.replace("faultSummaryQuery.data?.total_count", "faultSummaryQuery.data?.items?.length") }],
     ["capped auto-WO count", { ...live, profile: live.profile.replace("faultSummaryQuery.data?.auto_wo_count", "faultSummaryQuery.data?.items?.filter((row) => row.auto_wo_id != null).length") }],
     ["unstable page", { ...live, route: live.route.replace("ORDER BY h.occurred_at DESC, h.id DESC", "ORDER BY h.occurred_at DESC") }],
+    ["retained active count", { ...live, profile: live.profile.replace("faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.total_count", "faultSummaryQuery.data?.total_count") }],
+    ["retained auto-WO count", { ...live, profile: live.profile.replace("faultSummaryQuery.isError ? 0 : faultSummaryQuery.data?.auto_wo_count", "faultSummaryQuery.data?.auto_wo_count") }],
   ];
   for (const [name, sources] of mutations) {
     if (verify(sources).length === 0) throw new Error(`selftest did not catch ${name}`);

@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7040 | CLAIM=post.fleet-fault-summary-exact-count-guard | SOURCE=exact scoped fault totals + fail-closed profile | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7039 | PR=#16996 @ dfa6c248f6 | Built=fleet counter/list honesty guard 13/13 | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7039 | CLAIM=post.fleet-counter-fail-closed-guard | SOURCE=complete roster fail-closed counter slice | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7038 | PR=#16995 @ 6fade73c65 | Built=unit+equipment deactivation truth guard 8/8 | NEXT=fleet census | GO
 Codex | WORKING | FLEET-F7038 | CLAIM=post.fleet-deactivate-route-guard-extractor | SOURCE=unit+equipment exact soft-deactivate routes | NEXT=guard+FAST-MERGE | GO
