@@ -75,7 +75,7 @@ export async function buildDriverAggregate(
   const driver = driverRes.rows[0];
   if (!driver) return null;
 
-  const referenceFk = await loadDriverReferenceFkEnrichment(client, driverId);
+  const referenceFk = await loadDriverReferenceFkEnrichment(client, driverId, operatingCompanyId);
   const cdlExpiration = driver.cdl_expires_at as string | null;
   const license = {
     cdl_number: driver.cdl_number,

@@ -15,7 +15,8 @@ export type DriverReferenceFkEnrichment = {
 
 export async function loadDriverReferenceFkEnrichment(
   client: DbClient,
-  driverId: string
+  driverId: string,
+  operatingCompanyId: string,
 ): Promise<DriverReferenceFkEnrichment> {
   const rowRes = await client.query<{
     license_class_code: string | null;
@@ -38,9 +39,19 @@ export async function loadDriverReferenceFkEnrichment(
       LEFT JOIN reference.employment_statuses es ON es.id = d.driver_employment_status_id
       LEFT JOIN reference.medical_card_statuses mcs ON mcs.id = d.medical_card_status_id
       WHERE d.id = $1::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dca
+            WHERE dca.driver_id = d.id
+              AND dca.company_id = $2::uuid
+              AND dca.is_authorized = true
+              AND dca.deactivated_at IS NULL
+          )
+        )
       LIMIT 1
     `,
-    [driverId]
+    [driverId, operatingCompanyId]
   );
 
   const endorsementsRes = await client.query<{ code: string }>(
@@ -48,10 +59,21 @@ export async function loadDriverReferenceFkEnrichment(
       SELECT e.code
       FROM mdata.driver_cdl_endorsements de
       JOIN reference.cdl_endorsements e ON e.id = de.endorsement_id
+      JOIN mdata.drivers d ON d.id = de.driver_id
       WHERE de.driver_id = $1::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dca
+            WHERE dca.driver_id = d.id
+              AND dca.company_id = $2::uuid
+              AND dca.is_authorized = true
+              AND dca.deactivated_at IS NULL
+          )
+        )
       ORDER BY e.sort_order, e.code
     `,
-    [driverId]
+    [driverId, operatingCompanyId]
   );
 
   const restrictionsRes = await client.query<{ code: string }>(
@@ -59,10 +81,21 @@ export async function loadDriverReferenceFkEnrichment(
       SELECT r.code
       FROM mdata.driver_cdl_restrictions dr
       JOIN reference.cdl_restrictions r ON r.id = dr.restriction_id
+      JOIN mdata.drivers d ON d.id = dr.driver_id
       WHERE dr.driver_id = $1::uuid
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dca
+            WHERE dca.driver_id = d.id
+              AND dca.company_id = $2::uuid
+              AND dca.is_authorized = true
+              AND dca.deactivated_at IS NULL
+          )
+        )
       ORDER BY r.sort_order, r.code
     `,
-    [driverId]
+    [driverId, operatingCompanyId]
   );
 
   const row = rowRes.rows[0] ?? {};
