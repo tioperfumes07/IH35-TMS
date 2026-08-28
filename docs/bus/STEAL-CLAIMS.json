@@ -1,4 +1,5 @@
 {
+  "post.dispatch-cancellation-spine-atomicity": "Codex 2026-08-28 DSP-F7083",
   "post.dispatch-book-load-create-spine-atomicity": "Codex 2026-08-28 DSP-F7082",
   "post.dispatch-quicksave-spine-atomicity": "Codex 2026-08-28 DSP-F7081",
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",

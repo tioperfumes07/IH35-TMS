@@ -34,7 +34,7 @@ else pass("dispatch-spine-emit.ts does not bypass log_event()");
 const mutatingFiles = [
   { file: "apps/backend/src/dispatch/loads.routes.ts",        events: ["load.status_changed", "load.chargeback_flagged"] },
   { file: "apps/backend/src/dispatch/book-load.service.ts",   events: ["load.created"] },
-  { file: "apps/backend/src/dispatch/cancellation.routes.ts", events: ["load.cancelled", "load.cancellation_approved"] },
+  { file: "apps/backend/src/dispatch/cancellation.service.ts", events: ["load.cancelled", "load.cancellation_approved"] },
   { file: "apps/backend/src/dispatch/quick-assign.service.ts", events: ["load.assigned_to_driver", "load.quicksave_draft_completed"] },
 ];
 
@@ -76,6 +76,23 @@ function bookLoadAtomicityFailures(serviceSrc, routeSrc) {
     failures.push("load.created not awaited in bookLoad transaction");
   }
   if (/spine_emit_load_created_failed/.test(routeSrc)) failures.push("route swallows detached load.created emit");
+  return failures;
+}
+
+function cancellationAtomicityFailures(serviceSrc, routeSrc) {
+  const failures = [];
+  for (const eventType of ["load.cancelled", "load.cancellation_approved"]) {
+    const awaitedEvent = new RegExp(
+      `await\\s+emitDispatchSpineEvent\\(client,[\\s\\S]{0,500}?event_type:\\s*["']${eventType.replaceAll(".", "\\.")}["']`,
+    );
+    if (!awaitedEvent.test(serviceSrc)) failures.push(`${eventType} not awaited in cancellation transaction`);
+  }
+  if (/spine_emit_load_(?:cancelled|cancellation_approved)_failed|emitDispatchSpineEvent/.test(routeSrc)) {
+    failures.push("cancellation route contains detached/swallowed spine emit");
+  }
+  if (!/return \{ id: input\.cancellation_id, load_id: cancellation\.load_id, status: "approved" \}/.test(serviceSrc)) {
+    failures.push("approval result omits canonical load_id");
+  }
   return failures;
 }
 
@@ -148,6 +165,47 @@ if (process.argv.includes("--selftest")) {
     }
   }
   if (bookCaught === bookMutations.length) pass(`SELFTEST caught ${bookCaught}/${bookMutations.length} book-load regressions`);
+
+  const cancellationSrc = read("apps/backend/src/dispatch/cancellation.service.ts");
+  const cancellationRouteSrc = read("apps/backend/src/dispatch/cancellation.routes.ts");
+  const cancellationMutations = [
+    {
+      name: "cancel event loses await",
+      service: cancellationSrc.replace(
+        /await emitDispatchSpineEvent\(client, \{([\s\S]{0,300}?event_type: "load\.cancelled")/,
+        "void emitDispatchSpineEvent(client, {$1",
+      ),
+      route: cancellationRouteSrc,
+    },
+    {
+      name: "approval event loses await",
+      service: cancellationSrc.replace(
+        /await emitDispatchSpineEvent\(client, \{([\s\S]{0,300}?event_type: "load\.cancellation_approved")/,
+        "emitDispatchSpineEvent(client, {$1",
+      ),
+      route: cancellationRouteSrc,
+    },
+    {
+      name: "approval result drops load identity",
+      service: cancellationSrc.replace(", load_id: cancellation.load_id, status: \"approved\"", ", status: \"approved\""),
+      route: cancellationRouteSrc,
+    },
+    {
+      name: "route restores swallowed cancellation emit",
+      service: cancellationSrc,
+      route: `${cancellationRouteSrc}\nvoid emitDispatchSpineEvent(client, {}).catch(() => undefined);`,
+    },
+  ];
+  let cancellationCaught = 0;
+  for (const mutation of cancellationMutations) {
+    if (cancellationAtomicityFailures(mutation.service, mutation.route).length > 0) {
+      console.log(`[verify-a2] SELFTEST PASS: ${mutation.name}`);
+      cancellationCaught += 1;
+    } else {
+      fail(`SELFTEST mutation survived: ${mutation.name}`);
+    }
+  }
+  if (cancellationCaught === cancellationMutations.length) pass(`SELFTEST caught ${cancellationCaught}/${cancellationMutations.length} cancellation regressions`);
 }
 
 const bookLoadFailures = bookLoadAtomicityFailures(
@@ -158,6 +216,16 @@ if (bookLoadFailures.length > 0) {
   for (const message of bookLoadFailures) fail(`book-load atomicity: ${message}`);
 } else {
   pass("book-load load.created spine event is awaited in-transaction; route has no swallowed copy");
+}
+
+const cancellationFailures = cancellationAtomicityFailures(
+  read("apps/backend/src/dispatch/cancellation.service.ts"),
+  read("apps/backend/src/dispatch/cancellation.routes.ts"),
+);
+if (cancellationFailures.length > 0) {
+  for (const message of cancellationFailures) fail(`cancellation atomicity: ${message}`);
+} else {
+  pass("cancel + approval spine events are awaited in-transaction; approval preserves load identity");
 }
 
 // 4. DispatchSpineEvent union must cover all expected types
