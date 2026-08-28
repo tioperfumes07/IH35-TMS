@@ -12,11 +12,11 @@ export function audit(src) {
   if (/value=\{kpis\.(?:total_units|active_units|in_shop_units|out_of_service_units)\}/.test(src))
     failures.push("KPI cards are still bound to kpisQuery fields");
   if (!src.includes("const counters = useMemo(() =>")) failures.push("missing counters useMemo derivation");
-  if (!/\}, \[rowsQuery\.data\?\.rows, softDeleteFilter\]\);/.test(src))
+  if (!/\}, \[rowsQuery\.data\?\.rows, rowsQuery\.isError, softDeleteFilter\]\);/.test(src))
     failures.push("counters must depend on roster rows and the active/inactive slice");
 
   const required = [
-    /const sourceRows = \(rowsQuery\.data\?\.rows \?\? \[\]\)\.filter\(/,
+    /const sourceRows = \(rowsQuery\.isError \? \[\] : rowsQuery\.data\?\.rows \?\? \[\]\)\.filter\(/,
     /softDeleteFilter === "active" && r\.deactivated_at != null/,
     /softDeleteFilter === "inactive" && r\.deactivated_at == null/,
     /total: sourceRows\.length/,
@@ -46,7 +46,8 @@ export function audit(src) {
 if (process.argv.includes("--selftest")) {
   if (audit(source).length) throw new Error(`repo source rejected: ${audit(source).join("; ")}`);
   const mutations = [
-    source.replace('[rowsQuery.data?.rows, softDeleteFilter]', '[rowsQuery.data?.rows]'),
+    source.replace('[rowsQuery.data?.rows, rowsQuery.isError, softDeleteFilter]', '[rowsQuery.data?.rows, softDeleteFilter]'),
+    source.replace('const sourceRows = (rowsQuery.isError ? [] : rowsQuery.data?.rows ?? [])', 'const sourceRows = (rowsQuery.data?.rows ?? [])'),
     source.replaceAll('softDeleteFilter === "active" && r.deactivated_at != null', 'false'),
     source.replace('rowMatchesFleetStatus(r, "OutOfService")', 'r.status === "OutOfService"'),
     source.replace('value={counters.total}', 'value={kpis.total_units}'),
