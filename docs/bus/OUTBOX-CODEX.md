@@ -1643,3 +1643,5 @@ Codex | SHIPPED | CUST-F6950 | PR=#16916 @ d1fb8ecf1f | gate=exit0 | Built=custo
 CODEX | CLAIMING+WORKING | FINDING=DSP-F6951-LOAD-TEMPLATE-CATALOG-SILENT-500-CAP | SOURCE-OF-TRUTH=dispatch.load_templates | I-QUERIED=listLoadTemplates+LIMIT500+LoadTemplatePicker+Library | NOT-CHECKED=template writer+load create+money+Live+TRANSP/TRK | routed=Codex | GO
 Codex | WORKING | CLS-F6966 | CLAIM=post.export-business-date | vertical=customers+drivers+maintenance CSV/PDF | guard=5/5 | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | SAF-F6963 | PR=#16928 @ b4a775851d | Built=backend safety+insurance business-date | routed-money=CC-1 | NEXT=CLS-F6966 | GO
+Codex | WORKING | SAF-F6978 | CLAIM=post.safety-hos-catalog-read-recovery | vertical=HOS-tab+create-modal | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | ELD-F6977 | PR=#16938 @ 5a226d0859 | Built=ELD stale-read recovery 3/3 | NEXT=SAF-F6978 | GO
