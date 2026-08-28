@@ -15,10 +15,17 @@ function failures(input = source) {
     if (!dispatchReset.includes(token)) out.push(`dispatch reset ${token}`);
   }
   if (!/\[open, operatingCompanyId, loadId, resetDraft\]/.test(input.dispatch)) out.push("dispatch reset keyed by company/load/open");
-  if (!/const handleClose = useCallback\(\(\) => \{\s*resetDraft\(\);\s*onClose\(\);/.test(input.dispatch)) out.push("dispatch dismiss resets");
+  if (!/const handleClose = useCallback\(\(\) => \{\s*if \(loading\) return;\s*resetDraft\(\);\s*onClose\(\);/.test(input.dispatch)) out.push("dispatch dismiss resets");
   if (!input.dispatch.includes('<Modal open={open} onClose={handleClose}')) out.push("dispatch modal uses reset close");
   if (!/variant="secondary" onClick=\{handleClose\}/.test(input.dispatch)) out.push("dispatch close button resets");
-  if (!/await onSubmit\([\s\S]*?handleClose\(\);/.test(input.dispatch)) out.push("dispatch success resets");
+  if (!/await submittedOnSubmit\(submittedPayload\)[\s\S]*?handleClose\(\);/.test(input.dispatch)) out.push("dispatch success resets");
+  if (!/const scopeGenerationRef = useRef\(0\)/.test(input.dispatch)) out.push("dispatch owns scope generation");
+  if (!/scopeGenerationRef\.current \+= 1;[\s\S]{0,80}setLoading\(false\)/.test(input.dispatch)) out.push("dispatch scope transition retires pending write");
+  if (!/if \(loading\) return;[\s\S]{0,100}resetDraft\(\)/.test(input.dispatch)) out.push("dispatch pending dismissal locked");
+  if (!/const submittedPayload = \{[\s\S]*driver_id: driverId[\s\S]*unit_id: unitId[\s\S]*trailer_id: trailerId[\s\S]*acknowledged_warnings: ackAll \? \[\.\.\.hardWarnings\]/.test(input.dispatch)) out.push("dispatch submit snapshots assignment draft");
+  if (!/await submittedOnSubmit\(submittedPayload\);[\s\S]{0,100}scopeGenerationRef\.current !== submittedGeneration[\s\S]{0,80}handleClose\(\)/.test(input.dispatch)) out.push("dispatch success rejects stale load before close");
+  if (!/scopeGenerationRef\.current === submittedGeneration\) setLoading\(false\)/.test(input.dispatch)) out.push("dispatch finally rejects stale load");
+  if ((input.dispatch.match(/disabled=\{loading\}/g) ?? []).length < 5) out.push("dispatch inputs and dismissal lock while pending");
 
   const fleetReset = input.fleet.match(/const resetDraft = useCallback\(\(\) => \{([\s\S]*?)\n  \}, \[\]\);/)?.[1] ?? "";
   if (!fleetReset.includes('setDriverId("")') || !fleetReset.includes("setError(null)")) out.push("fleet resets driver and error");
@@ -38,6 +45,9 @@ function failures(input = source) {
 if (process.argv.includes("--selftest")) {
   const staleTrailer = { ...source, dispatch: source.dispatch.replace("setTrailerId(\"\");", "void trailerId;") };
   const staleLoad = { ...source, dispatch: source.dispatch.replace("[open, operatingCompanyId, loadId, resetDraft]", "[open, operatingCompanyId, resetDraft]") };
+  const dispatchStaleSuccess = { ...source, dispatch: source.dispatch.replace("if (scopeGenerationRef.current !== submittedGeneration) return;", "void submittedGeneration;") };
+  const dispatchMutablePayload = { ...source, dispatch: source.dispatch.replace("await submittedOnSubmit(submittedPayload);", "await onSubmit({ driver_id: driverId, acknowledged_warnings: hardWarnings });") };
+  const dispatchUnlocked = { ...source, dispatch: source.dispatch.replace("disabled={loading}", "disabled={false}") };
   const staleEquipment = { ...source, fleet: source.fleet.replace("[open, companyId, target?.equipmentId, resetDraft]", "[open, companyId, resetDraft]") };
   const staleSuccess = { ...source, fleet: source.fleet.replace("if (input.generation !== actionGenerationRef.current) return;\n            handleClose();", "handleClose();") };
   const staleError = { ...source, fleet: source.fleet.replace("if (input.generation !== actionGenerationRef.current) return;\n            setError", "setError") };
@@ -45,13 +55,16 @@ if (process.argv.includes("--selftest")) {
   const checks = [
     failures(staleTrailer).includes('dispatch reset setTrailerId("")'),
     failures(staleLoad).includes("dispatch reset keyed by company/load/open"),
+    failures(dispatchStaleSuccess).includes("dispatch success rejects stale load before close"),
+    failures(dispatchMutablePayload).includes("dispatch success rejects stale load before close"),
+    failures(dispatchUnlocked).includes("dispatch inputs and dismissal lock while pending"),
     failures(staleEquipment).includes("fleet reset keyed by company/equipment/open"),
     failures(staleSuccess).includes("fleet success rejects stale target before close"),
     failures(staleError).includes("fleet error rejects stale target"),
     failures(bypassCancel).includes("fleet Cancel uses guarded close"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-quick-assign-draft-lifecycle selftest PASS — 6/6 stale assignment mutations red");
+  console.log("verify-quick-assign-draft-lifecycle selftest PASS — 9/9 stale assignment mutations red");
   process.exit(0);
 }
 
