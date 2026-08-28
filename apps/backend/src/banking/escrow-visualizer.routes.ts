@@ -47,18 +47,24 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
     const q = query.data;
 
     const rows = await withCompanyScope(user.uuid, q.operating_company_id, async (client) => {
-      const res = await client
-        .query(
-          // ACCT-F5703: driver_finance.escrow_balances is a separate, near-empty operational ledger
-          // (1 row system-wide, live-confirmed 2026-08-21) that was never kept in sync with the real
-          // GL-linked liability subledger, accounting.escrow_accounts (Block-23) — the same table
-          // /accounting/escrow already reads correctly. Repointed here so this visualizer shows the
-          // same balances the accounting page shows. Driver escrow legitimately persists for
-          // separated/terminated drivers (escrow-separation.service.ts) — do NOT reinstate a
-          // deactivated_at filter that would hide a real outstanding balance; instead surface every
-          // active driver (regardless of balance) plus any deactivated driver who actually still has
-          // an escrow account row.
-          `
+      // BANK-F9515: this used to .catch(() => ({ rows: [] })) here, turning ANY query failure into a
+      // normal 200 with an empty driver list — indistinguishable from "no drivers". Both mdata.drivers
+      // and accounting.escrow_accounts (Block-23, migration 0234) are foundational tables, not
+      // conditionally created, so there is no legitimate defensive reason for the swallow (same class
+      // as BANK-F9514, #17030). DriverEscrowTabContent.tsx already derives its error UI from
+      // useListState(escrowLedgerQuery, ...).isError — it just never fired because the backend never
+      // returned an error status.
+      const res = await client.query(
+        // ACCT-F5703: driver_finance.escrow_balances is a separate, near-empty operational ledger
+        // (1 row system-wide, live-confirmed 2026-08-21) that was never kept in sync with the real
+        // GL-linked liability subledger, accounting.escrow_accounts (Block-23) — the same table
+        // /accounting/escrow already reads correctly. Repointed here so this visualizer shows the
+        // same balances the accounting page shows. Driver escrow legitimately persists for
+        // separated/terminated drivers (escrow-separation.service.ts) — do NOT reinstate a
+        // deactivated_at filter that would hide a real outstanding balance; instead surface every
+        // active driver (regardless of balance) plus any deactivated driver who actually still has
+        // an escrow account row.
+        `
             SELECT
               d.id AS driver_id,
               CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
@@ -73,9 +79,8 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
               AND (d.deactivated_at IS NULL OR ea.id IS NOT NULL)
             ORDER BY driver_name
           `,
-          [q.operating_company_id]
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        [q.operating_company_id]
+      );
       return res.rows;
     });
     return { drivers: rows };
@@ -116,9 +121,11 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
       // join needed, unlike the prior driver_finance.escrow_ledger path which had no JE link of its own).
       // settlement_line_id has no equivalent on escrow_postings — honestly NULL, not fabricated, same
       // pattern this file already used for the (also-honest) NULL bucket dimension.
-      const res = await client
-        .query(
-          `
+      //
+      // BANK-F9515: this used to .catch(() => ({ rows: [] })) here too — same fake-empty-200 class as
+      // the /escrow-visualizer list handler above, same fix.
+      const res = await client.query(
+        `
             SELECT
               ep.id,
               ea.holder_id AS driver_id,
@@ -143,9 +150,8 @@ export async function registerBankingEscrowVisualizerRoutes(app: FastifyInstance
             ORDER BY ep.posted_at DESC
             LIMIT 500
           `,
-          values
-        )
-        .catch(() => ({ rows: [] as Record<string, unknown>[] }));
+        values
+      );
       return res.rows;
     });
     return { timeline };
