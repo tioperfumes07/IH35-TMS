@@ -74,7 +74,7 @@ export function audit(src) {
   if (!/Boolean\(c\.factoring_company_vendor_id\)/.test(src.customers)) {
     failures.push(`${FILES.customers}: factored segment must filter real factoring_company_vendor_id`);
   }
-  if (!/customer_id: selectedCustomer!\.id/.test(src.customers)) {
+  if (!/queryKey: \["customers", "transactions"[\s\S]{0,320}listAllInvoices\(companyId,\s*\{\s*customer_id: selectedCustomer!\.id,/.test(src.customers)) {
     failures.push(`${FILES.customers}: transaction_list must query invoices scoped by real customer_id`);
   }
   if (!/customer_id=\$\{selectedCustomer\.id\}/.test(src.customers)) {
@@ -86,7 +86,7 @@ export function audit(src) {
   if (!/listInsuranceCoiRequests\(\{\s*operating_company_id: operatingCompanyId!,\s*customer_id: customerId,\s*status:/.test(src.coi)) {
     failures.push(`${FILES.coi}: md.coi_requests must read by the real customer_id`);
   }
-  if (!/createInsuranceCoiRequest\(\{\s*operating_company_id: operatingCompanyId!,\s*customer_id: customerId,\s*policy_id:/.test(src.coi)) {
+  if (!/createInsuranceCoiRequest\(\{\s*\.\.\.input\.payload,\s*operating_company_id: input\.companyId,\s*customer_id: input\.customerId,/.test(src.coi)) {
     failures.push(`${FILES.coi}: md.coi_requests must submit the real customer_id`);
   }
   if (!/params\.set\("tab", next\)/.test(src.customers)) {
@@ -191,11 +191,11 @@ if (process.argv.includes("--selftest")) {
     ["preferred-filter", "customers", /c\.quality_overall_flag === "preferred"/g, "false"],
     ["watch-filter", "customers", /c\.quality_overall_flag === "caution"/g, "false"],
     ["factored-filter", "customers", /Boolean\(c\.factoring_company_vendor_id\)/g, "false"],
-    ["transaction-list-scope", "customers", /customer_id: selectedCustomer!\.id/, "customer_id: undefined"],
+    ["transaction-list-scope", "customers", /(queryKey: \["customers", "transactions"[\s\S]{0,320}listAllInvoices\(companyId,\s*\{\s*)customer_id: selectedCustomer!\.id/, "$1customer_id: undefined"],
     ["new-transaction-nav", "customers", /customer_id=\$\{selectedCustomer\.id\}/, "customer_id=none"],
     ["tasks-target-type", "customers", /targetType="customer"/, 'targetType="unit"'],
     ["coi-read-customer-id", "coi", /(listInsuranceCoiRequests\(\{[\s\S]*?)customer_id: customerId/, "$1customer_id: undefined"],
-    ["coi-create-customer-id", "coi", /(createInsuranceCoiRequest\(\{[\s\S]*?)customer_id: customerId/, "$1customer_id: undefined"],
+    ["coi-create-customer-id", "coi", /(createInsuranceCoiRequest\(\{[\s\S]*?)customer_id: input\.customerId/, "$1customer_id: undefined"],
     ["detail-tab-url", "customers", /params\.set\("tab", next\)/, 'params.set("panel", next)'],
     ["detail-tab-control", "customers", /activeId=\{activeTab\} onChange=\{\(id\) => setActiveTab\(id as CustomerTabId\)\}/, 'activeId={activeTab} onChange={() => undefined}'],
     ["qbo-capability", "customers", /qboAvailable\s*=\s*selectedCompany\?\.code\s*===\s*"TRANSP"/, "qboAvailable = true"],
