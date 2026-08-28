@@ -1793,3 +1793,5 @@ Codex | SHIPPED | INS-F7056 | PR=#17013 @ 5f20fcb700 | Built=policy unit complet
 Codex | WORKING | INS-F7057 | CLAIM=post.insurance-claim-created-label-semantic-guard | SOURCE=ClaimCreateModal onSuccess→persisted id+claim_number | NEXT=guard+selftest+FAST-MERGE | GO
 Codex | SHIPPED | INS-F7057 | PR=#17014 @ 75d448a90c | Built=semantic created-label guard 17/17 | NEXT=insurance schema route parser | GO
 Codex | WORKING | INS-F7058 | CLAIM=post.insurance-schema-mounted-route-parser | SOURCE=policy.routes mounted multiline create route | NEXT=class parser+selftest+FAST-MERGE | GO
+Codex | SHIPPED | INS-F7058 | PR=#17015 @ 9025f33a0c | Built=mounted route parser class | NEXT=claim identity vertical | GO
+Codex | WORKING | INS-F7059 | CLAIM=post.insurance-claim-identity-vertical | SOURCE=claims.list self drill+claims.create persisted identity | NEXT=exact Built+guard+selftest+FAST-MERGE | GO

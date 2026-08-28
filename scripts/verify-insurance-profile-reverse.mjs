@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["insurance"],"cols":["claim"],"leaves":["claims.list","claims.create"],"task":"INS-F7059-CLAIM-IDENTITY-VERTICAL","vertical":"column-wave"} */
 import fs from "node:fs";
 const read = (path) => fs.readFileSync(path, "utf8");
 const files = {
@@ -13,8 +14,12 @@ const files = {
   insuranceApi: read("apps/frontend/src/api/insurance.ts"),
   driverProfile: read("apps/frontend/src/pages/drivers/DriverProfilePage.tsx"),
   unitProfile: read("apps/frontend/src/pages/fleet/VehicleProfilePage.tsx"),
+  claimPage: read("apps/frontend/src/pages/insurance/ClaimsTab.tsx"),
+  claimCreator: read("apps/frontend/src/components/insurance/ClaimCreateModal.tsx"),
 };
 function failures(s = files) { return [
+  ["claim list self drill uses canonical id and human label", s.claimPage.includes('kind="claim"') && s.claimPage.includes("id={claim.id}") && s.claimPage.includes('entityLabel(claim.claim_number, claim.id, "Claim")')],
+  ["claim create returns persisted identity and refreshes list", s.claimCreator.includes("onCreated(claim.id, claim.claim_number)") && s.claimPage.includes('invalidateQueries({ queryKey: ["insurance-claims", companyId] })')],
   ["coverage gap company/unit API filter", s.summaryRoutes.includes("coverageGapQuerySchema.safeParse") && s.summaryRoutes.includes("parsed.data.unit_id ?? null") && s.coverageSql.includes("$3::uuid IS NULL OR u.id = $3::uuid")],
   ["unit profile exact coverage target", s.insuranceSummary.includes('kind="insurance_coverage_gaps"') && s.insuranceSummary.includes("id={unitId}") && s.coveragePage.includes('searchParams.get("unit_id")') && s.coveragePage.includes('dataTestId="coverage-gap-filter-unit"') && s.coveragePage.includes("allowCreate={false}")],
   ["lawsuit driver/unit backend filters", s.lawsuitSchema.includes("driver_id: z.string().uuid().optional()") && s.lawsuitSchema.includes("unit_id: z.string().uuid().optional()") && s.lawsuitRoutes.includes("claim.driver_id = $${values.length}::uuid") && s.lawsuitRoutes.includes("asset.unit_id = $${values.length}::uuid")],
@@ -29,6 +34,8 @@ function failures(s = files) { return [
 ].filter(([,ok]) => !ok).map(([name]) => name); }
 if (process.argv.includes("--selftest")) {
   const checks = [
+    failures({...files, claimPage: files.claimPage.replace('id={claim.id}', 'id={null}')}).includes("claim list self drill uses canonical id and human label"),
+    failures({...files, claimCreator: files.claimCreator.replace("onCreated(claim.id, claim.claim_number)", "onCreated()")}).includes("claim create returns persisted identity and refreshes list"),
     failures({...files, coverageSql: files.coverageSql.replace("$3::uuid IS NULL OR u.id = $3::uuid", "TRUE")}).includes("coverage gap company/unit API filter"),
     failures({...files, insuranceSummary: files.insuranceSummary.replace('kind="insurance_coverage_gaps"', 'kind="unit"')}).includes("unit profile exact coverage target"),
     failures({...files, lawsuitRoutes: files.lawsuitRoutes.replace("claim.driver_id = $${values.length}::uuid", "TRUE")}).includes("lawsuit driver/unit backend filters"),
@@ -39,7 +46,7 @@ if (process.argv.includes("--selftest")) {
     failures({...files, lawsuitPage: files.lawsuitPage.replace("lawsuit.unit_number", "null")}).includes("lawsuit links consume human labels"),
   ];
   if (checks.some((ok)=>!ok)) { console.error(`verify-insurance-profile-reverse selftest FAIL — mutations ${checks.map((ok,i)=>ok?null:i+1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-insurance-profile-reverse selftest PASS — 8/8 API/profile/target/label mutations red"); process.exit(0);
+  console.log("verify-insurance-profile-reverse selftest PASS — 10/10 claim/API/profile/target/label mutations red"); process.exit(0);
 }
 const missing=failures(); if(missing.length){console.error(`verify-insurance-profile-reverse FAIL — ${missing.join(", ")}`);process.exit(1)}
-console.log("verify-insurance-profile-reverse PASS — coverage gaps and lawsuits return to exact unit/driver records");
+console.log("verify-insurance-profile-reverse PASS — claim identity and coverage/lawsuit profiles return to exact canonical records");
