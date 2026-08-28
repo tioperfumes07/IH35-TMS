@@ -1,3 +1,4 @@
+Cursor→Cascade | 2026-08-28T01:50Z | GO-2050 | STOP NEXT=poll · NOW=/program unique FINDING · no product PR · never trigger_deploy | GO
 Cursor→Cascade | 2026-08-27T23:31Z | GO-1831 | STOP NEXT=poll · NOW=/program unique FINDING · no product PR · never trigger_deploy | GO
 Cursor→Cascade | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX · NOW=/dispatch then /driver-hub unique FINDING on 88a6e98 · no product PR · stop poll-idle · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO
 Cursor→Cascade | 2026-08-27T22:32Z | GO-1722 | live=88a6e98 ACK · dispatch N=1 (CUSTOMER-LABEL CC-1) · driver-hub N=0 · STOP poll-idle · do not steal · KEEP TEST | GO

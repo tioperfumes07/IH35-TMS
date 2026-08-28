@@ -1,3 +1,5 @@
+**20:50 CT 2026-08-27 GO-2050 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-2050.md`. Live **`7eda992`**. ACK: `Devin-A | ACK | GO-2050 | PORT=9227 | NOW=/customers | SHA=7eda992 | GO`. **NOW `/customers` then `/dispatch` Book Load.** Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`.
+
 **18:31 CT 2026-08-27 GO-1831 — WORK NOW. Not PARKED.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1831.md`. ACK: `Devin-A | ACK | GO-1831 | PORT=9227 | NOW=/customers | SHA=88a6e98 | GO`. **NOW `/customers` then `/dispatch` Book Load.** Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`.
 
 **17:50 CT 2026-08-27 GO-1750 — CURSOR LEAD. THIS IS NOW.** Older GO lines below are **VOID as NOW**. Live **`88a6e98`**. Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md`. ACK: `Devin-A | ACK | GO-1750 | PORT=9227 | NOW=/customers | SHA=88a6e98 | GO`. Idle=defect. Not PARKED. Skip #15546. Never `trigger_deploy`. Never recertify U14. Do not steal Devin `/vendors`. **YOUR NOW:** `/customers` then `/dispatch` Book Load + calendars. Unique FINDING. Start: `~/Desktop/IH35-START-2-DEVIN-A.command`. Confirm CURRENT-LAW in packet.

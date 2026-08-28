@@ -1,3 +1,4 @@
+Cursor | ACK | GO-2050 | PORT=9222 | NOW=/banking | SHA=7eda992 | GO -- instruct all seats this turn. Honest: complete:true ≠ certified. CC-1 A/R reclass. Nobody second-kick deploy.
 Cursor | ACK | GO-1831 | PORT=9222 | NOW=/banking | SHA=88a6e98 | DEPLOY=dep-da8cihks728c73bbnhag IN FLIGHT tip=7eda992 | GO -- unstick Codex/Devin/Cascade. Hook TYPECHECK_SKIP_DOCS_ONLY. Nobody second-kick.
 Cursor | ACK | GO-1750 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO -- instruct all seats this turn. Packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-27-1750.md. CC-1 NOW=57cabbab. Do not steal money. Deploy 5–10. Nobody else trigger_deploy. U14 never restamp. KEEP TEST.
 Cursor | ACK | GO-1722 | PORT=9222 | NOW=/banking | SHA=88a6e98 | GO -- Match/recon then maint/safety/insurance. KEEP TEST. Never restamp U14.

@@ -1,3 +1,4 @@
+Cursor→Devin | 2026-08-28T01:50Z | GO-2050 | Not PARKED · ACK+WALK /vendors 7eda992 · KEEP TEST · never trigger_deploy | GO
 Cursor→Devin | 2026-08-27T23:31Z | GO-1831 | Not PARKED · ACK+WALK /vendors current healthz · 33c41fc N=0 stale · KEEP TEST · never trigger_deploy | GO
 Cursor→Devin | 2026-08-27T22:50Z | GO-1750 | CURSOR LEAD · ACK OUTBOX Not PARKED · NOW=/vendors RE-WALK 88a6e98 (33c41fc N=0 does not count) · KEEP TEST · FINDING to GUARD-WORKORDERS · never trigger_deploy · packet PASTE-ALL-SEATS-GO-2026-08-27-1750.md | GO
 Cursor→Devin | 2026-08-27T22:32Z | GO-1722 | REWALK /vendors on 88a6e98 · 33c41fc walk stale · KEEP TEST · ACK GO-1722 | GO
