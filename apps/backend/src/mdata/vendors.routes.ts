@@ -264,6 +264,23 @@ async function vendorNameConflictExists(
   });
 }
 
+/** PATCH G6-2: entity comes from the vendor row, never the caller's default or the request body. */
+async function resolveVendorRowOperatingCompanyId(authUserId: string, vendorId: string): Promise<string | null> {
+  return withCurrentUser(authUserId, async (client) => {
+    const res = await client.query<{ operating_company_id: string }>(
+      `
+        SELECT operating_company_id::text AS operating_company_id
+          FROM mdata.vendors
+         WHERE id = $1::uuid
+         LIMIT 1
+      `,
+      [vendorId]
+    );
+    const id = res.rows[0]?.operating_company_id;
+    return id && String(id).trim() ? String(id).trim() : null;
+  });
+}
+
 function scrubVendorProjectionSource(row: Record<string, unknown>) {
   const notesRaw = typeof row.notes === "string" ? row.notes : null;
   if (!notesRaw || !QBO_ARCHIVE_PROJECTION_SOURCE_RE.test(notesRaw)) return row;
@@ -680,10 +697,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       if (IS_PROD_ENV && isTestVendorFixtureName(b.name)) {
         return sendTestVendorFixtureRejected(reply);
       }
-      const patchScopedCompanyId = await withCurrentUser(authUser.uuid, async (client) =>
-        resolveOperatingCompanyId(client, authUser.uuid)
+      const patchScopedCompanyId = await resolveVendorRowOperatingCompanyId(
+        authUser.uuid,
+        parsedParams.data.id
       );
-      if (patchScopedCompanyId && (await vendorNameConflictExists(authUser.uuid, patchScopedCompanyId, b.name, parsedParams.data.id))) {
+      if (!patchScopedCompanyId) return reply.code(404).send({ error: "mdata_vendor_not_found" });
+      if (await vendorNameConflictExists(authUser.uuid, patchScopedCompanyId, b.name, parsedParams.data.id)) {
         return reply.code(409).send({
           error: "mdata_vendor_name_conflict",
           message: "Vendor with this name already exists",
