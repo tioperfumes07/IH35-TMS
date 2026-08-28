@@ -1868,3 +1868,5 @@ Codex | WORKING | DSP-F7101 | CLAIM=post.dispatch-assign-driver-failure-fail-clo
 Codex | SHIPPED | DSP-F7100 | PR=#17094 @ 63d5a16d54 | Built=customer filter failure honesty | NEXT=assignment picker failure cap | GO
 Codex | WORKING | DSP-F7102 | CLAIM=post.dispatch-book-load-catalog-failure-honesty | SOURCE=customer+load-type+pickup-type+lumper catalogs→Book Load | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7101 | PR=#17096 @ cdb93a8213 | Built=assign-driver failure fail-closed | NEXT=Book Load catalog failures | GO
+Codex | WORKING | DSP-F7103 | CLAIM=post.dispatch-book-load-edit-prefill-failure-lock | SOURCE=persisted load detail→edit wizard baseline | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7102 | PR=#17099 @ 552df5a640 | Built=Book Load catalog failure vertical | NEXT=edit prefill failure lock | GO
