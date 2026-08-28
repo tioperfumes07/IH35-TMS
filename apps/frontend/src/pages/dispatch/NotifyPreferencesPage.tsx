@@ -199,6 +199,17 @@ export function NotifyPreferencesPage() {
         </button>
       </div>
 
+      {customerId && prefsQuery.isError ? (
+        <div className="mt-6">
+          <ListErrorState
+            title="Couldn't load notification preferences"
+            status={0}
+            message={undefined}
+            onRetry={() => void prefsQuery.refetch()}
+          />
+        </div>
+      ) : null}
+
       {customerId && prefs ? (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div className="rounded-sm border p-4" data-testid="notify-preferences-panel">
