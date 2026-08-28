@@ -2,6 +2,60 @@
   "rule": "Before stealing a leftover hop, add leftover_id here. If claimed by another seat, pick a different id. leftover_id is the route or board id (e.g. post.fuel).",
   "claims": [
     {
+      "leftover_id": "post.wo-oos-estimate-read-honesty",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T12:05:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.unit-wear-retained-telemetry-on-error",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T11:45:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.pm-alert-lifecycle-guard-parser",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T11:25:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-kpi-summary-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T11:05:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.pm-auto-engine-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:50:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-tire-program-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:35:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-inspections-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:20:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-warranty-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T10:05:00-05:00",
+      "go": "0004"
+    },
+    {
+      "leftover_id": "post.maintenance-vendor-detail-read-recovery",
+      "seat": "CODEX",
+      "claimed_at": "2026-08-28T09:52:00-05:00",
+      "go": "0004"
+    },
+    {
       "leftover_id": "post.maintenance-ap-vendor-list-label",
       "seat": "CODEX",
       "claimed_at": "2026-08-28T09:40:00-05:00",
