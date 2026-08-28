@@ -77,7 +77,9 @@ export function assertGuard({ dispatchApi, driversPage }) {
   // also gates an unrelated roster-table conditional earlier in the file) — `title="Settlements
   // Ready"` is the genuinely unique string that opens this specific tile block.
   const driversTabBlock = extractBlock(page, 'title="Settlements Ready"', 9000);
-  const debtAlertDriversTab = driversTabBlock ? extractBlock(driversTabBlock, "Debt Alert", 500) : null;
+  // Include the complete error/retry branch plus mapped rows; 500 chars ended before the real link
+  // after fail-closed debt loading was added and falsely reported the linked tile as bare text.
+  const debtAlertDriversTab = driversTabBlock ? extractBlock(driversTabBlock, "Debt Alert", 1400) : null;
   const activeDriversTile = driversTabBlock ? extractBlock(driversTabBlock, "activeDriverLoadRows.map((row)", 400) : null;
 
   if (!debtAlertDriversTab || !/EntityLink/.test(debtAlertDriversTab)) {

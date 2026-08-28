@@ -1,3 +1,5 @@
+Codex | WORKING | DRV-F7030 | CLAIM=post.driver-hub-debt-alert-link-guard-window | SOURCE=drivers-tab fail-closed Debt Alert EntityLink | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7029 | PR=#16988 @ cabfd29a57 | Built=driver count+list scope ratchets | NEXT=DRV-F7030 | GO
 Codex | WORKING | DRV-F7029 | CLAIM=post.driver-list-canonical-company-scope-guard | vertical=count+list+default-expense guard | NEXT=normal+selftest+FAST-MERGE | GO
 Codex | BOARD-CLOSE | DRV-F6947 | already FIXED #16913 | guard=normal+6/6 selftest exit0 | stale original OPEN marked SUPERSEDED | NEXT=next genuine Codex row | GO
 Codex | ROUTED | GUARD-INFRA-F7028 | owner=CC-2 | evidence=3421 wired/521 unaccounted vs 174 | customer functional guards=green | NEXT=reread INBOX | GO
