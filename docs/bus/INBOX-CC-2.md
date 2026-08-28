@@ -1,3 +1,5 @@
+**GO-0016 CC-2 NOW — entire instruction is `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0016 | NOW=silent-job-noop-unique | SHA=069d531 | GO`. L2 closed. Silent job no-ops unique. Never trigger_deploy.
+
 **GO-0014 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0014 | NOW=cron-tick-1520Z | SHA=069d531 | GO`. Acceptance = 3:20 PM CT tick. Do not raise stale threshold. Never trigger_deploy.
 
 **GO-0013 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0013 | NOW=unique-FINDING-usmca-absorb-cascade | SHA=069d531 | GO`. Cascade frozen — you absorb unique FINDING USMCA. Never trigger_deploy.

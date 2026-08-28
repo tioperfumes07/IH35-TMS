@@ -1,3 +1,5 @@
+**GO-0016** FEED delivery. Desktop was GO-0013 while git had GO-0014. API `069d531`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0016.md`. Entire instruction `docs/bus/FEED/NOW-<SEAT>.md`. CC-1 Event 2 `#17157` on main remeasure after live. CC-2 silent-job unique (L2 closed). CC-3 BANK-F. Codex 8 PASS-UNVERIFIED. Devin ensure-drivers. Cascade vendors 0/7. Cursor Desktop sync + deploy. Nobody else trigger_deploy.
+
 **GO-0014** Claude 2:49 CT live findings. API `069d531`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0014.md`. CC-1 Event 2 silent on 5 invoices. CC-2 3:20 CT cron tick. CC-3 BANK-F01–F07. Codex 8 PASS-UNVERIFIED. Devin ensure-drivers. Cascade vendors 0/7. Nobody second-kick.
 
 **GO-0012** API `069d531` FE `451b359`. G1 on main not live API. CC-1 rebase #17039. CC-2 leftover unique. CC-3 TXH tab (Override shipped). Codex `/dispatch`. Cascade unique. Devin PREPEND + Override query-back FE. One Devin. Nobody second-kick.
