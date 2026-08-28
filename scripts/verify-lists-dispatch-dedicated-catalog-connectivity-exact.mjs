@@ -65,6 +65,8 @@ export function audit(s = {}) {
     if (!bookLoadModal.includes(`listAllDispatchCatalogRows(${client}`) || new RegExp(`${client}\\.list\\([\\s\\S]{0,180}limit:\\s*200`).test(bookLoadModal)) failures.push(`BookLoadModalV4 must exhaust ${client}`);
   }
   if (!expectedAdjustments.includes("listAllDispatchCatalogRows(detentionReasonsCatalogClient") || /detentionReasonsCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(expectedAdjustments)) failures.push("ExpectedAdjustmentsCallout must exhaust detention-reasons catalog");
+  for (const token of ["detentionReasonsQuery.isError", "disabled={detentionReasonsQuery.isLoading || detentionReasonsQuery.isError}", "Couldn't load detention reasons.", "onClick={() => void detentionReasonsQuery.refetch()}"])
+    if (!expectedAdjustments.includes(token)) failures.push(`ExpectedAdjustmentsCallout failure honesty missing ${token}`);
   if (expectedAdjustments.includes("CappedListNotice") || expectedAdjustments.includes("Type to search for a reason that is not listed")) failures.push("ExpectedAdjustmentsCallout must not claim an unavailable server-search fallback");
   for (const token of ["withCompanyScope(", 'app.get(basePath', 'app.post(basePath', "operating_company_id = $1::uuid", "INSERT INTO ${tableName}", "appendCrudAudit("]) if (!sharedBackend.includes(token)) failures.push(`shared Dispatch backend missing ${token}`);
 
@@ -108,6 +110,8 @@ if (process.argv.includes("--selftest")) {
     ["multiStopEditor", original.multiStopEditor.replace("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient", "pickupTimeTypesCatalogClient.list")],
     ["bookLoadModal", original.bookLoadModal.replace("listAllDispatchCatalogRows(lumperProvidersCatalogClient", "lumperProvidersCatalogClient.list")],
     ["expectedAdjustments", original.expectedAdjustments.replace("listAllDispatchCatalogRows(detentionReasonsCatalogClient", "detentionReasonsCatalogClient.list")],
+    ["expectedAdjustments", original.expectedAdjustments.replace("detentionReasonsQuery.isLoading || detentionReasonsQuery.isError", "detentionReasonsQuery.isLoading")],
+    ["expectedAdjustments", original.expectedAdjustments.replace("onClick={() => void detentionReasonsQuery.refetch()}", "onClick={() => void Promise.resolve()}")],
   ];
   for (const [key, mutant] of mutations) if (!audit({ ...original, [key]: mutant }).length) throw new Error(`mutation survived: ${key}`);
   for (const [leafKey, slug, pageName, clientName] of SHARED) {

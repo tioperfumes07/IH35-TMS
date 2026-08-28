@@ -78,12 +78,25 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                 operatingCompanyId={operatingCompanyId}
                 createdValueField="id"
                 loading={detentionReasonsQuery.isLoading}
+                disabled={detentionReasonsQuery.isLoading || detentionReasonsQuery.isError}
                 placeholder="Select reason"
                 onOptionCreated={() => {
                   void detentionReasonsQuery.refetch();
                   void queryClient.invalidateQueries({ queryKey: ["book-load", "detention-reasons", operatingCompanyId] });
                 }}
               />
+              {detentionReasonsQuery.isError ? (
+                <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-[11px] text-red-700" role="alert">
+                  <div>Couldn't load detention reasons.</div>
+                  <button
+                    type="button"
+                    className="mt-1 font-semibold underline"
+                    onClick={() => void detentionReasonsQuery.refetch()}
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
           <input
