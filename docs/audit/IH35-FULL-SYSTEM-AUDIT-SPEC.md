@@ -134,7 +134,7 @@ poster (`postSourceTransaction`), reuse it, no new GL math.
 `driver_finance.*` (RETIRE `payroll.*`,`settlement.*`) · `mdata.qbo_*` (RETIRE `accounting.qbo_*`) · `banking.*`
 (RETIRE `bank.*`) · `maintenance.*` (RETIRE `maint.*`) · vendors `mdata.vendors` (WO picker must stop writing
 `mdata.qbo_vendors`) · loads `mdata.loads` · units `mdata.units` (`owner_company_id`/`currently_leased_to_company_id`,
-NO `operating_company_id`, NO `display_id`) · cancellation `catalogs.cancellation_reasons`. Hubs: `org.companies`,
+NO `operating_company_id`, NO `display_id`) · cancellation `catalogs.load_cancellation_reasons` (RETIRE `catalogs.cancellation_reasons`). Hubs: `org.companies`,
 `identity.users`, `mdata.drivers`, `mdata.units`, `mdata.loads`, `catalogs.accounts`, `mdata.customers`,
 `maintenance.work_orders`, `mdata.vendors`, `accounting.journal_entries`, `mdata.equipment`, `docs.files`. Near-twin → STOP, ask.
 

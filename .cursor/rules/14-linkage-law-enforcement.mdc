@@ -7,7 +7,22 @@ alwaysApply: true
 **SYSTEM-WIDE (owner 2026-07-22):** Deep linkage is the **entire product** — Safety, Compliance, Fleet/Vehicles, Trailers, Dispatch, Settlements, Escrow, Banking, Accounting, Maintenance, Insurance, Legal, Drivers — **not** Insurance Claims / Legal only. Claims A2 is a depth *sample*; every module gets the same bar. No stone left unturned.
 
 Before any block, declare: canonical target table (`to_regclass`, NOT a RETIRE table), the cross-module linkage matrix, and deployed SHA vs origin/main.
-- **Never write/FK a RETIRE table:** `driver_finance.*` (not payroll/settlement) · `mdata.qbo_*` (not accounting.qbo_*) · `banking.*` (not bank.*) · `maintenance.*` (not maint.*) · `mdata.vendors` · `mdata.loads` · `catalogs.cancellation_reasons`. Verify the canonical exists on prod before repointing.
+
+**BEFORE ANY IH35-TMS WORK:** read `docs/trackers/FINAL-TABLES-WIRING-FOR-CODER-2026-07-05.md` and `.claude/skills/ih35-tms-standards/SKILL.md` §10 (there is no `01-LINKAGE-LAW.md` on main — this rule + SKILL §10 are the law). They override code-reads.
+
+**CANONICAL (write here) → RETIRE (never write; repoint the WRITER, never drag the FK):**
+
+| CANONICAL | RETIRE |
+|---|---|
+| `driver_finance.*` | `payroll.*` AND `settlement.*` |
+| `mdata.qbo_*` (QBO mirror) | `accounting.qbo_*` |
+| `banking.*` | `bank.*` |
+| `maintenance.*` | `maint.*` (stranded tables) |
+| `mdata.vendors` | `mdata.qbo_vendors` (WO picker must stop writing the twin) |
+| `mdata.loads` | (canonical load hub) |
+| `catalogs.load_cancellation_reasons` | `catalogs.cancellation_reasons` (legacy archive) |
+
+Do **not** flatten the left column and label it RETIRE. Verify the canonical exists on prod before repointing.
 - Every record links BOTH-WAY to its financial primitives AND operational modules AND the hub tables (org.companies, identity.users, mdata.drivers/units/loads/customers/vendors, catalogs.accounts, maintenance.work_orders, accounting.journal_entries). A block with no linkage declaration is a defect.
 - C1–C9 apply. Entity-scope every link (`operating_company_id` + FORCED RLS; cross-entity FK = defect). Wiring is part of the build (migration + backfill 0-NULL + route mounted + component reachable + guard wired). Additive only; guards only add. Enforced by CI guards G1–G4.
 - Reminder doc: `docs/trackers/FULL-SYSTEM-AUDIT-AND-WIRING-MASTER-PLAN-2026-07-22.md` §0.0.
