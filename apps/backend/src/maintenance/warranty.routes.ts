@@ -7,6 +7,10 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 // MNT-ECON-04 / SWEEP-C6: reimburse → createJournalEntry behind OFF flag.
 import { postWarrantyReimbursement } from "../accounting/warranty-posting/poster.service.js";
+// MAINT-MONEY-F6956 — companyBusinessDate(), not new Date().toISOString() (UTC): after ~19:00
+// Central the UTC calendar date has already rolled to tomorrow, which can mark warranty
+// eligibility/expiry against the wrong day and post the reimbursement JE on the wrong business date.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -109,7 +113,7 @@ export function mapWarrantyPartRow(row: Record<string, unknown>) {
   const purchasedAt = String(row.purchased_at ?? "");
   const warrantyMonths = Number(row.warranty_months ?? 12);
   const expiresAt = String(row.expires_at ?? "");
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
   return {
     id: row.id,
     operating_company_id: row.operating_company_id,
@@ -185,7 +189,7 @@ export async function detectWarrantyEligiblePartsFromWorkOrder(
     [workOrderId]
   );
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
   const eligible: Record<string, unknown>[] = [];
 
   for (const line of linesRes.rows) {
@@ -360,7 +364,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     const parsed = partCreateSchema.safeParse(req.body);
     if (!parsed.success) return validationError(reply, parsed.error);
     const body = parsed.data;
-    const purchasedAt = body.purchased_at ?? new Date().toISOString().slice(0, 10);
+    const purchasedAt = body.purchased_at ?? companyBusinessDate();
     const expiresAt = computeWarrantyExpiry(purchasedAt, body.warranty_months);
 
     const row = await withCompany(user.uuid, body.operating_company_id, async (client) => {
@@ -669,7 +673,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
       operating_company_id: parsed.data.operating_company_id,
       claim_id: params.data.id,
       actor_user_id: user.uuid,
-      entry_date_iso: new Date().toISOString().slice(0, 10),
+      entry_date_iso: companyBusinessDate(),
       reimbursement_amount_cents: parsed.data.reimbursement_amount_cents,
     });
 

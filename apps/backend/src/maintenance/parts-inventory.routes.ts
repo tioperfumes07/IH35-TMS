@@ -7,6 +7,10 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 // MNT-ECON-01 / SWEEP-C6: route purchases through the shared poster (createBill +
 // postSourceTransaction / createJournalEntry). Flag OFF => inventory write only.
 import { postPartsInventoryPurchase } from "../accounting/parts-inventory-posting/poster.service.js";
+// MAINT-MONEY-F6956 — companyBusinessDate(), not new Date().toISOString() (UTC): after ~19:00
+// Central the UTC calendar date has already rolled to tomorrow, which can post the parts-purchase
+// JE on the wrong business date.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -275,7 +279,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
       parts_inventory_id: String(stockRow.id),
       parts_purchase_id: String(purchaseRow.id),
       actor_user_id: user.uuid,
-      entry_date_iso: new Date().toISOString().slice(0, 10),
+      entry_date_iso: companyBusinessDate(),
       part_description: body.data.part_description,
       vendor_id: body.data.vendor_id ?? null,
       vendor_invoice_number: body.data.vendor_invoice_number ?? null,
