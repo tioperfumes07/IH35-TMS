@@ -8,8 +8,9 @@ const load = read("apps/frontend/src/components/dispatch/LoadInTransitIssuesReve
 const driver = read("apps/frontend/src/components/dispatch/DriverInTransitIssuesReverseSection.tsx");
 const unit = read("apps/frontend/src/components/dispatch/UnitInTransitIssuesReverseSection.tsx");
 const section = (s) => s.slice(s.indexOf("export async function listIntransitIssues"), s.indexOf("export async function listAssignmentHistoryGlobal"));
+const resolveSection = (s) => s.slice(s.indexOf("export async function resolveIntransitIssue"), s.indexOf("export async function createOfficeIntransitIssue"));
 function failures(s, p, l, d, u) {
-  const q = section(s); const out = [];
+  const q = section(s); const resolve = resolveSection(s); const out = [];
   if (!q.includes("dispatch.intransit_issues i") || !q.includes("i.operating_company_id = $1::uuid")) out.push("canonical company scope missing");
   if (/LIMIT\s+200/i.test(q)) out.push("issue range still caps at 200");
   for (const token of ["filters.load_id", "filters.driver_id", "filters.unit_id", "filters.issue_id"]) if (!q.includes(token)) out.push(`${token} filter missing`);
@@ -22,6 +23,8 @@ function failures(s, p, l, d, u) {
   if (!/input\.generation === createGenerationRef\.current\) setError/.test(p)) out.push("create error does not reject stale scope");
   if (!/resolveDispatchIntransitIssue\(input\.issueId, \{ operating_company_id: input\.companyId \}\)/.test(p)) out.push("resolve writer does not snapshot issue/company");
   if (!/queryKey: \["dispatch", "intransit-issues", input\.companyId\]/.test(p)) out.push("write invalidation does not use submitted company");
+  if (!/UPDATE dispatch\.intransit_issues i[\s\S]*issue_description = CASE[\s\S]*NULLIF\(BTRIM\(\$3::text\), ''\)[\s\S]*i\.operating_company_id = \$1::uuid[\s\S]*l\.operating_company_id = \$1::uuid[\s\S]*i\.status IN \('open', 'acknowledged'\)[\s\S]*RETURNING i\.id, i\.status/.test(resolve)) out.push("resolve status and notes are not one company-scoped lifecycle CAS");
+  if (/UPDATE dispatch\.intransit_issues SET issue_description/.test(resolve)) out.push("resolve notes still use a second unchecked write");
   if (!/<Modal variant="drawer" open=\{createOpen\} onClose=\{\(\) => \{ if \(!createMutation\.isPending\)/.test(p)) out.push("create dismissal not locked while pending");
   if ((p.match(/disabled=\{createMutation\.isPending\}/g) ?? []).length < 5) out.push("create controls not locked while pending");
   return out;
@@ -38,6 +41,9 @@ if (process.argv.includes("--selftest")) {
     [service, page.replace("operating_company_id: input.companyId", "operating_company_id: companyId"), load, driver, unit],
     [service, page.replace("if (input.generation !== createGenerationRef.current) return;", "void input.generation;"), load, driver, unit],
     [service, page.replace("resolveDispatchIntransitIssue(input.issueId, { operating_company_id: input.companyId })", "resolveDispatchIntransitIssue(input.issueId, { operating_company_id: companyId })"), load, driver, unit],
+    [service.replace("AND i.operating_company_id = $1::uuid", "AND true"), page, load, driver, unit],
+    [service.replace("issue_description = CASE", "issue_description = issue_description,"), page, load, driver, unit],
+    [service.replace("i.status IN ('open', 'acknowledged')", "i.status IS NOT NULL"), page, load, driver, unit],
     [service, page.replace("disabled={createMutation.isPending}", "disabled={false}"), load, driver, unit],
   ];
   const missed = mutations.filter((parts) => failures(...parts).length === 0);

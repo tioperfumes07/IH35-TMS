@@ -1,4 +1,5 @@
 CODEX | ACK | GO-0021 | NOW=dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7141 | CLAIM=intransit-resolve-notes-second-unchecked-write | SOURCE=dispatch.intransit_issues | NEXT=FAST-MERGE | GO
 Codex | WORKING | DSP-F7140 | CLAIM=driver-availability-missing-identity-fails-open | SOURCE=mdata.drivers+driver_company_authorizations | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7139 | PR=#17223 @ 19485dbf99 | Built=detention notification lock+claim | NEXT=driver availability truth | GO
 Codex | WORKING | DSP-F7139 | CLAIM=detention-threshold-notify-check-send-race | SOURCE=dispatch.detention_events.customer_notified_at | NEXT=FAST-MERGE | GO

@@ -242,24 +242,24 @@ export async function resolveIntransitIssue(userId: string, operatingCompanyId: 
     const res = await client.query(
       `
         UPDATE dispatch.intransit_issues i
-        SET status = 'resolved', updated_at = now()
+        SET status = 'resolved',
+            issue_description = CASE
+              WHEN NULLIF(BTRIM($3::text), '') IS NULL THEN i.issue_description
+              ELSE i.issue_description || E'\n[Resolved] ' || BTRIM($3::text)
+            END,
+            updated_at = now()
         FROM mdata.loads l
         WHERE i.id = $2
+          AND i.operating_company_id = $1::uuid
           AND i.load_id = l.id
           AND l.operating_company_id = $1::uuid
           AND i.status IN ('open', 'acknowledged')
         RETURNING i.id, i.status
       `,
-      [operatingCompanyId, issueId]
+      [operatingCompanyId, issueId, notes ?? null]
     );
     const row = res.rows[0];
     if (!row) return { ok: false as const, error: "issue_not_found_or_already_resolved" };
-    if (notes?.trim()) {
-      await client.query(`UPDATE dispatch.intransit_issues SET issue_description = issue_description || E'\n[Resolved] ' || $2 WHERE id = $1`, [
-        issueId,
-        notes.trim(),
-      ]);
-    }
     return { ok: true as const, issue: row };
   });
 }
