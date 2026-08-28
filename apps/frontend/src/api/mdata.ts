@@ -1863,6 +1863,32 @@ export function listUnits(
   return apiRequest<{ units: unknown[]; total?: number }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
 }
 
+/** Exhaust a stable scoped unit population for complete-grid consumers; pickers stay server-searched. */
+export async function listAllUnits(
+  params: Omit<Parameters<typeof listUnits>[0], "limit" | "offset"> = {},
+) {
+  const limit = 500;
+  const units: unknown[] = [];
+  const seen = new Set<string>();
+  let offset = 0;
+  let expectedTotal: number | null = null;
+  while (true) {
+    const page = await listUnits({ ...params, limit, offset });
+    const total = page.total ?? page.units.length;
+    if (expectedTotal == null) expectedTotal = total;
+    if (total !== expectedTotal) throw new Error("Unit roster changed during pagination. Retry.");
+    for (const raw of page.units) {
+      const id = String((raw as { id?: unknown })?.id ?? "");
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      units.push(raw);
+    }
+    if (offset + page.units.length >= expectedTotal) return { units, total: expectedTotal };
+    if (page.units.length === 0) throw new Error("Unit roster pagination stopped before the reported total.");
+    offset += page.units.length;
+  }
+}
+
 export type QboVendorCandidate = {
   qbo_vendor_id: string;
   display_name: string;

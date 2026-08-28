@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { listUnitsWithoutLoad } from "../../../api/dispatch";
-import { listUnits } from "../../../api/mdata";
+import { listAllUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -53,7 +53,7 @@ export function TruckPlanner() {
   const unitsQuery = useQuery({
     queryKey: ["mdata", "units", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
-    queryFn: () => listUnits({ operating_company_id: operatingCompanyId }),
+    queryFn: () => listAllUnits({ operating_company_id: operatingCompanyId }),
   });
 
   const reservedQuery = useQuery({
