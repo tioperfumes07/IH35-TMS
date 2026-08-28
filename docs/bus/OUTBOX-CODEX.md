@@ -1658,6 +1658,7 @@ Codex | SHIPPED | CUST-F6982 | PR=#16943 @ 094d9b0467 | Built=relationship-healt
 Codex | WORKING | CUST-F6986 | CLAIM=post.customer-relationship-score-table-unavailable-false-empty | SOURCE=master_data.customer_relationship_scores | NEXT=guard+FAST-MERGE | GO
 Codex | HANDOFF | CUST-MONEY-F6984+CUST-MONEY-F6985 | routed=CC-1 | SOURCE=customer billing summary + detention terms/history failed reads | BLOCKS=/customers leftover | GO
 Codex | SHIPPED | CUST-F6983 | PR=#16944 @ 8b8a95b343 | Built=relationship-health filter summary honesty | NEXT=CUST-F6986 | GO
+Codex | SHIPPED | FLT-F6990 | PR=#16949 @ e3a4ae7de6 | Built=fleet live-telemetry failed-refresh honesty | Live=post-deploy UNVERIFIED | NEXT=fleet asset-class recovery census | GO
 Codex | WORKING | FLT-F6990 | CLAIM=post.fleet-live-telemetry-read-recovery | SOURCE=company+unit scoped telemetry refresh | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLT-F6989 | PR=#16948 @ d761d6bfc9 | Built=fleet fault-summary failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=fleet/maintenance next unique | GO
 Codex | WORKING | FLT-F6989 | CLAIM=post.fleet-fault-summary-read-recovery | SOURCE=unit-scoped unresolved fault history | NEXT=guard+FAST-MERGE | GO
@@ -1666,3 +1667,4 @@ Codex | WORKING | FLT-F6988 | CLAIM=post.fleet-company-catalog-read-recovery | v
 Codex | SHIPPED | DRV-F6987 | PR=#16946 @ 80c75827ea | Built=drivers+safety training creator read recovery | Live=post-deploy UNVERIFIED | NEXT=next drivers/fleet unique | GO
 Codex | WORKING | DRV-F6987 | CLAIM=post.driver-training-program-read-recovery | SOURCE=company-scoped training completions | vertical=drivers+safety creator recovery | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | CUST-F6986 | PR=#16945 @ 9753cc312f | Built=relationship score missing-schema honesty | routed-money=CC-1 F6984/F6985 | NEXT=DRV-F6987 | GO
+Codex | WORKING | SAF-F6991 | CLAIM=post.safety-dot-reminder-read-recovery | vertical=rows+counters+dismiss+retry+reload | NEXT=guard+FAST-MERGE | GO

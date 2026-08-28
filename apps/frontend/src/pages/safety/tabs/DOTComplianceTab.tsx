@@ -10,6 +10,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { BackgroundChecksSection } from "../../../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../../../components/safety/MedicalCardsHistorySection";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { ListErrorState } from "../../../components/ListErrorState";
 
 type DotReferenceCard = {
   cfr: string;
@@ -104,7 +105,10 @@ export function DOTComplianceTab() {
   }, [companyId]); // Mutation reset is stable; company transitions own a fresh reminder lifecycle.
 
   // Hooks must run unconditionally (Rules of Hooks). Early return AFTER all hooks.
-  const reminders = remindersQ.data ?? [];
+  // SAF-F6991: React Query retains the last successful response after a failed
+  // refetch. Compliance reminders drive counts and a destructive Dismiss
+  // action, so failed reads must not leave that retained snapshot operable.
+  const reminders = remindersQ.isError ? [] : remindersQ.data ?? [];
   const orderedReminders = useMemo(
     () =>
       [...reminders].sort((a, b) => {
@@ -143,7 +147,7 @@ export function DOTComplianceTab() {
           <button
             type="button"
             className="rounded-sm border border-slate-300 px-2 py-0.5 text-[11px] disabled:opacity-50"
-            disabled={acknowledgeMutation.isPending || remindersQ.isLoading}
+            disabled={acknowledgeMutation.isPending || remindersQ.isLoading || remindersQ.isError}
             onClick={() => acknowledgeMutation.mutate({ reminderId: row.id, companyId, generation: actionGenerationRef.current })}
           >
             Dismiss
@@ -151,7 +155,7 @@ export function DOTComplianceTab() {
         ),
       },
     ],
-    [acknowledgeMutation, remindersQ.isLoading],
+    [acknowledgeMutation, remindersQ.isError, remindersQ.isLoading],
   );
 
   if (!companyId) {
@@ -172,19 +176,25 @@ export function DOTComplianceTab() {
           </div>
           <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">Open {orderedReminders.length}</span>
         </div>
-        {remindersQ.error ? (
-          <p className="mt-3 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">Could not load reminders. Try again.</p>
-        ) : null}
         <div className="mt-3">
-          <ParityTable<SafetyReminderRow>
-            columns={reminderColumns}
-            rows={orderedReminders}
-            rowKey={(row) => row.id}
-            loading={remindersQ.isLoading}
-            emptyText="No open reminders."
-            storageKey="safety-dot-compliance-reminders"
-            exportFilename="dot-compliance-reminders"
-          />
+          {remindersQ.isError ? (
+            <ListErrorState
+              title="Couldn't load compliance reminders"
+              status={0}
+              message={(remindersQ.error as Error)?.message}
+              onRetry={() => void remindersQ.refetch()}
+            />
+          ) : (
+            <ParityTable<SafetyReminderRow>
+              columns={reminderColumns}
+              rows={orderedReminders}
+              rowKey={(row) => row.id}
+              loading={remindersQ.isLoading}
+              emptyText="No open reminders."
+              storageKey="safety-dot-compliance-reminders"
+              exportFilename="dot-compliance-reminders"
+            />
+          )}
         </div>
         {acknowledgeError ? (
           <p className="mt-2 text-xs text-red-700" data-testid="dot-compliance-dismiss-error">
