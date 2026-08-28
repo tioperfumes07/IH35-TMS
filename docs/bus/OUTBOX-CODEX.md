@@ -1872,3 +1872,5 @@ Codex | WORKING | DSP-F7103 | CLAIM=post.dispatch-book-load-edit-prefill-failure
 Codex | SHIPPED | DSP-F7102 | PR=#17099 @ 552df5a640 | Built=Book Load catalog failure vertical | NEXT=edit prefill failure lock | GO
 Codex | WORKING | DSP-F7104 | CLAIM=post.dispatch-customs-broker-catalog-failure-honesty | SOURCE=catalogs.mx_customs_brokers scoped reader→Load Detail Customs filter | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0012 | NOW=/dispatch-unique | SHA=069d531 | GO
+Codex | WORKING | DSP-F7106 | CLAIM=post.dispatch-reassign-modal-scope-snapshot | SOURCE=mounted LoadReassignModal scope→assignment writer | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7104 | PR=#17105 @ 68871d0be6 | Built=customs broker failure Retry+fail-closed | NEXT=reassign modal scope | GO
