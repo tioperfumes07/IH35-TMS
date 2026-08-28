@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../../api/client";
+import * as mdataApi from "../../../api/mdata";
 import { FLEET_TYPE_FILTER_OPTIONS } from "../../../components/fleet/fleetTypeFilter";
 import { FleetTablePage } from "../FleetTablePage";
 
@@ -31,6 +32,10 @@ function renderPage(initialEntries = ["/maintenance/fleet-table"]) {
 
 describe("FleetTablePage type filter", () => {
   beforeEach(() => {
+    vi.spyOn(mdataApi, "listAllUnits").mockImplementation(async (params) => {
+      const units = params.type === "Reefer" ? allRows.filter((row) => row.equipment_type === "Reefer") : allRows;
+      return { units, total: units.length };
+    });
     vi.spyOn(clientApi, "apiRequest").mockImplementation(async (url: string) => {
       if (url.includes("/fleet-table/kpis")) {
         return {
@@ -41,10 +46,7 @@ describe("FleetTablePage type filter", () => {
           avg_age_years: 4.2,
         };
       }
-      const parsed = new URL(url, "http://localhost");
-      const type = parsed.searchParams.get("type");
-      const units = type === "Reefer" ? allRows.filter((row) => row.equipment_type === "Reefer") : allRows;
-      return { units };
+      return { rows: [] };
     });
   });
 
@@ -80,7 +82,7 @@ describe("FleetTablePage type filter", () => {
     await waitFor(() => {
       expect(screen.getByText("Showing 1 of 3 vehicles")).toBeTruthy();
     });
-    expect(clientApi.apiRequest).toHaveBeenCalledWith(expect.stringContaining("type=Reefer"));
+    expect(mdataApi.listAllUnits).toHaveBeenCalledWith(expect.objectContaining({ type: "Reefer", include: "trailers" }));
   });
 
   it("Clear filters resets type and shows full count", async () => {

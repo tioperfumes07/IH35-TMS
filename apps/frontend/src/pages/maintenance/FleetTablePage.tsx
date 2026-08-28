@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
+import { listAllUnits } from "../../api/mdata";
 import { FleetTable, fleetRosterSearchText, type FleetRow, type SoftDeleteFilter } from "../../components/FleetTable";
 import { FLEET_TYPE_FILTER_OPTIONS, parseFleetTypeFilter } from "../../components/fleet/fleetTypeFilter";
 import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../components/table";
@@ -104,12 +105,6 @@ function KpiCard({
   );
 }
 
-function buildUnitsUrl(operatingCompanyId: string, typeFilter: string, includeInactive = false): string {
-  const typeParam = typeFilter ? `&type=${encodeURIComponent(typeFilter)}` : "";
-  const inactiveParam = includeInactive ? "&include_inactive=true" : "";
-  return `/api/v1/mdata/units?include=trailers&operating_company_id=${encodeURIComponent(operatingCompanyId)}&limit=500${typeParam}${inactiveParam}`;
-}
-
 export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, showMaintenanceColumns = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [locationHosExportError, setLocationHosExportError] = useState<string | null>(null);
@@ -160,9 +155,9 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const totalRowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, "all"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[]; total?: number }>(buildUnitsUrl(operatingCompanyId, ""));
-      const rows = payload.units ?? [];
-      return { rows, total: payload.total ?? rows.length };
+      const payload = await listAllUnits({ operating_company_id: operatingCompanyId, include: "trailers" });
+      const rows = payload.units as UnifiedUnitRow[];
+      return { rows, total: payload.total };
     },
     enabled: Boolean(operatingCompanyId) && typeFilter !== "",
   });
@@ -170,9 +165,14 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const rowsQuery = useQuery({
     queryKey: ["maintenance", "fleet-table", "rows", operatingCompanyId, typeFilter || "all", includeInactive ? "incl-inactive" : "active"],
     queryFn: async () => {
-      const payload = await apiRequest<{ units: UnifiedUnitRow[]; total?: number }>(buildUnitsUrl(operatingCompanyId, typeFilter, includeInactive));
-      const rows = payload.units ?? [];
-      return { rows, total: payload.total ?? rows.length };
+      const payload = await listAllUnits({
+        operating_company_id: operatingCompanyId,
+        include: "trailers",
+        type: typeFilter || undefined,
+        include_inactive: includeInactive,
+      });
+      const rows = payload.units as UnifiedUnitRow[];
+      return { rows, total: payload.total };
     },
     enabled: Boolean(operatingCompanyId),
   });
