@@ -8,6 +8,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
 import {
   PART_INVENTORY_CATEGORIES,
   formatPartInventoryCategoryLabel,
@@ -64,8 +65,8 @@ export function PartEditDrawer({ part, onClose, operatingCompanyId }: PartEditDr
         vendor_id: data.vendor_id.trim() || null,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
+    onSuccess: async () => {
+      await invalidatePartsStockQueries(queryClient, operatingCompanyId);
       onClose();
     },
     // INV-F6323: zero error handling anywhere in this file — no onError, no isError render, no

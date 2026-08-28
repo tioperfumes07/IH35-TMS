@@ -1506,3 +1506,6 @@ Codex | SHIPPED | CUST-F6911 | PR=#16862 @ f9d340f548 | gate=exit0 | Built=compl
 Codex | WORKING | FINDING=CUST-F6912-LOAD-HISTORY-AND-RELATED-PICKER-FIRST-200-ONLY | SOURCE-OF-TRUTH=mdata.loads company+customer exact range | NOW=full Loads tab+Related Load picker | GO
 Codex | SHIPPED | CUST-F6912 | PR=#16864 @ a873e4a0dc | gate=exit0 | Built=complete customer load history+Related Load picker range | Live=post-deploy UNVERIFIED | NEXT=CUST-F6913 FMCSA history exact range | GO
 Codex | WORKING | FINDING=CUST-F6913-FMCSA-HISTORY-FIRST-25-ONLY | SOURCE-OF-TRUTH=catalogs.fmcsa_lookups company range | NOW=complete customer verification history | GO
+Codex | SHIPPED | CUST-F6913 | PR=#16865 @ caf848d900 | gate=exit0 | Built=complete FMCSA verification-history range | Live=post-deploy UNVERIFIED | NEXT=claim post.inventory | GO
+CODEX | CLAIMING | leftover=post.inventory | GO=0002 | reason=customers drained; drivers remaining caps disclosed or money-lane | NOW=inventory unique connectivity/history | GO
+CODEX | WORKING | FINDING=INV-F6914-PARTS-STOCK-MUTATIONS-LEAVE-SIBLING-SURFACE-STALE | SOURCE-OF-TRUTH=maintenance.parts_inventory | NOW=canonical dual-surface cache coherence+mutation guard | GO

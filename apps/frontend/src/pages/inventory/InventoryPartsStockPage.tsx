@@ -10,6 +10,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
 import { PartCreateDrawer } from "./PartCreateDrawer";
 import { PartEditDrawer } from "./PartEditDrawer";
+import { inventoryPartsStockQueryKey } from "./partsStockQueryKeys";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useSearchParams } from "react-router-dom";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
@@ -166,7 +167,7 @@ export function InventoryPartsStockPage() {
   });
 
   const partsQuery = useQuery({
-    queryKey: ["inventory", "parts", operatingCompanyId],
+    queryKey: inventoryPartsStockQueryKey(operatingCompanyId),
     enabled: Boolean(operatingCompanyId),
     queryFn: async () => {
       const data = await listMaintenanceParts(operatingCompanyId);

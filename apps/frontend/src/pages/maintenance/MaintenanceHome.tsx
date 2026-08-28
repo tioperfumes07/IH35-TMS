@@ -24,6 +24,7 @@ import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/Ho
 import { SubTabRow } from "../../components/layout/SubTabRow";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { maintenancePartsStockQueryKey } from "../inventory/partsStockQueryKeys";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
 import { FleetTablePage } from "./FleetTablePage";
@@ -186,7 +187,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
     enabled: Boolean(companyId && selectedWorkOrderId),
   });
   const partsInventoryRowsQuery = useQuery({
-    queryKey: ["maintenance", "parts-inventory", companyId],
+    queryKey: maintenancePartsStockQueryKey(companyId),
     queryFn: () => listPartsInventory(companyId),
     enabled: Boolean(companyId),
   });

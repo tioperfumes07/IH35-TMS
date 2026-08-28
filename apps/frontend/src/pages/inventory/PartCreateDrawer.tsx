@@ -8,6 +8,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { invalidatePartsStockQueries } from "./partsStockQueryKeys";
 import {
   PART_INVENTORY_CATEGORIES,
   formatPartInventoryCategoryLabel,
@@ -72,7 +73,7 @@ export function PartCreateDrawer({ isOpen, onClose, onCreated, operatingCompanyI
       );
     },
     onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: ["inventory", "parts", operatingCompanyId] });
+      await invalidatePartsStockQueries(queryClient, operatingCompanyId);
       onCreated?.(created.id);
       onClose();
       setFormData({

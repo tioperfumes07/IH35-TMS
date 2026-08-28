@@ -12,6 +12,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { invalidatePartsStockQueries } from "../../inventory/partsStockQueryKeys";
 
 type Props = {
   companyId: string;
@@ -87,7 +88,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       setOpenPurchase(false);
       setForm(EMPTY_PURCHASE);
       setLastGlPosting(created.gl_posting ?? null);
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", input.companyId] });
+      await invalidatePartsStockQueries(queryClient, input.companyId);
       // INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT: keep Purchase History fresh for the same session.
       await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-purchases", input.companyId] });
     },
@@ -108,7 +109,7 @@ export function PartsInventoryTable({ companyId, rows, openPurchaseOnMount = fal
       if (input.generation !== adjustmentGenerationRef.current) return;
       setAdjustRow(null);
       setDeltaQty(0);
-      await queryClient.invalidateQueries({ queryKey: ["maintenance", "parts-inventory", input.companyId] });
+      await invalidatePartsStockQueries(queryClient, input.companyId);
     },
     onError: (err, input) => {
       if (input.generation === adjustmentGenerationRef.current) {
