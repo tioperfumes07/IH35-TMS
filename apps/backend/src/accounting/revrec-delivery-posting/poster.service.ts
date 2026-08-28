@@ -4,7 +4,11 @@
  *
  * Event 1 (earn) at delivered / delivered_pending_docs:
  *   DR Unbilled Revenue (role unbilled_revenue) / CR Line-Haul Income (role revenue_default)
- * Event 2 (bill) at completed_docs_received:
+ * Event 2 (bill), fired from EITHER (a) dispatch reaching completed_docs_received OR (b) the load's
+ * invoice being SENT (see invoice-send.service.ts's after-commit call) — OWNER DECISION B
+ * (2026-08-27 23:00 CT): requires earn to exist AND a real, non-void, ISSUED invoice
+ * (sent/partial/paid/factored — never draft/proforma-only). POD is no longer a condition of Event 2;
+ * it remains required for factoring submission (factoring/submission-queue.service.ts, unchanged).
  *   DR A/R (role ar_control) / CR Unbilled Revenue
  *
  * WRITES ZERO NEW GL MATH — every entry goes through createJournalEntry (debits===credits) and
@@ -49,8 +53,11 @@ export type RevrecPostResult = {
     | "earn_missing_for_bill"
     | "amount_mismatch"
     | "missing_delivery_evidence"
-    // ACCT-F5692 — Event 2 refuses without an approved dispatch.pod_documents row for this load.
-    | "missing_pod_evidence"
+    // OWNER DECISION B (2026-08-27 23:00 CT, docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md)
+    // — replaces "missing_pod_evidence". Event 2 no longer requires POD; it requires a real, non-void,
+    // ISSUED invoice for the load (sent/partial/paid — never draft/proforma-only). See
+    // loadHasIssuedInvoice below.
+    | "missing_issued_invoice"
     // ACCT-F59 reverse interlock — an invoice already recognized this load's revenue/A-R. Distinct
     // from "already_posted" on purpose: that one means THIS latch fired, this one means the OTHER
     // poster did, and conflating them would hide which path double-counted.
@@ -207,6 +214,43 @@ async function loadHasStandingInvoiceGl(
   return res.rows[0]?.invoice_id ?? null;
 }
 
+/**
+ * OWNER DECISION B evidence gate for Event 2 (2026-08-27 23:00 CT,
+ * docs/lockdown/OWNER-DECISION-ACCT-F5692-OPTION-B-2026-08-27.md).
+ *
+ * ACCT-F5692's hasApprovedPodEvidence() gate is REMOVED as a posting BLOCK (dispatch.pod_documents is
+ * 0 rows system-wide — the gate could never open). Owner-ruled replacement matches QBO/NetSuite/McLeod:
+ * the BILL/INVOICE creates the receivable; POD gates COLLECTION/FACTORING
+ * (factoring/submission-queue.service.ts's own independent has_approved_pod check is UNCHANGED), not
+ * A/R recognition. So Event 2's evidence requirement becomes "a real invoice was actually issued to
+ * the customer for this load" — never draft/proforma alone, since those are non-posting projections
+ * the customer never saw.
+ *
+ * 'factored' is included even though the owner packet enumerates sent/partial/paid: per
+ * invoices-bulk.routes.ts's own note, 'factored' is reachable ONLY from 'sent', so it is strictly a
+ * superset of "issued", never a lesser state — excluding it would only create a gap for an
+ * already-factored invoice being reprocessed.
+ */
+async function loadHasIssuedInvoice(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadId: string
+): Promise<boolean> {
+  const res = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.invoices
+      WHERE source_load_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND voided_at IS NULL
+        AND status IN ('sent', 'partial', 'paid', 'factored')
+      LIMIT 1
+    `,
+    [loadId, operatingCompanyId]
+  );
+  return Boolean(res.rows[0]?.id);
+}
+
 async function loadLatchExists(
   client: DbClient,
   operatingCompanyId: string,
@@ -235,9 +279,15 @@ async function loadLatchExists(
 // sit in completed_docs_received with a posted `bill` JE (DR A/R / CR Unbilled) — a receivable booked
 // on paperwork that provably does not exist. Mirrors the exact gate the factoring submission queue
 // already uses to decide POD-eligibility (submission-queue.service.ts `has_approved_pod`): an
-// `approved`, non-archived dispatch.pod_documents row for this load. Fail-closed like every other gate
-// in this poster — a missing/errored check returns a gate string, it never throws or defaults to post.
-async function hasApprovedPodEvidence(
+// `approved`, non-archived dispatch.pod_documents row for this load.
+//
+// OWNER DECISION B (2026-08-27 23:00 CT) — this check is NO LONGER a posting gate on Event 2; Event
+// 2's evidence requirement is now loadHasIssuedInvoice() above. This function is kept EXPORTED so a
+// DETECTOR ("invoiced_without_approved_pod", tracked for CC-2's _system.reconciliation_findings
+// infrastructure) can flag a bill-event posting made without POD evidence, without blocking the
+// posting itself. submission-queue.service.ts's own independent has_approved_pod check is UNCHANGED —
+// factoring submission still requires real POD.
+export async function hasApprovedPodEvidence(
   client: DbClient,
   operatingCompanyId: string,
   loadId: string
@@ -456,10 +506,11 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
       if (earnAmt == null) return { gate: "earn_missing_for_bill" as const };
       amount = earnAmt;
 
-      // ACCT-F5692 — Event 2 bills A/R against completion paperwork; refuse without it, same shape
-      // as Event 1's missing_delivery_evidence gate above.
-      const hasPod = await hasApprovedPodEvidence(client, input.operating_company_id, input.load_id);
-      if (!hasPod) return { gate: "missing_pod_evidence" as const };
+      // OWNER DECISION B evidence gate (see loadHasIssuedInvoice's header comment above) — Event 2
+      // requires a real, non-void, ISSUED invoice (sent/partial/paid/factored), never draft/proforma
+      // alone. This replaces ACCT-F5692's hasApprovedPodEvidence() gate as the posting block.
+      const issuedInvoice = await loadHasIssuedInvoice(client, input.operating_company_id, input.load_id);
+      if (!issuedInvoice) return { gate: "missing_issued_invoice" as const };
     }
     if (amount <= 0) return { gate: "zero_amount" as const };
 
@@ -500,8 +551,8 @@ export async function postLoadRevenueLatch(input: PostLoadRevenueLatchInput): Pr
     return { posted: false, reason: "invoice_gl_already_recognized" };
   }
   if (prepared.gate === "earn_missing_for_bill") return { posted: false, reason: "earn_missing_for_bill" };
+  if (prepared.gate === "missing_issued_invoice") return { posted: false, reason: "missing_issued_invoice" };
   if (prepared.gate === "missing_delivery_evidence") return { posted: false, reason: "missing_delivery_evidence" };
-  if (prepared.gate === "missing_pod_evidence") return { posted: false, reason: "missing_pod_evidence" };
   if (prepared.gate === "zero_amount") return { posted: false, reason: "zero_amount" };
 
   const created = await createJournalEntry(
