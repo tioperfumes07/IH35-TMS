@@ -46,14 +46,30 @@ function auditScopedStatusHandlers(relativePath, content, handlers) {
     require(/is_authorized = true/, "must require active shared-driver authorization");
     require(/deactivated_at IS NULL/, "must reject deactivated shared-driver authorization");
     require(
-      /UPDATE mdata\.loads SET status = \$2 WHERE id = \$1 AND operating_company_id = \$3::uuid/,
+      /UPDATE mdata\.loads\s+SET status = \$2\s+WHERE id = \$1\s+AND operating_company_id = \$3::uuid/,
       "status UPDATE must bind exact captured company"
     );
     require(
-      /\[params\.data\.(?:id|uuid), nextLoadStatus, stop\.operating_company_id\]/,
+      /\[params\.data\.(?:id|uuid), nextLoadStatus, stop\.operating_company_id(?:, stop\.load_status)?\]/,
       "status UPDATE parameters must use the captured load company"
     );
   }
+  return issues;
+}
+
+function auditDispatchArrivalLifecycle(content) {
+  const from = content.lastIndexOf("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival");
+  const to = content.indexOf("/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure", from);
+  const block = from < 0 ? "" : content.slice(from, to);
+  const issues = [];
+  const require = (pattern, message) => {
+    if (!pattern.test(block)) issues.push(`apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts: arrival ${message}`);
+  };
+  require(/FOR UPDATE OF s, l/, "must lock the stop and load before lifecycle validation");
+  require(/actual_arrival_at IS NULL[\s\S]*?RETURNING id/, "must compare-and-set the first arrival stamp");
+  require(/if \(!arrivalUpdate\.rows\[0\]\?\.id\) return \{ error: "arrival_already_recorded" as const \}/, "must reject an already-recorded arrival before audit");
+  require(/AND status::text = \$4[\s\S]*?RETURNING id/, "must compare-and-set the validated load status");
+  require(/if \(!loadUpdate\.rows\[0\]\?\.id\) return \{ error: "load_transition_conflict" as const \}/, "must reject a lost load transition before audit");
   return issues;
 }
 
@@ -113,6 +129,8 @@ const scopeIssues = [
   ]),
 ];
 for (const issue of scopeIssues) fail(issue);
+const arrivalLifecycleIssues = auditDispatchArrivalLifecycle(dispatchView);
+for (const issue of arrivalLifecycleIssues) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const brokenDriver = driverLoads
@@ -133,11 +151,19 @@ if (process.argv.includes("--selftest")) {
       { label: "departure", start: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure", end: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/document" },
     ]),
   ];
-  if (scopeIssues.length || planted.length < 12) {
-    console.error(`verify:driver-pwa-load-status-gate SELFTEST FAILED — clean=${scopeIssues.length}, planted=${planted.length}`);
+  const arrivalMutations = [
+    dispatchView.replace("FOR UPDATE OF s, l", ""),
+    dispatchView.replace("AND actual_arrival_at IS NULL", ""),
+    dispatchView.replace('if (!arrivalUpdate.rows[0]?.id) return { error: "arrival_already_recorded" as const };', ""),
+    dispatchView.replace("AND status::text = $4", ""),
+    dispatchView.replace('if (!loadUpdate.rows[0]?.id) return { error: "load_transition_conflict" as const };', ""),
+  ];
+  const arrivalMutationsFail = arrivalMutations.every((mutant) => auditDispatchArrivalLifecycle(mutant).length > 0);
+  if (scopeIssues.length || arrivalLifecycleIssues.length || planted.length < 12 || !arrivalMutationsFail) {
+    console.error(`verify:driver-pwa-load-status-gate SELFTEST FAILED — scope=${scopeIssues.length}, lifecycle=${arrivalLifecycleIssues.length}, planted=${planted.length}, lifecycleMutations=${arrivalMutationsFail}`);
     process.exit(1);
   }
-  console.log(`verify:driver-pwa-load-status-gate SELFTEST PASS — ${planted.length} planted scope defects caught`);
+  console.log(`verify:driver-pwa-load-status-gate SELFTEST PASS — ${planted.length} scope + 5 arrival lifecycle defects caught`);
   process.exit(0);
 }
 

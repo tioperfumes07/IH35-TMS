@@ -1,3 +1,6 @@
+CODEX | ACK | GO-0020 | NOW=dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7133 | CLAIM=driver-PWA-arrival-unchecked-lifecycle | SOURCE=mdata.load_stops+mdata.loads | routed=CC-1 departure sibling | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7132 | PR=#17205 @ f9050f141f | Built=detention Reject lock+CAS truth | NEXT=driver PWA arrival | GO
 Codex | WORKING | DSP-F7132 | CLAIM=detention-reject-race-silent-success | SOURCE=dispatch.detention_requests | routed=CC-1 approval sibling | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7131 | PR=#17203 @ dfeafd8877 | Built=POD review lock+result truth | NEXT=detention reject lifecycle | GO
 Codex | WORKING | DSP-F7131 | CLAIM=POD-review-race-silent-success | SOURCE=dispatch.pod_documents | NEXT=guard+FAST-MERGE | GO
