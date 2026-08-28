@@ -3,6 +3,7 @@ import { listSubmissionQueue } from "../../api/factoring";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
 
 // LINK-F5171/LINK-F5181 — factoring:submit.queue reverse gap. listSubmissionQueue already selects
 // real customer_id/load_id FKs off accounting.invoices; LINK-F5181 added a customer_id filter,
@@ -26,7 +27,9 @@ export function CustomerFactoringSubmitQueueReverseSection({ operatingCompanyId,
           className="text-xs font-semibold text-slate-700 underline"
         />
       </div>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Submission queue unavailable.</p> : null}
+      {query.isError ? (
+        <ListErrorState status={0} message="Submission queue unavailable." onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && items.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No invoices eligible for factoring submission for this customer.</p>

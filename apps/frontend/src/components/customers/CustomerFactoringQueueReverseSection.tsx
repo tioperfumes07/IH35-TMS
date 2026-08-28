@@ -3,6 +3,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { apiRequest } from "../../api/client";
 import type { FactoringQueueRow } from "../../pages/dispatch/FactoringQueuePage";
 import { formatUsdCents } from "../../lib/money";
+import { ListErrorState } from "../ListErrorState";
 
 // LINK-F5171/LINK-F5179 — factoring:dispatch.queue reverse gap. GET /api/v1/dispatch/factoring-queue
 // already selects a real customer_id off mdata.customers (c.id) per row; this component queries it
@@ -22,7 +23,9 @@ export function CustomerFactoringQueueReverseSection({ operatingCompanyId, custo
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="customer-factoring-queue-reverse">
       <h2 className="text-sm font-semibold text-slate-900">Dispatch factoring queue</h2>
-      {query.isError ? <p className="mt-2 text-xs text-red-700">Factoring queue unavailable.</p> : null}
+      {query.isError ? (
+        <ListErrorState status={0} message="Factoring queue unavailable." onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading…</p> : null}
       {!query.isLoading && !query.isError && rows.length === 0 ? (
         <p className="mt-2 text-xs text-gray-500">No delivered loads in the factoring queue for this customer.</p>
