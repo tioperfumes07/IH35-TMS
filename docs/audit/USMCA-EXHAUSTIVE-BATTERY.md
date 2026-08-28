@@ -146,7 +146,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/fixed-assets/dispose` | `apps/backend/src/accounting/amortization-posting/amortization-posting.routes.ts:104` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts:372` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts:338` | — | — | — |
-| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:310` | — | — | — |
+| create | `/api/v1/accounting/invoices` | `apps/backend/src/accounting/invoices.routes.ts:310` | **y** | draft only (no-load Send correctly 409s, ACCT-F61) | CC-3 2026-08-28: `e01c4460-…` INV-2026-00048 $75, blocked from Send by delivery-evidence gate (correct-by-design). Retry via from-load path. See LIVE-TXN-BATTERY LV-TXN-018. |
 | nested | `/api/v1/accounting/invoices/:id/lines` | `apps/backend/src/accounting/invoice-lines.routes.ts:81` | — | — | — |
 | create | `/api/v1/accounting/invoices/from-load` | `apps/backend/src/accounting/invoices.routes.ts:481` | — | — | — |
 | create | `/api/v1/accounting/journal-entries` | `apps/backend/src/accounting/journal-entries.routes.ts:59` | — | — | — |
