@@ -1688,3 +1688,5 @@ Codex | WORKING | MAINT-F7000 | CLAIM=post.maintenance-csv-capability-read-hones
 Codex | SHIPPED | MAINT-F6999 | PR=#16958 @ 5e378f69f6 | Built=parts KPI failed-read honesty | Live=post-deploy UNVERIFIED | NEXT=MAINT-F7000 | GO
 Codex | SHIPPED | MAINT-F7000 | PR=#16959 @ 7d4c6b9156 | Built=vehicles+drivers CSV capability honesty | Live=post-deploy UNVERIFIED | NEXT=maintenance service-location/vendor census | GO
 Codex | WORKING | MAINT-F7001 | CLAIM=post.maintenance-vendor-read-recovery | vertical=roster+AP-link picker+write lifecycle | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | MAINT-F7001 | PR=#16960 @ c2b9518d5f | Built=maintenance vendor roster+AP-link recovery | Live=post-deploy UNVERIFIED | NEXT=maintenance AP vendor label root trace | GO
+Codex | WORKING | MAINT-F7002 | CLAIM=post.maintenance-ap-vendor-list-label | SOURCE=catalogs.maintenance_vendors→mdata.vendors same-company JOIN | NEXT=guard+FAST-MERGE | GO

@@ -115,14 +115,6 @@ export function VendorsPage() {
   );
   const apVendorCapNotice = capNotice(apVendorCap, "vendors");
 
-  const apVendorLabelById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const vendor of apVendorsQ.isError ? [] : (apVendorsQ.data?.vendors ?? [])) {
-      map.set(vendor.id, entityLabel(vendor.name, vendor.id, "Vendor"));
-    }
-    return map;
-  }, [apVendorsQ.data?.vendors, apVendorsQ.isError]);
-
   const refresh = async (submittedCompanyId: string) => {
     await queryClient.invalidateQueries({ queryKey: ["maintenance", "vendors", submittedCompanyId] });
   };
@@ -263,7 +255,7 @@ export function VendorsPage() {
           <EntityLink
             kind="vendor"
             id={row.mdata_vendor_id}
-            label={entityLabel(apVendorLabelById.get(row.mdata_vendor_id), row.mdata_vendor_id, "Vendor")}
+            label={entityLabel(row.mdata_vendor_name, row.mdata_vendor_id, "Vendor")}
             className="text-slate-600 underline"
             data-testid="maintenance-vendors-ap-vendor-link"
           />
