@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7070 | CLAIM=post.dispatch-detention-board-complete-queue | SOURCE=detention_events scoped operational queue→board+overview | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7069 | PR=#17034 @ ad861d08d5 | Built=no invented leaf; complete WORM history pager | NEXT=detention operational queue | GO
 Codex | WORKING | DSP-F7069 | CLAIM=post.dispatch-owner-override-log-complete-history | SOURCE=audit.audit_events total+offset→WORM history pager | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | FLEET-F7047 | CLAIM=post.fleet-type-filter-canonical-reader-guard | SOURCE=URL parser→staged Apply→listAllUnits type→listUnits query | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7046 | PR=#17003 @ 4e8c5cdbb7 | Built=unified trailer roster guard 7/7 | NEXT=fleet type filter | GO
