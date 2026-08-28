@@ -155,9 +155,9 @@ export function NotifyPreferencesPage() {
   });
 
   const syncM = useMutation({
-    mutationFn: () => syncCustomerNotify(companyId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customer-notify-log", companyId] });
+    mutationFn: (submittedCompanyId: string) => syncCustomerNotify(submittedCompanyId),
+    onSuccess: (_data, submittedCompanyId) => {
+      queryClient.invalidateQueries({ queryKey: ["customer-notify-log", submittedCompanyId] });
     },
     onError: (error) => {
       pushToast(userFacingApiError(error, "Notification sync failed"), "error");
@@ -192,7 +192,7 @@ export function NotifyPreferencesPage() {
           type="button"
           className="rounded-sm bg-[#1F2A44] px-3 py-1.5 text-sm text-white disabled:opacity-50"
           disabled={!companyId || syncM.isPending}
-          onClick={() => syncM.mutate()}
+          onClick={() => syncM.mutate(companyId)}
           data-testid="notify-sync-button"
         >
           Sync milestone sends
