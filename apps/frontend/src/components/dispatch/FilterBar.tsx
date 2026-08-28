@@ -7,6 +7,8 @@ import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { CollapsedListFilters, TableSearch, ColumnChooser, useStagedListFilters, type TableColumn } from "../../components/table";
 import { Button } from "../Button";
 import { Combobox } from "../Combobox";
+import { ListErrorState } from "../ListErrorState";
+import { formatQueryErrorDetail } from "../../lib/tableError";
 import type { LoadStatus } from "../../api/loads";
 import { STATUS_LABEL } from "./constants";
 
@@ -176,17 +178,25 @@ export function FilterBar({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Customer</label>
-            <ReferenceSelect
-              value={draft.customerId}
-              onChange={(customerId) => staged.setDraft({ ...draft, customerId })}
-              options={customerOptions}
-              createKind="customer"
-              operatingCompanyId={operatingCompanyId}
-              placeholder="Search customer"
-              disabled={!operatingCompanyId}
-              loading={customersQuery.isLoading}
-              onSearch={setCustomerSearch}
-            />
+            {customersQuery.isError ? (
+              <ListErrorState
+                title="Couldn't load customers"
+                {...formatQueryErrorDetail(customersQuery.error)}
+                onRetry={() => void customersQuery.refetch()}
+              />
+            ) : (
+              <ReferenceSelect
+                value={draft.customerId}
+                onChange={(customerId) => staged.setDraft({ ...draft, customerId })}
+                options={customerOptions}
+                createKind="customer"
+                operatingCompanyId={operatingCompanyId}
+                placeholder="Search customer"
+                disabled={!operatingCompanyId || customersQuery.isLoading || customersQuery.isError}
+                loading={customersQuery.isLoading}
+                onSearch={setCustomerSearch}
+              />
+            )}
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-gray-600">Driver</label>
