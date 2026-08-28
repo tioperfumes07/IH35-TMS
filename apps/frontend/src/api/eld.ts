@@ -26,8 +26,15 @@ export function fetchEldHosViolations(operatingCompanyId: string, range: { limit
  * InService units that are reporting motion/engine activity without a Samsara-assigned driver.
  * There is no dedicated unidentified-driving ingest API yet — this is honest, not fabricated.
  */
+// ELD-UNIDENTIFIED-STALE-FIX-NO-RECENCY-CHECK: the backend already computes `stale`
+// (fleet-location-hos.service.ts STALE_AFTER_MIN=60) but this filter ignored it, so a unit
+// with no fix in months (a speed/engine reading frozen "moving"/"on" from whenever ingestion
+// stopped) rendered forever as an active "Unidentified Driving" alert -- a stale ghost reading
+// masquerading as a live safety event. Require a fresh (non-stale) fix before treating a
+// frozen speed/engine snapshot as evidence of driving happening now.
 export function isUnidentifiedDrivingRow(row: FleetLocationHosRow): boolean {
   if (row.driver_id) return false;
+  if (row.stale) return false;
   const speed = row.speed_mph == null ? null : Number(row.speed_mph);
   const moving = speed != null && Number.isFinite(speed) && speed > 0;
   const engine = (row.engine_state ?? "").toLowerCase();
