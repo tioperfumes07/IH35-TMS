@@ -1,15 +1,15 @@
 {
   "module": "fuel",
-  "title": "Fuel — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-24T13:20:00Z",
+  "title": "Fuel \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:25:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. All 9 items PASS. complete:true 2026-08-24 after CLS-ECON-EMPTY + CLS-DISP-WIRE-06 set pins_complete:false (empty-expected / N/A-PRE-OP — not an incomplete checklist). complete:true ≠ U14 CERTIFIED.",
+  "note": "BASELINE created 2026-07-29. All 9 items PASS. complete:true 2026-08-24 after CLS-ECON-EMPTY + CLS-DISP-WIRE-06 set pins_complete:false (empty-expected / N/A-PRE-OP \u2014 not an incomplete checklist). complete:true \u2260 U14 CERTIFIED. REOPEN 2026-08-29: 5 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED.",
   "items": [
     {
       "id": "FUEL-S01",
@@ -20,10 +20,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "Route /fuel registered as ProtectedRoute wrapping FuelTabRoute tabId=home → FuelPlannerHomePage → FuelHomePage; FuelPlannerHomePage and FuelHomePage both guard against missing operating company with honest empty state; FuelHomePage fetches /api/v1/fuel/planner/dashboard and /api/v1/fuel/loves-sync/status with operating_company_id; fraud and overage KPI cards fetch entity-scoped summaries; dashboard errors use ListErrorBanner with retry; all queries enabled only when companyId is present. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "FAIL",
+      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/loves-sync/status. Prior: Route /fuel registered as ProtectedRoute wrapping FuelTabRoute tabId=home \u2192 FuelPlannerHomePage \u2192 FuelHomePage; FuelPlannerHomePage and FuelHomePage both guard against missing operating company with honest empty state; FuelHomePage fetches /api/v1/fuel/planner/dashboard and /api/v1/fuel/loves-sync/status with operating_company_id; fraud and overage KPI cards fetch entity-scoped summaries; dashboard errors use ListErrorBanner with retry; all queries enabled only when companyId is present. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5302",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "FUEL-S02",
@@ -34,10 +34,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "Route /fuel/compliance registered as ProtectedRoute wrapping FuelTabRoute tabId=compliance → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; compliance tab fetches /api/v1/fuel/compliance-summary via getFuelComplianceSummary(companyId) and now surfaces ListErrorBanner on query error with retry; CompliancePanel renders real entity-scoped summary data. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "FAIL",
+      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/compliance-summary. Prior: Route /fuel/compliance registered as ProtectedRoute wrapping FuelTabRoute tabId=compliance \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; compliance tab fetches /api/v1/fuel/compliance-summary via getFuelComplianceSummary(companyId) and now surfaces ListErrorBanner on query error with retry; CompliancePanel renders real entity-scoped summary data. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5304",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "FUEL-S03",
@@ -48,10 +48,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "Route /fuel/expense-mapping registered as ProtectedRoute wrapping FuelTabRoute tabId=expense_mapping → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; expense_mapping tab renders FuelGlMappingCoverage which fetches /api/v1/accounting/expense-category-mappings with operating_company_id and category_kind=fuel; component now surfaces ListErrorBanner on query error with retry, plus loading and honest empty/unmapped states; a direct link to the accounting expense category map is provided. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "FAIL",
+      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/accounting/expense-category-mappings. Prior: Route /fuel/expense-mapping registered as ProtectedRoute wrapping FuelTabRoute tabId=expense_mapping \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; expense_mapping tab renders FuelGlMappingCoverage which fetches /api/v1/accounting/expense-category-mappings with operating_company_id and category_kind=fuel; component now surfaces ListErrorBanner on query error with retry, plus loading and honest empty/unmapped states; a direct link to the accounting expense category map is provided. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5305",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "FUEL-S04",
@@ -77,7 +77,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/history registered as ProtectedRoute wrapping FuelTabRoute tabId=history → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; history tab fetches /api/v1/fuel/transactions via getFuelTransactions(companyId, {limit:200}) only when tab is active; transaction query errors now surface ListErrorBanner with retry; loading and honest empty states present; FuelTransactionsTable renders entity-scoped rows. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/history registered as ProtectedRoute wrapping FuelTabRoute tabId=history \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; history tab fetches /api/v1/fuel/transactions via getFuelTransactions(companyId, {limit:200}) only when tab is active; transaction query errors now surface ListErrorBanner with retry; loading and honest empty states present; FuelTransactionsTable renders entity-scoped rows. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5307",
       "prod_verified": true
     },
@@ -90,10 +90,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "Route /fuel/inbox registered as ProtectedRoute wrapping FuelTabRoute tabId=relay_inbox → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; inbox tab renders RelayDepositReview which fetches /api/v1/relay/deposits and /api/v1/relay/company-cards with operating_company_id; component now surfaces ListErrorBanner on deposits/cards query errors with retry, plus need-company, loading, and honest empty states; add/remove company-card mutations scoped to selected company. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "FAIL",
+      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/relay/deposits. Prior: Route /fuel/inbox registered as ProtectedRoute wrapping FuelTabRoute tabId=relay_inbox \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; inbox tab renders RelayDepositReview which fetches /api/v1/relay/deposits and /api/v1/relay/company-cards with operating_company_id; component now surfaces ListErrorBanner on deposits/cards query errors with retry, plus need-company, loading, and honest empty states; add/remove company-card mutations scoped to selected company. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5308",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "FUEL-S07",
@@ -104,10 +104,10 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "Route /fuel/loves-prices registered as ProtectedRoute wrapping FuelTabRoute tabId=loves_prices → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; loves_prices tab fetches /api/v1/fuel/loves-sync/status via getLovesSyncStatus(companyId); query errors now surface ListErrorBanner with retry; loading and honest empty states present; upload modal available. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "FAIL",
+      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/loves-sync/status. Prior: Route /fuel/loves-prices registered as ProtectedRoute wrapping FuelTabRoute tabId=loves_prices \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; loves_prices tab fetches /api/v1/fuel/loves-sync/status via getLovesSyncStatus(companyId); query errors now surface ListErrorBanner with retry; loading and honest empty states present; upload modal available. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5311",
-      "prod_verified": true
+      "prod_verified": false
     },
     {
       "id": "FUEL-S08",
@@ -119,7 +119,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/planner registered as ProtectedRoute wrapping FuelTabRoute tabId=planner → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; planner tab fetches dashboard, active routes, planner settings, compliance summary, and recommendation detail all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; honest empty states for no active route / no HOS-aware stops; send-to-driver action and upload/import modals wired. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/planner registered as ProtectedRoute wrapping FuelTabRoute tabId=planner \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; planner tab fetches dashboard, active routes, planner settings, compliance summary, and recommendation detail all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; honest empty states for no active route / no HOS-aware stops; send-to-driver action and upload/import modals wired. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5312",
       "prod_verified": true
     },
@@ -133,15 +133,15 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/settings registered as ProtectedRoute wrapping FuelTabRoute tabId=settings → FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; settings tab fetches /api/v1/fuel/planner/settings via getFuelPlannerSettings(companyId); query errors now surface ListErrorBanner with retry; loading and unavailable states present; PlannerSettingsForm edits settings via PATCH /api/v1/fuel/planner/settings with operating_company_id. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/settings registered as ProtectedRoute wrapping FuelTabRoute tabId=settings \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; settings tab fetches /api/v1/fuel/planner/settings via getFuelPlannerSettings(companyId); query errors now surface ListErrorBanner with retry; loading and unavailable states present; PlannerSettingsForm edits settings via PATCH /api/v1/fuel/planner/settings with operating_company_id. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5313",
       "prod_verified": true
     }
   ],
   "M": 9,
-  "pass_count": 9,
+  "pass_count": 4,
   "total_count": 9,
-  "progress": "9 of 9",
+  "progress": "4 of 9",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 0,
@@ -157,5 +157,5 @@
     ]
   },
   "complete_unpinned_at": "2026-08-24T13:20:00Z",
-  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog \u2014 not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

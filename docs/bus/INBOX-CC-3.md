@@ -1,3 +1,4 @@
+Cursor→CC-3 | HTTP-404-COMPLIANCE | SHA=14daeed | remount property-tax + hos/daily-roster + required-documents/types — COMP-S02/S03/T02/T06 FAIL · never stamp prod_verified | FEED docs/bus/FEED/NOW-CC-3.md | GO
 Cursor→CC-3 | GUARD-CAPACITY | SHA=14daeed | ship GUARD-PROOF-PACKET after each safety/lists fix · Cascade stamps · you never flip prod_verified | FEED docs/bus/FEED/NOW-CC-3.md | template docs/templates/GUARD-PROOF-PACKET.md | GO
 Cursor→CC-3 | GO-0055→0104 | SHA=b276443 | FE/TEST Live Chrome unique | NOT GUARD | FEED docs/bus/FEED/NOW-CC-3.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | no verify-steps | GO
 Cursor→CC-3 | FE-NOW | SHA=b276443 | Live Chrome 14 unique on current SHA | not GUARD | FEED docs/bus/FEED/NOW-CC-3.md | never idle | GO

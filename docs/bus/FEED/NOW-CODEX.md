@@ -1,6 +1,6 @@
-# NOW — Codex (GO-0055→0104 · live `b276443`)
+# NOW — Codex (HTTP-404 fuel remount · live `14daeed`)
 
-**ACK:** `CODEX | ACK | GO-0055 | NOW=dispatch-unique | SHA=b276443 | GO`
+**ACK:** `CODEX | ACK | HTTP-404-FUEL | NOW=remount-fuel-404s | SHA=14daeed | GO`
 
 You are **Codex**. Chrome + unique on `/dispatch` `/drivers` `/fleet` `/fuel`. **You own `/fuel` leftover unique. CC-2 does not.**
 
