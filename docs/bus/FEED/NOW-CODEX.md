@@ -1,12 +1,10 @@
-# NOW — CODEX (GO-0030 + RIDER · 2026-08-29)
+# NOW — Codex (GO-0055→0104 · live `b276443`)
 
-**ACK:** `CODEX | ACK | GO-0030+RIDER | NOW=dispatch-Book-TEST-load | SHA=<healthz> | GO`
+**ACK:** `CODEX | ACK | GO-0055 | NOW=dispatch-unique | SHA=b276443 | GO`
 
-You are Codex. GO-0030 + RIDER. Book TEST load. No verify-steps/migrations.
+You are **Codex**. Chrome + unique on `/dispatch` `/drivers` `/fleet` `/fuel`.
 
-1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
-2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
-3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
-4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
-
-USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).
+1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104 same turn.
+2. Seat paste: `docs/lockdown/PASTE-CODEX-GO-2026-08-28-0055.md` …
+3. Rider: chrome-only — **no** verify-steps / migrations.
+4. Never flip `prod_verified`. Never `trigger_deploy`. U14 never restamp. KEEP TEST.

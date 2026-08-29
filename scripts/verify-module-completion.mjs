@@ -58,7 +58,12 @@ export function loadManifests(dir = DIR) {
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir)
-    .filter((f) => f.endsWith(".json"))
+    .filter(
+      (f) =>
+        f.endsWith(".json") &&
+        // Not a module manifest (binding-guard baseline — 2026-08-29).
+        f !== "PROD-VERIFIED-BINDING-BASELINE.json"
+    )
     .map((f) => {
       const rel = path.join("docs/module-completion", f);
       const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));

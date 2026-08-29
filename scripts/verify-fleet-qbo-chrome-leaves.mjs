@@ -159,7 +159,7 @@ const CHECKS = [
     // elsewhere in the modal body).
     name: "trailer.edit: EditTrailerModal is a real Modal that mounts",
     file: "apps/frontend/src/components/fleet/EditTrailerModal.tsx",
-    pattern: /<Modal open=\{open\} title="Edit trailer"/,
+    pattern: /<Modal\s+open=\{open\}\s+title="Edit trailer"\s+onClose=\{resetAndClose\}/,
   },
   {
     name: "trailer.edit: EditTrailerModal's Leased To Company field is a real Combobox",

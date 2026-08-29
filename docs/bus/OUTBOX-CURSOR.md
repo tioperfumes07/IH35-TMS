@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-29T15:20Z | GO-0055→0104 sent all seats | binding guard install PR | SYS-S07 REOPEN | live b276443 | GO
 Cursor | LEAD | 2026-08-29T12:55Z | LANE-LOCK | deploy dep-da9dd4pf2nfc73f65t4g tip 673aa72 | STANDING §3 = GO-0030 rider fail-closed | VOID Claude-draft lanes | CC-1 money · CC-2 GUARD · CC-3 FE | GO
 GO-0030+RIDER sent · collision fail-closed · CLOSES line · CC-2 GUARD · deploy dep-da949t2jnfac73ckp97g · standing orders underneath
 STANDING-ORDERS-2026-08-29 shipped · CC-1 money · CC-2 GUARD · CC-3 FE · pull via next-work-item.sh · never wait GO chat

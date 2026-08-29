@@ -36,16 +36,30 @@ export function expandSha(root, short) {
   }
 }
 
-export function isAncestor(root, maybeAncestor, descendant) {
+/**
+ * Tri-state ancestry. Prefer this over isAncestor().
+ * @returns {"yes"|"no"|"unknown"}
+ *   unknown = unresolvable ref (shallow clone / unfetched SHA) — NEVER treat as "not an ancestor".
+ */
+export function ancestorCheck(root, maybeAncestor, descendant) {
+  const a = expandSha(root, maybeAncestor);
+  const b = expandSha(root, descendant);
+  if (!a || !b) return "unknown";
   try {
-    execSync(`git merge-base --is-ancestor ${maybeAncestor} ${descendant}`, {
+    execSync(`git merge-base --is-ancestor ${a} ${b}`, {
       cwd: root,
       stdio: "ignore",
     });
-    return true;
+    return "yes";
   } catch {
-    return false;
+    // After expandSha, exit≠0 means "not an ancestor" (git merge-base --is-ancestor).
+    return "no";
   }
+}
+
+/** @deprecated Prefer ancestorCheck — boolean false conflates "not ancestor" with "cannot determine". */
+export function isAncestor(root, maybeAncestor, descendant) {
+  return ancestorCheck(root, maybeAncestor, descendant) === "yes";
 }
 
 function ciOrProd() {
@@ -96,7 +110,9 @@ export function assertLiveVerifiedStamps({ stamps, healthzSha, gitRoot }) {
   }
   const liveFull = expandSha(gitRoot, healthzSha);
   if (!liveFull) {
-    problems.push(`L6: healthz version ${healthzSha} is not a git commit in this repo`);
+    problems.push(
+      `L6: CANNOT DETERMINE — healthz version ${healthzSha} is not resolvable in this clone (git fetch / fetch-depth 0)`
+    );
     return problems;
   }
   for (const s of stamps) {
@@ -108,12 +124,12 @@ export function assertLiveVerifiedStamps({ stamps, healthzSha, gitRoot }) {
       problems.push(`${s.file} item ${s.id}: live_verified_sha set without live_verified_at`);
       continue;
     }
-    const stampFull = expandSha(gitRoot, s.sha);
-    if (!stampFull) {
-      problems.push(`${s.file} item ${s.id}: live_verified_sha ${s.sha} is not a git commit`);
-      continue;
-    }
-    if (!isAncestor(gitRoot, stampFull, liveFull)) {
+    const verdict = ancestorCheck(gitRoot, s.sha, liveFull);
+    if (verdict === "unknown") {
+      problems.push(
+        `${s.file} item ${s.id}: CANNOT DETERMINE whether live_verified_sha ${s.sha} is an ancestor of healthz ${healthzSha} — run git fetch origin (CI: fetch-depth 0)`
+      );
+    } else if (verdict === "no") {
       problems.push(
         `${s.file} item ${s.id}: live_verified_sha ${s.sha} is not an ancestor of healthz ${healthzSha}`
       );

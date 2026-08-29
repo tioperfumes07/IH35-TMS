@@ -154,6 +154,19 @@ One item fully closed. Half-finished = zero.
 | `prod_verified` | `true` **only by CC-2 (GUARD)** after live prod exercise + Neon |
 | `live_verified_at` / `live_verified_sha` | both or neither; SHA ancestor of live healthz `version` |
 
+### 5b. `prod_verified` LIVE BINDING (guard on main)
+
+Measured 2026-08-29: **285** `prod_verified:true`, only **10** with `live_verified_sha` → **275 unfalsifiable greens**.
+
+Guard: `scripts/verify-prod-verified-live-binding.mjs` + baseline `docs/module-completion/PROD-VERIFIED-BINDING-BASELINE.json` (may **only shrink**).
+
+- New `prod_verified:true` **must** carry `live_verified_sha` + `live_verified_at` on an ancestor of live `healthz/shallow`.
+- Legacy unbound ids WARN only (baseline). Paying debt = stamp against live (or REOPEN `prod_verified:false`) and **remove** the id from the baseline — never re-add.
+- `SYS-S07` was the proof case (green with no SHA while TXH was unavailable on stale API). **REOPEN** until known-bad FAIL is proven on current SHA, then re-stamp with binding.
+- Shared lib: use `ancestorCheck()` (yes/no/unknown). Do not treat unresolvable SHA as “not an ancestor.”
+
+Only **CC-2 (GUARD)** flips `prod_verified`. Install note: `docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md`.
+
 Neon:
 
 ```sql
