@@ -60,7 +60,7 @@ class InternalLaborPartConflictError extends Error {
 
 export async function internalLaborRoutes(app: FastifyInstance) {
   // GET /api/v1/maintenance/internal-labor?operating_company_id=&work_order_id=
-  app.get("/api/v1/maintenance/internal-labor", async (req, reply) => {
+  app.get("/api/v1/maintenance/internal-labor", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({
@@ -106,7 +106,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/maintenance/internal-labor/productivity-report
-  app.get("/api/v1/maintenance/internal-labor/productivity-report", async (req, reply) => {
+  app.get("/api/v1/maintenance/internal-labor/productivity-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({
@@ -141,7 +141,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/maintenance/internal-labor — start labor entry
-  app.post("/api/v1/maintenance/internal-labor", async (req, reply) => {
+  app.post("/api/v1/maintenance/internal-labor", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createLaborBody.parse(req.body);
@@ -201,7 +201,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
 
   // POST /api/v1/maintenance/internal-labor/:id/close
   // Closes labor entry (sets end_time), decrements parts inventory, posts JE
-  app.post("/api/v1/maintenance/internal-labor/:id/close", async (req, reply) => {
+  app.post("/api/v1/maintenance/internal-labor/:id/close", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { id } = idParams.parse(req.params);
@@ -290,7 +290,7 @@ export async function internalLaborRoutes(app: FastifyInstance) {
   });
 
   // DELETE /api/v1/maintenance/internal-labor/:id
-  app.delete("/api/v1/maintenance/internal-labor/:id", async (req, reply) => {
+  app.delete("/api/v1/maintenance/internal-labor/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { id } = idParams.parse(req.params);

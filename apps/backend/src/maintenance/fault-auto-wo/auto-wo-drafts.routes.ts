@@ -32,7 +32,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerAutoWoDraftsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/auto-wo-drafts", async (req, reply) => {
+  app.get("/api/v1/maintenance/auto-wo-drafts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});

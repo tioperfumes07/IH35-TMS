@@ -386,7 +386,7 @@ export async function evaluateReeferHoursPmSchedulesForCompany(
 }
 
 export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/reefer-hours/log", async (req, reply) => {
+  app.get("/api/v1/maintenance/reefer-hours/log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -410,7 +410,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/reefer-hours/log", async (req, reply) => {
+  app.post("/api/v1/maintenance/reefer-hours/log", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = logCreateSchema.safeParse(req.body);
@@ -440,7 +440,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     return reply.code(201).send(mapReeferHoursLogRow(row));
   });
 
-  app.get("/api/v1/maintenance/reefer-hours/snapshot", async (req, reply) => {
+  app.get("/api/v1/maintenance/reefer-hours/snapshot", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema
@@ -510,7 +510,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     return reply.send(row);
   });
 
-  app.post("/api/v1/maintenance/reefer-hours/ingest-samsara", async (req, reply) => {
+  app.post("/api/v1/maintenance/reefer-hours/ingest-samsara", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
@@ -527,7 +527,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     return reply.send(result);
   });
 
-  app.get("/api/v1/maintenance/reefer-hours/pm-due", async (req, reply) => {
+  app.get("/api/v1/maintenance/reefer-hours/pm-due", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -539,7 +539,7 @@ export async function registerMaintenanceReeferHoursRoutes(app: FastifyInstance)
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/reefer-hours/log/:id/archive", async (req, reply) => {
+  app.post("/api/v1/maintenance/reefer-hours/log/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params);

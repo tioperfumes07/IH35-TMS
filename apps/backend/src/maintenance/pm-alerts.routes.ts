@@ -106,7 +106,7 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.patch("/api/v1/maintenance/pm-alerts/:id/ack", async (req, reply) => {
+  app.patch("/api/v1/maintenance/pm-alerts/:id/ack", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = alertParamsSchema.safeParse(req.params ?? {});
@@ -148,7 +148,7 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/maintenance/pm-alerts/:id/schedule", async (req, reply) => {
+  app.patch("/api/v1/maintenance/pm-alerts/:id/schedule", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = alertParamsSchema.safeParse(req.params ?? {});

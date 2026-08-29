@@ -28,7 +28,7 @@ function authed(req: Parameters<typeof requireAuth>[0], reply: FastifyReply) {
 }
 
 export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/driver-reports", async (req, reply) => {
+  app.get("/api/v1/maintenance/driver-reports", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -93,7 +93,7 @@ export async function registerMaintenanceDriverReportsRoutes(app: FastifyInstanc
     return result;
   });
 
-  app.patch("/api/v1/maintenance/driver-reports/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/driver-reports/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
