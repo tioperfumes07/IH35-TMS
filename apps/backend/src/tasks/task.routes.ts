@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
@@ -138,6 +139,31 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user!;
 }
 
+// GO-0034-TASKS-CROSS-TENANT-IDOR: every route below takes `operating_company_id` from the
+// client (query/body) and used it directly to set the RLS scope GUCs via SET_TASK_SCOPE_SQL --
+// with NO check that the caller actually belongs to that company. Per apps/backend/src/_helpers/
+// scoped-company-context.ts's own MDATA-F09 writeup: "the caller is choosing the scope RLS will
+// enforce -- so RLS authorizes nothing." tasks.task itself has NO RLS at all (TASK-XTENANT-SCOPE
+// #17218 already documented this), so this was a fully open cross-tenant IDOR on every route in
+// this file: any authenticated user could read, create, or mutate ANY company's tasks/comments/
+// links/activity simply by naming a different operating_company_id, live, with a normal 200.
+// This is a DIFFERENT defect from #17218 (which added WHERE-clause filtering on 8 single-task
+// routes using this SAME untrusted input -- that made the SQL internally consistent but never
+// validated the input itself). Cannot reuse setScopedCompanyContext() directly: it only sets the
+// STANDARD `app.operating_company_id` GUC, while this file's SET_TASK_SCOPE_SQL must also set the
+// LEGACY `app.current_operating_company_id` GUC tasks.task/status_history/note read (see that
+// const's own header comment) -- so this checks membership first, then still calls the existing
+// two-GUC SET_TASK_SCOPE_SQL, matching the house pattern at accounting/recon/recon.routes.ts.
+async function assertTaskCompanyMembership(reply: FastifyReply, userId: string, operatingCompanyId: string): Promise<boolean> {
+  try {
+    await assertCompanyMembership(userId, operatingCompanyId);
+    return true;
+  } catch {
+    reply.code(403).send({ error: "forbidden_company_membership" });
+    return false;
+  }
+}
+
 export default async function taskRoutes(fastify: FastifyInstance) {
   // GET /tasks — list with filters
   fastify.get("/", async (request, reply) => {
@@ -147,6 +173,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = ListTasksQuerySchema.safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, input.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
@@ -233,6 +260,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = PlannerQuerySchema.safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const query = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, query.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [query.operating_company_id]);
@@ -329,6 +357,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = CreateTaskBodySchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, input.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
@@ -397,6 +426,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = UpdateTaskStatusSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
@@ -436,6 +466,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const { id } = IdParamSchema.parse(request.params);
     const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
@@ -462,6 +493,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!user) return;
     const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, parsed.data.operating_company_id))) return;
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [parsed.data.operating_company_id]);
       const res = await (client as Queryable).query(
@@ -480,6 +512,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = CreateTaskTypeSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, input.operating_company_id))) return;
     return withCurrentUser(user.uuid, async (client) => {
       await client.query(SET_TASK_SCOPE_SQL, [input.operating_company_id]);
       const res = await (client as Queryable).query(
@@ -510,6 +543,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const { id } = IdParamSchema.parse(request.params);
     const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
@@ -540,6 +574,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = CreateTaskLinkSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
@@ -596,6 +631,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
     const parsed = UpdateProgressSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
       await client.query(SET_TASK_SCOPE_SQL, [ocId]);
@@ -620,6 +656,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const { id } = IdParamSchema.parse(request.params);
     const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
@@ -655,6 +692,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = CreateCommentSchema.safeParse(request.body ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
@@ -701,6 +739,7 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const { id } = IdParamSchema.parse(request.params);
     const scopeParsed = TaskScopeQuerySchema.safeParse(request.query ?? {});
     if (!scopeParsed.success) return reply.code(400).send({ error: "validation_error", details: scopeParsed.error.flatten() });
+    if (!(await assertTaskCompanyMembership(reply, user.uuid, scopeParsed.data.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
       const ocId = scopeParsed.data.operating_company_id;
