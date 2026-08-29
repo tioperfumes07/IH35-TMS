@@ -14,6 +14,7 @@
  */
 import type { FastifyInstance } from "fastify";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
 
@@ -128,14 +129,22 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
 
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
-      await client.query(
+      const cardResult = await client.query<{
+        id: string;
+        label: string | null;
+        source_hint: string | null;
+        is_active: boolean;
+      }>(
         `INSERT INTO integrations.relay_company_cards (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
          VALUES ($1::uuid, $2, $3, $4, $5, NULL)
          ON CONFLICT (operating_company_id, card_last4)
          DO UPDATE SET label = EXCLUDED.label, source_hint = EXCLUDED.source_hint, is_active = EXCLUDED.is_active,
-                       voided_at = NULL, updated_at = now()`,
+                       voided_at = NULL, updated_at = now()
+         RETURNING id::text, label, source_hint, is_active`,
         [opco, card, body.label ?? null, body.source_hint ?? null, isActive]
       );
+      const persistedCard = cardResult.rows[0];
+      if (!persistedCard) throw new Error("relay_company_card_write_failed");
       // Re-classify existing deposits for this card: active company card → 'company'; else back to
       // 'unclassified' (canceled rows stay 'canceled'). NEVER posts. Storage snapshot only.
       const newClass = isActive ? "company" : "unclassified";
@@ -147,7 +156,31 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
          RETURNING id`,
         [opco, card, newClass]
       )).rowCount ?? 0;
-      return reply.code(200).send({ operating_company_id: opco, card_last4: card, is_active: isActive, reclassified_deposits: updated });
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "integrations.relay_company_card.updated",
+        {
+          operating_company_id: opco,
+          relay_company_card_id: persistedCard.id,
+          card_last4: card,
+          label: persistedCard.label,
+          source_hint: persistedCard.source_hint,
+          is_active: persistedCard.is_active,
+          reclassified_deposits: updated,
+        },
+        "info",
+        "FUEL-RELAY-CARD-REVIEW",
+      );
+      return reply.code(200).send({
+        operating_company_id: opco,
+        id: persistedCard.id,
+        card_last4: card,
+        label: persistedCard.label,
+        source_hint: persistedCard.source_hint,
+        is_active: persistedCard.is_active,
+        reclassified_deposits: updated,
+      });
     });
   });
 }
