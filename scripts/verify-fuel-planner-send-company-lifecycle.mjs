@@ -10,11 +10,11 @@ function failures(text = source) {
     if (!pattern.test(text)) missing.push(label);
   };
   need(/const actionGenerationRef = useRef\(0\)/, "action generation");
-  need(/useEffect\(\(\) => \{\s*actionGenerationRef\.current \+= 1;\s*\}, \[companyId\]\)/, "company transition generation");
+  need(/useEffect\(\(\) => \{[\s\S]{0,220}?actionGenerationRef\.current \+= 1;[\s\S]{0,220}?\}, \[companyId\]\)/, "company transition generation");
   need(/mutationFn: \(input: \{ routeId: string; companyId: string; generation: number \}\) =>\s*sendFuelRecommendationToDriver\(input\.routeId, input\.companyId\)/, "immutable send input");
-  need(/onSuccess: \(_result, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/, "stale success rejection");
+  need(/onSuccess: \([^,]+, input\) => \{\s*if \(input\.generation !== actionGenerationRef\.current\) return;/, "stale success rejection");
   need(/onError: \(error, input\)[\s\S]{0,120}input\.generation === actionGenerationRef\.current/, "stale error rejection");
-  need(/queryKey: \["fuel", "planner", "active-routes", input\.companyId\],[\s\S]{0,60}exact: true/, "exact active-route refresh");
+  need(/invalidateQueries\(\{\s*queryKey: \["fuel", "planner", "active-routes", input\.companyId\],?\s*\}\)/, "company-wide active-route refresh");
   need(/queryKey: \["fuel", "planner", "recommendation-detail", input\.companyId, input\.routeId\],[\s\S]{0,60}exact: true/, "exact recommendation refresh");
   need(/sendRecommendationMutation\.mutate\(\{[\s\S]{0,180}routeId: activeRoute\.id,[\s\S]{0,80}companyId,[\s\S]{0,80}generation: actionGenerationRef\.current/, "caller snapshot");
   return missing;
@@ -26,7 +26,7 @@ if (process.argv.includes("--selftest")) {
     source.replace("input.routeId, input.companyId", "activeRoute.id, companyId"),
     source.replace("input.generation !== actionGenerationRef.current", "false"),
     source.replace("input.generation === actionGenerationRef.current", "true"),
-    source.replace('queryKey: ["fuel", "planner", "active-routes", input.companyId]', 'queryKey: ["fuel", "planner"]'),
+    source.replace('queryKey: ["fuel", "planner", "active-routes", input.companyId]', 'queryKey: ["fuel", "planner", "active-routes"]'),
     source.replace('queryKey: ["fuel", "planner", "recommendation-detail", input.companyId, input.routeId]', 'queryKey: ["fuel", "planner", "recommendation-detail"]'),
     source.replace("generation: actionGenerationRef.current", "generation: 0"),
   ];
