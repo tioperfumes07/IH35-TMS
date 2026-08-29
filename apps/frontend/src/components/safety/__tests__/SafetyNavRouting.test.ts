@@ -64,6 +64,18 @@ describe("Safety nav routing integrity", () => {
     expect(match?.group.label).toBe("Workforce Planning");
   });
 
+  it.each([
+    ["/safety/integrity-alerts", "Integrity Alerts", "Compliance Docs & Monitoring"],
+    ["/safety/csa-mitigation", "CSA Mitigation", "Inspections & FMCSA"],
+    ["/safety/csa-fmcsa-trend", "CSA / FMCSA Trend", "Inspections & FMCSA"],
+    ["/safety/anomaly-alerts", "Anomaly Alerts", "Compliance Docs & Monitoring"],
+    ["/safety/driver-profiles/49427973-e93e-4ea7-a2eb-eb9eefa7f331", "Driver Safety Profile", "Driver Files & Training"],
+  ])("keeps mounted leaf %s under %s", (path, label, groupLabel) => {
+    const match = findSafetyTabByPath(path);
+    expect(match?.tab.label).toBe(label);
+    expect(match?.group.label).toBe(groupLabel);
+  });
+
   it("alias tabs are NOT part of the canonical 28 groups", () => {
     for (const alias of SAFETY_ALIAS_TABS) {
       const inCanonical = SAFETY_GROUPS.some((g) => g.tabs.some((t) => t.id === alias.tab.id));
