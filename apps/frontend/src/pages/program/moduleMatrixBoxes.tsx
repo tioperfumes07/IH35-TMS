@@ -65,6 +65,8 @@ export function emptyWhyTitle(st: {
   }
   return "not_built · FIX — Box 3 empty. Vertical by column (shared component), not per-module chrome.";
 }
+
+export function pctClass(n: number): string {
   if (n >= 80) return "hi";
   if (n >= 40) return "mid";
   return "lo";
