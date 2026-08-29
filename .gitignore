@@ -4,3 +4,7 @@ dist/
 *.tsbuildinfo
 .DS_Store
 apps/frontend/src/generated/module-completion.ts
+apps/frontend/src/generated/
+docs/module-completion/*.md
+docs/audits/PASS-8-*
+.cursor/rules/00-agent-bus-inbox-CASCADE.mdc

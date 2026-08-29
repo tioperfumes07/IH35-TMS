@@ -259,8 +259,8 @@
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
       "prod_verified": true,
-      "live_verified_sha": "14daeed",
-      "live_verified_at": "2026-08-29T17:12:34Z"
+      "live_verified_sha": "b2448ce",
+      "live_verified_at": "2026-08-29T18:28:00.000Z"
     },
     {
       "id": "SAF-B06",
@@ -1954,8 +1954,8 @@
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
       "prod_verified": false,
-      "live_verified_at": "2026-08-29T03:43:00.000Z",
-      "live_verified_sha": "da39aab"
+      "live_verified_at": "2026-08-29T18:28:00.000Z",
+      "live_verified_sha": "b2448ce"
     },
     {
       "id": "SAF-B32",
