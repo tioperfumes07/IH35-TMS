@@ -16,7 +16,15 @@ const LEAVE_REQUESTS = "apps/frontend/src/pages/safety/driver-scheduler/DriverSc
 
 function assertWiring(readSource = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "utf8")) {
   const source = readSource(PAGE);
-  for (const needle of ["useSearchParams", 'searchParams.get("tab")', "parseDriverHubTab", 'params.set("tab", next)']) {
+  for (const needle of [
+    "useSearchParams",
+    "useLocation",
+    "parseDriverHubTab",
+    'params.set("tab", next)',
+    'navigate({ pathname: "/driver-hub"',
+    'key="scheduler"',
+    'key="leave_requests"',
+  ]) {
     if (!source.includes(needle)) throw new Error(`${LABEL}: missing ${JSON.stringify(needle)} in ${PAGE}`);
   }
   if (source.includes('useState<HubTab>("overview")')) {

@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -31,13 +31,17 @@ export function DriverHubPage() {
   const { user } = useAuth();
   const companyId = selectedCompanyId ?? "";
   const canReview = REVIEW_ROLES.includes(String(user?.role ?? ""));
-  const [searchParams, setSearchParams] = useSearchParams();
-  const tab = parseDriverHubTab(searchParams.get("tab"));
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Prefer location.search so tab flips when URL updates even if a child also holds useSearchParams.
+  const tab = parseDriverHubTab(new URLSearchParams(location.search).get("tab"));
   const setTab = (next: HubTab) => {
     const params = new URLSearchParams(searchParams);
     if (next === "overview") params.delete("tab");
     else params.set("tab", next);
-    setSearchParams(params, { replace: true });
+    const qs = params.toString();
+    navigate({ pathname: "/driver-hub", search: qs ? `?${qs}` : "" }, { replace: true });
   };
 
   return (
@@ -65,9 +69,9 @@ export function DriverHubPage() {
         ]}
       />
       {/* Reuse the existing Safety Driver Scheduler + Leave Requests components (no rebuild). */}
-      {tab === "overview" && <DriverInbox companyId={companyId} canReview={canReview} />}
-      {tab === "scheduler" && <DriverSchedulerGridPage />}
-      {tab === "leave_requests" && <DriverSchedulerRequestInboxPage />}
+      {tab === "overview" && <DriverInbox key="overview" companyId={companyId} canReview={canReview} />}
+      {tab === "scheduler" && <DriverSchedulerGridPage key="scheduler" />}
+      {tab === "leave_requests" && <DriverSchedulerRequestInboxPage key="leave_requests" />}
     </div>
   );
 }
