@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7201 | GO-0050 | CLAIM=combined+draft-quick-assign-history-exact-identity | SOURCE=dispatch.load_assignment_history.id | SHA=da39aab | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7200 | PR=#17411 @ 25abf158e02 | Built=training-edit+archive-audit | Live=post-deploy UNVERIFIED | NEXT=GO-0050 dispatch unique | GO
 Codex | WORKING | FLEET-F7198 | GO-0046 | CLAIM=unit-create+edit-canonical-default-driver-edge | SOURCE=mdata.units+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | FUEL-F7183 | CLAIM=planner-settings-write-exact-identity | SOURCE=fuel.fuel_planner_settings | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0044 | NOW=fuel-unique | SHA=4e5db76 | GO

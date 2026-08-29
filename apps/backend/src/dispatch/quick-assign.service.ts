@@ -255,7 +255,7 @@ export async function quickAssignLoad(
         input.load_id,
       );
 
-      await client.query(
+      const assignmentHistoryInsert = await client.query<{ id: string }>(
         `
           INSERT INTO dispatch.load_assignment_history (
             operating_company_id, load_id, assignment_method,
@@ -265,6 +265,7 @@ export async function quickAssignLoad(
             assigned_by_user_id, warnings_acknowledged
           )
           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
+          RETURNING id::text
         `,
         [
           input.operating_company_id,
@@ -280,6 +281,7 @@ export async function quickAssignLoad(
           JSON.stringify([...acknowledged]),
         ],
       );
+      if (!assignmentHistoryInsert.rows[0]?.id) throw new Error("E_ASSIGNMENT_HISTORY_CREATE_FAILED");
 
       await appendCrudAudit(
         client,
@@ -459,7 +461,7 @@ export async function completeQuicksaveDraft(
       // Persist unit/trailer changes in the same transaction as the load mutation. A failed history
       // INSERT must never leave the load reassigned without its audit/reverse-link row.
       if (unitId || resolvedTrailerId) {
-        await client.query(
+        const draftAssignmentHistoryInsert = await client.query<{ id: string }>(
           `
             INSERT INTO dispatch.load_assignment_history (
               operating_company_id, load_id, assignment_method,
@@ -468,6 +470,7 @@ export async function completeQuicksaveDraft(
               assigned_by_user_id, warnings_acknowledged
             )
             VALUES ($1::uuid, $2::uuid, 'quicksave', $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::uuid, '[]'::jsonb)
+            RETURNING id::text
           `,
           [
             input.operating_company_id,
@@ -479,6 +482,9 @@ export async function completeQuicksaveDraft(
             userId,
           ],
         );
+        if (!draftAssignmentHistoryInsert.rows[0]?.id) {
+          throw new Error("E_ASSIGNMENT_HISTORY_CREATE_FAILED");
+        }
       }
       await emitDispatchSpineEvent(client, {
         operating_company_id: input.operating_company_id,
