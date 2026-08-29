@@ -21,17 +21,30 @@ function verify(src = source) {
   return failures;
 }
 
+function mutateAssignWriter(src, before, after) {
+  const start = src.indexOf("async function handleAssignTruck");
+  const end = src.indexOf("export async function registerDriversBulkRoutes", start);
+  if (start < 0 || end <= start) return src;
+  const writer = src.slice(start, end);
+  const mutatedWriter = writer.replace(before, after);
+  if (mutatedWriter === writer) return src;
+  return `${src.slice(0, start)}${mutatedWriter}${src.slice(end)}`;
+}
+
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace("driver-default:${ctx.operatingCompanyId}:${ctx.id}", "driver-default:${ctx.id}"),
-    source.replace("unit-default:${ctx.operatingCompanyId}:${unitId}", "unit-default:${unitId}"),
-    source.replace("].sort();", "];"),
-    source.replace("pg_advisory_xact_lock", "pg_advisory_lock"),
-    source.replace("SET assigned_driver_id = NULL,", "SET updated_at = now(),"),
-    source.replace("SET assigned_driver_id = $2::uuid,", "SET assigned_driver_id = NULL,"),
-    source.replace('throw new Error("driver_bulk_unit_mirror_write_failed");', "return { ok: true };"),
-    source.replace("'bulk_assign', true, $4)\n        RETURNING id::text", "'bulk_assign', true, $4)\n        RETURNING unit_id::text"),
-    source.replace('throw new Error("driver_bulk_assignment_write_failed");', "return { ok: true };"),
+    // DRIVER-F7354 — archive now has a sibling driver-default lock earlier in
+    // this file. Mutate the Assign Truck writer itself so this arm can never
+    // accidentally edit the sibling and leave the protected site untouched.
+    mutateAssignWriter(source, "driver-default:${ctx.operatingCompanyId}:${ctx.id}", "driver-default:${ctx.id}"),
+    mutateAssignWriter(source, "unit-default:${ctx.operatingCompanyId}:${unitId}", "unit-default:${unitId}"),
+    mutateAssignWriter(source, "].sort();", "];"),
+    mutateAssignWriter(source, "pg_advisory_xact_lock", "pg_advisory_lock"),
+    mutateAssignWriter(source, "SET assigned_driver_id = NULL,", "SET updated_at = now(),"),
+    mutateAssignWriter(source, "SET assigned_driver_id = $2::uuid,", "SET assigned_driver_id = NULL,"),
+    mutateAssignWriter(source, 'throw new Error("driver_bulk_unit_mirror_write_failed");', "return { ok: true };"),
+    mutateAssignWriter(source, "'bulk_assign', true, $4)\n        RETURNING id::text", "'bulk_assign', true, $4)\n        RETURNING unit_id::text"),
+    mutateAssignWriter(source, 'throw new Error("driver_bulk_assignment_write_failed");', "return { ok: true };"),
   ];
   mutations.forEach((mutation, index) => {
     if (mutation === source || verify(mutation).length === 0) throw new Error(`selftest mutation escaped: ${index + 1}`);

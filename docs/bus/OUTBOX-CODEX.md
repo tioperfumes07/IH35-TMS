@@ -1,3 +1,4 @@
+CODEX | WORKING | GO-MODAL-01 | FINDING=DRIVER-F7354 | NOW=reanchor-bulk-assignment-lock-selftest | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=DSP-F7353 | NOW=planner-template-modal-full-url-retract | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7347 | NOW=fuel-queue-truth-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7346 | NOW=fuel-active-route-guard-root-fix | NEXT=unique dispatch/drivers/fleet/fuel | GO
