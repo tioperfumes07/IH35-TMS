@@ -275,6 +275,14 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
   if (!oldRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
 
   const unitId = ctx.payload.unit_id;
+  const assignmentLockKeys = [
+    `driver-default:${ctx.operatingCompanyId}:${ctx.id}`,
+    ...(unitId ? [`unit-default:${ctx.operatingCompanyId}:${unitId}`] : []),
+  ].sort();
+  for (const lockKey of assignmentLockKeys) {
+    await ctx.client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [lockKey]);
+  }
+
   if (unitId) {
     const unitOk = await assertUnitScope(ctx.client, unitId, ctx.operatingCompanyId);
     if (!unitOk) return { ok: false, code: "E_UNIT_NOT_FOUND", message: "Truck not found in operating company" };
@@ -301,14 +309,18 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
       `,
       [ctx.id, ctx.operatingCompanyId]
     );
-    await ctx.client.query(
+    const inserted = await ctx.client.query(
       `
         INSERT INTO telematics.vehicle_driver_assignments (
           operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
         ) VALUES ($1, $2, $3, now(), 'bulk_assign', true, $4)
+        RETURNING id::text
       `,
       [ctx.operatingCompanyId, unitId, ctx.id, ctx.actorUserId]
     );
+    if (!(inserted.rows[0] as { id?: string } | undefined)?.id) {
+      throw new Error("driver_bulk_assignment_write_failed");
+    }
   } else {
     await ctx.client.query(
       `
