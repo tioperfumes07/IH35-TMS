@@ -1,3 +1,5 @@
+Cursor | LEAD | FAST-MERGE-CATCH | SHA=b2448ce | pinged CC-1/2/3/Codex/Cascade · CC-1 OPEN #17648 #17639 #17627 #17604 · skip #15546 #16895 · Devin VOID · Cascade WORKING | GO
+Cursor | ACK | GO-0105-R1 | NOW=h4-per-entity-dormancy-correction | SHA=b2448ce | PR=#17657 merged 422990505 | deploy MCP Unauthorized · do not ship 22b1b63e4 as-is | GO
 Cursor | LEAD | 2026-08-29T19:05Z | GO-0105 sent all seats · TXH-04 Cursor · CC-3 customers LV-001 · CC-1 hops 4/6 · CC-2 H4 idle | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | GO
 Cursor | LEAD | 2026-08-29T19:00Z | H4 runbook: full /healthz + Render log stale_jobs · live fail is inbound+cdc only · CC-2 nothing to chase | GO
 Cursor | LEAD | 2026-08-29T18:40Z | H4 QBO jobs dormant unless IH35_QBO_JOB_HEALTH_ARMED=true · leftover realm must not yellow healthz | GO

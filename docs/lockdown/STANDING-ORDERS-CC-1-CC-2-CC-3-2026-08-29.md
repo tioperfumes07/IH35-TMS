@@ -136,7 +136,7 @@ Claim → merge CLAIMED → author (Rule 37). Never claim+author same PR.
 4. Fix root cause.
 5. Prove (§5).
 6. Update docs/module-completion/<module>.json + regenerate .md SAME commit (builders).
-7. Local gate → push → merge on green (§6).
+7. Local gate → push → **PR create → `gh api` squash in the same 15s** (§6). Do not start the next item with your PR still OPEN.
 8. Report (§9). GOTO 1.
 ```
 
@@ -184,17 +184,29 @@ Entity UUIDs: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80` · TRANSP `91e0bf0a-1
 
 ---
 
-## 6. MERGE PROTOCOL
+## 6. MERGE PROTOCOL — FAST-MERGE (owner 2026-08-29: CC-1 was skipping step 4)
+
+Local gate **exit 0** is merge proof. Do **not** wait for GitHub checks. Do **not** skip the PUT because `statusCheckRollup` is empty.
 
 ```bash
-node scripts/money-pr-local-gate.mjs   # or cursor-ship-preflight for Cursor
+# 0) Before ANY new item:
+gh pr list --author @me --state open
+# If rows exist: merge them first. Open PR = unshipped.
+
+node scripts/money-pr-local-gate.mjs   # Cursor: cursor-ship-preflight --body-file /tmp/pr-body.txt
+# 1–3: gate, push, gh pr create → N
+# 4) SAME TURN, SAME 15 SECONDS — this is the step CC-1 dropped after 12:32Z:
+gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash
 ```
 
-- Merge on green. Full Neon in lane. No `JORGE-APPROVED`.
+- Tip must contain `origin/main` (`git merge-base --is-ancestor origin/main HEAD`). CONFLICTING → rebase, gate, push, PUT again. Do not leave DIRTY PRs sitting (#17604 sat 32×).
+- Full Neon in lane. No `JORGE-APPROVED`.
 - **Never `trigger_deploy`.** Cursor lead only, Rule 42 (5–10 min **and** 5–10 PRs).
 - Money trailers: `MODULE_PROGRESS` / `ITEMS_TOUCHED` matching JSON.
 
 Skip PRs **#15546** **#16895**.
+
+CC-2: “don’t merge on red CI” **conflicts** with this law. Local gate 0 + ancestor of main → PUT. Do not wait 41 minutes on checks.
 
 ---
 

@@ -5,9 +5,8 @@
 // (Home day-summary, Create-Task scheduled date, Driver Scheduler range) and showed "no data".
 // Day-of defaults must be computed in the company's wall-clock zone.
 //
-// America/Chicago is hardcoded to match the backend convention (lib/company-business-date.ts).
-// TRANSP is the only active operating entity; when a per-company timezone is introduced, source it
-// here instead of the constant.
+// America/Chicago is the company default (CST/CDT). Per-entity org.companies.time_zone is EDIT-01/CC-1
+// (not this PR). Until that column is served on the session payload, every human timestamp uses this zone.
 const COMPANY_TIME_ZONE = "America/Chicago";
 
 // Exported so call sites needing the raw IANA zone id (e.g. a one-off Intl.DateTimeFormat call this
@@ -76,6 +75,31 @@ export function formatInCompanyTimeZone(
   const dt = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(dt.getTime())) return "";
   return dt.toLocaleString("en-US", { ...options, timeZone: COMPANY_TIME_ZONE });
+}
+
+/** Human timestamps: America/Chicago wall clock + " CT" (CST/CDT — never hardcoded CST). */
+export function ctDateTime(iso: string | null | undefined, empty = "—"): string {
+  if (!iso) return empty;
+  const s = formatInCompanyTimeZone(iso, {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return s ? `${s} CT` : empty;
+}
+
+export function ctDate(iso: string | null | undefined, empty = "—"): string {
+  if (!iso) return empty;
+  const s = formatInCompanyTimeZone(iso, { year: "numeric", month: "short", day: "2-digit" });
+  return s ? `${s} CT` : empty;
+}
+
+export function ctTime(iso: string | null | undefined, empty = "—"): string {
+  if (!iso) return empty;
+  const s = formatClockTimeCT(iso);
+  return s ? `${s} CT` : empty;
 }
 
 // Convenience: "3:45 PM" (12-hour clock, no date) in Central time — the common HOS/dispatch-board case.

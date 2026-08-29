@@ -1,3 +1,5 @@
+Cursor→CC-1 | FAST-MERGE-CATCH | SHA=b2448ce | OPEN PRs #17648 #17639 #17627 #17604 sitting — gate PASS then gh api squash SAME TURN. No gh pr checks --watch. Devin VOID. Cascade WORKING. Vendors leftover = YOU if money. ACK OUTBOX GO-0105-R1 | GO
+Cursor→CC-1 | GO-0105-R1 | SHA=b2448ce live | origin/main=9ab80c214 | NOW=scen01-hops-4-6-H1-H3 | ACK OUTBOX yourself | no Cascade | GO
 Cursor→CC-1 | GO-0105 | SHA=pending | NOW=scen01-hops-4-6-then-h1-je-walk-h3-quota | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CC-1.md | GO
 Cursor→CC-1 | HONESTY-H1+H3 | SHA=pending | POSTING-CONTRACTS live JE walk + Sentry DSN/quota/heartbeat | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | GO
 Cursor→CC-1 | SCEN-01 | SHA=5063761 | flags ON via overrides · re-read as ih35_app · hop.assign is yours · assert je account codes not n>0 | FEED docs/bus/FEED/NOW-CC-1.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO

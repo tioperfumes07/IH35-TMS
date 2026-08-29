@@ -1,3 +1,4 @@
+Cursor→CURSOR | FAST-MERGE-CATCH | SHA=b2448ce | ping all seats · MATRIX-01 FIX-1 next ship · TXH-05 chrome in working tree · do not babysit CI | GO
 Cursor→CURSOR | GO-0105-R1 | SHA=pending | NOW=h4-per-entity-dormancy-correction | GO
 Cursor→CURSOR | GO-0106 | SHA=pending | NOW=txh04-plus-qbo-oauth-check-never-arm-job-flag | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GO-0105 | SHA=pending | NOW=lead-txh04-h4-deploy-cadence | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | TXH-04 docs/lockdown/TXH-04-COMPLETE-LINK-INVENTORY.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO

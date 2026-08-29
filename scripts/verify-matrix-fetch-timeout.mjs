@@ -92,6 +92,12 @@ function failures(sources) {
   if (!/module-matrix-system-building/.test(system) || !/REQUIRED-SEED/.test(system)) {
     out.push("ModuleMatrixSystemView: must show building banner for REQUIRED-SEED (not API FEED UNAVAILABLE)");
   }
+  if (!/module-matrix-system-projection-failed/.test(system) || !/SCOREBOARD PROJECTION FAILED/.test(system)) {
+    out.push("ModuleMatrixSystemView: worker failure must render RED projection-failed banner, never computing copy");
+  }
+  if (/projectionFailed[\s\S]*computing in the background/.test(system.replace(/\n/g, " "))) {
+    out.push("ModuleMatrixSystemView: failed branch must not contain computing-in-the-background copy");
+  }
   if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
     out.push("ModuleMatrixSystemView: missing buildSystemMatrixRequiredFallback (API 502 must still paint Required)");
   }
@@ -190,9 +196,9 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       mutate: (text) => text.replace("POLL_MS = 300_000", "POLL_MS = 30_000"),
     },
     {
-      name: "building banner dropped",
+      name: "failed banner dropped",
       file: SYSTEM_VIEW,
-      mutate: (text) => text.replace("module-matrix-system-building", "module-matrix-system-unavailable-x"),
+      mutate: (text) => text.replace("module-matrix-system-projection-failed", "module-matrix-system-building-x"),
     },
   ];
   const escaped = [];
