@@ -88,9 +88,11 @@
       ],
       "spec": "BatchWizard · BatchDetail routes",
       "status": "PASS",
-      "evidence": "PASS code+guard — BatchWizard/BatchDetail company-gated; verify-fact-s03-batches-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.batch visible=0 == n_live_tup=0; live CDP9227 USMCA /factoring/batches/new h1=Factoring Batch Wizard Step1 shows 5 candidate invoices (INV-2026-00029…00017) Selected:0 · Face $0.00 — wizard wired; bare /factoring/batches has no list route (manifest = /batches/new + /batches/:id) and falls to /home (not claimed as list surface).",
+      "evidence": "PASS code+guard — BatchWizard/BatchDetail company-gated; verify-fact-s03-batches-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.batch visible=0 == n_live_tup=0; live CDP9227 USMCA /factoring/batches/new h1=Factoring Batch Wizard Step1 shows 5 candidate invoices (INV-2026-00029…00017) Selected:0 · Face $0.00 — wizard wired; bare /factoring/batches has no list route (manifest = /batches/new + /batches/:id) and falls to /home (not claimed as list surface). | LIVE RE-CONFIRMED 2026-08-28 (CC-1, GO-0033, app.ih35dispatch.com, USMCA, healthz=4e5db76): /accounting/factoring list renders FAC-2026-00001 (Faro Factoring, $1,850.00 total, $1,794.50 advanced, $55.50 reserve, ADVANCED) with a real drill-through href; followed it to /accounting/factoring/87e6389a-970c-4342-8c5e-99a39f3ce8fd — header, amounts, linked invoice INV-2026-00038 (TC Freight LLC), reserve movements (held $55.50), reserve balances by customer, and latest reserve events all rendered with real live data, no dead clicks or 500s.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T02:36:00.000Z",
+      "live_verified_sha": "4e5db76"
     },
     {
       "id": "FACT-S04",
