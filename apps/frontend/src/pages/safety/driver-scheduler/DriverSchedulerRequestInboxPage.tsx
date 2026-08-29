@@ -16,7 +16,7 @@ import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 type PendingRequestRow = Record<string, unknown>;
 const PAGE_SIZE = 50;
 
-export function DriverSchedulerRequestInboxPage() {
+export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded?: boolean } = {}) {
   // @matrix-built safety:leave_requests.list:{driver,connectivity,qbo_chrome}
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -68,13 +68,15 @@ export function DriverSchedulerRequestInboxPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader title="Leave Requests" subtitle="Pending time-off requests awaiting review" />
+      {!embedded ? <PageHeader title="Leave Requests" subtitle="Pending time-off requests awaiting review" /> : null}
       {!operatingCompanyId ? <div className="text-sm text-gray-500">Select an operating company to view leave requests.</div> : null}
-      <div className="mb-2">
-        <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
-          ← Back to Driver Scheduler grid
-        </Link>
-      </div>
+      {!embedded ? (
+        <div className="mb-2">
+          <Link to="/safety/driver-scheduler" className="text-xs text-slate-700 hover:underline">
+            ← Back to Driver Scheduler grid
+          </Link>
+        </div>
+      ) : null}
 
       {query.isError ? (
         <ListErrorState

@@ -44,6 +44,7 @@ import { SelectCombobox } from "../components/shared/SelectCombobox";
 import { CreateDriverModal } from "../components/drivers/CreateDriverModal";
 import { DriverPickerWithCreate } from "../components/drivers/DriverPickerWithCreate";
 import { DriversListPage } from "./drivers/DriversListPage";
+import { DriverSchedulerRequestInboxPage } from "./safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { AutoDeductionPoliciesPanel } from "./drivers/AutoDeductionPolicies";
 import { PendingSettlementDeductionsPanel } from "./drivers/PendingSettlementDeductionsPanel";
 import { SettlementDisputeList } from "./drivers/SettlementDisputeList";
@@ -894,16 +895,20 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
           ) : null}
           {subnavTab === "profiles" ? <DriversListPage /> : null}
           {subnavTab === "leave" ? (
-            <DataPanel title="Leave Overview" accentColor={colors.warn.strong}>
-              <DataPanelRow>
-                <span>On leave</span>
-                <span>{onLeaveCount}</span>
-              </DataPanelRow>
-              <DataPanelRow>
-                <span>Available drivers</span>
-                <span>{availableCount ?? "—"}</span>
-              </DataPanelRow>
-            </DataPanel>
+            <div className="space-y-3" data-testid="drivers-leave-workspace">
+              {/* @matrix-built drivers:leave:{connectivity} */}
+              <DataPanel title="Leave Overview" accentColor={colors.warn.strong}>
+                <DataPanelRow>
+                  <span>On leave</span>
+                  <span>{onLeaveCount}</span>
+                </DataPanelRow>
+                <DataPanelRow>
+                  <span>Available drivers</span>
+                  <span>{availableCount ?? "—"}</span>
+                </DataPanelRow>
+              </DataPanel>
+              <DriverSchedulerRequestInboxPage embedded />
+            </div>
           ) : null}
           {subnavTab === "pay_rate_templates" ? (
             <div data-testid="drivers-page-pay-rate-templates">
