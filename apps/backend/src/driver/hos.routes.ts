@@ -38,7 +38,7 @@ function sendForbidden(reply: FastifyReply) {
 }
 
 export async function registerDriverHosRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/hos", async (req, reply) => {
+  app.get("/api/v1/driver/hos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver || !req.user) return sendForbidden(reply);

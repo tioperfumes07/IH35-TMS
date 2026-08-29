@@ -56,7 +56,7 @@ function ownerOnly(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerUsmcaActivationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/usmca/activation/state", async (req, reply) => {
+  app.get("/api/v1/usmca/activation/state", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const result = await withCurrentUser(user.uuid, async (client) => {
@@ -70,7 +70,7 @@ export async function registerUsmcaActivationRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/usmca/activation/transition", async (req, reply) => {
+  app.post("/api/v1/usmca/activation/transition", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ownerOnly(req, reply);
     if (!user) return;
     const body = transitionBodySchema.safeParse(req.body ?? {});
@@ -106,7 +106,7 @@ export async function registerUsmcaActivationRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.patch("/api/v1/usmca/activation/checklist-item", async (req, reply) => {
+  app.patch("/api/v1/usmca/activation/checklist-item", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ownerOnly(req, reply);
     if (!user) return;
     const body = checklistPatchSchema.safeParse(req.body ?? {});

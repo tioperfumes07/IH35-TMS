@@ -49,7 +49,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverAuditEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/audit/events", async (req, reply) => {
+  app.get("/api/v1/audit/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

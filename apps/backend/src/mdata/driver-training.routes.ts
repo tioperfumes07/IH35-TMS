@@ -29,7 +29,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverTrainingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/drivers/:id/training", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/:id/training", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -76,7 +76,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/mdata/drivers/:id/training", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/training", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -138,7 +138,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     return reply.code(201).send(row);
   });
 
-  app.patch("/api/v1/mdata/drivers/:id/training/:training_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/drivers/:id/training/:training_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = trainingParamsSchema.safeParse(req.params ?? {});
@@ -196,7 +196,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/mdata/drivers/:id/training/:training_id/archive", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/training/:training_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = trainingParamsSchema.safeParse(req.params ?? {});

@@ -43,7 +43,7 @@ async function withCompany<T>(
 
 export async function mxPermitsRoutes(app: FastifyInstance) {
   // GET /api/v1/mx-permits
-  app.get("/api/v1/mx-permits", async (req, reply) => {
+  app.get("/api/v1/mx-permits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { operating_company_id } = companyQuery.parse(req.query);
@@ -67,7 +67,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/mx-permits/expiring — permits expiring in 30/60/90 days
-  app.get("/api/v1/mx-permits/expiring", async (req, reply) => {
+  app.get("/api/v1/mx-permits/expiring", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = z.object({
@@ -94,7 +94,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/mx-permits
-  app.post("/api/v1/mx-permits", async (req, reply) => {
+  app.post("/api/v1/mx-permits", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createPermitBody.parse(req.body);
@@ -128,7 +128,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
   });
 
   // PATCH /api/v1/mx-permits/:id
-  app.patch("/api/v1/mx-permits/:id", async (req, reply) => {
+  app.patch("/api/v1/mx-permits/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { id } = idParams.parse(req.params);
@@ -155,7 +155,7 @@ export async function mxPermitsRoutes(app: FastifyInstance) {
   });
 
   // DELETE /api/v1/mx-permits/:id (soft delete)
-  app.delete("/api/v1/mx-permits/:id", async (req, reply) => {
+  app.delete("/api/v1/mx-permits/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { id } = idParams.parse(req.params);

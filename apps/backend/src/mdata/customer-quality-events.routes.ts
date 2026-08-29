@@ -392,7 +392,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     return reply.code(201).send({ event: created });
   });
 
-  app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id/void", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -484,7 +484,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
     return { event: result };
   });
 
-  app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });

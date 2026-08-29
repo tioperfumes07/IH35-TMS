@@ -27,7 +27,7 @@ function canPost(role: string) {
 }
 
 export async function registerMaintWoApRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maint/wo/:id/posting-preview", async (req, reply) => {
+  app.get("/api/v1/maint/wo/:id/posting-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -50,7 +50,7 @@ export async function registerMaintWoApRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/maint/wo/:id/ap/post", async (req, reply) => {
+  app.post("/api/v1/maint/wo/:id/ap/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canPost(user.role)) return reply.code(403).send({ error: "forbidden" });

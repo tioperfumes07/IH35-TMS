@@ -110,7 +110,7 @@ function requireRole(reply: FastifyReply, role: string, allowed: string[]) {
 }
 
 export async function registerAttachmentsRoutes(app: FastifyInstance) {
-  app.post("/api/v1/attachments/upload-url", async (req, reply) => {
+  app.post("/api/v1/attachments/upload-url", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = uploadUrlBodySchema.safeParse(req.body ?? {});
@@ -135,7 +135,7 @@ export async function registerAttachmentsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/attachments/:id/finalize", async (req, reply) => {
+  app.post("/api/v1/attachments/:id/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -158,7 +158,7 @@ export async function registerAttachmentsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/attachments", async (req, reply) => {
+  app.get("/api/v1/attachments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -171,7 +171,7 @@ export async function registerAttachmentsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/attachments/:id/download-url", async (req, reply) => {
+  app.get("/api/v1/attachments/:id/download-url", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -192,7 +192,7 @@ export async function registerAttachmentsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/attachments/:id", async (req, reply) => {
+  app.delete("/api/v1/attachments/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireRole(reply, user.role, ATTACHMENT_DELETE_ROLES)) return;

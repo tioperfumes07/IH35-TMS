@@ -14,7 +14,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 
 /** Thin facade over docs.files + docs.file_links for unit profile Section 10. */
 export async function registerUnitDocumentsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/documents", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/documents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});

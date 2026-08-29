@@ -12,7 +12,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 
 export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   // POST /api/v1/broker-profiles — create/configure a broker profile
-  app.post("/api/v1/broker-profiles", async (req, reply) => {
+  app.post("/api/v1/broker-profiles", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = z.object({
@@ -46,7 +46,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/broker-profiles — list profiles for a company
-  app.get("/api/v1/broker-profiles", async (req, reply) => {
+  app.get("/api/v1/broker-profiles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { operating_company_id } = z
@@ -67,7 +67,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/broker-updates — queue an update (goes to pending_review by default)
-  app.post("/api/v1/broker-updates", async (req, reply) => {
+  app.post("/api/v1/broker-updates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = z.object({
@@ -121,7 +121,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/broker-updates/queue — pending-review queue for office approval
-  app.get("/api/v1/broker-updates/queue", async (req, reply) => {
+  app.get("/api/v1/broker-updates/queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { operating_company_id } = z
@@ -147,7 +147,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/broker-updates/:id/approve — office approves send
-  app.post("/api/v1/broker-updates/:id/approve", async (req, reply) => {
+  app.post("/api/v1/broker-updates/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };
@@ -170,7 +170,7 @@ export async function registerBrokerUpdateRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/broker-updates/:id/reject — office rejects send
-  app.post("/api/v1/broker-updates/:id/reject", async (req, reply) => {
+  app.post("/api/v1/broker-updates/:id/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };

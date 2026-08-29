@@ -33,7 +33,7 @@ async function withOwnerScope<T>(userId: string, role: string, fn: (client: DbCl
 }
 
 export async function registerUsmcaCarrierBootstrapRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/carrier-bootstrap/hidden-carriers", async (req, reply) => {
+  app.get("/api/v1/admin/carrier-bootstrap/hidden-carriers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     try {
@@ -47,7 +47,7 @@ export async function registerUsmcaCarrierBootstrapRoutes(app: FastifyInstance) 
     }
   });
 
-  app.post("/api/v1/admin/carrier-bootstrap/run", async (req, reply) => {
+  app.post("/api/v1/admin/carrier-bootstrap/run", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = runBodySchema.safeParse(req.body ?? {});

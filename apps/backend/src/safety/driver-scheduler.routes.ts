@@ -123,7 +123,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get("/api/v1/driver/scheduler/my-schedule", async (req, reply) => {
+  app.get("/api/v1/driver/scheduler/my-schedule", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsed = driverDateRangeQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -143,7 +143,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/driver/scheduler/request", async (req, reply) => {
+  app.post("/api/v1/driver/scheduler/request", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedBody = createLeaveRequestSchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -166,7 +166,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     return reply.code(201).send(result.request);
   });
 
-  app.patch("/api/v1/driver/scheduler/request/:id/cancel", async (req, reply) => {
+  app.patch("/api/v1/driver/scheduler/request/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedParams = uuidParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -238,7 +238,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/api/v1/safety/scheduler/grid", async (req, reply) => {
+  app.get("/api/v1/safety/scheduler/grid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -294,7 +294,7 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get("/api/v1/safety/scheduler/requests/:id", async (req, reply) => {
+  app.get("/api/v1/safety/scheduler/requests/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

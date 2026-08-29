@@ -53,7 +53,7 @@ async function loadPreparation(client: any, operatingCompanyId: string, id: stri
 }
 
 export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) {
-  app.post("/api/v1/ifta/preparations", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -77,7 +77,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return reply.code(201).send(data);
   });
 
-  app.get("/api/v1/ifta/preparations/:id", async (req, reply) => {
+  app.get("/api/v1/ifta/preparations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -106,7 +106,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return payload;
   });
 
-  app.post("/api/v1/ifta/preparations/:id/aggregate-miles", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations/:id/aggregate-miles", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -150,7 +150,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return payload.data;
   });
 
-  app.post("/api/v1/ifta/preparations/:id/aggregate-gallons", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations/:id/aggregate-gallons", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -193,7 +193,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return payload.data;
   });
 
-  app.post("/api/v1/ifta/preparations/:id/calculate-tax", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations/:id/calculate-tax", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -260,7 +260,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return payload.data;
   });
 
-  app.post("/api/v1/ifta/preparations/:id/generate-csv", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations/:id/generate-csv", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -321,7 +321,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return payload.data;
   });
 
-  app.get("/api/v1/ifta/preparations/:id/csv", async (req, reply) => {
+  app.get("/api/v1/ifta/preparations/:id/csv", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -344,7 +344,7 @@ export async function registerIftaQuarterlyPreparerRoutes(app: FastifyInstance) 
     return reply.redirect(payload.url);
   });
 
-  app.post("/api/v1/ifta/preparations/:id/submit", async (req, reply) => {
+  app.post("/api/v1/ifta/preparations/:id/submit", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

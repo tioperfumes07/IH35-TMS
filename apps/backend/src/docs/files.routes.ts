@@ -348,7 +348,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
   },
   });
 
-  app.post("/api/v1/docs/files/:file_id/upload-complete", async (req, reply) => {
+  app.post("/api/v1/docs/files/:file_id/upload-complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -514,7 +514,7 @@ export async function registerDocsFilesRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/docs/files/:file_id", async (req, reply) => {
+  app.get("/api/v1/docs/files/:file_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

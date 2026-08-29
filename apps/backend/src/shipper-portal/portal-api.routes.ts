@@ -98,7 +98,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     if (rejectInternalSessionOnPortalRoute(req, reply)) return;
   });
 
-  app.get("/api/v1/portal/loads", async (req, reply) => {
+  app.get("/api/v1/portal/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
 
@@ -163,7 +163,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     return { loads };
   });
 
-  app.get("/api/v1/portal/loads/:id", async (req, reply) => {
+  app.get("/api/v1/portal/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -293,7 +293,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/portal/loads/:id/documents", async (req, reply) => {
+  app.get("/api/v1/portal/loads/:id/documents", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -359,7 +359,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     return { documents };
   });
 
-  app.get("/api/v1/portal/loads/:id/documents/:attachment_id/download", async (req, reply) => {
+  app.get("/api/v1/portal/loads/:id/documents/:attachment_id/download", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     const params = z.object({ id: z.string().uuid(), attachment_id: z.string().min(1) }).safeParse(req.params ?? {});
@@ -447,7 +447,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     return signed;
   });
 
-  app.get("/api/v1/portal/loads/:id/tracking-stream", async (req, reply) => {
+  app.get("/api/v1/portal/loads/:id/tracking-stream", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -518,7 +518,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     reply.raw.end();
   });
 
-  app.get("/api/v1/portal/profile", async (req, reply) => {
+  app.get("/api/v1/portal/profile", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     return {
@@ -534,7 +534,7 @@ export async function registerPortalApiRoutes(app: FastifyInstance) {
     };
   });
 
-  app.patch("/api/v1/portal/profile", async (req, reply) => {
+  app.patch("/api/v1/portal/profile", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const portalUser = await requirePortalSession(req, reply);
     if (!portalUser) return;
     const body = profilePatchSchema.safeParse(req.body ?? {});

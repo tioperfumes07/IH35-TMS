@@ -1336,7 +1336,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return { drivers: result.rows, total: result.total };
   });
 
-  app.get("/api/v1/mdata/drivers/me", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/me", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
 
@@ -1365,7 +1365,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/mdata/drivers", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1993,7 +1993,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/mdata/drivers/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/drivers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

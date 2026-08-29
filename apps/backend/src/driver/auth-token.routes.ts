@@ -13,7 +13,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverAuthTokenRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/me", async (req, reply) => {
+  app.get("/api/v1/driver/me", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const user = req.user;
     const driver = req.driver;
@@ -53,7 +53,7 @@ export async function registerDriverAuthTokenRoutes(app: FastifyInstance) {
     };
   });
 
-  app.patch("/api/v1/driver/me/onboarding", async (req, reply) => {
+  app.patch("/api/v1/driver/me/onboarding", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const user = req.user;
     const driver = req.driver;
@@ -77,7 +77,7 @@ export async function registerDriverAuthTokenRoutes(app: FastifyInstance) {
     return { ok: true, onboarding_completed_at: parsed.data.complete ? new Date().toISOString() : null };
   });
 
-  app.post("/api/v1/driver/auth/refresh", async (req, reply) => {
+  app.post("/api/v1/driver/auth/refresh", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = refreshBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 

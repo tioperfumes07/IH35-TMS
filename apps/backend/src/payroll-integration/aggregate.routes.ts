@@ -37,7 +37,7 @@ async function withCompany<T>(
 }
 
 export async function registerPayrollIntegrationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/payroll-integration/aggregate", async (req, reply) => {
+  app.get("/api/v1/payroll-integration/aggregate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -92,7 +92,7 @@ export async function registerPayrollIntegrationRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/payroll-integration/aggregate/refresh", async (req, reply) => {
+  app.post("/api/v1/payroll-integration/aggregate/refresh", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

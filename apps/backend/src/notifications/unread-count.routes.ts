@@ -19,7 +19,7 @@ async function notificationsTableReady(client: Queryable): Promise<boolean> {
 }
 
 export async function registerNotificationUnreadCountRoutes(app: FastifyInstance) {
-  app.get("/api/v1/notifications/unread-count", async (req, reply) => {
+  app.get("/api/v1/notifications/unread-count", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

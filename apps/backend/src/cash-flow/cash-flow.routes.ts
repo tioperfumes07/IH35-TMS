@@ -46,7 +46,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/v1/cash-flow/daily-prediction", async (req, reply) => {
+  app.get("/api/v1/cash-flow/daily-prediction", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -68,7 +68,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     return reply.send(result);
   });
 
-  app.get("/api/v1/cash-flow/actual-vs-projected", async (req, reply) => {
+  app.get("/api/v1/cash-flow/actual-vs-projected", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -88,7 +88,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
     return reply.send(result);
   });
 
-  app.post("/api/v1/cash-flow/adjustments", async (req, reply) => {
+  app.post("/api/v1/cash-flow/adjustments", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -126,7 +126,7 @@ export async function registerCashFlowModuleRoutes(app: FastifyInstance): Promis
   // CASHFLOW-ADJUSTMENT-NO-VOID-PATH: archived_at has existed on this table since it was created
   // (202606080200_cash_flow_adjustments.sql, "ARCHIVE never DELETE"), but no route ever set it —
   // a mistaken manual adjustment could be created but never removed. Void-not-delete.
-  app.patch("/api/v1/cash-flow/adjustments/:id/archive", async (req, reply) => {
+  app.patch("/api/v1/cash-flow/adjustments/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

@@ -38,7 +38,7 @@ function frontendResetConfirmUrl(token: string): string {
 const argon2id = new Argon2id();
 
 export async function registerPasswordResetRoutes(app: FastifyInstance) {
-  app.post("/api/v1/identity/password-reset/request", async (req, reply) => {
+  app.post("/api/v1/identity/password-reset/request", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = requestBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const email = normalizeEmail(parsed.data.email);
@@ -103,7 +103,7 @@ export async function registerPasswordResetRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true, message: RESET_GENERIC_OK });
   });
 
-  app.post("/api/v1/identity/password-reset/confirm", async (req, reply) => {
+  app.post("/api/v1/identity/password-reset/confirm", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const parsed = confirmBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 

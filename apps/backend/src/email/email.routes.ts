@@ -44,7 +44,7 @@ function encodeCursor(row: { created_at: string | Date; id: string }) {
 }
 
 export async function registerEmailRoutes(app: FastifyInstance) {
-  app.post("/api/v1/email/test", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/email/test", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -122,7 +122,7 @@ export async function registerEmailRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/email/queue/:id/retry-now", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/email/queue/:id/retry-now", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -154,7 +154,7 @@ export async function registerEmailRoutes(app: FastifyInstance) {
     return { ok: true, id: params.data.id };
   });
 
-  app.post("/api/v1/email/alerts/:id/acknowledge", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/email/alerts/:id/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

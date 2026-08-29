@@ -22,7 +22,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerUnitPhotosRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/photos", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/photos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});
@@ -57,7 +57,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
     return { photos: rows };
   });
 
-  app.post("/api/v1/mdata/units/:id/photos", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});
@@ -101,7 +101,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
     return reply.code(201).send(row);
   });
 
-  app.post("/api/v1/mdata/units/:id/photos/:photo_id/archive", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/photos/:photo_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = photoParamsSchema.safeParse(req.params ?? {});

@@ -20,7 +20,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 export async function registerUserPreferencesRoutes(app: FastifyInstance) {
   await registerTableColumnPreferencesRoutes(app);
 
-  app.get("/api/v1/user/preferences", async (req, reply) => {
+  app.get("/api/v1/user/preferences", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
@@ -31,7 +31,7 @@ export async function registerUserPreferencesRoutes(app: FastifyInstance) {
     return { preferences };
   });
 
-  app.patch("/api/v1/user/preferences", async (req, reply) => {
+  app.patch("/api/v1/user/preferences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});

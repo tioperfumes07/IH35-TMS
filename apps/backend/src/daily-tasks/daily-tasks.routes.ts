@@ -29,7 +29,7 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDailyTasksRoutes(app: FastifyInstance) {
-  app.post("/api/v1/daily-tasks", async (req, reply) => {
+  app.post("/api/v1/daily-tasks", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = createDailyTaskBodySchema.safeParse(req.body ?? {});
@@ -50,7 +50,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
-  app.get("/api/v1/daily-tasks", async (req, reply) => {
+  app.get("/api/v1/daily-tasks", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = listDailyTasksQuerySchema.safeParse(req.query ?? {});
@@ -70,7 +70,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/daily-tasks/:id", async (req, reply) => {
+  app.get("/api/v1/daily-tasks/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = taskIdParamsSchema.safeParse(req.params ?? {});
@@ -88,7 +88,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/daily-tasks/:id/accept", async (req, reply) => {
+  app.post("/api/v1/daily-tasks/:id/accept", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = taskIdParamsSchema.safeParse(req.params ?? {});
@@ -107,7 +107,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/daily-tasks/:id/complete", async (req, reply) => {
+  app.post("/api/v1/daily-tasks/:id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = taskIdParamsSchema.safeParse(req.params ?? {});
@@ -126,7 +126,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/daily-tasks/:id/reassign", async (req, reply) => {
+  app.post("/api/v1/daily-tasks/:id/reassign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsedParams = taskIdParamsSchema.safeParse(req.params ?? {});
@@ -148,7 +148,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/daily-tasks/:id/cancel", async (req, reply) => {
+  app.post("/api/v1/daily-tasks/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsedParams = taskIdParamsSchema.safeParse(req.params ?? {});
@@ -170,7 +170,7 @@ export async function registerDailyTasksRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/daily-tasks/:id/events", async (req, reply) => {
+  app.get("/api/v1/daily-tasks/:id/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = taskIdParamsSchema.safeParse(req.params ?? {});

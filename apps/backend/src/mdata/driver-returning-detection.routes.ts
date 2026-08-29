@@ -152,7 +152,7 @@ export async function findReturningDriverMatches(client: QueryableClient, input:
 }
 
 export async function registerDriverReturningDetectionRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/drivers/check-returning", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/check-returning", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });

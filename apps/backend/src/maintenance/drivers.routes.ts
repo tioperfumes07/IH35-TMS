@@ -126,7 +126,7 @@ async function enqueueDriverPushIfProjected(
 }
 
 export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/drivers", async (req, reply) => {
+  app.get("/api/v1/maintenance/drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -182,7 +182,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     return { rows, csv_import_enabled: isDriversCsvImportEnabled() };
   });
 
-  app.post("/api/v1/maintenance/drivers", async (req, reply) => {
+  app.post("/api/v1/maintenance/drivers", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createSchema.safeParse(req.body ?? {});
@@ -242,7 +242,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     });
   });
 
-  app.patch("/api/v1/maintenance/drivers/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/drivers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -298,7 +298,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/maintenance/drivers/:id/void", async (req, reply) => {
+  app.patch("/api/v1/maintenance/drivers/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -328,7 +328,7 @@ export async function registerMaintenanceDriversRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/maintenance/drivers/import", async (req, reply) => {
+  app.post("/api/v1/maintenance/drivers/import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isDriversCsvImportEnabled()) {

@@ -62,7 +62,7 @@ async function unitTableHasColumn(
 }
 
 export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/units/bulk-update", async (req, reply) => {
+  app.post("/api/v1/mdata/units/bulk-update", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     return withLegacyBulkRequest(req, reply, async ({ authUser, bulkCallId }) => {
       const parsedQuery = bulkUpdateQuerySchema.safeParse(req.query ?? {});
       if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);

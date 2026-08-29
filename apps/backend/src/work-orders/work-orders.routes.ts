@@ -443,7 +443,7 @@ function buildPdfModel(params: {
 }
 
 export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
-  app.get("/api/v1/work-orders", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/work-orders", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -601,7 +601,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/work-orders/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/work-orders/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -651,7 +651,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: payload.wo, line_items: payload.lines, status_history: payload.history };
   });
 
-  app.post("/api/v1/work-orders", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -821,7 +821,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/work-orders/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/work-orders/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -959,7 +959,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: result.wo };
   });
 
-  app.post("/api/v1/work-orders/:id/approve", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -1010,7 +1010,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: row.wo };
   });
 
-  app.post("/api/v1/work-orders/:id/start", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/start", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -1044,7 +1044,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: row.wo };
   });
 
-  app.post("/api/v1/work-orders/:id/complete", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -1124,7 +1124,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: row.wo };
   });
 
-  app.post("/api/v1/work-orders/:id/cancel", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
@@ -1347,7 +1347,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: row.wo };
   });
 
-  app.post("/api/v1/work-orders/:id/photos", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/work-orders/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -1377,7 +1377,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { upload_url: payload.upload_url, object_key: payload.object_key };
   });
 
-  app.patch("/api/v1/work-orders/:id/photos", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/work-orders/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeWoRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -1416,7 +1416,7 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
     return { work_order: row.wo };
   });
 
-  app.get("/api/v1/work-orders/:id/pdf", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/work-orders/:id/pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

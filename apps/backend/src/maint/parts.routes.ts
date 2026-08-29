@@ -49,7 +49,7 @@ const GONE_BODY = {
 } as const;
 
 export async function registerMaintPartsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maint/parts", async (req, reply) => {
+  app.get("/api/v1/maint/parts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -88,11 +88,11 @@ export async function registerMaintPartsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/maint/parts", async (_req, reply) => {
+  app.post("/api/v1/maint/parts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {
     return reply.code(410).send(GONE_BODY);
   });
 
-  app.patch("/api/v1/maint/parts/:id", async (_req, reply) => {
+  app.patch("/api/v1/maint/parts/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {
     return reply.code(410).send(GONE_BODY);
   });
 }

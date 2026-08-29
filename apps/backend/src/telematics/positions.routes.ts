@@ -30,7 +30,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/positions/latest", async (req, reply) => {
+  app.get("/api/v1/telematics/positions/latest", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = latestQuerySchema.safeParse(req.query ?? {});
@@ -66,7 +66,7 @@ export async function registerTelematicsPositionsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/telematics/positions/:unit_id/history", async (req, reply) => {
+  app.get("/api/v1/telematics/positions/:unit_id/history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const params = historyParamsSchema.safeParse(req.params ?? {});

@@ -279,7 +279,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/maintenance/dashboard/dtc-auto-work-orders", async (req, reply) => {
+  app.get("/api/v1/maintenance/dashboard/dtc-auto-work-orders", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.extend({
@@ -320,7 +320,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return { ...rows, limit: parsed.data.limit, offset: parsed.data.offset };
   });
 
-  app.get("/api/v1/maintenance/fleet-table/kpis", async (req, reply) => {
+  app.get("/api/v1/maintenance/fleet-table/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -375,7 +375,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/maintenance/fleet-table/rows", async (req, reply) => {
+  app.get("/api/v1/maintenance/fleet-table/rows", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -441,7 +441,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/service-location/kpis", async (req, reply) => {
+  app.get("/api/v1/maintenance/service-location/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -487,7 +487,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/maintenance/service-location/rows", async (req, reply) => {
+  app.get("/api/v1/maintenance/service-location/rows", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -523,7 +523,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/parts-inventory/kpis", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts-inventory/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});

@@ -17,7 +17,7 @@ const noteSchema = z.object({
 
 export async function registerProgramBoardRoutes(app: FastifyInstance) {
   // Read the whole board. Any authed staff (office or driver) may view.
-  app.get("/api/v1/program/board", async (req, reply) => {
+  app.get("/api/v1/program/board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const user = req.user as { uuid: string };
     const board = await withCurrentUser(user.uuid, (client) => getProgramBoard(client));
@@ -25,7 +25,7 @@ export async function registerProgramBoardRoutes(app: FastifyInstance) {
   });
 
   // Owner posts an answer/idea/note. author is derived server-side ('owner') — never trusted from body.
-  app.post("/api/v1/program/board/notes", async (req, reply) => {
+  app.post("/api/v1/program/board/notes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const user = req.user as { uuid: string };
     const parsed = noteSchema.safeParse(req.body ?? {});
@@ -55,7 +55,7 @@ export async function registerProgramBoardRoutes(app: FastifyInstance) {
   // (phase manifest + reconcile:blocks registry + held-migrations). Honest failure (§0): if a required
   // artifact is unreadable, return 503 with an explicit error so the page shows an error state, never
   // stale/placeholder numbers.
-  app.get("/api/v1/program/tracker", async (req, reply) => {
+  app.get("/api/v1/program/tracker", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     try {
       return reply.send(await computeProgramTrackerLive(new Date()));

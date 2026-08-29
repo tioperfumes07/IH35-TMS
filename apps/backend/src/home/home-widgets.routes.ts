@@ -277,7 +277,7 @@ const revenueRangeQuerySchema = companyQuerySchema.extend({
 });
 
 export async function registerHomeWidgetRoutes(app: FastifyInstance) {
-  app.get("/api/v1/home/weekly-revenue", async (req, reply) => {
+  app.get("/api/v1/home/weekly-revenue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -322,7 +322,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/home/wo-status-counts", async (req, reply) => {
+  app.get("/api/v1/home/wo-status-counts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -377,7 +377,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/fleet-utilization", async (req, reply) => {
+  app.get("/api/v1/home/fleet-utilization", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -427,7 +427,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/today-revenue", async (req, reply) => {
+  app.get("/api/v1/home/today-revenue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -463,7 +463,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/home/open-loads-count", async (req, reply) => {
+  app.get("/api/v1/home/open-loads-count", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -484,7 +484,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/drivers-on-duty", async (req, reply) => {
+  app.get("/api/v1/home/drivers-on-duty", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -528,7 +528,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/wos-open-count", async (req, reply) => {
+  app.get("/api/v1/home/wos-open-count", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -570,7 +570,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/cash-position", async (req, reply) => {
+  app.get("/api/v1/home/cash-position", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -613,7 +613,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/home/factoring-balance", async (req, reply) => {
+  app.get("/api/v1/home/factoring-balance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -649,7 +649,7 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
   });
 
   // Auth probe for tests
-  app.get("/api/v1/home/widgets-auth-check", async (req, reply) => {
+  app.get("/api/v1/home/widgets-auth-check", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     return { ok: true };

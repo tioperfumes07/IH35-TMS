@@ -93,7 +93,7 @@ function unitParams(unitId: string | undefined) {
 }
 
 export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/kpi/summary", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = kpiQuerySchema.safeParse(req.query ?? {});
@@ -286,23 +286,23 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/maintenance/kpi/downtime", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/downtime", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return kpiDrilldown(req, reply, "downtime");
   });
 
-  app.get("/api/v1/maintenance/kpi/mtbf", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/mtbf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return kpiDrilldown(req, reply, "mtbf");
   });
 
-  app.get("/api/v1/maintenance/kpi/cpm", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/cpm", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return kpiDrilldown(req, reply, "cpm");
   });
 
-  app.get("/api/v1/maintenance/kpi/cost-per-truck", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/cost-per-truck", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return kpiDrilldown(req, reply, "cost_per_truck");
   });
 
-  app.get("/api/v1/maintenance/kpi/pm-compliance", async (req, reply) => {
+  app.get("/api/v1/maintenance/kpi/pm-compliance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = pmComplianceQuerySchema.safeParse(req.query ?? {});

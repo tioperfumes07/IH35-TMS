@@ -102,7 +102,7 @@ export async function registerPortalAuthRoutes(app: FastifyInstance) {
     return reply.code(200).send({ ok: true });
   });
 
-  app.post("/api/v1/portal/auth/logout", async (req, reply) => {
+  app.post("/api/v1/portal/auth/logout", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const sessionId = req.cookies[PORTAL_SESSION_COOKIE];
     if (sessionId) {
       await withLuciaBypass(async (client) => {

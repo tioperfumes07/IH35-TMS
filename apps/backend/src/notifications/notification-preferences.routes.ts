@@ -17,7 +17,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerNotificationPreferencesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/notifications/preferences", async (req, reply) => {
+  app.get("/api/v1/notifications/preferences", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -48,7 +48,7 @@ export async function registerNotificationPreferencesRoutes(app: FastifyInstance
     return reply.send({ preferences: prefs });
   });
 
-  app.patch("/api/v1/notifications/preferences", async (req, reply) => {
+  app.patch("/api/v1/notifications/preferences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = patchPrefsSchema.safeParse(req.body ?? {});

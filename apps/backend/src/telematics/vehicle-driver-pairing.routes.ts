@@ -33,7 +33,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/vehicle-driver-history", async (req, reply) => {
+  app.get("/api/v1/telematics/vehicle-driver-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = historyQuerySchema.safeParse(req.query ?? {});
@@ -110,7 +110,7 @@ export async function registerVehicleDriverPairingRoutes(app: FastifyInstance) {
     return { rows: rows.rows, total_count: rows.total_count, limit: parsed.data.limit, offset: parsed.data.offset };
   });
 
-  app.get("/api/v1/telematics/vehicle-driver-lookup", async (req, reply) => {
+  app.get("/api/v1/telematics/vehicle-driver-lookup", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = lookupQuerySchema.safeParse(req.query ?? {});

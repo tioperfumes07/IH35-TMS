@@ -30,7 +30,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   });
 
-  app.get("/api/v1/banking/transactions/review", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/review", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -183,7 +183,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/banking/rules", async (req, reply) => {
+  app.get("/api/v1/banking/rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -198,7 +198,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.post("/api/v1/banking/rules", async (req, reply) => {
+  app.post("/api/v1/banking/rules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -259,7 +259,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return reply.code(201).send({ id });
   });
 
-  app.patch("/api/v1/banking/rules/:id", async (req, reply) => {
+  app.patch("/api/v1/banking/rules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -297,7 +297,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.delete("/api/v1/banking/rules/:id", async (req, reply) => {
+  app.delete("/api/v1/banking/rules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -320,7 +320,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/transactions/:id/refresh-suggestion", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/refresh-suggestion", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -373,7 +373,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/reconciliation-sessions", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation-sessions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 
@@ -418,7 +418,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return reply.code(201).send({ id: row?.id });
   });
 
-  app.get("/api/v1/banking/reconciliation-sessions", async (req, reply) => {
+  app.get("/api/v1/banking/reconciliation-sessions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
     const q = companyQuerySchema.extend({ account_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
@@ -437,7 +437,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.get("/api/v1/banking/reconciliation-sessions/:id", async (req, reply) => {
+  app.get("/api/v1/banking/reconciliation-sessions/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
@@ -467,7 +467,7 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/banking/reconciliation-sessions/:id/finalize", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation-sessions/:id/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = financeUser(req, reply);
     if (!user) return;
 

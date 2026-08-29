@@ -30,7 +30,7 @@ function isManagerPlus(role: string): boolean {
 }
 
 export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers/:uuid/free-time-detention", async (req, reply) => {
+  app.get("/api/v1/customers/:uuid/free-time-detention", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
@@ -47,7 +47,7 @@ export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstan
     return { terms };
   });
 
-  app.patch("/api/v1/customers/:uuid/free-time-detention", async (req, reply) => {
+  app.patch("/api/v1/customers/:uuid/free-time-detention", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isManagerPlus(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -66,7 +66,7 @@ export async function registerCustomerFreeTimeDetentionRoutes(app: FastifyInstan
     return { terms: updated };
   });
 
-  app.get("/api/v1/customers/:uuid/terms-history", async (req, reply) => {
+  app.get("/api/v1/customers/:uuid/terms-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});

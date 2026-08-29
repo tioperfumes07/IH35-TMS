@@ -12,13 +12,13 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverPreferencesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/preferences/language", async (req, reply) => {
+  app.get("/api/v1/driver/preferences/language", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const preferredLanguage = req.driver?.preferred_language ?? "en";
     return { preferred_language: preferredLanguage };
   });
 
-  app.patch("/api/v1/driver/preferences/language", async (req, reply) => {
+  app.patch("/api/v1/driver/preferences/language", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     if (!req.user || !req.driver) return reply.code(403).send({ error: "forbidden" });
     const parsed = updateBodySchema.safeParse(req.body ?? {});

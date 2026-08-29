@@ -66,7 +66,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerEquipmentBulkUpdateRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/equipment/bulk-update", async (req, reply) => {
+  app.post("/api/v1/mdata/equipment/bulk-update", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     return withLegacyBulkRequest(req, reply, async ({ authUser, bulkCallId }) => {
       const parsedQuery = bulkUpdateQuerySchema.safeParse(req.query ?? {});
       if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);

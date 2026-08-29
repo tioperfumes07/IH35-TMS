@@ -28,7 +28,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 export async function registerAuditRoutes(app: FastifyInstance) {
   await registerAuditEventsListRoutes(app);
 
-  app.get("/api/v1/audit/row-changes", async (req, reply) => {
+  app.get("/api/v1/audit/row-changes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

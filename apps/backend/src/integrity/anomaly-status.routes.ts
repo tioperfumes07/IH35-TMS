@@ -89,7 +89,7 @@ function mapAnomalyRow(row: Record<string, unknown>) {
 }
 
 export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrity/anomalies", async (req, reply) => {
+  app.get("/api/v1/integrity/anomalies", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -190,7 +190,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/integrity/anomalies/:id", async (req, reply) => {
+  app.get("/api/v1/integrity/anomalies/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -265,7 +265,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
     return { anomaly };
   });
 
-  app.post("/api/v1/integrity/anomalies/:id/acknowledge", async (req, reply) => {
+  app.post("/api/v1/integrity/anomalies/:id/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -313,7 +313,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
     return { anomaly };
   });
 
-  app.post("/api/v1/integrity/anomalies/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/integrity/anomalies/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -361,7 +361,7 @@ export async function registerAnomalyStatusRoutes(app: FastifyInstance) {
     return { anomaly };
   });
 
-  app.post("/api/v1/integrity/anomalies/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/integrity/anomalies/:id/dismiss", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

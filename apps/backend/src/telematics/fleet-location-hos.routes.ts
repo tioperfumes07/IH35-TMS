@@ -59,7 +59,7 @@ export async function renderFleetLocationHosXlsx(rows: FleetLocationHosRow[]): P
 export async function registerFleetLocationHosRoutes(app: FastifyInstance) {
   // Read-only fleet location + assigned driver + HOS aggregation (Samsara-fed). No 50-cap — covers ALL
   // reporting vehicles. ?format=xlsx returns a .xlsx download. Entity-scoped.
-  app.get("/api/v1/telematics/fleet-location-hos", async (req, reply) => {
+  app.get("/api/v1/telematics/fleet-location-hos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});

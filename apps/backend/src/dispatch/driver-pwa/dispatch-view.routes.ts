@@ -300,7 +300,7 @@ export function buildDispatchViewPayload(load: LoadRow, stops: DispatchViewStop[
 }
 
 export async function registerDispatchViewRoutes(app: FastifyInstance) {
-  app.get("/api/dispatch/driver-pwa/load/:uuid/dispatch-view", async (req, reply) => {
+  app.get("/api/dispatch/driver-pwa/load/:uuid/dispatch-view", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
