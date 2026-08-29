@@ -46,7 +46,7 @@ function ApplicantCard({
       <p className="text-xs text-gray-600">{row.phone}</p>
       {row.email ? <p className="text-xs text-gray-500">{row.email}</p> : null}
       <div className="flex flex-wrap gap-1">
-        {APPLICANT_PIPELINE_COLUMNS.filter((c) => c.key !== row.status).map((col) => (
+        {APPLICANT_PIPELINE_COLUMNS.filter((c) => c.key !== row.status && c.key !== "hired").map((col) => (
           <button
             key={col.key}
             type="button"

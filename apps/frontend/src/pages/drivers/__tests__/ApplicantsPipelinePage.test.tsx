@@ -143,6 +143,14 @@ describe("ApplicantsPipelinePage (A24-12)", () => {
     });
   });
 
+  it("reserves hired status for the canonical conversion action", async () => {
+    render(wrap(<ApplicantsPipelinePage />));
+    await screen.findByTestId(`applicant-card-${applicantId}`);
+
+    expect(screen.queryByRole("button", { name: /→ Hired/i })).not.toBeInTheDocument();
+    expect(screen.getByTestId(`convert-applicant-${applicantId}`)).toBeInTheDocument();
+  });
+
   it("convert to driver calls convert API", async () => {
     render(wrap(<ApplicantsPipelinePage />));
     await screen.findByTestId(`convert-applicant-${applicantId}`);
