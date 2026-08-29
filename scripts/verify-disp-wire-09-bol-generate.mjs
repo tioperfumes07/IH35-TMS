@@ -12,6 +12,7 @@
  *   (g) Generate BOL closes over a mutable load/company or applies stale completion state
  *   (h) Summary loading/failure masquerades as zero POD/BOL history or permits duplicate generation
  *   (i) Stored-copy download applies a signed URL/error after load/company scope replacement
+ *   (j) Canonical BOL creation returns without transaction-bound actor/company/load/document audit evidence
  *
  * Mutation-tested both directions.
  *
@@ -59,6 +60,12 @@ export function auditBolWire(sources) {
   }
   if (!/export\s+async\s+function\s+generateAndStoreBol/.test(service)) {
     problems.push(`${PATHS.service}: generateAndStoreBol export missing`);
+  }
+  if (!/appendCrudAudit\(client, userId, ["']dispatch\.bol\.generated["'],\s*\{[\s\S]{0,160}operating_company_id:\s*operatingCompanyId,[\s\S]{0,160}bol_id:\s*stored\.id,[\s\S]{0,160}load_id:\s*loadId,[\s\S]{0,180}pdf_r2_key:\s*r2Key,[\s\S]{0,160}sha256,[\s\S]{0,160}template_version:\s*templateVersion/.test(service)) {
+    problems.push(`${PATHS.service}: canonical BOL create must append actor/company/load/document audit evidence`);
+  }
+  if (!/if \(!stored\?\.id\) throw new Error\(["']bol_document_create_failed["']\);[\s\S]{0,120}await appendCrudAudit\(client, userId, ["']dispatch\.bol\.generated["']/.test(service)) {
+    problems.push(`${PATHS.service}: BOL audit must run after required canonical document identity inside the compensated write block`);
   }
   if (!/driver_company_authorizations bol_driver_dca[\s\S]{0,320}bol_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}bol_driver_dca\.is_authorized = true[\s\S]{0,180}bol_driver_dca\.deactivated_at IS NULL/.test(service)) {
     problems.push(`${PATHS.service}: BOL driver label must accept active company authorization`);
@@ -177,6 +184,38 @@ function selftest() {
           service: mutate(real.service, "bol_driver_dca.is_authorized = true", "bol_driver_dca.is_authorized = false", "driver auth"),
         }),
       expect: "active company authorization",
+    },
+    {
+      label: "BOL generated audit event removed",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, '"dispatch.bol.generated"', '"dispatch.bol.generated_GONE"', "BOL audit event"),
+        }),
+      expect: "append actor/company/load/document audit evidence",
+    },
+    {
+      label: "BOL audit loses canonical document identity",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, "bol_id: stored.id", "bol_id: loadId", "BOL audit identity"),
+        }),
+      expect: "append actor/company/load/document audit evidence",
+    },
+    {
+      label: "BOL audit moves before identity requirement",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(
+            real.service,
+            'if (!stored?.id) throw new Error("bol_document_create_failed");',
+            'void stored?.id;',
+            "BOL audit ordering",
+          ),
+        }),
+      expect: "after required canonical document identity",
     },
     {
       label: "drawer mount removed",
