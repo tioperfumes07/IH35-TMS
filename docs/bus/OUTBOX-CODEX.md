@@ -2191,6 +2191,8 @@ Codex | WORKING | DSP-F7245 | GO-0030 | CLAIM=pre-settlement-feed-failure-honest
 Codex | SHIPPED | DSP-F7244 | PR=#17464 @ fd1867e802 | Built=retired-load mutation rejection | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7246 | GO-0030 | CLAIM=book-load-customer-read-honesty | SOURCE=company customer catalog→both Book Load selectors | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7245 | PR=#17465 @ 662edc8c5f | Built=pre-settlement feed failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DRV-F7255 | GO-0054 | CLAIM=training-completed-at-validation | SOURCE=API schema→training_records.completed_at | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7254 | PR=#17476 @ ac3a951eed | Built=W8BEN creator driver-company continuity | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
 Codex | WORKING | DRV-F7254 | GO-0054 | CLAIM=W8BEN-create-driver-company-continuity | SOURCE=driver roster→driver_w8ben FK | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7253 | PR=#17475 @ 3d670ad315 | Built=termination event+driver state atomicity | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
 Codex | WORKING | DRV-F7253 | GO-0054 | CLAIM=termination-event-parent-state-atomicity | SOURCE=driver_safety_events→mdata.drivers status/date | NEXT=guard+FAST-MERGE | GO

@@ -5,8 +5,11 @@
 import fs from "node:fs";
 import process from "node:process";
 const FILE = "apps/frontend/src/pages/safety/TrainingRecordsPage.tsx";
-function inspect(source) {
+const BACKEND_FILE = "apps/backend/src/mdata/driver-training.routes.ts";
+function inspect(source, backend) {
   const errors = [];
+  const createSchemaBody = backend.match(/const createTrainingSchema = z\.object\(\{([\s\S]*?)\n\}\);/)?.[1] ?? "";
+  const patchSchemaBody = backend.match(/const patchTrainingSchema = z\.object\(\{([\s\S]*?)\n\}\);/)?.[1] ?? "";
   const closeCreateBody = source.match(/const closeCreate = \(\) => \{([\s\S]*?)\n  \};/)?.[1] ?? "";
   const successBody = source.match(/onSuccess: \(_result, input\) => \{([\s\S]*?)\n    \},/)?.[1] ?? "";
   if (!/useEffect\(\(\) => \{[\s\S]*createMutation\.reset\(\)[\s\S]*setCreateOpen\(false\)[\s\S]*setDriverId\(""\)[\s\S]*setTrainingName\(""\)[\s\S]*setCompletedAt\(companyToday\(\)\)[\s\S]*setExpiryDate\(""\)[\s\S]*setNotes\(""\)[\s\S]*\}, \[operatingCompanyId\]\)/.test(source)) errors.push("company transition does not reset complete training creator lifecycle");
@@ -21,10 +24,13 @@ function inspect(source) {
   if (!source.includes('["safety", "training-records", input.companyId]') || !source.includes('["safety", "training-completions", input.companyId]')) errors.push("success refreshes are not pinned to submitting company");
   if (!/payload: \{[\s\S]*driver_id: driverId[\s\S]*training_name: trainingName\.trim\(\)[\s\S]*completed_at:[\s\S]*expiry_date: expiryDate \|\| undefined[\s\S]*notes: notes\.trim\(\) \|\| undefined/.test(source)) errors.push("submit does not carry every visible training field");
   if (!source.includes("<DriverPickerWithCreate") || !source.includes("operatingCompanyId={operatingCompanyId}")) errors.push("canonical scoped driver picker/create removed");
+  if (!/completed_at: z\.string\(\)\.datetime\(\{ offset: true \}\)/.test(createSchemaBody)) errors.push("create completed_at can reach PostgreSQL without ISO timestamp validation");
+  if (!/completed_at: z\.string\(\)\.datetime\(\{ offset: true \}\)\.optional\(\)/.test(patchSchemaBody)) errors.push("edit completed_at can reach PostgreSQL without ISO timestamp validation");
   return errors;
 }
 if (process.argv.includes("--selftest")) {
   const source = fs.readFileSync(FILE, "utf8");
+  const backend = fs.readFileSync(BACKEND_FILE, "utf8");
   const mutations = [
     source.replace("createMutation.reset();", "// planted: mutation survives"),
     source.replace("createSafetyTrainingRecord(input.companyId, input.payload)", "createSafetyTrainingRecord(operatingCompanyId, input.payload)"),
@@ -39,15 +45,20 @@ if (process.argv.includes("--selftest")) {
     source.replace("|| Boolean(expiryDate)", ""),
     source.replace("setCompletedAt(companyToday());\n      setExpiryDate", "setExpiryDate"),
   ];
-  const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
+  const missed = mutations.filter((candidate) => inspect(candidate, backend).length === 0);
+  const backendMutations = [
+    backend.replace('completed_at: z.string().datetime({ offset: true }),', 'completed_at: z.string(),'),
+    backend.replace('completed_at: z.string().datetime({ offset: true }).optional(),', 'completed_at: z.string().optional(),'),
+  ];
+  missed.push(...backendMutations.filter((candidate) => inspect(source, candidate).length === 0));
   if (missed.length) {
-    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/12 mutation(s) survived`);
+    console.error(`verify-training-record-company-lifecycle SELFTEST FAIL — ${missed.length}/14 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-training-record-company-lifecycle selftest PASS — 12/12 planted defects rejected");
+  console.log("verify-training-record-company-lifecycle selftest PASS — 14/14 planted defects rejected");
   process.exit(0);
 }
-const errors = inspect(fs.readFileSync(FILE, "utf8"));
+const errors = inspect(fs.readFileSync(FILE, "utf8"), fs.readFileSync(BACKEND_FILE, "utf8"));
 if (errors.length) {
   console.error("verify-training-record-company-lifecycle FAIL:\n" + errors.map((error) => `  - ${error}`).join("\n"));
   process.exit(1);

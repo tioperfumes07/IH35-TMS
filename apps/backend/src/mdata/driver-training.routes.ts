@@ -11,14 +11,14 @@ const trainingParamsSchema = z.object({ id: z.string().uuid(), training_id: z.st
 
 const createTrainingSchema = z.object({
   training_name: z.string().trim().min(1).max(200),
-  completed_at: z.string(),
+  completed_at: z.string().datetime({ offset: true }),
   expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
 const patchTrainingSchema = z.object({
   training_name: z.string().trim().min(1).max(200).optional(),
-  completed_at: z.string().optional(),
+  completed_at: z.string().datetime({ offset: true }).optional(),
   expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
