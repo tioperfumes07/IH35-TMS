@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=7c1f53e | SHIPPED PR #17341 | FIXED: LST-F9110 — Bill payments list route GET /api/v1/accounting/bills/:id/payments lacked config.rateLimit. All sibling bill routes had limits. Added 120/min (matches sibling reads). Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | ACK | GO-0028 | NOW=vendors-VEND-S01-USMCA-123 | SHA=56d50b5 | GO
 DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=56d50b5 | SHIPPED PR #17336 | FIXED: LST-F9109 — QBO vendors push status route GET /api/v1/sync/qbo-vendors/status lacked config.rateLimit. Added 60/min. Ratchet 320→319. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE. Do not remake TASK-XTENANT-SCOPE #17218 or VOID-PREDICATE-MAP-DRIFT.
 
