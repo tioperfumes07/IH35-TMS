@@ -1,3 +1,4 @@
+/** Linkage: mdata.loads · mdata.units · mdata.drivers · mdata.customers. Live=BLOCKED until Chrome on current healthz. */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
