@@ -652,11 +652,12 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const current = currentRes.rows[0];
       if (!current) return { error: "dispatcher_safety_event_not_found" as const };
 
-      await scopeToRelatedEntity(client, authUser.uuid, {
+      const voidScopedCompanyId = await scopeToRelatedEntity(client, authUser.uuid, {
         loadId: current.related_load_id,
         driverId: current.related_driver_id,
         customerId: current.related_customer_id,
       });
+      if (!voidScopedCompanyId) return { error: "dispatcher_safety_event_scope_unresolved" as const };
 
       if (current.voided_at) return { error: "already_voided" as const };
 
@@ -692,6 +693,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
     if ("error" in result) {
       if (result.error === "already_voided") return reply.code(400).send({ error: "already_voided" });
+      if (result.error === "dispatcher_safety_event_scope_unresolved") return reply.code(409).send({ error: result.error });
       return reply.code(404).send({ error: result.error });
     }
     return { event: result };
@@ -749,11 +751,12 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       const current = currentRes.rows[0];
       if (!current) return null;
 
-      await scopeToRelatedEntity(client, authUser.uuid, {
+      const editScopedCompanyId = await scopeToRelatedEntity(client, authUser.uuid, {
         loadId: current.related_load_id,
         driverId: current.related_driver_id,
         customerId: current.related_customer_id,
       });
+      if (!editScopedCompanyId) return { error: "dispatcher_safety_event_scope_unresolved" as const };
 
       const updateRes = await client.query(
         `
@@ -784,6 +787,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
       return row;
     });
     if (!updated) return reply.code(404).send({ error: "dispatcher_safety_event_not_found" });
+    if ("error" in updated) return reply.code(409).send({ error: updated.error });
     return { event: updated };
   });
 
