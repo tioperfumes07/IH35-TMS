@@ -26,7 +26,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 /**
  * The eight canonical SYSTEM tab labels (must match SYSTEM_TABS in SystemModulePage.tsx).
- * "Transactions" (TXH-01 / SYS-F-TRANSACTION-HEALTH-REGISTER, 2026-08-28) added the 8th.
+ * "Transactions" (TXH-01 / SYS-F-TRANSACTION-HEALTH-REGISTER, 2026-08-28) added the 8th, relabeled
+ * "Transaction Health" (2026-08-29) so it reads distinctly from the neighboring "Ledger Health" tab.
  */
 export const SYSTEM_TAB_LABELS = [
   "Overview",
@@ -35,7 +36,7 @@ export const SYSTEM_TAB_LABELS = [
   "Program Tracker",
   "Software / Build",
   "Ledger Health",
-  "Transactions",
+  "Transaction Health",
   "Claude Coder",
 ];
 

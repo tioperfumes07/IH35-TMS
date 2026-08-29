@@ -42,7 +42,7 @@ export const SYSTEM_TABS = [
   { id: "program", label: "Program Tracker" },
   { id: "software", label: "Software / Build" },
   { id: "ledger-health", label: "Ledger Health" },
-  { id: "tx-health", label: "Transactions" },
+  { id: "tx-health", label: "Transaction Health" },
   { id: "claude-coder", label: "Claude Coder" },
 ] as const;
 
@@ -597,7 +597,7 @@ function TransactionHealthTab() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Card
-        title="Transactions"
+        title="Transaction Health"
         pill={<Pill tone="neutral">READ-ONLY</Pill>}
         sub="Every TMS-native document — invoice, bill, bill payment, customer payment, expense, journal entry, factoring batch, settlement — with posted/balanced/linked/sample-consistency computed at read time. Nothing here is stored; a row clears when the underlying document is actually fixed, never by a click."
       >
