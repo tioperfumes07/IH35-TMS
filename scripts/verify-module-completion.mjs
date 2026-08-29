@@ -94,10 +94,26 @@ export const URGENT_6_COMPLETION_IDS = new Set([
   "vendors",
 ]);
 
+/**
+ * OWNER-REOPENED MODULES (GO-T07-SAFETY, owner 2026-08-29) — a SEPARATE, narrower set from
+ * URGENT_6_COMPLETION_IDS (which names exactly the 6 launch-critical modules and must stay exactly
+ * those 6 for the many other places in the repo that read "urgent-6" as a fixed cohort). This set
+ * is for a module the owner has independently found fake-green (complete:true on status:PASS
+ * self-reports with far fewer items actually prod_verified) and re-opened to the same
+ * prod_verified-required binding standard the urgent-6 already use, without touching that list's
+ * membership or count. safety.json was 2/38 prod_verified while complete:true (docs/module-
+ * completion/safety.json note, GO-CC-1.txt packet /Users/jorgemunoz/Downloads/IH35-GO-NOW-2026-08-29/).
+ */
+export const OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS = new Set(["safety"]);
+
 export function itemCountsTowardN(item, moduleId) {
   if (qualifiesHold(item)) return true;
   if (item.status !== "PASS") return false;
-  if (URGENT_6_COMPLETION_IDS.has(moduleId) && item.prod_verified !== true) return false;
+  if (
+    (URGENT_6_COMPLETION_IDS.has(moduleId) || OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS.has(moduleId)) &&
+    item.prod_verified !== true
+  )
+    return false;
   return true;
 }
 

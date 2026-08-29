@@ -1,8 +1,8 @@
 {
   "module": "safety",
   "title": "Safety (Module 3)",
-  "complete": true,
-  "as_of": "2026-08-10T15:45:00.000Z",
+  "complete": false,
+  "as_of": "2026-08-29T23:30:00.000Z",
   "live_sha": "5197b0f",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/safety.md",
   "spec_sources": [
@@ -10,7 +10,7 @@
     "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md",
     "apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"
   ],
-  "note": "38 of 38 — complete:true 2026-08-10. Company-violation authorization, validation, no-change, not-found, and resolution paths include human-readable messages; unexpected resolution failures are logged and return stable server_error copy. SAF-B08 + SAF-ORPH-05 are qualifying HOLDs (owner Legal density + remaining tab wizard depth). openWaveIdsForModule(safety)=[]. Dispatch spine already live-proven; do not re-audit Book Load for Safety close.",
+  "note": "GO-T07-SAFETY (owner 2026-08-29) — REOPENED. The 2026-08-10 complete:true claim was fake-green: independent scan at origin/main b252f3e76 found only 2 of 38 items with prod_verified:true, not 38. Flipped complete:false as the FIRST action per the owner packet, before any binding work, so the board stops claiming safety is done while CC-1 works the 38 items one at a time. Will flip back to complete:true only when all 38 are genuinely bound (prod_verified:true with live_verified_sha/live_verified_at) or honestly left prod_verified:false with a real evidence note — never re-stamped to clear the number.",
   "items": [
     {
       "id": "SAF-B01",
