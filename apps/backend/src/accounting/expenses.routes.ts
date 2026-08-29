@@ -1436,6 +1436,162 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
     }
   });
 
+  // WAVE-3-EDIT-01 (owner 2026-08-29) — the DRAFT/unposted branch of the posting-state x period-state
+  // edit matrix: "Draft/unposted -> direct edit, version the row, audit event, no GL impact." Of the 8
+  // named transaction types, expense is the ONLY one with a real, distinct draft status (`status`
+  // CHECK IN 'draft','posted','void', separate from `posting_status` CHECK IN 'unposted','posted',
+  // 'reversed') -- bill_payment/customer_payment always post immediately on create (no draft state
+  // exists for them at all; per Wave-3's OWN rule, "Externally transmitted... never a silent edit;
+  // void-and-reissue" is the correct, ALREADY-BUILT path for those two, not a new edit endpoint).
+  // Scope: header-only fields on a still-draft (status='draft', posting_status='unposted', ZERO
+  // expense_lines rows -- the /post route above only synthesizes a line at the POST moment, so a
+  // draft's total_amount_cents editing here never touches expense_lines) expense. Reason required on
+  // every posted-document edit per Wave-3's own rule; a still-draft edit is not yet a posted document,
+  // but a reason is still captured for the field-level revision history audit.trail.
+  // The POSTED-and-period-OPEN branch (reverse the original posting, repost the corrected one, both
+  // retained) is a separate, larger follow-on, not built in this pass -- see the board finding filed
+  // alongside this commit for the exact remaining scope.
+  const patchExpenseDraftBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(1),
+    memo: z.string().trim().max(2000).optional(),
+    transaction_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    amount_cents: z.coerce.number().int().positive().optional(),
+    vendor_uuid: z.string().uuid().optional().nullable(),
+  });
+  app.patch("/api/v1/expenses/:expenseId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return reply.code(400).send({ error: "validation_error" });
+    const body = patchExpenseDraftBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
+    if (
+      body.data.memo === undefined &&
+      body.data.transaction_date === undefined &&
+      body.data.amount_cents === undefined &&
+      body.data.vendor_uuid === undefined
+    ) {
+      return reply.code(400).send({ error: "validation_error", details: "at least one editable field is required" });
+    }
+    const oci = body.data.operating_company_id;
+    const expenseId = params.data.expenseId;
+
+    try {
+      const result = await withCompanyScope(user.uuid, oci, async (client) => {
+        // Owner + Accountant, same authorization tier as /post and /void — this is a posted-document-
+        // grade edit control even though the row itself is still draft.
+        if (!canVoid(String(user.role ?? ""))) return { kind: "forbidden" as const };
+        const r = await client.query(
+          `
+            SELECT
+              e.status,
+              e.posting_status,
+              e.memo,
+              e.transaction_date::text AS transaction_date,
+              e.total_amount_cents::text AS total_amount_cents,
+              e.vendor_uuid::text AS vendor_uuid,
+              (SELECT count(*) FROM accounting.expense_lines l WHERE l.expense_id = e.id)::int AS line_count
+            FROM accounting.expenses e
+            WHERE e.id = $1::uuid AND e.operating_company_id = $2::uuid
+            LIMIT 1
+            FOR UPDATE
+          `,
+          [expenseId, oci]
+        );
+        const exp = r.rows[0] as
+          | {
+              status: string;
+              posting_status: string;
+              memo: string | null;
+              transaction_date: string;
+              total_amount_cents: string;
+              vendor_uuid: string | null;
+              line_count: number;
+            }
+          | undefined;
+        if (!exp) return { kind: "not_found" as const };
+        // FAIL LOUD, never a silent no-op: a posted or void expense refuses this route entirely — the
+        // posted-and-open-period reverse+repost branch is a distinct, not-yet-built endpoint, and a
+        // void expense has no live document left to correct.
+        if (exp.status !== "draft" || exp.posting_status !== "unposted") {
+          return { kind: "not_draft" as const, status: exp.status, posting_status: exp.posting_status };
+        }
+        if (exp.line_count > 0) {
+          // A draft should never carry lines yet (only /post synthesizes one) — if it somehow does,
+          // amount_cents here would silently desync from SUM(expense_lines.amount_cents). Refuse
+          // rather than guess which side is authoritative.
+          return { kind: "has_lines" as const };
+        }
+
+        const before = {
+          memo: exp.memo,
+          transaction_date: exp.transaction_date,
+          total_amount_cents: exp.total_amount_cents,
+          vendor_uuid: exp.vendor_uuid,
+        };
+
+        const sets: string[] = [];
+        const values: unknown[] = [];
+        if (body.data.memo !== undefined) {
+          values.push(body.data.memo);
+          sets.push(`memo = $${values.length}`);
+        }
+        if (body.data.transaction_date !== undefined) {
+          values.push(body.data.transaction_date);
+          sets.push(`transaction_date = $${values.length}::date`);
+        }
+        if (body.data.amount_cents !== undefined) {
+          values.push(body.data.amount_cents);
+          sets.push(`total_amount_cents = $${values.length}`);
+        }
+        if (body.data.vendor_uuid !== undefined) {
+          values.push(body.data.vendor_uuid);
+          sets.push(`vendor_uuid = $${values.length}::uuid`);
+        }
+        sets.push(`updated_at = now()`);
+        values.push(expenseId, oci);
+
+        await client.query(
+          `UPDATE accounting.expenses SET ${sets.join(", ")} WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid`,
+          values
+        );
+
+        const after = {
+          memo: body.data.memo !== undefined ? body.data.memo : before.memo,
+          transaction_date: body.data.transaction_date !== undefined ? body.data.transaction_date : before.transaction_date,
+          total_amount_cents: body.data.amount_cents !== undefined ? String(body.data.amount_cents) : before.total_amount_cents,
+          vendor_uuid: body.data.vendor_uuid !== undefined ? body.data.vendor_uuid : before.vendor_uuid,
+        };
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "expense.draft_edited",
+          { expense_id: expenseId, operating_company_id: oci, reason: body.data.reason, before, after },
+          "info"
+        );
+
+        return { kind: "ok" as const, after };
+      });
+
+      if (result.kind === "forbidden") return reply.code(403).send({ error: "forbidden_owner_or_accountant_only" });
+      if (result.kind === "not_found") return reply.code(404).send({ error: "expense_not_found" });
+      if (result.kind === "not_draft") {
+        return reply.code(409).send({
+          error: "expense_not_draft",
+          detail: `status=${result.status} posting_status=${result.posting_status} — only a draft/unposted expense can be edited via this route`,
+        });
+      }
+      if (result.kind === "has_lines") {
+        return reply.code(409).send({ error: "expense_has_lines", detail: "expense already carries line items; not editable via this route" });
+      }
+      return reply.code(200).send({ expense_id: expenseId, status: "draft", ...result.after });
+    } catch (err) {
+      if (err instanceof PostingEngineError && err.code === "PERIOD_LOCKED") return reply.code(409).send({ error: "period_locked" });
+      throw err;
+    }
+  });
+
   // Reverse drill-through: list expenses attributed to a specific load. Read-only SELECT, company-scoped.
   // Powers the Load detail "Expenses" tab. Delegates to queryExpensesList with loadId from the path param.
   const loadIdParamSchema = z.object({ id: z.string().uuid() });
