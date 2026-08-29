@@ -1,3 +1,5 @@
+**2026-08-29T17:50Z SCEN-01 THIS IS NOW.** Packet `docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md`. Posting **overrides ON**. CC-1: `ih35_app` flag re-read + **account codes** not `n>0`. `hop.assign` = CC-1. CC-3 create TEST hops. Live `5063761`. Nobody else `trigger_deploy`.
+
 **2026-08-29T15:20Z GO-0055→0104 THIS IS NOW. ALL SEATS. Idle=defect.** Index `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md`. Master paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0055-0104-SEND.md`. Binding guard `docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md`. SYS-S07 REOPENED. Live `b276443`. Standing orders pull law. Nobody else `trigger_deploy`.
 
 **GO-0030 + RIDER THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md` + `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`. Standing orders underneath. Pull never wait. CC-2=GUARD. Chrome-only seats no verify-steps/migrations. CLOSES line required. Deploy in flight. PROG-01 SKIP. Nobody else `trigger_deploy`.
