@@ -2,9 +2,10 @@
 /**
  * VEND-S01 + VEND-S05 — Vendors roster density + default Active filter.
  *
- * Live Neon 2026-08-03 (bypass_rls=lucia, br-fancy-credit-akjnd07a):
- *   TRANSP active=564 inactive=387 · TRK active=1873 · USMCA active=4
+ * Live Neon 2026-08-28 (bypass_rls=lucia, br-fancy-credit-akjnd07a):
+ *   TRANSP active=571 inactive=387 · TRK active=1873 · USMCA active=123 inactive=19
  *   Default listStatus=active excludes deactivated_at IS NOT NULL (387 on TRANSP).
+ *   VEND-S01 stale 2026-08-03 stamp said USMCA=4 — FALSE, live Neon=123.
  *
  *   node scripts/verify-vend-s01-roster-active-filter.mjs
  *   node scripts/verify-vend-s01-roster-active-filter.mjs --selftest
@@ -29,8 +30,8 @@ function assert(files) {
   if (!/listVendors/.test(api)) {
     problems.push(`${API}: must export listVendors`);
   }
-  if (!/listVendors\(/.test(page)) {
-    problems.push(`${PAGE}: must call listVendors(`);
+  if (!/listVendors\(/.test(page) && !/listAllVendors\(/.test(page)) {
+    problems.push(`${PAGE}: must call listVendors( or listAllVendors(`);
   }
   // VEND-S05 is "the roster defaults to Active", NOT "the default lives in useState". The §7 list-segment
   // work made `listStatus` URL-addressable (`?listTab=`), so the default moved from a useState initialiser
