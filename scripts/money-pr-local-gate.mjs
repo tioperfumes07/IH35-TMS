@@ -71,6 +71,7 @@ const STEPS = [
   ["verify-fuel-planner-source-availability", "scripts/verify-fuel-planner-source-availability.mjs"],
   ["verify-driver-import-response-honesty", "scripts/verify-driver-import-response-honesty.mjs"],
   ["verify-driver-roster-bulk-deactivate", "scripts/verify-driver-roster-bulk-deactivate.mjs"],
+  ["verify-fleet-trip-cost-scope-lifecycle", "scripts/verify-fleet-trip-cost-scope-lifecycle.mjs"],
 
   // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
   // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a
