@@ -80,16 +80,30 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
   });
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      createScenario({
+    // GO-0047: PREVIEW-VS-PERSIST-REVENUE-FALLBACK-DROPPED — the preview above falls back to
+    // liveRevenueCents whenever the "Freight revenue" line is untouched (revenueCents === 0), so a
+    // user who fills in only the expense lines sees a plausible, live-data-backed break-even $/mi.
+    // Save used to send the raw `lines` array with the revenue line's still-zero
+    // monthly_estimate_cents — the button is gated on revenueCents + expenseCents > 0, which the
+    // expense total alone satisfies, so the save silently succeeded with a $0 revenue scenario
+    // row and a plain success toast, no warning that the just-previewed revenue number was
+    // dropped. Applying the exact same `|| liveRevenueCents` fallback here keeps what's saved
+    // consistent with what was just previewed.
+    mutationFn: () => {
+      const effectiveRevenueCents = revenueCents || liveRevenueCents;
+      const effectiveLines = lines.map((l) =>
+        l.category_kind === "revenue" ? { ...l, monthly_estimate_cents: effectiveRevenueCents } : l,
+      );
+      return createScenario({
         operating_company_id: operatingCompanyId,
         name: name.trim() || "Break-even analysis",
         period_basis: "monthly",
         period_start: periodStart,
         period_count: 12,
         notes: BREAK_EVEN_WORKBOOK_NOTE,
-        line_templates: lines.filter((l) => (l.monthly_estimate_cents || 0) > 0 || l.category_kind === "revenue"),
-      }),
+        line_templates: effectiveLines.filter((l) => (l.monthly_estimate_cents || 0) > 0 || l.category_kind === "revenue"),
+      });
+    },
     onSuccess: () => {
       pushToast("Break-even workbook saved (draft scenario). History is on Finance → Scenarios.", "success");
       void qc.invalidateQueries({ queryKey: ["finance", "scenarios", operatingCompanyId] });
