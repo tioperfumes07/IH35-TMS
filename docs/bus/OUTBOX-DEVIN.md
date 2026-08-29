@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | drain-cont3 | vendors-drain | SHA=7f12680 | SHIPPED PR #17385 | FIXED: LST-F9128 — Thirteen routes across five files lacked config.rateLimit: 5 collections (A/R mirror), 3 reconciliation (vendor bill matching), 1 date-ranges, 2 comparison-report, 3 consolidated-statements. Added 60/min reads, 30/min writes, 10/min sync. Ratchet 272→265. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | drain-cont | vendors-drain | SHA=566068 | SHIPPED PR #17384 | FIXED: LST-F9127 — Sixteen routes across six files lacked config.rateLimit: 5 settlement-posting (includes vendor bill poster), 5 amortization-posting, 3 QBO reconcile captures, 3 more (driver-subaccount-backfill, suggest-load, cash-forecast settings). Added 60/min reads, 30/min writes. Ratchet 279→272. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0054-cont | vendors-drain | SHA=ca36c99 | SHIPPED PR #17382 | FIXED: LST-F9126 — Nine routes across five files lacked config.rateLimit: finance-hub overview, 2 loan payment posting (post+reverse), 3 month-close (status+close+acknowledge), 2 periods (list+detail), break-even. Added 60/min reads, 30/min writes, 10/min month-close. Ratchet 281→279. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
