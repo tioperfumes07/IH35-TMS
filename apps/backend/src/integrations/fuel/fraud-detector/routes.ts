@@ -167,21 +167,26 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
               resolution_notes = COALESCE($4, resolution_notes)
           WHERE operating_company_id = $1::uuid
             AND uuid = $2::uuid
+            AND status = 'open'
             AND resolved_at IS NULL
           RETURNING uuid::text
         `,
         [body.data.operating_company_id, params.data.uuid, user.uuid, body.data.resolution_notes ?? null]
       );
-      if (!res.rows[0]) return null;
+      if (!res.rows[0]) {
+        const current = await fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+        return current ? { error: "fraud_alert_state_changed" as const } : null;
+      }
       await appendCrudAudit(client, user.uuid, "fuel.fraud_alert.investigating", {
         resource_type: "fuel.fraud_alerts",
         resource_id: params.data.uuid,
       });
-      return fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+      return { alert: await fetchAlert(client, body.data.operating_company_id, params.data.uuid) };
     });
 
     if (!alert) return reply.code(404).send({ error: "not_found" });
-    return reply.send({ alert });
+    if ("error" in alert) return reply.code(409).send({ error: alert.error });
+    return reply.send({ alert: alert.alert });
   });
 
   app.patch("/api/v1/fuel/fraud-alerts/:uuid/confirm-fraud", async (req, reply) => {
@@ -204,11 +209,16 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
               resolution_notes = COALESCE($4, resolution_notes)
           WHERE operating_company_id = $1::uuid
             AND uuid = $2::uuid
+            AND status IN ('open', 'investigating')
+            AND resolved_at IS NULL
           RETURNING uuid::text
         `,
         [body.data.operating_company_id, params.data.uuid, user.uuid, body.data.resolution_notes ?? null]
       );
-      if (!res.rows[0]) return null;
+      if (!res.rows[0]) {
+        const current = await fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+        return current ? { error: "fraud_alert_state_changed" as const } : null;
+      }
       await appendCrudAudit(
         client,
         user.uuid,
@@ -216,11 +226,12 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
         { resource_type: "fuel.fraud_alerts", resource_id: params.data.uuid },
         "warning"
       );
-      return fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+      return { alert: await fetchAlert(client, body.data.operating_company_id, params.data.uuid) };
     });
 
     if (!alert) return reply.code(404).send({ error: "not_found" });
-    return reply.send({ alert });
+    if ("error" in alert) return reply.code(409).send({ error: alert.error });
+    return reply.send({ alert: alert.alert });
   });
 
   app.patch("/api/v1/fuel/fraud-alerts/:uuid/dismiss", async (req, reply) => {
@@ -243,20 +254,26 @@ export async function registerFuelFraudAlertRoutes(app: FastifyInstance): Promis
               resolution_notes = $4
           WHERE operating_company_id = $1::uuid
             AND uuid = $2::uuid
+            AND status IN ('open', 'investigating')
+            AND resolved_at IS NULL
           RETURNING uuid::text
         `,
         [body.data.operating_company_id, params.data.uuid, user.uuid, body.data.reason]
       );
-      if (!res.rows[0]) return null;
+      if (!res.rows[0]) {
+        const current = await fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+        return current ? { error: "fraud_alert_state_changed" as const } : null;
+      }
       await appendCrudAudit(client, user.uuid, "fuel.fraud_alert.dismissed", {
         resource_type: "fuel.fraud_alerts",
         resource_id: params.data.uuid,
         reason: body.data.reason,
       });
-      return fetchAlert(client, body.data.operating_company_id, params.data.uuid);
+      return { alert: await fetchAlert(client, body.data.operating_company_id, params.data.uuid) };
     });
 
     if (!alert) return reply.code(404).send({ error: "not_found" });
-    return reply.send({ alert });
+    if ("error" in alert) return reply.code(409).send({ error: alert.error });
+    return reply.send({ alert: alert.alert });
   });
 }
