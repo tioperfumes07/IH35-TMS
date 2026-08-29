@@ -21,6 +21,10 @@ import { generateWorkOrderNumber } from "./wo-number.service.js";
 import { renderWorkOrderPdfHtml, type WorkOrderPdfModel } from "./wo-pdf-renderer.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { wrapPdfDocument } from "../render/pdf-template.js";
+// MAINT-MONEY-F6971 — companyBusinessDate(), not new Date().toISOString() (UTC): after ~19:00
+// Central this fallback used a UTC calendar date one day ahead of the real business day, which
+// resolveReversalDate would then post the reversal into.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -254,7 +258,7 @@ export async function settleWorkOrderFinancialLinkage(
   // touched a closed period. The reversal itself already dates into the open period (void.service); this
   // is only the register-facing flag.
   let closedPeriod = false;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyBusinessDate();
 
   // Reverse + void each linked bill.
   for (const bill of linkedBills) {
