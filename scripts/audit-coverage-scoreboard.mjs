@@ -873,6 +873,11 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
     // PROG-PRFEED-PRIVATE-EMPTY: ledger-sourced, generated in CI. Never a runtime GitHub call.
     recentActivity: ledgerRecentActivity(10),
   };
+  out.healthzSha = String(out.meta.deployedSha || "").slice(0, 40);
+  {
+    const ga = Date.parse(out.meta.generatedAt);
+    out.generated_at = Number.isFinite(ga) ? new Date(ga).toISOString() : new Date().toISOString();
+  }
 
 
   // Guard contract: text (markdown emphasis), never HTML tags / html key.

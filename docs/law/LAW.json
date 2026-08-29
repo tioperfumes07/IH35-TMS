@@ -782,5 +782,12 @@
     "source_file": "apps/backend/src/routes/safety/hos-violations.ts",
     "guard": "scripts/verify-load-column-all-modules.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-29-DERIVED-ARTIFACT-FRESHNESS",
+    "title": "A stored derived answer must declare the deploy SHA and timestamp it was true, and fail when that SHA is not an ancestor of live healthz or is stale. Prefer recompute-on-read (scenario-tracker / module-matrix verifierRollup). Owner subscription-grade DoD: if the owner has to check it, it is not done.",
+    "source_file": "docs/lockdown/SUBSCRIPTION-GRADE-DEFINITION-OF-DONE-2026-08-29.md",
+    "guard": "scripts/verify-derived-artifact-freshness.mjs",
+    "type": "enforced"
   }
 ]

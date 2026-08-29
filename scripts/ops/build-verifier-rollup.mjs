@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 /**
- * Build docs/specs/scoreboard/verifier-rollup.json — per-module WORST state for V1–V6.
- * Never averages. --check fails if the committed file differs from a rebuild.
+ * Build V1–V6 verifier rollup — per-module WORST state. Never averages.
+ *
+ * LAW (same as scenario-tracker.service.ts): status is DERIVED at request time.
+ * The API (`GET module-matrix?scope=system` → verifierRollup) is the live answer.
+ * This CLI still writes docs/specs/scoreboard/verifier-rollup.json for --check / docs;
+ * the matrix UI must not treat that file as live.
+ *
+ * --stdout  print JSON only (API spawn)
+ * --check   committed file matches rebuild with that file's asOf + healthzSha
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -11,8 +18,8 @@ import { ancestorCheck, fetchHealthzVersionSync } from "../lib/live-verified-sta
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const COMPLETION = path.join(ROOT, "docs/module-completion");
 const OUT = path.join(ROOT, "docs/specs/scoreboard/verifier-rollup.json");
-const AS_OF = "2026-08-29T00:00:00Z";
 const CHECK = process.argv.includes("--check");
+const STDOUT = process.argv.includes("--stdout");
 
 function readJson(p) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
@@ -49,8 +56,9 @@ function loadModuleManifests() {
   return manifests;
 }
 
-function build(opts = {}) {
+export function build(opts = {}) {
   const manifests = loadModuleManifests();
+  const asOf = opts.asOf || new Date().toISOString();
   let healthzSha = opts.healthzSha;
   if (healthzSha === undefined) {
     try {
@@ -158,7 +166,7 @@ function build(opts = {}) {
     let days = null;
     if (ages.length) {
       const oldest = Math.min(...ages);
-      days = Math.floor((Date.parse(AS_OF) - oldest) / 86_400_000);
+      days = Math.floor((Date.parse(asOf) - oldest) / 86_400_000);
     }
 
     modules[module] = {
@@ -172,7 +180,7 @@ function build(opts = {}) {
   }
 
   return {
-    asOf: AS_OF,
+    asOf,
     healthzSha: healthzSha || null,
     modules,
   };
@@ -180,6 +188,11 @@ function build(opts = {}) {
 
 function stable(obj) {
   return `${JSON.stringify(obj, null, 2)}\n`;
+}
+
+if (STDOUT) {
+  process.stdout.write(stable(build()));
+  process.exit(0);
 }
 
 if (CHECK) {
@@ -195,7 +208,10 @@ if (CHECK) {
     console.error("build-verifier-rollup --check FAIL — committed file unparseable");
     process.exit(1);
   }
-  const payload = build({ healthzSha: committed.healthzSha || "" });
+  const payload = build({
+    healthzSha: committed.healthzSha || "",
+    asOf: committed.asOf,
+  });
   const text = stable(payload);
   if (committedText !== text) {
     console.error("build-verifier-rollup --check FAIL — committed verifier-rollup.json differs from rebuild");
