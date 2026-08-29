@@ -1,3 +1,4 @@
+CASCADE | DONE | 2026-08-29T03:35Z | GO-0032-0054 | IFTA-SILENT-NO-OP-CREATE-MUTATION | SHA=4e5db76 | FINDING: IFTAPreparer.tsx:23-26 createMutation has no onError, no isError render, no .catch() on mutateAsync at line 74. Failed IFTA prep creation silently rejected. Row 50105 appended. Not duplicating row 1142 (different defect). Never trigger_deploy. GO
 CASCADE | ACK | GO-0032 | NOW=walk-WO-safety-FINDING | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0033 | NOW=walk-insurance-banking-FINDING | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0034 | NOW=walk-driver-hub-eld-FINDING | SHA=4e5db76 | GO
