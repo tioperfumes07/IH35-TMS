@@ -35,6 +35,15 @@ describe("dispatch customer-notify routes (B21-D9)", () => {
     expect(src).toContain("registerDispatchCustomerNotifyRoutes");
   });
 
+  it("maps a lost preference write on PUT rather than masking it on GET", () => {
+    const src = readFileSync(routesPath, "utf8");
+    const readRoute = src.split('app.get("/api/v1/dispatch/customer-notify/preferences/:customerId"')[1]?.split('app.put("/api/v1/dispatch/customer-notify/preferences/:customerId"')[0] ?? "";
+    const writeRoute = src.split('app.put("/api/v1/dispatch/customer-notify/preferences/:customerId"')[1]?.split('app.post("/api/v1/dispatch/customer-notify/sync"')[0] ?? "";
+    expect(readRoute).not.toContain("E_NOTIFY_PREFERENCES_WRITE_FAILED");
+    expect(writeRoute).toContain("E_NOTIFY_PREFERENCES_WRITE_FAILED");
+    expect(writeRoute).toContain('reply.code(409).send({ error: "notify_preferences_write_failed" })');
+  });
+
   it("subscribes to stop arrival and ETA update events in the service", () => {
     const src = readFileSync(servicePath, "utf8");
     expect(src).toContain("processStopArrivalNotifications");
