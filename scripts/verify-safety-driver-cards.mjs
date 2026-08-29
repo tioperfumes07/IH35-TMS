@@ -33,12 +33,40 @@ const TAB = "apps/frontend/src/pages/safety/tabs/DriverFilesTab.tsx";
 const FILTER = "apps/frontend/src/components/safety/SafetyDashboardFilter.tsx";
 const LAYOUT = "apps/frontend/src/pages/safety/SafetyLayout.tsx";
 
+function rosterFailures(source) {
+  const problems = [];
+  if (!/listAllDrivers\(\{[\s\S]*?operating_company_id:\s*companyId[\s\S]*?status:\s*"Active"[\s\S]*?search:\s*rosterSearch \|\| undefined[\s\S]*?\}\)/.test(source)) {
+    problems.push(`${CARDS} must load the complete active company roster while preserving server search`);
+  }
+  if (/listDrivers\(\{[\s\S]{0,300}?limit:\s*(?:50|200)/.test(source)) {
+    problems.push(`${CARDS} must not calculate company-wide safety cards from a capped driver page`);
+  }
+  return problems;
+}
+
+if (process.argv.includes("--selftest")) {
+  const good = read(CARDS);
+  const mutations = [
+    good.replace("listAllDrivers({", "listDrivers({\n        limit: 200,"),
+    good.replace('status: "Active",', 'status: "Inactive",'),
+    good.replace("operating_company_id: companyId,", "operating_company_id: undefined,"),
+    good.replace("search: rosterSearch || undefined,", "search: undefined,"),
+  ];
+  if (rosterFailures(good).length) fail(`selftest baseline rejected: ${rosterFailures(good).join("; ")}`);
+  mutations.forEach((mutated, index) => {
+    if (mutated === good) fail(`selftest mutation ${index + 1} did not alter the source`);
+    if (!rosterFailures(mutated).length) fail(`selftest mutation ${index + 1} escaped`);
+  });
+  console.log(`OK verify-safety-driver-cards SELFTEST: ${mutations.length}/${mutations.length} roster regressions rejected`);
+  process.exit(0);
+}
+
 // 1. The cards component exists and sources the six required fields from REAL endpoints.
 const cards = read(CARDS);
 for (const needle of ["listDrivers", "getSafetyEventsFiltered", "listDaEnrollments", "onCountsChange", "onOpenProfile"]) {
   if (!cards.includes(needle)) fail(`${CARDS} must reference ${needle} (six-field sourcing / wiring)`);
 }
-if (!/limit:\s*200/.test(cards)) fail(`${CARDS} must load the driver roster with limit:200 (no 50-cap truncation)`);
+for (const problem of rosterFailures(cards)) fail(problem);
 
 // 2. The driver-files landing mounts the cards AND feeds the shared counter bar.
 const tab = read(TAB);
