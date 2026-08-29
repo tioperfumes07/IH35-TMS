@@ -60,3 +60,14 @@ Canonical trailer FK = **`mdata.equipment`**. Do **not** rewrite DVIR/`mdata.uni
 ---
 
 MIGRATE: N/A · nobody but Cursor `trigger_deploy` (5–10) · KEEP TEST · U14 never restamp
+
+---
+
+## SUBSCRIPTION-GRADE DONE (owner 2026-08-29)
+
+Canonical: `docs/lockdown/SUBSCRIPTION-GRADE-DEFINITION-OF-DONE-2026-08-29.md`.
+If the owner has to open A/R / GL / the matrix to see whether the action took, the hop is not done.
+
+Every SCEN-01 money hop: **PROVES-IT-WORKS** = live JE **account codes** from `scenario-registry.ts` `je:`.
+**KEEPS-IT-TRUE** = probes derived at request time (`scenario-tracker.service.ts`); V1–V6 on the matrix are **request-time** `verifierRollup`, not `verifier-rollup.json`.
+Stored boards: `docs/specs/DERIVED-ARTIFACTS.json` + `scripts/verify-derived-artifact-freshness.mjs`.

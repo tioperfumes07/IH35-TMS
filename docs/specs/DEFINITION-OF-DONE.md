@@ -30,6 +30,15 @@ Enforced by:
 > **A change is DONE only when a hostile reviewer, using only the evidence in the PR, can confirm the
 > defect is gone and nothing else broke — without trusting the author.**
 
+**Subscription-grade (owner 2026-08-29):** if the owner has to check it, it is not done. Canonical:
+`docs/lockdown/SUBSCRIPTION-GRADE-DEFINITION-OF-DONE-2026-08-29.md`. Every block names:
+
+- **PROVES-IT-WORKS** — runnable check + asserted outcome (including designed account codes)
+- **KEEPS-IT-TRUE** — recompute-on-read, or regenerate job + `verify-derived-artifact-freshness`
+
+A stored snapshot without KEEPS-IT-TRUE is not done. Enforced for listed artifacts by
+`scripts/verify-derived-artifact-freshness.mjs`.
+
 CI-green is the floor, not the verdict. "Merged" is not done. "The API accepted it" is not done.
 "It renders" is not done.
 

@@ -5,5 +5,7 @@ export default {
     await ctx.run("node", ["scripts/verify-declared-is-rendered.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-declared-is-rendered.mjs"]);
     await ctx.run("node", ["scripts/ops/build-verifier-rollup.mjs", "--check"]);
+    await ctx.run("node", ["scripts/verify-derived-artifact-freshness.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-derived-artifact-freshness.mjs"]);
   },
 };

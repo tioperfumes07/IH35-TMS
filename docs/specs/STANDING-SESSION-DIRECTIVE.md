@@ -123,5 +123,11 @@ Every new session, every coder: brief CURRENT-LAW bullets + **only OPEN hops for
 
 Lead = census of **self-ACK** vs ping every turn. False done/wired without healthz+URL+click is forbidden. Next Cursor failure of T1–T6 → `node scripts/ops/activate-claude-lead.mjs` same turn (Claude lead). Do not add another law instead of a census.
 
+## 14. SUBSCRIPTION-GRADE DONE (owner 2026-08-29)
+
+**Canonical:** `docs/lockdown/SUBSCRIPTION-GRADE-DEFINITION-OF-DONE-2026-08-29.md`.
+If the owner has to check whether one action reached every derived place, it is not done.
+**PROVES-IT-WORKS** + **KEEPS-IT-TRUE** on every block. Stored snapshots: `docs/specs/DERIVED-ARTIFACTS.json` + `scripts/verify-derived-artifact-freshness.mjs`.
+
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*

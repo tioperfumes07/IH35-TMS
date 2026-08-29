@@ -10,7 +10,7 @@
  * % = done ÷ required. Unsure → unaudited. Never invent Done.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -111,6 +111,29 @@ const SYSTEM_LAST_GOOD_PATH =
 /** MODULE-MATRIX-LEAF-DETAIL-ENDPOINT-HANGS — same disk-survives-restart directory used for the
  * per-module last-good snapshot (one file per moduleId+probeScope), mirroring SYSTEM_LAST_GOOD_PATH. */
 const MODULE_LAST_GOOD_DIR = process.env.IH35_MATRIX_LAST_GOOD_DIR?.trim() || "/tmp";
+
+type VerifierRollupLive = {
+  asOf: string;
+  healthzSha: string | null;
+  modules: Record<string, unknown>;
+};
+
+function loadLiveVerifierRollup(): VerifierRollupLive {
+  try {
+    const raw = execFileSync(
+      process.execPath,
+      [path.join(REPO_ROOT, "scripts/ops/build-verifier-rollup.mjs"), "--stdout"],
+      { encoding: "utf8", timeout: 60_000, cwd: REPO_ROOT },
+    );
+    const parsed = JSON.parse(raw) as VerifierRollupLive;
+    if (parsed && typeof parsed.asOf === "string" && parsed.modules && typeof parsed.modules === "object") {
+      return parsed;
+    }
+  } catch {
+    /* matrix still serves; V cells show — */
+  }
+  return { asOf: new Date().toISOString(), healthzSha: null, modules: {} };
+}
 
 export type MatrixCellState = "live" | "built" | "audited" | "unaudited" | "na" | "done";
 
@@ -1725,6 +1748,8 @@ export type SystemModuleMatrixPayload = {
     honesty: string;
     probeSource?: "neon_live" | "committed_stale";
   };
+  /** V1–V6 — DERIVED at this request (never the committed verifier-rollup.json snapshot). */
+  verifierRollup?: VerifierRollupLive;
 };
 
 function emptyAbl(): MatrixAblPct {
@@ -2190,9 +2215,10 @@ export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = fa
       tipSha: tipSha(),
       orderSource: "docs/specs/scoreboard/matrix-module-order.json",
       honesty:
-        "Disk-first ledger + last-good JSON. GitHub OUTBOX only when bus files are missing on disk. USMCA LIVE PASS. Box 4 is not launch. TRANSP clicks do not count.",
+        "Disk-first ledger + last-good JSON. GitHub OUTBOX only when bus files are missing on disk. USMCA LIVE PASS. Box 4 is not launch. TRANSP clicks do not count. V1–V6 verifierRollup is derived at request time.",
       probeSource,
     },
+    verifierRollup: loadLiveVerifierRollup(),
   };
 
   if (seedOnly) {
