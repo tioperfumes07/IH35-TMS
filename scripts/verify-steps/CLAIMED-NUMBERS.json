@@ -6701,5 +6701,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-insurance-posting-dates-business-date"
+  },
+  "9997": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-financial-reports-business-date-defaults"
   }
 }
