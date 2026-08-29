@@ -75,6 +75,28 @@ describe("equipment transfer request service (GAP-37)", () => {
     ).rejects.toThrow("transfer_already_active");
   });
 
+  it("initiateTransfer rejects an empty INSERT identity before audit or notification", async () => {
+    const client = mockClient([
+      ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT, equipment_type: "DryVan" }]],
+      ["FROM dispatch.equipment_transfer_requests", []],
+      ["INSERT INTO dispatch.equipment_transfer_requests", []],
+    ]);
+
+    await expect(
+      initiateTransfer(client, USER, {
+        operating_company_id: COMPANY,
+        equipment_uuid: EQUIPMENT,
+        equipment_kind: "trailer",
+        from_driver_uuid: FROM_DRIVER,
+        to_driver_uuid: TO_DRIVER,
+        transfer_location: "Yard A",
+      })
+    ).rejects.toThrow("transfer_create_failed");
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("audit.append_event"))).toBe(false);
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO outbox.events"))).toBe(false);
+  });
+
   it("initiateTransfer rejects a selected equipment row whose type contradicts the payload kind", async () => {
     const client = mockClient([
       ["FROM mdata.drivers", [{ id: FROM_DRIVER }, { id: TO_DRIVER }]],
