@@ -88,6 +88,16 @@ const CHECKS = [
       /INSERT INTO maintenance\.work_orders[\s\S]{0,500}?equipment_id/.test(s) &&
       /accident\.trailer_id \?\? null/.test(s),
   },
+  {
+    id: "claim-backfill-on-reuse",
+    file: ROUTES,
+    describe:
+      "SCEN-01-WO-CLAIM-BACKFILL: reuse branch must backfill insurance_claim_id onto a WO spawned before the accident had a claim linked, not just at first-spawn INSERT time",
+    test: (s) =>
+      /listAccidentSpawnedWorkOrders[\s\S]{0,600}?insurance_claim_id/.test(s) &&
+      /accidentClaimId\s*&&\s*accidentClaimId\s*!==\s*first\.insurance_claim_id/.test(s) &&
+      /UPDATE maintenance\.work_orders[\s\S]{0,200}?SET insurance_claim_id = \$1::uuid/.test(s),
+  },
 ];
 
 export function run() {
@@ -185,6 +195,30 @@ function selftest() {
     console.log("  caught: load-forward-fk plant");
   } finally {
     writeFileSync(ROUTES, original, "utf8");
+  }
+  const noClaimBackfill = original.replace(
+    /if \(accidentClaimId && accidentClaimId !== first\.insurance_claim_id\) \{[\s\S]*?\n {8}\}\n/,
+    ""
+  );
+  if (noClaimBackfill === original) {
+    console.error("SELFTEST FAIL: claim-backfill-on-reuse plant pattern did not match anything to remove.");
+    process.exit(1);
+  }
+  try {
+    writeFileSync(ROUTES, noClaimBackfill, "utf8");
+    const caught = run();
+    if (caught.ok || !/claim-backfill-on-reuse/.test(caught.message)) {
+      console.error(`SELFTEST FAIL: claim-backfill-on-reuse plant not caught.\n${caught.message}`);
+      process.exit(1);
+    }
+    console.log("  caught: claim-backfill-on-reuse plant");
+  } finally {
+    writeFileSync(ROUTES, original, "utf8");
+  }
+  const afterBackfill = run();
+  if (!afterBackfill.ok) {
+    console.error(`SELFTEST FAIL: restore left repository red.\n${afterBackfill.message}`);
+    process.exit(1);
   }
   console.log("SELFTEST PASS: planted defect caught and repository restored green.");
 }
