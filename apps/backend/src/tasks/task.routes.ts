@@ -173,6 +173,13 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = ListTasksQuerySchema.safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const input = parsed.data;
+    // GO-0039-TASKS-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036/GO-0037 -- a reversed
+    // date_from/date_to silently returns a legitimate 200 with an empty tasks:[] / total_count:0,
+    // indistinguishable from a genuine zero-task period. Both are optional here; only check when
+    // both are present.
+    if (input.date_from && input.date_to && input.date_from > input.date_to) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["date_from must be on or before date_to"] } });
+    }
     if (!(await assertTaskCompanyMembership(reply, user.uuid, input.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
@@ -260,6 +267,12 @@ export default async function taskRoutes(fastify: FastifyInstance) {
     const parsed = PlannerQuerySchema.safeParse(request.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const query = parsed.data;
+    // GO-0039-TASKS-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036/GO-0037 -- a reversed
+    // date_from/date_to makes the BETWEEN predicate unsatisfiable, silently returning a legitimate
+    // 200 with tasks:[]/count:0, indistinguishable from a genuine zero-task window.
+    if (query.date_from > query.date_to) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["date_from must be on or before date_to"] } });
+    }
     if (!(await assertTaskCompanyMembership(reply, user.uuid, query.operating_company_id))) return;
 
     return withCurrentUser(user.uuid, async (client) => {
