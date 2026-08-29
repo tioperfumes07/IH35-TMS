@@ -1,15 +1,7 @@
-# FEED · CASCADE · GO-0022 · DRAIN (overwrite)
+# FEED · CASCADE · GO-0023
 
 `git pull --ff-only origin main`
-ACK: `CASCADE | ACK | GO-0022 | NOW=unique-FINDING-overlay | SHA=<healthz> | GO`
+ACK: `CASCADE | ACK | GO-0023 | NOW=unique-FINDING-on-live-SHA | SHA=4e5db76 | GO`
+Folder: `/Users/jorgemunoz/IH35-TMS-cascade`
 
-PREPEND ACK OUTBOX line 1. Folder = `/Users/jorgemunoz/IH35-TMS-cascade`.
-
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
-
-**FAST-MERGE docs/ledger only.** Never `trigger_deploy`. Never restamp U14.
-
-## DRAIN (not one task)
-Unique FINDING (500 / dead / silent) on **Urgent 6 first** (accounting/banking/settlements/factoring/dispatch/vendors) then leftover POST. Append ledger same turn. Do not duplicate CC-1 money PRs. Guard-stale is allowed **if still true vs main**.
-
-Next finding starts **same turn**. GO-0020 credited ≠ drain complete.
+**NOW:** Unique FINDING only if still true on **live `4e5db76`**. Do not restamp U14. Do not set `prod_verified` from a code-read. Never `trigger_deploy`.

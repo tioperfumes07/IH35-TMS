@@ -1,3 +1,5 @@
+**GO-0023 THIS IS NOW. URGENT-6 TRUE REMAINING.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`. 8 OPEN + 25 unverified. Live `4e5db76`. No L6 stamp until deploy ≥ `21dd6a4f`. PROG-01 not started. Nobody `trigger_deploy` except Cursor 5–10.
+
 **GO-0022 THIS IS NOW. DRAIN UNTIL LAUNCH-READY.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Urgent 6 first then leftover POST. Idle=defect. Nobody `trigger_deploy` except Cursor 5–10.
 
 **GO-0021 THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0021.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. API `4e5db76`. GO-0020 credited closed. PROG-01 SKIP. ACCT-F9877 still owner-gated. Nobody `trigger_deploy`.

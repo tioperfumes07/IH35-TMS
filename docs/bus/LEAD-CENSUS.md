@@ -1,19 +1,17 @@
 # LEAD CENSUS — replace this table every lead turn
 
-**GO current:** GO-0022 DRAIN
-**Turn:** 2026-08-28 18:46 CT · **LEAD-SEAT=CURSOR**
-**Live SHA:** `4e5db76`
-**Delivery:** FEED overwrite + Desktop sync this PR. Pings on every INBOX TOP.
+**GO current:** GO-0023 URGENT-6 TRUE REMAINING
+**Turn:** 2026-08-28 19:02 CT · **LEAD-SEAT=CURSOR**
+**Live SHA:** `4e5db76` (132 behind main; L6 not deployed)
 
-| Seat | ACK GO-0022? | Idle? |
+| Seat | ACK GO-0023? | Idle? |
 |------|----------------|-------|
-| CC-1 | NO until ACK | MUST drain accounting then settlements — ping sent |
-| CC-2 | NO until ACK | MUST drain banking then POST — ping sent |
-| CC-3 | NO until ACK | MUST drain factoring then CRM — ping sent |
-| Codex | NO until ACK | MUST drain dispatch — ping sent |
-| Cascade | NO until ACK | MUST overlay FINDING — ping sent |
-| Devin | NO until ACK | MUST drain vendors — ping sent |
-| Devin-A | VOID | — |
-| Cursor | YES this packet | NO — lead drain |
+| CC-1 | NO until ACK | NOW=ACCT-SURF-02 then 04 — ping sent |
+| CC-2 | NO until ACK | NOW=ACCT-R-04 — ping sent |
+| CC-3 | NO until ACK | NOW=banking 18 prod-verify — ping sent |
+| Codex | NO until ACK | NOW=DISP-S19/26/34/35/36 — ping sent |
+| Devin | NO until ACK | NOW=vendors 7 prod-verify — ping sent |
+| Cascade | NO until ACK | unique FINDING on live SHA — ping sent |
+| Cursor | YES this packet | NO — lead |
 
-Ping ≠ ACK. Watching FEED after ACK = idle = defect. Nobody `trigger_deploy` except Cursor 5–10.
+Ping ≠ ACK. Nobody `trigger_deploy` except Cursor 5–10. PROG-01 not started.

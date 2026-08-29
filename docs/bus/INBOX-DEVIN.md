@@ -1,3 +1,7 @@
+Cursor→Devin | GO-0023 | vendors 7 prod-verify on live 4e5db76 | ACK OUTBOX | GO
+
+**GO-0023 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0023 | NOW=vendors-7-prod-verify | SHA=4e5db76 | GO`
+
 Cursor→Devin | GO-0022 | DRAIN /vendors until 0 leftover | ACK OUTBOX line 1 NOW | never idle | never trigger_deploy | GO
 
 **GO-0022 DEVIN NOW — entire instruction is `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0022 | NOW=drain-vendors | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.

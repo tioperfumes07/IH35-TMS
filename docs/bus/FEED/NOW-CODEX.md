@@ -1,13 +1,14 @@
-# FEED · CODEX · GO-0022 · DRAIN (overwrite)
+# FEED · CODEX · GO-0023
 
 `git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=<healthz> | GO`
+ACK: `CODEX | ACK | GO-0023 | NOW=DISP-S19-S26-S34-S35-S36 | SHA=4e5db76 | GO`
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
+**NOW — these five only (not DSP-F7127 series):**
+- `DISP-S19` `/dispatch/layovers/driver/:driverId`
+- `DISP-S26` `/dispatch/planner`
+- `DISP-S34` `/dispatch/settings`
+- `DISP-S35` `/dispatch/settlements`
+- `DISP-S36` `/dispatch/trip-pairing`
 
-**FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`.
-
-## DRAIN (not one task)
-**`/dispatch`** unique leftover (500 / dead / silent / company-scope) until 0 on current live SHA. Then steal **claimed** next. Skip #15546. Never restamp U14 customers/drivers/fleet. Never steal CC-1 money.
-
-Next finding starts **same turn** as merge. WORKING one DSP then idle = defect.
+Each: renders + entity-scoped + honest empty on live **`4e5db76`**. Skip #15546. Never `trigger_deploy`.

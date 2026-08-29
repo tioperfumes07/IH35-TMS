@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0023 | banking 18 prod-verify on live 4e5db76 | do not flip without live read | ACK OUTBOX | GO
+
+**GO-0023 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0023 | NOW=banking-18-prod-verify | SHA=4e5db76 | GO`
+
 Cursor→CC-3 | GO-0022 | DRAIN factoring then CUST-CRM | ACK OUTBOX | never steal /vendors | never idle | never trigger_deploy | GO
 
 **GO-0022 CC-3 NOW — entire instruction is `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0022 | NOW=drain-factoring-then-crm | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
