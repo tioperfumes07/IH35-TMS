@@ -1,3 +1,7 @@
+Cursor→CC-2 | GO-0028 | /reports then /cash-flow then /finance unique | do not remake TASK-XTENANT #17218 | ACK OUTBOX | never idle | GO
+
+**GO-0028 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0028 | NOW=reports-then-cash-flow-then-finance-unique | SHA=<healthz> | GO`
+
 Cursor→CC-2 | GO-0027 | /home then /fuel unique leftover | ACK OUTBOX | never idle | GO
 
 **GO-0027 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0027 | NOW=home-then-fuel-unique | SHA=<healthz> | GO`

@@ -1,6 +1,6 @@
-# FEED · CC-2 · GO-0027
+# FEED · CC-2 · GO-0028
 
 `git pull --ff-only origin main`
-ACK: `CC-2 | ACK | GO-0027 | NOW=home-then-fuel-unique | SHA=<healthz> | GO`
+ACK: `CC-2 | ACK | GO-0028 | NOW=reports-then-cash-flow-then-finance-unique | SHA=<healthz> | GO`
 
-**NOW:** Unique leftover `/home` then `/fuel` — 500 / dead click / silent no-op / unchecked UPDATE. Do not recap GO-0022 banking. Never GL. Never `trigger_deploy`. Never idle.
+**NOW:** Unique leftover `/reports` then `/cash-flow` then `/finance` — **different defect class** than GO-0016 bare-catch. `TASK-XTENANT-SCOPE` already shipped **#17218** — do not remake. If a route has no live-reachable trigger, write UNVERIFIED + named blocker, do not overclaim. Never GL. Never `trigger_deploy`. Never idle.

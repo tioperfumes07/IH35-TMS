@@ -1,3 +1,5 @@
+**GO-0028 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0028.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. TASK-XTENANT #17218 and VOID-PREDICATE-MAP-DRIFT credited closed. Skip #15546 #16895. Nobody else `trigger_deploy`.
+
 **GO-0027 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0027.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Deploy in flight `dep-da92hg`. Skip #15546 #16895. Nobody else `trigger_deploy`.
 
 **GO-0026 CC-2 THIS IS NOW.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0026.md`. FEED `docs/bus/FEED/NOW-CC-2.md`. Other seats stay on GO-0025. BANK-CTRL-01 flags ON = ratified, not a defect. Nobody `trigger_deploy` except Cursor 5–10.
