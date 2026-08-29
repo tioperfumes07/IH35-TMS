@@ -101,11 +101,13 @@ export function collectProblems(overrides = {}) {
         `${MANIFEST}: complete:true is a false green — scored ${N} of ${M} (URGENT_6 modules need prod_verified, not just status:PASS); honest complete:false is correct until GUARD stamps the remaining items`
       );
     }
-    if (manifest.pass_count !== manifest.total_count) {
-      problems.push(
-        `${MANIFEST}: pass_count ${manifest.pass_count} must equal total_count ${manifest.total_count}`
-      );
-    }
+    // NOTE: this used to also assert pass_count === total_count unconditionally. That assumed
+    // pass_count always means "every item currently shows status:PASS" — true before URGENT_6
+    // existed, but pass_count is now the HONEST scored N (verify-module-manifest-integrity.mjs),
+    // which can legitimately be less than total_count for a URGENT_6 module with unverified PASS
+    // items (vendors: pass_count 0, total_count 7, all 7 items genuinely status:PASS). That
+    // arithmetic is verify-module-manifest-integrity.mjs's job, not this guard's — re-asserting a
+    // stale definition here is exactly the ACCT-GUARD-F7300 class of bug this fix exists to close.
   }
 
   if (overrides.runSibling !== false) {
