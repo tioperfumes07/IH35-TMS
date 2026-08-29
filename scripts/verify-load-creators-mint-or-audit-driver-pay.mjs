@@ -176,8 +176,26 @@ export function collectMilesOnBookLoudProblems() {
   if (!bookFe.includes("driver_bill_mint") || !bookFe.includes("skipped_no_pay_rate")) {
     problems.push("BookLoadModalV4.tsx: must toast skipped_no_pay_rate.");
   }
+  problems.push(...collectDriverBillSkipMessageProblems(bookFe));
   if (!kanban.includes("driver_bill_mint") || !kanban.includes("skipped_no_pay_rate")) {
     problems.push("DispatchKanban.tsx: must toast delivery pay skip.");
+  }
+  return problems;
+}
+
+export function collectDriverBillSkipMessageProblems(bookFe) {
+  const problems = [];
+  if (!bookFe.includes("function driverBillMintSkippedMessage") || (bookFe.match(/driverBillMintSkippedMessage/g) ?? []).length !== 3) {
+    problems.push("BookLoadModalV4.tsx: skipped driver-pay result must use one shared message contract.");
+  }
+  if (!bookFe.includes('"a configured driver pay rate"')) {
+    problems.push("BookLoadModalV4.tsx: empty missing[] must identify the configured pay rate, not generic pay inputs.");
+  }
+  if (!bookFe.includes("driver pay rate / mile and the load's pay-basis miles")) {
+    problems.push("BookLoadModalV4.tsx: recovery must name both possible pay inputs.");
+  }
+  if (bookFe.includes("Enter shortest miles before delivery")) {
+    problems.push("BookLoadModalV4.tsx: must not prescribe shortest miles when empty missing[] means the rate is absent.");
   }
   return problems;
 }
@@ -245,7 +263,21 @@ function selftest() {
     if (loud.length === 0) pass += 1;
     else console.error("  selftest FAIL: miles-on-book loud on real tree", loud);
   }
-  const total = cases.length + 2;
+  const realBookFe = fs.readFileSync(
+    path.join(root, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx"),
+    "utf8"
+  );
+  const messageMutations = [
+    realBookFe.replace("driverBillMintSkippedMessage", "inlineSkippedMessage"),
+    realBookFe.replace('"a configured driver pay rate"', '"pay inputs"'),
+    realBookFe.replace("driver pay rate / mile and the load's pay-basis miles", "shortest miles"),
+    `${realBookFe}\n// Enter shortest miles before delivery`,
+  ];
+  for (const mutant of messageMutations) {
+    if (collectDriverBillSkipMessageProblems(mutant).length > 0) pass += 1;
+    else console.error("  selftest FAIL: driver-pay recovery mutation survived");
+  }
+  const total = cases.length + 2 + messageMutations.length;
   console.log(`${LABEL} selftest ${pass}/${total}`);
   return pass === total ? 0 : 1;
 }

@@ -203,6 +203,15 @@ type Props = {
   prefillDriverId?: string | null;
 };
 
+function driverBillMintSkippedMessage(
+  action: "booked" | "updated",
+  missingInputs: string[] | undefined
+): string {
+  const missing = Array.isArray(missingInputs) ? missingInputs.filter(Boolean) : [];
+  const missingLabel = missing.length > 0 ? missing.join(", ") : "a configured driver pay rate";
+  return `Load ${action}, but driver pay was NOT minted — missing ${missingLabel}. Review driver pay rate / mile and the load's pay-basis miles before delivery so the driver bill can be created.`;
+}
+
 function numOrUndef(v: unknown): number | undefined {
   const n = Number(v);
   if (!Number.isFinite(n) || n === 0) return undefined;
@@ -718,12 +727,7 @@ export function BookLoadModalV4({
           patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } | null }
         ).driver_bill_mint;
         if (mint?.outcome === "skipped_no_pay_rate") {
-          const missing =
-            Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
-          pushToast(
-            `Load updated, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
-            "info"
-          );
+          pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
         }
         onCreated({ id: editLoadId, label: editLoad?.load_number ? String(editLoad.load_number) : undefined });
         onClose();
@@ -942,12 +946,7 @@ export function BookLoadModalV4({
       pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
       const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[] } }).driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate") {
-        const missing =
-          Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
-        pushToast(
-          `Load booked, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
-          "info"
-        );
+        pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
       }
       const createdId = String((payload as { id?: string }).id ?? "");
       const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
