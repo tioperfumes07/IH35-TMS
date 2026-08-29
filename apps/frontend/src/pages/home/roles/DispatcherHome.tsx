@@ -79,11 +79,13 @@ export function DispatcherHome({ auth }: Props) {
         }
       />
 
+      {/* GO-0027-HOME-F: on a failed fetch, `data` is undefined -- pass null (honest "—") rather
+          than `?? 0`, which used to render "0 Active loads / 0 Late loads" with no error styling. */}
       <DispatcherKpiBar
-        activeLoads={data?.kpis.active_loads ?? 0}
-        lateLoads={data?.kpis.late_loads ?? 0}
-        todayPickups={data?.kpis.today_pickups ?? 0}
-        todayDeliveries={data?.kpis.today_deliveries ?? 0}
+        activeLoads={homeQuery.isError ? null : (data?.kpis.active_loads ?? 0)}
+        lateLoads={homeQuery.isError ? null : (data?.kpis.late_loads ?? 0)}
+        todayPickups={homeQuery.isError ? null : (data?.kpis.today_pickups ?? 0)}
+        todayDeliveries={homeQuery.isError ? null : (data?.kpis.today_deliveries ?? 0)}
       />
 
       <DispatcherActiveLoadsPanel
