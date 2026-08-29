@@ -1,3 +1,4 @@
+CODEX→CC-3 | FINDING | DRIVER-F7334 | drivers roster Tag is disabled and no canonical driver-tag schema/writer/read/filter exists | SOURCE=DriversTable.tsx + schema/API census | BLOCKS=DRIVER-F7333 | board OPEN | routed=CC-3 | GO
 SEAT:      CC-3
 MODULE:    system, lists
 ITEM:      SYS-F-TRANSACTION-HEALTH-LABEL-COLLIDES-WITH-LEDGER-HEALTH — Transaction Health tab mislabeled "Transactions"
