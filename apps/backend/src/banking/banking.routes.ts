@@ -166,12 +166,14 @@ export async function registerBankingRoutes(app: FastifyInstance) {
         `,
         [companyId]
       );
-      const pendingBills = await countPendingBills(client, companyId).catch(() => 0);
-      const escrowCounts = await countDriverEscrowKpis(client, companyId).catch(() => ({
-        active_drivers: 0,
-        drivers_with_escrow_balance: 0,
-        drivers_with_active_escrow_account: 0,
-      }));
+      // BANK-KPI-FAKE-ZERO-CATCH-CLUSTER (GO-0027, CC-1): these 4 KPI sub-queries used to swallow
+      // their own failures behind a fake-zero .catch() — a real DB/RLS error rendered as a
+      // normal-looking (but wrong) "0" instead of surfacing the frontend's already-built
+      // kpiQuery.isError -> ListErrorBanner path (BankingHome.tsx:412). Matches the same fix
+      // already shipped for the authoritative-cash leg below (PR #16817): let a real failure
+      // propagate and 500, don't paint over it.
+      const pendingBills = await countPendingBills(client, companyId);
+      const escrowCounts = await countDriverEscrowKpis(client, companyId);
       // total_cash / cash-flow opening / accounts/all must agree via sumAuthoritativeDepositoryCashCents:
       // Plaid depository SUM(current_balance_cents) + non-Plaid internal-wallet ledger derivation.
       // Never re-sum bank_transactions for the Plaid-mixed population (phantom -$4.79M class).
@@ -188,14 +190,12 @@ export async function registerBankingRoutes(app: FastifyInstance) {
       // across all accounts. The tile view's uncategorized_count counts only 'uncategorized', so it
       // read 0 while ~2,650 CSV-imported 'pending_categorization' rows sat in the queue. One shared
       // count (pending-categorization.ts) now feeds both so they can never diverge.
-      const uncategorizedCount = await countUncategorizedTransactions(client, companyId).catch(() =>
-        Number(kpiRes.rows[0]?.total_uncategorized ?? 0)
-      );
+      const uncategorizedCount = await countUncategorizedTransactions(client, companyId);
       // FIX-3: the Banking Home SyncStatusStrip "Transactions" metric must read the REAL bank-transaction
       // total from the canonical banking.bank_transactions table — NOT a count of qbo_sync_queue entities
       // in status 'synced' (that queue counts pushed-to-QBO entities of ANY type, not bank transactions,
       // and previously showed "Transactions: 0" for companies with hundreds of un-pushed transactions).
-      const totalTransactions = await countTotalBankTransactions(client, companyId).catch(() => 0);
+      const totalTransactions = await countTotalBankTransactions(client, companyId);
       return {
         ...(kpiRes.rows[0] ?? {
           operating_company_id: companyId,

@@ -1,26 +1,22 @@
 #!/usr/bin/env node
 /**
- * BANK-KPI-FAKE-ZERO-CATCH-CLUSTER (cash-chain scope)
+ * BANK-KPI-FAKE-ZERO-CATCH-CLUSTER (full cluster, closed 2026-08-28)
  *
  * GET /api/v1/banking/dashboard/kpis swallowed FIVE independent money/count sub-queries with
- * `.catch(() => <fake zero>)`, painting a healthy-looking dashboard over a real query failure. Worse,
- * the ROOT of the total_cash chain was doubly-masked: sumAuthoritativeDepositoryCashCents itself
+ * `.catch(() => <fake zero>)`, painting a healthy-looking dashboard over a real query failure. The
+ * ROOT of the total_cash chain was doubly-masked: sumAuthoritativeDepositoryCashCents itself
  * (internal-wallet-balance.ts) already swallowed its own two internal queries — so the function could
  * never throw on a real DB error, and this exact total is shared by the KPI strip, /cash-flow opening
  * cash, and /accounts/all, so one masked failure corrupted three surfaces at once with a number that
- * reads as a real, alarming balance ($0 depository cash).
- *
- * This guard locks the CASH-CHAIN scope specifically (the board's own guard ask: "no bare
- * `.catch(() => 0)` / `.catch(() => ({ rows: [{ ... 0` survives on this handler's authoritative-cash
- * chain"):
- *  - internal-wallet-balance.ts's sumAuthoritativeDepositoryCashCents no longer catches either of its
- *    two internal queries into a fake-zero rows object.
- *  - banking.routes.ts's call to sumAuthoritativeDepositoryCashCents is no longer wrapped in
- *    `.catch(() => 0)`.
- *
- * Out of scope (left OPEN, not silently fixed here): the other 4 catches in the same KPI handler
+ * reads as a real, alarming balance ($0 depository cash). That cash-chain leg shipped first (PR
+ * #16817); this guard now also covers the remaining 4 catches deliberately left open at the time
  * (pendingBills, escrowCounts, uncategorizedCount fallback, totalTransactions) — lower-stakes COUNTS,
- * not the authoritative CASH total; a separate, narrower fix.
+ * fixed 2026-08-28 (GO-0027) with the identical pattern once each was proven to have its own
+ * `isError -> ListErrorBanner` display path already wired (BankingHome.tsx:412).
+ *
+ * This guard locks the FULL cluster: no bare `.catch(() => 0)` / `.catch(() => ({ ... 0` survives on
+ * ANY of this handler's 5 KPI sub-queries, nor on sumAuthoritativeDepositoryCashCents's own 2 internal
+ * queries.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -52,6 +48,31 @@ export function check(walletSrc, routesSrc) {
     failures.push(`${ROUTES_FILE}: authoritativeTotalCash call site not found — guard out of sync`);
   }
 
+  if (/countPendingBills\(client, companyId\)\.catch\(\s*\(\)\s*=>\s*0\s*\)/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: pendingBills' fake-zero .catch() reappeared`);
+  }
+  if (!/const pendingBills = await countPendingBills\(client, companyId\);/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: pendingBills call site not found — guard out of sync`);
+  }
+  if (/countDriverEscrowKpis\(client, companyId\)\.catch\(/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: escrowCounts' fake-zero .catch() reappeared`);
+  }
+  if (!/const escrowCounts = await countDriverEscrowKpis\(client, companyId\);/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: escrowCounts call site not found — guard out of sync`);
+  }
+  if (/countUncategorizedTransactions\(client, companyId\)\.catch\(/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: uncategorizedCount's fake-fallback .catch() reappeared`);
+  }
+  if (!/const uncategorizedCount = await countUncategorizedTransactions\(client, companyId\);/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: uncategorizedCount call site not found — guard out of sync`);
+  }
+  if (/countTotalBankTransactions\(client, companyId\)\.catch\(\s*\(\)\s*=>\s*0\s*\)/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: totalTransactions' fake-zero .catch() reappeared`);
+  }
+  if (!/const totalTransactions = await countTotalBankTransactions\(client, companyId\);/.test(routesSrc)) {
+    failures.push(`${ROUTES_FILE}: totalTransactions call site not found — guard out of sync`);
+  }
+
   return failures;
 }
 
@@ -71,8 +92,8 @@ function run() {
     process.exit(1);
   }
   console.log(
-    "PASS: sumAuthoritativeDepositoryCashCents and its KPI-route caller no longer mask a real query " +
-      "failure as $0 depository cash"
+    "PASS: all 5 banking KPI sub-queries (cash, pendingBills, escrowCounts, uncategorizedCount, " +
+      "totalTransactions) propagate a real failure instead of masking it as a fake zero"
   );
 }
 
@@ -117,7 +138,60 @@ function selftest() {
     process.exit(1);
   }
 
-  console.log("PASS(selftest): both planted regressions correctly caught; baseline clean");
+  // Mutation 3-6: reintroduce each of the 4 remaining fake-zero catches, one at a time.
+  const offenderC = routesSrc.replace(
+    "const pendingBills = await countPendingBills(client, companyId);",
+    "const pendingBills = await countPendingBills(client, companyId).catch(() => 0);"
+  );
+  if (offenderC === routesSrc) {
+    console.error("FAIL(selftest): offender C mutation did not change the file — pattern out of sync");
+    process.exit(1);
+  }
+  if (check(walletSrc, offenderC).length === 0) {
+    console.error("FAIL(selftest): planted offender (pendingBills fake-zero catch reintroduced) was NOT caught");
+    process.exit(1);
+  }
+
+  const offenderD = routesSrc.replace(
+    "const escrowCounts = await countDriverEscrowKpis(client, companyId);",
+    "const escrowCounts = await countDriverEscrowKpis(client, companyId).catch(() => ({ active_drivers: 0, drivers_with_escrow_balance: 0, drivers_with_active_escrow_account: 0 }));"
+  );
+  if (offenderD === routesSrc) {
+    console.error("FAIL(selftest): offender D mutation did not change the file — pattern out of sync");
+    process.exit(1);
+  }
+  if (check(walletSrc, offenderD).length === 0) {
+    console.error("FAIL(selftest): planted offender (escrowCounts fake-zero catch reintroduced) was NOT caught");
+    process.exit(1);
+  }
+
+  const offenderE = routesSrc.replace(
+    "const uncategorizedCount = await countUncategorizedTransactions(client, companyId);",
+    "const uncategorizedCount = await countUncategorizedTransactions(client, companyId).catch(() => Number(kpiRes.rows[0]?.total_uncategorized ?? 0));"
+  );
+  if (offenderE === routesSrc) {
+    console.error("FAIL(selftest): offender E mutation did not change the file — pattern out of sync");
+    process.exit(1);
+  }
+  if (check(walletSrc, offenderE).length === 0) {
+    console.error("FAIL(selftest): planted offender (uncategorizedCount fake-fallback catch reintroduced) was NOT caught");
+    process.exit(1);
+  }
+
+  const offenderF = routesSrc.replace(
+    "const totalTransactions = await countTotalBankTransactions(client, companyId);",
+    "const totalTransactions = await countTotalBankTransactions(client, companyId).catch(() => 0);"
+  );
+  if (offenderF === routesSrc) {
+    console.error("FAIL(selftest): offender F mutation did not change the file — pattern out of sync");
+    process.exit(1);
+  }
+  if (check(walletSrc, offenderF).length === 0) {
+    console.error("FAIL(selftest): planted offender (totalTransactions fake-zero catch reintroduced) was NOT caught");
+    process.exit(1);
+  }
+
+  console.log("PASS(selftest): all 6 planted regressions correctly caught; baseline clean");
 }
 
 if (process.argv.includes("--selftest")) {
