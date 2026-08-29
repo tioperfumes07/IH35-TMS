@@ -17,6 +17,7 @@ import { formatCashFlowCompoundLabel } from "../../lib/formatCashFlowCompoundLab
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
+import { useExportAction } from "../../hooks/useExportAction";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -43,6 +44,7 @@ export function CashFlowStatementPage() {
     empty: defaultRange,
     onApply: setApplied,
   });
+  const exportAction = useExportAction();
 
   const query = useQuery({
     queryKey: ["reports", "cash-flow-statement", companyId, applied.start, applied.end],
@@ -137,15 +139,19 @@ export function CashFlowStatementPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportCashFlowStatementReport({
-                  operating_company_id: companyId,
-                  range_key: "custom",
-                  from_date: applied.start,
-                  to_date: applied.end,
-                  format: "pdf",
-                })
+                void exportAction.run(
+                  () =>
+                    exportCashFlowStatementReport({
+                      operating_company_id: companyId,
+                      range_key: "custom",
+                      from_date: applied.start,
+                      to_date: applied.end,
+                      format: "pdf",
+                    }),
+                  "Cash flow statement export failed",
+                )
               }
             >
               Export PDF
@@ -153,15 +159,19 @@ export function CashFlowStatementPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportCashFlowStatementReport({
-                  operating_company_id: companyId,
-                  range_key: "custom",
-                  from_date: applied.start,
-                  to_date: applied.end,
-                  format: "xlsx",
-                })
+                void exportAction.run(
+                  () =>
+                    exportCashFlowStatementReport({
+                      operating_company_id: companyId,
+                      range_key: "custom",
+                      from_date: applied.start,
+                      to_date: applied.end,
+                      format: "xlsx",
+                    }),
+                  "Cash flow statement export failed",
+                )
               }
             >
               Export XLSX
@@ -175,6 +185,11 @@ export function CashFlowStatementPage() {
         This report is always accrual basis under the owner-locked reporting policy.
       </p>
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {exportAction.error ? (
+        <p role="alert" className="no-print text-xs text-red-700">
+          {exportAction.error}
+        </p>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(defaultRange) ? 1 : 0}

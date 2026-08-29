@@ -18,6 +18,7 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { apAgingBillsListHref, apAgingVendorProfileHref } from "./agingDrillThrough";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useExportAction } from "../../hooks/useExportAction";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
@@ -52,6 +53,7 @@ export function APAgingPage() {
   const deepLinkVendorId = searchParams.get("vendor_id")?.trim() ?? "";
   const emptyFilters: APAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", vendorId: "" };
   const [appliedFilters, setAppliedFilters] = useState<APAgingFilters>({ ...emptyFilters, vendorId: deepLinkVendorId });
+  const exportAction = useExportAction();
   useEffect(() => {
     setAppliedFilters((prev) => ({ ...prev, vendorId: deepLinkVendorId }));
   }, [deepLinkVendorId]);
@@ -208,13 +210,17 @@ export function APAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportApAging({
-                  operating_company_id: companyId,
-                  as_of_date: appliedFilters.asOfDate,
-                  format: "pdf",
-                })
+                void exportAction.run(
+                  () =>
+                    exportApAging({
+                      operating_company_id: companyId,
+                      as_of_date: appliedFilters.asOfDate,
+                      format: "pdf",
+                    }),
+                  "A/P aging export failed",
+                )
               }
             >
               Export PDF
@@ -222,13 +228,17 @@ export function APAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportApAging({
-                  operating_company_id: companyId,
-                  as_of_date: appliedFilters.asOfDate,
-                  format: "xlsx",
-                })
+                void exportAction.run(
+                  () =>
+                    exportApAging({
+                      operating_company_id: companyId,
+                      as_of_date: appliedFilters.asOfDate,
+                      format: "xlsx",
+                    }),
+                  "A/P aging export failed",
+                )
               }
             >
               Export XLSX
@@ -241,6 +251,11 @@ export function APAgingPage() {
         This report is always accrual basis under the owner-locked reporting policy.
       </p>
       {query.isError ? <ListErrorState title="Couldn't load A/P aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
+      {exportAction.error ? (
+        <p role="alert" className="text-xs text-red-700">
+          {exportAction.error}
+        </p>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(appliedFilters) !== JSON.stringify(emptyFilters) ? 1 : 0}

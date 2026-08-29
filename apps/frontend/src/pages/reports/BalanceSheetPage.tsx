@@ -18,6 +18,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
+import { useExportAction } from "../../hooks/useExportAction";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -38,6 +39,7 @@ export function BalanceSheetPage() {
   const today = companyToday();
   const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
+  const exportAction = useExportAction();
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -147,13 +149,17 @@ export function BalanceSheetPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportBalanceSheetReport({
-                  operating_company_id: companyId,
-                  as_of_date: applied.asOfDate,
-                  format: "pdf",
-                })
+                void exportAction.run(
+                  () =>
+                    exportBalanceSheetReport({
+                      operating_company_id: companyId,
+                      as_of_date: applied.asOfDate,
+                      format: "pdf",
+                    }),
+                  "Balance sheet export failed",
+                )
               }
             >
               Export PDF
@@ -161,13 +167,17 @@ export function BalanceSheetPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportBalanceSheetReport({
-                  operating_company_id: companyId,
-                  as_of_date: applied.asOfDate,
-                  format: "xlsx",
-                })
+                void exportAction.run(
+                  () =>
+                    exportBalanceSheetReport({
+                      operating_company_id: companyId,
+                      as_of_date: applied.asOfDate,
+                      format: "xlsx",
+                    }),
+                  "Balance sheet export failed",
+                )
               }
             >
               Export XLSX
@@ -178,6 +188,11 @@ export function BalanceSheetPage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {exportAction.error ? (
+        <p role="alert" className="no-print text-xs text-red-700">
+          {exportAction.error}
+        </p>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}
