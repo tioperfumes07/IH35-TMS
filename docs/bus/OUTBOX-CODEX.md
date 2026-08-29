@@ -2093,3 +2093,11 @@ CODEX | ACK | GO-0032 | NOW=dispatch-planner-POD-BOL | SHA=da39aab | GO
 Codex | GO-0032 | LIVE PASS | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | BOL=1 stored B21-D10-v1 | POD=honest 0 | FINDING=none | NEXT=GO-0033 | GO
 CODEX | ACK | GO-0033 | NOW=fleet-unique+TEST-create | SHA=da39aab | GO
 Codex | GO-0033 | LIVE FAIL→FIXING | TEST=TEST-CODEX-GO0033 | FINDING=FLEET-F7194 | create success closes onto TEST-filtered roster; exact record inaccessible | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7195 | GO-0039 | LIVE=da39aab open-return action silent no-op | SOURCE=TripPairingUnitRow→BookLoadModalV4 | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0039 | NOW=trip-pairing-unique | SHA=da39aab | GO
+CODEX | PASS | GO-0038 | URL=/dispatch/alerts/late-arrivals | LIVE=da39aab · 1 row · no 500/dead/silent | NEXT=GO-0039 | GO
+CODEX | PASS | GO-0037 | URL=/dispatch/border-crossing | LIVE=da39aab · TEST load+unit R=W through step 2 · no write | NEXT=GO-0038 | GO
+CODEX | PASS | GO-0036 | URL=/dispatch | LIVE=da39aab · no proven unique failure; OOS reader company-scoped owner/leased | NEXT=GO-0037 | GO
+CODEX | PASS | GO-0035 | URL=/fuel | LIVE=da39aab · planner/settings/mapping/history/compliance mounted · no unique failure | NEXT=GO-0036 | GO
+CODEX | PASS | GO-0034 | URL=/drivers/44398e9f-c92d-4ca6-9784-53d00ca16d53 | TEST=TEST CODEX GO0034 kept · canonical profile R=W | NEXT=GO-0035 | GO
+Codex | SHIPPED | FLEET-F7194 | PR=#17404 @ 8cfc3f86ef | Built=unit+trailer canonical post-create navigation | NEXT=GO-0034 | GO
