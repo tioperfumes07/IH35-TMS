@@ -15,6 +15,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { auditSurface, auditBackend } from "./verify-bill-vendor-link-canonical-uuid.mjs";
 import { openWaveIdsForModule } from "./lib/open-wave-modules.mjs";
+import { scoreManifest } from "./verify-module-completion.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-vend-link-01-vendor-uuid-entitylink";
@@ -67,6 +68,18 @@ export function collectProblems(overrides = {}) {
     // Checklist may be 7/7 PASS with complete:false while a shared-class wave still lists
     // vendors (CLS-ORPHAN-SURFACE). Align with verify-no-false-green-certify — never force
     // complete:true under an open shared class.
+    //
+    // ACCT-GUARD-F7300-class fix (2026-08-29): this check used to require complete:true
+    // whenever no open wave listed vendors, based purely on item.status. It never learned
+    // about URGENT_6_COMPLETION_IDS (verify-module-completion.mjs) — vendors is one of the six
+    // launch modules where a PASS item only counts toward N if it is ALSO prod_verified. With
+    // CLS-ORPHAN-SURFACE drained (2026-08-09) but zero of the 7 vendors items prod_verified yet,
+    // this guard was demanding complete:true on a manifest whose HONEST scored N is 0, not 7 —
+    // which would have been a false green and would have failed
+    // verify-module-manifest-integrity.mjs the moment anyone tried to set it. Use the SAME
+    // scoreManifest() the rest of the module-completion system trusts, so this guard can never
+    // again disagree with it about what "complete" means.
+    const { N, M } = scoreManifest(manifest);
     const openWaves =
       overrides.openWaveIds !== undefined
         ? overrides.openWaveIds
@@ -77,9 +90,15 @@ export function collectProblems(overrides = {}) {
           `${MANIFEST}: complete:true ILLEGAL while open wave(s) list vendors: ${openWaves.join(", ")}`
         );
       }
-    } else if (manifest.complete !== true) {
+    } else if (N === M) {
+      if (manifest.complete !== true) {
+        problems.push(
+          `${MANIFEST}: complete must be true when VEND-LINK-01 closes the module, every item scores toward N (prod_verified for URGENT_6 modules), and no shared-class waves list vendors`
+        );
+      }
+    } else if (manifest.complete === true) {
       problems.push(
-        `${MANIFEST}: complete must be true when VEND-LINK-01 closes the module and no shared-class waves list vendors`
+        `${MANIFEST}: complete:true is a false green — scored ${N} of ${M} (URGENT_6 modules need prod_verified, not just status:PASS); honest complete:false is correct until GUARD stamps the remaining items`
       );
     }
     if (manifest.pass_count !== manifest.total_count) {
@@ -166,6 +185,41 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   });
   if (honestHold.length) {
     failures.push(`honest complete:false under open wave wrongly flagged: ${honestHold.join(" | ")}`);
+  }
+
+  // ACCT-GUARD-F7300-class regression coverage: vendors is a URGENT_6_COMPLETION_IDS module, so a
+  // PASS item only scores toward N if it is ALSO prod_verified. complete:true must be a false
+  // green when items are PASS-but-unverified, and legal once every item is genuinely prod_verified.
+  const urgent6FalseGreen = collectProblems({
+    manifest: JSON.stringify({
+      module: "vendors",
+      complete: true,
+      pass_count: 1,
+      total_count: 1,
+      items: [{ id: "VEND-LINK-01", status: "PASS", prod_verified: false }],
+    }),
+    openWaveIds: [],
+    runSibling: false,
+  });
+  if (!urgent6FalseGreen.some((p) => /false green/.test(p))) {
+    failures.push("complete:true with no waves but zero prod_verified (URGENT_6 module) not caught");
+  }
+
+  const urgent6HonestComplete = collectProblems({
+    manifest: JSON.stringify({
+      module: "vendors",
+      complete: true,
+      pass_count: 1,
+      total_count: 1,
+      items: [{ id: "VEND-LINK-01", status: "PASS", prod_verified: true }],
+    }),
+    openWaveIds: [],
+    runSibling: false,
+  });
+  if (urgent6HonestComplete.length) {
+    failures.push(
+      `complete:true with every item genuinely prod_verified wrongly flagged: ${urgent6HonestComplete.join(" | ")}`
+    );
   }
 
   const sibling = spawnSync(

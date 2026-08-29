@@ -2411,7 +2411,7 @@
   "M": 38,
   "pass_count": 38,
   "total_count": 38,
-  "progress": "38 of 38 (36 PASS + 2 qualifying HOLD)",
+  "progress": "38 of 38",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
