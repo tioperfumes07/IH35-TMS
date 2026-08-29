@@ -4613,6 +4613,7 @@
       "funded_at",
       "id",
       "invoice_ids",
+      "is_sample_data",
       "status",
       "submitted_at",
       "tenant_id",

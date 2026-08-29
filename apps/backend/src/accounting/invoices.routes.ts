@@ -379,7 +379,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/accounting/invoices", async (req, reply) => {
+  app.post("/api/v1/accounting/invoices", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -839,7 +839,7 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
     return result.data;
   });
 
-  app.post("/api/v1/accounting/invoices/:id/send", async (req, reply) => {
+  app.post("/api/v1/accounting/invoices/:id/send", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
