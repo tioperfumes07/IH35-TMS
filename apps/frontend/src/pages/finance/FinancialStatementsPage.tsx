@@ -633,7 +633,14 @@ export function FinancialStatementsPage() {
           )}
         </CollapsedListFilters>
         <div className="ml-auto flex gap-2">
-          <Button size="sm" variant="secondary" onClick={exportCurrentCsv}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={exportCurrentCsv}
+            disabled={
+              (tab === "pl" && !plQuery.data) || (tab === "bs" && !bsQuery.data) || (tab === "tb" && !tbQuery.data)
+            }
+          >
             Export CSV
           </Button>
           <Button

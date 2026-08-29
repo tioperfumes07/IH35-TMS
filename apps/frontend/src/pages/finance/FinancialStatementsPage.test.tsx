@@ -45,6 +45,25 @@ describe("FinancialStatementsPage (FIN-19)", () => {
     expect(reportsApi.getTrialBalanceReport).not.toHaveBeenCalled();
   });
 
+  // GO-0033-FINANCIAL-STATEMENTS-EXPORT-CSV-DEAD-CLICK: exportCurrentCsv() silently no-ops
+  // (no toast, no error) whenever the active tab's query has no data yet -- still loading, or
+  // permanently isError after its one-shot retry:false failure. The sibling "Print" button
+  // already guards against this exact condition; "Export CSV" must match it, not stay clickable
+  // while doing nothing.
+  it("disables Export CSV (matching Print) while the report has no data yet", async () => {
+    vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
+    // Never resolves -- keeps plQuery permanently in a no-data state, same shape as a real
+    // isLoading window or a retry:false failure that leaves `data` undefined forever.
+    vi.mocked(reportsApi.getProfitLossReport).mockReturnValue(new Promise(() => {}));
+
+    render(wrap(<FinancialStatementsPage />));
+
+    const exportButton = await screen.findByRole("button", { name: "Export CSV" });
+    const printButton = screen.getByRole("button", { name: "Print" });
+    expect(exportButton).toBeDisabled();
+    expect(printButton).toBeDisabled();
+  });
+
   it("renders profit & loss when the flag is enabled", async () => {
     vi.mocked(flagHook.useFeatureFlag).mockReturnValue({ enabled: true, loading: false, error: null });
     vi.mocked(reportsApi.getProfitLossReport).mockResolvedValue({
