@@ -2126,26 +2126,32 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         const nextPhone = "phone" in b ? (b.phone ?? null) : undefined;
         const nextPreferredLanguage = "preferred_language" in b ? (b.preferred_language ?? "en") : undefined;
         if (identityUserId && nextPhone !== undefined) {
-          await client.query(
+          const identityPhone = await client.query<{ id: string }>(
             `
               UPDATE identity.users
               SET phone = $2
               WHERE id = $1
-                AND phone IS DISTINCT FROM $2
+              RETURNING id::text
             `,
             [identityUserId, nextPhone]
           );
+          if (identityPhone.rows[0]?.id !== identityUserId) {
+            throw Object.assign(new Error("E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT"), { code: "E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT" });
+          }
         }
         if (identityUserId && nextPreferredLanguage !== undefined) {
-          await client.query(
+          const identityLanguage = await client.query<{ id: string }>(
             `
               UPDATE identity.users
               SET preferred_language = $2
               WHERE id = $1
-                AND preferred_language IS DISTINCT FROM $2
+              RETURNING id::text
             `,
             [identityUserId, nextPreferredLanguage]
           );
+          if (identityLanguage.rows[0]?.id !== identityUserId) {
+            throw Object.assign(new Error("E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT"), { code: "E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT" });
+          }
           const refreshedRes = await client.query(
             `
               SELECT
@@ -2225,6 +2231,9 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
         });
       if (code === "23503") return reply.code(400).send({ error: "invalid_identity_user_id" });
+      if (code === "E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT") {
+        return reply.code(409).send({ error: code });
+      }
       throw err;
     }
   });
