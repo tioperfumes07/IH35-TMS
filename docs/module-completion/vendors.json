@@ -35,9 +35,11 @@
       ],
       "spec": "DUAL-FACTOR-VENDOR-DETAIL · VendorDetail.tsx",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor #4211: FactoringHome profile PATCH advance_rate/fee_rate/reserve_rate + remittance_details on factoring.factor; VendorDetail strips factoring notes block + relocates schedule UI to /factoring. Guard verify-fact-dual-canonical-profile step 2242. Neon Faro TRANSP flat rates 0.97/0.015/0.015.",
+      "evidence": "2026-08-03 Cursor #4211: FactoringHome profile PATCH advance_rate/fee_rate/reserve_rate + remittance_details on factoring.factor; VendorDetail strips factoring notes block + relocates schedule UI to /factoring. Guard verify-fact-dual-canonical-profile step 2242. Neon Faro TRANSP flat rates 0.97/0.015/0.015. RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): guard re-run PASS; Neon lucia (bypass_rls) direct read factoring.factor id=5240378c-1fcb-42e3-8c83-05c52ce44435 \"Faro Factoring Full Recourse V1\" TRANSP: advance_rate=0.9700 fee_rate=0.0150 reserve_rate=0.0150, exact match, not voided.",
       "pr": 4211,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T20:10:00.000Z",
+      "live_verified_sha": "b2448ce"
     },
     {
       "id": "VEND-LINK-01",
