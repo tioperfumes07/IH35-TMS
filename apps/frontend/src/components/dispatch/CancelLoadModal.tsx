@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { listDispatchCancellationReasons } from "../../api/dispatch";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
@@ -41,6 +41,33 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
   const [submitError, setSubmitError] = useState<string | null>(null);
   /** Optimistic rows from inline "+ Create" so submit works before the list refetch lands. */
   const [createdReasons, setCreatedReasons] = useState<Array<Record<string, unknown>>>([]);
+
+  // DSP-MONEY-F7112 — CancelLoadModal is reused across loads/companies without remounting (the
+  // parent toggles `open`, it does not remount by key), so without an explicit reset a reason/
+  // notes/billable/charge draft typed for one load could silently carry into whichever load or
+  // company the modal next opens for, and a submit already in flight when the modal is reassigned
+  // to a different load could apply its result (or a stale error) to the wrong context. Reset the
+  // full draft on every load/company/open transition, and snapshot the exact load/company this
+  // submit was FOR so a late-arriving response for a since-abandoned load is discarded, not shown.
+  const resetKey = `${operatingCompanyId}::${loadId ?? ""}::${open ? "open" : "closed"}`;
+  // Lazy-init to the CURRENT key so mount itself never fires a reset (nothing to reset yet) —
+  // only a genuine later transition (a different load/company, or a fresh re-open) does.
+  const lastResetKey = useRef<string | null>(resetKey);
+  useEffect(() => {
+    if (!open) {
+      lastResetKey.current = null;
+      return;
+    }
+    if (lastResetKey.current === resetKey) return;
+    lastResetKey.current = resetKey;
+    setReasonCode(null);
+    setNotes("");
+    setBillable(false);
+    setCharge("");
+    setSubmitError(null);
+    setCreatedReasons([]);
+  }, [resetKey, open]);
+
   const reasonsQuery = useQuery({
     queryKey: ["dispatch", "cancellation-reasons", operatingCompanyId],
     queryFn: () => listDispatchCancellationReasons(operatingCompanyId).then((value) => value.reasons),
@@ -65,8 +92,22 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
   const ownerInlineApprove = needsApproval && isOwner;
   const submitLabel = ownerInlineApprove ? "Approve & Cancel" : needsApproval ? "Submit cancel request" : "Confirm Cancel";
 
+  // DSP-MONEY-F7112 — live scope, read inside the async submit handler AFTER the await so a
+  // response that lands once this modal has been reassigned to a different load/company is
+  // detected and discarded rather than mutating state (or showing an error) for the wrong load.
+  const liveScopeRef = useRef({ loadId, operatingCompanyId });
+  liveScopeRef.current = { loadId, operatingCompanyId };
+
+  // DSP-MONEY-F7112 — controls/dismissal locked pending: an in-flight cancel must not be
+  // abandonable mid-request (Close button, Modal's own backdrop/Escape via onClose all route
+  // through this guard).
+  const guardedClose = () => {
+    if (submitting) return;
+    onClose();
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Cancel Load">
+    <Modal open={open} onClose={guardedClose} title="Cancel Load">
       {loadId ? (
         <div className="mb-2 text-xs text-slate-600" data-testid="cancel-load-modal-entitylinks">
           Load:{" "}
@@ -81,6 +122,10 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
           if (!selectedReason || notes.trim().length < 20) return;
           if (billable && !charge.trim()) return;
           setSubmitting(true);
+          // DSP-MONEY-F7112 — snapshot exactly which load/company this request is FOR. If the
+          // modal gets reassigned to a different load while this await is in flight (the parent
+          // can do that without unmounting us), the response below must not be applied to it.
+          const submittedFor = { loadId, operatingCompanyId };
           try {
             await onSubmit({
               cancel_reason_code: String(selectedReason.reason_code),
@@ -92,6 +137,10 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
               billable_to_customer: billable,
               cancellation_charge_cents: charge.trim() ? Math.round(Number(charge) * 100) : undefined,
             });
+            const stale =
+              liveScopeRef.current.loadId !== submittedFor.loadId ||
+              liveScopeRef.current.operatingCompanyId !== submittedFor.operatingCompanyId;
+            if (stale) return;
             setReasonCode(null);
             setNotes("");
             setBillable(false);
@@ -99,6 +148,10 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
             setCreatedReasons([]);
             onClose();
           } catch (err) {
+            const stale =
+              liveScopeRef.current.loadId !== submittedFor.loadId ||
+              liveScopeRef.current.operatingCompanyId !== submittedFor.operatingCompanyId;
+            if (stale) return;
             // Surface the API error instead of silently hanging (the original bug); keep the form editable.
             setSubmitError(extractCancelError(err));
           } finally {
@@ -198,7 +251,7 @@ export function CancelLoadModal({ open, operatingCompanyId, loadId, loadNumber, 
           </div>
         ) : null}
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="secondary" onClick={guardedClose} disabled={submitting}>
             Close
           </Button>
           <Button
