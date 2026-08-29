@@ -372,7 +372,7 @@ async function registerFixedAssetsRoutes(app: FastifyInstance) {
     in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   });
 
-  app.post("/api/v1/accounting/fixed-assets/register-unit", async (req, reply) => {
+  app.post("/api/v1/accounting/fixed-assets/register-unit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner" && user.role !== "Administrator") {

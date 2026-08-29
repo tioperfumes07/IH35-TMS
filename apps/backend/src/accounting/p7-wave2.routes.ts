@@ -47,7 +47,7 @@ function mapPgClosedPeriod(reply: { code: (c: number) => { send: (b: unknown) =>
 }
 
 export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/sync-conflicts", async (req, reply) => {
+  app.get("/api/v1/accounting/sync-conflicts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -95,7 +95,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.get("/api/v1/accounting/sync-conflicts/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/sync-conflicts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -115,7 +115,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return row;
   });
 
-  app.post("/api/v1/accounting/sync-conflicts/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/accounting/sync-conflicts/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -177,7 +177,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/accounting/periods", async (req, reply) => {
+  app.post("/api/v1/accounting/periods", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -221,7 +221,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/periods/:id/close", async (req, reply) => {
+  app.post("/api/v1/accounting/periods/:id/close", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
     if (!periodCloseRoles.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -332,7 +332,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/periods/:id/reopen", async (req, reply) => {
+  app.post("/api/v1/accounting/periods/:id/reopen", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -371,7 +371,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/accounting/reports/trial-balance", async (req, reply) => {
+  app.get("/api/v1/accounting/reports/trial-balance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -407,7 +407,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { as_of: q.data.as_of ?? null, accounts: rows };
   });
 
-  app.get("/api/v1/accounting/sales-tax-summary", async (req, reply) => {
+  app.get("/api/v1/accounting/sales-tax-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -435,7 +435,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { summary: rows[0] ?? null };
   });
 
-  app.get("/api/v1/accounting/1099-summary", async (req, reply) => {
+  app.get("/api/v1/accounting/1099-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -470,7 +470,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return { vendors: rows };
   });
 
-  app.post("/api/v1/accounting/1099-corrections", async (req, reply) => {
+  app.post("/api/v1/accounting/1099-corrections", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 
@@ -492,7 +492,7 @@ export async function registerAccountingP7Wave2Routes(app: FastifyInstance) {
     return reply.code(501).send({ error: "not_implemented", note: "corrections ledger table pending" });
   });
 
-  app.get("/api/v1/accounting/1099-forms/:vendor_id", async (req, reply) => {
+  app.get("/api/v1/accounting/1099-forms/:vendor_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = finance(req, reply);
     if (!user) return;
 

@@ -37,7 +37,7 @@ export type QboReconResponse = QboReconResult & {
 };
 
 async function registerQboReconRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/qbo-recon", async (req, reply) => {
+  app.get("/api/v1/accounting/qbo-recon", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     // OFF flag → unreachable, unchanged.
     if (!isQboReconUiEnabled()) {
       return reply.code(404).send({ error: "not_found" });

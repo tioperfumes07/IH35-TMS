@@ -390,7 +390,7 @@ async function registerRevenueRecognitionRoutes(app: FastifyInstance) {
   });
 
   // ACCT-R-16 — ASC 606 leakage / unbilled tracking (READ-ONLY; no posting).
-  app.get("/api/v1/accounting/revenue-leakage", async (req, reply) => {
+  app.get("/api/v1/accounting/revenue-leakage", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });

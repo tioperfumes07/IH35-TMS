@@ -88,7 +88,7 @@ async function ensureDraftInvoice(client: { query: (sql: string, values?: unknow
 }
 
 export async function registerInvoiceLineRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/invoices/:id/lines", async (req, reply) => {
+  app.post("/api/v1/accounting/invoices/:id/lines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -312,7 +312,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     }
   );
 
-  app.delete("/api/v1/accounting/invoices/:id/lines/:lineId", async (req, reply) => {
+  app.delete("/api/v1/accounting/invoices/:id/lines/:lineId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = lineParamsSchema.safeParse(req.params ?? {});

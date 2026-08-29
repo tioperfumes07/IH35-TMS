@@ -209,7 +209,7 @@ export const TRANSACTION_REGISTER_UNION_SQL = `
 `;
 
 export async function registerTransactionRegisterRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/transaction-register", async (req, reply) => {
+  app.get("/api/v1/accounting/transaction-register", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

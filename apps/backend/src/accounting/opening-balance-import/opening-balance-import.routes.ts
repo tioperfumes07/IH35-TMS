@@ -23,7 +23,7 @@ async function registerOpeningBalanceImportRoutes(app: FastifyInstance) {
   // The TRANSP 12/31/2024 opening-balance preview: maps the QBO Balance Sheet to catalogs.accounts,
   // flags unmapped accounts, and (only when every line maps AND the entry balances) returns a
   // reviewable JE preview. Nothing here writes to accounting.journal_entries.
-  app.get("/api/v1/accounting/opening-balance-import/transp-2024-12-31/preview", async (req, reply) => {
+  app.get("/api/v1/accounting/opening-balance-import/transp-2024-12-31/preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

@@ -96,7 +96,7 @@ function ensureFinanceUser(req: Parameters<typeof currentAuthUser>[0], reply: Pa
 }
 
 export async function registerPostingEngineRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/posting-engine-mvp/post", async (req, reply) => {
+  app.post("/api/v1/accounting/posting-engine-mvp/post", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -149,7 +149,7 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/posting-engine-mvp/reverse", async (req, reply) => {
+  app.post("/api/v1/accounting/posting-engine-mvp/reverse", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -180,7 +180,7 @@ export async function registerPostingEngineRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/posting-engine-mvp/backfill", async (req, reply) => {
+  app.post("/api/v1/accounting/posting-engine-mvp/backfill", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

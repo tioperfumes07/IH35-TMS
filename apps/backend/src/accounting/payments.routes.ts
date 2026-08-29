@@ -297,7 +297,7 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/accounting/payments/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/payments/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
