@@ -1,4 +1,7 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0031 | NOW=vendor-detail-ap-reverse | SHA=d3d20c9 | GO
+DEVIN | GO-0031 | vendor-detail-ap-reverse | SHA=d3d20c9 | NO UNIQUE FINDING — A/P reverse drill-through solid. Bills/expenses/credits/payments/AP aging all have visible error handling + proper EntityLink wiring. BillDetailPage vendor reverse via billVendorDrillId. ExpenseDetailPage vendor reverse via vendor_uuid. BillPaymentDetailPage vendor reverse via mdata_vendor_id (tombstone when null). No 500/dead/silent.
+
 DEVIN | ACK | GO-0030 | NOW=vendors-TEST-create | SHA=d38ffa0 | GO
 
 DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=26dc542 | SHIPPED PR #17350 | FIXED: LST-F9113 — AP + AR aging routes lacked config.rateLimit: GET /accounting/ap-aging (vendor A/P) and GET /accounting/ar-aging (customer A/R). Both authenticated, compute aging reports, never throttled. Added 60/min. Ratchet 315→313. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
