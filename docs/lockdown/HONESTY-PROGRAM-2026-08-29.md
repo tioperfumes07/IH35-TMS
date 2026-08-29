@@ -175,6 +175,23 @@ every deploy today. Reported as QBO inbound/CDC ~days stale with `invalid_grant`
 (USMCA-only; leftover TRANSP realm must not paint `stale_jobs`). When armed, A1-1 still uses
 `qboRealmConnected` for inbound/CDC/push and master-data delta.
 
+## Diagnosis runbook (do not rediscover)
+
+1. **Never treat `/healthz/shallow` as a check verdict.** It always returns `ok: true` plus `version`.
+   Read **`GET /api/v1/healthz`** (full body, `checks[]`).
+2. Public JSON is **SEC-HEALTHZ-01**: failed jobs publish only the token `stale_jobs` (or
+   `never_succeeded_jobs`). **Job names are not in the public body.**
+3. **Pull the Render app log for the API service** (`srv-d7rpem7avr4c73fhp4n0`). Filter text
+   `stale_jobs` or event `health_check_failed`. The structured field `internal_error` is
+   `stale_jobs: <job_name>:<minutes>m | …` (pipe-joined).
+4. After H4 deploys (`22b1b63e4` ancestor of live `healthz/shallow.version`): if `background_jobs.stale`
+   is still FAIL, that is surprising — re-run step 3 before changing code. CC-2 has nothing to chase
+   unless a **non-QBO** name appears.
+
+**Incident 2026-08-29 (live SHA `b2448ce`, pre-H4 image):** every sample in the window was exactly
+`integrations.qbo_inbound_sync:11841.4m | integrations.qbo_cdc_poll:11843.6m` (~8.2 days, last success
+~2026-08-21). **No other job.** Dormancy on those two names is the entire yellow.
+
 ## Build
 1. Identify precisely which job is stale and why — do not accept "QBO" as the answer without the job name.
 2. Fix it, or **make the check honest**: if a job is intentionally dormant (USMCA QBO off), the check

@@ -71,7 +71,11 @@ export function toPublicHealthErrorCode(error: unknown): string {
   return HEALTH_ERROR_GENERIC;
 }
 
-/** Full-fidelity server-side record of what the public body deliberately omits. */
+/** Full-fidelity server-side record of what the public body deliberately omits.
+ * H4 RUNBOOK: GET /healthz/shallow is not a check verdict (always ok). Full GET /healthz
+ * exposes only publicCode (stale_jobs). Job names + ages are here: filter Render API app
+ * logs for health_check_failed or stale_jobs → internal_error. 2026-08-29 on b2448ce:
+ * integrations.qbo_inbound_sync + integrations.qbo_cdc_poll only (~8.2d). */
 function logHealthCheckFailure(name: string, tier: HealthCheck["tier"], durationMs: number, error: unknown): void {
   logger.error("health_check_failed", error, {
     check: name,
