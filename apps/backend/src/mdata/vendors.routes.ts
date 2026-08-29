@@ -819,7 +819,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/mdata/vendors/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/vendors/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
