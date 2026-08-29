@@ -63,6 +63,14 @@ function assert(files) {
     );
   }
 
+  if (!/SELECT scheduled_arrival_at FROM mdata\.load_stops[\s\S]{0,140}stop_type = 'pickup' AND soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number ASC/.test(svc)) {
+    problems.push(`${SVC}: pickup endpoint must come from active load_stops history only`);
+  }
+
+  if (!/SELECT city, state, scheduled_arrival_at FROM mdata\.load_stops[\s\S]{0,160}stop_type = 'delivery' AND soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number DESC/.test(svc)) {
+    problems.push(`${SVC}: delivery endpoint must come from active load_stops history only`);
+  }
+
   return problems;
 }
 
@@ -97,6 +105,18 @@ if (SELFTEST) {
     [SVC]: files[SVC].replace("trip_pairing_eld_driver_dca.is_authorized = true", "trip_pairing_eld_driver_dca.is_authorized = false"),
   };
   checks.push(["shared ELD-driver authorization removed", assert(noSharedEldDriver).some((p) => /ELD fallback driver/.test(p))]);
+
+  const retiredPickup = {
+    ...files,
+    [SVC]: files[SVC].replace("stop_type = 'pickup' AND soft_deleted_at IS NULL", "stop_type = 'pickup'"),
+  };
+  checks.push(["retired pickup admitted", assert(retiredPickup).some((p) => /pickup endpoint/.test(p))]);
+
+  const retiredDelivery = {
+    ...files,
+    [SVC]: files[SVC].replace("stop_type = 'delivery' AND soft_deleted_at IS NULL", "stop_type = 'delivery'"),
+  };
+  checks.push(["retired delivery admitted", assert(retiredDelivery).some((p) => /delivery endpoint/.test(p))]);
 
   const failed = checks.filter(([, caught]) => !caught).map(([n]) => n);
   if (failed.length) {

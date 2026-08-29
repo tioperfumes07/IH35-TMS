@@ -50,20 +50,32 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
           'accruing',
           COALESCE(sa.confirmed_at, sa.triggered_at),
           CASE WHEN ls.stop_type::text = 'pickup'
-            THEN COALESCE(c.free_time_pickup_minutes, 120)
-            ELSE COALESCE(c.free_time_delivery_minutes, 120)
+            THEN COALESCE(c.free_time_pickup_minutes, c2.free_time_pickup_minutes, 120)
+            ELSE COALESCE(c.free_time_delivery_minutes, c2.free_time_delivery_minutes, 120)
           END,
           GREATEST(
             COALESCE(l.detention_bill_customer_per_hour_cents, 0),
-            COALESCE(ROUND(c.detention_rate_per_hour * 100)::int, 0)
+            COALESCE(ROUND(c.detention_rate_per_hour * 100)::int, ROUND(c2.detention_rate_per_hour * 100)::int, 0)
           ),
           $2::int
         FROM dispatch.stop_arrivals sa
         JOIN mdata.load_stops ls ON ls.id = sa.stop_id
         JOIN mdata.loads l ON l.id = ls.load_id
                           AND l.operating_company_id = sa.operating_company_id
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        -- DSP-MONEY-F7271 — mdata.customers' customers_select RLS policy excludes any
+        -- deactivated_at IS NOT NULL row for a non-bypass reader. A plain (INNER) JOIN here meant a
+        -- load whose customer was deactivated after booking (but is still active, dispatched, and
+        -- confirmed-arrival) could NEVER get a detention event created at all -- not degraded
+        -- economics, a complete silent loss of tracking. Same RLS-scoped-primary-join + LATERAL
+        -- full-row-fallback pattern already established in submission-queue.service.ts (ACCT-F5787),
+        -- via the existing mdata.get_customer_same_company resolver (202613060000) -- no new
+        -- migration needed, no RLS policy touched.
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                    AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT * FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id)
+          WHERE c.id IS NULL
+        ) c2 ON true
         WHERE sa.operating_company_id = $1::uuid
           AND sa.confirmed_at IS NOT NULL
           AND l.soft_deleted_at IS NULL
@@ -72,8 +84,9 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
             SELECT 1 FROM dispatch.detention_events de
             WHERE de.operating_company_id = sa.operating_company_id
               AND de.stop_id = sa.stop_id
-              AND de.status = 'accruing'
           )
+        ON CONFLICT (operating_company_id, stop_id) WHERE status = 'accruing'
+        DO NOTHING
         RETURNING id
       `,
       [operatingCompanyId, detentionNotifyThresholdMinutes()]
@@ -84,18 +97,18 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
         UPDATE dispatch.detention_events de
         SET
           status = 'closed',
-          stopped_at = COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()),
+          stopped_at = ls.actual_departure_at,
           accrued_minutes = GREATEST(
             0,
             EXTRACT(EPOCH FROM (
-              COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at
+              ls.actual_departure_at - de.started_at
             ))::int / 60 - de.free_time_minutes
           ),
           accrued_amount_cents = ROUND(
             (GREATEST(
               0,
               EXTRACT(EPOCH FROM (
-                COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at
+                ls.actual_departure_at - de.started_at
               ))::numeric / 60 - de.free_time_minutes
             ) / 60.0) * de.rate_per_hour_cents
           )::int,
@@ -104,7 +117,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
         WHERE de.operating_company_id = $1::uuid
           AND de.status = 'accruing'
           AND ls.id = de.stop_id
-          AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)
+          AND ls.actual_departure_at IS NOT NULL
         RETURNING de.id
       `,
       [operatingCompanyId]
@@ -167,8 +180,8 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
           l.load_number,
           l.status AS load_status,
           l.customer_id,
-          c.customer_name,
-          c.ar_email AS customer_email,
+          COALESCE(c.customer_name, c2.customer_name) AS customer_name,
+          COALESCE(c.ar_email, c2.ar_email) AS customer_email,
           ls.stop_type::text AS stop_type,
           ls.city AS stop_city,
           ls.state AS stop_state,
@@ -177,8 +190,18 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
                           AND l.operating_company_id = de.operating_company_id
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        -- DSP-MONEY-F7271 — an INNER JOIN to mdata.customers here made an EXISTING detention event
+        -- (already accruing or closed on a real, active load) vanish from the operational board
+        -- entirely the moment its customer was deactivated -- not a degraded label, the whole row.
+        -- Same RLS-scoped-primary-join + LATERAL fallback pattern as the create-path fix above; the
+        -- event's own economics (rate_per_hour_cents, free_time_minutes, etc.) already live on
+        -- de.* and never depended on this join.
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                    AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT * FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id)
+          WHERE c.id IS NULL
+        ) c2 ON true
         JOIN mdata.load_stops ls ON ls.id = de.stop_id
         LEFT JOIN mdata.drivers d ON d.id = de.driver_id
                                  AND (
@@ -254,12 +277,16 @@ export async function closeDetentionEvent(
             accrued_minutes = $4,
             accrued_amount_cents = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2::uuid
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND status = 'accruing'
         RETURNING *
       `,
       [eventId, operatingCompanyId, stopAt, billable, amount]
     );
-    return { ok: true as const, event: updated.rows[0] };
+    const closedEvent = updated.rows[0];
+    if (!closedEvent) return { ok: false as const, error: "not_accruing" as const };
+    return { ok: true as const, event: closedEvent };
   });
 }
 
@@ -317,6 +344,12 @@ export async function bridgeDetentionToBillingInClientTx(
       : [];
     const accessorial_bridge_rows = [...priorRows, bridge];
 
+    // DSP-MONEY-F7214 — this UPDATE used to bind only `WHERE id = $1`, with no
+    // operating_company_id predicate, and never checked whether a row actually came back:
+    // a lost/cross-company write silently fell through to `?? 0` below, which then resynced
+    // the proforma invoice to a rate of $0 while the detention event still went on to flip to
+    // 'billed' and notify the customer — asserting a charge was billed when the load's own
+    // rate was never actually raised. Company-scoped and required below.
     const loadUpdate = await client.query<{ rate_total_cents: string | number | null }>(
       `
         UPDATE mdata.loads
@@ -324,11 +357,15 @@ export async function bridgeDetentionToBillingInClientTx(
             quicksave_pending_fields = COALESCE(quicksave_pending_fields, '{}'::jsonb)
               || jsonb_build_object('accessorial_bridge_rows', $3::jsonb),
             updated_at = now()
-        WHERE id = $1
+        WHERE id = $1 AND operating_company_id = $4::uuid
         RETURNING rate_total_cents
       `,
-      [row.load_id, amount, JSON.stringify(accessorial_bridge_rows)]
+      [row.load_id, amount, JSON.stringify(accessorial_bridge_rows), operatingCompanyId]
     );
+    const loadRateRow = loadUpdate.rows[0];
+    if (!loadRateRow) {
+      return { ok: false as const, error: "load_rate_update_failed" as const };
+    }
 
     // ACCT-F5624 — the UPDATE above just raised the load's billable total, but a draft/proforma
     // invoice minted at booking time is a snapshot taken once and never re-read on its own
@@ -347,7 +384,7 @@ export async function bridgeDetentionToBillingInClientTx(
     await resyncProformaInvoiceFromLoadRate(client, {
       loadId: String(row.load_id),
       operatingCompanyId,
-      newRateTotalCents: Number(loadUpdate.rows[0]?.rate_total_cents ?? 0),
+      newRateTotalCents: Number(loadRateRow.rate_total_cents ?? 0),
       userId,
     });
 
@@ -365,6 +402,13 @@ export async function bridgeDetentionToBillingInClientTx(
       `,
       [eventId, operatingCompanyId, JSON.stringify(bridge), billable, amount]
     );
+    // DSP-MONEY-F7214 — the event status UPDATE above was previously unchecked: a lost write
+    // (e.g. the event flipped to 'billed' by a concurrent caller between the initial SELECT and
+    // this UPDATE) would fall through to appendCrudAudit + `{ok:true, event:undefined}` anyway,
+    // asserting the bridge succeeded when the canonical event row was never actually stamped.
+    if (!updated.rows[0]) {
+      return { ok: false as const, error: "event_billed_stamp_failed" as const };
+    }
 
     await appendCrudAudit(
       client,
@@ -411,12 +455,22 @@ export async function notifyCustomerDetentionThreshold(
     );
     const res = await client.query(
       `
-        SELECT de.*, l.load_number, c.customer_name, c.ar_email
+        SELECT de.*, l.load_number,
+          COALESCE(c.customer_name, c2.customer_name) AS customer_name,
+          COALESCE(c.ar_email, c2.ar_email) AS ar_email
         FROM dispatch.detention_events de
         JOIN mdata.loads l ON l.id = de.load_id
                           AND l.operating_company_id = de.operating_company_id
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        -- DSP-MONEY-F7271 — an INNER JOIN to mdata.customers here turned a real, existing detention
+        -- event into a false "not_found" the moment its customer was deactivated, even though the
+        -- event genuinely exists and the actual failure mode (if any) should be "no_customer_email"
+        -- below. Economics (billable/rate) come entirely from de.* and never depended on this join.
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                    AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN LATERAL (
+          SELECT * FROM mdata.get_customer_same_company(l.customer_id, l.operating_company_id)
+          WHERE c.id IS NULL
+        ) c2 ON true
         WHERE de.id = $1 AND de.operating_company_id = $2::uuid
         FOR UPDATE OF de
       `,

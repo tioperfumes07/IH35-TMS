@@ -22,6 +22,7 @@ export function problems(files) {
   const failures = [];
   const quick = files.quick ?? "";
   const reassign = files.reassign ?? "";
+  const reassignBlock = reassign.match(/export async function manualReassignLoad[\s\S]*?(?=\nexport async function listLoadStopsRefined)/)?.[0] ?? "";
   const routes = files.routes ?? "";
   const loads = files.loads ?? "";
   const dispatcher = files.dispatcher ?? "";
@@ -43,11 +44,24 @@ export function problems(files) {
   if (!reassign.includes('"load.assigned_to_driver"')) {
     failures.push("manual reassignment must durably notify the replacement driver");
   }
-  const commit = reassign.indexOf('client.query("COMMIT")');
+  if (!/const assignmentHistory = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?'manual_reassign'[\s\S]*?RETURNING id::text/.test(reassignBlock)) {
+    failures.push("manual reassignment must return the canonical assignment-history identity");
+  }
+  if (!/if \(!assignmentHistory\.rows\[0\]\?\.id\) \{[\s\S]*?throw new Error\("E_ASSIGNMENT_HISTORY_WRITE_FAILED"\)/.test(reassignBlock)) {
+    failures.push("manual reassignment must fail before notices/audit when assignment history did not persist");
+  }
+  const historyCheck = reassign.indexOf("if (!assignmentHistory.rows[0]?.id)");
+  const firstReassignNotice = reassign.indexOf('"load.reassigned"');
+  if (historyCheck < 0 || firstReassignNotice < 0 || historyCheck > firstReassignNotice) {
+    failures.push("manual reassignment must prove assignment history before publishing reassignment notices");
+  }
+  const reassignReturn = reassign.indexOf("return { ok: true as const, load_id: input.load_id }");
   for (const eventType of ["load.reassigned_away_from_driver", "load.assigned_to_driver"]) {
     const event = reassign.indexOf(`"${eventType}"`);
-    if (event < 0 || commit < 0 || event > commit) failures.push(`${eventType} must be enqueued before COMMIT`);
+    if (event < 0 || reassignReturn < 0 || event > reassignReturn) failures.push(`${eventType} must be enqueued before the wrapper transaction returns`);
   }
+  if (!/withCurrentUser\(userId, async \(client\) =>/.test(reassignBlock)) failures.push("manual reassignment must use the wrapper transaction");
+  if (/client\.query\(["'`](?:BEGIN|COMMIT|ROLLBACK)["'`]\)/.test(reassignBlock)) failures.push("manual reassignment must not own nested transaction control");
   if (/notifyLoadAssigned|notifyLoadReassignedAway|loserBox|winnerBox|\.catch\(\(\) => undefined\)/.test(reassign)) {
     failures.push("manual reassignment must use only durable outbox events, never duplicate swallowed direct pushes");
   }
@@ -122,6 +136,11 @@ if (process.argv.includes("--selftest")) {
     ["reassigned-away handler", { ...production, routes: production.routes.replace('eventType: "load.reassigned_away_from_driver"', 'eventType: "load.reassigned_away_REMOVED"') }],
     ["quick duplicate direct push", { ...production, quick: `${production.quick}\nvoid notifyLoadAssigned({}).catch(() => undefined);` }],
     ["reassign duplicate direct push", { ...production, reassign: `${production.reassign}\nvoid notifyLoadReassignedAway({}).catch(() => undefined);` }],
+    ["reassign history RETURNING removed", { ...production, reassign: production.reassign.replace("RETURNING id::text", "RETURNING load_id::text") }],
+    ["reassign history identity check removed", { ...production, reassign: production.reassign.replace("if (!assignmentHistory.rows[0]?.id) {", "if (false) {") }],
+    ["reassign notice precedes history proof", { ...production, reassign: production.reassign.replace("if (!assignmentHistory.rows[0]?.id) {", 'await enqueueOutboxEvent(client, "load.reassigned", {}, {});\n      if (!assignmentHistory.rows[0]?.id) {') }],
+    ["reassign wrapper removed", { ...production, reassign: production.reassign.replace("return withCurrentUser(userId, async (client) => {", "return noTransaction(userId, async (client) => {") }],
+    ["reassign nested commit", { ...production, reassign: production.reassign.replace("const loadRes = await client.query(", 'await client.query("COMMIT");\n      const loadRes = await client.query(') }],
     ["abandoned durable enqueue", { ...production, loads: production.loads.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
     ["abandoned handler", { ...production, routes: production.routes.replace('eventType: "load.abandoned"', 'eventType: "load.abandoned_REMOVED"') }],
     ["abandoned detached delivery restored", { ...production, loads: `${production.loads}\nvoid notifyAbandonedLoadStakeholders({}).catch(() => undefined);` }],

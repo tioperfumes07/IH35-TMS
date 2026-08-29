@@ -105,7 +105,6 @@ export async function cancelLoad(
 
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const loadRes = await client.query(
         `
@@ -188,7 +187,13 @@ export async function cancelLoad(
             cancellationChargeCents: input.cancellation_charge_cents,
             actorUserId: userId,
           });
-          await client.query(
+          // DSP-MONEY-F7146B-R1 (CC-1): the backlink write must bind the cancellation's own company
+          // and confirm it is still the 'approved' row this transaction just wrote (this branch only
+          // runs when !pendingOwnerApproval, i.e. status was just set to 'approved' above) — the bare
+          // `WHERE id = $1` accepted any operating_company_id and any status, and never checked
+          // whether the row actually changed, so a lost/RLS-filtered/status-drifted update could
+          // commit the TONU invoice while silently losing the canonical backlink.
+          const backlinkRes = await client.query<{ id: string }>(
             `
               UPDATE dispatch.load_cancellations
                  SET charge_invoice_id = $2::uuid,
@@ -196,9 +201,17 @@ export async function cancelLoad(
                      charged_at = now(),
                      charged_by_user_id = $4
                WHERE id = $1
+                 AND operating_company_id = $5::uuid
+                 AND status = 'approved'
+               RETURNING id
             `,
-            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId]
+            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId, input.operating_company_id]
           );
+          if (!backlinkRes.rows[0]) {
+            throw Object.assign(new Error("cancellation_charge_backlink_failed"), {
+              code: "cancellation_charge_backlink_failed",
+            });
+          }
         }
       }
 
@@ -349,14 +362,12 @@ export async function cancelLoad(
         },
       });
 
-      await client.query("COMMIT");
       return {
         load_id: input.load_id,
         cancellation_id: cancellation.id,
         status: pendingOwnerApproval ? "pending_owner_approval" : "cancelled",
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw translateCancellationDbError(error);
     }
   });
@@ -447,7 +458,6 @@ export async function approveCancellation(
   if (!isOwner(role)) throw new Error("E_OWNER_ONLY");
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const row = await client.query<{ id: string; load_id: string; status: string }>(
         `
@@ -457,21 +467,27 @@ export async function approveCancellation(
               approved_at = now()
           WHERE id = $1
             AND operating_company_id = $3::uuid
+            AND status = 'requested'
           RETURNING id, load_id, status
         `,
         [input.cancellation_id, userId, input.operating_company_id]
       );
       const cancellation = row.rows[0];
       if (!cancellation) throw new Error("E_NOT_FOUND");
-      await client.query(
+      const cancelledLoad = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET status = 'cancelled'::mdata.load_status_enum,
               updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND status <> 'cancelled'::mdata.load_status_enum
+            AND soft_deleted_at IS NULL
+          RETURNING id::text
         `,
-        [cancellation.load_id]
+        [cancellation.load_id, input.operating_company_id]
       );
+      if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
       await appendCrudAudit(
         client,
         userId,
@@ -491,10 +507,8 @@ export async function approveCancellation(
         event_type: "load.cancellation_approved",
         load_id: cancellation.load_id,
       });
-      await client.query("COMMIT");
       return { id: input.cancellation_id, load_id: cancellation.load_id, status: "approved" };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });

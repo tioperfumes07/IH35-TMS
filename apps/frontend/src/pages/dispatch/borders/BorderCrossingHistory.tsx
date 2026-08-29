@@ -7,6 +7,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../../components/
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { resolveApiUrl } from "../../../api/client";
 import { addDaysIso, companyToday } from "../../../lib/businessDate";
+import { useCompanyContext } from "../../../contexts/CompanyContext";
 // NOTE (EntityLink adoption sweep): `vehicle_id` here is the raw Samsara external vehicle id
 // (dispatch.border_crossing_events.vehicle_id, sourced from integrations.samsara_positions —
 // verified against apps/backend/src/integrations/samsara/border-crossings), NOT mdata.units.id.
@@ -33,7 +34,11 @@ const CROSSING_LABELS: Record<string, string> = {
 };
 
 export function BorderCrossingHistory() {
-  const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
+  // DSP-F7280 — sessionStorage["operating_company_id"] is never written by this app. Reading it
+  // kept this mounted page's query permanently disabled and rendered a false empty history. Use the
+  // same reactive company source as every other entity-scoped surface so company switches refetch.
+  const { selectedCompanyId } = useCompanyContext();
+  const operatingCompanyId = selectedCompanyId ?? "";
   const today = companyToday();
   const weekAgo = addDaysIso(today, -7);
   const [from, setFrom] = useState(weekAgo);

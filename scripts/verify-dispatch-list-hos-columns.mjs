@@ -39,6 +39,12 @@ if (!/<DriverHosClockCells\b/.test(list) && !/<DriverHosClockValue\b/.test(list)
 }
 const cells = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
 if (!/getDriverHosStatus/.test(cells)) fail("HOS cells must read the in-app HOS store (getDriverHosStatus, #1109)");
+if (!/HOS_SOURCE_TOOLTIP/.test(cells) || !/Certified ELD clock from Samsara/.test(clocks)) {
+  fail("mounted HOS consumers must use the human source tooltip");
+}
+if (/title=\{[^}]*samsaraField/.test(cells)) {
+  fail("mounted HOS tooltips must not expose raw Samsara field paths");
+}
 function checkRecovery(source) {
   const requirements = [
     ["shared retry control", /function HosRetryButton[\s\S]*?data-hos-retry[\s\S]*?onRetry\(\)/],
@@ -71,6 +77,9 @@ if (selftest) {
   for (let index = 0; index < mutations.length; index += 1) {
     if (checkRecovery(mutations[index]).length === 0) fail(`mutation ${index + 1} survived`);
   }
+  if (!/title=\{[^}]*samsaraField/.test(cells.replace(": HOS_SOURCE_TOOLTIP}", ": col.samsaraField}"))) {
+    fail("raw Samsara tooltip mutation survived");
+  }
   if (/showRetryOnError=\{cIndex === 0\}/.test(list.replace("cIndex === 0", "false"))) fail("list retry placement mutation survived");
   if (/showRetryOnError=\{hosColIndex === 0\}/.test(board.replace("hosColIndex === 0", "false"))) fail("board retry placement mutation survived");
   const pillMutations = [
@@ -81,7 +90,7 @@ if (selftest) {
   for (let index = 0; index < pillMutations.length; index += 1) {
     if (pillRecovery(pillMutations[index])) fail(`pill mutation ${index + 1} survived`);
   }
-  const total = mutations.length + pillMutations.length + 2;
+  const total = mutations.length + pillMutations.length + 3;
   console.log(`PASS verify-dispatch-list-hos-columns selftest ${total}/${total}`);
 } else {
   console.log("PASS verify-dispatch-list-hos-columns");

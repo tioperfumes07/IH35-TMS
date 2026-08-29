@@ -57,7 +57,9 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
       const cur = await client.query<{ predicted_delivery_date: string | null }>(
         `SELECT predicted_delivery_date::text AS predicted_delivery_date
          FROM mdata.loads
-         WHERE id = $1::uuid AND operating_company_id = $2::uuid
+         WHERE id = $1::uuid
+           AND operating_company_id = $2::uuid
+           AND soft_deleted_at IS NULL
          LIMIT 1
          FOR UPDATE`,
         [params.data.load_id, body.data.operating_company_id]
@@ -73,6 +75,7 @@ export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
                 predicted_updated_at = now()
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
+            AND soft_deleted_at IS NULL
             AND predicted_delivery_date IS DISTINCT FROM $3::timestamptz
           RETURNING id::text`,
         [params.data.load_id, body.data.operating_company_id, body.data.new_predicted_date]

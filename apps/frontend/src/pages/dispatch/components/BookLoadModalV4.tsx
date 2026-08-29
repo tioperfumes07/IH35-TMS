@@ -203,6 +203,15 @@ type Props = {
   prefillDriverId?: string | null;
 };
 
+function driverBillMintSkippedMessage(
+  action: "booked" | "updated",
+  missingInputs: string[] | undefined
+): string {
+  const missing = Array.isArray(missingInputs) ? missingInputs.filter(Boolean) : [];
+  const missingLabel = missing.length > 0 ? missing.join(", ") : "a configured driver pay rate";
+  return `Load ${action}, but driver pay was NOT minted — missing ${missingLabel}. Review driver pay rate / mile and the load's pay-basis miles before delivery so the driver bill can be created.`;
+}
+
 function numOrUndef(v: unknown): number | undefined {
   const n = Number(v);
   if (!Number.isFinite(n) || n === 0) return undefined;
@@ -380,9 +389,10 @@ export function BookLoadModalV4({
   const watchedCustomerId = form.watch("customer_id");
   const watchedCustomerName = form.watch("customer_name");
   const watchedTripType = form.watch("trip_type");
-  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean }>({
+  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean; hasWarnings: boolean }>({
     canDispatch: true,
     hasBlockers: false,
+    hasWarnings: false,
   });
   // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
   // server-side already enforces these on POST .../book (auth-gates preHandler, 422 dispatch_auth_gate_blocked
@@ -427,6 +437,24 @@ export function BookLoadModalV4({
 
 
   const { isDirty } = form.formState;
+
+  // DSP-F7251: opening the modal must establish a clean form before any caller-provided
+  // template/OCR prefill is applied. This reset effect used to live below the prefill effect;
+  // React runs effects in declaration order, so every OCR conversion visibly opened Book Load
+  // and then silently erased the extracted customer, rate, stops, and dates.
+  useEffect(() => {
+    if (!open) {
+      setShowDiscardConfirm(false);
+      return;
+    }
+    form.reset();
+    setGateBanner(null);
+    setSubmitErrorMessage(null);
+    setOverrideReason("");
+    setOverrideToken(null);
+    setPendingCloseAfterAdvisory(false);
+    setShowSpecialNotes(false);
+  }, [open, form]);
 
   useEffect(() => {
     if (!open || !templatePrefillJson) return;
@@ -616,15 +644,15 @@ export function BookLoadModalV4({
     []
   );
 
-  const validationIssues = useMemo(
+  const validationChecks = useMemo(
     () => [
-      "Unit PM up-to-date check",
-      "DVIR / dispatch block",
-      "Trailer inspection check (pending automation)",
-      "Customer quality flag warning (pending automation)",
-      "FMCSA broker authority cache check (pending automation)",
-      "Driver instructions pushed to driver mobile app + dispatch sheet PDF",
-      "Expected adjustments flagged on customer invoice review banner",
+      { text: "Unit repair / availability gate", code: "readiness", state: "live" as const },
+      { text: "DVIR major-defect authorization gate", code: "authorization required", state: "live" as const },
+      { text: "Trailer inspection check", code: "not automated", state: "pending" as const },
+      { text: "Customer quality flag warning", code: "not automated", state: "pending" as const },
+      { text: "FMCSA broker authority cache check", code: "not automated", state: "pending" as const },
+      { text: "Driver instructions → mobile + dispatch PDF", code: "on save", state: "on_save" as const },
+      { text: "Expected adjustments → invoice review", code: "on save", state: "on_save" as const },
     ],
     []
   );
@@ -636,20 +664,6 @@ export function BookLoadModalV4({
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
   const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
-
-  useEffect(() => {
-    if (!open) {
-      setShowDiscardConfirm(false);
-      return;
-    }
-    form.reset();
-    setGateBanner(null);
-    setSubmitErrorMessage(null);
-    setOverrideReason("");
-    setOverrideToken(null);
-    setPendingCloseAfterAdvisory(false);
-    setShowSpecialNotes(false);
-  }, [open, form]);
 
   // FAIL-B5 — double Book+dispatch. There was NO in-flight state anywhere in this modal: no `isSubmitting`
   // tracking, no re-entry guard, and the submit button's `disabled` covered only the repair-block and
@@ -713,12 +727,7 @@ export function BookLoadModalV4({
           patchResult as { driver_bill_mint?: { outcome?: string; missing?: string[] } | null }
         ).driver_bill_mint;
         if (mint?.outcome === "skipped_no_pay_rate") {
-          const missing =
-            Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
-          pushToast(
-            `Load updated, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
-            "info"
-          );
+          pushToast(driverBillMintSkippedMessage("updated", mint.missing), "info");
         }
         onCreated({ id: editLoadId, label: editLoad?.load_number ? String(editLoad.load_number) : undefined });
         onClose();
@@ -937,12 +946,7 @@ export function BookLoadModalV4({
       pushToast(bookLoadToastMessage(saveMode, serverStatus), bookLoadToastTone(saveMode, serverStatus));
       const mint = (payload as { driver_bill_mint?: { outcome?: string; missing?: string[] } }).driver_bill_mint;
       if (mint?.outcome === "skipped_no_pay_rate") {
-        const missing =
-          Array.isArray(mint.missing) && mint.missing.length > 0 ? mint.missing.join(", ") : "pay inputs";
-        pushToast(
-          `Load booked, but driver pay was NOT minted — missing ${missing}. Enter shortest miles before delivery so the driver bill can be created.`,
-          "info"
-        );
+        pushToast(driverBillMintSkippedMessage("booked", mint.missing), "info");
       }
       const createdId = String((payload as { id?: string }).id ?? "");
       const createdLabel = String((payload as { load_number?: string }).load_number ?? "") || undefined;
@@ -1698,7 +1702,13 @@ export function BookLoadModalV4({
                   {preDispatch.hasBlockers || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
-                    <b>{preDispatch.canDispatch ? "All checks pass · ready to book" : "Review warnings"}</b>
+                    <b>
+                      {preDispatch.hasWarnings
+                        ? "Warnings to review · booking allowed"
+                        : preDispatch.canDispatch
+                          ? "All checks pass · ready to book"
+                          : "Validation unavailable · retry checks"}
+                    </b>
                   ) : (
                     <span>Select driver / unit / customer to run checks</span>
                   )}
@@ -1715,7 +1725,9 @@ export function BookLoadModalV4({
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   customerLabel={watchedCustomerName || null}
-                  onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                  onValidationChange={(canDispatch, hasBlockers, hasWarnings) =>
+                    setPreDispatch({ canDispatch, hasBlockers, hasWarnings })
+                  }
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
                   // optional-chained to a no-op — the override textarea could not receive a single
@@ -1757,7 +1769,7 @@ export function BookLoadModalV4({
                   onOverrideRepairBlockChange={setOverrideRepairBlock}
                   onSubmitBlockedChange={setRepairBlockSubmitBlocked}
                 />
-                <BookLoadValidationSection issues={validationIssues} />
+                <BookLoadValidationSection checks={validationChecks} />
               </div>
             </section>
 

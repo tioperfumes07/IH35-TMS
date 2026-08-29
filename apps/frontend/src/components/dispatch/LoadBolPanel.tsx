@@ -9,6 +9,7 @@ import { useToast } from "../Toast";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useRef, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -56,7 +57,8 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
     try {
       const result = await downloadBolDocument(input.bolId, input.companyId);
       if (generateGenerationRef.current !== input.generation) return;
-      window.open(result.download_url, "_blank");
+      const popup = window.open(result.download_url, "_blank", "noopener,noreferrer");
+      if (!popup) throw new Error("Your browser blocked the BOL download window. Allow pop-ups and retry.");
     } catch (error) {
       if (generateGenerationRef.current !== input.generation) return;
       pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");
@@ -75,7 +77,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
         <div className="flex gap-2">
           <a
             className="rounded-sm border border-slate-300 px-3 py-1 text-sm text-[#1f2a44]"
-            href={`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`}
+            href={resolveApiUrl(`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`)}
             data-testid="bol-download-link"
           >
             Download BOL PDF

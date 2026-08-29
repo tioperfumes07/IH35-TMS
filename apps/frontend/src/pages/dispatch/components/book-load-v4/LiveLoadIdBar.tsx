@@ -30,7 +30,11 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
     activeGenerationRef.current = submittedGeneration;
     setError(null);
     try {
-      const r = await reserveDispatchLoadId(submittedCompanyId);
+      const currentReservation = reservationRef.current;
+      const renewalId = currentReservation?.companyId === submittedCompanyId
+        ? currentReservation.reservationId
+        : undefined;
+      const r = await reserveDispatchLoadId(submittedCompanyId, renewalId);
       if (scopeGenerationRef.current !== submittedGeneration) {
         await releaseDispatchLoadReservation(submittedCompanyId, r.reservation_uuid).catch(() => undefined);
         return;

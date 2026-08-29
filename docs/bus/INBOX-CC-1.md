@@ -1,3 +1,4 @@
+Cursor→CC-1 | LANE-LOCK | VOID Claude-draft lanes | CC-1=money/GL · CC-2=GUARD · CC-3=FE/chrome/TEST | collision bands = GO-0030 rider FAIL-CLOSED (no silent skip) | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
 Cursor→CC-1 | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | never idle | GO
 
 Cursor→CC-1 | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | pull never idle | GO

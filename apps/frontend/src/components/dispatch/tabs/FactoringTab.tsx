@@ -23,6 +23,7 @@ import { useToast } from "../../Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { EntityLink } from "../../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../shared/EntityLinkOrTombstone";
+import { QueryErrorNote } from "./QueryErrorNote";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -445,26 +446,33 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
       <div className="rounded-sm border border-gray-200 p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Packet Checklist</div>
         <div className="space-y-1.5">
+          {/* DSP-MONEY-F7283 — docsQ failure used to silently default `docs` to [], indistinguishable
+          from a genuine empty document set: hasRateConf/hasBol/hasPod all read false and the operator
+          saw "Upload under Documents tab" for documents that may actually already exist. */}
           <CheckItem
             label="Rate Confirmation"
             ok={hasRateConf}
-            note={hasRateConf ? undefined : "Upload under Documents tab"}
+            note={docsQ.isError ? <QueryErrorNote label="documents" onRetry={() => docsQ.refetch()} /> : hasRateConf ? undefined : "Upload under Documents tab"}
           />
           <CheckItem
             label="Bill of Lading (BOL)"
             ok={hasBol}
-            note={hasBol ? undefined : "Upload under Documents tab"}
+            note={docsQ.isError ? <QueryErrorNote label="documents" onRetry={() => docsQ.refetch()} /> : hasBol ? undefined : "Upload under Documents tab"}
           />
           <CheckItem
             label="Proof of Delivery (POD)"
             ok={hasPod}
-            note={hasPod ? undefined : "Driver PWA or upload under Documents tab"}
+            note={docsQ.isError ? <QueryErrorNote label="documents" onRetry={() => docsQ.refetch()} /> : hasPod ? undefined : "Driver PWA or upload under Documents tab"}
           />
+          {/* DSP-MONEY-F7283 — invoicesQ failure used to silently default linkedInvoice to null,
+          showing "Create invoice from Overview tab" even when a real linked invoice exists. */}
           <CheckItem
             label="Invoice"
             ok={hasInvoice}
             note={
-              hasInvoice && linkedInvoice?.id ? (
+              invoicesQ.isError ? (
+                <QueryErrorNote label="invoice" onRetry={() => invoicesQ.refetch()} />
+              ) : hasInvoice && linkedInvoice?.id ? (
                 <EntityLinkOrTombstone kind="invoice" id={linkedInvoice.id} name={linkedInvoice.display_id} noun="Invoice" className="text-slate-700 hover:underline" data-testid="load-factoring-invoice-link" />
               ) : (
                 "Create invoice from Overview tab"
@@ -475,7 +483,7 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
             <CheckItem
               label="Invoice PDF"
               ok={hasInvoicePdf}
-              note={hasInvoicePdf ? undefined : "Generate from Invoice page"}
+              note={invoiceDocsQ.isError ? <QueryErrorNote label="invoice documents" onRetry={() => invoiceDocsQ.refetch()} /> : hasInvoicePdf ? undefined : "Generate from Invoice page"}
             />
           ) : null}
         </div>
@@ -511,7 +519,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
           {stage === "NOT_FACTORED" && isDeliverable && (
             <div className="rounded-sm border border-slate-300 bg-slate-100 p-3">
               <p className="mb-2 text-xs text-slate-700">
-                {packetComplete
+                {/* DSP-MONEY-F7283 — packetComplete is derived from docsQ/invoicesQ; a fetch failure
+                on either used to silently read as "documents missing" instead of "can't verify yet". */}
+                {docsQ.isError || invoicesQ.isError
+                  ? "Couldn't verify document completeness — see checklist above and retry before relying on this."
+                  : packetComplete
                   ? "All documents present. Mark packet ready for dispatcher approval."
                   : "Some documents are missing (see checklist). You can still mark ready and upload missing docs later."}
               </p>
@@ -554,7 +566,14 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
               >
                 Submit to FARO
               </Button>
-              {linkedInvoice && !candidateIds.has(linkedInvoice.id) ? (
+              {/* DSP-MONEY-F7283 — candidateQ failure used to silently default candidateIds to an
+              empty Set, disabling submission with the WRONG explanation ("may already be in a
+              batch") when the real cause was a fetch failure. The button stays safely disabled
+              either way (we cannot fabricate eligibility we failed to read); only the message
+              changes to the honest one. */}
+              {candidateQ.isError ? (
+                <QueryErrorNote label="submission eligibility" onRetry={() => candidateQ.refetch()} />
+              ) : linkedInvoice && !candidateIds.has(linkedInvoice.id) ? (
                 <p className="mt-1 text-[11px] text-slate-700">Invoice may already be in a batch or already factored.</p>
               ) : null}
             </div>
@@ -577,6 +596,11 @@ export function FactoringTab({ loadId, operatingCompanyId, canEdit, onPacketUpda
                     onAdd: () => setShowAddFactorModal(true),
                   }}
                 />
+                {/* DSP-MONEY-F7283 — factorsQ failure used to silently default the picker to an
+                empty option list with no explanation, indistinguishable from "no factors set up". */}
+                {factorsQ.isError ? (
+                  <QueryErrorNote label="factor accounts" onRetry={() => factorsQ.refetch()} />
+                ) : null}
               </div>
               <div className="flex gap-2">
                 <Button

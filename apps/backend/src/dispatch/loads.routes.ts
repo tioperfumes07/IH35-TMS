@@ -428,6 +428,7 @@ const updateDispatchLoadBodySchema = z.object({
 
 const reserveLoadIdBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  reservation_uuid: z.string().uuid().optional(),
 });
 
 const anticipatedChargebackBodySchema = z.object({
@@ -473,6 +474,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reserveNextLoadId(client, {
         operatingCompanyId: body.data.operating_company_id,
         reservedByUserId: authUser.uuid,
+        reservationId: body.data.reservation_uuid,
       });
     });
     return {
@@ -644,6 +646,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
@@ -651,6 +654,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
@@ -747,6 +751,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
@@ -754,6 +759,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
@@ -856,6 +862,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
                  ml.miles_deadhead AS miles_deadhead,
+                 -- DSP-F7193: the canonical Book Load write stores both operator references on
+                 -- mdata.loads, but the shared dispatch view does not project either column.
+                 -- LoadDetailDrawer therefore rendered "—" immediately after a successful save.
+                 -- Read them from the same entity-scoped mdata.loads alias used for trip type,
+                 -- miles and commodity; do not widen the shared view or add a second source.
+                 ml.customer_wo_number AS customer_wo_number,
+                 ml.pickup_number AS pickup_number,
                  -- ACCT-F9508 (migration 202613220000): same trip_type pattern above — view has no
                  -- commodity/cargo_weight_lbs cols, read from mdata.loads via ml rather than widening
                  -- the shared view. Feeds LoadDetailDrawer + the Edit wizard's prefill (editLoadMapping.ts).
@@ -952,6 +965,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT *
           FROM mdata.load_stops
           WHERE load_id = $1::uuid
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC
         `,
         [resolvedLoadId]
@@ -997,6 +1011,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (
         message.includes("r2_not_configured") ||
         message.includes("instructions_document_create_failed") ||
+        message.includes("instructions_document_link_failed") ||
         message.includes("load_distribution_cleanup_failed")
       ) {
         return reply.code(503).send({ error: "instruction_distribution_unavailable" });
@@ -1402,6 +1417,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         });
       }
       const code = (error as { code?: string }).code;
+      if (["E_LOAD_WRITE_CONFLICT", "E_LOAD_STOP_WRITE_CONFLICT", "E_LOAD_STOP_ARCHIVE_CONFLICT", "E_LOAD_CHARGE_DEACTIVATE_INCOMPLETE", "E_LOAD_CHARGE_INSERT_FAILED"].includes(code ?? "")) {
+        return reply.code(409).send({ error: code });
+      }
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });
       throw error;
@@ -1562,7 +1580,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // already past the gate stay flagged and unrecognized until a human supplies real evidence).
       if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
         // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths).
-        await stampFinalActiveDeliveryDeparture(client, params.data.id, body.data.delivered_at ?? null);
+        await stampFinalActiveDeliveryDeparture(
+          client,
+          operatingCompanyId,
+          params.data.id,
+          body.data.delivered_at ?? null
+        );
 
         // ACCT-F277 — delivery cannot recognize freight revenue while silently carrying no driver
         // cost record. Re-enter the canonical idempotent pay path: an existing Book bill is a no-op;

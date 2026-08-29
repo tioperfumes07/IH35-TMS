@@ -71,6 +71,14 @@ function check(src) {
       );
     }
   }
+  const activeEndpointSelectors =
+    src.match(/FROM mdata\.load_stops\s+WHERE load_id = l\.id AND stop_type = '(?:pickup|delivery)'\s+AND soft_deleted_at IS NULL/g) ?? [];
+  if (activeEndpointSelectors.length !== 4) {
+    problems.push(`${TARGET}: list count+rows must retain 4 active pickup/delivery selectors; found ${activeEndpointSelectors.length}`);
+  }
+  if (!/FROM mdata\.load_stops\s+WHERE load_id = \$1::uuid\s+AND soft_deleted_at IS NULL\s+ORDER BY sequence_number ASC/.test(src)) {
+    problems.push(`${TARGET}: GET detail itinerary must exclude retired load stops`);
+  }
   return problems;
 }
 
@@ -87,6 +95,11 @@ function main() {
       const problems = check(broken);
       if (problems.length === 0) {
         console.error(`${LABEL}: --selftest FAIL — mutation not detected`);
+        process.exit(1);
+      }
+      const lifecycleBroken = src.replace(/\s+AND soft_deleted_at IS NULL/g, "");
+      if (!check(lifecycleBroken).some((problem) => problem.includes("active pickup/delivery") || problem.includes("retired load stops"))) {
+        console.error(`${LABEL}: --selftest FAIL — active-stop mutation not detected`);
         process.exit(1);
       }
       console.log(`${LABEL}: --selftest PASS — mutation detected (${problems.length} problem(s))`);

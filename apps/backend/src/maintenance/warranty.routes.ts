@@ -331,7 +331,7 @@ async function fetchClaimById(client: DbClient, companyId: string, id: string) {
 }
 
 export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/warranty/parts", async (req, reply) => {
+  app.get("/api/v1/maintenance/warranty/parts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -358,7 +358,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/warranty/parts", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/parts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = partCreateSchema.safeParse(req.body);
@@ -429,7 +429,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.code(201).send(mapWarrantyPartRow(row ?? {}));
   });
 
-  app.get("/api/v1/maintenance/warranty/claims", async (req, reply) => {
+  app.get("/api/v1/maintenance/warranty/claims", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -460,7 +460,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/warranty/claims", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/claims", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = claimCreateSchema.safeParse(req.body);
@@ -519,7 +519,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.code(201).send(mapWarrantyClaimRow(row));
   });
 
-  app.patch("/api/v1/maintenance/warranty/claims/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/warranty/claims/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -581,7 +581,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send(mapWarrantyClaimRow(outcome.row ?? {}));
   });
 
-  app.post("/api/v1/maintenance/warranty/claims/:id/file", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/claims/:id/file", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -622,7 +622,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send(mapWarrantyClaimRow(row));
   });
 
-  app.post("/api/v1/maintenance/warranty/claims/:id/reimburse", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/claims/:id/reimburse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -680,7 +680,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send({ ...mapWarrantyClaimRow(row), gl_posting: gl });
   });
 
-  app.post("/api/v1/maintenance/warranty/claims/:id/archive", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/claims/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -708,7 +708,7 @@ export async function registerMaintenanceWarrantyRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, id: params.data.id });
   });
 
-  app.post("/api/v1/maintenance/warranty/detect-from-wo", async (req, reply) => {
+  app.post("/api/v1/maintenance/warranty/detect-from-wo", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = detectFromWoSchema.safeParse(req.body);

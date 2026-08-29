@@ -23,7 +23,9 @@
       "status": "PASS",
       "evidence": "PASS 2026-08-09 — /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "MAINT-S02",

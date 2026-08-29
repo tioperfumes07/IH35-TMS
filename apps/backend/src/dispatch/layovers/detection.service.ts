@@ -53,6 +53,9 @@ export type LayoverDetectionResult = {
 };
 
 export async function detectLayovers(client: PoolClient, operatingCompanyId: string): Promise<LayoverDetectionResult> {
+  const lockKey = `dispatch.layover_detector:${operatingCompanyId}`;
+  await client.query(`SELECT pg_advisory_lock(hashtextextended($1::text, 0))`, [lockKey]);
+  try {
   // CANONICAL SOURCES (§4, prod-verified 2026-07-27):
   //   driver     -> mdata.loads.assigned_primary_driver_id   (populated)
   //   delivered  -> the LAST stop_type='delivery' stop's actual_departure_at on mdata.load_stops
@@ -76,6 +79,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
               s.actual_departure_at AS released_at
          FROM mdata.load_stops s
         WHERE s.stop_type = 'delivery'
+          AND s.soft_deleted_at IS NULL
           AND s.actual_departure_at IS NOT NULL
         ORDER BY s.load_id, s.sequence_number DESC
      ),
@@ -87,6 +91,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
               s.actual_arrival_at AS started_at
          FROM mdata.load_stops s
         WHERE s.actual_arrival_at IS NOT NULL
+          AND s.soft_deleted_at IS NULL
         ORDER BY s.load_id, s.sequence_number ASC
      ),
      driver_loads AS (
@@ -127,6 +132,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
         AND l.soft_deleted_at IS NULL
         AND l.assigned_primary_driver_id IS NOT NULL
         AND s.stop_type = 'delivery'
+        AND s.soft_deleted_at IS NULL
         AND s.actual_departure_at IS NOT NULL`,
     [operatingCompanyId]
   );
@@ -141,17 +147,24 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
     );
     if (existing.rows.length > 0) continue;
 
-    await client.query(
+    const created = await client.query<{ uuid: string }>(
       `INSERT INTO dispatch.driver_layovers
          (operating_company_id, driver_uuid, previous_load_uuid, next_load_uuid,
           layover_started_at, layover_ended_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING uuid::text`,
       [operatingCompanyId, row.driver_uuid, row.previous_load_uuid, row.next_load_uuid,
        row.layover_started_at, row.layover_ended_at]
     );
+    if (!created.rows[0]?.uuid) {
+      throw new LayoverDetectionUnavailableError("driver_layovers insert returned no identity");
+    }
     inserted++;
   }
-  return { inserted, resolvable_deliveries: resolvableDeliveries };
+    return { inserted, resolvable_deliveries: resolvableDeliveries };
+  } finally {
+    await client.query(`SELECT pg_advisory_unlock(hashtextextended($1::text, 0))`, [lockKey]);
+  }
 }
 
 export async function getLayoversForDriver(

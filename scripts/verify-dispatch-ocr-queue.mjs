@@ -59,8 +59,22 @@ function finalizeLifecycleSignals(processor) {
   const section = processor.slice(processor.indexOf("export async function finalizeOcrIntakeConversion"), processor.indexOf("/** Re-export for tests"));
   if (!/if \(row\.converted_load_id\)[\s\S]*String\(row\.converted_load_id\) !== loadId[\s\S]*already_converted[\s\S]*return \{ ok: true as const, item: mapRow\(row\) \}/.test(section)) failures.push("same-load finalize replay must be idempotent without another audit");
   if (!/String\(row\.status\) !== "ready_review"[\s\S]*error: "not_ready"/.test(section)) failures.push("finalize must reject items that are not ready for review");
+  if (!/SELECT id FROM mdata\.loads[\s\S]{0,180}?operating_company_id = \$2::uuid[\s\S]{0,80}?soft_deleted_at IS NULL/.test(section)) failures.push("finalize must reject a retired target load");
   if (!/SET status = 'converted'[\s\S]*operating_company_id = \$2::uuid[\s\S]*status = 'ready_review'[\s\S]*converted_load_id IS NULL[\s\S]*RETURNING \*/.test(section)) failures.push("finalize write must compare-and-set exact company, ready status, and empty conversion FK");
   if (!/if \(!updated\.rows\[0\]\) return \{ ok: false as const, error: "already_converted" as const \}/.test(section)) failures.push("finalize must reject a lost conversion claim before audit");
+  return failures;
+}
+
+function bookLoadPrefillOrderSignals(bookLoad) {
+  const failures = [];
+  const reset = bookLoad.indexOf("form.reset();");
+  const lastReset = bookLoad.lastIndexOf("form.reset();");
+  const prefill = bookLoad.indexOf("applyLoadTemplateToBookForm(");
+  if (reset < 0) failures.push("Book Load must reset a newly opened form");
+  if (prefill < 0) failures.push("Book Load must apply OCR/template prefill");
+  if (reset >= 0 && prefill >= 0 && (reset > prefill || lastReset > prefill)) {
+    failures.push("Book Load reset must run only before OCR/template prefill so extracted fields survive open");
+  }
   return failures;
 }
 
@@ -112,6 +126,7 @@ function main() {
   if (!dispatchFlyout.includes("/dispatch/ocr-queue")) failures.push("sidebar flyout must link OCR queue");
 
   if (!bookLoad.includes("templatePrefillJson")) failures.push("BookLoadModalV4 must accept templatePrefillJson for OCR convert");
+  failures.push(...bookLoadPrefillOrderSignals(bookLoad));
 
   if (!archDesign.includes("verify:dispatch-ocr-queue")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-ocr-queue");
@@ -147,9 +162,17 @@ function main() {
       processor.replace("AND status = 'ready_review'", "AND status IS NOT NULL"),
       processor.replace("AND converted_load_id IS NULL", ""),
       processor.replace('if (!updated.rows[0]) return { ok: false as const, error: "already_converted" as const };', ""),
+      processor.replace("AND soft_deleted_at IS NULL\n        LIMIT 1", "LIMIT 1"),
     ];
     if (!finalizeMutants.every((mutant) => finalizeLifecycleSignals(mutant).length > 0)) fail("selftest finalize lifecycle mutation escaped");
-    console.log("verify:dispatch-ocr-queue SELFTEST PASS (12/12 planted defects rejected)");
+    const reorderedPrefill = bookLoad.replace(
+      "applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson);",
+      "applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson); form.reset();"
+    );
+    if (!bookLoadPrefillOrderSignals(reorderedPrefill).some((message) => message.includes("reset must run only before"))) {
+      fail("selftest post-prefill reset mutation escaped");
+    }
+    console.log("verify:dispatch-ocr-queue SELFTEST PASS (14/14 planted defects rejected)");
   }
 }
 

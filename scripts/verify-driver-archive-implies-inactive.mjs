@@ -36,6 +36,24 @@ export function auditSources(sources) {
   if (!/status\s*=\s*CASE[\s\S]*?Inactive'::mdata\.driver_status/.test(bulk)) {
     problems.push(`${BULK}: archive UPDATE must force non-terminal status to Inactive`);
   }
+  const archiveStart = bulk.indexOf("async function handleArchive");
+  const archiveEnd = bulk.indexOf("async function handleAssignTruck", archiveStart);
+  const archive = archiveStart >= 0 && archiveEnd > archiveStart ? bulk.slice(archiveStart, archiveEnd) : "";
+  if (!/driver-default:\$\{ctx\.operatingCompanyId\}:\$\{ctx\.id\}/.test(archive)) {
+    problems.push(`${BULK}: archive must acquire the canonical driver lifecycle lock`);
+  }
+  if (!/pg_advisory_xact_lock\(hashtextextended\(\$1::text, 0\)\)/.test(archive)) {
+    problems.push(`${BULK}: archive driver lifecycle lock must be transaction-scoped`);
+  }
+  if (!/UPDATE telematics\.vehicle_driver_assignments[\s\S]*driver_id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*is_default = true[\s\S]*ended_at IS NULL[\s\S]*RETURNING id::text, unit_id::text/.test(archive)) {
+    problems.push(`${BULK}: archive must close company-scoped open default assignments with identity evidence`);
+  }
+  if (!/UPDATE mdata\.units[\s\S]*SET assigned_driver_id = NULL[\s\S]*assigned_driver_id = \$1::uuid[\s\S]*owner_company_id = \$2::uuid OR currently_leased_to_company_id = \$2::uuid[\s\S]*RETURNING id::text/.test(archive)) {
+    problems.push(`${BULK}: archive must clear company-owned unit mirrors with identity evidence`);
+  }
+  if (!/ended_assignment_ids:[\s\S]*ended_assignment_unit_ids:[\s\S]*cleared_unit_ids:/.test(archive)) {
+    problems.push(`${BULK}: archive audit must retain assignment and cleared-unit identities`);
+  }
 
   for (const [rel, key] of [
     [ALERTS, "alerts"],
@@ -67,7 +85,10 @@ function auditTree() {
 
 function selftest() {
   const good = {
-    bulk: `
+    bulk: `async function handleArchive(ctx) {
+      await ctx.client.query(\`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))\`, [
+        \`driver-default:${"${ctx.operatingCompanyId}"}:${"${ctx.id}"}\`,
+      ]);
       UPDATE mdata.drivers
       SET
         archived_at = COALESCE(archived_at, now()),
@@ -76,6 +97,17 @@ function selftest() {
           WHEN status::text IN ('Inactive', 'Terminated') THEN status
           ELSE 'Inactive'::mdata.driver_status
         END
+      UPDATE telematics.vehicle_driver_assignments SET ended_at = now()
+      WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+        AND is_default = true AND ended_at IS NULL
+      RETURNING id::text, unit_id::text
+      UPDATE mdata.units SET assigned_driver_id = NULL
+      WHERE assigned_driver_id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      RETURNING id::text
+      audit({ ended_assignment_ids: [], ended_assignment_unit_ids: [], cleared_unit_ids: [] });
+    }
+    async function handleAssignTruck() {}
     `,
     alerts: `AND d.deactivated_at IS NULL\n          AND d.archived_at IS NULL`,
     messages: `AND d.deactivated_at IS NULL\n        AND d.archived_at IS NULL`,
@@ -94,7 +126,22 @@ function selftest() {
   };
   if (auditSources(badReader).length < 1) throw new Error("selftest bad reader failed");
 
-  console.log(`${LABEL}: selftest PASS`);
+  const archiveMutations = [
+    good.bulk.replace("pg_advisory_xact_lock", "pg_advisory_lock"),
+    good.bulk.replace("driver-default:${ctx.operatingCompanyId}:${ctx.id}", "driver-default:${ctx.id}"),
+    good.bulk.replace("AND is_default = true", "AND is_default = false"),
+    good.bulk.replace("RETURNING id::text, unit_id::text", "RETURNING driver_id::text"),
+    good.bulk.replace("SET assigned_driver_id = NULL", "SET updated_at = now()"),
+    good.bulk.replace("owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid", "owner_company_id IS NOT NULL"),
+    good.bulk.replace("ended_assignment_ids: [], ended_assignment_unit_ids: [], cleared_unit_ids: []", "cleared_unit_ids: []"),
+  ];
+  archiveMutations.forEach((mutation, index) => {
+    if (mutation === good.bulk || auditSources({ ...good, bulk: mutation }).length < 1) {
+      throw new Error(`selftest archive mutation escaped: ${index + 1}`);
+    }
+  });
+
+  console.log(`${LABEL}: selftest PASS (10/10)`);
 }
 
 function main() {

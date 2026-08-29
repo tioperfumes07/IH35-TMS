@@ -168,7 +168,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reasons };
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -221,7 +221,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/catalogs/driver-termination-reasons/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/driver-termination-reasons/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -294,7 +294,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -330,7 +330,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reason: updated };
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -675,14 +675,19 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       const row = insertRes.rows[0];
 
       if (body.event_type === "termination") {
-        await client.query(
+        const driverUpdateRes = await client.query<{ id: string }>(
           `
             UPDATE mdata.drivers
             SET status = 'Terminated', termination_date = $2, updated_by_user_id = $3
             WHERE id = $1
+              AND operating_company_id = $4::uuid
+            RETURNING id::text
           `,
-          [parsedParams.data.driver_id, body.event_date, authUser.uuid]
+          [parsedParams.data.driver_id, body.event_date, authUser.uuid, opco]
         );
+        if (driverUpdateRes.rows[0]?.id !== parsedParams.data.driver_id) {
+          throw new Error("driver_termination_status_write_failed");
+        }
       }
 
       await appendCrudAudit(

@@ -13,6 +13,7 @@ import { readFileSync } from "node:fs";
 const FILE = "apps/backend/src/dispatch/load-geofence-timeline.routes.ts";
 const fail = (m) => { console.error(`FAIL verify-no-unused-query-params: ${m}`); process.exit(1); };
 const src = readFileSync(FILE, "utf8");
+const activeStopScope = /FROM mdata\.load_stops ls[\s\S]{0,120}ls\.load_id = \$1[\s\S]{0,100}ls\.soft_deleted_at IS NULL[\s\S]{0,100}ls\.stop_type IN \('pickup', 'delivery'\)/;
 
 // The buggy bind must be gone: loadId must NOT be passed as a leading param alongside the geofence
 // LIKE pattern.
@@ -26,5 +27,17 @@ if (!/g\.operating_company_id = \$1[\s\S]{0,80}LIKE \$2/.test(src)) {
 if (!/\[\s*operating_company_id\s*,\s*`load-\$\{loadId\}-stop-%`\s*\]/.test(src)) {
   fail(`${FILE}: geofence query must bind exactly [operating_company_id, \`load-\${loadId}-stop-%\`].`);
 }
+if (!activeStopScope.test(src)) {
+  fail(`${FILE}: timeline stop query must exclude soft-deleted pickup/delivery history.`);
+}
 
-console.log("PASS verify-no-unused-query-params (geofence-timeline binds no unused positional param)");
+if (process.argv.includes("--selftest")) {
+  const mutated = src.replace("           AND ls.soft_deleted_at IS NULL\n", "");
+  if (mutated === src || activeStopScope.test(mutated)) {
+    fail("planted retired-stop regression escaped the active-stop ratchet");
+  }
+  console.log("PASS verify-no-unused-query-params SELFTEST (retired geofence-timeline stop rejected)");
+  process.exit(0);
+}
+
+console.log("PASS verify-no-unused-query-params (geofence-timeline binds no unused positional param and reads active stops)");

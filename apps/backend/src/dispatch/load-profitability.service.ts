@@ -95,12 +95,21 @@ export async function computeLoadProfitability(
        -- error. The delivery timestamp lives on the STOP: the last stop_type='delivery' stop's
        -- actual_departure_at (truck-release basis, same as booking-gap.service.ts). Falling back to
        -- updated_at/created_at preserves the original intent for loads not yet delivered.
+       -- DSP-MONEY-F7243 — this subquery picked the latest actual_departure_at across EVERY
+       -- delivery-type stop row for the load, including one archived by the Stops-replace
+       -- lifecycle (soft_deleted_at IS NOT NULL). A retired delivery stop's own departure could
+       -- therefore outrank the canonical active delivery's, shifting trip_end and — through it —
+       -- trip duration, the insurance-allocation denominator, and net profitability after a route
+       -- revision. Same soft_deleted_at IS NULL predicate this session's sibling fixes already
+       -- standardized on for mdata.load_stops (dispatch-refinements.service.ts's
+       -- replaceLoadStopsRefined is the write path that stamps it on archive).
        COALESCE(
          (SELECT ls.actual_departure_at
             FROM mdata.load_stops ls
            WHERE ls.load_id = l.id
              AND ls.stop_type = 'delivery'
              AND ls.actual_departure_at IS NOT NULL
+             AND ls.soft_deleted_at IS NULL
            ORDER BY ls.actual_departure_at DESC
            LIMIT 1),
          l.updated_at,

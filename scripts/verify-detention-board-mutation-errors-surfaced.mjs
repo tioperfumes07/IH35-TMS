@@ -85,6 +85,52 @@ export function checkDetentionBoardCompleteRange(src) {
   return offenders;
 }
 
+export function checkDetentionCloseLifecycle(src) {
+  const offenders = [];
+  const start = src.indexOf("export async function closeDetentionEvent");
+  const end = src.indexOf("export async function bridgeDetentionToBillingInClientTx", start);
+  const close = start >= 0 && end > start ? src.slice(start, end) : "";
+  if (!close) offenders.push(`${SERVICE_FILE}: closeDetentionEvent lifecycle is missing.`);
+  if (!/WHERE id = \$1[\s\S]*?operating_company_id = \$2::uuid[\s\S]*?status = 'accruing'[\s\S]*?RETURNING \*/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must compare-and-set the accruing state in the canonical write.`);
+  }
+  if (!/const closedEvent = updated\.rows\[0\];[\s\S]*?if \(!closedEvent\) return \{ ok: false as const, error: "not_accruing" as const \};/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must reject a lost race before publishing success.`);
+  }
+  if (!/return \{ ok: true as const, event: closedEvent \};/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must return only the proven persisted row.`);
+  }
+  return offenders;
+}
+
+export function checkDetentionSyncDepartureBoundary(src) {
+  const offenders = [];
+  const start = src.indexOf("export async function syncDetentionEventsFromStopArrivals");
+  const end = src.indexOf("export async function listDetentionEventsForLoad", start);
+  const sync = start >= 0 && end > start ? src.slice(start, end) : "";
+  if (!sync) offenders.push(`${SERVICE_FILE}: detention arrival/departure sync lifecycle is missing.`);
+  if (!/stopped_at = ls\.actual_departure_at/.test(sync)) {
+    offenders.push(`${SERVICE_FILE}: automatic detention close must use actual departure, never arrival fallback.`);
+  }
+  if ((sync.match(/ls\.actual_departure_at - de\.started_at/g) ?? []).length !== 2) {
+    offenders.push(`${SERVICE_FILE}: detention duration and accrual must both end at actual departure.`);
+  }
+  if (!/AND ls\.actual_departure_at IS NOT NULL/.test(sync) || /actual_departure_at IS NOT NULL OR ls\.actual_arrival_at IS NOT NULL/.test(sync)) {
+    offenders.push(`${SERVICE_FILE}: arrival alone must not close a newly accruing detention event.`);
+  }
+  const dedupe = sync.match(/AND NOT EXISTS \([\s\S]*?FROM dispatch\.detention_events de[\s\S]*?\n\s*\)/)?.[0] ?? "";
+  if (!/de\.operating_company_id = sa\.operating_company_id/.test(dedupe) || !/de\.stop_id = sa\.stop_id/.test(dedupe)) {
+    offenders.push(`${SERVICE_FILE}: detention sync must deduplicate the exact company+stop lifecycle.`);
+  }
+  if (/de\.status = 'accruing'/.test(dedupe)) {
+    offenders.push(`${SERVICE_FILE}: detention sync must include closed/billed history when deduplicating a physical stop.`);
+  }
+  if (!/ON CONFLICT \(operating_company_id, stop_id\) WHERE status = 'accruing'[\s\S]*?DO NOTHING/.test(sync)) {
+    offenders.push(`${SERVICE_FILE}: concurrent detention sync ticks must use the canonical active-stop conflict boundary.`);
+  }
+  return offenders;
+}
+
 export function checkDetentionRejectLifecycle(src) {
   const offenders = [];
   const reject = src.slice(src.indexOf("export async function rejectDetentionRequest"));
@@ -107,7 +153,7 @@ export function run() {
   const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
   const serviceSrc = fs.readFileSync(path.join(repoRoot, SERVICE_FILE), "utf8");
   const approvalServiceSrc = fs.readFileSync(path.join(repoRoot, APPROVAL_SERVICE_FILE), "utf8");
-  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc), ...checkDetentionRejectLifecycle(approvalServiceSrc)];
+  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc), ...checkDetentionCloseLifecycle(serviceSrc), ...checkDetentionSyncDepartureBoundary(serviceSrc), ...checkDetentionRejectLifecycle(approvalServiceSrc)];
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -156,16 +202,30 @@ if (process.argv.includes("--selftest")) {
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
   const rejectMutationsFail = [
     fixedApprovalService.replace("operating_company_id = $2::uuid FOR UPDATE", "operating_company_id = $2::uuid"),
-    fixedApprovalService.replace(" AND status = 'pending_review'\n        RETURNING *", "\n        RETURNING *"),
+    fixedApprovalService.replace("WHERE id = $1 AND operating_company_id = $4::uuid AND status = 'pending_review'", "WHERE id = $1 AND operating_company_id = $4::uuid"),
     fixedApprovalService.replace("if (!rejectedRequest) return { ok: false as const, error: \"not_pending\" as const };", "if (false) return { ok: false as const, error: \"not_pending\" as const };")
   ].every((mutant) => checkDetentionRejectLifecycle(mutant).length > 0);
   const rejectPasses = checkDetentionRejectLifecycle(fixedApprovalService).length === 0;
+  const closeMutationsFail = [
+    fixedService.replace("AND status = 'accruing'", "AND status = status"),
+    fixedService.replace('if (!closedEvent) return { ok: false as const, error: "not_accruing" as const };', 'if (false) return { ok: false as const, error: "not_accruing" as const };'),
+    fixedService.replace("return { ok: true as const, event: closedEvent };", "return { ok: true as const, event: updated.rows[0] };")
+  ].every((mutant) => checkDetentionCloseLifecycle(mutant).length > 0);
+  const closePasses = checkDetentionCloseLifecycle(fixedService).length === 0;
+  const syncMutationsFail = [
+    fixedService.replace("stopped_at = ls.actual_departure_at", "stopped_at = COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now())"),
+    fixedService.replace("ls.actual_departure_at - de.started_at", "COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at"),
+    fixedService.replace("AND ls.actual_departure_at IS NOT NULL", "AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)"),
+    fixedService.replace("AND de.stop_id = sa.stop_id\n          )", "AND de.stop_id = sa.stop_id\n              AND de.status = 'accruing'\n          )"),
+    fixedService.replace("ON CONFLICT (operating_company_id, stop_id) WHERE status = 'accruing'\n        DO NOTHING", "")
+  ].every((mutant) => checkDetentionSyncDepartureBoundary(mutant).length > 0);
+  const syncPasses = checkDetentionSyncDepartureBoundary(fixedService).length === 0;
 
   const lifecycleMutationsFail = [mutableScope, wrongInvalidation, concurrentRows].every(
     (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
   );
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && rejectMutationsFail && rejectPasses) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && closeMutationsFail && closePasses && syncMutationsFail && syncPasses && rejectMutationsFail && rejectPasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
@@ -175,6 +235,12 @@ if (process.argv.includes("--selftest")) {
     lifecycleMutationsFail,
     capFails,
     completePasses,
+    closeMutationsFail,
+    closePasses,
+    syncMutationsFail,
+    syncPasses,
+    rejectMutationsFail,
+    rejectPasses,
   });
   process.exit(1);
 }

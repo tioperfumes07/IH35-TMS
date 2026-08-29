@@ -29,7 +29,13 @@ const paths = {
 
 function bolStorageFailures(bol, r2) {
   const failures = [];
-  if (!/const stored = res\.rows\[0\];[\s\S]{0,100}if \(!stored\?\.id\) throw new Error\("bol_document_create_failed"\);[\s\S]{0,80}return stored/.test(bol)) failures.push("BOL metadata write must require its canonical identity");
+  const storedAt = bol.indexOf("const stored = res.rows[0];");
+  const identityAt = bol.indexOf('if (!stored?.id) throw new Error("bol_document_create_failed");', storedAt);
+  const auditAt = bol.indexOf('await appendCrudAudit(client, userId, "dispatch.bol.generated"', identityAt);
+  const returnAt = bol.indexOf("return stored;", auditAt);
+  if (!(storedAt >= 0 && identityAt > storedAt && auditAt > identityAt && returnAt > auditAt)) {
+    failures.push("BOL metadata write must require its canonical identity before audit and return");
+  }
   if (!/catch \(error\)[\s\S]{0,120}await deleteObjectBytes\(r2Key\)[\s\S]{0,180}bol_document_cleanup_failed:[\s\S]{0,100}throw error/.test(bol)) failures.push("failed BOL metadata writes must compensate the uploaded R2 object and fail loud on cleanup loss");
   if (!/export async function deleteObjectBytes[\s\S]{0,180}DeleteObjectCommand/.test(r2)) failures.push("R2 client must expose canonical object deletion");
   return failures;
@@ -128,6 +134,7 @@ function main() {
   if (process.argv.includes("--selftest")) {
     const mutations = [
       [bol.replace('if (!stored?.id) throw new Error("bol_document_create_failed");', ""), r2],
+      [bol.replace("return stored;", "return {};"), r2],
       [bol.replace("await deleteObjectBytes(r2Key);", ""), r2],
       [bol, r2.replace("new DeleteObjectCommand", "new HeadObjectCommand")],
     ];
@@ -145,7 +152,7 @@ function main() {
     fail(failures.join("; "));
   }
 
-  console.log(`verify:dispatch-pod-bol-workflow PASS${process.argv.includes("--selftest") ? " — 7/7 storage mutations caught" : ""}`);
+  console.log(`verify:dispatch-pod-bol-workflow PASS${process.argv.includes("--selftest") ? " — 8/8 storage mutations caught" : ""}`);
 }
 
 main();

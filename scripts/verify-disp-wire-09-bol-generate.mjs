@@ -12,6 +12,7 @@
  *   (g) Generate BOL closes over a mutable load/company or applies stale completion state
  *   (h) Summary loading/failure masquerades as zero POD/BOL history or permits duplicate generation
  *   (i) Stored-copy download applies a signed URL/error after load/company scope replacement
+ *   (j) Canonical BOL creation returns without transaction-bound actor/company/load/document audit evidence
  *
  * Mutation-tested both directions.
  *
@@ -60,8 +61,17 @@ export function auditBolWire(sources) {
   if (!/export\s+async\s+function\s+generateAndStoreBol/.test(service)) {
     problems.push(`${PATHS.service}: generateAndStoreBol export missing`);
   }
+  if (!/appendCrudAudit\(client, userId, ["']dispatch\.bol\.generated["'],\s*\{[\s\S]{0,160}operating_company_id:\s*operatingCompanyId,[\s\S]{0,160}bol_id:\s*stored\.id,[\s\S]{0,160}load_id:\s*loadId,[\s\S]{0,180}pdf_r2_key:\s*r2Key,[\s\S]{0,160}sha256,[\s\S]{0,160}template_version:\s*templateVersion/.test(service)) {
+    problems.push(`${PATHS.service}: canonical BOL create must append actor/company/load/document audit evidence`);
+  }
+  if (!/if \(!stored\?\.id\) throw new Error\(["']bol_document_create_failed["']\);[\s\S]{0,120}await appendCrudAudit\(client, userId, ["']dispatch\.bol\.generated["']/.test(service)) {
+    problems.push(`${PATHS.service}: BOL audit must run after required canonical document identity inside the compensated write block`);
+  }
   if (!/driver_company_authorizations bol_driver_dca[\s\S]{0,320}bol_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}bol_driver_dca\.is_authorized = true[\s\S]{0,180}bol_driver_dca\.deactivated_at IS NULL/.test(service)) {
     problems.push(`${PATHS.service}: BOL driver label must accept active company authorization`);
+  }
+  if (!/FROM mdata\.load_stops s[\s\S]{0,240}WHERE s\.load_id = \$1::uuid[\s\S]{0,100}s\.soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY s\.sequence_number ASC/.test(service)) {
+    problems.push(`${PATHS.service}: BOL must render only canonical active stop history`);
   }
   if (!/registerDispatchPodBolRoutes/.test(index)) {
     problems.push(`${PATHS.index}: registerDispatchPodBolRoutes not mounted`);
@@ -101,6 +111,9 @@ export function auditBolWire(sources) {
   }
   if (!/async function downloadStoredBol\([\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,420}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
+  }
+  if (!/const popup = window\.open\(result\.download_url, "_blank", "noopener,noreferrer"\);[\s\S]{0,140}if \(!popup\) throw new Error\("Your browser blocked the BOL download window\. Allow pop-ups and retry\."\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: blocked stored-BOL popup must fail visibly and remain retryable`);
   }
   if (!/const input = \{[\s\S]{0,120}bolId,[\s\S]{0,120}companyId,[\s\S]{0,120}generation: generateGenerationRef\.current/.test(panel)
       || !/downloadBolDocument\(input\.bolId, input\.companyId\)/.test(panel)) {
@@ -179,6 +192,47 @@ function selftest() {
       expect: "active company authorization",
     },
     {
+      label: "retired BOL stop admitted",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, "        AND s.soft_deleted_at IS NULL\n", "", "active BOL stops"),
+        }),
+      expect: "canonical active stop history",
+    },
+    {
+      label: "BOL generated audit event removed",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, '"dispatch.bol.generated"', '"dispatch.bol.generated_GONE"', "BOL audit event"),
+        }),
+      expect: "append actor/company/load/document audit evidence",
+    },
+    {
+      label: "BOL audit loses canonical document identity",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, "bol_id: stored.id", "bol_id: loadId", "BOL audit identity"),
+        }),
+      expect: "append actor/company/load/document audit evidence",
+    },
+    {
+      label: "BOL audit moves before identity requirement",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(
+            real.service,
+            'if (!stored?.id) throw new Error("bol_document_create_failed");',
+            'void stored?.id;',
+            "BOL audit ordering",
+          ),
+        }),
+      expect: "after required canonical document identity",
+    },
+    {
       label: "drawer mount removed",
       run: () =>
         auditBolWire({
@@ -227,6 +281,19 @@ function selftest() {
           ),
         }),
       expect: "stored BOL download must surface",
+    },
+    {
+      label: "blocked stored download popup accepted silently",
+      run: () => auditBolWire({
+        ...real,
+        panel: mutate(
+          real.panel,
+          'if (!popup) throw new Error("Your browser blocked the BOL download window. Allow pop-ups and retry.");',
+          "void popup;",
+          "blocked popup",
+        ),
+      }),
+      expect: "blocked stored-BOL popup",
     },
     {
       label: "stored download consumes mutable company",

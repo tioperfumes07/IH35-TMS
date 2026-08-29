@@ -150,6 +150,7 @@ async function fetchLoadContext(
           FROM mdata.load_stops s
           WHERE s.load_id = l.id
             AND s.stop_type::text = 'delivery'
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) AS scheduled_delivery_at,

@@ -25,6 +25,7 @@ import { Button } from "../../Button";
 import { Modal } from "../../Modal";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { QueryErrorNote } from "./QueryErrorNote";
 
 export type FinesDeductionsCardProps = {
   loadId: string;
@@ -231,7 +232,13 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               )}
             </div>
           ))}
-          {loadPendingRows.length === 0 ? <p className="text-xs text-gray-500">No pending deductions for this load.</p> : null}
+          {/* DSP-MONEY-F7283 — pendingEscrowQ failure used to silently default loadPendingRows to
+          [], indistinguishable from a load that genuinely has no pending escrow deductions. */}
+          {pendingEscrowQ.isError ? (
+            <QueryErrorNote label="pending deductions" onRetry={() => pendingEscrowQ.refetch()} />
+          ) : loadPendingRows.length === 0 ? (
+            <p className="text-xs text-gray-500">No pending deductions for this load.</p>
+          ) : null}
         </div>
       </section>
 
@@ -257,13 +264,35 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </div>
             );
           })}
-          {activeFinePolicies.length === 0 ? <p className="text-xs text-gray-500">No active fine policies for this driver.</p> : null}
+          {/* DSP-MONEY-F7283 — finePoliciesQ failure used to silently default both derived lists to
+          [], indistinguishable from a driver who genuinely has no active fine policies. */}
+          {finePoliciesQ.isError ? (
+            <QueryErrorNote label="fine deduction policies" onRetry={() => finePoliciesQ.refetch()} />
+          ) : activeFinePolicies.length === 0 ? (
+            <p className="text-xs text-gray-500">No active fine policies for this driver.</p>
+          ) : null}
         </div>
       </section>
 
       {/* Settlement that actually covers this load — load-aware resolution wins over the driver's
-          open pre-settlement cycle, per LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING. */}
-      {resolvedSettlementIsSettled && resolvedSettlement ? (
+          open pre-settlement cycle, per LOAD-SETTLEMENT-TAB-SHOWS-OPEN-NOT-SETTLING.
+          DSP-MONEY-F7283 — a settlementForLoadQ failure used to silently fall through to the open
+          pre-settlement branch below as if no resolved settlement existed, when the real cause was
+          a fetch failure — a load that WAS already settled could be shown as merely "open, no lines
+          yet." A preSettlementQ failure had the mirror problem: the whole section silently rendered
+          nothing. Either failure now shows one explicit error instead of guessing. */}
+      {settlementForLoadQ.isError || preSettlementQ.isError ? (
+        <section className="rounded-sm border border-gray-200 bg-white p-3">
+          <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">Settlement for this load</h4>
+          <QueryErrorNote
+            label="settlement information for this load"
+            onRetry={() => {
+              void settlementForLoadQ.refetch();
+              void preSettlementQ.refetch();
+            }}
+          />
+        </section>
+      ) : resolvedSettlementIsSettled && resolvedSettlement ? (
         <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="load-settlement-resolved">
           <h4 className="mb-2 text-xs font-semibold uppercase text-gray-600">
             Settlement for this load (
@@ -326,7 +355,11 @@ export function FinesDeductionsCard({ loadId, operatingCompanyId, canEdit }: Fin
               </div>
             );
           })}
-          {historyFinePolicies.length === 0 ? <p className="text-xs text-gray-500">No completed fine policies yet.</p> : null}
+          {finePoliciesQ.isError ? (
+            <QueryErrorNote label="fine deduction policies" onRetry={() => finePoliciesQ.refetch()} />
+          ) : historyFinePolicies.length === 0 ? (
+            <p className="text-xs text-gray-500">No completed fine policies yet.</p>
+          ) : null}
         </div>
       </section>
 

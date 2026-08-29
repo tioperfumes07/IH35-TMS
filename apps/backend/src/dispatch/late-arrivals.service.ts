@@ -44,17 +44,20 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           l.customer_id,
           l.assigned_unit_id AS unit_id,
           l.assigned_primary_driver_id AS driver_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           u.unit_number,
-          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+          COALESCE(
+            NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), ''),
+            mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+          ) AS driver_name,
           l.latest_eta_prediction,
           sp.scheduled_arrival_at AS next_stop_scheduled_at,
           sp.city AS next_stop_city,
           sp.state AS next_stop_state,
           sp.stop_type AS next_stop_type
         FROM views.dispatch_load_with_driver_status l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
@@ -73,6 +76,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           SELECT scheduled_arrival_at, city, state, stop_type::text AS stop_type
           FROM mdata.load_stops
           WHERE load_id = l.id
+            AND soft_deleted_at IS NULL
             AND scheduled_arrival_at IS NOT NULL
             AND COALESCE(actual_arrival_at, actual_departure_at) IS NULL
           ORDER BY scheduled_arrival_at ASC

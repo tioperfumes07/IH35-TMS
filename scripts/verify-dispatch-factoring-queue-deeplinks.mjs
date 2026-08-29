@@ -75,6 +75,9 @@ export function checkFactoringQueueApi(src) {
   if (!/AS customer_id/.test(src) || !/customer_id:\s*row\.customer_id/.test(src)) {
     failures.push(`${ROUTES}: factoring-queue API must return customer_id for customer EntityLink`);
   }
+  if (!/FROM mdata\.load_stops[\s\S]{0,180}load_id = l\.id[\s\S]{0,120}stop_type = 'delivery'[\s\S]{0,120}soft_deleted_at IS NULL[\s\S]{0,120}ORDER BY sequence_number DESC/.test(src)) {
+    failures.push(`${ROUTES}: factoring-queue destination must resolve only from active delivery stops`);
+  }
   return failures;
 }
 
@@ -185,6 +188,8 @@ if (process.argv.includes("--selftest")) {
   `;
   const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }`;
   const badSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load" }`;
+  const goodApi = `SELECT c.id AS customer_id FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC; customer_id: row.customer_id`;
+  const badApiRetiredStop = goodApi.replace("AND soft_deleted_at IS NULL", "");
 
   const checks = [
     ["good queue passes", checkFactoringQueueProducer(goodQueue).length === 0],
@@ -195,6 +200,8 @@ if (process.argv.includes("--selftest")) {
     ["dispatch missing book_load fails", checkDispatchConsumer(badDispatchNoBook).length > 0],
     ["good subnav passes", checkSubnavReserveHref(goodSubnav).length === 0],
     ["bad subnav fails", checkSubnavReserveHref(badSubnav).length > 0],
+    ["active delivery stop API passes", checkFactoringQueueApi(goodApi).length === 0],
+    ["retired delivery stop API fails", checkFactoringQueueApi(badApiRetiredStop).length > 0],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {

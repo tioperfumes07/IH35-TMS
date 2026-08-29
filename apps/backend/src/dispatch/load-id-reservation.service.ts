@@ -8,6 +8,7 @@ type DbClient = {
 type ReserveInput = {
   operatingCompanyId: string;
   reservedByUserId: string;
+  reservationId?: string;
 };
 
 type ConsumeInput = {
@@ -91,6 +92,44 @@ export async function expireStaleLoadIdReservations(client: DbClient, operatingC
 }
 
 export async function reserveNextLoadId(client: DbClient, input: ReserveInput): Promise<ReserveNextLoadIdResult> {
+  if (input.reservationId) {
+    const renewed = await client.query<{ id: string; reserved_load_number: string; expires_at: string }>(
+      `
+        UPDATE dispatch.load_id_reservations
+        SET expires_at = now() + ($4 * interval '1 second'),
+            updated_at = now()
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND reserved_by_user_id = $3::uuid
+          AND status = 'reserved'
+          AND expires_at > now() - ($4 * interval '1 second')
+        RETURNING id::text, reserved_load_number, expires_at::text
+      `,
+      [input.reservationId, input.operatingCompanyId, input.reservedByUserId, LOAD_ID_RESERVATION_TTL_SECONDS]
+    );
+    const row = renewed.rows[0];
+    if (row?.id && row.reserved_load_number && row.expires_at) {
+      await appendCrudAudit(
+        client,
+        input.reservedByUserId,
+        "dispatch.load.id_reservation_renewed",
+        {
+          operating_company_id: input.operatingCompanyId,
+          reservation_uuid: row.id,
+          load_number: row.reserved_load_number,
+          ttl_seconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+        },
+        "info",
+        "P6-D2"
+      );
+      return {
+        reservationId: row.id,
+        loadNumber: row.reserved_load_number,
+        reservedUntilIso: new Date(row.expires_at).toISOString(),
+        ttlSeconds: LOAD_ID_RESERVATION_TTL_SECONDS,
+      };
+    }
+  }
   await expireStaleLoadIdReservations(client, input.operatingCompanyId);
 
   const now = new Date();

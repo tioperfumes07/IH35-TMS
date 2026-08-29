@@ -126,7 +126,7 @@ export function BorderCrossingWizardPage() {
 
   const pdfUrl =
     result?.crossingId && selectedCompanyId
-      ? `/api/v1/border-crossing/${result.crossingId}/emanifest.pdf?operating_company_id=${encodeURIComponent(selectedCompanyId)}`
+      ? resolveApiUrl(`/api/v1/border-crossing/${result.crossingId}/emanifest.pdf?operating_company_id=${encodeURIComponent(selectedCompanyId)}`)
       : null;
 
   return (

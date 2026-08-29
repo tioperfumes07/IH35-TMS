@@ -124,7 +124,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
 }
 
 export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/parts", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -184,7 +184,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/parts/kpis", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -207,7 +207,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     return kpis;
   });
 
-  app.post("/api/v1/maintenance/parts", async (req, reply) => {
+  app.post("/api/v1/maintenance/parts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createSchema.safeParse(req.body ?? {});
@@ -273,7 +273,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/maintenance/parts/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/parts/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -353,7 +353,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/maintenance/parts/:id/void", async (req, reply) => {
+  app.patch("/api/v1/maintenance/parts/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -379,7 +379,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/maintenance/parts/import-template", async (_req, reply) => {
+  app.get("/api/v1/maintenance/parts/import-template", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (_req, reply) => {
     const csv = "part_number,name,vendor_default,unit_cost,qty_on_hand,reorder_threshold,location\nP-001,Oil Filter,Acme Parts,18.50,12,4,Bin-A1\nP-002,Brake Pad,Acme Parts,39.99,8,3,Bin-B4\n";
     return reply
       .header("Content-Type", "text/csv; charset=utf-8")
@@ -387,7 +387,7 @@ export async function registerMaintenancePartsRoutes(app: FastifyInstance) {
       .send(csv);
   });
 
-  app.post("/api/v1/maintenance/parts/import", async (req, reply) => {
+  app.post("/api/v1/maintenance/parts/import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const companyId = (req.query as { operating_company_id?: string })?.operating_company_id;

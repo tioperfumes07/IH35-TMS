@@ -304,9 +304,14 @@ export function TripPairingBoardPage() {
                           {sb ? (
                             legChip(sb)
                           ) : t.open_return ? (
-                            <span className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">
+                            <button
+                              type="button"
+                              onClick={() => setBookUnitId(t.unit_id)}
+                              className="inline-flex items-center rounded-sm border border-dashed border-slate-300 bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700 hover:border-slate-500 hover:bg-slate-200"
+                              aria-label={`Book Southbound return for ${t.unit_number ?? "unit"}`}
+                            >
                               + Find Southbound{t.return_city ? ` · empty in ${t.return_city}` : ""}{t.return_avail_date ? ` · avail ${new Date(t.return_avail_date).toLocaleDateString()}` : ""}
-                            </span>
+                            </button>
                           ) : (
                             <span className="text-slate-400">—</span>
                           )}
@@ -353,7 +358,11 @@ export function TripPairingBoardPage() {
           open={Boolean(bookUnitId)}
           operatingCompanyId={companyId}
           prefillUnitId={bookUnitId}
-          prefillDriverId={unbooked.find((u) => u.unit_id === bookUnitId)?.driver_id ?? null}
+          prefillDriverId={
+            unbooked.find((u) => u.unit_id === bookUnitId)?.driver_id ??
+            tours.find((tour) => tour.unit_id === bookUnitId)?.driver_id ??
+            null
+          }
           onClose={() => setBookUnitId(null)}
           onCreated={() => {
             setBookUnitId(null);

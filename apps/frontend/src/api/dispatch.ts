@@ -236,7 +236,7 @@ export type DispatchBookLoadPayload = {
   override_credit_limit?: boolean;
 };
 
-export function reserveDispatchLoadId(operatingCompanyId: string) {
+export function reserveDispatchLoadId(operatingCompanyId: string, reservationUuid?: string) {
   return apiRequest<{
     reservation_uuid: string;
     load_number: string;
@@ -244,7 +244,7 @@ export function reserveDispatchLoadId(operatingCompanyId: string) {
     ttl_seconds: number;
   }>("/api/v1/dispatch/loads/reserve-id", {
     method: "POST",
-    body: { operating_company_id: operatingCompanyId },
+    body: { operating_company_id: operatingCompanyId, reservation_uuid: reservationUuid },
   });
 }
 

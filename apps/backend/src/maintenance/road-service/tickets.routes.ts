@@ -265,7 +265,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     }
   );
 
-  app.patch("/api/v1/road-service-tickets/:id/complete", async (req, reply) => {
+  app.patch("/api/v1/road-service-tickets/:id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -307,7 +307,7 @@ export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
     return { ticket: updated };
   });
 
-  app.post("/api/v1/road-service-tickets/:id/create-wo", async (req, reply) => {
+  app.post("/api/v1/road-service-tickets/:id/create-wo", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

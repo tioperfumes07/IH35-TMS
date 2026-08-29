@@ -24,6 +24,9 @@ function failures(routeSource = route, pageSource = page, analyticsSource = anal
     ["driver canonical key lineage", routeSource.includes('by_driver: groupBy(rows, (r) => r.driver_id ?? "unassigned"')],
     ["report driver active company authorization", /driver_company_authorizations cancellation_report_driver_dca[\s\S]{0,360}cancellation_report_driver_dca\.company_id = lc\.operating_company_id[\s\S]{0,180}cancellation_report_driver_dca\.is_authorized = true[\s\S]{0,180}cancellation_report_driver_dca\.deactivated_at IS NULL/.test(routeSource)],
     ["analytics driver active company authorization", /driver_company_authorizations cancellation_analytics_driver_dca[\s\S]{0,360}cancellation_analytics_driver_dca\.company_id = lc\.operating_company_id[\s\S]{0,180}cancellation_analytics_driver_dca\.is_authorized = true[\s\S]{0,180}cancellation_analytics_driver_dca\.deactivated_at IS NULL/.test(analyticsSource)],
+    ["report historical driver label fallback", /COALESCE\([\s\S]{0,220}mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, lc\.operating_company_id\)[\s\S]{0,80}AS driver_name/.test(routeSource)],
+    ["analytics historical driver label fallback", /COALESCE\([\s\S]{0,220}mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, lc\.operating_company_id\)[\s\S]{0,80}AS driver_name/.test(analyticsSource)],
+    ["analytics historical customer label fallback", /COALESCE\(c\.customer_name, mdata\.resolve_customer_label_same_company\(l\.customer_id, lc\.operating_company_id\)\) AS customer_name/.test(analyticsSource)],
     ["customer canonical key lineage", routeSource.includes('by_customer: groupBy(rows, (r) => r.customer_id ?? "unknown"')],
     ["driver typed mapping", pageSource.includes('prop: "by_driver" as const') && pageSource.includes('entityKind: "driver" as const')],
     ["customer typed mapping", pageSource.includes('prop: "by_customer" as const') && pageSource.includes('entityKind: "customer" as const')],
@@ -58,11 +61,16 @@ if (process.argv.includes("--selftest")) {
     ["sentinel safety", page.replace("!entityKind || !UUID_KEY.test(row.key)", "false")],
     ["report driver active company authorization", route.replace("cancellation_report_driver_dca.is_authorized = true", "cancellation_report_driver_dca.is_authorized = false")],
     ["analytics driver active company authorization", analytics.replace("cancellation_analytics_driver_dca.is_authorized = true", "cancellation_analytics_driver_dca.is_authorized = false")],
+    ["report historical driver label fallback", route.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, lc.operating_company_id)", "NULL")],
+    ["analytics historical driver label fallback", analytics.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, lc.operating_company_id)", "NULL")],
+    ["analytics historical customer label fallback", analytics.replace("mdata.resolve_customer_label_same_company(l.customer_id, lc.operating_company_id)", "NULL")],
   ];
   for (const [expected, source] of mutations) {
     const problems = expected === "analytics driver active company authorization"
       ? failures(route, page, source)
-      : expected.includes("key lineage") || expected === "report driver active company authorization"
+      : expected.startsWith("analytics ")
+        ? failures(route, page, source)
+        : expected.includes("key lineage") || expected.startsWith("report ")
         ? failures(source, page, analytics)
         : failures(route, source, analytics);
     if (!problems.includes(expected)) throw new Error(`planted ${expected} defect escaped`);

@@ -105,7 +105,7 @@ async function assertUnitScope(
 }
 
 export async function registerUnitPlatesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/units/:id/plates", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/plates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});
@@ -134,7 +134,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/mdata/units/:id/plates", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/plates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -189,7 +189,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/mdata/units/:id/plates/:plate_id", async (req, reply) => {
+  app.patch("/api/v1/mdata/units/:id/plates/:plate_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -246,7 +246,7 @@ export async function registerUnitPlatesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/mdata/units/:id/plates/:plate_id/archive", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/plates/:plate_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });

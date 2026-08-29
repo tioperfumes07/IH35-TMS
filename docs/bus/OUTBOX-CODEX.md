@@ -1,3 +1,88 @@
+Codex | WORKING | DSP-F7263 | GO-0030+RIDER | CLAIM=driver-instructions-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7262 | PR=#17484 @ 027478c0bb | Built=stored-BOL popup failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7262 | GO-0030+RIDER | CLAIM=stored-BOL-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7261 | PR=#17483 @ 7cd84daa41 | Built=cancel+approve wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7261 | GO-0030 | CLAIM=cancellation-wrapper-owned-transactions | SOURCE=cancel+approve canonical chains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | SAFETY-F7260 | PR=#17482 @ ba16545e2a | Built=DOT inspection wrapper-owned atomic lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | SAFETY-F7260 | GO-0054 | CLAIM=DOT-inspection-wrapper-owned-transaction | SOURCE=inspection→OOS-WO→backlink→CSA→audit | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7259 | PR=#17481 @ f5d7d235d9 | Built=dispatch refinement wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=safety unique | GO
+Codex | WORKING | DSP-F7259 | GO-0030 | CLAIM=dispatch-refinement-wrapper-owned-transactions | SOURCE=reassign+replace-stops exact lifecycle chains | CLOSES=transaction proof regression | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7258 | PR=#17480 @ c1cc68ac5e | Built=equipment-transfer wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | FLEET-F7258 | GO-0054 | CLAIM=equipment-transfer-wrapper-owned-transactions | SOURCE=transfer→equipment assignment→log→audit four callbacks | CLOSES=F6845/F6846 transaction proof gap | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7257 | PR=#17479 @ d6b4d08c5a | Built=Unit create+PATCH wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=fleet unique | GO
+Codex | WORKING | FLEET-F7257 | GO-0054 | CLAIM=unit-writers-wrapper-owned-transaction | SOURCE=withCurrentUser→unit+asset+default-driver+audit/spine | CLOSES=F7198 transaction proof regression | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7256 | PR=#17478 @ 0922db592f | Built=default assignment wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=fleet unique | GO
+Codex | WORKING | FLEET-F7256 | GO-0054 | CLAIM=default-assignment-wrapper-owned-transaction | SOURCE=withCurrentUser→telematics.vehicle_driver_assignments both directions | CLOSES=F6850 transaction proof regression | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7255 | PR=#17477 @ 16926b8ad1 | Built=training completion timestamp typed lifecycle | Live=post-deploy UNVERIFIED | NEXT=drivers/fleet unique | GO
+Codex | WORKING | FUEL-F7241 | GO-0030 | CLAIM=fuel-load-match-active-stops | SOURCE=active stop window→import+Relay load attribution | CLOSES=none — post-deploy rematch proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7240 | PR=#17461 @ 7469c76d5c | Built=mdata load active-stop vertical | Live=post-deploy UNVERIFIED | NEXT=vertical census | GO
+Codex | WORKING | DSP-F7240 | GO-0030 | CLAIM=mdata-load-active-stop-vertical | SOURCE=active stops→detail+PATCH+driver reverse | CLOSES=none — post-deploy shared API proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7239 | PR=#17460 @ 55fd58c92e | Built=load list/detail active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7239 | GO-0030 | CLAIM=load-list-detail-active-stops | SOURCE=active pickup+delivery→count+rows+drawer itinerary | CLOSES=none — post-deploy list/detail proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7238 | PR=#17459 @ 8154a1e712 | Built=POD capture active delivery stop | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7238 | GO-0030 | CLAIM=pod-active-delivery-stop | SOURCE=active delivery stop→POD capture+evidence linkage | CLOSES=none — post-deploy capture proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7237 | PR=#17458 @ 0eaf6948aa | Built=layover detector active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7237 | GO-0030 | CLAIM=layover-active-stops | SOURCE=active delivery release+next arrival+denominator→layover detector | CLOSES=none — post-deploy detector proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7236 | PR=#17457 @ b1a43297a1 | Built=deadhead optimizer active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7236 | GO-0030 | CLAIM=deadhead-active-stops | SOURCE=active pickup+delivery→drop origin+candidate ranking | CLOSES=none — post-deploy optimizer proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7235 | PR=#17456 @ a6bf720f32 | Built=Driver PWA active stop lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7235 | GO-0030 | CLAIM=driver-pwa-active-stop-lifecycle | SOURCE=active mdata.load_stops→contacts+itinerary+arrival/departure/document writes | CLOSES=none — post-deploy PWA proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7234 | PR=#17455 @ 634dc569c7 | Built=planner calendar active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7234 | GO-0030 | CLAIM=planner-calendar-active-stops | SOURCE=active pickup+delivery→initial+refreshed calendar | CLOSES=none — post-deploy calendar proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7233 | PR=#17454 @ f05e8c229c | Built=at-risk queue active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7233 | GO-0030 | CLAIM=at-risk-active-stops | SOURCE=active delivery+next stop→at-risk queue | CLOSES=none — post-deploy queue proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7232 | PR=#17453 @ 62ccb897d6 | Built=driver recommendation active pickup truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7232 | GO-0030 | CLAIM=driver-recommendation-active-pickup | SOURCE=active pickup stop→available+optimal drivers | CLOSES=none — post-deploy ranking proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7231 | PR=#17452 @ 1d1026438a | Built=customer notify active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7231 | GO-0030 | CLAIM=customer-notify-active-stops | SOURCE=active mdata.load_stops→route labels+milestones | CLOSES=none — post-deploy provider proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7230 | PR=#17451 @ 39306207d7 | Built=instruction PDFs active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7230 | GO-0030 | CLAIM=load-distribution-active-stops | SOURCE=active mdata.load_stops→driver/customer instructions | CLOSES=none — post-deploy PDF proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7229 | PR=#17450 @ 35ba796881 | Built=BOL active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7229 | GO-0030 | CLAIM=BOL-active-stops | SOURCE=active mdata.load_stops→generated BOL | CLOSES=none — post-deploy PDF proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7228 | PR=#17449 @ 8abbb21e8f | Built=geofence timeline active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7228 | GO-0030 | CLAIM=geofence-timeline-active-stops | SOURCE=active mdata.load_stops→load drawer timeline | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7227 | PR=#17448 @ 5f0434b251 | Built=late-arrivals active upcoming-stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7227 | GO-0030 | CLAIM=late-arrivals-active-stop | SOURCE=active mdata.load_stops→dispatch late queue | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7226 | PR=#17447 @ 17f5f06906 | Built=trip-pairing active pickup+delivery truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7226 | GO-0030 | CLAIM=trip-pairing-active-stops | SOURCE=active mdata.load_stops→dispatch trip pairing | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7225 | PR=#17446 @ 1db411f13a | Built=factoring queue active delivery-stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7225 | GO-0032 | CLAIM=factoring-queue-active-delivery | SOURCE=active mdata.load_stops→dispatch factoring queue | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7224 | PR=#17445 @ 882c0d8a32 | Built=BOL transaction-bound audit evidence | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7224 | GO-0032 | CLAIM=BOL-generation-audit | SOURCE=dispatch.bol_documents→audit.audit_events | CLOSES=none — post-deploy audit-row proof remains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7223 | PR=#17442 @ 87c8551ba5 | Built=load-template create audit evidence | Live=post-deploy UNVERIFIED | NEXT=GO-0032 BOL unique | GO
+Codex | WORKING | DSP-F7223 | GO-0031 fallback | CLAIM=load-template-create-audit | SOURCE=dispatch.load_templates→audit.audit_events | CLOSES=none — post-deploy audit-row proof remains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7222 | PR=#17441 @ b4774f3134 | Built=typed nested customer UUID boundary | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7222 | GO-0031 fallback | CLAIM=load-template-nested-customer-uuid-500 | SOURCE=dispatch.load_templates.template_json.customer_id→mdata.customers | CLOSES=none — post-deploy malformed-input Live proof remains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7221 | PR=#17435 @ bef8f8be40 | Built=late-arrival+booking-gap active stop analytics | Live=post-deploy UNVERIFIED | NEXT=GO-0030 Book TEST | GO
+Codex | WORKING | DSP-F7221 | GO-0054 | CLAIM=dispatch-analytics-retired-stops | SOURCE=active mdata.load_stops across late-arrival+booking-gap | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7220 | PR=#17433 @ 8678ca1f3b | Built=tri-signal active delivery-stop source | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7217 | GO-0054 | CLAIM=equipment-transfer-active-race | SOURCE=dispatch.equipment_transfer_requests company+equipment active lifecycle | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7216 | PR=#17429 @ 18d26538cf | Built=replace-stops exact archive+insert identities | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7216 | GO-0054 | CLAIM=replace-stops-persisted-identities | SOURCE=mdata.load_stops exact archive+insert IDs | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7215 | PR=#17426 @ d047523ff7 | Built=manual reassignment reverse-history identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7212 | GO-0054 | CLAIM=delivery-stop-stamp-company-contract | SOURCE=mdata.load_stops via mdata.loads.operating_company_id | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7211 | PR=#17423 @ 678daed609 | Built=detention stop lifecycle idempotent | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
+Codex | WORKING | DSP-F7211 | GO-0054 | CLAIM=detention-stop-lifecycle-idempotency | SOURCE=dispatch.detention_events company+stop history | CLOSES=none — post-deploy Live proof remains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7210 | PR=#17422 @ 752522d29a | Built=exact load-number lease renewal | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
+Codex | WORKING | DSP-F7210 | GO-0054 | CLAIM=load-id-exact-lease-renewal | SOURCE=dispatch.load_id_reservations | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7209 | PR=#17421 @ c2d46c241c | Built=bulk lifecycle locked before effects | Live=post-deploy UNVERIFIED | NEXT=GO-0054 load-id renewal | GO
+Codex | WORKING | DSP-F7209 | GO-0054 | CLAIM=bulk-status-locked-lifecycle | SOURCE=mdata.loads.status | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRIVER-F7208 | PR=#17420 @ 917944c9b9 | Built=archive closes assignment+unit mirror | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
+Codex | WORKING | DRIVER-F7208 | GO-0054 | CLAIM=bulk-archive-closes-assignment+unit-mirror | SOURCE=mdata.drivers+telematics.vehicle_driver_assignments+mdata.units.assigned_driver_id | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DRIVER-F7207 | PR=#17419 @ 203e5e8f5a | Built=bulk assign edge+unit mirror R=W | Live=post-deploy UNVERIFIED | NEXT=GO-0054 driver archive unique | GO
+Codex | WORKING | DRIVER-F7207 | GO-0054 | CLAIM=bulk-truck-assignment-unit-mirror-R=W | SOURCE=mdata.units.assigned_driver_id+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
+Codex | WORKING | DRIVER-F7206 | GO-0054 | CLAIM=bulk-truck-assignment-serialized-exact-edge | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
+CODEX | ACK | GO-0054 | NOW=dispatch-drivers-fleet-fuel-unique | FINDING=FUEL-F7205 | Live=post-deploy UNVERIFIED | GO
+Codex | WORKING | FUEL-F7205 | GO-0054 | CLAIM=Love's-cron-write-fail-loud-atomic | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
+CODEX | ACK | GO-0053 | NOW=fuel-dispatch-unique | FINDING=FUEL-F7204 | Live=post-deploy UNVERIFIED | GO
+Codex | WORKING | FUEL-F7204 | GO-0053 | CLAIM=Love's-price-atomic-upsert | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
+Codex | WORKING | FLEET-F7203 | GO-0052 | CLAIM=Samsara-pairing-unit-lifecycle-serialization | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7202 | PR=#17413 @ 21dc372821 | Built=unknown status fails closed | Live=post-deploy UNVERIFIED | NEXT=GO-0052 drivers/fleet unique | GO
+Codex | WORKING | DSP-F7202 | GO-0051 | CLAIM=unknown-load-status-fails-closed | SOURCE=mdata.load_status_enum→dispatch state machine | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7201 | PR=#17412 @ c5ef33dd16 | Built=combined+draft quick-assign exact history identity | Live=post-deploy UNVERIFIED | NEXT=GO-0051 dispatch unique | GO
+Codex | WORKING | DSP-F7201 | GO-0050 | CLAIM=combined+draft-quick-assign-history-exact-identity | SOURCE=dispatch.load_assignment_history.id | SHA=da39aab | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7200 | PR=#17411 @ 25abf158e02 | Built=training-edit+archive-audit | Live=post-deploy UNVERIFIED | NEXT=GO-0050 dispatch unique | GO
+Codex | WORKING | FLEET-F7198 | GO-0046 | CLAIM=unit-create+edit-canonical-default-driver-edge | SOURCE=mdata.units+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | FUEL-F7183 | CLAIM=planner-settings-write-exact-identity | SOURCE=fuel.fuel_planner_settings | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0044 | NOW=fuel-unique | SHA=4e5db76 | GO
 Codex | SHIPPED | DRIVER-F7182 | PR=#17378 @ c2f703fee6 | Built=office+PWA message persistence exact identity | Live=post-deploy UNVERIFIED | NEXT=GO-0044 fuel unique | GO
@@ -2069,3 +2154,83 @@ CODEX | WORKING | GO-0045 | FINDING=DSP-F7184 | NOW=canonical cancellation/load 
 CODEX | ACK | GO-0046 | NOW=/fleet-leftover-unique | SHA=4e5db76 | GO
 CODEX | SHIPPED | GO-0045 | FINDING=DSP-F7184 | PR=#17387 @ e003eacbac | NEXT=GO-0046 /fleet | GO
 CODEX | WORKING | GO-0046 | FINDING=FLEET-F7185 | NOW=dual-ack canonical CAS | NEXT=FAST-MERGE then GO-0047 | GO
+CODEX | ACK | GO-0049 | NOW=/fuel-leftover-unique | SHA=4e5db76 | GO
+Codex | WORKING | FUEL-F7188 | CLAIM=loves-upload-invalid-row-truth | SOURCE=fuel.loves_prices_daily | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRIVER-F7187 | PR=#17396 @ 8e37b3f6b1 | Built=driver→identity phone+language exact mirror | Live=post-deploy UNVERIFIED | NEXT=GO-0049 /fuel | GO
+CODEX | ACK | GO-0048 | NOW=/drivers-leftover-unique | SHA=4e5db76 | GO
+Codex | WORKING | DRIVER-F7187 | CLAIM=driver-identity-phone+language-exact-mirror | SOURCE=mdata.drivers→identity.users | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7186 | PR=#17395 @ abf2c81098 | Built=Edit Load exact write identities | Live=post-deploy UNVERIFIED | NEXT=GO-0048 /drivers | GO
+Codex | WORKING | DSP-F7186 | CLAIM=edit-load-write-exact-identities | SOURCE=mdata.loads+load_stops | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0047 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
+CODEX | SHIPPED | GO-0046 | FINDING=FLEET-F7185 | PR=#17390 @ b1e59581d7 | NEXT=GO-0047 /dispatch | GO
+CODEX | ACK | GO-0050 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
+Codex | SHIPPED | FUEL-F7188 | PR=#17397 @ 026620163c | Built=Love's upload invalid-row truth | Live=post-deploy UNVERIFIED | NEXT=GO-0050 /dispatch | GO
+Codex | WORKING | DSP-F7189 | CLAIM=detention-close-race-silent-success | SOURCE=dispatch.detention_events | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0051 | NOW=/dispatch-sweep-unique | SHA=4e5db76 | GO
+Codex | FINDING | DSP-MONEY-F7146B-R1 | routed=CC-1 | SOURCE=dispatch.load_cancellations TONU backlink | BLOCKS=GO-0051 | NEXT=dispatch non-money unique | GO
+Codex | WORKING | DSP-F7190 | CLAIM=detention-arrival-must-not-close-accrual | SOURCE=load_stops arrival/departure→detention_events | NEXT=guard+FAST-MERGE | GO
+CODEX | GO-0052 | FINDING=DRV-F7191 | replace-driver active-state race fixed with company-scoped CAS + typed 409 | NEXT=gate+FAST-MERGE then GO-0053 | GO
+CODEX | GO-0053 | FINDING=DSP-F7192 | layover detector duplicate race fixed with per-company DB serialization | NEXT=guard+FAST-MERGE then GO-0054 | GO
+Codex | GO-0030 | LIVE FAIL→FIXING | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | FINDING=DSP-F7193 | customer/pickup refs saved but detail read-model rendered — | CLOSES=none — Book TEST load; dispatch items need GUARD after PASS | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7193 | PR=#17403 @ 23320b6712 | Built=Book Load customer_wo+pickup canonical detail R=W | Live=post-deploy UNVERIFIED | NEXT=GO-0031 | GO
+CODEX | GO-0031 | TEST ASSIGN UNCHANGED | load=L-20260828-0029 | driver=CODEX ACTIVE FLEET TEST 20260821 | blocker=driver not DOT-qualified; production driver not repurposed | NEXT=GO-0032 | GO
+CODEX | ACK | GO-0032 | NOW=dispatch-planner-POD-BOL | SHA=da39aab | GO
+Codex | GO-0032 | LIVE PASS | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | BOL=1 stored B21-D10-v1 | POD=honest 0 | FINDING=none | NEXT=GO-0033 | GO
+CODEX | ACK | GO-0033 | NOW=fleet-unique+TEST-create | SHA=da39aab | GO
+Codex | GO-0033 | LIVE FAIL→FIXING | TEST=TEST-CODEX-GO0033 | FINDING=FLEET-F7194 | create success closes onto TEST-filtered roster; exact record inaccessible | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7195 | GO-0039 | LIVE=da39aab open-return action silent no-op | SOURCE=TripPairingUnitRow→BookLoadModalV4 | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0039 | NOW=trip-pairing-unique | SHA=da39aab | GO
+CODEX | PASS | GO-0038 | URL=/dispatch/alerts/late-arrivals | LIVE=da39aab · 1 row · no 500/dead/silent | NEXT=GO-0039 | GO
+CODEX | PASS | GO-0037 | URL=/dispatch/border-crossing | LIVE=da39aab · TEST load+unit R=W through step 2 · no write | NEXT=GO-0038 | GO
+CODEX | PASS | GO-0036 | URL=/dispatch | LIVE=da39aab · no proven unique failure; OOS reader company-scoped owner/leased | NEXT=GO-0037 | GO
+CODEX | PASS | GO-0035 | URL=/fuel | LIVE=da39aab · planner/settings/mapping/history/compliance mounted · no unique failure | NEXT=GO-0036 | GO
+CODEX | PASS | GO-0034 | URL=/drivers/44398e9f-c92d-4ca6-9784-53d00ca16d53 | TEST=TEST CODEX GO0034 kept · canonical profile R=W | NEXT=GO-0035 | GO
+Codex | SHIPPED | FLEET-F7194 | PR=#17404 @ 8cfc3f86ef | Built=unit+trailer canonical post-create navigation | NEXT=GO-0034 | GO
+CODEX | WORKING | GO-0045 | FINDING=DSP-F7197 | NOW=quicksave assignment-history identity | NEXT=dispatch unique | GO
+Codex | WORKING | GO-0047 | FINDING=DSP-F7199 | MODULE=dispatch | leaf=dispatch.modal.driver_instructions:reverse_link | root=unchecked docs.file_links identities | NEXT=guard+gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7198 | PR=#17409 @ fd3a9e5146 | root=unit default-driver canonical assignment edge | NEXT=GO-0047 dispatch unique | GO
+Codex | WORKING | GO-0048 | FINDING=DRV-F7200 | MODULE=drivers | leaf=profile.training:audit | root=edit/archive omit audit | NEXT=guard+gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7199 | PR=#17410 @ 313c835028 | root=instruction docs reverse-link identities | NEXT=GO-0048 drivers unique | GO
+Codex | SHIPPED | DSP-F7212 | PR=#17424 @ 732df14efe | Built=delivery stamp company contract | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
+CODEX | WORKING | DSP-F7213 | NOW=layover detector canonical insert identity | SOURCE=dispatch.driver_layovers.uuid | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7213 | PR=#17425 @ 28fcc99d51 | Built=layover canonical insert identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | FINDING | DSP-MONEY-F7214 | routed=CC-1 | SOURCE=detention billing bridge unchecked load+event writes | BLOCKS=GO-0054 | NEXT=dispatch non-money unique | GO
+CODEX | WORKING | DSP-F7215 | NOW=manual reassign reverse-history identity | SOURCE=dispatch.load_assignment_history.id | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7218 | GO-0054 | CLAIM=Edit-Load-new-stop-identity | SOURCE=mdata.load_stops.id/load_id | routed=CC-1 DSP-MONEY-F7146A-R1+F7218A | NEXT=gate+FAST-MERGE | GO
+Codex | WORKING | DSP-F7219 | GO-0054 | CLAIM=intransit-office-assignment-continuity | SOURCE=mdata.loads assigned drivers/unit → dispatch.intransit_issues | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7218 | PR=#17431 @ 777e3e6717 | Built=Edit Load new-stop canonical identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7242 | GO-0030 | CLAIM=operational-active-stop-vertical | SOURCE=active route stops→geofence+shipper+ETA+fuel planner | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FUEL-F7241 | PR=#17462 @ f3a06f38da | Built=fuel load attribution active-stop truth | Live=post-deploy UNVERIFIED | NEXT=vertical census | GO
+Codex | WORKING | DSP-F7244 | GO-0030 | CLAIM=retired-load-mutation-rejection | SOURCE=active load→OCR conversion+ETA confirm | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7242 | PR=#17463 @ 2b6d2a884b | Built=operational active-stop vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7245 | GO-0030 | CLAIM=pre-settlement-feed-failure-honesty | SOURCE=driver-finance open cycles→Dispatch Board prompt | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7244 | PR=#17464 @ fd1867e802 | Built=retired-load mutation rejection | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7246 | GO-0030 | CLAIM=book-load-customer-read-honesty | SOURCE=company customer catalog→both Book Load selectors | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7245 | PR=#17465 @ 662edc8c5f | Built=pre-settlement feed failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DRV-F7255 | GO-0054 | CLAIM=training-completed-at-validation | SOURCE=API schema→training_records.completed_at | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7254 | PR=#17476 @ ac3a951eed | Built=W8BEN creator driver-company continuity | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
+Codex | WORKING | DRV-F7254 | GO-0054 | CLAIM=W8BEN-create-driver-company-continuity | SOURCE=driver roster→driver_w8ben FK | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7253 | PR=#17475 @ 3d670ad315 | Built=termination event+driver state atomicity | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
+Codex | WORKING | DRV-F7253 | GO-0054 | CLAIM=termination-event-parent-state-atomicity | SOURCE=driver_safety_events→mdata.drivers status/date | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7252 | PR=#17474 @ ba2eaa2f26 | Built=retention honest zero-result state | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
+Codex | SHIPPED | DSP-F7246 | PR=#17466 @ cc801a3f6f | Built=Book Load customer read honesty | Live=post-deploy UNVERIFIED | NEXT=GO-0031 assign TEST | GO
+CODEX | ACK | GO-0031 | NOW=TEST-assign | SHA=da39aab | GO
+Codex | WORKING | DSP-F7247 | GO-0031 | LOAD=L-20260828-0025 · is_sample_data=true | ASSIGN=UNCHANGED 422 E_DRIVER_NOT_QUALIFIED cdl_missing+medical_card_missing | CLAIM=reassign selected-driver human label continuity | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7247 | PR=#17469 @ be84562e63 | Built=reassign selected-driver label continuity | Live=post-deploy UNVERIFIED | NEXT=GO-0032 POD/BOL | GO
+CODEX | ACK | GO-0032 | NOW=dispatch planner/POD/BOL unique | SHA=da39aab | GO
+Codex | WORKING | DSP-F7248 | GO-0032 | LIVE=app-origin BOL GET 404 · load=L-20260828-0025 | CLAIM=canonical BOL API-origin download | NEXT=guard+FAST-MERGE | GO
+CODEX | WORKING | FLEET-F7249 | GO-0033 | TEST unit=df53ccb6-a8ac-45d2-a5af-49fd50f068c3 POST=201 reload=200 audit=0 | NOW=unit lifecycle audit company scope | GO
+CODEX | ACK | GO-0033 | NOW=fleet unique + TEST unit/trailer | SHA=da39aab | GO
+Codex | SHIPPED | DSP-F7248 | PR=#17470 @ 47607ae10f | Built=canonical BOL API-origin download | Live=post-deploy UNVERIFIED | NEXT=GO-0033 fleet unique | GO
+CODEX | WORKING | DRIVER-F7250 | GO-0034 | 409 phone falsely labeled CDL; same CDL + new phone POST=201 driver=dab084fb-910b-4000-9407-cfcacd6288cd | NOW=constraint-aware conflict mapping | GO
+CODEX | ACK | GO-0034 | NOW=drivers canonical Create TEST | SHA=da39aab | GO
+Codex | SHIPPED | FLEET-F7249 | PR=#17471 @ bcf66e0d71 | Built=unit lifecycle audit company scope 4/4 | Live=post-deploy UNVERIFIED | NEXT=GO-0034 drivers unique | GO
+Codex | WORKING | DSP-F7251 | GO-0050 | CLAIM=OCR Book Load prefill erased after Convert | SOURCE=ocr_intake_queue.extracted_fields→BookLoadModalV4 | Live=da39aab | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DRV-F7252 | GO-0054 | CLAIM=retention-zero-result-honesty | SOURCE=drivers.retention_scores→/drivers/retention | CLOSES=blank successful surface | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7251 | PR=#17473 @ 52d369c947 | Built=dispatch docs.ocr canonical prefill survives modal reset | Live=post-deploy UNVERIFIED | NEXT=GO-0051 | GO
+Codex | ROUTED | DSP-MONEY-F7264 | owner=CC-1 | SOURCE=LoadDetailDrawer factoring package popup/lifecycle | NEXT=dispatch non-money unique | GO
+Codex | WORKING | DSP-F7265 | GO-0030+RIDER | CLAIM=eManifest PDF SPA-origin dead links | LEAVES=wizard.border_crossing_wizard_page+queues.border_history | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7265 | PR=#17487 @ d7b7b5218c | Built=eManifest API-origin vertical wizard+history | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7266 | GO-0030+RIDER | CLAIM=Book Load post-insert visible fields silent-drop | CLOSES=none — needs deploy+GUARD Live reload | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7266 | PR=#17488 @ 5024309714 | Built=Book Load shipment+equipment+trip persistence fail-closed | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7184-R1 | GO-0030+RIDER | CLAIM=approveCancellation stale false closure | SOURCE=requested cancellation→active company load | NEXT=guard+FAST-MERGE | GO

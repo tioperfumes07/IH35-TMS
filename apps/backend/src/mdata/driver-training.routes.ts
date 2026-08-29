@@ -11,14 +11,14 @@ const trainingParamsSchema = z.object({ id: z.string().uuid(), training_id: z.st
 
 const createTrainingSchema = z.object({
   training_name: z.string().trim().min(1).max(200),
-  completed_at: z.string(),
+  completed_at: z.string().datetime({ offset: true }),
   expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   notes: z.string().trim().max(2000).optional(),
 });
 
 const patchTrainingSchema = z.object({
   training_name: z.string().trim().min(1).max(200).optional(),
-  completed_at: z.string().optional(),
+  completed_at: z.string().datetime({ offset: true }).optional(),
   expiry_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
@@ -182,7 +182,15 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
         `,
         values
       );
-      return res.rows[0] ?? null;
+      const trainingRecord = res.rows[0] ?? null;
+      if (!trainingRecord) return null;
+      await appendCrudAudit(client, authUser.uuid, "safety.training_record.updated", {
+        resource_type: "safety.training_records",
+        resource_id: trainingRecord.id,
+        operating_company_id: query.data.operating_company_id,
+        driver_id: params.data.id,
+      });
+      return trainingRecord;
     });
     if (!row) return reply.code(404).send({ error: "training_record_not_found" });
     return row;
@@ -209,7 +217,15 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
         `,
         [query.data.operating_company_id, params.data.id, params.data.training_id]
       );
-      return res.rows[0] ?? null;
+      const trainingRecord = res.rows[0] ?? null;
+      if (!trainingRecord) return null;
+      await appendCrudAudit(client, authUser.uuid, "safety.training_record.archived", {
+        resource_type: "safety.training_records",
+        resource_id: trainingRecord.id,
+        operating_company_id: query.data.operating_company_id,
+        driver_id: params.data.id,
+      });
+      return trainingRecord;
     });
     if (!row) return reply.code(404).send({ error: "training_record_not_found" });
     return { ok: true, id: row.id };

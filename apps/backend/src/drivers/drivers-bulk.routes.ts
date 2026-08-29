@@ -229,6 +229,10 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
   const oldRow = await assertDriverScope(ctx.client, ctx.id, ctx.operatingCompanyId);
   if (!oldRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
 
+  await ctx.client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [
+    `driver-default:${ctx.operatingCompanyId}:${ctx.id}`,
+  ]);
+
   const res = await ctx.client.query(
     `
       UPDATE mdata.drivers
@@ -260,11 +264,38 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
   const newRow = res.rows[0] as Record<string, unknown> | undefined;
   if (!newRow) return { ok: false, code: "E_ALREADY_ARCHIVED", message: "Driver already archived" };
 
+  const endedAssignments = await ctx.client.query(
+    `
+      UPDATE telematics.vehicle_driver_assignments
+      SET ended_at = now()
+      WHERE driver_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND is_default = true
+        AND ended_at IS NULL
+      RETURNING id::text, unit_id::text
+    `,
+    [ctx.id, ctx.operatingCompanyId]
+  );
+  const clearedUnitMirrors = await ctx.client.query(
+    `
+      UPDATE mdata.units
+      SET assigned_driver_id = NULL,
+          updated_at = now()
+      WHERE assigned_driver_id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      RETURNING id::text
+    `,
+    [ctx.id, ctx.operatingCompanyId]
+  );
+
   await appendBulkCrudAudit(ctx.client, ctx.actorUserId, "mdata.drivers", "archive", ctx.bulkCallId, {
     resource_id: ctx.id,
     operating_company_id: ctx.operatingCompanyId,
     reason: ctx.reason,
     changes: buildPatchChanges({ archived_at: newRow.archived_at }, oldRow, newRow),
+    ended_assignment_ids: endedAssignments.rows.map((row) => String((row as { id: string }).id)),
+    ended_assignment_unit_ids: endedAssignments.rows.map((row) => String((row as { unit_id: string }).unit_id)),
+    cleared_unit_ids: clearedUnitMirrors.rows.map((row) => String((row as { id: string }).id)),
   });
 
   return { ok: true };
@@ -275,6 +306,27 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
   if (!oldRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
 
   const unitId = ctx.payload.unit_id;
+  const assignmentLockKeys = [
+    `driver-default:${ctx.operatingCompanyId}:${ctx.id}`,
+    ...(unitId ? [`unit-default:${ctx.operatingCompanyId}:${unitId}`] : []),
+  ].sort();
+  for (const lockKey of assignmentLockKeys) {
+    await ctx.client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [lockKey]);
+  }
+
+  const clearedUnitMirrors = await ctx.client.query(
+    `
+      UPDATE mdata.units
+      SET assigned_driver_id = NULL,
+          updated_at = now()
+      WHERE assigned_driver_id = $1::uuid
+        AND ($2::uuid IS NULL OR id IS DISTINCT FROM $2::uuid)
+        AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+      RETURNING id::text
+    `,
+    [ctx.id, unitId, ctx.operatingCompanyId]
+  );
+
   if (unitId) {
     const unitOk = await assertUnitScope(ctx.client, unitId, ctx.operatingCompanyId);
     if (!unitOk) return { ok: false, code: "E_UNIT_NOT_FOUND", message: "Truck not found in operating company" };
@@ -301,14 +353,32 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
       `,
       [ctx.id, ctx.operatingCompanyId]
     );
-    await ctx.client.query(
+    const unitMirror = await ctx.client.query(
+      `
+        UPDATE mdata.units
+        SET assigned_driver_id = $2::uuid,
+            updated_at = now()
+        WHERE id = $1::uuid
+          AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+        RETURNING id::text
+      `,
+      [unitId, ctx.id, ctx.operatingCompanyId]
+    );
+    if (!(unitMirror.rows[0] as { id?: string } | undefined)?.id) {
+      throw new Error("driver_bulk_unit_mirror_write_failed");
+    }
+    const inserted = await ctx.client.query(
       `
         INSERT INTO telematics.vehicle_driver_assignments (
           operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
         ) VALUES ($1, $2, $3, now(), 'bulk_assign', true, $4)
+        RETURNING id::text
       `,
       [ctx.operatingCompanyId, unitId, ctx.id, ctx.actorUserId]
     );
+    if (!(inserted.rows[0] as { id?: string } | undefined)?.id) {
+      throw new Error("driver_bulk_assignment_write_failed");
+    }
   } else {
     await ctx.client.query(
       `
@@ -327,6 +397,7 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
     resource_id: ctx.id,
     operating_company_id: ctx.operatingCompanyId,
     unit_id: unitId,
+    cleared_unit_ids: clearedUnitMirrors.rows.map((row) => String((row as { id: string }).id)),
     reason: ctx.reason,
   });
 

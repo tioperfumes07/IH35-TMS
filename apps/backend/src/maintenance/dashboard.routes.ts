@@ -42,7 +42,7 @@ async function relationExists(client: any, rel: string) {
 
 /** Dashboard KPIs live in dashboard-kpis.routes.ts: /api/v1/maintenance/dashboard/kpis */
 export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/dashboard/rm-status", async (req, reply) => {
+  app.get("/api/v1/maintenance/dashboard/rm-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = rmStatusQuerySchema.safeParse(req.query ?? {});
@@ -56,7 +56,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return buckets;
   });
 
-  app.get("/api/v1/maintenance/dashboard/severe-alerts", async (req, reply) => {
+  app.get("/api/v1/maintenance/dashboard/severe-alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -134,7 +134,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/maintenance/dashboard/intransit-triage-queue", async (req, reply) => {
+  app.get("/api/v1/maintenance/dashboard/intransit-triage-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.extend({
@@ -229,7 +229,7 @@ export async function registerMaintenanceDashboardRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/maintenance/dashboard/recent-activity", async (req, reply) => {
+  app.get("/api/v1/maintenance/dashboard/recent-activity", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.extend({

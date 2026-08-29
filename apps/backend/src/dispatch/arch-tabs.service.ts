@@ -13,16 +13,19 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           l.customer_id,
           l.assigned_unit_id AS unit_id,
           l.assigned_primary_driver_id AS driver_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           u.unit_number,
-          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+          COALESCE(
+            NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), ''),
+            mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+          ) AS driver_name,
           l.latest_eta_prediction,
           sp.scheduled_arrival_at AS next_stop_scheduled_at,
           sd.city AS delivery_city,
           sd.state AS delivery_state
         FROM views.dispatch_load_with_driver_status l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
@@ -41,6 +44,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           SELECT scheduled_arrival_at, city, state
           FROM mdata.load_stops
           WHERE load_id = l.id AND stop_type = 'delivery'
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number DESC
           LIMIT 1
         ) sd ON true
@@ -48,6 +52,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           SELECT scheduled_arrival_at
           FROM mdata.load_stops
           WHERE load_id = l.id
+            AND soft_deleted_at IS NULL
             AND scheduled_arrival_at IS NOT NULL
             AND scheduled_arrival_at >= now()
           ORDER BY scheduled_arrival_at ASC
@@ -278,12 +283,20 @@ export async function createOfficeIntransitIssue(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
-    const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null }>(
-      `SELECT id, assigned_unit_id, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+    const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null; assigned_secondary_driver_id: string | null }>(
+      `SELECT id, assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
       [body.load_id, operatingCompanyId]
     );
     const load = loadRes.rows[0];
     if (!load) return { ok: false as const, error: "load_not_found" };
+
+    const assignedDriverIds = [load.assigned_primary_driver_id, load.assigned_secondary_driver_id].filter(Boolean);
+    if (body.driver_id && !assignedDriverIds.includes(body.driver_id)) {
+      return { ok: false as const, error: "driver_not_assigned_to_load" as const };
+    }
+    if (body.unit_id && body.unit_id !== load.assigned_unit_id) {
+      return { ok: false as const, error: "unit_not_assigned_to_load" as const };
+    }
 
     const driverId = body.driver_id ?? load.assigned_primary_driver_id;
     const unitId = body.unit_id ?? load.assigned_unit_id;

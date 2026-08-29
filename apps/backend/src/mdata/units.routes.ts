@@ -121,6 +121,37 @@ function isWriteRole(role: string): boolean {
   return role === "Owner" || role === "Administrator" || role === "Manager";
 }
 
+async function syncCanonicalDefaultDriver(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ id?: string }> }> },
+  input: { unitId: string; driverId: string | null; operatingCompanyId: string; actorUserId: string },
+) {
+  await client.query(
+    `UPDATE telematics.vehicle_driver_assignments
+     SET ended_at = now()
+     WHERE unit_id = $1::uuid AND operating_company_id = $2::uuid
+       AND is_default = true AND ended_at IS NULL`,
+    [input.unitId, input.operatingCompanyId],
+  );
+  if (!input.driverId) return null;
+  await client.query(
+    `UPDATE telematics.vehicle_driver_assignments
+     SET ended_at = now()
+     WHERE driver_id = $1::uuid AND operating_company_id = $2::uuid
+       AND is_default = true AND ended_at IS NULL`,
+    [input.driverId, input.operatingCompanyId],
+  );
+  const inserted = await client.query(
+    `INSERT INTO telematics.vehicle_driver_assignments (
+       operating_company_id, unit_id, driver_id, started_at, source, is_default, created_by_user_uuid
+     ) VALUES ($1::uuid,$2::uuid,$3::uuid,now(),'manual_override',true,$4::uuid)
+     RETURNING id::text AS id`,
+    [input.operatingCompanyId, input.unitId, input.driverId, input.actorUserId],
+  );
+  const assignmentId = inserted.rows[0]?.id;
+  if (!assignmentId) throw new Error("unit_default_driver_insert_failed");
+  return assignmentId;
+}
+
 async function resolveAssetCompanyIds(
   client: {
     query: (
@@ -312,8 +343,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           throw new Error("owner_company_id_required");
         }
         const operatingCompanyId = resolvedLeasedId ?? resolvedOwnerId;
-        await client.query("BEGIN");
-        try {
           // mdata.assets is FORCE-RLS and scopes writes through app.operating_company_id.
           // Bind one validated company inside the same transaction as unit + asset + audit + spine.
           await setScopedCompanyContext(
@@ -376,6 +405,13 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           const row = res.rows[0];
           if (!row?.id) throw new Error("unit_insert_returned_no_row");
 
+          const defaultDriverAssignmentId = b.assigned_driver_id
+            ? await syncCanonicalDefaultDriver(client, {
+                unitId: String(row.id), driverId: b.assigned_driver_id,
+                operatingCompanyId, actorUserId: authUser.uuid,
+              })
+            : null;
+
           // FAIL-INS-POLICY-ASSET-404 — mint the canonical mdata.assets row alongside the unit.
           //
           // insurance.policy_unit.asset_id and insurance.claim reference mdata.assets, but unit-create
@@ -405,6 +441,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           });
 
           await appendCrudAudit(client, authUser.uuid, "mdata.units.created", {
+            operating_company_id: operatingCompanyId,
             resource_id: row.id,
             resource_type: "mdata.units",
             id: row.id,
@@ -412,6 +449,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             vin: row.vin,
             status: row.status,
             asset_id: assetId,
+            default_driver_assignment_id: defaultDriverAssignmentId,
           });
           await emitMasterDataCreatedSpineEvent(client, {
             operating_company_id: String(operatingCompanyId),
@@ -424,12 +462,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
               status: row.status,
             },
           });
-          await client.query("COMMIT");
           return row;
-        } catch (error) {
-          await client.query("ROLLBACK");
-          throw error;
-        }
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -609,12 +642,30 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             (req.query as { operating_company_id?: string } | undefined)
               ?.operating_company_id,
           );
+          if (!scopedCompanyId) {
+            return null;
+          }
           const oldRes = await client.query(
             `SELECT * FROM mdata.units WHERE id = $1 AND (owner_company_id = $2 OR currently_leased_to_company_id = $2) LIMIT 1`,
             [parsedParams.data.id, scopedCompanyId],
           );
           const oldRow = oldRes.rows[0] ?? null;
-          if (!oldRow) return null;
+          if (!oldRow) {
+            return null;
+          }
+          if ("assigned_driver_id" in normalizedPatch && normalizedPatch.assigned_driver_id) {
+            const driver = await client.query<{ id?: string }>(
+              `SELECT d.id::text FROM mdata.drivers d
+               WHERE d.id = $1::uuid AND d.archived_at IS NULL
+                 AND (d.operating_company_id = $2::uuid OR EXISTS (
+                   SELECT 1 FROM mdata.driver_company_authorizations unit_patch_dca
+                   WHERE unit_patch_dca.driver_id = d.id AND unit_patch_dca.company_id = $2::uuid
+                     AND unit_patch_dca.is_authorized = true AND unit_patch_dca.deactivated_at IS NULL
+                 )) LIMIT 1`,
+              [normalizedPatch.assigned_driver_id, scopedCompanyId],
+            );
+            if (!driver.rows[0]?.id) throw new Error("invalid_assigned_driver_id");
+          }
 
           values.push(scopedCompanyId);
           const scopeIdx = values.length;
@@ -629,7 +680,16 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             values,
           );
           const updatedRow = res.rows[0] ?? null;
-          if (!updatedRow) return null;
+          if (!updatedRow) {
+            return null;
+          }
+          const defaultDriverAssignmentId = "assigned_driver_id" in normalizedPatch
+            ? await syncCanonicalDefaultDriver(client, {
+                unitId: String(updatedRow.id),
+                driverId: (normalizedPatch.assigned_driver_id as string | null | undefined) ?? null,
+                operatingCompanyId: scopedCompanyId, actorUserId: authUser.uuid,
+              })
+            : null;
 
           const changes = buildPatchChanges(
             normalizedPatch as unknown as Record<string, unknown>,
@@ -650,10 +710,12 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             ? "mdata.unit.status_changed"
             : "mdata.units.updated";
           await appendCrudAudit(client, authUser.uuid, auditAction, {
+            operating_company_id: scopedCompanyId,
             resource_id: updatedRow.id,
             resource_type: "mdata.units",
             changes,
             profile_fields: profileAuditFields,
+            ...("assigned_driver_id" in normalizedPatch ? { default_driver_assignment_id: defaultDriverAssignmentId } : {}),
             ...(statusChanged
               ? {
                   before_status: oldRow.status,
@@ -672,6 +734,8 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         if (code === "23505")
           return reply.code(409).send({ error: "mdata_unit_conflict" });
         if (code === "23503")
+          return reply.code(400).send({ error: "invalid_assigned_driver_id" });
+        if ((err as Error).message === "invalid_assigned_driver_id")
           return reply.code(400).send({ error: "invalid_assigned_driver_id" });
         throw err;
       }
@@ -762,6 +826,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             authUser.uuid,
             "mdata.units.deactivated",
             {
+              operating_company_id: scopedCompanyId,
               resource_id: oldRow.id,
               resource_type: "mdata.units",
               was_already_deactivated: wasAlreadyDeactivated,
@@ -835,7 +900,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         authUser.uuid,
         "mdata.unit.quick_availability_changed",
         {
+          operating_company_id: scopedCompanyId,
           resource_id: row.id,
+          resource_type: "mdata.units",
           before: oldRow.quick_availability,
           after: row.quick_availability,
           profile_fields: { quick_availability: parsedBody.data.value },

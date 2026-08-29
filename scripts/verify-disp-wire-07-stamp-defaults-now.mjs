@@ -37,8 +37,13 @@ export function run() {
     errors
   );
   assert(
-    helper.includes("COALESCE($2::timestamptz, now())") && helper.includes("actual_departure_at ="),
+    helper.includes("COALESCE($3::timestamptz, now())") && helper.includes("actual_departure_at ="),
     `${HELPER} must default actual_departure_at to now() when deliveredAt is null/undefined`,
+    errors
+  );
+  assert(
+    /JOIN mdata\.loads l2 ON l2\.id = s2\.load_id[\s\S]{0,180}l2\.operating_company_id = \$2::uuid/.test(helper),
+    `${HELPER} must scope the stop mutation through the canonical parent load company`,
     errors
   );
   assert(
@@ -55,8 +60,8 @@ export function run() {
       errors
     );
     assert(
-      /stampFinalActiveDeliveryDeparture\s*\(\s*client\s*,\s*[^,]+\s*,\s*(?:[^\n)]*delivered_at\s*\?\?\s*null|[^\n)]*null[^)]*\))/.test(src),
-      `${caller} must invoke stampFinalActiveDeliveryDeparture with an explicit null fallback (not omit the argument)`,
+      /stampFinalActiveDeliveryDeparture\s*\(\s*client\s*,\s*[^,]+\s*,\s*[^,]+\s*,\s*(?:[^)]*delivered_at\s*\?\?\s*null|[^)]*null[^)]*)\)/.test(src),
+      `${caller} must pass company, load, and an explicit null fallback to stampFinalActiveDeliveryDeparture`,
       errors
     );
   }
@@ -69,8 +74,8 @@ function selftest() {
   const backup = fs.readFileSync(p, "utf8");
   try {
     const planted = backup.replace(
-      /COALESCE\(\$2::timestamptz,\s*now\(\)\)/,
-      "$2::timestamptz"
+      /COALESCE\(\$3::timestamptz,\s*now\(\)\)/,
+      "$3::timestamptz"
     );
     fs.writeFileSync(p, planted, "utf8");
     const plantedErrors = run();

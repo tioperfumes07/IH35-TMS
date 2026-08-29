@@ -138,7 +138,7 @@ async function enqueueVehiclePushIfProjected(
 }
 
 export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/vehicles", async (req, reply) => {
+  app.get("/api/v1/maintenance/vehicles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -185,7 +185,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     return { rows, csv_import_enabled: isVehiclesCsvImportEnabled() };
   });
 
-  app.post("/api/v1/maintenance/vehicles", async (req, reply) => {
+  app.post("/api/v1/maintenance/vehicles", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createSchema.safeParse(req.body ?? {});
@@ -236,7 +236,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     return reply.code(201).send(row);
   });
 
-  app.patch("/api/v1/maintenance/vehicles/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/vehicles/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -301,7 +301,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/maintenance/vehicles/:id/void", async (req, reply) => {
+  app.patch("/api/v1/maintenance/vehicles/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -331,7 +331,7 @@ export async function registerMaintenanceVehiclesRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/maintenance/vehicles/import", async (req, reply) => {
+  app.post("/api/v1/maintenance/vehicles/import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isVehiclesCsvImportEnabled()) {

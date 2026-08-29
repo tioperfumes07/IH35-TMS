@@ -21,9 +21,11 @@
       ],
       "spec": "FinanceHubPage \u00b7 finance-hub-deep-2026-08-01",
       "status": "PASS",
-      "evidence": "FinanceHubPage.tsx uses FINANCE_HUB_UI_FLAG per selectedCompanyId, disables query when flag off, and renders honest 'Finance Hub is not enabled for this entity' message without exposing raw flag name. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: lib.feature_flags FINANCE_HUB_UI_ENABLED default_enabled=true; per-entity overrides TRANSP/TRK/USMCA all enabled=true; feature_flags visible=85 == pg_stat n_live_tup; healthz version=ed061c2.",
+      "evidence": "FinanceHubPage.tsx uses FINANCE_HUB_UI_FLAG per selectedCompanyId, disables query when flag off, and renders honest 'Finance Hub is not enabled for this entity' message without exposing raw flag name. Guard: scripts/verify-finance-hub-surfaces-s01-s08.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: lib.feature_flags FINANCE_HUB_UI_ENABLED default_enabled=true; per-entity overrides TRANSP/TRK/USMCA all enabled=true; feature_flags visible=85 == pg_stat n_live_tup; healthz version=ed061c2. | LIVE RE-CONFIRMED 2026-08-29 (CC-1, self-serve queue, app.ih35dispatch.com, USMCA, healthz=4e5db76): /finance renders the enabled Finance Hub with real KPI tiles — Cash Position -$19,019.45, Accounts Receivable (Open) $762.00 (4 open invoices), Accounts Payable (Open) $5,463.45 (12 open bills, $125.00 past due), Current Accounting Period Aug 2026 open, Fixed Assets (Net Book Value) $0.00 — plus the full tab strip (Overview/Projections/Scenarios/Hub/Statements/AR-AP Aging/Loan Wizard/Calculator/Amortization) and reciprocal Related links. No mutation, no dead end.",
       "pr": "#5348",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:42:00.000Z",
+      "live_verified_sha": "4e5db76"
     },
     {
       "id": "FIN-S02",

@@ -84,7 +84,7 @@ function mapServiceError(error: unknown) {
 }
 
 export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
-  app.post("/api/v1/driver-teams", async (req, reply) => {
+  app.post("/api/v1/driver-teams", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!ensureOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -99,7 +99,7 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-teams", async (req, reply) => {
+  app.get("/api/v1/driver-teams", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const query = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -113,7 +113,7 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-teams/:id", async (req, reply) => {
+  app.get("/api/v1/driver-teams/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = teamIdParamsSchema.safeParse(req.params ?? {});
@@ -135,7 +135,7 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/driver-teams/:id", async (req, reply) => {
+  app.patch("/api/v1/driver-teams/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!ensureOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -152,7 +152,7 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-teams/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/driver-teams/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!ensureOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -173,7 +173,7 @@ export async function registerDriverTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/loads/:id/team-settlement-split", async (req, reply) => {
+  app.get("/api/v1/loads/:id/team-settlement-split", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});

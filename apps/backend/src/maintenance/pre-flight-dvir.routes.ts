@@ -329,7 +329,7 @@ export async function registerPreFlightDvirRoutes(app: FastifyInstance) {
   );
 
   // ── PATCH /:defectId/severity ───────────────────────────────────────────────────────────────
-  app.patch("/api/v1/maintenance/pre-flight-dvir/:defectId/severity", async (req, reply) => {
+  app.patch("/api/v1/maintenance/pre-flight-dvir/:defectId/severity", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = defectParamsSchema.safeParse(req.params ?? {});

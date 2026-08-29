@@ -20,6 +20,7 @@ function failures(fallbackSource, optimizerSource) {
     if (!block.includes("mdata.drivers d")) found.push(`${name} canonical driver source missing`);
     if (!block.includes("operating_company_id = $1::uuid") || !block.includes("driver_company_authorizations")) found.push(`${name} company scope missing`);
     if (!block.includes("d.status = 'Active'::mdata.driver_status") || !block.includes("d.deactivated_at IS NULL")) found.push(`${name} active scope missing`);
+    if (!/stop_type = 'pickup'::mdata\.stop_type_enum[\s\S]{0,100}s\.soft_deleted_at IS NULL/.test(block)) found.push(`${name} pickup context includes retired stops`);
     if (/LIMIT\s+200/i.test(block)) found.push(`${name} still silently caps candidates at 200`);
   }
   if (!optimizerSource.includes("rankOptimalDrivers(scored, 10)")) found.push("optimizer no longer ranks the complete set down to top 10");
@@ -31,6 +32,8 @@ if (process.argv.includes("--selftest")) {
     [fallback, optimizer.replace("ORDER BY d.last_name ASC, d.first_name ASC", "ORDER BY d.last_name ASC, d.first_name ASC\n        LIMIT 200")],
     [fallback.replace("d.deactivated_at IS NULL", "true"), optimizer],
     [fallback, optimizer.replace("rankOptimalDrivers(scored, 10)", "scored.slice(0, 10)")],
+    [fallback.replace("AND s.soft_deleted_at IS NULL", "AND TRUE"), optimizer],
+    [fallback, optimizer.replace("AND s.soft_deleted_at IS NULL", "AND TRUE")],
   ];
   const missed = mutations.filter(([a, b]) => failures(a, b).length === 0);
   if (missed.length) {

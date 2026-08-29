@@ -17,6 +17,8 @@ const route = read("apps/backend/src/dispatch/predicted-delivery.routes.ts");
 
 const requiredLifecycle = [
   [/FOR UPDATE/, "must lock the canonical load before reading the old prediction"],
+  [/SELECT predicted_delivery_date::text[\s\S]{0,220}?soft_deleted_at IS NULL/, "must reject a retired load before reading the prediction"],
+  [/UPDATE\s+mdata\.loads[\s\S]{0,260}?soft_deleted_at IS NULL/, "must reject a retired load at the prediction write"],
   [/predicted_delivery_date IS DISTINCT FROM \$3::timestamptz/, "must suppress replayed identical predictions"],
   [/RETURNING id::text/, "must return write evidence"],
   [/if \(!updated\.rows\[0\]\?\.id\) return \{ kind: "unchanged" as const/, "must stop before audit when no prediction changed"],

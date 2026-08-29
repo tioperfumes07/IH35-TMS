@@ -13,11 +13,44 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const file = join(root, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
 const src = readFileSync(file, "utf8");
+const panelFile = join(root, "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx");
+const panelSrc = readFileSync(panelFile, "utf8");
 
 const fail = (msg) => {
   console.error(`FAIL verify-dispatch-board-sections-and-columns: ${msg}`);
   process.exit(1);
 };
+
+function preSettlementReadIssues(content) {
+  const issues = [];
+  if (!/openPreSettlementsQuery\.isError[\s\S]{0,260}<ListErrorState/.test(content)) {
+    issues.push("open pre-settlement failure must render an explicit ListErrorState");
+  }
+  if (!/title="Couldn't load open pre-settlements"/.test(content)) {
+    issues.push("open pre-settlement failure needs a specific human title");
+  }
+  if (!/onRetry=\{\(\) => void openPreSettlementsQuery\.refetch\(\)\}/.test(content)) {
+    issues.push("open pre-settlement failure must retry the exact query");
+  }
+  return issues;
+}
+
+function preSettlementPanelReadIssues(content) {
+  const issues = [];
+  if (!/if \(query\.isError\)[\s\S]{0,280}<ListErrorState/.test(content)) {
+    issues.push("pre-settlement panel failure must render an explicit ListErrorState before the empty branch");
+  }
+  if (!/title="Couldn't load pre-settlement"/.test(content)) {
+    issues.push("pre-settlement panel failure needs a specific human title");
+  }
+  if (!/onRetry=\{\(\) => void query\.refetch\(\)\}/.test(content)) {
+    issues.push("pre-settlement panel failure must retry the exact query");
+  }
+  if (/query\.isError\s*\|\|\s*!query\.data\?\.settlement/.test(content)) {
+    issues.push("pre-settlement panel must not collapse a failed read into the honest empty state");
+  }
+  return issues;
+}
 
 // 1. One shared column model, List and Table both alias it.
 if (!src.includes("const boardColumns")) fail("missing shared `boardColumns` model");
@@ -95,6 +128,36 @@ if (!/of \$\{totalCount\} \$\{totalCount === 1 \? "load" : "loads"\}/.test(src))
 if (!/awaitingTruckCount/.test(src)) fail("loadCountSummary must surface the awaiting-truck roster total (awaitingTruckCount)");
 if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
   fail("bare 'Showing {from}-{to} of {totalCount}' label is ambiguous against the truck roster — use loadCountSummary");
+}
+
+for (const issue of preSettlementReadIssues(src)) fail(issue);
+for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
+
+if (process.argv.includes("--selftest")) {
+  const mutants = [
+    src.replace("openPreSettlementsQuery.isError ? (", "false ? ("),
+    src.replace('title="Couldn\'t load open pre-settlements"', 'title="Open pre-settlements"'),
+    src.replace(
+      "onRetry={() => void openPreSettlementsQuery.refetch()}",
+      "onRetry={() => void Promise.resolve()}"
+    ),
+  ];
+  if (!mutants.every((mutant) => preSettlementReadIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped open pre-settlement read-honesty guard");
+  }
+  const panelMutants = [
+    panelSrc.replace("if (query.isError) {", "if (false) {"),
+    panelSrc.replace('title="Couldn\'t load pre-settlement"', 'title="Pre-settlement"'),
+    panelSrc.replace("onRetry={() => void query.refetch()}", "onRetry={() => void Promise.resolve()}"),
+    panelSrc.replace(
+      "if (query.isError) {",
+      "if (query.isError || !query.data?.settlement) {"
+    ),
+  ];
+  if (!panelMutants.every((mutant) => preSettlementPanelReadIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped pre-settlement panel read-honesty guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 7/7 read-honesty defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");

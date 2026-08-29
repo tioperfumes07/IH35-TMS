@@ -89,7 +89,10 @@ describe("updateDispatchLoad — rate re-sync", () => {
       { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] },
       { match: /FROM accounting\.invoices/, rows: [] as Row[] },
       { match: /FROM driver_finance\.driver_bills/, rows: [] as Row[] },
-      { match: /UPDATE mdata\.loads SET/, rows: [] as Row[] },
+      { match: /SELECT id FROM dispatch\.load_charge_lines[\s\S]*FOR UPDATE/, rows: [] as Row[] },
+      { match: /UPDATE dispatch\.load_charge_lines SET is_active = false[\s\S]*RETURNING id/, rows: [] as Row[] },
+      { match: /INSERT INTO dispatch\.load_charge_lines[\s\S]*RETURNING id/, rows: [{ id: "cl1" }] },
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
       { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 120000 }] },
       { match: /UPDATE accounting\.invoice_lines/, rows: [{ invoice_id: "inv1" }] },
       { match: /SELECT.*FROM accounting\.invoice_lines/, rows: [] as Row[] },
@@ -120,7 +123,10 @@ describe("updateDispatchLoad — rate re-sync", () => {
       { match: /FROM driver_finance\.driver_settlements/, rows: [] as Row[] },
       { match: /FROM accounting\.invoices/, rows: [] as Row[] },
       { match: /FROM driver_finance\.driver_bills/, rows: [] as Row[] },
-      { match: /UPDATE mdata\.loads SET/, rows: [] as Row[] },
+      { match: /SELECT id FROM dispatch\.load_charge_lines[\s\S]*FOR UPDATE/, rows: [] as Row[] },
+      { match: /UPDATE dispatch\.load_charge_lines SET is_active = false[\s\S]*RETURNING id/, rows: [] as Row[] },
+      { match: /INSERT INTO dispatch\.load_charge_lines[\s\S]*RETURNING id/, rows: [{ id: "cl1" }] },
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
       { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 120000 }] },
       { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] as Row[] },
       { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id/, rows: [] as Row[] },
@@ -146,18 +152,22 @@ describe("updateDispatchLoad — rate re-sync", () => {
 
 describe("updateDispatchLoad — evidence-safe stops replace", () => {
   it("NEVER issues a DELETE against load_stops; archives removed stops via status='cancelled'", async () => {
-    // Existing load has 3 stops; the edit submits 2 → stop #3 must be ARCHIVED, never deleted.
+    // Existing load has 2 stops; the edit submits 1 → stop #2 must be ARCHIVED, never deleted.
     const { client, sqls } = makeClient([
       loadExists,
       noSettlement,
       noInvoice,
       noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
       { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [
         { id: "st1", sequence_number: 1 },
         { id: "st2", sequence_number: 2 },
-        { id: "st3", sequence_number: 3 },
       ] },
-      { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id = \$1::uuid AND sequence_number > /, rows: [{ id: "st3" }] },
+      { match: /UPDATE mdata\.load_stops SET[\s\S]*WHERE id = \$1::uuid/, rows: [
+        { id: "st1" },
+      ] },
+      { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id = \$1::uuid AND sequence_number > /, rows: [{ id: "st2" }] },
+      { match: /UPDATE mdata\.load_stops[\s\S]*id = ANY/, rows: [{ id: "st2" }] },
       { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
       driverBillReentryNoDriver,
     ]);
@@ -169,7 +179,6 @@ describe("updateDispatchLoad — evidence-safe stops replace", () => {
       fields: { notes: "edit" },
       stops: [
         { stop_type: "pickup", city: "Laredo", state: "TX" },
-        { stop_type: "delivery", city: "Dallas", state: "TX" },
       ],
     });
 
@@ -180,5 +189,87 @@ describe("updateDispatchLoad — evidence-safe stops replace", () => {
     expect(/UPDATE mdata\.load_stops[\s\S]*status = 'cancelled'/.test(joined)).toBe(true);
     // The audit event is recorded.
     expect(/audit\.append_event/.test(joined)).toBe(true);
+  });
+
+  it("rejects a zero-row scalar write instead of re-reading the old load as success", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [] },
+    ]);
+
+    await expect(updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "must persist" },
+    })).rejects.toMatchObject({ code: "E_LOAD_WRITE_CONFLICT" });
+  });
+
+  it("rejects a missing existing-stop identity instead of counting it as updated", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [{ id: "st1", sequence_number: 1 }] },
+      { match: /UPDATE mdata\.load_stops SET[\s\S]*WHERE id = \$1::uuid/, rows: [] },
+    ]);
+
+    await expect(updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "edit" },
+      stops: [{ stop_type: "pickup", city: "Laredo", state: "TX" }],
+    })).rejects.toMatchObject({ code: "E_LOAD_STOP_WRITE_CONFLICT" });
+  });
+
+  it("rejects a missing inserted-stop identity instead of counting it as inserted", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] },
+      { match: /INSERT INTO mdata\.load_stops/, rows: [] },
+    ]);
+
+    await expect(updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "edit" },
+      stops: [{ stop_type: "pickup", city: "Laredo", state: "TX" }],
+    })).rejects.toMatchObject({ code: "E_LOAD_STOP_WRITE_CONFLICT" });
+  });
+
+  it("rejects a partial stop archive instead of reporting the selected count", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [
+        { id: "st1", sequence_number: 1 },
+        { id: "st2", sequence_number: 2 },
+      ] },
+      { match: /UPDATE mdata\.load_stops SET[\s\S]*WHERE id = \$1::uuid/, rows: [{ id: "st1" }] },
+      { match: /SELECT id::text FROM mdata\.load_stops WHERE load_id = \$1::uuid AND sequence_number > /, rows: [{ id: "st2" }] },
+      { match: /UPDATE mdata\.load_stops[\s\S]*id = ANY/, rows: [] },
+    ]);
+
+    await expect(updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "edit" },
+      stops: [{ stop_type: "pickup", city: "Laredo", state: "TX" }],
+    })).rejects.toMatchObject({ code: "E_LOAD_STOP_ARCHIVE_CONFLICT" });
   });
 });

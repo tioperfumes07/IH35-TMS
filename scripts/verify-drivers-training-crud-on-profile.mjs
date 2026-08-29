@@ -26,6 +26,21 @@ function fail(msg) {
   process.exit(1);
 }
 
+function inspectTrainingLifecycle(driverTrainingRoutes) {
+  const failures = [];
+  const patchStart = driverTrainingRoutes.indexOf('app.patch("/api/v1/mdata/drivers/:id/training/:training_id"');
+  const archiveStart = driverTrainingRoutes.indexOf('app.post("/api/v1/mdata/drivers/:id/training/:training_id/archive"');
+  const patch = driverTrainingRoutes.slice(patchStart, archiveStart);
+  const archive = driverTrainingRoutes.slice(archiveStart);
+  if (!/const trainingRecord = res\.rows\[0\] \?\? null;[\s\S]{0,100}if \(!trainingRecord\) return null;[\s\S]{0,180}appendCrudAudit\(client, authUser\.uuid, "safety\.training_record\.updated"[\s\S]{0,260}resource_id: trainingRecord\.id[\s\S]{0,180}driver_id: params\.data\.id/.test(patch)) {
+    failures.push("training edit must audit only after its exact canonical write returns identity");
+  }
+  if (!/const trainingRecord = res\.rows\[0\] \?\? null;[\s\S]{0,100}if \(!trainingRecord\) return null;[\s\S]{0,180}appendCrudAudit\(client, authUser\.uuid, "safety\.training_record\.archived"[\s\S]{0,260}resource_id: trainingRecord\.id[\s\S]{0,180}driver_id: params\.data\.id/.test(archive)) {
+    failures.push("training archive must audit only after its exact canonical write returns identity");
+  }
+  return failures;
+}
+
 function main() {
   const addTrainingModal = read(paths.addTrainingModal);
   const driverProfilePage = read(paths.driverProfilePage);
@@ -63,10 +78,23 @@ function main() {
   if (!archDesign.includes("verify:drivers-training-crud-on-profile")) {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:drivers-training-crud-on-profile");
   }
+  failures.push(...inspectTrainingLifecycle(driverTrainingRoutes));
 
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail("FAILED");
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      driverTrainingRoutes.replace('"safety.training_record.updated"', '"safety.training_record.missing"'),
+      driverTrainingRoutes.replace('"safety.training_record.archived"', '"safety.training_record.missing"'),
+      driverTrainingRoutes.replaceAll("resource_id: trainingRecord.id", "resource_id: params.data.training_id"),
+      driverTrainingRoutes.replace("if (!trainingRecord) return null;", "if (false) return null;"),
+    ];
+    const detected = mutations.filter((mutation) => inspectTrainingLifecycle(mutation).length > 0).length;
+    if (detected !== mutations.length) fail(`selftest detected ${detected}/${mutations.length} planted lifecycle regressions`);
+    console.log(`[verify-drivers-training-crud-on-profile] selftest ${detected}/${mutations.length}`);
   }
 
   console.log("[verify-drivers-training-crud-on-profile] OK");

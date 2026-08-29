@@ -21,11 +21,32 @@ const servicePath = "apps/backend/src/telematics/vehicle-driver-lookup.service.t
 if (!fs.existsSync(servicePath)) {
   throw new Error(`Missing service: ${servicePath}`);
 }
-const service = fs.readFileSync(servicePath, "utf8");
-mustInclude(service, "UPDATE telematics.vehicle_driver_assignments", "ended_at close path");
-mustInclude(service, "ON CONFLICT (raw_event_id) DO NOTHING", "idempotent insert");
-if (service.includes("DELETE FROM telematics.vehicle_driver_assignments")) {
-  throw new Error("Delete path is not allowed for telematics.vehicle_driver_assignments");
+export function auditService(service) {
+  const problems = [];
+  const required = [
+    ["UPDATE telematics.vehicle_driver_assignments", "ended_at close path"],
+    ["ON CONFLICT (raw_event_id) DO NOTHING", "idempotent insert"],
+    ["pg_advisory_lock(hashtextextended($1, 0))", "company+unit lifecycle lock"],
+    ["pg_advisory_unlock(hashtextextended($1, 0))", "lifecycle lock release"],
+    ["WHERE raw_event_id = $1::uuid", "exact-event replay check"],
+    ["vehicle_driver_assignment_close_lost_race", "checked close identity"],
+    ["vehicle_driver_assignment_insert_not_persisted", "checked insert identity"],
+  ];
+  for (const [needle, description] of required) {
+    if (!service.includes(needle)) problems.push(`Missing ${description}: ${needle}`);
+  }
+  if ((service.match(/RETURNING id::text/g) ?? []).length < 2) problems.push("Both pairing writes must return identity");
+  if (service.includes("DELETE FROM telematics.vehicle_driver_assignments")) problems.push("Delete path is not allowed");
+  return problems;
 }
 
-console.log("verify-vehicle-driver-pairing-append-only: ok");
+const service = fs.readFileSync(servicePath, "utf8");
+if (process.argv.includes("--selftest")) {
+  const planted = service.replace("pg_advisory_lock(hashtextextended($1, 0))", "pg_sleep(0)");
+  if (!auditService(planted).some((problem) => problem.includes("lifecycle lock"))) throw new Error("selftest failed to catch missing lifecycle lock");
+  console.log("verify-vehicle-driver-pairing-append-only: selftest PASS — missing lifecycle lock planted and detected");
+} else {
+  const problems = auditService(service);
+  if (problems.length) throw new Error(problems.join("\n"));
+  console.log("verify-vehicle-driver-pairing-append-only: ok");
+}

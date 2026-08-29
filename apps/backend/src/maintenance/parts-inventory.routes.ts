@@ -85,7 +85,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/parts-inventory", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts-inventory", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -120,7 +120,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
 
   // GET purchase history — INV-PURCHASE-LEDGER-SOR-STOCK-UPSERT. The real append-only SoR;
   // maintenance.parts_inventory (above) stays a mutable on-hand snapshot, never purchase history.
-  app.get("/api/v1/maintenance/parts-inventory/purchases", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts-inventory/purchases", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -149,7 +149,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/parts-inventory/purchases/:id", async (req, reply) => {
+  app.get("/api/v1/maintenance/parts-inventory/purchases/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -177,7 +177,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     return row;
   });
 
-  app.post("/api/v1/maintenance/parts-inventory/purchases", async (req, reply) => {
+  app.post("/api/v1/maintenance/parts-inventory/purchases", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -291,7 +291,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
 
   // Void a purchase event — void-not-delete. Symmetrically decrements the same stock row it
   // additively upserted, in the same transaction, so on-hand quantity never drifts.
-  app.post("/api/v1/maintenance/parts-inventory/purchases/:id/void", async (req, reply) => {
+  app.post("/api/v1/maintenance/parts-inventory/purchases/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -369,7 +369,7 @@ export async function registerMaintenancePartsInventoryRoutes(app: FastifyInstan
     return result.row;
   });
 
-  app.patch("/api/v1/maintenance/parts-inventory/:id/adjust", async (req, reply) => {
+  app.patch("/api/v1/maintenance/parts-inventory/:id/adjust", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

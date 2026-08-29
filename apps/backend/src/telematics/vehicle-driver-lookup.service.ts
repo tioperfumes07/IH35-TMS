@@ -224,25 +224,41 @@ export async function processVehicleDriverPairingWebhookEvent(
   const ids = await resolveLocalIds(client, event, fallbackVehicleId);
   if (!ids) return;
 
-  const occurredAt = resolveEventTimestamp(event);
-  const openAssignment = await getOpenAssignment(client, event.operating_company_id, ids.unit_id);
-  const action = computeAssignmentAction(openAssignment, assignmentType, ids.driver_id, occurredAt);
+  const lockKey = `${event.operating_company_id}:${ids.unit_id}`;
+  await client.query(`SELECT pg_advisory_lock(hashtextextended($1, 0))`, [lockKey]);
+  try {
+    // An exact webhook replay is already projected even when its assignment has since been closed.
+    const replay = await client.query<{ id: string }>(
+      `SELECT id::text
+       FROM telematics.vehicle_driver_assignments
+       WHERE raw_event_id = $1::uuid
+         AND operating_company_id = $2::uuid
+       LIMIT 1`,
+      [event.id, event.operating_company_id]
+    );
+    if (replay.rows[0]?.id) return;
 
-  if (action.close_open_assignment && openAssignment) {
-    await client.query(
+    const occurredAt = resolveEventTimestamp(event);
+    const openAssignment = await getOpenAssignment(client, event.operating_company_id, ids.unit_id);
+    const action = computeAssignmentAction(openAssignment, assignmentType, ids.driver_id, occurredAt);
+
+    if (action.close_open_assignment && openAssignment) {
+      const closed = await client.query<{ id: string }>(
       `
         UPDATE telematics.vehicle_driver_assignments
         SET ended_at = $3::timestamptz
         WHERE id = $1::uuid
           AND operating_company_id = $2::uuid
           AND ended_at IS NULL
+        RETURNING id::text
       `,
       [openAssignment.id, event.operating_company_id, occurredAt]
-    );
-  }
+      );
+      if (!closed.rows[0]?.id) throw new Error("vehicle_driver_assignment_close_lost_race");
+    }
 
-  if (action.insert_new_assignment) {
-    await client.query(
+    if (action.insert_new_assignment) {
+      const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO telematics.vehicle_driver_assignments (
           operating_company_id,
@@ -261,9 +277,14 @@ export async function processVehicleDriverPairingWebhookEvent(
           $5::uuid
         )
         ON CONFLICT (raw_event_id) DO NOTHING
+        RETURNING id::text
       `,
       [event.operating_company_id, ids.unit_id, ids.driver_id, occurredAt, event.id]
-    );
+      );
+      if (!inserted.rows[0]?.id) throw new Error("vehicle_driver_assignment_insert_not_persisted");
+    }
+  } finally {
+    await client.query(`SELECT pg_advisory_unlock(hashtextextended($1, 0))`, [lockKey]);
   }
 }
 

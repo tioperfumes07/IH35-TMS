@@ -24,8 +24,6 @@ type InitiateTransferInput = {
 export async function initiateTransfer(userId: string, input: InitiateTransferInput) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const drivers = await client.query<{ id: string }>(
         `
           SELECT id
@@ -110,7 +108,6 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
         "P5-F5-EQUIPMENT-TRANSFER"
       );
 
-      await client.query("COMMIT");
       const dualNotes = encodeDualAckNotes(input.notes ?? null, initialDualAckState());
       return enrichTransferRow({
         id: createdTransfer.id,
@@ -118,10 +115,6 @@ export async function initiateTransfer(userId: string, input: InitiateTransferIn
         expires_at: createdTransfer.expires_at,
         notes: dualNotes,
       });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    }
   });
 }
 
@@ -131,8 +124,6 @@ export async function confirmTransfer(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const transferRes = await client.query<{
         id: string;
         equipment_id: string;
@@ -211,12 +202,7 @@ export async function confirmTransfer(
         "info",
         "P5-F5-EQUIPMENT-TRANSFER"
       );
-      await client.query("COMMIT");
       return { id: input.transfer_id, status: "confirmed" };
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    }
   });
 }
 
@@ -469,8 +455,6 @@ export async function ackDropoffTransfer(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const transfer = await loadPendingTransfer(client, input);
       if (transfer.from_driver_id !== input.from_driver_id) throw new Error("E_TRANSFER_NOT_FROM_DRIVER");
       const state = parseDualAckNotes(String(transfer.notes ?? "")) ?? initialDualAckState();
@@ -484,12 +468,7 @@ export async function ackDropoffTransfer(
         nextNotes: notes,
       });
       if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.from_driver_id);
-      await client.query("COMMIT");
       return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    }
   });
 }
 
@@ -499,8 +478,6 @@ export async function ackPickupTransfer(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const transfer = await loadPendingTransfer(client, input);
       if (transfer.to_driver_id !== input.to_driver_id) throw new Error("E_TRANSFER_NOT_ASSIGNED_TO_DRIVER");
       const state = parseDualAckNotes(String(transfer.notes ?? "")) ?? initialDualAckState();
@@ -515,12 +492,7 @@ export async function ackPickupTransfer(
         nextNotes: notes,
       });
       if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.to_driver_id);
-      await client.query("COMMIT");
       return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    }
   });
 }
 

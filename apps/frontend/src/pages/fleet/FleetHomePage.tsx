@@ -5,6 +5,7 @@ import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
 import { CreateTrailerModal } from "../../components/fleet/CreateTrailerModal";
 import { FleetTablePage } from "../maintenance/FleetTablePage";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { useNavigate } from "react-router-dom";
 
 /**
  * Canonical FLEET home (/fleet) — the units + trailers roster. Reuses the shared
@@ -17,6 +18,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
  * Lists fleet catalogs retain their own + Create — additive only, nothing deleted.
  */
 export function FleetHomePage() {
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [createUnitOpen, setCreateUnitOpen] = useState(false);
@@ -58,11 +60,13 @@ export function FleetHomePage() {
             open={createUnitOpen}
             operatingCompanyId={companyId}
             onClose={() => setCreateUnitOpen(false)}
+            onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)}
           />
           <CreateTrailerModal
             open={createTrailerOpen}
             operatingCompanyId={companyId}
             onClose={() => setCreateTrailerOpen(false)}
+            onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}
           />
         </>
       ) : (

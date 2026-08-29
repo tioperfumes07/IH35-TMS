@@ -27,6 +27,8 @@ function assert(source) {
     problems.push("reservation failure must be honest and recoverable");
   if (!/display \? "● Reserved" : "Reserving…"/.test(source))
     problems.push("pending reservation must not claim Reserved");
+  if (!/reserveDispatchLoadId\(submittedCompanyId, renewalId\)/.test(source))
+    problems.push("countdown renewal must submit the exact current reservation id");
   return problems;
 }
 
@@ -36,6 +38,8 @@ function assertBackend(service, book) {
     problems.push("consume must CAS reservation/company/user/status and return the claimed row");
   if (!/if \(!consumed\.rows\[0\]\?\.id\) throw new Error\("load_id_reservation_consume_conflict"\)/.test(service))
     problems.push("lost reservation consume must abort Book Load");
+  if (!/SET expires_at = now\(\) \+ \(\$4 \* interval '1 second'\)[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*reserved_by_user_id = \$3::uuid[\s\S]*status = 'reserved'[\s\S]*expires_at > now\(\) - \(\$4 \* interval '1 second'\)[\s\S]*RETURNING id::text, reserved_load_number, expires_at::text/.test(service))
+    problems.push("renewal must extend only the exact recent company/user reservation and return its unchanged number");
   if (!/consumeLoadNumberReservation\(client, \{[\s\S]{0,180}operatingCompanyId: input\.operating_company_id[\s\S]{0,180}reservedByUserId: input\.requestingUserUuid/.test(book))
     problems.push("Book Load must forward submitted company and reserving user into consume");
   return problems;
@@ -51,6 +55,7 @@ if (SELFTEST) {
     live.replace("releaseDispatchLoadReservation(submittedCompanyId, r.reservation_uuid)", "releaseDispatchLoadReservation(operatingCompanyId, r.reservation_uuid)"),
     live.replace("if (activeGenerationRef.current === submittedGeneration) return;", ""),
     live.replace("Load number unavailable: {error}", "Reserved"),
+    live.replace("reserveDispatchLoadId(submittedCompanyId, renewalId)", "reserveDispatchLoadId(submittedCompanyId)"),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (!assert(mutation).length) {
@@ -59,16 +64,16 @@ if (SELFTEST) {
     }
   }
   const backendMutations = [
-    service.replace("AND operating_company_id = $3::uuid", ""),
-    service.replace("AND reserved_by_user_id = $4::uuid", ""),
-    service.replace("RETURNING id::text", ""),
-    service.replace('if (!consumed.rows[0]?.id) throw new Error("load_id_reservation_consume_conflict");', ""),
-    book.replaceAll("operatingCompanyId: input.operating_company_id,", ""),
-    book.replaceAll("reservedByUserId: input.requestingUserUuid,", ""),
+    { service: service.replace("AND operating_company_id = $3::uuid", ""), book },
+    { service: service.replace("AND reserved_by_user_id = $4::uuid", ""), book },
+    { service: service.replace("RETURNING id::text", ""), book },
+    { service: service.replace('if (!consumed.rows[0]?.id) throw new Error("load_id_reservation_consume_conflict");', ""), book },
+    { service, book: book.replaceAll("operatingCompanyId: input.operating_company_id,", "") },
+    { service, book: book.replaceAll("reservedByUserId: input.requestingUserUuid,", "") },
+    { service: service.replace("AND expires_at > now() - ($4 * interval '1 second')", ""), book },
   ];
   for (const [index, mutation] of backendMutations.entries()) {
-    const serviceMutation = index < 4;
-    if (!assertBackend(serviceMutation ? mutation : service, serviceMutation ? book : mutation).length) {
+    if (!assertBackend(mutation.service, mutation.book).length) {
       console.error(`verify-live-load-id-reservation-lifecycle SELFTEST FAIL: backend mutation ${index + 1} survived`);
       process.exit(1);
     }

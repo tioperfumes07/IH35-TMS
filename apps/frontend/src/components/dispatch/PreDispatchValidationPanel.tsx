@@ -17,8 +17,8 @@ type Props = {
   unitLabel?: string | null;
   trailerLabel?: string | null;
   customerLabel?: string | null;
-  /** Called whenever can_dispatch changes — used to gate the Book button. */
-  onValidationChange?: (canDispatch: boolean, hasBlockers: boolean) => void;
+  /** Reports readiness and advisory state; only blockers gate the Book button. */
+  onValidationChange?: (canDispatch: boolean, hasBlockers: boolean, hasWarnings: boolean) => void;
   /** Override reason collected by the parent (BookLoadModalV4). */
   overrideReason?: string;
   onOverrideReasonChange?: (reason: string) => void;
@@ -83,7 +83,7 @@ export function PreDispatchValidationPanel({
     // Only run if there's something to validate.
     if (!driverUuid && !unitUuid && !customerId) {
       setResult(EMPTY_RESULT);
-      onValidationChange?.(true, false);
+      onValidationChange?.(true, false, false);
       return;
     }
 
@@ -100,7 +100,7 @@ export function PreDispatchValidationPanel({
       .then((data) => {
         if (cancelled) return;
         setResult(data);
-        onValidationChange?.(data.can_dispatch, data.blockers.length > 0);
+        onValidationChange?.(data.can_dispatch, data.blockers.length > 0, data.warnings.length > 0);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -110,7 +110,7 @@ export function PreDispatchValidationPanel({
         // but telling the parent `true` made Section D render "All checks pass · ready to book"
         // directly above this unavailable error. Preserve no fabricated blockers while making the
         // readiness signal honestly unavailable/not-passing.
-        onValidationChange?.(false, false);
+        onValidationChange?.(false, false, false);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

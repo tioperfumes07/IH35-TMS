@@ -202,7 +202,7 @@ function selftest() {
   const parameterized = `const mdataStatus = toMdataStatus(statusPayload.transition);
     await client.query("UPDATE mdata.loads SET status = $3::mdata.load_status_enum", [id, opco, mdataStatus]);
     if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
-      await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
+      await stampFinalActiveDeliveryDeparture(client, operatingCompanyId, id, statusPayload.delivered_at ?? null);
     }
     const PAID = new Set(["invoiced", "completed_docs_received", "delivered_pending_docs", "paid"]);`;
   if (auditSources([{ rel: "apps/backend/src/dispatch/x-bulk.routes.ts", src: parameterized }]).problems.length === 0)

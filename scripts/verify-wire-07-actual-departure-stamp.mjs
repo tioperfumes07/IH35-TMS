@@ -32,7 +32,9 @@ mustInclude(
   [
     "stampFinalActiveDeliveryDeparture",
     "loadStatusRequiresDeliveryDepartureStamp",
-    "actual_departure_at = COALESCE($2::timestamptz, now())",
+    "actual_departure_at = COALESCE($3::timestamptz, now())",
+    "JOIN mdata.loads l2 ON l2.id = s2.load_id",
+    "AND l2.operating_company_id = $2::uuid",
     "AND s.actual_departure_at IS NULL",
     "stop_type::text = 'delivery'",
   ],

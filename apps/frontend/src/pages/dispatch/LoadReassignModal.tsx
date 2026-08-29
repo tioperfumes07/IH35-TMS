@@ -29,6 +29,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const [driverId, setDriverId] = useState("");
+  const [driverLabel, setDriverLabel] = useState<string | null>(null);
   const [reasonCode, setReasonCode] = useState<string>(REASSIGN_REASON_CODES[0].value);
   const [notes, setNotes] = useState("");
   // GAP-47 — dispatch authorization gates preview; the server enforces the same check on the
@@ -57,6 +58,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
   useEffect(() => {
     scopeGenerationRef.current += 1;
     setDriverId("");
+    setDriverLabel(null);
     setReasonCode(REASSIGN_REASON_CODES[0].value);
     setNotes("");
     setGateBlocked(false);
@@ -89,6 +91,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
           operatingCompanyId={operatingCompanyId}
           selectedDriverId={driverId}
           onSelectDriver={setDriverId}
+          onSelectedDriverLabelChange={setDriverLabel}
           disabled={mut.isPending}
         />
         <AssignDriverDropdown
@@ -96,6 +99,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
           operatingCompanyId={operatingCompanyId}
           value={driverId}
           onChange={setDriverId}
+          onSelectedDriverLabelChange={setDriverLabel}
           driversOverride={driversOverride}
           disabled={mut.isPending}
         />
@@ -125,6 +129,7 @@ export function LoadReassignModal({ open, onClose, loadId, operatingCompanyId, l
             loadUuid={loadId}
             loadLabel={loadNumber}
             driverUuid={driverId}
+            driverLabel={driverLabel}
             onBlockersChange={setGateBlocked}
           />
         ) : null}

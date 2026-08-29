@@ -28,7 +28,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerMaintenanceComplianceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/compliance/425c-log", async (req, reply) => {
+  app.get("/api/v1/maintenance/compliance/425c-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});

@@ -155,15 +155,18 @@ async function fetchDriverOwnedLoad(
         l.load_number,
         l.status::text,
         l.operating_company_id::text,
-        c.customer_name,
+        COALESCE(
+          c.customer_name,
+          mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)
+        ) AS customer_name,
         NULL::text AS special_instructions,
         pickup.site_contact_name AS pickup_contact_name,
         pickup.site_contact_phone AS pickup_contact_phone,
         delivery.site_contact_name AS delivery_contact_name,
         delivery.site_contact_phone AS delivery_contact_phone
       FROM mdata.loads l
-      JOIN mdata.customers c ON c.id = l.customer_id
-                          AND c.operating_company_id = l.operating_company_id
+      LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                               AND c.operating_company_id = l.operating_company_id
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the load itself carries no entity predicate above,
       -- so bind it here via the driver acting on it — the JOIN only matches when the driver identified
       -- by $2 belongs to the SAME company as the load, which fails closed (no row) on a cross-entity FK.
@@ -179,14 +182,18 @@ async function fetchDriverOwnedLoad(
       LEFT JOIN LATERAL (
         SELECT s.site_contact_name, s.site_contact_phone
         FROM mdata.load_stops s
-        WHERE s.load_id = l.id AND s.stop_type = 'pickup'
+        WHERE s.load_id = l.id
+          AND s.stop_type = 'pickup'
+          AND s.soft_deleted_at IS NULL
         ORDER BY s.sequence_number ASC
         LIMIT 1
       ) pickup ON true
       LEFT JOIN LATERAL (
         SELECT s.site_contact_name, s.site_contact_phone
         FROM mdata.load_stops s
-        WHERE s.load_id = l.id AND s.stop_type = 'delivery'
+        WHERE s.load_id = l.id
+          AND s.stop_type = 'delivery'
+          AND s.soft_deleted_at IS NULL
         ORDER BY s.sequence_number DESC
         LIMIT 1
       ) delivery ON true
@@ -238,6 +245,7 @@ async function loadDispatchStops(
       -- re-deriving it, which would just add another unscoped read.
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1
+        AND s.soft_deleted_at IS NULL
       ORDER BY s.sequence_number ASC
     `,
     [loadId, operatingCompanyId]
@@ -344,6 +352,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
+            AND s.soft_deleted_at IS NULL
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
           LIMIT 1
@@ -446,6 +455,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
                                       AND loc.operating_company_id = l.operating_company_id
           WHERE s.id = $1
             AND s.load_id = $2
+            AND s.soft_deleted_at IS NULL
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
           LIMIT 1
@@ -553,6 +563,7 @@ export async function registerDispatchViewRoutes(app: FastifyInstance) {
           JOIN mdata.loads l ON l.id = s.load_id
           WHERE s.id = $1
             AND s.load_id = $2
+            AND s.soft_deleted_at IS NULL
             AND (l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3)
             AND l.soft_deleted_at IS NULL
           LIMIT 1

@@ -55,7 +55,7 @@ function isOwner(role: string) {
 }
 
 export async function registerMaintenanceSevereRepairEstimateRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/severe-repair-estimates", async (req, reply) => {
+  app.get("/api/v1/maintenance/severe-repair-estimates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -68,7 +68,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     return reply.send({ data: rows });
   });
 
-  app.get("/api/v1/maintenance/severe-repair/fleet-restore-cost", async (req, reply) => {
+  app.get("/api/v1/maintenance/severe-repair/fleet-restore-cost", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -81,7 +81,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     return reply.send({ data: row });
   });
 
-  app.get("/api/v1/maintenance/severe-repair/per-unit-breakdown", async (req, reply) => {
+  app.get("/api/v1/maintenance/severe-repair/per-unit-breakdown", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -94,7 +94,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     return reply.send({ data: rows });
   });
 
-  app.post("/api/v1/maintenance/severe-repair/export-pdf", async (req, reply) => {
+  app.post("/api/v1/maintenance/severe-repair/export-pdf", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isOwner(user.role)) return reply.code(403).send({ error: "forbidden_owner_only" });
@@ -121,7 +121,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
       .send(pdf.pdfBuffer);
   });
 
-  app.get("/api/v1/maintenance/severe-repair-estimates/total", async (req, reply) => {
+  app.get("/api/v1/maintenance/severe-repair-estimates/total", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -134,7 +134,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     return reply.send({ data: row });
   });
 
-  app.post("/api/v1/maintenance/severe-repair-estimates/:id/refresh", async (req, reply) => {
+  app.post("/api/v1/maintenance/severe-repair-estimates/:id/refresh", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = estimateIdSchema.safeParse(req.params ?? {});
@@ -152,7 +152,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     }
   });
 
-  app.post("/api/v1/maintenance/units/:id/mark-oos", async (req, reply) => {
+  app.post("/api/v1/maintenance/units/:id/mark-oos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canManageOos(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -177,7 +177,7 @@ export async function registerMaintenanceSevereRepairEstimateRoutes(app: Fastify
     }
   });
 
-  app.post("/api/v1/maintenance/units/:id/mark-back-in-service", async (req, reply) => {
+  app.post("/api/v1/maintenance/units/:id/mark-back-in-service", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canManageOos(user.role)) return reply.code(403).send({ error: "forbidden" });

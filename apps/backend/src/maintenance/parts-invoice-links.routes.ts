@@ -202,7 +202,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
     }
   );
 
-  app.post("/api/v1/maintenance/work-orders/:id/parts-invoice-links", async (req, reply) => {
+  app.post("/api/v1/maintenance/work-orders/:id/parts-invoice-links", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = woParamsSchema.safeParse(req.params ?? {});
@@ -313,7 +313,7 @@ export async function registerMaintenancePartsInvoiceLinksRoutes(app: FastifyIns
     return reply.code(201).send(result);
   });
 
-  app.delete("/api/v1/maintenance/parts-invoice-links/:id", async (req, reply) => {
+  app.delete("/api/v1/maintenance/parts-invoice-links/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = linkParamsSchema.safeParse(req.params ?? {});

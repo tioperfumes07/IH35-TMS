@@ -194,10 +194,10 @@ export async function processPendingMilestoneEmails(client: DbClient, input: { l
         sd.state AS delivery_state
       FROM mdata.loads l
       LEFT JOIN LATERAL (
-        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup' ORDER BY sequence_number ASC LIMIT 1
+        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1
       ) sp ON true
       LEFT JOIN LATERAL (
-        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' ORDER BY sequence_number DESC LIMIT 1
+        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1
       ) sd ON true
       WHERE l.id = $1::uuid
         AND l.operating_company_id = $2::uuid

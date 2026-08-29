@@ -16,6 +16,9 @@ export const dispatchStatusSchema = z.enum([
 export type DispatchStatus = z.infer<typeof dispatchStatusSchema>;
 
 export function fromMdataStatus(status: string): DispatchStatus {
+  // These are real pre-dispatch members of mdata.load_status_enum. Keep the aliases explicit so an
+  // unknown/corrupt value cannot inherit the same authority through a catch-all default.
+  if (status === "draft" || status === "booked" || status === "planned") return "unassigned";
   if (status === "assigned") return "assigned_not_dispatched";
   if (status === "at_pickup") return "dispatched";
   if (status === "at_delivery") return "in_transit";
@@ -31,7 +34,7 @@ export function fromMdataStatus(status: string): DispatchStatus {
   if (status === "abandoned") return "abandoned";
   if (status === "driver_walkoff") return "driver_walkoff";
   if (status === "driver_no_show") return "driver_no_show";
-  return "unassigned";
+  throw new RangeError(`Unknown mdata load status: ${status}`);
 }
 
 export function toMdataStatus(status: DispatchStatus): string {

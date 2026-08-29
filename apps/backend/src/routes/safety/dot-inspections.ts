@@ -240,7 +240,6 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
     if (!body.success) return validationError(reply, body.error);
 
     const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {
-      await client.query("BEGIN");
       try {
         const links = await client.query(
           `SELECT
@@ -278,7 +277,6 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           trailer_ok?: boolean;
         } | undefined;
         if (!integrity?.driver_ok || !integrity.unit_ok || !integrity.trailer_ok) {
-          await client.query("ROLLBACK");
           return null;
         }
         const csaPointBreakdown = Object.fromEntries(
@@ -386,7 +384,6 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           inspection.outcome === "OOS" ? "warning" : "info",
           "P3-T11.17.2-SAFETY-V6.4"
         );
-        await client.query("COMMIT");
         return {
           dot_inspection: inspection,
           spawned_wo: spawnedWo,
@@ -394,7 +391,6 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
           csa_source: INTERNAL_CSA_SOURCE_METADATA,
         };
       } catch (error) {
-        await client.query("ROLLBACK");
         throw error;
       }
     });

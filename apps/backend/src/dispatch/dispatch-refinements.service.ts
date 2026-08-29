@@ -1,4 +1,5 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
@@ -60,8 +61,6 @@ export type LoadStopInput = {
 export async function manualReassignLoad(userId: string, input: ReassignBody) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const loadRes = await client.query(
         `
           SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
@@ -201,7 +200,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       );
       if (!reassignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
-      await client.query(
+      const assignmentHistory = await client.query<{ id: string }>(
         `
           INSERT INTO dispatch.load_assignment_history (
             operating_company_id, load_id, assignment_method,
@@ -212,6 +211,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
             reason_code, notes
           )
           VALUES ($1,$2,'manual_reassign',$3,$4,$5,$5,$6,$6,$7,'[]'::jsonb,$8,$9)
+          RETURNING id::text
         `,
         [
           input.operating_company_id,
@@ -225,6 +225,9 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
           input.notes ?? null,
         ]
       );
+      if (!assignmentHistory.rows[0]?.id) {
+        throw new Error("E_ASSIGNMENT_HISTORY_WRITE_FAILED");
+      }
 
       await enqueueOutboxEvent(
         client,
@@ -286,12 +289,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         "P6-T11191"
       );
 
-      await client.query("COMMIT");
       return { ok: true as const, load_id: input.load_id };
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    }
   });
 
 }
@@ -347,23 +345,45 @@ export async function replaceLoadStopsRefined(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
-    await client.query("BEGIN");
-    try {
       const load = await client.query(
         `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL FOR UPDATE`,
         [loadId, operatingCompanyId]
       );
       if (!load.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
-      // INV-1: void-never-delete — soft-delete all existing stops before re-inserting.
-      await client.query(`UPDATE mdata.load_stops SET soft_deleted_at = now() WHERE load_id = $1 AND soft_deleted_at IS NULL`, [loadId]);
+      // INV-1: void-never-delete — lock and archive the exact active stop set before re-inserting.
+      const existingStops = await client.query<{ id: string }>(
+        `SELECT id::text AS id
+           FROM mdata.load_stops
+          WHERE load_id = $1::uuid
+            AND soft_deleted_at IS NULL
+          FOR UPDATE`,
+        [loadId]
+      );
+      const existingStopIds = existingStops.rows.map((row) => row.id);
+      const archivedStops = await client.query<{ id: string }>(
+        `UPDATE mdata.load_stops
+            SET soft_deleted_at = now()
+          WHERE load_id = $1::uuid
+            AND id = ANY($2::uuid[])
+            AND soft_deleted_at IS NULL
+        RETURNING id::text AS id`,
+        [loadId, existingStopIds]
+      );
+      const archivedStopIds = new Set(archivedStops.rows.map((row) => row.id));
+      if (
+        archivedStopIds.size !== existingStopIds.length ||
+        existingStopIds.some((id) => !archivedStopIds.has(id))
+      ) {
+        throw new Error("E_LOAD_STOP_REPLACE_ARCHIVE_CONFLICT");
+      }
 
       for (const s of stops) {
         const st = normalizeStopType(s.stop_type);
         const apStart = s.window_start ?? null;
         const apEnd = s.window_end ?? null;
         const addr1 = s.address_line1 ?? s.location_address ?? null;
-        await client.query(
+        const insertedStop = await client.query<{ id: string }>(
           `
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type,
@@ -373,6 +393,7 @@ export async function replaceLoadStopsRefined(
               latitude, longitude, signature_required, photo_required,
               time_window_type, pickup_time_type_id
             )
+            RETURNING id::text AS id
             VALUES (
               $1,$2,$3::mdata.stop_type_enum,
               $4,$5,$6,$7,$8,
@@ -403,6 +424,9 @@ export async function replaceLoadStopsRefined(
             s.pickup_time_type_id ?? null,
           ]
         );
+        if (!insertedStop.rows[0]?.id) {
+          throw new Error("E_LOAD_STOP_REPLACE_INSERT_CONFLICT");
+        }
       }
 
       await bindLoadToGeofences(client, operatingCompanyId, loadId);
@@ -416,12 +440,7 @@ export async function replaceLoadStopsRefined(
         "P6-T11191"
       );
 
-      await client.query("COMMIT");
       return { ok: true as const, load_id: loadId };
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    }
   });
 }
 
@@ -440,6 +459,7 @@ export async function listAvailableDriversForDispatch(
         LEFT JOIN LATERAL (
           SELECT city, state FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'pickup'::mdata.stop_type_enum
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) sp ON true
@@ -606,10 +626,17 @@ export async function createLoadTemplate(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     const customerId = input.template_json.customer_id;
-    if (typeof customerId === "string" && customerId) {
+    if (customerId !== undefined && customerId !== null && customerId !== "") {
+      const parsedCustomerId = z.string().uuid().safeParse(customerId);
+      if (!parsedCustomerId.success) {
+        throw Object.assign(new Error("Template customer ID must be a valid UUID."), {
+          statusCode: 400,
+          code: "E_TEMPLATE_CUSTOMER_ID_INVALID",
+        });
+      }
       const customer = await client.query(
         `SELECT 1 FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-        [customerId, input.operating_company_id],
+        [parsedCustomerId.data, input.operating_company_id],
       );
       if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
     }
@@ -628,6 +655,19 @@ export async function createLoadTemplate(
         code: "E_TEMPLATE_CREATE_FAILED",
       });
     }
+    await appendCrudAudit(
+      client,
+      userId,
+      "dispatch.load_template.created",
+      {
+        operating_company_id: input.operating_company_id,
+        load_template_id: template.id,
+        name: template.name,
+        customer_id: customerId || null,
+      },
+      "info",
+      "DISPATCH-LOAD-TEMPLATE-CREATE",
+    );
     return template;
   });
 }

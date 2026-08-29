@@ -55,6 +55,7 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
+      FOR UPDATE
     `,
     [id, operatingCompanyId]
   );
@@ -106,7 +107,7 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
     // CLS-DISP-WIRE-07 — office bulk "Mark delivered" must stamp final delivery departure
     // (same as PATCH /dispatch/loads/:id/transition). COALESCE(now()) when client omits delivered_at.
     if (loadStatusRequiresDeliveryDepartureStamp(mdataStatus)) {
-      await stampFinalActiveDeliveryDeparture(client, id, statusPayload.delivered_at ?? null);
+      await stampFinalActiveDeliveryDeparture(client, operatingCompanyId, id, statusPayload.delivered_at ?? null);
     }
     // LV-BULK-DELIVER-NOLATCH (live-proven on prod 2026-08-07) — this route had the STAMP half of
     // WIRE-07 and not the LATCH half. It accepts the delivery statuses (PER_LOAD_ONLY_TRANSITIONS

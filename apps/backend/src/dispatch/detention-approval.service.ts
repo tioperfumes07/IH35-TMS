@@ -206,8 +206,10 @@ function formatTimestamp(value: unknown): string {
  * invoiced. Runs in its own transaction AFTER the approval commits (the email
  * is an external side-effect that must never roll back billing). Gated behind
  * the {@link DETENTION_NOTIFY_FLAG} feature flag (default OFF) and idempotent on
- * dispatch.detention_requests.customer_notified_at (send only when IS NULL, then
- * stamp). A send failure is swallowed so the approval still succeeds.
+ * dispatch.detention_requests.customer_notified_at — DSP-MONEY-F7146A-R1: the claim
+ * is an atomic UPDATE ... WHERE customer_notified_at IS NULL RETURNING id, done
+ * BEFORE sending, so two concurrent callers cannot both win and both send. A send
+ * failure is swallowed so the approval still succeeds (the claim is not rolled back).
  */
 async function notifyCustomerOfApprovedDetention(
   userId: string,
@@ -233,14 +235,22 @@ async function notifyCustomerOfApprovedDetention(
     const email = details.customerEmail ? details.customerEmail.trim() : "";
     if (!email) return { sent: false, reason: "no_customer_email" };
 
-    // Idempotency guard: only the first approval-notification per request sends.
+    // DSP-MONEY-F7146A-R1 (CC-1): the idempotency guard used to be a plain unlocked SELECT, followed
+    // (after the external sendEmail call, below) by a conditional-but-unchecked UPDATE. Two
+    // concurrent approval-notification calls for the same request could both pass the SELECT (neither
+    // has stamped customer_notified_at yet) and both send the customer the same charge email — the
+    // final UPDATE's own `WHERE customer_notified_at IS NULL` guard only prevented a double STAMP, not
+    // a double SEND. Fixed by claiming atomically (UPDATE ... WHERE customer_notified_at IS NULL
+    // RETURNING id) BEFORE sending: only the caller that actually wins the claim proceeds to send.
     const claimed = await withCompany(userId, operatingCompanyId, async (client) => {
       const res = await client.query(
-        `SELECT customer_notified_at FROM dispatch.detention_requests
-         WHERE id = $1 AND operating_company_id = $2::uuid`,
+        `UPDATE dispatch.detention_requests
+         SET customer_notified_at = now(), updated_at = now()
+         WHERE id = $1 AND operating_company_id = $2::uuid AND customer_notified_at IS NULL
+         RETURNING id`,
         [requestId, operatingCompanyId]
       );
-      return res.rows[0] && !res.rows[0].customer_notified_at;
+      return res.rows.length > 0;
     });
     if (!claimed) return { sent: false, reason: "already_notified" };
 
@@ -279,6 +289,10 @@ async function notifyCustomerOfApprovedDetention(
       `Charge derived from stop timestamps.`,
     ].join("\n");
 
+    // The claim above already stamped customer_notified_at atomically before this send — no second
+    // write needed here. (If sendEmail throws below, the row stays claimed; see the catch below for
+    // why that trade-off is deliberate: it prevents a double-send, at the cost of no automatic retry
+    // on a transient send failure.)
     await sendEmail({
       sender: "dispatch",
       to: email,
@@ -288,15 +302,6 @@ async function notifyCustomerOfApprovedDetention(
       eventClass: "dispatch.detention.customer_charge_notified",
       actorUserId: userId,
     });
-
-    await withCompany(userId, operatingCompanyId, (client) =>
-      client.query(
-        `UPDATE dispatch.detention_requests
-         SET customer_notified_at = now(), updated_at = now()
-         WHERE id = $1 AND operating_company_id = $2::uuid AND customer_notified_at IS NULL`,
-        [requestId, operatingCompanyId]
-      )
-    );
 
     return { sent: true };
   } catch {

@@ -100,6 +100,8 @@ function verifySources({
     failures.push("NotifyPreferencesPage must expose preferences panel");
   if (!page.includes("Delivery log"))
     failures.push("NotifyPreferencesPage must show delivery log");
+  if (!/useEffect\(\(\) => \{[\s\S]{0,100}setCustomerId\(initialCustomerId\);[\s\S]{0,80}\}, \[initialCustomerId\]\);/.test(page))
+    failures.push("customer reverse drill must resynchronize the mounted picker when customer_id changes");
   if ((pageTest.match(/\bit\(/g) ?? []).length < 2)
     failures.push("NotifyPreferencesPage tests must cover at least 2 cases");
   if ((routeTest.match(/\bit\(/g) ?? []).length < 4)
@@ -117,11 +119,21 @@ function verifySources({
     failures.push("service must subscribe to stop arrivals");
   if (!service.includes("processEtaUpdateNotifications"))
     failures.push("service must subscribe to ETA updates");
+  const activeRouteStops = service.match(/stop_type = '(?:pickup|delivery)' AND soft_deleted_at IS NULL/g)?.length ?? 0;
+  if (activeRouteStops < 2)
+    failures.push("notification route labels must resolve pickup and delivery from active stops only");
+  const activeMilestoneStops = service.match(/AND ls\.soft_deleted_at IS NULL/g)?.length ?? 0;
+  if (activeMilestoneStops < 2)
+    failures.push("arrival and departure notifications must exclude retired stop events");
   if (!service.includes("sendEmail"))
     failures.push("service must dispatch email");
   if (!service.includes("sendSms")) failures.push("service must dispatch SMS");
   if (!service.includes("dispatch.notify_log"))
     failures.push("service must log delivery confirmations");
+  if (!/COALESCE\([\s\S]{0,120}c\.customer_name,[\s\S]{0,180}mdata\.resolve_customer_label_same_company\(nl\.customer_id, nl\.operating_company_id\)[\s\S]{0,80}AS customer_name/.test(service))
+    failures.push("delivery history must resolve the preserved same-company customer label");
+  if (!/LEFT JOIN mdata\.customers c ON c\.id = nl\.customer_id[\s\S]{0,100}c\.operating_company_id = nl\.operating_company_id/.test(service))
+    failures.push("delivery history customer label join must not erase preserved notifications");
   if (!/const preferences = res\.rows\[0\];[\s\S]{0,140}?if \(!preferences\?\.customer_id\)[\s\S]{0,100}?E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,600}?appendCrudAudit/.test(service)) {
     failures.push("preference upsert must prove its returned canonical customer identity before audit/success");
   }
@@ -180,6 +192,11 @@ function main() {
   if (process.argv.includes("--selftest")) {
     const mutations = [
       [
+        "drop mounted customer deep-link synchronization",
+        "page",
+        sources.page.replace("setCustomerId(initialCustomerId);", "setCustomerId(customerId);")
+      ],
+      [
         "drop preference persistence proof",
         "service",
         sources.service.replace("if (!preferences?.customer_id) {", "if (false) {")
@@ -225,6 +242,26 @@ function main() {
           "await finishNotifyDelivery(client",
           "await Promise.resolve(client",
         ),
+      ],
+      [
+        "restore retired route labels",
+        "service",
+        sources.service.replace("AND soft_deleted_at IS NULL ORDER BY sequence_number ASC", "ORDER BY sequence_number ASC"),
+      ],
+      [
+        "restore retired milestone events",
+        "service",
+        sources.service.replace("AND ls.soft_deleted_at IS NULL", "AND TRUE"),
+      ],
+      [
+        "erase notification history with an inactive-customer inner join",
+        "service",
+        sources.service.replace("LEFT JOIN mdata.customers c ON c.id = nl.customer_id", "JOIN mdata.customers c ON c.id = nl.customer_id"),
+      ],
+      [
+        "drop historical notification customer label resolution",
+        "service",
+        sources.service.replace("mdata.resolve_customer_label_same_company(nl.customer_id, nl.operating_company_id)", "NULL"),
       ],
     ];
     for (const [name, key, source] of mutations) {

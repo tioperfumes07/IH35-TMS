@@ -56,7 +56,7 @@ export function audit(s = {}) {
   if (!self.includes("DSP-F7076-DISPATCH-CATALOG-PICKERS-COMPLETE-RANGE")) failures.push("dispatch picker complete-range Built header missing");
   if (!sharedPage.includes("client.list({") || !sharedPage.includes("operating_company_id: companyId") || !sharedPage.includes("client.create(companyId, body)") || !sharedPage.includes("invalidateQueries") || !sharedPage.includes("<CatalogEntryModal")) failures.push("shared Dispatch catalog page must scope list/create, reload, and mount the editor");
   if (!sharedApi.includes("operating_company_id=${encodeURIComponent(operatingCompanyId)}") || !sharedApi.includes('method: "POST"')) failures.push("shared Dispatch API must scope writes by company");
-  for (const token of ["listAllDispatchCatalogRows", "expectedTotal", "page.total !== expectedTotal", "page.rows.length === 0", "seen.has(row.id)", "offset += page.rows.length", "rows.length !== expectedTotal"]) {
+  for (const token of ["listAllDispatchCatalogRows", "expectedTotal", "page.total !== expectedTotal", "if (rows.length === expectedTotal) break", "page.rows.length === 0", "seen.has(row.id)", "offset += page.rows.length", "rows.length !== expectedTotal"]) {
     if (!sharedApi.includes(token)) failures.push(`complete Dispatch catalog reader missing ${token}`);
   }
   if (!accessorialEditor.includes("listAllDispatchCatalogRows(additionalChargesCatalogClient") || /additionalChargesCatalogClient\.list\([\s\S]{0,180}limit:\s*200/.test(accessorialEditor)) failures.push("AccessorialEditor must exhaust additional-charges catalog");
@@ -121,6 +121,7 @@ if (process.argv.includes("--selftest")) {
     ["sharedBackend", original.sharedBackend.replaceAll("appendCrudAudit(", "appendMissingAudit(")],
     ["sharedApi", original.sharedApi.replace("offset += page.rows.length", "offset += 200")],
     ["sharedApi", original.sharedApi.replace("page.total !== expectedTotal", "page.total < expectedTotal")],
+    ["sharedApi", original.sharedApi.replace("if (rows.length === expectedTotal) break", "if (false) break")],
     ["accessorialEditor", original.accessorialEditor.replace("listAllDispatchCatalogRows(additionalChargesCatalogClient", "additionalChargesCatalogClient.list")],
     ["multiStopEditor", original.multiStopEditor.replace("listAllDispatchCatalogRows(pickupTimeTypesCatalogClient", "pickupTimeTypesCatalogClient.list")],
     ["multiStopEditor", original.multiStopEditor.replace("pickupTimeTypesUnavailable={pickupTimeTypesQuery.isError}", "pickupTimeTypesUnavailable={false}")],

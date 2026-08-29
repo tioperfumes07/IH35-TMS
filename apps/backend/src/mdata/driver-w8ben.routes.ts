@@ -91,6 +91,36 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+type DriverRosterClient = {
+  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
+};
+
+async function driverOnCompanyRoster(
+  client: DriverRosterClient,
+  driverId: string,
+  operatingCompanyId: string
+): Promise<boolean> {
+  const driver = await client.query(
+    `SELECT 1
+       FROM mdata.drivers d
+      WHERE d.id = $1::uuid
+        AND d.archived_at IS NULL
+        AND (
+          d.operating_company_id = $2::uuid
+          OR EXISTS (
+            SELECT 1 FROM mdata.driver_company_authorizations dca
+             WHERE dca.driver_id = d.id
+               AND dca.company_id = $2::uuid
+               AND dca.is_authorized = true
+               AND dca.deactivated_at IS NULL
+          )
+        )
+      LIMIT 1`,
+    [driverId, operatingCompanyId]
+  );
+  return Boolean(driver.rows[0]);
+}
+
 export async function registerDriverW8benRoutes(app: FastifyInstance) {
   // List W-8BEN certificates for a driver (newest signing first).
   app.get("/api/v1/mdata/drivers/:id/w8ben", RL_READ, async (req, reply) => {
@@ -104,25 +134,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
       // DRV-F6120: a child-only W-8BEN lookup returned rows:[] for unknown/other-company drivers.
       // Prove the driver is on this company's roster before reporting true zero certificates.
-      const driver = await client.query(
-        `SELECT 1
-           FROM mdata.drivers d
-          WHERE d.id = $1::uuid
-            AND d.archived_at IS NULL
-            AND (
-              d.operating_company_id = $2::uuid
-              OR EXISTS (
-                SELECT 1 FROM mdata.driver_company_authorizations dca
-                 WHERE dca.driver_id = d.id
-                   AND dca.company_id = $2::uuid
-                   AND dca.is_authorized = true
-                   AND dca.deactivated_at IS NULL
-              )
-            )
-          LIMIT 1`,
-        [params.data.id, query.data.operating_company_id]
-      );
-      if (driver.rowCount === 0) return null;
+      if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return null;
       const res = await client.query(
         `
           SELECT ${SELECT_COLS}
@@ -154,6 +166,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       await setScopedCompanyContext(client, authUser.uuid, query.data.operating_company_id);
+      if (!(await driverOnCompanyRoster(client, params.data.id, query.data.operating_company_id))) return null;
       const res = await client.query(
         `
           INSERT INTO safety.driver_w8ben (
@@ -207,6 +220,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
       });
       return res.rows[0];
     });
+    if (!row) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return reply.code(201).send(row);
   });
 

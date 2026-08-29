@@ -25,7 +25,12 @@ function assertIncludes(hay, needle, label) {
 
 function selftest() {
   assertIncludes("load-rematch-ok", "load-rematch-ok", "selftest");
-  console.log("verify-fuel-g18-load-link-rematch: selftest PASS");
+  const resolver = read("apps/backend/src/fuel/fuel-transaction-import.ts");
+  const mutated = resolver.replace(/\s+AND s\.soft_deleted_at IS NULL/, "");
+  if (mutated === resolver || /JOIN mdata\.load_stops s ON s\.load_id = l\.id[\s\S]*?AND s\.soft_deleted_at IS NULL[\s\S]*?GROUP BY l\.id/.test(mutated)) {
+    throw new Error("selftest: retired-stop mutation escaped");
+  }
+  console.log("verify-fuel-g18-load-link-rematch: selftest PASS — active-stop mutation caught");
 }
 
 function main() {
@@ -44,6 +49,11 @@ function main() {
   assertIncludes(rematch, "load_exemption_reason = NULL", "clear exemption on match");
   assertIncludes(rematch, "skipped_no_driver_or_unit", "skip counter when no driver/unit");
   assertIncludes(rematch, "skipped_no_load_in_window", "skip counter when no load in window");
+
+  const resolver = read("apps/backend/src/fuel/fuel-transaction-import.ts");
+  if (!/JOIN mdata\.load_stops s ON s\.load_id = l\.id[\s\S]*?AND s\.soft_deleted_at IS NULL[\s\S]*?GROUP BY l\.id/.test(resolver)) {
+    throw new Error("resolveLoadId must bracket fuel only against active load stops");
+  }
 
   const routes = read("apps/backend/src/integrations/relay-payments/relay-fuel-load-rematch.routes.ts");
   assertIncludes(routes, "/api/integrations/relay/fuel/rematch-loads", "rematch-loads route path");

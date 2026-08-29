@@ -1,8 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { ReactNode } from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useNavigate } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { NotifyPreferencesPage } from "../NotifyPreferencesPage";
 
@@ -14,6 +14,10 @@ vi.mock("../../../api/mdata", () => ({
   listCustomers: vi.fn(async () => ({
     customers: [{ id: "cust-1", customer_name: "Acme Freight" }],
   })),
+}));
+
+vi.mock("../../../components/parity/EntityPicker", () => ({
+  EntityPicker: ({ value }: { value: string | null }) => <div data-testid="mock-notify-customer-picker">{value ?? "none"}</div>,
 }));
 
 vi.mock("../../../api/dispatch", () => ({
@@ -50,18 +54,23 @@ vi.mock("../../../api/dispatch", () => ({
   syncCustomerNotify: vi.fn(),
 }));
 
-function wrap(ui: ReactNode) {
+function wrap(ui: ReactNode, initialEntries: string[] = ["/"]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       {/* ToastProvider: the page (or a child it gained) calls useToast, so every render threw
           "useToast must be used inside ToastProvider" and the test died before a single assertion.
           The app always renders this inside the provider; the harness was the unrealistic part. */}
-      <MemoryRouter>
+      <MemoryRouter initialEntries={initialEntries}>
         <ToastProvider>{ui}</ToastProvider>
       </MemoryRouter>
     </QueryClientProvider>
   );
+}
+
+function NavigateToSecondCustomer() {
+  const navigate = useNavigate();
+  return <button onClick={() => navigate("/dispatch/notify-preferences?customer_id=cust-2")}>Open customer two</button>;
 }
 
 describe("NotifyPreferencesPage (B21-D9)", () => {
@@ -81,5 +90,20 @@ describe("NotifyPreferencesPage (B21-D9)", () => {
     expect(await screen.findByTestId("notify-log-log-1")).toBeTruthy();
     expect(screen.getByText("email-abc")).toBeTruthy();
     expect(screen.getByText("sent")).toBeTruthy();
+  });
+
+  it("updates the customer picker when a mounted reverse drill changes customer_id", async () => {
+    wrap(
+      <>
+        <NavigateToSecondCustomer />
+        <NotifyPreferencesPage />
+      </>,
+      ["/dispatch/notify-preferences?customer_id=cust-1"],
+    );
+    expect(await screen.findByTestId("mock-notify-customer-picker")).toHaveTextContent("cust-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "Open customer two" }));
+
+    await waitFor(() => expect(screen.getByTestId("mock-notify-customer-picker")).toHaveTextContent("cust-2"));
   });
 });

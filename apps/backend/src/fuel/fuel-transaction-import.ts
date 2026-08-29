@@ -323,6 +323,7 @@ export async function resolveLoadId(
       JOIN mdata.load_stops s ON s.load_id = l.id
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
+        AND s.soft_deleted_at IS NULL
         AND (
           ($2::uuid IS NOT NULL AND l.assigned_unit_id = $2::uuid)
           OR ($3::uuid IS NOT NULL AND (
