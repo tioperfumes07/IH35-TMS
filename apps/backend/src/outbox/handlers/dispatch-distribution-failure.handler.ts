@@ -61,10 +61,16 @@ export class DispatchDistributionFailureHandler implements OutboxEventHandler {
 
     // Owner AND Dispatcher: the Owner owns the risk, the Dispatcher is who actually calls the driver.
     const recipients = await ctx.client.query<{ id: string }>(
-      `SELECT id::text AS id
-         FROM identity.users
-        WHERE role::text IN ('Owner', 'Dispatcher')
-          AND deactivated_at IS NULL`
+      `SELECT DISTINCT u.id::text AS id
+         FROM identity.users u
+         LEFT JOIN org.user_company_access uca
+           ON uca.user_id = u.id
+          AND uca.company_id = $1::uuid
+          AND uca.deactivated_at IS NULL
+        WHERE u.role::text IN ('Owner', 'Dispatcher')
+          AND u.deactivated_at IS NULL
+          AND (u.default_company_id = $1::uuid OR uca.user_id IS NOT NULL)`,
+      [operatingCompanyId]
     );
     if (recipients.rows.length === 0) {
       throw new Error("distribution_failure_no_active_recipient");
@@ -79,7 +85,7 @@ export class DispatchDistributionFailureHandler implements OutboxEventHandler {
 
     let delivered = 0;
     for (const recipient of recipients.rows) {
-      await createNotification(
+      const notification = await createNotification(
         {
           operating_company_id: operatingCompanyId,
           user_id: recipient.id,
@@ -94,6 +100,9 @@ export class DispatchDistributionFailureHandler implements OutboxEventHandler {
         },
         ctx.client
       );
+      if (!notification?.id) {
+        throw new Error(`distribution_failure_notification_insert_returned_no_identity:${recipient.id}`);
+      }
       delivered += 1;
     }
 

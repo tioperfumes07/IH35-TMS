@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7168 | CLAIM=distribution-failure-alert-cross-company+zero-row-success | SOURCE=notifications.user_notifications.id+event operating_company_id | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7167 | PR=#17318 @ 6f6e80de02 | Built=persisted notice identity required before delivery ACK | Live=post-deploy UNVERIFIED | NEXT=distribution-failure alert durability | GO
 Codex | WORKING | DSP-F7162 | CLAIM=load-instructions-nonatomic-storage+precommit-email | SOURCE=docs.files+file_links+load backlink+R2 | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7161 | PR=#17291 @ ffe74e4f15 | Built=typed canonical ratecon audit persistence | Live=post-deploy UNVERIFIED | NEXT=load instruction distribution lifecycle | GO
 Codex | WORKING | DSP-F7161 | CLAIM=ratecon-extraction-unchecked-audit-identity | SOURCE=dispatch.ratecon_extractions.id | NEXT=guard+FAST-MERGE | GO
