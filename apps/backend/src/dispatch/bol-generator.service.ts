@@ -5,6 +5,7 @@ import Handlebars from "handlebars";
 import puppeteer from "puppeteer";
 import crypto from "node:crypto";
 import type { PoolClient } from "pg";
+import { appendCrudAudit } from "../audit/crud-audit.js";
 import { deleteObjectBytes, putObjectBytes, isR2Configured } from "../storage/r2-client.js";
 
 export type BolStopRow = {
@@ -262,7 +263,7 @@ export async function storeBolDocument(
   client: PoolClient,
   operatingCompanyId: string,
   loadId: string,
-  userId: string | null,
+  userId: string,
   pdfBuffer: Buffer,
   sha256: string,
   templateVersion: string
@@ -284,6 +285,14 @@ export async function storeBolDocument(
     );
     const stored = res.rows[0];
     if (!stored?.id) throw new Error("bol_document_create_failed");
+    await appendCrudAudit(client, userId, "dispatch.bol.generated", {
+      operating_company_id: operatingCompanyId,
+      bol_id: stored.id,
+      load_id: loadId,
+      pdf_r2_key: r2Key,
+      sha256,
+      template_version: templateVersion,
+    });
     return stored;
   } catch (error) {
     try {
@@ -295,7 +304,7 @@ export async function storeBolDocument(
   }
 }
 
-export async function generateAndStoreBol(client: PoolClient, operatingCompanyId: string, loadId: string, userId: string | null) {
+export async function generateAndStoreBol(client: PoolClient, operatingCompanyId: string, loadId: string, userId: string) {
   const payload = await fetchBolPayload(client, operatingCompanyId, loadId);
   if (!payload) return null;
   const rendered = await generateBolPdf(payload);
