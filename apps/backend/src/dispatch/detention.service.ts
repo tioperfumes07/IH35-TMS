@@ -254,12 +254,16 @@ export async function closeDetentionEvent(
             accrued_minutes = $4,
             accrued_amount_cents = $5,
             updated_at = now()
-        WHERE id = $1 AND operating_company_id = $2::uuid
+        WHERE id = $1
+          AND operating_company_id = $2::uuid
+          AND status = 'accruing'
         RETURNING *
       `,
       [eventId, operatingCompanyId, stopAt, billable, amount]
     );
-    return { ok: true as const, event: updated.rows[0] };
+    const closedEvent = updated.rows[0];
+    if (!closedEvent) return { ok: false as const, error: "not_accruing" as const };
+    return { ok: true as const, event: closedEvent };
   });
 }
 
