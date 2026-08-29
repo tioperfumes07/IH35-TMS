@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../../../auth/useAuth";
-import { runRelayFuelBackfill } from "../../../api/relayDeposits";
+import { getRelayFuelBackfillStatus, runRelayFuelBackfill } from "../../../api/relayDeposits";
 
 // B3a — Owner-only "Import Relay history" control. The daily cron only pulls yesterday; this triggers the
 // historical backfill (3-day windows, idempotent + resumable) so the owner can seed full history in-app
@@ -12,6 +13,12 @@ export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId:
   const [state, setState] = useState<"idle" | "starting" | "started" | "error">("idle");
   const [msg, setMsg] = useState("");
   const lifecycleGenerationRef = useRef(0);
+  const statusQuery = useQuery({
+    queryKey: ["relay", "fuel-backfill-status", operatingCompanyId],
+    queryFn: () => getRelayFuelBackfillStatus(operatingCompanyId),
+    enabled: Boolean(operatingCompanyId) && user?.role === "Owner",
+    refetchInterval: (query) => query.state.data?.run?.status === "running" ? 3_000 : false,
+  });
 
   useEffect(() => {
     lifecycleGenerationRef.current += 1;
@@ -34,9 +41,8 @@ export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId:
       const res = await runRelayFuelBackfill(request.companyId, request.months);
       if (request.generation !== lifecycleGenerationRef.current) return;
       setState("started");
-      setMsg(
-        `Backfill started for the last ${res.months} month(s), pulled in 3-day windows. Rows appear in Fuel transactions as each window completes — refresh to watch progress.`
-      );
+      setMsg(`Backfill started for the last ${res.months} month(s). Progress updates here automatically.`);
+      await statusQuery.refetch();
     } catch (e) {
       if (request.generation !== lifecycleGenerationRef.current) return;
       setState("error");
@@ -62,13 +68,21 @@ export function RelayHistoryImport({ operatingCompanyId }: { operatingCompanyId:
         <button
           type="button"
           onClick={onImport}
-          disabled={state === "starting"}
+          disabled={state === "starting" || statusQuery.data?.run?.status === "running"}
           className="rounded-sm border border-gray-300 px-2 py-0.5 font-semibold text-gray-800 hover:bg-gray-50 disabled:opacity-50"
         >
-          {state === "starting" ? "Starting…" : "Import"}
+          {state === "starting" || statusQuery.data?.run?.status === "running" ? "Running…" : "Import"}
         </button>
       </div>
       {msg ? <div className={`mt-1 ${state === "error" ? "text-red-700" : "text-gray-600"}`}>{msg}</div> : null}
+      {statusQuery.isError ? <div className="mt-1 text-red-700">Backfill status unavailable.</div> : null}
+      {statusQuery.data?.run ? (
+        <div className={`mt-1 ${statusQuery.data.run.status === "failed" ? "text-red-700" : "text-gray-600"}`} data-testid="relay-backfill-status">
+          Status: {statusQuery.data.run.status}
+          {statusQuery.data.run.status === "completed" ? ` · ${statusQuery.data.run.upserted ?? 0} row(s) processed` : ""}
+          {statusQuery.data.run.error ? ` · ${statusQuery.data.run.error}` : ""}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -71,7 +71,11 @@ export function toPublicHealthErrorCode(error: unknown): string {
   return HEALTH_ERROR_GENERIC;
 }
 
-/** Full-fidelity server-side record of what the public body deliberately omits. */
+/** Full-fidelity server-side record of what the public body deliberately omits.
+ * H4 RUNBOOK: GET /healthz/shallow is not a check verdict (always ok). Full GET /healthz
+ * exposes only publicCode (stale_jobs | qbo_oauth_invalid). Job names + ages + oauth
+ * counts are here: filter Render logs for health_check_failed. Do not ARM
+ * IH35_QBO_JOB_HEALTH_ARMED to "fix" invalid_grant — owner QBO re-auth. */
 function logHealthCheckFailure(name: string, tier: HealthCheck["tier"], durationMs: number, error: unknown): void {
   logger.error("health_check_failed", error, {
     check: name,
@@ -232,6 +236,36 @@ async function checkQboSyncAlertsDepth(): Promise<void> {
   });
 }
 
+/**
+ * H4 split (CC-2 2026-08-29): job-stale inbound/CDC may be dormant under USMCA-only.
+ * Connected realms with needs_reauth_at / invalid_grant are a different truth — do not
+ * hide them by unarming job freshness. Public code only; realm ids stay in the log.
+ * Owner re-auth in QBO (no coder can exchange tokens). Do NOT set IH35_QBO_JOB_HEALTH_ARMED
+ * to "fix" OAuth.
+ */
+async function checkQboOauthNeedsReauth(): Promise<void> {
+  await withLuciaBypass(async (client) => {
+    const reg = await client.query(`SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`);
+    if (!reg.rows[0]?.ok) return;
+    const res = await promiseTimeout(
+      client.query<{ c: string }>(
+        `SELECT COUNT(*)::bigint AS c
+           FROM integrations.qbo_connections
+          WHERE revoked_at IS NULL
+            AND (
+              needs_reauth_at IS NOT NULL
+              OR COALESCE(last_refresh_error, '') ILIKE '%invalid_grant%'
+            )`
+      ),
+      120
+    );
+    const c = Number(res.rows[0]?.c ?? 0);
+    if (c > 0) {
+      throw new HealthCheckError("qbo_oauth_invalid", String(c));
+    }
+  });
+}
+
 async function checkEmailQueueDepth(): Promise<void> {
   await withLuciaBypass(async (client) => {
     const reg = await client.query(`SELECT to_regclass('email.email_queue') IS NOT NULL AS ok`);
@@ -262,16 +296,73 @@ function envEnabled(name: string): boolean {
   return v === "true";
 }
 
+/** QBO jobs by name prefix (not Samsara / bank / TMS money crons). */
+export function isQboBackgroundJob(jobName: string): boolean {
+  return (
+    jobName.startsWith("qbo.") ||
+    jobName.startsWith("qbo_sync.") ||
+    jobName.startsWith("integrations.qbo") ||
+    jobName.startsWith("sync.qbo_") ||
+    jobName.startsWith("reconciliation.qbo_")
+  );
+}
+
+/**
+ * GO-0105-R1: ARM is an override (force QBO-named jobs through per-job rules even when
+ * there is no connection row). It is NEVER the only gate. An active connection with
+ * needs_reauth_at must still fail healthz (entity names in the logged stale_jobs detail).
+ */
+export function qboJobHealthArmed(): boolean {
+  return process.env.IH35_QBO_JOB_HEALTH_ARMED === "true";
+}
+
+export type QboJobHealthEvidence = {
+  anyActiveConnection: boolean;
+  needsReauthLabels: string[];
+};
+
+export function coerceQboJobHealthEvidence(
+  arg: boolean | QboJobHealthEvidence | undefined
+): QboJobHealthEvidence {
+  if (arg && typeof arg === "object") {
+    return {
+      anyActiveConnection: Boolean(arg.anyActiveConnection),
+      needsReauthLabels: [...(arg.needsReauthLabels ?? [])],
+    };
+  }
+  return { anyActiveConnection: Boolean(arg), needsReauthLabels: [] };
+}
+
+/** Planted: active + needs_reauth_at ⇒ not dormant (must still fail the check). */
+export function qboNamedJobsAreDormant(ev: QboJobHealthEvidence): boolean {
+  if (ev.needsReauthLabels.length > 0) return false;
+  if (qboJobHealthArmed()) return false;
+  return !ev.anyActiveConnection;
+}
+
 // A1-1 (observability): the QBO master-data mirror-staleness alarm must NOT self-disable.
 // It was gated only on QBO_MASTERDATA_SYNC_ENABLED, so with the sync flag OFF the staleness
 // check was skipped entirely — a stale/broken QBO mirror never alarmed even while a realm was
 // live-connected. `qboRealmConnected` (any non-revoked integrations.qbo_connections row) now
 // arms the mirror-health alarm independently of the sync flag: connected realm ⇒ a stale mirror
 // always surfaces; no connected realm ⇒ still silent (correct).
+// H4 R1: dormancy is per-connection (no row → dormant; needs_reauth_at → alarm + name entity).
 export function backgroundJobRule(
   jobName: string,
-  qboRealmConnected: boolean
-): { enabled: boolean; maxStaleMinutes: number } | null {
+  qboRealmConnectedOrEvidence: boolean | QboJobHealthEvidence = false
+): { enabled: boolean; maxStaleMinutes: number; dormantReason?: string } | null {
+  const evidence = coerceQboJobHealthEvidence(qboRealmConnectedOrEvidence);
+  const qboRealmConnected = evidence.anyActiveConnection;
+  if (
+    (jobName === "integrations.qbo_inbound_sync" ||
+      jobName === "integrations.qbo_cdc_poll" ||
+      jobName === "sync.qbo_vendors_push" ||
+      jobName === "sync.qbo_customers_push" ||
+      jobName === "sync.qbo_accounts_push") &&
+    qboNamedJobsAreDormant(evidence)
+  ) {
+    return { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_connection_for_entity" };
+  }
   switch (jobName) {
     // ── OPS-F76 — the 8 jobs OPS-F75 deliberately skipped, now paired BY HAND ──────────────────────
     //
@@ -528,19 +619,29 @@ export function backgroundJobRule(
       // Daily 08:00 CT (payment-reminder.service.ts) — insurance payment schedule. 26h window.
       return { enabled: true, maxStaleMinutes: 1560 };
     case "integrations.qbo_inbound_sync":
-      // 15s interval, always armed (index.ts) — pulls QBO changes. 30m window (thousands of ticks/window).
-      return { enabled: true, maxStaleMinutes: 30 };
+      // H4: no connected realm ⇒ dormant-by-design (USMCA QBO off / no write-back), not "stale".
+      // A permanently-yellow check trains operators to ignore healthz.
+      return qboRealmConnected
+        ? { enabled: true, maxStaleMinutes: 30 }
+        : { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_realm_connected" };
     case "integrations.qbo_cdc_poll":
-      // 5m interval, always armed (index.ts) — QBO change-data-capture poll. 30m window.
-      return { enabled: true, maxStaleMinutes: 30 };
+      return qboRealmConnected
+        ? { enabled: true, maxStaleMinutes: 30 }
+        : { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_realm_connected" };
     case "sync.qbo_vendors_push":
-      // 60s interval (qbo-vendors-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_VENDORS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     case "sync.qbo_customers_push":
-      // 60s interval (qbo-customers-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_CUSTOMERS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     case "sync.qbo_accounts_push":
-      // 60s interval (qbo-accounts-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_ACCOUNTS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     default:
       return null;
@@ -552,10 +653,8 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     const reg = await client.query(`SELECT to_regclass('_system.background_jobs') IS NOT NULL AS ok`);
     if (!reg.rows[0]?.ok) return;
 
-    // A1-1: is any QBO realm currently connected (non-revoked)? Arms the mirror-staleness alarm
-    // independently of the sync-enabled flag. withLuciaBypass reads across companies via the
-    // policy bypass (migration 0082), so this sees every realm regardless of tenant scope.
-    let qboRealmConnected = false;
+    // A1-1 + H4 R1: per-connection evidence (not a global ARM flag).
+    const qboEvidence: QboJobHealthEvidence = { anyActiveConnection: false, needsReauthLabels: [] };
     const connReg = await client.query(
       `SELECT to_regclass('integrations.qbo_connections') IS NOT NULL AS ok`
     );
@@ -563,7 +662,16 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       const conn = await client.query<{ connected: boolean | null }>(
         `SELECT bool_or(revoked_at IS NULL) AS connected FROM integrations.qbo_connections`
       );
-      qboRealmConnected = Boolean(conn.rows[0]?.connected);
+      qboEvidence.anyActiveConnection = Boolean(conn.rows[0]?.connected);
+      const reauth = await client.query<{ code: string }>(
+        `SELECT oc.code
+           FROM integrations.qbo_connections qc
+           JOIN org.companies oc ON oc.id = qc.operating_company_id
+          WHERE qc.revoked_at IS NULL
+            AND qc.needs_reauth_at IS NOT NULL
+          ORDER BY oc.code`
+      );
+      qboEvidence.needsReauthLabels = reauth.rows.map((r) => r.code);
     }
 
     const res = await client.query<{ job_name: string; last_successful_run_at: string | null }>(
@@ -584,9 +692,15 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     // anonymous caller sees, so the distinction costs nothing in exposure.
     const neverSucceeded: string[] = [];
     const late: string[] = [];
+    for (const label of qboEvidence.needsReauthLabels) {
+      late.push(`${label}:needs_reauth`);
+    }
     for (const row of res.rows) {
-      const rule = backgroundJobRule(row.job_name, qboRealmConnected);
+      const rule = backgroundJobRule(row.job_name, qboEvidence);
       const mins = minutesSinceIso(row.last_successful_run_at);
+
+      // H4 — dormant-by-design must not appear as never_succeeded or stale.
+      if (rule?.dormantReason && rule.enabled === false) continue;
 
       // OPS-F69 — NEVER-SUCCEEDED NEEDS NO RULE.
       //
@@ -618,6 +732,10 @@ async function checkBackgroundJobStaleness(): Promise<void> {
     // Never-succeeded outranks late: report the more serious condition when both are present, and
     // carry BOTH lists in the logged detail so nothing is hidden by the precedence.
     const detail = [...neverSucceeded, ...late].join("|");
+    // GO-0105-R1: token-dead active realms must publish stale_jobs (entity:needs_reauth in the log).
+    if (qboEvidence.needsReauthLabels.length > 0) {
+      throw new HealthCheckError("stale_jobs", detail);
+    }
     if (neverSucceeded.length > 0) {
       throw new HealthCheckError("never_succeeded_jobs", detail);
     }
@@ -625,6 +743,15 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       throw new HealthCheckError("stale_jobs", detail);
     }
   });
+}
+
+/** H3 — error pipeline cannot die silently. Production without DSN is unconfigured, not "no errors". */
+async function checkSentryHeartbeat(): Promise<void> {
+  const onRender = Boolean(process.env.RENDER === "true" || process.env.RENDER_GIT_COMMIT?.trim());
+  if (!onRender && process.env.NODE_ENV !== "production") return;
+  if (!process.env.SENTRY_DSN?.trim()) {
+    throw new HealthCheckError("sentry_unconfigured", "SENTRY_DSN missing");
+  }
 }
 
 export function resolveBackendVersion(): string {
@@ -645,8 +772,10 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
 
   const warningFns = [
     () => timed("qbo.sync_alerts.unresolved_depth", "warning", checkQboSyncAlertsDepth),
+    () => timed("qbo.connections.oauth", "warning", checkQboOauthNeedsReauth),
     () => timed("email.queue.depth", "warning", checkEmailQueueDepth),
     () => timed("background_jobs.stale", "warning", checkBackgroundJobStaleness),
+    () => timed("sentry.heartbeat", "warning", checkSentryHeartbeat),
   ];
 
   const critical = await Promise.all(criticalFns.map((fn) => fn()));

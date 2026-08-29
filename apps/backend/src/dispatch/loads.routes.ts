@@ -1752,7 +1752,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             -- Units panel rendered "T171 · · Need load": two separators around an empty field. 50 units on
             -- prod have no assigned driver, so this was every row in the panel.
             NULLIF(CONCAT_WS(' ', ud.first_name, ud.last_name), '') AS driver_name,
-            MAX(ls.actual_departure_at) AS last_drop_at,
+            last_delivery.last_drop_at,
             -- LIVE location for EVERY unit (Jorge: show it whether dispatched or not). Reverse-geo'd
             -- city/state come from the Samsara stats ingest via telematics.vehicle_latest_position
             -- (the same source that powers the fleet board) — NOT positions/latest, which lacks city/state.
@@ -1795,7 +1795,22 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
              ORDER BY e.updated_at DESC NULLS LAST, e.id
              LIMIT 1
           ) tr ON true
-          LEFT JOIN mdata.load_stops ls ON ls.load_id = l.id
+          -- The active-load join above MUST remain null for an available unit, so delivery history
+          -- cannot be derived through the active-load alias. The old MAX(actual_departure_at) did exactly that and
+          -- made every available unit's last_drop_at null forever. Derive the last completed delivery
+          -- independently from the unit's historical loads instead.
+          LEFT JOIN LATERAL (
+            SELECT MAX(delivery_stop.actual_departure_at) AS last_drop_at
+              FROM mdata.loads delivered_load
+              JOIN mdata.load_stops delivery_stop
+                ON delivery_stop.load_id = delivered_load.id
+               AND delivery_stop.stop_type = 'delivery'
+               AND delivery_stop.soft_deleted_at IS NULL
+             WHERE delivered_load.assigned_unit_id = u.id
+               AND delivered_load.operating_company_id = $1::uuid
+               AND delivered_load.soft_deleted_at IS NULL
+               AND delivery_stop.actual_departure_at IS NOT NULL
+          ) last_delivery ON true
           LEFT JOIN telematics.vehicle_latest_position p
             ON p.unit_id = u.id
             AND p.operating_company_id = COALESCE(u.currently_leased_to_company_id, u.owner_company_id)
@@ -1810,8 +1825,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             AND u.status = 'InService'::mdata.unit_status
             AND l.id IS NULL
           GROUP BY u.id, u.unit_number, tr.id, tr.equipment_number, ud.id, ud.first_name, ud.last_name,
+            last_delivery.last_drop_at,
             p.city, p.state, p.formatted_location, p.lat, p.lng, p.captured_at
-          ORDER BY COALESCE(MAX(ls.actual_departure_at), now() - interval '999 days') ASC
+          ORDER BY COALESCE(last_delivery.last_drop_at, now() - interval '999 days') ASC
         `,
         [operatingCompanyId]
       );

@@ -789,5 +789,26 @@
     "source_file": "docs/lockdown/SUBSCRIPTION-GRADE-DEFINITION-OF-DONE-2026-08-29.md",
     "guard": "scripts/verify-derived-artifact-freshness.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-29-HONESTY-POSTING-ACCOUNT-CONTRACT",
+    "title": "Every GL posting path has a machine-checkable contract (account_role, DR=CR). A posting path with no contract entry FAILS. Scenario je: is a caption; je_contract is the check. Tracker will not stamp done on join n>0.",
+    "source_file": "docs/lockdown/HONESTY-PROGRAM-2026-08-29.md",
+    "guard": "scripts/verify-posting-hits-designed-accounts.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-29-HONESTY-GENERATED-ARTIFACT-REGISTRY",
+    "title": "Every stored generated artifact is in DERIVED-ARTIFACTS or GENERATED-ARTIFACT-EXEMPT. Unregistered generated files FAIL.",
+    "source_file": "docs/specs/GENERATED-ARTIFACT-EXEMPT.json",
+    "guard": "scripts/verify-generated-artifact-registry.mjs",
+    "type": "enforced"
+  },
+  {
+    "id": "LAW-2026-08-29-HONESTY-REVERSAL-SYMMETRY-REGISTRY",
+    "title": "C28 reversal_symmetry is registry-driven from POSTING-CONTRACTS. Drawn is not computed. Live restore after SCEN-01 chains.",
+    "source_file": "docs/specs/accounting/POSTING-CONTRACTS.json",
+    "guard": "scripts/verify-reversal-symmetry.mjs",
+    "type": "enforced"
   }
 ]

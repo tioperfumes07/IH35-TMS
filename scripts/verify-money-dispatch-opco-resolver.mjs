@@ -62,6 +62,21 @@ const SYSTEM_DERIVED_ALLOWLIST = [
     fragment: '"/api/v1/mdata/loads/:id", { config',
     reason: "office load-fields PATCH: the load row is fetched via `operating_company_id IN (SELECT org.user_accessible_company_ids())` (membership gate) BEFORE any write, then the downstream hazmat-check and driver-assignment-gate queries scope on oldRow.operating_company_id — the row's own column, never a client-supplied value. Same shape as the /status sibling entry above.",
   },
+  {
+    file: "dispatch/driver-pwa/dispatch-view.routes.ts",
+    fragment: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/arrival",
+    reason: "driver PWA: identical shape to the /document sibling above — stop.operating_company_id comes from a stopRes query that JOINs mdata.drivers ON drv.id = $3 (the SESSION driver, from requireDriverSession) AND (drv.operating_company_id = l.operating_company_id OR an active driver_company_authorizations row), further gated by l.assigned_primary_driver_id = $3 OR l.assigned_secondary_driver_id = $3 — the row's own column via a driver-membership-gated JOIN, never a client-supplied value. Previously undetected only because this handler's route path is declared on its own line (with a comment before the config object) rather than inline with .post(, which the old single-line head extraction silently dropped — see the extractHandlers fix above, not a new code change to this route.",
+  },
+  {
+    file: "dispatch/driver-pwa/dispatch-view.routes.ts",
+    fragment: "/api/dispatch/driver-pwa/load/:uuid/stops/:stop_uuid/departure",
+    reason: "driver PWA: same shape as the /arrival entry immediately above (same file, same stopRes driver-membership-gated JOIN pattern, same multi-line declaration style that the head-extraction fix now handles).",
+  },
+  {
+    file: "dispatch/intransit-issues.routes.ts",
+    fragment: '"/api/v1/dispatch/intransit-issues", { config',
+    reason: "driver PWA: assignment.operating_company_id comes from an assignmentRes query joining mdata.loads to mdata.drivers ON d.identity_user_id = $1::uuid (the authenticated user) AND d.id IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id) — the load's own row via a driver-assignment-gated JOIN, never a client-supplied value (the route's own comment already states this: 'Derive it from the assigned load, never a mutable/default company selection').",
+  },
 ];
 
 function listRouteFiles() {
@@ -96,10 +111,21 @@ function extractHandlers(src) {
       if (c === "{") depth++;
       else if (c === "}" && --depth === 0) break;
     }
+    // head must capture the route PATH for SYSTEM_DERIVED_ALLOWLIST fragment matching. A route
+    // registered on one line ("app.post(\"/path\", { config }, async (req, reply) => {") has its
+    // path on the same line as the match, but a route split across lines (path, then a comment,
+    // then the options object, each on its own line — a real, existing style in this codebase,
+    // e.g. dispatch-view.routes.ts's arrival/departure handlers) had its path silently dropped by
+    // a bare "up to the next newline" slice, so no allowlist fragment could ever match it and every
+    // multi-line-declared SYSTEM_DERIVED route false-positived here. Fix: slice everything from the
+    // method call up to the handler's own "=> {" (never past it — that would pull in unrelated body
+    // text), collapse whitespace so line breaks/comments don't fragment the path string, then cap
+    // the length the same way as before.
+    const headRaw = src.slice(from, arrow);
     handlers.push({
       body: src.slice(open, end + 1),
       line: src.slice(0, from).split("\n").length,
-      head: src.slice(from, src.indexOf("\n", from)).trim().slice(0, 100),
+      head: headRaw.replace(/\s+/g, " ").trim().slice(0, 200),
     });
   }
   return handlers;

@@ -12,7 +12,7 @@ function audit(text) {
   need(/disabled=\{!destinationValid\}/.test(text), "Compute must be disabled until destination is valid");
   need(/mutation\.reset\(\)/.test(text), "editing must clear stale result/error state");
   need(/aria-describedby="vp-trip-cost-status"/.test(text) && /aria-live="polite"/.test(text), "input must reference an announced status region");
-  need(/mutation\.isError/.test(text) && /role="alert"/.test(text), "API failure must render a visible alert");
+  need(/\{requestError \?[\s\S]{0,220}role="alert"/.test(text), "API failure must render a visible alert");
   need(/Couldn&apos;t compute trip cost/.test(text), "failure message must describe the failed action");
   return failures;
 }
@@ -27,9 +27,9 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     source.replace("destination.trim().length >= 3", "destination.length >= 0"),
     source.replace("disabled={!destinationValid}", "disabled={false}"),
-    source.replace("mutation.reset();", ""),
+    source.replaceAll("mutation.reset();", ""),
     source.replace('aria-live="polite"', 'aria-live="off"'),
-    source.replace("mutation.isError", "false"),
+    source.replace("{requestError ?", "{false ?"),
     source.replace("Couldn&apos;t compute trip cost", "Request failed"),
   ];
   for (const [index, mutation] of mutations.entries()) {

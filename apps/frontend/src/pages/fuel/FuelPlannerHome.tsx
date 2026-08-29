@@ -218,6 +218,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
 
   const activeRoutes = activeRoutesQuery.data?.routes ?? [];
   const activeRouteTotal = activeRoutesQuery.data?.total_count ?? 0;
+  const plannerSourceAvailable = activeRoutesQuery.data?.source_available !== false;
   const activeRoutePageCount = Math.max(1, Math.ceil(activeRouteTotal / activeRoutePageSize));
   const activeRoute = activeRoutes.find((route) => route.id === selectedActiveRouteId) ?? activeRoutes[0] ?? null;
   const activeRouteOptions = activeRoutes.map((route) => ({
@@ -393,11 +394,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
             </div>
           ) : (
             <SavingsPanel
-              driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-              fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
-              lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
-              topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
-              topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+              sourceAvailable={Boolean(savingsQuery.data?.source_available)}
+              driverSavings={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
+              fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}
+              lostSavings={savingsQuery.data?.fleet_lost_savings_ytd ?? null}
+              topDriverName={(savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? null}
+              topDriverAmount={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
             />
           )}
           <section className="rounded-sm border border-gray-200 bg-white p-4">
@@ -536,9 +538,10 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <ListErrorBanner onRetry={() => void complianceQuery.refetch()} />
         ) : (
           <CompliancePanel
+            sourceAvailable={Boolean(complianceQuery.data?.source_available)}
             sentToDriverAt={activeRoute?.computed_at ?? null}
-            fleetPct={Number(complianceQuery.data?.fleet_pct_followed ?? 0)}
-            fleetTotalRecommendations={Number(complianceQuery.data?.fleet_total_recommendations ?? 0)}
+            fleetPct={complianceQuery.data?.fleet_pct_followed ?? null}
+            fleetTotalRecommendations={complianceQuery.data?.fleet_total_recommendations ?? null}
             driverPct={driverPct}
           />
         )
@@ -566,22 +569,22 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                   value={activeRoute?.id ?? null}
                   onChange={setSelectedActiveRouteId}
                   options={activeRouteOptions}
-                  placeholder={activeRoutesQuery.isLoading ? "Loading active plans…" : "Select an active load plan"}
+                  placeholder={activeRoutesQuery.isLoading ? "Loading active plans…" : !plannerSourceAvailable ? "Fuel planner source is not available" : "Select an active load plan"}
                   loading={activeRoutesQuery.isLoading}
-                  disabled={activeRoutesQuery.isError || activeRoutes.length === 0}
+                  disabled={activeRoutesQuery.isError || !plannerSourceAvailable || activeRoutes.length === 0}
                   className="mt-1"
                 />
               </label>
               <div className="flex items-center gap-2 text-xs text-slate-600">
                 <ActionButton
-                  disabled={activeRoutePage <= 1 || activeRoutesQuery.isFetching}
+                  disabled={!plannerSourceAvailable || activeRoutePage <= 1 || activeRoutesQuery.isFetching}
                   onClick={() => setActiveRoutePage((page) => Math.max(1, page - 1))}
                 >
                   Previous plans
                 </ActionButton>
-                <span>Page {activeRoutePage} of {activeRoutePageCount} · {activeRouteTotal} active plans</span>
+                <span>{plannerSourceAvailable ? `Page ${activeRoutePage} of ${activeRoutePageCount} · ${activeRouteTotal} active plans` : "Fuel planner source not available"}</span>
                 <ActionButton
-                  disabled={activeRoutePage >= activeRoutePageCount || activeRoutesQuery.isFetching}
+                  disabled={!plannerSourceAvailable || activeRoutePage >= activeRoutePageCount || activeRoutesQuery.isFetching}
                   onClick={() => setActiveRoutePage((page) => Math.min(activeRoutePageCount, page + 1))}
                 >
                   Next plans
@@ -644,9 +647,10 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
 
           <div className="grid grid-cols-1 gap-2 xl:grid-cols-2">
             <CompliancePanel
+              sourceAvailable={Boolean(complianceQuery.data?.source_available)}
               sentToDriverAt={activeRoute?.computed_at ?? null}
-              fleetPct={Number(complianceQuery.data?.fleet_pct_followed ?? 0)}
-              fleetTotalRecommendations={Number(complianceQuery.data?.fleet_total_recommendations ?? 0)}
+              fleetPct={complianceQuery.data?.fleet_pct_followed ?? null}
+              fleetTotalRecommendations={complianceQuery.data?.fleet_total_recommendations ?? null}
               driverPct={driverPct}
             />
             {savingsQuery.isError ? (
@@ -655,11 +659,12 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
               </div>
             ) : (
               <SavingsPanel
-                driverSavings={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
-                fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}
-                lostSavings={Number(savingsQuery.data?.fleet_lost_savings_ytd ?? 0)}
-                topDriverName={String((savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? "n/a")}
-                topDriverAmount={Number((savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? 0)}
+                sourceAvailable={Boolean(savingsQuery.data?.source_available)}
+                driverSavings={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
+                fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}
+                lostSavings={savingsQuery.data?.fleet_lost_savings_ytd ?? null}
+                topDriverName={(savingsQuery.data?.top_driver?.driver_name as string | undefined) ?? null}
+                topDriverAmount={(savingsQuery.data?.top_driver?.savings_ytd as number | undefined) ?? null}
               />
             )}
           </div>

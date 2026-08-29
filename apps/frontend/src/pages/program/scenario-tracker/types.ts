@@ -11,6 +11,11 @@ export type ScenarioTrackerItem = {
   evidence?: string;
   doing?: string;
   je?: string;
+  je_contract?: {
+    source_type?: string | null;
+    lines: Array<{ side: "DR" | "CR"; account_role: string; account_code_any_of?: string[] }>;
+    must_balance: true;
+  } | null;
   spec_ref?: string;
   trigger?: string;
   links?: string;

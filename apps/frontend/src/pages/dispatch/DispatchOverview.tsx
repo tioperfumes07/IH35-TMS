@@ -21,7 +21,6 @@ import {
 import { DataPanel } from "../../components/layout/DataPanel";
 import { DataPanelRow } from "../../components/layout/DataPanelRow";
 import { colors, spacing, typography } from "../../design/tokens";
-import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 
 type Props = {
@@ -268,6 +267,10 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     () => unitsWithoutLoad.filter((unit) => unit.last_drop_at != null).length,
     [unitsWithoutLoad]
   );
+  const returnUnits = useMemo(
+    () => unitsWithoutLoad.filter((unit) => unit.last_drop_at != null),
+    [unitsWithoutLoad]
+  );
 
   const atRiskCount = atRiskQ.data?.loads?.length ?? 0;
   const lateCount = lateQ.data?.count ?? 0;
@@ -293,8 +296,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
 
   return (
     <div className="space-y-3" data-testid="dispatch-overview-page">
-      {/* B-A3: Active loads / At-risk / Units available → real panel routes. Units needing return has
-          no dedicated filtered view — honest disabled (not /dispatch?view=loads guess). */}
+      {/* Every derived KPI drills into the surface that exposes the exact rows behind the number. */}
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <KpiCard
           label="Active loads"
@@ -320,12 +322,31 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           label="Units needing return"
           value={unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? "—" : unitsNeedingReturn}
           hint="recent drop, no return booked"
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
+          to="/dispatch#units-needing-return"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div id="units-needing-return" data-testid="dispatch-units-needing-return-panel">
+          <DataPanel title="Units needing return" accentColor={colors.dispatch.strong}>
+            {unitsWithoutLoadQ.isLoading ? (
+              <PanelLoading />
+            ) : unitsWithoutLoadQ.isError ? (
+              PanelError("Couldn't load units needing return.", () => void unitsWithoutLoadQ.refetch())
+            ) : returnUnits.length === 0 ? (
+              PanelEmpty("No delivered units are waiting for a return load.")
+            ) : (
+              returnUnits.slice(0, PANEL_ROW_LIMIT).map((unit) => (
+                <PanelRow
+                  key={unit.id}
+                  unit={<EntityLinkOrTombstone kind="unit" id={unit.id} name={unit.unit_number} noun="Unit" />}
+                  driver={<EntityLinkOrTombstone kind="driver" id={unit.driver_id} name={unit.driver_name} noun="Driver" />}
+                  loadCustomer={`${unit.hours_since_last_delivery ?? "—"}h since delivery · Return load not booked`}
+                />
+              ))
+            )}
+          </DataPanel>
+        </div>
         <DataPanel title="Unassigned units" viewAllHref="/dispatch?view=loads" accentColor={colors.dispatch.strong}>
           {unitsWithoutLoadQ.isLoading ? (
             <PanelLoading />

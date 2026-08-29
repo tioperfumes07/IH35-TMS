@@ -1,0 +1,48 @@
+{
+  "finding": "DRIVER-F7332-IMPORT-PARTIAL-FAILURES-REPORTED-AS-CLEAN-SUCCESS",
+  "contracts": [
+    {
+      "id": "api_boundary",
+      "file": "apps/frontend/src/api/mdata.ts",
+      "required_tokens": [
+        "export type DriverImportPreviewResponse",
+        "export type DriverImportCommitResponse",
+        "created: number",
+        "row_errors: number",
+        "validateDriverImportResponse(payload, mode, operatingCompanyId)",
+        "Driver import commit response omitted its result counts",
+        "Driver import commit counts exceeded the reviewed create set"
+      ],
+      "forbidden_tokens": [
+        "created?: number",
+        "row_errors?: number"
+      ]
+    },
+    {
+      "id": "partial_commit_ui",
+      "file": "apps/frontend/src/pages/drivers/DriverImportModal.tsx",
+      "required_tokens": [
+        "if (res.row_errors > 0)",
+        "setCommitError(message)",
+        "setPreview(null)",
+        "if (res.created > 0) onImported()",
+        "Driver import completed with row errors",
+        "onRetry={() => void runPreview()}"
+      ],
+      "forbidden_tokens": [
+        "res.created ?? 0"
+      ]
+    },
+    {
+      "id": "boundary_tests",
+      "file": "apps/frontend/src/api/mdata.driver-import.test.ts",
+      "required_tokens": [
+        "missing counts",
+        "wrong company",
+        "wrong mode",
+        "impossible counts"
+      ],
+      "forbidden_tokens": []
+    }
+  ]
+}

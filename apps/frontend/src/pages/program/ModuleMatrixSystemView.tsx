@@ -748,6 +748,8 @@ export function ModuleMatrixSystemView() {
             {" "}
             · V1–V6 live asOf <code>{verifierRollup.asOf || "—"}</code> healthzSha{" "}
             <code>{verifierRollup.healthzSha || "—"}</code>
+            {" "}
+            · red V after prose-193 is live truth (not a frozen rollup)
           </span>
           {dataUpdatedAt ? (
             <>
