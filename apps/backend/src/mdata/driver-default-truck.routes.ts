@@ -165,19 +165,11 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error" });
     }
     const result = await withCurrentUser(user.uuid, async (client) => {
-      await client.query("BEGIN");
-      try {
-        await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
-        const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
-        if (!driverOk) {
-          await client.query("ROLLBACK");
-          return null;
-        }
-        const unitOk = await assertUnitScope(client, body.data.unit_id, query.data.operating_company_id);
-        if (!unitOk) {
-          await client.query("ROLLBACK");
-          return { error: "mdata_unit_not_found" as const };
-        }
+      await setScopedCompanyContext(client, user.uuid, query.data.operating_company_id);
+      const driverOk = await assertDriverScope(client, params.data.id, query.data.operating_company_id);
+      if (!driverOk) return null;
+      const unitOk = await assertUnitScope(client, body.data.unit_id, query.data.operating_company_id);
+      if (!unitOk) return { error: "mdata_unit_not_found" as const };
         await client.query(
           `UPDATE telematics.vehicle_driver_assignments
            SET ended_at = now()
@@ -211,13 +203,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
           unit_id: body.data.unit_id,
           assignment_id: assignmentId,
         });
-        const payload = await fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
-        await client.query("COMMIT");
-        return payload;
-      } catch (error) {
-        await client.query("ROLLBACK");
-        throw error;
-      }
+      return fetchTruckAssignments(client, params.data.id, query.data.operating_company_id);
     });
     if (!result) return reply.code(404).send({ error: "mdata_driver_not_found" });
     if ("error" in result) return reply.code(404).send({ error: result.error });
