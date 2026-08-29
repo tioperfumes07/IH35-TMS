@@ -129,12 +129,12 @@ const CHECKS = [
   {
     name: "profiles.drawer.background_check: BackgroundChecksSection real Modal drawer + DatePicker",
     file: "apps/frontend/src/components/safety/BackgroundChecksSection.tsx",
-    pattern: /<Modal variant="drawer" open=\{open\}[\s\S]{0,1500}DatePicker/,
+    pattern: /<Modal variant="drawer" open=\{open\}(?:(?!<\/Modal>)[\s\S])*DatePicker(?:(?!<\/Modal>)[\s\S])*<\/Modal>/,
   },
   {
     name: "profiles.drawer.medical_card: MedicalCardsHistorySection real Modal drawer + DatePicker",
     file: "apps/frontend/src/components/safety/MedicalCardsHistorySection.tsx",
-    pattern: /<Modal variant="drawer" open=\{open\}[\s\S]{0,1000}DatePicker/,
+    pattern: /<Modal variant="drawer" open=\{open\}(?:(?!<\/Modal>)[\s\S])*DatePicker(?:(?!<\/Modal>)[\s\S])*<\/Modal>/,
   },
   {
     name: "teams.create: Drivers.tsx real Modal drawer + Create Team submit",
@@ -144,7 +144,7 @@ const CHECKS = [
   {
     name: "drivers.panel.team_split_config: TeamSplitConfig real Modal drawer + DriverPickerWithCreate",
     file: "apps/frontend/src/pages/drivers/TeamSplitConfig.tsx",
-    pattern: /<Modal variant="drawer" open=\{createOpen\}[\s\S]{0,1000}DriverPickerWithCreate/,
+    pattern: /<Modal\s+(?=[^>]*variant="drawer")(?=[^>]*open=\{createOpen\})[^>]*>(?:(?!<\/Modal>)[\s\S])*DriverPickerWithCreate(?:(?!<\/Modal>)[\s\S])*<\/Modal>/,
   },
 ];
 
@@ -177,6 +177,10 @@ function runEvidence(requiredSrc, selfSrc, feedSrc) {
 
 function selftest() {
   const live = runChecks();
+  if (live.length) {
+    console.error(`${LABEL} SELFTEST BASELINE FAIL:\n- ${live.join("\n- ")}`);
+    process.exit(1);
+  }
   const requiredGood = fs.readFileSync(path.join(ROOT, REQUIRED), "utf8");
   const selfGood = fs.readFileSync(path.join(ROOT, SELF), "utf8");
   const feedGood = fs.readFileSync(path.join(ROOT, FEED), "utf8");
@@ -193,12 +197,29 @@ function selftest() {
       process.exit(1);
     }
     console.log(`${LABEL} SELFTEST PASS (poison trips ${planted.length})`);
+
+    for (const mutation of [
+      ["apps/frontend/src/components/safety/BackgroundChecksSection.tsx", "DatePicker"],
+      ["apps/frontend/src/components/safety/MedicalCardsHistorySection.tsx", "DatePicker"],
+      ["apps/frontend/src/pages/drivers/TeamSplitConfig.tsx", "DriverPickerWithCreate"],
+    ]) {
+      for (const c of CHECKS) {
+        const source = path.join(ROOT, c.file);
+        const target = path.join(tmp, c.file);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.copyFileSync(source, target);
+      }
+      const [file, token] = mutation;
+      const target = path.join(tmp, file);
+      fs.writeFileSync(target, fs.readFileSync(target, "utf8").replaceAll(token, "REMOVED_SHARED_CONTROL"));
+      const expected = CHECKS.find((check) => check.file === file)?.name;
+      if (!expected || !runChecks(tmp).some((failure) => failure.startsWith(expected))) {
+        console.error(`${LABEL} SELFTEST FAIL — ${file} ${token} mutation escaped`);
+        process.exit(1);
+      }
+    }
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
-  }
-  if (live.length) {
-    console.error(`${LABEL} FAIL live:\n- ${live.join("\n- ")}`);
-    process.exit(1);
   }
   const evidenceFailures = runEvidence(requiredGood, selfGood, feedGood);
   for (const id of EXACT_ROUTES.keys()) {
