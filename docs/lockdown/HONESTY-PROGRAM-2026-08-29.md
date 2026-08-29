@@ -171,6 +171,10 @@ Prod, dev and staging all reporting; the heartbeat check fails loudly when any s
 The **only** failing check on `healthz`. Postgres, migrations, redis and R2 are all OK. It has survived
 every deploy today. Reported as QBO inbound/CDC ~days stale with `invalid_grant`.
 
+**H4 Cursor 2026-08-29:** QBO-named jobs are **dormant-by-design** unless `IH35_QBO_JOB_HEALTH_ARMED=true`
+(USMCA-only; leftover TRANSP realm must not paint `stale_jobs`). When armed, A1-1 still uses
+`qboRealmConnected` for inbound/CDC/push and master-data delta.
+
 ## Build
 1. Identify precisely which job is stale and why — do not accept "QBO" as the answer without the job name.
 2. Fix it, or **make the check honest**: if a job is intentionally dormant (USMCA QBO off), the check

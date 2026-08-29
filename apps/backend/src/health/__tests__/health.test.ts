@@ -174,20 +174,47 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     }
   });
 
+  it("QBO jobs are dormant by default (USMCA-only — leftover realm must not yellow healthz)", () => {
+    const prior = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      for (const jobName of [
+        "integrations.qbo_inbound_sync",
+        "qbo.remote_count_collector.delta",
+        "qbo.master_data_sync.delta",
+        "qbo_sync.drift_scheduler",
+      ]) {
+        const r = backgroundJobRule(jobName, true);
+        expect(r?.enabled, jobName).toBe(false);
+        expect(r?.dormantReason).toBe("usmca_qbo_health_unarmed");
+      }
+    } finally {
+      if (prior === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = prior;
+    }
+  });
+
   it("QBO inbound/CDC/push are dormant when no realm is connected (H4 — not stale)", () => {
-    for (const jobName of [
-      "integrations.qbo_inbound_sync",
-      "integrations.qbo_cdc_poll",
-      "sync.qbo_vendors_push",
-      "sync.qbo_customers_push",
-      "sync.qbo_accounts_push",
-    ]) {
-      const off = backgroundJobRule(jobName, false);
-      expect(off?.enabled).toBe(false);
-      expect(off?.dormantReason).toBe("no_qbo_realm_connected");
-      const on = backgroundJobRule(jobName, true);
-      expect(on?.enabled).toBe(true);
-      expect(on?.dormantReason).toBeUndefined();
+    const prior = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      process.env.IH35_QBO_JOB_HEALTH_ARMED = "true";
+      for (const jobName of [
+        "integrations.qbo_inbound_sync",
+        "integrations.qbo_cdc_poll",
+        "sync.qbo_vendors_push",
+        "sync.qbo_customers_push",
+        "sync.qbo_accounts_push",
+      ]) {
+        const off = backgroundJobRule(jobName, false);
+        expect(off?.enabled).toBe(false);
+        expect(off?.dormantReason).toBe("no_qbo_realm_connected");
+        const on = backgroundJobRule(jobName, true);
+        expect(on?.enabled).toBe(true);
+        expect(on?.dormantReason).toBeUndefined();
+      }
+    } finally {
+      if (prior === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = prior;
     }
   });
 
@@ -248,12 +275,16 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
 // only when no realm is connected. Regression guard for the self-disabling health gate.
 describe("A1-1 backgroundJobRule — QBO mirror-staleness arms on connected realm", () => {
   const prior = process.env.QBO_MASTERDATA_SYNC_ENABLED;
+  const priorQboHealth = process.env.IH35_QBO_JOB_HEALTH_ARMED;
   beforeEach(() => {
     delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+    process.env.IH35_QBO_JOB_HEALTH_ARMED = "true";
   });
   afterAll(() => {
     if (prior === undefined) delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
     else process.env.QBO_MASTERDATA_SYNC_ENABLED = prior;
+    if (priorQboHealth === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    else process.env.IH35_QBO_JOB_HEALTH_ARMED = priorQboHealth;
   });
 
   it("sync flag OFF + realm CONNECTED → alarm armed (was silently skipped)", () => {
