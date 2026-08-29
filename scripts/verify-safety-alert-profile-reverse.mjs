@@ -101,9 +101,9 @@ function failures(s = files) {
     ],
     [
       "integrity evaluator refreshes the canonical inbox",
-      s.integrityPage.includes("evaluateIntegrityAlerts(operatingCompanyId)") &&
+      s.integrityPage.includes("evaluateIntegrityAlerts(input.companyId)") &&
         s.integrityPage.includes(
-          'invalidateQueries({ queryKey: ["safety", "integrity-alerts", operatingCompanyId]',
+          'invalidateQueries({ queryKey: ["safety", "integrity-alerts", input.companyId]',
         ),
     ],
     [
@@ -268,7 +268,7 @@ if (process.argv.includes("--selftest")) {
     }).includes("failed reverse reads suppress cached safety rows"),
     failures({
       ...files,
-      companyRoutes: files.companyRoutes.replace(
+      companyRoutes: files.companyRoutes.replaceAll(
         "d.driver_id = $2::uuid",
         "TRUE",
       ),
@@ -318,7 +318,7 @@ if (process.argv.includes("--selftest")) {
     failures({
       ...files,
       integrityPage: files.integrityPage.replace(
-        "evaluateIntegrityAlerts(operatingCompanyId)",
+        "evaluateIntegrityAlerts(input.companyId)",
         "Promise.resolve()",
       ),
     }).includes("integrity evaluator refreshes the canonical inbox"),
