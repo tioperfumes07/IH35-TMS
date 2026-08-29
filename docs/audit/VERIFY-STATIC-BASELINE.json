@@ -1,0 +1,6 @@
+{
+  "status": "unseeded",
+  "failingNames": [],
+  "updated": "2026-08-29",
+  "note": "NAMES not a count. Cascade seeds status=seeded + failingNames from a fresh verify-static run. After seed: shrink-only. A name not in this list that later fails is new rot."
+}

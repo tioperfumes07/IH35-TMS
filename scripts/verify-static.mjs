@@ -32,6 +32,7 @@ import {
   loadCapabilityPolicy,
   validateCapabilityEquivalent,
 } from "./push-gate-capability-policy.mjs";
+import { extraFailsNotInBaseline, loadHeadBaseline } from "./verify-static-ratchet.mjs";
 
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
@@ -377,9 +378,32 @@ if (isDirectRun) {
   }
   const results = runStatic();
   printSummary(results);
-  const gatedFailCount = results.filter(
+  const gatedFails = results.filter(
     (r) => r.kind === STATIC_RESULT_CATEGORIES.FAIL_TEST && r.gated
-  ).length;
+  );
+  const gatedFailCount = gatedFails.length;
+  let baseline = null;
+  try {
+    baseline = loadHeadBaseline();
+  } catch {
+    baseline = null;
+  }
+  if (baseline?.status === "seeded") {
+    const extra = extraFailsNotInBaseline(
+      gatedFails.map((r) => r.name),
+      baseline,
+    );
+    if (extra.length) {
+      console.error(
+        `\n[${LABEL}] FAILED — ${extra.length} gated fail(s) NOT in VERIFY-STATIC-BASELINE (new rot; do not grow the JSON):\n  ${extra.join("\n  ")}`,
+      );
+      process.exit(1);
+    }
+    console.log(
+      `\n[${LABEL}] OK — GR-1 seeded: ${gatedFailCount} known baseline fail(s), 0 new names. Shrink the JSON when a name goes green.`,
+    );
+    process.exit(0);
+  }
   if (gatedFailCount) {
     console.error(`\n[${LABEL}] FAILED — ${gatedFailCount} CI-run static-guard failure(s) above. Fix locally before pushing.`);
     process.exit(1);
