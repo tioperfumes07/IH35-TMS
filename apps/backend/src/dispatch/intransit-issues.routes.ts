@@ -164,6 +164,9 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
       `;
       const insertedRes = await client.query<{ id: string; created_at: string }>(insertSql, values);
       const inserted = insertedRes.rows[0];
+      if (!inserted) {
+        return { kind: "conflict" as const, code: 409, error: "intransit_issue_create_failed" };
+      }
 
       await appendCrudAudit(
         client,
