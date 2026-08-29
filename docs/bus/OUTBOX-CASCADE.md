@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-0023 | NOW=unique-FINDING-on-live-SHA | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0022 | NOW=unique-FINDING-overlay | SHA=4e5db76 | GO
 CASCADE | DONE | 2026-08-28T23:30Z | GO-0021 | COMPLIANCE-SILENT-NO-OP-NOTIFICATION-RULES-DELETE | SHA=8a0d61bb1 | FINDING: compliance-notification-rules.routes.ts:156-163 soft-delete UPDATE without RETURNING or rowCount check — non-existent or cross-tenant rule UUID silently returns ok:true. Sibling PUT at :115 correctly uses RETURNING. Same silent-no-op class as Codex DSP-F7130 (fixed PR #17197). Row 50096 appended. Not duplicating CC-1 A/P, CC-2 tasks RLS, CC-3 BANK-F, or Codex dispatch. Never trigger_deploy. GO
 CASCADE | ACK | GO-0021 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO
