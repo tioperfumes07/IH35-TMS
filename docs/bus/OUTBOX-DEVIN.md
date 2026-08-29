@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=e7c2136 | SHIPPED PR #17302 | FIXED: LST-F9104 — Vendors list page only checked vendorsQuery.isError (active roster). If inactiveVendorsQuery failed, Inactive tab silently showed "No vendors found." instead of an error. Added inactiveVendorsQuery.isError check with ListErrorState + Retry. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=d05ffc6 | SHIPPED PR #17298 | FIXED: LST-F9103 — VendorDetail bill payments query only surfaced errors for HTTP 404/500/501 (vendorPaymentBackendPending). Any other error (403/429/502/503) silently showed "No payments recorded." — silent no-op. Added isError branch with Retry for non-404/500/501 errors. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=dc0e8ff | SHIPPED PR #17294 | FIXED: LST-F9102 — vendor LIST endpoint (GET /api/v1/mdata/vendors) was missing config.rateLimit (detail + classifications GETs had it). List allows limit up to 5000 rows — unthrottled DoS risk. Added matching rate limit. All vendor GET+POST endpoints now have rate limiting. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
