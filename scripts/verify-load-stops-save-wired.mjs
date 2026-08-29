@@ -62,8 +62,11 @@ function checkSources({ editor, drawer, api, service, routes }) {
     assertWired("refinements.service list", service, /soft_deleted_at IS NULL/);
     assertWired("refinements.service list", service, /ls\.postal_code/);
     assertWired("refinements.service replace", service, /postal_code,/);
+    assertWired("refinements.service stop type", service, /code: "E_STOP_TYPE_INVALID"/);
     assertWired("refinements.routes", routes, /app\.post\(\s*["']\/api\/v1\/loads\/:loadId\/stops["']/);
     assertWired("refinements.routes", routes, /postal_code:/);
+    assertWired("refinements.routes stop type enum", routes, /stop_type: z\.enum\(\["pickup", "delivery", "dropoff", "fuel", "rest", "border", "customs"\]\)/);
+    assertWired("refinements.routes stop type error", routes, /E_STOP_TYPE_INVALID[\s\S]{0,240}reply\.code\(400\)/);
   } catch (e) {
     errors.push(String(e.message || e));
   }
@@ -98,6 +101,19 @@ function selftest() {
     }
     console.log(`selftest PASS — planted ${label} fails:`, errors[0]);
   }
+  const serviceMutation = sources.service.replace('code: "E_STOP_TYPE_INVALID"', 'code: "REMOVED"');
+  if (serviceMutation === sources.service) throw new Error("selftest: could not plant stop-type service failure");
+  if (checkSources({ ...sources, service: serviceMutation }).length === 0) {
+    throw new Error("selftest: planted stop-type service failure did not FAIL the guard");
+  }
+  console.log("selftest PASS — planted stop-type service failure is rejected");
+
+  const routesMutation = sources.routes.replace('stop_type: z.enum(["pickup", "delivery", "dropoff", "fuel", "rest", "border", "customs"])', 'stop_type: z.string()');
+  if (routesMutation === sources.routes) throw new Error("selftest: could not plant stop-type route failure");
+  if (checkSources({ ...sources, routes: routesMutation }).length === 0) {
+    throw new Error("selftest: planted stop-type route failure did not FAIL the guard");
+  }
+  console.log("selftest PASS — planted stop-type route failure is rejected");
 }
 
 const args = new Set(process.argv.slice(2));

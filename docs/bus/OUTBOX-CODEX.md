@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0028 | NOW=dispatch-unique-leftover | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7177 | CLAIM=unknown-stop-type-silently-persists-as-rest | SOURCE=mdata.load_stops.stop_type | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | BANK-F7176 | CLAIM=load-banking-label-failure-masquerades-as-tombstone | SOURCE=mdata.loads.id/load_number+opco | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0027 | NOW=dispatch-unique-leftover | SHA=4e5db76 | GO
 Codex | SHIPPED | DSP-F7174 | PR=#17329 @ c9d2dd0bdd | Built=border wizard canonical success identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
