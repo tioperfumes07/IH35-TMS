@@ -346,13 +346,6 @@ export function VendorDetailPage() {
 
   const billPayManualInvalid = !billPayAuto && vendorBillPayBreakdown.appliedSum > billPayCents;
 
-  const vendorPaymentBackendPending =
-    vendorPaymentsQuery.isError &&
-    vendorPaymentsQuery.error instanceof ApiError &&
-    (vendorPaymentsQuery.error.status === 404 ||
-      vendorPaymentsQuery.error.status === 500 ||
-      vendorPaymentsQuery.error.status === 501);
-
   const recordVendorBillPayMutation = useMutation({
     mutationFn: () =>
       recordVendorBillPayment(id, {
@@ -997,10 +990,10 @@ export function VendorDetailPage() {
             </button>
             {billPayOpen ? (
               <div className="space-y-3 border-t border-gray-100 p-3 text-xs">
-                {vendorPaymentBackendPending ? (
-                  <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-slate-700">
-                    Backend pending — file <strong>P6-T11204</strong> for vendor bill payment APIs.{" "}
-                    <button type="button" className="font-semibold text-slate-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
+                {vendorPaymentsQuery.isError ? (
+                  <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-red-700">
+                    Failed to load bill payments — {(vendorPaymentsQuery.error as Error)?.message ?? "unknown error"}.{" "}
+                    <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                       Retry
                     </button>
                   </div>
@@ -1143,13 +1136,9 @@ export function VendorDetailPage() {
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 text-sm font-semibold text-gray-900">Recent bill payments</div>
-            {vendorPaymentBackendPending ? (
-              <p className="text-sm text-slate-700">
-                Backend pending — history unavailable until backend ships (P6-T11204).
-              </p>
-            ) : vendorPaymentsQuery.isError ? (
+            {vendorPaymentsQuery.isError ? (
               <p className="text-sm text-red-600">
-                Failed to load bill payments.{" "}
+                Failed to load bill payments — {(vendorPaymentsQuery.error as Error)?.message ?? "unknown error"}.{" "}
                 <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
                   Retry
                 </button>
