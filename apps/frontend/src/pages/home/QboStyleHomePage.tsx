@@ -255,6 +255,24 @@ export function QboStyleHomePage({ auth }: Props) {
             </div>
             {bankTilesQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
+            ) : bankTilesQuery.isError ? (
+              // GO-0027-HOME-F: a failed bank-tiles fetch must never render as "$0 total balance,
+              // no accounts" -- that reads as a genuinely empty/closed set of bank accounts.
+              <div className="space-y-2" data-testid="qbo-bank-tiles-error">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Unable to load bank accounts
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  onClick={() => void bankTilesQuery.refetch()}
+                  data-testid="qbo-bank-tiles-retry"
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Retry
+                </button>
+              </div>
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(totalBankBalance * 100)}</p>
@@ -359,6 +377,24 @@ export function QboStyleHomePage({ auth }: Props) {
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
+            ) : accountingQuery.isError ? (
+              // GO-0027-HOME-F: a failed accounting-role-home fetch must never render as "$0
+              // outstanding A/P" -- that reads as genuinely nothing owed.
+              <div className="space-y-2" data-testid="qbo-expenses-error">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Unable to load expenses
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  onClick={() => void accountingQuery.refetch()}
+                  data-testid="qbo-expenses-retry"
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Retry
+                </button>
+              </div>
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(apTotal)}</p>
@@ -376,6 +412,24 @@ export function QboStyleHomePage({ auth }: Props) {
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
+            ) : accountingQuery.isError ? (
+              // GO-0027-HOME-F: a failed accounting-role-home fetch must never render as "$0
+              // unpaid" -- that reads as genuinely nothing outstanding.
+              <div className="space-y-2" data-testid="qbo-invoices-error">
+                <p className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+                  <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Unable to load invoices
+                </p>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-800 hover:bg-slate-50"
+                  onClick={() => void accountingQuery.refetch()}
+                  data-testid="qbo-invoices-retry"
+                >
+                  <RefreshCw className="h-3 w-3" aria-hidden="true" />
+                  Retry
+                </button>
+              </div>
             ) : (
               <>
                 <p className="text-2xl font-semibold text-gray-900">{fmt$(arTotal)}</p>
