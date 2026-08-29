@@ -27,10 +27,11 @@ export async function enqueueEquipmentTransferNotify(
   }
 ): Promise<void> {
   /* outbox-handler-parity: literal-types=["dispatch.equipment_transfer.requested","dispatch.equipment_transfer.confirmed","dispatch.equipment_transfer.rejected"] */
-  await client.query(
+  const outboxEvent = await client.query(
     `
       INSERT INTO outbox.events (event_type, payload, next_retry_at)
       VALUES ($1, $2::jsonb, now())
+      RETURNING id::text
     `,
     [
       args.eventType,
@@ -45,6 +46,7 @@ export async function enqueueEquipmentTransferNotify(
       }),
     ]
   );
+  if (!outboxEvent.rows[0]?.id) throw new Error("equipment_transfer_outbox_enqueue_failed");
 
   // LV-DRIVER-PWA-NOTIFY-SILENTLY-DROPPED — never bare-return when table absent.
   await insertDriverPwaNotification(client, {

@@ -39,9 +39,9 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
       ],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "11111111-aaaa-4aaa-8aaa-111111111111" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "22222222-aaaa-4aaa-8aaa-222222222222" }]],
     ]);
 
     const result = await confirmOutbound(client, USER, COMPANY, REQUEST_UUID, FROM_DRIVER, OUTBOUND_EVIDENCE);
@@ -81,9 +81,9 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
       ["UPDATE mdata.equipment", [{ id: EQUIPMENT }]],
       ["INSERT INTO mdata.equipment_log", [{ id: equipmentLogId }]],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "33333333-aaaa-4aaa-8aaa-333333333333" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "44444444-aaaa-4aaa-8aaa-444444444444" }]],
     ]);
 
     const result = await confirmInbound(client, USER, COMPANY, REQUEST_UUID, TO_DRIVER, INBOUND_EVIDENCE);
