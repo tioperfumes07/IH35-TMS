@@ -29,10 +29,9 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     if (!driver || !user) return reply.code(403).send({ error: "forbidden" });
 
     const rows = await withCurrentUser(user.uuid, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string | null }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
-        [driver.id]
-      );
+      const companyRes = await client.query<{
+        operating_company_id: string | null;
+      }>(`SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`, [driver.id]);
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return [];
 
@@ -79,7 +78,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           ORDER BY a.triggered_at DESC
           LIMIT 10
         `,
-        [operatingCompanyId, driver.id]
+        [operatingCompanyId, driver.id],
       );
       return res.rows;
     });
@@ -99,18 +98,19 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const confirmedAt = body.data.confirmed_at ?? new Date().toISOString();
-    const result = await withCurrentUser(user.uuid, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string | null }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
-        [driver.id]
-      );
-      const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
-      if (!operatingCompanyId) return { updated: false };
+    let result: { updated: boolean };
+    try {
+      result = await withCurrentUser(user.uuid, async (client) => {
+        const companyRes = await client.query<{
+          operating_company_id: string | null;
+        }>(`SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`, [driver.id]);
+        const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
+        if (!operatingCompanyId) return { updated: false };
 
-      await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
+        await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
-      const res = await client.query<{ stop_id: string }>(
-        `
+        const res = await client.query<{ stop_id: string }>(
+          `
           UPDATE dispatch.stop_arrivals a
           SET
             confirmed_at = $4::timestamptz,
@@ -121,38 +121,50 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
             AND a.confirmed_at IS NULL
           RETURNING a.stop_id::text
         `,
-        [params.data.id, operatingCompanyId, user.uuid, confirmedAt, driver.id]
-      );
+          [params.data.id, operatingCompanyId, user.uuid, confirmedAt, driver.id],
+        );
 
-      const stopId = res.rows[0]?.stop_id ?? null;
-      if (!stopId) return { updated: false };
+        const stopId = res.rows[0]?.stop_id ?? null;
+        if (!stopId) return { updated: false };
 
-      await client.query(
-        `
-          UPDATE mdata.load_stops
+        const arrivalStop = await client.query<{ id: string }>(
+          `
+          UPDATE mdata.load_stops s
           SET
             actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
             status = CASE WHEN status::text = 'pending' THEN 'arrived'::mdata.stop_status_enum ELSE status END
-          WHERE id = $1::uuid
+          FROM mdata.loads l
+          WHERE s.id = $1::uuid
+            AND l.id = s.load_id
+            AND l.operating_company_id = $3::uuid
+            AND l.soft_deleted_at IS NULL
+          RETURNING s.id::text AS id
         `,
-        [stopId, confirmedAt]
-      );
+          [stopId, confirmedAt, operatingCompanyId],
+        );
+        if (!arrivalStop.rows[0]?.id) throw new Error("arrival_stop_not_found");
 
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "dispatch.stop_arrival_confirmed",
-        {
-          resource_type: "dispatch.stop_arrivals",
-          resource_id: params.data.id,
-          driver_id: driver.id,
-          confirmed_at: confirmedAt,
-        },
-        "info"
-      );
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "dispatch.stop_arrival_confirmed",
+          {
+            resource_type: "dispatch.stop_arrivals",
+            resource_id: params.data.id,
+            driver_id: driver.id,
+            confirmed_at: confirmedAt,
+          },
+          "info",
+        );
 
-      return { updated: true };
-    });
+        return { updated: true };
+      });
+    } catch (error) {
+      if ((error as Error).message === "arrival_stop_not_found") {
+        return reply.code(409).send({ error: "arrival_stop_not_found" });
+      }
+      throw error;
+    }
 
     if (!result.updated) return reply.code(404).send({ error: "arrival_prompt_not_found" });
     return { ok: true };
@@ -170,10 +182,9 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
     if (!body.success) return sendValidationError(reply, body.error);
 
     const dismissed = await withCurrentUser(user.uuid, async (client) => {
-      const companyRes = await client.query<{ operating_company_id: string | null }>(
-        `SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`,
-        [driver.id]
-      );
+      const companyRes = await client.query<{
+        operating_company_id: string | null;
+      }>(`SELECT operating_company_id::text FROM mdata.drivers WHERE id = $1::uuid LIMIT 1`, [driver.id]);
       const operatingCompanyId = companyRes.rows[0]?.operating_company_id ?? null;
       if (!operatingCompanyId) return false;
 
@@ -183,7 +194,10 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
       // Previously this endpoint audited ANY UUID and always returned 200; the prompt then remained
       // in the canonical GET because that reader did not consume dismissal evidence.
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [params.data.id]);
-      const prompt = await client.query<{ id: string; already_dismissed: boolean }>(
+      const prompt = await client.query<{
+        id: string;
+        already_dismissed: boolean;
+      }>(
         `SELECT a.id::text AS id,
                 EXISTS (
                   SELECT 1 FROM audit.audit_events ae
@@ -198,7 +212,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
             AND a.driver_id = $3::uuid
             AND a.confirmed_at IS NULL
           LIMIT 1`,
-        [params.data.id, operatingCompanyId, driver.id]
+        [params.data.id, operatingCompanyId, driver.id],
       );
       if (!prompt.rows[0]) return false;
       if (prompt.rows[0].already_dismissed) return true;
@@ -214,7 +228,7 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           driver_id: driver.id,
           reason: body.data.reason ?? null,
         },
-        "info"
+        "info",
       );
       return true;
     });
