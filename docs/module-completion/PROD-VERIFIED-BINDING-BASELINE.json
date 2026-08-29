@@ -1,5 +1,5 @@
 {
-  "note": "Unbound prod_verified claims that predate verify-prod-verified-live-binding. MAY ONLY SHRINK. 2026-08-29 owner REOPEN unbound prose: removed 186 ids.",
+  "note": "Unbound prod_verified claims that predate verify-prod-verified-live-binding. MAY ONLY SHRINK. 2026-08-29 owner REOPEN unbound prose: removed 186 ids. 2026-08-29 CC-2 GUARD WAVE-1: adjudicated 7 factoring/settlements ids (6 bound live on ecd3afd, FACT-VERIFY-01 REOPENed honestly partial) -- removed all 7.",
   "created": "2026-08-29T15:18:47.810Z",
   "ids": [
     "425-S02",
@@ -37,12 +37,6 @@
     "DISP-S34",
     "DISP-S35",
     "DISP-S36",
-    "FACT-DUAL-01",
-    "FACT-S01",
-    "FACT-S02",
-    "FACT-S04",
-    "FACT-UNIT-01",
-    "FACT-VERIFY-01",
     "FIN-VERIFY-01",
     "FLEET-S01",
     "FLEET-S04",
@@ -63,7 +57,6 @@
     "RPT-S04",
     "RPT-VERIFY-01",
     "SAF-B08",
-    "SETL-PICK-01",
     "SYS-S01",
     "SYS-S02",
     "SYS-S03",

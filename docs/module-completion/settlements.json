@@ -69,9 +69,11 @@
       ],
       "spec": "ENUM-AUTO-DEDUCT-TYPES \u00b7 settlements-deep-2026-08-01",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog \u2192 GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971.",
+      "evidence": "PASS code+guard \u2014 AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog \u2192 GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): both guards re-run exit 0. Live Chrome (USMCA context) /drivers/deductions -> Create policy drawer: Type field is a real ReferenceSelect (\"+ Create Driver deduction type\" catalog-create option, 7+ scrollable catalog options: Load abandonment/walkoff, Driver-at-fault damage, Safety fine, Insurance deduction, Loan Repayment, Load abandonment, Damage claim, ...), Recovery rail defaults to a catalog-driven value (\"Catalog default: Escrow first\") -- not a hardcoded enum. Neon lucia (bypass_rls) direct read this turn: catalogs.driver_deduction_types unchanged at TRANSP=8/TRK=7/USMCA=8 (sum=23); driver_finance.auto_deduction_policies USMCA now=2 (grew from 1, healthy). Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "SETL-PICK-02",
