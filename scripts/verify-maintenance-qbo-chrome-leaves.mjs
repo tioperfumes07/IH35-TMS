@@ -188,14 +188,20 @@ const CHECKS = [
     pattern: /(?=[\s\S]*runMaintenancePmAutoEngineNow)(?=[\s\S]*runNowM\.mutate\(\{\s*companyId,\s*generation: actionGenerationRef\.current\s*\}\))(?=[\s\S]*Recent runs)/,
   },
   {
+    // RE-ANCHOR (found stale 2026-08-29): real gap grew from 300 to 393 chars (a
+    // ListErrorState branch was added between the header action and the ParityTable render) —
+    // widened with headroom.
     name: "inspections.create: InspectionsPage real + Create Inspection -> real ParityTable",
     file: "apps/frontend/src/pages/maintenance/inspections/InspectionsPage.tsx",
-    pattern: /\+ Create Inspection[\s\S]{0,300}<ParityTable/,
+    pattern: /\+ Create Inspection[\s\S]{0,700}<ParityTable/,
   },
   {
+    // RE-ANCHOR (found stale 2026-08-29): real gap grew from 2200 to 2421 chars (a KPI summary
+    // grid + a CSV import row were added between the header action and the ParityTable render) —
+    // widened with headroom.
     name: "parts.create: PartsMasterDataPage real + Create Part -> real ParityTable",
     file: "apps/frontend/src/pages/maintenance/parts/PartsMasterDataPage.tsx",
-    pattern: /\+ Create Part[\s\S]{0,2200}<ParityTable/,
+    pattern: /\+ Create Part[\s\S]{0,2700}<ParityTable/,
   },
   {
     name: "vendors.create: VendorsPage (maintenance) real + Create Vendor -> real ParityTable",

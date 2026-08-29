@@ -92,6 +92,12 @@
     "_comment_vehiclerecentactivity: @archived Fleet Vehicle Profile active-path (DUALPATH-06, 2026-07-22) \u2014 superseded by ServiceTimeline; no longer imported/rendered by VehicleProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
     "apps/frontend/src/components/vehicle-profile/RecentActivitySection.tsx",
     "_comment_trailerrecentactivity: @archived Fleet Trailer Profile active-path (DUALPATH-07, 2026-07-22) \u2014 superseded by ServiceTimeline (equipment_id-filtered per B26); no longer imported/rendered by TrailerProfilePage.tsx. Enforced by verify-fleet-profile-no-dual-activity.mjs.",
-    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx"
+    "apps/frontend/src/components/trailer-profile/TrailerRecentActivitySection.tsx",
+    "_comment_iftalegacy: legacy /reports/ifta duplicate of the canonical, routed pages/reports/tax-regulatory/IftaPreparer.tsx (LV-REPORTS-IFTA-RUNNER-DUPLICATE-POLICY-CHROME, #8381) \u2014 not route-reachable by design, but read directly (fs.readFileSync by path) by verify-reports-ifta-runner-duplicate-policy-chrome.mjs (shared no-ledger-posting policy chrome) and verify-ifta-step-{gallons,miles,tax}-uses-paritytable.mjs (IFTAStepCSVExport read via the miles guard). Deleting these 5 files would red those guards.",
+    "apps/frontend/src/pages/reports/ifta/IFTAPreparer.tsx",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepCSVExport.tsx",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepGallons.tsx",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepMiles.tsx",
+    "apps/frontend/src/pages/reports/ifta/IFTAStepTax.tsx"
   ]
 }

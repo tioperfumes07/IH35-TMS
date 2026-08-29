@@ -32,7 +32,12 @@ export function collectProblems(root = ROOT) {
   if (!/unitSearchQuery/.test(code) || !/search:\s*unitSearchQuery/.test(code) && !/search:\s*unitSearchQuery\.trim/.test(code)) {
     problems.push(`${FILE}: listUnits must pass search: unitSearchQuery`);
   }
-  if (!/queryKey:.*"unitSearchQuery"/.test(code) && !/unitSearchQuery\]/.test(code)) {
+  // RE-ANCHOR (found stale 2026-08-29): the queryKey array grew a trailing `activeChip` element
+  // after unitSearchQuery (`[..., unitSearchQuery, activeChip]`), so the old `unitSearchQuery]`
+  // end-of-array anchor no longer matched even though unitSearchQuery is still a real, correctly
+  // scoped key element -- just no longer last. Match unitSearchQuery as a bare identifier anywhere
+  // inside a `queryKey: [...]` array instead of anchoring on array position.
+  if (!/queryKey:\s*\[[^\]]*\bunitSearchQuery\b[^\]]*\]/.test(code)) {
     problems.push(`${FILE}: unitsQuery key must include unitSearchQuery`);
   }
   return problems;
