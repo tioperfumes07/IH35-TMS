@@ -37,7 +37,7 @@ const approveBodySchema = z.object({
 const APPROVE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

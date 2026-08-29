@@ -5,7 +5,7 @@ import { requireAuth } from "../../../auth/session-middleware.js";
 import { getLivePositionsForActiveLoads, getPositionForUnit } from "./live-position.service.js";
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

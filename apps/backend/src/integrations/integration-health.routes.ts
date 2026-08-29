@@ -7,7 +7,7 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 
 export async function registerIntegrationHealthRoutes(app: FastifyInstance) {
   app.get("/api/integrations/health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error" });
     let health;

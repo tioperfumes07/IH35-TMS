@@ -24,7 +24,7 @@ const MAINTENANCE_USD_PER_MILE = 0.15;
 const DEFAULT_CPM_CENTS = 55;
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

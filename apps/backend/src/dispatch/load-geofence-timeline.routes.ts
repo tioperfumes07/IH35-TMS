@@ -11,7 +11,7 @@ const querySchema = z.object({ operating_company_id: z.string().uuid() });
 const LAYOVER_THRESHOLD_MINUTES = 480;
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

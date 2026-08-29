@@ -76,7 +76,7 @@ export async function registerDispatchLoadAssignRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/dispatch/drivers/:driver_id/load-availability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const params = (req.params ?? {}) as Record<string, unknown>;
     const query = (req.query ?? {}) as Record<string, unknown>;
     const driverId = typeof params.driver_id === "string" ? params.driver_id : "";

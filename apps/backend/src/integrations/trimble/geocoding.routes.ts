@@ -37,7 +37,7 @@ function cacheSet(key: string, results: GeocodeResult[]) {
 
 export async function registerGeocodingRoutes(app: FastifyInstance) {
   app.get("/api/v1/geocoding/search", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     // Flag + config gate: nothing calls Trimble unless the flag is ON and the key is set.
     if (!isPcmilerEnabled() || !isTrimbleConfigured()) {
       return { enabled: false, results: [] as GeocodeResult[] };

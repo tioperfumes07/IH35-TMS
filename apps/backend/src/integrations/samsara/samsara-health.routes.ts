@@ -9,7 +9,7 @@ const companyQuerySchema = z.object({
 });
 
 function currentOfficeUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const user = req.user as { uuid: string; role: string };
   if (user.role === "Driver") {
     reply.code(403).send({ error: "forbidden" });

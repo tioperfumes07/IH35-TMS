@@ -16,7 +16,7 @@ import { runRelayFuelBackfill } from "./relay-fuel-ingest.cron.js";
 
 export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
   app.get("/api/integrations/relay/fuel/backfill/status", async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const query = req.query as { operating_company_id?: string } | undefined;
     const requestedCompanyId = query?.operating_company_id?.trim();
     if (!requestedCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
@@ -79,7 +79,7 @@ export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
   });
 
   app.post("/api/integrations/relay/fuel/backfill", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const role = String((req.user as { role?: string } | undefined)?.role ?? "");
     if (!["Owner", "Administrator"].includes(role)) {
       return reply.code(403).send({ error: "forbidden" });

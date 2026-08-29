@@ -39,7 +39,7 @@ type SpineEventRow = {
 
 export async function registerSpineEventsRoutes(app: FastifyInstance) {
   app.get("/api/v1/audit/spine-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const role = String(req.user?.role ?? "");
     if (!["Owner", "Administrator", "Manager", "Accountant"].includes(role)) {
       return reply.code(403).send({ error: "forbidden" });

@@ -11,7 +11,7 @@ const bodySchema = z.object({ operating_company_id: z.string().uuid() });
 
 export async function registerDriverHireDateApplyRoutes(app: FastifyInstance) {
   app.post("/api/v1/telematics/driver-hire-date/apply", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user as { uuid: string; role: string };
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = bodySchema.safeParse((req.body as Record<string, unknown>) ?? {});

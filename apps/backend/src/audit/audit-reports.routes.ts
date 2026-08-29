@@ -14,7 +14,7 @@ const baseQuerySchema = z.object({
 });
 
 function authGuard(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return false;
+  if (!requireAuth(req, reply)) return reply;
   const role = String(req.user?.role ?? "");
   if (!ALLOWED_ROLES.includes(role)) {
     reply.code(403).send({ error: "forbidden" });

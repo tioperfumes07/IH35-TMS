@@ -76,7 +76,7 @@ const templateCreateBody = z.object({
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const role = String(req.user?.role ?? "");
   if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(role)) {
     reply.code(403).send({ error: "forbidden" });

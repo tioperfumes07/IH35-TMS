@@ -25,7 +25,7 @@ const createPermitBody = z.object({
 const patchPermitBody = createPermitBody.partial().omit({ operating_company_id: true });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

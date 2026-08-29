@@ -15,7 +15,7 @@ const bodySchema = z.object({
 
 export async function registerSamsaraMasterSyncRoutes(app: FastifyInstance) {
   app.post("/api/v1/integrations/samsara/drivers/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user as { uuid: string; role: string };
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 
@@ -29,7 +29,7 @@ export async function registerSamsaraMasterSyncRoutes(app: FastifyInstance) {
   });
 
   app.post("/api/v1/integrations/samsara/assets/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user as { uuid: string; role: string };
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
 

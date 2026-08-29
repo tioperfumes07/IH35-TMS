@@ -15,7 +15,7 @@ export async function registerRelayFuelLoadRematchRoute(app: FastifyInstance) {
     "/api/integrations/relay/fuel/rematch-loads",
     { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       const role = String((req.user as { role?: string } | undefined)?.role ?? "");
       if (!["Owner", "Administrator"].includes(role)) {
         return reply.code(403).send({ error: "forbidden" });

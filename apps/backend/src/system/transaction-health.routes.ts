@@ -23,7 +23,7 @@ const querySchema = z.object({
 });
 
 function currentOwner(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const user = req.user;
   if (!user || user.role !== "Owner") {
     void reply.code(403).send({ error: "forbidden_owner_only" });

@@ -9,7 +9,7 @@ type MappingSnapshot = { scanned_at: string; findings: Awaited<ReturnType<typeof
 const latestSnapshotsByCompany = new Map<string, MappingSnapshot>();
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

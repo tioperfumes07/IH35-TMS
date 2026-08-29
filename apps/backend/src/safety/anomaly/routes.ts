@@ -11,7 +11,7 @@ const companyQuery = z.object({ operating_company_id: z.string().uuid() });
 const uuidParams = z.object({ uuid: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user!;
 }
 
