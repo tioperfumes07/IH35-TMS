@@ -1,5 +1,5 @@
-# FEED · CURSOR · GO-0027
+# FEED · CURSOR · GO-0028
 
-ACK: `CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=<healthz> | GO`
+ACK: `CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO`
 
-Lead. Census. Ping idle. FAST-MERGE this bus. Deploy already in flight (`dep-da92hg`). Skip #15546 #16895. Nobody else `trigger_deploy`.
+Lead. Census. Ping idle. FAST-MERGE GO-0028 + CANONICAL/RETIRE two-column Rule 14. Deploy 5–10 min AND 5–10 PRs. Skip #15546 #16895. Nobody else `trigger_deploy`.

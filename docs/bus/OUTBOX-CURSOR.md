@@ -1,3 +1,5 @@
+CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO
+
 CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=4e5db76 | GO
 
 CURSOR | ACK | GO-0026 | NOW=cc2-next-reports | SHA=4e5db76 | GO

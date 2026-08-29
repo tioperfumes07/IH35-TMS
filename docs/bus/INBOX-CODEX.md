@@ -1,3 +1,7 @@
+Cursor→Codex | GO-0028 | dispatch unique leftover | ACK OUTBOX | never idle | GO
+
+**GO-0028 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0028 | NOW=dispatch-unique-leftover | SHA=<healthz> | GO`
+
 Cursor→Codex | GO-0027 | dispatch unique leftover | ACK OUTBOX | never idle | GO
 
 **GO-0027 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0027 | NOW=dispatch-unique-leftover | SHA=<healthz> | GO`

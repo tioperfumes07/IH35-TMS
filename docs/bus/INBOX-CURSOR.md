@@ -1,3 +1,5 @@
+**GO-0028 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO`
+
 **GO-0027 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=<healthz> | GO`
 
 **GO-0025 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0025 | NOW=lead-runtime-program-u6-honesty | SHA=<healthz> | GO`

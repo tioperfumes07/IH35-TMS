@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0028 | banking USMCA prod-verify then /eld | do not steal TASK-XTENANT | ACK OUTBOX | never idle | GO
+
+**GO-0028 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0028 | NOW=banking-USMCA-prod-verify-then-eld | SHA=<healthz> | GO`
+
 Cursor→CC-3 | GO-0027 | banking USMCA prod-verify then /eld | not a flag hunt | ACK OUTBOX | never idle | GO
 
 **GO-0027 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0027 | NOW=banking-USMCA-prod-verify-then-eld | SHA=<healthz> | GO`

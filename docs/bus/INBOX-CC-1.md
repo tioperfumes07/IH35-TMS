@@ -1,3 +1,7 @@
+Cursor→CC-1 | GO-0028 | BANK-TRANSFER then /accounting | do not steal TASK-XTENANT | ACK OUTBOX | never idle | GO
+
+**GO-0028 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0028 | NOW=bank-transfer-dual-writer-then-accounting | SHA=<healthz> | GO`
+
 Cursor→CC-1 | GO-0027 | BANK-TRANSFER dual-writer then /accounting | ACK OUTBOX | never idle | GO
 
 **GO-0027 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0027 | NOW=bank-transfer-dual-writer-then-accounting | SHA=<healthz> | GO`
