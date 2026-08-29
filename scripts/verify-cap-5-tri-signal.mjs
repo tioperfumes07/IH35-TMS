@@ -7,6 +7,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const failures = [];
+const selftest = process.argv.includes("--selftest");
 
 function fail(message) {
   failures.push(message);
@@ -47,7 +48,18 @@ contains("apps/backend/src/dispatch/load-status-signal/tri-signal.service.ts", s
   { pattern: /evaluateTriSignal/, label: "evaluateTriSignal export" },
   { pattern: /set_config\('app\.operating_company_id'/, label: "tenant RLS set_config" },
   { pattern: /samsara_vehicle_positions/, label: "GAP-55 GPS positions usage" },
+  {
+    pattern: /FROM mdata\.load_stops s[\s\S]{0,180}s\.load_id = l\.id[\s\S]{0,180}s\.stop_type::text = 'delivery'[\s\S]{0,180}s\.soft_deleted_at IS NULL/,
+    label: "scheduled delivery excludes retired stops",
+  },
 ]);
+
+if (selftest && service) {
+  const planted = service.replace("            AND s.soft_deleted_at IS NULL\n", "");
+  if (/FROM mdata\.load_stops s[\s\S]{0,180}s\.load_id = l\.id[\s\S]{0,180}s\.stop_type::text = 'delivery'[\s\S]{0,180}s\.soft_deleted_at IS NULL/.test(planted)) {
+    fail("selftest failed to plant retired-stop regression");
+  }
+}
 
 const routes = read("apps/backend/src/dispatch/load-status-signal/tri-signal.routes.ts");
 contains("apps/backend/src/dispatch/load-status-signal/tri-signal.routes.ts", routes, [
@@ -100,6 +112,16 @@ const pkg = read("package.json");
 contains("package.json", pkg, [
   { pattern: /verify:cap-5-tri-signal/, label: "verify script in package.json" },
 ]);
+
+if (selftest) {
+  const plantedFailure = failures.find((failure) => failure.includes("selftest failed"));
+  if (plantedFailure) {
+    console.error(`verify-cap-5-tri-signal SELFTEST FAILED: ${plantedFailure}`);
+    process.exit(1);
+  }
+  console.log("verify-cap-5-tri-signal SELFTEST PASS (1/1 planted regression rejected)");
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify-cap-5-tri-signal FAILED:");
