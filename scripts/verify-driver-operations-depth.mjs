@@ -145,6 +145,16 @@ contains(`${PAGE_DIR}/FuelHistoryView.tsx`, fuelPage, [
   { pattern: /key:\s*"unit_number"[\s\S]*idKey:\s*"unit_id"/, label: "fuel unit renders human label over canonical id" },
   { pattern: /key:\s*"load_number"[\s\S]*idKey:\s*"load_id"/, label: "fuel load renders human label over canonical id" },
 ]);
+const pwaEngagementSvc = read(`${BACKEND_DIR}/pwa-engagement.service.ts`);
+contains(`${BACKEND_DIR}/pwa-engagement.service.ts`, pwaEngagementSvc, [
+  { pattern: /JOIN dispatch\.auto_status_suggestions s[\s\S]{0,120}s\.id = r\.suggestion_id[\s\S]{0,120}s\.operating_company_id = r\.operating_company_id/, label: "PWA responses join canonical suggestion in same company" },
+  { pattern: /WHERE s\.driver_id = \$1::uuid[\s\S]{0,80}r\.operating_company_id = \$2::uuid/, label: "PWA engagement derives driver scope from suggestion" },
+  { pattern: /s\.driver_id::text/, label: "PWA engagement projects canonical suggestion driver" },
+  { pattern: /r\.response_at::text AS created_at/, label: "PWA engagement uses real response timestamp" },
+]);
+if (/WHERE driver_id = \$1::uuid/.test(pwaEngagementSvc) || /\bcreated_at::text/.test(pwaEngagementSvc)) {
+  fail(`${BACKEND_DIR}/pwa-engagement.service.ts: response table phantom driver_id/created_at columns remain`);
+}
 const operationsTable = read(TABLE);
 contains(TABLE, operationsTable, [
   { pattern: /import \{ EntityLinkOrTombstone \} from "\.\.\/shared\/EntityLinkOrTombstone"/, label: "shared operations cells import canonical tombstone-aware drill" },
@@ -185,6 +195,9 @@ if (process.argv.includes("--selftest")) {
     ["shared-driver active status", shared.replace("operations_depth_dca.is_authorized = true", "operations_depth_dca.is_authorized = false"), /operations_depth_dca\.is_authorized = true/],
     ["permit CDL shared driver", permitSvc.replace("FROM mdata.driver_company_authorizations permit_cdl_dca", "FROM mdata.drivers permit_cdl_dca"), /FROM mdata\.driver_company_authorizations permit_cdl_dca/],
     ["permit hazmat shared driver", permitSvc.replace("permit_hazmat_dca.is_authorized = true", "permit_hazmat_dca.is_authorized = false"), /permit_hazmat_dca\.is_authorized = true/],
+    ["PWA suggestion join", pwaEngagementSvc.replaceAll("JOIN dispatch.auto_status_suggestions s", "JOIN dispatch.auto_status_suggestion_responses s"), /JOIN dispatch\.auto_status_suggestions s/],
+    ["PWA driver source", pwaEngagementSvc.replaceAll("s.driver_id", "r.driver_id"), /WHERE s\.driver_id = \$1::uuid/],
+    ["PWA real timestamp", pwaEngagementSvc.replace("r.response_at::text AS created_at", "r.created_at::text"), /r\.response_at::text AS created_at/],
   ];
   const escaped = planted.filter(([, mutated, expected]) => typeof expected === "function" ? expected(mutated) : expected.test(mutated));
   if (escaped.length) {
