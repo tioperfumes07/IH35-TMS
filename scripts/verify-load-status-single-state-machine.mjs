@@ -95,6 +95,24 @@ export function auditDetector(src) {
   return problems;
 }
 
+/** The canonical translator must enumerate pre-dispatch aliases and fail closed on unknown values. */
+export function auditTranslator(src) {
+  const problems = [];
+  const code = stripComments(src);
+  for (const status of ["draft", "booked", "planned"]) {
+    if (!new RegExp(`status\\s*===\\s*["']${status}["']`).test(code)) {
+      problems.push(`${CANONICAL} must explicitly map mdata status ${status}; valid states cannot rely on a catch-all.`);
+    }
+  }
+  if (/return\s+["']unassigned["']\s*;\s*\}/.test(code)) {
+    problems.push(`${CANONICAL} silently maps unknown mdata load statuses to unassigned instead of failing closed.`);
+  }
+  if (!/throw\s+new\s+RangeError\s*\(/.test(code)) {
+    problems.push(`${CANONICAL} must throw for an unknown mdata load status.`);
+  }
+  return problems;
+}
+
 /**
  * Scope by DOMAIN, not by identifier name. `maintenance/work-orders.routes.ts` legitimately owns a
  * const named `allowedTransitions` for the WORK-ORDER machine (open/in_progress/waiting_parts/
@@ -150,7 +168,11 @@ function auditTree() {
     rel: relative(ROOT, full),
     code: stripComments(readFileSync(full, "utf8")),
   }));
-  return [...auditDuplicates(files), ...auditDetector(readFileSync(join(ROOT, DETECTOR), "utf8"))];
+  return [
+    ...auditDuplicates(files),
+    ...auditDetector(readFileSync(join(ROOT, DETECTOR), "utf8")),
+    ...auditTranslator(readFileSync(join(ROOT, CANONICAL), "utf8")),
+  ];
 }
 
 function selftest() {
@@ -218,9 +240,29 @@ function selftest() {
   if (auditDuplicates(single).length !== 0)
     failures.push(`case5 FAIL — a clean single definition was flagged: ${auditDuplicates(single).join(" | ")}`);
 
-  // case6 — the real tree must be clean (proves the fix is actually in place).
+  // case6 — the old catch-all silently granted an unknown DB value the unassigned transition set.
+  const permissiveTranslator = `
+    function fromMdataStatus(status) {
+      if (status === "assigned") return "assigned_not_dispatched";
+      return "unassigned";
+    }
+  `;
+  if (!auditTranslator(permissiveTranslator).some((p) => p.includes("silently maps unknown")))
+    failures.push("case6 FAIL — permissive unknown→unassigned fallback was NOT caught");
+
+  // case7 — aliases are explicit and an unknown value fails closed.
+  const strictTranslator = `
+    function fromMdataStatus(status) {
+      if (status === "draft" || status === "booked" || status === "planned") return "unassigned";
+      throw new RangeError("Unknown mdata load status");
+    }
+  `;
+  if (auditTranslator(strictTranslator).length !== 0)
+    failures.push(`case7 FAIL — strict translator was flagged: ${auditTranslator(strictTranslator).join(" | ")}`);
+
+  // case8 — the real tree must be clean (proves the fix is actually in place).
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case6 FAIL — real sources flagged: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case8 FAIL — real sources flagged: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
@@ -228,7 +270,7 @@ function selftest() {
   }
   console.log(
     `${LABEL}: selftest PASS — unvalidated GPS write caught, validate-after-write caught, ` +
-      `forked transition table caught, single canonical definition clean`
+      `forked transition table caught, unknown-status fallback caught, single canonical definition clean`
   );
 }
 
