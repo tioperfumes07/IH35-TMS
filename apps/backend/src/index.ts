@@ -162,6 +162,7 @@ import { registerSettlementPayRunCloseRoutes } from "./driver-finance/settlement
 import { registerDriverInboxReportingRoutes } from "./driver-finance/inbox-reporting.routes.js";
 import { registerOwnerApprovalPortalRoutes } from "./driver-finance/owner-approval.routes.js";
 import { registerAbandonmentRoutes } from "./driver-finance/abandonment.routes.js";
+import { registerDetentionPayPostingRoutes } from "./driver-finance/detention-pay-posting.routes.js";
 import { registerSettlementsDisputesRoutes } from "./settlements/disputes/disputes.routes.js";
 import { registerSettlementApprovalRoutes } from "./settlements/approval.routes.js";
 import { registerAutoDeductionPolicyRoutes } from "./settlements/auto-deductions/policy.routes.js";
@@ -959,6 +960,7 @@ async function main() {
   registerSettlementPayRunCloseRoutes(app);
   registerDriverInboxReportingRoutes(app);
   await registerAbandonmentRoutes(app);
+  await registerDetentionPayPostingRoutes(app);
   await registerHomeRoutes(app);
   await registerHomeWidgetRoutes(app);
   await registerOwnerTodaysAttentionRoutes(app);
