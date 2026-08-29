@@ -794,12 +794,15 @@ export async function listCustomerNotifyLog(
           nl.sent_at::text,
           nl.created_at::text,
           l.load_number,
-          c.customer_name
+          COALESCE(
+            c.customer_name,
+            mdata.resolve_customer_label_same_company(nl.customer_id, nl.operating_company_id)
+          ) AS customer_name
         FROM dispatch.notify_log nl
         JOIN mdata.loads l ON l.id = nl.load_id
                            AND l.operating_company_id = $1::uuid
-        JOIN mdata.customers c ON c.id = nl.customer_id
-                               AND c.operating_company_id = $1::uuid
+        LEFT JOIN mdata.customers c ON c.id = nl.customer_id
+                                    AND c.operating_company_id = nl.operating_company_id
         WHERE nl.operating_company_id = $1::uuid
           ${customerFilter}
         ORDER BY nl.created_at DESC
