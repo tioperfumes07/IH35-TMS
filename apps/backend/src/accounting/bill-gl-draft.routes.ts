@@ -42,7 +42,7 @@ const draftPreviewBodySchema = z.object({
 });
 
 export async function registerBillGlDraftRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/bills/draft-je-preview", async (req, reply) => {
+  app.post("/api/v1/accounting/bills/draft-je-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) {
@@ -99,7 +99,7 @@ export async function registerBillGlDraftRoutes(app: FastifyInstance) {
   // CHAIN-03 STEP-2 — actually post the bill's JE. Gated by BILL_GL_POSTING_ENABLED (default OFF).
   // Uses the SAME canonical writer (postSourceTransaction → buildBillLines → resolveBillLineDebitAccount)
   // the draft preview proves, so what posts equals the preview. TRANSP only. Tier-1 financial.
-  app.post("/api/v1/accounting/bills/:id/post-gl", async (req, reply) => {
+  app.post("/api/v1/accounting/bills/:id/post-gl", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) {
