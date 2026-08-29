@@ -5,6 +5,17 @@ import { verifyMigrationContent } from "./lib/migration-content-verifier.mjs";
 
 dotenv.config();
 
+// NO-PER-MERGE-PROD-DEPLOY-LAW: live dashboard drifted to
+// `db:migrate && db:verify:critical-runtime`. Verify-in-preDeploy delays PORT bind
+// and causes Render update_failed. Critical-runtime belongs in GitHub CI.
+// On Render (RENDER=true), skip unless IH35_RUN_CRITICAL_RUNTIME=1 (manual SSH).
+if (process.env.RENDER === "true" && process.env.IH35_RUN_CRITICAL_RUNTIME !== "1") {
+  console.log(
+    "SKIP: db-verify-critical-runtime on Render — CI-only (set IH35_RUN_CRITICAL_RUNTIME=1 to force)",
+  );
+  process.exit(0);
+}
+
 const connectionString = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
 if (!connectionString) {
   console.error("FAIL: Missing DATABASE_DIRECT_URL or DATABASE_URL");
