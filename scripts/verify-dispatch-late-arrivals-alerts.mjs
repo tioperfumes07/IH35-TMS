@@ -33,6 +33,7 @@ const queueStopScope = /FROM mdata\.load_stops[\s\S]{0,100}load_id = l\.id[\s\S]
 const queueHistoricalCustomer = /COALESCE\(c\.customer_name, mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)\) AS customer_name/;
 const queueCustomerJoinPreservesLoad = /LEFT JOIN mdata\.customers c ON c\.id = l\.customer_id[\s\S]{0,100}c\.operating_company_id = l\.operating_company_id/;
 const queueHistoricalDriver = /COALESCE\([\s\S]{0,180}mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, l\.operating_company_id\)[\s\S]{0,80}AS driver_name/;
+const analyticsHistoricalCustomer = /COALESCE\(c\.customer_name, mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)\) AS customer_name/;
 
 function completeRangeFailures(source) {
   const aggregateReaders = source.match(/ORDER BY late_count DESC, entity_label ASC[\s\S]{0,80}/g) ?? [];
@@ -96,6 +97,7 @@ function main() {
   if (!queueHistoricalCustomer.test(service)) failures.push("late-arrivals queue must preserve customer labels after customer deactivation");
   if (!queueCustomerJoinPreservesLoad.test(service)) failures.push("late-arrivals customer label join must not eliminate the canonical load");
   if (!queueHistoricalDriver.test(service)) failures.push("late-arrivals queue must preserve historical same-company driver labels");
+  if (!analyticsHistoricalCustomer.test(analyticsService)) failures.push("late-arrival analytics must preserve historical customer labels");
   failures.push(...completeRangeFailures(analyticsService));
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
@@ -165,11 +167,12 @@ function main() {
       [service.replace("LEFT JOIN mdata.customers c", "JOIN mdata.customers c"), queueCustomerJoinPreservesLoad, "customer row preservation"],
       [service.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"), queueHistoricalCustomer, "customer historical label"],
       [service.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"), queueHistoricalDriver, "driver historical label"],
+      [analyticsService.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"), analyticsHistoricalCustomer, "analytics customer historical label"],
     ];
     for (const [mutated, pattern, label] of labelMutations) {
       if (pattern.test(mutated)) fail(`${label} mutation escaped`);
     }
-    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 15/15 shared-driver/complete-range/active-stop/historical-label mutations red");
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 16/16 shared-driver/complete-range/active-stop/historical-label mutations red");
     return;
   }
 
