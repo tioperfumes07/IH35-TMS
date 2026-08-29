@@ -9,6 +9,7 @@ const FILES = {
   dispatcher: "apps/backend/src/notifications/dispatcher.ts",
   noticeHandler: "apps/backend/src/outbox/handlers/operational-notice.handler.ts",
   trailHandlers: "apps/backend/src/outbox/handlers/trail-events.handler.ts",
+  registry: "apps/backend/src/outbox/handlers/registry.ts",
 };
 
 function count(source, literal) {
@@ -24,6 +25,7 @@ export function problems(files) {
   const dispatcher = files.dispatcher ?? "";
   const noticeHandler = files.noticeHandler ?? "";
   const trailHandlers = files.trailHandlers ?? "";
+  const registry = files.registry ?? "";
 
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
@@ -74,6 +76,12 @@ export function problems(files) {
   if (!/route\.multiChannelRoles[\s\S]{0,1000}?dispatchNotification\([\s\S]{0,500}?failures\.length/.test(noticeHandler)) {
     failures.push("operational handler must execute and fail loud on durable multi-channel delivery results");
   }
+  if (!/if \(registry\.has\(handler\.eventType\)\)[\s\S]{0,120}?throw new Error\(`duplicate_outbox_handler:\$\{handler\.eventType\}`\)/.test(registry)) {
+    failures.push("outbox registry must fail startup on duplicate event handlers instead of silently overwriting");
+  }
+  if (!/return buildUniqueOutboxHandlerMap\(handlers\)/.test(registry)) {
+    failures.push("production outbox registry must use duplicate-rejecting construction");
+  }
   if (!/LEFT JOIN org\.user_company_access uca[\s\S]{0,300}?uca\.company_id = \$1::uuid[\s\S]{0,180}?uca\.deactivated_at IS NULL/.test(noticeHandler)) {
     failures.push("role-based operational notices must resolve only active memberships for the event company");
   }
@@ -103,6 +111,8 @@ if (process.argv.includes("--selftest")) {
     ["abandoned trail overwrite restored", { ...production, trailHandlers: `${production.trailHandlers}\nnew TrailEventHandler("load.abandoned");` }],
     ["abandoned multichannel route removed", { ...production, routes: production.routes.replace('multiChannelRoles: ["Owner", "Administrator"],', "") }],
     ["abandoned delivery failure ignored", { ...production, noticeHandler: production.noticeHandler.replace("if (failures.length) {", "if (false) {") }],
+    ["registry duplicate rejection removed", { ...production, registry: production.registry.replace("if (registry.has(handler.eventType)) {", "if (false) {") }],
+    ["registry bypasses unique builder", { ...production, registry: production.registry.replace("return buildUniqueOutboxHandlerMap(handlers);", "return new Map(handlers.map((handler) => [handler.eventType, handler]));") }],
     ["notice role company join removed", { ...production, noticeHandler: production.noticeHandler.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
     ["notice default company arm removed", { ...production, noticeHandler: production.noticeHandler.replace("u.default_company_id = $1::uuid", "u.default_company_id = NULL") }],
     ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],

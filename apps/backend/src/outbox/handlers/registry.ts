@@ -107,6 +107,17 @@ class GeofenceBreachDetectedHandler implements OutboxEventHandler {
   }
 }
 
+export function buildUniqueOutboxHandlerMap(handlers: OutboxEventHandler[]) {
+  const registry = new Map<string, OutboxEventHandler>();
+  for (const handler of handlers) {
+    if (registry.has(handler.eventType)) {
+      throw new Error(`duplicate_outbox_handler:${handler.eventType}`);
+    }
+    registry.set(handler.eventType, handler);
+  }
+  return registry;
+}
+
 export function buildOutboxHandlerRegistry() {
   const handlers: OutboxEventHandler[] = [
     new TwilioSmsHandler(),
@@ -150,5 +161,5 @@ export function buildOutboxHandlerRegistry() {
     ...operationalNoticeHandlers(),
     ...buildTrailEventHandlers(),
   ];
-  return new Map(handlers.map((handler) => [handler.eventType, handler]));
+  return buildUniqueOutboxHandlerMap(handlers);
 }

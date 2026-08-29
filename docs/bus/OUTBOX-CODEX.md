@@ -2026,3 +2026,5 @@ Codex | WORKING | DSP-F7164 | CLAIM=operational-notice-role-recipients-cross-com
 Codex | SHIPPED | DSP-F7163 | PR=#17301 @ f64eb18d8530 | Built=single durable assignment notice path | Live=post-deploy UNVERIFIED | NEXT=operational notice tenant scope | GO
 Codex | WORKING | DSP-F7165 | CLAIM=abandoned-notice-overwritten+delivery-failure-discarded | SOURCE=load.abandoned→outbox handler registry | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7164 | PR=#17309 @ 160d0efe8d2a | Built=company-scoped operational notice recipients | Live=post-deploy UNVERIFIED | NEXT=abandonment delivery durability | GO
+Codex | WORKING | DSP-F7166 | CLAIM=outbox-registry-silent-duplicate-overwrite | SOURCE=ordered handlers→registry Map | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7165 | PR=#17314 @ d5b20c9e9627 | Built=durable abandonment notice delivery+retry | Live=post-deploy UNVERIFIED | NEXT=registry duplicate ratchet | GO
