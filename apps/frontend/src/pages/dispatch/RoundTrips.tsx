@@ -5,6 +5,7 @@ import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
@@ -358,17 +359,17 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
         </div>
         {boardView === "timeline" ? (
           <span className="inline-flex items-center gap-1">
-            <input
-              type="date"
+            <DatePicker
+              data-testid="round-trips-range-from"
               value={range.from}
-              onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-              className="rounded-sm border border-gray-200 px-1"
+              onChange={(from) => setRange((r) => ({ ...r, from }))}
+              className="w-36"
             />
-            <input
-              type="date"
+            <DatePicker
+              data-testid="round-trips-range-to"
               value={range.to}
-              onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-              className="rounded-sm border border-gray-200 px-1"
+              onChange={(to) => setRange((r) => ({ ...r, to }))}
+              className="w-36"
             />
           </span>
         ) : null}
