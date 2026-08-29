@@ -83,9 +83,14 @@ export function assertSafetyF22OrphanNavReachability(sources) {
     problems.push(`${GROUP_NAV}: does not merge SAFETY_ALIAS_TABS — alias tabs registered but never shown.`);
   }
 
-  // 4. SafetyLayout must resolve alias routes to activeTabId (breadcrumb correctness).
-  if (!src[LAYOUT].includes("SAFETY_ALIAS_TABS")) {
-    problems.push(`${LAYOUT}: activeTabId derivation ignores SAFETY_ALIAS_TABS — alias pages highlight wrong tab.`);
+  // 4. SafetyLayout must delegate active-route resolution to the canonical helper, and that helper
+  // must include alias routes. Keeping alias inventory in the config prevents the layout and nav
+  // from growing separate route-matching implementations.
+  if (!src[LAYOUT].includes("findSafetyTabByPath(path)")) {
+    problems.push(`${LAYOUT}: activeTabId does not use findSafetyTabByPath(path) — alias pages may highlight the wrong tab.`);
+  }
+  if (!/export function findSafetyTabByPath[\s\S]{0,1600}for \(const alias of SAFETY_ALIAS_TABS\)/.test(src[TABS_CONFIG])) {
+    problems.push(`${TABS_CONFIG}: findSafetyTabByPath does not resolve SAFETY_ALIAS_TABS — alias pages highlight wrong tab.`);
   }
 
   // 5. Safety Home quick-jump grid must expose alias entry points (secondary reachability).
@@ -162,6 +167,22 @@ if (SELFTEST) {
     "does not render SAFETY_ALIAS_TABS quick-jumps"
   );
   expectCaught(
+    "layout-stops-using-canonical-route-resolver",
+    { ...live, [LAYOUT]: live[LAYOUT].replace("findSafetyTabByPath(path)", 'findSafetyTabByPath("/safety/home")') },
+    "activeTabId does not use findSafetyTabByPath(path)"
+  );
+  expectCaught(
+    "route-resolver-stops-walking-aliases",
+    {
+      ...live,
+      [TABS_CONFIG]: live[TABS_CONFIG].replace(
+        /(export function findSafetyTabByPath[\s\S]{0,1600})for \(const alias of SAFETY_ALIAS_TABS\) \{/,
+        "$1for (const alias of []) {",
+      ),
+    },
+    "findSafetyTabByPath does not resolve SAFETY_ALIAS_TABS"
+  );
+  expectCaught(
     "driver-profile-link-removed",
     { ...live, [DRIVER_SECTION]: live[DRIVER_SECTION].replace(/kind="driver_safety_profile"/g, 'kind="driver"') },
     "no link to /safety/driver-profiles/:driverId"
@@ -175,7 +196,7 @@ if (SELFTEST) {
     for (const f of failures) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4 planted defects caught, live sources clean`);
+  console.log(`${LABEL} SELFTEST PASS — 6 planted defects caught, live sources clean`);
   process.exit(0);
 }
 
