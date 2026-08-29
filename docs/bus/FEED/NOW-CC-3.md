@@ -1,12 +1,12 @@
-# FEED · CC-3 · GO-0030 (queue 0030–0054)
+# NOW — CC-3 (GO-0030 + RIDER · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `CC-3 | ACK | GO-0030 | NOW=lists-catalog-cards-TEST-create | SHA=<healthz> | GO`
+**ACK:** `CC-3 | ACK | GO-0030+RIDER | NOW=lists-catalog-TEST | SHA=<healthz> | GO`
 
-**Index:** `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`
-**This hop:** `docs/lockdown/PASTE-CC-3-GO-2026-08-28-0030.md`
-**All seats:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+You are CC-3. FE/chrome/TEST. GO-0030 + RIDER. No verify-steps/migrations.
 
-NOW: `/lists` every catalog card → `+ Create` / nested `+ Add new`. TEST create. Then **immediately GO-0031** (do not wait for chat).
+1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
+3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
 
-PROG-01 SKIP. Never `trigger_deploy`. Never idle. U14 never restamp.
+USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).

@@ -1,4 +1,59 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=bdd2698 | GO
+DEVIN | GO-0049 | vendors-leftover-unique | SHA=bdd2698 | SHIPPED PR #17364 | FIXED: LST-F9120 — Thirteen routes across four files lacked config.rateLimit: names search, audit events list, 6 QBO master read routes (customers/vendors list+detail, items, expense-categories), 4 QBO master write routes (qbo vendors/customers/items/accounts). Added 60/min reads, 30/min writes. Ratchet 305→299. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=bdd2698 | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=bdd2698 | GO — final sweep
+
+DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=24ae06c | GO
+DEVIN | GO-0047 | vendors-leftover-unique | SHA=24ae06c | SHIPPED PR #17361 | FIXED: LST-F9118 — Two reclassify routes lacked config.rateLimit: POST /api/v1/customers/:id/flag-duplicate (write) and GET /api/v1/vendors/:id/reclassification-history (read, vendor-specific). Added 30/min write, 120/min read. Ratchet 307→306. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0048 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO
+DEVIN | GO-0048 | vendors-leftover-unique | SHA=5dee9eb | SHIPPED PR #17363 | FIXED: LST-F9119 — Eight routes across two files lacked config.rateLimit: samsara vendor-mapping-integrity + 7 maintenance integrity routes (unit/driver/vendor history list+detail, fleet-baselines). Added 60/min. Ratchet 306→305. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO — continuing drain
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=5dee9eb | GO — final sweep
+
+DEVIN | ACK | GO-0046 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO
+DEVIN | GO-0046 | vendors-leftover-unique | SHA=d6e7552 | SHIPPED PR #17360 | FIXED: LST-F9117 — Eight maintenance vendor routes lacked config.rateLimit: list, detail, create, update, archive, void, CSV import, template download. All authenticated, never throttled. Added 60/min reads, 30/min writes, 10/min CSV import. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0048 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=d6e7552 | GO — final sweep
+
+DEVIN | ACK | GO-0039 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO
+DEVIN | GO-0039 | vendors-leftover-unique | SHA=3c5ca46 | SHIPPED PR #17359 | FIXED: LST-F9116 — Two vendor category routes lacked config.rateLimit: POST /api/v1/accounting/vendors/batch-categorize (batch write) and PATCH /api/v1/accounting/vendors/:id/category. Both authenticated write paths, never throttled. Added 30/min. Ratchet 309→307. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0040 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
+DEVIN | ACK | GO-0041 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
+DEVIN | ACK | GO-0042 | NOW=bills-reverse-vendor-detail | SHA=3c5ca46 | GO — bills reverse verified GO-0031
+DEVIN | ACK | GO-0043 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
+DEVIN | ACK | GO-0044 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
+DEVIN | ACK | GO-0045 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
+
+DEVIN | ACK | GO-0034 | NOW=vendors-leftover-unique | SHA=ada22bc | GO
+DEVIN | GO-0034 | vendors-leftover-unique | SHA=ada22bc | SHIPPED PR #17358 | FIXED: LST-F9115 — Four FIN-20 aging routes lacked config.rateLimit: ar-aging, ar-aging/invoices, ap-aging, ap-aging/bills. All authenticated, compute aging reports, never throttled. Added 60/min. Ratchet 313→309. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0035 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+DEVIN | ACK | GO-0036 | NOW=vendors-test-picker-density | SHA=ada22bc | GO — TEST vendor already created GO-0030
+DEVIN | ACK | GO-0037 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+DEVIN | ACK | GO-0038 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+
+DEVIN | ACK | GO-0033 | NOW=vendors-leftover-unique | SHA=a693889 | GO
+DEVIN | GO-0033 | vendors-leftover-unique | SHA=a693889 | SHIPPED PR #17356 | FIXED: LST-F9114 — Vendor balances route GET /api/v1/accounting/vendor-balances lacked config.rateLimit. Used by Vendors page sidebar. Added 60/min. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
+DEVIN | ACK | GO-0032 | NOW=vendor-picker-wo-path | SHA=6ef8830 | GO
+DEVIN | GO-0032 | vendor-picker-wo-path | SHA=6ef8830 | NO UNIQUE FINDING — WO vendor picker uses EntityPicker(kind=vendor, allowCreate, server-search). Error visible via Combobox error prop. Canonical mdata.vendors. No 500/dead/silent.
+
+DEVIN | ACK | GO-0031 | NOW=vendor-detail-ap-reverse | SHA=d3d20c9 | GO
+DEVIN | GO-0031 | vendor-detail-ap-reverse | SHA=d3d20c9 | NO UNIQUE FINDING — A/P reverse drill-through solid. Bills/expenses/credits/payments/AP aging all have visible error handling + proper EntityLink wiring. BillDetailPage vendor reverse via billVendorDrillId. ExpenseDetailPage vendor reverse via vendor_uuid. BillPaymentDetailPage vendor reverse via mdata_vendor_id (tombstone when null). No 500/dead/silent.
+
 DEVIN | ACK | GO-0030 | NOW=vendors-TEST-create | SHA=d38ffa0 | GO
 
 DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=26dc542 | SHIPPED PR #17350 | FIXED: LST-F9113 — AP + AR aging routes lacked config.rateLimit: GET /accounting/ap-aging (vendor A/P) and GET /accounting/ar-aging (customer A/R). Both authenticated, compute aging reports, never throttled. Added 60/min. Ratchet 315→313. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.

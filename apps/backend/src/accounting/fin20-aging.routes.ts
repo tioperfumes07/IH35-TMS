@@ -76,7 +76,7 @@ const apDrillQuerySchema = companyQuerySchema.extend({
 
 export async function registerFin20AgingRoutes(app: FastifyInstance) {
   // GET /api/v1/accounting/fin20/ar-aging — AR aging by customer (summary, from views.ar_aging).
-  app.get("/api/v1/accounting/fin20/ar-aging", async (req, reply) => {
+  app.get("/api/v1/accounting/fin20/ar-aging", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -99,7 +99,7 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/accounting/fin20/ar-aging/invoices?customer_id= — drill to a customer's open invoices.
-  app.get("/api/v1/accounting/fin20/ar-aging/invoices", async (req, reply) => {
+  app.get("/api/v1/accounting/fin20/ar-aging/invoices", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -123,7 +123,7 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/accounting/fin20/ap-aging — AP aging by vendor (summary, from views.ap_aging).
-  app.get("/api/v1/accounting/fin20/ap-aging", async (req, reply) => {
+  app.get("/api/v1/accounting/fin20/ap-aging", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -146,7 +146,7 @@ export async function registerFin20AgingRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/accounting/fin20/ap-aging/bills?vendor_id= — drill to a vendor's open bills.
-  app.get("/api/v1/accounting/fin20/ap-aging/bills", async (req, reply) => {
+  app.get("/api/v1/accounting/fin20/ap-aging/bills", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

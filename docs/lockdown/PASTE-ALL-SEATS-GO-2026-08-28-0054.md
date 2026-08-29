@@ -10,31 +10,26 @@ USMCA only. Chrome + labeled TEST DATA create. Unique FINDING = 500/dead/silent.
 
 ACK: `SEAT | ACK | GO-0054 | NOW=<one line> | SHA=<healthz> | GO`
 
-## Per coder (do this, this GO)
+## Never-wait five-item list (ordered — then loop)
 
-### CC-1 (9223)
-Mine leftover unique USMCA money. Never wait. Never PROG-01.
+1. Unresolved unique FINDING (500 / dead / silent) in **your** lane URLs.
+2. Top OPEN row in `docs/audit/GUARD-WORKORDERS.md` in your lane.
+3. `bash scripts/next-work-item.sh <your modules>` — take TOP open item.
+4. **CC-2 (GUARD):** re-verify oldest `prod_verified:true` against current healthz; REOPEN if rotten. **Other seats:** one labeled TEST hop still missing on your URL.
+5. Announce next module with most open items no seat holds → work it. Standing orders §8.
 
-### CC-2 (9224)
-Mine leftover unique `/reports` `/cash-flow` `/finance` `/tasks` `/home`.
+`CLOSES: none — unless you name a real ITEM-ID you closed this turn`
 
-### CC-3 (9225)
-Mine leftover unique `/lists` `/legal` `/maintenance` `/safety` `/insurance` `/banking`. Then `/eld`.
+### Seat URL reminders
 
-### Codex (9226)
-Mine leftover unique `/dispatch` `/drivers` `/fleet` `/fuel`.
-
-### Cascade
-Mine leftover unique FINDING any sidebar. No U14 restamp.
-
-### Devin
-Mine leftover unique `/vendors`. KEEP TEST.
-
-### Devin-A
-Mine leftover unique `/customers`. KEEP TEST.
-
-### Cursor (9222)
-Lead until leftover unique = 0 on USMCA chrome+TEST. Deploy 5–10. Nobody else trigger_deploy.
+- CC-1: leftover unique USMCA money. Never PROG-01.
+- CC-2: GUARD + `/reports` `/cash-flow` `/finance` `/tasks` `/home`.
+- CC-3: `/lists` `/legal` `/maintenance` `/safety` `/insurance` `/banking` then `/eld`. No verify-steps/migrations.
+- Codex: `/dispatch` `/drivers` `/fleet` `/fuel`. No verify-steps/migrations.
+- Cascade: unique FINDING any sidebar. No U14 restamp. No product PR.
+- Devin: `/vendors`. KEEP TEST.
+- Devin-A: `/customers`. KEEP TEST.
+- Cursor: lead until leftover unique = 0 on USMCA chrome+TEST. Deploy 5–10 only.
 
 ## Forbidden
 HOLD. Waiting for a new GO. Waiting for CC-1. PROG-01. U14 restamp. TRANSP/TRK/QBO write-back. Dual Devin.

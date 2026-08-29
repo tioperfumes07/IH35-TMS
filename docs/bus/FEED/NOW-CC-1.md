@@ -1,9 +1,12 @@
-# FEED · CC-1 · GO-0030 (queue 0030–0054)
+# NOW — CC-1 (GO-0030 + RIDER · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `CC-1 | ACK | GO-0030 | NOW=accounting-TEST-expense | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | GO-0030+RIDER | NOW=accounting-TEST-expense | SHA=<healthz> | GO`
 
-**Index:** `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`
-**Paste:** `docs/lockdown/PASTE-CC-1-GO-2026-08-28-0030.md`
+You are CC-1. Money. GO-0030 + RIDER. CLOSES line. Do not gate others.
 
-NOW: `/accounting` TEST expense then leftover money. Do not gate other seats. Then GO-0031 same turn. PROG-01 SKIP. Never `trigger_deploy`.
+1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
+3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
+
+USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).

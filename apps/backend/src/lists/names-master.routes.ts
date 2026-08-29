@@ -303,7 +303,7 @@ async function countActive(
 }
 
 export async function registerNamesMasterRoutes(app: FastifyInstance) {
-  app.get("/api/v1/lists/names/search", async (req, reply) => {
+  app.get("/api/v1/lists/names/search", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = namesSearchQuerySchema.safeParse(req.query ?? {});

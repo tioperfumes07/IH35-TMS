@@ -54,7 +54,7 @@ async function columnExists(
 }
 
 export async function registerQboMasterReadRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/customers", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/customers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -111,7 +111,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/customers/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/customers/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -145,7 +145,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/vendors", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -214,7 +214,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/vendors/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/vendors/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -266,7 +266,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/items", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -326,7 +326,7 @@ export async function registerQboMasterReadRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/expense-categories", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/expense-categories", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
