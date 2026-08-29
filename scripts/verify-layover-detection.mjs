@@ -49,6 +49,23 @@ export function assertCompleteRange(serviceTs) {
   return errors;
 }
 
+export function assertDetectorSerialization(serviceTs) {
+  const errors = [];
+  if (!/const lockKey = `dispatch\.layover_detector:\$\{operatingCompanyId\}`/.test(serviceTs)) {
+    errors.push("layover detector must derive an exact per-company advisory lock key");
+  }
+  if (!/pg_advisory_lock\(hashtextextended\(\$1::text, 0\)\)/.test(serviceTs)) {
+    errors.push("layover detector must acquire the per-company session lock");
+  }
+  if (!/finally\s*\{[\s\S]*?pg_advisory_unlock\(hashtextextended\(\$1::text, 0\)\)/.test(serviceTs)) {
+    errors.push("layover detector must release the session lock in finally");
+  }
+  if (!/WHERE driver_uuid = \$1 AND previous_load_uuid = \$2 LIMIT 1/.test(serviceTs)) {
+    errors.push("layover dedupe must retain canonical driver+previous-load identity");
+  }
+  return errors;
+}
+
 function selftest() {
   const good = `
     import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
@@ -111,7 +128,30 @@ function selftest() {
     }
   }
 
-  console.log(`[${LABEL}] --selftest OK — 6/6 wiring/complete-range mutations red`);
+  const serializedDetector = `
+    const lockKey = \`dispatch.layover_detector:\${operatingCompanyId}\`;
+    await client.query(\`SELECT pg_advisory_lock(hashtextextended($1::text, 0))\`, [lockKey]);
+    try {
+      SELECT 1 FROM dispatch.driver_layovers
+      WHERE driver_uuid = $1 AND previous_load_uuid = $2 LIMIT 1
+    } finally {
+      await client.query(\`SELECT pg_advisory_unlock(hashtextextended($1::text, 0))\`, [lockKey]);
+    }
+  `;
+  const serializationMutations = [
+    serializedDetector.replace("pg_advisory_lock", "pg_advisory_lock_missing"),
+    serializedDetector.replace("finally", "if (true)"),
+    serializedDetector.replace("pg_advisory_unlock", "pg_advisory_unlock_missing"),
+    serializedDetector.replace("previous_load_uuid = $2", "previous_load_uuid IS NOT NULL"),
+  ];
+  for (const [index, mutated] of serializationMutations.entries()) {
+    if (assertDetectorSerialization(mutated).length === 0) {
+      console.error(`[${LABEL}] --selftest FAIL: serialization mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`[${LABEL}] --selftest OK — 10/10 wiring/range/serialization mutations red`);
 }
 
 function main() {
@@ -122,7 +162,7 @@ function main() {
 
   const indexTs = readFileSync(INDEX_TS_PATH, "utf8");
   const serviceTs = readFileSync(SERVICE_TS_PATH, "utf8");
-  const errors = [...assertGuard(indexTs), ...assertCompleteRange(serviceTs)];
+  const errors = [...assertGuard(indexTs), ...assertCompleteRange(serviceTs), ...assertDetectorSerialization(serviceTs)];
   if (errors.length) {
     for (const e of errors) console.error(`✗ FAIL: ${e}`);
     console.error("GAP-28 CI guard failed");
