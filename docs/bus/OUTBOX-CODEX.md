@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7235 | GO-0030 | CLAIM=driver-pwa-active-stop-lifecycle | SOURCE=active mdata.load_stops→contacts+itinerary+arrival/departure/document writes | CLOSES=none — post-deploy PWA proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7234 | PR=#17455 @ 634dc569c7 | Built=planner calendar active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7234 | GO-0030 | CLAIM=planner-calendar-active-stops | SOURCE=active pickup+delivery→initial+refreshed calendar | CLOSES=none — post-deploy calendar proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7233 | PR=#17454 @ f05e8c229c | Built=at-risk queue active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7233 | GO-0030 | CLAIM=at-risk-active-stops | SOURCE=active delivery+next stop→at-risk queue | CLOSES=none — post-deploy queue proof remains | NEXT=guard+FAST-MERGE | GO
