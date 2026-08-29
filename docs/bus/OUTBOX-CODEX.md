@@ -1,3 +1,4 @@
+CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7347 | NOW=fuel-queue-truth-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7346 | NOW=fuel-active-route-guard-root-fix | NEXT=unique dispatch/drivers/fleet/fuel | GO
 CODEX | ACK | GO-TRUST-02 | SHA=ed4e2f2 | FINDING=DSP-F7345 | NOW=dispatch-driver-guard-root-fix | GO
 CODEX | EVIDENCE | ITEM=DISP-S04 | MODULE=dispatch | LIVE_SHA=ed4e2f2 | ENTITY=USMCA 5c854333-6ea5-4faa-af31-67cb272fef80 | ROUTE=/dispatch/assignment-history | UI=Assignment History · 14 rows · full_form/quicksave/manual_reassign/unit+trailer swap methods · load/previous+new driver/previous+new unit EntityLinks · L-20260824-0007 T149 history preserved · pager+Refresh | RESULT=BINDABLE | TO=CC-2 | NEXT=DISP-S05 | GO
