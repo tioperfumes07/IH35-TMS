@@ -7,6 +7,7 @@
       "backend_file": "apps/backend/src/fuel/planner.routes.ts",
       "backend_tokens": [
         "hasRelation(client, \"fuel.route_recommendations\")",
+        "hasRelation(client, \"views.fuel_planner_active_routes\")",
         "return { unavailable: true as const }",
         "fuel_planner_source_unavailable",
         "planner_source_available: plannerSourceAvailable",

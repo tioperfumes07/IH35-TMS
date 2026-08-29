@@ -1,3 +1,5 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7341 | direct planner recommendation detail queried intentionally absent source/view and returned HTTP500 | SOURCE=fuel.route_recommendations+views.fuel_planner_active_routes | PROVES=company-scoped typed 503 unavailable vs real 404 | KEEPS=registry guard planted detail mutations | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | BOARD-F7340 | PR=#17698 @ 5778d2d149 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7341 planner detail source availability | GO
 CODEX | SHIPPED | DSP-F7339 | PR=#17693 @ b40cbe3bf0 | gate=exit0 | push=no-verify-after-gate | Live=UNVERIFIED | NEXT=close stale DRV navigation row then next unique dispatch/drivers/fleet/fuel | GO
 CODEX | FINDING+FIXED CODE | DSP-F7339 | dispatcher safety void/edit ignored unresolved company scope | SOURCE=related load→driver→customer resolver | PROVES=typed fail-closed 409 before both writes | KEEPS=write-scope guard selftest 4/4+2/2 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FUEL-F7338 | PR=#17691 @ ecd3afd53d | gate=exit0 | push=no-verify-after-gate | Live=UNVERIFIED | NEXT=DSP-F7339 unresolved safety-event scope | GO
