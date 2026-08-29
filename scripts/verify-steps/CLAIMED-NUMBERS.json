@@ -6681,5 +6681,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-items-list-sort-values-wired"
+  },
+  "9981": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-pay-tab-generic-error-has-retry"
   }
 }
