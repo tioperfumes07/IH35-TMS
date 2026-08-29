@@ -29,7 +29,7 @@ const reassignBody = z.object({
 
 const stopBodyItem = z.object({
   sequence_number: z.number().int().min(1),
-  stop_type: z.string().trim().min(1).max(24),
+  stop_type: z.enum(["pickup", "delivery", "dropoff", "fuel", "rest", "border", "customs"]),
   location_address: z.string().trim().max(500).optional().nullable(),
   city: z.string().trim().max(120).optional().nullable(),
   state: z.string().trim().max(120).optional().nullable(),
@@ -235,6 +235,12 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
         return reply.code(404).send({
           error: "E_LOAD_NOT_FOUND",
           message: "Load not found for this operating company.",
+        });
+      }
+      if ((e as { code?: string }).code === "E_STOP_TYPE_INVALID") {
+        return reply.code(400).send({
+          error: "E_STOP_TYPE_INVALID",
+          message: "Stop type must be pickup, delivery, fuel, rest, or border.",
         });
       }
       req.log.error({ err: e }, "dispatch load stops replacement failed");

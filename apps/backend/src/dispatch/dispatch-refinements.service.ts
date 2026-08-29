@@ -23,7 +23,10 @@ function normalizeStopType(raw: string): "pickup" | "delivery" | "fuel" | "rest"
   if (v === "dropoff") return "delivery";
   if (v === "customs") return "border";
   if (v === "pickup" || v === "delivery" || v === "fuel" || v === "rest" || v === "border") return v;
-  return "rest";
+  throw Object.assign(new Error("Unsupported stop type."), {
+    statusCode: 400,
+    code: "E_STOP_TYPE_INVALID",
+  });
 }
 
 // OWNER-ONLY override for the DRIVER-QUALIFICATION gate (CDL / DOT medical / hazmat endorsement).
