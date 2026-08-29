@@ -473,6 +473,7 @@ export async function listAvailableDriversForDispatch(
         LEFT JOIN LATERAL (
           SELECT city, state FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'pickup'::mdata.stop_type_enum
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) sp ON true
