@@ -30,6 +30,7 @@ export class DispatchLoadDispatchedHandler implements OutboxEventHandler {
           load_id: loadId,
           requested_by_user_id: actorUserId,
         });
+        lastError = null;
         break;
       } catch (error) {
         lastError = error as Error;
