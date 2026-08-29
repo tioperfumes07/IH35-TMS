@@ -82,7 +82,7 @@ const COMPLETED_STOPS_CTE = `
     SELECT
       sa.driver_id,
       l.customer_id,
-      c.customer_name,
+      COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
       d.first_name AS driver_first_name,
       d.last_name AS driver_last_name,
       lane.origin_city,
