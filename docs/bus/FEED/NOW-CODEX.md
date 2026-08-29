@@ -1,7 +1,11 @@
-# NOW — Codex (GO-0106)
+# NOW — Codex (FAST-MERGE-CATCH + GO-0105-R1)
 
-**ACK:** `CODEX | ACK | GO-0106 | NOW=dispatch-drivers-fleet-fuel-unique-leftover | SHA=<healthz> | GO`
+**ACK on OUTBOX:** `CODEX | ACK | FAST-MERGE-CATCH | SHA=b2448ce | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
+**Catch:** OUTBOX lines `NEXT=gate+FAST-MERGE` then leaving the PR open is the defect Jorge named. Gate exit 0 **is** merge proof. Then:
 
-Unique leftover dispatch/drivers/fleet/fuel. Do not restamp CC-3 clean waves. No TXH-04. No GL. Never trigger_deploy. Never restamp U14.
+`gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`
+
+Live is **b2448ce**, not 965789a. Proof packets bound to 965789a are undeployed vs live.
+
+NOW: unique leftover dispatch / drivers / fleet / fuel. No TXH-04. No GL. Cascade working. Devin VOID. Skip #15546 #16895. Never restamp U14. Never `trigger_deploy`.

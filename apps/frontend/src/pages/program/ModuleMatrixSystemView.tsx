@@ -7,6 +7,7 @@ import { Fragment, useMemo, createContext, useContext } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
+import { ctDateTime } from "../../lib/businessDate";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
   URGENT_6_MODULE_IDS,
@@ -87,7 +88,14 @@ type SystemPayload = {
     readyAbl?: AblPct;
     fwAbl?: Record<string, AblPct>;
   };
-  meta?: { tipSha?: string; probeSource?: string; honesty?: string };
+  meta?: {
+    tipSha?: string;
+    probeSource?: string;
+    honesty?: string;
+    workerState?: "running" | "failed" | "never_started";
+    workerError?: string;
+    workerFailedAt?: string;
+  };
   verifierRollup?: {
     asOf: string;
     healthzSha: string | null;
@@ -540,14 +548,22 @@ export function ModuleMatrixSystemView() {
   const hasLastGoodNumbers = Boolean(
     sys && ((sys.builtCells ?? 0) > 0 || (sys.liveCells ?? 0) > 0 || (sys.boxAbl?.builtPct ?? 0) > 0),
   );
+  const workerState = data?.meta?.workerState;
+  const projectionFailed = workerState === "failed";
+  const workerNeverStarted =
+    workerState === "never_started" && Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED")) && !hasLastGoodNumbers;
   const buildingFeed =
-    !hasLastGoodNumbers && Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED"));
+    !projectionFailed &&
+    !workerNeverStarted &&
+    !hasLastGoodNumbers &&
+    Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED"));
   const fallbackFeed =
     !hasLastGoodNumbers &&
     !buildingFeed &&
+    !projectionFailed &&
     (data?.meta?.probeSource === "committed_fallback" ||
       data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true);
-  const apiLive = Boolean(data?.system) && !fallbackFeed && !buildingFeed && !isError;
+  const apiLive = Boolean(data?.system) && !fallbackFeed && !buildingFeed && !projectionFailed && !workerNeverStarted && !isError;
   const ok = Boolean(data?.system);
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
@@ -694,7 +710,17 @@ export function ModuleMatrixSystemView() {
   return (
     <VerifierRollupContext.Provider value={verifierRollup}>
     <>
-      {buildingFeed ? (
+      {projectionFailed ? (
+        <div className="banner" data-testid="module-matrix-system-projection-failed" role="alert">
+          <b>SCOREBOARD PROJECTION FAILED — Boxes 2/3/4 are not computable. This is not progress and not launch truth.</b>{" "}
+          {data?.meta?.workerError ? <code>{data.meta.workerError}</code> : null}
+          {data?.meta?.workerFailedAt ? <> · {ctDateTime(data.meta.workerFailedAt)}</> : null}
+        </div>
+      ) : workerNeverStarted ? (
+        <div className="banner" data-testid="module-matrix-system-worker-never-started" role="alert">
+          <b>SCOREBOARD WORKER NEVER SPAWNED — Boxes 2/3/4 are not computable.</b>
+        </div>
+      ) : buildingFeed ? (
         <div className="banner" data-testid="module-matrix-system-building">
           <b>Scoreboard is computing in the background — the API is up.</b> You are seeing Required
           cell counts only until the worker finishes. This is not a 502 and not launch truth.

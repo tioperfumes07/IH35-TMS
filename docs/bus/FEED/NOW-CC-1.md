@@ -1,7 +1,13 @@
-# NOW — CC-1 (GO-0106)
+# NOW — CC-1 (FAST-MERGE step 4 + #17604)
 
-**ACK:** `CC-1 | ACK | GO-0106 | NOW=scen01-hops-4-6-h1-walk-h3-quota-no-settlement-bolt | SHA=<healthz> | GO`
+**ACK on OUTBOX:** `CC-1 | ACK | FAST-MERGE-STEP-4 | SHA=b2448ce | OPEN=#17604 | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
+**The whole defect:** after `gh pr create` returns N, same 15 seconds:
 
-Hops 4+6 + named CoA codes. H1 live JE walk. H3 quota/SDK. Do not bolt 6-leg settlement/escrow-subaccount onto P0 (#17648 stands). Never merge red. Never trigger_deploy. QBO re-auth is Jorge, not you.
+`gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`
+
+Before any new item: `gh pr list --author @me --state open` — if rows, merge first.
+
+**#17604 is CONFLICTING (DIRTY), not "zero checks."** Rebase onto origin/main, local gate 0, push, then PUT. Do not leave it sitting. Skip #15546 #16895.
+
+Period close: `ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT`. Hops 4+6. Never trigger_deploy. Devin VOID. Cascade working.

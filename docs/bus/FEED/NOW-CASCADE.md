@@ -1,7 +1,9 @@
-# NOW — Cascade (GO-0106)
+# NOW — Cascade (FAST-MERGE-CATCH + GO-0105-R1)
 
-**ACK:** `CASCADE | ACK | GO-0106 | NOW=unique-FINDING-guard-stamps-not-devin | SHA=<healthz> | GO`
+**ACK on OUTBOX:** `CASCADE | ACK | FAST-MERGE-CATCH | SHA=b2448ce | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
+You **are** a working seat. Devin is **not**.
 
-Unique FINDING live healthz. **You/CC-2 stamp prod_verified**, not Devin. Devin vendors-only. Never restamp U14/SYS-S07. Skip #15546 #16895.
+NOW: unique FINDING on live healthz + GUARD-2 stamps on safety/lists/drivers/system bound to ancestor of **b2448ce**. Do not stamp money. Do not open product PRs. Do not restamp SYS-S07 or U14.
+
+Skip #15546 #16895. Never `trigger_deploy`.

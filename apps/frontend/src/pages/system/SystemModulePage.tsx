@@ -22,7 +22,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
-import { companyToday } from "../../lib/businessDate";
+import { companyToday, ctDateTime } from "../../lib/businessDate";
 
 /**
  * SYSTEM — Owner-only module. Single home for QuickBooks Reconciliation (TMS↔QBO tie-out — NOT bank
@@ -60,18 +60,7 @@ export function parseSystemTab(raw: string | null, qboAvailable = true): SystemT
   return "overview";
 }
 
-const CT = "America/Chicago";
 const LAUNCH_COMMAND = "claude --project IH35-TMS";
-
-function ctDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return (
-    d.toLocaleString("en-US", { timeZone: CT, year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }) +
-    " CT"
-  );
-}
 
 function fmtUsd(cents: number | null | undefined): string {
   if (cents == null || Number.isNaN(cents)) return "—";
@@ -621,7 +610,7 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
 }
 
 function TransactionHealthTab() {
-  const [issuesOnly, setIssuesOnly] = useState(true);
+  const [issuesOnly, setIssuesOnly] = useState(false);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]); // empty = every active entity
   const [cursor, setCursor] = useState<string | null>(null);
   const [rows, setRows] = useState<TxHealthRow[]>([]);
@@ -689,7 +678,12 @@ function TransactionHealthTab() {
         <Row label="Generated">{ctDateTime(generatedAt)}</Row>
       </Card>
 
-      <Card title="Filters" sub="Entity defaults to every active company (not USMCA-only).">
+      <Card title="Filters" sub="Default is every active company and every status. Uncheck an entity to hide it. Yesterday-morning dates usually mean TRANSPORTATION is the only chip still on — USMCA has today's TEST docs.">
+        {selectedEntityIds.length > 0 ? (
+          <p className="border-t border-slate-200 bg-slate-50 px-1 py-2 text-[11px] font-semibold text-slate-800" role="status">
+            Entity filter is ON ({selectedEntityIds.length} company). Newest rows are for those companies only — not a stale API.
+          </p>
+        ) : null}
         <label className="flex items-center gap-2 border-t border-gray-200 py-[7px] text-[12px] first:border-t-0">
           <input type="checkbox" checked={issuesOnly} onChange={(e) => setIssuesOnly(e.target.checked)} />
           <span className="text-slate-600">Show only issues (WARN/FAIL)</span>
@@ -733,12 +727,16 @@ function TransactionHealthTab() {
               <TxHealthWiringMap links={links} />
               <div className="flex flex-wrap gap-2">
                 <a
-                  href={txHealthDocumentPath(selected)}
+                  href={
+                    selected.findings?.[0]
+                      ? `${txHealthDocumentPath(selected)}?txh_finding=${encodeURIComponent(selected.findings[0].id)}`
+                      : txHealthDocumentPath(selected)
+                  }
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1f2a44] hover:bg-slate-50"
                 >
-                  Open document
+                  Open / Fix
                 </a>
                 {wiredChips.map((chip) => (
                   <a
@@ -774,7 +772,7 @@ function TransactionHealthTab() {
                     <span className="min-w-0">
                       <span className="block truncate font-semibold text-[#1f2a44]">{row.display_label}</span>
                       <span className="block truncate text-[11px] text-slate-500">
-                        {row.doc_type.replace(/_/g, " ")} · {row.entity_code}
+                        {row.doc_type.replace(/_/g, " ")} · {row.entity_code} · {ctDateTime(row.event_at)}
                       </span>
                     </span>
                     <Pill tone={row.status === "OK" ? "ok" : row.status === "WARN" ? "warn" : "off"}>{row.status}</Pill>
