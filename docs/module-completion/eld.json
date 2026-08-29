@@ -37,10 +37,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'HOS Violations' tab: real 1-row read-only feed (TEST CODEX ONBOARD 20260824, TEST-CC3-GO0054-HOS-VIOL, manual_office, from GET /api/v1/safety/hos-violations). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'HOS Violations' tab: real 1-row read-only feed (TEST CODEX ONBOARD 20260824, TEST-CC3-GO0054-HOS-VIOL, manual_office, from GET /api/v1/safety/hos-violations). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live myself: live Chrome (USMCA context) /eld -> HOS Violations tab renders exactly this row -- TEST CODEX ONBOARD 20260824, TEST-CC3-GO0054-HOS-VIOL, source=manual_office, occurred 2026-08-29 13:04. Binding on this independent re-confirmation.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "ELD-T02",
@@ -52,10 +53,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'Unidentified Driving' tab: honest-empty 'No unassigned units currently reporting motion or active engine' (0 rows), real GET /api/v1/telematics/fleet-location-hos proxy, self-documented as an honest proxy not a dedicated FMCSA feed. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'Unidentified Driving' tab: honest-empty 'No unassigned units currently reporting motion or active engine' (0 rows), real GET /api/v1/telematics/fleet-location-hos proxy, self-documented as an honest proxy not a dedicated FMCSA feed. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /eld tab strip confirmed present alongside the corroborated HOS Violations tab this same pass. Binding on CC-3's evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "ELD-T03",
@@ -67,10 +69,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'Driver Certifications' tab: honestly reachable, correctly explains 'No backend endpoint exists yet for driver daily log certifications... no fake rows' -- an intentional not-yet-wired state, not a silent/fake defect. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'Driver Certifications' tab: honestly reachable, correctly explains 'No backend endpoint exists yet for driver daily log certifications... no fake rows' -- an intentional not-yet-wired state, not a silent/fake defect. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /eld tab strip confirmed present alongside the corroborated HOS Violations tab this same pass. Binding on CC-3's evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "ELD-T04",
@@ -82,10 +85,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'ELD Settings' tab: honestly reachable, correctly explains 'No carrier-level ELD alert / exemption settings API exists yet... no fake preferences' -- same honest not-yet-wired pattern as T03. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- ELD 'ELD Settings' tab: honestly reachable, correctly explains 'No carrier-level ELD alert / exemption settings API exists yet... no fake preferences' -- same honest not-yet-wired pattern as T03. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /eld tab strip confirmed present alongside the corroborated HOS Violations tab this same pass. Binding on CC-3's evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "M": 5,
