@@ -18,7 +18,7 @@ function audit(source) {
   const failures = [];
   if (!source.api.includes('params: { status?: string; subject_type?: "driver" | "company"; subject_driver_id?: string; related_load_id?: string; related_unit_id?: string; limit?: number; offset?: number } = {}') || !/getSafetyFines[\s\S]{0,900}total_count: number/.test(source.api)) failures.push("canonical ranged API + exact total");
   if (!/DriverFinesReverseSection[\s\S]{0,500}civilPage/.test(source.compactDriver) || !/offset: \(civilPage - 1\) \* civilPageSize/.test(source.compactDriver)) failures.push("compact driver range");
-  if (!/civilTotal[\s\S]*driver-fines-civil-server-pager/.test(source.compactDriver) || !/setCivilPage\(1\), \[operatingCompanyId, driverId\]/.test(source.compactDriver)) failures.push("compact driver total, pager, scope reset");
+  if (!source.compactDriver.includes("const civilTotal") || !source.compactDriver.includes("driver-fines-civil-server-pager") || !/setCivilPage\(1\)[\s\S]{0,180}\}, \[operatingCompanyId, driverId\]\);/.test(source.compactDriver)) failures.push("compact driver total, pager, scope reset");
   if (!/offset: \(civilFinePage - 1\) \* civilFinePageSize/.test(source.driverHub) || !/count=\{civilFineTotal\}/.test(source.driverHub)) failures.push("driver hub range + exact total");
   if (!/driver-safety-reverse-civil-fines-pager/.test(source.driverHub) || !/setCivilFinePage\(1\)/.test(source.driverHub)) failures.push("driver hub pager + scope reset");
   if (!/offset: \(page - 1\) \* pageSize/.test(source.sharedAssetLoad) || !/data\?\.total_count/.test(source.sharedAssetLoad)) failures.push("shared unit/load range + exact total");
@@ -41,6 +41,7 @@ if (process.argv.includes("--selftest")) {
     ["api", "related_unit_id?: string; limit?: number; offset?: number", "related_unit_id?: string"],
     ["compactDriver", "offset: (civilPage - 1) * civilPageSize", "offset: 0"],
     ["compactDriver", "driver-fines-civil-server-pager", "driver-fines-civil-summary"],
+    ["compactDriver", "setCivilPage(1)", "setCivilPage(2)"],
     ["driverHub", "offset: (civilFinePage - 1) * civilFinePageSize", "offset: 0"],
     ["driverHub", "count={civilFineTotal}", "count={civilFines.length}"],
     ["sharedAssetLoad", "offset: (page - 1) * pageSize", "offset: 0"],
