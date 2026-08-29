@@ -172,6 +172,13 @@ export async function createTonuInvoiceForCancellation(
     ]
   );
   const invoiceLineId = String(lineRes.rows[0]?.id ?? "");
+  // DSP-MONEY-F7196 (CC-1): mirror the invoice header's own zero-rows check above — a lost/suppressed
+  // invoice_lines write must not silently continue into totals recompute + audit + success carrying a
+  // blank line id. Throw inside this same transaction so the whole TONU invoice rolls back rather than
+  // committing a header-only invoice with no line.
+  if (!invoiceLineId) {
+    throw Object.assign(new Error("tonu_invoice_line_create_failed"), { code: "tonu_invoice_line_create_failed" });
+  }
 
   await recomputeInvoiceTotals(client, invoiceId);
 
