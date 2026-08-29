@@ -189,7 +189,7 @@ function accidentSpawnDescription(accidentId: string): string {
   return `Auto-created from accident report ${accidentId}. Fill external vendor WO/invoice fields before completion.`;
 }
 
-type SpawnedWoRow = { id: string; display_id: string | null };
+type SpawnedWoRow = { id: string; display_id: string | null; insurance_claim_id: string | null };
 
 async function listAccidentSpawnedWorkOrders(
   client: {
@@ -199,9 +199,12 @@ async function listAccidentSpawnedWorkOrders(
   accidentId: string
 ): Promise<SpawnedWoRow[]> {
   // Match the full token OR a bare accident uuid (covers any prior wording that still carried the id).
+  // insurance_claim_id is selected so the reuse branch below can detect and backfill a WO spawned
+  // BEFORE the accident had a claim linked (SCEN-01-WO-CLAIM-BACKFILL) — the column itself is not
+  // part of the description-token match, only carried through so the caller can compare it.
   const res = await client.query<SpawnedWoRow>(
     `
-      SELECT id::text AS id, display_id
+      SELECT id::text AS id, display_id, insurance_claim_id::text AS insurance_claim_id
       FROM maintenance.work_orders
       WHERE operating_company_id = $1::uuid
         AND source_type = 'AC'
@@ -1321,6 +1324,28 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const existing = await listAccidentSpawnedWorkOrders(client, query.data.operating_company_id, params.data.id);
       if (existing.length > 0) {
         const first = existing[0];
+        // SCEN-01-WO-CLAIM-BACKFILL: listAccidentSpawnedWorkOrders finds the reused WO purely via
+        // the durable description token, never insurance_claim_id, so a WO spawned BEFORE the
+        // accident had a claim linked (or whose claim changed since) keeps insurance_claim_id
+        // NULL/stale forever across every future "Spawn WO" click on this same accident -- the
+        // create branch below only ever sets it once, at first-spawn time. Backfill it here on
+        // reuse so the FK a later claim link established actually reaches the WO, matching what
+        // the create branch would have written had the claim existed at spawn time. Live-confirmed
+        // 2026-08-29: accident 2b3d6512 (claim CLM-CC3-SCEN01-20260829) had a spawned AC WO
+        // (a236b27a) with insurance_claim_id=NULL, blocking SCEN-01 scenario.accident's own probe
+        // (which joins bills through this exact FK) even though every other hop was already correct.
+        const accidentClaimId = accident.insurance_claim_id ? String(accident.insurance_claim_id) : null;
+        if (accidentClaimId && accidentClaimId !== first.insurance_claim_id) {
+          await client.query(
+            `
+              UPDATE maintenance.work_orders
+              SET insurance_claim_id = $1::uuid, updated_at = now()
+              WHERE id = $2::uuid AND operating_company_id = $3::uuid
+            `,
+            [accidentClaimId, first.id, query.data.operating_company_id]
+          );
+          first.insurance_claim_id = accidentClaimId;
+        }
         await appendCrudAudit(
           client,
           user.uuid,

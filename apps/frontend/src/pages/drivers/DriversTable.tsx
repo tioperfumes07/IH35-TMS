@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -9,6 +10,9 @@ import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import type { summarizeDriverDqf } from "../../lib/driverDqf";
 import { Combobox } from "../../components/Combobox";
 import { companyToday } from "../../lib/businessDate";
+import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { employmentStatusCatalogClient } from "../../api/lists-drivers-catalogs";
 
 const DRIVER_STATUS_FILTERS: Array<{ value: string; label: string }> = [
   { value: "", label: "All statuses" },
@@ -34,16 +38,21 @@ type EnrichedDriverRow = DriverTableRow & {
 
 type Props = {
   rows: DriverTableRow[];
+  companyId: string;
   onOpenProfile?: (driverId: string) => void;
+  onUpdated?: () => void;
 };
 
-export function DriversTable({ rows, onOpenProfile }: Props) {
+export function DriversTable({ rows, companyId, onOpenProfile, onUpdated }: Props) {
   const { pushToast } = useToast();
   // Same role gate the old BulkSelectableTable wrapper enforced (BULK_WRITE_ROLES via
   // useBulkPermission, applied inside its BulkActionBar) — preserved here so bulk selection/actions
   // stay hidden for roles that couldn't use them before. Matches the FuelTransactionsTable /
   // TBL-STANDARD batch-1 idiom.
   const bulkPermission = useBulkPermission();
+  const bulk = useEntityBulkAction();
+  const [deactivateRows, setDeactivateRows] = useState<DriverTableRow[]>([]);
+  const [employmentReasonId, setEmploymentReasonId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const staged = useStagedListFilters({
     applied: { status: statusFilter },
@@ -60,6 +69,21 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
     if (!statusFilter) return enrichedRows;
     return enrichedRows.filter((row) => row.status === statusFilter);
   }, [enrichedRows, statusFilter]);
+
+  const employmentReasonsQ = useQuery({
+    queryKey: ["lists", "drivers", "employment-status", companyId],
+    queryFn: () => employmentStatusCatalogClient.list(),
+    enabled: Boolean(companyId && deactivateRows.length > 0),
+  });
+  const inactiveReasons = useMemo(
+    () => (employmentReasonsQ.data?.rows ?? []).filter((row) => row.code !== "ACTIVE").map((row) => ({ value: row.id, label: row.label })),
+    [employmentReasonsQ.data?.rows]
+  );
+
+  useEffect(() => {
+    setDeactivateRows([]);
+    setEmploymentReasonId(null);
+  }, [companyId]);
 
   function handleExportSelected(selected: DriverTableRow[]) {
     const scope = selected.length > 0 ? selected : filteredRows;
@@ -88,6 +112,7 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
   }
 
   return (
+    <>
     <ParityTable<EnrichedDriverRow>
       rows={filteredRows}
       rowKey={(row) => row.driverId}
@@ -140,10 +165,13 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
             </button>
             <button
               type="button"
-              disabled
-              title="Bulk deactivate is not available yet — deactivate a driver from their profile."
+              disabled={selected.length === 0}
+              title="Deactivate selected drivers"
               className="rounded-sm border border-red-300 bg-white px-2 py-1 text-xs font-semibold text-red-800 disabled:opacity-50"
-              onClick={() => pushToast("Bulk deactivate is not available yet — deactivate a driver from their profile.", "info")}
+              onClick={() => {
+                setDeactivateRows(selected);
+                setEmploymentReasonId(null);
+              }}
             >
               Deactivate
             </button>
@@ -222,5 +250,60 @@ export function DriversTable({ rows, onOpenProfile }: Props) {
         },
       ]}
     />
+    <BulkActionModal
+      open={deactivateRows.length > 0}
+      actionLabel="Deactivate drivers"
+      affectedCount={deactivateRows.length}
+      requiresReason
+      confirming={bulk.progressLoading}
+      description="Selected drivers will become inactive and leave active rosters. Existing history is retained."
+      payloadFields={
+        <div className="space-y-1">
+          <label htmlFor="driver-bulk-deactivate-reason" className="text-sm font-medium text-gray-800">Employment status reason</label>
+          <Combobox
+            id="driver-bulk-deactivate-reason"
+            options={inactiveReasons}
+            value={employmentReasonId}
+            onChange={setEmploymentReasonId}
+            placeholder={employmentReasonsQ.isLoading ? "Loading reasons…" : "Select reason"}
+          />
+          {employmentReasonsQ.isError ? <p className="text-xs text-red-600">Could not load employment status reasons.</p> : null}
+        </div>
+      }
+      onCancel={() => {
+        if (bulk.progressLoading) return;
+        setDeactivateRows([]);
+        setEmploymentReasonId(null);
+      }}
+      onConfirm={({ reason }) => {
+        if (!employmentReasonId) {
+          pushToast("Select an employment status reason.", "error");
+          return;
+        }
+        void bulk.runBulk({
+          domain: "mdata",
+          resource: "drivers",
+          ids: deactivateRows.map((row) => row.driverId),
+          action: "set_status",
+          payload: { status: "Inactive", reason_code_id: employmentReasonId },
+          reason,
+          operatingCompanyId: companyId,
+          invalidateKeys: [["drivers"]],
+        }, onUpdated).then(() => {
+          setDeactivateRows([]);
+          setEmploymentReasonId(null);
+        }).catch(() => undefined);
+      }}
+    />
+    <BulkProgressDialog
+      open={bulk.progressOpen}
+      requested={bulk.progress.requested}
+      succeeded={bulk.progress.succeeded}
+      failed={bulk.progress.failed}
+      loading={bulk.progressLoading}
+      bulk_call_id={bulk.progress.bulk_call_id}
+      onClose={() => bulk.setProgressOpen(false)}
+    />
+    </>
   );
 }

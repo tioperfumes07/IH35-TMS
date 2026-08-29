@@ -1528,6 +1528,45 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             "info",
             "BT-3-LOADS-SCHEMA"
           );
+
+          // SCEN-01 hop.assign — the generic office edit path was the ONLY driver/unit assignment
+          // writer that never recorded dispatch.load_assignment_history (book-load.service.ts,
+          // quick-assign.service.ts, dispatch-refinements.service.ts, and assignments/quicksave.
+          // service.ts all do). appendCrudAudit above is a generic, untyped info-log entry — it is
+          // NOT a substitute for the dedicated assignment-history table other features (this hop's
+          // own live probe included) join against with typed previous/new driver+unit columns. Live-
+          // verified 2026-08-29: 4 real driver bills already priced from the rate card had ZERO
+          // matching dispatch.load_assignment_history rows, permanently masking scenario probe
+          // hop.assign behind a false empty even though the underlying money mechanism (the driver
+          // bill itself) was already correct. Only fires on a real primary-driver/unit change (never
+          // a no-op write on an unrelated field edit), reusing the same 'full_form' assignment_method
+          // book-load.service.ts's own full-form wizard already uses — this IS a full-form edit of
+          // the load, just via the office PATCH surface instead of the Book Load wizard.
+          if (
+            oldRow.assigned_unit_id !== row.assigned_unit_id ||
+            oldRow.assigned_primary_driver_id !== row.assigned_primary_driver_id
+          ) {
+            await client.query(
+              `
+                INSERT INTO dispatch.load_assignment_history (
+                  operating_company_id, load_id, assignment_method,
+                  previous_driver_id, new_driver_id,
+                  previous_unit_id, new_unit_id,
+                  assigned_by_user_id, warnings_acknowledged
+                )
+                VALUES ($1::uuid, $2::uuid, 'full_form', $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::uuid, '[]'::jsonb)
+              `,
+              [
+                row.operating_company_id,
+                row.id,
+                oldRow.assigned_primary_driver_id ?? null,
+                row.assigned_primary_driver_id ?? null,
+                oldRow.assigned_unit_id ?? null,
+                row.assigned_unit_id ?? null,
+                authUser.uuid,
+              ]
+            );
+          }
         }
 
         if (!oldRow.soft_deleted_at && row.soft_deleted_at) {

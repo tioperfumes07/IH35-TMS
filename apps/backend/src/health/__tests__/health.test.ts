@@ -4,6 +4,7 @@ import {
   registerHealthRoutes,
   resolveBackendVersion,
   backgroundJobRule,
+  qboNamedJobsAreDormant,
   toPublicHealthErrorCode,
   HealthCheckError,
   HEALTH_ERROR_GENERIC,
@@ -111,6 +112,7 @@ describe("SEC-HEALTHZ-01 — no raw driver text escapes to an anonymous caller",
     expect(toPublicHealthErrorCode(new HealthCheckError("unresolved_depth_high", "1483"))).toBe(
       "unresolved_depth_high"
     );
+    expect(toPublicHealthErrorCode(new HealthCheckError("qbo_oauth_invalid", "2"))).toBe("qbo_oauth_invalid");
     expect(toPublicHealthErrorCode(new HealthCheckError("timeout", "after_1000ms"))).toBe("timeout");
   });
 
@@ -174,20 +176,62 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     }
   });
 
+  it("QBO named jobs are dormant only when there is no connection row (USMCA)", () => {
+    const prior = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      expect(qboNamedJobsAreDormant({ anyActiveConnection: false, needsReauthLabels: [] })).toBe(true);
+      for (const jobName of [
+        "integrations.qbo_inbound_sync",
+        "integrations.qbo_cdc_poll",
+        "sync.qbo_vendors_push",
+      ]) {
+        const r = backgroundJobRule(jobName, false);
+        expect(r?.enabled, jobName).toBe(false);
+        expect(r?.dormantReason).toBe("no_qbo_connection_for_entity");
+      }
+    } finally {
+      if (prior === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = prior;
+    }
+  });
+
+  it("planted: active connection with needs_reauth_at MUST still fail (not dormant)", () => {
+    const prior = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      const ev = { anyActiveConnection: true, needsReauthLabels: ["TRANSP", "TRK"] };
+      expect(qboNamedJobsAreDormant(ev)).toBe(false);
+      const r = backgroundJobRule("integrations.qbo_inbound_sync", ev);
+      expect(r?.enabled).toBe(true);
+      expect(r?.dormantReason).toBeUndefined();
+    } finally {
+      if (prior === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = prior;
+    }
+  });
+
   it("QBO inbound/CDC/push are dormant when no realm is connected (H4 — not stale)", () => {
-    for (const jobName of [
-      "integrations.qbo_inbound_sync",
-      "integrations.qbo_cdc_poll",
-      "sync.qbo_vendors_push",
-      "sync.qbo_customers_push",
-      "sync.qbo_accounts_push",
-    ]) {
-      const off = backgroundJobRule(jobName, false);
-      expect(off?.enabled).toBe(false);
-      expect(off?.dormantReason).toBe("no_qbo_realm_connected");
-      const on = backgroundJobRule(jobName, true);
-      expect(on?.enabled).toBe(true);
-      expect(on?.dormantReason).toBeUndefined();
+    const prior = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      for (const jobName of [
+        "integrations.qbo_inbound_sync",
+        "integrations.qbo_cdc_poll",
+        "sync.qbo_vendors_push",
+        "sync.qbo_customers_push",
+        "sync.qbo_accounts_push",
+      ]) {
+        const off = backgroundJobRule(jobName, false);
+        expect(off?.enabled).toBe(false);
+        expect(off?.dormantReason).toBe("no_qbo_connection_for_entity");
+        const on = backgroundJobRule(jobName, true);
+        expect(on?.enabled).toBe(true);
+        expect(on?.dormantReason).toBeUndefined();
+      }
+    } finally {
+      if (prior === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = prior;
     }
   });
 
@@ -248,12 +292,16 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
 // only when no realm is connected. Regression guard for the self-disabling health gate.
 describe("A1-1 backgroundJobRule — QBO mirror-staleness arms on connected realm", () => {
   const prior = process.env.QBO_MASTERDATA_SYNC_ENABLED;
+  const priorQboHealth = process.env.IH35_QBO_JOB_HEALTH_ARMED;
   beforeEach(() => {
     delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
+    delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
   });
   afterAll(() => {
     if (prior === undefined) delete process.env.QBO_MASTERDATA_SYNC_ENABLED;
     else process.env.QBO_MASTERDATA_SYNC_ENABLED = prior;
+    if (priorQboHealth === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    else process.env.IH35_QBO_JOB_HEALTH_ARMED = priorQboHealth;
   });
 
   it("sync flag OFF + realm CONNECTED → alarm armed (was silently skipped)", () => {

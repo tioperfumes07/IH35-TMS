@@ -59,7 +59,6 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
-import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 import { driverDisplayName, summarizeDriverDqf } from "../../lib/driverDqf";
 import { DriverDqfComplianceChip } from "./components/DriverDqfComplianceChip";
 import { DriverDqfPanel } from "./components/DriverDqfPanel";
@@ -182,6 +181,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const [addTrainingOpen, setAddTrainingOpen] = useState(false);
   const [w8benOpen, setW8benOpen] = useState(false);
   const [autoPaySaving, setAutoPaySaving] = useState(false);
+  const [dqfFocus, setDqfFocus] = useState<"all" | "present" | "missing" | "expired" | "expiry_alerts">("all");
+
+  const focusDqf = (focus: typeof dqfFocus) => {
+    setDqfFocus(focus);
+    requestAnimationFrame(() => document.getElementById("driver-dqf-checklist")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   const refreshDriver = () => {
     void queryClient.invalidateQueries({ queryKey: ["driver", id] });
@@ -488,8 +493,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
       </div>
 
-      {/* B-A3: DQF summary tiles — checklist below has no status/expiry filter yet; honest disabled
-          (no guess-route to a nearest Safety/Docs page). */}
+      {/* DQF summary tiles drill into the canonical checklist below with the matching exact filter. */}
       {itemsQ.isError ? (
         <ListErrorState
           title="Couldn't load DQF summary"
@@ -503,36 +507,31 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             label="Checklist items"
             number={String(summary.itemCount)}
             accent={colors.drivers.strong}
-            disabled
-            disabledReason={NOT_AVAILABLE_YET}
+            onClick={() => focusDqf("all")}
           />
           <KpiCard
             label="Present"
             number={String(summary.presentCount)}
             accent={colors.positive.strong}
-            disabled
-            disabledReason={NOT_AVAILABLE_YET}
+            onClick={() => focusDqf("present")}
           />
           <KpiCard
             label="Missing"
             number={String(summary.missingCount)}
             accent={colors.warn.strong}
-            disabled
-            disabledReason={NOT_AVAILABLE_YET}
+            onClick={() => focusDqf("missing")}
           />
           <KpiCard
             label="Expired"
             number={String(summary.expiredCount)}
             accent={colors.crit.strong}
-            disabled
-            disabledReason={NOT_AVAILABLE_YET}
+            onClick={() => focusDqf("expired")}
           />
           <KpiCard
             label="Expiry alerts"
             number={`${summary.redExpiryCount} red · ${summary.amberExpiryCount} amber`}
             accent={colors.info.strong}
-            disabled
-            disabledReason={NOT_AVAILABLE_YET}
+            onClick={() => focusDqf("expiry_alerts")}
           />
         </KpiStrip>
       )}
@@ -551,7 +550,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         2026-07-27: cdl_number, cdl_state, cdl_expires_at, dot_medical_expires_at, phone, email all
         exist on mdata.drivers.
       */}
-      <section className="rounded-sm border border-gray-200 bg-white p-3">
+      <section id="driver-dqf-checklist" className="scroll-mt-4 rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-1 text-sm font-semibold text-slate-900">Compliance summary</h2>
         <p className="mb-3 text-xs text-slate-600">
           Profile readiness combines master-data credentials with DQF checklist rows from the driver-qualification API.
@@ -591,7 +590,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <h2 className="mb-3 text-sm font-semibold text-slate-900">DQF checklist</h2>
-        <DriverDqfPanel companyId={companyId} driverId={id} editable />
+        <DriverDqfPanel companyId={companyId} driverId={id} editable focus={dqfFocus} onClearFocus={() => setDqfFocus("all")} />
       </section>
 
       <div data-testid="dp-section-12-action-bar">

@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "contracts": [
+    {
+      "id": "active-loads",
+      "label": "Active loads",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["dashboardQ.data?.active_loads", "to=\"/dispatch/loads\""]
+    },
+    {
+      "id": "at-risk-late",
+      "label": "At-risk / late",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["atRiskLateTotal", "to=\"/dispatch/at-risk\""]
+    },
+    {
+      "id": "units-available",
+      "label": "Units available",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "required_tokens": ["unitsAvailable", "to=\"/dispatch?view=loads\""]
+    },
+    {
+      "id": "units-needing-return",
+      "label": "Units needing return",
+      "component": "apps/frontend/src/pages/dispatch/DispatchOverview.tsx",
+      "source": "apps/backend/src/dispatch/loads.routes.ts",
+      "required_tokens": ["to=\"/dispatch#units-needing-return\"", "data-testid=\"dispatch-units-needing-return-panel\""],
+      "source_tokens": ["last_delivery.last_drop_at", "LEFT JOIN LATERAL (", "delivery_stop.stop_type = 'delivery'", "delivered_load.operating_company_id = $1::uuid", "delivery_stop.actual_departure_at IS NOT NULL"]
+    }
+  ]
+}
