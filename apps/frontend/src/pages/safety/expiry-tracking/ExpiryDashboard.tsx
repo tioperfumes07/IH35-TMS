@@ -28,6 +28,10 @@ type CertExpiryResponse = {
   alerts: CertExpiryAlert[];
 };
 
+type ExpiryDashboardProps = {
+  breadcrumbLabel?: "Cert Expiry" | "DOT Compliance";
+};
+
 const CERT_OPTIONS: Array<{ value: "all" | CertType; label: string }> = [
   { value: "all", label: "All certs" },
   { value: "cdl", label: "CDL" },
@@ -57,7 +61,7 @@ function severityWeight(severity: CertSeverity) {
   return 2;
 }
 
-export function ExpiryDashboard() {
+export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashboardProps = {}) {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [certType, setCertType] = useState<"all" | CertType>("all");
@@ -127,7 +131,7 @@ export function ExpiryDashboard() {
       <PageHeader
         title="Certificate Expiry Dashboard"
         subtitle="Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates."
-        breadcrumb={[{ label: "Safety" }, { label: "Cert Expiry" }]}
+        breadcrumb={[{ label: "Safety" }, { label: breadcrumbLabel }]}
         backHref="/safety"
         actions={
           <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">

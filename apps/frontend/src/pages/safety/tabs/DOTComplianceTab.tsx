@@ -164,7 +164,7 @@ export function DOTComplianceTab() {
 
   return (
     <div className="space-y-4">
-      <ExpiryDashboard />
+      <ExpiryDashboard breadcrumbLabel="DOT Compliance" />
       <MedicalCardsHistorySection operatingCompanyId={companyId} />
       <BackgroundChecksSection operatingCompanyId={companyId} />
 

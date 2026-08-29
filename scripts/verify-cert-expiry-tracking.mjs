@@ -128,6 +128,27 @@ contains("apps/frontend/src/pages/safety/tabs/DOTComplianceTab.tsx", dotTab, [
   { pattern: /ExpiryDashboard/, label: "dashboard mounted in DOT compliance tab" },
 ]);
 
+function breadcrumbContextFailures(dashboardSource, dotTabSource) {
+  const contextFailures = [];
+  if (!/breadcrumbLabel\?:\s*"Cert Expiry"\s*\|\s*"DOT Compliance"/.test(dashboardSource)) {
+    contextFailures.push("dashboard breadcrumb contract is not restricted to its two route contexts");
+  }
+  if (!/breadcrumbLabel\s*=\s*"Cert Expiry"/.test(dashboardSource)) {
+    contextFailures.push("standalone cert-expiry route lost its Cert Expiry default");
+  }
+  if (!/breadcrumb=\{\[\{ label: "Safety" \}, \{ label: breadcrumbLabel \}\]\}/.test(dashboardSource)) {
+    contextFailures.push("PageHeader does not render the route-aware breadcrumb label");
+  }
+  if (!/<ExpiryDashboard\s+breadcrumbLabel="DOT Compliance"\s*\/>/.test(dotTabSource)) {
+    contextFailures.push("DOT Compliance embedding does not identify its own route context");
+  }
+  return contextFailures;
+}
+
+for (const message of breadcrumbContextFailures(dashboard, dotTab)) {
+  fail(`safety cert-expiry breadcrumb: ${message}`);
+}
+
 const docs = read("docs/specs/gap-82-cert-expiry-tracking.md");
 contains("docs/specs/gap-82-cert-expiry-tracking.md", docs, [
   { pattern: /GAP-82/, label: "GAP-82 identifier" },
@@ -173,7 +194,21 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutations.length + durabilityMutations.length}/${mutations.length + durabilityMutations.length} mutations detected`);
+  const breadcrumbMutations = [
+    ["standalone default", dashboard, 'breadcrumbLabel = "Cert Expiry"', 'breadcrumbLabel = "DOT Compliance"', dotTab],
+    ["route-aware PageHeader", dashboard, '{ label: breadcrumbLabel }', '{ label: "Cert Expiry" }', dotTab],
+    ["DOT embed context", dotTab, '<ExpiryDashboard breadcrumbLabel="DOT Compliance" />', '<ExpiryDashboard />', dashboard],
+  ];
+  for (const [name, source, before, after, sibling] of breadcrumbMutations) {
+    const mutated = source.replace(before, after);
+    const [mutatedDashboard, mutatedDotTab] = source === dashboard ? [mutated, sibling] : [sibling, mutated];
+    if (mutated === source || breadcrumbContextFailures(mutatedDashboard, mutatedDotTab).length === 0) {
+      console.error(`verify:cert-expiry-tracking --selftest FAILED: ${name} mutation escaped`);
+      process.exit(1);
+    }
+  }
+  const mutationCount = mutations.length + durabilityMutations.length + breadcrumbMutations.length;
+  console.log(`verify:cert-expiry-tracking --selftest OK — ${mutationCount}/${mutationCount} mutations detected`);
   process.exit(0);
 }
 
