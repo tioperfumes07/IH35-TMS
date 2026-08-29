@@ -39,8 +39,17 @@ const ISLANDS = [
   },
   {
     table: "catalogs.tire_positions",
+    // RE-ANCHOR (LST-LINK-02, found stale 2026-08-29): the route was refactored onto the shared
+    // createCatalogRoutes factory (apps/backend/src/catalogs/fleet/factory.ts), which builds
+    // `catalogs.${config.tableName}` at runtime — this specific wrapper file only carries the
+    // config object (tableName: "tire_positions"), never the literal schema-qualified string.
+    // Checking the factory + this file's config value together proves the same real wiring the
+    // old literal-string check proved, without weakening it to accept a factory route that
+    // DOESN'T actually pass a tire_positions tableName.
     backend: "apps/backend/src/catalogs/fleet/tire-positions.routes.ts",
-    backendMust: [/catalogs\.tire_positions/i],
+    backendMust: [/tableName:\s*"tire_positions"/i],
+    backendFactory: "apps/backend/src/catalogs/fleet/factory.ts",
+    backendFactoryMust: [/catalogs\.\$\{config\.tableName\}/],
     frontend: "apps/frontend/src/components/forms/TwoSectionLineEditor.tsx",
     frontendMust: [/tire-positions|tirePositionsCatalogClient/i],
     emptyOk: true,
@@ -80,6 +89,19 @@ export function collectProblems() {
         }
       }
     }
+    if (island.backendFactory) {
+      if (!fs.existsSync(path.join(ROOT, island.backendFactory))) {
+        problems.push(`${island.table}: missing factory file ${island.backendFactory}`);
+      } else {
+        const factorySrc = read(island.backendFactory);
+        for (const re of island.backendFactoryMust || []) {
+          if (!re.test(factorySrc)) {
+            problems.push(`${island.table}: ${island.backendFactory} missing ${re}`);
+          }
+        }
+      }
+    }
+
     if (island.listsOnly && !island.listsNote) {
       problems.push(`${island.table}: listsOnly island must carry listsNote`);
     }
