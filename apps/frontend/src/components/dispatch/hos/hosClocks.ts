@@ -22,6 +22,8 @@ export type HosStatusRow = {
 
 export type HosColumnKey = "drive" | "shift" | "break" | "cycle" | "stopBy" | "resumeAt";
 
+export const HOS_SOURCE_TOOLTIP = "Certified ELD clock from Samsara";
+
 // The 6 ordered HOS columns. `samsaraField` documents the Samsara field this maps to; `derived`
 // marks the two projected clocks (Stop By / Resume At).
 export const HOS_COLUMNS: ReadonlyArray<{
