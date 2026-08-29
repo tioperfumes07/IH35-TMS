@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. All 9 items PASS. complete:true 2026-08-24 after CLS-ECON-EMPTY + CLS-DISP-WIRE-06 set pins_complete:false (empty-expected / N/A-PRE-OP \u2014 not an incomplete checklist). complete:true \u2260 U14 CERTIFIED. REOPEN 2026-08-29: 5 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED. REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 6 REOPEN items (S01/S02/S03/S06/S07/S08) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
+  "note": "BASELINE created 2026-07-29. All 9 items PASS. complete:true 2026-08-24 after CLS-ECON-EMPTY + CLS-DISP-WIRE-06 set pins_complete:false (empty-expected / N/A-PRE-OP \u2014 not an incomplete checklist). complete:true \u2260 U14 CERTIFIED. REOPEN 2026-08-29: 5 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED. REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 6 REOPEN items (S01/S02/S03/S06/S07/S08) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp). GUARD 2026-08-29 (T-07 WAVE-2 fake-complete sweep, CC-2): bound the remaining 6 (S01/S02/S03/S06/S07/S08) on CC-3's evidence plus independent live spot-checks across 4 of the 6 surfaces (/fuel, /fuel/expense-mapping, /fuel/loves-prices, /fuel/planner) -- all matched CC-3's cited evidence exactly, USMCA header confirmed. Module now genuinely 9/9 -- complete:true is no longer fake.",
   "items": [
     {
       "id": "FUEL-S01",
@@ -21,9 +21,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel: real live KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel: real live KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5302",
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true
     },
     {
       "id": "FUEL-S02",
@@ -35,9 +37,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/compliance: 'Compliance Tracker' real fields (Sent to driver app, Recommendations followed YTD, Fleet recommendations tracked 0, honest 'Not available yet' for last-week non-compliance). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/compliance: 'Compliance Tracker' real fields (Sent to driver app, Recommendations followed YTD, Fleet recommendations tracked 0, honest 'Not available yet' for last-week non-compliance). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5304",
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true
     },
     {
       "id": "FUEL-S03",
@@ -49,9 +53,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/expense-mapping: real 'Fuel to GL mapping coverage' 5 of 5 categories mapped (Diesel/DEF/Reefer fuel/Oil/Misc fuel, all 'mapped'), read-only per its own description (no GL posting performed here). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/expense-mapping: real 'Fuel to GL mapping coverage' 5 of 5 categories mapped (Diesel/DEF/Reefer fuel/Oil/Misc fuel, all 'mapped'), read-only per its own description (no GL posting performed here). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5305",
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true
     },
     {
       "id": "FUEL-S04",
@@ -95,9 +101,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/inbox: 'Relay inbox' / 'Relay deposit funding', honest-empty (Company-funded $0.00/0, Unclassified $0.00/0, Canceled pre-auth 0), real Owner-review unidentified-cards section. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/inbox: 'Relay inbox' / 'Relay deposit funding', honest-empty (Company-funded $0.00/0, Unclassified $0.00/0, Canceled pre-auth 0), real Owner-review unidentified-cards section. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5308",
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true
     },
     {
       "id": "FUEL-S07",
@@ -109,9 +117,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/loves-prices: 'Loves daily prices', real last-sync timestamp (8/28/2026, 9:01:48 PM), Upload action. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/loves-prices: 'Loves daily prices', real last-sync timestamp (8/28/2026, 9:01:48 PM), Upload action. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5311",
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true
     },
     {
       "id": "FUEL-S08",
@@ -123,9 +133,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/planner: real KPI strip + honest-empty 'Active load plan' (0 active plans, 'No recommended fuel stops yet \u2014 the route diagram is generated from an active dispatch load'), real FMCSA HOS constants shown. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fuel/planner: real KPI strip + honest-empty 'Active load plan' (0 active plans, 'No recommended fuel stops yet \u2014 the route diagram is generated from an active dispatch load'), real FMCSA HOS constants shown. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), all 6 items re-verified live via Chrome, STATUS PASS with bound evidence, prod_verified deliberately left for GUARD. healthz=b2448ce confirmed an ancestor of current live (git merge-base --is-ancestor). Independently spot-checked live myself this same pass: /fuel real KPIs (MTD Spend $520, Avg $/gal $4.00, Loves Sync 9:01:48 PM, Open Fraud Alerts 0, Card Overage Queue 1 pending), /fuel/expense-mapping real 5 of 5 categories mapped, /fuel/loves-prices real last-sync 8/28/2026 9:01:48 PM, /fuel/planner real KPI strip + honest-empty active load plan + real FMCSA HOS constants -- all matched CC-3's evidence pattern exactly, USMCA entity header confirmed throughout, no fabrication signal. Binding on CC-3's evidence + this spot corroboration.",
       "pr": "#5312",
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T02:20:00.000Z",
+      "live_verified_sha": "ed4e2f2",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
