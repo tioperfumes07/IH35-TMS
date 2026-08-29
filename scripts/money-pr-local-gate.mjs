@@ -90,6 +90,9 @@ const STEPS = [
   ["verify-fine-create-suggest-load", "scripts/verify-fine-create-suggest-load.mjs"],
   ["verify-internal-fine-create-suggest-load", "scripts/verify-internal-fine-create-suggest-load.mjs"],
   ["verify-safety-event-create-suggest-load", "scripts/verify-safety-event-create-suggest-load.mjs"],
+  // 2026-08-29 — literal `draft.col` matcher redded origin/main after page moved to input.draft.col;
+  // four CC-1 PRs burned a full build-typecheck each. Run here so local gate catches source-shape drift.
+  ["verify-safety-log-event-dot-fields", "scripts/verify-safety-log-event-dot-fields.mjs"],
   ["verify-cargo-claim-create-suggest-load", "scripts/verify-cargo-claim-create-suggest-load.mjs"],
   ["verify-incidents-cluster-create-suggest-load", "scripts/verify-incidents-cluster-create-suggest-load.mjs"],
   ["verify-abandonment-driver-picker", "scripts/verify-abandonment-driver-picker.mjs"],
