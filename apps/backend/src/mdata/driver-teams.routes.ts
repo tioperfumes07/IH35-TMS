@@ -497,11 +497,14 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
             UPDATE mdata.driver_teams
             SET is_active = false, effective_to = COALESCE(effective_to, CURRENT_DATE)
             WHERE id = $1
+              AND operating_company_id = $2::uuid
+              AND is_active = true
             RETURNING *
           `,
-          [team.id]
+          [team.id, team.operating_company_id]
         );
         const deactivated = deactivateRes.rows[0];
+        if (!deactivated) return { error: "driver_team_state_changed" as const };
 
         const createRes = await client.query(
           `
@@ -568,6 +571,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
       if (result && typeof result === "object" && "error" in result) {
         if (result.error === "mdata_driver_team_not_found") return reply.code(404).send({ error: result.error });
         if (result.error === "driver_team_not_active") return reply.code(409).send({ error: result.error });
+        if (result.error === "driver_team_state_changed") return reply.code(409).send({ error: result.error });
         if (result.error === "drivers_not_in_operating_company") return reply.code(400).send({ error: result.error });
         if (result.error === "driver_already_in_active_team") return reply.code(409).send({ error: result.error });
         if (result.error === "driver_team_constraint_violation") return reply.code(400).send({ error: result.error });
