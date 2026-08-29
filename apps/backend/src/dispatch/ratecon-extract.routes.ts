@@ -47,6 +47,9 @@ export function classifyRateconExtractError(err: unknown): RateconErrorClassific
   if (isUpstreamAiFailure) {
     return { status: 502, body: { error: "extraction_failed", detail: msg.slice(0, 120) }, capture: true, phase: "extraction_failed" };
   }
+  if (msg === "ratecon_extraction_create_failed") {
+    return { status: 503, body: { error: "extraction_persistence_failed" }, capture: true, phase: "persistence_failed" };
+  }
   return { status: 500, body: { error: "internal_error" }, capture: true, phase: "internal_error" };
 }
 
@@ -118,9 +121,11 @@ export async function registerRateConExtractRoutes(app: FastifyInstance) {
              result.extraction.rate.total_cents, result.total_matches_components,
              JSON.stringify(result.extraction), user.uuid],
           );
+          const extractionId = rec.rows[0]?.id;
+          if (!extractionId) throw new Error("ratecon_extraction_create_failed");
 
           return reply.send({
-            extraction_id: rec.rows[0].id,
+            extraction_id: extractionId,
             extraction: result.extraction,
             total_matches_components: result.total_matches_components,
             page_count: result.page_count,
