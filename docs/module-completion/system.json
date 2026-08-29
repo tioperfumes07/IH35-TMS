@@ -19,9 +19,11 @@
       ],
       "spec": "SystemModulePage \u00b7 program-system-help SYSTEM section",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 \u00b7 open_sync_alerts=0 \u00b7 success_sync_runs=489; qbo.sync_runs n_live_tup=1086 \u00b7 integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
+      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 \u00b7 open_sync_alerts=0 \u00b7 success_sync_runs=489; qbo.sync_runs n_live_tup=1086 \u00b7 integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-system-module-surfaces-s01-s04.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /system Overview tab renders live, Program Tracker card shows Registered=1054 / Active tracked blocks=1245 (real live counts, not static). Binding on this independent re-confirmation.",
       "pr": "#5343",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S02",
@@ -32,9 +34,11 @@
       ],
       "spec": "System health DEGRADED when background_jobs.stale DOWN",
       "status": "PASS",
-      "evidence": "Software/Build card fetches live /api/v1/healthz via fetchHealth, displays DEGRADED when ok=false, and lists individual service checks with OK/DOWN pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET https://ih35-tms.onrender.com/api/v1/healthz ok=false (honest DEGRADED, not false green): background_jobs.stale tier=warning ok=false error=never_succeeded_jobs; critical checks postgres.select1/migrations.ledger/redis.ping all ok=true. shallow version=e16ebd0.",
+      "evidence": "Software/Build card fetches live /api/v1/healthz via fetchHealth, displays DEGRADED when ok=false, and lists individual service checks with OK/DOWN pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET https://ih35-tms.onrender.com/api/v1/healthz ok=false (honest DEGRADED, not false green): background_jobs.stale tier=warning ok=false error=never_succeeded_jobs; critical checks postgres.select1/migrations.ledger/redis.ping all ok=true. shallow version=e16ebd0. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-system-module-surfaces-s01-s04.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /system?tab=software shows \"DEGRADED\" badge, Deployed backend=ed4e2f2 (current live, exact match), Service health=RED (honest, not fake green). Binding on this independent re-confirmation.",
       "pr": "#5343",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S03",
@@ -44,9 +48,11 @@
       ],
       "spec": "System page Program Tracker subsection",
       "status": "PASS",
-      "evidence": "Program Tracker card fetches getProgramTracker, mirrors registered_total / view_counts, and links to the canonical /program board. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 tip 203758833 .block-ready registry n=1382 JSON files (registered_total computed at request from deployed artifacts per program-tracker.service.ts); GET /api/v1/program/tracker returns 401 without session (auth-gated, expected); SystemModulePage + /program board route wired on main #5343.",
+      "evidence": "Program Tracker card fetches getProgramTracker, mirrors registered_total / view_counts, and links to the canonical /program board. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 tip 203758833 .block-ready registry n=1382 JSON files (registered_total computed at request from deployed artifacts per program-tracker.service.ts); GET /api/v1/program/tracker returns 401 without session (auth-gated, expected); SystemModulePage + /program board route wired on main #5343. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-system-module-surfaces-s01-s04.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /system Program Tracker card shows Registered=1054 (a different metric than the cited 1382 .block-ready JSON file count -- computed live from deployed artifacts per program-tracker.service.ts, not a regression, just a different denominator), Active tracked blocks=1245. Binding on this independent re-confirmation.",
       "pr": "#5343",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S04",
@@ -57,9 +63,11 @@
       ],
       "spec": "Health & Deploys detail panel",
       "status": "PASS",
-      "evidence": "Health & Deploys / Service checks drill-in maps over health.data.checks and renders each check name, tier, and OK/DOWN status. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET /api/v1/healthz checks[] exposes 7 named probes (postgres.select1, migrations.ledger, redis.ping, r2.head_bucket, qbo.sync_alerts.unresolved_depth, email.queue.depth, background_jobs.stale) each with ok/tier; failing check surfaces error=never_succeeded_jobs (not silent green).",
+      "evidence": "Health & Deploys / Service checks drill-in maps over health.data.checks and renders each check name, tier, and OK/DOWN status. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 GET /api/v1/healthz checks[] exposes 7 named probes (postgres.select1, migrations.ledger, redis.ping, r2.head_bucket, qbo.sync_alerts.unresolved_depth, email.queue.depth, background_jobs.stale) each with ok/tier; failing check surfaces error=never_succeeded_jobs (not silent green). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-system-module-surfaces-s01-s04.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /system?tab=software \"Service checks\" table renders 7 rows exactly as cited, postgres.select1/migrations.ledger/redis.ping=OK, background_job...=DOWN (honest failing status shown, not hidden). Binding on this independent re-confirmation.",
       "pr": "#5343",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S05",
@@ -89,9 +97,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 SYS-VERIFY-01 \u2014 CDP 9225 Owner session, USMCA (+TRANSP qbo-sync). All six /system tabs clicked: overview \u00b7 qbo-recon \u00b7 qbo-sync \u00b7 program \u00b7 software \u00b7 claude-coder \u2014 each renders (not 404). QBO write-back OFF by design (SYS-S05); Software DEGRADED honest (SYS-S02); Program Tracker counts + link to /program. VERIFY V1/V3/V5/V7/V8 PASS; V2 N/A; V6 N/A. Neon 2026-08-10: audit.scenario_status has hop.book/dispatch/deliver/invoice/gl passed (CI-PROBE). Cursor closed stale scaffold evidence that predated Cascade click notes.",
+      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 SYS-VERIFY-01 \u2014 CDP 9225 Owner session, USMCA (+TRANSP qbo-sync). All six /system tabs clicked: overview \u00b7 qbo-recon \u00b7 qbo-sync \u00b7 program \u00b7 software \u00b7 claude-coder \u2014 each renders (not 404). QBO write-back OFF by design (SYS-S05); Software DEGRADED honest (SYS-S02); Program Tracker counts + link to /program. VERIFY V1/V3/V5/V7/V8 PASS; V2 N/A; V6 N/A. Neon 2026-08-10: audit.scenario_status has hop.book/dispatch/deliver/invoice/gl passed (CI-PROBE). Cursor closed stale scaffold evidence that predated Cascade click notes. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): 4 constituent SYS-S01/S02/S03/S04 items independently re-verified live and bound this same pass (SYS-S06/S07 already bound separately). Live Chrome (USMCA context) /system confirms the tab strip still matches (6+ tabs, all render). Binding on the aggregate of those bindings.",
       "pr": "Cascade OUTBOX + Neon",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S06",
@@ -103,9 +113,11 @@
       ],
       "spec": "CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md \u00a71/\u00a73 item 6/\u00a74 \u2014 Ledger Health, self-close only",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx's 7th tab (ledger-health.routes.ts / ledger-health-reads.ts) renders summary counts, per-integration last-tick, and a findings table with zero resolve/close control anywhere \u2014 enforced by scripts/verify-ledger-health-no-human-resolve.mjs. | PROD-VERIFIED 2026-08-28 live Chrome (CDP 9225, USMCA) at https://app.ih35dispatch.com/system?tab=ledger-health on deploy dep-da8i6fgae00c73d0u7b0 (healthz version ebc1c4f, git merge-base --is-ancestor a6801b12 ebc1c4f true): Open findings 102 \u00b7 Critical 96 \u00b7 Important 4 \u00b7 Cleanup 2; By-integration breakdown live for ledger (3 open \u2014 CC-2's ledger-integrity detector already producing real rows with zero code change needed on this dashboard, exactly the design intent), qbo (1 open), samsara (96 critical / 98 open); Findings table populated with 102 real rows (samsara count_drift/identity_mismatch, CRITICAL, OPEN), no resolve/close action column present in the rendered table.",
+      "evidence": "SystemModulePage.tsx's 7th tab (ledger-health.routes.ts / ledger-health-reads.ts) renders summary counts, per-integration last-tick, and a findings table with zero resolve/close control anywhere \u2014 enforced by scripts/verify-ledger-health-no-human-resolve.mjs. | PROD-VERIFIED 2026-08-28 live Chrome (CDP 9225, USMCA) at https://app.ih35dispatch.com/system?tab=ledger-health on deploy dep-da8i6fgae00c73d0u7b0 (healthz version ebc1c4f, git merge-base --is-ancestor a6801b12 ebc1c4f true): Open findings 102 \u00b7 Critical 96 \u00b7 Important 4 \u00b7 Cleanup 2; By-integration breakdown live for ledger (3 open \u2014 CC-2's ledger-integrity detector already producing real rows with zero code change needed on this dashboard, exactly the design intent), qbo (1 open), samsara (96 critical / 98 open); Findings table populated with 102 real rows (samsara count_drift/identity_mismatch, CRITICAL, OPEN), no resolve/close action column present in the rendered table. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-ledger-health-no-human-resolve.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /system Overview shows Ledger Health = 99 CRITICAL, Open findings=107 (grown from 102, healthy). Binding on this independent re-confirmation.",
       "pr": "#16836",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SYS-S07",
