@@ -40,10 +40,16 @@ export function audit(src) {
   // text, not at a fixed byte offset (the onClick handler body varies in length).
   const context = src.slice(uploadIdx === -1 ? Math.max(0, btnIdx - 1200) : uploadIdx, btnIdx + 50);
 
-  if (!/disabled=\{!activeRoute \|\| !companyId\}/.test(context)) {
+  const disabledExpression = context.match(/disabled=\{([^}]*)\}/)?.[1] ?? "";
+  const hasRouteGuard = /(?:^|\|\|)\s*!activeRoute\s*(?:\|\||$)/.test(disabledExpression);
+  const hasCompanyGuard = /(?:^|\|\|)\s*!companyId\s*(?:\|\||$)/.test(disabledExpression);
+  const hasPendingGuard = /(?:^|\|\|)\s*sendRecommendationMutation\.isPending\s*(?:\|\||$)/.test(
+    disabledExpression,
+  );
+  if (!hasRouteGuard || !hasCompanyGuard || !hasPendingGuard) {
     failures.push(
-      `${FILE}: "Send to driver app" ActionButton must be disabled when there is no active route ` +
-        `(disabled={!activeRoute || !companyId}) — otherwise a click with no active route is a silent no-op.`,
+      `${FILE}: "Send to driver app" ActionButton must be disabled for a missing active route, ` +
+        `missing company, or an in-flight send — otherwise the control can silently no-op or submit twice.`,
     );
   }
   if (!/<span\s+title=\{/.test(context)) {
@@ -74,7 +80,9 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    { from: "disabled={!activeRoute || !companyId}", to: "" },
+    { from: "!activeRoute || ", to: "" },
+    { from: "!companyId || ", to: "" },
+    { from: " || sendRecommendationMutation.isPending", to: "" },
     {
       from: `<span
                   title={
