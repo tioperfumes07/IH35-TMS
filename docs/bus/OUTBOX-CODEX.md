@@ -2355,3 +2355,4 @@ CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7348 | NOW=upload-guard-partial-ev
 CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7349 | NOW=drivers-chrome-guard-structural-modal-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7350 | NOW=driver-column-keyed-hub-mount-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=FLEET-F7351 | NOW=fleet-expense-reverse-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
+CODEX | WORKING | GO-MODAL-01 | FINDING=MAINT-F7352 | NOW=arriving-convert-canonical-unit-scope-guard | NEXT=unique dispatch/drivers/fleet | GO
