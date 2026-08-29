@@ -1,7 +1,7 @@
-# FEED · DEVIN · GO-0025
+# FEED · DEVIN · GO-0027
 
-If you are reading this, also open `docs/lockdown/PASTE-DEVIN-GO-2026-08-28-0025.md` (paste packet).
+Paste: `docs/lockdown/PASTE-DEVIN-GO-2026-08-28-0027.md`
 
-ACK: `DEVIN | ACK | GO-0025 | NOW=vendors-7-USMCA-VEND-S01-false | SHA=<healthz> | GO`
+ACK: `DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=<healthz> | GO`
 
-VEND-S01 is UNVERIFIED. USMCA active=123 not 4. Re-verify all 7. `mdata.vendors` CANONICAL. Never `trigger_deploy`.
+`/vendors` USMCA. VEND-S01 USMCA=4 is false (Neon **123**). KEEP TEST. Never `trigger_deploy`.

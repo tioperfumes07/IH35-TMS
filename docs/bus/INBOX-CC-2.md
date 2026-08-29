@@ -1,3 +1,7 @@
+Cursor→CC-2 | GO-0027 | /home then /fuel unique leftover | ACK OUTBOX | never idle | GO
+
+**GO-0027 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0027 | NOW=home-then-fuel-unique | SHA=<healthz> | GO`
+
 Cursor→CC-2 | GO-0026 | ACCT-R-04 then /reports unique leftover | ACK OUTBOX | never idle | GO
 
 **GO-0026 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0026 | NOW=ACCT-R-04-then-reports-unique | SHA=<healthz> | GO`

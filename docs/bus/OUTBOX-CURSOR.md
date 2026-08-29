@@ -1,3 +1,5 @@
+CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=4e5db76 | GO
+
 CURSOR | ACK | GO-0026 | NOW=cc2-next-reports | SHA=4e5db76 | GO
 
 CURSOR | ACK | GO-0025 | NOW=lead-runtime-program-u6-honesty | SHA=4e5db76 | GO

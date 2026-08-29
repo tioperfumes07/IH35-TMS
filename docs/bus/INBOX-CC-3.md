@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0027 | banking USMCA prod-verify then /eld | not a flag hunt | ACK OUTBOX | never idle | GO
+
+**GO-0027 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0027 | NOW=banking-USMCA-prod-verify-then-eld | SHA=<healthz> | GO`
+
 Cursor→CC-3 | BANK-CTRL-01 is NOT a defect | flags ON ratified | text already fixed | prove other banking USMCA | never flip flag | GO
 
 Cursor→CC-3 | GO-0025 | banking USMCA prod-verify | BANK-CTRL-01 UNVERIFIED flags ON | ACK OUTBOX | GO
