@@ -7,10 +7,29 @@
  * listEscrowRecords() swallowed failures into an empty timeline — the panel looked like
  * "no forfeitures" when the read was structurally broken.
  *
- * This guard locks BOTH halves:
- *   1. escrow_ledger reads order by created_at (never posted_at)
- *   2. listEscrowRecords does not manufacture empty timelines from caught exceptions
- *   3. EscrowRecordTab surfaces timeline_errors when history is incomplete
+ * ACCT-GUARD-F7300 (2026-08-29): ACCT-F5703 deliberately repointed escrow-visualizer.routes.ts's
+ * detail-timeline query OFF driver_finance.escrow_ledger (near-empty, never kept in sync, no JE
+ * link of its own) ONTO accounting.escrow_postings — the real postings backing
+ * accounting.escrow_accounts.balance_cents, already correctly linked to its GL journal entry via
+ * linked_journal_entry_id. This guard's original check #1 required BOTH deductions.routes.ts AND
+ * escrow-visualizer.routes.ts to query driver_finance.escrow_ledger — after ACCT-F5703, the
+ * visualizer legitimately queries neither that table nor a phantom posted_at column (verified live
+ * on Neon: accounting.escrow_postings genuinely HAS a posted_at column, unlike escrow_ledger), so
+ * the guard was rejecting a correct, deliberate improvement. Root cause was the guard's own
+ * assumption, not the code. Fixed by scoping check #1 to deductions.routes.ts only (still queries
+ * escrow_ledger, still must never order by its nonexistent posted_at) and adding a companion check
+ * for escrow-visualizer.routes.ts's actual canonical source: it must query
+ * accounting.escrow_postings, LEFT JOIN accounting.journal_entries via linked_journal_entry_id
+ * (preserving the JE lineage that is the whole point of the repoint), and scope by both
+ * operating_company_id and driver/holder identity — the "company/driver scope" the finding asked
+ * for. Do not restore the retired escrow_ledger query merely to satisfy the old guard.
+ *
+ * This guard locks all of:
+ *   1. deductions.routes.ts's escrow_ledger reads order by created_at (never posted_at)
+ *   2. escrow-visualizer.routes.ts's timeline reads use accounting.escrow_postings, joined to
+ *      accounting.journal_entries, scoped by company + driver
+ *   3. listEscrowRecords does not manufacture empty timelines from caught exceptions
+ *   4. EscrowRecordTab surfaces timeline_errors when history is incomplete
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -48,18 +67,17 @@ export function assertOrph03(root = ROOT) {
   }
   if (problems.length) return problems;
 
-  for (const rel of [DEDUCTIONS_ROUTES, ESCROW_VIZ_ROUTES]) {
+  // Check #1 — deductions.routes.ts is the ONLY remaining reader of driver_finance.escrow_ledger,
+  // which genuinely has no posted_at column. escrow-visualizer.routes.ts was deliberately
+  // repointed off this table by ACCT-F5703 and is checked separately below.
+  {
+    const rel = DEDUCTIONS_ROUTES;
     const src = stripComments(read(rel));
     const chunks = extractEscrowLedgerSql(src);
     if (chunks.length === 0) {
       problems.push(`${rel}: expected at least one driver_finance.escrow_ledger query`);
-      continue;
     }
     for (const chunk of chunks) {
-      // Allow an optional table-alias prefix (e.g. `ORDER BY el.created_at`) — the real
-      // escrow-visualizer.routes.ts query joins escrow_ledger against driver_settlement_gl_runs
-      // and journal_entries, so it aliases the ledger as `el` and qualifies every column,
-      // including the ORDER BY. An unqualified-only regex false-flagged that real, correct query.
       if (/order\s+by\s+(?:\w+\.)?posted_at/i.test(chunk)) {
         problems.push(
           `${rel}: driver_finance.escrow_ledger query orders by posted_at — column does not exist (Postgres 42703)`
@@ -68,6 +86,32 @@ export function assertOrph03(root = ROOT) {
       if (!/order\s+by\s+(?:\w+\.)?created_at/i.test(chunk)) {
         problems.push(`${rel}: driver_finance.escrow_ledger query must ORDER BY created_at`);
       }
+    }
+  }
+
+  // Check #2 — escrow-visualizer.routes.ts's detail-timeline query (ACCT-F5703's canonical
+  // replacement): must read accounting.escrow_postings, preserve the JE lineage via a
+  // LEFT JOIN accounting.journal_entries ON linked_journal_entry_id, and stay scoped by both
+  // operating_company_id and driver/holder identity — company+driver scope, mutation-proven
+  // independently of the deductions.routes.ts check above.
+  {
+    const rel = ESCROW_VIZ_ROUTES;
+    const src = stripComments(read(rel));
+    // Anchor on "escrow_postings ep" — unique to the detail-timeline query (the list endpoint
+    // above it in the same file never mentions escrow_postings at all), so this can't accidentally
+    // match the unrelated list-endpoint query the way an "accounting.escrow_accounts" anchor did
+    // (both endpoints reference that table).
+    if (!/join\s+accounting\.escrow_postings\s+ep/i.test(src)) {
+      problems.push(`${rel}: detail-timeline query must JOIN accounting.escrow_postings (ACCT-F5703 canonical source)`);
+    }
+    if (!/left\s+join\s+accounting\.journal_entries[\s\S]{0,120}linked_journal_entry_id/i.test(src)) {
+      problems.push(`${rel}: detail-timeline query must LEFT JOIN accounting.journal_entries via linked_journal_entry_id — losing this drops the GL lineage that is the whole point of the repoint`);
+    }
+    if (!/"ea\.operating_company_id\s*=\s*\$1::uuid"/i.test(src)) {
+      problems.push(`${rel}: detail-timeline query must stay scoped by operating_company_id`);
+    }
+    if (!/"ea\.holder_id\s*=\s*\$2"/i.test(src)) {
+      problems.push(`${rel}: detail-timeline query must stay scoped to the requested driver (holder_id)`);
     }
   }
 
@@ -109,14 +153,30 @@ function selftest() {
       replace: "ORDER BY posted_at DESC LIMIT 200",
     },
     {
-      // ESCROW_VIZ_ROUTES was never actually mutation-tested before — its ORDER BY el.created_at
-      // shape (aliased, unlike deductions.routes.ts's bare created_at) is the only occurrence in
-      // this file, so this proves both the alias-prefix match works on the real query AND that a
-      // genuine posted_at regression on this specific file is still caught.
-      name: "posted_at resurrected on escrow-visualizer.routes.ts read",
+      name: "escrow-visualizer.routes.ts drops the escrow_postings join (reverts toward the retired source)",
       file: ESCROW_VIZ_ROUTES,
-      find: "ORDER BY el.created_at DESC",
-      replace: "ORDER BY el.posted_at DESC",
+      find: "JOIN accounting.escrow_postings ep",
+      replace: "JOIN accounting.escrow_ledger ep",
+    },
+    {
+      name: "escrow-visualizer.routes.ts drops the journal_entries JE-lineage join",
+      file: ESCROW_VIZ_ROUTES,
+      find: `LEFT JOIN accounting.journal_entries je
+              ON je.id = ep.linked_journal_entry_id`,
+      replace: `LEFT JOIN accounting.journal_entries je
+              ON je.id = ep.id`,
+    },
+    {
+      name: "escrow-visualizer.routes.ts drops company scope on the detail-timeline query",
+      file: ESCROW_VIZ_ROUTES,
+      find: '"ea.operating_company_id = $1::uuid",',
+      replace: '"1 = 1",',
+    },
+    {
+      name: "escrow-visualizer.routes.ts drops driver scope on the detail-timeline query",
+      file: ESCROW_VIZ_ROUTES,
+      find: '"ea.holder_id = $2",',
+      replace: '"1 = 1",',
     },
     {
       name: "timeline failures treated as empty success",
