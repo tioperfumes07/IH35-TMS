@@ -11,6 +11,7 @@ const FILES = {
   trailHandlers: "apps/backend/src/outbox/handlers/trail-events.handler.ts",
   registry: "apps/backend/src/outbox/handlers/registry.ts",
   distributionFailure: "apps/backend/src/outbox/handlers/dispatch-distribution-failure.handler.ts",
+  dispatchedHandler: "apps/backend/src/outbox/handlers/dispatch-load-dispatched.handler.ts",
 };
 
 function count(source, literal) {
@@ -28,6 +29,7 @@ export function problems(files) {
   const trailHandlers = files.trailHandlers ?? "";
   const registry = files.registry ?? "";
   const distributionFailure = files.distributionFailure ?? "";
+  const dispatchedHandler = files.dispatchedHandler ?? "";
 
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
@@ -104,6 +106,9 @@ export function problems(files) {
   if (!/const notification = await createNotification\([\s\S]{0,700}?if \(!notification\?\.id\)[\s\S]{0,180}?distribution_failure_notification_insert_returned_no_identity/.test(distributionFailure)) {
     failures.push("distribution-failure alerts must require persisted notification identity before acknowledging delivery");
   }
+  if (!/await distributeLoadInstructions\([\s\S]{0,300}?lastError = null;[\s\S]{0,60}?break;/.test(dispatchedHandler)) {
+    failures.push("a successful instruction-distribution retry must clear the prior error before delivery is acknowledged");
+  }
   return failures;
 }
 
@@ -131,6 +136,7 @@ if (process.argv.includes("--selftest")) {
     ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],
     ["distribution failure company join removed", { ...production, distributionFailure: production.distributionFailure.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
     ["distribution failure identity check removed", { ...production, distributionFailure: production.distributionFailure.replace("if (!notification?.id) {", "if (false) {") }],
+    ["successful retry retains stale error", { ...production, dispatchedHandler: production.dispatchedHandler.replace("lastError = null;", "// stale error retained") }],
   ];
   const missed = mutations.filter(([, fixture]) => problems(fixture).length === 0);
   if (missed.length) {
