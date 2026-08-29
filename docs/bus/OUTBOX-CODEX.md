@@ -2203,3 +2203,4 @@ Codex | SHIPPED | DSP-F7248 | PR=#17470 @ 47607ae10f | Built=canonical BOL API-o
 CODEX | WORKING | DRIVER-F7250 | GO-0034 | 409 phone falsely labeled CDL; same CDL + new phone POST=201 driver=dab084fb-910b-4000-9407-cfcacd6288cd | NOW=constraint-aware conflict mapping | GO
 CODEX | ACK | GO-0034 | NOW=drivers canonical Create TEST | SHA=da39aab | GO
 Codex | SHIPPED | FLEET-F7249 | PR=#17471 @ bcf66e0d71 | Built=unit lifecycle audit company scope 4/4 | Live=post-deploy UNVERIFIED | NEXT=GO-0034 drivers unique | GO
+Codex | WORKING | DSP-F7251 | GO-0050 | CLAIM=OCR Book Load prefill erased after Convert | SOURCE=ocr_intake_queue.extracted_fields→BookLoadModalV4 | Live=da39aab | NEXT=guard+FAST-MERGE | GO
