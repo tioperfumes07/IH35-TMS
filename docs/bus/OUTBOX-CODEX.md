@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7209 | GO-0054 | CLAIM=bulk-status-locked-lifecycle | SOURCE=mdata.loads.status | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRIVER-F7208 | PR=#17420 @ 917944c9b9 | Built=archive closes assignment+unit mirror | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 Codex | WORKING | DRIVER-F7208 | GO-0054 | CLAIM=bulk-archive-closes-assignment+unit-mirror | SOURCE=mdata.drivers+telematics.vehicle_driver_assignments+mdata.units.assigned_driver_id | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DRIVER-F7207 | PR=#17419 @ 203e5e8f5a | Built=bulk assign edge+unit mirror R=W | Live=post-deploy UNVERIFIED | NEXT=GO-0054 driver archive unique | GO
 Codex | WORKING | DRIVER-F7207 | GO-0054 | CLAIM=bulk-truck-assignment-unit-mirror-R=W | SOURCE=mdata.units.assigned_driver_id+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO

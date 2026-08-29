@@ -55,6 +55,7 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
         AND operating_company_id = $2::uuid
         AND soft_deleted_at IS NULL
       LIMIT 1
+      FOR UPDATE
     `,
     [id, operatingCompanyId]
   );
