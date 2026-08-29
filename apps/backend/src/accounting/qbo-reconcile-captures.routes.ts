@@ -71,7 +71,7 @@ const conflictsQuerySchema = companyQuerySchema.extend({
 
 export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
   // Overview: connection summary + sync-health table + last-poll timestamp.
-  app.get("/api/v1/accounting/qbo-reconcile/overview", async (req, reply) => {
+  app.get("/api/v1/accounting/qbo-reconcile/overview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -98,7 +98,7 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
   });
 
   // Modify captures: inbound QBO changes and whether TMS has reflected them.
-  app.get("/api/v1/accounting/qbo-reconcile/modify-captures", async (req, reply) => {
+  app.get("/api/v1/accounting/qbo-reconcile/modify-captures", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -124,7 +124,7 @@ export async function registerQboReconcileCapturesRoutes(app: FastifyInstance) {
   });
 
   // Conflicts (local vs QBO side by side) + recon alert history.
-  app.get("/api/v1/accounting/qbo-reconcile/conflicts", async (req, reply) => {
+  app.get("/api/v1/accounting/qbo-reconcile/conflicts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

@@ -20,7 +20,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerExpenseLoadLookupRoutes(app: FastifyInstance) {
-  app.get("/api/v1/expenses/suggest-load", async (req, reply) => {
+  app.get("/api/v1/expenses/suggest-load", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 

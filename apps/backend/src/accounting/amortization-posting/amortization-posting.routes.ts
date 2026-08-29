@@ -53,7 +53,7 @@ const ownedAssetDisposalBody = z.object({
 
 async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   // Prepaid amortization — post all due, unposted periods (flag-gated; OFF => no-op).
-  app.post("/api/v1/accounting/amortization-posting/prepaid/post", async (req, reply) => {
+  app.post("/api/v1/accounting/amortization-posting/prepaid/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -77,7 +77,7 @@ async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   });
 
   // Fixed-asset depreciation — materialize schedule + post all due, unposted periods.
-  app.post("/api/v1/accounting/amortization-posting/depreciation/post", async (req, reply) => {
+  app.post("/api/v1/accounting/amortization-posting/depreciation/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -101,7 +101,7 @@ async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   });
 
   // FLT-05 — explicit Owner-only sale action. A unit's Sold status must never silently post money.
-  app.post("/api/v1/accounting/fixed-assets/dispose", async (req, reply) => {
+  app.post("/api/v1/accounting/fixed-assets/dispose", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -142,7 +142,7 @@ async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   });
 
   // Reverse a prepaid amortization posting (reversing JE; never delete).
-  app.post("/api/v1/accounting/amortization-posting/prepaid/reverse", async (req, reply) => {
+  app.post("/api/v1/accounting/amortization-posting/prepaid/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -158,7 +158,7 @@ async function registerAmortizationPostingRoutes(app: FastifyInstance) {
   });
 
   // Reverse a fixed-asset depreciation posting (reversing JE; never delete).
-  app.post("/api/v1/accounting/amortization-posting/depreciation/reverse", async (req, reply) => {
+  app.post("/api/v1/accounting/amortization-posting/depreciation/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
