@@ -54,6 +54,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { QuickActionsBar } from "./QuickActionsBar";
 import { HOME_QUICK_JUMPS } from "./homeQuickJumps";
+import { combineQueryIsError } from "./combineQueryIsError";
 import "./home-print.css";
 
 type Props = {
@@ -594,7 +595,12 @@ export function OwnerHome({ auth }: Props) {
               vendorsPushStatus={qboVendorsPushStatusQuery.data}
               accountsPushStatus={qboAccountsPushStatusQuery.data}
               isLoading={qboSyncHealthQuery.isLoading}
-              isError={qboSyncHealthQuery.isError}
+              isError={combineQueryIsError([
+                qboSyncHealthQuery,
+                qboCustomersPushStatusQuery,
+                qboVendorsPushStatusQuery,
+                qboAccountsPushStatusQuery,
+              ])}
               onRetry={() => {
                 void qboSyncHealthQuery.refetch();
                 void qboCustomersPushStatusQuery.refetch();
