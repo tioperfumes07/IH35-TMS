@@ -34,10 +34,21 @@ const src = readFileSync(routesPath, "utf8");
 function analyze(src) {
   const failures = [];
 
-  if (!/COALESCE\(ae\.payload->>'resource_type', ae\.payload->>'reversed_entity_type'\) AS subject_type/.test(src)) {
+  // VOID-REVERSAL-REPORT-PAYLOAD-SUBJECT-TYPE-VOCABULARY-MISMATCH re-anchor (2026-08-29): the
+  // subject_type extraction was folded into a CASE that normalizes raw dotted table-paths to the
+  // short vocabulary and adds a THIRD payload->>'entity_type' fallback beyond reversed_entity_type
+  // — so it's no longer a bare `COALESCE(...) AS subject_type` alias. Check the two properties
+  // that actually matter: the reversed_entity_type fallback is still present in the COALESCE feeding
+  // the CASE, and that CASE still resolves to `AS subject_type`.
+  if (!/COALESCE\(ae\.payload->>'resource_type', ae\.payload->>'reversed_entity_type'/.test(src)) {
     failures.push(`${routesPath}: audit.audit_events branch no longer falls back to reversed_entity_type for subject_type — journal_entry.reversed rows will go NULL again`);
   }
-  if (!/COALESCE\(ae\.payload->>'resource_type', ae\.payload->>'reversed_entity_type'\) AS source_table/.test(src)) {
+  if (!/END AS subject_type/.test(src)) {
+    failures.push(`${routesPath}: subject_type CASE no longer resolves to AS subject_type`);
+  }
+  // source_table kept its direct COALESCE-as-alias shape, just with the same third entity_type
+  // fallback appended before the closing paren.
+  if (!/COALESCE\(ae\.payload->>'resource_type', ae\.payload->>'reversed_entity_type', ae\.payload->>'entity_type'\) AS source_table/.test(src)) {
     failures.push(`${routesPath}: audit.audit_events branch no longer falls back to reversed_entity_type for source_table`);
   }
   if (!/WHEN \$\{alias\}\.subject_type = 'journal_entry' THEN NULLIF\(TRIM\(audit_je\.memo\), ''\)/.test(src)) {
@@ -58,7 +69,15 @@ function analyze(src) {
   if (!/WHEN \$\{alias\}\.subject_type = 'prepaid_purchase' THEN NULLIF\(TRIM\(COALESCE\(audit_prepaid\.asset_number, audit_prepaid\.description\)\), ''\)/.test(src)) {
     failures.push(`${routesPath}: shared auditSubjectProjection() no longer has a prepaid_purchase branch`);
   }
-  if (!/LEFT JOIN accounting\.payments audit_customer_payment\s*\n\s*ON \$\{alias\}\.subject_type = 'customer_payment'/.test(src)) {
+  // Re-anchored (2026-08-29): the join grew a second linkage arm (a generic subject_type='task'
+  // + source_table='accounting.payments' path, matching the pattern already used elsewhere in
+  // this file), wrapping the original condition in an outer `((...) OR (...))`. The functional
+  // property this guard cares about — join accounting.payments, keyed on subject_type =
+  // 'customer_payment' — is still present, just no longer immediately after `ON` with no parens.
+  if (
+    !/LEFT JOIN accounting\.payments audit_customer_payment/.test(src) ||
+    !/\$\{alias\}\.subject_type = 'customer_payment' AND audit_customer_payment\.id = \$\{alias\}\.subject_id/.test(src)
+  ) {
     failures.push(`${routesPath}: shared auditSubjectJoins() no longer joins accounting.payments for customer_payment`);
   }
   if (!/LEFT JOIN accounting\.prepaid_assets audit_prepaid\s*\n\s*ON \$\{alias\}\.subject_type = 'prepaid_purchase'/.test(src)) {
@@ -82,10 +101,13 @@ function selftest() {
     process.exit(1);
   }
 
-  // Mutation 1: drop the reversed_entity_type fallback for subject_type (reverts to the original bug).
-  const mutated1 = src.replace(
-    "COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type') AS subject_type,",
-    "(ae.payload->>'resource_type') AS subject_type,"
+  // Mutation 1: drop the reversed_entity_type fallback everywhere it feeds subject_type/
+  // source_table (reverts to the original bug). The fallback is now repeated across every WHEN
+  // arm of the subject_type-normalizing CASE, so this must strip ALL occurrences, not just the
+  // first, or the still-present copies elsewhere in the CASE would mask the regression.
+  const mutated1 = src.replaceAll(
+    "COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type')",
+    "(ae.payload->>'resource_type')"
   );
   if (mutated1 === src) {
     console.error("verify-audit-void-reversal-subject-resolver --selftest: mutation 1 setup failed — anchor not found");
