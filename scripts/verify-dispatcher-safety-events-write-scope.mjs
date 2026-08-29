@@ -50,6 +50,9 @@ export function checkDispatcherSafetyEventWriteScope(src) {
       "void route does not call scopeToRelatedEntity before its UPDATE — an Owner of any company could void another company's dispatcher safety-file record"
     );
   }
+  if (!/const voidScopedCompanyId = await scopeToRelatedEntity[\s\S]*if \(!voidScopedCompanyId\) return \{ error: "dispatcher_safety_event_scope_unresolved" as const \};/.test(voidBlock)) {
+    problems.push("void route must fail closed when the related entity cannot resolve a company");
+  }
 
   // The edit route is the last route in the file touching this table — a generous bounded slice
   // avoids matching into unrelated later code while staying well clear of the real ~2400-char span.
@@ -60,6 +63,9 @@ export function checkDispatcherSafetyEventWriteScope(src) {
     problems.push(
       "PATCH-edit route does not call scopeToRelatedEntity before its UPDATE — an Owner of any company could silently edit another company's dispatcher safety-file record"
     );
+  }
+  if (!/const editScopedCompanyId = await scopeToRelatedEntity[\s\S]*if \(!editScopedCompanyId\) return \{ error: "dispatcher_safety_event_scope_unresolved" as const \};/.test(editBlock)) {
+    problems.push("PATCH-edit route must fail closed when the related entity cannot resolve a company");
   }
 
   return problems;
@@ -102,9 +108,9 @@ if (process.argv.includes("--selftest")) {
     });
   `;
   const badProblems = checkDispatcherSafetyEventWriteScope(bad);
-  if (badProblems.length !== 2) {
+  if (badProblems.length !== 4) {
     failures.push(
-      `the real pre-fix defect verbatim expected 2 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
+      `the real pre-fix defect verbatim expected 4 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
     );
   }
 
@@ -118,12 +124,12 @@ if (process.argv.includes("--selftest")) {
   // routes are checked independently, not one flag covering both.
   const partialEditOnly = bad.replace(
     "if (!currentRes.rows[0]) return null;\n        const updateRes",
-    "if (!currentRes.rows[0]) return null;\n        await scopeToRelatedEntity(client, authUser.uuid, {});\n        const updateRes"
+    "if (!currentRes.rows[0]) return null;\n        const editScopedCompanyId = await scopeToRelatedEntity(client, authUser.uuid, {});\n        if (!editScopedCompanyId) return { error: \"dispatcher_safety_event_scope_unresolved\" as const };\n        const updateRes"
   );
   const partialEditOnlyProblems = checkDispatcherSafetyEventWriteScope(partialEditOnly);
-  if (partialEditOnlyProblems.length !== 1) {
+  if (partialEditOnlyProblems.length !== 2) {
     failures.push(
-      `a partial fix (edit route scoped, void route still not) expected 1 problem, got ${partialEditOnlyProblems.length}: ${partialEditOnlyProblems.join("; ")}`
+      `a partial fix (edit route scoped, void route still not) expected 2 problems, got ${partialEditOnlyProblems.length}: ${partialEditOnlyProblems.join("; ")}`
     );
   }
 
@@ -133,8 +139,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — the real pre-fix defect caught (2/2), the real fixed file clears, a ` +
-      `partial (only one route scoped) regression caught (1/1).`
+    `${LABEL} SELFTEST OK — the real pre-fix defect caught (4/4), the real fixed file clears, a ` +
+      `partial (only one route scoped) regression caught (2/2).`
   );
   process.exit(0);
 }
