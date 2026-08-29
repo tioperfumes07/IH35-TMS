@@ -2191,6 +2191,8 @@ Codex | WORKING | DSP-F7245 | GO-0030 | CLAIM=pre-settlement-feed-failure-honest
 Codex | SHIPPED | DSP-F7244 | PR=#17464 @ fd1867e802 | Built=retired-load mutation rejection | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7246 | GO-0030 | CLAIM=book-load-customer-read-honesty | SOURCE=company customer catalog→both Book Load selectors | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7245 | PR=#17465 @ 662edc8c5f | Built=pre-settlement feed failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DRV-F7254 | GO-0054 | CLAIM=W8BEN-create-driver-company-continuity | SOURCE=driver roster→driver_w8ben FK | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRV-F7253 | PR=#17475 @ 3d670ad315 | Built=termination event+driver state atomicity | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
 Codex | WORKING | DRV-F7253 | GO-0054 | CLAIM=termination-event-parent-state-atomicity | SOURCE=driver_safety_events→mdata.drivers status/date | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7252 | PR=#17474 @ ba2eaa2f26 | Built=retention honest zero-result state | Live=post-deploy UNVERIFIED | NEXT=GO-0054 drivers unique | GO
 Codex | SHIPPED | DSP-F7246 | PR=#17466 @ cc801a3f6f | Built=Book Load customer read honesty | Live=post-deploy UNVERIFIED | NEXT=GO-0031 assign TEST | GO
