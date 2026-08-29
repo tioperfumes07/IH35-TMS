@@ -1,9 +1,9 @@
 {
   "healthzSha": "ecd3afd",
-  "generated_at": "2026-08-29T19:56:49.000Z",
+  "generated_at": "2026-08-29T20:25:17.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T14:56:49-05:00",
-    "sourceSha": "4f0ae19c87",
+    "generatedAt": "2026-08-29T15:25:17-05:00",
+    "sourceSha": "0ce1a21d9b",
     "deployedSha": "ecd3afd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2146,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 17695,
+      "title": "FINDING: N/A — GO-0105-R1: post-deploy full healthz check, qbo.connections.oauth live and OK",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 03:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17695",
+      "sha": "6266d52d41",
+      "committedAtIso": "2026-08-29T15:23:40-05:00"
+    },
+    {
+      "number": 17694,
+      "title": "FINDING: N/A — GUARD-2 re-stamp SAF-B05 + SAF-B31 to live SHA b2448ce",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 03:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17694",
+      "sha": "0a4926ad42",
+      "committedAtIso": "2026-08-29T15:21:13-05:00"
+    },
+    {
       "number": 17693,
       "title": "FINDING: DSP-F7339 dispatcher safety mutations ignore unresolved company",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17686",
       "sha": "b31377b0e5",
       "committedAtIso": "2026-08-29T15:05:18-05:00"
-    },
-    {
-      "number": 17685,
-      "title": "FINDING: USER-S02-BACKEND-APPROVER-BYPASS -- role-change approver ceremony was UI-only, not enforced server-side",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17685",
-      "sha": "7f22ce4d5d",
-      "committedAtIso": "2026-08-29T15:05:00-05:00"
-    },
-    {
-      "number": 17684,
-      "title": "FINDING: N/A — OUTBOX shipped proof for FUEL-F7336",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17684",
-      "sha": "23e58a3c56",
-      "committedAtIso": "2026-08-29T15:04:49-05:00"
     }
   ]
 }
