@@ -171,9 +171,12 @@ Prod, dev and staging all reporting; the heartbeat check fails loudly when any s
 The **only** failing check on `healthz`. Postgres, migrations, redis and R2 are all OK. It has survived
 every deploy today. Reported as QBO inbound/CDC ~days stale with `invalid_grant`.
 
-**H4 Cursor 2026-08-29:** QBO-named jobs are **dormant-by-design** unless `IH35_QBO_JOB_HEALTH_ARMED=true`
-(USMCA-only; leftover TRANSP realm must not paint `stale_jobs`). When armed, A1-1 still uses
-`qboRealmConnected` for inbound/CDC/push and master-data delta.
+**H4 Cursor GO-0105-R1:** Dormancy is **per-connection**, not a global env gate.
+No `integrations.qbo_connections` row for the entity → dormant (USMCA). Active row +
+`needs_reauth_at` → **real failure**; `stale_jobs` detail names the entity (TRANSP/TRK).
+`IH35_QBO_JOB_HEALTH_ARMED` is an override only, never the only gate. Do not set it to
+"fix" OAuth. Owner re-auths in QuickBooks. Public `/healthz` still publishes `stale_jobs`
+only; names live in the server log. `qbo.connections.oauth` / `qbo_oauth_invalid` remains.
 
 ## Diagnosis runbook (do not rediscover)
 

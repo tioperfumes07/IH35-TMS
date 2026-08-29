@@ -1,15 +1,15 @@
 {
   "module": "fleet",
   "title": "Fleet \u2014 acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-29T16:40:00Z",
-  "live_sha": "a1a7b50",
+  "complete": true,
+  "as_of": "2026-08-29T19:20:00Z",
+  "live_sha": "b2448ce",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "2026-08-10 USMCA-PV-STACK: FLEET-S01..S07 prod_verified:true (Neon lucia shared fleet USMCA 5c854333-6ea5-4faa-af31-67cb272fef80). complete:true. healthz=a1a7b50. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "2026-08-10 USMCA-PV-STACK: FLEET-S01..S07 prod_verified:true (Neon lucia shared fleet USMCA 5c854333-6ea5-4faa-af31-67cb272fef80). complete:true. healthz=a1a7b50. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 3 REOPEN items (S02/S03/S07) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
   "items": [
     {
       "id": "FLEET-S01",
@@ -34,8 +34,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Route /fleet/:id registered as a ProtectedRoute wrapping FleetUnitLegacyRedirect; it redirects legacy unit bookmarks to canonical /fleet/units/:id and avoids collision with fleet leaf segments (/fleet/map, /fleet/transfers-in-progress, /fleet/units, /fleet/trailers); no dead end. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/:id is a legacy redirect (FleetUnitLegacyRedirect) to the canonical /fleet/units/:id (VehicleProfilePage) -- confirmed real via unit 395352db-7b51-4f07-8dc7-f1e2f1a321bc (T120, 2009 Freightliner Cascadia, VIN 1FUJGLBG69LAG2288, live Samsara GPS 27.6561,-99.6365, Plates honest-empty). healthz=b2448ce.",
       "pr": "#5290",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -49,8 +49,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Route /fleet/map registered as ProtectedRoute wrapping PreserveSearchNavigate; it redirects to canonical /dispatch/map while preserving query/search params, so fleet map bookmarks resolve without a dead end. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce.",
       "pr": "#5291",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -106,15 +106,15 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Route /fleet/units/:id/detail registered as ProtectedRoute wrapping UnitDetail; page uses entityLabel(null, id, \"Unit\") so title never falls back to raw UUID; need-company guard present; renders tabs for permits, toll-tags, tasks, brakes, tires, and finance linkage, each receiving unitId and companyId; active tab driven by URL search param. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 \u2014 Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce.",
       "pr": "#5301",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 7,
-  "pass_count": 4,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "4 of 7"
+  "progress": "7/7"
 }

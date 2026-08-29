@@ -8,12 +8,14 @@ export type LovesSyncStatus = {
 };
 
 export type FuelDashboard = {
-  active_plans: number;
+  planner_source_available: boolean;
+  compliance_source_available: boolean;
+  active_plans: number | null;
   mtd_spend: number;
   avg_price_per_gallon: number;
-  mtd_savings: number;
-  compliance_pct: number;
-  fleet_mpg: number;
+  mtd_savings: number | null;
+  compliance_pct: number | null;
+  fleet_mpg: number | null;
   loves_sync_at: string | null;
 };
 
@@ -83,7 +85,7 @@ export function getLovesSyncStatus(companyId: string) {
 }
 
 export function getFuelActiveRoutes(companyId: string, range: { limit: number; offset: number }) {
-  return apiRequest<{ routes: FuelActiveRoute[]; total_count: number; limit: number; offset: number }>(
+  return apiRequest<{ routes: FuelActiveRoute[]; total_count: number | null; source_available: boolean; limit: number; offset: number }>(
     `/api/v1/fuel/planner/active-routes?${q(companyId)}&limit=${range.limit}&offset=${range.offset}`
   );
 }
@@ -108,16 +110,18 @@ export function getFuelComplianceSummary(companyId: string, driverId?: string | 
   const search = new URLSearchParams({ operating_company_id: companyId });
   if (driverId) search.set("driver_id", driverId);
   return apiRequest<{
-    fleet_pct_followed: number;
-    fleet_total_recommendations: number;
+    source_available: boolean;
+    fleet_pct_followed: number | null;
+    fleet_total_recommendations: number | null;
     per_driver: Array<Record<string, unknown>>;
   }>(`/api/v1/fuel/planner/compliance/summary?${search}`);
 }
 
 export function getFuelSavingsSummary(companyId: string) {
   return apiRequest<{
-    fleet_savings_ytd: number;
-    fleet_lost_savings_ytd: number;
+    source_available: boolean;
+    fleet_savings_ytd: number | null;
+    fleet_lost_savings_ytd: number | null;
     top_driver: Record<string, unknown> | null;
   }>(`/api/v1/fuel/planner/savings/summary?${q(companyId)}`);
 }

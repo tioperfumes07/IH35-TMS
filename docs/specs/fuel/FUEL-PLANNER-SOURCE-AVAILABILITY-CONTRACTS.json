@@ -1,0 +1,43 @@
+{
+  "finding": "FUEL-F7331-PLANNER-FALLBACK-VIEWS-RENDERED-AS-REAL-ZEROS",
+  "contracts": [
+    {
+      "id": "planner",
+      "canonical_relation": "fuel.route_recommendations",
+      "backend_file": "apps/backend/src/fuel/planner.routes.ts",
+      "backend_tokens": [
+        "hasRelation(client, \"fuel.route_recommendations\")",
+        "planner_source_available: plannerSourceAvailable",
+        "source_available: false",
+        "active_plans: plannerSourceAvailable ?",
+        "mtd_savings: plannerSourceAvailable ?",
+        "fleet_mpg: plannerSourceAvailable ?"
+      ],
+      "api_file": "apps/frontend/src/api/fuelPlanner.ts",
+      "api_tokens": ["planner_source_available: boolean", "source_available: boolean", "total_count: number | null"],
+      "ui_file": "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+      "ui_tokens": ["plannerSourceAvailable", "Fuel planner source is not available", "Fuel planner source not available"]
+    },
+    {
+      "id": "compliance_and_savings",
+      "canonical_relation": "fuel.relay_matches",
+      "backend_file": "apps/backend/src/fuel/planner.routes.ts",
+      "backend_tokens": [
+        "hasRelation(client, \"fuel.relay_matches\")",
+        "compliance_source_available: complianceSourceAvailable",
+        "fleet_pct_followed: sourceAvailable ?",
+        "fleet_savings_ytd: sourceAvailable ?",
+        "fleet_lost_savings_ytd: sourceAvailable ?"
+      ],
+      "api_file": "apps/frontend/src/api/fuelPlanner.ts",
+      "api_tokens": ["compliance_source_available: boolean", "fleet_pct_followed: number | null", "fleet_savings_ytd: number | null"],
+      "ui_file": "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+      "ui_tokens": [
+        "sourceAvailable={Boolean(complianceQuery.data?.source_available)}",
+        "sourceAvailable={Boolean(savingsQuery.data?.source_available)}",
+        "fleetPct={complianceQuery.data?.fleet_pct_followed ?? null}",
+        "fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}"
+      ]
+    }
+  ]
+}

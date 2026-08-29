@@ -1,0 +1,22 @@
+{
+  "block_id": "cc2-board-backend-test-suite-red-behind-first-gate",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "HONESTY-PROGRAM-2026-08-29",
+  "task": "CC-2 board finding: with #17637 merged, build-typecheck's backend test suite step is reachable for the first time and has 4 unrelated failing tests (team-splits, revrec-latch-two-event, random-pool, permits), all confirmed pre-existing via CI log diff against pre-fix runs. Routed to CC-1 + safety-backend owner. No code change.",
+  "branch": "cc2/board-backend-test-suite-red-behind-first-gate",
+  "lane": "GUARD-2 NON-MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/audit/GUARD-WORKORDERS.md",
+    ".block-ready/cc2-board-backend-test-suite-red-behind-first-gate.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/audit/GUARD-WORKORDERS.md", "note": "one new OPEN row naming 4 test failures with file:line and CI job ids" }
+  ],
+  "linkage": "N/A -- board finding from CI log inspection, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

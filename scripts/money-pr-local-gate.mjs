@@ -68,6 +68,10 @@ const STEPS = [
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).
   ["verify-prod-verified-live-binding", "scripts/verify-prod-verified-live-binding.mjs"],
+  ["verify-fuel-planner-source-availability", "scripts/verify-fuel-planner-source-availability.mjs"],
+  ["verify-driver-import-response-honesty", "scripts/verify-driver-import-response-honesty.mjs"],
+  ["verify-driver-roster-bulk-deactivate", "scripts/verify-driver-roster-bulk-deactivate.mjs"],
+  ["verify-fleet-trip-cost-scope-lifecycle", "scripts/verify-fleet-trip-cost-scope-lifecycle.mjs"],
 
   // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
   // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a
@@ -178,6 +182,7 @@ const STEPS = [
   ["verify-dispatch-loads-customer-label-survives-archive", "scripts/verify-dispatch-loads-customer-label-survives-archive.mjs"],
   ["verify-bank-kpi-authoritative-cash-no-fake-zero", "scripts/verify-bank-kpi-authoritative-cash-no-fake-zero.mjs"],
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
+  ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
 ];
 
 function runNode(rel) {

@@ -286,7 +286,15 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
         ) : driversQ.isLoading ? (
           <div className="px-3 py-6 text-center text-slate-500 text-xs">Loading drivers...</div>
         ) : (
-          <DriversTable rows={focusedRows} onOpenProfile={onOpenProfile} />
+          <DriversTable
+            rows={focusedRows}
+            companyId={companyId}
+            onOpenProfile={onOpenProfile}
+            onUpdated={() => {
+              void driversQ.refetch();
+              void dqfQ.refetch();
+            }}
+          />
         )}
         <div className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-xs text-slate-600">
           <span>{totalDrivers === 0 ? "0 of 0" : `${rangeStart}–${rangeEnd} of ${totalDrivers}`}</span>

@@ -126,23 +126,73 @@ export type DriverImportSampleRow = {
   reason?: string;
 };
 
-export type DriverImportResponse = {
-  mode: "preview" | "commit";
+type DriverImportResponseBase = {
   operating_company_id: string;
   summary: DriverImportSummary;
-  sample?: DriverImportSampleRow[];
-  created?: number;
-  row_errors?: number;
 };
+
+export type DriverImportPreviewResponse = DriverImportResponseBase & {
+  mode: "preview";
+  sample: DriverImportSampleRow[];
+};
+
+export type DriverImportCommitResponse = DriverImportResponseBase & {
+  mode: "commit";
+  created: number;
+  row_errors: number;
+};
+
+export type DriverImportResponse = DriverImportPreviewResponse | DriverImportCommitResponse;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return Number.isInteger(value) && Number(value) >= 0;
+}
+
+const DRIVER_IMPORT_SUMMARY_KEYS: Array<keyof DriverImportSummary> = [
+  "total", "will_create", "dup_existing", "dup_in_file", "invalid", "will_create_no_phone",
+];
+
+/** Fail closed at the API boundary so a malformed 2xx can never become an honest-looking zero. */
+export function validateDriverImportResponse(
+  payload: unknown,
+  expectedMode: "preview" | "commit",
+  expectedCompanyId: string
+): DriverImportResponse {
+  if (!isRecord(payload) || payload.mode !== expectedMode || payload.operating_company_id !== expectedCompanyId) {
+    throw new Error("Driver import response did not match the requested mode and company");
+  }
+  const summary = payload.summary;
+  if (!isRecord(summary) || DRIVER_IMPORT_SUMMARY_KEYS.some((key) => !isNonNegativeInteger(summary[key]))) {
+    throw new Error("Driver import response contained an invalid summary");
+  }
+  if (expectedMode === "preview") {
+    if (!Array.isArray(payload.sample)) throw new Error("Driver import preview response omitted its sample rows");
+    return payload as DriverImportPreviewResponse;
+  }
+  if (!isNonNegativeInteger(payload.created) || !isNonNegativeInteger(payload.row_errors)) {
+    throw new Error("Driver import commit response omitted its result counts");
+  }
+  if (payload.created + payload.row_errors > Number(summary.will_create)) {
+    throw new Error("Driver import commit counts exceeded the reviewed create set");
+  }
+  return payload as DriverImportCommitResponse;
+}
 
 // Import the Driver Master Contacts List CSV. mode="preview" writes nothing (returns counts + a sample);
 // mode="commit" creates the will_create rows. Ex-drivers (termination date present) import as Terminated.
-export function importDriversCsv(file: File, operatingCompanyId: string, mode: "preview" | "commit") {
+export function importDriversCsv(file: File, operatingCompanyId: string, mode: "preview"): Promise<DriverImportPreviewResponse>;
+export function importDriversCsv(file: File, operatingCompanyId: string, mode: "commit"): Promise<DriverImportCommitResponse>;
+export async function importDriversCsv(file: File, operatingCompanyId: string, mode: "preview" | "commit") {
   const form = new FormData();
   form.append("csv_file", file);
   form.append("operating_company_id", operatingCompanyId);
   form.append("mode", mode);
-  return apiRequestFormData<DriverImportResponse>(`/api/v1/mdata/drivers/import`, form);
+  const payload = await apiRequestFormData<unknown>(`/api/v1/mdata/drivers/import`, form);
+  return validateDriverImportResponse(payload, mode, operatingCompanyId);
 }
 
 export function quicksaveEquipmentAssignment(payload: {
