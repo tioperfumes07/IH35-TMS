@@ -266,7 +266,7 @@ async function fetchReconRows(
 }
 
 async function registerDailyReconRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/daily-recon", async (req, reply) => {
+  app.get("/api/v1/accounting/daily-recon", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

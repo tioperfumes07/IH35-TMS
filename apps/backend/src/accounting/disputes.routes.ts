@@ -56,7 +56,7 @@ const OFFICE_READ_ROLES = new Set(["Owner", "Administrator", "Accountant", "Mana
 const DECIDE_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
 export async function registerAccountingSettlementDisputesP6Routes(app: FastifyInstance) {
-  app.get("/api/v1/settlements/:settlementId/disputes", async (req, reply) => {
+  app.get("/api/v1/settlements/:settlementId/disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = settlementIdParamsSchema.safeParse(req.params ?? {});
@@ -78,7 +78,7 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     }
   });
 
-  app.get("/api/v1/disputes", async (req, reply) => {
+  app.get("/api/v1/disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const query = queueQuerySchema.safeParse(req.query ?? {});
@@ -101,7 +101,7 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     }
   });
 
-  app.post("/api/v1/disputes/:disputeId/start-review", async (req, reply) => {
+  app.post("/api/v1/disputes/:disputeId/start-review", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = disputeIdParamsSchema.safeParse(req.params ?? {});
@@ -124,7 +124,7 @@ export async function registerAccountingSettlementDisputesP6Routes(app: FastifyI
     }
   });
 
-  app.post("/api/v1/disputes/:disputeId/decide", async (req, reply) => {
+  app.post("/api/v1/disputes/:disputeId/decide", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = disputeIdParamsSchema.safeParse(req.params ?? {});

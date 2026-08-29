@@ -242,7 +242,7 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
   });
 
   // DETAIL + schedule + JE preview
-  app.get("/api/v1/accounting/prepaid-expenses/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/prepaid-expenses/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(user.role)) return reply.code(403).send({ error: "forbidden" });

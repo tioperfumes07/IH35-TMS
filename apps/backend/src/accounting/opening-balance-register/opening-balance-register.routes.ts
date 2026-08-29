@@ -72,7 +72,7 @@ const commitBodySchema = z.object({
 
 async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
   // Register view: staged lines + live posted values + finality + every commit blocker.
-  app.get("/api/v1/accounting/opening-balance-register", async (req, reply) => {
+  app.get("/api/v1/accounting/opening-balance-register", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -88,7 +88,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/opening-balance-register/audit", async (req, reply) => {
+  app.get("/api/v1/accounting/opening-balance-register/audit", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -106,7 +106,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
   });
 
   // Edit / enter one account's opening balance in STAGING. Never touches catalogs.accounts.
-  app.patch("/api/v1/accounting/opening-balance-register/line", async (req, reply) => {
+  app.patch("/api/v1/accounting/opening-balance-register/line", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const body = lineBodySchema.safeParse(req.body ?? {});
@@ -129,7 +129,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
 
   // Read-only QBO BalanceSheet pull → staging. USMCA (no realm) is refused, not faked. Re-import
   // refreshes the Snapshot only — a prior Adjustment on the same account/period is preserved.
-  app.post("/api/v1/accounting/opening-balance-register/import-from-qbo", async (req, reply) => {
+  app.post("/api/v1/accounting/opening-balance-register/import-from-qbo", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const body = commitBodySchema.safeParse(req.body ?? {});
@@ -147,7 +147,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
 
   // TRANSP-only: import the owner-provided clone-as-is fixture (docs/fixtures/ob01) into staging.
   // Read-only against the repo fixture, writes only staging + WORM audit. Never invents a match.
-  app.post("/api/v1/accounting/opening-balance-register/import-from-fixture", async (req, reply) => {
+  app.post("/api/v1/accounting/opening-balance-register/import-from-fixture", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const body = commitBodySchema.safeParse(req.body ?? {});
@@ -166,7 +166,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
   // Owner ruling 2026-07-29 — clone-as-is NOW: import (QBO if connected, else the TRANSP fixture) AND
   // commit immediately, Adjustment 0, no human maker/checker pair. Still refuses on unbalanced / OBE /
   // non-balance-sheet-account-type — see cloneAsIsImportAndCommit.
-  app.post("/api/v1/accounting/opening-balance-register/clone-as-is-commit", async (req, reply) => {
+  app.post("/api/v1/accounting/opening-balance-register/clone-as-is-commit", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const body = commitBodySchema.safeParse(req.body ?? {});
@@ -191,7 +191,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
   });
 
   // Martin's gate: the QBO cleanup for this entity/period is final. Audited both directions.
-  app.post("/api/v1/accounting/opening-balance-register/finality", async (req, reply) => {
+  app.post("/api/v1/accounting/opening-balance-register/finality", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, finalityRoles);
     if (!user) return;
     const body = finalityBodySchema.safeParse(req.body ?? {});
@@ -214,7 +214,7 @@ async function registerOpeningBalanceRegisterRoutes(app: FastifyInstance) {
   // The only write to catalogs.accounts. Owner ruling 2026-07-29: no finality gate. Refuses unless
   // the checker is not a maker, the entry balances, every line is a balance-sheet account, and OBE
   // has been reclassed. A refusal writes nothing.
-  app.post("/api/v1/accounting/opening-balance-register/commit", async (req, reply) => {
+  app.post("/api/v1/accounting/opening-balance-register/commit", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureRole(req, reply, financeRoles);
     if (!user) return;
     const body = commitBodySchema.safeParse(req.body ?? {});

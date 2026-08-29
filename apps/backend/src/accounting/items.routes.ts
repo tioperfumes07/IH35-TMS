@@ -21,7 +21,7 @@ function officeRole(role: string) {
 const EXPENSE_ACCOUNT_TYPES = ["Expense", "Cost of Goods Sold", "Other Expense"];
 
 export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/categories", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/categories", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -87,7 +87,7 @@ export async function registerAccountingCatalogLookupRoutes(app: FastifyInstance
     return { categories: rows };
   });
 
-  app.get("/api/v1/accounting/items-for-wo", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/accounting/items-for-wo", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

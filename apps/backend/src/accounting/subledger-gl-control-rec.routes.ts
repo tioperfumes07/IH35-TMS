@@ -14,7 +14,7 @@ function canAccessSubledgerGlControlRec(role: string): boolean {
 }
 
 async function registerSubledgerGlControlRecRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/subledger-gl-control-rec", async (req, reply) => {
+  app.get("/api/v1/accounting/subledger-gl-control-rec", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessSubledgerGlControlRec(String(user.role ?? ""))) {

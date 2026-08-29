@@ -182,7 +182,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
 
   // CONN-2 — Advance Packet: advance header + linked invoices/loads + reserve ledger + interest ledger in
   // one read (Law of the Land §10a forward+reverse drill-through). Read-only; not flag-gated.
-  app.get("/api/v1/accounting/factoring-advances/:id/packet", async (req, reply) => {
+  app.get("/api/v1/accounting/factoring-advances/:id/packet", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -329,7 +329,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/accounting/factoring-advances/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/factoring-advances/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

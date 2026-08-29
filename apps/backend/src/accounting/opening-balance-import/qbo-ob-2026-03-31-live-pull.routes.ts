@@ -24,6 +24,7 @@ async function registerQboOb20260331LivePullRoutes(app: FastifyInstance) {
   // No createJournalEntry / no GL writes. Unmapped lines surfaced; never claim balanced if unmapped remain.
   app.get(
     "/api/v1/accounting/opening-balance-import/qbo-live/2026-03-31/preview",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const user = ensureFinanceUser(req, reply);
       if (!user) return;
