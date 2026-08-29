@@ -118,7 +118,11 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
         body.data.evidence_uuid
       );
     } catch (error) {
-      if (String((error as Error)?.message ?? "") === "equipment_log_create_failed") {
+      const code = String((error as Error)?.message ?? "");
+      if (code === "equipment_reassign_failed") {
+        return reply.code(409).send({ error: "equipment_reassign_failed" });
+      }
+      if (code === "equipment_log_create_failed") {
         return reply.code(409).send({ error: "equipment_log_create_failed" });
       }
       throw error;

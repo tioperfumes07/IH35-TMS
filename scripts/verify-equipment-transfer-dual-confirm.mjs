@@ -35,11 +35,18 @@ function lifecycleFailures(service, routeSource) {
     if (!pattern.test(source)) out.push(message);
   };
   requirePattern(service, /status = 'pending_outbound'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "outbound confirmation must CAS and check pending_outbound");
+  const equipmentLockAt = service.indexOf("SELECT id::text\n      FROM mdata.equipment");
+  const inboundTransitionAt = service.indexOf("SET status = 'completed'");
+  if (equipmentLockAt < 0 || inboundTransitionAt < 0 || equipmentLockAt >= inboundTransitionAt) {
+    out.push("inbound confirmation must prove and lock company-owned equipment before completing the transfer");
+  }
+  requirePattern(service, /SELECT id::text[\s\S]{0,120}FROM mdata\.equipment[\s\S]{0,220}FOR UPDATE[\s\S]{0,100}if \(!equipment\.rows\[0\]\?\.id\) return \{ kind: "equipment_not_found" \}/, "inbound confirmation must reject missing equipment before any lifecycle write");
   requirePattern(service, /status = 'outbound_confirmed'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "inbound confirmation must CAS and check outbound_confirmed");
-  requirePattern(service, /UPDATE mdata\.equipment[\s\S]{0,240}RETURNING id::text[\s\S]{0,180}if \(!equipmentUpdate\.rows\[0\]\?\.id\) return \{ kind: "equipment_not_found" \}/, "inbound confirmation must reject a missing/cross-company equipment update");
+  requirePattern(service, /UPDATE mdata\.equipment[\s\S]{0,420}RETURNING id::text[\s\S]{0,420}if \(!equipmentUpdate\.rows\[0\]\?\.id\) throw new Error\("equipment_reassign_failed"\)/, "a lost equipment reassignment must throw so the completed transition rolls back");
   requirePattern(service, /const equipmentLogId = String\(logRes\.rows\[0\]\?\.id \?\? ""\);[\s\S]{0,100}if \(!equipmentLogId\) throw new Error\("equipment_log_create_failed"\);[\s\S]{0,180}appendCrudAudit/, "inbound confirmation must require the equipment-log identity before audit/notify");
   requirePattern(routeSource, /result\.kind === "equipment_not_found"[\s\S]{0,80}reply\.code\(404\)/, "route must expose equipment_not_found without a generic 500");
-  requirePattern(routeSource, /equipment_log_create_failed[\s\S]{0,120}reply\.code\(409\)/, "route must expose equipment_log_create_failed as a typed conflict");
+  requirePattern(routeSource, /if \(code === "equipment_reassign_failed"\) \{[\s\S]{0,80}reply\.code\(409\)/, "route must expose a lost reassignment as a typed rollback conflict");
+  requirePattern(routeSource, /if \(code === "equipment_log_create_failed"\) \{[\s\S]{0,80}reply\.code\(409\)/, "route must expose equipment_log_create_failed as a typed conflict");
   return out;
 }
 
@@ -157,18 +164,21 @@ if (process.argv.includes("--selftest")) {
     if (transferKindFailures(mutation).length === 0) fail(`selftest mutation ${index + 1} escaped the subtype guard`);
   }
   const lifecycleMutations = [
+    dualConfirm.replace("FOR UPDATE\n    `,\n    [req.equipment_uuid, operatingCompanyId]", "`\n    , [req.equipment_uuid, operatingCompanyId]"),
+    dualConfirm.replace('if (!equipment.rows[0]?.id) return { kind: "equipment_not_found" };', ""),
     dualConfirm.replace("AND status = 'pending_outbound'", ""),
     dualConfirm.replace("AND status = 'outbound_confirmed'", ""),
     dualConfirm.replace("RETURNING uuid::text", ""),
     dualConfirm.replace('if (!transferUpdate.rows[0]?.uuid) return { kind: "invalid_status" };', ""),
     dualConfirm.replace("RETURNING id::text", ""),
-    dualConfirm.replace('if (!equipmentUpdate.rows[0]?.id) return { kind: "equipment_not_found" };', ""),
+    dualConfirm.replace('if (!equipmentUpdate.rows[0]?.id) throw new Error("equipment_reassign_failed");', ""),
     routes.replaceAll('if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });', ""),
+    routes.replace('return reply.code(409).send({ error: "equipment_reassign_failed" });', 'return reply.code(500).send({ error: "equipment_reassign_failed" });'),
     dualConfirm.replace('if (!equipmentLogId) throw new Error("equipment_log_create_failed");', ""),
     routes.replace('return reply.code(409).send({ error: "equipment_log_create_failed" });', 'return reply.code(500).send({ error: "equipment_log_create_failed" });'),
   ];
   for (const [index, mutation] of lifecycleMutations.entries()) {
-    const routeMutation = index === lifecycleMutations.length - 1;
+    const routeMutation = [8, 9, 11].includes(index);
     if (lifecycleFailures(routeMutation ? dualConfirm : mutation, routeMutation ? mutation : routes).length === 0) {
       fail(`selftest lifecycle mutation ${index + 1} escaped the guard`);
     }

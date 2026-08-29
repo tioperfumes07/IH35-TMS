@@ -13,26 +13,40 @@
  * All Owner/Administrator only. No GL. posted_to_gl untouched.
  */
 import type { FastifyInstance } from "fastify";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
+const RELAY_DEPOSIT_CLASSIFICATIONS = ["company", "unclassified", "canceled"] as const;
 
-function requireOwnerAdmin(req: unknown, reply: { code: (n: number) => { send: (b: unknown) => unknown } }): boolean {
-  const role = String((req as { user?: { role?: string } }).user?.role ?? "");
-  if (!["Owner", "Administrator"].includes(role)) { reply.code(403).send({ error: "forbidden" }); return false; }
-  return true;
+type OfficeUser = { uuid: string; role: string };
+
+function requireOwnerAdmin(req: unknown, reply: { code: (n: number) => { send: (b: unknown) => unknown } }): OfficeUser | null {
+  const user = (req as { user?: OfficeUser }).user;
+  const role = String(user?.role ?? "");
+  if (!["Owner", "Administrator"].includes(role)) { reply.code(403).send({ error: "forbidden" }); return null; }
+  return user ?? null;
 }
 
 export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Review queue: deposits + summary ──
   app.get("/api/integrations/relay/deposits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const q = (req.query ?? {}) as { operating_company_id?: string; classification?: string };
     const opco = String(q.operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
-    const classFilter = q.classification && ["company", "unclassified", "canceled"].includes(q.classification) ? q.classification : null;
+    await assertCompanyMembership(user.uuid, opco);
+    const requestedClassification = q.classification?.trim();
+    if (requestedClassification && !RELAY_DEPOSIT_CLASSIFICATIONS.includes(requestedClassification as (typeof RELAY_DEPOSIT_CLASSIFICATIONS)[number])) {
+      return reply.code(400).send({
+        error: `classification must be one of: ${RELAY_DEPOSIT_CLASSIFICATIONS.join(", ")}`,
+      });
+    }
+    const classFilter = requestedClassification || null;
 
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
@@ -75,9 +89,11 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Company-card map: read ──
   app.get("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    await assertCompanyMembership(user.uuid, opco);
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const rows = (await client.query(
@@ -108,9 +124,11 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Company-card map: upsert one card (owner adds/labels/deactivates). Re-classifies deposits. ──
   app.put("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    await assertCompanyMembership(user.uuid, opco);
     const body = (req.body ?? {}) as { card_last4?: string; label?: string; source_hint?: string; is_active?: boolean };
     const card = String(body.card_last4 ?? "").trim();
     if (!/^[0-9]{4}$/.test(card)) return reply.code(400).send({ error: "card_last4 must be exactly 4 digits" });
@@ -118,14 +136,24 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
 
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
-      await client.query(
-        `INSERT INTO integrations.relay_company_cards (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
+      const cardResult = await client.query<{
+        id: string;
+        label: string | null;
+        source_hint: string | null;
+        is_active: boolean;
+      }>(
+        `INSERT INTO integrations.relay_company_cards AS existing (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
          VALUES ($1::uuid, $2, $3, $4, $5, NULL)
          ON CONFLICT (operating_company_id, card_last4)
-         DO UPDATE SET label = EXCLUDED.label, source_hint = EXCLUDED.source_hint, is_active = EXCLUDED.is_active,
-                       voided_at = NULL, updated_at = now()`,
+         DO UPDATE SET label = COALESCE(EXCLUDED.label, existing.label),
+                       source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint),
+                       is_active = EXCLUDED.is_active,
+                       voided_at = NULL, updated_at = now()
+         RETURNING id::text, label, source_hint, is_active`,
         [opco, card, body.label ?? null, body.source_hint ?? null, isActive]
       );
+      const persistedCard = cardResult.rows[0];
+      if (!persistedCard) throw new Error("relay_company_card_write_failed");
       // Re-classify existing deposits for this card: active company card → 'company'; else back to
       // 'unclassified' (canceled rows stay 'canceled'). NEVER posts. Storage snapshot only.
       const newClass = isActive ? "company" : "unclassified";
@@ -137,7 +165,31 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
          RETURNING id`,
         [opco, card, newClass]
       )).rowCount ?? 0;
-      return reply.code(200).send({ operating_company_id: opco, card_last4: card, is_active: isActive, reclassified_deposits: updated });
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "integrations.relay_company_card.updated",
+        {
+          operating_company_id: opco,
+          relay_company_card_id: persistedCard.id,
+          card_last4: card,
+          label: persistedCard.label,
+          source_hint: persistedCard.source_hint,
+          is_active: persistedCard.is_active,
+          reclassified_deposits: updated,
+        },
+        "info",
+        "FUEL-RELAY-CARD-REVIEW",
+      );
+      return reply.code(200).send({
+        operating_company_id: opco,
+        id: persistedCard.id,
+        card_last4: card,
+        label: persistedCard.label,
+        source_hint: persistedCard.source_hint,
+        is_active: persistedCard.is_active,
+        reclassified_deposits: updated,
+      });
     });
   });
 }

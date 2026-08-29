@@ -35,6 +35,12 @@ function audit(source) {
   if (!/path="hos-violations" element=\{<HOSViolationsTab/.test(source.routes)) failures.push("canonical list route mount");
   if (!/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverPage) || !/<DriverHosViolationsReverseSection[\s\S]{0,150}driverId=/.test(source.driverDetail)) failures.push("both driver reverse mounts");
   if (!/<LoadSafetyReverseSection[\s\S]{0,150}loadId=/.test(source.loadDrawer)) failures.push("load reverse mount");
+  if (!/key:\s*"driver_id"[\s\S]{0,120}sortValue:\s*\(row\)\s*=>\s*String\(row\.driver_name/.test(source.tab)) {
+    failures.push("HOS Driver column must sortValue driver_name not UUID");
+  }
+  if (!/key:\s*"related_load_id"[\s\S]{0,120}sortValue:\s*\(row\)\s*=>\s*String\(row\.related_load_number/.test(source.tab)) {
+    failures.push("HOS Load column must sortValue related_load_number not UUID");
+  }
   return failures;
 }
 
@@ -60,6 +66,8 @@ if (process.argv.includes("--selftest")) {
     ["routes", "<HOSViolationsTab", "<MissingHOSViolationsTab"],
     ["driverPage", "<DriverHosViolationsReverseSection", "<MissingDriverHosViolationsReverseSection"],
     ["loadDrawer", "<LoadSafetyReverseSection", "<MissingLoadSafetyReverseSection"],
+    ["tab", "sortValue: (row) => String(row.driver_name ?? row.driver_id ?? \"\")", ""],
+    ["tab", "sortValue: (row) => String(row.related_load_number ?? row.related_load_id ?? \"\")", ""],
   ];
   for (const [key, needle, replacement] of mutations) {
     if (!live[key].includes(needle)) {
@@ -74,5 +82,5 @@ if (process.argv.includes("--selftest")) {
   }
   console.log(`PASS verify-safety-hos-violations-range-vertical --selftest (${mutations.length}/${mutations.length} mutations killed)`);
 } else {
-  console.log("PASS verify-safety-hos-violations-range-vertical (14/14 checks)");
+  console.log("PASS verify-safety-hos-violations-range-vertical (16/16 checks)");
 }

@@ -31,6 +31,17 @@ function fail(msg) {
   process.exit(1);
 }
 
+function notificationIdentityFailures(notify) {
+  const failures = [];
+  if (!/INSERT\s+INTO\s+outbox\.events[\s\S]{0,180}RETURNING id::text/i.test(notify)) {
+    failures.push("notify.ts must return the durable outbox identity");
+  }
+  if (!/if \(!outboxEvent\.rows\[0\]\?\.id\) throw new Error\("equipment_transfer_outbox_enqueue_failed"\)/.test(notify)) {
+    failures.push("notify.ts must reject a zero-row outbox INSERT");
+  }
+  return failures;
+}
+
 function main() {
   const request = read(PATHS.request);
   const dual = read(PATHS.dual);
@@ -58,6 +69,7 @@ function main() {
   if (!/INSERT\s+INTO\s+outbox\.events/i.test(notify)) {
     failures.push("notify.ts must INSERT INTO outbox.events");
   }
+  failures.push(...notificationIdentityFailures(notify));
   if (!notify.includes("pwa.driver_notifications")) {
     failures.push("notify.ts must also write pwa.driver_notifications when available");
   }
@@ -81,6 +93,17 @@ function main() {
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail(failures.join("; "));
+  }
+
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      notify.replace("RETURNING id::text", ""),
+      notify.replace('if (!outboxEvent.rows[0]?.id) throw new Error("equipment_transfer_outbox_enqueue_failed");', ""),
+    ];
+    for (const [index, mutation] of mutations.entries()) {
+      if (notificationIdentityFailures(mutation).length === 0) fail(`selftest mutation ${index + 1} escaped`);
+    }
+    console.log(`${LABEL} SELFTEST PASS — ${mutations.length} zero-row durability mutations caught`);
   }
 
   console.log(`${LABEL} PASS`);

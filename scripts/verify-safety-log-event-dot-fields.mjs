@@ -6,6 +6,9 @@
  * safety.safety_events (location_text, injury_count, fatality_count, tow_away_required,
  * dot_reportable, police_report_number). occurred_at is owned by s-06 / PR #2630 — not checked here.
  *
+ * Create-payload match: `col:` then optional `Number(` then optional prefix (`input.`) then `draft.col`.
+ * Do not require a bare `draft.col` literal — SafetyEventsPage wires via `input.draft`.
+ *
  * Self-test: node scripts/verify-safety-log-event-dot-fields.mjs --selftest
  */
 import fs from "node:fs";
@@ -35,6 +38,11 @@ function stripComments(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/[^\n]*/g, "$1");
 }
 
+/** Create payload may use `draft.col` or `input.draft.col` (company-lifecycle wrapper). */
+export function payloadWiresDraftCol(page, col) {
+  return new RegExp(`${col}:\\s*(?:Number\\()?[\\w.]*draft\\.${col}\\b`).test(page);
+}
+
 export function assertGuard(sources) {
   const errors = [];
   const migration = sources.migration;
@@ -55,7 +63,7 @@ export function assertGuard(sources) {
     if (!new RegExp(`data-testid="safety-event-${col.replace(/_/g, "-")}"`).test(page)) {
       errors.push(`${FILES.page}: DOT field ${col} must use data-testid="safety-event-${col.replace(/_/g, "-")}"`);
     }
-    if (!page.includes(`${col}: draft.${col}`) && !page.includes(`${col}: Number(draft.${col}`)) {
+    if (!payloadWiresDraftCol(page, col)) {
       errors.push(`${FILES.page}: create payload must pass ${col} from draft`);
     }
   }
@@ -127,6 +135,34 @@ function selftest() {
 
   if (assertGuard(good).length) {
     console.error(`[${LABEL}] --selftest FAIL: good fixture rejected`, assertGuard(good));
+    process.exit(1);
+  }
+
+  const prefixed = {
+    ...good,
+    page: good.page
+      .replace("location_text: draft.location_text,", "location_text: input.draft.location_text.trim() || undefined,")
+      .replace("injury_count: Number(draft.injury_count),", "injury_count: Number(input.draft.injury_count) || 0,")
+      .replace("fatality_count: draft.fatality_count,", "fatality_count: Number(input.draft.fatality_count) || 0,")
+      .replace("tow_away_required: draft.tow_away_required,", "tow_away_required: input.draft.tow_away_required,")
+      .replace("dot_reportable: draft.dot_reportable,", "dot_reportable: input.draft.dot_reportable,")
+      .replace("police_report_number: draft.police_report_number,", "police_report_number: input.draft.police_report_number.trim() || undefined,"),
+  };
+  if (assertGuard(prefixed).length) {
+    console.error(`[${LABEL}] --selftest FAIL: input.draft fixture rejected`, assertGuard(prefixed));
+    process.exit(1);
+  }
+
+  const planted = {
+    ...prefixed,
+    page: prefixed.page.replace(
+      /location_text: input\.draft\.location_text\.trim\(\) \|\| undefined,/,
+      ""
+    ),
+  };
+  const plantFail = assertGuard(planted);
+  if (!plantFail.some((e) => e.includes("create payload must pass location_text"))) {
+    console.error(`[${LABEL}] --selftest FAIL: planted payload omission not rejected`, plantFail);
     process.exit(1);
   }
 

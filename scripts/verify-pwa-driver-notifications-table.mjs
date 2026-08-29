@@ -47,6 +47,12 @@ function check(root = ROOT) {
   if (/if\s*\(!ok\)\s*return\s*;/.test(helper)) {
     errors.push(`${HELPER}: bare if (!ok) return is forbidden`);
   }
+  if (!/pwa_driver_notification_undelivered_enqueue_failed/.test(helper) || !/pwa_driver_notification_insert_failed/.test(helper)) {
+    errors.push(`${HELPER}: both undelivered and inbox INSERTs must require returned identities`);
+  }
+  if ((helper.match(/RETURNING id::text/g) ?? []).length < 2) {
+    errors.push(`${HELPER}: both notification persistence branches must RETURNING id`);
+  }
   const routes = fs.readFileSync(path.join(root, NOTICE_ROUTES), "utf8");
   if (!/eventType:\s*["']pwa\.driver_notification\.undelivered["']/.test(routes)) {
     errors.push(`${NOTICE_ROUTES}: undelivered PWA event must have a registered operational handler`);
@@ -112,6 +118,19 @@ function selftest() {
       process.exit(1);
     }
     console.log(`${LABEL} selftest PASS — missing-handler replant rejected`);
+
+    // A successful SQL call with zero persisted rows is still a lost notification.
+    const uncheckedHelper = fs.readFileSync(path.join(ROOT, HELPER), "utf8")
+      .replace('if (!undelivered.rows[0]?.id) throw new Error("pwa_driver_notification_undelivered_enqueue_failed");', "")
+      .replace('if (!inserted.rows[0]?.id) throw new Error("pwa_driver_notification_insert_failed");', "");
+    fs.writeFileSync(path.join(tmp, HELPER), uncheckedHelper);
+    fs.writeFileSync(path.join(tmp, NOTICE_ROUTES), fs.readFileSync(path.join(ROOT, NOTICE_ROUTES), "utf8"));
+    const identityErrors = check(tmp);
+    if (!identityErrors.some((error) => error.includes("returned identities"))) {
+      console.error(`${LABEL} selftest FAIL — zero-row identity replant did not redden`);
+      process.exit(1);
+    }
+    console.log(`${LABEL} selftest PASS — zero-row notification identities rejected`);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
