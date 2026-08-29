@@ -292,10 +292,10 @@ async function fetchLoadNotifyContext(
       JOIN mdata.customers c ON c.id = l.customer_id
                           AND c.operating_company_id = l.operating_company_id
       LEFT JOIN LATERAL (
-        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup' ORDER BY sequence_number ASC LIMIT 1
+        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL ORDER BY sequence_number ASC LIMIT 1
       ) sp ON true
       LEFT JOIN LATERAL (
-        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' ORDER BY sequence_number DESC LIMIT 1
+        SELECT city, state FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC LIMIT 1
       ) sd ON true
       WHERE l.id = $1::uuid AND l.soft_deleted_at IS NULL
         AND l.operating_company_id = $2::uuid
@@ -463,6 +463,7 @@ export async function processStopArrivalNotifications(
       WHERE sa.operating_company_id = $1::uuid
         AND sa.confirmed_at IS NOT NULL
         AND sa.confirmed_at >= now() - interval '7 days'
+        AND ls.soft_deleted_at IS NULL
         AND l.soft_deleted_at IS NULL
         AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery', 'delivered')
     `,
@@ -512,6 +513,7 @@ export async function processStopArrivalNotifications(
       WHERE l.operating_company_id = $1::uuid
         AND ls.actual_departure_at IS NOT NULL
         AND ls.actual_departure_at >= now() - interval '7 days'
+        AND ls.soft_deleted_at IS NULL
         AND l.soft_deleted_at IS NULL
         AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
     `,

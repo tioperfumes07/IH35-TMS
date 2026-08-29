@@ -117,6 +117,12 @@ function verifySources({
     failures.push("service must subscribe to stop arrivals");
   if (!service.includes("processEtaUpdateNotifications"))
     failures.push("service must subscribe to ETA updates");
+  const activeRouteStops = service.match(/stop_type = '(?:pickup|delivery)' AND soft_deleted_at IS NULL/g)?.length ?? 0;
+  if (activeRouteStops < 2)
+    failures.push("notification route labels must resolve pickup and delivery from active stops only");
+  const activeMilestoneStops = service.match(/AND ls\.soft_deleted_at IS NULL/g)?.length ?? 0;
+  if (activeMilestoneStops < 2)
+    failures.push("arrival and departure notifications must exclude retired stop events");
   if (!service.includes("sendEmail"))
     failures.push("service must dispatch email");
   if (!service.includes("sendSms")) failures.push("service must dispatch SMS");
@@ -225,6 +231,16 @@ function main() {
           "await finishNotifyDelivery(client",
           "await Promise.resolve(client",
         ),
+      ],
+      [
+        "restore retired route labels",
+        "service",
+        sources.service.replace("AND soft_deleted_at IS NULL ORDER BY sequence_number ASC", "ORDER BY sequence_number ASC"),
+      ],
+      [
+        "restore retired milestone events",
+        "service",
+        sources.service.replace("AND ls.soft_deleted_at IS NULL", "AND TRUE"),
       ],
     ];
     for (const [name, key, source] of mutations) {

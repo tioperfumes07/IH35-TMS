@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7231 | GO-0030 | CLAIM=customer-notify-active-stops | SOURCE=active mdata.load_stops→route labels+milestones | CLOSES=none — post-deploy provider proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7230 | PR=#17451 @ 39306207d7 | Built=instruction PDFs active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7230 | GO-0030 | CLAIM=load-distribution-active-stops | SOURCE=active mdata.load_stops→driver/customer instructions | CLOSES=none — post-deploy PDF proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7229 | PR=#17450 @ 35ba796881 | Built=BOL active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7229 | GO-0030 | CLAIM=BOL-active-stops | SOURCE=active mdata.load_stops→generated BOL | CLOSES=none — post-deploy PDF proof remains | NEXT=guard+FAST-MERGE | GO
