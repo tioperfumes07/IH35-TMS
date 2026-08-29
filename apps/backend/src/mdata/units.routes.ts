@@ -343,8 +343,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           throw new Error("owner_company_id_required");
         }
         const operatingCompanyId = resolvedLeasedId ?? resolvedOwnerId;
-        await client.query("BEGIN");
-        try {
           // mdata.assets is FORCE-RLS and scopes writes through app.operating_company_id.
           // Bind one validated company inside the same transaction as unit + asset + audit + spine.
           await setScopedCompanyContext(
@@ -464,12 +462,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
               status: row.status,
             },
           });
-          await client.query("COMMIT");
           return row;
-        } catch (error) {
-          await client.query("ROLLBACK");
-          throw error;
-        }
       });
       return reply.code(201).send(created);
     } catch (err) {
@@ -638,8 +631,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       const idIdx = values.length;
       try {
         const updated = await withCurrentUser(authUser.uuid, async (client) => {
-          await client.query("BEGIN");
-          try {
           // Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and its
           // RLS is role-scoped, so a bare `WHERE id = $1` write reaches ANY entity's truck. Resolve the
           // caller's company (default, or an explicit ?operating_company_id validated for membership) and
@@ -652,7 +643,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
               ?.operating_company_id,
           );
           if (!scopedCompanyId) {
-            await client.query("ROLLBACK");
             return null;
           }
           const oldRes = await client.query(
@@ -661,7 +651,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           );
           const oldRow = oldRes.rows[0] ?? null;
           if (!oldRow) {
-            await client.query("ROLLBACK");
             return null;
           }
           if ("assigned_driver_id" in normalizedPatch && normalizedPatch.assigned_driver_id) {
@@ -692,7 +681,6 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           );
           const updatedRow = res.rows[0] ?? null;
           if (!updatedRow) {
-            await client.query("ROLLBACK");
             return null;
           }
           const defaultDriverAssignmentId = "assigned_driver_id" in normalizedPatch
@@ -736,12 +724,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
                 }
               : {}),
           });
-          await client.query("COMMIT");
           return updatedRow;
-          } catch (error) {
-            await client.query("ROLLBACK");
-            throw error;
-          }
         });
         if (!updated)
           return reply.code(404).send({ error: "mdata_unit_not_found" });
