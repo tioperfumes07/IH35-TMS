@@ -1,7 +1,6 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
-import { notifyLoadAssigned, notifyLoadReassignedAway } from "../services/push-notification.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { enqueueOverrideNotice } from "../outbox/enqueue-override-notice.js";
 import {
@@ -55,14 +54,7 @@ export type LoadStopInput = {
 };
 
 export async function manualReassignLoad(userId: string, input: ReassignBody) {
-  const loserBox: {
-    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
-  } = { v: null };
-  const winnerBox: {
-    v: { operatingCompanyId: string; driverId: string; loadId: string; loadLabel: string | null } | null;
-  } = { v: null };
-
-  const result = await withCurrentUser(userId, async (client) => {
+  return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     await client.query("BEGIN");
     try {
@@ -291,22 +283,6 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       );
 
       await client.query("COMMIT");
-      if (previousPrimary && previousPrimary !== input.new_driver_id) {
-        loserBox.v = {
-          operatingCompanyId: input.operating_company_id,
-          driverId: previousPrimary,
-          loadId: input.load_id,
-          loadLabel: load.load_number ?? null,
-        };
-      }
-      if (input.new_driver_id !== previousPrimary) {
-        winnerBox.v = {
-          operatingCompanyId: input.operating_company_id,
-          driverId: input.new_driver_id,
-          loadId: input.load_id,
-          loadLabel: load.load_number ?? null,
-        };
-      }
       return { ok: true as const, load_id: input.load_id };
     } catch (e) {
       await client.query("ROLLBACK");
@@ -314,24 +290,6 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
     }
   });
 
-  if (loserBox.v) {
-    void notifyLoadReassignedAway({
-      operatingCompanyId: loserBox.v.operatingCompanyId,
-      driverId: loserBox.v.driverId,
-      loadId: loserBox.v.loadId,
-      loadLabel: loserBox.v.loadLabel,
-    }).catch(() => undefined);
-  }
-  if (winnerBox.v) {
-    void notifyLoadAssigned({
-      operatingCompanyId: winnerBox.v.operatingCompanyId,
-      driverId: winnerBox.v.driverId,
-      loadId: winnerBox.v.loadId,
-      loadLabel: winnerBox.v.loadLabel,
-    }).catch(() => undefined);
-  }
-
-  return result;
 }
 
 export async function listLoadStopsRefined(userId: string, operatingCompanyId: string, loadId: string) {

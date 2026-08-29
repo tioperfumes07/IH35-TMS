@@ -3,7 +3,6 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
-import { notifyLoadAssigned } from "../services/push-notification.service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import {
   assertDriverQualifiedForLoad,
@@ -47,16 +46,7 @@ export async function quickAssignLoad(
   role: string,
   input: QuickAssignInput,
 ) {
-  const notifyBox: {
-    v: {
-      operatingCompanyId: string;
-      driverId: string;
-      loadId: string;
-      loadLabel: string | null;
-    } | null;
-  } = { v: null };
-
-  const result = await withCurrentUser(userId, async (client) => {
+  return withCurrentUser(userId, async (client) => {
     // ENTITY GATE (MDATA-F09 class). input.operating_company_id is caller-supplied — quicksave.routes.ts
     // passes the request body straight through — and it both SETS the RLS scope and drives every
     // predicate below, so without this the caller chooses the scope RLS enforces. Assert first.
@@ -341,13 +331,6 @@ export async function quickAssignLoad(
             driver_id: input.driver_id,
           },
         );
-        notifyBox.v = {
-          operatingCompanyId: input.operating_company_id,
-          driverId: input.driver_id,
-          loadId: input.load_id,
-          loadLabel:
-            (load as { load_number?: string | null }).load_number ?? null,
-        };
       }
       return {
         load_id: input.load_id,
@@ -359,16 +342,6 @@ export async function quickAssignLoad(
     }
   });
 
-  if (notifyBox.v) {
-    void notifyLoadAssigned({
-      operatingCompanyId: notifyBox.v.operatingCompanyId,
-      driverId: notifyBox.v.driverId,
-      loadId: notifyBox.v.loadId,
-      loadLabel: notifyBox.v.loadLabel,
-    }).catch(() => undefined);
-  }
-
-  return result;
 }
 
 export async function completeQuicksaveDraft(
