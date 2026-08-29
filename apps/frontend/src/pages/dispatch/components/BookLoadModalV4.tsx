@@ -428,6 +428,24 @@ export function BookLoadModalV4({
 
   const { isDirty } = form.formState;
 
+  // DSP-F7251: opening the modal must establish a clean form before any caller-provided
+  // template/OCR prefill is applied. This reset effect used to live below the prefill effect;
+  // React runs effects in declaration order, so every OCR conversion visibly opened Book Load
+  // and then silently erased the extracted customer, rate, stops, and dates.
+  useEffect(() => {
+    if (!open) {
+      setShowDiscardConfirm(false);
+      return;
+    }
+    form.reset();
+    setGateBanner(null);
+    setSubmitErrorMessage(null);
+    setOverrideReason("");
+    setOverrideToken(null);
+    setPendingCloseAfterAdvisory(false);
+    setShowSpecialNotes(false);
+  }, [open, form]);
+
   useEffect(() => {
     if (!open || !templatePrefillJson) return;
     applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson);
@@ -636,20 +654,6 @@ export function BookLoadModalV4({
   const canOverrideHardBlock = auth.user?.role === "Owner";
   const canOverrideHos = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
   const canOverrideCreditLimit = ["Owner", "Administrator", "Manager"].includes(String(auth.user?.role ?? ""));
-
-  useEffect(() => {
-    if (!open) {
-      setShowDiscardConfirm(false);
-      return;
-    }
-    form.reset();
-    setGateBanner(null);
-    setSubmitErrorMessage(null);
-    setOverrideReason("");
-    setOverrideToken(null);
-    setPendingCloseAfterAdvisory(false);
-    setShowSpecialNotes(false);
-  }, [open, form]);
 
   // FAIL-B5 — double Book+dispatch. There was NO in-flight state anywhere in this modal: no `isSubmitting`
   // tracking, no re-entry guard, and the submit button's `disabled` covered only the repair-block and
