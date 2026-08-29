@@ -115,14 +115,19 @@ export function ItemsListPage() {
 
   const columns: Array<ParityColumn<AccountingCatalogRow>> = [
     { key: "display_name", label: "Name", sortable: true, render: (r) => <span className="font-medium text-gray-900">{r.display_name}</span> },
-    { key: "type", label: "Type / Sides", sortable: true, render: (r) => <span className="text-gray-600">{itemSummary(r)}</span> },
-    { key: "category", label: "Category", sortable: true, render: (r) => <span className="text-gray-600">{resolveCategory(r)}</span> },
-    { key: "income", label: "Income account", sortable: true, render: (r) => <span className="text-gray-500">{resolveAccount(r.metadata.default_income_account_id)}</span> },
-    { key: "expense", label: "Expense account", sortable: true, render: (r) => <span className="text-gray-500">{resolveAccount(r.metadata.default_expense_account_id)}</span> },
+    // LISTS-ITEMS-CATALOG-SORT-NO-OP (GO-0027, CC-1): these 5 columns render derived/resolved
+    // values, not real fields on AccountingCatalogRow (type/category/income/expense/status all
+    // live inside `metadata` or require an id→name lookup) — without an explicit sortValue,
+    // ParityTable's default `row[key]` fallback is always undefined and the sort is a no-op.
+    { key: "type", label: "Type / Sides", sortable: true, sortValue: (r) => itemSummary(r), render: (r) => <span className="text-gray-600">{itemSummary(r)}</span> },
+    { key: "category", label: "Category", sortable: true, sortValue: (r) => resolveCategory(r), render: (r) => <span className="text-gray-600">{resolveCategory(r)}</span> },
+    { key: "income", label: "Income account", sortable: true, sortValue: (r) => resolveAccount(r.metadata.default_income_account_id), render: (r) => <span className="text-gray-500">{resolveAccount(r.metadata.default_income_account_id)}</span> },
+    { key: "expense", label: "Expense account", sortable: true, sortValue: (r) => resolveAccount(r.metadata.default_expense_account_id), render: (r) => <span className="text-gray-500">{resolveAccount(r.metadata.default_expense_account_id)}</span> },
     {
       key: "status",
       label: "Status",
       sortable: true,
+      sortValue: (r) => (r.is_active ? 1 : 0),
       render: (r) => (
         <span className={r.is_active
           ? "rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
