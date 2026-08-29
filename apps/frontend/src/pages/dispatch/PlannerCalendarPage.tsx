@@ -124,6 +124,11 @@ export function PlannerCalendarPage() {
   const closeTemplates = () => {
     const next = new URLSearchParams(searchParams);
     next.delete("panel");
+    // DSP-F7353 / MODAL-01 — the template and customer deep links are part of
+    // this modal's URL state. Clear the whole modal scope so reopening cannot
+    // resurrect a template/customer from a prior visit.
+    next.delete("template_id");
+    next.delete("customer_id");
     setSearchParams(next, { replace: true });
   };
 

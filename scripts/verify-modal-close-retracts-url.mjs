@@ -14,6 +14,7 @@ const DISPATCH = "apps/frontend/src/pages/Dispatch.tsx";
 const PROFILE = "apps/frontend/src/pages/drivers/DriverProfilePage.tsx";
 const DETAIL_TYPES = "apps/frontend/src/pages/lists/accounting/DetailTypesListPage.tsx";
 const CREATE_HOOK = "apps/frontend/src/hooks/useCreateQueryParam.ts";
+const PLANNER = "apps/frontend/src/pages/dispatch/PlannerCalendarPage.tsx";
 
 const REGRESSION_DELETE_CREATE = [
   "apps/frontend/src/pages/Vendors.tsx",
@@ -32,6 +33,7 @@ export function assertModalCloseRetracts(sources) {
   const profile = sources?.[PROFILE] ?? readRel(PROFILE);
   const detailTypes = sources?.[DETAIL_TYPES] ?? readRel(DETAIL_TYPES);
   const hook = sources?.[CREATE_HOOK] ?? readRel(CREATE_HOOK);
+  const planner = sources?.[PLANNER] ?? readRel(PLANNER);
 
   if (/useState\(\s*initialSubTab\s*===\s*"book_load"\s*\)/.test(dispatch)) {
     problems.push(`${DISPATCH}: second opener — useState must not seed from book_load URL/sub-tab`);
@@ -55,6 +57,13 @@ export function assertModalCloseRetracts(sources) {
 
   if (!/useCreateQueryParam/.test(detailTypes) || !/next\.delete\("create"\)/.test(hook)) {
     problems.push(`${DETAIL_TYPES}: must open via useCreateQueryParam which deletes create`);
+  }
+
+  const closeTemplates = planner.match(/const closeTemplates = \(\) => \{([\s\S]*?)\n  \};/)?.[1] ?? "";
+  for (const key of ["panel", "template_id", "customer_id"]) {
+    if (!new RegExp(`next\\.delete\\("${key}"\\)`).test(closeTemplates)) {
+      problems.push(`${PLANNER}: closeTemplates must delete ${key}`);
+    }
   }
 
   for (const rel of REGRESSION_DELETE_CREATE) {
@@ -120,8 +129,20 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     console.error(`${LABEL} SELFTEST FAIL\n${escaped.join("\n")}`);
     process.exit(1);
   }
+  const plannerSource = readRel(PLANNER);
+  for (const key of ["template_id", "customer_id"]) {
+    const mutantPlanner = plannerSource.replace(`next.delete("${key}");`, "/* planted missing retract */");
+    const caught = assertModalCloseRetracts({ [PLANNER]: mutantPlanner });
+    if (!caught.some((p) => p.includes(`delete ${key}`))) {
+      escaped.push(`remove ${key} retract: planted defect escaped (${caught.join("; ") || "no problems"})`);
+    }
+  }
+  if (escaped.length) {
+    console.error(`${LABEL} SELFTEST FAIL\n${escaped.join("\n")}`);
+    process.exit(1);
+  }
   void FIXTURE_OK;
-  console.log(`${LABEL} SELFTEST PASS — 3/3 planted arms fail independently`);
+  console.log(`${LABEL} SELFTEST PASS — 5/5 planted arms fail independently`);
   process.exit(0);
 }
 
