@@ -6696,5 +6696,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-bulk-mark-factored-zero-rows-check"
+  },
+  "9993": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-posting-dates-business-date"
   }
 }
