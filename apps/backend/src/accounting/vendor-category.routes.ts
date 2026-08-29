@@ -42,7 +42,7 @@ async function appendVendorCategoryAudit(
 }
 
 export async function registerVendorCategoryRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/vendors/batch-categorize", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/accounting/vendors/batch-categorize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -111,7 +111,7 @@ export async function registerVendorCategoryRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.patch("/api/v1/accounting/vendors/:id/category", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/accounting/vendors/:id/category", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
