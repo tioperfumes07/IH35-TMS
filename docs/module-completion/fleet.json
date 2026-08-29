@@ -37,10 +37,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/:id is a legacy redirect (FleetUnitLegacyRedirect) to the canonical /fleet/units/:id (VehicleProfilePage) -- confirmed real via unit 395352db-7b51-4f07-8dc7-f1e2f1a321bc (T120, 2009 Freightliner Cascadia, VIN 1FUJGLBG69LAG2288, live Samsara GPS 27.6561,-99.6365, Plates honest-empty). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/:id is a legacy redirect (FleetUnitLegacyRedirect) to the canonical /fleet/units/:id (VehicleProfilePage) -- confirmed real via unit 395352db-7b51-4f07-8dc7-f1e2f1a321bc (T120, 2009 Freightliner Cascadia, VIN 1FUJGLBG69LAG2288, live Samsara GPS 27.6561,-99.6365, Plates honest-empty). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/395352db-7b51-4f07-8dc7-f1e2f1a321bc redirects to /fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc, renders \"Unit T120 · 2009 FREIGHTLINER CASCADIA\", VIN 1FUJGLBG69LAG2288, live location 27.6561,-99.6365 (fresh timestamp), 0 plates on file (honest empty) -- exact match to the cited evidence. Binding on this independent re-confirmation.",
       "pr": "#5290",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:15:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "FLEET-S03",
@@ -52,10 +53,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/map redirects to /dispatch/map, renders \"Active Load Map\", \"Map provider not configured\", \"3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins).\" -- exact match. Binding on this independent re-confirmation.",
       "pr": "#5291",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:15:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "FLEET-S04",
