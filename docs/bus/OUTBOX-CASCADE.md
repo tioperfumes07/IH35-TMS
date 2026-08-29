@@ -1,3 +1,6 @@
+CASCADE | WAVE-2 | 17 fake-complete verdicts (50108-50124) | all 16 modules complete:true REOPEN | NEXT=wave3-normal-mode-triage
+CASCADE | GR-1-SEED | merged #17717 @ 460816dad9 | verify-static=209 (selftest=97 registry=16 normal=96) at ed4e2f286a | NEXT=wave2-fake-complete-flags
+CASCADE | FAST-MERGE | merged #17701 @ d6848f6cf1 | FINDING 50107 system 500-error accounting-sync | NEXT=gr1-seed
 CASCADE | FAST-MERGE | gate=exit0 | push=no-verify-static-ENV-OK | merged #17696 @ 23cdc51c43 | neon=N/A | NEXT=stamp-more-items
 CASCADE | FINDING | 50107 | system · 500-ERROR — accounting-sync retry/dismiss routes throw uncaught qbo_sync_queue_item_not_found → 500 instead of 404 | SHA=b2448ce | GO
 CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=SAF-B05 | MODULE=safety | SHA=14daeed | RESULT=USMCA /compliance/form-2290 rendered computed due 2026-08-31 (2 days) + 1 canonical draft row; verify-step 1500 PASS; live SHA ancestor of origin/main | GO
