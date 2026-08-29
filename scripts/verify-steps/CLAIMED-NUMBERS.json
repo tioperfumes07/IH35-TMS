@@ -6706,5 +6706,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-financial-reports-business-date-defaults"
+  },
+  "10001": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-source-load-uniqueness-race"
   }
 }
