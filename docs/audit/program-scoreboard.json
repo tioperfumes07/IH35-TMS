@@ -1,14 +1,14 @@
 {
-  "healthzSha": "ecd3afd",
-  "generated_at": "2026-08-29T20:25:17.000Z",
+  "healthzSha": "ed4e2f2",
+  "generated_at": "2026-08-29T22:00:22.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T15:25:17-05:00",
-    "sourceSha": "0ce1a21d9b",
-    "deployedSha": "ecd3afd",
+    "generatedAt": "2026-08-29T17:00:22-05:00",
+    "sourceSha": "c74f85d15",
+    "deployedSha": "ed4e2f2",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2146,
-    "failOpen": 15,
-    "defects": 20
+    "ledgerRows": 2247,
+    "failOpen": 116,
+    "defects": 26
   },
   "modules": [
     {
@@ -70,7 +70,7 @@
       "build": "1/1",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "NA",
         "AUDIT",
         "FIX",
@@ -102,7 +102,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "AUDIT",
           "FIX",
@@ -123,7 +123,7 @@
       "build": "23/23",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -155,7 +155,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -173,7 +173,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "11/39",
+      "build": "25/39",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -282,7 +282,7 @@
       "build": "39/39",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "AUDIT",
         "AUDIT",
@@ -314,7 +314,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -388,7 +388,7 @@
       "build": "9/9",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "FIX",
@@ -420,7 +420,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "FIX",
@@ -547,7 +547,7 @@
       "build": "6/6",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "FIX",
         "AUDIT",
@@ -579,7 +579,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "UNV",
           "FIX",
           "PASS",
@@ -812,7 +812,7 @@
       "build": "10/10",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "FIX",
         "FIX",
@@ -844,7 +844,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "FIX",
           "FIX",
@@ -865,7 +865,7 @@
       "build": "7/7",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "AUDIT",
         "AUDIT",
@@ -897,7 +897,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "AUDIT",
@@ -968,7 +968,7 @@
     {
       "tier": "3",
       "module": "factoring",
-      "build": "10/10",
+      "build": "9/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1130,7 +1130,7 @@
       "build": "5/5",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "NA",
         "AUDIT",
@@ -1162,7 +1162,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -1183,7 +1183,7 @@
       "build": "3/3",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "FIX",
@@ -1215,7 +1215,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "AUDIT",
           "FIX",
@@ -1236,7 +1236,7 @@
       "build": "5/5",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "NA",
         "NA",
         "AUDIT",
@@ -1268,7 +1268,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "NA",
           "AUDIT",
@@ -1289,7 +1289,7 @@
       "build": "5/5",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -1321,7 +1321,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "AUDIT",
           "AUDIT",
@@ -1342,7 +1342,7 @@
       "build": "6/6",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "NA",
         "FIX",
@@ -1374,7 +1374,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "NA",
           "FIX",
@@ -1395,7 +1395,7 @@
       "build": "7/7",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "NA",
         "FIX",
@@ -1427,7 +1427,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "UNV",
           "NA",
           "FIX",
@@ -1498,7 +1498,7 @@
     {
       "tier": "3",
       "module": "docs",
-      "build": "0/7",
+      "build": "5/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1551,7 +1551,7 @@
     {
       "tier": "3",
       "module": "help",
-      "build": "1/5",
+      "build": "5/5",
       "cells": [
         "AUDIT",
         "NA",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17695,
-      "title": "FINDING: N/A — GO-0105-R1: post-deploy full healthz check, qbo.connections.oauth live and OK",
+      "number": 17773,
+      "title": "FINDING: N/A — GO-TRUST-02: bind compliance (CC-3 packet 3/8) + close HELP-VERIFY-01",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17695",
-      "sha": "6266d52d41",
-      "committedAtIso": "2026-08-29T15:23:40-05:00"
+      "mergedAtCt": "08/29/2026, 05:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17773",
+      "sha": "7849bed61",
+      "committedAtIso": "2026-08-29T17:01:16-05:00"
     },
     {
-      "number": 17694,
-      "title": "FINDING: N/A — GUARD-2 re-stamp SAF-B05 + SAF-B31 to live SHA b2448ce",
+      "number": 17772,
+      "title": "FINDING: 50175-50207 — WAVE 3 final batch triage (33 guards) — WAVE 3 COMPLETE",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17694",
-      "sha": "0a4926ad42",
-      "committedAtIso": "2026-08-29T15:21:13-05:00"
+      "mergedAtCt": "08/29/2026, 05:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17772",
+      "sha": "c74f85d15",
+      "committedAtIso": "2026-08-29T17:00:22-05:00"
     },
     {
-      "number": 17693,
-      "title": "FINDING: DSP-F7339 dispatcher safety mutations ignore unresolved company",
+      "number": 17771,
+      "title": "FINDING: FUEL-F7346 active-route guard rejects honest unavailable total",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17693",
-      "sha": "b40cbe3bf0",
-      "committedAtIso": "2026-08-29T15:20:33-05:00"
+      "mergedAtCt": "08/29/2026, 04:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17771",
+      "sha": "bf563831d",
+      "committedAtIso": "2026-08-29T16:59:00-05:00"
     },
     {
-      "number": 17692,
-      "title": "FINDING: N/A — bind 6 settlements items live proof, SETL-VERIFY-01 correctly left open",
+      "number": 17770,
+      "title": "FINDING: N/A — GO-TRUST-02: bind eld+insurance from CC-3 packet 2/8",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17692",
-      "sha": "41250ebe78",
-      "committedAtIso": "2026-08-29T15:15:47-05:00"
+      "mergedAtCt": "08/29/2026, 04:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17770",
+      "sha": "97fc1546f",
+      "committedAtIso": "2026-08-29T16:58:33-05:00"
     },
     {
-      "number": 17691,
-      "title": "FINDING: FUEL-F7338 send-to-driver missing source returns HTTP 500",
+      "number": 17769,
+      "title": "FINDING: N/A -- board row: audit-void-reversal-subject-resolver routed to CC-1; OUTBOX batch-3 summary",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17691",
-      "sha": "ecd3afd53d",
-      "committedAtIso": "2026-08-29T15:14:35-05:00"
+      "mergedAtCt": "08/29/2026, 04:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17769",
+      "sha": "651d05e29",
+      "committedAtIso": "2026-08-29T16:56:49-05:00"
     },
     {
-      "number": 17690,
-      "title": "FINDING: N/A — bind FACT-DUAL-02/03 + FACT-S05 live proof, factoring module 10 of 10",
+      "number": 17765,
+      "title": "FINDING: 50138-50174 — WAVE 3 batch 2 triage (37 guards)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17690",
-      "sha": "6bd473bcab",
-      "committedAtIso": "2026-08-29T15:11:52-05:00"
+      "mergedAtCt": "08/29/2026, 04:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17765",
+      "sha": "2b7305346",
+      "committedAtIso": "2026-08-29T16:55:36-05:00"
     },
     {
-      "number": 17689,
-      "title": "FINDING: FUEL-F7337 fuel import discards rejected-row remediation",
+      "number": 17768,
+      "title": "FINDING: DSP-F7345 dispatch driver guard rejects block callback",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:10 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17689",
-      "sha": "aa850a218b",
-      "committedAtIso": "2026-08-29T15:10:14-05:00"
+      "mergedAtCt": "08/29/2026, 04:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17768",
+      "sha": "fef88ffa0",
+      "committedAtIso": "2026-08-29T16:55:00-05:00"
     },
     {
-      "number": 17688,
-      "title": "FINDING: N/A — re-confirm BANK-ECON-04/BANK-SURF-04 honest FAIL still holds, not flipping",
+      "number": 17767,
+      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 3/N) -- RE-ANCHOR 2 guards, 1 genuinely RED on plain main",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17688",
-      "sha": "396305c9c9",
-      "committedAtIso": "2026-08-29T15:08:57-05:00"
+      "mergedAtCt": "08/29/2026, 04:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17767",
+      "sha": "7a3e2fa35",
+      "committedAtIso": "2026-08-29T16:54:43-05:00"
     },
     {
-      "number": 17687,
-      "title": "FINDING: N/A -- OUTBOX status: users closed (#17685), GO-0105/0106 sequence complete",
+      "number": 17766,
+      "title": "FINDING: N/A — GO-TRUST-02: bind home/help/docs from CC-3 packets, REOPEN BANK-ECON-05 per owner",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17687",
-      "sha": "a4546dd810",
-      "committedAtIso": "2026-08-29T15:05:56-05:00"
+      "mergedAtCt": "08/29/2026, 04:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17766",
+      "sha": "d85f57b5f",
+      "committedAtIso": "2026-08-29T16:54:33-05:00"
     },
     {
-      "number": 17686,
-      "title": "FINDING: N/A — remove committed node_modules symlink, fix .gitignore gap that let it happen",
+      "number": 17764,
+      "title": "FINDING: N/A -- OUTBOX ACK: GO-TRUST-02, batch 2/N re-anchor summary (#17763)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 03:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17686",
-      "sha": "b31377b0e5",
-      "committedAtIso": "2026-08-29T15:05:18-05:00"
+      "mergedAtCt": "08/29/2026, 04:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17764",
+      "sha": "fff090b06",
+      "committedAtIso": "2026-08-29T16:50:56-05:00"
     }
   ]
 }
