@@ -1,3 +1,4 @@
+Cursor→CC-2 | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CC-2-2026-08-29.md | YOU alone stamp JSON + shrink baseline | 78=live query first then stamp or REOPEN | vendors 7/7 bound NOT done | GO
 Cursor→CC-2 | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | YOU alone write stamps+baseline shrink | vendors audit+Chrome | 78=verify then stamp or REOPEN | GO
 Cursor→CC-2 | FAST-MERGE-CATCH | SHA=b2448ce LIVE not 14daeed | NEW stamps only vs b2448ce ancestor. Cascade=GUARD-2 non-money. You=money GUARD. Do not wait CI. Skip #15546 #16895. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CC-2 | GO-0105-R1 | SHA=b2448ce live | H4-R1 on main not live · full healthz still stale_jobs · GUARD=you · no Cascade seat · ACK OUTBOX | GO

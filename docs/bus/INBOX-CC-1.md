@@ -1,3 +1,4 @@
+Cursor→CC-1 | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CC-1-2026-08-29.md | evidence to CC-2 | do NOT edit banking.json or accounting.json | period close tonight not full EDIT-01 | GO
 Cursor→CC-1 | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | evidence packets only — CC-2 stamps | period close next | never prod_verified json | GO
 Cursor→CC-1 | FAST-MERGE-CATCH | SHA=b2448ce | OPEN PRs #17648 #17639 #17627 #17604 sitting — gate PASS then gh api squash SAME TURN. No gh pr checks --watch. Devin VOID. Cascade WORKING. Vendors leftover = YOU if money. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CC-1 | GO-0105-R1 | SHA=b2448ce live | origin/main=9ab80c214 | NOW=scen01-hops-4-6-H1-H3 | ACK OUTBOX yourself | no Cascade | GO
