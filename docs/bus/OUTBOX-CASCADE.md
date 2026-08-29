@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50106 | safety · DEAD-UX — DriverVendorMappingTab "Driver" column shows raw UUID not driver name | SHA=b276443 | GO
 CASCADE | ACK | STANDING+GO-0055 | NOW=unique-FINDING-TXH-walk | SHA=b276443 | GO
 CASCADE | ACK | GO-056 | NOW=packet-0056 | SHA=b276443 | GO
 CASCADE | ACK | GO-057 | NOW=packet-0057 | SHA=b276443 | GO
