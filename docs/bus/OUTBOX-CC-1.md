@@ -3803,3 +3803,4 @@ Codex | FINDING | DRV-MONEY-F7034 | routed=CC-1 | SOURCE=driver_finance cash-adv
 Codex→CC-1 | FINDING | DSP-MONEY-F7092-KANBAN-PROFITABILITY-FAILURE-SILENT | SOURCE=getLoadProfitability→DeliveredProfitBadge | BLOCKS=GO-0009-dispatch-complete | routed=CC-1 | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7105-DRIVER-PAY-READ-FAILURE-DEAD-END | routed=CC-1 | SOURCE=driver_finance.driver_bills via LoadDetailDriverPayTab.tsx | generic GET failure has no Retry; preserve 501/403 semantics and add exact billsQuery.refetch recovery + mutation guard | BLOCKS=GO-0012-dispatch-complete | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7112-CANCEL-LOAD-MODAL-STALE-SCOPE | routed=CC-1 | SOURCE=CancelLoadModal→billable cancellation/TONU writer | BLOCKS=GO-0012-dispatch-complete | GO
+Codex→CC-1 | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored audits success after unchecked accounting.invoices UPDATE | board=OPEN | GO

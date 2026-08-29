@@ -2007,3 +2007,4 @@ Codex | SHIPPED | DSP-F7148 | PR=#17247 @ b739f1c02d | Built=atomic company-scop
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7150 | CLAIM=status-suggestion-contradictory-response-replay | SOURCE=auto_status_suggestions→auto_status_suggestion_responses | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7149 | PR=#17248 @ 78c16bb21a | Built=PWA engagement real-schema reader | NEXT=status suggestion response lifecycle | GO
+Codex | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored unchecked invoice UPDATE | board=OPEN | NEXT=dispatch non-money unique | GO
