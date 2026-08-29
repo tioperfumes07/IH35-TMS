@@ -29,7 +29,7 @@ function comparisonReader(req: Parameters<typeof currentAuthUser>[0], reply: Par
 }
 
 export async function registerComparisonReportRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/comparison-report", async (req, reply) => {
+  app.get("/api/v1/accounting/comparison-report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = comparisonReader(req, reply);
     if (!user) return;
 
@@ -54,7 +54,7 @@ export async function registerComparisonReportRoutes(app: FastifyInstance) {
   });
 
   // ACCT-R-15 — Class / cost-center variance (read-only; catalogs.classes dimension)
-  app.get("/api/v1/accounting/cost-center-class-variance", async (req, reply) => {
+  app.get("/api/v1/accounting/cost-center-class-variance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = comparisonReader(req, reply);
     if (!user) return;
 

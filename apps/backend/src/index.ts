@@ -329,7 +329,6 @@ import { registerFinanceLoanWizardRoutes } from "./finance/loan-wizard/routes.js
 import { registerFinanceCalculatorRoutes } from "./finance/calculator/routes.js";
 import { registerFinanceAmortizationRoutes } from "./finance/amortization/routes.js";
 import { registerFinanceScenariosRoutes } from "./finance/scenarios/routes.js";
-import { registerBreakEvenRoutes } from "./accounting/break-even.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerDriverAuditEventsRoutes } from "./audit/driver-events.routes.js";
 import { registerSpineEventsRoutes } from "./audit/spine-events.routes.js";
@@ -1128,7 +1127,8 @@ async function main() {
   await registerFinanceCalculatorRoutes(app);
   await registerFinanceAmortizationRoutes(app);
   await registerFinanceScenariosRoutes(app);
-  await registerBreakEvenRoutes(app);
+  // GET /api/v1/finance/break-even is autoload-mounted via break-even.routes.ts default fp.
+  // Do not also call that registrar from this file — Fastify throws duplicate GET and never binds PORT.
   await registerAuditRoutes(app);
   await registerDriverAuditEventsRoutes(app);
   await registerSpineEventsRoutes(app);

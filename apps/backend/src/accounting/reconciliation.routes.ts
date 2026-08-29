@@ -40,7 +40,7 @@ function asLedgerKind(value: string): LedgerEntryKind {
 }
 
 export async function registerAccountingReconciliationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/reconciliation/workspace", async (req, reply) => {
+  app.get("/api/v1/accounting/reconciliation/workspace", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -61,7 +61,7 @@ export async function registerAccountingReconciliationRoutes(app: FastifyInstanc
     };
   });
 
-  app.post("/api/v1/accounting/reconciliation/match", async (req, reply) => {
+  app.post("/api/v1/accounting/reconciliation/match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -87,7 +87,7 @@ export async function registerAccountingReconciliationRoutes(app: FastifyInstanc
     }
   });
 
-  app.patch("/api/v1/accounting/reconciliation/unmatch", async (req, reply) => {
+  app.patch("/api/v1/accounting/reconciliation/unmatch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });

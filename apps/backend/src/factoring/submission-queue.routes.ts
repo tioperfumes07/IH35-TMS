@@ -38,7 +38,7 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
   // GET /api/v1/factoring/workqueue
   // McLeod-parity clerk board: per-invoice factoring status, advance/reserve/fee/chargeback context,
   // recourse expiry days for risk awareness.
-  app.get("/api/v1/factoring/workqueue", async (req, reply) => {
+  app.get("/api/v1/factoring/workqueue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -54,7 +54,7 @@ export async function registerSubmissionQueueRoutes(app: FastifyInstance) {
   // Validates doc-gate on each selected invoice BEFORE creating the batch.
   // Blocks with docs_missing_error if any invoice fails the gate.
   // On success: creates draft batch, submits it, and writes an audit row.
-  app.post("/api/v1/factoring/submission-queue/submit-batch", async (req, reply) => {
+  app.post("/api/v1/factoring/submission-queue/submit-batch", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const allowed = ["Owner", "Administrator", "Manager", "Accountant"];

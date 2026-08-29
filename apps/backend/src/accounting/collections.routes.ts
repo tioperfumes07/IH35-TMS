@@ -53,7 +53,7 @@ function collectionsReader(req: Parameters<typeof currentAuthUser>[0], reply: Pa
 }
 
 export async function registerCollectionsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/collections", async (req, reply) => {
+  app.get("/api/v1/accounting/collections", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = collectionsReader(req, reply);
     if (!user) return;
 
@@ -70,7 +70,7 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     return reply.code(200).send(result);
   });
 
-  app.get("/api/v1/accounting/collections/:taskId", async (req, reply) => {
+  app.get("/api/v1/accounting/collections/:taskId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = collectionsReader(req, reply);
     if (!user) return;
     const params = taskParamSchema.safeParse(req.params ?? {});
@@ -89,7 +89,7 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     return reply.code(200).send(detail);
   });
 
-  app.post("/api/v1/accounting/collections/:taskId/contact", async (req, reply) => {
+  app.post("/api/v1/accounting/collections/:taskId/contact", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = collectionsReader(req, reply);
     if (!user) return;
     const params = taskParamSchema.safeParse(req.params ?? {});
@@ -111,7 +111,7 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     return reply.code(200).send({ contact });
   });
 
-  app.post("/api/v1/accounting/collections/:taskId/resolve", async (req, reply) => {
+  app.post("/api/v1/accounting/collections/:taskId/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = collectionsReader(req, reply);
     if (!user) return;
     const params = taskParamSchema.safeParse(req.params ?? {});
@@ -131,7 +131,7 @@ export async function registerCollectionsRoutes(app: FastifyInstance) {
     return reply.code(200).send(resolved);
   });
 
-  app.post("/api/v1/accounting/collections/sync", async (req, reply) => {
+  app.post("/api/v1/accounting/collections/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = collectionsReader(req, reply);
     if (!user) return;
     const body = syncBodySchema.safeParse(req.body ?? {});

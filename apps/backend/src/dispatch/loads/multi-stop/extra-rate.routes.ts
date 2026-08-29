@@ -43,7 +43,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dispatch/loads/:load_uuid/stops/:stop_uuid/extra-rates", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:load_uuid/stops/:stop_uuid/extra-rates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!manageRoles.has(user.role)) {
@@ -75,7 +75,7 @@ export async function registerLoadStopExtraRateRoutes(app: FastifyInstance) {
     return reply.code(201).send({ rate: created });
   });
 
-  app.get("/api/v1/dispatch/loads/:load_uuid/extra-rates", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:load_uuid/extra-rates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});

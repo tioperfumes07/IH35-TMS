@@ -159,7 +159,7 @@ function todayDateString() {
 export async function registerFactorRoutes(app: FastifyInstance) {
 
   // GET /api/v1/factoring/factors — list all factors for tenant
-  app.get("/api/v1/factoring/factors", async (req, reply) => {
+  app.get("/api/v1/factoring/factors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -175,7 +175,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/factoring/factors — create factor profile
-  app.post("/api/v1/factoring/factors", async (req, reply) => {
+  app.post("/api/v1/factoring/factors", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate
@@ -229,7 +229,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // PATCH /api/v1/factoring/factors/:id — update factor profile
-  app.patch("/api/v1/factoring/factors/:id", async (req, reply) => {
+  app.patch("/api/v1/factoring/factors/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate
@@ -296,7 +296,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // DELETE /api/v1/factoring/factors/:id — SOFT deactivate (NOT hard delete)
-  app.delete("/api/v1/factoring/factors/:id", async (req, reply) => {
+  app.delete("/api/v1/factoring/factors/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate
@@ -326,7 +326,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/customers/:customerId/factor — active factor for a customer
-  app.get("/api/v1/customers/:customerId/factor", async (req, reply) => {
+  app.get("/api/v1/customers/:customerId/factor", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -349,7 +349,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/factoring/factors/:id/letter-of-release — list LORs for a factor
-  app.get("/api/v1/factoring/factors/:id/letter-of-release", async (req, reply) => {
+  app.get("/api/v1/factoring/factors/:id/letter-of-release", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -366,7 +366,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/factoring/factors/:id/letter-of-release — record an LOR for a factor
-  app.post("/api/v1/factoring/factors/:id/letter-of-release", async (req, reply) => {
+  app.post("/api/v1/factoring/factors/:id/letter-of-release", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate
@@ -404,7 +404,7 @@ export async function registerFactorRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/customers/:customerId/factor — assign customer to factor
-  app.post("/api/v1/customers/:customerId/factor", async (req, reply) => {
+  app.post("/api/v1/customers/:customerId/factor", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" }); // MUST KEEP: role-gate

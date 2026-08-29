@@ -39,7 +39,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/customer-notify/log", async (req, reply) => {
+  app.get("/api/v1/dispatch/customer-notify/log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -50,7 +50,7 @@ export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance)
     });
   });
 
-  app.get("/api/v1/dispatch/customer-notify/preferences/:customerId", async (req, reply) => {
+  app.get("/api/v1/dispatch/customer-notify/preferences/:customerId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = customerParamsSchema.safeParse(req.params ?? {});
@@ -86,7 +86,7 @@ export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance)
     }
   });
 
-  app.post("/api/v1/dispatch/customer-notify/sync", async (req, reply) => {
+  app.post("/api/v1/dispatch/customer-notify/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = companyBodySchema.safeParse(req.body ?? {});

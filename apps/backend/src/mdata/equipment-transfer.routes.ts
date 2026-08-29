@@ -60,6 +60,7 @@ function mapServiceError(error: unknown) {
       "E_DROPOFF_ALREADY_ACKED",
       "E_DROPOFF_ACK_REQUIRED",
       "E_PICKUP_ALREADY_ACKED",
+      "E_TRANSFER_ACK_WRITE_CONFLICT",
     ].includes(code)
   ) {
     return { status: 422, payload: { error: code } };

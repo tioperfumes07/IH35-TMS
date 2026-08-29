@@ -40,7 +40,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchDetentionApprovalRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/detention/requests", async (req, reply) => {
+  app.get("/api/v1/dispatch/detention/requests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -48,7 +48,7 @@ export async function registerDispatchDetentionApprovalRoutes(app: FastifyInstan
     return listDetentionRequests(user.uuid, query.data.operating_company_id, query.data.status);
   });
 
-  app.get("/api/v1/dispatch/detention/requests/kpis", async (req, reply) => {
+  app.get("/api/v1/dispatch/detention/requests/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = kpisQuerySchema.safeParse(req.query ?? {});
@@ -56,7 +56,7 @@ export async function registerDispatchDetentionApprovalRoutes(app: FastifyInstan
     return detentionApprovalKpis(user.uuid, query.data.operating_company_id);
   });
 
-  app.patch("/api/v1/dispatch/detention/requests/:id/approve", async (req, reply) => {
+  app.patch("/api/v1/dispatch/detention/requests/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isDetentionApprover(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -74,7 +74,7 @@ export async function registerDispatchDetentionApprovalRoutes(app: FastifyInstan
     return result;
   });
 
-  app.patch("/api/v1/dispatch/detention/requests/:id/reject", async (req, reply) => {
+  app.patch("/api/v1/dispatch/detention/requests/:id/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isDetentionApprover(user.role)) return reply.code(403).send({ error: "forbidden" });

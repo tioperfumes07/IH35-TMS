@@ -342,6 +342,23 @@ async function loadPendingTransfer(
   return transfer;
 }
 
+async function writeDualAckNotes(
+  client: { query: <R = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<{ rows: R[] }> },
+  input: { transferId: string; operatingCompanyId: string; priorNotes: string; nextNotes: string }
+) {
+  const updated = await client.query<{ id: string }>(
+    `UPDATE mdata.equipment_transfers
+        SET notes = $4, updated_at = now()
+      WHERE id = $1
+        AND operating_company_id = $2::uuid
+        AND status = 'pending_to_confirm'
+        AND COALESCE(notes, '') = $3
+      RETURNING id::text AS id`,
+    [input.transferId, input.operatingCompanyId, input.priorNotes, input.nextNotes]
+  );
+  if (!updated.rows[0]?.id) throw new Error("E_TRANSFER_ACK_WRITE_CONFLICT");
+}
+
 /** Append mdata.equipment_log on transfer completion (0242). event_type CHECK has no 'transfer'. */
 async function insertEquipmentTransferLog(
   client: Parameters<Parameters<typeof withCurrentUser>[1]>[0],
@@ -460,10 +477,12 @@ export async function ackDropoffTransfer(
       if (state.dropoff_ack_at) throw new Error("E_DROPOFF_ALREADY_ACKED");
       const next = withDropoffAck(state);
       const notes = encodeDualAckNotes(stripDualAckNotes(String(transfer.notes ?? "")), next);
-      await client.query(`UPDATE mdata.equipment_transfers SET notes = $2, updated_at = now() WHERE id = $1`, [
-        input.transfer_id,
-        notes,
-      ]);
+      await writeDualAckNotes(client, {
+        transferId: input.transfer_id,
+        operatingCompanyId: input.operating_company_id,
+        priorNotes: String(transfer.notes ?? ""),
+        nextNotes: notes,
+      });
       if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.from_driver_id);
       await client.query("COMMIT");
       return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });
@@ -489,10 +508,12 @@ export async function ackPickupTransfer(
       if (state.pickup_ack_at) throw new Error("E_PICKUP_ALREADY_ACKED");
       const next = withPickupAck(state);
       const notes = encodeDualAckNotes(stripDualAckNotes(String(transfer.notes ?? "")), next);
-      await client.query(`UPDATE mdata.equipment_transfers SET notes = $2, updated_at = now() WHERE id = $1`, [
-        input.transfer_id,
-        notes,
-      ]);
+      await writeDualAckNotes(client, {
+        transferId: input.transfer_id,
+        operatingCompanyId: input.operating_company_id,
+        priorNotes: String(transfer.notes ?? ""),
+        nextNotes: notes,
+      });
       if (dualAckComplete(next)) await finalizeDualAckTransfer(client, userId, input.operating_company_id, transfer, input.to_driver_id);
       await client.query("COMMIT");
       return enrichTransferRow({ id: input.transfer_id, status: dualAckComplete(next) ? "confirmed" : "pending_to_confirm", notes });

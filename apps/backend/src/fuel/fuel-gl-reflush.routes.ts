@@ -23,7 +23,7 @@ function auth(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerFuelGlReflushRoutes(app: FastifyInstance) {
-  app.post("/api/v1/fuel/gl/reflush-unposted", async (req, reply) => {
+  app.post("/api/v1/fuel/gl/reflush-unposted", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!ALLOWED.has(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

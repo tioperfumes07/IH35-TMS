@@ -22,7 +22,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchPlannerRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/planner/week", async (req, reply) => {
+  app.get("/api/v1/dispatch/planner/week", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -30,7 +30,7 @@ export async function registerDispatchPlannerRoutes(app: FastifyInstance) {
     return getPlannerWeek(user.uuid, query.data.operating_company_id, query.data.week_start);
   });
 
-  app.patch("/api/v1/dispatch/planner/loads/:id/start_at", async (req, reply) => {
+  app.patch("/api/v1/dispatch/planner/loads/:id/start_at", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});

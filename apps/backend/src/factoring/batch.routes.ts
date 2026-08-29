@@ -31,7 +31,7 @@ function sendBatchError(reply: { code: (status: number) => { send: (payload: unk
 }
 
 export async function registerFactoringBatchRoutes(app: FastifyInstance) {
-  app.get("/api/v1/factoring/batches/candidate-invoices", async (req, reply) => {
+  app.get("/api/v1/factoring/batches/candidate-invoices", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = factoringBatchCompanyQuerySchema.safeParse(req.query ?? {});
@@ -43,7 +43,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     return { invoices };
   });
 
-  app.get("/api/v1/factoring/batches", async (req, reply) => {
+  app.get("/api/v1/factoring/batches", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = factoringBatchListQuerySchema.safeParse(req.query ?? {});
@@ -55,7 +55,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     return { batches };
   });
 
-  app.post("/api/v1/factoring/batches", async (req, reply) => {
+  app.post("/api/v1/factoring/batches", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -74,7 +74,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/factoring/batches/:id/submit", async (req, reply) => {
+  app.post("/api/v1/factoring/batches/:id/submit", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -95,7 +95,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/factoring/batches/:id", async (req, reply) => {
+  app.get("/api/v1/factoring/batches/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = factoringBatchIdParamsSchema.safeParse(req.params ?? {});
@@ -110,7 +110,7 @@ export async function registerFactoringBatchRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/factoring/batches/:id/reserve-movements", async (req, reply) => {
+  app.get("/api/v1/factoring/batches/:id/reserve-movements", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = factoringBatchIdParamsSchema.safeParse(req.params ?? {});

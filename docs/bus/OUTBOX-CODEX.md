@@ -2064,3 +2064,8 @@ Codex | WORKING | DSP-F7166 | CLAIM=outbox-registry-silent-duplicate-overwrite |
 Codex | SHIPPED | DSP-F7165 | PR=#17314 @ d5b20c9e9627 | Built=durable abandonment notice delivery+retry | Live=post-deploy UNVERIFIED | NEXT=registry duplicate ratchet | GO
 Codex | WORKING | DSP-F7167 | CLAIM=operational-notice-zero-row-acked-delivered | SOURCE=notifications.user_notifications INSERT RETURNING id | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7166 | PR=#17315 @ 3c2b7ac462a7 | Built=fail-loud unique outbox handler registry | Live=post-deploy UNVERIFIED | NEXT=notification persistence identity | GO
+CODEX | ACK | GO-0045 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
+CODEX | WORKING | GO-0045 | FINDING=DSP-F7184 | NOW=canonical cancellation/load write identity | NEXT=FAST-MERGE then GO-0046 | GO
+CODEX | ACK | GO-0046 | NOW=/fleet-leftover-unique | SHA=4e5db76 | GO
+CODEX | SHIPPED | GO-0045 | FINDING=DSP-F7184 | PR=#17387 @ e003eacbac | NEXT=GO-0046 /fleet | GO
+CODEX | WORKING | GO-0046 | FINDING=FLEET-F7185 | NOW=dual-ack canonical CAS | NEXT=FAST-MERGE then GO-0047 | GO

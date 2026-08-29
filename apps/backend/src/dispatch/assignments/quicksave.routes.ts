@@ -60,7 +60,7 @@ function mapValidationError(error: unknown) {
 }
 
 export async function registerDispatchAssignmentsQuicksaveRoutes(app: FastifyInstance) {
-  app.patch("/api/v1/dispatch/loads/:uuid/assign-unit", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:uuid/assign-unit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
@@ -82,7 +82,7 @@ export async function registerDispatchAssignmentsQuicksaveRoutes(app: FastifyIns
     }
   });
 
-  app.patch("/api/v1/dispatch/loads/:uuid/assign-trailer", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:uuid/assign-trailer", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
@@ -104,7 +104,7 @@ export async function registerDispatchAssignmentsQuicksaveRoutes(app: FastifyIns
     }
   });
 
-  app.patch("/api/v1/dispatch/loads/:uuid/assign-driver", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:uuid/assign-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
