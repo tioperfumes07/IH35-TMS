@@ -125,7 +125,7 @@ async function withScopedCompany<T>(
 }
 
 export async function registerItemRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/items", async (req, reply) => {
+  app.get("/api/v1/catalogs/items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -177,7 +177,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     return { items };
   });
 
-  app.post("/api/v1/catalogs/items", async (req, reply) => {
+  app.post("/api/v1/catalogs/items", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -251,7 +251,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/items/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/items/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -283,7 +283,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/items/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/items/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -382,7 +382,7 @@ export async function registerItemRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/items/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/items/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

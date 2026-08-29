@@ -194,7 +194,7 @@ function mapAccountConflict(constraint?: string): string {
 }
 
 export async function registerAccountRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/accounts", async (req, reply) => {
+  app.get("/api/v1/catalogs/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});

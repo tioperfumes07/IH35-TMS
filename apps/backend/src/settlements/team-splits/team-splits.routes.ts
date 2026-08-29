@@ -237,7 +237,7 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
     return { configs: rows.map((row) => teamRowToConfig(row)) };
   });
 
-  app.post("/api/v1/team-splits/configs", async (req, reply) => {
+  app.post("/api/v1/team-splits/configs", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });
@@ -317,7 +317,7 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/team-splits/configs/:id", async (req, reply) => {
+  app.delete("/api/v1/team-splits/configs/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });
@@ -338,7 +338,7 @@ export async function registerTeamSplitRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/loads/:id/team-split", async (req, reply) => {
+  app.post("/api/v1/loads/:id/team-split", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureOfficeRole((user as { role?: unknown }).role)) return reply.code(403).send({ error: "forbidden" });

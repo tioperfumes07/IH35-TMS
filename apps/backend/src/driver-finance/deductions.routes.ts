@@ -131,7 +131,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     }
   );
 
-  app.patch("/api/v1/driver-finance/deduction-schedules/:id/hold", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/deduction-schedules/:id/hold", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
@@ -178,7 +178,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     return result.row;
   });
 
-  app.patch("/api/v1/driver-finance/deduction-schedules/:id/resume", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/deduction-schedules/:id/resume", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
@@ -229,7 +229,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
   // serve the separate cash-advance/liability recurring-schedule feature (driver_finance.
   // deduction_schedule) and have their own callers elsewhere; this is a distinct table with its
   // own hold semantics, not a repoint of those routes.
-  app.patch("/api/v1/driver-finance/settlement-deductions/:id/hold", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id/hold", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
@@ -278,7 +278,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     return result.row;
   });
 
-  app.patch("/api/v1/driver-finance/settlement-deductions/:id/resume", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/settlement-deductions/:id/resume", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireDeductionWriteRole(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});
@@ -320,7 +320,7 @@ export async function registerDriverFinanceDeductionRoutes(app: FastifyInstance)
     return result.row;
   });
 
-  app.get("/api/v1/driver-finance/drivers/:id/escrow-timeline", async (req, reply) => {
+  app.get("/api/v1/driver-finance/drivers/:id/escrow-timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = deductionIdParamsSchema.safeParse(req.params ?? {});

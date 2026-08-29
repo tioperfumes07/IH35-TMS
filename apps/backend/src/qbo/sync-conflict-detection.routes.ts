@@ -213,7 +213,7 @@ function entitySql(entity: EntityType) {
 }
 
 export async function registerQboSyncConflictDetectionRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/sync-conflicts", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/qbo/sync-conflicts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

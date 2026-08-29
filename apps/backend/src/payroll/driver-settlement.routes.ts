@@ -26,7 +26,7 @@ export async function registerPayrollDriverSettlementRoutes(app: FastifyInstance
   app.post("/api/v1/payroll/driver-settlements/compute", async (_req, reply) => gone(reply, CANONICAL));
 
   // POST /api/v1/payroll/driver-settlements/:settlement_id/post — RETIRED -> canonical subledger detail.
-  app.post("/api/v1/payroll/driver-settlements/:settlement_id/post", async (req, reply) => {
+  app.post("/api/v1/payroll/driver-settlements/:settlement_id/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const id = (req.params as { settlement_id?: string })?.settlement_id;
     return gone(reply, id ? `${CANONICAL}/${id}` : CANONICAL);
   });

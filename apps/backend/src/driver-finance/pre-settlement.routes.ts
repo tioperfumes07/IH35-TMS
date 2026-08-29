@@ -65,7 +65,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * Returns all open (in-progress) pre-settlements for the company — used by the
    * dispatch board to show the "Driver has open pre-settlement · Add to it?" prompt.
    */
-  app.get("/api/v1/driver-finance/pre-settlements/open-by-driver", async (req, reply) => {
+  app.get("/api/v1/driver-finance/pre-settlements/open-by-driver", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -113,7 +113,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * Returns the most recent active pre-settlement for a driver, with all
    * settlement lines.  Used by the LoadDetailDrawer Pre-Settlement tab.
    */
-  app.get("/api/v1/driver-finance/pre-settlements/by-driver/:driverId", async (req, reply) => {
+  app.get("/api/v1/driver-finance/pre-settlements/by-driver/:driverId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -186,7 +186,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * helper, updates last_load tracking, and re-aggregates totals.
    * INVARIANT: one open pre-settlement per driver (MUST 8a.0.5.12).
    */
-  app.post("/api/v1/driver-finance/pre-settlements/:id/add-load", async (req, reply) => {
+  app.post("/api/v1/driver-finance/pre-settlements/:id/add-load", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requirePreSettlementWriteRole(req, reply);
     if (!user) return;
 
@@ -311,7 +311,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
    * Guard: settlement must be status=closed (auto-set by closeSettlementForFinalLoad
    * when the SB return load is marked delivered_pending_docs).
    */
-  app.post("/api/v1/driver-finance/pre-settlements/:id/settle", async (req, reply) => {
+  app.post("/api/v1/driver-finance/pre-settlements/:id/settle", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requirePreSettlementWriteRole(req, reply);
     if (!user) return;
 

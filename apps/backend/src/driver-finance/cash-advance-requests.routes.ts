@@ -116,7 +116,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
-  app.post("/api/v1/driver/cash-advance-requests/:id/cancel", async (req, reply) => {
+  app.post("/api/v1/driver/cash-advance-requests/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const parsedParams = uuidParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -155,7 +155,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.get("/api/v1/driver-finance/cash-advance-requests", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
@@ -173,7 +173,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.get("/api/v1/driver-finance/cash-advance-requests/pending-owner-approval", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests/pending-owner-approval", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (String(user.role ?? "") !== "Owner") {
@@ -189,7 +189,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.post("/api/v1/driver-finance/cash-advance-requests/:id/escalate", async (req, reply) => {
+  app.post("/api/v1/driver-finance/cash-advance-requests/:id/escalate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canEscalateCashAdvanceToOwner(String(user.role ?? ""))) {
@@ -233,7 +233,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/driver-finance/cash-advance-requests/:id", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
@@ -268,7 +268,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
 
   // B6: read-only dry run of the B5 cascade — what "Approve & post" will do (branch + linked
   // load/bill + resolved GL account), WITHOUT posting. Reuses the live branch-detection logic.
-  app.get("/api/v1/driver-finance/cash-advance-requests/:id/cascade-preview", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests/:id/cascade-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
@@ -289,7 +289,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
   });
 
   // B6: read-only B4 accountability timeline for one request (5 steps + actor/role + elapsed).
-  app.get("/api/v1/driver-finance/cash-advance-requests/:id/timeline", async (req, reply) => {
+  app.get("/api/v1/driver-finance/cash-advance-requests/:id/timeline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
@@ -356,7 +356,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     return reply.code(201).send({ request: result.request, auto_approved: false });
   });
 
-  app.post("/api/v1/driver-finance/cash-advance-requests/:id/approve", async (req, reply) => {
+  app.post("/api/v1/driver-finance/cash-advance-requests/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {
@@ -418,7 +418,7 @@ export async function registerCashAdvanceRequestRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/driver-finance/cash-advance-requests/:id/deny", async (req, reply) => {
+  app.post("/api/v1/driver-finance/cash-advance-requests/:id/deny", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewCashAdvanceRequest(String(user.role ?? ""))) {

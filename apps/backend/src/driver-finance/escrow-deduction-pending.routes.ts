@@ -39,7 +39,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/escrow-deductions-pending", async (req, reply) => {
+  app.get("/api/v1/driver-finance/escrow-deductions-pending", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -57,7 +57,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-finance/escrow-deductions-pending/:id/approve", async (req, reply) => {
+  app.post("/api/v1/driver-finance/escrow-deductions-pending/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = pendingIdSchema.safeParse(req.params ?? {});
@@ -83,7 +83,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-finance/escrow-deductions-pending/:id/reject", async (req, reply) => {
+  app.post("/api/v1/driver-finance/escrow-deductions-pending/:id/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = pendingIdSchema.safeParse(req.params ?? {});
@@ -107,7 +107,7 @@ export function registerEscrowDeductionPendingRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/load-abandonments", async (req, reply) => {
+  app.get("/api/v1/dispatch/load-abandonments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

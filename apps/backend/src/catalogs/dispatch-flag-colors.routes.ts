@@ -100,7 +100,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
     return { flags: rows };
   });
 
-  app.post("/api/v1/catalogs/dispatch-flag-colors", async (req, reply) => {
+  app.post("/api/v1/catalogs/dispatch-flag-colors", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedBody = createFlagColorSchema.safeParse(req.body ?? {});
@@ -158,7 +158,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/catalogs/dispatch-flag-colors/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/dispatch-flag-colors/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -240,7 +240,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/dispatch-flag-colors/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/dispatch-flag-colors/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

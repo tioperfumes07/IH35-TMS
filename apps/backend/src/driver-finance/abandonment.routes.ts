@@ -40,7 +40,7 @@ function isOwnerOrAdmin(role: string) {
 }
 
 export async function registerAbandonmentRoutes(app: FastifyInstance) {
-  app.get("/api/v1/abandonment-chargebacks", async (req, reply) => {
+  app.get("/api/v1/abandonment-chargebacks", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -88,7 +88,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/abandonment-chargebacks/:id/approve", async (req, reply) => {
+  app.post("/api/v1/abandonment-chargebacks/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -131,7 +131,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
     return { abandonment_chargeback: payload.chargeback };
   });
 
-  app.post("/api/v1/abandonment-chargebacks/:id/dispute", async (req, reply) => {
+  app.post("/api/v1/abandonment-chargebacks/:id/dispute", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -175,7 +175,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
     return { abandonment_chargeback: payload.chargeback };
   });
 
-  app.post("/api/v1/abandonment-chargebacks/:id/reverse", async (req, reply) => {
+  app.post("/api/v1/abandonment-chargebacks/:id/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "owner_admin_only" });
@@ -218,7 +218,7 @@ export async function registerAbandonmentRoutes(app: FastifyInstance) {
     return { abandonment_chargeback: payload.chargeback };
   });
 
-  app.get("/api/v1/abandonment-defaults", async (req, reply) => {
+  app.get("/api/v1/abandonment-defaults", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});

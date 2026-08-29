@@ -253,7 +253,7 @@ const DEPARTMENT_LABELS: Record<z.infer<typeof catalogDepartmentSchema>, string>
 const DEPARTMENT_ORDER: Array<z.infer<typeof catalogDepartmentSchema>> = ["dispatch", "safety", "accounting", "identity", "operations"];
 
 export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/registry", async (req, reply) => {
+  app.get("/api/v1/catalogs/registry", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -343,7 +343,7 @@ export async function registerCatalogRegistryRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/catalogs/registry", async (req, reply) => {
+  app.post("/api/v1/catalogs/registry", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedBody = createCatalogRegistrySchema.safeParse(req.body ?? {});

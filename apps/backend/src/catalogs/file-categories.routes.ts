@@ -28,7 +28,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerFileCategoriesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/file-categories", async (req, reply) => {
+  app.get("/api/v1/catalogs/file-categories", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsedQuery = listFileCategoriesQuerySchema.safeParse(req.query ?? {});
@@ -66,7 +66,7 @@ export async function registerFileCategoriesRoutes(app: FastifyInstance) {
     return { categories: result };
   });
 
-  app.post("/api/v1/catalogs/file-categories", async (req, reply) => {
+  app.post("/api/v1/catalogs/file-categories", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

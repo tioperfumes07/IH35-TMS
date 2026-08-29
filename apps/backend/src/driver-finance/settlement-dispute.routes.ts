@@ -84,7 +84,7 @@ function mapKnownError(error: unknown) {
 }
 
 export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
-  app.post("/api/v1/driver-finance/settlement-disputes", async (req, reply) => {
+  app.post("/api/v1/driver-finance/settlement-disputes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const body = createDisputeBodySchema.safeParse(req.body ?? {});
@@ -126,7 +126,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-finance/settlement-disputes", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlement-disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const query = listDisputeQuerySchema.safeParse(req.query ?? {});
@@ -142,7 +142,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-finance/settlement-disputes/:id", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlement-disputes/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -169,7 +169,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-finance/settlement-disputes/:id/review", async (req, reply) => {
+  app.post("/api/v1/driver-finance/settlement-disputes/:id/review", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) {
@@ -196,7 +196,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-finance/settlement-disputes/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/driver-finance/settlement-disputes/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) {
@@ -254,7 +254,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     return { data: result };
   });
 
-  app.post("/api/v1/driver-finance/settlement-disputes/:id/withdraw", async (req, reply) => {
+  app.post("/api/v1/driver-finance/settlement-disputes/:id/withdraw", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -289,7 +289,7 @@ export async function registerSettlementDisputeRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-pwa/my-disputes", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/my-disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     if (user.role !== "Driver") return reply.code(403).send({ error: "drivers_only" });

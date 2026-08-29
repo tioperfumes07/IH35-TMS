@@ -136,7 +136,7 @@ async function recomputeDebtSync(client: any, driverId: string) {
 }
 
 export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/settlements", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlements", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -408,7 +408,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return { settlements: payload.rows, total_count: payload.total };
   });
 
-  app.get("/api/v1/driver-finance/settlements/:id", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlements/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -540,7 +540,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
   // COALESCE(db.load_id, sl.load_id) resolution the settlement detail route above already uses
   // (SETTLEMENT-DETAIL-LOAD-COALESCE-DRIFT) — reused here, not reinvented, so the two call sites can
   // never drift apart on which load a settlement line covers.
-  app.get("/api/v1/driver-finance/settlements/for-load/:loadId", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlements/for-load/:loadId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ loadId: z.string().uuid() }).safeParse(req.params ?? {});
@@ -575,7 +575,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return result;
   });
 
-  app.get("/api/v1/driver-finance/settlements/:id/pdf", async (req, reply) => {
+  app.get("/api/v1/driver-finance/settlements/:id/pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -601,7 +601,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     }
   });
 
-  app.post("/api/v1/driver-finance/settlements", async (req, reply) => {
+  app.post("/api/v1/driver-finance/settlements", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const parsed = createBodySchema.safeParse(req.body ?? {});
@@ -675,7 +675,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/driver-finance/settlements/:id/acknowledge", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/settlements/:id/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -728,7 +728,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     return result.row;
   });
 
-  app.patch("/api/v1/driver-finance/settlements/:id/finalize", async (req, reply) => {
+  app.patch("/api/v1/driver-finance/settlements/:id/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireSettlementWriteRole(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

@@ -78,7 +78,7 @@ async function hasPreviewCostsTable(client: any) {
 }
 
 export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
-  app.post("/api/v1/settlements/preview", async (req, reply) => {
+  app.post("/api/v1/settlements/preview", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = previewBodySchema.safeParse(req.body ?? {});
@@ -130,7 +130,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/settlements", async (req, reply) => {
+  app.post("/api/v1/settlements", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = createBodySchema.safeParse(req.body ?? {});
@@ -195,7 +195,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.get("/api/v1/settlements/:id/pdf", async (req, reply) => {
+  app.get("/api/v1/settlements/:id/pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -221,7 +221,7 @@ export async function registerSettlementsMvpRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/settlements/:id/approve", async (req, reply) => {
+  app.post("/api/v1/settlements/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

@@ -251,7 +251,7 @@ export async function buildWeeklyCloseDraftForDriver(
 }
 
 export async function registerWeeklyCloseRoutes(app: FastifyInstance) {
-  app.post("/api/v1/settlements/weekly-close", async (req, reply) => {
+  app.post("/api/v1/settlements/weekly-close", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = requireWeeklyCloseWriteRole(req, reply);
     if (!user) return;
     const parsed = bodySchema.safeParse(req.body ?? {});

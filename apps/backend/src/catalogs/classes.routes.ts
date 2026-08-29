@@ -189,7 +189,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/catalogs/classes/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/classes/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -220,7 +220,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/catalogs/classes/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/classes/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -308,7 +308,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/classes/bulk", async (req, reply) => {
+  app.post("/api/v1/catalogs/classes/bulk", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -370,7 +370,7 @@ export async function registerClassRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/classes/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/classes/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

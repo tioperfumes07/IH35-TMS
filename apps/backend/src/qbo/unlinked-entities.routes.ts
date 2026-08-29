@@ -151,7 +151,7 @@ function bestAssetVendorMatch(tokens: string[], vendors: VendorRow[]): Match | n
 }
 
 export async function registerQboUnlinkedEntitiesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/unlinked-entities", async (req, reply) => {
+  app.get("/api/v1/qbo/unlinked-entities", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccess(user.role)) return reply.code(403).send({ error: "forbidden" });

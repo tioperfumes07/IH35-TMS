@@ -183,7 +183,7 @@ function buildMergedSql(params: BuildParams): { sql: string; values: unknown[] }
 }
 
 export async function registerQboSyncEventLogRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/sync-event-log", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/qbo/sync-event-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

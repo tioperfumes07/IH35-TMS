@@ -32,7 +32,7 @@ function canManage(role: string) {
 }
 
 export async function registerComplianceNotificationRulesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/compliance/notification-rules", async (req, reply) => {
+  app.get("/api/v1/compliance/notification-rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuery.safeParse(req.query ?? {});
@@ -55,7 +55,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     return reply.send({ rules: rows });
   });
 
-  app.post("/api/v1/compliance/notification-rules", async (req, reply) => {
+  app.post("/api/v1/compliance/notification-rules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user || !canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
     const body = createRuleSchema.safeParse(req.body ?? {});
@@ -94,7 +94,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     return reply.code(201).send({ rule: row });
   });
 
-  app.patch("/api/v1/compliance/notification-rules/:id", async (req, reply) => {
+  app.patch("/api/v1/compliance/notification-rules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user || !canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = idParams.safeParse(req.params ?? {});
@@ -142,7 +142,7 @@ export async function registerComplianceNotificationRulesRoutes(app: FastifyInst
     return reply.send({ rule: row });
   });
 
-  app.delete("/api/v1/compliance/notification-rules/:id", async (req, reply) => {
+  app.delete("/api/v1/compliance/notification-rules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user || !canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
     const params = idParams.safeParse(req.params ?? {});

@@ -958,7 +958,7 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
   createCatalogRoutes(app, mxCustomsBrokersCatalogConfig, { mode: "all" });
 
 
-  app.get("/api/v1/catalogs/excel-upload-jobs/:id", async (req, reply) => {
+  app.get("/api/v1/catalogs/excel-upload-jobs/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

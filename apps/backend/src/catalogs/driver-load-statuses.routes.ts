@@ -125,7 +125,7 @@ export async function registerDriverLoadStatusRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/driver-load-statuses", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-load-statuses", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
