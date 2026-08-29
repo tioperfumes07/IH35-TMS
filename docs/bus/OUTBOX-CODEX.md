@@ -1,3 +1,5 @@
+Codex | WORKING | FUEL-F7241 | GO-0030 | CLAIM=fuel-load-match-active-stops | SOURCE=active stop window→import+Relay load attribution | CLOSES=none — post-deploy rematch proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7240 | PR=#17461 @ 7469c76d5c | Built=mdata load active-stop vertical | Live=post-deploy UNVERIFIED | NEXT=vertical census | GO
 Codex | WORKING | DSP-F7240 | GO-0030 | CLAIM=mdata-load-active-stop-vertical | SOURCE=active stops→detail+PATCH+driver reverse | CLOSES=none — post-deploy shared API proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7239 | PR=#17460 @ 55fd58c92e | Built=load list/detail active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7239 | GO-0030 | CLAIM=load-list-detail-active-stops | SOURCE=active pickup+delivery→count+rows+drawer itinerary | CLOSES=none — post-deploy list/detail proof remains | NEXT=guard+FAST-MERGE | GO
