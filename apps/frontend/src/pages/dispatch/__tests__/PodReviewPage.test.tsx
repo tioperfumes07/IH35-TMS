@@ -11,6 +11,10 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91e0bf0a-133f-4ce8-a734-2586cfa66d96" }),
 }));
 
+vi.mock("../../../components/Toast", () => ({
+  useToast: () => ({ pushToast: vi.fn() }),
+}));
+
 vi.mock("../../../api/dispatch", () => ({
   getPodDocuments: vi.fn(async () => ({
     documents: [
@@ -95,7 +99,9 @@ describe("PodReviewPage (B21-D10)", () => {
     await user.click(screen.getByRole("button", { name: "Apply" }));
     expect(await screen.findByTestId("load-pod-bol-panel")).toBeTruthy();
     expect(screen.getByTestId("bol-generate-button")).toBeTruthy();
-    expect(screen.getByTestId("bol-download-link")).toBeTruthy();
+    const download = screen.getByTestId("bol-download-link");
+    expect(download).toBeTruthy();
+    expect(download.getAttribute("href")).toContain("/api/v1/dispatch/loads/load-1/bol.pdf");
   });
 
   it("filters POD documents by status", async () => {
