@@ -2229,3 +2229,4 @@ Codex | WORKING | DSP-F7251 | GO-0050 | CLAIM=OCR Book Load prefill erased after
 Codex | WORKING | DRV-F7252 | GO-0054 | CLAIM=retention-zero-result-honesty | SOURCE=drivers.retention_scores→/drivers/retention | CLOSES=blank successful surface | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7251 | PR=#17473 @ 52d369c947 | Built=dispatch docs.ocr canonical prefill survives modal reset | Live=post-deploy UNVERIFIED | NEXT=GO-0051 | GO
 Codex | ROUTED | DSP-MONEY-F7264 | owner=CC-1 | SOURCE=LoadDetailDrawer factoring package popup/lifecycle | NEXT=dispatch non-money unique | GO
+Codex | WORKING | DSP-F7265 | GO-0030+RIDER | CLAIM=eManifest PDF SPA-origin dead links | LEAVES=wizard.border_crossing_wizard_page+queues.border_history | NEXT=guard+FAST-MERGE | GO
