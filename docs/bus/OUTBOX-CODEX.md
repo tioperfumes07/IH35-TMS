@@ -2254,3 +2254,6 @@ CODEX | SHIPPED | GUARD-F7304 | PR=#17548 @ 9d66fc2218 | gate=exit0 | Built=back
 CODEX | WORKING | GUARD-F7305 | GO-0043 | CLAIM=external-fine leaf chrome guard honesty | NEXT=FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7305 | PR=#17551 @ 702bfd5deb | gate=exit0 | Built=external-fine chrome guard 14/14 | NEXT=GUARD-F7306 | GO
 CODEX | WORKING | GUARD-F7306 | GO-0043 | CLAIM=civil-fines scope-reset parser honesty | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7306 | PR=#17553 @ 877baed934 | gate=exit0 | Built=civil-fines reverse guard 11 checks/12 mutations | NEXT=GUARD-F7307 | GO
+CODEX | ACK | GO-0055 | NOW=fleet-qbo-chrome-unique | SHA=b276443 | GO
+CODEX | WORKING | GUARD-F7307 | GO-0055 | CLAIM=trailer-edit Modal format-tolerant structural guard | NEXT=FAST-MERGE | GO
