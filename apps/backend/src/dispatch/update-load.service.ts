@@ -512,22 +512,43 @@ export async function updateDispatchLoad(
     const total = bookLoadRateTotalCents(input.charges);
     if (Number(old.rate_total_cents ?? 0) !== total) rateChanged = true;
     add("rate_total_cents", total);
-    await client.query(
-      `UPDATE dispatch.load_charge_lines SET is_active = false, updated_at = now()
-        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true`,
+    // DSP-MONEY-F7218A — this deactivate+replace used to check neither write's persisted identity
+    // set: a lost/RLS-filtered archive of a stale charge line (leaving it `is_active = true`
+    // alongside the new replacement set) or a lost replacement INSERT could still fall through to
+    // the rate resync/audit/HTTP 200 below with silently incomplete economics. Snapshot+lock the
+    // exact active set first (FOR UPDATE — held for the rest of this transaction), require the
+    // deactivation UPDATE to affect every locked row, and require every replacement INSERT to
+    // return its id.
+    const activeChargeLines = await client.query<{ id: string }>(
+      `SELECT id FROM dispatch.load_charge_lines
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true
+        FOR UPDATE`,
       [loadId, operatingCompanyId]
     );
+    const deactivated = await client.query<{ id: string }>(
+      `UPDATE dispatch.load_charge_lines SET is_active = false, updated_at = now()
+        WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND is_active = true
+        RETURNING id`,
+      [loadId, operatingCompanyId]
+    );
+    if (deactivated.rows.length !== activeChargeLines.rows.length) {
+      throw writeConflict("E_LOAD_CHARGE_DEACTIVATE_INCOMPLETE");
+    }
     for (const [index, charge] of input.charges.entries()) {
       const isSystem = ["linehaul", "fuel_surcharge"].includes(charge.code.toLowerCase());
       if (!isSystem && !charge.additional_charge_id) throw Object.assign(new Error("additional_charge_id_required"), { code: "23503" });
-      await client.query(
+      const inserted = await client.query<{ id: string }>(
         `INSERT INTO dispatch.load_charge_lines (
            operating_company_id, load_id, line_kind, additional_charge_id, charge_code,
            description, amount_cents, sort_order, created_by_user_id
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         RETURNING id`,
         [operatingCompanyId, loadId, isSystem ? "system" : "accessorial", charge.additional_charge_id ?? null,
          charge.code, charge.description ?? null, charge.amount_cents, (index + 1) * 10, requestingUserUuid]
       );
+      if (!inserted.rows[0]?.id) {
+        throw writeConflict("E_LOAD_CHARGE_INSERT_FAILED");
+      }
     }
   }
 

@@ -1412,7 +1412,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         });
       }
       const code = (error as { code?: string }).code;
-      if (["E_LOAD_WRITE_CONFLICT", "E_LOAD_STOP_WRITE_CONFLICT", "E_LOAD_STOP_ARCHIVE_CONFLICT"].includes(code ?? "")) {
+      if (["E_LOAD_WRITE_CONFLICT", "E_LOAD_STOP_WRITE_CONFLICT", "E_LOAD_STOP_ARCHIVE_CONFLICT", "E_LOAD_CHARGE_DEACTIVATE_INCOMPLETE", "E_LOAD_CHARGE_INSERT_FAILED"].includes(code ?? "")) {
         return reply.code(409).send({ error: code });
       }
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
