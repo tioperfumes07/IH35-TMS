@@ -72,8 +72,9 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
             SELECT 1 FROM dispatch.detention_events de
             WHERE de.operating_company_id = sa.operating_company_id
               AND de.stop_id = sa.stop_id
-              AND de.status = 'accruing'
           )
+        ON CONFLICT (operating_company_id, stop_id) WHERE status = 'accruing'
+        DO NOTHING
         RETURNING id
       `,
       [operatingCompanyId, detentionNotifyThresholdMinutes()]
