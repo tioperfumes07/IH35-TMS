@@ -6656,5 +6656,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-maintenance-warranty-parts-business-dates"
+  },
+  "9961": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-reversal-recognizes-cross-mechanism-reversal"
   }
 }
