@@ -63,8 +63,19 @@ function sqlBlocks(codeNoComments) {
 
 const BASE_TABLE = /\bmdata\.(units|equipment)\b(?!_)/i; // base tables only (not equipment_plates/_log/_types)
 const BIND =
-  /\b(?:FROM|JOIN|UPDATE)\s+mdata\.(?:units|equipment)\b(?!_)(?:\s+AS)?(?:\s+(?!WHERE\b|SET\b|ON\b|LEFT\b|RIGHT\b|JOIN\b|INNER\b|USING\b|VALUES\b|GROUP\b|ORDER\b|LIMIT\b|RETURNING\b)([a-z][a-z0-9_]*))?/gi;
-const ANY_TABLE = /\b(?:FROM|JOIN|UPDATE)\s+[a-z_]+\.[a-z_]+/gi;
+  /\b(?:FROM|JOIN|UPDATE|INSERT\s+INTO)\s+mdata\.(?:units|equipment)\b(?!_)(?:\s+AS)?(?:\s+(?!WHERE\b|SET\b|ON\b|LEFT\b|RIGHT\b|JOIN\b|INNER\b|USING\b|VALUES\b|GROUP\b|ORDER\b|LIMIT\b|RETURNING\b)([a-z][a-z0-9_]*))?/gi;
+// RE-ANCHOR (found stale 2026-08-29): only counted FROM/JOIN/UPDATE as a "table reference" for the
+// onlyUnitsEquipment tally below, so an INSERT INTO a DIFFERENT, legitimately-scoped sibling table
+// (e.g. mdata.equipment_plates, which DOES carry its own real operating_company_id column) inside
+// the same backtick block as a `FROM mdata.equipment` scope-validation subquery was invisible to
+// the table count -- the block looked like it referenced ONLY units/equipment, so the INSERT
+// target's own bare operating_company_id column got misattributed as a phantom reference on
+// units/equipment. Real example: equipment-plates.routes.ts's create handler validates equipment
+// ownership via `FROM mdata.equipment AS equipment ... equipment.owner_company_id = $1` (correct,
+// not phantom) while INSERTing into `mdata.equipment_plates (operating_company_id, ...)` (also
+// correct -- a different table with a real column) in the SAME query. Recognizing INSERT INTO as a
+// table reference too fixes the count without weakening the actual units/equipment phantom check.
+const ANY_TABLE = /\b(?:FROM|JOIN|UPDATE|INSERT\s+INTO)\s+[a-z_]+\.[a-z_]+/gi;
 const ESCROW = /(?<![A-Za-z0-9_])escrow_balance(?![A-Za-z0-9_])/g;
 
 function scanBlock(block) {
