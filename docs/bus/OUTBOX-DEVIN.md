@@ -1,4 +1,6 @@
 DEVIN | ACK | STANDING | NOW=vendors-TEST-unique | SHA=b276443 (healthz) / main=7e3c80a | GO
+DEVIN | drain-cont14 | vendors-drain | SHA=648618a | SHIPPED PR #17574 | FIXED: LST-F9139 — Forty+ routes across twenty-five driver-finance/qbo-sync/qbo/catalogs/compliance/settlements/payroll files lacked config.rateLimit: driver-finance (55), qbo-sync (9), qbo (9), catalogs (30), compliance (30), settlements (18), payroll (4). Added 60/min reads, 30/min writes, 10/min sync/pull-now/generate-draft/draws-run/weekly-close/refresh. Ratchet 116→73. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | drain-cont13 | vendors-drain | SHA=f5270fa | SHIPPED PR #17565 | FIXED: LST-F9138 — Sixty+ routes across twenty admin/banking/lists/legal/insurance files lacked config.rateLimit: admin (18), banking (9), lists (12), legal (34), insurance (25). Added 60/min reads, 30/min writes, 10/min sync/imports/generate-bills/renew. Ratchet 172→116. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 
