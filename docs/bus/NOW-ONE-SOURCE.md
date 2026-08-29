@@ -1,3 +1,5 @@
+**2026-08-29T19:05Z GO-0105 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`. TXH-04 Cursor. H4 runbook + dormancy on main, prove after deploy via **full** `/healthz`. CC-3 **customers LV-001**. CC-1 SCEN-01 hops 4/6 + H1 JE walk + H3 quota. CC-2 H4 nothing to chase. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Nobody else `trigger_deploy`.
+
 **2026-08-29T18:30Z DEPLOY IN FLIGHT.** `dep-da9iac1srm7s73cehfb0` commit `b2448ce` (includes HONESTY-H1). Do not judge matrix/tracker until `healthz/shallow` `version` is `b2448ce`. SPA can lead API. Red V columns after live = prose-193 honesty. Nobody else `trigger_deploy`.
 
       **2026-08-29T18:15Z HONESTY PROGRAM THIS IS NOW.** Packet `docs/lockdown/HONESTY-PROGRAM-2026-08-29.md`. Meta-rule: registry-driven, planted selftest, fail-closed. **A posting path with no contract entry FAILS.** H1 CC-1 live JE walk vs roles. H3 CC-1 Sentry DSN/quota. H4 CC-2 confirm dormant vs invalid_grant. H5 after SCEN-01 chains. Nobody else `trigger_deploy`.

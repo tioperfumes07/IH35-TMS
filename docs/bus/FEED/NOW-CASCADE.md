@@ -1,11 +1,7 @@
-# NOW — Cascade (GUARD-2 non-money · live `14daeed`)
+# NOW — Cascade (GO-0105)
 
-**ACK:** `CASCADE | ACK | GUARD-2-NON-MONEY | NOW=safety-lists-drivers-system | SHA=14daeed | GO`
+**ACK:** `CASCADE | ACK | GO-0105 | NOW=unique-FINDING-live-healthz | SHA=<healthz> | GO`
 
-You are **Cascade GUARD-2**. Paste `docs/lockdown/PASTE-CASCADE-GUARD-2-NON-MONEY-2026-08-29.md`.
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`
 
-Stamp `prod_verified` **only** on safety / lists / drivers / system. Money = CC-2. No product PRs. No U14 restamp. No `trigger_deploy`. SYS-S07: do **not** re-walk for ancestor-valid `b276443`.
-
-Queue: `bash scripts/next-work-item.sh safety lists drivers system`
-Packet: `docs/templates/GUARD-PROOF-PACKET.md`
-Law: `docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md`
+Unique **FINDING** only, live healthz. Append ledger. Skip #15546 #16895. Do not restamp U14 or SYS-S07. No product PRs. No money column stamps.
