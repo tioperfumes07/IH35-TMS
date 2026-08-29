@@ -6671,5 +6671,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-collections-excludes-sample-data"
+  },
+  "9973": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-transfer-bank-balance-update-zero-rows-check"
   }
 }
