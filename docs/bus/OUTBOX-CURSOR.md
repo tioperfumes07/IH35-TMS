@@ -1,3 +1,4 @@
+CURSOR | GO-BUILD-01 | B-3 env skip inbound/CDC stale · B-2 already on main · B-1 CC-2 401 proven · DRIFT-3 dashboard still migrate+verify | SHA=20f3601 | GO
 CURSOR | GO-PENDING-01 | T-01 helpers + bus wake CC-1 | HOLD D-5 | GO
 CURSOR | GO-DWELL-01 | packet+canvas | CC-3 GR-1 slice | CC-1 D-3/D-4 | Codex D-1 | T-06 names exist | T-07 CC-2 | T-08 CC-3 | GO
 Cursor | LEAD | GO-MODAL-01 | Book Load cancel must leave /dispatch/book-load | TURBO 3 waves credited | deploy after merge | skip #15546 | GO

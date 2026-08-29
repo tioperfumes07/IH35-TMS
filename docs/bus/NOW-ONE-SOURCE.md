@@ -1,3 +1,7 @@
+**2026-08-29T23:05Z GO-BUILD-01 THIS IS NOW.** Packet `docs/lockdown/GO-BUILD-01-DRIFT-AND-QUEUE-2026-08-29.md`. Live `20f3601`. B-1 CC-2 proofs. B-3 DRIFT-5 env skip. DRIFT-3 live preDeploy still migrate+verify until dashboard restore. Skip #15546. Nobody else `trigger_deploy`.
+
+**2026-08-29T22:50Z GO-RT-01 THIS IS NOW.** Two boards. D-5 calendar-as-page VOID. Spec `docs/lockdown/SPEC-ROUND-TRIPS-BOTH-BOARDS-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.
+
 **2026-08-29T22:40Z GO-PENDING-01 THIS IS NOW.** Drain T-06/T-07/T-08/D-1/D-3. **HOLD Round Trips D-5.** Packet `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`. CC-1 INBOX rewritten. Cascade TURBO CLOSED. Skip #15546. Nobody else `trigger_deploy`.
 
 **2026-08-29T22:10Z GO-MODAL-01 THIS IS NOW.** Book Load wizard must retract URL on Cancel. Packet `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`. Cascade TURBO waves complete. Skip #15546. Nobody else `trigger_deploy`.

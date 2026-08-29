@@ -347,10 +347,22 @@ export function qboNamedJobsAreDormant(ev: QboJobHealthEvidence): boolean {
 // arms the mirror-health alarm independently of the sync flag: connected realm ⇒ a stale mirror
 // always surfaces; no connected realm ⇒ still silent (correct).
 // H4 R1: dormancy is per-connection (no row → dormant; needs_reauth_at → alarm + name entity).
+function envExplicitlyFalse(name: string): boolean {
+  return process.env[name]?.trim() === "false";
+}
+
 export function backgroundJobRule(
   jobName: string,
   qboRealmConnectedOrEvidence: boolean | QboJobHealthEvidence = false
 ): { enabled: boolean; maxStaleMinutes: number; dormantReason?: string } | null {
+  // DRIFT-5: render.yaml DISABLES inbound/CDC. A connected TRANSP realm must not
+  // mark those ticks stale while the cron never runs. Env-off wins over connection.
+  if (jobName === "integrations.qbo_inbound_sync" && envExplicitlyFalse("ENABLE_QBO_INBOUND_SYNC")) {
+    return { enabled: false, maxStaleMinutes: 30, dormantReason: "env_disabled" };
+  }
+  if (jobName === "integrations.qbo_cdc_poll" && envExplicitlyFalse("ENABLE_QBO_CDC_POLL")) {
+    return { enabled: false, maxStaleMinutes: 30, dormantReason: "env_disabled" };
+  }
   const evidence = coerceQboJobHealthEvidence(qboRealmConnectedOrEvidence);
   const qboRealmConnected = evidence.anyActiveConnection;
   if (

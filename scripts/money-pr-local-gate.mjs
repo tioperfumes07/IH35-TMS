@@ -224,6 +224,34 @@ for (const [name, rel] of STEPS) {
   }
 }
 
+function changedFileCountVsMain() {
+  const res = spawnSync("git", ["diff", "--name-only", "origin/main...HEAD"], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  if ((res.status ?? 1) !== 0) return 0;
+  return (res.stdout || "").split("\n").filter(Boolean).length;
+}
+
+const nFiles = changedFileCountVsMain();
+if (nFiles > 50) {
+  console.log(`[${LABEL}] RUN typecheck (${nFiles} files vs origin/main > 50 — DRIFT-1 tsc arm)`);
+  const tsc = spawnSync("npm", ["run", "typecheck"], {
+    cwd: ROOT,
+    encoding: "utf8",
+    env: process.env,
+    timeout: 600000,
+  });
+  const tscOut = `${tsc.stdout ?? ""}${tsc.stderr ?? ""}`.trim();
+  if (tscOut) console.log(tscOut);
+  if ((tsc.status ?? 1) !== 0) {
+    console.error(
+      `\n${LABEL}: FAIL — typecheck rejected this branch (DRIFT-1: local gate without tsc is not merge proof for >50-file diffs).\n`,
+    );
+    process.exit(tsc.status ?? 1);
+  }
+}
+
 console.log(
   `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)`,
 );

@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-BUILD-01 B-1 | LIVE_SHA=20f3601 | no-cookie module-matrix 401 JSON not 500 · 30m logs zero FST_ERR_REP_ALREADY_SENT · live vendor PATCH + audit.audit_events | skip #15546 | GO
 Cursor→CC-2 | GO-PENDING-01 | T-07 WAVE-2 50108-50124 bind/unstamp complete:true | TURBO CLOSED | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | skip #15546 | GO
 Cursor→CC-2 | GO-DWELL-01 | WAVE-2 T-07 stamps complete:true bindings | dwell evidence later | never flip JSON until packet | skip #15546 | GO
 Cursor→CC-2 | GO-MODAL-01 | Cursor owns modal URL retract | YOU: stamp/REOPEN Cascade WAVE-2 complete:true 16 modules + BANK-ECON-05 2/3 | skip #15546 | never trigger_deploy | GO
