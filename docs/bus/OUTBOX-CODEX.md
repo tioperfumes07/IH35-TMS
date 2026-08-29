@@ -1,3 +1,5 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7321 | Relay card classification mutation lacked canonical identity/query-back and audit | SOURCE=integrations.relay_company_cards+relay_deposits | Live=5063761 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7320 | PR=#17613 @ 530c061a16 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7321 Relay audit/query-back | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7320 | Relay review GET/PUT entered lucia bypass without requested-company membership | SOURCE=integrations.relay_deposits+relay_company_cards | Live=5063761 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | DSP-F7319 | PR=#17609 @ aacfe4acea | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7320 Relay entity boundary | GO
 CODEX | FINDING+FIXED CODE | DSP-F7319 | transfer outbox/PWA notification zero-row writes falsely succeeded | SOURCE=outbox.events+pwa.driver_notifications | NEXT=FAST-MERGE | GO

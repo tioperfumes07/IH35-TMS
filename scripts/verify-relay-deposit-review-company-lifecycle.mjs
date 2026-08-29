@@ -41,6 +41,18 @@ function inspect(source, routes) {
   const firstMembership = routes.indexOf("await assertCompanyMembership(user.uuid, opco);");
   const firstBypass = routes.indexOf("return withLuciaBypass");
   if (firstMembership < 0 || firstMembership > firstBypass) errors.push("membership must be proven before entering the bypass boundary");
+  if (!/ON CONFLICT[\s\S]*RETURNING id::text, label, source_hint, is_active/.test(routes)) {
+    errors.push("company-card upsert does not query back its canonical persisted identity/state");
+  }
+  if (!routes.includes('if (!persistedCard) throw new Error("relay_company_card_write_failed")')) {
+    errors.push("company-card upsert can report success without a persisted identity");
+  }
+  if (!routes.includes('"integrations.relay_company_card.updated"') || !routes.includes('"FUEL-RELAY-CARD-REVIEW"')) {
+    errors.push("company-card lifecycle does not append its canonical audit event");
+  }
+  const auditIndex = routes.indexOf('"integrations.relay_company_card.updated"');
+  const responseIndex = routes.indexOf("return reply.code(200).send({", routes.indexOf("app.put"));
+  if (auditIndex < 0 || responseIndex < 0 || auditIndex > responseIndex) errors.push("card audit must complete before HTTP success");
   return errors;
 }
 
@@ -52,13 +64,15 @@ if (process.argv.includes("--selftest")) {
     [source.replace("putRelayCompanyCard(input.companyId", "putRelayCompanyCard(companyId"), routes],
     [source.replaceAll("input.generation !== lifecycleGenerationRef.current", "false"), routes],
     [source, routes.replace("await assertCompanyMembership(user.uuid, opco);", "// planted: membership removed")],
+    [source, routes.replace("RETURNING id::text, label, source_hint, is_active", "RETURNING label, source_hint, is_active")],
+    [source, routes.replace('"integrations.relay_company_card.updated"', '"planted.audit.removed"')],
   ];
   const missed = mutations.filter(([candidateSource, candidateRoutes]) => inspect(candidateSource, candidateRoutes).length === 0);
   if (missed.length) {
-    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/4 mutation(s) survived`);
+    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/6 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 4/4 planted defects rejected");
+  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 6/6 planted defects rejected");
   process.exit(0);
 }
 
