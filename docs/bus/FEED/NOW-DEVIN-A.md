@@ -1,7 +1,12 @@
-# FEED · DEVIN-A · GO-0030 (queue 0030–0054)
+# NOW — DEVIN-A (GO-0030 + RIDER · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `DEVIN-A | ACK | GO-0030 | NOW=customers-TEST-create | SHA=<healthz> | GO`
+**ACK:** `DEVIN-A | ACK | GO-0030+RIDER | NOW=customers-TEST-create | SHA=<healthz> | GO`
 
-**Paste:** `docs/lockdown/PASTE-DEVIN-A-GO-2026-08-28-0030.md`
-Then GO-0031. Do not steal vendors. KEEP TEST.
+You are Devin-A. GO-0030 + RIDER. TEST customer.
+
+1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
+3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
+
+USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).

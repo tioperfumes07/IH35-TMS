@@ -30,6 +30,9 @@ Execute **in order**. ACK the current GO, work it, then start the next packet **
 | GO-0053 | Full sidebar unique sweep C (insurance→program) | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0053.md` |
 | GO-0054 | Close remaining unique — do not idle — do not wait for next GO | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0054.md` |
 
-Start: **GO-0030**. End: **GO-0054** then keep mining unique leftover (GO-0054 says never idle).
+Start: **GO-0030** + rider `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`.  
+End: **GO-0054** five-item never-wait list, then standing orders §8 (never idle).
 
-Law: USMCA · chrome + TEST create · unique FINDING · KEEP TEST · no U14 restamp · PROG-01 SKIP · CC-1 does not gate · Cursor deploy 5–10 only.
+Every GO must carry `CLOSES: <ITEM-ID>` or `CLOSES: none — <why>`. Only CC-2 (GUARD) flips `prod_verified`.
+
+Law: USMCA · chrome + TEST create · unique FINDING · KEEP TEST · no U14 restamp · PROG-01 SKIP · CC-1 does not gate · Cursor deploy 5–10 only · chrome-only seats no verify-steps/migrations.

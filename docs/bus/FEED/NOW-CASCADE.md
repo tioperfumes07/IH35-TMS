@@ -1,9 +1,12 @@
-# FEED · CASCADE · GO-0030 (queue 0030–0054)
+# NOW — CASCADE (GO-0030 + RIDER · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `CASCADE | ACK | GO-0030 | NOW=walk-lists-accounting-FINDING | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-0030+RIDER | NOW=lists-then-accounting-FINDING | SHA=<healthz> | GO`
 
-**Index:** `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`
-**Paste:** `docs/lockdown/PASTE-CASCADE-GO-2026-08-28-0030.md`
+You are Cascade. Unique FINDING only. GO-0030 + RIDER.
 
-NOW: unique FINDING. Then GO-0031. No product PR. No U14 restamp.
+1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
+3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
+
+USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).
