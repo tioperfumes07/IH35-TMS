@@ -1,3 +1,6 @@
+CODEX | GO-0032 PASS | SHA=673aa72 | LOAD=L-20260829-0362 | BOL=1a351a17-4129-45b5-8a09-4571cf469725 POST=201 | planner+POD+border API failures=0 | NEXT=GO-0033+ unique | GO
+CODEX | GO-0031 HONEST VALIDATION | SHA=673aa72 | LOAD=L-20260829-0362 | assign POST=422 E_DRIVER_NOT_QUALIFIED cdl_missing+medical_card_missing | modal=retained | NEXT=GO-0032 | GO
+CODEX | GO-0030 PASS | SHA=673aa72 | LOAD=L-20260829-0362 id=93cf7678-acec-407b-b2ff-456cde049558 | POST=201 GET=200 | customer=TEST-CASCADE-CUSTOMER-20260824-1iklx7 | stops=2 R=W | sample=KEEP | NEXT=GO-0031 | GO
 Codex | WORKING | DSP-F7263 | GO-0030+RIDER | CLAIM=driver-instructions-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7262 | PR=#17484 @ 027478c0bb | Built=stored-BOL popup failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7262 | GO-0030+RIDER | CLAIM=stored-BOL-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
