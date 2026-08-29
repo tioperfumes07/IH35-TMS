@@ -265,7 +265,11 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
           message: "Load not found for this operating company.",
         });
       }
-      throw e;
+      req.log.error({ err: e }, "dispatch available drivers lookup failed");
+      return reply.code(500).send({
+        error: "server_error",
+        message: "Could not load available drivers. Try again or contact support.",
+      });
     }
   });
 
