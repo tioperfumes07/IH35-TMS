@@ -1,4 +1,8 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=485a358 | GO
+DEVIN | GO-0053 | vendors-sweep-unique | SHA=485a358 | SHIPPED PR #17379 | FIXED: LST-F9124 — Seven routes across two files lacked config.rateLimit: 5 cash-forecast routes (vendor-adjacent via CashForecastReverseSection) + customer detail. Added 60/min reads, 30/min writes. Ratchet 289→287. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=485a358 | GO — final sweep continuing
+
 DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=8bc877e | GO
 DEVIN | GO-0050 | vendors-leftover-unique | SHA=8bc877e | SHIPPED PR #17373 | FIXED: LST-F9121 — Eight routes across three files lacked config.rateLimit: account-balances, account-register, 6 PSE mirror routes (sync-now, enforce, vendor-subtype, ps-categories, ps-items, coa-accounts). Added 60/min reads, 10/min admin write/sync. Ratchet 299→291. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=8bc877e | GO
