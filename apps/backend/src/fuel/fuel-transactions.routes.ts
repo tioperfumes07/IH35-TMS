@@ -187,13 +187,19 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             ft.load_id,
             l.load_number,
             ft.driver_id,
-            NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS driver_name,
+            COALESCE(
+              NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), ''),
+              mdata.resolve_driver_label_same_company(ft.driver_id, ft.operating_company_id)
+            ) AS driver_name,
             ft.unit_id,
             u.unit_number,
             ft.trailer_id,
             tr.equipment_number AS trailer_number,
             ft.vendor_id,
-            v.vendor_name,
+            COALESCE(
+              v.vendor_name,
+              mdata.resolve_vendor_label_same_company(ft.vendor_id, ft.operating_company_id)
+            ) AS vendor_name,
             ft.fuel_type,
             ft.gallons,
             ft.price_per_gallon,

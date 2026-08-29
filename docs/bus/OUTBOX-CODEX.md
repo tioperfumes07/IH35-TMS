@@ -1,4 +1,6 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7326 | Fuel History lost deactivated driver/vendor labels | SOURCE=fuel.fuel_transactions IDs+same-company resolvers | Live=66724ce | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7325 | Loves benchmark upload allowed Driver sessions | SOURCE=fuel.loves_prices_daily | Live=5063761 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7325 | PR=#17622 @ a14a49e2eb | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7326 history labels | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7324 | Loves status bypass skipped requested-company membership | SOURCE=fuel.loves_prices_daily+sync snapshot | Live=5063761 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FUEL-F7324 | PR=#17621 @ ddfa143444 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7325 upload role boundary | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7323 | invalid Relay classification silently returned full queue | SOURCE=integrations.relay_deposits.classification | Live=5063761 | NEXT=gate+FAST-MERGE | GO
