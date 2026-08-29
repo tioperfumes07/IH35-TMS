@@ -4572,6 +4572,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-transaction-health-computed-not-stored"
   },
+  "9896": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-declared-is-rendered (spec-vs-source; C25-C31 + V1-V6 + TXH tokens)"
+  },
   "9899": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
@@ -6766,5 +6771,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1328
+  "total_claimed": 1329
 }
