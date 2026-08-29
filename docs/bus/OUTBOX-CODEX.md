@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7229 | GO-0030 | CLAIM=BOL-active-stops | SOURCE=active mdata.load_stops→generated BOL | CLOSES=none — post-deploy PDF proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7228 | PR=#17449 @ 8abbb21e8f | Built=geofence timeline active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7228 | GO-0030 | CLAIM=geofence-timeline-active-stops | SOURCE=active mdata.load_stops→load drawer timeline | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7227 | PR=#17448 @ 5f0434b251 | Built=late-arrivals active upcoming-stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7227 | GO-0030 | CLAIM=late-arrivals-active-stop | SOURCE=active mdata.load_stops→dispatch late queue | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO

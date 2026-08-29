@@ -70,6 +70,9 @@ export function auditBolWire(sources) {
   if (!/driver_company_authorizations bol_driver_dca[\s\S]{0,320}bol_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}bol_driver_dca\.is_authorized = true[\s\S]{0,180}bol_driver_dca\.deactivated_at IS NULL/.test(service)) {
     problems.push(`${PATHS.service}: BOL driver label must accept active company authorization`);
   }
+  if (!/FROM mdata\.load_stops s[\s\S]{0,240}WHERE s\.load_id = \$1::uuid[\s\S]{0,100}s\.soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY s\.sequence_number ASC/.test(service)) {
+    problems.push(`${PATHS.service}: BOL must render only canonical active stop history`);
+  }
   if (!/registerDispatchPodBolRoutes/.test(index)) {
     problems.push(`${PATHS.index}: registerDispatchPodBolRoutes not mounted`);
   }
@@ -184,6 +187,15 @@ function selftest() {
           service: mutate(real.service, "bol_driver_dca.is_authorized = true", "bol_driver_dca.is_authorized = false", "driver auth"),
         }),
       expect: "active company authorization",
+    },
+    {
+      label: "retired BOL stop admitted",
+      run: () =>
+        auditBolWire({
+          ...real,
+          service: mutate(real.service, "        AND s.soft_deleted_at IS NULL\n", "", "active BOL stops"),
+        }),
+      expect: "canonical active stop history",
     },
     {
       label: "BOL generated audit event removed",
