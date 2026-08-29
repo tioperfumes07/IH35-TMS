@@ -20,7 +20,7 @@ function todayIsoDate() {
 }
 
 export async function registerApAgingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/ap-aging", async (req, reply) => {
+  app.get("/api/v1/accounting/ap-aging", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canAccessApAging(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
