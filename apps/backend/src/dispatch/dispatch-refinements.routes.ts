@@ -256,7 +256,17 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     if (!user) return;
     const q = availableDriversQuery.safeParse(req.query ?? {});
     if (!q.success) return sendZodValidation(reply, q.error);
-    return listAvailableDriversForDispatch(user.uuid, q.data.operating_company_id, q.data.load_id, q.data.for_pickup_at);
+    try {
+      return await listAvailableDriversForDispatch(user.uuid, q.data.operating_company_id, q.data.load_id, q.data.for_pickup_at);
+    } catch (e) {
+      if (String((e as Error).message) === "E_LOAD_NOT_FOUND") {
+        return reply.code(404).send({
+          error: "E_LOAD_NOT_FOUND",
+          message: "Load not found for this operating company.",
+        });
+      }
+      throw e;
+    }
   });
 
   app.get("/api/v1/dispatch/loads/:loadId/optimal-drivers", async (req, reply) => {

@@ -444,7 +444,9 @@ export async function listAvailableDriversForDispatch(
       `,
       [loadId, operatingCompanyId]
     );
-    const pickupCity = String(loadPickup.rows[0]?.pickup_city ?? "");
+    const scopedLoad = loadPickup.rows[0];
+    if (!scopedLoad) throw new Error("E_LOAD_NOT_FOUND");
+    const pickupCity = String(scopedLoad.pickup_city ?? "");
 
     const res = await client.query(
       `
