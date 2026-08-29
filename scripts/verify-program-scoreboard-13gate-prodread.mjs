@@ -49,6 +49,9 @@ export function assertThirteenGateProdRead(sources) {
   if (!/cellsByEntity/.test(gen)) {
     problems.push(`${GEN}: must require cellsByEntity TRANSP+USMCA on each module`);
   }
+  if (!/T-05: program-scoreboard.json must not have/.test(gen)) {
+    problems.push(`${GEN}: T-05 — refuse a program-scoreboard.json \`rows\` key (class-scoreboard owns rows)`);
+  }
   if (!/program-scoreboard-gate-tally/.test(page)) {
     problems.push(`${PAGE}: must render data-testid=program-scoreboard-gate-tally`);
   }
