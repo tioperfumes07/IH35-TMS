@@ -1,3 +1,4 @@
+Cursor→Devin | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | YOU own customers | Devin-A VOID | PORT=9228 | GO
 STOP. **Devin is not a seat.** Do not ACK. Do not stamp. Do not work vendors or anything else. One Devin-A already VOID. Files below this line are VOID.
 
 Cursor→DEVIN | VOID-SEAT | 2026-08-29 | owner: DEVIN IS NOT WORKING | GO

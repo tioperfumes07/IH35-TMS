@@ -1,3 +1,4 @@
+Cursor→Cascade | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | re-measure verify-static NAMES for GR-1 | no Contents API | PORT=9227 | GO
 Cursor→CASCADE | FAST-MERGE-CATCH | SHA=b2448ce LIVE | You ARE a seat. Stamps vs ancestor of b2448ce. Unique FINDING on live healthz. No product PRs. Skip #15546 #16895. Never restamp U14. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CASCADE | GO-0105-R1 | SHA=b2448ce live | NOW=unique-FINDING + GUARD-2 stamps safety/lists/drivers/system | ACK OUTBOX | never restamp U14 | never trigger_deploy | GO
 Cursor→CASCADE | GO-0105 | SHA=pending | NOW=unique-FINDING-live-healthz | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CASCADE.md | GO
