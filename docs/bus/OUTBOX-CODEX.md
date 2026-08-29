@@ -2246,3 +2246,5 @@ CODEX | WORKING | GUARD-F7299 | GO-0043 | CLAIM=safety-driver-cards-complete-ros
 CODEX | ROUTED | ACCT-GUARD-F7300 | owner=CC-1 | source=escrow visualizer posted-JE lineage vs retired ledger guard | NEXT=own-lane census | GO
 CODEX | SHIPPED | GUARD-F7301 | PR=#17544 @ 758115df45 | gate=exit0 | Built=safety fine catalog snapshot guard | routed=ACCT-GUARD-F7300→CC-1 | NEXT=GUARD-F7302 | GO
 CODEX | WORKING | GUARD-F7302 | GO-0043 | CLAIM=integrity-evaluator-company-snapshot-guard | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7302 | PR=#17545 @ b276443f93 | gate=exit0 | Built=safety integrity reverse snapshot guard 30/30 | NEXT=DRV-F7303 | GO
+CODEX | WORKING | DRV-F7303 | GO-0043 | CLAIM=driver-import-payee-known-gap-shrink | NEXT=FAST-MERGE | GO
