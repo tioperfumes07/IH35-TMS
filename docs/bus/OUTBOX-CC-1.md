@@ -3843,3 +3843,4 @@ Codex→CC-1 | FINDING | DSP-MONEY-F7092-KANBAN-PROFITABILITY-FAILURE-SILENT | S
 Codex→CC-1 | FINDING | DSP-MONEY-F7105-DRIVER-PAY-READ-FAILURE-DEAD-END | routed=CC-1 | SOURCE=driver_finance.driver_bills via LoadDetailDriverPayTab.tsx | generic GET failure has no Retry; preserve 501/403 semantics and add exact billsQuery.refetch recovery + mutation guard | BLOCKS=GO-0012-dispatch-complete | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7112-CANCEL-LOAD-MODAL-STALE-SCOPE | routed=CC-1 | SOURCE=CancelLoadModal→billable cancellation/TONU writer | BLOCKS=GO-0012-dispatch-complete | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored audits success after unchecked accounting.invoices UPDATE | board=OPEN | GO
+Codex → CC-1 | FINDING | DSP-MONEY-F7146B-R1 | TONU backlink remains UUID-only+unchecked on origin/main cancellation.service.ts:191-201 despite stale FIXED row | BLOCKS=GO-0051 | FIX root lifecycle+guard | GO

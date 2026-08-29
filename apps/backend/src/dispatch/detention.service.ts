@@ -84,18 +84,18 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
         UPDATE dispatch.detention_events de
         SET
           status = 'closed',
-          stopped_at = COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()),
+          stopped_at = ls.actual_departure_at,
           accrued_minutes = GREATEST(
             0,
             EXTRACT(EPOCH FROM (
-              COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at
+              ls.actual_departure_at - de.started_at
             ))::int / 60 - de.free_time_minutes
           ),
           accrued_amount_cents = ROUND(
             (GREATEST(
               0,
               EXTRACT(EPOCH FROM (
-                COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at
+                ls.actual_departure_at - de.started_at
               ))::numeric / 60 - de.free_time_minutes
             ) / 60.0) * de.rate_per_hour_cents
           )::int,
@@ -104,7 +104,7 @@ export async function syncDetentionEventsFromStopArrivals(userId: string, operat
         WHERE de.operating_company_id = $1::uuid
           AND de.status = 'accruing'
           AND ls.id = de.stop_id
-          AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)
+          AND ls.actual_departure_at IS NOT NULL
         RETURNING de.id
       `,
       [operatingCompanyId]
