@@ -622,13 +622,13 @@ export function VendorsPage() {
                     <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
                     <p><span className="font-semibold text-gray-600">Notes:</span> {selectedVendorPublicNotes || "—"}</p>
                     <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
-                    <p className="md:col-span-2"><span className="font-semibold text-gray-600">Payment method on file:</span> {formatPaymentMethodDisplay(vendorPaymentMethodsQuery.data?.payment_methods, vendorPaymentMethodsQuery.isLoading)}</p>
+                    <p className="md:col-span-2"><span className="font-semibold text-gray-600">Payment method on file:</span> {vendorPaymentMethodsQuery.isError ? <span className="text-red-600">Failed to load — <button type="button" className="underline" onClick={() => void vendorPaymentMethodsQuery.refetch()}>Retry</button></span> : formatPaymentMethodDisplay(vendorPaymentMethodsQuery.data?.payment_methods, vendorPaymentMethodsQuery.isLoading)}</p>
                   </div>
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
                   <h3 className="mb-2 text-sm font-semibold text-gray-900">Summary</h3>
                   <p className="text-sm text-gray-600">Open balance</p>
-                  <p className="text-xl font-semibold text-gray-900">{fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
+                  <p className="text-xl font-semibold text-gray-900">{balancesQuery.isError ? <span className="text-red-600 text-base">Failed to load — <button type="button" className="underline" onClick={() => void balancesQuery.refetch()}>Retry</button></span> : fmtMoney(openByVendorId.get(selectedVendor.id) ?? 0)}</p>
                   <p className="mt-2 text-sm text-gray-600">Overdue payment</p>
                   <p className="text-lg font-semibold text-red-700">{fmtMoney(overdueCents)}</p>
                 </section>
