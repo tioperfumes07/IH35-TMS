@@ -126,6 +126,8 @@ const GROUP_LABELS: Record<string, string> = {
   chrome: "Picker + QBO chrome",
   wiring: "Connectivity + reverse",
   process: "Process / scenario probe",
+  economics: "ECON C25–C31",
+  verifier: "PROOF V1–V6",
   other: "Other",
 };
 
@@ -143,7 +145,7 @@ export function mergeTierBuckets(into: MatrixTierBucket, from: MatrixTierBucket)
 }
 
 export function sortGroupRollups(rollups: MatrixGroupRollup[]): MatrixGroupRollup[] {
-  const order = ["linkage", "money", "chrome", "wiring", "process", "other"];
+  const order = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
   return [...rollups].sort((a, b) => {
     const ai = order.indexOf(a.group);
     const bi = order.indexOf(b.group);

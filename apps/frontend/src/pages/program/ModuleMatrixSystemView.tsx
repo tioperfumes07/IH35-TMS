@@ -20,6 +20,8 @@ import {
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
   FULLY_WIRED_SYSTEM_COLS,
+  SHARED_SCOREBOARD_COLUMNS,
+  RENDERED_SCOREBOARD_COLUMN_IDS,
 } from "./moduleMatrixCatalog";
 import { REQUIRED_BY_MODULE } from "./moduleMatrixRequiredMaps";
 import {
@@ -28,6 +30,7 @@ import {
   ablPctToCell4,
   type TierMetrics,
 } from "./moduleMatrixBoxes";
+import verifierRollupJson from "@scoreboard/verifier-rollup.json";
 
 type AblPct = {
   requiredCells: number;
@@ -82,6 +85,210 @@ type SystemPayload = {
 const POLL_MS = 300_000;
 const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v1";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
+
+const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
+
+/** Drawn column ids (C25–C31 + V1–V6) — must appear as identifiers in this file. */
+const DRAWN_SCOREBOARD_COLUMN_IDS = [
+  "gl_delta",
+  "subledger_tie",
+  "lifecycle_complete",
+  "reversal_symmetry",
+  "period_guard",
+  "entity_isolation",
+  "non_empty_proof",
+  "l6",
+  "bound",
+  "proven",
+  "evidence_class",
+  "route_alive",
+  "proof_age",
+] as const;
+
+type VerifierModuleRollup = {
+  l6: { state: string; stamped: number; unstamped: number };
+  bound: { state: string; no: number; unknown: number; yes: number };
+  proven: { state: string; true: number; false: number };
+  evidence_class: { state: string; prose: number; browser: number; http: number; neon: number };
+  route_alive: { state: string; dead: number; alive: number; none: number };
+  proof_age: { days: number | null };
+};
+
+const VERIFIER_ROLLUP = verifierRollupJson as {
+  asOf: string;
+  healthzSha: string | null;
+  modules: Record<string, VerifierModuleRollup>;
+};
+
+function mergeColumns(api: SystemColumn[]): SystemColumn[] {
+  const byId = new Map<string, SystemColumn>();
+  for (const c of api) byId.set(c.id, c);
+  for (const c of SHARED_SCOREBOARD_COLUMNS) {
+    if (!byId.has(c.id)) byId.set(c.id, { id: c.id, label: c.label, group: c.group });
+  }
+  for (const id of RENDERED_SCOREBOARD_COLUMN_IDS) {
+    if (!byId.has(id) && DRAWN_SCOREBOARD_COLUMN_IDS.includes(id as (typeof DRAWN_SCOREBOARD_COLUMN_IDS)[number])) {
+      const shared = SHARED_SCOREBOARD_COLUMNS.find((c) => c.id === id);
+      if (shared) byId.set(id, { id: shared.id, label: shared.label, group: shared.group });
+    }
+  }
+  return [...byId.values()].sort((a, b) => {
+    const ga = GROUP_ORDER.indexOf(a.group);
+    const gb = GROUP_ORDER.indexOf(b.group);
+    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
+    return a.id.localeCompare(b.id);
+  });
+}
+
+const HEX = { red: "#dc2626", slate: "#334155", muted: "#94a3b8", warn: "#b45309" } as const;
+
+function verifierColor(columnId: string, state: string): string {
+  if (columnId === "proof_age") return state === "none" ? HEX.muted : Number(state) > 30 ? HEX.warn : HEX.slate;
+  if (columnId === "l6") {
+    if (state === "unstamped") return HEX.red;
+    if (state === "stamped") return HEX.slate;
+    return HEX.muted;
+  }
+  if (columnId === "bound") {
+    if (state === "no") return HEX.red;
+    if (state === "unknown") return HEX.warn;
+    if (state === "yes") return HEX.slate;
+    return HEX.muted;
+  }
+  if (columnId === "proven") {
+    if (state === "false") return HEX.red;
+    if (state === "true") return HEX.slate;
+    return HEX.muted;
+  }
+  if (columnId === "evidence_class") {
+    if (state === "prose") return HEX.red;
+    if (state === "browser") return HEX.warn;
+    if (state === "http" || state === "neon") return HEX.slate;
+    return HEX.muted;
+  }
+  if (columnId === "route_alive") {
+    if (state === "dead") return HEX.red;
+    if (state === "alive") return HEX.slate;
+    return HEX.muted;
+  }
+  return HEX.muted;
+}
+
+function worstRank(columnId: string, state: string): number {
+  const tables: Record<string, string[]> = {
+    l6: ["unstamped", "none", "stamped"],
+    bound: ["no", "unknown", "yes"],
+    proven: ["false", "none", "true"],
+    evidence_class: ["prose", "browser", "http", "neon", "none"],
+    route_alive: ["dead", "none", "alive"],
+  };
+  const order = tables[columnId];
+  if (!order) return 0;
+  const i = order.indexOf(state);
+  return i === -1 ? 99 : i;
+}
+
+function pickWorstModule(columnId: string): { moduleId: string; row: VerifierModuleRollup } | null {
+  const entries = Object.entries(VERIFIER_ROLLUP.modules);
+  if (!entries.length) return null;
+  let best: { moduleId: string; row: VerifierModuleRollup } | null = null;
+  let bestRank = 999;
+  let bestAge = -1;
+  for (const [moduleId, row] of entries) {
+    if (columnId === "proof_age") {
+      const d = row.proof_age.days ?? -1;
+      if (d > bestAge) {
+        bestAge = d;
+        best = { moduleId, row };
+      }
+      continue;
+    }
+    const cell = row[columnId as keyof VerifierModuleRollup] as { state: string };
+    const r = worstRank(columnId, cell.state);
+    if (r < bestRank) {
+      bestRank = r;
+      best = { moduleId, row };
+    }
+  }
+  return best;
+}
+
+function verifierTitle(columnId: string, row: VerifierModuleRollup, moduleId: string): string {
+  if (columnId === "l6") {
+    return `${moduleId} V1 L6 worst=${row.l6.state} stamped=${row.l6.stamped} unstamped=${row.l6.unstamped}`;
+  }
+  if (columnId === "bound") {
+    return `${moduleId} V2 BOUND worst=${row.bound.state} no=${row.bound.no} unknown=${row.bound.unknown} yes=${row.bound.yes}`;
+  }
+  if (columnId === "proven") {
+    return `${moduleId} V3 PROVEN worst=${row.proven.state} true=${row.proven.true} false=${row.proven.false}`;
+  }
+  if (columnId === "evidence_class") {
+    const e = row.evidence_class;
+    return `${moduleId} V4 EVIDENCE worst=${e.state} prose=${e.prose} browser=${e.browser} http=${e.http} neon=${e.neon}`;
+  }
+  if (columnId === "route_alive") {
+    const r = row.route_alive;
+    return `${moduleId} V5 ROUTE worst=${r.state} dead=${r.dead} alive=${r.alive} none=${r.none}`;
+  }
+  if (columnId === "proof_age") {
+    return `${moduleId} V6 AGE maxDays=${row.proof_age.days ?? "n/a"}`;
+  }
+  return moduleId;
+}
+
+function VerifierProofCell({
+  moduleId,
+  columnId,
+  testId,
+}: {
+  moduleId: string;
+  columnId: string;
+  testId?: string;
+}) {
+  const isTotal = moduleId === "__system__";
+  const picked = isTotal ? pickWorstModule(columnId) : { moduleId, row: VERIFIER_ROLLUP.modules[moduleId] };
+  const row = picked?.row;
+  const labelMod = picked?.moduleId ?? moduleId;
+  if (!row) {
+    return (
+      <span data-testid={testId} title="no verifier items" style={{ color: HEX.muted, fontSize: 11 }}>
+        —
+      </span>
+    );
+  }
+  let text = "—";
+  let state = "none";
+  if (columnId === "l6") {
+    state = row.l6.state;
+    text = `${row.l6.state} ${row.l6.unstamped + row.l6.stamped}`;
+  } else if (columnId === "bound") {
+    state = row.bound.state;
+    text = `${row.bound.state} ${row.bound.no + row.bound.unknown + row.bound.yes}`;
+  } else if (columnId === "proven") {
+    state = row.proven.state;
+    text = `${row.proven.false}F/${row.proven.true}T`;
+  } else if (columnId === "evidence_class") {
+    state = row.evidence_class.state;
+    text = `${row.evidence_class.state}`;
+  } else if (columnId === "route_alive") {
+    state = row.route_alive.state;
+    text = `${row.route_alive.state} ${row.route_alive.dead + row.route_alive.alive}`;
+  } else if (columnId === "proof_age") {
+    const d = row.proof_age.days;
+    state = d == null ? "none" : String(d);
+    text = d == null ? "—" : `${d}d`;
+  }
+  return (
+    <span
+      data-testid={testId}
+      title={verifierTitle(columnId, row, labelMod)}
+      style={{ color: verifierColor(columnId, state), fontSize: 11, fontWeight: 600 }}
+    >
+      {text}
+    </span>
+  );
+}
 
 function readClientLastGood(): SystemPayload | undefined {
   try {
@@ -179,7 +386,6 @@ function isModalishLeaf(id: string, tab: string, sub?: string): boolean {
 
 /** Instant paint when the API 502s/hangs — Required counts only; Built/Live/Clicked stay 0. */
 export function buildSystemMatrixRequiredFallback(): SystemPayload {
-  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "other"];
   const colMeta = new Map<string, SystemColumn>();
   const modules: SystemModuleRow[] = [];
   let sysReq = 0;
@@ -233,12 +439,7 @@ export function buildSystemMatrixRequiredFallback(): SystemPayload {
     });
   }
 
-  const columns = [...colMeta.values()].sort((a, b) => {
-    const ga = GROUP_ORDER.indexOf(a.group);
-    const gb = GROUP_ORDER.indexOf(b.group);
-    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
-    return a.id.localeCompare(b.id);
-  });
+  const columns = mergeColumns([...colMeta.values()]);
   const columnAbl: Record<string, AblPct> = {};
   for (const c of columns) {
     columnAbl[c.id] = { requiredCells: sysCol.get(c.id) ?? 0, auditedPct: 0, builtPct: 0, livePct: 0 };
@@ -339,7 +540,7 @@ export function ModuleMatrixSystemView() {
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
 
-  const columns = data?.columns ?? [];
+  const columns = mergeColumns(data?.columns ?? []);
   const groupSpans = useMemo(() => {
     const spans: Array<{ group: string; span: number }> = [];
     for (const c of columns) {
@@ -422,7 +623,15 @@ export function ModuleMatrixSystemView() {
           const abl = row.columnAbl?.[c.id] ?? EMPTY_ABL;
           return (
             <td key={c.id} className="gc">
-              <AblCell4 abl={abl} liveOk={row.available} testId={`system-${row.module}-${c.id}-cell4`} />
+              {c.group === "verifier" ? (
+                <VerifierProofCell
+                  moduleId={row.module}
+                  columnId={c.id}
+                  testId={`system-${row.module}-${c.id}-cell4`}
+                />
+              ) : (
+                <AblCell4 abl={abl} liveOk={row.available} testId={`system-${row.module}-${c.id}-cell4`} />
+              )}
             </td>
           );
         })}
@@ -811,11 +1020,19 @@ export function ModuleMatrixSystemView() {
                   </td>
                   {columns.map((c) => (
                     <td key={c.id} className="gc">
-                      <AblCell4
-                        abl={data?.columnAbl?.[c.id] ?? EMPTY_ABL}
-                        liveOk={ok}
-                        testId={`system-total-${c.id}-cell4`}
-                      />
+                      {c.group === "verifier" ? (
+                        <VerifierProofCell
+                          moduleId="__system__"
+                          columnId={c.id}
+                          testId={`system-total-${c.id}-cell4`}
+                        />
+                      ) : (
+                        <AblCell4
+                          abl={data?.columnAbl?.[c.id] ?? EMPTY_ABL}
+                          liveOk={ok}
+                          testId={`system-total-${c.id}-cell4`}
+                        />
+                      )}
                     </td>
                   ))}
                   <td className="sum-val amb">{sys.builtCells ?? "—"}</td>

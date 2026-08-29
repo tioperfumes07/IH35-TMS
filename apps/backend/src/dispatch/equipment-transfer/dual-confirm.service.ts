@@ -105,6 +105,22 @@ export async function confirmInbound(
   if (String(req.to_driver_uuid) !== driverUuid) return { kind: "driver_mismatch" };
   if (req.status !== "outbound_confirmed") return { kind: "invalid_status" };
 
+  // Prove and lock the company-owned equipment before advancing the request lifecycle. Returning a
+  // normal `equipment_not_found` result after the request UPDATE would commit `completed` in
+  // withCurrentUser, leaving the equipment on the old driver while the transfer looked finished.
+  const equipment = await client.query(
+    `
+      SELECT id::text
+      FROM mdata.equipment
+      WHERE id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [req.equipment_uuid, operatingCompanyId]
+  );
+  if (!equipment.rows[0]?.id) return { kind: "equipment_not_found" };
+
   const transferUpdate = await client.query(
     `
       UPDATE dispatch.equipment_transfer_requests
@@ -133,7 +149,9 @@ export async function confirmInbound(
     `,
     [req.equipment_uuid, operatingCompanyId, req.to_driver_uuid]
   );
-  if (!equipmentUpdate.rows[0]?.id) return { kind: "equipment_not_found" };
+  // The row is locked above, so losing it here is a persistence conflict. Throw (rather than return)
+  // so withCurrentUser rolls back the already-written `completed` transition.
+  if (!equipmentUpdate.rows[0]?.id) throw new Error("equipment_reassign_failed");
 
   // Domain equipment activity log (0242 / biz-flow-8). event_type CHECK only allows
   // Coupled|Uncoupled|Moved|StatusChange|MaintenanceStart|MaintenanceEnd|Note — use Moved
