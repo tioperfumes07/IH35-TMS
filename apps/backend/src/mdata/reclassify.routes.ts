@@ -136,7 +136,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/customers/:id/flag-duplicate
-  app.post("/api/v1/customers/:id/flag-duplicate", async (req, reply) => {
+  app.post("/api/v1/customers/:id/flag-duplicate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReclassify(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -356,7 +356,7 @@ export async function registerReclassifyRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/vendors/:id/reclassification-history
-  app.get("/api/v1/vendors/:id/reclassification-history", async (req, reply) => {
+  app.get("/api/v1/vendors/:id/reclassification-history", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
