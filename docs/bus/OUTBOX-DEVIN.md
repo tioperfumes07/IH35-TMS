@@ -1,4 +1,7 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0032 | NOW=vendor-picker-wo-path | SHA=6ef8830 | GO
+DEVIN | GO-0032 | vendor-picker-wo-path | SHA=6ef8830 | NO UNIQUE FINDING — WO vendor picker uses EntityPicker(kind=vendor, allowCreate, server-search). Error visible via Combobox error prop. Canonical mdata.vendors. No 500/dead/silent.
+
 DEVIN | ACK | GO-0031 | NOW=vendor-detail-ap-reverse | SHA=d3d20c9 | GO
 DEVIN | GO-0031 | vendor-detail-ap-reverse | SHA=d3d20c9 | NO UNIQUE FINDING — A/P reverse drill-through solid. Bills/expenses/credits/payments/AP aging all have visible error handling + proper EntityLink wiring. BillDetailPage vendor reverse via billVendorDrillId. ExpenseDetailPage vendor reverse via vendor_uuid. BillPaymentDetailPage vendor reverse via mdata_vendor_id (tombstone when null). No 500/dead/silent.
 
