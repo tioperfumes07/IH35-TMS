@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7223 | GO-0031 fallback | CLAIM=load-template-create-audit | SOURCE=dispatch.load_templates→audit.audit_events | CLOSES=none — post-deploy audit-row proof remains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7222 | PR=#17441 @ b4774f3134 | Built=typed nested customer UUID boundary | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7222 | GO-0031 fallback | CLAIM=load-template-nested-customer-uuid-500 | SOURCE=dispatch.load_templates.template_json.customer_id→mdata.customers | CLOSES=none — post-deploy malformed-input Live proof remains | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7221 | PR=#17435 @ bef8f8be40 | Built=late-arrival+booking-gap active stop analytics | Live=post-deploy UNVERIFIED | NEXT=GO-0030 Book TEST | GO
 Codex | WORKING | DSP-F7221 | GO-0054 | CLAIM=dispatch-analytics-retired-stops | SOURCE=active mdata.load_stops across late-arrival+booking-gap | NEXT=gate+FAST-MERGE | GO

@@ -49,6 +49,7 @@ function checkSource(modal, service = fs.readFileSync(SERVICE, "utf8")) {
   assert(/z\.string\(\)\.uuid\(\)\.safeParse\(customerId\)/.test(service), "backend create must validate the nested customer id before its SQL UUID cast");
   assert(/!parsedCustomerId\.success[\s\S]*statusCode: 400[\s\S]*code: "E_TEMPLATE_CUSTOMER_ID_INVALID"/.test(service), "malformed nested customer ids must return a typed client error");
   assert(/\[parsedCustomerId\.data, input\.operating_company_id\]/.test(service), "same-company customer lookup must consume only the validated UUID");
+  assert(/await appendCrudAudit\([\s\S]*?"dispatch\.load_template\.created"[\s\S]*?operating_company_id: input\.operating_company_id[\s\S]*?load_template_id: template\.id[\s\S]*?customer_id: customerId \|\| null/.test(service), "backend create must audit the persisted template identity and company/customer linkage");
 }
 
 function check() {
@@ -91,6 +92,8 @@ function selftest() {
     [/z\.string\(\)\.uuid\(\)\.safeParse\(customerId\)/, "{ success: true, data: customerId }"],
     [/code: "E_TEMPLATE_CUSTOMER_ID_INVALID"/, 'code: "REMOVED"'],
     [/\[parsedCustomerId\.data, input\.operating_company_id\]/, "[customerId, input.operating_company_id]"],
+    [/"dispatch\.load_template\.created"/, '"dispatch.load_template.removed"'],
+    [/load_template_id: template\.id/, "load_template_id: null"],
   ];
   for (const [pattern, replacement] of serviceMutations) {
     const broken = service.replace(pattern, replacement);
