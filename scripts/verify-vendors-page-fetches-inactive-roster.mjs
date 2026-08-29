@@ -62,6 +62,15 @@ export function checkPageSource(src) {
   if (!/inactiveVendorsQuery\.isError/.test(src)) {
     problems.push("inactiveVendorsQuery.isError is not checked — a failed inactive fetch silently shows 'No vendors found.' on the Inactive tab (LST-F9104)");
   }
+  // LST-F9105 — the balances query and payment-methods query must surface errors (not silently
+  // show $0 balance or "Not on file"). A failed balances fetch silently shows $0 open balance;
+  // a failed payment-methods fetch silently shows "Not on file".
+  if (!/balancesQuery\.isError/.test(src)) {
+    problems.push("balancesQuery.isError is not checked — a failed balances fetch silently shows $0 open balance (LST-F9105)");
+  }
+  if (!/vendorPaymentMethodsQuery\.isError/.test(src)) {
+    problems.push("vendorPaymentMethodsQuery.isError is not checked — a failed payment-methods fetch silently shows 'Not on file' (LST-F9105)");
+  }
   return problems;
 }
 
@@ -100,6 +109,12 @@ function selftest() {
     );
     if (inactiveVendorsQuery.isError) {
       return <ListErrorState title="Couldn't load inactive vendors" />;
+    }
+    if (balancesQuery.isError) {
+      return <span>Failed to load balances</span>;
+    }
+    if (vendorPaymentMethodsQuery.isError) {
+      return <span>Failed to load payment methods</span>;
     }
   `;
 
