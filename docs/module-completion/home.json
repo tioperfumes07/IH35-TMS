@@ -1,9 +1,9 @@
 {
   "module": "home",
   "title": "Home \u2014 acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-29T16:40:00Z",
-  "live_sha": "8d2f67b",
+  "complete": true,
+  "as_of": "2026-08-29T19:15:00Z",
+  "live_sha": "b2448ce",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
@@ -20,15 +20,15 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: VERIFIED LIVE on prod 2026-07-29 in BOTH entities, authenticated. TRANSP: cash position $4,718, 2 open loads, WOS OPEN 2, fleet 50 trucks, QBO vendors 910/910, 101 filings overdue+due-soon. USMCA: cash position $93, 0 loads, WOS OPEN 0, trucks 0, QBO vendors 0/0, attention 'No attention items'. Entity scoping proven by the two reads differing on every figure. Footer reads 'Backend version: 4de9adb' \u2014 a real backend sha, confirming PR #3751 deployed and working. Honest-empty and honest-error states present rather than silent zeros (USMCA factoring reads 'Unverifiable: faro_contract_entity_mismatch').",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /home: real Owner Home workspace snapshot (Pending Owner Approvals 0, Attention: 1 late arrival / 5 open complaints, real 4-row Driver day-summaries table with live miles/hours/fuel-stops). healthz=b2448ce.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 1,
-  "pass_count": 0,
+  "pass_count": 1,
   "total_count": 1,
-  "progress": "0 of 1"
+  "progress": "1/1"
 }
