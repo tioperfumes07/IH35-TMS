@@ -122,6 +122,12 @@ function verifySources({
   if (!service.includes("sendSms")) failures.push("service must dispatch SMS");
   if (!service.includes("dispatch.notify_log"))
     failures.push("service must log delivery confirmations");
+  if (!/const preferences = res\.rows\[0\];[\s\S]{0,140}?if \(!preferences\?\.customer_id\)[\s\S]{0,100}?E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,600}?appendCrudAudit/.test(service)) {
+    failures.push("preference upsert must prove its returned canonical customer identity before audit/success");
+  }
+  if (!/E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,180}?reply\.code\(409\)\.send\(\{ error: "notify_preferences_write_failed" \}\)/.test(routes)) {
+    failures.push("preference lost-write must return an honest typed 409 instead of 200/undefined or raw 500");
+  }
   if (!index.includes("registerDispatchCustomerNotifyRoutes"))
     failures.push("backend index must register customer notify routes");
 
@@ -169,7 +175,18 @@ function main() {
   if (process.argv.includes("--selftest")) {
     const mutations = [
       [
+        "drop preference persistence proof",
+        "service",
+        sources.service.replace("if (!preferences?.customer_id) {", "if (false) {")
+      ],
+      [
+        "drop preference lost-write route",
+        "routes",
+        sources.routes.replace('if ((error as Error).message === "E_NOTIFY_PREFERENCES_WRITE_FAILED") {', "if (false) {")
+      ],
+      [
         "drop atomic claim",
+        "service",
         sources.service.replace(
           "async function claimNotifyDelivery",
           "async function lostNotifyDelivery",
@@ -177,10 +194,12 @@ function main() {
       ],
       [
         "restore check-then-send race",
+        "service",
         sources.service.replaceAll("claimNotifyDelivery", "alreadyLogged"),
       ],
       [
         "drop conflict refusal",
+        "service",
         sources.service.replace(
           "DO NOTHING",
           "DO UPDATE SET updated_at = now()",
@@ -188,14 +207,15 @@ function main() {
       ],
       [
         "drop claim finalization",
+        "service",
         sources.service.replaceAll(
           "await finishNotifyDelivery(client",
           "await Promise.resolve(client",
         ),
       ],
     ];
-    for (const [name, service] of mutations) {
-      if (verifySources({ ...sources, service }).length === 0)
+    for (const [name, key, source] of mutations) {
+      if (verifySources({ ...sources, [key]: source }).length === 0)
         fail(`selftest mutation survived: ${name}`);
     }
     console.log(

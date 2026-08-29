@@ -62,6 +62,9 @@ export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance)
       return await getCustomerNotifyPreferences(user.uuid, query.data.operating_company_id, params.data.customerId);
     } catch (error) {
       if ((error as Error).message === "E_CUSTOMER_NOT_FOUND") return reply.code(404).send({ error: "customer_not_found" });
+      if ((error as Error).message === "E_NOTIFY_PREFERENCES_WRITE_FAILED") {
+        return reply.code(409).send({ error: "notify_preferences_write_failed" });
+      }
       throw error;
     }
   });

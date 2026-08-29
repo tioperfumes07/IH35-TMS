@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7170 | CLAIM=notify-preferences-upsert-200-undefined | SOURCE=dispatch.customer_notify_preferences RETURNING customer_id | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7169 | PR=#17320 @ 0b9ef86031 | Built=successful instruction retry state | Live=post-deploy UNVERIFIED | NEXT=dispatch customer-notify lifecycle | GO
 Codex | WORKING | DSP-F7169 | CLAIM=successful-instruction-retry-reported-failed | SOURCE=dispatch.load.dispatched retry state | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7168 | PR=#17319 @ 4131a8230a | Built=same-company persisted distribution-failure alerts | Live=post-deploy UNVERIFIED | NEXT=dispatch retry lifecycle | GO
 Codex | WORKING | DSP-F7168 | CLAIM=distribution-failure-alert-cross-company+zero-row-success | SOURCE=notifications.user_notifications.id+event operating_company_id | NEXT=guard+FAST-MERGE | GO
