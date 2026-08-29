@@ -56,6 +56,12 @@ export function audit(src) {
   if (!/\/api\/v1\/qbo-sync\/vendors\/status/.test(src.sync) || !/\/api\/v1\/qbo-sync\/vendors\/(pull-now|reconcile-now)/.test(src.sync)) {
     failures.push(`${SYNC_FILE}: vendors sync panel must hit the real qbo-sync/vendors endpoints`);
   }
+  // LST-F9103 — vendor bill payments query must surface non-404/500/501 errors (not silently show
+  // "No payments recorded."). The vendorPaymentBackendPending check only catches 404/500/501; any
+  // other error status (403, 429, 502, 503) must also be surfaced with a Retry button.
+  if (!/vendorPaymentsQuery\.isError[\s\S]*?Retry/.test(src.detail)) {
+    failures.push(`${FILE}: bill payments table must surface query errors with a Retry button (LST-F9103 — silent no-op on non-404/500/501 errors)`);
+  }
   return failures;
 }
 
