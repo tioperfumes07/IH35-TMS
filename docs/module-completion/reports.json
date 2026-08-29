@@ -48,9 +48,11 @@
       ],
       "spec": "SettlementSummaryPage \u00b7 VSETTLE",
       "status": "PASS",
-      "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 driver_settlements rows readable for entity 5c854333-6ea5-4faa-af31-67cb272fef80.",
+      "evidence": "SettlementSummaryPage.tsx uses useCompanyContext selectedCompanyId, gates the query on companyId, and calls getSettlementSummary({ operating_company_id }). FE api withCompany(/api/v1/reports/settlement-summary). BE settlement-summary.routes.ts uses companyQuerySchema + withCompanyScope and SQL s.operating_company_id = $1 / d.operating_company_id = $1 on driver_finance.driver_settlements. Guard: scripts/verify-rpt-s03-settlement-summary.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 driver_settlements rows readable for entity 5c854333-6ea5-4faa-af31-67cb272fef80. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-rpt-s03-settlement-summary.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /reports/settlement-summary renders 5 real driver rows (Neftali Coronado Urbano, Javier..., etc), Gross/Deductions/Chargebacks/Net Pay KPIs. Binding on this independent re-confirmation.",
       "pr": "#5347",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:15:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "RPT-S04",
@@ -61,9 +63,11 @@
       ],
       "spec": "FuelReconciliationPage \u00b7 VFUEL",
       "status": "PASS",
-      "evidence": "FuelReconciliationPage.tsx uses useCompanyContext selectedCompanyId, gates query on companyId, calls getFuelReconciliation({ operating_company_id }). FE api withCompany(/api/v1/reports/fuel-reconciliation). BE fuel-reconciliation.routes.ts uses companyQuerySchema + withCompanyScope and reads card totals/by-unit/unmatched from fuel.fuel_transactions (ft.operating_company_id = $1, archived_at IS NULL, ROUND(total_cost*100) cents) \u2014 not banking.bank_transactions merchant heuristics. Guard: scripts/verify-rpt-s04-fuel-reconciliation.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 fuel.fuel_transactions entity-scoped (honest zero txn count OK).",
+      "evidence": "FuelReconciliationPage.tsx uses useCompanyContext selectedCompanyId, gates query on companyId, calls getFuelReconciliation({ operating_company_id }). FE api withCompany(/api/v1/reports/fuel-reconciliation). BE fuel-reconciliation.routes.ts uses companyQuerySchema + withCompanyScope and reads card totals/by-unit/unmatched from fuel.fuel_transactions (ft.operating_company_id = $1, archived_at IS NULL, ROUND(total_cost*100) cents) \u2014 not banking.bank_transactions merchant heuristics. Guard: scripts/verify-rpt-s04-fuel-reconciliation.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 fuel.fuel_transactions entity-scoped (honest zero txn count OK). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-rpt-s04-fuel-reconciliation.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /reports/fuel-reconciliation renders 7 real rows (T150 $480.00, T149 $40.00, etc), Card $520.05 / WO $0.00 / Delta $520.05 / Match Rate 0.0% -- honest gap disclosed, not hidden. Binding on this independent re-confirmation.",
       "pr": "#5359",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:15:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "RPT-S05",
@@ -120,10 +124,11 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED from Cascade OUTBOX + tip RPT-S01..S07 PASS: Cascade listed /reports as 15 reports / 8 categories (OUTBOX); Finance statements live USMCA P&L/BS/TB already exercised in FIN-VERIFY COMPLETE; RPT-S* items carry Neon lucia USMCA prod_verified. VERIFY V1/V3/V5/V7 PASS on catalog+entity scope; V6 via statement figures; V2/V4 N/A where report has no picker. Cursor closed scaffold after searching Cascade creates \u2014 not a re-click invent.",
+      "status": "UNVERIFIED",
+      "evidence": "PROD-VERIFIED from Cascade OUTBOX + tip RPT-S01..S07 PASS: Cascade listed /reports as 15 reports / 8 categories (OUTBOX); Finance statements live USMCA P&L/BS/TB already exercised in FIN-VERIFY COMPLETE; RPT-S* items carry Neon lucia USMCA prod_verified. VERIFY V1/V3/V5/V7 PASS on catalog+entity scope; V6 via statement figures; V2/V4 N/A where report has no picker. Cursor closed scaffold after searching Cascade creates \u2014 not a re-click invent. | GUARD DECISION (CC-2, 2026-08-29, SHA ed4e2f2): NOT bound -- this item's own text claims \"RPT-S01..S07 PASS\", but the actual constituent items are only 2 of 7 bound (RPT-S03/S04, both independently re-verified live this pass) -- RPT-S01, S02, S05, S06, S07 remain status:UNVERIFIED right now. That is a real overclaim, the same class of composed-item inflation this session has consistently REOPENed rather than rubber-stamped. REOPENed; a future pass live-verifying the remaining 5 RPT-S* surfaces should close this cleanly.",
       "pr": "Cascade OUTBOX + Neon + tip S* PASS",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "GUARD_OVERCLAIM_2026-08-29_ONLY_2_OF_7_CONSTITUENT_ITEMS_BOUND"
     }
   ],
   "pass_count": 3,
