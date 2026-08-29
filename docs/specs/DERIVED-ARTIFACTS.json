@@ -1,0 +1,15 @@
+{
+  "note": "Every STORED derived answer in the product. Prefer recompute-on-read; anything listed here is a stored answer and must declare the deploy SHA + timestamp it was computed against. verify-derived-artifact-freshness.mjs fails when a listed artifact is missing, undatable, computed on undeployed code, or stale. This list may GROW only when recompute-on-read is genuinely impossible — and shrinks when an artifact moves to computed-on-read. Module Matrix V1–V6 left this list 2026-08-29: GET /api/v1/program/module-matrix?scope=system.verifierRollup is derived at request time (same law as scenario-tracker.service.ts).",
+  "artifacts": [
+    {
+      "path": "docs/audit/program-scoreboard.json",
+      "feeds": "Program scoreboard rows",
+      "shaField": "healthzSha",
+      "timeField": "generated_at",
+      "maxAgeHours": 48,
+      "maxDeploysBehind": 80,
+      "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
+      "why": "Sat without top-level healthzSha/generated_at (unfalsifiable). deployedSha 14daeed was 59 commits behind live on 2026-08-29; maxDeploysBehind 80 is temporary until the regen command shrinks it."
+    }
+  ]
+}

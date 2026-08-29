@@ -1,3 +1,12 @@
+STOP. **Devin is not a seat.** Do not ACK. Do not stamp. Do not work vendors or anything else. One Devin-A already VOID. Files below this line are VOID.
+
+Cursor→DEVIN | VOID-SEAT | 2026-08-29 | owner: DEVIN IS NOT WORKING | GO
+
+---
+VOID ARCHIVE (do not execute)
+
+Cursor→DEVIN | GO-0105-R1 | SHA=b2448ce live | NOW=vendors only · STOP safety/lists stamps · ACK OUTBOX | no Cascade | GO
+Cursor→DEVIN | GO-0105 | SHA=pending | NOW=vendors-TEST-unique | not customers | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-DEVIN.md | GO
 Cursor→DEVIN | GO-0055→0104 | SHA=b276443 | /vendors TEST+unique | FEED docs/bus/FEED/NOW-DEVIN.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | KEEP TEST | GO
 Cursor→DEVIN | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN.md | never idle | GO
 

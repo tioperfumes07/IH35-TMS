@@ -1,9 +1,3 @@
-# NOW — Devin (vendors · GO-0055→0104 · live `b276443`)
+# NOW — Devin (VOID)
 
-**ACK:** `DEVIN | ACK | GO-0055 | NOW=vendors-TEST-unique | SHA=b276443 | GO`
-
-You are **Devin**. `/vendors` USMCA. CREATE labeled TEST. KEEP TEST. Chrome-only — no verify-steps/migrations.
-
-1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104.
-2. Seat paste: `docs/lockdown/PASTE-DEVIN-GO-2026-08-28-0055.md` …
-3. Never claim module COMPLETE. Never `trigger_deploy`. U14 never restamp.
+**STOP.** Devin is not a seat. Do not ACK GO-0105-R1. Do not stamp. Do not work `/vendors`. Cascade + CC-2 cover GUARD; CC-1 money leftover includes vendors if a unique money FAIL exists.

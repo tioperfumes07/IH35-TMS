@@ -60,7 +60,15 @@ Cursor already FAST-MERGED #14921 (claim-reserve) and #14923 (DRV-F6259) that we
 | **5 · Neon** | after | Money/migrations: **you** apply on Neon · prove one query |
 | **6 · Next** | same turn | OUTBOX one line → start next ☐ in INBOX |
 
-**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **kicking Render after each merge**.
+**Total wall clock: ~4–5 minutes.** Forbidden: babysitting 20 checks · asking Jorge to merge · idle after merge · **kicking Render after each merge** · **opening the next task while one of YOUR PRs is still OPEN**.
+
+**Drain before new work (owner 2026-08-29 — CC-1 skipped step 4 from ~12:32Z, PRs piled until a sweep):** After `gh pr create` returns `N`, **same 15 seconds**, run the `gh api` PUT. Before starting anything new:
+
+```bash
+gh pr list --author @me --state open
+```
+
+If that returns rows, **merge them first**. An open PR is unshipped work. Local gate exit 0 is merge proof — GitHub `total_count: 0` checks is **not** a reason to skip step 4.
 
 **Production deploy is not in this loop.** autoDeploy is OFF on purpose. Merging every 4 minutes is fine. Deploying after **each** merge 502s the API for the whole deploy (~3 min). Measured 2026-08-21: 9 deploys / 90 min, median gap 5.9 min — shorter than a deploy. **Cursor lead deploys every 5–10 minutes and every 5–10 merged PRs (default 5, never wait past 10) or on demand (Jorge).** Law: `docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md` · `docs/lockdown/USMCA-LAUNCH-FIRST-STANDING-LAW-2026-08-22.md`. Never `trigger_deploy` because healthz SHA lags `origin/main` after one merge.
 

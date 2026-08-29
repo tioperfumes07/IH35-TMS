@@ -164,6 +164,12 @@ function checkReverseVendorLabels(apiClientSrc, reverseSrc, listRouteSrc, mountS
   if (!/v\.vendor_name/.test(listRouteSrc ?? "") || !/vendor_name:\s*row\.vendor_name/.test(listRouteSrc ?? "")) {
     failures.push("fuel list must project and return the same-company canonical vendor_name");
   }
+  if (!/COALESCE\([\s\S]*v\.vendor_name,[\s\S]*mdata\.resolve_vendor_label_same_company\(ft\.vendor_id, ft\.operating_company_id\)[\s\S]*\) AS vendor_name/.test(listRouteSrc ?? "")) {
+    failures.push("fuel history must preserve the same-company vendor label after vendor deactivation");
+  }
+  if (!/mdata\.resolve_driver_label_same_company\(ft\.driver_id, ft\.operating_company_id\)[\s\S]*\) AS driver_name/.test(listRouteSrc ?? "")) {
+    failures.push("fuel history must preserve the same-company driver label after driver deactivation");
+  }
   if (!/vendor_name:\s*string \| null/.test(apiClientSrc ?? "")) {
     failures.push("FuelTransactionListItem must type vendor_name");
   }
@@ -281,7 +287,7 @@ function selftest() {
   const goodIndex = `registerFuelTransactionsRoutes(app); registerFuelTransactionImportRoutes(app);`;
   const goodVendorApi = `vendor_name: string | null;`;
   const goodVendorReverse = `entityLabel(row.vendor_name, row.vendor_id, "Vendor")`;
-  const goodVendorRoute = `SELECT v.vendor_name FROM x; vendor_name: row.vendor_name`;
+  const goodVendorRoute = `SELECT COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(ft.vendor_id, ft.operating_company_id)) AS vendor_name, COALESCE(name, mdata.resolve_driver_label_same_company(ft.driver_id, ft.operating_company_id)) AS driver_name FROM x; vendor_name: row.vendor_name`;
   const goodMounts = Object.fromEntries(REVERSE_MOUNTS.map(([file, filter]) => [file, `<FuelTransactionsReverseSection filter={{ ${filter}: id }} />`]));
 
   let ok = true;
@@ -315,6 +321,8 @@ function selftest() {
   expectFail("backend endpoints missing", checkBackendEndpointsExist(null, null, null));
   expectPass("vendor label across four reverse mounts", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute, goodMounts));
   expectFail("vendor mapper dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute.replace("vendor_name: row.vendor_name", "vendor_id: row.vendor_id"), goodMounts));
+  expectFail("historical vendor resolver dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute.replace("mdata.resolve_vendor_label_same_company", "mdata.missing_vendor_label"), goodMounts));
+  expectFail("historical driver resolver dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute.replace("mdata.resolve_driver_label_same_company", "mdata.missing_driver_label"), goodMounts));
   expectFail("vendor type dropped", checkReverseVendorLabels("vendor_id: string", goodVendorReverse, goodVendorRoute, goodMounts));
   expectFail("vendor label unresolved", checkReverseVendorLabels(goodVendorApi, `entityLabel(null, row.vendor_id, "Vendor")`, goodVendorRoute, goodMounts));
   expectFail("load reverse mount dropped", checkReverseVendorLabels(goodVendorApi, goodVendorReverse, goodVendorRoute, { ...goodMounts, [REVERSE_MOUNTS[0][0]]: "" }));

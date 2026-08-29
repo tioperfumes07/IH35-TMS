@@ -7,7 +7,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { getProgramTracker, type ProgramTracker, type TrackerPhase, type TrackerBlockRow, type Tab } from "../../api/program-tracker";
 
-const CT = "America/Chicago";
+import { ctDateTime } from "../../lib/businessDate";
 
 /** UI tabs on Program Tracker (API `Tab` also has `not_counted`, which is not a sub-nav tab). */
 type TrackerTabId = "pending" | "in_progress" | "completed" | "sequence" | "modules";
@@ -19,12 +19,6 @@ export function parseProgramTrackerTab(raw: string | null): TrackerTabId {
 }
 
 // Real Central-Time stamps only — never hardcoded/now() (§0). All timestamps come from the server; unknown → "—".
-function ctDateTime(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", { timeZone: CT, year: "numeric", month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit" }) + " CT";
-}
 function relTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   const t = new Date(iso).getTime();

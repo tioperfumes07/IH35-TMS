@@ -1,0 +1,811 @@
+{
+  "note": "H1 HONESTY PROGRAM 2026-08-29. A posting path with no contract entry FAILS. Roles from accounting.chart_of_accounts_roles / COA_ROLE_VALUES — never hardcode one entity's account code. Live JE walk: verify-posting-hits-designed-accounts.mjs when DATABASE_URL set.",
+  "exempt_flags": [
+    "QBO_JE_PUSH_ENABLED",
+    "QBO_ENTITY_PUSH_ENABLED"
+  ],
+  "exempt_why": "TMS→QBO write-back is forbidden; these are kill-switches, not TMS GL design contracts.",
+  "honesty_28": [
+    "GL_POSTING_ENABLED",
+    "AMORTIZATION_GL_POSTING_ENABLED",
+    "BANK_FEED_GL_POSTING_ENABLED",
+    "BANK_TX_SPLIT_GL_POSTING_ENABLED",
+    "BILL_GL_POSTING_ENABLED",
+    "BILL_PAYMENT_GL_POSTING_ENABLED",
+    "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+    "DRIVER_ADVANCE_GL_POSTING_ENABLED",
+    "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED",
+    "EXPENSE_GL_POSTING_ENABLED",
+    "FACTORING_GL_POSTING_ENABLED",
+    "FINANCE_HUB_AMORTIZATION_POST_ENABLED",
+    "FIXED_ASSET_AUTOPOST_ENABLED",
+    "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED",
+    "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED",
+    "INVOICE_AR_GL_POSTING_ENABLED",
+    "LEASE_GL_POSTING_ENABLED",
+    "PARTS_PURCHASE_GL_POSTING_ENABLED",
+    "PREPAID_EXPENSES_POST_ENABLED",
+    "PROPERTY_TAX_GL_POSTING_ENABLED",
+    "REIMBURSEMENT_GL_POSTING_ENABLED",
+    "RELATED_PARTY_LOAN_GL_POSTING_ENABLED",
+    "REVENUE_RECOGNITION_POST_ENABLED",
+    "SAFETY_FINE_GL_POSTING_ENABLED",
+    "SETTLEMENT_GL_POSTING_ENABLED",
+    "TONU_CANCELLATION_AR_POSTING_ENABLED",
+    "TRANSFER_GL_POSTING_ENABLED",
+    "WARRANTY_REIMBURSE_GL_POSTING_ENABLED"
+  ],
+  "paths": [
+    {
+      "flag": "GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "AMORTIZATION_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "amortization_expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "prepaid_asset_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "BANK_FEED_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "BANK_TX_SPLIT_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "BILL_GL_POSTING_ENABLED",
+      "source_type": "bill",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "BILL_PAYMENT_GL_POSTING_ENABLED",
+      "source_type": "bill_payment",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ap_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "CUSTOMER_PAYMENT_GL_POSTING_ENABLED",
+      "source_type": "customer_payment",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "operating_bank"
+        },
+        {
+          "side": "CR",
+          "account_role": "ar_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "DRIVER_ADVANCE_GL_POSTING_ENABLED",
+      "source_type": "driver_advance",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "advance_recovery"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "DRIVER_ESCROW_FORFEIT_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "escrow_liability_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "revenue_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "EXPENSE_GL_POSTING_ENABLED",
+      "source_type": "expense",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "FACTORING_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "operating_bank"
+        },
+        {
+          "side": "CR",
+          "account_role": "factoring_advance_liability"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "FINANCE_HUB_AMORTIZATION_POST_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "amortization_expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "prepaid_asset_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "FIXED_ASSET_AUTOPOST_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "depr_expense_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "accum_depr_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "FUEL_CARD_OVERAGE_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "fuel_overage_receivable"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "INSURANCE_CLAIM_RECOVERY_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "operating_bank"
+        },
+        {
+          "side": "CR",
+          "account_role": "insurance_recovery"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "INVOICE_AR_GL_POSTING_ENABLED",
+      "source_type": "invoice",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ar_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "revenue_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "LEASE_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "rent_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "PARTS_PURCHASE_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "maintenance_parts_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "PREPAID_EXPENSES_POST_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "prepaid_asset_default"
+        },
+        {
+          "side": "CR",
+          "account_role": "ap_control"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "PROPERTY_TAX_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "property_tax_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "property_tax_payable"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "REIMBURSEMENT_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "reimbursement_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "RELATED_PARTY_LOAN_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "advance_recovery"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "REVENUE_RECOGNITION_POST_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "unbilled_revenue"
+        },
+        {
+          "side": "CR",
+          "account_role": "revenue_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "SAFETY_FINE_GL_POSTING_ENABLED",
+      "source_type": "safety_fine",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "civil_fines_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "cash_clearing"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "SETTLEMENT_GL_POSTING_ENABLED",
+      "source_type": "settlement",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "driver_pay_expense"
+        },
+        {
+          "side": "CR",
+          "account_role": "driver_payroll_clearing"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "TONU_CANCELLATION_AR_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ar_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "revenue_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "TRANSFER_GL_POSTING_ENABLED",
+      "source_type": "transfer",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "operating_bank"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "WARRANTY_REIMBURSE_GL_POSTING_ENABLED",
+      "source_type": null,
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "operating_bank"
+        },
+        {
+          "side": "CR",
+          "account_role": "warranty_recovery"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register",
+          "aging"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "BANK_DRIVER_ADVANCE_ENABLED",
+      "source_type": "driver_advance",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "advance_recovery"
+        },
+        {
+          "side": "CR",
+          "account_role": "operating_bank"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "void_reversal",
+        "surfaces": [
+          "gl",
+          "subledger"
+        ],
+        "producer": "pending_scen01_chains"
+      }
+    },
+    {
+      "flag": "VOID_ENFORCEMENT_ENABLED",
+      "source_type": "void_reversal",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ap_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "expense_default"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "is_the_reversal",
+        "surfaces": [
+          "gl",
+          "subledger",
+          "register"
+        ],
+        "producer": "postVoidReversal"
+      }
+    },
+    {
+      "flag": "WO_VOID_ENABLED",
+      "source_type": "work_order_void",
+      "lines": [
+        {
+          "side": "DR",
+          "account_role": "ap_control"
+        },
+        {
+          "side": "CR",
+          "account_role": "heavy_repair_expense"
+        }
+      ],
+      "must_balance": true,
+      "reversal": {
+        "mode": "is_the_reversal",
+        "surfaces": [
+          "gl",
+          "wo",
+          "bill"
+        ],
+        "producer": "work-orders.routes void"
+      }
+    }
+  ]
+}

@@ -21,6 +21,7 @@ function verify(s = source) {
   if (/const updateRes = await client\.query[\s\S]*const insertRes = await client\.query/.test(route)) failures.push("check-then-insert race must not return");
   if (!/RETURNING \(xmax = 0\) AS inserted[\s\S]*if \(!persisted\) throw new Error\("loves_price_upsert_failed"\)/.test(route)) failures.push("upsert must return and require persisted identity evidence");
   if (!/if \(persisted\.inserted\) counts\.rows_added \+= 1;[\s\S]*else counts\.rows_updated \+= 1;/.test(route)) failures.push("atomic upsert must retain honest added/updated counts");
+  if (!/if \(!requireOfficeRole\(reply, String\(authUser\.role \?\? ""\)\)\) return;/.test(route)) failures.push("Love's benchmark upload must reject Driver sessions before parsing or writes");
   return failures;
 }
 
@@ -36,11 +37,12 @@ if (process.argv.includes("--selftest")) {
     source.replace("RETURNING (xmax = 0) AS inserted", "RETURNING true AS inserted"),
     source.replace('if (!persisted) throw new Error("loves_price_upsert_failed");', "// planted missing persistence proof"),
     source.replace("else counts.rows_updated += 1;", "else counts.rows_skipped += 1;"),
+    source.replace('if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;', '// planted: office-role gate removed'),
   ];
   mutations.forEach((mutation, index) => {
     if (mutation === source || verify(mutation).length === 0) throw new Error(`selftest mutation escaped: ${index + 1}`);
   });
-  console.log("[verify-fuel-loves-upload-invalid-row-truth] SELFTEST PASS (10/10)");
+  console.log("[verify-fuel-loves-upload-invalid-row-truth] SELFTEST PASS (11/11)");
 }
 
 const failures = verify();

@@ -1,3 +1,6 @@
+Cursor→CC-3 | FAST-MERGE-CATCH | SHA=b2448ce | NOW=/driver-hub unique FAIL. Cascade stamps GUARD-2 not you. FAST-MERGE after cursor-ship-preflight: gh api squash same 15s. No babysit. ACK OUTBOX GO-0105-R1 | GO
+Cursor→CC-3 | GO-0105-R1 | SHA=b2448ce live | NOW=driver-hub | #17652 merged on GitHub — put ACK on OUTBOX if that was you | no Cascade | GO
+Cursor→CC-3 | GO-0105 | SHA=pending | NOW=customers-LV-001-relationship-health-500 | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CC-3.md | GO
 Cursor→CC-3 | SCEN-01 | SHA=5063761 | create TEST hops 1,2,3,5,7,10 · trailer=mdata.equipment · KEEP TEST · screenshot≠GL | FEED docs/bus/FEED/NOW-CC-3.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor→CC-3 | HTTP-404-COMPLIANCE | SHA=14daeed | remount property-tax + hos/daily-roster + required-documents/types — COMP-S02/S03/T02/T06 FAIL · never stamp prod_verified | FEED docs/bus/FEED/NOW-CC-3.md | GO
 Cursor→CC-3 | GUARD-CAPACITY | SHA=14daeed | ship GUARD-PROOF-PACKET after each safety/lists fix · Cascade stamps · you never flip prod_verified | FEED docs/bus/FEED/NOW-CC-3.md | template docs/templates/GUARD-PROOF-PACKET.md | GO

@@ -1,3 +1,6 @@
+Cursor→CASCADE | FAST-MERGE-CATCH | SHA=b2448ce LIVE | You ARE a seat. Stamps vs ancestor of b2448ce. Unique FINDING on live healthz. No product PRs. Skip #15546 #16895. Never restamp U14. ACK OUTBOX GO-0105-R1 | GO
+Cursor→CASCADE | GO-0105-R1 | SHA=b2448ce live | NOW=unique-FINDING + GUARD-2 stamps safety/lists/drivers/system | ACK OUTBOX | never restamp U14 | never trigger_deploy | GO
+Cursor→CASCADE | GO-0105 | SHA=pending | NOW=unique-FINDING-live-healthz | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CASCADE.md | GO
 Cursor→CASCADE | GUARD-2 | SHA=14daeed | stamp prod_verified on safety lists drivers system only · paste docs/lockdown/PASTE-CASCADE-GUARD-2-NON-MONEY-2026-08-29.md | FEED docs/bus/FEED/NOW-CASCADE.md | no money stamps · no product PR · SYS-S07 do not restamp | GO
 Cursor→CASCADE | GO-0055→0104 | SHA=b276443 | unique FINDING | FEED docs/bus/FEED/NOW-CASCADE.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | no product PR | GO
 Cursor→CASCADE | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CASCADE.md | never idle | GO

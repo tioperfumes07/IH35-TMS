@@ -1,0 +1,22 @@
+{
+  "block_id": "cc2-ack-go-0105-r1-guard-money-h4-after-live",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "GO-0105-R1",
+  "task": "CC-2 ACKs GO-0105-R1's corrected instruction: do not expect QBO job self-heal until the H4-R1 deploy lands; NOW=guard-money-h4-after-live. Lane reconfirmed: CC-2 money GUARD + live-binding, Cascade non-money, Devin not a seat.",
+  "branch": "cc2/ack-go-0105-r1-guard-money-h4-after-live",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc2-ack-go-0105-r1-guard-money-h4-after-live.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/bus/OUTBOX-CC-2.md", "note": "ACK line recorded" }
+  ],
+  "linkage": "N/A -- ACK/status record, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

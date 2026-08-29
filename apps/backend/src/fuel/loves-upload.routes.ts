@@ -28,6 +28,14 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   return req.user;
 }
 
+function requireOfficeRole(reply: FastifyReply, role: string) {
+  if (role === "Driver") {
+    reply.code(403).send({ error: "forbidden", detail: "uploading Love's prices requires an office role" });
+    return false;
+  }
+  return true;
+}
+
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
@@ -83,6 +91,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
   app.post("/api/v1/fuel/loves-prices/upload", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
+    if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;

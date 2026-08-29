@@ -60,10 +60,18 @@ const STEPS = [
   ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
   ["verify-economic-columns-c25-c31-present", "scripts/verify-economic-columns-c25-c31-present.mjs"],
   ["verify-declared-is-rendered", "scripts/verify-declared-is-rendered.mjs"],
+  ["verify-derived-artifact-freshness", "scripts/verify-derived-artifact-freshness.mjs"],
+  ["verify-generated-artifact-registry", "scripts/verify-generated-artifact-registry.mjs"],
+  ["verify-posting-hits-designed-accounts", "scripts/verify-posting-hits-designed-accounts.mjs"],
+  ["verify-reversal-symmetry", "scripts/verify-reversal-symmetry.mjs"],
   ["verify-module-progress-not-authored", "scripts/verify-module-progress-not-authored.mjs"],
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).
   ["verify-prod-verified-live-binding", "scripts/verify-prod-verified-live-binding.mjs"],
+  ["verify-fuel-planner-source-availability", "scripts/verify-fuel-planner-source-availability.mjs"],
+  ["verify-driver-import-response-honesty", "scripts/verify-driver-import-response-honesty.mjs"],
+  ["verify-driver-roster-bulk-deactivate", "scripts/verify-driver-roster-bulk-deactivate.mjs"],
+  ["verify-fleet-trip-cost-scope-lifecycle", "scripts/verify-fleet-trip-cost-scope-lifecycle.mjs"],
 
   // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
   // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a
@@ -134,6 +142,8 @@ const STEPS = [
   ["verify-border-crossing-cbp-wait-cache-rls", "scripts/verify-border-crossing-cbp-wait-cache-rls.mjs"],
   ["verify-dispatch-trip-pairing-expenses-endpoint-404", "scripts/verify-dispatch-trip-pairing-expenses-endpoint-404.mjs"],
   ["verify-dispatch-load-status-filter-enum-mismatch-400", "scripts/verify-dispatch-load-status-filter-enum-mismatch-400.mjs"],
+  ["verify-dispatch-overview-derived-actions", "scripts/verify-dispatch-overview-derived-actions.mjs"],
+  ["verify-driver-profile-dqf-kpi-actions", "scripts/verify-driver-profile-dqf-kpi-actions.mjs"],
   ["verify-bill-payment-print-letter-html", "scripts/verify-bill-payment-print-letter-html.mjs"],
   ["verify-account-register-ref-no-journal-entry-link", "scripts/verify-account-register-ref-no-journal-entry-link.mjs"],
   ["verify-money-detail-page-uses-ispending", "scripts/verify-money-detail-page-uses-ispending.mjs"],
@@ -172,6 +182,7 @@ const STEPS = [
   ["verify-dispatch-loads-customer-label-survives-archive", "scripts/verify-dispatch-loads-customer-label-survives-archive.mjs"],
   ["verify-bank-kpi-authoritative-cash-no-fake-zero", "scripts/verify-bank-kpi-authoritative-cash-no-fake-zero.mjs"],
   ["verify-gl-invariants-inv3-real-only-basis", "scripts/verify-gl-invariants-inv3-real-only-basis.mjs"],
+  ["verify-mdata-loads-patch-writes-assignment-history", "scripts/verify-mdata-loads-patch-writes-assignment-history.mjs"],
 ];
 
 function runNode(rel) {

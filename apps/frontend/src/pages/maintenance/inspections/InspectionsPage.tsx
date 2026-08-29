@@ -356,7 +356,7 @@ export function InspectionsPage() {
               type="search"
               aria-label="Search inspections"
               placeholder="Search inspections…"
-              className="h-8 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
+              className="min-h-12 h-12 w-56 rounded-sm border border-gray-300 px-2 text-[13px]"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);

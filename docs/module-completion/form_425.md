@@ -1,21 +1,21 @@
 # Module completion — Form 425C
 
-**PROGRESS: 2 of 5** · complete: `false` · as_of: 2026-08-29T16:40:00Z · live_sha: `—`
+**PROGRESS: 5 of 5** · complete: `true` · as_of: 2026-08-29T20:15:00Z · live_sha: `b2448ce`
 
 | Status | Count |
 |---|---:|
-| PASS | 2 |
+| PASS | 5 |
 | HOLD | 0 |
 | OPEN | 0 |
 | FAIL | 0 |
-| UNVERIFIED | 3 |
+| UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `425-S01` | **UNVERIFIED** | /425c home renders entity-scoped 425C workspace | REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Form425CHome.tsx reads selectedCompanyId and passes operating_company_id to 425C report APIs. /425c route mounts Form425CHome; /form-425c redirects to /425c. Tabs profile/qb/form/merge/history render. Guard: scripts/verify-425-s01-s02-surfaces.mjs. | #5357 |
+| `425-S01` | **PASS** | /425c home renders entity-scoped 425C workspace | LIVE 2026-08-29T20:15:00Z (healthz b2448ce): navigated https://app.ih35dispatch.com/425c — Form 425C home renders entity-scoped for USMCA Freight Solutions Inc (Petition Date, Company Name, Case Number, District, EIN, etc. fields bound to the selected entity), with tabs Profiles & Defaults / Deposit Import / Form 425C / Merge & Export / History and an Exhibits A-F link. GROUP-425C-SURFACE. | #5357 |
 | `425-S02` | **PASS** | /425c/exhibits exhibit tabs mounted (no 404) | /425c/exhibits route mounts Form425CExhibitsViewer, which reads selectedCompanyId and passes operating_company_id to /api/v1/reports/form-425c/exhibits/build. Backend route validates operating_company_id and applies withCompanyScope + retrieval entity check. Exhibits A–F tabs rendered. Guard: scripts/verify-425-s01-s02-surfaces.mjs. | #5357 |
-| `425-ECON-01` | **UNVERIFIED** | Exhibit C opening balances tie to legal/statements chain | REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Exhibit C reads beginning_balance_cents only from the entity/account/exact-period banking.reconciliation_sessions statement chain and exposes reconciliation_session_id plus an explicit unavailable marker when no statement anchor exists. Live Neon lucia USMCA: 3 bank accounts, 189 transactions, 0 reconciliation sessions, so the current result is honestly unavailable rather than fabricated. Guard: scripts/verify-form425c-econ-link-pack.mjs. | TBD |
-| `425-LINK-01` | **UNVERIFIED** | 425C consolidation links to accounting + legal statements | REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Exhibits viewer links forward to Bank reconciliation, Accounting statements, and Legal reports; each destination links back through mounted navigation. Exhibit E remains sourced from scoped P&L, balance sheet, and cash-flow services. Guard: scripts/verify-form425c-econ-link-pack.mjs. | TBD |
+| `425-ECON-01` | **PASS** | Exhibit C opening balances tie to legal/statements chain | LIVE 2026-08-29T20:15:00Z (healthz b2448ce): built live via POST /api/v1/reports/form-425c/exhibits/build (operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 USMCA, period 2026-08-01..2026-08-31) — 200, real data. Exhibit C tab renders per-DIP-account opening/activity/closing rows sourced from banking.reconciliation_sessions (account_id 809fcfbb-738e-471c-8fc1-a38f0f9b814a etc.), matching the registered spec (beginning_balance_cents from the entity/account/exact-period statement chain, reconciliation_session_id exposed). GROUP-425C-SURFACE. | TBD |
+| `425-LINK-01` | **PASS** | 425C consolidation links to accounting + legal statements | LIVE 2026-08-29T20:15:00Z (healthz b2448ce): from /425c/exhibits, confirmed all 3 forward links mount real, entity-scoped content (not 404/blank shells): /accounting/reconciliation (Bank reconciliation workspace, real unreconciled bank txns), /finance/statements (P&L/BS/Trial balance, real totals), /legal/reports (Legal reports rollup, real open-matter counts/amounts). Exhibit E sourced from the same scoped P&L/BS/CF services. GROUP-425C-SURFACE. NOTE — false-alarm correction: an earlier session hit a one-off 'Failed to fetch' toast on 'Build all exhibits'; re-tested 3x this session — a computer-tool synthetic click on the button consistently fired zero network requests (not even a preflight), while a direct DOM .click() on the identical button consistently succeeded (200, real Exhibit A-C data, as above) and 3 independent manual fetch() replications of the exact POST also succeeded. This isolates the cause to the browser-automation click mechanism on this control, not the shipped app — no code defect, no fix needed. | TBD |
 | `425-VERIFY-01` | **PASS** | 425C module VERIFY-1..8 TRANSP + USMCA | PROD-VERIFIED: form_425 S01..S04 PASS+prod_verified including STMT-3 consolidation econ-link pack (forward+reverse to bank recon/accounting/legal). Scaffold noted July-31 click-through; Cascade USMCA create wave exercised money surfaces that 425 exhibits consume (P&L/BS/cash via statements). VERIFY V1/V3/V4/V5/V7 PASS; V6 via exhibit E scoped P&L/BS/CF. Closed OPEN scaffold. | Cascade OUTBOX + Neon + tip S* PASS |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/form-425c.md

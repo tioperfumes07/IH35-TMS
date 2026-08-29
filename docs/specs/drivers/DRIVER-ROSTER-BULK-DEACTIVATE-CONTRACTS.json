@@ -1,0 +1,45 @@
+{
+  "finding": "DRIVER-F7333-ROSTER-BULK-DEACTIVATE-DEAD-ACTION",
+  "contracts": [
+    {
+      "id": "roster_ui",
+      "file": "apps/frontend/src/pages/drivers/DriversTable.tsx",
+      "required_tokens": [
+        "employmentStatusCatalogClient.list()",
+        "row.code !== \"ACTIVE\"",
+        "actionLabel=\"Deactivate drivers\"",
+        "requiresReason",
+        "payload: { status: \"Inactive\", reason_code_id: employmentReasonId }",
+        "operatingCompanyId: companyId",
+        "BulkProgressDialog",
+        "onUpdated"
+      ],
+      "forbidden_tokens": [
+        "Bulk deactivate is not available yet"
+      ]
+    },
+    {
+      "id": "canonical_writer",
+      "file": "apps/backend/src/drivers/drivers-bulk.routes.ts",
+      "required_tokens": [
+        "reason_code_id required when setting status to Inactive",
+        "assertEmploymentStatusCode",
+        "driver_employment_status_id = CASE",
+        "deactivated_at = CASE",
+        "appendBulkCrudAudit",
+        "registerBulkRoute"
+      ],
+      "forbidden_tokens": []
+    },
+    {
+      "id": "query_back",
+      "file": "apps/frontend/src/pages/drivers/DriversListPage.tsx",
+      "required_tokens": [
+        "companyId={companyId}",
+        "void driversQ.refetch()",
+        "void dqfQ.refetch()"
+      ],
+      "forbidden_tokens": []
+    }
+  ]
+}

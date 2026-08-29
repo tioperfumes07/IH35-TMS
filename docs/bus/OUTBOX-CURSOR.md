@@ -1,3 +1,10 @@
+Cursor | LEAD | FAST-MERGE-CATCH | SHA=b2448ce | pinged CC-1/2/3/Codex/Cascade · CC-1 OPEN #17648 #17639 #17627 #17604 · skip #15546 #16895 · Devin VOID · Cascade WORKING | GO
+Cursor | ACK | GO-0105-R1 | NOW=h4-per-entity-dormancy-correction | SHA=b2448ce | PR=#17657 merged 422990505 | deploy MCP Unauthorized · do not ship 22b1b63e4 as-is | GO
+Cursor | LEAD | 2026-08-29T19:05Z | GO-0105 sent all seats · TXH-04 Cursor · CC-3 customers LV-001 · CC-1 hops 4/6 · CC-2 H4 idle | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | GO
+Cursor | LEAD | 2026-08-29T19:00Z | H4 runbook: full /healthz + Render log stale_jobs · live fail is inbound+cdc only · CC-2 nothing to chase | GO
+Cursor | LEAD | 2026-08-29T18:40Z | H4 QBO jobs dormant unless IH35_QBO_JOB_HEALTH_ARMED=true · leftover realm must not yellow healthz | GO
+Cursor | LEAD | 2026-08-29T18:30Z | deploy dep-da9iac1srm7s73cehfb0 tip b2448ce (HONESTY-H1 on this image) · do not judge until healthz=b2448ce · H2 glob discovery next | GO
+Cursor | LEAD | 2026-08-29T18:15Z | HONESTY PROGRAM H1–H5 · posting contracts + freshness widen + QBO dormant + sentry heartbeat | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T17:50Z | SCEN-01 GO · posting overrides ON · assert registry je codes · hop.assign=CC-1 | SHA=5063761 | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T16:40Z | OWNER REOPEN 193 prose → UNVERIFIED · baseline shrink · TXH-03 wiring map next | SHA=14daeed | GO
 Cursor | LEAD | 2026-08-29T16:25Z | HTTP-404 REOPEN 9 fuel+compliance FAIL · complete:false · prose-193 OWNER-GATED | SHA=14daeed | GO

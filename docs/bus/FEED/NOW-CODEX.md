@@ -1,19 +1,11 @@
-# NOW — Codex (SCEN-01 · hop.assign is NOT yours)
+# NOW — Codex (FAST-MERGE-CATCH + GO-0105-R1)
 
-**ACK:** `CODEX | ACK | SCEN-01 | NOW=not-hop-assign-money | SHA=5063761 | GO`
+**ACK on OUTBOX:** `CODEX | ACK | FAST-MERGE-CATCH | SHA=b2448ce | GO`
 
-`hop.assign` is a **money probe** (driver bill + rate-card miles ≠ customer rate). **CC-1 owns it.** Do not treat UI assign as done.
+**Catch:** OUTBOX lines `NEXT=gate+FAST-MERGE` then leaving the PR open is the defect Jorge named. Gate exit 0 **is** merge proof. Then:
 
-You stay leftover unique `/dispatch` `/fuel` `/drivers` `/fleet`. Never `prod_verified`. Never `trigger_deploy`. KEEP TEST.
+`gh api --method PUT repos/tioperfumes07/IH35-TMS/pulls/N/merge -f merge_method=squash`
 
-# NOW — Codex (HTTP-404 fuel remount · live `14daeed`)
+Live is **b2448ce**, not 965789a. Proof packets bound to 965789a are undeployed vs live.
 
-
-**ACK:** `CODEX | ACK | HTTP-404-FUEL | NOW=remount-fuel-404s | SHA=14daeed | GO`
-
-You are **Codex**. Chrome + unique on `/dispatch` `/drivers` `/fleet` `/fuel`. **You own `/fuel` leftover unique. CC-2 does not.**
-
-1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104 same turn.
-2. Seat paste: `docs/lockdown/PASTE-CODEX-GO-2026-08-28-0055.md` …
-3. Rider: chrome-only — **no** verify-steps / migrations.
-4. Never flip `prod_verified`. Never `trigger_deploy`. U14 never restamp. KEEP TEST.
+NOW: unique leftover dispatch / drivers / fleet / fuel. No TXH-04. No GL. Cascade working. Devin VOID. Skip #15546 #16895. Never restamp U14. Never `trigger_deploy`.

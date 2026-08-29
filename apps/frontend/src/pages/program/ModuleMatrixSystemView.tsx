@@ -3,10 +3,11 @@
  * Rows = modules (Urgent 6 → rest of urgent → WAVE2) · columns = LINK/MONEY/CHROME/WIRE/PROC atoms.
  * Each cell = MatrixCell4 from column Abl rollup (tooltip keeps Audited%·Built%·Live% detail).
  */
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, createContext, useContext } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
+import { ctDateTime } from "../../lib/businessDate";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
   URGENT_6_MODULE_IDS,
@@ -30,7 +31,6 @@ import {
   ablPctToCell4,
   type TierMetrics,
 } from "./moduleMatrixBoxes";
-import verifierRollupJson from "@scoreboard/verifier-rollup.json";
 
 type AblPct = {
   requiredCells: number;
@@ -59,6 +59,15 @@ type SystemModuleRow = {
   fwAbl?: Record<string, AblPct>;
 };
 
+type VerifierModuleRollup = {
+  l6: { state: string; stamped: number; unstamped: number };
+  bound: { state: string; no: number; unknown: number; yes: number };
+  proven: { state: string; true: number; false: number };
+  evidence_class: { state: string; prose: number; browser: number; http: number; neon: number };
+  route_alive: { state: string; dead: number; alive: number; none: number };
+  proof_age: { days: number | null };
+};
+
 type SystemPayload = {
   sample: false;
   scope: "system";
@@ -79,7 +88,19 @@ type SystemPayload = {
     readyAbl?: AblPct;
     fwAbl?: Record<string, AblPct>;
   };
-  meta?: { tipSha?: string; probeSource?: string; honesty?: string };
+  meta?: {
+    tipSha?: string;
+    probeSource?: string;
+    honesty?: string;
+    workerState?: "running" | "failed" | "never_started";
+    workerError?: string;
+    workerFailedAt?: string;
+  };
+  verifierRollup?: {
+    asOf: string;
+    healthzSha: string | null;
+    modules: Record<string, VerifierModuleRollup>;
+  };
 };
 
 const POLL_MS = 300_000;
@@ -105,20 +126,13 @@ const DRAWN_SCOREBOARD_COLUMN_IDS = [
   "proof_age",
 ] as const;
 
-type VerifierModuleRollup = {
-  l6: { state: string; stamped: number; unstamped: number };
-  bound: { state: string; no: number; unknown: number; yes: number };
-  proven: { state: string; true: number; false: number };
-  evidence_class: { state: string; prose: number; browser: number; http: number; neon: number };
-  route_alive: { state: string; dead: number; alive: number; none: number };
-  proof_age: { days: number | null };
-};
-
-const VERIFIER_ROLLUP = verifierRollupJson as {
+const EMPTY_VERIFIER_ROLLUP: {
   asOf: string;
   healthzSha: string | null;
   modules: Record<string, VerifierModuleRollup>;
-};
+} = { asOf: "", healthzSha: null, modules: {} };
+
+const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
 
 function mergeColumns(api: SystemColumn[]): SystemColumn[] {
   const byId = new Map<string, SystemColumn>();
@@ -188,8 +202,11 @@ function worstRank(columnId: string, state: string): number {
   return i === -1 ? 99 : i;
 }
 
-function pickWorstModule(columnId: string): { moduleId: string; row: VerifierModuleRollup } | null {
-  const entries = Object.entries(VERIFIER_ROLLUP.modules);
+function pickWorstModule(
+  columnId: string,
+  modules: Record<string, VerifierModuleRollup>,
+): { moduleId: string; row: VerifierModuleRollup } | null {
+  const entries = Object.entries(modules);
   if (!entries.length) return null;
   let best: { moduleId: string; row: VerifierModuleRollup } | null = null;
   let bestRank = 999;
@@ -246,8 +263,11 @@ function VerifierProofCell({
   columnId: string;
   testId?: string;
 }) {
+  const rollup = useContext(VerifierRollupContext);
   const isTotal = moduleId === "__system__";
-  const picked = isTotal ? pickWorstModule(columnId) : { moduleId, row: VERIFIER_ROLLUP.modules[moduleId] };
+  const picked = isTotal
+    ? pickWorstModule(columnId, rollup.modules)
+    : { moduleId, row: rollup.modules[moduleId] };
   const row = picked?.row;
   const labelMod = picked?.moduleId ?? moduleId;
   if (!row) {
@@ -528,14 +548,22 @@ export function ModuleMatrixSystemView() {
   const hasLastGoodNumbers = Boolean(
     sys && ((sys.builtCells ?? 0) > 0 || (sys.liveCells ?? 0) > 0 || (sys.boxAbl?.builtPct ?? 0) > 0),
   );
+  const workerState = data?.meta?.workerState;
+  const projectionFailed = workerState === "failed";
+  const workerNeverStarted =
+    workerState === "never_started" && Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED")) && !hasLastGoodNumbers;
   const buildingFeed =
-    !hasLastGoodNumbers && Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED"));
+    !projectionFailed &&
+    !workerNeverStarted &&
+    !hasLastGoodNumbers &&
+    Boolean(data?.meta?.honesty?.includes("REQUIRED-SEED"));
   const fallbackFeed =
     !hasLastGoodNumbers &&
     !buildingFeed &&
+    !projectionFailed &&
     (data?.meta?.probeSource === "committed_fallback" ||
       data?.meta?.honesty?.includes("REQUIRED-FALLBACK") === true);
-  const apiLive = Boolean(data?.system) && !fallbackFeed && !buildingFeed && !isError;
+  const apiLive = Boolean(data?.system) && !fallbackFeed && !buildingFeed && !projectionFailed && !workerNeverStarted && !isError;
   const ok = Boolean(data?.system);
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
@@ -599,6 +627,7 @@ export function ModuleMatrixSystemView() {
   }, [sys]);
 
   const colSpan = 1 + columns.length + 11 + FULLY_WIRED_SYSTEM_COLS.length;
+  const verifierRollup = data?.verifierRollup ?? EMPTY_VERIFIER_ROLLUP;
 
   const renderModuleRow = (row: SystemModuleRow) => {
     const built = row.metrics?.builtCells ?? Math.round(((row.boxAbl?.builtPct ?? 0) / 100) * (row.boxAbl?.requiredCells ?? 0));
@@ -679,8 +708,19 @@ export function ModuleMatrixSystemView() {
   };
 
   return (
+    <VerifierRollupContext.Provider value={verifierRollup}>
     <>
-      {buildingFeed ? (
+      {projectionFailed ? (
+        <div className="banner" data-testid="module-matrix-system-projection-failed" role="alert">
+          <b>SCOREBOARD PROJECTION FAILED — Boxes 2/3/4 are not computable. This is not progress and not launch truth.</b>{" "}
+          {data?.meta?.workerError ? <code>{data.meta.workerError}</code> : null}
+          {data?.meta?.workerFailedAt ? <> · {ctDateTime(data.meta.workerFailedAt)}</> : null}
+        </div>
+      ) : workerNeverStarted ? (
+        <div className="banner" data-testid="module-matrix-system-worker-never-started" role="alert">
+          <b>SCOREBOARD WORKER NEVER SPAWNED — Boxes 2/3/4 are not computable.</b>
+        </div>
+      ) : buildingFeed ? (
         <div className="banner" data-testid="module-matrix-system-building">
           <b>Scoreboard is computing in the background — the API is up.</b> You are seeing Required
           cell counts only until the worker finishes. This is not a 502 and not launch truth.
@@ -730,6 +770,13 @@ export function ModuleMatrixSystemView() {
               · tip <code>{tip}</code>
             </>
           ) : null}
+          <span data-testid="module-matrix-verifier-freshness">
+            {" "}
+            · V1–V6 live asOf <code>{verifierRollup.asOf || "—"}</code> healthzSha{" "}
+            <code>{verifierRollup.healthzSha || "—"}</code>
+            {" "}
+            · red V after prose-193 is live truth (not a frozen rollup)
+          </span>
           {dataUpdatedAt ? (
             <>
               {" "}
@@ -1068,5 +1115,6 @@ export function ModuleMatrixSystemView() {
         </div>
       </div>
     </>
+    </VerifierRollupContext.Provider>
   );
 }

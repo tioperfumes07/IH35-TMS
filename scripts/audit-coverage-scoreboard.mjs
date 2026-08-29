@@ -319,6 +319,15 @@ export function parseFindings(md) {
       auditor,
     });
   }
+  const dupCounts = new Map();
+  for (const r of rows) dupCounts.set(r.num, (dupCounts.get(r.num) || 0) + 1);
+  const dups = [...dupCounts.entries()].filter(([, c]) => c > 1);
+  if (dups.length) {
+    throw new Error(
+      `DUPLICATE ROW NUMBERS: ${dups.map(([n, c]) => `${n}×${c}`).join(", ")}. ` +
+        `Delete the corrupt duplicate; do not silently skip.`
+    );
+  }
   assertParsedRowCountMatchesMax(rows, md.slice(start));
   return rows;
 }
@@ -873,6 +882,11 @@ export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
     // PROG-PRFEED-PRIVATE-EMPTY: ledger-sourced, generated in CI. Never a runtime GitHub call.
     recentActivity: ledgerRecentActivity(10),
   };
+  out.healthzSha = String(out.meta.deployedSha || "").slice(0, 40);
+  {
+    const ga = Date.parse(out.meta.generatedAt);
+    out.generated_at = Number.isFinite(ga) ? new Date(ga).toISOString() : new Date().toISOString();
+  }
 
 
   // Guard contract: text (markdown emphasis), never HTML tags / html key.
@@ -951,6 +965,22 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
 | 5 | fuel | A | TRANSP | PASS | e | OPEN | — | NO | 2026-08-02 | X |
 `;
   const rows = parseFindings(sample);
+  const tenCell = `${sample}| 99 | reports | B | USMCA | FAIL | e | OPEN | — | NO | 2026-08-29 |\n`;
+  let tenThrew = false;
+  try {
+    parseFindings(tenCell);
+  } catch (e) {
+    tenThrew = /10 cells/.test(String(e?.message ?? e));
+  }
+  if (!tenThrew) throw new Error("selftest: 10-cell numbered row must throw (not skip)");
+  const dupSample = `${sample}| 1 | fuel | B | TRANSP | FAIL | e | OPEN | — | NO | 2026-08-02 | X |\n`;
+  let dupThrew = false;
+  try {
+    parseFindings(dupSample);
+  } catch (e) {
+    dupThrew = /DUPLICATE ROW NUMBERS/.test(String(e?.message ?? e));
+  }
+  if (!dupThrew) throw new Error("selftest: duplicate finding number must throw independently");
   const m = computeMetrics(rows, ids);
   if (m.failOpen !== 2) throw new Error(`failOpen ${m.failOpen}`);
   if (m.ownerGateYes !== 1) throw new Error(`ownerGate ${m.ownerGateYes}`);
