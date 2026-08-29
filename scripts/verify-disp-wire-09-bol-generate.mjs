@@ -112,6 +112,9 @@ export function auditBolWire(sources) {
   if (!/async function downloadStoredBol\([\s\S]{0,520}await\s+downloadBolDocument\([\s\S]{0,420}catch\s*\([^)]+\)[\s\S]{0,240}pushToast\(userFacingApiError\([^,]+,\s*["']Stored BOL download failed["']\),\s*["']error["']\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must surface rejected requests through the canonical error toast`);
   }
+  if (!/const popup = window\.open\(result\.download_url, "_blank", "noopener,noreferrer"\);[\s\S]{0,140}if \(!popup\) throw new Error\("Your browser blocked the BOL download window\. Allow pop-ups and retry\."\)/.test(panel)) {
+    problems.push(`${PATHS.panel}: blocked stored-BOL popup must fail visibly and remain retryable`);
+  }
   if (!/const input = \{[\s\S]{0,120}bolId,[\s\S]{0,120}companyId,[\s\S]{0,120}generation: generateGenerationRef\.current/.test(panel)
       || !/downloadBolDocument\(input\.bolId, input\.companyId\)/.test(panel)) {
     problems.push(`${PATHS.panel}: stored BOL download must snapshot document/company/generation at click`);
@@ -278,6 +281,19 @@ function selftest() {
           ),
         }),
       expect: "stored BOL download must surface",
+    },
+    {
+      label: "blocked stored download popup accepted silently",
+      run: () => auditBolWire({
+        ...real,
+        panel: mutate(
+          real.panel,
+          'if (!popup) throw new Error("Your browser blocked the BOL download window. Allow pop-ups and retry.");',
+          "void popup;",
+          "blocked popup",
+        ),
+      }),
+      expect: "blocked stored-BOL popup",
     },
     {
       label: "stored download consumes mutable company",

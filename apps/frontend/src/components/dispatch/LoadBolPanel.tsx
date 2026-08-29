@@ -57,7 +57,8 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
     try {
       const result = await downloadBolDocument(input.bolId, input.companyId);
       if (generateGenerationRef.current !== input.generation) return;
-      window.open(result.download_url, "_blank");
+      const popup = window.open(result.download_url, "_blank", "noopener,noreferrer");
+      if (!popup) throw new Error("Your browser blocked the BOL download window. Allow pop-ups and retry.");
     } catch (error) {
       if (generateGenerationRef.current !== input.generation) return;
       pushToast(userFacingApiError(error, "Stored BOL download failed"), "error");
