@@ -3,6 +3,8 @@
  * VEND-S03 — vendor create dedup is entity-scoped (operating_company_id + live rows only).
  * VEND-S04 — create/edit vendor type uses createKind=vendor_type → catalogs.vendor_types.
  * VEND-F-PATCH-NAME-CONFLICT (GO-0019) — PATCH G6-2 scopes to the vendor row's operating_company_id.
+ * VEND-F-DEACTIVATE-REACTIVATE-PATCH-GRANTLESS-404 (GO-0022) — deactivate/reactivate/PATCH SELECTs
+ *   must use org.user_accessible_company_ids() not direct org.user_company_access (Owner with 0 uca).
  *
  *   node scripts/verify-vend-s03-s04-dedup-and-types.mjs
  *   node scripts/verify-vend-s03-s04-dedup-and-types.mjs --selftest
@@ -83,6 +85,24 @@ function assert(files) {
   if (!/SELECT[\s\S]*operating_company_id[\s\S]*FROM mdata\.vendors/.test(helper)) {
     problems.push(`${ROUTES}: resolveVendorRowOperatingCompanyId must SELECT operating_company_id FROM mdata.vendors`);
   }
+
+  // VEND-F-DEACTIVATE-REACTIVATE-PATCH-GRANTLESS-404 (GO-0022) — the three vendor write SELECTs
+  // (PATCH, deactivate, reactivate) must scope membership via org.user_accessible_company_ids(),
+  // not a direct org.user_company_access probe. Owner role with 0 uca rows must still find their
+  // vendors — user_accessible_company_ids() returns ALL active companies for Owner.
+  const deactivateSlice = routes.slice(routes.indexOf('app.post("/api/v1/mdata/vendors/:id/deactivate"'));
+  const reactivateSlice = routes.slice(routes.indexOf('app.post("/api/v1/mdata/vendors/:id/reactivate"'));
+  const slices = [
+    { name: "PATCH", text: patch },
+    { name: "deactivate", text: deactivateSlice },
+    { name: "reactivate", text: reactivateSlice },
+  ];
+  for (const { name, text } of slices) {
+    if (!text) continue;
+    if (/FROM org\.user_company_access/.test(text)) {
+      problems.push(`${ROUTES}: ${name} SELECT must use org.user_accessible_company_ids() not direct org.user_company_access (Owner with 0 uca gets 404)`);
+    }
+  }
   return problems;
 }
 
@@ -134,6 +154,33 @@ if (SELFTEST) {
   }
 
   console.log(`${LABEL} SELFTEST PASS`);
+  // fall through to grantless-404 selftest
+}
+
+// VEND-F-DEACTIVATE-REACTIVATE-PATCH-GRANTLESS-404 selftest: plant a direct uca query in deactivate
+if (SELFTEST) {
+  const plantedUca = {
+    ...files,
+    [ROUTES]: files[ROUTES].replace(
+      /SELECT id, operating_company_id, deactivated_at\s+FROM mdata\.vendors\s+WHERE id = \$1\s+AND operating_company_id IN \(\s+SELECT org\.user_accessible_company_ids\(\)\s+\)/,
+      `SELECT id, operating_company_id, deactivated_at
+               FROM mdata.vendors
+              WHERE id = $1
+                AND operating_company_id IN (
+                  SELECT uca.company_id
+                    FROM org.user_company_access uca
+                    JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
+                   WHERE uca.user_id = $2::uuid
+                     AND uca.deactivated_at IS NULL
+                )`
+    ),
+  };
+  const ucaCaught = assert(plantedUca);
+  if (!ucaCaught.some((p) => /deactivate.*user_accessible_company_ids/.test(p))) {
+    console.error(`${LABEL} SELFTEST FAIL — direct uca in deactivate not caught`, ucaCaught);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS (grantless-404 plant)`);
   process.exit(0);
 }
 
