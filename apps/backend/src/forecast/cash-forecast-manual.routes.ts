@@ -67,7 +67,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   };
 
   // List entries (date-range optional), entity-scoped.
-  app.get("/api/v1/forecast/cash-entries", async (req, reply) => {
+  app.get("/api/v1/forecast/cash-entries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const q = dateRangeQuery.safeParse(req.query ?? {});
@@ -104,7 +104,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   });
 
   // Create entry.
-  app.post("/api/v1/forecast/cash-entries", async (req, reply) => {
+  app.post("/api/v1/forecast/cash-entries", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const b = entryBody.safeParse(req.body ?? {});
@@ -181,7 +181,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   });
 
   // Update entry.
-  app.patch("/api/v1/forecast/cash-entries/:id", async (req, reply) => {
+  app.patch("/api/v1/forecast/cash-entries/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const p = idParams.safeParse(req.params ?? {});
@@ -284,7 +284,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   });
 
   // Soft-delete entry (void-not-delete).
-  app.delete("/api/v1/forecast/cash-entries/:id", async (req, reply) => {
+  app.delete("/api/v1/forecast/cash-entries/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const p = idParams.safeParse(req.params ?? {});
@@ -312,7 +312,7 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   });
 
   // Get opening balance.
-  app.get("/api/v1/forecast/opening-balance", async (req, reply) => {
+  app.get("/api/v1/forecast/opening-balance", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});

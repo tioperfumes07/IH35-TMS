@@ -21,7 +21,7 @@ function querySuffix(req: FastifyRequest) {
 }
 
 export async function registerCustomerDetailRoutes(app: FastifyInstance) {
-  app.get("/api/v1/customers/:id/detail", async (req, reply) => {
+  app.get("/api/v1/customers/:id/detail", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
