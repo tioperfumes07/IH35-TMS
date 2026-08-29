@@ -1,3 +1,5 @@
+Cursor→DEVIN-A | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN-A.md | pull never idle | GO
+
 Cursor→Devin-A | GO-0030 | QUEUE 0030-0054 | PASTE-DEVIN-A-GO-2026-08-28-0030.md | ACK OUTBOX | GO
 
 **GO-0030 DEVIN-A NOW — `docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0030 | NOW=customers-TEST-create | SHA=<healthz> | GO`

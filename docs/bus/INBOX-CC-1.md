@@ -1,3 +1,5 @@
+Cursor→CC-1 | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | pull never idle | GO
+
 Cursor→CC-1 | GO-0030 | QUEUE 0030-0054 | PASTE-CC-1-GO-2026-08-28-0030.md | do not gate other seats | ACK OUTBOX | GO
 
 **GO-0030 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0030 | NOW=accounting-TEST-expense | SHA=<healthz> | GO`
