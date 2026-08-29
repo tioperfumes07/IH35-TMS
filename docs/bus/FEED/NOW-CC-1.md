@@ -1,4 +1,17 @@
+# NOW — CC-1 (money · SCEN-01 · live `5063761`)
+
+**ACK:** `CC-1 | ACK | SCEN-01 | NOW=flags-ih35_app-then-account-codes | SHA=5063761 | GO`
+
+**THIS IS NOW:** `docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md`
+
+1. Re-read posting flag **overrides** as **`ih35_app`**. Defaults false ≠ OFF. Never raise “flags off” from defaults alone.
+2. **`hop.assign` is yours** (driver bill + rate-card ≠ customer rate) — not Codex.
+3. Hops 4,6,8,9,11,12,13: **assert registry `je:` account codes**, not probe `n > 0`.
+4. Keep TEST. Never void. Never `prod_verified`. Never `trigger_deploy`.
+5. Still fix CI-red on your open PRs (#17602 etc.) — do not merge red. SCEN-01 does not wait on those.
+
 # NOW — CC-1 (money · GO-0055→0104 · live `b276443`)
+
 
 **ACK:** `CC-1 | ACK | GO-0055 | NOW=next-work-item-accounting-banking-vendors | SHA=b276443 | GO`
 

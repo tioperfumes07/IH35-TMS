@@ -1,3 +1,12 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7322 | Relay card deactivate/reactivate silently erased label+source hint | SOURCE=integrations.relay_company_cards | Live=5063761 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7321 | PR=#17615 @ 7227844234 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7322 metadata retention | GO
+CODEX | FINDING+FIXED CODE | FUEL-F7321 | Relay card classification mutation lacked canonical identity/query-back and audit | SOURCE=integrations.relay_company_cards+relay_deposits | Live=5063761 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7320 | PR=#17613 @ 530c061a16 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7321 Relay audit/query-back | GO
+CODEX | FINDING+FIXED CODE | FUEL-F7320 | Relay review GET/PUT entered lucia bypass without requested-company membership | SOURCE=integrations.relay_deposits+relay_company_cards | Live=5063761 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | DSP-F7319 | PR=#17609 @ aacfe4acea | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7320 Relay entity boundary | GO
+CODEX | FINDING+FIXED CODE | DSP-F7319 | transfer outbox/PWA notification zero-row writes falsely succeeded | SOURCE=outbox.events+pwa.driver_notifications | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | DSP-F7318 | PR=#17606 @ 50637611df | gate=exit0 | Live=UNVERIFIED | NEXT=DSP-F7319 notification durability | GO
+CODEX | FINDING+FIXED CODE | DSP-F7318 | equipment transfer completed before reassignment identity; prelock + rollback conflict | SOURCE=dispatch.equipment_transfer_requests+mdata.equipment | SHA=14daeed | NEXT=typecheck+FAST-MERGE | GO
 CODEX | FINDING+FIXED CODE | DRV-F7313 | live TEST applicant offered manual Hired plus Convert, but conversion rejects hired and strands canonical links | SOURCE=identity.driver_applicants via applicants.routes.ts | SHA=14daeed | NEXT=focused gate+FAST-MERGE | GO
 CODEX | FINDING+FIXED CODE | DRV-F7312 | TEST applicant ab9ac0a7 POST 201 but DOB response Wed Aug 29 not 1990-08-29 | SOURCE=identity.driver_applicants via applicants.routes.ts mapApplicant | SHA=14daeed | NEXT=focused gate+FAST-MERGE | GO
 CODEX | ACK | STANDING+GO-0055 | NOW=dispatch-unique | SHA=b276443 | GO

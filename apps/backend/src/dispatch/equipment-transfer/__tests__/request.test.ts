@@ -34,9 +34,9 @@ describe("equipment transfer request service (GAP-37)", () => {
       ["FROM dispatch.equipment_transfer_requests", []],
       ["INSERT INTO dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "55555555-aaaa-4aaa-8aaa-555555555555" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "66666666-aaaa-4aaa-8aaa-666666666666" }]],
     ]);
 
     const uuid = await initiateTransfer(client, USER, {
@@ -145,9 +145,9 @@ describe("equipment transfer request service (GAP-37)", () => {
         }],
       ],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "77777777-aaaa-4aaa-8aaa-777777777777" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "88888888-aaaa-4aaa-8aaa-888888888888" }]],
     ]);
 
     const ok = await cancelTransfer(client, USER, COMPANY, REQUEST_UUID);

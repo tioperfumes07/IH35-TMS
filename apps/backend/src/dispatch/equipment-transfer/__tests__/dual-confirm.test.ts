@@ -39,9 +39,9 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
       ],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "11111111-aaaa-4aaa-8aaa-111111111111" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "22222222-aaaa-4aaa-8aaa-222222222222" }]],
     ]);
 
     const result = await confirmOutbound(client, USER, COMPANY, REQUEST_UUID, FROM_DRIVER, OUTBOUND_EVIDENCE);
@@ -76,13 +76,14 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
           outbound_evidence_uuid: OUTBOUND_EVIDENCE,
         }],
       ],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["UPDATE mdata.equipment", [{ id: EQUIPMENT }]],
       ["INSERT INTO mdata.equipment_log", [{ id: equipmentLogId }]],
       ["audit.append_event", []],
-      ["INSERT INTO outbox.events", []],
+      ["INSERT INTO outbox.events", [{ id: "33333333-aaaa-4aaa-8aaa-333333333333" }]],
       ["to_regclass('pwa.driver_notifications')", [{ ok: true }]],
-      ["INSERT INTO pwa.driver_notifications", []],
+      ["INSERT INTO pwa.driver_notifications", [{ id: "44444444-aaaa-4aaa-8aaa-444444444444" }]],
     ]);
 
     const result = await confirmInbound(client, USER, COMPANY, REQUEST_UUID, TO_DRIVER, INBOUND_EVIDENCE);
@@ -117,8 +118,7 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
           outbound_evidence_uuid: OUTBOUND_EVIDENCE,
         }],
       ],
-      ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
-      ["UPDATE mdata.equipment", []],
+      ["FROM mdata.equipment", []],
     ]);
 
     const result = await confirmInbound(client, USER, COMPANY, REQUEST_UUID, TO_DRIVER, INBOUND_EVIDENCE);
@@ -126,11 +126,25 @@ describe("equipment transfer dual-confirm service (GAP-37)", () => {
     expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO mdata.equipment_log"))).toBe(false);
     expect(client.query.mock.calls.some((c) => String(c[0]).includes("audit.append_event"))).toBe(false);
     expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO outbox.events"))).toBe(false);
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("UPDATE dispatch.equipment_transfer_requests"))).toBe(false);
+  });
+
+  it("confirmInbound throws when the locked equipment reassignment loses its persisted identity", async () => {
+    const client = mockClient([
+      ["FROM dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID, to_driver_uuid: TO_DRIVER, from_driver_uuid: FROM_DRIVER, equipment_uuid: EQUIPMENT, status: "outbound_confirmed", outbound_evidence_uuid: OUTBOUND_EVIDENCE }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
+      ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
+      ["UPDATE mdata.equipment", []],
+    ]);
+    await expect(confirmInbound(client, USER, COMPANY, REQUEST_UUID, TO_DRIVER, INBOUND_EVIDENCE)).rejects.toThrow("equipment_reassign_failed");
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("INSERT INTO mdata.equipment_log"))).toBe(false);
+    expect(client.query.mock.calls.some((c) => String(c[0]).includes("audit.append_event"))).toBe(false);
   });
 
   it("confirmInbound rejects an empty equipment-log identity before audit or notification", async () => {
     const client = mockClient([
       ["FROM dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID, to_driver_uuid: TO_DRIVER, from_driver_uuid: FROM_DRIVER, equipment_uuid: EQUIPMENT, status: "outbound_confirmed", outbound_evidence_uuid: OUTBOUND_EVIDENCE }]],
+      ["FROM mdata.equipment", [{ id: EQUIPMENT }]],
       ["UPDATE dispatch.equipment_transfer_requests", [{ uuid: REQUEST_UUID }]],
       ["UPDATE mdata.equipment", [{ id: EQUIPMENT }]],
       ["INSERT INTO mdata.equipment_log", []],

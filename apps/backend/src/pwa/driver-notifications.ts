@@ -30,10 +30,11 @@ export async function insertDriverPwaNotification(
   const ok = Boolean((reg.rows[0] as { ok?: boolean } | undefined)?.ok);
   if (!ok) {
     // Fail-loud signal (not silent): durable outbox row + declared unavailable code in payload.
-    await client.query(
+    const undelivered = await client.query(
       `
         INSERT INTO outbox.events (event_type, payload, next_retry_at)
         VALUES ($1, $2::jsonb, now())
+        RETURNING id::text
       `,
       [
         "pwa.driver_notification.undelivered",
@@ -47,13 +48,15 @@ export async function insertDriverPwaNotification(
         }),
       ]
     );
+    if (!undelivered.rows[0]?.id) throw new Error("pwa_driver_notification_undelivered_enqueue_failed");
     return false;
   }
 
-  await client.query(
+  const inserted = await client.query(
     `
       INSERT INTO pwa.driver_notifications (operating_company_id, driver_id, title, message, payload)
       VALUES ($1::uuid, $2::uuid, $3, $4, $5::jsonb)
+      RETURNING id::text
     `,
     [
       args.operatingCompanyId,
@@ -63,5 +66,6 @@ export async function insertDriverPwaNotification(
       JSON.stringify(args.payload),
     ]
   );
+  if (!inserted.rows[0]?.id) throw new Error("pwa_driver_notification_insert_failed");
   return true;
 }
