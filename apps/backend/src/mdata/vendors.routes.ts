@@ -767,11 +767,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             FROM mdata.vendors
             WHERE id = $1
               AND operating_company_id IN (
-                SELECT uca.company_id
-                  FROM org.user_company_access uca
-                  JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
-                 WHERE uca.user_id = $2::uuid
-                   AND uca.deactivated_at IS NULL
+                SELECT org.user_accessible_company_ids()
               )
             LIMIT 1
           `,
@@ -837,11 +833,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
           FROM mdata.vendors
           WHERE id = $1
             AND operating_company_id IN (
-              SELECT uca.company_id
-                FROM org.user_company_access uca
-                JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
-               WHERE uca.user_id = $2::uuid
-                 AND uca.deactivated_at IS NULL
+              SELECT org.user_accessible_company_ids()
             )
           LIMIT 1
         `,
@@ -919,11 +911,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
               FROM mdata.vendors
               WHERE id = $1
                 AND operating_company_id IN (
-                  SELECT uca.company_id
-                    FROM org.user_company_access uca
-                    JOIN org.companies oc ON oc.id = uca.company_id AND oc.deactivated_at IS NULL
-                   WHERE uca.user_id = $2::uuid
-                     AND uca.deactivated_at IS NULL
+                  SELECT org.user_accessible_company_ids()
                 )
               LIMIT 1
             `,
