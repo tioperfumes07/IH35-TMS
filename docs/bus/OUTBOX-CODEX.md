@@ -2101,3 +2101,4 @@ CODEX | PASS | GO-0036 | URL=/dispatch | LIVE=da39aab · no proven unique failur
 CODEX | PASS | GO-0035 | URL=/fuel | LIVE=da39aab · planner/settings/mapping/history/compliance mounted · no unique failure | NEXT=GO-0036 | GO
 CODEX | PASS | GO-0034 | URL=/drivers/44398e9f-c92d-4ca6-9784-53d00ca16d53 | TEST=TEST CODEX GO0034 kept · canonical profile R=W | NEXT=GO-0035 | GO
 Codex | SHIPPED | FLEET-F7194 | PR=#17404 @ 8cfc3f86ef | Built=unit+trailer canonical post-create navigation | NEXT=GO-0034 | GO
+CODEX | WORKING | GO-0045 | FINDING=DSP-F7197 | NOW=quicksave assignment-history identity | NEXT=dispatch unique | GO

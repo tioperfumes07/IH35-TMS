@@ -150,7 +150,7 @@ async function recordAssignment(
     user_id: string;
   }
 ) {
-  await client.query(
+  const assignment = await client.query<{ id: string }>(
     `
       INSERT INTO dispatch.load_assignment_history (
         operating_company_id, load_id, assignment_method,
@@ -160,6 +160,7 @@ async function recordAssignment(
         assigned_by_user_id, warnings_acknowledged
       )
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'[]'::jsonb)
+      RETURNING id::text
     `,
     [
       input.operating_company_id,
@@ -174,6 +175,8 @@ async function recordAssignment(
       input.user_id,
     ]
   );
+  if (!assignment.rows[0]?.id) throw new Error("E_ASSIGNMENT_HISTORY_WRITE_FAILED");
+  return assignment.rows[0].id;
 }
 
 export async function reassignUnit(
