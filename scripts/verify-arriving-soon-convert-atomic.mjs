@@ -15,7 +15,7 @@ function failures(candidate) {
     ["WO insert failure truth", /if \(!wo\?\.id\) throw new Error\("arriving_soon_work_order_insert_failed"\)/],
     ["lineage company CAS (both schema branches)", lineageCompanyCasCount === 2],
     ["lineage failure truth (both schema branches)", lineageFailureCount === 2],
-    ["unit block load/company scope", /UPDATE mdata\.units AS u[\s\S]{0,500}u\.operating_company_id = \$4::uuid[\s\S]{0,180}l\.id = \$3::uuid[\s\S]{0,100}l\.operating_company_id = \$4::uuid[\s\S]{0,100}l\.assigned_unit_id = u\.id[\s\S]{0,160}RETURNING id::text/],
+    ["unit block load/company scope", /UPDATE mdata\.units AS u[\s\S]{0,500}COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = \$4::uuid[\s\S]{0,180}l\.id = \$3::uuid[\s\S]{0,100}l\.operating_company_id = \$4::uuid[\s\S]{0,100}l\.assigned_unit_id = u\.id[\s\S]{0,160}RETURNING id::text/],
     ["unit block failure truth", /if \(!blocked\.rows\[0\]\) throw new Error\("arriving_soon_unit_block_lost"\)/],
   ];
   return checks.filter(([, assertion]) => typeof assertion === "boolean" ? !assertion : !assertion.test(route)).map(([label]) => label);
@@ -28,14 +28,18 @@ if (problems.length) {
 }
 
 if (process.argv.includes("--selftest")) {
+  if (problems.length) {
+    console.error(`verify-arriving-soon-convert-atomic selftest BASELINE FAIL:\n${problems.map((p) => ` - ${p}`).join("\n")}`);
+    process.exit(1);
+  }
   const mutations = [
-    ['{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', ""],
+    ['"/api/v1/maintenance/arriving-soon/:load_id/convert-issue-to-wo",\n    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', '"/api/v1/maintenance/arriving-soon/:load_id/convert-issue-to-wo",'],
     ["AND operating_company_id = $2::uuid\n            AND unit_id = $3", "AND TRUE\n            AND unit_id = $3"],
     ["FOR UPDATE", ""],
     ['if (!wo?.id) throw new Error("arriving_soon_work_order_insert_failed");', ""],
     ["AND operating_company_id = $3::uuid", "AND TRUE", true],
     ['if (!linked.rows[0]) throw new Error("arriving_soon_issue_link_lost");', "", true],
-    ["AND u.operating_company_id = $4::uuid", "AND TRUE"],
+    ["AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $4::uuid", "AND TRUE"],
     ["AND l.operating_company_id = $4::uuid", "AND TRUE"],
     ['if (!blocked.rows[0]) throw new Error("arriving_soon_unit_block_lost");', ""],
   ];
