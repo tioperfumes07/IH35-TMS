@@ -634,15 +634,15 @@ export function BookLoadModalV4({
     []
   );
 
-  const validationIssues = useMemo(
+  const validationChecks = useMemo(
     () => [
-      "Unit PM up-to-date check",
-      "DVIR / dispatch block",
-      "Trailer inspection check (pending automation)",
-      "Customer quality flag warning (pending automation)",
-      "FMCSA broker authority cache check (pending automation)",
-      "Driver instructions pushed to driver mobile app + dispatch sheet PDF",
-      "Expected adjustments flagged on customer invoice review banner",
+      { text: "Unit repair / availability gate", code: "readiness", state: "live" as const },
+      { text: "DVIR major-defect authorization gate", code: "authorization required", state: "live" as const },
+      { text: "Trailer inspection check", code: "not automated", state: "pending" as const },
+      { text: "Customer quality flag warning", code: "not automated", state: "pending" as const },
+      { text: "FMCSA broker authority cache check", code: "not automated", state: "pending" as const },
+      { text: "Driver instructions → mobile + dispatch PDF", code: "on save", state: "on_save" as const },
+      { text: "Expected adjustments → invoice review", code: "on save", state: "on_save" as const },
     ],
     []
   );
@@ -1761,7 +1761,7 @@ export function BookLoadModalV4({
                   onOverrideRepairBlockChange={setOverrideRepairBlock}
                   onSubmitBlockedChange={setRepairBlockSubmitBlocked}
                 />
-                <BookLoadValidationSection issues={validationIssues} />
+                <BookLoadValidationSection checks={validationChecks} />
               </div>
             </section>
 
