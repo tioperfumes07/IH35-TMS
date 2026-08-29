@@ -63,8 +63,10 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/fraud-alerts registered as ProtectedRoute wrapping FraudAlertsListPage; page now guards missing operating company with honest empty state; fetches /api/v1/fuel/fraud-alerts with operating_company_id; query errors surface ListErrorBanner with retry; ParityTable renders entity-scoped fraud alerts with honest empty text; action mutations (investigate/confirm/dismiss) scoped to the selected company. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/fraud-alerts registered as ProtectedRoute wrapping FraudAlertsListPage; page now guards missing operating company with honest empty state; fetches /api/v1/fuel/fraud-alerts with operating_company_id; query errors surface ListErrorBanner with retry; ParityTable renders entity-scoped fraud alerts with honest empty text; action mutations (investigate/confirm/dismiss) scoped to the selected company. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2, route confirmed registered). Codex's live re-check: Fuel fraud alerts renders all lifecycle filters, search/range/gear/pager, Actions column, named settled empty \"No fraud alerts for this filter\" -- USMCA. Binding on Codex's evidence + route corroboration.",
       "pr": "#5306",
+      "live_verified_at": "2026-08-29T23:00:00.000Z",
+      "live_verified_sha": "ed4e2f2",
       "prod_verified": true
     },
     {
@@ -77,8 +79,10 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/history registered as ProtectedRoute wrapping FuelTabRoute tabId=history \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; history tab fetches /api/v1/fuel/transactions via getFuelTransactions(companyId, {limit:200}) only when tab is active; transaction query errors now surface ListErrorBanner with retry; loading and honest empty states present; FuelTransactionsTable renders entity-scoped rows. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/history registered as ProtectedRoute wrapping FuelTabRoute tabId=history \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; history tab fetches /api/v1/fuel/transactions via getFuelTransactions(companyId, {limit:200}) only when tab is active; transaction query errors now surface ListErrorBanner with retry; loading and honest empty states present; FuelTransactionsTable renders entity-scoped rows. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): STATE CHANGE since 08-09 -- no longer empty. Neon lucia (bypass_rls) direct read this turn: fuel.fuel_transactions=3 for USMCA, exact match to Codex's OUTBOX-handed live count (3 transactions render with Create/Import + full toolbar, real Javier Vargas Solis→T149→L-20260824-0007 links plus USMCA-T01 trailer link). Binding on this independently-confirmed count.",
       "pr": "#5307",
+      "live_verified_at": "2026-08-29T23:00:00.000Z",
+      "live_verified_sha": "ed4e2f2",
       "prod_verified": true
     },
     {
@@ -134,8 +138,10 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fuel/settings registered as ProtectedRoute wrapping FuelTabRoute tabId=settings \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; settings tab fetches /api/v1/fuel/planner/settings via getFuelPlannerSettings(companyId); query errors now surface ListErrorBanner with retry; loading and unavailable states present; PlannerSettingsForm edits settings via PATCH /api/v1/fuel/planner/settings with operating_company_id. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "evidence": "Route /fuel/settings registered as ProtectedRoute wrapping FuelTabRoute tabId=settings \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; settings tab fetches /api/v1/fuel/planner/settings via getFuelPlannerSettings(companyId); query errors now surface ListErrorBanner with retry; loading and unavailable states present; PlannerSettingsForm edits settings via PATCH /api/v1/fuel/planner/settings with operating_company_id. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2, route confirmed registered). Codex's live re-check: Planner settings renders saved routing/overfill values, expensive-state creator, honest no-active-catalog state, retained saved codes, real Save settings action -- USMCA. Neon lucia (bypass_rls) direct read this turn: fuel.fuel_planner_settings=1 for USMCA, stable. Binding on Codex's evidence + Neon corroboration.",
       "pr": "#5313",
+      "live_verified_at": "2026-08-29T23:00:00.000Z",
+      "live_verified_sha": "ed4e2f2",
       "prod_verified": true
     }
   ],
