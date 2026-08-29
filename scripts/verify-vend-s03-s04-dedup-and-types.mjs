@@ -103,6 +103,13 @@ function assert(files) {
       problems.push(`${ROUTES}: ${name} SELECT must use org.user_accessible_company_ids() not direct org.user_company_access (Owner with 0 uca gets 404)`);
     }
   }
+
+  // LST-F9101 — vendor deactivate endpoint must have rateLimit config (CodeQL js/missing-rate-limiting).
+  // The reactivate sibling already had it; deactivate was the only vendor write endpoint missing it.
+  const deactivateHead = routes.match(/app\.post\("\/api\/v1\/mdata\/vendors\/:id\/deactivate"[^)]*\)/)?.[0] ?? "";
+  if (deactivateHead && !/rateLimit/.test(deactivateHead)) {
+    problems.push(`${ROUTES}: deactivate endpoint must have config.rateLimit (CodeQL js/missing-rate-limiting — LST-F9101)`);
+  }
   return problems;
 }
 
