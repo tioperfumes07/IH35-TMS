@@ -2086,3 +2086,4 @@ Codex | FINDING | DSP-MONEY-F7146B-R1 | routed=CC-1 | SOURCE=dispatch.load_cance
 Codex | WORKING | DSP-F7190 | CLAIM=detention-arrival-must-not-close-accrual | SOURCE=load_stops arrival/departure→detention_events | NEXT=guard+FAST-MERGE | GO
 CODEX | GO-0052 | FINDING=DRV-F7191 | replace-driver active-state race fixed with company-scoped CAS + typed 409 | NEXT=gate+FAST-MERGE then GO-0053 | GO
 CODEX | GO-0053 | FINDING=DSP-F7192 | layover detector duplicate race fixed with per-company DB serialization | NEXT=guard+FAST-MERGE then GO-0054 | GO
+Codex | GO-0030 | LIVE FAIL→FIXING | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | FINDING=DSP-F7193 | customer/pickup refs saved but detail read-model rendered — | CLOSES=none — Book TEST load; dispatch items need GUARD after PASS | NEXT=guard+FAST-MERGE | GO

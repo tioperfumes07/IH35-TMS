@@ -856,6 +856,13 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
                  ml.miles_practical AS miles_practical,
                  ml.loaded_miles AS loaded_miles,
                  ml.miles_deadhead AS miles_deadhead,
+                 -- DSP-F7193: the canonical Book Load write stores both operator references on
+                 -- mdata.loads, but the shared dispatch view does not project either column.
+                 -- LoadDetailDrawer therefore rendered "—" immediately after a successful save.
+                 -- Read them from the same entity-scoped mdata.loads alias used for trip type,
+                 -- miles and commodity; do not widen the shared view or add a second source.
+                 ml.customer_wo_number AS customer_wo_number,
+                 ml.pickup_number AS pickup_number,
                  -- ACCT-F9508 (migration 202613220000): same trip_type pattern above — view has no
                  -- commodity/cargo_weight_lbs cols, read from mdata.loads via ml rather than widening
                  -- the shared view. Feeds LoadDetailDrawer + the Edit wizard's prefill (editLoadMapping.ts).
