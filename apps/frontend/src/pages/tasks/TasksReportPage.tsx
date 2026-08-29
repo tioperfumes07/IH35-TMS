@@ -56,7 +56,19 @@ export function TasksReportPage() {
     enabled: Boolean(companyId),
   });
 
-  const tasks = query.data?.tasks ?? [];
+  // GO-0044-TASKS-REPORT-OVERDUE-ROLLOVER-CONTAMINATION: /tasks/planner (fetchPlannerTasks)
+  // intentionally includes ANY still-open task scheduled before date_from, unbounded -- that's
+  // correct for the Planner grid (so "This Week" never hides old open work), but wrong here: this
+  // page presents an explicit "Window: 7d/30d/90d" period contract, and without this filter a task
+  // scheduled a year ago that's still open gets counted in "Total tasks"/"Completion rate"/the
+  // per-assignee table for EVERY window size, silently deflating completion rate and making the
+  // Window filter not actually change the denominator the way it implies. Re-scope to the report's
+  // own selected period; the Planner/Calendar/Mine pages that also call this endpoint keep the
+  // unbounded rollover, unaffected (they read query.data directly, not through this page).
+  const tasks = useMemo(
+    () => (query.data?.tasks ?? []).filter((t) => t.scheduled_date >= date_from && t.scheduled_date <= date_to),
+    [query.data?.tasks, date_from, date_to],
+  );
 
   const statusCounts = useMemo(() => {
     const m = new Map<TaskStatus, number>();
