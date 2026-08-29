@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { DispatchLoadRow } from "../../api/loads";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { loadSpanEndMs, loadSpanStartMs, orderedLegsForUnit, resolvedTripType, type TripKind } from "./roundTripsLegs";
@@ -70,19 +71,25 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
           byUnit.map(([unitId, unitLoads]) => {
             const chrono = [...unitLoads].sort((a, b) => loadSpanStartMs(a) - loadSpanStartMs(b));
             const legs = orderedLegsForUnit(unitLoads);
-            const unitLabel = unitLoads[0]?.assigned_unit_number ?? unitId;
             return (
               <div
                 key={unitId}
                 className="relative border-b border-gray-100"
                 style={{ minHeight: 40 + legs.length * 22 }}
-                data-testid={`round-trips-timeline-unit-${unitLabel}`}
+                data-testid={`round-trips-timeline-unit-${unitId}`}
               >
                 <div
                   className="grid"
                   style={{ gridTemplateColumns: `7rem repeat(${days.length}, minmax(2.5rem, 1fr))` }}
                 >
-                  <div className="truncate px-2 py-2 text-xs font-semibold text-gray-800">{unitLabel}</div>
+                  <div className="truncate px-2 py-2 text-xs font-semibold text-gray-800">
+                    <EntityLinkOrTombstone
+                      kind="unit"
+                      id={unitId}
+                      name={unitLoads[0]?.assigned_unit_number}
+                      noun="Unit"
+                    />
+                  </div>
                   <div className="relative min-h-10" style={{ gridColumn: `2 / span ${days.length}` }}>
                     {chrono.slice(0, -1).map((load, i) => {
                       const next = chrono[i + 1];
