@@ -7,6 +7,9 @@ const backendSource = fs.readFileSync("apps/backend/src/routes/safety/dot-inspec
 
 function inspect(value, backend = backendSource) {
   const failures = [];
+  const createStart = backend.indexOf('app.post("/api/v1/safety/dot-inspections"');
+  const createEnd = backend.indexOf('app.post("/api/v1/safety/dot-inspections/:id/upload-pdf"', createStart);
+  const createBackend = createStart >= 0 && createEnd > createStart ? backend.slice(createStart, createEnd) : "";
   const checks = [
     [/companyGenerationRef = useRef\(0\)/, "missing company generation"],
     [/createDotInspection\(input\.companyId, input\.payload\)/, "create uses mutable company/form"],
@@ -35,6 +38,13 @@ function inspect(value, backend = backendSource) {
     const pattern = new RegExp(`"safety\\.dot_inspection\\.${event}",[\\s\\S]{0,260}operating_company_id: query\\.data\\.operating_company_id`);
     if (!pattern.test(backend)) failures.push(`${event} audit must identify the operating company`);
   }
+  if (!createBackend) failures.push("mounted DOT inspection creator block is missing");
+  if (!/withCompany\(user\.uuid, user\.role, query\.data\.operating_company_id, async \(client\) =>/.test(createBackend)) {
+    failures.push("mounted DOT inspection creator must use the company-scoped transaction wrapper");
+  }
+  if (/client\.query\(["'`](?:BEGIN|COMMIT|ROLLBACK)["'`]\)/.test(createBackend)) {
+    failures.push("mounted DOT inspection creator must not own nested transaction control");
+  }
   return failures;
 }
 
@@ -59,6 +69,11 @@ if (process.argv.includes("--selftest")) {
     const eventBlock = new RegExp(`("safety\\.dot_inspection\\.${event}",[\\s\\S]{0,260})operating_company_id: query\\.data\\.operating_company_id,`);
     const mutatedBackend = backendSource.replace(eventBlock, "$1");
     if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error(`missed ${event} audit mutation`);
+  }
+  const createNeedle = "const payload = await withCompany(user.uuid, user.role, query.data.operating_company_id, async (client) => {";
+  for (const control of ["BEGIN", "COMMIT", "ROLLBACK"]) {
+    const mutatedBackend = backendSource.replace(createNeedle, `${createNeedle}\n      await client.query("${control}");`);
+    if (mutatedBackend === backendSource || inspect(source, mutatedBackend).length === 0) throw new Error(`missed nested ${control} mutation`);
   }
   console.log(`verify-dot-inspection-action-company-lifecycle --selftest PASS (${mutations.length + 7}/${mutations.length + 7})`);
 } else {
