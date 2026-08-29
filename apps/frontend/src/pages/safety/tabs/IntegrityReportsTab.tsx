@@ -26,6 +26,38 @@ type IntegrityRow = IntegrityReportRow & { _rowKey: string };
 type SubTab = "wo-cost" | "fuel-mpg" | "driver-dwell" | "hos-pattern" | "driver-vendor" | "active-alerts" | "anomalies";
 const REPORT_PAGE_SIZE = 50;
 
+// GUARD-F7307-class fix (SAFETY-INTEGRITY-REPORTS-DRIVER-VENDOR-TAB-BAR-MISSING, 2026-08-29): the four
+// subTab branches below each rendered their OWN copy-pasted tab-bar array — three did, one (driver-vendor)
+// was a bare early-return with none at all, permanently stranding the operator on that one sub-tab with no
+// way back except a hard reload. Single shared list + renderer so the four branches can never drift again.
+const SUB_TABS: { id: SubTab; label: string }[] = [
+  { id: "wo-cost", label: "WO Cost Outliers" },
+  { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
+  { id: "driver-dwell", label: "Driver Dwell Outliers" },
+  { id: "hos-pattern", label: "HOS Pattern Breaks" },
+  { id: "driver-vendor", label: "Driver-Vendor Mapping" },
+  { id: "active-alerts", label: "Active Alerts" },
+  { id: "anomalies", label: "Anomalies" },
+];
+
+function IntegritySubTabBar({ subTab, onChange }: { subTab: SubTab; onChange: (next: SubTab) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {SUB_TABS.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          className="rounded-sm border px-3 py-1 text-xs font-semibold"
+          style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
+          onClick={() => onChange(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function IntegrityEntityCell({ row }: { row: IntegrityRow }) {
   const driverId = String(row.driver_id ?? row.subject_driver_id ?? "").trim();
   const unitId = String(row.unit_id ?? row.subject_unit_id ?? "").trim();
@@ -212,33 +244,18 @@ export function IntegrityReportsTab() {
   );
 
   if (subTab === "driver-vendor") {
-    return <DriverVendorMappingTab />;
+    return (
+      <div className="space-y-3" data-testid="integrity-reports-driver-vendor">
+        <IntegritySubTabBar subTab={subTab} onChange={setSubTab} />
+        <DriverVendorMappingTab />
+      </div>
+    );
   }
 
   if (subTab === "active-alerts") {
     return (
       <div className="space-y-3" data-testid="integrity-reports-active-alerts">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: "wo-cost", label: "WO Cost Outliers" },
-            { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
-            { id: "driver-dwell", label: "Driver Dwell Outliers" },
-            { id: "hos-pattern", label: "HOS Pattern Breaks" },
-            { id: "driver-vendor", label: "Driver-Vendor Mapping" },
-            { id: "active-alerts", label: "Active Alerts" },
-            { id: "anomalies", label: "Anomalies" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className="rounded-sm border px-3 py-1 text-xs font-semibold"
-              style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
-              onClick={() => setSubTab(tab.id as SubTab)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <IntegritySubTabBar subTab={subTab} onChange={setSubTab} />
         <IntegrityAlertsPage operatingCompanyId={companyId} />
       </div>
     );
@@ -247,27 +264,7 @@ export function IntegrityReportsTab() {
   if (subTab === "anomalies") {
     return (
       <div className="space-y-3" data-testid="integrity-reports-anomalies">
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: "wo-cost", label: "WO Cost Outliers" },
-            { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
-            { id: "driver-dwell", label: "Driver Dwell Outliers" },
-            { id: "hos-pattern", label: "HOS Pattern Breaks" },
-            { id: "driver-vendor", label: "Driver-Vendor Mapping" },
-            { id: "active-alerts", label: "Active Alerts" },
-            { id: "anomalies", label: "Anomalies" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className="rounded-sm border px-3 py-1 text-xs font-semibold"
-              style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
-              onClick={() => setSubTab(tab.id as SubTab)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        <IntegritySubTabBar subTab={subTab} onChange={setSubTab} />
         {/* Detector/rule-engine based anomaly review inbox (ack/resolve/dismiss + audit trail) —
             a separate, more advanced engine (safety.anomalies) than the Active Alerts rule table above. */}
         <AnomaliesTab />
@@ -281,27 +278,7 @@ export function IntegrityReportsTab() {
         Foundation outlier views (Phase 3). Active alerts tab runs the A23-12 rule engine inbox.
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: "wo-cost", label: "WO Cost Outliers" },
-          { id: "fuel-mpg", label: "Fuel MPG Anomalies" },
-          { id: "driver-dwell", label: "Driver Dwell Outliers" },
-          { id: "hos-pattern", label: "HOS Pattern Breaks" },
-          { id: "driver-vendor", label: "Driver-Vendor Mapping" },
-            { id: "active-alerts", label: "Active Alerts" },
-            { id: "anomalies", label: "Anomalies" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className="rounded-sm border px-3 py-1 text-xs font-semibold"
-            style={subTab === tab.id ? { background: "#1f2a44", borderColor: "#1f2a44", color: "white" } : { background: "white", borderColor: "#cbd5e1", color: "#334155" }}
-            onClick={() => setSubTab(tab.id as SubTab)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <IntegritySubTabBar subTab={subTab} onChange={setSubTab} />
 
       {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to emptyText "No observations available for this integrity report."
           — an outage presenting as an integrity report with nothing to observe. Active sub-tab query only (wo/fuel/dwell/hos). */}
