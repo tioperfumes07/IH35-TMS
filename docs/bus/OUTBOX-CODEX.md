@@ -2248,3 +2248,5 @@ CODEX | SHIPPED | GUARD-F7301 | PR=#17544 @ 758115df45 | gate=exit0 | Built=safe
 CODEX | WORKING | GUARD-F7302 | GO-0043 | CLAIM=integrity-evaluator-company-snapshot-guard | NEXT=FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7302 | PR=#17545 @ b276443f93 | gate=exit0 | Built=safety integrity reverse snapshot guard 30/30 | NEXT=DRV-F7303 | GO
 CODEX | WORKING | DRV-F7303 | GO-0043 | CLAIM=driver-import-payee-known-gap-shrink | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | DRV-F7303 | PR=#17546 @ 55b2b67aa2 | gate=exit0 | Built=driver import→payee gap shrink | NEXT=GUARD-F7304 | GO
+CODEX | WORKING | GUARD-F7304 | GO-0043 | CLAIM=safety expiry reverse paginated clients | NEXT=FAST-MERGE | GO
