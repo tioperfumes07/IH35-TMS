@@ -12,7 +12,7 @@ function failures(s) {
   const out = [];
   if (!s.backend.includes("activeRoutesQuerySchema") || !s.backend.includes("count(*)::int AS total_count")) out.push("active routes need an exact count");
   if (!s.backend.includes("ORDER BY computed_at DESC, id DESC") || !s.backend.includes("LIMIT $2 OFFSET $3")) out.push("active routes need stable bounded paging");
-  if (!s.api.includes("{ routes: FuelActiveRoute[]; total_count: number;") || !s.api.includes("&limit=${range.limit}&offset=${range.offset}")) out.push("API must carry range and exact total");
+  if (!s.api.includes("{ routes: FuelActiveRoute[]; total_count: number | null;") || !s.api.includes("&limit=${range.limit}&offset=${range.offset}")) out.push("API must carry range and exact total-or-unavailable contract");
   if (!s.page.includes('activeRoutePage, setActiveRoutePage') || !s.page.includes('activeRoutePageCount')) out.push("mounted planner needs controlled server paging");
   if (!s.page.includes('data-testid="fuel-active-route-selector"') || !s.page.includes("setSelectedActiveRouteId")) out.push("operator must be able to choose the active plan");
   if (/routes\?\.\[0\]/.test(s.page)) out.push("planner must not silently force the first route");
@@ -20,10 +20,15 @@ function failures(s) {
 }
 
 if (process.argv.includes("--selftest")) {
+  const baseline = failures(source);
+  if (baseline.length) {
+    console.error(`FAIL: selftest baseline is red: ${baseline.join("; ")}`);
+    process.exit(1);
+  }
   const mutations = [
     { ...source, backend: source.backend.replace("count(*)::int AS total_count", "1::int AS total_count") },
     { ...source, backend: source.backend.replace("LIMIT $2 OFFSET $3", "LIMIT 100") },
-    { ...source, api: source.api.replace("{ routes: FuelActiveRoute[]; total_count: number;", "{ routes: FuelActiveRoute[];") },
+    { ...source, api: source.api.replace("{ routes: FuelActiveRoute[]; total_count: number | null;", "{ routes: FuelActiveRoute[];") },
     { ...source, page: source.page.replace('data-testid="fuel-active-route-selector"', 'data-testid="disabled"') },
     { ...source, page: `${source.page}\nconst regression = routes?.[0];` },
   ];
