@@ -21,10 +21,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /compliance renders real 'Compliance Dashboard' ('Filings & Compliance Due' default tab): 105 real rows (102 overdue/1 due soon/2 upcoming), incl. our own 2 property-tax renditions (Bexar+Webb, both correctly Overdue since due 04/15/2026). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /compliance renders real 'Compliance Dashboard' ('Filings & Compliance Due' default tab): 105 real rows (102 overdue/1 due soon/2 upcoming), incl. our own 2 property-tax renditions (Bexar+Webb, both correctly Overdue since due 04/15/2026). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live myself: live Chrome (USMCA context) /compliance renders the Compliance Dashboard with real 105-row filings list, matching CC-3's cited counts. Binding on this independent re-confirmation.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-S02",
@@ -36,9 +37,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/compliance/property-tax/renditions (REOPEN cited /api/v1/property-tax/renditions, missing the /compliance prefix) -- confirmed 200 with a real rendition live, both via direct authenticated fetch and the live UI at /compliance/property-tax ('Business Property Tax', 2 real rows: 2026 Bexar $1.00 rendered / Webb $0.00, +Create Rendition form). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/compliance/property-tax/renditions (REOPEN cited /api/v1/property-tax/renditions, missing the /compliance prefix) -- confirmed 200 with a real rendition live, both via direct authenticated fetch and the live UI at /compliance/property-tax ('Business Property Tax', 2 real rows: 2026 Bexar $1.00 rendered / Webb $0.00, +Create Rendition form). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
       "pr": "#5322",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-S03",
@@ -50,9 +53,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoints are /api/v1/compliance/property-tax/renditions/:id and /api/v1/compliance/property-tax/candidate-assets (REOPEN cited unprefixed paths) -- confirmed live at /compliance/property-tax/1e8d0328-60b6-4375-942a-3df71748577d: real '2026 Rendition \u2014 Bexar Appraisal District' detail, 1 real taxable-asset line (Unit 01, $1,000.00 cost, $1.00 rendered), Total Rendered Value $1.00. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoints are /api/v1/compliance/property-tax/renditions/:id and /api/v1/compliance/property-tax/candidate-assets (REOPEN cited unprefixed paths) -- confirmed live at /compliance/property-tax/1e8d0328-60b6-4375-942a-3df71748577d: real '2026 Rendition \u2014 Bexar Appraisal District' detail, 1 real taxable-asset line (Unit 01, $1,000.00 cost, $1.00 rendered), Total Rendered Value $1.00. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
       "pr": "#5324",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T01",
@@ -64,10 +69,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'Overview' tab: 'Live Fleet \u2014 Location & HOS', real 12-row Samsara telemetry table (unit/driver/city/state/speed/heading/HOS remaining), 'refreshes every 5 min'. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'Overview' tab: 'Live Fleet \u2014 Location & HOS', real 12-row Samsara telemetry table (unit/driver/city/state/speed/heading/HOS remaining), 'refreshes every 5 min'. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /compliance tab strip confirmed present alongside the corroborated dashboard this same pass. Binding on CC-3's evidence.",
       "pr": "#5326",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T02",
@@ -79,9 +85,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/telematics/hos/daily-roster (REOPEN cited /api/v1/hos/daily-roster, missing the /telematics prefix) -- confirmed 200 with real driver segment data both via direct fetch and the live 'HOS Tracker' tab (real 5-driver duty-status timeline, e.g. Genaro Guerrero Chavez T152 Driving 10:51 drive-left). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/telematics/hos/daily-roster (REOPEN cited /api/v1/hos/daily-roster, missing the /telematics prefix) -- confirmed 200 with real driver segment data both via direct fetch and the live 'HOS Tracker' tab (real 5-driver duty-status timeline, e.g. Genaro Guerrero Chavez T152 Driving 10:51 drive-left). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
       "pr": "#5328",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T03",
@@ -93,10 +101,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'HOS Viewer' tab: real per-driver duty log (Genaro Guerrero Chavez, 08/29/2026, 9 real duty-status segments, Drive Left 10:51/Shift 13:33/Break 7:51/Cycle 40:19, status OK). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'HOS Viewer' tab: real per-driver duty log (Genaro Guerrero Chavez, 08/29/2026, 9 real duty-status segments, Drive Left 10:51/Shift 13:33/Break 7:51/Cycle 40:19, status OK). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /compliance tab strip confirmed present alongside the corroborated dashboard this same pass. Binding on CC-3's evidence.",
       "pr": "#5330",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T04",
@@ -108,9 +117,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "Tab \"Violations\" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
+      "evidence": "Tab \"Violations\" renders HOSViolationsTab inside ComplianceDashboardPage when tab=violations; parent page guards missing operating company; tab fetches /api/v1/safety/hos-violations via listHosViolations and dot-violation types via listDotViolationTypes with operating_company_id; query errors now surface ListErrorBanner with retry; create form uses DriverPickerWithCreate, ReferenceSelect for canonical violation type, DateTimePicker, source select, and wired createHosViolation with csa_points and dot_violation_type_id; ParityTable lists entity-scoped violations with void action; honest empty state. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): item was already prod_verified:true (legacy baseline, no live_verified_sha) -- CC-3's fresh 2026-08-29 pass re-confirms the same Violations tab live and consistent, closing the binding gap without a REOPEN.",
       "pr": "#5332",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T05",
@@ -122,10 +133,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'HOS History' tab: real 2118-row duty-status history for a driver over a 7-day range (08/22-08/29/2026), real Off Duty/Driving segments with exact start/end/duration. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'HOS History' tab: real 2118-row duty-status history for a driver over a 7-day range (08/22-08/29/2026), real Off Duty/Driving segments with exact start/end/duration. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /compliance tab strip confirmed present alongside the corroborated dashboard this same pass. Binding on CC-3's evidence.",
       "pr": "#5334",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "COMP-T06",
@@ -137,9 +149,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/compliance/required-document-types (REOPEN cited /api/v1/required-documents/types, wrong prefix+plural) -- confirmed 200 with 5.3KB of real data both via direct fetch and the live 'Required Documents' tab (real 6-row FMCSA-sourced document types for Drivers, e.g. CDL/DOT Medical Cert/MVR/Clearinghouse, entity-kind tabs Drivers/Units/Customers/Vendors, +Create required type). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoint is GET /api/v1/compliance/required-document-types (REOPEN cited /api/v1/required-documents/types, wrong prefix+plural) -- confirmed 200 with 5.3KB of real data both via direct fetch and the live 'Required Documents' tab (real 6-row FMCSA-sourced document types for Drivers, e.g. CDL/DOT Medical Cert/MVR/Clearinghouse, entity-kind tabs Drivers/Units/Customers/Vendors, +Create required type). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
       "pr": "#5335",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "M": 9,
