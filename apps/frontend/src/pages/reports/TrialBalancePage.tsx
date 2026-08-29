@@ -19,6 +19,7 @@ import { formatDateUS } from "../../lib/formatDate";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 import { getShowAccountNumbers } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
+import { useExportAction } from "../../hooks/useExportAction";
 
 function money(cents: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((Number(cents) || 0) / 100);
@@ -48,6 +49,7 @@ export function TrialBalancePage() {
   const [showCodes] = useShowAccountNumbers();
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
+  const exportAction = useExportAction();
   const staged = useStagedListFilters({
     applied,
     empty: emptyFilters,
@@ -190,13 +192,17 @@ export function TrialBalancePage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportTrialBalanceReport({
-                  operating_company_id: companyId,
-                  as_of_date: applied.end,
-                  format: "pdf",
-                })
+                void exportAction.run(
+                  () =>
+                    exportTrialBalanceReport({
+                      operating_company_id: companyId,
+                      as_of_date: applied.end,
+                      format: "pdf",
+                    }),
+                  "Trial balance export failed",
+                )
               }
             >
               Export PDF
@@ -204,13 +210,17 @@ export function TrialBalancePage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportTrialBalanceReport({
-                  operating_company_id: companyId,
-                  as_of_date: applied.end,
-                  format: "xlsx",
-                })
+                void exportAction.run(
+                  () =>
+                    exportTrialBalanceReport({
+                      operating_company_id: companyId,
+                      as_of_date: applied.end,
+                      format: "xlsx",
+                    }),
+                  "Trial balance export failed",
+                )
               }
             >
               Export XLSX
@@ -221,6 +231,11 @@ export function TrialBalancePage() {
 
       {!companyId ? <p className="text-sm text-red-600">Select an operating company.</p> : null}
       {query.isError ? <ReportBlockTPendingBanner error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {exportAction.error ? (
+        <p role="alert" className="no-print text-xs text-red-700">
+          {exportAction.error}
+        </p>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(applied) !== JSON.stringify(emptyFilters) ? 1 : 0}

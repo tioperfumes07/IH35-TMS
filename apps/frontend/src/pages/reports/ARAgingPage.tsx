@@ -17,6 +17,7 @@ import { arAgingCustomerProfileHref, arAgingInvoiceListHref } from "./agingDrill
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
+import { useExportAction } from "../../hooks/useExportAction";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { printLetterHtml } from "../../lib/openPrintableDocument";
 
@@ -42,6 +43,7 @@ export function ARAgingPage() {
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const emptyFilters: ARAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", customerId: "" };
   const [appliedFilters, setAppliedFilters] = useState<ARAgingFilters>({ ...emptyFilters, customerId: deepLinkCustomerId });
+  const exportAction = useExportAction();
   useEffect(() => {
     setAppliedFilters((prev) => ({ ...prev, customerId: deepLinkCustomerId }));
   }, [deepLinkCustomerId]);
@@ -198,13 +200,17 @@ export function ARAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportArAging({
-                  operating_company_id: companyId,
-                  as_of_date: appliedFilters.asOfDate,
-                  format: "pdf",
-                })
+                void exportAction.run(
+                  () =>
+                    exportArAging({
+                      operating_company_id: companyId,
+                      as_of_date: appliedFilters.asOfDate,
+                      format: "pdf",
+                    }),
+                  "A/R aging export failed",
+                )
               }
             >
               Export PDF
@@ -212,13 +218,17 @@ export function ARAgingPage() {
             <Button
               size="sm"
               variant="secondary"
-              disabled={!companyId}
+              disabled={!companyId || exportAction.pending}
               onClick={() =>
-                exportArAging({
-                  operating_company_id: companyId,
-                  as_of_date: appliedFilters.asOfDate,
-                  format: "xlsx",
-                })
+                void exportAction.run(
+                  () =>
+                    exportArAging({
+                      operating_company_id: companyId,
+                      as_of_date: appliedFilters.asOfDate,
+                      format: "xlsx",
+                    }),
+                  "A/R aging export failed",
+                )
               }
             >
               Export XLSX
@@ -231,6 +241,11 @@ export function ARAgingPage() {
         This report is always accrual basis under the owner-locked reporting policy.
       </p>
       {query.isError ? <ListErrorState title="Couldn't load A/R aging" status={0} message={(query.error as Error)?.message} onRetry={() => void query.refetch()} /> : null}
+      {exportAction.error ? (
+        <p role="alert" className="text-xs text-red-700">
+          {exportAction.error}
+        </p>
+      ) : null}
 
       <CollapsedListFilters
         activeFilterCount={JSON.stringify(appliedFilters) !== JSON.stringify(emptyFilters) ? 1 : 0}
