@@ -24,8 +24,8 @@ export function problems(files) {
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
   }
-  if (quick.indexOf('"load.assigned_to_driver"') > quick.indexOf("notifyBox.v =")) {
-    failures.push("Quick Assign durable enqueue must precede its supplemental push handoff");
+  if (/notifyLoadAssigned|notifyBox|\.catch\(\(\) => undefined\)/.test(quick)) {
+    failures.push("Quick Assign must use only the durable outbox, never a duplicate swallowed direct push");
   }
   if (!reassign.includes('"load.reassigned_away_from_driver"')) {
     failures.push("manual reassignment must durably notify the previous driver");
@@ -37,6 +37,9 @@ export function problems(files) {
   for (const eventType of ["load.reassigned_away_from_driver", "load.assigned_to_driver"]) {
     const event = reassign.indexOf(`"${eventType}"`);
     if (event < 0 || commit < 0 || event > commit) failures.push(`${eventType} must be enqueued before COMMIT`);
+  }
+  if (/notifyLoadAssigned|notifyLoadReassignedAway|loserBox|winnerBox|\.catch\(\(\) => undefined\)/.test(reassign)) {
+    failures.push("manual reassignment must use only durable outbox events, never duplicate swallowed direct pushes");
   }
   for (const eventType of ["load.assigned_to_driver", "load.reassigned_away_from_driver"]) {
     if (!routes.includes(`eventType: "${eventType}"`)) failures.push(`${eventType} needs a registered handler route`);
@@ -66,10 +69,12 @@ const production = Object.fromEntries(Object.entries(FILES).map(([key, file]) =>
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["quick durable enqueue", { ...production, quick: production.quick.replace('"load.assigned_to_driver"', '"load.assigned_REMOVED"') }],
+    ["quick durable enqueue", { ...production, quick: production.quick.replace('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"', 'enqueueOutboxEvent(\n          client,\n          "load.assigned_REMOVED"') }],
     ["previous-driver enqueue", { ...production, reassign: production.reassign.replace('"load.reassigned_away_from_driver"', '"load.reassigned_away_REMOVED"') }],
     ["assigned handler", { ...production, routes: production.routes.replace('eventType: "load.assigned_to_driver"', 'eventType: "load.assigned_REMOVED"') }],
     ["reassigned-away handler", { ...production, routes: production.routes.replace('eventType: "load.reassigned_away_from_driver"', 'eventType: "load.reassigned_away_REMOVED"') }],
+    ["quick duplicate direct push", { ...production, quick: `${production.quick}\nvoid notifyLoadAssigned({}).catch(() => undefined);` }],
+    ["reassign duplicate direct push", { ...production, reassign: `${production.reassign}\nvoid notifyLoadReassignedAway({}).catch(() => undefined);` }],
     ["abandoned durable enqueue", { ...production, loads: production.loads.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
     ["abandoned handler", { ...production, routes: production.routes.replace('eventType: "load.abandoned"', 'eventType: "load.abandoned_REMOVED"') }],
     ["abandoned detail failure swallow", { ...production, dispatcher: production.dispatcher.replace("  });\n\n  const loadNo = String(detail?.load_number", "  }).catch(() => null);\n\n  const loadNo = String(detail?.load_number") }],

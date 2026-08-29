@@ -2,8 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const withCurrentUserMock = vi.fn();
 const appendCrudAuditMock = vi.fn(async () => undefined);
-const notifyLoadAssignedMock = vi.fn(async () => undefined);
-const notifyLoadReassignedAwayMock = vi.fn(async () => undefined);
 const enqueueOutboxEventMock = vi.fn(async () => undefined);
 const enqueueOverrideNoticeMock = vi.fn(async () => undefined);
 const assertDriverQualifiedForLoadMock = vi.fn();
@@ -13,10 +11,6 @@ vi.mock("../../auth/db.js", () => ({
 }));
 vi.mock("../../audit/crud-audit.js", () => ({
   appendCrudAudit: appendCrudAuditMock,
-}));
-vi.mock("../../services/push-notification.service.js", () => ({
-  notifyLoadAssigned: notifyLoadAssignedMock,
-  notifyLoadReassignedAway: notifyLoadReassignedAwayMock,
 }));
 vi.mock("../../outbox/enqueue-outbox-event.js", () => ({
   enqueueOutboxEvent: enqueueOutboxEventMock,
