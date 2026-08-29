@@ -1,3 +1,4 @@
+Codex | WORKING | DSP-F7152 | CLAIM=load-template-create-201-undefined | SOURCE=dispatch.load_templates INSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0025 | NOW=next-genuine-dispatch-unique | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7151 | CLAIM=intransit-office-create-201-undefined | SOURCE=dispatch.intransit_issues INSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0023 | NOW=DISP-S19-S26-S34-S35-S36 | SHA=4e5db76 | GO
