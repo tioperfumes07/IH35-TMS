@@ -1,3 +1,4 @@
+Cursor→CC-2 | LANE-LOCK | VOID Claude-draft lanes | CC-1=money/GL · CC-2=GUARD · CC-3=FE/chrome/TEST | only you flip prod_verified | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
 Cursor→CC-2 | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | never idle | GO
 
 Cursor→CC-2 | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | pull never idle | GO

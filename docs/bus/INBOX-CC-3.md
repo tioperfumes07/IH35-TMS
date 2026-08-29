@@ -1,3 +1,4 @@
+Cursor→CC-3 | LANE-LOCK | VOID Claude-draft lanes | you are NOT GUARD | CC-3=FE/chrome/TEST · no verify-steps · no migrations | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
 Cursor→CC-3 | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-3.md | never idle | GO
 
 Cursor→CC-3 | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-3.md | pull never idle | GO
