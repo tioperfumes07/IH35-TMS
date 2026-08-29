@@ -6751,5 +6751,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-factoring-package-metadata-failures-caught"
+  },
+  "10037": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
   }
 }
