@@ -50,7 +50,11 @@ const CHECKS = [
   {
     name: "tasks.modal.create_task: CreateTaskModal real Modal drawer + DatePicker/EntityPicker",
     file: "apps/frontend/src/components/tasks/CreateTaskModal.tsx",
-    pattern: /<Modal variant="drawer" open=\{open\}[\s\S]{0,3500}<DatePicker/,
+    // RE-ANCHOR (found stale 2026-08-29): more form fields were added between the Modal open tag
+    // and the first DatePicker, pushing the real (unchanged-shape) distance to 3865 chars -- just
+    // past the old 3500 window. Widened with headroom; this is a single-file span (no adjacent
+    // route/component to falsely bleed into), so a generous bump carries no precision risk.
+    pattern: /<Modal variant="drawer" open=\{open\}[\s\S]{0,5000}<DatePicker/,
   },
   {
     name: "daily_tasks.create: DailyTasksPage real + Create -> real ParityTable",

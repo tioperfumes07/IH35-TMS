@@ -31,8 +31,16 @@ if (!driverSection.includes("defaultDriver") || !driverSection.includes("current
   console.error("verify:vehicle-profile-driver-dual-tracking FAIL: frontend must render default + current separately");
   process.exit(1);
 }
+// RE-ANCHOR (found stale 2026-08-29): "default_dca" is also a literal substring of the unrelated
+// "set_default_dca" alias (POST /drivers/default's own authorization check, lines ~54-57) with an
+// IDENTICAL company_id/is_authorized/deactivated_at chain shape. Check #0's un-anchored regex could
+// match entirely within that unrelated block, so mutating the REAL target (bare `default_dca`,
+// lines ~89-90) went undetected -- the check found the OTHER block's identical pattern instead.
+// Negative lookbehinds exclude the `set_` prefix from every default_dca reference.
 const routeChecks = (candidate) => [
-  /default_dca\.company_id = \$2::uuid[\s\S]{0,160}default_dca\.is_authorized = true[\s\S]{0,160}default_dca\.deactivated_at IS NULL/.test(candidate),
+  /(?<!set_)default_dca\.company_id = \$2::uuid[\s\S]{0,160}(?<!set_)default_dca\.is_authorized = true[\s\S]{0,160}(?<!set_)default_dca\.deactivated_at IS NULL/.test(
+    candidate,
+  ),
   /current_dca\.company_id = \$2::uuid[\s\S]{0,160}current_dca\.is_authorized = true[\s\S]{0,160}current_dca\.deactivated_at IS NULL/.test(candidate),
   /history_dca\.company_id = \$2::uuid[\s\S]{0,160}history_dca\.is_authorized = true[\s\S]{0,160}history_dca\.deactivated_at IS NULL/.test(candidate),
   (candidate.match(/rateLimit: \{ max: 120, timeWindow: "1 minute" \}/g) ?? []).length === 2,
@@ -51,8 +59,14 @@ if (aggregateChecks(aggregate).some((ok) => !ok)) {
   process.exit(1);
 }
 if (process.argv.includes("--selftest")) {
+  // RE-ANCHOR (found stale 2026-08-29): "default_dca.is_authorized = true" is also a literal
+  // SUBSTRING of "set_default_dca.is_authorized = true" (an unrelated alias, line ~56) which sorts
+  // earlier in the file. A bare .replace() (non-global) mutated that unrelated embedded occurrence
+  // instead of the real check target (the bare `default_dca` alias, line ~90), leaving the actual
+  // pattern intact and the mutation escaped. Anchored on a negative lookbehind so only the bare
+  // `default_dca` alias (not `set_default_dca`) matches.
   const routeMutations = [
-    (x) => x.replace("default_dca.is_authorized = true", "TRUE"),
+    (x) => x.replace(/(?<!set_)default_dca\.is_authorized = true/, "TRUE"),
     (x) => x.replace("current_dca.is_authorized = true", "TRUE"),
     (x) => x.replace("history_dca.is_authorized = true", "TRUE"),
     (x) => x.replace('rateLimit: { max: 120, timeWindow: "1 minute" }', 'rateLimit: { max: 0, timeWindow: "1 minute" }'),

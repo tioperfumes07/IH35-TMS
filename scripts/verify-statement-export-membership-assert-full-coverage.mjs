@@ -40,17 +40,30 @@ const ROUTES = [
   ['app.get("/api/v1/accounting/ap-aging/export/pdf"', "GET /ap-aging/export/pdf"],
   ['app.get("/api/v1/accounting/ap-aging/export/xlsx"', "GET /ap-aging/export/xlsx"],
 ];
-const WINDOW = 1000;
+// RE-ANCHOR (found stale 2026-08-29): a fixed 1000-char WINDOW from each route's start no longer
+// reached its own assertCompanyMembership call once cash-flow/export/{pdf,xlsx} gained an extra
+// from_date/to_date range-validation block (GO-0037-CASH-FLOW-STATEMENT-DATE-RANGE-ORDER-
+// UNVALIDATED, with its own explanatory comment) ahead of the real, still-present gate line --
+// pushing it to 1520/1182 chars in, past the window. The real fix (proven on live source, not just
+// a bigger magic number): bound each route's search to its OWN body -- from this route's start
+// marker to the NEXT route's start marker (or end of file for the last one) -- so the check can
+// never falsely credit a route with a LATER route's gate line bleeding into an oversized window,
+// and never again goes stale just because one route's body grows.
+function routeBody(src, idx, allIdxs) {
+  const nextIdx = Math.min(...allIdxs.filter((i) => i > idx), src.length);
+  return src.slice(idx, nextIdx);
+}
 
 function assertAll(src) {
   const problems = [];
+  const allIdxs = ROUTES.map(([needle]) => src.indexOf(needle)).filter((i) => i !== -1);
   for (const [needle, label] of ROUTES) {
     const idx = src.indexOf(needle);
     if (idx === -1) {
       problems.push(`${label}: route not found (guard target moved; update this guard)`);
       continue;
     }
-    const window = src.slice(idx, idx + WINDOW);
+    const window = routeBody(src, idx, allIdxs);
     if (!window.includes(GATE_LINE)) {
       problems.push(`${label}: does not call assertCompanyMembership before generating the export`);
     }
@@ -70,9 +83,11 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: trial-balance/export/xlsx route not found in real code`);
     process.exit(1);
   }
+  const allIdxsForSetup = ROUTES.map(([n]) => src.indexOf(n)).filter((i) => i !== -1);
+  const body = routeBody(src, idx, allIdxsForSetup);
   const gateIdx = src.indexOf(GATE_LINE, idx);
-  if (gateIdx === -1 || gateIdx - idx > WINDOW - GATE_LINE.length) {
-    console.error(`${LABEL} SELFTEST SETUP FAILED: gate line not found near trial-balance/export/xlsx (guard text drifted from real code)`);
+  if (gateIdx === -1 || gateIdx >= idx + body.length) {
+    console.error(`${LABEL} SELFTEST SETUP FAILED: gate line not found within trial-balance/export/xlsx's own route body (guard text drifted from real code)`);
     process.exit(1);
   }
   const lineStart = src.lastIndexOf("\n", gateIdx) + 1;
