@@ -36,7 +36,7 @@ function extractBodyContext(body: Record<string, unknown>, action: string, opera
 
 export async function registerDispatchAuthGateRoutes(app: FastifyInstance) {
   app.get("/api/dispatch/auth-gates/check", async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const parsed = checkQuery.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     const d = parsed.data;

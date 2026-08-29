@@ -15,7 +15,7 @@ const preDispatchBodySchema = z.object({
 
 export async function registerPreDispatchValidationRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/validation/pre-dispatch", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
 
     const user = req.user!;
     const parsed = preDispatchBodySchema.safeParse(req.body ?? {});

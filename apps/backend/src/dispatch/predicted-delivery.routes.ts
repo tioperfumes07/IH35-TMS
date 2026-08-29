@@ -33,7 +33,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 
 export async function registerPredictedDeliveryRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/loads/:load_id/confirm-predicted-delivery", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user!;
     const params = paramsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);

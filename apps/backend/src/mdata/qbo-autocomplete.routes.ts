@@ -40,7 +40,7 @@ export async function registerQboAutocompleteRoutes(app: FastifyInstance) {
   const factory =
     (table: "mdata.qbo_vendors" | "mdata.qbo_customers" | "mdata.qbo_items" | "mdata.qbo_accounts") =>
     async (req: FastifyRequest, reply: FastifyReply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       const role = String(req.user?.role ?? "");
       if (!officeRole(role)) return reply.code(403).send({ error: "forbidden" });
 

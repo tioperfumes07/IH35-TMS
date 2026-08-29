@@ -36,7 +36,7 @@ const asOfQuerySchema = z.object({
 });
 
 function currentAuthUser(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user as { uuid: string; role: string };
 }
 

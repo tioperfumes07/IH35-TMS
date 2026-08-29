@@ -22,7 +22,7 @@ function driverManagerOrAdmin(role: string): boolean {
 }
 
 function authedDriverManager(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const user = req.user as { uuid: string; role: string };
   if (!driverManagerOrAdmin(user.role)) {
     reply.code(403).send({ error: "forbidden", message: "Manager, Owner, or Administrator role required" });

@@ -50,7 +50,7 @@ const generatePdfSchema = z.object({
 
 // Auth helper
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const role = String(req.user?.role ?? "");
   if (!["Owner", "Administrator", "Manager", "Accountant", "Payroll"].includes(role)) {
     reply.code(403).send({ error: "forbidden" });

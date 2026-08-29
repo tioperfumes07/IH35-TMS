@@ -15,7 +15,7 @@ export async function registerRelayWalletBankFeedBackfillRoute(app: FastifyInsta
     "/api/integrations/relay/wallet-bank-feed/backfill",
     { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       const role = String((req.user as { role?: string } | undefined)?.role ?? "");
       if (!["Owner", "Administrator"].includes(role)) {
         return reply.code(403).send({ error: "forbidden" });

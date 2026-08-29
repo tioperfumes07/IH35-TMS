@@ -37,7 +37,7 @@ const READ_RL = { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } };
 const WRITE_RL = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } };
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user as { uuid: string; role: string };
 }
 function validationError(reply: FastifyReply, err: z.ZodError) {

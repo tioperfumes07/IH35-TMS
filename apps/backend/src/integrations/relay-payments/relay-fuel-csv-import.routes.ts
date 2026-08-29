@@ -117,7 +117,7 @@ export async function registerRelayFuelCsvImportRoute(app: FastifyInstance) {
 
   // Heavy owner-only bulk import — tight rate limit (CodeQL js/missing-rate-limiting; DoS guard).
   app.post("/api/integrations/relay/fuel/import-csv", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const role = String((req.user as { role?: string } | undefined)?.role ?? "");
     if (!["Owner", "Administrator"].includes(role)) return reply.code(403).send({ error: "forbidden" });
     const opco = String((req.query as { operating_company_id?: string } | undefined)?.operating_company_id ?? "");
