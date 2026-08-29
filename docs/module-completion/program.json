@@ -20,9 +20,11 @@
       ],
       "spec": "ProgramBoardPage \u00b7 program-system-help breadth pass",
       "status": "PASS",
-      "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 GET /api/v1/program/audit-scoreboard returns 401 without session (auth-gated, expected); audit-scoreboard.routes stamps prodReadAt via Neon SELECT now() (verify-program-scoreboard-13gate-prodread PASS); node scripts/verify-program-audit-scoreboard-api-url.mjs exit 0; healthz version=50ce01b.",
+      "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 GET /api/v1/program/audit-scoreboard returns 401 without session (auth-gated, expected); audit-scoreboard.routes stamps prodReadAt via Neon SELECT now() (verify-program-scoreboard-13gate-prodread PASS); node scripts/verify-program-audit-scoreboard-api-url.mjs exit 0; healthz version=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/legacy-scoreboard renders \"deployed @ ed4e2f2\" (current live SHA, exact match), \"Last synced: 08/29/2026 05:00 PM CT\". Binding on this independent re-confirmation.",
       "pr": "#5373",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-S02",
@@ -33,9 +35,11 @@
       ],
       "spec": "npm run reconcile:blocks shared JSON",
       "status": "PASS",
-      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 committed docs/trackers/block-reconciliation-data.json date=2026-08-08 generated_at_iso=2026-08-08T02:25:00.607Z \u00b7 universe.total_blocks_after_dedup=1203 \u00b7 counts DONE=593 PENDING=15 NEEDS-VERIFY=59; GET /api/v1/program/board 401 auth-gated; verify-program-scoreboard-13gate-prodread.mjs exit 0; healthz=50ce01b.",
+      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 committed docs/trackers/block-reconciliation-data.json date=2026-08-08 generated_at_iso=2026-08-08T02:25:00.607Z \u00b7 universe.total_blocks_after_dedup=1203 \u00b7 counts DONE=593 PENDING=15 NEEDS-VERIFY=59; GET /api/v1/program/board 401 auth-gated; verify-program-scoreboard-13gate-prodread.mjs exit 0; healthz=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/tracker (Build Progress) renders \"Deploy ed4e2f2\" (current live SHA, exact match), 1054 registered / 1245 tracked status rows -- a live, current spine, superseding the 08-08 committed-snapshot citation. Binding on this independent re-confirmation.",
       "pr": "#5373",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-S03",
@@ -46,9 +50,11 @@
       ],
       "spec": "ModuleCompletionPage \u00b7 verify-module-completion",
       "status": "PASS",
-      "evidence": "Route /program/modules -> ModuleCompletionPage fetches GET /api/v1/program/module-completion (types-only import from generated). Guard: scripts/verify-program-surfaces-s01-s05.mjs. LIVE 2026-08-28 browser USMCA: FE version.json f16f7f5 fetches API; API healthz 4e5db76 returns 404 Route not found; page showed module-completion 404 + false 'not yet defined' for all rows before boardReady gate. Table must not paint empty as undefined when fetch fails.",
+      "evidence": "Route /program/modules -> ModuleCompletionPage fetches GET /api/v1/program/module-completion (types-only import from generated). Guard: scripts/verify-program-surfaces-s01-s05.mjs. LIVE 2026-08-28 browser USMCA: FE version.json f16f7f5 fetches API; API healthz 4e5db76 returns 404 Route not found; page showed module-completion 404 + false 'not yet defined' for all rows before boardReady gate. Table must not paint empty as undefined when fetch fails. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): the 08-28 404/false-empty defect is CONFIRMED FIXED, not still active -- node scripts/verify-program-surfaces-s01-s05.mjs exit 0, and live Chrome (USMCA context) /program/modules now renders correctly: header shows served_sha=ed4e2f2 (current live, exact match, no 404), \"166 of 198 acceptance items passing across 14 modules... 39 of 198 live-proven (prod_verified)\" -- real data, no false 'not yet defined' painting. Binding on this independent re-confirmation that the fix landed.",
       "pr": "#5373 #17257",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-S04",
@@ -59,9 +65,11 @@
       ],
       "spec": "reconcile-block-status truth-first law",
       "status": "PASS",
-      "evidence": "Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 .block-ready active registrations n=1015 (367 retired excluded); verify-program-tracker-r2-live.mjs exit 0 (R2 CI-refreshed spine + committed fallback); GET /api/v1/program/tracker 401 auth-gated; healthz=50ce01b.",
+      "evidence": "Route /program/tracker -> ProgramTrackerPage; fetches /api/v1/program/tracker and renders per-block status/PR/completeness; verify-program-tracker-r2-live.mjs + verify-program-tracker-tabs-url-sync.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 .block-ready active registrations n=1015 (367 retired excluded); verify-program-tracker-r2-live.mjs exit 0 (R2 CI-refreshed spine + committed fallback); GET /api/v1/program/tracker 401 auth-gated; healthz=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/tracker renders \"Deploy ed4e2f2\" (current live SHA, exact match), 1054 registered (grown from 1015), honest per-status breakdown (Authored/Pending/In Progress/Completed). Binding on this independent re-confirmation.",
       "pr": "#5373",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-S05",
@@ -71,10 +79,11 @@
       ],
       "spec": "Program tracker tab 01 Merged PRs",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /program/legacy-board?tab=merged (ProgramBoardPage 'Merged PRs' tab): real 'showing 400 of 3000 merged PRs (most recent slice)' with real GitHub-linked PR numbers/titles/branches/merge timestamps (#7912 FINDING: INV-PARTS-FILTER..., #7911 Cursor- docs:..., etc.), working filter input. Honestly labels its own snapshot staleness ('Blocks data as of 08/16/2026... 12d old'). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /program/legacy-board?tab=merged (ProgramBoardPage 'Merged PRs' tab): real 'showing 400 of 3000 merged PRs (most recent slice)' with real GitHub-linked PR numbers/titles/branches/merge timestamps (#7912 FINDING: INV-PARTS-FILTER..., #7911 Cursor- docs:..., etc.), working filter input. Honestly labels its own snapshot staleness ('Blocks data as of 08/16/2026... 12d old'). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). healthz=b2448ce confirmed ancestor of current live. Binding on CC-3's evidence.",
       "pr": "#5373",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-S06",
@@ -85,10 +94,11 @@
       ],
       "spec": "INBOX-CODEX task 14 \u00b7 program API client error banner",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- static guard scripts/verify-program-api-error-banner.mjs (asserts ProgramBoardPage + ProgramTrackerPage replace silent/red-only errors with ListErrorBanner + refetch on API failure) run locally this session: exit 0 PASS. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- static guard scripts/verify-program-api-error-banner.mjs (asserts ProgramBoardPage + ProgramTrackerPage replace silent/red-only errors with ListErrorBanner + refetch on API failure) run locally this session: exit 0 PASS. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-api-error-banner.mjs re-run clean this pass. Binding on CC-3's evidence + this re-confirmation.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "PROG-VERIFY-01",
@@ -105,10 +115,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- live click-through this session across /program (Scenario tracker, real SCEN-01 lifecycle data incl. our own hops), /program/tracker (Build Progress, real 1046-registered live counts, Deploy tag matches healthz exactly = b2448ce), /program/legacy-board (Audit Truth board + Merged PRs tab, both real). USMCA entity, Owner session. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- live click-through this session across /program (Scenario tracker, real SCEN-01 lifecycle data incl. our own hops), /program/tracker (Build Progress, real 1046-registered live counts, Deploy tag matches healthz exactly = b2448ce), /program/legacy-board (Audit Truth board + Merged PRs tab, both real). USMCA entity, Owner session. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): all 6 constituent PROG-S01..S06 items independently re-verified live and bound this same pass (including confirming PROG-S03's 08-28 404 defect is now fixed). Binding on the aggregate of those bindings.",
       "pr": "Cascade OUTBOX + Neon scenario_status",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "pass_count": 7,
