@@ -32,6 +32,13 @@ const plannerSettingsPatchSchema = z.object({
   overfill_threshold_pct: z.number().positive().max(100).optional(),
 });
 
+class FuelPlannerSettingsWriteError extends Error {
+  constructor() {
+    super("fuel_planner_settings_write_failed");
+    this.name = "FuelPlannerSettingsWriteError";
+  }
+}
+
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -443,6 +450,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const keys = Object.keys(body.data);
     if (keys.length === 0) return reply.code(400).send({ error: "empty_patch" });
 
+    try {
     const updated = await withCompanyScope(authUser.uuid, companyId, async (client) => {
       await client.query(
         `
@@ -488,6 +496,8 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `,
         values
       );
+      const updatedRow = updateRes.rows[0];
+      if (!updatedRow) throw new FuelPlannerSettingsWriteError();
 
       await appendCrudAudit(
         client,
@@ -503,9 +513,15 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         "BT-3-FUEL-PLANNER-REBUILD"
       );
 
-      return updateRes.rows[0];
+      return updatedRow;
     });
 
     return updated;
+    } catch (error) {
+      if (error instanceof FuelPlannerSettingsWriteError) {
+        return reply.code(409).send({ error: error.message });
+      }
+      throw error;
+    }
   });
 }
