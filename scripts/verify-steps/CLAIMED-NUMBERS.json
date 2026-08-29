@@ -1,9 +1,4 @@
 {
-  "9985": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-3",
-    "purpose": "verify-safety-nav-no-dual-navigate"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4551,6 +4546,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-banking-factoring-timeline-no-silent-catch"
   },
+  "9882": {
+    "claimedBy": "cursor",
+    "purpose": "verify-prod-verified-live-binding",
+    "date": "2026-08-29"
+  },
   "9883": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
@@ -4681,6 +4681,106 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-3",
     "purpose": "verify-reserve-tracker-outstanding-liability-not-double-scaled"
+  },
+  "9965": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-reversal-recognizes-cross-mechanism-reversal"
+  },
+  "9969": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-collections-excludes-sample-data"
+  },
+  "9973": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-transfer-bank-balance-update-zero-rows-check"
+  },
+  "9977": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-items-list-sort-values-wired"
+  },
+  "9981": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-pay-tab-generic-error-has-retry"
+  },
+  "9985": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-3",
+    "purpose": "verify-safety-nav-no-dual-navigate"
+  },
+  "9989": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bulk-mark-factored-zero-rows-check"
+  },
+  "9993": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-posting-dates-business-date"
+  },
+  "9997": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-financial-reports-business-date-defaults"
+  },
+  "10001": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-source-load-uniqueness-race"
+  },
+  "10005": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-tonu-invoice-line-zero-rows-check"
+  },
+  "10009": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cancellation-tonu-backlink-scoped-check"
+  },
+  "10013": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-notify-claim-before-send"
+  },
+  "10017": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-bridge-scoped-checks"
+  },
+  "10021": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-edit-load-charge-replacement-checked"
+  },
+  "10025": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-profitability-trip-end-active-stop"
+  },
+  "10029": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-package-popup-block-honesty"
+  },
+  "10033": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-package-metadata-failures-caught"
+  },
+  "10037": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
+  },
+  "10041": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-drawer-money-query-error-disclosure"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -6666,100 +6766,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1328,
-  "9965": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-reversal-recognizes-cross-mechanism-reversal"
-  },
-  "9969": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-collections-excludes-sample-data"
-  },
-  "9973": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-transfer-bank-balance-update-zero-rows-check"
-  },
-  "9977": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-items-list-sort-values-wired"
-  },
-  "9981": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-pay-tab-generic-error-has-retry"
-  },
-  "9989": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-bulk-mark-factored-zero-rows-check"
-  },
-  "9993": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-insurance-posting-dates-business-date"
-  },
-  "9997": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-financial-reports-business-date-defaults"
-  },
-  "10001": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-invoice-source-load-uniqueness-race"
-  },
-  "10005": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-tonu-invoice-line-zero-rows-check"
-  },
-  "10009": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cancellation-tonu-backlink-scoped-check"
-  },
-  "10013": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-notify-claim-before-send"
-  },
-  "10017": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-bridge-scoped-checks"
-  },
-  "10021": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-edit-load-charge-replacement-checked"
-  },
-  "10025": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-profitability-trip-end-active-stop"
-  },
-  "10029": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-package-popup-block-honesty"
-  },
-  "10033": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-package-metadata-failures-caught"
-  },
-  "10037": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
-  },
-  "10041": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-drawer-money-query-error-disclosure"
-  }
+  "total_claimed": 1328
 }
