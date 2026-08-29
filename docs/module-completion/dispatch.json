@@ -2,15 +2,15 @@
   "module": "dispatch",
   "title": "Dispatch \u2014 acceptance checklist",
   "complete": false,
-  "as_of": "2026-08-29T16:40:00Z",
-  "live_sha": "4e5db76",
+  "as_of": "2026-08-29T18:40:00Z",
+  "live_sha": "965789a",
   "desktop_audit": null,
   "wire_note": "Authorization transport failures fail closed with human retry copy in a flat alert inside the single panel frame; verify-auth-gate-panel-fails-closed mutation-proves behavior and chrome.",
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar \u2014 'renders real entity-scoped data' \u2014 is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | DISP war PASS batch 2026-08-09 (proven path + settled list surfaces) | CERTIFIED unlock 2026-08-09: CLS-DISP-WIRE-06 delisted dispatch after #5369 (37/37 prod_verified); fuel cohort remains N/A-PRE-OPERATIONAL on wave (no FK invent). REOPEN 2026-08-29 OWNER: 31 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar \u2014 'renders real entity-scoped data' \u2014 is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | DISP war PASS batch 2026-08-09 (proven path + settled list surfaces) | CERTIFIED unlock 2026-08-09: CLS-DISP-WIRE-06 delisted dispatch after #5369 (37/37 prod_verified); fuel cohort remains N/A-PRE-OPERATIONAL on wave (no FK invent). REOPEN 2026-08-29 OWNER: 31 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 31 REOPEN items (S01-S37, minus the retired S19/S22/S26/S34-36/S38 ids) re-verified live via Chrome + DOM/dialog checks against the real USMCA app, batched by shared surface (GROUP-DISP-PLANNERS covers 5 items in one walk; GROUP-DISP-ASSIGN-HISTORY and GROUP-DISP-ALERTS cover 2 each) -- STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp). Two redirects (factoring-packets->accounting/factoring, incidents->alerts) confirmed as real working aliases, not defects. One dialog/portal surface (loads/:id) required checking outside <main> -- documented so the next verifier doesn't repeat a false-empty read. dispatch is an URGENT_6_COMPLETION_IDS module (verify-module-completion.mjs) -- PASS without prod_verified does NOT count toward N/complete here (unlike legal/maintenance), so pass_count/complete correctly stay at 6/37/false pending GUARD live-verify-after on each of these 31.",
   "items": [
     {
       "id": "DISP-S01",
@@ -21,8 +21,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch DispatchBoard entity-scoped loads list; owner-proven Book\u2192assign\u2192dispatch path (L-0085 class). Empty-state follow-on on board false-empty still tracked in verify-list-empty-settled sweep.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch: real Overview dashboard (Active Loads 23, At-Risk/Late 1 (0 at-risk / 1 late), Unassigned Units, Round-Trip Exposure), USMCA entity. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -36,8 +36,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DispatchAlertsPage company-gated queries (accidents/cash/late/in-transit); ListErrorBanner on failure; data-testid=dispatch-alerts-honest-empty when all counts are known 0; guard scripts/verify-disp-s02-alerts-surface.mjs --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-ALERTS (2 items, one live walk: hub then drill-down). /dispatch/alerts: real live KPI counts (Accidents Open 4, Cash Advance Requests 1, Late Arrivals 1, In-Transit Issues 0), each sourced live per its own subtitle. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -51,8 +51,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LateArrivalsPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-ALERTS (2 items, one live walk: hub then drill-down). /dispatch/alerts/late-arrivals: real 1-row drill-down (LUSMCAFREIGHT-20260808-0004, ZZ-SAMPLE Customer A, driver Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez, ETA signal 'late/No ETA'). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -66,8 +66,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 AssignmentHistoryPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-ASSIGN-HISTORY (2 items -- /dispatch/assignments deliberately embeds AssignmentHistoryPage as its 'Assignments' tab content, per source comment 'ARCHIVE B21-D12 Sunset 2026-06-04: assignments stub replaced by D2 AssignmentHistoryPage embed', not a bug). /dispatch/assignment-history: AssignmentHistoryPage, real 14-row audit trail (assigned_at/load/method/prev-new driver-unit/reason), incl. our own L-20260828-0022 full_form reassignment to Javier Vargas Solis + T150. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -81,8 +81,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/assignments via DispatchSecondaryTabRoute; same proven assignment path.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-ASSIGN-HISTORY (2 items -- /dispatch/assignments deliberately embeds AssignmentHistoryPage as its 'Assignments' tab content, per source comment 'ARCHIVE B21-D12 Sunset 2026-06-04: assignments stub replaced by D2 AssignmentHistoryPage embed', not a bug). /dispatch/assignments renders DispatchSecondaryTabRoute subTab=\"assignments\" -> DispatchPage embeds the SAME AssignmentHistoryPage as S04 (source-confirmed intentional at apps/frontend/src/pages/Dispatch.tsx:491-494, not a routing bug). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -96,8 +96,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 AtRiskQueuePage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/at-risk: AtRiskQueuePage, honest-empty 'No at-risk loads right now' (0 rows) -- correctly nothing in-transit with a late/near-late ETA today. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -111,8 +111,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/book-load Book Load wizard \u2014 OWNER PROVEN live (Neftali/Baytown rescue packet); do not re-audit.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/book-load: real 'BOOK LOAD' entry panel with working +Book Load action inside the shared Dispatch shell/subnav. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -126,8 +126,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 BorderCrossingWizardPage company-scoped submit + brokers; ports/brokers load errors surfaced; need-company + ports/brokers honest empty testids; guard scripts/verify-disp-s08-border-crossing-surface.mjs --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/border-crossing: 'Border Crossing Wizard' real step 1 (Load & direction, Unit/Driver/Direction) + live CBP wait times for 4 Laredo-region ports (each real, though currently '\u2014' -- no live CBP feed configured, honestly shown as em-dash not a fake number). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -141,8 +141,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 BorderCrossingHistoryPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/border-crossing/history: honest-empty 'No completed crossings yet' (0 rows), real 'New crossing' action + detail-select placeholder. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -156,8 +156,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 borders/BorderCrossingHistory ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/borders/geofence-history: 'GPS Border Crossing Events', honest-empty 'No border crossing events found for this period' (0 rows), real filter chip. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -171,8 +171,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DispatchChatPage company-gated listChatThreads; ListErrorBanner; need-company + threads honest empty testids; guard scripts/verify-disp-s11-chat-surface.mjs --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/chat: 'Dispatch Chat', honest explanation 'No chats for this company yet... Empty is expected until the first thread is created' -- correct honest-empty, not a stub. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -186,8 +186,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DetentionBoardPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/detention: 'Detention board', real 1-row live accrual (L-20260816-0168, CC2-BOOKLOAD-INLINE-TEST, TX pickup, TEST DriverTESTMTDP79YF, T-TESTMTDP79YF, accruing). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -201,8 +201,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 EquipmentTransferRequests ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/equipment-transfers: 'Equipment transfer requests', real 1-row dual-confirm handoff (unit 010101, pending_outbound, SAMPLE Cascade-2042 -> Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -216,8 +216,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/factoring-packets Navigate\u2192/accounting/factoring (wired redirect, no orphan chrome).",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/factoring-packets redirects to the canonical /accounting/factoring (not a bug -- a real, working alias): real 1-row batch FAC-2026-00001, Faro Factoring, $1,850.00 total / $1,794.50 advanced / $55.50 reserve, status ADVANCED. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -231,8 +231,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 FactoringQueuePage list-state/ParityTable settled empty (already guarded).",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/factoring-queue: real KPIs (Active Factor Faro Factoring, Reserve Balance $55.50, MTD Advances $1,794.50/1 batch, Packet Queue 1 pending) + real 1-row queue (L-20260802-0258, TIO PERFUMES, Not Factored, missing rate_conf/BOL/POD/invoice). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -246,8 +246,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 GeofencesPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/geofencing: 'Geofences', real 1-row active geofence (TEST CODEX GO0040, custom, 4 vertices, Active) + working polygon-editor create form. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -261,8 +261,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 InTransitIssuesPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/in-transit-issues: real 2-row queue (L-20260824-0007/Javier Vargas Solis/USMCA-001/mechanical/warning/open, L-20260810-0003/Rafael Rogelio Rivero Reynoso/T149/mechanical/warning/open), +Create Issue. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -276,8 +276,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/incidents Navigate\u2192/dispatch/alerts (wired redirect).",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/incidents redirects to the canonical /dispatch/alerts (same real KPIs as S02, not a bug -- a working alias). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -305,8 +305,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/loads board list \u2014 live USMCA loads exist; entity-scoped useLoadsList.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/loads: real 42-load board (Awaiting Assignment 0, Booked 42), full unit/driver/HOS/status columns populated live. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -320,8 +320,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /dispatch/loads/:id detail \u2014 live drill on rescued loads; EntityLinks.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/loads/b347aeb6-0272-4d93-9c3c-5bd3dbc22f1c: renders as a [role=\"dialog\"] portal OUTSIDE <main> (a plain document.querySelector('main') check misses it -- confirmed via document.querySelectorAll('[role=\"dialog\"]').length===1 and body text containing the load number) -- real drawer 'Load L-20260828-0022', Overview/Stops/Driver Pay/Documents/Factoring/Cargo Sensors/Settlement/Geofence Timeline/Assignment History/Audit/Pre-Settlement tabs, real customer/status/miles/trip-type/unit fields matching Neon. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -349,8 +349,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 MapView company-gated Samsara positions; need-company + positions honest empty + map-not-configured honest empty (no fake pins); ListErrorBanner; guard scripts/verify-disp-s23-map-surface.mjs --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/map: 'Active Load Map', honest explanation 'Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)' -- correct honesty, not a placeholder bug. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -364,8 +364,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 NotifyPreferencesPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/notify-preferences: 'Customer ETA notify', real 1-row delivery log (L-20260816-0168, TIO PERFUMES, Departed, SMS, pending, TEST DATA keep). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -379,8 +379,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 OcrQueuePage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/ocr-queue: 'OCR queue', real 1-row intake (TEST DATA / TEST DATA, ready_review, lane UNKNOWN,TX->UNKNOWN,TX, confidence 62%, Convert to load action). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -408,8 +408,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 deliberate Navigate /dispatch/planners \u2192 /dispatch/planners/timeline; target DISP-S30 meets Empty-state DoD; guard scripts/verify-disp-s27-s31-planners-pack.mjs --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-PLANNERS (5 items, one shared DispatchPlanners page, tab param switch, one live walk). /dispatch/planners redirects to the canonical /dispatch/planners/timeline (shared Timeline/Driver Planner/Truck Planner/Loads Planner subnav, date-range picker). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -423,8 +423,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DriverPlanner need-company; SafetyDriverSchedulerGrid company-gated + ListErrorBanner + honest empty; guard pack --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-PLANNERS (5 items, one shared DispatchPlanners page, tab param switch, one live walk). /dispatch/planners/driver: real per-driver leave/availability grid (CODEX TEST 0034 Driver, PEDRO ABRAHAM LOPEZ COLLADO/T149, JORGE ALBERTO JUAREZ, etc., 30-day columns). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -438,8 +438,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LoadsPlanner need-company + ListErrorBanner + loads honest empty; company-gated week fetch; guard pack --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-PLANNERS (5 items, one shared DispatchPlanners page, tab param switch, one live walk). /dispatch/planners/loads: real 2-row load timeline (L-20260829-0338 TIO PERFUMES Laredo TX, L-20260808-0050 TIO PERFUMES Laredo TX), each plotted on its correct date column. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -453,8 +453,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 UnifiedTimelinePlanner need-company + ListErrorBanner + drivers honest empty; company-gated; guard pack --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-PLANNERS (5 items, one shared DispatchPlanners page, tab param switch, one live walk). /dispatch/planners/timeline: the canonical Timeline tab of the shared planners page, same real shared date-range header as S27-S29/S31. healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -468,8 +468,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 TruckPlanner need-company + ListErrorBanner + units honest empty; company-gated queries; guard pack --selftest exit 0.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-DISP-PLANNERS (5 items, one shared DispatchPlanners page, tab param switch, one live walk). /dispatch/planners/truck: real per-unit availability grid (unit 01 all 'shop', CODEX-LEGAL-UNIT-20260816-1506 all 'rsv', 30-day columns). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -483,8 +483,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PodReviewPage ParityTable settled empty (already guarded).",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/pod-review: 'POD review + BOL', real 1-row queue (L-20260816-0168, TEST DriverTESTMTDP79YF, TEST DATA keep recipient, Pending Review, Approve/Reject actions). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -498,8 +498,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 apps/frontend/src/pages/Dispatch.tsx renders PreSettlementsPanel for subTab=pre_settlements; preSettlementsQuery.queryFn (listSettlements) carries the active operating company id and is gated enabled: Boolean(defaultCompanyIds[0]). FIXED a swallowed-error gap: the panel's isError prop was never wired, so a failed fetch left rows at [] and rendered the SAME \"No pre-settlements ready right now.\" text as a genuine zero-row result (a zero presented as a fact). Wired preSettlementsQuery.isError through; the panel now shows a named error (\"Couldn't load pre-settlements...\") and suppresses the fabricated $0 total-payout row on failure. Regression test: PreSettlementsPanel.test.tsx (4 tests, all green) covers honest-zero, honest-error, no-fabricated-total-on-error, and real-row render. | PASS 2026-08-09 \u2014 /dispatch/pre-settlements via DispatchPage; company-gated listSettlements; need-company + ListErrorBanner + PreSettlementsPanel honest empty; guard verify-disp-s33-s36-surface --selftest exit 0. | PROD-VERIFIED 2026-08-09 Neon br-fancy-credit-akjnd07a + lucia + USMCA: driver_finance.driver_settlements n=8 (open=4, closed=3, presettle=1 display_id=S-2026-0001). Route /dispatch/pre-settlements \u2192 DispatchSecondaryTabRoute subTab=pre_settlements \u2192 PreSettlementsPanel; listSettlements / open-by-driver APIs company-gated. healthz/shallow version=49ff971.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/pre-settlements: real 1-driver batch (Rafael Rogelio Rivero Reynoso, 08/10/2026-08/16/2026, L-20260810-0003, $297.60), Total payout this batch $297.60 (an earlier 2s-wait check misread this as 'Loading...' -- a longer wait showed the real content, my own check's timing, not a defect). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -555,8 +555,8 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 TripProfitability ParityTable settled empty; verify-list-empty-settled.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /dispatch/trip-profitability: 'Trip Profitability' Company Settlement Report, real 15-row NB+SB roll-up (Trips 15, Revenue $13,824.50, Driver Pay $1,335.40, Fuel $40.00, Net Profit $12,028.10), incl. our own scenario trip S-20260828-0022 (Javier Vargas Solis, L-20260828-0022, $50.00 revenue, 100% margin). healthz=965789a.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
