@@ -127,7 +127,7 @@ const driverBucketsQuery = companyQuerySchema.extend({ driver_id: z.string().uui
 
 export async function registerSettlementPostingRoutes(app: FastifyInstance) {
   // RETIRED (SET-01) — never posts via FIN-18; 308 to canonical payrun-close.
-  app.post("/api/v1/accounting/settlement-posting/post", async (req, reply) => {
+  app.post("/api/v1/accounting/settlement-posting/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const body = postBody.safeParse(req.body ?? {});
     const settlementId = body.success ? body.data.settlement_id : undefined;
     return retiredSettlementPost(reply, settlementId);
@@ -136,7 +136,7 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
   // SET-04 — canonical Bill+BillPayment forward poster (blueprint §3). Role-gated; SETTLEMENT_GL_POSTING_ENABLED
   // is enforced inside postSettlementBillPayment (OFF => skipped_flag_off, zero writes). Reuses the existing
   // poster only — no new GL math.
-  app.post("/api/v1/accounting/settlement-posting/bill-payment-post", async (req, reply) => {
+  app.post("/api/v1/accounting/settlement-posting/bill-payment-post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -159,14 +159,14 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
   });
 
   // ACCT-F5648 — retired (SET-01 companion retirement). See retiredSettlementReverse above.
-  app.post("/api/v1/accounting/settlement-posting/reverse", async (req, reply) => {
+  app.post("/api/v1/accounting/settlement-posting/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     return retiredSettlementReverse(reply);
   });
 
   // Recover-from-driver: charge a flagged expense into the driver's deduction bucket (consent-gated).
-  app.post("/api/v1/accounting/settlement-posting/recover-from-driver", async (req, reply) => {
+  app.post("/api/v1/accounting/settlement-posting/recover-from-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -190,7 +190,7 @@ export async function registerSettlementPostingRoutes(app: FastifyInstance) {
   });
 
   // READ-ONLY per-bucket balances for a driver (the PWA "Advance balance / Lease N of M" view).
-  app.get("/api/v1/accounting/settlement-posting/driver-buckets", async (req, reply) => {
+  app.get("/api/v1/accounting/settlement-posting/driver-buckets", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = driverBucketsQuery.safeParse(req.query ?? {});

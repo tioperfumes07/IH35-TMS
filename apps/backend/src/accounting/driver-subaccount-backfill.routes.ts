@@ -9,7 +9,7 @@ const dryRunQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const REVIEW_ROLES = new Set(["Owner", "Administrator", "Accountant", "SuperAdmin"]);
 
 export async function registerDriverSubAccountBackfillRoutes(app: FastifyInstance) {
-  app.get("/api/v1/payroll/driver-subaccount-backfill/dry-run", async (req, reply) => {
+  app.get("/api/v1/payroll/driver-subaccount-backfill/dry-run", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!REVIEW_ROLES.has(String((user as { role?: string }).role ?? ""))) {
