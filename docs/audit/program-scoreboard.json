@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 17824,
+      "title": "FINDING: N/A -- regenerate stale docs/audit/program-scoreboard.json (115 commits behind, blocked all pushes)",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:02 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17824",
+      "sha": "49610b41a4",
+      "committedAtIso": "2026-08-29T18:02:19-05:00"
+    },
+    {
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7361 repair idempotency mutation",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 05:57 PM CT",
+      "url": "",
+      "sha": "47c0188599",
+      "committedAtIso": "2026-08-29T17:57:44-05:00"
+    },
+    {
+      "number": 17821,
+      "title": "FINDING: N/A -- D-3 detention-pay build spec + GO-PENDING-01 ACK/report",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 05:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17821",
+      "sha": "c7ab63d578",
+      "committedAtIso": "2026-08-29T17:56:51-05:00"
+    },
+    {
+      "number": 17820,
+      "title": "FINDING: GO-DWELL-01-D3-DETENTION-PAY-LINE-TYPE",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 05:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17820",
+      "sha": "66369bbe85",
+      "committedAtIso": "2026-08-29T17:55:11-05:00"
+    },
+    {
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7360 repair lifecycle selftest",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 05:55 PM CT",
+      "url": "",
+      "sha": "9410922678",
+      "committedAtIso": "2026-08-29T17:55:06-05:00"
+    },
+    {
       "number": 17818,
       "title": "FINDING: N/A -- OUTBOX ACK: GO-PENDING-01, batch 6/N status (#17816)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17814",
       "sha": "e06e3f2184",
       "committedAtIso": "2026-08-29T17:48:01-05:00"
-    },
-    {
-      "number": 17813,
-      "title": "FINDING: N/A — OUTBOX checkpoint: BASELINE ZERO, full 78-item sweep complete",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17813",
-      "sha": "e12aebc7e8",
-      "committedAtIso": "2026-08-29T17:47:53-05:00"
-    },
-    {
-      "number": 17812,
-      "title": "FINDING: 50209-50212 — IFTA 4-step wizard silent no-op on all run/submit mutations",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17812",
-      "sha": "59cac5aa7c",
-      "committedAtIso": "2026-08-29T17:47:25-05:00"
-    },
-    {
-      "number": 17811,
-      "title": "FINDING: N/A — bind SAF-B08 + all 6 system baseline items, BASELINE NOW ZERO",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17811",
-      "sha": "c46d868f90",
-      "committedAtIso": "2026-08-29T17:45:43-05:00"
-    },
-    {
-      "number": 17810,
-      "title": "FINDING: DRV-F7357 scope onboarding lock selftest to completion",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17810",
-      "sha": "e8cf8150ee",
-      "committedAtIso": "2026-08-29T17:45:23-05:00"
-    },
-    {
-      "number": 17809,
-      "title": "FINDING: ACCT-F98",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17809",
-      "sha": "e1f5dcccc0",
-      "committedAtIso": "2026-08-29T17:44:40-05:00"
     }
   ]
 }
