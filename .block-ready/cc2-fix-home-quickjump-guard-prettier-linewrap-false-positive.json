@@ -1,0 +1,23 @@
+{
+  "block_id": "cc2-fix-home-quickjump-guard-prettier-linewrap-false-positive",
+  "status": "GUARD",
+  "classification": "NON-MONEY",
+  "phase": "HONESTY-PROGRAM-2026-08-29",
+  "task": "CC-2 fixes scripts/verify-home-quickjump-counts.mjs, which was false-failing on a prettier line-wrap of correct, unchanged DispatchSubnav.tsx code -- root-caused as the single failing step in origin/main's own build-typecheck CI job. Whitespace-tolerant matcher + planted-mutation --selftest added (guard had none before).",
+  "branch": "cc2/fix-home-quickjump-guard-prettier-linewrap-false-positive-v2",
+  "lane": "GUARD-2 NON-MONEY",
+  "runtime_path": "scripts",
+  "allowed_files": [
+    "scripts/verify-home-quickjump-counts.mjs",
+    ".block-ready/cc2-fix-home-quickjump-guard-prettier-linewrap-false-positive.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "scripts/verify-home-quickjump-counts.mjs --selftest", "note": "4/4 planted cases PASS" },
+    { "kind": "route", "value": "scripts/verify-home-quickjump-counts.mjs", "note": "real run now OK, was FAILED on origin/main CI job 99141084140" }
+  ],
+  "linkage": "N/A -- guard bugfix, no data/schema change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "Merge only after this PR's own build-typecheck CI is confirmed GREEN (not pre-existing-baseline-red) -- this is the fix for that baseline, so it must self-prove before merge, per this session's standing instruction not to squash-merge red CI."
+}
