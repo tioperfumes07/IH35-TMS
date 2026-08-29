@@ -205,6 +205,7 @@ export async function fetchBolPayload(client: PoolClient, operatingCompanyId: st
       FROM mdata.load_stops s
       LEFT JOIN mdata.locations loc ON loc.id = s.location_id AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1::uuid
+        AND s.soft_deleted_at IS NULL
       ORDER BY s.sequence_number ASC
     `,
     [loadId, operatingCompanyId]
