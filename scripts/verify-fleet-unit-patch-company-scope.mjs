@@ -17,7 +17,7 @@ const source = Object.fromEntries(Object.entries(FILES).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
-  const patchStart = s.backend.indexOf('"/api/v1/mdata/units/:id"');
+  const patchStart = s.backend.indexOf('app.patch(\n    "/api/v1/mdata/units/:id"');
   const patchEnd = s.backend.indexOf('"/api/v1/mdata/units/:id/deactivate"', patchStart);
   const patchBackend = patchStart >= 0 && patchEnd > patchStart ? s.backend.slice(patchStart, patchEnd) : "";
   const apiStart = s.api.indexOf("export function patchUnit(");
@@ -32,7 +32,8 @@ function audit(s) {
   if (!/resolveOperatingCompanyId\([\s\S]{0,180}req\.query/.test(s.backend) || !/owner_company_id = \$\$\{scopeIdx\} OR currently_leased_to_company_id = \$\$\{scopeIdx\}/.test(s.backend)) failures.push("backend PATCH must resolve and enforce requested company");
   if (!/unit_patch_dca[\s\S]*company_id = \$2::uuid[\s\S]*is_authorized = true[\s\S]*deactivated_at IS NULL/.test(patchBackend)) failures.push("backend PATCH must validate selected driver in the operating company");
   if (!/"assigned_driver_id" in normalizedPatch[\s\S]*syncCanonicalDefaultDriver\(client,[\s\S]*unitId: String\(updatedRow\.id\)[\s\S]*operatingCompanyId: scopedCompanyId/.test(patchBackend)) failures.push("backend PATCH must synchronize the canonical default-driver edge");
-  if (!/await client\.query\("BEGIN"\)[\s\S]*syncCanonicalDefaultDriver[\s\S]*appendCrudAudit[\s\S]*await client\.query\("COMMIT"\)[\s\S]*await client\.query\("ROLLBACK"\)/.test(patchBackend)) failures.push("unit PATCH, canonical assignment, and audit must be atomic");
+  if (!/withCurrentUser\(authUser\.uuid, async \(client\) =>[\s\S]*syncCanonicalDefaultDriver[\s\S]*appendCrudAudit/.test(patchBackend)) failures.push("unit PATCH, canonical assignment, and audit must use the wrapper transaction");
+  if (/client\.query\(["'`](?:BEGIN|COMMIT|ROLLBACK)["'`]\)/.test(patchBackend)) failures.push("unit PATCH must not own nested transaction control");
   const leaf = JSON.parse(s.matrix).leaves.find((entry) => entry.id === "unit.edit.quick_availability");
   const expected = ["driver", "unit", "picker_law", "connectivity"];
   if (!leaf || JSON.stringify(leaf.required) !== JSON.stringify(expected)) failures.push("quick availability applicability must not invent load or inline reverse ownership");
@@ -51,7 +52,8 @@ if (process.argv.includes("--selftest")) {
     ["backend scope", "backend", /owner_company_id = \$\$\{scopeIdx\}/, "owner_company_id = owner_company_id"],
     ["driver company", "backend", /unit_patch_dca\.is_authorized = true/, "TRUE"],
     ["canonical edge", "backend", /(\"assigned_driver_id\" in normalizedPatch[\s\S]{0,120})syncCanonicalDefaultDriver\(client, \{/, "$1Promise.resolve({"],
-    ["patch transaction", "backend", /(\"assigned_driver_id\" in normalizedPatch[\s\S]*?)await client\.query\(\"COMMIT\"\);/, "$1// planted"],
+    ["patch transaction", "backend", /const updated = await withCurrentUser/, "const updated = await noTransaction"],
+    ["nested transaction", "backend", /const updated = await withCurrentUser/, 'const updated = await withCurrentUser\n          await client.query("BEGIN");'],
     ["false load", "matrix", /"picker_law",\n        "connectivity"/, '"load",\n        "picker_law",\n        "connectivity"'],
     ["driver picker", "edit", /kind="driver"/, 'kind="unit"'],
   ];

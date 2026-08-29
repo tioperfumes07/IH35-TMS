@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7257 | GO-0054 | CLAIM=unit-writers-wrapper-owned-transaction | SOURCE=withCurrentUser→unit+asset+default-driver+audit/spine | CLOSES=F7198 transaction proof regression | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7256 | PR=#17478 @ 0922db592f | Built=default assignment wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=fleet unique | GO
 Codex | WORKING | FLEET-F7256 | GO-0054 | CLAIM=default-assignment-wrapper-owned-transaction | SOURCE=withCurrentUser→telematics.vehicle_driver_assignments both directions | CLOSES=F6850 transaction proof regression | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DRV-F7255 | PR=#17477 @ 16926b8ad1 | Built=training completion timestamp typed lifecycle | Live=post-deploy UNVERIFIED | NEXT=drivers/fleet unique | GO
 Codex | WORKING | FUEL-F7241 | GO-0030 | CLAIM=fuel-load-match-active-stops | SOURCE=active stop window→import+Relay load attribution | CLOSES=none — post-deploy rematch proof remains | NEXT=guard+FAST-MERGE | GO

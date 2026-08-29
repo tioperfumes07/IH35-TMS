@@ -26,7 +26,7 @@ function inspect(route, asset) {
     [
       "atomic unit chain",
       create,
-      /BEGIN[\s\S]*INSERT INTO mdata\.units[\s\S]*ensureUnitAsset[\s\S]*appendCrudAudit[\s\S]*emitMasterDataCreatedSpineEvent[\s\S]*COMMIT[\s\S]*ROLLBACK/,
+      /withCurrentUser\(authUser\.uuid, async \(client\) =>[\s\S]*INSERT INTO mdata\.units[\s\S]*ensureUnitAsset[\s\S]*appendCrudAudit[\s\S]*emitMasterDataCreatedSpineEvent/,
     ],
     [
       "driver company validation",
@@ -60,6 +60,7 @@ function inspect(route, asset) {
       /if \(!asset\?\.id \|\| asset\.unit_id !== input\.unitId\)\s*throw new Error\("unit_asset_identity_conflict"\)/,
     ],
   ];
+  if (/client\.query\(["'`](?:BEGIN|COMMIT|ROLLBACK)["'`]\)/.test(create)) failures.push("unit create nested transaction control");
   for (const [label, source, pattern] of checks)
     if (!pattern.test(source)) failures.push(label);
   return failures;
@@ -71,7 +72,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [route.replace('{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', "{}"), asset],
     [route.replace(/(\/api\/v1\/mdata\/units\/:id\/quick-availability"[\s\S]*?)\{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/, "$1{}"), asset],
-    [route.replace('await client.query("BEGIN");', "// planted"), asset],
+    [route.replace("const created = await withCurrentUser", "const created = await noTransaction"), asset],
     [route.replace("unit_create_dca.is_authorized = true", "TRUE"), asset],
     [
       route.replace(
@@ -89,6 +90,7 @@ if (process.argv.includes("--selftest")) {
     ],
     [route.replace("asset_id: assetId", "asset_id: null"), asset],
     [route.replace("driverId: b.assigned_driver_id", "driverId: null"), asset],
+    [route.replace("// mdata.assets is FORCE-RLS", 'await client.query("COMMIT");\n          // mdata.assets is FORCE-RLS'), asset],
     [
       route,
       asset.replace(
