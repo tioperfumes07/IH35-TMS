@@ -2087,3 +2087,9 @@ Codex | WORKING | DSP-F7190 | CLAIM=detention-arrival-must-not-close-accrual | S
 CODEX | GO-0052 | FINDING=DRV-F7191 | replace-driver active-state race fixed with company-scoped CAS + typed 409 | NEXT=gate+FAST-MERGE then GO-0053 | GO
 CODEX | GO-0053 | FINDING=DSP-F7192 | layover detector duplicate race fixed with per-company DB serialization | NEXT=guard+FAST-MERGE then GO-0054 | GO
 Codex | GO-0030 | LIVE FAIL→FIXING | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | FINDING=DSP-F7193 | customer/pickup refs saved but detail read-model rendered — | CLOSES=none — Book TEST load; dispatch items need GUARD after PASS | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7193 | PR=#17403 @ 23320b6712 | Built=Book Load customer_wo+pickup canonical detail R=W | Live=post-deploy UNVERIFIED | NEXT=GO-0031 | GO
+CODEX | GO-0031 | TEST ASSIGN UNCHANGED | load=L-20260828-0029 | driver=CODEX ACTIVE FLEET TEST 20260821 | blocker=driver not DOT-qualified; production driver not repurposed | NEXT=GO-0032 | GO
+CODEX | ACK | GO-0032 | NOW=dispatch-planner-POD-BOL | SHA=da39aab | GO
+Codex | GO-0032 | LIVE PASS | load=L-20260828-0029 | UUID=fcc5de0a-d167-4415-b6c6-5f59886deba9 | BOL=1 stored B21-D10-v1 | POD=honest 0 | FINDING=none | NEXT=GO-0033 | GO
+CODEX | ACK | GO-0033 | NOW=fleet-unique+TEST-create | SHA=da39aab | GO
+Codex | GO-0033 | LIVE FAIL→FIXING | TEST=TEST-CODEX-GO0033 | FINDING=FLEET-F7194 | create success closes onto TEST-filtered roster; exact record inaccessible | NEXT=guard+FAST-MERGE | GO
