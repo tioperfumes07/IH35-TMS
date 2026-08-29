@@ -43,8 +43,7 @@ describe("parseLovesCsv", () => {
     const client = {
       query: vi.fn(async (sql: string) => {
         queries.push(sql);
-        if (sql.includes("UPDATE fuel.loves_prices_daily")) return { rowCount: 0 };
-        if (sql.includes("INSERT INTO fuel.loves_prices_daily")) return { rowCount: 1 };
+        if (sql.includes("INSERT INTO fuel.loves_prices_daily")) return { rows: [{ inserted: true }], rowCount: 1 };
         if (sql.includes("audit.append_event")) return { rows: [] };
         return { rows: [] };
       }),
@@ -78,13 +77,13 @@ describe("runLovesCardImportTick", () => {
       listCompanyIdsImpl: async () => ["00000000-0000-4000-8000-000000000001"],
       withLuciaBypassImpl: async (fn) =>
         fn({
-          query: vi.fn(async (sql: string) => {
+          query: vi.fn(async (sql: string, values?: unknown[]) => {
             if (sql.includes("to_regclass")) return { rows: [{ ok: true }] };
             if (sql.includes("set_config")) return { rows: [] };
-            if (sql.includes("UPDATE fuel.loves_prices_daily")) return { rowCount: 0 };
             if (sql.includes("INSERT INTO fuel.loves_prices_daily")) {
-              expect(sql).toContain(LOVES_CARD_IMPORT_SOURCE);
-              return { rowCount: 1 };
+              expect(values?.[7]).toBe(LOVES_CARD_IMPORT_SOURCE);
+              expect(sql).toContain("ON CONFLICT (operating_company_id, effective_date, station_name, station_address)");
+              return { rows: [{ inserted: true }], rowCount: 1 };
             }
             if (sql.includes("audit.append_event")) return { rows: [] };
             return { rows: [] };
