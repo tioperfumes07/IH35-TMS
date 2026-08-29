@@ -112,6 +112,14 @@ function missingKeep(doc, leafCols) {
   return out;
 }
 
+function hasScopedOcrLoadLookup(source) {
+  const finalize = source.split("export async function finalizeOcrIntakeConversion")[1] ?? "";
+  const lookup = finalize.match(/SELECT\s+id\s+FROM\s+mdata\.loads[\s\S]*?LIMIT\s+1/i)?.[0] ?? "";
+  return /WHERE\s+id\s*=\s*\$1::uuid/i.test(lookup)
+    && /AND\s+operating_company_id\s*=\s*\$2::uuid/i.test(lookup)
+    && /AND\s+soft_deleted_at\s+IS\s+NULL/i.test(lookup);
+}
+
 if (process.argv.includes("--selftest")) {
   const doc = loadMod("dispatch");
   const clone = structuredClone(doc);
@@ -122,6 +130,10 @@ if (process.argv.includes("--selftest")) {
   if (!bad.length) fail("selftest: poison did not trip");
   const page = fs.readFileSync(OCR_PAGE, "utf8").replace('kind="load"', 'kind="customer"');
   if (/kind="load"/.test(page)) fail("selftest: OCR load-link mutation did not remove the exact drill");
+  const service = fs.readFileSync(OCR_SERVICE, "utf8");
+  if (!hasScopedOcrLoadLookup(service)) fail("selftest: canonical OCR load lookup is not recognized");
+  const unscoped = service.replaceAll(/AND\s+operating_company_id\s*=\s*\$2::uuid/g, "");
+  if (hasScopedOcrLoadLookup(unscoped)) fail("selftest: removing OCR load company scope did not trip");
   console.log(`${LABEL} --selftest PASS (poison would trip ${bad.length})`);
   process.exit(0);
 }
@@ -145,7 +157,7 @@ if (!/converted_load_id: string \| null/.test(ocrApi)) failures.push("dispatch A
 if (!/status IN \('pending_ocr', 'processing', 'ready_review', 'failed'\)[\s\S]*status = 'converted' AND converted_load_id IS NOT NULL/.test(ocrService)) failures.push("dispatch: converted OCR rows with a real load must remain visible");
 const ocrPrefillSection = ocrService.split("export async function finalizeOcrIntakeConversion")[0] ?? ocrService;
 if (/getOcrIntakeConvertPrefill[\s\S]*SET status = 'converted'/.test(ocrPrefillSection)) failures.push("dispatch: opening Book Load must not mark OCR converted before create");
-if (!/FROM mdata\.loads WHERE id = \$1::uuid AND operating_company_id = \$2::uuid/.test(ocrService)) failures.push("dispatch: OCR finalize must validate same-company load ownership");
+if (!hasScopedOcrLoadLookup(ocrService)) failures.push("dispatch: OCR finalize must validate active same-company load ownership");
 if (!/items\/:id\/finalize/.test(ocrRoutes)) failures.push("dispatch: OCR finalize route must be mounted");
 
 // Anchors: hop leaves still say Hop / accounting hop in sub
