@@ -9686,3 +9686,68 @@ GUARD: verify-book-load-hard-block-response-not-silent.mjs, fail-pre/pass-post p
 BLOCKED: none
 NEXT: board row BOOKLOAD-OVERRIDE-DISPATCH-DEAD-CLICK closed with this evidence; GO-0009 complete
 ```
+
+---
+
+# CC-3 LIVE-TXN — LV-TXN-021 — USMCA revrec Event 1 re-verified live on L-20260828-0022; Event 2 correctly pending on POD, NOT a new defect — 2026-08-29
+
+**Sync:** `git fetch origin` + `git pull --ff-only` clean, `main` == `origin/main` at session start. Branch
+`cc3/live-txn-usmca-20260829`. Prod project `tiny-field-89581227`, branch `br-fancy-credit-akjnd07a` confirmed
+via `list_projects`/`list_organizations` before any query.
+
+**Entity: USMCA `5c854333-6ea5-4faa-af31-67cb272fef80`.** Continuing the same real load LV-TXN-020's correction
+created (`L-20260828-0022`, id `b347aeb6-0272-4d93-9c3c-5bd3dbc22f1c`, driver Javier Vargas Solis, unit T150).
+
+## VERDICT: **PASS** (verification only — no defect found, no new create needed)
+
+**Found live, not assumed:** since LV-TXN-020's correction, the load has been carried further by another
+actor: status is now `delivered_pending_docs`, and invoice `f9d24bad-fe52-4149-8163-c268436647dc`
+(display shows the load number, $50.00) is `sent` (`sent_at` 2026-08-29T01:04:55Z).
+
+**Trap avoided:** an initial check joined `accounting.journal_entry_postings.source_transaction_id` against
+the load id and the invoice id and got **zero rows** — the exact false-empty already retracted on this board
+under `RETRACTED-USMCA-AR-IS-ON-THE-BOOKS` (latch JEs link via `accounting.load_revenue_recognition_postings
+.journal_entry_id`, not that column). Re-checked the correct table before concluding anything:
+
+```
+accounting.load_revenue_recognition_postings for load b347aeb6-…:
+  event=earn  journal_entry_id=225f9ac2-6382-4070-a529-51d956e2d720  amount=$50.00  status=posted  is_active=true
+  (created_at 2026-08-29T01:05:11Z — 17s after the invoice's sent_at, consistent with the earn poster
+   firing off the invoice-send path, the same call-site already flagged as the open wiring gap)
+
+JE 225f9ac2-… (via journal_entry_postings, this one links correctly by journal_entry_uuid):
+  DR 1150 Unbilled Revenue          $50.00
+  CR 4000 Freight/Line-haul Income  $50.00   — balanced, correct accounts
+```
+
+**No `bill` event row yet** — this is **CORRECT, not a defect**: the two-event latch's Event 2 (DR A/R / CR
+Unbilled Revenue) fires on `completed_docs_received` (POD received), and this load's status is still
+`delivered_pending_docs` — POD has not been marked received. An invoice already being `sent` while GL still
+carries the revenue in Unbilled (not A/R) is the **same already-open** earn-only-backlog class from
+LV-TXN-019 (9 loads / $13,701 at the time), not a fresh finding — this load is simply one more live instance
+of that same tracked gap, confirmed still reproducing on a load created after that count was taken. Filing a
+duplicate board row would violate the single-source-of-truth rule; the existing OPEN item already covers it.
+
+**Did not advance this load to `completed_docs_received` this round** — see the OPEN QUESTION below before
+touching POD/void state on any row.
+
+## OPEN QUESTION — void policy conflict, routed to the owner before further action
+
+This session's task text says "VOID exactly one by UUID" as the standing per-unit instruction. A more recent
+memory note (owner ruling, 2026-08-27 17:00 CT — `create-test-do-not-void-until-launch`) says the opposite:
+leave TEST rows in place, one void-and-clean pass happens after launch, superseding per-fix immediate voiding.
+Both cannot be right at once for a WORM financial action. **No void performed this unit** pending that
+clarification — asked in chat, not guessed either way.
+
+## Register updated
+`docs/audit/USMCA-EXHAUSTIVE-BATTERY.md` MANIFEST — no new row (verification of an existing row, not a new
+create). Existing earn-only-backlog board item stands as the routing target for this confirming instance.
+
+```
+VERDICT: PASS (verify-only)
+NEON: load b347aeb6-0272-4d93-9c3c-5bd3dbc22f1c / invoice f9d24bad-… / revrec posting ce24da05-…
+      JE 225f9ac2-… DR 1150 $50.00 / CR 4000 $50.00, balanced
+APP: live UI load detail + Documents tab reviewed (0 POD uploaded yet, 2 other docs present)
+BLOCKED: void-policy conflict (see OPEN QUESTION) — routed to owner, not guessed
+NEXT: once void policy is confirmed, either (a) advance this load's POD to verify Event 2 fires correctly, or
+      (b) void per whichever standing rule the owner confirms current
