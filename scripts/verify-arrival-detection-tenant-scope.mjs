@@ -35,6 +35,11 @@ mustInclude(routes, "already_dismissed", "idempotent arrival dismissal replay");
 mustInclude(routes, "AND a.driver_id = $3::uuid", "dismiss prompt driver ownership predicate");
 mustInclude(routes, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
 mustInclude(routes, "if (!dismissed) return reply.code(404)", "honest missing-prompt dismissal response");
+mustInclude(routes, "FROM mdata.loads l", "confirm stop canonical load join");
+mustInclude(routes, "AND l.operating_company_id = $3::uuid", "confirm stop immutable company predicate");
+mustInclude(routes, "RETURNING s.id::text AS id", "confirm stop write evidence");
+mustInclude(routes, 'if (!arrivalStop.rows[0]?.id) throw new Error("arrival_stop_not_found")', "confirm stop lost-write rejection");
+mustInclude(routes, 'reply.code(409).send({ error: "arrival_stop_not_found" })', "honest confirm integrity response");
 if ((routes.match(/dismissed\.payload->>'resource_id'/g) ?? []).length < 1) {
   throw new Error("Arrival prompt list must consume durable dismissal evidence");
 }
@@ -45,6 +50,11 @@ if (process.argv.includes("--selftest")) {
     ["drop pending lifecycle", routes.replaceAll("AND a.confirmed_at IS NULL", "")],
     ["drop durable list exclusion", routes.replace("dismissed.payload->>'resource_id'", "dismissed.payload->>'missing_id'")],
     ["restore false success", routes.replace("if (!dismissed) return reply.code(404)", "if (!dismissed) return { ok: true }")],
+    ["drop confirm load join", routes.replace("FROM mdata.loads l", "")],
+    ["drop confirm company", routes.replace("AND l.operating_company_id = $3::uuid", "")],
+    ["drop confirm write evidence", routes.replace("RETURNING s.id::text AS id", "")],
+    ["drop confirm lost-write check", routes.replace('if (!arrivalStop.rows[0]?.id) throw new Error("arrival_stop_not_found")', "")],
+    ["hide confirm integrity error", routes.replace('reply.code(409).send({ error: "arrival_stop_not_found" })', "reply.code(200).send({ ok: true })")],
   ];
   for (const [name, mutated] of mutations) {
     let caught = false;
@@ -53,6 +63,11 @@ if (process.argv.includes("--selftest")) {
       mustInclude(mutated, "AND a.confirmed_at IS NULL", "dismiss prompt pending lifecycle predicate");
       mustInclude(mutated, "dismissed.payload->>'resource_id'", "durable list exclusion");
       mustInclude(mutated, "if (!dismissed) return reply.code(404)", "honest false-success rejection");
+      mustInclude(mutated, "FROM mdata.loads l", "confirm stop canonical load join");
+      mustInclude(mutated, "AND l.operating_company_id = $3::uuid", "confirm stop immutable company predicate");
+      mustInclude(mutated, "RETURNING s.id::text AS id", "confirm stop write evidence");
+      mustInclude(mutated, 'if (!arrivalStop.rows[0]?.id) throw new Error("arrival_stop_not_found")', "confirm stop lost-write rejection");
+      mustInclude(mutated, 'reply.code(409).send({ error: "arrival_stop_not_found" })', "honest confirm integrity response");
     } catch {
       caught = true;
     }

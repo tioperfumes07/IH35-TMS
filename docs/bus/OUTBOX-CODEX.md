@@ -1991,3 +1991,6 @@ Codex | WORKING | DSP-F7127O | CLAIM=planner-reschedule-write-continuity | SOURC
 Codex | SHIPPED | DSP-F7127N | PR=#17192 @ abd66b4d82 | Built=distribution backlink exact-company | NEXT=planner reschedule | GO
 Codex | WORKING | DSP-F7127P | CLAIM=dispatch-transition-result-before-effects | SOURCE=mdata.loads.status→delivery/latch/audit | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7127O | PR=#17193 @ 4f878f7a3b | Built=planner write continuity | NEXT=canonical transition result | GO
+CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7148 | CLAIM=arrival-confirm-hides-prompt-after-canonical-stop-zero-row | SOURCE=dispatch.stop_arrivals→mdata.load_stops→mdata.loads | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7147 | PR=#17244 @ 9a67f6ef37 | Built=atomic load-reservation consumption | NEXT=arrival confirm lifecycle | GO
