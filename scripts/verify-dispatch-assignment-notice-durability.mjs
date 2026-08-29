@@ -82,6 +82,9 @@ export function problems(files) {
   if (!/return buildUniqueOutboxHandlerMap\(handlers\)/.test(registry)) {
     failures.push("production outbox registry must use duplicate-rejecting construction");
   }
+  if (!/const notification = await createNotification\([\s\S]{0,700}?if \(!notification\?\.id\)[\s\S]{0,180}?notification_insert_returned_no_identity/.test(noticeHandler)) {
+    failures.push("operational notices must require persisted notification identity before acknowledging delivery");
+  }
   if (!/LEFT JOIN org\.user_company_access uca[\s\S]{0,300}?uca\.company_id = \$1::uuid[\s\S]{0,180}?uca\.deactivated_at IS NULL/.test(noticeHandler)) {
     failures.push("role-based operational notices must resolve only active memberships for the event company");
   }
@@ -113,6 +116,7 @@ if (process.argv.includes("--selftest")) {
     ["abandoned delivery failure ignored", { ...production, noticeHandler: production.noticeHandler.replace("if (failures.length) {", "if (false) {") }],
     ["registry duplicate rejection removed", { ...production, registry: production.registry.replace("if (registry.has(handler.eventType)) {", "if (false) {") }],
     ["registry bypasses unique builder", { ...production, registry: production.registry.replace("return buildUniqueOutboxHandlerMap(handlers);", "return new Map(handlers.map((handler) => [handler.eventType, handler]));") }],
+    ["notification identity check removed", { ...production, noticeHandler: production.noticeHandler.replace("if (!notification?.id) {", "if (false) {") }],
     ["notice role company join removed", { ...production, noticeHandler: production.noticeHandler.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
     ["notice default company arm removed", { ...production, noticeHandler: production.noticeHandler.replace("u.default_company_id = $1::uuid", "u.default_company_id = NULL") }],
     ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],
