@@ -201,7 +201,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
       );
       if (!reassignmentUpdate.rows[0]?.id) throw new Error("E_LOAD_NOT_FOUND");
 
-      await client.query(
+      const assignmentHistory = await client.query<{ id: string }>(
         `
           INSERT INTO dispatch.load_assignment_history (
             operating_company_id, load_id, assignment_method,
@@ -212,6 +212,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
             reason_code, notes
           )
           VALUES ($1,$2,'manual_reassign',$3,$4,$5,$5,$6,$6,$7,'[]'::jsonb,$8,$9)
+          RETURNING id::text
         `,
         [
           input.operating_company_id,
@@ -225,6 +226,9 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
           input.notes ?? null,
         ]
       );
+      if (!assignmentHistory.rows[0]?.id) {
+        throw new Error("E_ASSIGNMENT_HISTORY_WRITE_FAILED");
+      }
 
       await enqueueOutboxEvent(
         client,
