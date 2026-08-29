@@ -1,3 +1,4 @@
+CASCADE | ACK | GO-0031 | NOW=walk-legal-customers-FINDING | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0030 | NOW=walk-lists-accounting-FINDING | SHA=4e5db76 | GO
 CASCADE | DONE | 2026-08-29T01:35Z | GO-0027 | DRIVER-INBOX-DENY-SILENT-NO-OP | SHA=4e5db76 | FINDING: DriverInbox.tsx:101-108 denyMut useMutation has no onError and no isError render — failed deny API call silently swallowed. User clicks "Confirm deny", mutation fails, no feedback. Sibling CashAdvanceRequestsPage.tsx:453 renders isError. Row 50103 appended. Never trigger_deploy. GO
 CASCADE | DONE | 2026-08-29T01:28Z | GO-0027 | QBO-AUTO-LINK-SILENT-OVERCOUNT | SHA=4e5db76 | FINDING: QboVendorLinkagePage.tsx:233-239 bulk auto-link calls linkDriverQboVendor().catch(() => undefined) which silently swallows failures, but linkedCount += 1 runs unconditionally — toast reports "N drivers linked" including failed links. Silent no-op. Row 50102 appended. Never trigger_deploy. GO
