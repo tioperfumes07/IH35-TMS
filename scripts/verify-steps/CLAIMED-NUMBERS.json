@@ -4797,6 +4797,16 @@
     "claimed_by": "cursor",
     "purpose": "verify-audit-coverage-ledger-integrity"
   },
+  "10046": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-requireauth-returns-reply"
+  },
+  "10048": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-sql-placeholder-param-count"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6781,5 +6791,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1331
+  "total_claimed": 1333
 }
