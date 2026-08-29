@@ -1,3 +1,5 @@
+DEVIN | ACK | STANDING+GO-0055 | NOW=vendors-TEST-unique | SHA=b276443 (healthz) / main=38fd5e0 | GO
+
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
 DEVIN | drain-cont11 | vendors-drain | SHA=ba23128 | SHIPPED PR #17550 | FIXED: LST-F9136 — Forty+ routes across fifteen integration/report files lacked config.rateLimit: QBO forensic-admin/sync-admin/oauth, trimble geocoding, samsara health/hos-driver-map/master-sync/stats-probe/config/geofences/hos-readiness/positions, integrity driver-vendor-mapping, plaid admin/link, reports deadhead/csa-fleet-score/custom-report-builder/ifta-status/scheduled-reports/library, scheduled-reports pause/resume/send-now/delete/test-send. Added 60/min reads, 30/min writes, 10/min sync/oauth/backfill/send-now. Ratchet 220→180. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
