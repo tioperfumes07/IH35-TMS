@@ -99,13 +99,19 @@ export function auditSource(src, label) {
   return found;
 }
 
+// RE-ANCHOR (found stale 2026-08-29): this route's registration was reformatted onto multiple
+// lines (`app.get(\n  "/api/v1/mdata/units/:id",\n  ...`), so the single-line literal marker never
+// matched — the whole check silently returned "missing unit aggregate route" on CORRECT code. The
+// two body regexes below were similarly reformatted (args moved onto their own lines with trailing
+// commas). All three are now whitespace/trailing-comma tolerant.
 function unitAggregateRouteFailures(src) {
-  const start = src.indexOf('app.get("/api/v1/mdata/units/:id"');
-  if (start < 0) return ["missing unit aggregate route"];
-  const route = src.slice(start, start + 2200);
+  const marker = /app\.get\(\s*["']\/api\/v1\/mdata\/units\/:id["']/;
+  const m = marker.exec(src);
+  if (!m) return ["missing unit aggregate route"];
+  const route = src.slice(m.index, m.index + 2200);
   const resolvesCallerCompany =
-    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*parsedQuery\.data\.operating_company_id\s*\)/.test(route);
-  const passesResolvedCompany = /buildUnitAggregate\(client, parsedParams\.data\.id, scopedCompanyId\)/.test(route);
+    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*parsedQuery\.data\.operating_company_id,?\s*\)/.test(route);
+  const passesResolvedCompany = /buildUnitAggregate\(\s*client,\s*parsedParams\.data\.id,\s*scopedCompanyId,?\s*\)/.test(route);
   return [
     !resolvesCallerCompany ? "unit aggregate must membership-resolve caller company" : null,
     !passesResolvedCompany ? "unit aggregate must receive only the resolved company" : null,
@@ -114,8 +120,8 @@ function unitAggregateRouteFailures(src) {
 
 function unitPdfAggregateRouteFailures(src) {
   const resolvesCallerCompany =
-    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*query\.data\.operating_company_id\s*\)/.test(src);
-  const passesResolvedCompany = /buildUnitAggregate\(client, params\.data\.id, scopedCompanyId\)/.test(src);
+    /resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*query\.data\.operating_company_id,?\s*\)/.test(src);
+  const passesResolvedCompany = /buildUnitAggregate\(\s*client,\s*params\.data\.id,\s*scopedCompanyId,?\s*\)/.test(src);
   return [
     !resolvesCallerCompany ? "unit PDF export must membership-resolve caller company" : null,
     !passesResolvedCompany ? "unit PDF export must receive only the resolved company" : null,
@@ -144,20 +150,26 @@ if (process.argv.includes("--selftest")) {
     bad++;
     console.error(`  selftest FAIL: production unit aggregate rejected — ${goodUnitFailures.join(", ")}`);
   }
+  // RE-ANCHOR (found stale 2026-08-29): both mutations below hardcoded the exact
+  // whitespace/line-break shape of these two call sites. A reformat (prettier moved
+  // resolveOperatingCompanyId's args and buildUnitAggregate's args onto their own lines with
+  // trailing commas) left both literal anchors matching nothing, so the mutations were silent
+  // no-ops — the real code is still correct (membership-resolved company only), the guard was just
+  // blind to a regression. Regex-based, whitespace-tolerant anchors instead of exact literal text.
   const unitMutations = [
     [
       "unit resolver removed",
       unitRoutes.replace(
-        "parsedQuery.data.operating_company_id\n      );",
-        "authUser.defaultCompanyId\n      );"
+        /(const scopedCompanyId = await resolveOperatingCompanyId\(\s*client,\s*authUser\.uuid,\s*)parsedQuery\.data\.operating_company_id,?(\s*\);)/,
+        "$1authUser.defaultCompanyId$2"
       ),
       "membership-resolve caller company",
     ],
     [
       "caller company passed to builder",
       unitRoutes.replace(
-        "buildUnitAggregate(client, parsedParams.data.id, scopedCompanyId)",
-        "buildUnitAggregate(client, parsedParams.data.id, parsedQuery.data.operating_company_id)"
+        /(return buildUnitAggregate\(\s*client,\s*parsedParams\.data\.id,\s*)scopedCompanyId,?(\s*\);)/,
+        "$1parsedQuery.data.operating_company_id$2"
       ),
       "receive only the resolved company",
     ],
