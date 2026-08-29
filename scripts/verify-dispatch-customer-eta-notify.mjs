@@ -100,6 +100,8 @@ function verifySources({
     failures.push("NotifyPreferencesPage must expose preferences panel");
   if (!page.includes("Delivery log"))
     failures.push("NotifyPreferencesPage must show delivery log");
+  if (!/useEffect\(\(\) => \{[\s\S]{0,100}setCustomerId\(initialCustomerId\);[\s\S]{0,80}\}, \[initialCustomerId\]\);/.test(page))
+    failures.push("customer reverse drill must resynchronize the mounted picker when customer_id changes");
   if ((pageTest.match(/\bit\(/g) ?? []).length < 2)
     failures.push("NotifyPreferencesPage tests must cover at least 2 cases");
   if ((routeTest.match(/\bit\(/g) ?? []).length < 4)
@@ -189,6 +191,11 @@ function main() {
 
   if (process.argv.includes("--selftest")) {
     const mutations = [
+      [
+        "drop mounted customer deep-link synchronization",
+        "page",
+        sources.page.replace("setCustomerId(initialCustomerId);", "setCustomerId(customerId);")
+      ],
       [
         "drop preference persistence proof",
         "service",
