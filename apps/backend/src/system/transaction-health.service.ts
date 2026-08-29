@@ -43,6 +43,7 @@
  * Documented as best-effort; a false negative (a real finding this doesn't surface) is possible, a
  * false positive is not (an id that doesn't appear in the row cannot match).
  */
+import { enrichTxHealthEvidence } from "./transaction-health-evidence.js";
 
 export type TxHealthDocType =
   | "invoice"
@@ -61,6 +62,33 @@ export type TxHealthChecks = {
   sample_consistent: boolean | null; // null = UNVERIFIABLE
 };
 
+export type TxHealthLinkState = "wired" | "missing" | "not_applicable" | "blocked_by_constraint";
+export type TxHealthLinkGroup = "GENERAL LEDGER" | "OPERATIONS" | "MASTER DATA";
+
+export type TxHealthGlLine = {
+  account_code: string;
+  account_name: string;
+  account_id: string | null;
+  dr: number;
+  cr: number;
+};
+
+export type TxHealthGl = null | {
+  lines: TxHealthGlLine[];
+  dr_total: number;
+  cr_total: number;
+  balanced: boolean;
+};
+
+export type TxHealthLink = {
+  label: string;
+  target_type: string;
+  target_id: string | null;
+  target_label: string | null;
+  state: TxHealthLinkState;
+  group: TxHealthLinkGroup;
+};
+
 export type TxHealthRow = {
   doc_type: TxHealthDocType;
   id: string;
@@ -72,6 +100,8 @@ export type TxHealthRow = {
   checks: TxHealthChecks;
   findings: Array<{ id: string; finding_type: string; severity: string }>;
   status: "OK" | "WARN" | "FAIL";
+  gl: TxHealthGl;
+  links: TxHealthLink[];
 };
 
 export type TxHealthClient = {
@@ -513,10 +543,13 @@ export async function fetchTransactionHealth(
       checks,
       findings,
       status,
+      gl: { lines: [], dr_total: 0, cr_total: 0, balanced: true },
+      links: [],
     };
   });
 
-  const filtered = params.issuesOnly ? rows.filter((r) => r.status !== "OK") : rows;
+  const withEvidence = await enrichTxHealthEvidence(client, rows);
+  const filtered = params.issuesOnly ? withEvidence.filter((r) => r.status !== "OK") : withEvidence;
   const lastRaw = page[page.length - 1];
   const next_cursor = hasMore && lastRaw ? Buffer.from(JSON.stringify({ event_at: lastRaw.event_at, id: lastRaw.id }), "utf8").toString("base64url") : null;
 

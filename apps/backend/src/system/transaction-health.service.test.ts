@@ -37,6 +37,17 @@ function row(overrides: Partial<RawRow> & Pick<RawRow, "doc_type" | "id" | "even
 function makeClient(opts: {
   pageRows: RawRow[];
   findings?: Array<{ id: string; finding_type: string; severity: string; resource_scope: unknown; local_value: unknown }>;
+  glLines?: Array<{
+    doc_id: string;
+    journal_entry_id: string | null;
+    account_id: string | null;
+    account_code: string | null;
+    account_name: string | null;
+    amount_cents: number;
+    debit_or_credit: string;
+    line_sequence: number;
+  }>;
+  invoiceCustomers?: Array<{ doc_id: string; customer_id: string | null; customer_name: string | null }>;
 }): TxHealthClient & { calls: Array<{ sql: string; values?: unknown[] }> } {
   const calls: Array<{ sql: string; values?: unknown[] }> = [];
   return {
@@ -48,6 +59,12 @@ function makeClient(opts: {
       }
       if (sql.includes("_system.reconciliation_findings")) {
         return { rows: opts.findings ?? [] };
+      }
+      if (sql.includes("FROM accounting.journal_entry_postings p") && sql.includes("source_transaction_id = ANY")) {
+        return { rows: opts.glLines ?? [] };
+      }
+      if (sql.includes("FROM accounting.invoices i") && sql.includes("mdata.customers") && sql.includes("customer_name")) {
+        return { rows: opts.invoiceCustomers ?? [] };
       }
       return { rows: [] };
     },
@@ -260,5 +277,50 @@ describe("transaction-health.service — pagination", () => {
     const mainCall = client.calls.find((c) => c.sql.includes("WITH u AS"));
     expect(mainCall?.values).toContain("2026-08-01T00:00:00.000Z");
     expect(mainCall?.values).toContain("cursor-id");
+  });
+});
+
+describe("transaction-health.service — TXH-03 GL + links evidence", () => {
+  it("returns gl.lines (2), balanced, wired Customer, and GENERAL LEDGER links for a posted invoice", async () => {
+    const invId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const client = makeClient({
+      pageRows: [row({ doc_type: "invoice", id: invId, event_at: "2026-08-27T00:00:00Z" })],
+      glLines: [
+        {
+          doc_id: invId,
+          journal_entry_id: "je-1",
+          account_id: "acct-ar",
+          account_code: "1100",
+          account_name: "Accounts Receivable",
+          amount_cents: 120000,
+          debit_or_credit: "debit",
+          line_sequence: 1,
+        },
+        {
+          doc_id: invId,
+          journal_entry_id: "je-1",
+          account_id: "acct-rev",
+          account_code: "4000",
+          account_name: "Freight revenue",
+          amount_cents: 120000,
+          debit_or_credit: "credit",
+          line_sequence: 2,
+        },
+      ],
+      invoiceCustomers: [{ doc_id: invId, customer_id: "cust-1", customer_name: "Acme Brokers" }],
+    });
+
+    const result = await fetchTransactionHealth(client, {
+      operatingCompanyIds: [COMPANY_A],
+      cursor: null,
+      limit: 50,
+      issuesOnly: false,
+    });
+
+    expect(result.rows[0].gl).not.toBeNull();
+    expect(result.rows[0].gl?.lines).toHaveLength(2);
+    expect(result.rows[0].gl?.balanced).toBe(true);
+    expect(result.rows[0].links.find((l) => l.label === "Customer")?.state).toBe("wired");
+    expect(result.rows[0].links.some((l) => l.group === "GENERAL LEDGER")).toBe(true);
   });
 });

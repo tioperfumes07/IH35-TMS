@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
@@ -13,6 +13,8 @@ import { getProgramTracker, type ProgramTracker, type TrackerPhase } from "../..
 import {
   getTransactionHealth,
   txHealthDocumentPath,
+  txHealthLinkPath,
+  type TxHealthLink,
   type TxHealthResponse,
   type TxHealthRow,
 } from "../../api/transaction-health";
@@ -513,29 +515,101 @@ function LedgerHealthTab({ data }: { data: SystemData }) {
 }
 
 /**
- * TRANSACTIONS tab (TXH-01 / SYS-F-TRANSACTION-HEALTH-REGISTER) — read-only. Every TMS-native
- * document (invoice, bill, bill_payment, customer_payment, expense, journal_entry, factoring_batch,
- * settlement), joined at read time to its own posting/balance/linkage/sample-consistency status —
- * never stored (no health_status column, no migration; see transaction-health.service.ts header). No
- * resolve/close/acknowledge control exists here, matching Ledger Health's self-close-only shape: a row
- * clears when the underlying document is actually fixed, never by a click on this page.
- *
- * Self-contained data fetch (own useQuery + local filter/pagination state) rather than folding into
- * useSystemData — this tab's filters (entity, issues-only) and cursor pagination are its own concern.
+ * TRANSACTIONS tab (TXH-01 / TXH-03) — read-only two-pane register. Status is computed at read time;
+ * never stored. List click stays on this page (setSelectedKey only). Wired chips open a new tab.
  */
-function TxCheckPill({ value }: { value: boolean | null }) {
-  if (value === null) return <Pill tone="neutral">N/A</Pill>;
-  return value ? <Pill tone="ok">OK</Pill> : <Pill tone="off">FAIL</Pill>;
+function formatGlLedgerPre(row: TxHealthRow): string {
+  const gl = row.gl;
+  const head = `${row.doc_type.replace(/_/g, " ").toUpperCase()}  ${row.display_label}  ·  ${row.checks.posted ? "POSTED" : "UNPOSTED"}`;
+  if (gl == null) return `${head}\n\nno GL entry — this document type posts nothing`;
+  const col = (s: string, n: number) => (s.length > n ? s.slice(0, n) : s.padEnd(n));
+  const money = (cents: number) => (cents === 0 ? "".padStart(12) : (cents / 100).toFixed(2).padStart(12));
+  const header = `${col("Acct", 10)} ${col("Account", 28)} ${"DR".padStart(12)} ${"CR".padStart(12)}`;
+  const body = gl.lines.map((line) => `${col(line.account_code || "", 10)} ${col(line.account_name || "", 28)} ${money(line.dr)} ${money(line.cr)}`);
+  const rule = "-".repeat(10 + 1 + 28 + 1 + 12 + 1 + 12);
+  const totals = `${col("", 10)} ${col("", 28)} ${money(gl.dr_total)} ${money(gl.cr_total)}   ${gl.balanced ? "✓ balanced" : "UNBALANCED"}`;
+  return [head, "", header, ...body, rule, totals].join("\n");
+}
+
+const GROUP_ORDER = ["GENERAL LEDGER", "OPERATIONS", "MASTER DATA"] as const;
+const GAP = 26;
+
+function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: string } {
+  if (state === "wired") return { color: "#334155" };
+  if (state === "missing") return { color: "#dc2626", dash: "6 4" };
+  if (state === "not_applicable") return { color: "#94a3b8", dash: "1 3" };
+  return { color: "#b45309" };
+}
+
+function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
+  type Node = { link: TxHealthLink; y: number };
+  const nodes: Node[] = [];
+  let y = 20;
+  for (let gi = 0; gi < GROUP_ORDER.length; gi++) {
+    const group = GROUP_ORDER[gi];
+    const items = links.filter((l) => l.group === group);
+    if (items.length === 0) continue;
+    if (nodes.length > 0) y += 26;
+    for (const link of items) {
+      nodes.push({ link, y });
+      y += GAP;
+    }
+  }
+  const height = Math.max(y + 8, 80);
+  const hubX = 36;
+  const hubY = height / 2;
+  const nodeX = 200;
+  return (
+    <svg width="420" height={height} aria-label="wiring map" className="max-w-full">
+      <circle cx={hubX} cy={hubY} r={7} fill="#334155" />
+      {nodes.map(({ link, y: ny }, idx) => {
+        const { color, dash } = strokeForLink(link.state);
+        return (
+          <g key={`${link.group}:${link.label}:${link.target_id ?? idx}`}>
+            <line
+              x1={hubX}
+              y1={hubY}
+              x2={nodeX}
+              y2={ny}
+              stroke={color}
+              strokeWidth={1.5}
+              strokeDasharray={dash}
+            />
+            <circle cx={nodeX} cy={ny} r={4} fill={color} />
+            {link.state === "missing" ? (
+              <text x={nodeX - 16} y={ny + 4} fill="#dc2626" fontSize="11">
+                ✕
+              </text>
+            ) : null}
+            {link.state === "wired" && txHealthLinkPath(link) ? (
+              <a href={txHealthLinkPath(link) ?? undefined} target="_blank" rel="noreferrer">
+                <text x={nodeX + 10} y={ny + 4} fill="#334155" fontSize="11">
+                  {link.label}
+                  {link.target_label ? ` — ${link.target_label}` : ""}
+                </text>
+              </a>
+            ) : (
+              <text x={nodeX + 10} y={ny + 4} fill="#334155" fontSize="11">
+                {link.label}
+                {link.target_label ? ` — ${link.target_label}` : ""}
+                {link.state === "missing" ? " (missing)" : ""}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
 }
 
 function TransactionHealthTab() {
-  const navigate = useNavigate();
   const [issuesOnly, setIssuesOnly] = useState(true);
   const [selectedEntityIds, setSelectedEntityIds] = useState<string[]>([]); // empty = every active entity
   const [cursor, setCursor] = useState<string | null>(null);
   const [rows, setRows] = useState<TxHealthRow[]>([]);
   const [entities, setEntities] = useState<TxHealthResponse["entities"]>([]);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const query = useQuery<TxHealthResponse>({
     queryKey: ["system", "tx-health", issuesOnly, selectedEntityIds, cursor],
@@ -544,10 +618,10 @@ function TransactionHealthTab() {
     staleTime: 15_000,
   });
 
-  // A genuine filter change (not a "Load more" cursor bump) restarts the page from the top.
   useEffect(() => {
     setCursor(null);
     setRows([]);
+    setSelectedKey(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [issuesOnly, selectedEntityIds.join(",")]);
 
@@ -559,43 +633,27 @@ function TransactionHealthTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query.data]);
 
+  useEffect(() => {
+    if (rows.length === 0) return;
+    const newest = `${rows[0].doc_type}:${rows[0].id}`;
+    if (!selectedKey || !rows.some((r) => `${r.doc_type}:${r.id}` === selectedKey)) {
+      setSelectedKey(newest);
+    }
+  }, [rows, selectedKey]);
+
   const toggleEntity = (id: string) => {
     setSelectedEntityIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
   const failCount = rows.filter((r) => r.status === "FAIL").length;
   const warnCount = rows.filter((r) => r.status === "WARN").length;
-
-  const columns: ParityColumn<TxHealthRow>[] = [
-    { key: "doc_type", label: "Type", sortable: true, render: (row) => row.doc_type.replace(/_/g, " ") },
-    { key: "entity_code", label: "Entity", sortable: true },
-    { key: "display_label", label: "Document", sortable: true },
-    { key: "event_at", label: "Date", sortable: true, render: (row) => ctDateTime(row.event_at) },
-    { key: "posted", label: "Posted", render: (row) => <TxCheckPill value={row.checks.posted} /> },
-    { key: "balanced", label: "Balanced", render: (row) => <TxCheckPill value={row.checks.balanced} /> },
-    { key: "linked", label: "Linked", render: (row) => <TxCheckPill value={row.checks.linked} /> },
-    {
-      key: "sample_consistent",
-      label: "Sample",
-      render: (row) => <TxCheckPill value={row.checks.sample_consistent} />,
-    },
-    {
-      key: "findings",
-      label: "Findings",
-      render: (row) => (row.findings.length === 0 ? "—" : <Pill tone="warn">{row.findings.length}</Pill>),
-    },
-    {
-      key: "status",
-      label: "Status",
-      sortable: true,
-      render: (row) => (
-        <Pill tone={row.status === "OK" ? "ok" : row.status === "WARN" ? "warn" : "off"}>{row.status}</Pill>
-      ),
-    },
-  ];
+  const selected = rows.find((r) => `${r.doc_type}:${r.id}` === selectedKey) ?? null;
+  const links = selected?.links ?? [];
+  const wiredChips = links.filter((l) => l.state === "wired" && Boolean(l.target_id));
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <span className="sr-only">links[].state gl.lines</span>
       <Card
         title="Transaction Health"
         pill={<Pill tone="neutral">READ-ONLY</Pill>}
@@ -634,31 +692,85 @@ function TransactionHealthTab() {
         ) : null}
       </Card>
 
-      <Card title="Documents" full sub="Row click opens the document's own existing detail page — there is no separate detail view here.">
-        <ParityTable<TxHealthRow>
-          columns={columns}
-          rows={rows}
-          rowKey={(row) => `${row.doc_type}:${row.id}`}
-          storageKey="system-tx-health-documents"
-          onRowClick={(row) => navigate(txHealthDocumentPath(row))}
-          emptyText={
-            query.isError
-              ? "Transaction health unavailable."
-              : query.isLoading && rows.length === 0
-              ? "Loading documents…"
-              : issuesOnly
-              ? "No open issues — every document checked is OK."
-              : "No documents found."
-          }
-        />
-        {query.data?.next_cursor ? (
-          <div className="mt-3">
-            <GhostButton onClick={() => setCursor(query.data?.next_cursor ?? null)}>
-              {query.isFetching ? "Loading…" : "Load more"}
-            </GhostButton>
-          </div>
-        ) : null}
-      </Card>
+      <div className="grid grid-cols-1 gap-4 sm:col-span-2 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]">
+        <Card
+          title={selected ? selected.display_label : "Document"}
+          pill={selected ? <Pill tone={selected.status === "OK" ? "ok" : selected.status === "WARN" ? "warn" : "off"}>{selected.status}</Pill> : undefined}
+          sub={selected ? `${selected.doc_type.replace(/_/g, " ")} · ${selected.entity_code} · ${ctDateTime(selected.event_at)}` : "Select a document from the list."}
+        >
+          {query.isError ? (
+            <p className="text-[12px] font-semibold text-red-700" role="alert">
+              Transaction health unavailable.
+            </p>
+          ) : query.isLoading && rows.length === 0 ? (
+            <p className="text-[12px] text-slate-500">Loading documents…</p>
+          ) : !selected ? (
+            <p className="text-[12px] text-slate-500">{issuesOnly ? "No open issues — every document checked is OK." : "No documents found."}</p>
+          ) : (
+            <div className="space-y-3">
+              <pre className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-[11px] leading-5 text-slate-800">
+                {formatGlLedgerPre(selected)}
+              </pre>
+              <TxHealthWiringMap links={links} />
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={txHealthDocumentPath(selected)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+                >
+                  Open document
+                </a>
+                {wiredChips.map((chip) => (
+                  <a
+                    key={`${chip.target_type}:${chip.target_id}`}
+                    href={txHealthLinkPath(chip) ?? "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-[#1f2a44] hover:bg-slate-50"
+                  >
+                    {chip.label}
+                    {chip.target_label ? ` · ${chip.target_label}` : ""}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </Card>
+
+        <Card title="Documents" sub="Newest first. Click selects — does not leave this page.">
+          <ul className="divide-y divide-gray-200">
+            {rows.map((row) => {
+              const key = `${row.doc_type}:${row.id}`;
+              const active = key === selectedKey;
+              return (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedKey(key)}
+                    className={`flex w-full items-center justify-between gap-2 px-1 py-2 text-left text-[12px] ${active ? "bg-slate-100" : "hover:bg-slate-50"}`}
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-[#1f2a44]">{row.display_label}</span>
+                      <span className="block truncate text-[11px] text-slate-500">
+                        {row.doc_type.replace(/_/g, " ")} · {row.entity_code}
+                      </span>
+                    </span>
+                    <Pill tone={row.status === "OK" ? "ok" : row.status === "WARN" ? "warn" : "off"}>{row.status}</Pill>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          {query.data?.next_cursor ? (
+            <div className="mt-3">
+              <GhostButton onClick={() => setCursor(query.data?.next_cursor ?? null)}>
+                {query.isFetching ? "Loading…" : "Load more"}
+              </GhostButton>
+            </div>
+          ) : null}
+        </Card>
+      </div>
     </div>
   );
 }
