@@ -50,7 +50,7 @@ function asLedgerKind(value: string): LedgerEntryKind {
 }
 
 export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
-  app.get("/api/v1/bank-recon/worklist", async (req, reply) => {
+  app.get("/api/v1/bank-recon/worklist", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -66,7 +66,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/bank-recon/accept-match", async (req, reply) => {
+  app.post("/api/v1/bank-recon/accept-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -92,7 +92,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/bank-recon/reject-match", async (req, reply) => {
+  app.post("/api/v1/bank-recon/reject-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -109,7 +109,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/bank-recon/manual-match", async (req, reply) => {
+  app.post("/api/v1/bank-recon/manual-match", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -135,7 +135,7 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/bank-recon/close-period", async (req, reply) => {
+  app.post("/api/v1/bank-recon/close-period", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
