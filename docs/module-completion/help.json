@@ -1,8 +1,8 @@
 {
   "module": "help",
   "title": "Help Center",
-  "complete": true,
-  "as_of": "2026-08-04",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
   "spec_sources": [
@@ -18,11 +18,12 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "HelpCenterPage · program-system-help breadth pass",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
+      "spec": "HelpCenterPage \u00b7 program-system-help breadth pass",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "HELP-S02",
@@ -32,10 +33,11 @@
         "VERIFY-1"
       ],
       "spec": "sidebar help flyout Overview",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: sidebar-config Overview → /help/overview; manifest mounts HelpPage. Guard step 2240.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: sidebar-config Overview \u2192 /help/overview; manifest mounts HelpPage. Guard step 2240.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "HELP-S03",
@@ -44,10 +46,11 @@
         "DOD-A"
       ],
       "spec": "RunbooksIndex route",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: /help/runbooks → RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: /help/runbooks \u2192 RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "HELP-S04",
@@ -57,10 +60,11 @@
         "VERIFY-1"
       ],
       "spec": "HelpArticlePage",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (≥12 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (\u226512 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "HELP-VERIFY-01",
@@ -77,12 +81,13 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots — structural VERIFY 1–8 locked in CI.",
+      "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots \u2014 structural VERIFY 1\u20138 locked in CI.",
       "pr": null,
       "prod_verified": true
     }
   ],
-  "pass_count": 5,
+  "pass_count": 1,
   "total_count": 5,
-  "progress": "5 of 5"
+  "progress": "1 of 5",
+  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

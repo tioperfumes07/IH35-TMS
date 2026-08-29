@@ -1,15 +1,15 @@
 {
   "module": "home",
-  "title": "Home — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-04",
+  "title": "Home \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "8d2f67b",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). COMPLETE 2026-07-29. Home is a single-route dashboard with no tab strip — its surfaces are sections of one page, all of which rendered in both entities during the live check. Unlike ELD/Insurance/Cash Flow/Compliance, there was no hidden tab layer to grow M with, so the module genuinely closes on one item. It reopens the moment a section is found broken (Rule 21: M grows when new FAILs appear).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). COMPLETE 2026-07-29. Home is a single-route dashboard with no tab strip \u2014 its surfaces are sections of one page, all of which rendered in both entities during the live check. Unlike ELD/Insurance/Cash Flow/Compliance, there was no hidden tab layer to grow M with, so the module genuinely closes on one item. It reopens the moment a section is found broken (Rule 21: M grows when new FAILs appear). REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "HOME-S01",
@@ -20,14 +20,15 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities, authenticated. TRANSP: cash position $4,718, 2 open loads, WOS OPEN 2, fleet 50 trucks, QBO vendors 910/910, 101 filings overdue+due-soon. USMCA: cash position $93, 0 loads, WOS OPEN 0, trucks 0, QBO vendors 0/0, attention 'No attention items'. Entity scoping proven by the two reads differing on every figure. Footer reads 'Backend version: 4de9adb' — a real backend sha, confirming PR #3751 deployed and working. Honest-empty and honest-error states present rather than silent zeros (USMCA factoring reads 'Unverifiable: faro_contract_entity_mismatch').",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: VERIFIED LIVE on prod 2026-07-29 in BOTH entities, authenticated. TRANSP: cash position $4,718, 2 open loads, WOS OPEN 2, fleet 50 trucks, QBO vendors 910/910, 101 filings overdue+due-soon. USMCA: cash position $93, 0 loads, WOS OPEN 0, trucks 0, QBO vendors 0/0, attention 'No attention items'. Entity scoping proven by the two reads differing on every figure. Footer reads 'Backend version: 4de9adb' \u2014 a real backend sha, confirming PR #3751 deployed and working. Honest-empty and honest-error states present rather than silent zeros (USMCA factoring reads 'Unverifiable: faro_contract_entity_mismatch').",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 1,
-  "pass_count": 1,
+  "pass_count": 0,
   "total_count": 1,
-  "progress": "1 of 1"
+  "progress": "0 of 1"
 }

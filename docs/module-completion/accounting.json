@@ -2,7 +2,7 @@
   "module": "accounting",
   "title": "Accounting (Module 3)",
   "complete": false,
-  "as_of": "2026-08-10T17:25:00Z",
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "49ff971",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/modules/accounting.md",
   "wire_note": "Bills and Invoices bulk failures use userFacingApiError with stable fallback copy; shared bulk guard mutation-proves raw error.message rejection across all production bulk surfaces.",
@@ -20,11 +20,12 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 economics — never header-only",
-      "status": "PASS",
-      "evidence": "Neon lucia: bills=16212 bill_lines=155049 (2026-07-24) | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "DoD VERIFY-6 economics \u2014 never header-only",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia: bills=16212 bill_lines=155049 (2026-07-24) | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3382",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-ECON-02",
@@ -34,11 +35,12 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Bill+BillPayment chain",
-      "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success×2 last 23:23Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "DoD VERIFY-6 \u00b7 Bill+BillPayment chain",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 23:23Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3398",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-ECON-03",
@@ -48,7 +50,7 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Receive Payment",
+      "spec": "DoD VERIFY-6 \u00b7 Receive Payment",
       "status": "PASS",
       "evidence": "Neon lucia 2026-07-29 (run_sql_transaction set_config bypass_rls=lucia): accounting.payments=12123. QBO_AR_PAYMENTS_PROJECTION_ENABLED override enabled=true for TRANSP (set_at 2026-07-29T00:42:27Z via #3733/202610110000). qbo.sync_runs ar_payments_inbound_mirror success through 2026-07-29T01:04Z. Subledger-only by design (no JE). Deploy health previously 256ecff; projection density proven on Neon independent of later expense fix. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3733",
@@ -62,11 +64,12 @@
         "DOD-E",
         "VERIFY-6"
       ],
-      "spec": "DoD VERIFY-6 · Expense chain",
-      "status": "PASS",
-      "evidence": "Neon lucia 2026-07-29 after #3744 deploy (healthz version=4ea40dd): accounting.expenses=26837, expense_lines=33745 (eligible mirror total_cents>0 was 26837). Root cause fixed: expense_lines.operating_company_id stamped. Owner-authorized catch-up projection ran post-deploy (same SQL as projectPurchasesToExpenses / backfill). qbo.sync_runs kind=qbo_purchases_expenses_projection success records_processed=26837. Flag stayed ON. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "DoD VERIFY-6 \u00b7 Expense chain",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-29 after #3744 deploy (healthz version=4ea40dd): accounting.expenses=26837, expense_lines=33745 (eligible mirror total_cents>0 was 26837). Root cause fixed: expense_lines.operating_company_id stamped. Owner-authorized catch-up projection ran post-deploy (same SQL as projectPurchasesToExpenses / backfill). qbo.sync_runs kind=qbo_purchases_expenses_projection success records_processed=26837. Flag stayed ON. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3744",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-ECON-05",
@@ -76,11 +79,12 @@
         "VERIFY-6"
       ],
       "spec": "Vendor credit apply/void",
-      "status": "PASS",
-      "evidence": "LIVE PROOF 2026-07-29 lucia: mdata.qbo_vendor_credits=6; accounting.vendor_credits=6 (all qbo_id set); sync_runs qbo_vendor_credits_inbound_mirror success records_processed=6; qbo_vendor_credits_projection success records_processed=6; healthz 20e2aad; TRANSP flags QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED + QBO_VENDOR_CREDITS_PROJECTION_ENABLED ON. Pull via same pullVendorCreditsFromQbo/projectVendorCreditsToLedger spine as scheduler. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE PROOF 2026-07-29 lucia: mdata.qbo_vendor_credits=6; accounting.vendor_credits=6 (all qbo_id set); sync_runs qbo_vendor_credits_inbound_mirror success records_processed=6; qbo_vendor_credits_projection success records_processed=6; healthz 20e2aad; TRANSP flags QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED + QBO_VENDOR_CREDITS_PROJECTION_ENABLED ON. Pull via same pullVendorCreditsFromQbo/projectVendorCreditsToLedger spine as scheduler. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3749",
       "live_proof_at": "2026-07-29T06:35:03Z",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-PULL-01",
@@ -90,11 +94,12 @@
         "VERIFY-6",
         "DOD-E"
       ],
-      "spec": "ACCT-F01 · inbound wiring",
-      "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F01 \u00b7 inbound wiring",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3411",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-PULL-02",
@@ -104,10 +109,11 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 AP side",
-      "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success×2 last 2026-07-24T23:23:41Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 2026-07-24T23:23:41Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3398",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-PULL-03",
@@ -117,10 +123,11 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 expense side",
-      "status": "PASS",
-      "evidence": "Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success×2 last 2026-07-24T23:25:26Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success\u00d72 last 2026-07-24T23:25:26Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3399",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-LINK-01",
@@ -129,11 +136,12 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 · ACCT-F02",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "Law \u00a79 \u00b7 ACCT-F02",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3697",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-LINK-02",
@@ -143,12 +151,13 @@
         "VERIFY-4",
         "VERIFY-5"
       ],
-      "spec": "Law §9 · ACCT-F03",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "Law \u00a79 \u00b7 ACCT-F03",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING-LINK02-PASS",
       "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-LINK-03",
@@ -157,11 +166,12 @@
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "ACCT-F04 · Claim/WO reverse",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo→unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F04 \u00b7 Claim/WO reverse",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo\u2192unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3699",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-LINK-04",
@@ -171,10 +181,11 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F07",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey → catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey \u2192 catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3446 #3697",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-LINK-05",
@@ -192,23 +203,24 @@
     },
     {
       "id": "ACCT-LINK-06",
-      "title": "bank feed matched_journal_entry_id density + categorize→GL poster wired (ACCT-F05)",
+      "title": "bank feed matched_journal_entry_id density + categorize\u2192GL poster wired (ACCT-F05)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "ACCT-F05 · companion BANK-ECON-02",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk→maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). #3424 poster on main. apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) — THIS PR mounts it + guard 1832. Guard 1762 / 1507 allow PASS when matched_je=N/M with N>=50. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F05 \u00b7 companion BANK-ECON-02",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk\u2192maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). #3424 poster on main. apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) \u2014 THIS PR mounts it + guard 1832. Guard 1762 / 1507 allow PASS when matched_je=N/M with N>=50. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3424 #PENDING-ACCT-CLOSE",
       "live_proof": "2026-07-30 matched_je=170/10830; stamped bank_categorization batches>0",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-SURF-01",
-      "title": "Bills family — DoD A–E + VERIFY 1–8 on live surfaces",
+      "title": "Bills family \u2014 DoD A\u2013E + VERIFY 1\u20138 on live surfaces",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -224,7 +236,7 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bills ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bills \u25be",
       "status": "PASS",
       "evidence": "Structural guard verify-acct-surf-01-bills.mjs on main. LIVE browser 2026-07-28 app.ih35dispatch.com: TRANSP /accounting/bills non-blank (Bills heading + Bill # columns + live rows); USMCA Freight /accounting/bills renders Bills heading + live row USMCA-AUD-BILL-20260722 + Allocate + Open Bills $1.00 KPI. Closes Rule 23 TRANSP+USMCA re-click gate. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3477",
@@ -233,7 +245,7 @@
     },
     {
       "id": "ACCT-SURF-02",
-      "title": "Expenses — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Expenses \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -249,9 +261,9 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Expenses ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Expenses \u25be",
       "status": "PASS",
-      "evidence": "Economics density PASS (ACCT-ECON-04): Neon lucia accounting.expenses=26837, expense_lines=33745 (2026-07-29). Structural DoD guard scripts/verify-acct-surf-02-expenses.mjs (step 1747) PASS on branch: /accounting/expenses route renders ExpensesListPage (no ComingSoon twin); subnav leaf present; RecordExpenseModal uses ParityDrawer and is mounted from the list (+ Create); RecordExpenseForm vendor/category/account pickers use ReferenceSelect createKind; submitRecordExpense->createExpense POSTs /api/v1/expenses; server INSERTs INTO accounting.expenses (canonical, no RETIRE write); ExpensesListPage EntityLink vendor + journal_entry + expense (self); companion reverse guards verify-acct-expense-list-reverse.mjs + verify-acct-expense-list-wo-reverse.mjs remain present/wired. LIVE USMCA BROWSER CLICK-THROUGH RECORDED 2026-08-28 (CC-1, GO-0030): app.ih35dispatch.com, entity USMCA, healthz version=4e5db76 — Home '+ Record Expense' -> filled Vendor (ReferenceSelect, typed 'TEST', selected an existing vendor), Category (ReferenceSelect), Amount, Description, Payment method, Payment account -> submit -> real row created (EXP-2026-00010) live on /accounting/expenses, Status=Posted, GL=Posted; followed the row's real JE link (not dead) to /accounting/journal-entries/53dfc196-…, confirmed a POSTED, BALANCED 2-line entry (Dr Office & Administrative Expense $12.34 / Cr Bank of America - Operating (USMCA) $12.34) sourced back to EXP-2026-00010 — DoD A–D + VERIFY-1..6 (chrome, picker, wiring, EntityLink vendor+JE, catalogs/entity scope, economics) confirmed live on USMCA; VERIFY-7/8 (tab law / RLS) unchanged from ACCT-R-44, not independently re-checked this pass. TRANSP not walked — USMCA-only is this session's standing law (no TRANSP/TRK campaign), not a gap. ACCT-F17 (claim 1804): expenses list/detail project matched_bank_transaction_id via banking.bank_transactions.matched_expense_id + EntityLink bank_transaction. LIVE density of matched_expense_id not independently re-checked this pass. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "Economics density PASS (ACCT-ECON-04): Neon lucia accounting.expenses=26837, expense_lines=33745 (2026-07-29). Structural DoD guard scripts/verify-acct-surf-02-expenses.mjs (step 1747) PASS on branch: /accounting/expenses route renders ExpensesListPage (no ComingSoon twin); subnav leaf present; RecordExpenseModal uses ParityDrawer and is mounted from the list (+ Create); RecordExpenseForm vendor/category/account pickers use ReferenceSelect createKind; submitRecordExpense->createExpense POSTs /api/v1/expenses; server INSERTs INTO accounting.expenses (canonical, no RETIRE write); ExpensesListPage EntityLink vendor + journal_entry + expense (self); companion reverse guards verify-acct-expense-list-reverse.mjs + verify-acct-expense-list-wo-reverse.mjs remain present/wired. LIVE USMCA BROWSER CLICK-THROUGH RECORDED 2026-08-28 (CC-1, GO-0030): app.ih35dispatch.com, entity USMCA, healthz version=4e5db76 \u2014 Home '+ Record Expense' -> filled Vendor (ReferenceSelect, typed 'TEST', selected an existing vendor), Category (ReferenceSelect), Amount, Description, Payment method, Payment account -> submit -> real row created (EXP-2026-00010) live on /accounting/expenses, Status=Posted, GL=Posted; followed the row's real JE link (not dead) to /accounting/journal-entries/53dfc196-\u2026, confirmed a POSTED, BALANCED 2-line entry (Dr Office & Administrative Expense $12.34 / Cr Bank of America - Operating (USMCA) $12.34) sourced back to EXP-2026-00010 \u2014 DoD A\u2013D + VERIFY-1..6 (chrome, picker, wiring, EntityLink vendor+JE, catalogs/entity scope, economics) confirmed live on USMCA; VERIFY-7/8 (tab law / RLS) unchanged from ACCT-R-44, not independently re-checked this pass. TRANSP not walked \u2014 USMCA-only is this session's standing law (no TRANSP/TRK campaign), not a gap. ACCT-F17 (claim 1804): expenses list/detail project matched_bank_transaction_id via banking.bank_transactions.matched_expense_id + EntityLink bank_transaction. LIVE density of matched_expense_id not independently re-checked this pass. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3808 merged 2026-07-30 (branch cursor/acct-f17-expense-bank-reverse-1804 gone)",
       "prod_verified": false,
       "live_verified_at": "2026-08-28T21:36:00.000Z",
@@ -259,7 +271,7 @@
     },
     {
       "id": "ACCT-SURF-03",
-      "title": "Bill payment — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Bill payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -275,16 +287,16 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Bill payment ▾",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Bill payment \u25be",
       "status": "PASS",
-      "evidence": "Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461) on main. LIVE browser 2026-07-28: TRANSP /accounting/bill-payments — Bill Payments heading, Unpaid bill selector, JE + Bank transaction columns, live payment rows with JE drill links; USMCA Freight same route renders chrome (heading + columns + selector) without blank crash (sparse ledger OK). Neon bill_payments density live (lucia). Closes Rule 23 TRANSP+USMCA re-click gate. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "Structural DoD guard scripts/verify-acct-surf-03-bill-payment.mjs (step 1461) on main. LIVE browser 2026-07-28: TRANSP /accounting/bill-payments \u2014 Bill Payments heading, Unpaid bill selector, JE + Bank transaction columns, live payment rows with JE drill links; USMCA Freight same route renders chrome (heading + columns + selector) without blank crash (sparse ledger OK). Neon bill_payments density live (lucia). Closes Rule 23 TRANSP+USMCA re-click gate. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING",
       "live_proof": "2026-07-28 browser TRANSP live bill-payment rows + USMCA chrome non-blank",
       "prod_verified": true
     },
     {
       "id": "ACCT-SURF-04",
-      "title": "Receive Payment — DoD A–E + VERIFY 1–8 with live rows",
+      "title": "Receive Payment \u2014 DoD A\u2013E + VERIFY 1\u20138 with live rows",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -300,9 +312,9 @@
         "VERIFY-7",
         "VERIFY-8"
       ],
-      "spec": "EVERY-PR-AUDIT-CHECKLIST · Receive Payment",
+      "spec": "EVERY-PR-AUDIT-CHECKLIST \u00b7 Receive Payment",
       "status": "PASS",
-      "evidence": "Economics density PASS (ACCT-ECON-03): Neon lucia accounting.payments=12123 (2026-07-29) after QBO_AR_PAYMENTS_PROJECTION_ENABLED ON TRANSP (#3733/#3748). Structural DoD guard scripts/verify-acct-surf-04-receive-payment.mjs (step 1748) PASS on branch: /accounting/payments route renders PaymentsListPage (no ComingSoon twin); subnav leaf Receive Payment present; RecordPaymentModal uses ParityDrawer, mounted from list (+ Record Payment); customer/deposit pickers use ReferenceSelect createKind=customer|account; submit payload carries customer_id/payment_date/amount_cents/payment_method/deposited_to_account_id/apply_to; createPayment POSTs /api/v1/accounting/payments; server INSERTs INTO accounting.payments (canonical, no RETIRE write). VERIFY-4 gap CLOSED this PR: PaymentsListPage Customer column + PaymentDetailPage header now EntityLink kind=customer (were plain text); detail Applications table already EntityLink kind=invoice; detail header EntityLink kind=account on deposited_to_account_id. LIVE USMCA BROWSER CLICK-THROUGH RECORDED 2026-08-29 (CC-1, self-serve queue, app.ih35dispatch.com, healthz=4e5db76): /accounting/payments '+ Record Payment' -> Customer (ReferenceSelect, typed TEST, selected TEST-CC3 Customer 0822), Payment method ACH, Reference, Amount $15.75, Notes -> Apply to invoices honestly rendered 'No open invoices for this customer' (not a false empty — this customer genuinely has none) -> submit -> real row created PMT-2026-00015, live on /accounting/payments/704f5a67-…: Header shows Customer/Date/Method/Reference/Amount $15.75/Applied $0.00/Unapplied $15.75/Deposited to 1090 — Undeposited Funds; a real GL/Journal Entries posting link (not dead) to /accounting/journal-entries/d5c5451a-…, confirmed POSTED, BALANCED 2-line entry (Dr Undeposited Funds $15.75 / Cr Accounts Receivable (A/R) $15.75); Applications section correctly shows 'No applications yet' with a functional '+ Apply to invoice' control. HONEST GAP NOTED, not claimed fixed: the JE's own Source Links panel showed 'PAYMENT — Source — not visible' — journal-entries.service.ts's getJournalEntrySourceLinks() resolves display names only for invoice/bill/bank_categorization linked_object_types today (its own code comment explicitly scopes this as deliberate incremental coverage, 'payment' is not yet in that resolved set) — a pre-existing, already-documented scope boundary, not a regression introduced or discovered as new. DoD A–D + VERIFY-1..6 (chrome, picker, wiring, EntityLink customer+account, catalogs/entity scope, economics/GL) confirmed live on USMCA; VERIFY-7/8 (tab law / RLS) not independently re-checked this pass. TRANSP not walked — USMCA-only is this session's standing law. REMAINING (named, not claimed PASS): accounting.payment_applications density for apply-to-invoice specifically stays a data/ops backlog question (chrome + create + apply POST path are structurally wired and correct, honestly empty when no open invoice exists — not a broken feature). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "Economics density PASS (ACCT-ECON-03): Neon lucia accounting.payments=12123 (2026-07-29) after QBO_AR_PAYMENTS_PROJECTION_ENABLED ON TRANSP (#3733/#3748). Structural DoD guard scripts/verify-acct-surf-04-receive-payment.mjs (step 1748) PASS on branch: /accounting/payments route renders PaymentsListPage (no ComingSoon twin); subnav leaf Receive Payment present; RecordPaymentModal uses ParityDrawer, mounted from list (+ Record Payment); customer/deposit pickers use ReferenceSelect createKind=customer|account; submit payload carries customer_id/payment_date/amount_cents/payment_method/deposited_to_account_id/apply_to; createPayment POSTs /api/v1/accounting/payments; server INSERTs INTO accounting.payments (canonical, no RETIRE write). VERIFY-4 gap CLOSED this PR: PaymentsListPage Customer column + PaymentDetailPage header now EntityLink kind=customer (were plain text); detail Applications table already EntityLink kind=invoice; detail header EntityLink kind=account on deposited_to_account_id. LIVE USMCA BROWSER CLICK-THROUGH RECORDED 2026-08-29 (CC-1, self-serve queue, app.ih35dispatch.com, healthz=4e5db76): /accounting/payments '+ Record Payment' -> Customer (ReferenceSelect, typed TEST, selected TEST-CC3 Customer 0822), Payment method ACH, Reference, Amount $15.75, Notes -> Apply to invoices honestly rendered 'No open invoices for this customer' (not a false empty \u2014 this customer genuinely has none) -> submit -> real row created PMT-2026-00015, live on /accounting/payments/704f5a67-\u2026: Header shows Customer/Date/Method/Reference/Amount $15.75/Applied $0.00/Unapplied $15.75/Deposited to 1090 \u2014 Undeposited Funds; a real GL/Journal Entries posting link (not dead) to /accounting/journal-entries/d5c5451a-\u2026, confirmed POSTED, BALANCED 2-line entry (Dr Undeposited Funds $15.75 / Cr Accounts Receivable (A/R) $15.75); Applications section correctly shows 'No applications yet' with a functional '+ Apply to invoice' control. HONEST GAP NOTED, not claimed fixed: the JE's own Source Links panel showed 'PAYMENT \u2014 Source \u2014 not visible' \u2014 journal-entries.service.ts's getJournalEntrySourceLinks() resolves display names only for invoice/bill/bank_categorization linked_object_types today (its own code comment explicitly scopes this as deliberate incremental coverage, 'payment' is not yet in that resolved set) \u2014 a pre-existing, already-documented scope boundary, not a regression introduced or discovered as new. DoD A\u2013D + VERIFY-1..6 (chrome, picker, wiring, EntityLink customer+account, catalogs/entity scope, economics/GL) confirmed live on USMCA; VERIFY-7/8 (tab law / RLS) not independently re-checked this pass. TRANSP not walked \u2014 USMCA-only is this session's standing law. REMAINING (named, not claimed PASS): accounting.payment_applications density for apply-to-invoice specifically stays a data/ops backlog question (chrome + create + apply POST path are structurally wired and correct, honestly empty when no open invoice exists \u2014 not a broken feature). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING",
       "prod_verified": false,
       "live_verified_at": "2026-08-29T04:13:00.000Z",
@@ -310,32 +322,34 @@
     },
     {
       "id": "ACCT-SURF-05",
-      "title": "Journal Entries — type catalog wired + reverse drill",
+      "title": "Journal Entries \u2014 type catalog wired + reverse drill",
       "layers": [
         "DOD-C",
         "VERIFY-4",
         "VERIFY-7"
       ],
-      "spec": "ACCT-F02 · JE tab",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK + 8/8 JEs typed (GENERAL/BILL/OPENING_BALANCE/SALES_INVOICE). ManualJEModal picker + JournalEntryDetailPage reverse display of journal_entry_type_name/code wired. Backfill mig 202610070000 + inferJournalEntryTypeCode write path. PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F02 \u00b7 JE tab",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK + 8/8 JEs typed (GENERAL/BILL/OPENING_BALANCE/SALES_INVOICE). ManualJEModal picker + JournalEntryDetailPage reverse display of journal_entry_type_name/code wired. Backfill mig 202610070000 + inferJournalEntryTypeCode write path. PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3697",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-SURF-06",
-      "title": "Chart of Accounts / Detail Types — canonical detail_type link",
+      "title": "Chart of Accounts / Detail Types \u2014 canonical detail_type link",
       "layers": [
         "DOD-C",
         "VERIFY-5",
         "VERIFY-2"
       ],
-      "spec": "ACCT-F03 · CoA",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F03 \u00b7 CoA",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING-LINK02-PASS",
       "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-03",
@@ -347,12 +361,13 @@
         "VERIFY-4",
         "VERIFY-8"
       ],
-      "spec": "ACCT-F13 · blueprint MUST 3.18.4.3",
-      "status": "PASS",
-      "evidence": "LIVE PROOF 2026-07-29 lucia TRANSP (91e0bf0a-…): catalogs.account_merge_records=1; merge_record_id=0332ffcd-b88d-4e5b-9c77-ae52fe8724b9; source R03S-20260729 id=4c9db35e-9f22-447a-b0da-2d7506dee3f3 archived is_postable=false; target R03T-20260729 id=0d2a6566-f25f-41cd-ab43-407852a46e09; migrate_historical_postings=false; actor Owner d7bcbf8a-…; healthz 8a2a4c4. Wiring: POST /catalogs/accounts/:id/merge + mergeAccountsOnClient + guard 1488 + density guard 1749. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ACCT-F13 \u00b7 blueprint MUST 3.18.4.3",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE PROOF 2026-07-29 lucia TRANSP (91e0bf0a-\u2026): catalogs.account_merge_records=1; merge_record_id=0332ffcd-b88d-4e5b-9c77-ae52fe8724b9; source R03S-20260729 id=4c9db35e-9f22-447a-b0da-2d7506dee3f3 archived is_postable=false; target R03T-20260729 id=0d2a6566-f25f-41cd-ab43-407852a46e09; migrate_historical_postings=false; actor Owner d7bcbf8a-\u2026; healthz 8a2a4c4. Wiring: POST /catalogs/accounts/:id/merge + mergeAccountsOnClient + guard 1488 + density guard 1749. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3756",
       "live_proof_at": "2026-07-29T11:51:18Z",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-SURF-07",
@@ -363,54 +378,57 @@
         "VERIFY-3",
         "VERIFY-4"
       ],
-      "spec": "Law §9 reverse",
+      "spec": "Law \u00a79 reverse",
       "status": "PASS",
-      "evidence": "Structural guard verify-acct-surf-07-register.mjs (step 1462) PASS on main. LIVE browser 2026-07-29 app.ih35dispatch.com: TRANSP All Transactions 10,477 live rows, Open-source-record on a bill row drilled to /accounting/bills/0ccecb8c-... (real bill detail, not a list redisplay); USMCA All Transactions 143 live rows, drill-through to /accounting/bills/996907d6-... . USMCA Account Register (Accounts Payable A/P #2000) showed 2 live rows (07/22 + 07/29/2026) and the SAME row-click drilled to the identical bill detail page — reverse drill proven on Account Register itself, not just All Transactions. TRANSP Account Register rendered chrome (heading+columns+selector) without crash for accounts genuinely empty in-window (sparse ledger OK, SURF-03 pattern). ACCT-F51 (this PR): found + fixed a real crash — fn_account_balances_as_of's HAVING clause excludes any account whose opening+closing balance are both exactly $0 (e.g. TRANSP \"Income Accounts\" 1¢ debit + 1¢ credit wash on 2026-05-19, Neon lucia-confirmed), and getAccountRegister threw account_not_found on that exclusion → 404 → browser-reproduced \"Couldn't load the register\". Fixed with a metadata-only fallback (no new GL math, canonical fn still reused) + 2 new unit tests + guard verify-acct-f51-account-register-zero-net (step 1750). Guards 1462+1750 both PASS. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "Structural guard verify-acct-surf-07-register.mjs (step 1462) PASS on main. LIVE browser 2026-07-29 app.ih35dispatch.com: TRANSP All Transactions 10,477 live rows, Open-source-record on a bill row drilled to /accounting/bills/0ccecb8c-... (real bill detail, not a list redisplay); USMCA All Transactions 143 live rows, drill-through to /accounting/bills/996907d6-... . USMCA Account Register (Accounts Payable A/P #2000) showed 2 live rows (07/22 + 07/29/2026) and the SAME row-click drilled to the identical bill detail page \u2014 reverse drill proven on Account Register itself, not just All Transactions. TRANSP Account Register rendered chrome (heading+columns+selector) without crash for accounts genuinely empty in-window (sparse ledger OK, SURF-03 pattern). ACCT-F51 (this PR): found + fixed a real crash \u2014 fn_account_balances_as_of's HAVING clause excludes any account whose opening+closing balance are both exactly $0 (e.g. TRANSP \"Income Accounts\" 1\u00a2 debit + 1\u00a2 credit wash on 2026-05-19, Neon lucia-confirmed), and getAccountRegister threw account_not_found on that exclusion \u2192 404 \u2192 browser-reproduced \"Couldn't load the register\". Fixed with a metadata-only fallback (no new GL math, canonical fn still reused) + 2 new unit tests + guard verify-acct-f51-account-register-zero-net (step 1750). Guards 1462+1750 both PASS. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING",
       "live_proof": "2026-07-29 browser TRANSP+USMCA All Transactions live rows + drill-through; USMCA Account Register live rows + drill-through; zero-net crash (ACCT-F51) reproduced + fixed same PR",
       "prod_verified": true
     },
     {
       "id": "ACCT-SURF-08",
-      "title": "Period close / Audit trail / Posting lineage — active path + evidence",
+      "title": "Period close / Audit trail / Posting lineage \u2014 active path + evidence",
       "layers": [
         "DOD-A",
         "DOD-E",
         "VERIFY-7"
       ],
       "spec": "Architectural design Accounting tabs",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-29 browser app.ih35dispatch.com TRANSP: /accounting/month-close Month close wizard loads (period 2026-07 checklist + Close month control present; no period lock executed). /accounting/audit-trail Audit Trail live rows + EntityLink source ids (e.g. b23eb593) + Source lineage actions. /accounting/posting-lineage Load lineage for source_type=invoice source_transaction_id=06c7af5d-… returned JE EntityLinks (e36c6aef, 111edfe8) + posting table columns. Neon lucia: journal_entry_postings TRANSP=38 USMCA=10 TRK=11; accounting.periods=0 (no closed period yet — chrome proven, lock not exercised). Structural guard 1463 remains. Guard 1764 ratchets PASS + live_proof contract. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-29 browser app.ih35dispatch.com TRANSP: /accounting/month-close Month close wizard loads (period 2026-07 checklist + Close month control present; no period lock executed). /accounting/audit-trail Audit Trail live rows + EntityLink source ids (e.g. b23eb593) + Source lineage actions. /accounting/posting-lineage Load lineage for source_type=invoice source_transaction_id=06c7af5d-\u2026 returned JE EntityLinks (e36c6aef, 111edfe8) + posting table columns. Neon lucia: journal_entry_postings TRANSP=38 USMCA=10 TRK=11; accounting.periods=0 (no closed period yet \u2014 chrome proven, lock not exercised). Structural guard 1463 remains. Guard 1764 ratchets PASS + live_proof contract. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING-SURF08",
-      "live_proof": "2026-07-29 browser TRANSP month-close + audit-trail rows + posting-lineage invoice 06c7af5d→JEs; Neon lucia postings TRANSP=38 USMCA=10 TRK=11",
-      "prod_verified": true
+      "live_proof": "2026-07-29 browser TRANSP month-close + audit-trail rows + posting-lineage invoice 06c7af5d\u2192JEs; Neon lucia postings TRANSP=38 USMCA=10 TRK=11",
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-SURF-09",
-      "title": "Factoring / Escrow / Settlements cross-links from Accounting More ▾",
+      "title": "Factoring / Escrow / Settlements cross-links from Accounting More \u25be",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law §9 cross-module",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 browser app.ih35dispatch.com TRANSP: Accounting More▾ → Factoring (/accounting/factoring), Escrow (/accounting/escrow with Settlements/Factoring/Banking reverse links), Settlements → /driver-finance/settlements (sidebar SETTLEMENTS + Escrow tab). Structural guards 1464/1788 + live both-way drill. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "Law \u00a79 cross-module",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 browser app.ih35dispatch.com TRANSP: Accounting More\u25be \u2192 Factoring (/accounting/factoring), Escrow (/accounting/escrow with Settlements/Factoring/Banking reverse links), Settlements \u2192 /driver-finance/settlements (sidebar SETTLEMENTS + Escrow tab). Structural guards 1464/1788 + live both-way drill. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING-ACCT-CLOSE",
-      "live_proof": "2026-07-30 browser Factoring+Escrow+Settlements both-way Law §9",
-      "prod_verified": true
+      "live_proof": "2026-07-30 browser Factoring+Escrow+Settlements both-way Law \u00a79",
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-CTRL-01",
-      "title": "Parallel books — refuse invented TMS JE for qbo-sourced money",
+      "title": "Parallel books \u2014 refuse invented TMS JE for qbo-sourced money",
       "layers": [
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "DoD owner money locks · #3386/#3393",
-      "status": "PASS",
-      "evidence": "Refuse-GL paths merged; flags default OFF | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "DoD owner money locks \u00b7 #3386/#3393",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Refuse-GL paths merged; flags default OFF | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3386",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-CTRL-02",
@@ -419,23 +437,25 @@
         "VERIFY-5",
         "VERIFY-8"
       ],
-      "spec": "DoD VERIFY-5 · #3400",
-      "status": "PASS",
-      "evidence": "chart_of_accounts_roles=89 with lucia | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "DoD VERIFY-5 \u00b7 #3400",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: chart_of_accounts_roles=89 with lucia | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3400",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-GATE-01",
-      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) — process closed",
+      "title": "Every money PR uses EVERY-PR checklist (VERIFY-1..8) \u2014 process closed",
       "layers": [
         "DOD-E"
       ],
-      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md · verify-step 1430",
-      "status": "PASS",
-      "evidence": "#3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "docs/specs/EVERY-PR-AUDIT-CHECKLIST.md \u00b7 verify-step 1430",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: #3430 merged on main (sha fc1cf13); verify-steps 1430+1431 + Rule 24 live; money PRs require MODULE_PROGRESS trailers | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3430",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-11",
@@ -446,27 +466,29 @@
         "VERIFY-2",
         "VERIFY-3"
       ],
-      "spec": "0441-mod8-tx-fields-captured-not-sent · ACCT-R-11",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-28 Neon lucia (br-fancy-credit-akjnd07a): TRANSP bank_tx b23eb593… status=categorized check_number=R11-TRANSP-0728 categorization_location=Dallas yard; USMCA bank_tx b4fc7cd6… status=categorized check_number=R11-USMCA-0728 categorization_location=Laredo yard. Browser categorize Post on app.ih35dispatch.com Banking For review both entities. Static guards verify-bank-tx-capture-fields-persisted (1211) + verify-acct-r11-tx-fields-sent (1490) on main. mig 202607690000 Neon-applied. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "0441-mod8-tx-fields-captured-not-sent \u00b7 ACCT-R-11",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia (br-fancy-credit-akjnd07a): TRANSP bank_tx b23eb593\u2026 status=categorized check_number=R11-TRANSP-0728 categorization_location=Dallas yard; USMCA bank_tx b4fc7cd6\u2026 status=categorized check_number=R11-USMCA-0728 categorization_location=Laredo yard. Browser categorize Post on app.ih35dispatch.com Banking For review both entities. Static guards verify-bank-tx-capture-fields-persisted (1211) + verify-acct-r11-tx-fields-sent (1490) on main. mig 202607690000 Neon-applied. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DISP-01",
-      "title": "Two-event delivery revenue latch (Unbilled → A/R)",
+      "title": "Two-event delivery revenue latch (Unbilled \u2192 A/R)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "ASC 606 earn-first · blueprint §18 · EXEMPLAR-DISP-01",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30: load L-20260624-0083 (57fe61a4-…) smoked assigned_not_dispatched→dispatched→in_transit→delivered_pending_docs→completed_docs_received via PATCH /transition. Neon lucia load_revenue_recognition_postings=2 (earn+bill, $15,000). Earn JE 7d459959 DR Unbilled 1240 / CR Freight 4100 balanced; Bill JE 020ad2e1 DR A/R QBO-45 / CR Unbilled 1240 balanced. ROOT CAUSE unblocked: escrow abandon trigger compared nonexistent enum labels (22P02) — fixed live + mig 202610291200 (::text cast) + guard 1832. REVENUE_RECOGNITION_POST_ENABLED ON TRANSP+USMCA. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "ASC 606 earn-first \u00b7 blueprint \u00a718 \u00b7 EXEMPLAR-DISP-01",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30: load L-20260624-0083 (57fe61a4-\u2026) smoked assigned_not_dispatched\u2192dispatched\u2192in_transit\u2192delivered_pending_docs\u2192completed_docs_received via PATCH /transition. Neon lucia load_revenue_recognition_postings=2 (earn+bill, $15,000). Earn JE 7d459959 DR Unbilled 1240 / CR Freight 4100 balanced; Bill JE 020ad2e1 DR A/R QBO-45 / CR Unbilled 1240 balanced. ROOT CAUSE unblocked: escrow abandon trigger compared nonexistent enum labels (22P02) \u2014 fixed live + mig 202610291200 (::text cast) + guard 1832. REVENUE_RECOGNITION_POST_ENABLED ON TRANSP+USMCA. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#PENDING-ACCT-CLOSE",
       "live_proof": "L-20260624-0083 latch earn+bill JEs balanced 1500000/1500000; status=completed_docs_received",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-04",
@@ -476,7 +498,7 @@
         "VERIFY-3",
         "VERIFY-8"
       ],
-      "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner · ACCT-F15 · G4-DEPLOY",
+      "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner \u00b7 ACCT-F15 \u00b7 G4-DEPLOY",
       "status": "UNVERIFIED",
       "evidence": "render.yaml ih35-tms-backend declares IH35_SMOKE_UNIT_ID + IH35_SMOKE_OPERATING_COMPANY_ID (sync:false) merged #3528; identity.users filters archived test seeds via EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL; closure guard verify-acct-r04-deploy-smoke-closure (step 1704) PASS. UNVERIFIED: Render dashboard UUID values remain operator-set. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3528",
@@ -490,9 +512,9 @@
         "DOD-A",
         "VERIFY-1"
       ],
-      "spec": "ACCT-F14 · frontend reliability — an accounting surface must not unmount to a blank page on a well-formed-but-sparse API response",
+      "spec": "ACCT-F14 \u00b7 frontend reliability \u2014 an accounting surface must not unmount to a blank page on a well-formed-but-sparse API response",
       "status": "PASS",
-      "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main — 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "Guard scripts/verify-no-partial-optional-chain.mjs (step 1650) PASS on origin/main \u2014 1918 files, 0 partial chains. LIVE browser 2026-07-28 app.ih35dispatch.com: /accounting hub renders KPIs+nav (not blank); /accounting/bills renders Bills heading + Bill # columns (355 a11y refs); /accounting/expenses renders Expenses heading + Expense#/Date/Payee/JE columns (not blank). PR #3669 shipped the chain fix; this closes the Rule 23 browser re-click gate. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": "#3669",
       "live_proof": "2026-07-28 browser TRANSP: accounting + bills + expenses non-blank; guard 1650 PASS",
       "prod_verified": true
@@ -508,9 +530,9 @@
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "audit8-revenue-leakage-detection · ASC 606 · DISP-01 latch companion",
+      "spec": "audit8-revenue-leakage-detection \u00b7 ASC 606 \u00b7 DISP-01 latch companion",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: delivered_like=2 missing_earn=1 (DEMO-L004) earn_missing_bill=0 unbilled_open=0; GET /api/v1/accounting/revenue-leakage + RevenueRecognitionPage LeakagePanel (no new tab). Guard 1498. Read-only — no new GL math. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "LIVE 2026-07-30 Neon lucia: delivered_like=2 missing_earn=1 (DEMO-L004) earn_missing_bill=0 unbilled_open=0; GET /api/v1/accounting/revenue-leakage + RevenueRecognitionPage LeakagePanel (no new tab). Guard 1498. Read-only \u2014 no new GL math. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon lucia missing_earn=1 of 2 delivered+; latch table accounting.load_revenue_recognition_postings",
       "prod_verified": true
@@ -525,9 +547,9 @@
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "audit9-expense-validation-duplicate-detection · QBO duplicate expense warn",
+      "spec": "audit9-expense-validation-duplicate-detection \u00b7 QBO duplicate expense warn",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: dup_groups=2634 dup_rows=6632 (vendor_uuid+transaction_date+total_amount_cents). GET /api/v1/expenses/duplicates + ExpensesListPage panel. Guard 1471. Read-only — no auto-void/merge. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: dup_groups=2634 dup_rows=6632 (vendor_uuid+transaction_date+total_amount_cents). GET /api/v1/expenses/duplicates + ExpensesListPage panel. Guard 1471. Read-only \u2014 no auto-void/merge. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon lucia 2634 duplicate fingerprint groups / 6632 expense rows",
       "prod_verified": true
@@ -541,12 +563,13 @@
         "VERIFY-3",
         "VERIFY-7"
       ],
-      "spec": "audit4-tax-return-automation · QBO sales tax return",
-      "status": "PASS",
-      "evidence": "BUILT: accounting/sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon tables sales_tax_agencies/returns exist (agencies=0 returns=0 honest empty). Guard verify-acct-r14-sales-tax-autoload step 1486 PASS. LIVE 2026-07-30 API /sales-tax/agencies returns 401 unauth (mounted, not 404). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "audit4-tax-return-automation \u00b7 QBO sales tax return",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: BUILT: accounting/sales-tax/sales-tax.routes.ts autoloaded via registerAccountingRoutes; FE SalesTaxPage + subnav Sales tax; Neon tables sales_tax_agencies/returns exist (agencies=0 returns=0 honest empty). Guard verify-acct-r14-sales-tax-autoload step 1486 PASS. LIVE 2026-07-30 API /sales-tax/agencies returns 401 unauth (mounted, not 404). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "API path mounted (401!=404); tables present; guard 1486 PASS",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-15",
@@ -560,9 +583,9 @@
         "VERIFY-6",
         "VERIFY-7"
       ],
-      "spec": "audit7-cost-center-tracking · QBO Class / NetSuite department parity — no parallel cost_centers table",
+      "spec": "audit7-cost-center-tracking \u00b7 QBO Class / NetSuite department parity \u2014 no parallel cost_centers table",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: catalogs.classes active=122; JE cost lines classified=0 unclassified>0 (honest density); GET /api/v1/accounting/cost-center-class-variance + PeriodComparisonPage ClassCostCenterVariancePanel (no new tab). Guard 1458. Read-only — no new GL math. Owner law: Class IS the cost-center axis (QBO). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "LIVE 2026-07-30 Neon lucia TRANSP: catalogs.classes active=122; JE cost lines classified=0 unclassified>0 (honest density); GET /api/v1/accounting/cost-center-class-variance + PeriodComparisonPage ClassCostCenterVariancePanel (no new tab). Guard 1458. Read-only \u2014 no new GL math. Owner law: Class IS the cost-center axis (QBO). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon lucia classes=122; cost JE rollup unclassified row returns period variance; route mounted via comparison-report.routes autoload",
       "prod_verified": true
@@ -576,12 +599,13 @@
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "0441-mod7-myaccountant-flag-no-seed · ACCT-R-10",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; overrides ON for TRANSP+TRK+USMCA. Migration 202607590000_my_accountant_flag_seed.sql + guard 1506 PASS. MyAccountantPage gates via useFeatureFlag. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "0441-mod7-myaccountant-flag-no-seed \u00b7 ACCT-R-10",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: lib.feature_flags MY_ACCOUNTANT_ENABLED default_enabled=false; overrides ON for TRANSP+TRK+USMCA. Migration 202607590000_my_accountant_flag_seed.sql + guard 1506 PASS. MyAccountantPage gates via useFeatureFlag. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon feature_flags row + 3 opco overrides; verify-myaccountant-flag-seeded PASS",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-18",
@@ -594,12 +618,13 @@
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "banking-b4-driver-vendor-account-mapping · ACCT-R-18",
-      "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 89 active drivers (Neon lucia), 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "banking-b4-driver-vendor-account-mapping \u00b7 ACCT-R-18",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: mdata.drivers.default_expense_account_id uuid exists (mig 202607680000 applied_held); 89 active drivers (Neon lucia), 0 populated (mapping ready). API PATCH/GET/list project+write the column; BankingTransactionsDesignView DriverAutocomplete Option-B prefills accountId when empty (never auto-post). Guard 1509. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon column present; verify-driver-default-expense-account-wired PASS; density 0/89 active drivers (Neon lucia 2026-07-30) until owners set defaults",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-20",
@@ -609,12 +634,13 @@
         "VERIFY-3",
         "VERIFY-8"
       ],
-      "spec": "db249-index-optimization-3 · ACCT-R-20",
-      "status": "PASS",
-      "evidence": "LIVE Neon lucia 2026-07-31: mig 202610331200 applied_at 2026-07-31T02:00:04Z (ledger + ih35_migrations). pg_indexes EFFECT present: idx_safety_events_company_driver_occurred, idx_invoices_customer_status_issue_date, idx_work_orders_unit_status_opened. Guard 1835. Deploy pipeline applied (owner full-auto). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "db249-index-optimization-3 \u00b7 ACCT-R-20",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE Neon lucia 2026-07-31: mig 202610331200 applied_at 2026-07-31T02:00:04Z (ledger + ih35_migrations). pg_indexes EFFECT present: idx_safety_events_company_driver_occurred, idx_invoices_customer_status_issue_date, idx_work_orders_unit_status_opened. Guard 1835. Deploy pipeline applied (owner full-auto). | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": 3852,
       "live_proof": "Neon 2026-07-31: all 3 indexes present; filename 202610331200 in _system._schema_migrations",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ACCT-R-24",
@@ -625,17 +651,18 @@
         "VERIFY-3",
         "VERIFY-6"
       ],
-      "spec": "flow6-auto-invoice-sending · ACCT-R-24 · owner B2d",
-      "status": "PASS",
-      "evidence": "CODE: loads.routes delivered_pending_docs → convertProformaToOfficial → sendDraftInvoice (shared with POST /accounting/invoices/:id/send). Guards 1836+1643+1234 PASS. FLAG: INVOICE_PROFORMA_PIPELINE_ENABLED override enabled=true TRANSP+TRK+USMCA (lib.feature_flags). NEON lucia 2026-08-09: loads delivered_pending_docs=3 completed_docs_received=5; USMCA load-linked invoices with sent_at include INV-2026-00017 (L-20260808-0069, still delivered_pending_docs) + INV-2026-00018 (L-20260808-0074) + INV-2026-00019/00023 (completed_docs_received). healthz d236753. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "spec": "flow6-auto-invoice-sending \u00b7 ACCT-R-24 \u00b7 owner B2d",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: CODE: loads.routes delivered_pending_docs \u2192 convertProformaToOfficial \u2192 sendDraftInvoice (shared with POST /accounting/invoices/:id/send). Guards 1836+1643+1234 PASS. FLAG: INVOICE_PROFORMA_PIPELINE_ENABLED override enabled=true TRANSP+TRK+USMCA (lib.feature_flags). NEON lucia 2026-08-09: loads delivered_pending_docs=3 completed_docs_received=5; USMCA load-linked invoices with sent_at include INV-2026-00017 (L-20260808-0069, still delivered_pending_docs) + INV-2026-00018 (L-20260808-0074) + INV-2026-00019/00023 (completed_docs_received). healthz d236753. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
       "pr": null,
       "live_proof": "Neon lucia 2026-08-09: INV-2026-00017 sent_at=2026-08-08T22:42:53Z load L-20260808-0069 status=delivered_pending_docs USMCA; INV-2026-00018 sent_at=2026-08-08T22:42:54Z L-20260808-0074 same; verify-flow6-auto-invoice-sending PASS + --selftest PASS; healthz version=d236753",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
-  "pass_count": 36,
+  "pass_count": 11,
   "total_count": 39,
-  "progress": "36 of 39",
+  "progress": "11 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 5,
@@ -669,5 +696,6 @@
         "evidence": "8 open (non-voided) bill(s)"
       }
     ]
-  }
+  },
+  "note": "REOPEN 2026-08-29 OWNER: 27 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

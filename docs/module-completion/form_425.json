@@ -1,8 +1,8 @@
 {
   "module": "form_425",
   "title": "Form 425C",
-  "complete": true,
-  "as_of": "2026-08-10T06:38:46Z",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/form-425c.md",
   "spec_sources": [
@@ -19,10 +19,11 @@
         "DOD-B"
       ],
       "spec": "Form425CHome route",
-      "status": "PASS",
-      "evidence": "Form425CHome.tsx reads selectedCompanyId and passes operating_company_id to 425C report APIs. /425c route mounts Form425CHome; /form-425c redirects to /425c. Tabs profile/qb/form/merge/history render. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Form425CHome.tsx reads selectedCompanyId and passes operating_company_id to 425C report APIs. /425c route mounts Form425CHome; /form-425c redirects to /425c. Tabs profile/qb/form/merge/history render. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
       "pr": "#5357",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "425-S02",
@@ -45,10 +46,11 @@
         "VERIFY-6"
       ],
       "spec": "0441-mod13-form425c-exhibit-c-opening-balance \u00b7 STMT-3",
-      "status": "PASS",
-      "evidence": "Exhibit C reads beginning_balance_cents only from the entity/account/exact-period banking.reconciliation_sessions statement chain and exposes reconciliation_session_id plus an explicit unavailable marker when no statement anchor exists. Live Neon lucia USMCA: 3 bank accounts, 189 transactions, 0 reconciliation sessions, so the current result is honestly unavailable rather than fabricated. Guard: scripts/verify-form425c-econ-link-pack.mjs.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Exhibit C reads beginning_balance_cents only from the entity/account/exact-period banking.reconciliation_sessions statement chain and exposes reconciliation_session_id plus an explicit unavailable marker when no statement anchor exists. Live Neon lucia USMCA: 3 bank accounts, 189 transactions, 0 reconciliation sessions, so the current result is honestly unavailable rather than fabricated. Guard: scripts/verify-form425c-econ-link-pack.mjs.",
       "pr": "TBD",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "425-LINK-01",
@@ -58,10 +60,11 @@
         "VERIFY-4"
       ],
       "spec": "STMT-3-1099-425c-consolidation vertical wave",
-      "status": "PASS",
-      "evidence": "Exhibits viewer links forward to Bank reconciliation, Accounting statements, and Legal reports; each destination links back through mounted navigation. Exhibit E remains sourced from scoped P&L, balance sheet, and cash-flow services. Guard: scripts/verify-form425c-econ-link-pack.mjs.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Exhibits viewer links forward to Bank reconciliation, Accounting statements, and Legal reports; each destination links back through mounted navigation. Exhibit E remains sourced from scoped P&L, balance sheet, and cash-flow services. Guard: scripts/verify-form425c-econ-link-pack.mjs.",
       "pr": "TBD",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "425-VERIFY-01",
@@ -83,8 +86,8 @@
       "prod_verified": true
     }
   ],
-  "pass_count": 5,
+  "pass_count": 2,
   "total_count": 5,
-  "progress": "5 of 5",
-  "note": " | 2026-08-10T06:38:46Z CLOSED 425-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order)."
+  "progress": "2 of 5",
+  "note": "| 2026-08-10T06:38:46Z CLOSED 425-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

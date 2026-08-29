@@ -1,8 +1,8 @@
 {
   "module": "inventory",
   "title": "Inventory (Parts & Stock)",
-  "complete": true,
-  "as_of": "2026-08-03",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/inventory-deep-2026-08-01.md",
   "spec_sources": [
@@ -32,11 +32,12 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "CLS-CATALOG-EMPTY field-level · 144/144 blank category",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: both scoped /inventory rows rendered the human category Brake; Create Part mounted the required canonical category picker. Guard verify-inv-cat-01-category-honesty.mjs step 2260 remains green; no category was invented or mutated.",
+      "spec": "CLS-CATALOG-EMPTY field-level \u00b7 144/144 blank category",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: both scoped /inventory rows rendered the human category Brake; Create Part mounted the required canonical category picker. Guard verify-inv-cat-01-category-honesty.mjs step 2260 remains green; no category was invented or mutated.",
       "pr": "#4223",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INV-S02",
@@ -72,27 +73,29 @@
         "DOD-C"
       ],
       "spec": "08-BLOCK picker source correction",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory and its Create/Edit drawers loaded the same 2 canonical maintenance.parts_inventory rows returned by the scoped maintenance parts endpoint; no catalogs.parts surface appeared. Guard verify-inv-s02-s03-pick-01 remains green.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /inventory and its Create/Edit drawers loaded the same 2 canonical maintenance.parts_inventory rows returned by the scoped maintenance parts endpoint; no catalogs.parts surface appeared. Guard verify-inv-s02-s03-pick-01 remains green.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INV-LINK-01",
-      "title": "Part → vendor linkage on create/edit (0441-mod13-inventory-part-to-vendor)",
+      "title": "Part \u2192 vendor linkage on create/edit (0441-mod13-inventory-part-to-vendor)",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
       "spec": "Architectural inventory purchases chain",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: Parts & Stock rendered P42-VENDOR-FK-20260811 on the canonical linked part; opening Edit after reload preserved that exact human vendor selection. Create Part vendor picker placed + Add new vendor first, followed by scoped human vendor labels. Guard verify-inv-link-01-part-vendor.mjs step 2354 remains green.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: Parts & Stock rendered P42-VENDOR-FK-20260811 on the canonical linked part; opening Edit after reload preserved that exact human vendor selection. Create Part vendor picker placed + Add new vendor first, followed by scoped human vendor labels. Guard verify-inv-link-01-part-vendor.mjs step 2354 remains green.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INV-VERIFY-01",
-      "title": "Inventory module VERIFY-1..8 — USMCA TMS-native",
+      "title": "Inventory module VERIFY-1..8 \u2014 USMCA TMS-native",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -104,13 +107,15 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory rendered exactly 2 scoped stock rows; Parts & Stock, Assignments, and Purchase History all mounted without 404/500. Assignments and Purchase History showed honest zero states. Search, Range, gear, Create Part, canonical Category and Preferred Vendor controls rendered; the vendor picker placed + Add new vendor first and the persisted P42-VENDOR-FK-20260811 row exposed its canonical vendor drill. No save or mutation. TRANSP is explicitly N/A under the owner-closed USMCA-only sprint law; no TRANSP or QBO claim is made. Meta guard step 2268 composes the six exact inventory acceptance guards and three canonical routes.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /inventory rendered exactly 2 scoped stock rows; Parts & Stock, Assignments, and Purchase History all mounted without 404/500. Assignments and Purchase History showed honest zero states. Search, Range, gear, Create Part, canonical Category and Preferred Vendor controls rendered; the vendor picker placed + Add new vendor first and the persisted P42-VENDOR-FK-20260811 row exposed its canonical vendor drill. No save or mutation. TRANSP is explicitly N/A under the owner-closed USMCA-only sprint law; no TRANSP or QBO claim is made. Meta guard step 2268 composes the six exact inventory acceptance guards and three canonical routes.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
-  "pass_count": 7,
+  "pass_count": 3,
   "total_count": 7,
-  "progress": "7 of 7"
+  "progress": "3 of 7",
+  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

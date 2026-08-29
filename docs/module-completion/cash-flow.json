@@ -1,15 +1,15 @@
 {
   "module": "cash-flow",
-  "title": "Cash Flow — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-07-29",
+  "title": "Cash Flow \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 3 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 2 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 3 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 2 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29 OWNER: 2 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "CASH-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /cash-flow rendered the real Projected (Auto) surface with three mounted tabs, five reciprocal related-module links, a 7-day outlook, opening cash −$203.92, expected Driver Pay expense $297.60 linked to canonical load S-2026-0002, and the inline projection creator controls. No mutation; no 404/500. | LIVE RE-CONFIRMED 2026-08-29 (CC-1, self-serve queue, app.ih35dispatch.com, USMCA, healthz=4e5db76): /cash-flow rendered the same real Projected (Auto) surface (opening cash $3,193.68, three mounted tabs, 7-day outlook, related-module links); switched to Actual vs Projected — 5 real dated rows (Aug 21–27) with genuine income/expense variance figures (e.g. Sat Aug 22: proj $0 vs actual income $2,400.00, proj $124.80 vs actual expense $668.25); switched to Manual Daily Projections — live bank balances (USMCA Freight $1,993.68, Relay Fuel Wallet $1,200.00, total $3,193.68), day picker with saved history (2026-08-26/27), income/expense line creators. No mutation. No dead clicks across all 3 tabs.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /cash-flow rendered the real Projected (Auto) surface with three mounted tabs, five reciprocal related-module links, a 7-day outlook, opening cash \u2212$203.92, expected Driver Pay expense $297.60 linked to canonical load S-2026-0002, and the inline projection creator controls. No mutation; no 404/500. | LIVE RE-CONFIRMED 2026-08-29 (CC-1, self-serve queue, app.ih35dispatch.com, USMCA, healthz=4e5db76): /cash-flow rendered the same real Projected (Auto) surface (opening cash $3,193.68, three mounted tabs, 7-day outlook, related-module links); switched to Actual vs Projected \u2014 5 real dated rows (Aug 21\u201327) with genuine income/expense variance figures (e.g. Sat Aug 22: proj $0 vs actual income $2,400.00, proj $124.80 vs actual expense $668.25); switched to Manual Daily Projections \u2014 live bank balances (USMCA Freight $1,993.68, Relay Fuel Wallet $1,200.00, total $3,193.68), day picker with saved history (2026-08-26/27), income/expense line creators. No mutation. No dead clicks across all 3 tabs.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:40:00.000Z",
@@ -36,10 +36,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /cash-flow?tab=actual_vs_projected rendered scoped KPIs and exactly 3 dated rows (Aug 11, 12, 16), including projected income $6,250.00, actual expense $297.60, and net variance −$6,547.60. Search, Range, gear, pagination, and From/To dates rendered. The separately inventoried missing Filters panel remains OPEN and is not credited here. No mutation.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /cash-flow?tab=actual_vs_projected rendered scoped KPIs and exactly 3 dated rows (Aug 11, 12, 16), including projected income $6,250.00, actual expense $297.60, and net variance \u2212$6,547.60. Search, Range, gear, pagination, and From/To dates rendered. The separately inventoried missing Filters panel remains OPEN and is not credited here. No mutation.",
       "pr": "#5340",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CASH-T02",
@@ -50,14 +51,15 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /cash-flow?tab=manual_daily_projections mounted the real manual projection surface with opening cash, shared day picker, unit/customer selectors, vendor/driver and bill/expense fields, income and expense create controls, and honest empty-line states. No save and no mutation.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /cash-flow?tab=manual_daily_projections mounted the real manual projection surface with opening cash, shared day picker, unit/customer selectors, vendor/driver and bill/expense fields, income and expense create controls, and honest empty-line states. No save and no mutation.",
       "pr": "#5340",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 3,
-  "pass_count": 3,
+  "pass_count": 1,
   "total_count": 3,
-  "progress": "3 of 3"
+  "progress": "1 of 3"
 }

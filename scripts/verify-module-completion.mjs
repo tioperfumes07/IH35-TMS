@@ -115,6 +115,43 @@ export function scoreManifest(data) {
 
 const HTTP_RECHECK_JSON = path.join(DIR, "PROD-VERIFIED-HTTP-RECHECK.json");
 
+const EVIDENCE_NEON =
+  /\b(SELECT|FROM\s+\w+\.|bypass_rls|n_live_tup|current_user|SET LOCAL app\.|pg_stat_all_tables)\b/i;
+const EVIDENCE_HTTP = /\/api\/v1\/[A-Za-z0-9_./?=&%-]+|https?:\/\/api\.ih35dispatch\.com/i;
+const EVIDENCE_BROWSER =
+  /https?:\/\/app\.ih35dispatch\.com|live Chrome|CDP\s|Owner session|click(?:ed|ing)?\b|tab bar shows/i;
+
+export function classifyProdVerifiedEvidenceShape(ev) {
+  const t = String(ev || "");
+  if (EVIDENCE_NEON.test(t)) return "neon";
+  if (EVIDENCE_HTTP.test(t)) return "http";
+  if (EVIDENCE_BROWSER.test(t)) return "browser";
+  return "prose";
+}
+
+function itemIsBound(item) {
+  const sha = typeof item.live_verified_sha === "string" ? item.live_verified_sha.trim() : "";
+  const at = item.live_verified_at == null ? "" : String(item.live_verified_at).trim();
+  return Boolean(sha && at);
+}
+
+/** Unbound prod_verified + exclusive-bucket prose = unfalsifiable fake-green (owner 2026-08-29). */
+export function assertUnboundProseNotProdVerified(manifests) {
+  const problems = [];
+  for (const { file, data } of manifests) {
+    if (!Array.isArray(data.items)) continue;
+    for (const it of data.items) {
+      if (it.prod_verified !== true) continue;
+      if (itemIsBound(it)) continue;
+      if (classifyProdVerifiedEvidenceShape(it.evidence) !== "prose") continue;
+      problems.push(
+        `${file}: item ${it.id} is unbound prod_verified with prose-only evidence — REOPEN (UNVERIFIED + packet) or bind live_verified_sha`
+      );
+    }
+  }
+  return problems;
+}
+
 /** Item ids whose cited HTTP evidence is live 404 must not stay PASS + prod_verified. */
 export function assertHttp404NotProdVerified(manifests, recheckPath = HTTP_RECHECK_JSON) {
   const problems = [];
@@ -338,6 +375,7 @@ export function runAll(opts = {}) {
     }
   }
   problems.push(...assertHttp404NotProdVerified(manifests, opts.httpRecheckPath));
+  problems.push(...assertUnboundProseNotProdVerified(manifests));
   if (!opts.skipCommits) {
     problems.push(...assertNoFalseCompleteClaims(listBranchCommits(), manifests));
   }
@@ -468,6 +506,16 @@ if (isMain && SELFTEST) {
   fs.rmSync(planted404, { force: true });
   if (!stillGreen.some((x) => x.includes("FUEL-S01"))) {
     failures.push("HTTP 404 PASS/prod_verified ratchet not caught");
+  }
+
+  const proseStillGreen = assertUnboundProseNotProdVerified([
+    {
+      file: "docs/module-completion/legal.json",
+      data: { items: [{ ...passItem("LEGAL-X"), evidence: "Looks wired on main." }] },
+    },
+  ]);
+  if (!proseStillGreen.some((x) => x.includes("LEGAL-X"))) {
+    failures.push("unbound prose prod_verified ratchet not caught");
   }
 
   const u6Theater = assertManifestShape(

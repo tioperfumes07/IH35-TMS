@@ -1,15 +1,15 @@
 {
   "module": "eld",
-  "title": "Eld — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-04",
+  "title": "Eld \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 5 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 4 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 5 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 4 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "ELD-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. 5 tabs (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD Settings). TRANSP: 6 drivers on the canonical roster from GET /api/v1/telematics/hos/daily-roster with real duty status, drive-left and shift-left values (e.g. T176 Sleeper Berth 10h54m / 3h51m). USMCA: 0 rows with an explicit honest-empty message, 'No HOS duty events for this company today (honest empty — ingest may be quiet)' — an honest empty, not a silent blank.",
+      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. 5 tabs (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD Settings). TRANSP: 6 drivers on the canonical roster from GET /api/v1/telematics/hos/daily-roster with real duty status, drive-left and shift-left values (e.g. T176 Sleeper Berth 10h54m / 3h51m). USMCA: 0 rows with an explicit honest-empty message, 'No HOS duty events for this company today (honest empty \u2014 ingest may be quiet)' \u2014 an honest empty, not a silent blank.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -36,10 +36,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: ViolationsTab useQuery→fetchEldHosViolations (listHosViolations). data-testid=eld-violations-tab. Neon lucia safety.hos_violations count=0 → honest empty path. Guard verify-eld-tabs-live-data + step 2246.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: ViolationsTab useQuery\u2192fetchEldHosViolations (listHosViolations). data-testid=eld-violations-tab. Neon lucia safety.hos_violations count=0 \u2192 honest empty path. Guard verify-eld-tabs-live-data + step 2246.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ELD-T02",
@@ -50,10 +51,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: UnidentifiedTab useQuery→fetchEldUnidentifiedDriving (getFleetLocationHos). data-testid=eld-unidentified-tab. Guard step 2246. Honest empty when no unassigned moving units.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: UnidentifiedTab useQuery\u2192fetchEldUnidentifiedDriving (getFleetLocationHos). data-testid=eld-unidentified-tab. Guard step 2246. Honest empty when no unassigned moving units.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ELD-T03",
@@ -64,10 +66,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: certifications tab renders HonestEmptyTab (data-testid=eld-certifications-honest-empty, data-eld-honest-empty) — ELD_TABS_CONFIG documents no backend yet; no fake rows. Guard step 2246.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: certifications tab renders HonestEmptyTab (data-testid=eld-certifications-honest-empty, data-eld-honest-empty) \u2014 ELD_TABS_CONFIG documents no backend yet; no fake rows. Guard step 2246.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "ELD-T04",
@@ -78,14 +81,15 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-03 Cursor: settings tab renders HonestEmptyTab (data-testid=eld-settings-honest-empty) — no ELD settings API yet; honest empty locked. Guard step 2246.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: settings tab renders HonestEmptyTab (data-testid=eld-settings-honest-empty) \u2014 no ELD settings API yet; honest empty locked. Guard step 2246.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 5,
-  "pass_count": 5,
+  "pass_count": 1,
   "total_count": 5,
-  "progress": "5 of 5"
+  "progress": "1 of 5"
 }

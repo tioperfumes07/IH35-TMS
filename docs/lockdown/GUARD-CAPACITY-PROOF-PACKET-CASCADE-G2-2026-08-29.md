@@ -36,7 +36,9 @@ New stamps **must** include `live_verified_sha` + `live_verified_at`. Paying bas
 
 HTTP 401/403 = mounted, not proven. Neon still needs GUARD/builder packet.
 
-**404 disposition (Cursor 2026-08-29, live `14daeed`, two independent probes):** 9 unbound greens cited routes that return **404**. Those items are **REOPENED FAIL** (`FUEL-S01/S02/S03/S06/S07`, `COMP-S02/S03/T02/T06`). `fuel` and `compliance` `complete:false`. Classifier buckets to use: **neon 17 · http 44 · browser 20 · prose 193**. **Mass-REOPEN of the 193 prose greens is OWNER-GATED** — board row `OWNER-GATE-PROSE-193-REOPEN`. Do not overnight-flip them without Jorge.
+**404 disposition (Cursor 2026-08-29, live `14daeed`):** 9 HTTP-cited greens were **REOPENED FAIL**. Classifier after that: unbound **265** · neon 17 · http 35 · browser 20 · **prose 193**.
+
+**OWNER 2026-08-29:** mass-REOPEN the **193 prose** greens. They are **UNVERIFIED** + `prod_verified: false`. Baseline shrunk. New unbound `prod_verified` with prose-only evidence **fails** `verify-module-completion`. Neon/HTTP/browser unbound still exist — GUARD packets those; do not treat them as certified. U14 stays 14/14 CONCLUDED.
 
 ## `background_jobs.stale`
 
