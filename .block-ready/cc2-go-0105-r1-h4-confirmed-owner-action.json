@@ -1,0 +1,23 @@
+{
+  "block_id": "cc2-go-0105-r1-h4-confirmed-owner-action",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "GO-0105-R1",
+  "task": "CC-2 re-confirms HONESTY-H4 live (TRANSP + TRK QBO connections unchanged, still invalid_grant-class token exchange failures since 8/18 and 8/20) and files an isolated OPEN owner-action-required board row naming both entities, superseding the earlier row's routing tail which conflated this with the now-resolved build-typecheck fix.",
+  "branch": "cc2/go-0105-r1-h4-confirmed-owner-action",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc2-go-0105-r1-h4-confirmed-owner-action.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/audit/GUARD-WORKORDERS.md", "note": "one new OPEN row, owner-action-required, named per entity (TRANSP + TRK)" }
+  ],
+  "linkage": "N/A -- re-confirmation board finding from live Neon MCP SQL, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
