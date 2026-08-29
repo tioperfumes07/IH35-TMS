@@ -1,3 +1,5 @@
+**2026-08-29T15:20Z GO-0055→0104 THIS IS NOW. ALL SEATS. Idle=defect.** Index `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md`. Master paste `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0055-0104-SEND.md`. Binding guard `docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md`. SYS-S07 REOPENED. Live `b276443`. Standing orders pull law. Nobody else `trigger_deploy`.
+
 **GO-0030 + RIDER THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md` + `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`. Standing orders underneath. Pull never wait. CC-2=GUARD. Chrome-only seats no verify-steps/migrations. CLOSES line required. Deploy in flight. PROG-01 SKIP. Nobody else `trigger_deploy`.
 
 **STANDING-ORDERS 2026-08-29 THIS IS NOW. ALL CC SEATS. Idle=defect.** Canonical `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`. Paste entire doc + one seat line. Pull queue via `bash scripts/next-work-item.sh`. CC-1=money · CC-2=GUARD · CC-3=FE/chrome/TEST. Never wait for next GO chat. U14 never restamp. PROG-01 SKIP. Nobody else `trigger_deploy`.

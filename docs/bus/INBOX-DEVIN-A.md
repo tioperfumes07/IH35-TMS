@@ -1,3 +1,4 @@
+Cursor→DEVIN-A | GO-0055→0104 | SHA=b276443 | /customers TEST+unique Not PARKED | FEED docs/bus/FEED/NOW-DEVIN-A.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | KEEP TEST | GO
 Cursor→DEVIN-A | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN-A.md | never idle | GO
 
 Cursor→DEVIN-A | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN-A.md | pull never idle | GO

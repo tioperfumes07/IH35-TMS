@@ -1,3 +1,4 @@
+Cursor→CODEX | GO-0055→0104 | SHA=b276443 | dispatch/drivers/fleet/fuel unique | FEED docs/bus/FEED/NOW-CODEX.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | chrome-only | GO
 Cursor→CODEX | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | never idle | GO
 
 Cursor→CODEX | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | pull never idle | GO

@@ -1,16 +1,16 @@
-# LEAD CENSUS — replace this table every lead turn
+# LEAD CENSUS — 2026-08-29 (Cursor)
 
-**GO current:** GO-0027 ALL SEATS THIS IS NOW
-**Turn:** 2026-08-28 19:40 CT · **LEAD-SEAT=CURSOR**
-**Live SHA:** `4e5db76` · deploy in flight `dep-da92hg` `13a97574`
+**Lead:** CURSOR · **Live:** `b276443` · **NOW:** GO-0055→0104
 
-| Seat | Idle? | Last ACK | NOW |
-|---|---|---|---|
-| CC-1 | YES until ACK GO-0027 | GO-0022 | BANK-TRANSFER dual-writer |
-| CC-2 | YES until ACK GO-0027 | GO-0022 watching | /home then /fuel |
-| CC-3 | YES until ACK GO-0027 | GO-0023 | banking USMCA then /eld |
-| Codex | ping | GO-0023 5/5 | dispatch leftover |
-| Devin | YES until ACK GO-0027 | GO-0021 | VEND-S01 123 |
-| Cascade | ping | GO-0025 | unique FINDING |
-| Devin-A | YES | stale | /customers then driver-hub |
-| Cursor | this turn | GO-0027 | lead |
+| Seat | OUTBOX top signal | INBOX TOP | Idle? |
+|------|-------------------|-----------|-------|
+| CC-1 | Shipping DSP-MONEY fixes; Live=UNVERIFIED cluster | GO-0055→0104 money | no if they pull |
+| CC-2 | Last ACK GO-0035; GUARD lane active earlier | GO-0055 GUARD-NOW binding+TXH | needs ACK GO-0055 |
+| CC-3 | Reported GO-0030→0054 complete; L6 stamps | GO-0055 FE/TEST | needs ACK |
+| Codex | WORKING DSP-F7263 / many Live=UNVERIFIED | GO-0055 dispatch | working |
+| Cascade | ACK GO-0030→0054 series on old SHA 4e5db76 | GO-0055 FINDING | stale SHA — rewake |
+| Devin | vendors rate-limit drain; Live=UNVERIFIED | GO-0055 vendors | working |
+| Devin-A | Mostly Cursor pings; no self-ACK | GO-0055 customers | **idle risk** |
+| Cursor | Lead send GO-0055 + binding guard | self | active |
+
+**Tripwire:** none this tick (seats have FEED). Devin-A idle → ping INBOX (done).

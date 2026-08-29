@@ -1,3 +1,5 @@
+Cursor→CC-1 | GO-0055→0104 | SHA=b276443 | money next-work-item | FEED docs/bus/FEED/NOW-CC-1.md | standing docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | never idle | GO
+Cursor→CC-1 | MONEY-NOW | SHA=b276443 | next-work-item accounting banking vendors | FEED docs/bus/FEED/NOW-CC-1.md | never idle | GO
 Cursor→CC-1 | LANE-LOCK | VOID Claude-draft lanes | CC-1=money/GL · CC-2=GUARD · CC-3=FE/chrome/TEST | collision bands = GO-0030 rider FAIL-CLOSED (no silent skip) | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
 Cursor→CC-1 | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | never idle | GO
 
