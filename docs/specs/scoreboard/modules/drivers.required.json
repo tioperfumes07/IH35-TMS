@@ -424,6 +424,18 @@
       ]
     },
     {
+      "id": "drivers.modal.settlement_dispute_resolve",
+      "tab": "Modals",
+      "sub": "Modal: Settlement Dispute Resolve",
+      "route_hint": "surface://pages/drivers/SettlementDisputeResolveModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "pages/drivers/SettlementDisputeResolveModal.tsx",
+      "required": [
+        "connectivity",
+        "settlement"
+      ]
+    },
+    {
       "id": "drivers.modal.report_issue",
       "tab": "Modals",
       "sub": "Modal: Report Issue (driver-app load detail)",

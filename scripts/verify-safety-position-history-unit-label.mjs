@@ -45,10 +45,18 @@ function assert(sources) {
   if (/\bp\.part_name\s+as\s+part_name\b/.test(backend)) {
     problems.push(`${BE}: maint.part uses name, never phantom p.part_name`);
   }
+  // RE-ANCHOR (found stale 2026-08-29): this required EXACTLY 3 occurrences of each scope pattern
+  // (the 3 GET readers this guard originally named: list, detail, timeline). A 4th, MORE scoped
+  // occurrence was since added -- the POST create handler scoping its own position_set lookup
+  // before insert (position-history.routes.ts:236) -- strictly MORE entity-scoping than before, not
+  // a regression, but the exact-equality check treated growth the same as shrinkage. Bumped the
+  // required count to 4 to match the current committed reality (3 readers + 1 scoped writer). If a
+  // 5th legitimate site is added later, bump this again deliberately -- do not widen to a floor
+  // (>=), which would stop catching a real drop from 4 back to 3.
   const positionScopeCount = (backend.match(/ps\.operating_company_id\s*=\s*\$(?:1|2)::uuid/g) ?? []).length;
   const partScopeCount = (backend.match(/p\.tenant_id\s*=\s*\$(?:1|2)::uuid/g) ?? []).length;
-  if (positionScopeCount !== 3 || partScopeCount !== 3) {
-    problems.push(`${BE}: all 3 readers must entity-scope position_set and part joins (found ${positionScopeCount}/${partScopeCount})`);
+  if (positionScopeCount !== 4 || partScopeCount !== 4) {
+    problems.push(`${BE}: all 3 readers + 1 scoped writer must entity-scope position_set and part joins (found ${positionScopeCount}/${partScopeCount}, need 4/4)`);
   }
   return problems;
 }

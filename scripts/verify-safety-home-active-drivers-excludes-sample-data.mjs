@@ -23,7 +23,16 @@ const LABEL = "verify-safety-home-active-drivers-excludes-sample-data";
 
 export function audit(src) {
   const failures = [];
-  const match = src.routes.match(/FROM mdata\.drivers[\s\S]*?AS active_drivers/);
+  // RE-ANCHOR (found stale 2026-08-29): the bare `/FROM mdata\.drivers[\s\S]*?AS active_drivers/`
+  // start-anchor also matches an EARLIER, unrelated "FROM mdata.drivers" (a driver-FK-validation
+  // subquery, safety.routes.ts:168) — the non-greedy scan then spans all the way from there to the
+  // real active_drivers subquery, a ~6.5KB stretch that swallows several unrelated queries AND an
+  // explanatory comment (line ~272) that itself contains the literal text
+  // "is_sample_data IS NOT TRUE" in prose. That comment alone satisfied the check even after the
+  // mutation removed the real code's occurrence -- the selftest correctly caught this as a
+  // mutation-escaped guard. Anchored on the unique `(SELECT COUNT(*)::int FROM mdata.drivers`
+  // opener instead, which only appears at the real active_drivers subquery.
+  const match = src.routes.match(/\(SELECT COUNT\(\*\)::int FROM mdata\.drivers[\s\S]*?AS active_drivers/);
   if (!match) {
     failures.push(`${FILES.routes}: the Safety Home active_drivers KPI subquery not found (re-anchor)`);
     return failures;
