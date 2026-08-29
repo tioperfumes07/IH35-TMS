@@ -106,6 +106,7 @@ function assertAll(srcs) {
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /getLoad\(id as string, companyId\)/, "company-scoped load label read"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /entityLabel\(loadNumber, id, "Load"\)/, "load breadcrumb"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /<EntityLinkOrTombstone[\s\S]{0,180}?kind="load"[\s\S]{0,180}?name=\{loadNumber\}/, "load-number reverse drill"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", /loadQuery\.isError[\s\S]{0,220}?onRetry=\{\(\) => void loadQuery\.refetch\(\)\}/, "load-label failure retry"],
     ["apps/frontend/src/components/home/RevenueDiscrepancyDrill.tsx", /entityLabel\(inv\.display_id, inv\.invoice_id, "Invoice"\)/, "invoice display ID"],
     ["apps/frontend/src/components/dispatch/tabs/FinesDeductionsCard.tsx", /EntityLinkOrTombstone kind="driver" id=\{selectedPending\.driver_id\} name=\{selectedPending\.driver_name\}/, "unresolved-safe deduction driver name"],
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", /EntityLinkOrTombstone kind="load" id=\{String\(currentLoad\.load_id\)\} name=\{currentLoad\.load_number\}/, "unresolved-safe current load number"],
@@ -140,6 +141,7 @@ if (SELFTEST) {
     ["apps/frontend/src/components/vehicle-profile/CurrentLoadSection.tsx", 'name={currentLoad.load_number}', 'name={null}', "current load human label"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'getLoad(id as string, companyId)', 'getLoad(id as string)', "load label company scope"],
     ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'name={loadNumber}', 'name={null}', "load banking reverse label"],
+    ["apps/frontend/src/pages/dispatch/LoadBankingLinkagePage.tsx", 'onRetry={() => void loadQuery.refetch()}', 'onRetry={undefined}', "load banking label retry"],
     ["apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", 'entityLabel(tx.resolved_load_number, tx.resolved_load_id, "Load")', 'entityLabel(null, tx.resolved_load_id, "Load")', "bank resolved load number"],
   ];
   for (const [file, needle, replacement, label] of mutations) {
