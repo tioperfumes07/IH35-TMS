@@ -28,13 +28,25 @@ function asText(value: unknown): string | null {
 
 type Recipients = { userIds: string[]; driverUnreachable: boolean };
 
-async function resolveByRoles(ctx: OutboxHandlerContext, roles: string[]): Promise<string[]> {
+async function resolveByRoles(
+  ctx: OutboxHandlerContext,
+  operatingCompanyId: string,
+  roles: string[],
+): Promise<string[]> {
   const res = await ctx.client.query<{ id: string }>(
-    `SELECT id::text AS id
-       FROM identity.users
-      WHERE role::text = ANY($1::text[])
-        AND deactivated_at IS NULL`,
-    [roles]
+    `SELECT DISTINCT u.id::text AS id
+       FROM identity.users u
+       LEFT JOIN org.user_company_access uca
+         ON uca.user_id = u.id
+        AND uca.company_id = $1::uuid
+        AND uca.deactivated_at IS NULL
+      WHERE u.role::text = ANY($2::text[])
+        AND u.deactivated_at IS NULL
+        AND (
+          u.default_company_id = $1::uuid
+          OR uca.user_id IS NOT NULL
+        )`,
+    [operatingCompanyId, roles]
   );
   return res.rows.map((r) => r.id);
 }
@@ -44,8 +56,15 @@ async function resolveRecipients(
   payload: NoticePayload,
   ctx: OutboxHandlerContext
 ): Promise<Recipients> {
+  const operatingCompanyId = asText(payload.operating_company_id);
+  if (!operatingCompanyId) {
+    throw new Error(`${route.eventType}_missing_operating_company_id`);
+  }
   if (route.audience.kind === "roles") {
-    return { userIds: await resolveByRoles(ctx, route.audience.roles), driverUnreachable: false };
+    return {
+      userIds: await resolveByRoles(ctx, operatingCompanyId, route.audience.roles),
+      driverUnreachable: false,
+    };
   }
 
   const driverId = asText(payload[route.audience.driverIdKey]);
@@ -67,7 +86,10 @@ async function resolveRecipients(
   }
 
   // No driver login — tell the humans who can reach them another way, and say so.
-  return { userIds: await resolveByRoles(ctx, route.audience.fallbackRoles), driverUnreachable: true };
+  return {
+    userIds: await resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles),
+    driverUnreachable: true,
+  };
 }
 
 export function createOperationalNoticeHandler(route: NoticeRoute): OutboxEventHandler {

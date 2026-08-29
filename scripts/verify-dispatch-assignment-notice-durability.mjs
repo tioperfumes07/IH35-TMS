@@ -7,6 +7,7 @@ const FILES = {
   routes: "apps/backend/src/outbox/handlers/operational-notice.routes.ts",
   loads: "apps/backend/src/dispatch/loads.routes.ts",
   dispatcher: "apps/backend/src/notifications/dispatcher.ts",
+  noticeHandler: "apps/backend/src/outbox/handlers/operational-notice.handler.ts",
 };
 
 function count(source, literal) {
@@ -20,6 +21,7 @@ export function problems(files) {
   const routes = files.routes ?? "";
   const loads = files.loads ?? "";
   const dispatcher = files.dispatcher ?? "";
+  const noticeHandler = files.noticeHandler ?? "";
 
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
@@ -62,6 +64,16 @@ export function problems(files) {
   if (/withLuciaBypass[\s\S]{0,1800}?\.catch\(\(\) => null\)/.test(abandonedFn)) {
     failures.push("abandoned-load detail read failures must propagate, not fabricate fallback context");
   }
+  if (!/LEFT JOIN org\.user_company_access uca[\s\S]{0,300}?uca\.company_id = \$1::uuid[\s\S]{0,180}?uca\.deactivated_at IS NULL/.test(noticeHandler)) {
+    failures.push("role-based operational notices must resolve only active memberships for the event company");
+  }
+  if (!/u\.default_company_id = \$1::uuid[\s\S]{0,100}?OR uca\.user_id IS NOT NULL/.test(noticeHandler)) {
+    failures.push("role-based operational notices must include the user's canonical default company without widening globally");
+  }
+  if (!/resolveByRoles\(ctx, operatingCompanyId, route\.audience\.roles\)/.test(noticeHandler) ||
+      !/resolveByRoles\(ctx, operatingCompanyId, route\.audience\.fallbackRoles\)/.test(noticeHandler)) {
+    failures.push("both role and driver-fallback audiences must pass immutable event company scope");
+  }
   return failures;
 }
 
@@ -78,6 +90,9 @@ if (process.argv.includes("--selftest")) {
     ["abandoned durable enqueue", { ...production, loads: production.loads.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
     ["abandoned handler", { ...production, routes: production.routes.replace('eventType: "load.abandoned"', 'eventType: "load.abandoned_REMOVED"') }],
     ["abandoned detail failure swallow", { ...production, dispatcher: production.dispatcher.replace("  });\n\n  const loadNo = String(detail?.load_number", "  }).catch(() => null);\n\n  const loadNo = String(detail?.load_number") }],
+    ["notice role company join removed", { ...production, noticeHandler: production.noticeHandler.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
+    ["notice default company arm removed", { ...production, noticeHandler: production.noticeHandler.replace("u.default_company_id = $1::uuid", "u.default_company_id = NULL") }],
+    ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],
   ];
   const missed = mutations.filter(([, fixture]) => problems(fixture).length === 0);
   if (missed.length) {

@@ -2022,3 +2022,5 @@ Codex | SHIPPED | DSP-F7157 | PR=#17275 | MERGE=96cef4f388 | gate=exit0 | Live=B
 Codex | WORKING | DSP-F7159 | CLAIM=BOL-R2-orphan-on-metadata-failure | SOURCE=dispatch.bol_documents+R2 | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7158 | PR=#17281 | MERGE=407ff63807 | gate=exit0 | Live=BLOCKED | NEXT=DSP-F7159 | GO
 Codex | WORKING | DSP-F7163 | CLAIM=assignment-notices-duplicate+swallowed-direct-push | SOURCE=mdata.loads+load_assignment_history→outbox | NEXT=FAST-MERGE | GO
+Codex | WORKING | DSP-F7164 | CLAIM=operational-notice-role-recipients-cross-company | SOURCE=event.opco→identity.default_company/active-access | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7163 | PR=#17301 @ f64eb18d8530 | Built=single durable assignment notice path | Live=post-deploy UNVERIFIED | NEXT=operational notice tenant scope | GO
