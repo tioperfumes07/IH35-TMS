@@ -29,6 +29,7 @@ const analyticsSharedDriverScope = /driver_company_authorizations late_arrival_a
 const completedStopScope = /JOIN mdata\.load_stops ls ON ls\.id = sa\.stop_id[\s\S]{0,100}ls\.soft_deleted_at IS NULL/;
 const laneStopScope = /p\.stop_type = 'pickup'[\s\S]{0,100}p\.soft_deleted_at IS NULL[\s\S]{0,100}del\.stop_type = 'delivery'[\s\S]{0,100}del\.soft_deleted_at IS NULL/;
 const bookingGapStopScope = /JOIN mdata\.load_stops ls[\s\S]{0,100}ls\.load_id = l\.id[\s\S]{0,100}ls\.stop_type = 'delivery'[\s\S]{0,100}ls\.soft_deleted_at IS NULL/;
+const queueStopScope = /FROM mdata\.load_stops[\s\S]{0,100}load_id = l\.id[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}scheduled_arrival_at IS NOT NULL/;
 
 function completeRangeFailures(source) {
   const aggregateReaders = source.match(/ORDER BY late_count DESC, entity_label ASC[\s\S]{0,80}/g) ?? [];
@@ -88,6 +89,7 @@ function main() {
   if (!completedStopScope.test(analyticsService)) failures.push("late-arrival facts must exclude retired stops");
   if (!laneStopScope.test(analyticsService)) failures.push("late-arrival lane endpoints must exclude retired stops");
   if (!bookingGapStopScope.test(bookingGapService)) failures.push("booking-gap deliveries must exclude retired stops");
+  if (!queueStopScope.test(service)) failures.push("late-arrivals queue must exclude retired upcoming stops");
   failures.push(...completeRangeFailures(analyticsService));
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
@@ -148,11 +150,12 @@ function main() {
       [analyticsService.replace("        AND p.soft_deleted_at IS NULL", ""), laneStopScope, "pickup lane stop"],
       [analyticsService.replace("        AND del.soft_deleted_at IS NULL", ""), laneStopScope, "delivery lane stop"],
       [bookingGapService.replace("         AND ls.soft_deleted_at IS NULL", ""), bookingGapStopScope, "booking-gap stop"],
+      [service.replace("            AND soft_deleted_at IS NULL", ""), queueStopScope, "queue upcoming stop"],
     ];
     for (const [mutated, pattern, label] of activeStopMutations) {
       if (pattern.test(mutated)) fail(`${label} mutation escaped`);
     }
-    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 11/11 shared-driver/complete-range/active-stop mutations red");
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 12/12 shared-driver/complete-range/active-stop mutations red");
     return;
   }
 
