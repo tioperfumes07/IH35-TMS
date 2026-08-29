@@ -138,6 +138,10 @@ export async function syncCollectionTasksWithClient(
       WHERE i.operating_company_id = $1::uuid
         AND i.voided_at IS NULL
         AND i.status IN ('sent', 'partial', 'paid', 'factored')
+        -- SEED-HOLD-SAMPLE-FILTER-AGING-BALANCES (GO-0022 drain) — collections sibling of the
+        -- same ap-aging/ar-aging/vendor_balances fix: a demo/test invoice has no real collections
+        -- workflow. Mirrors ar-aging.service.ts's existing is_sample_data exclusion.
+        AND i.is_sample_data = false
     `,
     [input.operatingCompanyId]
   );
