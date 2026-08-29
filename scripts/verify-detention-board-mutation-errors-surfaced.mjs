@@ -85,6 +85,24 @@ export function checkDetentionBoardCompleteRange(src) {
   return offenders;
 }
 
+export function checkDetentionCloseLifecycle(src) {
+  const offenders = [];
+  const start = src.indexOf("export async function closeDetentionEvent");
+  const end = src.indexOf("export async function bridgeDetentionToBillingInClientTx", start);
+  const close = start >= 0 && end > start ? src.slice(start, end) : "";
+  if (!close) offenders.push(`${SERVICE_FILE}: closeDetentionEvent lifecycle is missing.`);
+  if (!/WHERE id = \$1[\s\S]*?operating_company_id = \$2::uuid[\s\S]*?status = 'accruing'[\s\S]*?RETURNING \*/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must compare-and-set the accruing state in the canonical write.`);
+  }
+  if (!/const closedEvent = updated\.rows\[0\];[\s\S]*?if \(!closedEvent\) return \{ ok: false as const, error: "not_accruing" as const \};/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must reject a lost race before publishing success.`);
+  }
+  if (!/return \{ ok: true as const, event: closedEvent \};/.test(close)) {
+    offenders.push(`${SERVICE_FILE}: detention close must return only the proven persisted row.`);
+  }
+  return offenders;
+}
+
 export function checkDetentionRejectLifecycle(src) {
   const offenders = [];
   const reject = src.slice(src.indexOf("export async function rejectDetentionRequest"));
@@ -107,7 +125,7 @@ export function run() {
   const src = fs.readFileSync(path.join(repoRoot, FILE), "utf8");
   const serviceSrc = fs.readFileSync(path.join(repoRoot, SERVICE_FILE), "utf8");
   const approvalServiceSrc = fs.readFileSync(path.join(repoRoot, APPROVAL_SERVICE_FILE), "utf8");
-  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc), ...checkDetentionRejectLifecycle(approvalServiceSrc)];
+  const offenders = [...checkDetentionBoardMutationErrors(src), ...checkDetentionBoardCompleteRange(serviceSrc), ...checkDetentionCloseLifecycle(serviceSrc), ...checkDetentionRejectLifecycle(approvalServiceSrc)];
   return { ok: offenders.length === 0, offenders };
 }
 
@@ -156,16 +174,22 @@ if (process.argv.includes("--selftest")) {
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
   const rejectMutationsFail = [
     fixedApprovalService.replace("operating_company_id = $2::uuid FOR UPDATE", "operating_company_id = $2::uuid"),
-    fixedApprovalService.replace(" AND status = 'pending_review'\n        RETURNING *", "\n        RETURNING *"),
+    fixedApprovalService.replace("WHERE id = $1 AND operating_company_id = $4::uuid AND status = 'pending_review'", "WHERE id = $1 AND operating_company_id = $4::uuid"),
     fixedApprovalService.replace("if (!rejectedRequest) return { ok: false as const, error: \"not_pending\" as const };", "if (false) return { ok: false as const, error: \"not_pending\" as const };")
   ].every((mutant) => checkDetentionRejectLifecycle(mutant).length > 0);
   const rejectPasses = checkDetentionRejectLifecycle(fixedApprovalService).length === 0;
+  const closeMutationsFail = [
+    fixedService.replace("AND status = 'accruing'", "AND status = status"),
+    fixedService.replace('if (!closedEvent) return { ok: false as const, error: "not_accruing" as const };', 'if (false) return { ok: false as const, error: "not_accruing" as const };'),
+    fixedService.replace("return { ok: true as const, event: closedEvent };", "return { ok: true as const, event: updated.rows[0] };")
+  ].every((mutant) => checkDetentionCloseLifecycle(mutant).length > 0);
+  const closePasses = checkDetentionCloseLifecycle(fixedService).length === 0;
 
   const lifecycleMutationsFail = [mutableScope, wrongInvalidation, concurrentRows].every(
     (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
   );
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && rejectMutationsFail && rejectPasses) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && closeMutationsFail && closePasses && rejectMutationsFail && rejectPasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
@@ -175,6 +199,10 @@ if (process.argv.includes("--selftest")) {
     lifecycleMutationsFail,
     capFails,
     completePasses,
+    closeMutationsFail,
+    closePasses,
+    rejectMutationsFail,
+    rejectPasses,
   });
   process.exit(1);
 }

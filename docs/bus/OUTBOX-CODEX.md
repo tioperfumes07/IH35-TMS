@@ -2078,3 +2078,6 @@ Codex | SHIPPED | DSP-F7186 | PR=#17395 @ abf2c81098 | Built=Edit Load exact wri
 Codex | WORKING | DSP-F7186 | CLAIM=edit-load-write-exact-identities | SOURCE=mdata.loads+load_stops | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0047 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
 CODEX | SHIPPED | GO-0046 | FINDING=FLEET-F7185 | PR=#17390 @ b1e59581d7 | NEXT=GO-0047 /dispatch | GO
+CODEX | ACK | GO-0050 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
+Codex | SHIPPED | FUEL-F7188 | PR=#17397 @ 026620163c | Built=Love's upload invalid-row truth | Live=post-deploy UNVERIFIED | NEXT=GO-0050 /dispatch | GO
+Codex | WORKING | DSP-F7189 | CLAIM=detention-close-race-silent-success | SOURCE=dispatch.detention_events | NEXT=guard+FAST-MERGE | GO
