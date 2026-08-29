@@ -1,4 +1,5 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
@@ -638,10 +639,17 @@ export async function createLoadTemplate(
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
     const customerId = input.template_json.customer_id;
-    if (typeof customerId === "string" && customerId) {
+    if (customerId !== undefined && customerId !== null && customerId !== "") {
+      const parsedCustomerId = z.string().uuid().safeParse(customerId);
+      if (!parsedCustomerId.success) {
+        throw Object.assign(new Error("Template customer ID must be a valid UUID."), {
+          statusCode: 400,
+          code: "E_TEMPLATE_CUSTOMER_ID_INVALID",
+        });
+      }
       const customer = await client.query(
         `SELECT 1 FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-        [customerId, input.operating_company_id],
+        [parsedCustomerId.data, input.operating_company_id],
       );
       if (!customer.rows[0]) throw Object.assign(new Error("Customer does not belong to this operating company."), { statusCode: 400 });
     }
