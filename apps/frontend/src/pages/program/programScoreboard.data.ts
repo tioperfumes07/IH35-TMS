@@ -29,15 +29,15 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "ed4e2f2",
-  "generated_at": "2026-08-29T22:00:22.000Z",
+  "healthzSha": "20f3601",
+  "generated_at": "2026-08-29T22:47:25.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T17:00:22-05:00",
-    "sourceSha": "c74f85d15",
-    "deployedSha": "ed4e2f2",
+    "generatedAt": "2026-08-29T17:47:25-05:00",
+    "sourceSha": "59cac5aa7c",
+    "deployedSha": "20f3601",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2247,
-    "failOpen": 116,
+    "ledgerRows": 2252,
+    "failOpen": 121,
     "defects": 26
   },
   "modules": [
@@ -524,7 +524,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "19/20",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FIX",
         "FIX",
@@ -556,7 +556,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FIX",
           "FIX",
@@ -1104,7 +1104,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "reports",
-      "build": "3/8",
+      "build": "2/8",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1369,7 +1369,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "users",
-      "build": "6/6",
+      "build": "5/6",
       "cells": [
         "AUDIT",
         "FAIL",

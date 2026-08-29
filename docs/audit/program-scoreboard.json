@@ -1,13 +1,13 @@
 {
-  "healthzSha": "ed4e2f2",
-  "generated_at": "2026-08-29T22:00:22.000Z",
+  "healthzSha": "20f3601",
+  "generated_at": "2026-08-29T22:47:25.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T17:00:22-05:00",
-    "sourceSha": "c74f85d15",
-    "deployedSha": "ed4e2f2",
+    "generatedAt": "2026-08-29T17:47:25-05:00",
+    "sourceSha": "59cac5aa7c",
+    "deployedSha": "20f3601",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2247,
-    "failOpen": 116,
+    "ledgerRows": 2252,
+    "failOpen": 121,
     "defects": 26
   },
   "modules": [
@@ -494,7 +494,7 @@
       "build": "19/20",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "FIX",
         "FIX",
@@ -526,7 +526,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FIX",
           "FIX",
@@ -1074,7 +1074,7 @@
     {
       "tier": "3",
       "module": "reports",
-      "build": "3/8",
+      "build": "2/8",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1339,7 +1339,7 @@
     {
       "tier": "3",
       "module": "users",
-      "build": "6/6",
+      "build": "5/6",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17773,
-      "title": "FINDING: N/A — GO-TRUST-02: bind compliance (CC-3 packet 3/8) + close HELP-VERIFY-01",
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7361 repair idempotency mutation",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17773",
-      "sha": "7849bed61",
-      "committedAtIso": "2026-08-29T17:01:16-05:00"
+      "mergedAtCt": "08/29/2026, 05:57 PM CT",
+      "url": "",
+      "sha": "47c0188599",
+      "committedAtIso": "2026-08-29T17:57:44-05:00"
     },
     {
-      "number": 17772,
-      "title": "FINDING: 50175-50207 — WAVE 3 final batch triage (33 guards) — WAVE 3 COMPLETE",
+      "number": 17821,
+      "title": "FINDING: N/A -- D-3 detention-pay build spec + GO-PENDING-01 ACK/report",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17772",
-      "sha": "c74f85d15",
-      "committedAtIso": "2026-08-29T17:00:22-05:00"
+      "mergedAtCt": "08/29/2026, 05:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17821",
+      "sha": "c7ab63d578",
+      "committedAtIso": "2026-08-29T17:56:51-05:00"
     },
     {
-      "number": 17771,
-      "title": "FINDING: FUEL-F7346 active-route guard rejects honest unavailable total",
+      "number": 17820,
+      "title": "FINDING: GO-DWELL-01-D3-DETENTION-PAY-LINE-TYPE",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17771",
-      "sha": "bf563831d",
-      "committedAtIso": "2026-08-29T16:59:00-05:00"
+      "mergedAtCt": "08/29/2026, 05:55 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17820",
+      "sha": "66369bbe85",
+      "committedAtIso": "2026-08-29T17:55:11-05:00"
     },
     {
-      "number": 17770,
-      "title": "FINDING: N/A — GO-TRUST-02: bind eld+insurance from CC-3 packet 2/8",
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7360 repair lifecycle selftest",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17770",
-      "sha": "97fc1546f",
-      "committedAtIso": "2026-08-29T16:58:33-05:00"
+      "mergedAtCt": "08/29/2026, 05:55 PM CT",
+      "url": "",
+      "sha": "9410922678",
+      "committedAtIso": "2026-08-29T17:55:06-05:00"
     },
     {
-      "number": 17769,
-      "title": "FINDING: N/A -- board row: audit-void-reversal-subject-resolver routed to CC-1; OUTBOX batch-3 summary",
+      "number": 17818,
+      "title": "FINDING: N/A -- OUTBOX ACK: GO-PENDING-01, batch 6/N status (#17816)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17769",
-      "sha": "651d05e29",
-      "committedAtIso": "2026-08-29T16:56:49-05:00"
+      "mergedAtCt": "08/29/2026, 05:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17818",
+      "sha": "20f3601ced",
+      "committedAtIso": "2026-08-29T17:52:53-05:00"
     },
     {
-      "number": 17765,
-      "title": "FINDING: 50138-50174 — WAVE 3 batch 2 triage (37 guards)",
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fleet): FLEET-F7359 bind trailer CAS guard",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17765",
-      "sha": "2b7305346",
-      "committedAtIso": "2026-08-29T16:55:36-05:00"
+      "mergedAtCt": "08/29/2026, 05:52 PM CT",
+      "url": "",
+      "sha": "22e2277830",
+      "committedAtIso": "2026-08-29T17:52:49-05:00"
     },
     {
-      "number": 17768,
-      "title": "FINDING: DSP-F7345 dispatch driver guard rejects block callback",
+      "number": 17816,
+      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 6/N) -- RE-ANCHOR 4 guards + 1 real registry gap",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17768",
-      "sha": "fef88ffa0",
-      "committedAtIso": "2026-08-29T16:55:00-05:00"
+      "mergedAtCt": "08/29/2026, 05:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17816",
+      "sha": "18e68e46e5",
+      "committedAtIso": "2026-08-29T17:51:40-05:00"
     },
     {
-      "number": 17767,
-      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 3/N) -- RE-ANCHOR 2 guards, 1 genuinely RED on plain main",
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(fleet): FLEET-F7358 repair archive mutation",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17767",
-      "sha": "7a3e2fa35",
-      "committedAtIso": "2026-08-29T16:54:43-05:00"
+      "mergedAtCt": "08/29/2026, 05:50 PM CT",
+      "url": "",
+      "sha": "d5b0dcab7f",
+      "committedAtIso": "2026-08-29T17:50:14-05:00"
     },
     {
-      "number": 17766,
-      "title": "FINDING: N/A — GO-TRUST-02: bind home/help/docs from CC-3 packets, REOPEN BANK-ECON-05 per owner",
+      "number": 17814,
+      "title": "FINDING: N/A -- re-anchor verify-audit-void-reversal-subject-resolver.mjs (GO-MODAL-01)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17766",
-      "sha": "d85f57b5f",
-      "committedAtIso": "2026-08-29T16:54:33-05:00"
+      "mergedAtCt": "08/29/2026, 05:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17814",
+      "sha": "e06e3f2184",
+      "committedAtIso": "2026-08-29T17:48:01-05:00"
     },
     {
-      "number": 17764,
-      "title": "FINDING: N/A -- OUTBOX ACK: GO-TRUST-02, batch 2/N re-anchor summary (#17763)",
+      "number": 17813,
+      "title": "FINDING: N/A — OUTBOX checkpoint: BASELINE ZERO, full 78-item sweep complete",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 04:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17764",
-      "sha": "fff090b06",
-      "committedAtIso": "2026-08-29T16:50:56-05:00"
+      "mergedAtCt": "08/29/2026, 05:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17813",
+      "sha": "e12aebc7e8",
+      "committedAtIso": "2026-08-29T17:47:53-05:00"
     }
   ]
 }
