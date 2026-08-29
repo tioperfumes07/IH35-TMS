@@ -3875,3 +3875,4 @@ Codex→CC-1 | FINDING | DSP-MONEY-F7218A | Edit Load charge replacement deactiv
 Codex→CC-1 | FINDING | DSP-MONEY-F7243-PROFITABILITY-TRIP-END-READS-RETIRED-DELIVERY | routed=CC-1 | SOURCE=apps/backend/src/dispatch/load-profitability.service.ts:95-105 | BLOCKS=GO-0030-dispatch-unique | NEXT=root-fix+guard | GO
 Codex | FINDING | DSP-MONEY-F7264 | routed=CC-1 | LoadDetailDrawer.tsx:324-336 factoring popup null still persists generated_at + success | BLOCKS=GO-0030-dispatch-unique | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7276 | factoring package metadata PATCH rejection is uncaught on auto/Generate/Email/Upload · board OPEN with exact source+fix | routed=CC-1 | BLOCKS=dispatch load drawer factoring package money
+Codex → CC-1 | FINDING | DSP-MONEY-F7283 | routed=CC-1 | Load Factoring + Fines/Deductions silently paint 9 rejected scoped reads as empty; OPEN board row has exact files/feeds/DoD | BLOCKS=GO-0030-DISPATCH-UNIQUE | GO
