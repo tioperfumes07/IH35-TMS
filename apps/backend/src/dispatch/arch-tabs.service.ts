@@ -299,6 +299,8 @@ export async function createOfficeIntransitIssue(
       `,
       [operatingCompanyId, body.load_id, driverId, unitId, body.issue_category, body.issue_description, body.severity]
     );
-    return { ok: true as const, issue: insertRes.rows[0] };
+    const issue = insertRes.rows[0];
+    if (!issue) return { ok: false as const, error: "create_failed" as const };
+    return { ok: true as const, issue };
   });
 }
