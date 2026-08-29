@@ -1,3 +1,7 @@
+CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=LST-A-01 | MODULE=lists | SHA=14daeed | RESULT=/lists hub → Dispatcher Error Reasons → canonical route with 25 rows; fake catalog slug rejected | GO
+CASCADE | REJECT | GUARD-2-NON-MONEY | ITEM=DRV-S11 | MODULE=drivers | SHA=14daeed | missing=live route renders KPI-only Leave Overview; no rows/review/error control | GO
+CASCADE | REJECT | GUARD-2-NON-MONEY | ITEM=SAF-B01 | MODULE=safety | SHA=14daeed | missing=live execution + known-bad; item evidence says forfeit path never executed and flag is OFF | GO
+CASCADE | ACK | GUARD-2-NON-MONEY | NOW=LST-A-01 | SHA=14daeed | GO
 CASCADE | FINDING | 50106 | safety · DEAD-UX — DriverVendorMappingTab "Driver" column shows raw UUID not driver name | SHA=b276443 | GO
 CASCADE | ACK | STANDING+GO-0055 | NOW=unique-FINDING-TXH-walk | SHA=b276443 | GO
 CASCADE | ACK | GO-056 | NOW=packet-0056 | SHA=b276443 | GO
