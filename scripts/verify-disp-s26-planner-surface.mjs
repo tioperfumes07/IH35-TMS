@@ -39,6 +39,12 @@ function assertLive() {
   if (!/const driverUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,400}UPDATE mdata\.loads[\s\S]{0,260}AND operating_company_id = \$3::uuid[\s\S]{0,100}RETURNING id[\s\S]{0,180}operatingCompanyId[\s\S]{0,160}if \(!driverUpdate\.rows\[0\]\?\.id\) return \{ ok: false, error: "load_not_found" \}/.test(service)) {
     problems.push("planner driver write must bind company and prove the load row changed");
   }
+  if (!/WHERE l\.id = \$1::uuid[\s\S]{0,180}LIMIT 1\s+FOR UPDATE OF l, c/.test(service)) {
+    problems.push("planner must lock the canonical load/customer snapshot before qualification and writes");
+  }
+  if (!/const updated = refreshed\.rows\[0\];\s+if \(!updated\) return \{ ok: false, error: "load_not_found" \};\s+return \{/.test(service)) {
+    problems.push("planner must reject a lost read-back before dereferencing or reporting success");
+  }
   return problems;
 }
 
@@ -66,6 +72,8 @@ if (SELFTEST) {
     ["pickup result", "if (!pickupUpdate.rows[0]?.id)", "if (false)"],
     ["driver company", "AND operating_company_id = $3::uuid", "AND TRUE"],
     ["driver result", "if (!driverUpdate.rows[0]?.id)", "if (false)"],
+    ["snapshot lock", "FOR UPDATE OF l, c", ""],
+    ["read-back identity", 'if (!updated) return { ok: false, error: "load_not_found" };', ""],
   ];
   for (const [label, before, after] of serviceMutations) {
     const mutant = serviceOrig.replace(before, after);
@@ -79,7 +87,7 @@ if (SELFTEST) {
       fs.writeFileSync(servicePath, serviceOrig);
     }
   }
-  console.log(`${LABEL} SELFTEST PASS — 5/5 surface/write mutations caught`);
+  console.log(`${LABEL} SELFTEST PASS — 7/7 surface/write mutations caught`);
   process.exit(0);
 }
 

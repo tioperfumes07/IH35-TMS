@@ -2011,3 +2011,5 @@ Codex | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored unchecked 
 Codex | WORKING | DSP-F7156 | CLAIM=equipment-transfer-initiate-empty-identity-success | SOURCE=dispatch.equipment_transfer_requests INSERT RETURNING uuid | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7157 | CLAIM=equipment-transfer-completes-without-log | SOURCE=mdata.equipment_log INSERT RETURNING id | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7156 | PR=#17273 | MERGE=b074176363 | gate=exit0 | Live=BLOCKED | NEXT=DSP-F7157 | GO
+Codex | WORKING | DSP-F7158 | CLAIM=planner-unlocked-snapshot-readback-500 | SOURCE=mdata.loads+mdata.customers | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7157 | PR=#17275 | MERGE=96cef4f388 | gate=exit0 | Live=BLOCKED | NEXT=DSP-F7158 | GO
