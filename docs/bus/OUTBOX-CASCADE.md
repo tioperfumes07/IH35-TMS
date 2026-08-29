@@ -1,3 +1,26 @@
+CASCADE | ACK | GO-0032 | NOW=walk-WO-safety-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0033 | NOW=walk-insurance-banking-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0034 | NOW=walk-driver-hub-eld-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0035 | NOW=walk-banking-driver-hub-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0036 | NOW=walk-eld-dispatch-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0037 | NOW=walk-lists-nested-create-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0038 | NOW=walk-legal-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0039 | NOW=walk-maintenance-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0040 | NOW=walk-safety-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0041 | NOW=walk-insurance-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0042 | NOW=walk-compliance-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0043 | NOW=walk-inventory-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0044 | NOW=walk-users-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0045 | NOW=walk-docs-help-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0046 | NOW=walk-system-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0047 | NOW=walk-safety-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0048 | NOW=walk-insurance-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0049 | NOW=walk-banking-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0050 | NOW=walk-eld-home-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0051 | NOW=walk-accounting-customers-vendors-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0052 | NOW=walk-dispatch-safety-fleet-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0053 | NOW=walk-insurance-legal-program-FINDING | SHA=4e5db76 | GO
+CASCADE | ACK | GO-0054 | NOW=walk-leftover-any-sidebar-FINDING | SHA=4e5db76 | GO
 CASCADE | DONE | 2026-08-29T02:25Z | GO-0031 | LEGAL-SORT-NO-OP-TEMPLATE-CODE | SHA=4e5db76 | FINDING: LegalContractInstancesPage.tsx:155-163 "Template" column sortable: true with key=template_code but renders display_name_en. Sort by internal code not display name. Same class as rows 50098-50101. Row 50104 appended. Never trigger_deploy. GO
 CASCADE | ACK | GO-0031 | NOW=walk-legal-customers-FINDING | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0030 | NOW=walk-lists-accounting-FINDING | SHA=4e5db76 | GO
