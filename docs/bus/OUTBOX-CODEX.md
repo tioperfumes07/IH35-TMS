@@ -1,3 +1,4 @@
+CODEX | WORKING | GO-MODAL-01 | FINDING=FUEL-F7360 | NOW=repair-create-lifecycle-selftest-label-contract | NEXT=fuel recommendation idempotency | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=FLEET-F7359 | NOW=bind-trailer-CAS-guard-to-exact-routes | NEXT=fuel unique selftests | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=FLEET-F7358 | NOW=repair-deactivate-archive-planted-mutation | NEXT=fleet/fuel unique selftests | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=DRV-F7357 | NOW=reanchor-onboarding-completion-lock-selftest | NEXT=fleet/fuel stale selftests | GO
