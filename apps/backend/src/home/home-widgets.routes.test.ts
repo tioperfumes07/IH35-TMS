@@ -85,6 +85,53 @@ describe("home-widgets factoring-balance invoice linkage (0280-05)", () => {
   });
 });
 
+// GO-0027-HOME-F: wo-status-counts/open-loads-count/drivers-on-duty/wos-open-count/cash-position
+// each caught a genuine DB query failure with a bare `catch { return <zeros> }`, indistinguishable
+// on the Home dashboard from "legitimately empty" — a real outage silently presented as $0 cash /
+// 0 drivers / 0 open loads. Must propagate (throw) so it surfaces as a 500, same as the already-fixed
+// revenue/factoring-balance siblings above and fleet-utilization's own `catch (error) { ...; throw error; }`.
+describe("home-widgets query failures propagate, never fabricate zeros (GO-0027-HOME-F)", () => {
+  const routesSrc = readFileSync(
+    fileURLToPath(new URL("./home-widgets.routes.ts", import.meta.url)),
+    "utf8"
+  );
+
+  const zeroCatchPatterns: Array<[string, RegExp]> = [
+    ["wo-status-counts", /catch\s*\{\s*return\s+out;?\s*\}/],
+    ["open-loads-count", /catch\s*\{\s*return\s*\{\s*total:\s*0/],
+    ["drivers-on-duty", /catch\s*\{\s*return\s*\{\s*active:\s*0/],
+    ["wos-open-count", /catch\s*\{\s*return\s*\{\s*open:\s*0/],
+    ["cash-position", /catch\s*\{\s*return\s*\{\s*totalCents:\s*0/],
+  ];
+
+  it("no bare catch-block fabricates a zero-shaped payload", () => {
+    for (const [label, pattern] of zeroCatchPatterns) {
+      expect(routesSrc, `${label} must not silently swallow a query error into zeros`).not.toMatch(pattern);
+    }
+  });
+
+  it("each fixed handler logs and re-throws its real query error", () => {
+    expect(routesSrc).toContain('"home.wo-status-counts query failed"');
+    expect(routesSrc).toContain('"home.open-loads-count query failed"');
+    expect(routesSrc).toContain('"home.drivers-on-duty query failed"');
+    expect(routesSrc).toContain('"home.wos-open-count query failed"');
+    expect(routesSrc).toContain('"home.cash-position query failed"');
+    // Each of the 5 fixed labels must be immediately followed by a re-throw, not a swallow.
+    for (const label of [
+      "home.wo-status-counts query failed",
+      "home.open-loads-count query failed",
+      "home.drivers-on-duty query failed",
+      "home.wos-open-count query failed",
+      "home.cash-position query failed",
+    ]) {
+      const idx = routesSrc.indexOf(`"${label}"`);
+      expect(idx, `${label} label must be present`).toBeGreaterThan(-1);
+      const tail = routesSrc.slice(idx, idx + 80);
+      expect(tail, `${label} must re-throw, not swallow`).toContain("throw err;");
+    }
+  });
+});
+
 describe("home-widgets.routes (auth gates)", () => {
   let app: FastifyInstance;
 

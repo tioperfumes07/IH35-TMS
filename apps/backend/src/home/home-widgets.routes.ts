@@ -333,10 +333,14 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
       // Canonical WO chart buckets — includes 'draft' so Samsara fault auto-WOs (status='draft')
       // are not silently dropped (HOME-4). 'unknown' captures any genuinely unmapped status.
       const out = { draft: 0, open: 0, in_progress: 0, awaiting_parts: 0, completed: 0, cancelled: 0, unknown: 0 };
-      try {
-        const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return out;
+      const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return out;
 
+      // GO-0027-HOME-F: a genuine query failure here used to be caught and silently returned as
+      // `out` (all zeros) — indistinguishable from "no open work orders" on the Home dashboard tile.
+      // Never fabricate zeros on a query error — propagate so it surfaces as a 500, matching the
+      // linked_economics handling right below and the fleet-utilization/*-revenue siblings in this file.
+      try {
         const res = await client.query(
           `
             SELECT status::text AS status, COUNT(*)::text AS c
@@ -351,8 +355,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           const bucket = bucketizeWoStatus(row.status);
           out[bucket] += Number(row.c ?? 0);
         }
-      } catch {
-        return out;
+      } catch (err) {
+        req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.wo-status-counts query failed");
+        throw err;
       }
 
       // ACCT-R-07 (0280-42-wo-to-expense-flow): join to accounting.bills/accounting.expenses via
@@ -466,13 +471,15 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return { total: 0, in_transit: 0, assigned: 0, unassigned: 0 };
+      // GO-0027-HOME-F: never fabricate zeros on a genuine query error — propagate as a 500.
       try {
-        const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { total: 0, in_transit: 0, assigned: 0, unassigned: 0 };
         // Rich breakdown (total + mutually-exclusive sub-buckets) for the Home OPEN LOADS tile.
         return await getOpenLoadsBreakdown(client, parsed.data.operating_company_id);
-      } catch {
-        return { total: 0, in_transit: 0, assigned: 0, unassigned: 0 };
+      } catch (err) {
+        req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.open-loads-count query failed");
+        throw err;
       }
     });
   });
@@ -485,9 +492,10 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return { active: 0, total_drivers: 0, on_break: 0 };
+      // GO-0027-HOME-F: never fabricate zeros on a genuine query error — propagate as a 500.
       try {
-        const rel = await client.query(`SELECT to_regclass('mdata.loads') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { active: 0, total_drivers: 0, on_break: 0 };
         // Numerator = drivers on a canonical active load. Denominator = active driver roster
         // (HOME-3: the "/0" was wrong — there is no roster query feeding the denominator).
         const active = await countDriversOnActiveLoads(client, parsed.data.operating_company_id);
@@ -513,8 +521,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         const total_drivers = Number(rosterRes.rows[0]?.c ?? 0);
         // on_break is not yet wired to live HOS duty-status; report 0 honestly rather than fake it.
         return { active, total_drivers, on_break: 0 };
-      } catch {
-        return { active: 0, total_drivers: 0, on_break: 0 };
+      } catch (err) {
+        req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.drivers-on-duty query failed");
+        throw err;
       }
     });
   });
@@ -527,17 +536,19 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
+      const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return { open: 0, in_progress: 0 };
+      // open = canonical open set (matches the Maintenance dashboard open_wos); in_progress = subset.
+      // Returns { open, in_progress } to match the Home tile (api/home.ts fetchHomeWosOpenCount).
+      //
+      // MAINT-VOID: this claimed to match the maintenance dashboard but re-typed the status list and
+      // omitted the void filter, so VOIDED work orders were counted. On prod that made Home report
+      // "2 open work orders" when both rows were voided demo records (DEMO-WO-001/002, voided
+      // 2026-07-13) and the maintenance table itself correctly showed "0 of 0". Now it uses the ONE
+      // canonical predicate so the two can never disagree again.
+      //
+      // GO-0027-HOME-F: never fabricate zeros on a genuine query error — propagate as a 500.
       try {
-        const rel = await client.query(`SELECT to_regclass('maintenance.work_orders') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { open: 0, in_progress: 0 };
-        // open = canonical open set (matches the Maintenance dashboard open_wos); in_progress = subset.
-        // Returns { open, in_progress } to match the Home tile (api/home.ts fetchHomeWosOpenCount).
-        //
-        // MAINT-VOID: this claimed to match the maintenance dashboard but re-typed the status list and
-        // omitted the void filter, so VOIDED work orders were counted. On prod that made Home report
-        // "2 open work orders" when both rows were voided demo records (DEMO-WO-001/002, voided
-        // 2026-07-13) and the maintenance table itself correctly showed "0 of 0". Now it uses the ONE
-        // canonical predicate so the two can never disagree again.
         const res = await client.query(
           `
             SELECT
@@ -552,8 +563,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
           open: Number(res.rows[0]?.open ?? 0),
           in_progress: Number(res.rows[0]?.in_progress ?? 0),
         };
-      } catch {
-        return { open: 0, in_progress: 0 };
+      } catch (err) {
+        req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.wos-open-count query failed");
+        throw err;
       }
     });
   });
@@ -566,10 +578,11 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     return await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
-      try {
-        const rel = await client.query(`SELECT to_regclass('banking.bank_accounts') IS NOT NULL AS ok`);
-        if (!rel.rows[0]?.ok) return { totalCents: 0, byAccount: [] as Array<{ accountName: string; cents: number }> };
+      const rel = await client.query(`SELECT to_regclass('banking.bank_accounts') IS NOT NULL AS ok`);
+      if (!rel.rows[0]?.ok) return { totalCents: 0, byAccount: [] as Array<{ accountName: string; cents: number }> };
 
+      // GO-0027-HOME-F: never fabricate zeros on a genuine query error — propagate as a 500.
+      try {
         // BANK-ACCOUNT-HIDE: exclude accounts hidden for THIS entity (flag OFF by default — see
         // docs/accounting/BANK-ACCOUNT-ENTITY-HIDE-DESIGN.md).
         const hideOn = await isBankAccountHideEnabled(client, parsed.data.operating_company_id);
@@ -593,8 +606,9 @@ export async function registerHomeWidgetRoutes(app: FastifyInstance) {
         }));
         const totalCents = byAccount.reduce((sum: number, row: { cents: number }) => sum + row.cents, 0);
         return { totalCents, byAccount };
-      } catch {
-        return { totalCents: 0, byAccount: [] };
+      } catch (err) {
+        req.log.error({ err, operating_company_id: parsed.data.operating_company_id }, "home.cash-position query failed");
+        throw err;
       }
     });
   });
