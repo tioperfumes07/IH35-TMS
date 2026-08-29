@@ -1330,6 +1330,15 @@ export function DispatchBoard({
         onClear={selection.clear}
       />
 
+      {openPreSettlementsQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load open pre-settlements"
+          status={(openPreSettlementsQuery.error as { status?: number } | null)?.status ?? 0}
+          message={userFacingApiError(openPreSettlementsQuery.error, "Pre-settlement linkage feed failed")}
+          onRetry={() => void openPreSettlementsQuery.refetch()}
+        />
+      ) : null}
+
       {boardMode === "assignment"
         ? renderAssignmentView()
         : boardMode === "table"

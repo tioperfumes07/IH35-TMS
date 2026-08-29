@@ -2187,3 +2187,5 @@ Codex | WORKING | DSP-F7242 | GO-0030 | CLAIM=operational-active-stop-vertical |
 Codex | SHIPPED | FUEL-F7241 | PR=#17462 @ f3a06f38da | Built=fuel load attribution active-stop truth | Live=post-deploy UNVERIFIED | NEXT=vertical census | GO
 Codex | WORKING | DSP-F7244 | GO-0030 | CLAIM=retired-load-mutation-rejection | SOURCE=active load→OCR conversion+ETA confirm | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7242 | PR=#17463 @ 2b6d2a884b | Built=operational active-stop vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7245 | GO-0030 | CLAIM=pre-settlement-feed-failure-honesty | SOURCE=driver-finance open cycles→Dispatch Board prompt | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7244 | PR=#17464 @ fd1867e802 | Built=retired-load mutation rejection | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
