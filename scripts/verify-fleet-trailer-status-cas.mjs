@@ -16,15 +16,34 @@ function readSources(overrides = {}) {
   );
 }
 
+function routeBody(source, start, end) {
+  const startIndex = source.indexOf(start);
+  const endIndex = source.indexOf(end, startIndex + start.length);
+  if (startIndex < 0 || endIndex < 0) return "";
+  return source.slice(startIndex, endIndex);
+}
+
 function failuresFor(src) {
   const failures = [];
+  const equipmentStatusRoute = routeBody(
+    src.equipment,
+    'app.post("/api/v1/mdata/equipment/:id/status-change"',
+    'app.patch("/api/v1/mdata/equipment/:id"'
+  );
+  const trailerStatusRoute = routeBody(
+    src.trailer,
+    'app.put("/api/v1/fleet/trailers/:id/status"',
+    'app.patch("/api/v1/fleet/trailers/:id"'
+  );
   const checks = [
-    ["mdata status update compares source status", /UPDATE mdata\.equipment[\s\S]{0,500}AND status = \$6::mdata\.equipment_status[\s\S]{0,250}oldRow\.status/.test(src.equipment)],
-    ["mdata status conflict is explicit", /updated\.kind === "conflict"[\s\S]{0,120}reply\.code\(409\)[\s\S]{0,120}mdata_equipment_state_changed/.test(src.equipment)],
-    ["fleet alias appends source status", /values\.push\(oldRow\.status\);\s*const expectedStatusIdx = values\.length;/.test(src.trailer)],
-    ["fleet alias status update compares source status", /UPDATE mdata\.equipment[\s\S]{0,900}AND status = \$\$\{expectedStatusIdx\}::mdata\.equipment_status/.test(src.trailer)],
-    ["fleet alias refuses zero-row transition before audit", /const row = res\.rows\[0\];\s*if \(!row\) return \{ kind: "conflict" as const \};[\s\S]{0,160}appendCrudAudit/.test(src.trailer)],
-    ["fleet alias status conflict is explicit", /updated\.kind === "conflict"[\s\S]{0,120}reply\.code\(409\)[\s\S]{0,120}mdata_equipment_state_changed/.test(src.trailer)],
+    ["mdata status route is mounted", Boolean(equipmentStatusRoute)],
+    ["fleet alias status route is mounted", Boolean(trailerStatusRoute)],
+    ["mdata status update compares source status", /UPDATE mdata\.equipment[\s\S]{0,500}AND status = \$6::mdata\.equipment_status[\s\S]{0,250}oldRow\.status/.test(equipmentStatusRoute)],
+    ["mdata status conflict is explicit", /updated\.kind === "conflict"[\s\S]{0,120}reply\.code\(409\)[\s\S]{0,120}mdata_equipment_state_changed/.test(equipmentStatusRoute)],
+    ["fleet alias appends source status", /values\.push\(oldRow\.status\);\s*const expectedStatusIdx = values\.length;/.test(trailerStatusRoute)],
+    ["fleet alias status update compares source status", /UPDATE mdata\.equipment[\s\S]{0,900}AND status = \$\$\{expectedStatusIdx\}::mdata\.equipment_status/.test(trailerStatusRoute)],
+    ["fleet alias refuses zero-row transition before audit", /const row = res\.rows\[0\];\s*if \(!row\) return \{ kind: "conflict" as const \};[\s\S]{0,160}appendCrudAudit/.test(trailerStatusRoute)],
+    ["fleet alias status conflict is explicit", /updated\.kind === "conflict"[\s\S]{0,120}reply\.code\(409\)[\s\S]{0,120}mdata_equipment_state_changed/.test(trailerStatusRoute)],
   ];
   for (const [name, ok] of checks) if (!ok) failures.push(name);
   return failures;
