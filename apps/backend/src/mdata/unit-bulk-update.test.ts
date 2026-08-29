@@ -28,6 +28,13 @@ describe("unit bulk-update route", () => {
     expect(routes).toMatch(/too_many_unit_ids/);
   });
 
+  it("rejects duplicates and fails partial scoped writes", () => {
+    expect(routes).toMatch(/unit_ids must be unique/);
+    expect(routes).toMatch(/oldRes\.rows\.length, "pre_update"/);
+    expect(routes).toMatch(/updateRes\.rows\.length, "post_update"/);
+    expect(routes).toMatch(/sendFleetBulkTargetMismatch/);
+  });
+
   it("emits unit.bulk_update audit rows per affected unit", () => {
     expect(routes).toMatch(/unit\.bulk_update/);
     expect(routes).toMatch(/appendLegacyFleetBulkAudit/);

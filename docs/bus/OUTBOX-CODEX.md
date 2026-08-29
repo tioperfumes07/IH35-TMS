@@ -1,3 +1,6 @@
+Codex | WORKING | FLEET-F7181 | CLAIM=fleet-bulk-update-exact-target-atomicity | SOURCE=mdata.units+equipment UPDATE RETURNING | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0042 | NOW=fleet-unique | SHA=4e5db76 | GO
+Codex | SHIPPED | DSP-F7180 | PR=#17353 @ d3d20c980a | Built=notify-preferences typed write conflict | Live=post-deploy UNVERIFIED | NEXT=GO-0042 fleet unique | GO
 Codex | WORKING | DSP-F7180 | CLAIM=notify-preferences-lost-write-mapped-on-GET-not-PUT | SOURCE=dispatch.customer_notify_preferences upsert RETURNING identity | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7179 | PR=#17348 @ 96c932799b | Built=load-stop geofence create/update+wake lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | SHIPPED | DSP-F7178 | PR=#17343 @ 88ba2a305c | Built=available-driver exact-load truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO

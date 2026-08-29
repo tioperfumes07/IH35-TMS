@@ -184,12 +184,28 @@ export async function assembleFactoringPacket(
       // which then silently produced a null invoiceId with no trace of what actually failed. A
       // thrown error must propagate — the caller (the POD-approval route / the daily sweep cron)
       // already handles a rejected assembleFactoringPacket call.
+      //
+      // DSP-MONEY-F7175 (GO-0031, CC-1): two bugs found and fixed together, discovered via a
+      // disposable-Neon-branch rehearsal of this exact INSERT (not a guess):
+      // (1) `display_id` (NOT NULL, no column default, no trigger fills it) was missing from this
+      //     INSERT entirely — this statement could never succeed inserting a new row, race or not.
+      //     Added, sourced from `l.load_number` — the exact convention from-load.ts's own
+      //     buildInvoiceFromLoad already uses (`const displayId = loadNumber`).
+      // (2) `ON CONFLICT (source_load_id) DO NOTHING` had no matching arbiter — no unique/exclusion
+      //     index existed on `source_load_id` at all, so this raised 42P10 the moment two racing
+      //     calls (or any call once accounting.invoices had a pre-existing conflicting row) reached
+      //     it. Migration 202613270100 adds a PARTIAL unique index matching
+      //     findConflictingInvoiceForLoad's own predicate (`voided_at IS NULL`) — a load may
+      //     accumulate multiple VOIDED invoices over time (void-not-delete), only one ACTIVE invoice
+      //     per load is the real invariant. The ON CONFLICT clause's own inference predicate below
+      //     must match the index predicate verbatim or Postgres still reports no matching arbiter.
       const newInvRes = await client.query<{ id: string }>(
         `
           INSERT INTO accounting.invoices (
             operating_company_id,
             customer_id,
             source_load_id,
+            display_id,
             status,
             issue_date,
             due_date,
@@ -202,6 +218,7 @@ export async function assembleFactoringPacket(
             l.operating_company_id,
             l.customer_id,
             l.id,
+            l.load_number,
             'draft',
             CURRENT_DATE,
             CURRENT_DATE + INTERVAL '30 days',
@@ -210,7 +227,7 @@ export async function assembleFactoringPacket(
             COALESCE(l.is_sample_data, false)
           FROM mdata.loads l
           WHERE l.id = $1::uuid AND l.operating_company_id = $2::uuid
-          ON CONFLICT (source_load_id) DO NOTHING
+          ON CONFLICT (source_load_id) WHERE voided_at IS NULL AND source_load_id IS NOT NULL DO NOTHING
           RETURNING id
           `,
         [input.loadId, input.operatingCompanyId, input.userId],
