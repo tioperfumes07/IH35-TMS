@@ -65,6 +65,7 @@ export async function aggregateForPeriod(
        JOIN mdata.load_stops ls
          ON ls.load_id = l.id
          AND ls.stop_type = 'delivery'
+         AND ls.soft_deleted_at IS NULL
          AND ls.actual_departure_at IS NOT NULL
          AND ls.actual_departure_at BETWEEN $2::date AND ($3::date + INTERVAL '1 day')
        JOIN dispatch.load_assignment_history lah
