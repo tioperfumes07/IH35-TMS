@@ -59,6 +59,7 @@ const STEPS = [
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
   ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
   ["verify-economic-columns-c25-c31-present", "scripts/verify-economic-columns-c25-c31-present.mjs"],
+  ["verify-declared-is-rendered", "scripts/verify-declared-is-rendered.mjs"],
   ["verify-module-progress-not-authored", "scripts/verify-module-progress-not-authored.mjs"],
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).

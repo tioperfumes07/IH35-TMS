@@ -535,11 +535,19 @@ const GROUP_ORDER = ["GENERAL LEDGER", "OPERATIONS", "MASTER DATA"] as const;
 const GAP = 26;
 
 function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: string } {
+  // TXH_LINK_STATE_WIRED TXH_LINK_STATE_MISSING TXH_LINK_STATE_NA TXH_LINK_STATE_BLOCKED
   if (state === "wired") return { color: "#334155" };
   if (state === "missing") return { color: "#dc2626", dash: "6 4" };
   if (state === "not_applicable") return { color: "#94a3b8", dash: "1 3" };
   if (state === "blocked_by_constraint") return { color: "#b45309", dash: "4 3" };
   return { color: "#334155" };
+}
+
+function txhLinkStateToken(state: TxHealthLink["state"]): string {
+  if (state === "wired") return "TXH_LINK_STATE_WIRED";
+  if (state === "missing") return "TXH_LINK_STATE_MISSING";
+  if (state === "not_applicable") return "TXH_LINK_STATE_NA";
+  return "TXH_LINK_STATE_BLOCKED";
 }
 
 function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
@@ -561,12 +569,12 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
   const hubY = height / 2;
   const nodeX = 200;
   return (
-    <svg width="420" height={height} aria-label="wiring map" className="max-w-full">
+    <svg data-token="TXH_WIRING_SVG" width="420" height={height} aria-label="wiring map" className="max-w-full">
       <circle cx={hubX} cy={hubY} r={7} fill="#334155" />
       {nodes.map(({ link, y: ny }, idx) => {
         const { color, dash } = strokeForLink(link.state);
         return (
-          <g key={`${link.group}:${link.label}:${link.target_id ?? idx}`}>
+          <g key={`${link.group}:${link.label}:${link.target_id ?? idx}`} data-token={txhLinkStateToken(link.state)}>
             <line
               x1={hubX}
               y1={hubY}
@@ -703,6 +711,7 @@ function TransactionHealthTab() {
       </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:col-span-2 lg:grid-cols-[minmax(0,1fr)_minmax(260px,340px)]">
+        <div data-token="TXH_PANE_DETAIL">
         <Card
           title={selected ? selected.display_label : "Document"}
           pill={selected ? <Pill tone={selected.status === "OK" ? "ok" : selected.status === "WARN" ? "warn" : "off"}>{selected.status}</Pill> : undefined}
@@ -718,7 +727,7 @@ function TransactionHealthTab() {
             <p className="text-[12px] text-slate-500">{issuesOnly ? "No open issues — every document checked is OK." : "No documents found."}</p>
           ) : (
             <div className="space-y-3">
-              <pre className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-[11px] leading-5 text-slate-800">
+              <pre data-token="TXH_LEDGER_PRE" className="overflow-x-auto rounded-lg border border-gray-200 bg-slate-50 p-3 font-mono text-[11px] leading-5 text-slate-800">
                 {formatGlLedgerPre(selected)}
               </pre>
               <TxHealthWiringMap links={links} />
@@ -747,7 +756,9 @@ function TransactionHealthTab() {
             </div>
           )}
         </Card>
+        </div>
 
+        <div data-token="TXH_PANE_LIST">
         <Card title="Documents" sub="Newest first. Click selects — does not leave this page.">
           <ul className="divide-y divide-gray-200">
             {rows.map((row) => {
@@ -780,6 +791,7 @@ function TransactionHealthTab() {
             </div>
           ) : null}
         </Card>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,1026 @@
+{
+  "asOf": "2026-08-29T00:00:00Z",
+  "healthzSha": "14daeed",
+  "modules": {
+    "accounting": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 2,
+        "unstamped": 9
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 2
+      },
+      "proven": {
+        "state": "false",
+        "true": 9,
+        "false": 30
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 4,
+        "http": 4,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 4,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 102
+      }
+    },
+    "banking": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 2,
+        "unstamped": 15
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 2
+      },
+      "proven": {
+        "state": "false",
+        "true": 17,
+        "false": 2
+      },
+      "evidence_class": {
+        "state": "prose",
+        "prose": 7,
+        "browser": 6,
+        "http": 2,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 2,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 44
+      }
+    },
+    "cash-flow": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 1,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 2
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 13
+      }
+    },
+    "compliance": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 1
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 8
+      },
+      "evidence_class": {
+        "state": "neon",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 31
+      }
+    },
+    "customers": {
+      "l6": {
+        "state": "none",
+        "stamped": 0,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 0,
+        "false": 10
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 21
+      }
+    },
+    "dispatch": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 6
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 6,
+        "false": 31
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 6,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 7,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 29
+      }
+    },
+    "docs": {
+      "l6": {
+        "state": "none",
+        "stamped": 0,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 0,
+        "false": 7
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 22
+      }
+    },
+    "driver-hub": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 1,
+        "unstamped": 2
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 3,
+        "false": 4
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 0,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 19
+      }
+    },
+    "drivers": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 7,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 7
+      },
+      "proven": {
+        "state": "false",
+        "true": 7,
+        "false": 13
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 31
+      }
+    },
+    "eld": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 1,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 4
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 31
+      }
+    },
+    "factoring": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 1,
+        "unstamped": 6
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 7,
+        "false": 3
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 0,
+        "neon": 5
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 19
+      }
+    },
+    "finance": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 1,
+        "unstamped": 1
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 2,
+        "false": 7
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 22
+      }
+    },
+    "fleet": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 4
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 4,
+        "false": 3
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 4,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 4,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "form_425": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 2
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 2,
+        "false": 3
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 1,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 1,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 0
+      }
+    },
+    "fuel": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 3
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 3,
+        "false": 6
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 3,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 3,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "help": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 1
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 4
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 26
+      }
+    },
+    "home": {
+      "l6": {
+        "state": "none",
+        "stamped": 0,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 0,
+        "false": 1
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 31
+      }
+    },
+    "insurance": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 1,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 5
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 13
+      }
+    },
+    "inventory": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 3
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 3,
+        "false": 4
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 3,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 3,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 13
+      }
+    },
+    "legal": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 1,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 11
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "lists": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 10,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 10
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 22
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 36
+      }
+    },
+    "maintenance": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 1,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 1,
+        "false": 38
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 29
+      }
+    },
+    "program": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 4
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 4,
+        "false": 3
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 3,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 3,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 21
+      }
+    },
+    "reports": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 3
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 3,
+        "false": 5
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 1,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 1,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 26
+      }
+    },
+    "safety": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 2,
+        "unstamped": 1
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 2
+      },
+      "proven": {
+        "state": "false",
+        "true": 2,
+        "false": 36
+      },
+      "evidence_class": {
+        "state": "neon",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 49
+      }
+    },
+    "settlements": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 1,
+        "unstamped": 1
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 1
+      },
+      "proven": {
+        "state": "false",
+        "true": 2,
+        "false": 7
+      },
+      "evidence_class": {
+        "state": "neon",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "system": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 2,
+        "unstamped": 6
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 2
+      },
+      "proven": {
+        "state": "false",
+        "true": 8,
+        "false": 1
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 2,
+        "http": 3,
+        "neon": 1
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 3,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "tasks": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 5
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "true",
+        "true": 5,
+        "false": 0
+      },
+      "evidence_class": {
+        "state": "http",
+        "prose": 0,
+        "browser": 0,
+        "http": 5,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "alive",
+        "dead": 0,
+        "alive": 5,
+        "none": 0
+      },
+      "proof_age": {
+        "days": 20
+      }
+    },
+    "users": {
+      "l6": {
+        "state": "unstamped",
+        "stamped": 0,
+        "unstamped": 5
+      },
+      "bound": {
+        "state": "unknown",
+        "no": 0,
+        "unknown": 0,
+        "yes": 0
+      },
+      "proven": {
+        "state": "false",
+        "true": 5,
+        "false": 1
+      },
+      "evidence_class": {
+        "state": "browser",
+        "prose": 0,
+        "browser": 1,
+        "http": 0,
+        "neon": 4
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 19
+      }
+    },
+    "vendors": {
+      "l6": {
+        "state": "stamped",
+        "stamped": 2,
+        "unstamped": 0
+      },
+      "bound": {
+        "state": "yes",
+        "no": 0,
+        "unknown": 0,
+        "yes": 2
+      },
+      "proven": {
+        "state": "false",
+        "true": 0,
+        "false": 7
+      },
+      "evidence_class": {
+        "state": "none",
+        "prose": 0,
+        "browser": 0,
+        "http": 0,
+        "neon": 0
+      },
+      "route_alive": {
+        "state": "none",
+        "dead": 0,
+        "alive": 0,
+        "none": 1
+      },
+      "proof_age": {
+        "days": 26
+      }
+    }
+  }
+}

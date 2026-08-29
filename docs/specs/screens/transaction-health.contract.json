@@ -1,0 +1,15 @@
+{
+  "screen": "System -> Transaction Health (/system?tab=tx-health)",
+  "spec": "claude/TXH-01-BLOCK-transaction-health-register-FINAL-2026-08-28.md",
+  "note": "Owner-designed two-pane wiring map. A flat table shipped instead and the block scored green on its BACKEND contract alone. Each token below must be referenced by the renderer or this guard fails.",
+  "elements": [
+    { "token": "TXH_PANE_LIST",        "means": "right pane: document list, newest auto-selected" },
+    { "token": "TXH_PANE_DETAIL",      "means": "left pane: detail for the selected doc; selection must NOT navigate away" },
+    { "token": "TXH_LEDGER_PRE",       "means": "monospace <pre> GL box with DR/CR columns and a balanced marker" },
+    { "token": "TXH_WIRING_SVG",       "means": "inline <svg> link map, grouped, one row per link" },
+    { "token": "TXH_LINK_STATE_WIRED", "means": "teal solid, chip clickable to the linked record" },
+    { "token": "TXH_LINK_STATE_MISSING", "means": "red dashed with an X marker, names what is missing" },
+    { "token": "TXH_LINK_STATE_NA",    "means": "grey dotted; a real third state, never folded into missing" },
+    { "token": "TXH_LINK_STATE_BLOCKED", "means": "amber, names the blocking constraint" }
+  ]
+}

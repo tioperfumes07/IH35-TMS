@@ -13,6 +13,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MODULES_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
 const SHARED = path.join(ROOT, "docs/specs/scoreboard/columns.shared.json");
 const CATALOG = path.join(ROOT, "apps/frontend/src/pages/program/moduleMatrixCatalog.ts");
+const MATRIX_VIEW = path.join(ROOT, "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx");
 
 const ECON = [
   "gl_delta",
@@ -66,6 +67,18 @@ export function check(modulesDir = MODULES_DIR) {
 
   const declared = new Set((JSON.parse(fs.readFileSync(SHARED, "utf8")).columns || []).map((c) => c.id));
   for (const id of ECON) if (!declared.has(id)) failures.push(`columns.shared.json missing ${id}`);
+
+  if (!fs.existsSync(MATRIX_VIEW)) {
+    failures.push("ModuleMatrixSystemView.tsx missing — C25–C31 cannot be drawn");
+  } else {
+    const viewSrc = fs.readFileSync(MATRIX_VIEW, "utf8");
+    for (const id of ECON) {
+      const re = new RegExp(`(^|[^A-Za-z0-9_])${id}([^A-Za-z0-9_]|$)`);
+      if (!re.test(viewSrc)) {
+        failures.push(`ModuleMatrixSystemView.tsx does not contain ${id} (word boundary) — declared columns must be drawn`);
+      }
+    }
+  }
 
   const catIds = catalogUrgent16Ids();
   if (catIds.length === 0) failures.push("URGENT_16_MODULE_IDS unreadable in moduleMatrixCatalog.ts");

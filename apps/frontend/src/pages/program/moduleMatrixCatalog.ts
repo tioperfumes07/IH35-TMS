@@ -4,6 +4,57 @@
  */
 import matrixOrder from "@scoreboard/matrix-module-order.json";
 import launchLadder from "@scoreboard/launch-ladder.json";
+import sharedColumns from "@scoreboard/columns.shared.json";
+
+export const SHARED_SCOREBOARD_COLUMNS = sharedColumns.columns as ReadonlyArray<{
+  id: string;
+  group: string;
+  label: string;
+}>;
+
+/** Literal ids the matrix draws — guard searches this source, not the spec. */
+export const RENDERED_SCOREBOARD_COLUMN_IDS = [
+  "driver",
+  "customer",
+  "vendor",
+  "unit",
+  "trailer",
+  "load",
+  "claim",
+  "work_order",
+  "accident",
+  "policy",
+  "settlement",
+  "legal_matter",
+  "ap_bill",
+  "expense",
+  "invoice",
+  "bank",
+  "gl_je",
+  "inventory",
+  "liability",
+  "picker_law",
+  "qbo_chrome",
+  "connectivity",
+  "reverse_link",
+  "scenario.maintenance",
+  "scenario.insurance",
+  "scenario.ap",
+  "scenario.dispatch",
+  "gl_delta",
+  "subledger_tie",
+  "lifecycle_complete",
+  "reversal_symmetry",
+  "period_guard",
+  "entity_isolation",
+  "non_empty_proof",
+  "l6",
+  "bound",
+  "proven",
+  "evidence_class",
+  "route_alive",
+  "proof_age",
+] as const;
 
 export type MatrixModuleId =
   | "maintenance"
@@ -97,6 +148,19 @@ const MATRIX_COLUMN_SHORT: Record<string, string> = {
   fw10_rls: "10 RLS",
   fw11_guard: "11 GUARD",
   fw12_live: "12 CLICK",
+  gl_delta: "C25 GLΔ",
+  subledger_tie: "C26 SUB",
+  lifecycle_complete: "C27 LIFE",
+  reversal_symmetry: "C28 REV",
+  period_guard: "C29 PER",
+  entity_isolation: "C30 ENT",
+  non_empty_proof: "C31 LIVE",
+  l6: "V1 L6",
+  bound: "V2 BOUND",
+  proven: "V3 PROVEN",
+  evidence_class: "V4 EVIDENCE",
+  route_alive: "V5 ROUTE",
+  proof_age: "V6 AGE",
 };
 
 const MATRIX_GROUP_SHORT: Record<string, string> = {
@@ -106,6 +170,7 @@ const MATRIX_GROUP_SHORT: Record<string, string> = {
   wiring: "WIRE",
   process: "PROC",
   economics: "ECON C25–C31",
+  verifier: "PROOF V1–V6",
   fully_wired: "FULLY WIRED 1–12",
 };
 
