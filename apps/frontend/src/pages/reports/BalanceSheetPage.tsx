@@ -6,6 +6,7 @@ import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { companyToday } from "../../lib/businessDate";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
   exportBalanceSheetReport,
@@ -34,7 +35,7 @@ function registerHref(accountId: string, asOfDate: string, basis: string) {
 export function BalanceSheetPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({

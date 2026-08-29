@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
+import { companyToday } from "../../lib/businessDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -47,7 +48,7 @@ export function APAgingPage() {
   // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
   // sort persists in the URL (?sort=&dir=) so it survives reload / is shareable.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const deepLinkVendorId = searchParams.get("vendor_id")?.trim() ?? "";
   const emptyFilters: APAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", vendorId: "" };
   const [appliedFilters, setAppliedFilters] = useState<APAgingFilters>({ ...emptyFilters, vendorId: deepLinkVendorId });

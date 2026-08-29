@@ -15,6 +15,7 @@ import {
   YAxis,
 } from "recharts";
 import { getCashFlowOverview, type CashFlowOverviewResponse } from "../../api/reports";
+import { companyToday } from "../../lib/businessDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -90,7 +91,7 @@ function MiniSparkline({ values }: { values: number[] }) {
 export function CashFlowOverviewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const [appliedAsOf, setAppliedAsOf] = useState(today);
   const staged = useStagedListFilters({
     applied: { asOfDate: appliedAsOf },

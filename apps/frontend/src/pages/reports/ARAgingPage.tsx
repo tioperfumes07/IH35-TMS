@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
+import { companyToday } from "../../lib/businessDate";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -37,7 +38,7 @@ export function ARAgingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const emptyFilters: ARAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", customerId: "" };
   const [appliedFilters, setAppliedFilters] = useState<ARAgingFilters>({ ...emptyFilters, customerId: deepLinkCustomerId });

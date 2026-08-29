@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AR_AP_AGING_UI_FLAG, getApAgingBills } from "../../api/arApAging";
+import { companyToday } from "../../lib/businessDate";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -21,7 +22,7 @@ type Props = {
 // AR_AP_AGING_UI_ENABLED flag that page already respects.
 export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
   const { enabled, loading: flagLoading } = useFeatureFlag(AR_AP_AGING_UI_FLAG, operatingCompanyId || undefined);
-  const asOfDate = new Date().toISOString().slice(0, 10);
+  const asOfDate = companyToday();
 
   const query = useQuery({
     queryKey: ["vendor-ap-aging", operatingCompanyId, vendorId, asOfDate],
