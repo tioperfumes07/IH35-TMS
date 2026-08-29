@@ -140,9 +140,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 FIN-VERIFY-01 COMPLETE \u2014 CDP 9225 live click, USMCA then TRANSP, all 9 Finance tabs. Hub honest disabled gate (FIN-S01); Overview future placeholder (FIN-S02); Scenarios honesty copy live (FIN-S06); Statements P&L/BS/TB with live USMCA figures (Revenue $20,638.92 \u00b7 NI $10,295.02 \u00b7 TB balanced); AR/AP Aging + Loan Wizard + Calculator + Amortization reachable. VERIFY V1/V3/V5/V7 PASS; V2 N/A pickers not exercised; V6 N/A for hub-disabled surfaces; V4 drill links present on statements. Neon re-prove 2026-08-10 lucia USMCA: invoices sent/paid with source_load_id include INV-17/18/19/23 on L-0069/0074/0085/0087 (Neftali 5753 + Baytown 5743); JE count since 2026-08-07 = 64; settlements S-0085 locked+paid. Cursor closed OPEN scaffold that ignored Cascade COMPLETE line.",
+      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 FIN-VERIFY-01 COMPLETE \u2014 CDP 9225 live click, USMCA then TRANSP, all 9 Finance tabs. Hub honest disabled gate (FIN-S01); Overview future placeholder (FIN-S02); Scenarios honesty copy live (FIN-S06); Statements P&L/BS/TB with live USMCA figures (Revenue $20,638.92 \u00b7 NI $10,295.02 \u00b7 TB balanced); AR/AP Aging + Loan Wizard + Calculator + Amortization reachable. VERIFY V1/V3/V5/V7 PASS; V2 N/A pickers not exercised; V6 N/A for hub-disabled surfaces; V4 drill links present on statements. Neon re-prove 2026-08-10 lucia USMCA: invoices sent/paid with source_load_id include INV-17/18/19/23 on L-0069/0074/0085/0087 (Neftali 5753 + Baytown 5743); JE count since 2026-08-07 = 64; settlements S-0085 locked+paid. Cursor closed OPEN scaffold that ignored Cascade COMPLETE line. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): independently re-verified live myself: live Chrome (USMCA context) /finance renders Finance Hub with real Cash Position -$19,019.45, A/R $762.00 (4 open invoices), A/P $8,013.45 (15 open bills), Current Accounting Period Aug 2026, honest read-only banner. Binding on this independent re-confirmation.",
       "pr": "Cascade OUTBOX + Neon",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "pass_count": 2,

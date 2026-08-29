@@ -20,9 +20,11 @@
       ],
       "spec": "Form425CHome route",
       "status": "PASS",
-      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): navigated https://app.ih35dispatch.com/425c \u2014 Form 425C home renders entity-scoped for USMCA Freight Solutions Inc (Petition Date, Company Name, Case Number, District, EIN, etc. fields bound to the selected entity), with tabs Profiles & Defaults / Deposit Import / Form 425C / Merge & Export / History and an Exhibits A-F link. GROUP-425C-SURFACE.",
+      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): navigated https://app.ih35dispatch.com/425c \u2014 Form 425C home renders entity-scoped for USMCA Freight Solutions Inc (Petition Date, Company Name, Case Number, District, EIN, etc. fields bound to the selected entity), with tabs Profiles & Defaults / Deposit Import / Form 425C / Merge & Export / History and an Exhibits A-F link. GROUP-425C-SURFACE. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): healthz b2448ce confirmed ancestor of current live. Independently re-verified live myself: live Chrome (USMCA context) /425c/exhibits renders the same tab strip (Deposit Import, Merge & Export, History, Bank reconciliation, Accounting statements, Legal reports) plus Exhibits A-F cards. Binding on this independent re-confirmation.",
       "pr": "#5357",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "425-S02",
@@ -33,9 +35,11 @@
       ],
       "spec": "C10-ROUTES tab law \u00b7 425c exhibits route",
       "status": "PASS",
-      "evidence": "/425c/exhibits route mounts Form425CExhibitsViewer, which reads selectedCompanyId and passes operating_company_id to /api/v1/reports/form-425c/exhibits/build. Backend route validates operating_company_id and applies withCompanyScope + retrieval entity check. Exhibits A\u2013F tabs rendered. Guard: scripts/verify-425-s01-s02-surfaces.mjs.",
+      "evidence": "/425c/exhibits route mounts Form425CExhibitsViewer, which reads selectedCompanyId and passes operating_company_id to /api/v1/reports/form-425c/exhibits/build. Backend route validates operating_company_id and applies withCompanyScope + retrieval entity check. Exhibits A\u2013F tabs rendered. Guard: scripts/verify-425-s01-s02-surfaces.mjs. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-425-s01-s02-surfaces.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /425c/exhibits renders Exhibits A-F (Cash receipts, Cash disbursements, Bank reconciliation, Trustee quarterly fee, Statements summary, Supporting documents). ASIDE: scripts/verify-form-425c-exhibits.mjs (a SEPARATE, UNWIRED guard -- not in verify-steps, does not run in CI per its own printed NOTE) fails on stale checks (registerForm425cExhibitsRoutes literal string no longer present after a refactor; a to=\"/legal|finance|accounting/\" pattern check that actually flags the item's OWN correct forward-link design per 425-LINK-01). Not fixed this pass -- zero CI impact since unwired, noted for a future guard-hygiene pass. Binding on the wired guard + live re-confirmation.",
       "pr": "#5357",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "425-ECON-01",
@@ -46,9 +50,11 @@
       ],
       "spec": "0441-mod13-form425c-exhibit-c-opening-balance \u00b7 STMT-3",
       "status": "PASS",
-      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): built live via POST /api/v1/reports/form-425c/exhibits/build (operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 USMCA, period 2026-08-01..2026-08-31) \u2014 200, real data. Exhibit C tab renders per-DIP-account opening/activity/closing rows sourced from banking.reconciliation_sessions (account_id 809fcfbb-738e-471c-8fc1-a38f0f9b814a etc.), matching the registered spec (beginning_balance_cents from the entity/account/exact-period statement chain, reconciliation_session_id exposed). GROUP-425C-SURFACE.",
+      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): built live via POST /api/v1/reports/form-425c/exhibits/build (operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 USMCA, period 2026-08-01..2026-08-31) \u2014 200, real data. Exhibit C tab renders per-DIP-account opening/activity/closing rows sourced from banking.reconciliation_sessions (account_id 809fcfbb-738e-471c-8fc1-a38f0f9b814a etc.), matching the registered spec (beginning_balance_cents from the entity/account/exact-period statement chain, reconciliation_session_id exposed). GROUP-425C-SURFACE. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): healthz b2448ce confirmed ancestor of current live. Binding on this detailed live POST + real-data evidence.",
       "pr": "TBD",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "425-LINK-01",
@@ -59,9 +65,11 @@
       ],
       "spec": "STMT-3-1099-425c-consolidation vertical wave",
       "status": "PASS",
-      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): from /425c/exhibits, confirmed all 3 forward links mount real, entity-scoped content (not 404/blank shells): /accounting/reconciliation (Bank reconciliation workspace, real unreconciled bank txns), /finance/statements (P&L/BS/Trial balance, real totals), /legal/reports (Legal reports rollup, real open-matter counts/amounts). Exhibit E sourced from the same scoped P&L/BS/CF services. GROUP-425C-SURFACE. NOTE \u2014 false-alarm correction: an earlier session hit a one-off 'Failed to fetch' toast on 'Build all exhibits'; re-tested 3x this session \u2014 a computer-tool synthetic click on the button consistently fired zero network requests (not even a preflight), while a direct DOM .click() on the identical button consistently succeeded (200, real Exhibit A-C data, as above) and 3 independent manual fetch() replications of the exact POST also succeeded. This isolates the cause to the browser-automation click mechanism on this control, not the shipped app \u2014 no code defect, no fix needed.",
+      "evidence": "LIVE 2026-08-29T20:15:00Z (healthz b2448ce): from /425c/exhibits, confirmed all 3 forward links mount real, entity-scoped content (not 404/blank shells): /accounting/reconciliation (Bank reconciliation workspace, real unreconciled bank txns), /finance/statements (P&L/BS/Trial balance, real totals), /legal/reports (Legal reports rollup, real open-matter counts/amounts). Exhibit E sourced from the same scoped P&L/BS/CF services. GROUP-425C-SURFACE. NOTE \u2014 false-alarm correction: an earlier session hit a one-off 'Failed to fetch' toast on 'Build all exhibits'; re-tested 3x this session \u2014 a computer-tool synthetic click on the button consistently fired zero network requests (not even a preflight), while a direct DOM .click() on the identical button consistently succeeded (200, real Exhibit A-C data, as above) and 3 independent manual fetch() replications of the exact POST also succeeded. This isolates the cause to the browser-automation click mechanism on this control, not the shipped app \u2014 no code defect, no fix needed. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): healthz b2448ce confirmed ancestor of current live. This item's own claim -- forward links to /finance /accounting /legal are the CORRECT design -- directly explains why the separate unwired verify-form-425c-exhibits.mjs guard's stale pattern check (flagging exactly those links) is wrong, not this item. Binding on the detailed live evidence.",
       "pr": "TBD",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "425-VERIFY-01",
@@ -78,9 +86,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED: form_425 S01..S04 PASS+prod_verified including STMT-3 consolidation econ-link pack (forward+reverse to bank recon/accounting/legal). Scaffold noted July-31 click-through; Cascade USMCA create wave exercised money surfaces that 425 exhibits consume (P&L/BS/cash via statements). VERIFY V1/V3/V4/V5/V7 PASS; V6 via exhibit E scoped P&L/BS/CF. Closed OPEN scaffold.",
+      "evidence": "PROD-VERIFIED: form_425 S01..S04 PASS+prod_verified including STMT-3 consolidation econ-link pack (forward+reverse to bank recon/accounting/legal). Scaffold noted July-31 click-through; Cascade USMCA create wave exercised money surfaces that 425 exhibits consume (P&L/BS/cash via statements). VERIFY V1/V3/V4/V5/V7 PASS; V6 via exhibit E scoped P&L/BS/CF. Closed OPEN scaffold. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): all 4 constituent 425-S01/S02/ECON-01/LINK-01 items independently re-verified live and bound this same pass. Binding on the aggregate of those bindings.",
       "pr": "Cascade OUTBOX + Neon + tip S* PASS",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "pass_count": 5,

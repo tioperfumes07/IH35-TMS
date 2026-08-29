@@ -68,9 +68,11 @@
       ],
       "spec": "DriverHubPage tab=leave_requests \u00b7 DriverSchedulerRequestInboxPage",
       "status": "PASS",
-      "evidence": "DriverSchedulerRequestInboxPage mounted from DriverHubPage ?tab=leave_requests; Select an operating company gate; ParityTable with EntityLink kind=driver. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: leave inbox company-scoped; healthz=1b3a44d.",
+      "evidence": "DriverSchedulerRequestInboxPage mounted from DriverHubPage ?tab=leave_requests; Select an operating company gate; ParityTable with EntityLink kind=driver. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: leave inbox company-scoped; healthz=1b3a44d. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): both guards re-run clean this pass. Independently re-verified live myself: live Chrome (USMCA context) /driver-hub?tab=leave_requests renders 1 real row (DLS-2026-000001, TEST DriverTESTMTDP79YF, Sick, 09/15/2026-09/15/2026, Review action). Binding on this independent re-confirmation.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "DHUB-S05",
@@ -116,9 +118,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Cascade CDP 9225, entity=USMCA: clicked overview, scheduler, leave_requests, and reporting; Driver Inbox Reporting rendered 1 request with 100% approval rate; entity remained USMCA with TRANSP-CHECKS=0. Cascade OUTBOX-CASCADE WIRE DHUB-VERIFY-01 PASS.",
+      "evidence": "PROD-VERIFIED 2026-08-10 Cascade CDP 9225, entity=USMCA: clicked overview, scheduler, leave_requests, and reporting; Driver Inbox Reporting rendered 1 request with 100% approval rate; entity remained USMCA with TRANSP-CHECKS=0. Cascade OUTBOX-CASCADE WIRE DHUB-VERIFY-01 PASS. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed live this pass alongside DHUB-S04 (same 1-row leave request, matches exactly). Binding on this re-confirmation.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "pass_count": 7,
