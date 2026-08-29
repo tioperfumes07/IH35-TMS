@@ -11,7 +11,7 @@
  * ★ THE QUEUE'S OWN ROOT CAUSE FOR THIS CLASS IS WRONG, and this guard is written against the real
  * one. The queue says: "reads body.data.delivered_at from the request — if the client doesn't send
  * it, it's NULL." That is not what the code does. `stampFinalActiveDeliveryDeparture` writes
- * `COALESCE($2::timestamptz, now())`, so an absent `delivered_at` falls back to now() and can never
+ * `COALESCE($3::timestamptz, now())`, so an absent `delivered_at` falls back to now() and can never
  * be NULL. A builder told to "make the client send delivered_at" would change nothing.
  * Verified live by controlled A/B on prod (2026-08-06, USMCA, deploy e6343f4): two loads, same
  * customer/driver/unit, same day, NEITHER call sending `delivered_at` — the one advanced via
@@ -42,8 +42,8 @@ const STAMPER = "apps/backend/src/dispatch/stamp-final-delivery-departure.ts";
 
 /**
  * `SET actual_departure_at = <expr>` — capture the assigned expression to END OF LINE, not to the
- * next comma. Splitting on the comma truncated `COALESCE($2::timestamptz, now())` to
- * `COALESCE($2::timestamptz` and the guard then flagged the CORRECT stamper as a defect — caught by
+ * next comma. Splitting on the comma truncated `COALESCE($3::timestamptz, now())` to
+ * `COALESCE($3::timestamptz` and the guard then flagged the CORRECT stamper as a defect — caught by
  * this file's own selftest before it ever ran in anger.
  */
 const ASSIGN_RE = /actual_departure_at\s*=\s*(.+)$/gim;
@@ -94,7 +94,7 @@ function walk(dir, out = []) {
 if (process.argv.includes("--selftest")) {
   const cases = [
     ["now() is a real stamp", `SET actual_departure_at = now(),`, 0],
-    ["COALESCE onto now() is a real stamp", `SET actual_departure_at = COALESCE($2::timestamptz, now()),`, 0],
+    ["COALESCE onto now() is a real stamp", `SET actual_departure_at = COALESCE($3::timestamptz, now()),`, 0],
     ["a BARE parameter can arrive null", `SET actual_departure_at = $2::timestamptz,`, 1],
     ["COALESCE WITHOUT now() still can be null", `SET actual_departure_at = COALESCE($2, $3),`, 1],
     ["a comment describing the pattern is not a write", ` * SET actual_departure_at = $2 is the bug`, 0],
@@ -109,7 +109,7 @@ if (process.argv.includes("--selftest")) {
   }
   // The COALESCE fallback in the stamper is the thing the queue wrongly believes is missing.
   const stamper = fs.existsSync(path.join(ROOT, STAMPER)) ? fs.readFileSync(path.join(ROOT, STAMPER), "utf8") : "";
-  if (stamper && !/COALESCE\s*\(\s*\$2::timestamptz\s*,\s*now\(\)\s*\)/i.test(stamper)) {
+  if (stamper && !/COALESCE\s*\(\s*\$3::timestamptz\s*,\s*now\(\)\s*\)/i.test(stamper)) {
     console.error("SELFTEST FAIL: the stamper no longer COALESCEs onto now() — the NULL is back");
     failed++;
   }
@@ -144,7 +144,7 @@ if (writeSites === 0) {
 const stamperAbs = path.join(ROOT, STAMPER);
 if (!fs.existsSync(stamperAbs)) {
   problems.push(`${STAMPER}: missing — the final-delivery departure stamper is the WIRE-07 write path.`);
-} else if (!/COALESCE\s*\(\s*\$2::timestamptz\s*,\s*now\(\)\s*\)/i.test(fs.readFileSync(stamperAbs, "utf8"))) {
+} else if (!/COALESCE\s*\(\s*\$3::timestamptz\s*,\s*now\(\)\s*\)/i.test(fs.readFileSync(stamperAbs, "utf8"))) {
   problems.push(
     `${STAMPER}: the COALESCE(..., now()) fallback is gone. Without it an omitted delivered_at writes ` +
       `NULL — which is the failure the wave queue already (incorrectly) believes is live today.`,

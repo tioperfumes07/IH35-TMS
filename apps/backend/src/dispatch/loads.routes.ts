@@ -1575,7 +1575,12 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       // already past the gate stay flagged and unrecognized until a human supplies real evidence).
       if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
         // CLS-DISP-WIRE-07 — shared stamp (also used by bulk + mdata status paths).
-        await stampFinalActiveDeliveryDeparture(client, params.data.id, body.data.delivered_at ?? null);
+        await stampFinalActiveDeliveryDeparture(
+          client,
+          operatingCompanyId,
+          params.data.id,
+          body.data.delivered_at ?? null
+        );
 
         // ACCT-F277 — delivery cannot recognize freight revenue while silently carrying no driver
         // cost record. Re-enter the canonical idempotent pay path: an existing Book bill is a no-op;

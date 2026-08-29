@@ -90,6 +90,12 @@ function auditStampSql(sqlSrc, label) {
         `An office confirmation would overwrite a driver's first-hand capture.`,
     );
   }
+  if (!/JOIN\s+mdata\.loads\s+l2\s+ON\s+l2\.id\s*=\s*s2\.load_id/i.test(code)) {
+    problems.push(`${label}: stop write must scope through its canonical parent load.`);
+  }
+  if (!/l2\.operating_company_id\s*=\s*\$2::uuid/i.test(code)) {
+    problems.push(`${label}: parent load selector is missing explicit operating-company scope.`);
+  }
   for (const [re, why] of [
     [/ORDER BY\s+s2?\.?sequence_number\s+DESC/i, "must target the LAST delivery stop (ORDER BY sequence_number DESC)"],
     [/<>\s*'cancelled'/i, "must exclude cancelled stops"],
@@ -242,13 +248,18 @@ function selftest() {
       run: () => {
         const mutated = mutate(
           helper,
-          "SET actual_departure_at = COALESCE($2::timestamptz, now()),",
-          "SET actual_departure_at = COALESCE($2::timestamptz, now()),\n             actual_arrival_at = now(),",
+          "SET actual_departure_at = COALESCE($3::timestamptz, now()),",
+          "SET actual_departure_at = COALESCE($3::timestamptz, now()),\n             actual_arrival_at = now(),",
           "fabricate arrival",
         );
         return auditOfficeDelivery(route, mutated);
       },
       expect: "WRITES actual_arrival_at",
+    },
+    {
+      label: "company scope removed",
+      run: () => auditOfficeDelivery(route, mutate(helper, /\n\s*AND l2\.operating_company_id = \$2::uuid/, "", "remove company scope")),
+      expect: "missing explicit operating-company scope",
     },
   ];
 

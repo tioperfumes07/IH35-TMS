@@ -65,7 +65,7 @@ async function transitionOneHop(targetStatus: string) {
 
     let driverBillOutcome = null;
     if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
-      await stampFinalActiveDeliveryDeparture(client, LOAD_ID, null);
+      await stampFinalActiveDeliveryDeparture(client, USMCA, LOAD_ID, null);
       driverBillOutcome = await ensureDriverBillArtifactsForLoad(client, {
         loadId: LOAD_ID,
         operatingCompanyId: USMCA,

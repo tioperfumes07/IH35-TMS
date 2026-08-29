@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7212 | GO-0054 | CLAIM=delivery-stop-stamp-company-contract | SOURCE=mdata.load_stops via mdata.loads.operating_company_id | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7211 | PR=#17423 @ 678daed609 | Built=detention stop lifecycle idempotent | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 Codex | WORKING | DSP-F7211 | GO-0054 | CLAIM=detention-stop-lifecycle-idempotency | SOURCE=dispatch.detention_events company+stop history | CLOSES=none — post-deploy Live proof remains | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7210 | PR=#17422 @ 752522d29a | Built=exact load-number lease renewal | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 Codex | WORKING | DSP-F7210 | GO-0054 | CLAIM=load-id-exact-lease-renewal | SOURCE=dispatch.load_id_reservations | NEXT=guard+FAST-MERGE | GO

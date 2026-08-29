@@ -79,7 +79,7 @@ async function transitionOneHop(targetStatus: string) {
     await client.query(`UPDATE mdata.loads SET status = $2 WHERE id = $1`, [LOAD_ID, mdataStatus]);
 
     if (loadStatusRequiresDeliveryDepartureStamp(targetStatus)) {
-      await stampFinalActiveDeliveryDeparture(client, LOAD_ID, null);
+      await stampFinalActiveDeliveryDeparture(client, USMCA, LOAD_ID, null);
       await ensureDriverBillArtifactsForLoad(client, { loadId: LOAD_ID, operatingCompanyId: USMCA, actorUserId: ACTOR_USER_UUID });
     }
 
