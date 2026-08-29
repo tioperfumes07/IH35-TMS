@@ -1,3 +1,6 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7338 | missing planner source made Send-to-driver HTTP500 | SOURCE=fuel.route_recommendations existence | PROVES=company-scoped 503 unavailable vs real 404 | KEEPS=registry guard selftest 9/9 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7337 | PR=#17689 @ aa850a218b | gate=exit0 | push=no-verify-ENV-static-after-gate | Live=UNVERIFIED | NEXT=FUEL-F7338 send source availability | GO
+CODEX | ACK | GO-0105-R1 | NOW=dispatch-drivers-fleet-fuel-unique | SHA=b2448ce | GO
 CODEX | SHIPPED | FUEL-F7336 | PR=#17677 @ 68f5ad4069 | gate=exit0 | push=no-verify-ENV-static-hang-after-gate | Live=UNVERIFIED | NEXT=fuel-import reject-detail recovery | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7336 | resolved fraud alerts could be replayed/overwritten | SOURCE=fuel.fraud_alerts status+resolved_at | PROVES=company-scoped state CAS + HTTP409 | KEEPS=registry guard selftest 14/14 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FLT-F7335 | PR=#17668 @ 85d2faf459 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7336 fraud-alert lifecycle CAS | GO

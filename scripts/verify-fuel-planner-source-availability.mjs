@@ -61,6 +61,8 @@ function selftest() {
   const mutations = [
     ["empty registry", { registry: { ...good.registry, contracts: [] }, files: good.files }],
     ["route source check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replaceAll('hasRelation(client, "fuel.route_recommendations")', "false") } }],
+    ["send source unavailable sentinel", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('return { unavailable: true as const };', 'return null;') } }],
+    ["send source unavailable response", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('fuel_planner_source_unavailable', 'fuel_recommendation_not_found') } }],
     ["relay source check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replaceAll('hasRelation(client, "fuel.relay_matches")', "false") } }],
     ["backend null honesty", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("active_plans: plannerSourceAvailable ? Number(activeRes.rows[0]?.count ?? 0) : null", "active_plans: Number(activeRes.rows[0]?.count ?? 0)") } }],
     ["active route false zero", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("return { routes: [], total_count: null, source_available: false }", "return { routes: [], total_count: 0, source_available: false }") } }],
