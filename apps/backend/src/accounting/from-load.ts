@@ -184,53 +184,70 @@ export async function buildInvoiceFromLoad(client: Queryable, input: BuildInvoic
   dueDate.setUTCDate(dueDate.getUTCDate() + paymentTermsDays);
   const initialStatus = input.asProforma ? "proforma" : "draft";
 
-  const invoiceRes = await client.query(
-    `
-      INSERT INTO accounting.invoices (
-        operating_company_id,
-        customer_id,
-        display_id,
-        status,
-        source_load_id,
-        issue_date,
-        due_date,
-        delivery_date,
-        payment_terms_id,
-        payment_terms_label,
-        payment_terms_days,
-        ar_email_snapshot,
-        ar_phone_snapshot,
-        invoice_type,
-        created_by_user_id,
-        updated_by_user_id,
-        -- ACCT-F193: a sample load must produce a SAMPLE invoice. Derived from the load exactly as
-        -- driver-finance/settlements-load-bookended.service.ts:158 already does for settlements
-        -- (opts.isSampleData ?? load.is_sample_data ?? false) — one source of truth, not a new rule.
-        is_sample_data
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'from_load',$14,$14,$15
-      )
-      RETURNING *
-    `,
-    [
-      input.operatingCompanyId,
-      load.customer_id,
-      displayId,
-      initialStatus,
-      input.loadId,
-      issueDate.toISOString().slice(0, 10),
-      dueDate.toISOString().slice(0, 10),
-      toIsoDate(load.updated_at) ?? toIsoDate(load.created_at),
-      load.payment_terms_id ?? null,
-      load.payment_terms_label ?? null,
-      paymentTermsDays,
-      load.ar_email ?? null,
-      load.ar_phone ?? null,
-      input.userId,
-      // ACCT-F193 — lockstep with the $15 placeholder and the is_sample_data column above.
-      load.is_sample_data ?? false,
-    ]
-  );
+  let invoiceRes: { rows: Record<string, unknown>[] };
+  try {
+    invoiceRes = await client.query(
+      `
+        INSERT INTO accounting.invoices (
+          operating_company_id,
+          customer_id,
+          display_id,
+          status,
+          source_load_id,
+          issue_date,
+          due_date,
+          delivery_date,
+          payment_terms_id,
+          payment_terms_label,
+          payment_terms_days,
+          ar_email_snapshot,
+          ar_phone_snapshot,
+          invoice_type,
+          created_by_user_id,
+          updated_by_user_id,
+          -- ACCT-F193: a sample load must produce a SAMPLE invoice. Derived from the load exactly as
+          -- driver-finance/settlements-load-bookended.service.ts:158 already does for settlements
+          -- (opts.isSampleData ?? load.is_sample_data ?? false) — one source of truth, not a new rule.
+          is_sample_data
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'from_load',$14,$14,$15
+        )
+        RETURNING *
+      `,
+      [
+        input.operatingCompanyId,
+        load.customer_id,
+        displayId,
+        initialStatus,
+        input.loadId,
+        issueDate.toISOString().slice(0, 10),
+        dueDate.toISOString().slice(0, 10),
+        toIsoDate(load.updated_at) ?? toIsoDate(load.created_at),
+        load.payment_terms_id ?? null,
+        load.payment_terms_label ?? null,
+        paymentTermsDays,
+        load.ar_email ?? null,
+        load.ar_phone ?? null,
+        input.userId,
+        // ACCT-F193 — lockstep with the $15 placeholder and the is_sample_data column above.
+        load.is_sample_data ?? false,
+      ]
+    );
+  } catch (err) {
+    // DSP-MONEY-F7175 (GO-0031, CC-1): the existing-invoice check above (a plain SELECT, no row
+    // lock) and this INSERT are not atomic — two racing from-load calls on the same never-before-
+    // invoiced load (double-click, timeout-retry, or the POD-approval auto-trigger racing a manual
+    // click) can both pass the SELECT and both reach this INSERT. Migration 202613270100 added a
+    // partial unique index (uq_invoices_source_load_active, WHERE voided_at IS NULL) matching the
+    // findConflictingInvoiceForLoad predicate above — the LOSING racer now hits a real 23505 here
+    // instead of silently minting a duplicate invoice. Recognize exactly that constraint and fall
+    // back to the existing-invoice idempotent path; any other error still propagates unchanged.
+    const pgErr = err as { code?: string; constraint?: string };
+    if (pgErr?.code === "23505" && pgErr?.constraint === "uq_invoices_source_load_active") {
+      return buildInvoiceFromLoad(client, input);
+    }
+    throw err;
+  }
   const invoice = invoiceRes.rows[0];
 
   const lineTotal = Number(load.rate_total_cents ?? 0);
