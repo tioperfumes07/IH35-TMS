@@ -46,15 +46,20 @@ async function withCompanyScope<T>(
   });
 }
 
-async function normalizeRowsFromWorkbook(data: Buffer, filename: string): Promise<LovesRow[]> {
-  const rows = await readUntrustedSpreadsheetRows(data, filename);
+export function normalizeLovesRows(
+  rows: Record<string, unknown>[]
+): { rows: LovesRow[]; rows_rejected: number } {
   const normalized: LovesRow[] = [];
+  let rowsRejected = 0;
   for (const row of rows) {
     const station_name = String(row.station_name ?? row.name ?? "").trim();
     const station_address = String(row.station_address ?? row.address ?? row.address_line1 ?? "").trim();
     const priceRaw = row.price_per_gallon ?? row.price ?? row.retail_price;
     const price = Number(priceRaw);
-    if (!station_name || !station_address || !Number.isFinite(price)) continue;
+    if (!station_name || !station_address || !Number.isFinite(price) || price <= 0) {
+      rowsRejected += 1;
+      continue;
+    }
     normalized.push({
       station_uuid: String(row.station_uuid ?? row.station_id ?? "").trim() || undefined,
       station_name,
@@ -64,7 +69,14 @@ async function normalizeRowsFromWorkbook(data: Buffer, filename: string): Promis
       price_per_gallon: price,
     });
   }
-  return normalized;
+  return { rows: normalized, rows_rejected: rowsRejected };
+}
+
+async function normalizeRowsFromWorkbook(
+  data: Buffer,
+  filename: string
+): Promise<{ rows: LovesRow[]; rows_rejected: number }> {
+  return normalizeLovesRows(await readUntrustedSpreadsheetRows(data, filename));
 }
 
 export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
@@ -102,9 +114,9 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
       if (!filePart) return { badRequest: true as const };
       if (!filePart.filename.toLowerCase().endsWith(".xlsx")) return { invalidFile: true as const };
       const workbookBytes = await filePart.toBuffer();
-      let rows: LovesRow[];
+      let normalizedWorkbook: { rows: LovesRow[]; rows_rejected: number };
       try {
-        rows = await normalizeRowsFromWorkbook(workbookBytes, filePart.filename);
+        normalizedWorkbook = await normalizeRowsFromWorkbook(workbookBytes, filePart.filename);
       } catch (err) {
         if (err instanceof SpreadsheetUploadRejectedError) {
           return { invalidFile: true as const };
@@ -112,12 +124,16 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
         throw err;
       }
 
-      const counts = { rows_added: 0, rows_updated: 0, rows_skipped: 0 };
-      for (const row of rows) {
-        if (!row.station_name || !row.station_address || !Number.isFinite(row.price_per_gallon)) {
-          counts.rows_skipped += 1;
-          continue;
-        }
+      if (normalizedWorkbook.rows.length === 0) {
+        return { noValidRows: true as const, rowsRejected: normalizedWorkbook.rows_rejected };
+      }
+
+      const counts = {
+        rows_added: 0,
+        rows_updated: 0,
+        rows_skipped: normalizedWorkbook.rows_rejected,
+      };
+      for (const row of normalizedWorkbook.rows) {
 
         const updateRes = await client.query(
             `
@@ -221,6 +237,9 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
     if ("conflict" in result) return reply.code(412).send({ error: "etag_conflict", expected_etag: result.expectedEtag });
     if ("badRequest" in result) return reply.code(400).send({ error: "file_required" });
     if ("invalidFile" in result) return reply.code(400).send({ error: "xlsx_required" });
+    if ("noValidRows" in result) {
+      return reply.code(400).send({ error: "no_valid_price_rows", rows_rejected: result.rowsRejected });
+    }
     reply.header("ETag", `"${result.etag}"`);
     return {
       rows_added: result.rows_added,
