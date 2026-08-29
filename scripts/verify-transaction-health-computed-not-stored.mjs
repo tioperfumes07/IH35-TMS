@@ -152,6 +152,9 @@ export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migr
   if (tab && /\bnavigate\s*\(/.test(tab)) {
     failures.push(`${PAGE_FILE}: TransactionHealthTab must not call navigate( — list click stays on the page`);
   }
+  if (pageSrc && !pageSrc.includes("blocked_by_constraint")) {
+    failures.push(`${PAGE_FILE}: wiring map must render blocked_by_constraint as its own state, not a silent default`);
+  }
 
   return failures;
 }
@@ -230,12 +233,34 @@ function selftest() {
   }
 
   // Offender F: list click navigates away instead of setSelectedKey.
-  const offenderF = check({
-    ...baseline,
-    pageSrc: baseline.pageSrc.replace("onClick={() => setSelectedKey(key)}", "onClick={() => navigate(txHealthDocumentPath(row))}"),
-  });
-  if (offenderF.length === 0) {
+  // If the plant string does not match the source, the assertion never fires — that is a
+  // closed loop. Fail closed when the mutation does not apply, and require the navigate() finding.
+  const plantFrom = "onClick={() => setSelectedKey(key)}";
+  const plantTo = "onClick={() => navigate(txHealthDocumentPath(row))}";
+  if (!baseline.pageSrc.includes(plantFrom)) {
+    console.error("FAIL(selftest): offender F plant target onClick={() => setSelectedKey(key)} is missing from the page — selftest out of sync");
+    process.exit(1);
+  }
+  const plantedF = baseline.pageSrc.replace(plantFrom, plantTo);
+  if (plantedF === baseline.pageSrc) {
+    console.error("FAIL(selftest): offender F plant did not change the page source");
+    process.exit(1);
+  }
+  const offenderF = check({ ...baseline, pageSrc: plantedF });
+  if (!offenderF.some((f) => f.includes("must not call navigate("))) {
     console.error("FAIL(selftest): planted offender F (navigate on list click) was NOT caught");
+    process.exit(1);
+  }
+
+  // Offender G: drop the fourth wiring state so it falls through to a default.
+  const plantedG = baseline.pageSrc.replaceAll("blocked_by_constraint", "blocked_PLANTED");
+  if (plantedG === baseline.pageSrc) {
+    console.error("FAIL(selftest): offender G plant did not change the page source");
+    process.exit(1);
+  }
+  const offenderG = check({ ...baseline, pageSrc: plantedG });
+  if (!offenderG.some((f) => f.includes("blocked_by_constraint"))) {
+    console.error("FAIL(selftest): planted offender G (blocked_by_constraint removed) was NOT caught");
     process.exit(1);
   }
 
