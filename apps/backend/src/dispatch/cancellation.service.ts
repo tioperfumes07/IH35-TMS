@@ -188,7 +188,13 @@ export async function cancelLoad(
             cancellationChargeCents: input.cancellation_charge_cents,
             actorUserId: userId,
           });
-          await client.query(
+          // DSP-MONEY-F7146B-R1 (CC-1): the backlink write must bind the cancellation's own company
+          // and confirm it is still the 'approved' row this transaction just wrote (this branch only
+          // runs when !pendingOwnerApproval, i.e. status was just set to 'approved' above) — the bare
+          // `WHERE id = $1` accepted any operating_company_id and any status, and never checked
+          // whether the row actually changed, so a lost/RLS-filtered/status-drifted update could
+          // commit the TONU invoice while silently losing the canonical backlink.
+          const backlinkRes = await client.query<{ id: string }>(
             `
               UPDATE dispatch.load_cancellations
                  SET charge_invoice_id = $2::uuid,
@@ -196,9 +202,17 @@ export async function cancelLoad(
                      charged_at = now(),
                      charged_by_user_id = $4
                WHERE id = $1
+                 AND operating_company_id = $5::uuid
+                 AND status = 'approved'
+               RETURNING id
             `,
-            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId]
+            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId, input.operating_company_id]
           );
+          if (!backlinkRes.rows[0]) {
+            throw Object.assign(new Error("cancellation_charge_backlink_failed"), {
+              code: "cancellation_charge_backlink_failed",
+            });
+          }
         }
       }
 
