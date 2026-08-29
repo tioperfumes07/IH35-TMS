@@ -12,6 +12,7 @@ import { useAuth } from "../../../auth/useAuth";
 import { StepWizard } from "../../../components/reports/ifta/StepWizard";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useToast } from "../../../components/Toast";
 import { filingQuarterLabel, recentQuarterOptions, toQuarterLabel } from "../ifta/quarter";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -32,6 +33,7 @@ export function IftaPreparer() {
   const quarterOptions = useMemo(() => recentQuarterOptions(8), []);
   const queryClient = useQueryClient();
   const [filingUuid, setFilingUuid] = useState<string | null>(null);
+  const { pushToast } = useToast();
 
   const historyQuery = useQuery({
     queryKey: ["reports-ifta-filings", companyId],
@@ -45,12 +47,19 @@ export function IftaPreparer() {
     enabled: Boolean(companyId && filingUuid),
   });
 
+  // GO-0028: none of these 4 mutations had an onError handler, and every call site discards the
+  // promise with `void`/no try-catch (see StepWizard's Step1/Step2/Step4 children) -- a failed
+  // "Prepare filing", overrides save, OWNER APPROVAL, or "mark as filed" click reverted its button
+  // to normal with zero signal that anything went wrong. On a live, routed, compliance-critical
+  // filing wizard that includes an owner-approval step, that is a silent-failure dead click on a
+  // regulated action. Matches this app's established pushToast(...,"error") pattern.
   const prepareMutation = useMutation({
     mutationFn: () => prepareIftaFiling(companyId, quarter),
     onSuccess: (data) => {
       setFilingUuid(String(data.uuid));
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filings", companyId] });
     },
+    onError: () => pushToast(`Failed to prepare ${quarter} filing — nothing was created. Please retry.`, "error"),
   });
 
   const overridesMutation = useMutation({
@@ -59,6 +68,7 @@ export function IftaPreparer() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filing", companyId, filingUuid] });
     },
+    onError: () => pushToast("Failed to save overrides — your changes were not saved. Please retry.", "error"),
   });
 
   const approveMutation = useMutation({
@@ -68,6 +78,7 @@ export function IftaPreparer() {
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filing", companyId, filingUuid] });
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filings", companyId] });
     },
+    onError: () => pushToast("Owner approval failed — the filing was NOT approved. Please retry.", "error"),
   });
 
   const markFiledMutation = useMutation({
@@ -76,6 +87,7 @@ export function IftaPreparer() {
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filing", companyId, filingUuid] });
       void queryClient.invalidateQueries({ queryKey: ["reports-ifta-filings", companyId] });
     },
+    onError: () => pushToast("Failed to record this filing as filed — please retry.", "error"),
   });
 
   const filing = filingQuery.data;
@@ -120,7 +132,11 @@ export function IftaPreparer() {
             type="button"
             className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 disabled:opacity-50"
             disabled={!companyId || prepareMutation.isPending}
-            onClick={() => void prepareMutation.mutateAsync()}
+            onClick={() => {
+              // onError above already surfaces the toast; .catch() here only prevents an
+              // unhandled-promise-rejection console error from this fire-and-forget click.
+              void prepareMutation.mutateAsync().catch(() => {});
+            }}
             data-testid="ifta-prepare-quarter"
           >
             {prepareMutation.isPending ? "Preparing…" : `Prepare ${quarter} filing`}

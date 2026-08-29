@@ -114,7 +114,11 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
               type="button"
               className="rounded-sm border border-slate-500 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
               disabled={!confirmationNumber.trim() || filingPending}
-              onClick={() => void onMarkFiled(confirmationNumber.trim())}
+              onClick={() => {
+                // GO-0028: the parent mutation's onError already surfaces a toast; .catch() here
+                // only prevents an unhandled-promise-rejection from this fire-and-forget click.
+                void onMarkFiled(confirmationNumber.trim()).catch(() => {});
+              }}
             >
               {filingPending ? "Saving…" : "Mark as filed"}
             </button>
@@ -162,7 +166,11 @@ export function Step4FinalReview({ filing, isOwner, onOwnerApprove, onMarkFiled,
             <Button
               variant="danger"
               disabled={!typedOk || !holdOk || approving}
-              onClick={() => void submitApprove()}
+              onClick={() => {
+                // GO-0028: the parent mutation's onError already surfaces a toast; .catch() here
+                // only prevents an unhandled-promise-rejection from this fire-and-forget click.
+                void submitApprove().catch(() => {});
+              }}
               data-testid="ifta-wf064-final-confirm"
             >
               {approving ? "Approving…" : "Yes — approve filing"}

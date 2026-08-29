@@ -129,7 +129,11 @@ export function Step2FuelReview({ filing, onSaveOverrides, saving }: Props) {
           type="button"
           className="rounded-sm border border-slate-400 bg-slate-100 px-3 py-1.5 font-semibold text-slate-900 disabled:opacity-50"
           disabled={saving}
-          onClick={() => void save()}
+          onClick={() => {
+            // GO-0028: the parent mutation's onError already surfaces a toast; .catch() here
+            // only prevents an unhandled-promise-rejection from this fire-and-forget click.
+            void save().catch(() => {});
+          }}
         >
           {saving ? "Saving…" : "Save fuel overrides"}
         </button>
