@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-29 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-29 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **50 / 150** | 2026-08-29 |
-| Rows in this file | **2164** | 2026-08-29 |
-| Rows `FAIL` + `OPEN` | **33** | 2026-08-29 |
+| Rows in this file | **2177** | 2026-08-29 |
+| Rows `FAIL` + `OPEN` | **46** | 2026-08-29 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-29 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-29 |
-| Verdict tally (all rows) | FAIL=257 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-29 |
+| Verdict tally (all rows) | FAIL=270 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-29 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2254,3 +2254,16 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50122 | driver-hub · FAKE-COMPLETE — complete:true with 1 of 7 items bound | B | USMCA | FAIL — FALSE COMPLETE FLAG (audit) | DHUB-S01 bound (da39aab, BINDABLE). 6 items prod_verified:false, no live_verified_sha. VERDICT: REOPEN. CC-2 flips flag. | OPEN | docs/module-completion/driver-hub.json:4 | NO | 2026-08-29 | CASCADE |
 | 50123 | form_425 · FAKE-COMPLETE — complete:true with 0 of 5 items bound | B | USMCA | FAIL — FALSE COMPLETE FLAG (audit) | 425-S01 and 425-S04 have prod_verified:true but NO live_verified_sha — unbound per Recipe A. VERDICT: REOPEN. CC-2 flips flag. | OPEN | docs/module-completion/form_425.json:4 | NO | 2026-08-29 | CASCADE |
 | 50124 | users · FAKE-COMPLETE — complete:true with 0 of 6 items bound | B | USMCA | FAIL — FALSE COMPLETE FLAG (audit) | USER-S01/S03/S04/S05/VERIFY-01 have prod_verified:true but NO live_verified_sha — all unbound per Recipe A. VERDICT: REOPEN. CC-2 flips flag. | OPEN | docs/module-completion/users.json:4 | NO | 2026-08-29 | CASCADE |
+| 50125 | system · WAVE3-TRIAGE — verify-no-dead-schema REAL DEFECT | B | USMCA | FAIL — DEAD SCHEMA (guard triage) | pwa.driver_notifications has columns nothing reads (read_at). REAL DEFECT — guard stays. | OPEN | scripts/verify-no-dead-schema.mjs | NO | 2026-08-29 | CASCADE |
+| 50126 | system · WAVE3-TRIAGE — verify-board-append-only REAL DEFECT | B | USMCA | FAIL — BOARD INTEGRITY (guard triage) | 78 finding IDs simultaneously OPEN+FIXED (duplicate rows from union merge); 1459 uncited completion rows. REAL DEFECT — guard stays. | OPEN | scripts/verify-board-append-only.mjs | NO | 2026-08-29 | CASCADE |
+| 50127 | system · WAVE3-TRIAGE — verify-hold-merge-gate GUARD IS WRONG for static | B | USMCA | FAIL — GUARD MISPLACED (guard triage) | Passes standalone (pass-neutral). Only fails in static mode because it checks PR labels/approval which don't exist outside CI. GUARD IS WRONG — should be CI-only, not static. | OPEN | scripts/verify-hold-merge-gate.mjs | NO | 2026-08-29 | CASCADE |
+| 50128 | system · WAVE3-TRIAGE — verify-matrix-fetch-timeout REAL DEFECT | B | USMCA | FAIL — STALE COPY (guard triage) | ModuleMatrixSystemView has stale computing-in-the-background copy. REAL DEFECT — guard stays. | OPEN | scripts/verify-matrix-fetch-timeout.mjs | NO | 2026-08-29 | CASCADE |
+| 50129 | system · WAVE3-TRIAGE — verify-no-uncast-operating-company-id REAL DEFECT | B | USMCA | FAIL — UNCAST OPCO (guard triage) | equipment-log.routes.ts:187,190 and training-programs.routes.ts:64 have uncast operating_company_id in SQL. REAL DEFECT — guard stays. | OPEN | scripts/verify-no-uncast-operating-company-id.mjs | NO | 2026-08-29 | CASCADE |
+| 50130 | system · WAVE3-TRIAGE — verify-route-file-mounted REAL DEFECT | B | USMCA | FAIL — UNMOUNTED ROUTES (guard triage) | 16/640 route modules not mounted (ledger-health.routes.ts etc). REAL DEFECT — guard stays. | OPEN | scripts/verify-route-file-mounted.mjs | NO | 2026-08-29 | CASCADE |
+| 50131 | system · WAVE3-TRIAGE — verify-session-law-autoload REAL DEFECT | B | USMCA | FAIL — GITIGNORE (guard triage) | .gitignore ignores .cursor/rules/15,16,33 which should be tracked. REAL DEFECT — guard stays. | OPEN | scripts/verify-session-law-autoload.mjs | NO | 2026-08-29 | CASCADE |
+| 50132 | system · WAVE3-TRIAGE — verify-honest-built-launch-law-present REAL DEFECT | B | USMCA | FAIL — INBOX CITATION (guard triage) | INBOX-CURSOR/CC-1/CODEX/CC-2 don't cite HONEST-BUILT-LAUNCH-LAW-2026-08-14. REAL DEFECT — guard stays. | OPEN | scripts/verify-honest-built-launch-law-present.mjs | NO | 2026-08-29 | CASCADE |
+| 50133 | system · WAVE3-TRIAGE — verify-no-nested-box REAL DEFECT | B | USMCA | FAIL — NESTED BOX (guard triage) | 3 files have nested boxes above baseline: ExpectedAdjustmentsCallout (4 vs 3), DriverProfilePage (1 vs 0), ClaimsTab (1 vs 0). REAL DEFECT — guard stays. | OPEN | scripts/verify-no-nested-box.mjs | NO | 2026-08-29 | CASCADE |
+| 50134 | system · WAVE3-TRIAGE — verify-orphan-components REAL DEFECT | B | USMCA | FAIL — ORPHAN COMPONENTS (guard triage) | Orphan components found not wired to any route. REAL DEFECT — guard stays. | OPEN | scripts/verify-orphan-components.mjs | NO | 2026-08-29 | CASCADE |
+| 50135 | system · WAVE3-TRIAGE — verify-no-jsonb-id-array-as-fk REAL DEFECT | B | USMCA | FAIL — JSONB FK (guard triage) | jsonb array of entity ids used as FK — no cascade, no reverse read. REAL DEFECT — guard stays. | OPEN | scripts/verify-no-jsonb-id-array-as-fk.mjs | NO | 2026-08-29 | CASCADE |
+| 50136 | system · WAVE3-TRIAGE — verify-design-parity GUARD IS WRONG for static | B | USMCA | FAIL — NON-BLOCKING BACKLOG (guard triage) | Reports as non-blocking punch list (design backlog) but fails static mode. GUARD IS WRONG — should not fail static, it's informational. | OPEN | scripts/verify-design-parity.mjs | NO | 2026-08-29 | CASCADE |
+| 50137 | system · WAVE3-TRIAGE — verify-myaccountant-flag-seeded REAL DEFECT | B | USMCA | FAIL — MISSING LEAF (guard triage) | accounting.json missing ACCT-R-10 PASS leaf. REAL DEFECT — guard stays. | OPEN | scripts/verify-myaccountant-flag-seeded.mjs | NO | 2026-08-29 | CASCADE |

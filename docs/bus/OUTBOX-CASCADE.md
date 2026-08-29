@@ -1,3 +1,4 @@
+CASCADE | WAVE-3 | 13 normal-mode triage verdicts (50125-50137) | 11 REAL DEFECT + 2 GUARD IS WRONG | NEXT=continue-triage-remaining-67
 CASCADE | WAVE-2 | 17 fake-complete verdicts (50108-50124) | all 16 modules complete:true REOPEN | NEXT=wave3-normal-mode-triage
 CASCADE | GR-1-SEED | merged #17717 @ 460816dad9 | verify-static=209 (selftest=97 registry=16 normal=96) at ed4e2f286a | NEXT=wave2-fake-complete-flags
 CASCADE | FAST-MERGE | merged #17701 @ d6848f6cf1 | FINDING 50107 system 500-error accounting-sync | NEXT=gr1-seed
