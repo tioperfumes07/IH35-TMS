@@ -30,6 +30,9 @@ const completedStopScope = /JOIN mdata\.load_stops ls ON ls\.id = sa\.stop_id[\s
 const laneStopScope = /p\.stop_type = 'pickup'[\s\S]{0,100}p\.soft_deleted_at IS NULL[\s\S]{0,100}del\.stop_type = 'delivery'[\s\S]{0,100}del\.soft_deleted_at IS NULL/;
 const bookingGapStopScope = /JOIN mdata\.load_stops ls[\s\S]{0,100}ls\.load_id = l\.id[\s\S]{0,100}ls\.stop_type = 'delivery'[\s\S]{0,100}ls\.soft_deleted_at IS NULL/;
 const queueStopScope = /FROM mdata\.load_stops[\s\S]{0,100}load_id = l\.id[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}scheduled_arrival_at IS NOT NULL/;
+const queueHistoricalCustomer = /COALESCE\(c\.customer_name, mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)\) AS customer_name/;
+const queueCustomerJoinPreservesLoad = /LEFT JOIN mdata\.customers c ON c\.id = l\.customer_id[\s\S]{0,100}c\.operating_company_id = l\.operating_company_id/;
+const queueHistoricalDriver = /COALESCE\([\s\S]{0,180}mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, l\.operating_company_id\)[\s\S]{0,80}AS driver_name/;
 
 function completeRangeFailures(source) {
   const aggregateReaders = source.match(/ORDER BY late_count DESC, entity_label ASC[\s\S]{0,80}/g) ?? [];
@@ -90,6 +93,9 @@ function main() {
   if (!laneStopScope.test(analyticsService)) failures.push("late-arrival lane endpoints must exclude retired stops");
   if (!bookingGapStopScope.test(bookingGapService)) failures.push("booking-gap deliveries must exclude retired stops");
   if (!queueStopScope.test(service)) failures.push("late-arrivals queue must exclude retired upcoming stops");
+  if (!queueHistoricalCustomer.test(service)) failures.push("late-arrivals queue must preserve customer labels after customer deactivation");
+  if (!queueCustomerJoinPreservesLoad.test(service)) failures.push("late-arrivals customer label join must not eliminate the canonical load");
+  if (!queueHistoricalDriver.test(service)) failures.push("late-arrivals queue must preserve historical same-company driver labels");
   failures.push(...completeRangeFailures(analyticsService));
   if (!index.includes("registerDispatchAlertsRoutes")) {
     failures.push("backend index must register dispatch alerts routes");
@@ -155,7 +161,15 @@ function main() {
     for (const [mutated, pattern, label] of activeStopMutations) {
       if (pattern.test(mutated)) fail(`${label} mutation escaped`);
     }
-    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 12/12 shared-driver/complete-range/active-stop mutations red");
+    const labelMutations = [
+      [service.replace("LEFT JOIN mdata.customers c", "JOIN mdata.customers c"), queueCustomerJoinPreservesLoad, "customer row preservation"],
+      [service.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"), queueHistoricalCustomer, "customer historical label"],
+      [service.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"), queueHistoricalDriver, "driver historical label"],
+    ];
+    for (const [mutated, pattern, label] of labelMutations) {
+      if (pattern.test(mutated)) fail(`${label} mutation escaped`);
+    }
+    console.log("verify:dispatch-late-arrivals-alerts SELFTEST PASS — 15/15 shared-driver/complete-range/active-stop/historical-label mutations red");
     return;
   }
 
