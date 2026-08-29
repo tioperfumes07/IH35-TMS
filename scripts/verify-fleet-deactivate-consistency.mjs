@@ -27,7 +27,7 @@ const trailer = read("apps/backend/src/fleet/trailer.routes.ts");
 
 if (process.argv.includes("--selftest")) {
   const fixtures = [
-    [units.replace('add("deactivated_at", new Date().toISOString().slice(0, 10))', 'add("status_note", "archived")'), trailer],
+    [units.replace('add("deactivated_at", companyBusinessDate())', 'add("status_note", "archived")'), trailer],
     [units.replace('add("deactivated_at", null)', 'add("status_note", "active")'), trailer],
     [units, trailer.replace('deactivated_at = COALESCE($4::date, CURRENT_DATE)::timestamptz', 'status = status')],
     [units, trailer.replace('deactivated_at = NULL', 'status = status')],

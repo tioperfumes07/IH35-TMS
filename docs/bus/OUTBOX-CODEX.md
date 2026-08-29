@@ -1,3 +1,4 @@
+CODEX | WORKING | GO-MODAL-01 | FINDING=FLEET-F7358 | NOW=repair-deactivate-archive-planted-mutation | NEXT=fleet/fuel unique selftests | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=DRV-F7357 | NOW=reanchor-onboarding-completion-lock-selftest | NEXT=fleet/fuel stale selftests | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=DRV-F7356 | NOW=reanchor-suspend-captured-scope-selftest | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=DRIVER-F7355 | NOW=reanchor-driver-pwa-route-selftest | NEXT=unique dispatch/drivers/fleet | GO
