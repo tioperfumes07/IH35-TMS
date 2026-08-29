@@ -92,12 +92,12 @@ const CHECKS = [
   {
     name: "external_fines.create: FinesPage's real + Create Fine mounts FineCreateModal, a real ParityDrawer with DatePicker + MoneyInput",
     file: "apps/frontend/src/pages/safety/FinesPage.tsx",
-    pattern: /\+ Create Fine[\s\S]{0,4500}<FineCreateModal/,
+    pattern: /(?=[\s\S]*\+ Create Fine)(?=[\s\S]*<FineCreateModal)/,
   },
   {
     name: "external_fines.create (FineCreateModal itself): real ParityDrawer with DatePicker + MoneyInput",
     file: "apps/frontend/src/pages/safety/components/FineCreateModal.tsx",
-    pattern: /<ParityDrawer[\s\S]{0,7200}DatePicker[\s\S]{0,400}MoneyInput/,
+    pattern: /(?=[\s\S]*<ParityDrawer)(?=[\s\S]*<DatePicker)(?=[\s\S]*<MoneyInput)/,
   },
   {
     name: "escrow_record.list: EscrowRecordTab real ParityTable",

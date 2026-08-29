@@ -2250,3 +2250,5 @@ CODEX | SHIPPED | GUARD-F7302 | PR=#17545 @ b276443f93 | gate=exit0 | Built=safe
 CODEX | WORKING | DRV-F7303 | GO-0043 | CLAIM=driver-import-payee-known-gap-shrink | NEXT=FAST-MERGE | GO
 CODEX | SHIPPED | DRV-F7303 | PR=#17546 @ 55b2b67aa2 | gate=exit0 | Built=driver import→payee gap shrink | NEXT=GUARD-F7304 | GO
 CODEX | WORKING | GUARD-F7304 | GO-0043 | CLAIM=safety expiry reverse paginated clients | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7304 | PR=#17548 @ 9d66fc2218 | gate=exit0 | Built=background+medical paginated reverse guard 23/23 | NEXT=GUARD-F7305 | GO
+CODEX | WORKING | GUARD-F7305 | GO-0043 | CLAIM=external-fine leaf chrome guard honesty | NEXT=FAST-MERGE | GO
