@@ -23,6 +23,15 @@ const MODAL_FILE = path.join(FE, "components/drivers/CreateDriverModal.tsx");
 const LIST_FILE = path.join(FE, "pages/drivers/DriversListPage.tsx");
 const DRIVERS_FILE = path.join(FE, "pages/Drivers.tsx");
 
+// RE-ANCHOR (found stale 2026-08-29): mutationFn used to be the bare `createDriver` reference; it's
+// since become an inline wrapper -- `mutationFn: (input: {...}) => createDriver(input.payload)` --
+// so it can pass a richer input shape through to the same single createDriver call. The modal still
+// owns the ONLY createDriver invocation; the literal `mutationFn:\s*createDriver\b` reference match
+// just never matches a wrapper. Accept either the bare reference OR an arrow function whose body
+// calls createDriver(, so a real second creator (anywhere, in either form) is still caught by the
+// anti-divergence scan below.
+const MUTATION_FN_OWNS_CREATE_DRIVER = /mutationFn:\s*(?:createDriver\b|\([^)]*\)(?:\s*:[^=]*)?\s*=>[\s\S]{0,150}?createDriver\()/;
+
 function fail(message) {
   console.error(`verify:safety-driver-creator-entry — FAILED\n- ${message}`);
   process.exit(1);
@@ -42,7 +51,7 @@ const driversSource = fs.readFileSync(DRIVERS_FILE, "utf8");
 
 // 1. The shared modal is the canonical creator.
 requirePattern(modalSource, /export function CreateDriverModal\b/, "CreateDriverModal must export CreateDriverModal");
-requirePattern(modalSource, /mutationFn:\s*createDriver\b/, "CreateDriverModal must own the createDriver mutation");
+requirePattern(modalSource, MUTATION_FN_OWNS_CREATE_DRIVER, "CreateDriverModal must own the createDriver mutation");
 requirePattern(modalSource, /onCreated\??:/, "CreateDriverModal must accept an onCreated prop (Safety lands on the new DQF)");
 
 // 2. DriversListPage (the shared Safety/Profiles surface) mounts the creator + exposes the button.
@@ -85,7 +94,7 @@ function walk(dir, acc) {
 
 const offenders = walk(FE, [])
   .filter((file) => path.resolve(file) !== path.resolve(MODAL_FILE))
-  .filter((file) => /mutationFn:\s*createDriver\b/.test(fs.readFileSync(file, "utf8")))
+  .filter((file) => MUTATION_FN_OWNS_CREATE_DRIVER.test(fs.readFileSync(file, "utf8")))
   .map((file) => path.relative(ROOT, file));
 
 if (offenders.length > 0) {
