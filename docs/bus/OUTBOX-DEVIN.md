@@ -1,4 +1,15 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=24ae06c | GO
+DEVIN | GO-0047 | vendors-leftover-unique | SHA=24ae06c | SHIPPED PR #17361 | FIXED: LST-F9118 — Two reclassify routes lacked config.rateLimit: POST /api/v1/customers/:id/flag-duplicate (write) and GET /api/v1/vendors/:id/reclassification-history (read, vendor-specific). Added 30/min write, 120/min read. Ratchet 307→306. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0048 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO
+DEVIN | GO-0048 | vendors-leftover-unique | SHA=5dee9eb | SHIPPED PR #17363 | FIXED: LST-F9119 — Eight routes across two files lacked config.rateLimit: samsara vendor-mapping-integrity + 7 maintenance integrity routes (unit/driver/vendor history list+detail, fleet-baselines). Added 60/min. Ratchet 306→305. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO — continuing drain
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=5dee9eb | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=5dee9eb | GO — final sweep
+
 DEVIN | ACK | GO-0046 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO
 DEVIN | GO-0046 | vendors-leftover-unique | SHA=d6e7552 | SHIPPED PR #17360 | FIXED: LST-F9117 — Eight maintenance vendor routes lacked config.rateLimit: list, detail, create, update, archive, void, CSV import, template download. All authenticated, never throttled. Added 60/min reads, 30/min writes, 10/min CSV import. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
