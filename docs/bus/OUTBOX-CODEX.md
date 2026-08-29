@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7216 | GO-0054 | CLAIM=replace-stops-persisted-identities | SOURCE=mdata.load_stops exact archive+insert IDs | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7215 | PR=#17426 @ d047523ff7 | Built=manual reassignment reverse-history identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7212 | GO-0054 | CLAIM=delivery-stop-stamp-company-contract | SOURCE=mdata.load_stops via mdata.loads.operating_company_id | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7211 | PR=#17423 @ 678daed609 | Built=detention stop lifecycle idempotent | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 Codex | WORKING | DSP-F7211 | GO-0054 | CLAIM=detention-stop-lifecycle-idempotency | SOURCE=dispatch.detention_events company+stop history | CLOSES=none — post-deploy Live proof remains | NEXT=gate+FAST-MERGE | GO

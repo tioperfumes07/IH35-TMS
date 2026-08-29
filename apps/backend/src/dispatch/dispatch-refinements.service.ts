@@ -359,15 +359,39 @@ export async function replaceLoadStopsRefined(
       );
       if (!load.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
 
-      // INV-1: void-never-delete — soft-delete all existing stops before re-inserting.
-      await client.query(`UPDATE mdata.load_stops SET soft_deleted_at = now() WHERE load_id = $1 AND soft_deleted_at IS NULL`, [loadId]);
+      // INV-1: void-never-delete — lock and archive the exact active stop set before re-inserting.
+      const existingStops = await client.query<{ id: string }>(
+        `SELECT id::text AS id
+           FROM mdata.load_stops
+          WHERE load_id = $1::uuid
+            AND soft_deleted_at IS NULL
+          FOR UPDATE`,
+        [loadId]
+      );
+      const existingStopIds = existingStops.rows.map((row) => row.id);
+      const archivedStops = await client.query<{ id: string }>(
+        `UPDATE mdata.load_stops
+            SET soft_deleted_at = now()
+          WHERE load_id = $1::uuid
+            AND id = ANY($2::uuid[])
+            AND soft_deleted_at IS NULL
+        RETURNING id::text AS id`,
+        [loadId, existingStopIds]
+      );
+      const archivedStopIds = new Set(archivedStops.rows.map((row) => row.id));
+      if (
+        archivedStopIds.size !== existingStopIds.length ||
+        existingStopIds.some((id) => !archivedStopIds.has(id))
+      ) {
+        throw new Error("E_LOAD_STOP_REPLACE_ARCHIVE_CONFLICT");
+      }
 
       for (const s of stops) {
         const st = normalizeStopType(s.stop_type);
         const apStart = s.window_start ?? null;
         const apEnd = s.window_end ?? null;
         const addr1 = s.address_line1 ?? s.location_address ?? null;
-        await client.query(
+        const insertedStop = await client.query<{ id: string }>(
           `
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type,
@@ -377,6 +401,7 @@ export async function replaceLoadStopsRefined(
               latitude, longitude, signature_required, photo_required,
               time_window_type, pickup_time_type_id
             )
+            RETURNING id::text AS id
             VALUES (
               $1,$2,$3::mdata.stop_type_enum,
               $4,$5,$6,$7,$8,
@@ -407,6 +432,9 @@ export async function replaceLoadStopsRefined(
             s.pickup_time_type_id ?? null,
           ]
         );
+        if (!insertedStop.rows[0]?.id) {
+          throw new Error("E_LOAD_STOP_REPLACE_INSERT_CONFLICT");
+        }
       }
 
       await bindLoadToGeofences(client, operatingCompanyId, loadId);

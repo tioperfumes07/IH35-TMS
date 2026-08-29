@@ -28,6 +28,7 @@ function assertWired(label, src, re) {
 
 function checkSources({ editor, drawer, api, service, routes }) {
   const errors = [];
+  const replaceService = service.match(/export async function replaceLoadStopsRefined\([\s\S]*?(?=\nexport async function listAvailableDriversForDispatch)/)?.[0] ?? "";
   try {
     assertWired("LoadDetailDrawer", drawer, /activeTab === ["']Stops["']/);
     assertWired("LoadDetailDrawer", drawer, /<MultiStopEditor\b/);
@@ -62,6 +63,10 @@ function checkSources({ editor, drawer, api, service, routes }) {
     assertWired("refinements.service list", service, /soft_deleted_at IS NULL/);
     assertWired("refinements.service list", service, /ls\.postal_code/);
     assertWired("refinements.service replace", service, /postal_code,/);
+    assertWired("refinements.service exact archive snapshot", replaceService, /const existingStops = await client\.query<\{ id: string \}>\([\s\S]*?FROM mdata\.load_stops[\s\S]*?FOR UPDATE/);
+    assertWired("refinements.service archive identity", replaceService, /const archivedStops = await client\.query<\{ id: string \}>\(\s*`UPDATE mdata\.load_stops[\s\S]*?id = ANY\(\$2::uuid\[\]\)[\s\S]*?RETURNING id::text AS id`,\s*\[loadId, existingStopIds\]\s*\)/);
+    assertWired("refinements.service archive completeness", replaceService, /archivedStopIds\.size !== existingStopIds\.length[\s\S]*?existingStopIds\.some\(\(id\) => !archivedStopIds\.has\(id\)\)[\s\S]*?E_LOAD_STOP_REPLACE_ARCHIVE_CONFLICT/);
+    assertWired("refinements.service insert identity", replaceService, /const insertedStop = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO mdata\.load_stops[\s\S]*?RETURNING id::text AS id[\s\S]*?if \(!insertedStop\.rows\[0\]\?\.id\)[\s\S]*?E_LOAD_STOP_REPLACE_INSERT_CONFLICT/);
     assertWired("refinements.service stop type", service, /code: "E_STOP_TYPE_INVALID"/);
     assertWired("refinements.routes", routes, /app\.post\(\s*["']\/api\/v1\/loads\/:loadId\/stops["']/);
     assertWired("refinements.routes", routes, /postal_code:/);
@@ -107,6 +112,27 @@ function selftest() {
     throw new Error("selftest: planted stop-type service failure did not FAIL the guard");
   }
   console.log("selftest PASS — planted stop-type service failure is rejected");
+
+  const archiveIdentityMutation = sources.service.replace("        RETURNING id::text AS id`,\n        [loadId, existingStopIds]", "        `,\n        [loadId, existingStopIds]");
+  if (archiveIdentityMutation === sources.service) throw new Error("selftest: could not plant archive identity failure");
+  if (checkSources({ ...sources, service: archiveIdentityMutation }).length === 0) {
+    throw new Error("selftest: planted archive identity failure did not FAIL the guard");
+  }
+  console.log("selftest PASS — planted archive identity failure is rejected");
+
+  const archiveCompletenessMutation = sources.service.replace("archivedStopIds.size !== existingStopIds.length", "false");
+  if (archiveCompletenessMutation === sources.service) throw new Error("selftest: could not plant archive completeness failure");
+  if (checkSources({ ...sources, service: archiveCompletenessMutation }).length === 0) {
+    throw new Error("selftest: planted archive completeness failure did not FAIL the guard");
+  }
+  console.log("selftest PASS — planted archive completeness failure is rejected");
+
+  const insertIdentityMutation = sources.service.replace("if (!insertedStop.rows[0]?.id)", "if (false)");
+  if (insertIdentityMutation === sources.service) throw new Error("selftest: could not plant insert identity failure");
+  if (checkSources({ ...sources, service: insertIdentityMutation }).length === 0) {
+    throw new Error("selftest: planted insert identity failure did not FAIL the guard");
+  }
+  console.log("selftest PASS — planted insert identity failure is rejected");
 
   const routesMutation = sources.routes.replace('stop_type: z.enum(["pickup", "delivery", "dropoff", "fuel", "rest", "border", "customs"])', 'stop_type: z.string()');
   if (routesMutation === sources.routes) throw new Error("selftest: could not plant stop-type route failure");
