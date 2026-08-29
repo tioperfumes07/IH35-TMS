@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const fetchStatusMock = vi.fn();
+const assertCompanyMembershipMock = vi.fn();
 const requireAuthState = { allowed: true };
 
 vi.mock("../../auth/session-middleware.js", () => ({
@@ -16,11 +17,17 @@ vi.mock("../loves-card-import.js", () => ({
   fetchLovesSyncStatus: (...args: unknown[]) => fetchStatusMock(...args),
 }));
 
+vi.mock("../../_helpers/company-membership-guard.js", () => ({
+  assertCompanyMembership: (...args: unknown[]) => assertCompanyMembershipMock(...args),
+}));
+
 import { registerLovesSyncStatusRoutes } from "../loves-status.routes.js";
 
 describe("GET /api/v1/sync/loves/status", () => {
   afterEach(() => {
     fetchStatusMock.mockReset();
+    assertCompanyMembershipMock.mockReset();
+    assertCompanyMembershipMock.mockResolvedValue(undefined);
     requireAuthState.allowed = true;
   });
 
@@ -52,6 +59,13 @@ describe("GET /api/v1/sync/loves/status", () => {
     expect(body.rows_imported_24h).toBe(42);
     expect(body.status).toBe("ok");
     expect(Number.isNaN(Date.parse(body.last_synced_at))).toBe(false);
+    expect(assertCompanyMembershipMock).toHaveBeenCalledWith(
+      "00000000-0000-4000-8000-000000000099",
+      "00000000-0000-4000-8000-000000000001",
+    );
+    expect(assertCompanyMembershipMock.mock.invocationCallOrder[0]).toBeLessThan(
+      fetchStatusMock.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+    );
     await app.close();
   });
 });

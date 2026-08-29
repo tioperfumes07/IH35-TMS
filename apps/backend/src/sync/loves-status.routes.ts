@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { fetchLovesSyncStatus } from "./loves-card-import.js";
 
@@ -27,6 +28,7 @@ export async function registerLovesSyncStatusRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
     }
 
+    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
     const status = await fetchLovesSyncStatus(parsed.data.operating_company_id);
     return reply.send(status);
   });
