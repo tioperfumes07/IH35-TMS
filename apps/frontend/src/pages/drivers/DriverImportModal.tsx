@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   importDriversCsv,
-  type DriverImportResponse,
+  type DriverImportPreviewResponse,
   type DriverImportSampleRow,
 } from "../../api/mdata";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -64,8 +64,9 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-  const [preview, setPreview] = useState<DriverImportResponse | null>(null);
+  const [preview, setPreview] = useState<DriverImportPreviewResponse | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [commitError, setCommitError] = useState<string | null>(null);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const requestGenerationRef = useRef(0);
   const columns = useMemo(() => PREVIEW_COLUMNS, []);
@@ -74,6 +75,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
     setFile(null);
     setPreview(null);
     setPreviewError(null);
+    setCommitError(null);
     if (fileRef.current) fileRef.current.value = "";
   }, []);
 
@@ -95,6 +97,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
     const input = { file, companyId, generation: requestGenerationRef.current };
     setBusy(true);
     setPreviewError(null);
+    setCommitError(null);
     try {
       const res = await importDriversCsv(input.file, input.companyId, "preview");
       if (input.generation !== requestGenerationRef.current) return;
@@ -116,7 +119,15 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
     try {
       const res = await importDriversCsv(input.file, input.companyId, "commit");
       if (input.generation !== requestGenerationRef.current) return;
-      pushToast(`Imported ${res.created ?? 0} driver profiles`, "success");
+      if (res.row_errors > 0) {
+        const message = `Imported ${res.created} driver profile${res.created === 1 ? "" : "s"}; ${res.row_errors} row${res.row_errors === 1 ? "" : "s"} failed. Review the file and preview again.`;
+        setCommitError(message);
+        setPreview(null);
+        pushToast(message, "error");
+        if (res.created > 0) onImported();
+        return;
+      }
+      pushToast(`Imported ${res.created} driver profiles`, "success");
       onImported();
       requestGenerationRef.current += 1;
       resetDraft();
@@ -149,6 +160,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
               setFile(e.target.files?.[0] ?? null);
               setPreview(null);
               setPreviewError(null);
+              setCommitError(null);
             }}
             className="text-xs"
           />
@@ -167,6 +179,16 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
             title="Couldn't preview driver import"
             status={0}
             message={previewError}
+            onRetry={() => void runPreview()}
+            className="py-6"
+          />
+        ) : null}
+
+        {commitError ? (
+          <ListErrorState
+            title="Driver import completed with row errors"
+            status={0}
+            message={commitError}
             onRetry={() => void runPreview()}
             className="py-6"
           />
