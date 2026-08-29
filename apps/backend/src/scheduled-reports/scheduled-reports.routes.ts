@@ -4,6 +4,7 @@ import { currentAuthUser, validationError, withCompanyScope } from "../accountin
 import { computeNextRunAt, scheduleInputFromDbRow, type ScheduleFrequency } from "./next-run.js";
 import { appendReportingAuditEvent } from "./reporting-audit.js";
 import { deliverScheduledReportToEmail } from "./report-delivery.js";
+import { isLegacyScheduledReportId, LEGACY_SCHEDULED_REPORT_IDS } from "./report-file-builder.js";
 
 function accountingRoles(role: string) {
   return ["Owner", "Administrator", "Accountant"].includes(role);
@@ -176,6 +177,17 @@ export async function registerScheduledReportsRoutes(app: FastifyInstance) {
 
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    // GO-0045-SCHEDULED-REPORTS-UNSUPPORTED-REPORT-ID-SILENT-NEVER-SENDS: fail loud at creation
+    // time -- the delivery worker can only build these 6 legacy report ids; letting an
+    // unsupported id insert as 'active' meant the schedule silently never sent for up to 3
+    // delivery cycles before anyone saw an error.
+    if (!isLegacyScheduledReportId(parsed.data.report_id)) {
+      return reply.code(400).send({
+        error: "unsupported_report_id",
+        report_id: parsed.data.report_id,
+        supported_report_ids: LEGACY_SCHEDULED_REPORT_IDS,
+      });
+    }
 
     const timezone = parsed.data.timezone ?? "America/Chicago";
     const frequency = parsed.data.frequency.kind;
@@ -278,6 +290,15 @@ export async function registerScheduledReportsRoutes(app: FastifyInstance) {
 
     const parsed = patchBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    // GO-0045-SCHEDULED-REPORTS-UNSUPPORTED-REPORT-ID-SILENT-NEVER-SENDS: same fail-loud guard as
+    // create, only when report_id is actually being changed (patch is partial).
+    if (parsed.data.report_id !== undefined && !isLegacyScheduledReportId(parsed.data.report_id)) {
+      return reply.code(400).send({
+        error: "unsupported_report_id",
+        report_id: parsed.data.report_id,
+        supported_report_ids: LEGACY_SCHEDULED_REPORT_IDS,
+      });
+    }
 
     const updated = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const exists = await client.query(`SELECT to_regclass('reporting.scheduled_reports') IS NOT NULL AS ok`);

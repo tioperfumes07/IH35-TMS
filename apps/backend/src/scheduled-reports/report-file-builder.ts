@@ -14,6 +14,17 @@ const LEGACY_IDS = new Set<string>([
   "ifta-quarterly-state",
 ]);
 
+// GO-0045-SCHEDULED-REPORTS-UNSUPPORTED-REPORT-ID-SILENT-NEVER-SENDS: buildScheduledReportFile()
+// can only actually generate these 6 legacy ids -- but the "Schedule a new report" picker
+// (ScheduleReportModal.tsx) offers the full 19-entry apps/backend/src/reports/shared.ts
+// REPORT_LIBRARY catalog, a completely disjoint namespace, with NO whitelist check on create/
+// PATCH. A schedule created for any of those 19 ids inserted successfully (status='active') and
+// only failed 3 delivery cycles later (up to 3 weeks for a weekly cadence) before flipping to
+// 'failed' -- recipients silently never received anything the whole time, with no error shown
+// anywhere in the UI. Exported so the create/PATCH routes can reject an unsupported id up front,
+// and the frontend catalog can offer only ids that actually work.
+export const LEGACY_SCHEDULED_REPORT_IDS: readonly string[] = Array.from(LEGACY_IDS);
+
 export function isLegacyScheduledReportId(id: string): id is ScheduledReportId {
   return LEGACY_IDS.has(id);
 }

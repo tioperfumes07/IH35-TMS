@@ -32,6 +32,12 @@ export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
+    // GO-0045-LATE-ARRIVAL-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036 and 15+ other
+    // routes -- a reversed from/to makes the safety-relevant occurred_at range unsatisfiable,
+    // silently returning a false-clean "0 chronic" report instead of an error.
+    if (query.data.from > query.data.to) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from must be on or before to"] } });
+    }
     return aggregateLateArrivals(
       user.uuid,
       query.data.operating_company_id,
@@ -48,6 +54,10 @@ export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
     const query = entityQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) {
       return reply.code(400).send({ error: "validation_error" });
+    }
+    // GO-0045-LATE-ARRIVAL-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036 and 15+ other routes.
+    if (query.data.from > query.data.to) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from must be on or before to"] } });
     }
     const detail = await getDriverLateArrivalDetail(
       user.uuid,
@@ -67,6 +77,10 @@ export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
     const query = entityQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) {
       return reply.code(400).send({ error: "validation_error" });
+    }
+    // GO-0045-LATE-ARRIVAL-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036 and 15+ other routes.
+    if (query.data.from > query.data.to) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from must be on or before to"] } });
     }
     const detail = await getCustomerLateArrivalDetail(
       user.uuid,
