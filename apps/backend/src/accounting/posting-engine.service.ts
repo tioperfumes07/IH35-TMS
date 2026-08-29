@@ -2507,6 +2507,74 @@ export async function postSourceTransaction(input: PostSourceInput, actor: Actor
   }
 }
 
+/**
+ * ACCT-F9877 — CROSS-MECHANISM REVERSAL RECOGNITION.
+ *
+ * `executeSourceReversalOnClient`'s own idempotency check above (`getPostingBySource(...,
+ * "reversal")`) can only see a reversal that was created THROUGH THIS SAME FUNCTION, because it
+ * looks for an `accounting.posting_batches` row keyed on this function's own posting-mvp
+ * idempotency-key format. A journal entry can also be reversed through a COMPLETELY SEPARATE
+ * mechanism — `postVoidReversal`/`reverseJournalEntryNoFlip` (void.service.ts /
+ * journal-entries.service.ts), the path a direct JE void and this session's ACCT-F345 WORM
+ * correction script both use — which tracks its reversal via `journal_entries.reversed_by_je_id`
+ * (or `transaction_source_links` pre-migration) and never touches `posting_batches` at all.
+ *
+ * Before this fix, that gap meant a source already reversed via the OTHER mechanism looked
+ * unreversed to this function, which would then attempt to build a SECOND reversing JE for the
+ * same original — live-reproduced on a disposable Neon branch (br-soft-hill-akioslj8,
+ * 2026-08-28): `uq_je_reverses_je_id` correctly rejected the duplicate INSERT, but the caller
+ * (`voidBillPayment`) surfaced that as a raw, opaque database error instead of a recognized,
+ * already-reversed result — exactly the ACCT-F9877 finding.
+ *
+ * This check runs AFTER the same-mechanism check above finds nothing, and BEFORE any new reversal
+ * is built. It reads the ALREADY-COMMITTED cross-mechanism link directly off the original journal
+ * entry — no new column, no schema change — and if a reversal already exists there, returns it as
+ * a recognized `"reversed"` result instead of proceeding. `posting_batch_id` on the returned result
+ * borrows the ORIGINAL's own batch id: no `posting_batches` row exists for a
+ * postVoidReversal-created reversal, and grep-confirmed no caller of this function reads
+ * `posting_batch_id` off a reversal result (only `journal_entry_id` and
+ * `journal_entry_posting_ids` are ever consumed) — this is documentation, never data other code
+ * depends on.
+ */
+async function findCrossMechanismReversal(
+  client: DbClient,
+  operatingCompanyId: string,
+  original: PostingResult
+): Promise<PostingResult | null> {
+  const headerRes = await client.query<{ reversed_by_je_id: string | null }>(
+    `
+      SELECT reversed_by_je_id::text
+      FROM accounting.journal_entries
+      WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [original.journal_entry_id, operatingCompanyId]
+  );
+  const reversalJeId = headerRes.rows[0]?.reversed_by_je_id;
+  if (!reversalJeId) return null;
+
+  const postingsRes = await client.query<{ id: string }>(
+    `
+      SELECT id::text
+      FROM accounting.journal_entry_postings
+      WHERE journal_entry_uuid = $1::uuid AND operating_company_id = $2::uuid
+      ORDER BY line_sequence ASC NULLS LAST, created_at ASC
+    `,
+    [reversalJeId, operatingCompanyId]
+  );
+
+  return {
+    result: "reversed",
+    posting_batch_id: original.posting_batch_id,
+    journal_entry_id: reversalJeId,
+    journal_entry_posting_ids: postingsRes.rows.map((r) => r.id),
+    idempotency_key: original.idempotency_key,
+    posting_purpose: "reversal",
+    source_transaction_type: original.source_transaction_type,
+    source_transaction_id: original.source_transaction_id,
+  };
+}
+
 async function executeSourceReversalOnClient(
   client: DbClient,
   input: ReverseBatchInput,
@@ -2521,6 +2589,12 @@ async function executeSourceReversalOnClient(
 
   const existingReversal = await getPostingBySource(client, input.operating_company_id, sourceType, sourceId, "reversal");
   if (existingReversal) return existingReversal;
+
+  // ACCT-F9877 — see findCrossMechanismReversal's own header comment. Must run before any new
+  // reversal is built, never after: building first and checking second is the exact race that lets
+  // a duplicate reversal attempt reach the database in the first place.
+  const crossMechanismReversal = await findCrossMechanismReversal(client, input.operating_company_id, original);
+  if (crossMechanismReversal) return crossMechanismReversal;
 
   const originalLines = await client.query<{
     id: string;
