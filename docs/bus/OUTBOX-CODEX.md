@@ -2129,3 +2129,5 @@ Codex | WORKING | GO-0047 | FINDING=DSP-F7199 | MODULE=dispatch | leaf=dispatch.
 Codex | SHIPPED | FLEET-F7198 | PR=#17409 @ fd3a9e5146 | root=unit default-driver canonical assignment edge | NEXT=GO-0047 dispatch unique | GO
 Codex | WORKING | GO-0048 | FINDING=DRV-F7200 | MODULE=drivers | leaf=profile.training:audit | root=edit/archive omit audit | NEXT=guard+gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7199 | PR=#17410 @ 313c835028 | root=instruction docs reverse-link identities | NEXT=GO-0048 drivers unique | GO
+Codex | SHIPPED | DSP-F7212 | PR=#17424 @ 732df14efe | Built=delivery stamp company contract | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
+CODEX | WORKING | DSP-F7213 | NOW=layover detector canonical insert identity | SOURCE=dispatch.driver_layovers.uuid | NEXT=gate+FAST-MERGE | GO

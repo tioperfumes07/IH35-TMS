@@ -63,6 +63,17 @@ export function assertDetectorSerialization(serviceTs) {
   if (!/WHERE driver_uuid = \$1 AND previous_load_uuid = \$2 LIMIT 1/.test(serviceTs)) {
     errors.push("layover dedupe must retain canonical driver+previous-load identity");
   }
+  if (!/const created = await client\.query<\{ uuid: string \}>\([\s\S]*?INSERT INTO dispatch\.driver_layovers[\s\S]*?RETURNING uuid::text/.test(serviceTs)) {
+    errors.push("layover detector must return the canonical created identity");
+  }
+  if (!/if \(!created\.rows\[0\]\?\.uuid\) \{[\s\S]*?throw new LayoverDetectionUnavailableError\("driver_layovers insert returned no identity"\)/.test(serviceTs)) {
+    errors.push("layover detector must fail loud before incrementing when the canonical insert returns no identity");
+  }
+  const identityCheck = serviceTs.indexOf("if (!created.rows[0]?.uuid)");
+  const insertedIncrement = serviceTs.indexOf("inserted++");
+  if (identityCheck < 0 || insertedIncrement < 0 || identityCheck > insertedIncrement) {
+    errors.push("layover detector must prove the created identity before incrementing its success count");
+  }
   return errors;
 }
 
@@ -134,6 +145,13 @@ function selftest() {
     try {
       SELECT 1 FROM dispatch.driver_layovers
       WHERE driver_uuid = $1 AND previous_load_uuid = $2 LIMIT 1
+      const created = await client.query<{ uuid: string }>(
+        INSERT INTO dispatch.driver_layovers DEFAULT VALUES RETURNING uuid::text
+      );
+      if (!created.rows[0]?.uuid) {
+        throw new LayoverDetectionUnavailableError("driver_layovers insert returned no identity");
+      }
+      inserted++;
     } finally {
       await client.query(\`SELECT pg_advisory_unlock(hashtextextended($1::text, 0))\`, [lockKey]);
     }
@@ -143,6 +161,9 @@ function selftest() {
     serializedDetector.replace("finally", "if (true)"),
     serializedDetector.replace("pg_advisory_unlock", "pg_advisory_unlock_missing"),
     serializedDetector.replace("previous_load_uuid = $2", "previous_load_uuid IS NOT NULL"),
+    serializedDetector.replace("RETURNING uuid::text", "RETURNING driver_uuid::text"),
+    serializedDetector.replace("if (!created.rows[0]?.uuid)", "if (false)"),
+    serializedDetector.replace("if (!created.rows[0]?.uuid)", "inserted++;\n      if (!created.rows[0]?.uuid)"),
   ];
   for (const [index, mutated] of serializationMutations.entries()) {
     if (assertDetectorSerialization(mutated).length === 0) {
@@ -151,7 +172,7 @@ function selftest() {
     }
   }
 
-  console.log(`[${LABEL}] --selftest OK — 10/10 wiring/range/serialization mutations red`);
+  console.log(`[${LABEL}] --selftest OK — 13/13 wiring/range/serialization/identity mutations red`);
 }
 
 function main() {
