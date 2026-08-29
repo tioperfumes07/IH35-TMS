@@ -39,10 +39,10 @@ async function fetchModuleCompletionBoard(): Promise<LiveBoard> {
 
 // Module Completion — Rule 24 N of M.
 //
-// Manifests live in docs/module-completion/*.json. The generated TS file is gitignored and baked
-// into the static frontend at Vite build — that froze /program to the SPA SHA. This page fetches
-// GET /api/v1/program/module-completion so numbers follow the API process (healthz version).
-// PROG-01 snapshot table is not this path and is not started (migration 202613270000 waits Jorge).
+// Manifests live in docs/module-completion/*.json. The generated TS file is types/fallback only.
+// This page fetches GET /api/v1/program/module-completion so numbers follow the API process
+// (healthz version). Never paint an empty board as "not yet defined" when that fetch fails —
+// that was the live FE/API split false-empty (FE ahead of API → 404 → every module undefined).
 //
 // Proof law (2026-08-04): complete:true / all-PASS is CODE-VERIFIED only. CERTIFIED (navy solid)
 // requires every item prod_verified:true after a live GUARD click. Never paint complete:true as
@@ -210,8 +210,13 @@ export function ModuleCompletionPage() {
     refetchInterval: 60_000,
   });
 
+  // Only build rows after a successful board fetch. On error/pending, an empty modules[] would
+  // paint every sidebar id as "not yet defined" — live false-empty when API lags the FE.
+  const boardReady = live.isSuccess && Array.isArray(live.data?.modules);
+
   const rows = useMemo(() => {
-    const modules = live.data?.modules ?? [];
+    if (!boardReady || !live.data) return [];
+    const modules = live.data.modules;
     const ids =
       scope === "first14"
         ? FIRST_14_MODULE_IDS
@@ -219,7 +224,7 @@ export function ModuleCompletionPage() {
           ? U14_EXCLUSIVE_ROWS.map((r) => r.completionId)
           : [...SIDEBAR_ITEM_IDS];
     return buildRows(ids, modules);
-  }, [scope, live.data]);
+  }, [scope, boardReady, live.data]);
 
   const filteredRows = useMemo(() => {
     if (proofFilter === "all") return rows;
@@ -337,12 +342,22 @@ export function ModuleCompletionPage() {
       </p>
       {live.isError ? (
         <ListErrorBanner
-          message={userFacingApiError(live.error, "Could not load module completion from the API.")}
+          message={userFacingApiError(
+            live.error,
+            "Could not load module completion from the API. The static app is ahead of the API until healthz serves GET /api/v1/program/module-completion."
+          )}
           onRetry={() => void live.refetch()}
         />
       ) : null}
+      {live.isPending && !live.isError ? (
+        <p className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-700" data-testid="module-completion-loading">
+          Loading module completion from the API…
+        </p>
+      ) : null}
       <U14ExclusiveStatusBanner testId="module-completion-u14-banner" />
 
+      {boardReady ? (
+        <>
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -439,8 +454,10 @@ export function ModuleCompletionPage() {
         storageKey="program-module-completion"
         exportFilename="module-completion"
       />
+        </>
+      ) : null}
 
-      {expandedRow && detailItems.length > 0 ? (
+      {boardReady && expandedRow && detailItems.length > 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
           <div className="mb-2 text-xs font-semibold text-[#1f2a44]">
             {expandedRow.label} — {detailItems.length} item
