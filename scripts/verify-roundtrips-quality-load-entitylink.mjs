@@ -13,6 +13,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-roundtrips-quality-load-entitylink";
 const ROUND = "apps/frontend/src/pages/dispatch/RoundTrips.tsx";
+const TIMELINE = "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx";
+const LEGS = "apps/frontend/src/pages/dispatch/roundTripsLegs.ts";
 const QUAL = "apps/frontend/src/pages/CustomerDetail.tsx";
 const API = "apps/frontend/src/api/mdata.ts";
 const ROUTE = "apps/backend/src/mdata/customer-quality-events.routes.ts";
@@ -43,6 +45,32 @@ function auditRound(src) {
   for (const [pattern, label] of exact) if (!pattern.test(src)) failures.push(`${ROUND}: ${label} must couple canonical id to its human label`);
   if (/assigned_unit_number\s*\?\?\s*(?:sorted\[0\]\?\.assigned_unit_number\s*\?\?\s*)?unitId/.test(src)) {
     failures.push(`${ROUND}: unit display label must never fall back to unit UUID`);
+  }
+  if (/md:grid-cols-\[minmax\(0,1fr\)_minmax\(0,1fr\)_auto\]/.test(src)) {
+    failures.push(`${ROUND}: hardcoded 3-column grid forbids TR between NB and SB`);
+  }
+  if (!/orderedLegsForUnit/.test(src) || !/data-rt-sequence/.test(src)) {
+    failures.push(`${ROUND}: must order legs NB then TR then SB via orderedLegsForUnit + data-rt-sequence`);
+  }
+  if (!/RT_KANBAN_CARD_CLASS/.test(src)) {
+    failures.push(`${ROUND}: trip cards must use Kanban card class constant`);
+  }
+  return failures;
+}
+
+function auditTimeline(src, legsSrc) {
+  const failures = [];
+  if (!/--dwl/.test(src) || !/round-trips-dwell/.test(src)) {
+    failures.push(`${TIMELINE}: dwell segment must use --dwl (not --dw) and data-testid=round-trips-dwell`);
+  }
+  if (/\["--dw" as string\]/.test(src)) {
+    failures.push(`${TIMELINE}: --dw is day-width; dwell must be --dwl`);
+  }
+  if (!/\[\.\.\.nb, \.\.\.tr, \.\.\.sb\]/.test(legsSrc)) {
+    failures.push(`${LEGS}: orderedLegsForUnit must concatenate NB then TR then SB`);
+  }
+  if (!/rounded border border-gray-200 bg-white p-3/.test(legsSrc)) {
+    failures.push(`${LEGS}: RT_KANBAN_CARD_CLASS must match Kanban card padding p-3`);
   }
   return failures;
 }
@@ -111,40 +139,46 @@ function auditQuality(src, api, route) {
   return failures;
 }
 
-function audit(roundSrc, qualSrc, apiSrc, routeSrc) {
-  return [...auditRound(roundSrc), ...auditQuality(qualSrc, apiSrc, routeSrc)];
+function audit(roundSrc, qualSrc, apiSrc, routeSrc, timelineSrc, legsSrc) {
+  return [...auditRound(roundSrc), ...auditQuality(qualSrc, apiSrc, routeSrc), ...auditTimeline(timelineSrc, legsSrc)];
 }
+
 
 if (process.argv.includes("--selftest")) {
   const round = fs.readFileSync(path.join(ROOT, ROUND), "utf8");
   const qual = fs.readFileSync(path.join(ROOT, QUAL), "utf8");
   const api = fs.readFileSync(path.join(ROOT, API), "utf8");
   const route = fs.readFileSync(path.join(ROOT, ROUTE), "utf8");
-  if (audit(round, qual, api, route).length) {
+  const timeline = fs.readFileSync(path.join(ROOT, TIMELINE), "utf8");
+  const legs = fs.readFileSync(path.join(ROOT, LEGS), "utf8");
+  if (audit(round, qual, api, route, timeline, legs).length) {
     console.error(`${LABEL} SELFTEST FAIL — live files should pass`);
     process.exit(1);
   }
   const brokenRound = round.replace(/round-trip-unit-link/g, "x");
   const mutations = [
-    [brokenRound, qual, api, route],
-    [round.replace("name={load.customer_name}", "name={load.customer_id}"), qual, api, route],
-    [round.replace("name={load.assigned_primary_driver_name}", "name={load.assigned_primary_driver_id}"), qual, api, route],
-    [round.replace("name={pair.unitNumber}", "name={pair.unitId}"), qual, api, route],
-    [round.replace("name={pair.driverName}", "name={pair.driverId}"), qual, api, route],
-    [round, qual.replace("event.related_load_number", "null"), api, route],
-    [round, qual, api.replace("related_load_number: string | null", "related_load_number?: string | null"), route],
-    [round, qual, api, route.replace("rl.load_number AS related_load_number", "NULL AS related_load_number")],
-    [round, qual, api, route.replace("AND rl.operating_company_id = $2::uuid", "")],
-    [round, qual.replace("event.related_invoice_display_id", "null"), api, route],
-    [round, qual, api.replace("related_invoice_display_id: string | null", "related_invoice_display_id?: string | null"), route],
-    [round, qual, api, route.replace("ri.display_id AS related_invoice_display_id", "NULL AS related_invoice_display_id")],
-    [round, qual, api, route.replace("AND ri.operating_company_id = $2::uuid", "")],
-    [round, qual, api, route.replace("AND ri.customer_id = e.customer_id", "")],
-    [round, qual, api, route.replace("AND rl.customer_id = e.customer_id", "")],
-    [round, qual, api, route.replace("AND l.customer_id = $3::uuid", "")],
-    [round, qual, api, route.replace("AND i.customer_id = $3::uuid", "")],
-    [round, qual, api, route.replace("invalid_related_invoice_id", "invalid_related_record_id")],
-    [round, qual, api, route.replace("related_invoice_display_id: relatedInvoiceDisplayId", "related_invoice_display_id: null")],
+    [round.replaceAll("RT_KANBAN_CARD_CLASS", "X"), qual, api, route, timeline, legs],
+    [round.replaceAll("orderedLegsForUnit", "xLegs"), qual, api, route, timeline, legs],
+    [round, qual, api, route, timeline.replace(/--dwl/g, "--dw"), legs],
+    [brokenRound, qual, api, route, timeline, legs],
+    [round.replace("name={load.customer_name}", "name={load.customer_id}"), qual, api, route, timeline, legs],
+    [round.replace("name={load.assigned_primary_driver_name}", "name={load.assigned_primary_driver_id}"), qual, api, route, timeline, legs],
+    [round.replace("name={pair.unitNumber}", "name={pair.unitId}"), qual, api, route, timeline, legs],
+    [round.replace("name={pair.driverName}", "name={pair.driverId}"), qual, api, route, timeline, legs],
+    [round, qual.replace("event.related_load_number", "null"), api, route, timeline, legs],
+    [round, qual, api.replace("related_load_number: string | null", "related_load_number?: string | null"), route, timeline, legs],
+    [round, qual, api, route.replace("rl.load_number AS related_load_number", "NULL AS related_load_number"), timeline, legs],
+    [round, qual, api, route.replace("AND rl.operating_company_id = $2::uuid", ""), timeline, legs],
+    [round, qual.replace("event.related_invoice_display_id", "null"), api, route, timeline, legs],
+    [round, qual, api.replace("related_invoice_display_id: string | null", "related_invoice_display_id?: string | null"), route, timeline, legs],
+    [round, qual, api, route.replace("ri.display_id AS related_invoice_display_id", "NULL AS related_invoice_display_id"), timeline, legs],
+    [round, qual, api, route.replace("AND ri.operating_company_id = $2::uuid", ""), timeline, legs],
+    [round, qual, api, route.replace("AND ri.customer_id = e.customer_id", ""), timeline, legs],
+    [round, qual, api, route.replace("AND rl.customer_id = e.customer_id", ""), timeline, legs],
+    [round, qual, api, route.replace("AND l.customer_id = $3::uuid", ""), timeline, legs],
+    [round, qual, api, route.replace("AND i.customer_id = $3::uuid", ""), timeline, legs],
+    [round, qual, api, route.replace("invalid_related_invoice_id", "invalid_related_record_id"), timeline, legs],
+    [round, qual, api, route.replace("related_invoice_display_id: relatedInvoiceDisplayId", "related_invoice_display_id: null"), timeline, legs],
   ];
   if (mutations.some((args) => !audit(...args).length)) {
     console.error(`${LABEL} SELFTEST FAIL — planted RoundTrips regression not caught`);
@@ -159,10 +193,12 @@ const failures = audit(
   fs.readFileSync(path.join(ROOT, QUAL), "utf8"),
   fs.readFileSync(path.join(ROOT, API), "utf8"),
   fs.readFileSync(path.join(ROOT, ROUTE), "utf8"),
+  fs.readFileSync(path.join(ROOT, TIMELINE), "utf8"),
+  fs.readFileSync(path.join(ROOT, LEGS), "utf8"),
 );
 if (failures.length) {
   console.error(`${LABEL} FAIL:`);
   for (const f of failures) console.error(" -", f);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — round-trips links + company-scoped customer-quality load identity`);
+console.log(`${LABEL} PASS — round-trips NB-TR-SB + dwell --dwl + quality load identity`);

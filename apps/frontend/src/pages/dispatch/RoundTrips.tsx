@@ -1,15 +1,22 @@
-import { useMemo } from "react";
+/** Linkage: mdata.loads · mdata.units · mdata.drivers · mdata.customers. Live=BLOCKED until Chrome on current healthz. */
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { DispatchLoadRow } from "../../api/loads";
 import { listOpenPreSettlements } from "../../api/driverFinance";
 import { listUnitsWithoutLoad, type UnitsWithoutLoad } from "../../api/dispatch";
 import { flagDotColor, flagDotLabel, flagDotTag, hasVisibleFlag, STATUS_LABEL, formatMoneyCents, toRouteSummary } from "../../components/dispatch/constants";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, orderedLegsForUnit, resolvedTripType } from "./roundTripsLegs";
+import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
+
+const SORT_KEY = "ih35.roundTrips.sort";
+const VIEW_KEY = "ih35.roundTrips.view";
 
 const ACTIVE_STATUSES = new Set([
   "assigned",
@@ -31,7 +38,11 @@ type UnitPair = {
   outbound: DispatchLoadRow | null;
   returnLoad: DispatchLoadRow | null;
   needsReturn: boolean;
+  unitLoads: DispatchLoadRow[];
 };
+
+type SortMode = "truck" | "date" | "load";
+type BoardView = "board" | "timeline";
 
 type Props = {
   loads: DispatchLoadRow[];
@@ -59,7 +70,7 @@ function TripCard({
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") onClick(load.id);
       }}
-      className="w-full cursor-pointer rounded-sm border border-gray-200 bg-white p-2.5 text-left shadow-xs transition hover:border-slate-300 hover:shadow-sm"
+      className={RT_KANBAN_CARD_CLASS}
       data-testid={`round-trip-load-${load.load_number}`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -174,6 +185,7 @@ function buildUnitPairs(
       outbound,
       returnLoad,
       needsReturn,
+      unitLoads,
     });
   }
 
@@ -187,6 +199,7 @@ function buildUnitPairs(
       outbound: null,
       returnLoad: null,
       needsReturn: true,
+      unitLoads: [],
     });
   }
 
@@ -203,14 +216,30 @@ function buildUnitPairs(
       outbound,
       returnLoad: null,
       needsReturn: true,
+      unitLoads: outbound ? [outbound] : [],
     });
   }
 
-  return [...pairByUnit.values()].sort((a, b) => (a.unitNumber ?? "").localeCompare(b.unitNumber ?? "", undefined, { numeric: true }));
+  return [...pairByUnit.values()];
+}
+
+function readSort(): SortMode {
+  const raw = typeof localStorage !== "undefined" ? localStorage.getItem(SORT_KEY) : null;
+  if (raw === "date" || raw === "load" || raw === "truck") return raw;
+  return "truck";
+}
+
+function readView(): BoardView {
+  const raw = typeof localStorage !== "undefined" ? localStorage.getItem(VIEW_KEY) : null;
+  if (raw === "timeline" || raw === "board") return raw;
+  return "board";
 }
 
 export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLoadClick, onBookReturn }: Props) {
   const enabled = Boolean(operatingCompanyId);
+  const [sort, setSort] = useState<SortMode>(readSort);
+  const [boardView, setBoardView] = useState<BoardView>(readView);
+  const [range, setRange] = useState(defaultTimelineRange);
 
   const preSettlementsQuery = useQuery({
     queryKey: ["dispatch", "round-trips", "pre-settlements", operatingCompanyId],
@@ -226,15 +255,26 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
     refetchInterval: 60_000,
   });
 
-  const pairs = useMemo(
-    () =>
-      buildUnitPairs(
-        loads,
-        preSettlementsQuery.data?.pre_settlements ?? [],
-        idleUnitsQuery.data?.units ?? []
-      ),
-    [idleUnitsQuery.data?.units, loads, preSettlementsQuery.data?.pre_settlements]
-  );
+  const pairs = useMemo(() => {
+    const built = buildUnitPairs(
+      loads,
+      preSettlementsQuery.data?.pre_settlements ?? [],
+      idleUnitsQuery.data?.units ?? []
+    );
+    const copy = [...built];
+    copy.sort((a, b) => {
+      if (sort === "truck") return (a.unitNumber ?? "").localeCompare(b.unitNumber ?? "", undefined, { numeric: true });
+      if (sort === "load") {
+        const an = orderedLegsForUnit(a.unitLoads)[0]?.load_number ?? "";
+        const bn = orderedLegsForUnit(b.unitLoads)[0]?.load_number ?? "";
+        return an.localeCompare(bn, undefined, { numeric: true });
+      }
+      const at = Math.max(0, ...a.unitLoads.map((l) => Date.parse(l.created_at)));
+      const bt = Math.max(0, ...b.unitLoads.map((l) => Date.parse(l.created_at)));
+      return bt - at;
+    });
+    return copy;
+  }, [idleUnitsQuery.data?.units, loads, preSettlementsQuery.data?.pre_settlements, sort]);
 
   if (listError) {
     return (
@@ -273,84 +313,152 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
   }
 
   return (
-    <div className="space-y-2" data-testid="dispatch-round-trips-view">
-      <div className="text-xs text-gray-600">
-        Unit outbound + return pairing — bands implicit by row, not status columns.
+    <div className="overflow-x-hidden space-y-2" data-testid="dispatch-round-trips-view">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+        <span>Load board orders NB, then triangulation, then SB. TR sits between NB and SB.</span>
+        <label className="ml-auto inline-flex items-center gap-1">
+          Sort
+          <select
+            className="rounded-sm border border-gray-200 bg-white px-1 py-0.5"
+            data-testid="round-trips-sort"
+            value={sort}
+            onChange={(e) => {
+              const next = e.target.value as SortMode;
+              setSort(next);
+              localStorage.setItem(SORT_KEY, next);
+            }}
+          >
+            <option value="truck">by truck</option>
+            <option value="date">by date</option>
+            <option value="load">by load</option>
+          </select>
+        </label>
+        <div className="inline-flex rounded-sm border border-gray-200">
+          <button
+            type="button"
+            className={`px-2 py-0.5 ${boardView === "board" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`}
+            data-testid="round-trips-view-board"
+            onClick={() => {
+              setBoardView("board");
+              localStorage.setItem(VIEW_KEY, "board");
+            }}
+          >
+            Load board
+          </button>
+          <button
+            type="button"
+            className={`px-2 py-0.5 ${boardView === "timeline" ? "bg-slate-800 text-white" : "bg-white text-slate-700"}`}
+            data-testid="round-trips-view-timeline"
+            onClick={() => {
+              setBoardView("timeline");
+              localStorage.setItem(VIEW_KEY, "timeline");
+            }}
+          >
+            Timeline
+          </button>
+        </div>
+        {boardView === "timeline" ? (
+          <span className="inline-flex items-center gap-1">
+            <DatePicker
+              data-testid="round-trips-range-from"
+              value={range.from}
+              onChange={(from) => setRange((r) => ({ ...r, from }))}
+              className="w-36"
+            />
+            <DatePicker
+              data-testid="round-trips-range-to"
+              value={range.to}
+              onChange={(to) => setRange((r) => ({ ...r, to }))}
+              className="w-36"
+            />
+          </span>
+        ) : null}
       </div>
 
       {isLoading ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">Loading round trips…</div>
+      ) : boardView === "timeline" ? (
+        <RoundTripsTimeline loads={loads} rangeFrom={range.from} rangeTo={range.to} onLoadClick={onLoadClick} />
       ) : pairs.length === 0 ? (
         <div className="rounded-sm border border-gray-200 bg-white p-4 text-sm text-gray-500">
           No active unit round trips. Book loads to see outbound + return pairing.
         </div>
       ) : (
-        <div className="space-y-2">
-          {pairs.map((pair) => (
-            <div
-              key={pair.unitId}
-              className="grid grid-cols-1 gap-2 rounded-sm border border-gray-200 bg-gray-50/80 p-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-              data-testid={`round-trip-row-${pair.unitNumber ?? pair.unitId}`}
-            >
-              <div className="flex min-w-0 flex-col gap-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                  <EntityLinkOrTombstone
-                    kind="unit"
-                    id={pair.unitId}
-                    name={pair.unitNumber}
-                    noun="Unit"
-                    className="text-gray-500 hover:underline"
-                    data-testid="round-trip-unit-link"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  {pair.driverId || pair.driverName ? (
-                    <>
-                      {" · "}
-                      <EntityLinkOrTombstone
-                        kind="driver"
-                        id={pair.driverId ?? undefined}
-                        name={pair.driverName}
-                        noun="Driver"
-                        className="text-gray-500 hover:underline"
-                        data-testid="round-trip-driver-link"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </>
-                  ) : null}
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] space-y-2 pr-1" data-testid="round-trips-load-board">
+          {pairs.map((pair) => {
+            const legs = orderedLegsForUnit(pair.unitLoads);
+            const chrono = [...pair.unitLoads].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+            const sequence = legs.map((load) => resolvedTripType(load, chrono.indexOf(load), chrono)).join("-");
+            const cells = legs.length ? legs : [null];
+            return (
+              <div
+                key={pair.unitId}
+                className="flex min-w-max gap-2 rounded-sm border border-gray-200 bg-gray-50/80 p-2"
+                data-testid={`round-trip-row-${pair.unitNumber ?? pair.unitId}`}
+                data-rt-sequence={sequence || "empty"}
+              >
+                <div className="flex w-36 shrink-0 flex-col justify-start pt-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                    <EntityLinkOrTombstone
+                      kind="unit"
+                      id={pair.unitId}
+                      name={pair.unitNumber}
+                      noun="Unit"
+                      className="text-gray-500 hover:underline"
+                      data-testid="round-trip-unit-link"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {pair.driverId || pair.driverName ? (
+                      <>
+                        {" · "}
+                        <EntityLinkOrTombstone
+                          kind="driver"
+                          id={pair.driverId ?? undefined}
+                          name={pair.driverName}
+                          noun="Driver"
+                          className="text-gray-500 hover:underline"
+                          data-testid="round-trip-driver-link"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                  <div className="mt-2 hidden md:block">
+                    {pair.needsReturn && !pair.returnLoad ? (
+                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Needs return</span>
+                    ) : pair.returnLoad ? (
+                      <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Paired</span>
+                    ) : (
+                      <span className="rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
+                    )}
+                  </div>
                 </div>
-                {pair.outbound ? (
-                  <TripCard load={pair.outbound} onClick={onLoadClick} />
-                ) : (
-                  <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
-                    No active outbound load
+                {cells.map((load, idx) => (
+                  <div key={load?.id ?? `empty-${idx}`} className={`flex min-w-0 shrink-0 flex-col gap-1 ${RT_KANBAN_COL_MIN.compact}`}>
+                    {load ? (
+                      <TripCard
+                        load={load}
+                        tag={
+                          load.trip_type === "SB" || (!load.trip_type && pair.returnLoad?.id === load.id)
+                            ? "RETURN·SB"
+                            : load.trip_type === "TR"
+                              ? "TR"
+                              : "NB"
+                        }
+                        onClick={onLoadClick}
+                      />
+                    ) : pair.needsReturn ? (
+                      <NeedsReturnCard onBookReturn={onBookReturn} />
+                    ) : (
+                      <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
+                        No active outbound load
+                      </div>
+                    )}
                   </div>
-                )}
+                ))}
               </div>
-
-              <div className="flex min-w-0 flex-col gap-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-500">Return leg</div>
-                {pair.returnLoad ? (
-                  <TripCard load={pair.returnLoad} tag="RETURN·SB" onClick={onLoadClick} />
-                ) : pair.needsReturn ? (
-                  <NeedsReturnCard onBookReturn={onBookReturn} />
-                ) : (
-                  <div className="rounded-sm border border-dashed border-gray-300 bg-white px-3 py-6 text-center text-xs text-gray-500">
-                    Return not required yet
-                  </div>
-                )}
-              </div>
-
-              <div className="hidden items-center justify-center md:flex">
-                {pair.needsReturn && !pair.returnLoad ? (
-                  <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Needs return</span>
-                ) : pair.returnLoad ? (
-                  <span className="rounded-sm bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700">Paired</span>
-                ) : (
-                  <span className="rounded-sm bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-700">Open</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
