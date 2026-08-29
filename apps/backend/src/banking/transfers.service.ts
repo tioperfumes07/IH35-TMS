@@ -127,21 +127,29 @@ async function validateAccountOwnership(
 }
 
 async function updateBankBalance(
-  client: { query: (sql: string, values?: unknown[]) => Promise<unknown> },
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number | null }> },
   accountId: string,
   operatingCompanyId: string,
   deltaCents: number
 ) {
-  await client.query(
+  const res = await client.query(
     `
       UPDATE banking.bank_accounts
       SET current_balance_cents = current_balance_cents + $3,
           updated_at = now()
       WHERE id = $1
         AND operating_company_id = $2::uuid
+      RETURNING id
     `,
     [accountId, operatingCompanyId, deltaCents]
   );
+  // BANK-TRANSFER-BALANCE-DUAL-WRITER-CONFLICT (GO-0027, CC-1): the account can be deactivated
+  // between an earlier validateAccountOwnership check and this call (revokeTransfer's path does
+  // not even re-validate first) — without this check the balance adjustment silently no-ops
+  // while the transfer itself is still recorded as successful.
+  if ((res.rowCount ?? 0) === 0) {
+    throw new Error("bank_balance_update_zero_rows");
+  }
 }
 
 type DbClient = {
