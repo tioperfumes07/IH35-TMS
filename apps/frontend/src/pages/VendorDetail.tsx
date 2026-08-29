@@ -573,7 +573,14 @@ export function VendorDetailPage() {
           </div>
         }
       />
-      {reworkSignalCount > 0 ? (
+      {vendorIntegrityQuery.isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          Failed to load rework signals.{" "}
+          <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorIntegrityQuery.refetch()}>
+            Retry
+          </button>
+        </div>
+      ) : reworkSignalCount > 0 ? (
         <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-700">
           Warning: {reworkSignalCount} possible re-do signal(s) in last 30 days (same vendor/unit/failure pattern).
         </div>
@@ -581,7 +588,11 @@ export function VendorDetailPage() {
 
       <div className="flex flex-wrap items-center gap-2">
         <MissingRequiredChip operatingCompanyId={companyId} entityKind="vendor" entityId={vendor.id} />
-        {saferEntity?.safer_verified_at ? (
+        {saferStatusQuery.isError ? (
+          <StatusBadge variant="warn">
+            SAFER status failed — <button type="button" className="underline" onClick={() => void saferStatusQuery.refetch()}>Retry</button>
+          </StatusBadge>
+        ) : saferEntity?.safer_verified_at ? (
           <StatusBadge variant="positive">
             {`SAFER ${saferEntity.safer_authority_status ?? "unknown"} · ${new Date(saferEntity.safer_verified_at).toLocaleDateString()}`}
           </StatusBadge>

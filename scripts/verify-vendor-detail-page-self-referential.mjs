@@ -62,6 +62,14 @@ export function audit(src) {
   if (!/vendorPaymentsQuery\.isError[\s\S]*?Retry/.test(src.detail)) {
     failures.push(`${FILE}: bill payments table must surface query errors with a Retry button (LST-F9103 — silent no-op on non-404/500/501 errors)`);
   }
+  // LST-F9106 — saferStatusQuery and vendorIntegrityQuery must surface errors (not silently show
+  // "SAFER not verified" or hide the rework signal warning).
+  if (!/saferStatusQuery\.isError/.test(src.detail)) {
+    failures.push(`${FILE}: saferStatusQuery.isError must be checked — a failed SAFER fetch silently shows 'SAFER not verified' (LST-F9106)`);
+  }
+  if (!/vendorIntegrityQuery\.isError/.test(src.detail)) {
+    failures.push(`${FILE}: vendorIntegrityQuery.isError must be checked — a failed integrity fetch silently hides the rework signal warning (LST-F9106)`);
+  }
   return failures;
 }
 
