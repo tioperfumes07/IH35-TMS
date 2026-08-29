@@ -333,12 +333,22 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     }
     win.document.write(html);
     win.document.close();
-    await persistPackageMeta({
-      generated_at: new Date().toISOString(),
-      emailed_at: packageState.meta.emailed_at,
-      uploaded_at: packageState.meta.uploaded_at,
-      invoice_id: linkedInvoice?.id ?? null,
-    });
+    // DSP-MONEY-F7276 — persistPackageMeta's mutateAsync was awaited with no rejection handler here,
+    // and both the auto-effect and the manual button called this function with `void`/`.then()` and
+    // no `.catch()` of their own. A real package window could open, then the metadata PATCH could
+    // fail (network/RLS/validation), and the operator got an unhandled promise rejection instead of
+    // any failure signal or retry path. Catch here so both call sites are covered by one fix.
+    try {
+      await persistPackageMeta({
+        generated_at: new Date().toISOString(),
+        emailed_at: packageState.meta.emailed_at,
+        uploaded_at: packageState.meta.uploaded_at,
+        invoice_id: linkedInvoice?.id ?? null,
+      });
+    } catch (error) {
+      if (!auto) pushToast(userFacingApiError(error, "Factoring package could not be saved"), "error");
+      return;
+    }
     if (!auto) pushToast("Factoring package generated", "success");
   }
 
@@ -346,8 +356,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     if (!load?.driver_instructions_file_id) return;
     try {
       const result = await getDownloadUrl(load.driver_instructions_file_id);
-      const popup = window.open(result.presigned_url, "_blank", "noopener,noreferrer");
-      if (!popup) throw new Error("Your browser blocked the driver instructions window. Allow pop-ups and retry.");
+      window.open(result.presigned_url, "_blank", "noopener,noreferrer");
     } catch (error) {
       pushToast(userFacingApiError(error, "Driver instructions download failed"), "error");
     }
@@ -891,10 +900,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         size="sm"
                         variant="secondary"
                         onClick={() =>
+                          // DSP-MONEY-F7276 — this call had no .catch(): a failed metadata PATCH
+                          // (network/RLS/validation) became an unhandled promise rejection with no
+                          // failure signal shown to the operator at all.
                           void persistPackageMeta({
                             ...packageState.meta,
                             emailed_at: new Date().toISOString(),
-                          }).then(() => pushToast("Marked as emailed to factoring company", "success"))
+                          })
+                            .then(() => pushToast("Marked as emailed to factoring company", "success"))
+                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as emailed"), "error"))
                         }
                         disabled={!packageState.meta.generated_at}
                       >
@@ -904,10 +918,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         size="sm"
                         variant="secondary"
                         onClick={() =>
+                          // DSP-MONEY-F7276 — same unhandled-rejection gap as the Email button above.
                           void persistPackageMeta({
                             ...packageState.meta,
                             uploaded_at: new Date().toISOString(),
-                          }).then(() => pushToast("Marked as uploaded to factoring portal", "success"))
+                          })
+                            .then(() => pushToast("Marked as uploaded to factoring portal", "success"))
+                            .catch((error) => pushToast(userFacingApiError(error, "Could not mark package as uploaded"), "error"))
                         }
                         disabled={!packageState.meta.generated_at}
                       >
