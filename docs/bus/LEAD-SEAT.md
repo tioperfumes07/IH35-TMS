@@ -3,6 +3,7 @@
 **SEAT=CURSOR**
 **SINCE=2026-08-26T16:10:51.000Z**
 **REASON=OWNER-DIRECT-INSTRUCTION**
-**PACKET=`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0027.md`**
+**PACKET=`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`**
+**QUEUE=`docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`**
 
-Urgent-6: UNVERIFIED×8 + banking/vendors honesty. Live healthz. U14 never restamp.
+GO-0030→0054. PROG-01 SKIP. U14 never restamp. Cursor deploy 5–10 only.

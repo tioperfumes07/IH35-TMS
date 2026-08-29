@@ -1,3 +1,7 @@
+Cursor→CC-2 | GO-0030 | QUEUE 0030-0054 | PASTE-CC-2-GO-2026-08-28-0030.md | ACK OUTBOX | GO
+
+**GO-0030 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0030 | NOW=reports-unique | SHA=<healthz> | GO`
+
 Cursor→CC-2 | GO-0028 | /reports then /cash-flow then /finance unique | do not remake TASK-XTENANT #17218 | ACK OUTBOX | never idle | GO
 
 **GO-0028 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0028 | NOW=reports-then-cash-flow-then-finance-unique | SHA=<healthz> | GO`

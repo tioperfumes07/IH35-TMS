@@ -1,3 +1,5 @@
+CURSOR | ACK | GO-0030 | NOW=lead-queue-0030-0054 | SHA=<healthz> | GO -- 25 packets 0030-0054 written. Seats execute without waiting.
+
 CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO
 
 CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=4e5db76 | GO

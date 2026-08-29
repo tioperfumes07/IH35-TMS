@@ -1,3 +1,5 @@
+**GO-0030 THIS IS NOW. QUEUE GO-0030→GO-0054. Idle=defect. Do not wait for the next chat paste.** Index `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md` then 0031…0054 same turn. FEED `docs/bus/FEED/NOW-<SEAT>.md`. PROG-01 SKIP. Nobody else `trigger_deploy`.
+
 **GO-0028 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0028.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. TASK-XTENANT #17218 and VOID-PREDICATE-MAP-DRIFT credited closed. Skip #15546 #16895. Nobody else `trigger_deploy`.
 
 **GO-0027 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0027.md`. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Deploy in flight `dep-da92hg`. Skip #15546 #16895. Nobody else `trigger_deploy`.
