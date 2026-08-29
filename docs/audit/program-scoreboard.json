@@ -1,13 +1,13 @@
 {
-  "healthzSha": "14daeed",
-  "generated_at": "2026-08-29T16:05:18.000Z",
+  "healthzSha": "ecd3afd",
+  "generated_at": "2026-08-29T19:56:49.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T11:05:18-05:00",
-    "sourceSha": "7c417c33e",
-    "deployedSha": "14daeed",
+    "generatedAt": "2026-08-29T14:56:49-05:00",
+    "sourceSha": "4f0ae19c87",
+    "deployedSha": "ecd3afd",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2145,
-    "failOpen": 14,
+    "ledgerRows": 2146,
+    "failOpen": 15,
     "defects": 20
   },
   "modules": [
@@ -173,7 +173,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "38/39",
+      "build": "11/39",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -332,7 +332,7 @@
     {
       "tier": "1",
       "module": "settlements",
-      "build": "9/9",
+      "build": "8/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -491,7 +491,7 @@
     {
       "tier": "2",
       "module": "drivers",
-      "build": "20/20",
+      "build": "19/20",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -756,7 +756,7 @@
     {
       "tier": "2",
       "module": "system",
-      "build": "9/9",
+      "build": "8/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -915,7 +915,7 @@
     {
       "tier": "3",
       "module": "inventory",
-      "build": "7/7",
+      "build": "3/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1021,7 +1021,7 @@
     {
       "tier": "3",
       "module": "finance",
-      "build": "9/9",
+      "build": "2/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1074,7 +1074,7 @@
     {
       "tier": "3",
       "module": "reports",
-      "build": "8/8",
+      "build": "3/8",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1498,7 +1498,7 @@
     {
       "tier": "3",
       "module": "docs",
-      "build": "7/7",
+      "build": "0/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1551,7 +1551,7 @@
     {
       "tier": "3",
       "module": "help",
-      "build": "5/5",
+      "build": "1/5",
       "cells": [
         "AUDIT",
         "NA",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17571,
-      "title": "FINDING: ACL-PARSE-50100-SCOREBOARD-STALE",
+      "number": 17693,
+      "title": "FINDING: DSP-F7339 dispatcher safety mutations ignore unresolved company",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 11:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17571",
-      "sha": "7c417c33e",
-      "committedAtIso": "2026-08-29T11:05:18-05:00"
+      "mergedAtCt": "08/29/2026, 03:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17693",
+      "sha": "b40cbe3bf0",
+      "committedAtIso": "2026-08-29T15:20:33-05:00"
     },
     {
-      "number": 17569,
-      "title": "FINDING: DRV-S01-DRIVERS-ROSTER-PROVEN-LIVE",
+      "number": 17692,
+      "title": "FINDING: N/A — bind 6 settlements items live proof, SETL-VERIFY-01 correctly left open",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 11:03 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17569",
-      "sha": "1f8ad2f17",
-      "committedAtIso": "2026-08-29T11:03:30-05:00"
+      "mergedAtCt": "08/29/2026, 03:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17692",
+      "sha": "41250ebe78",
+      "committedAtIso": "2026-08-29T15:15:47-05:00"
     },
     {
-      "number": 17570,
-      "title": "Claude-1-VEND-LINK-01: guard/manifest-integrity reconciliation (3 manifests)",
+      "number": 17691,
+      "title": "FINDING: FUEL-F7338 send-to-driver missing source returns HTTP 500",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 11:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17570",
-      "sha": "b74ab8003",
-      "committedAtIso": "2026-08-29T11:02:49-05:00"
+      "mergedAtCt": "08/29/2026, 03:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17691",
+      "sha": "ecd3afd53d",
+      "committedAtIso": "2026-08-29T15:14:35-05:00"
     },
     {
-      "number": 0,
-      "title": "CC-3: GO-0057 done, PR #17566 live-verified",
+      "number": 17690,
+      "title": "FINDING: N/A — bind FACT-DUAL-02/03 + FACT-S05 live proof, factoring module 10 of 10",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:59 AM CT",
-      "url": "",
-      "sha": "1ea0aa4e0",
-      "committedAtIso": "2026-08-29T10:59:38-05:00"
+      "mergedAtCt": "08/29/2026, 03:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17690",
+      "sha": "6bd473bcab",
+      "committedAtIso": "2026-08-29T15:11:52-05:00"
     },
     {
-      "number": 0,
-      "title": "CC-3: FIXED SAFETY-INTEGRITY-REPORTS-DRIVER-VENDOR-TAB-BAR-MISSING PR #17566",
+      "number": 17689,
+      "title": "FINDING: FUEL-F7337 fuel import discards rejected-row remediation",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:54 AM CT",
-      "url": "",
-      "sha": "14daeeda2",
-      "committedAtIso": "2026-08-29T10:54:09-05:00"
+      "mergedAtCt": "08/29/2026, 03:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17689",
+      "sha": "aa850a218b",
+      "committedAtIso": "2026-08-29T15:10:14-05:00"
     },
     {
-      "number": 0,
-      "title": "board: CLOSE ACCT-GUARD-F7300-ORPH03-ESCROW-VISUALIZER-REQUIRES-RETIRED-LEDGER (CC-1, PR #17567)",
+      "number": 17688,
+      "title": "FINDING: N/A — re-confirm BANK-ECON-04/BANK-SURF-04 honest FAIL still holds, not flipping",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:54 AM CT",
-      "url": "",
-      "sha": "8394f5885",
-      "committedAtIso": "2026-08-29T10:54:03-05:00"
+      "mergedAtCt": "08/29/2026, 03:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17688",
+      "sha": "396305c9c9",
+      "committedAtIso": "2026-08-29T15:08:57-05:00"
     },
     {
-      "number": 17564,
-      "title": "FINDING: SYS-S07-KNOWN-BAD-PROVEN-RESTAMPED",
+      "number": 17687,
+      "title": "FINDING: N/A -- OUTBOX status: users closed (#17685), GO-0105/0106 sequence complete",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17564",
-      "sha": "e3324eecb",
-      "committedAtIso": "2026-08-29T10:53:52-05:00"
+      "mergedAtCt": "08/29/2026, 03:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17687",
+      "sha": "a4546dd810",
+      "committedAtIso": "2026-08-29T15:05:56-05:00"
     },
     {
-      "number": 17568,
-      "title": "FINDING: DRV-MONEY-F7311 historical driver label loss",
+      "number": 17686,
+      "title": "FINDING: N/A — remove committed node_modules symlink, fix .gitignore gap that let it happen",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17568",
-      "sha": "bf834d4ab",
-      "committedAtIso": "2026-08-29T10:53:21-05:00"
+      "mergedAtCt": "08/29/2026, 03:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17686",
+      "sha": "b31377b0e5",
+      "committedAtIso": "2026-08-29T15:05:18-05:00"
     },
     {
-      "number": 0,
-      "title": "board: CC-1 ACCT-GUARD-F7300 report (PR #17567)",
+      "number": 17685,
+      "title": "FINDING: USER-S02-BACKEND-APPROVER-BYPASS -- role-change approver ceremony was UI-only, not enforced server-side",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:53 AM CT",
-      "url": "",
-      "sha": "a1e4ea9b7",
-      "committedAtIso": "2026-08-29T10:53:15-05:00"
+      "mergedAtCt": "08/29/2026, 03:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17685",
+      "sha": "7f22ce4d5d",
+      "committedAtIso": "2026-08-29T15:05:00-05:00"
     },
     {
-      "number": 17567,
-      "title": "Claude-1-ACCT-GUARD-F7300: reconcile ORPH-03 guard with ACCT-F5703 escrow repoint",
+      "number": 17684,
+      "title": "FINDING: N/A — OUTBOX shipped proof for FUEL-F7336",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17567",
-      "sha": "2b406c476",
-      "committedAtIso": "2026-08-29T10:51:49-05:00"
+      "mergedAtCt": "08/29/2026, 03:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17684",
+      "sha": "23e58a3c56",
+      "committedAtIso": "2026-08-29T15:04:49-05:00"
     }
   ]
 }
