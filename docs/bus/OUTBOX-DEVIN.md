@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | drain-cont5 | vendors-drain | SHA=2a9a59e | SHIPPED PR #17389 | FIXED: LST-F9130 — Thirteen routes across five files lacked config.rateLimit: 5 driver alerts (drivers-as-vendors), 4 driver messages, 1 communications, 1 fuel GL reflush, 2 fuel planner. Added 60/min reads, 30/min writes, 10/min fan-out. Ratchet 245→244. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | drain-cont4 | vendors-drain | SHA=878bc36 | SHIPPED PR #17388 | FIXED: LST-F9129 — Thirty-one routes across six files lacked config.rateLimit: 9 lease-posting (vendor lessors), 8 factor (factors are vendors), 6 factoring batch, 2 submission-queue, 3 reserve, 2 factoring. Added 60/min reads, 30/min writes, 10/min batch submit. Ratchet 265→245. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | drain-cont3 | vendors-drain | SHA=7f12680 | SHIPPED PR #17385 | FIXED: LST-F9128 — Thirteen routes across five files lacked config.rateLimit: 5 collections (A/R mirror), 3 reconciliation (vendor bill matching), 1 date-ranges, 2 comparison-report, 3 consolidated-statements. Added 60/min reads, 30/min writes, 10/min sync. Ratchet 272→265. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
