@@ -25,6 +25,33 @@ export type TxHealthChecks = {
 
 export type TxHealthFinding = { id: string; finding_type: string; severity: string };
 
+export type TxHealthLinkState = "wired" | "missing" | "not_applicable" | "blocked_by_constraint";
+export type TxHealthLinkGroup = "GENERAL LEDGER" | "OPERATIONS" | "MASTER DATA";
+
+export type TxHealthGlLine = {
+  account_code: string;
+  account_name: string;
+  account_id: string | null;
+  dr: number;
+  cr: number;
+};
+
+export type TxHealthGl = null | {
+  lines: TxHealthGlLine[];
+  dr_total: number;
+  cr_total: number;
+  balanced: boolean;
+};
+
+export type TxHealthLink = {
+  label: string;
+  target_type: string;
+  target_id: string | null;
+  target_label: string | null;
+  state: TxHealthLinkState;
+  group: TxHealthLinkGroup;
+};
+
 export type TxHealthRow = {
   doc_type: TxHealthDocType;
   id: string;
@@ -36,6 +63,8 @@ export type TxHealthRow = {
   checks: TxHealthChecks;
   findings: TxHealthFinding[];
   status: "OK" | "WARN" | "FAIL";
+  gl: TxHealthGl;
+  links: TxHealthLink[];
 };
 
 export type TxHealthEntity = { id: string; code: string };
@@ -85,5 +114,32 @@ export function txHealthDocumentPath(row: Pick<TxHealthRow, "doc_type" | "id">):
       return `/driver-finance/settlements?settlement_id=${row.id}`;
     default:
       return "#";
+  }
+}
+
+/**
+ * Chip href for a wiring-map node. List click stays on this page; chips open a new tab.
+ */
+export function txHealthLinkPath(link: Pick<TxHealthLink, "target_type" | "target_id">): string | null {
+  if (!link.target_id) return null;
+  switch (link.target_type) {
+    case "mdata.customers":
+      return `/customers/${link.target_id}`;
+    case "mdata.vendors":
+      return `/vendors/${link.target_id}`;
+    case "mdata.drivers":
+      return `/drivers/${link.target_id}`;
+    case "mdata.loads":
+      return `/dispatch/loads/${link.target_id}`;
+    case "mdata.units":
+      return `/fleet/units/${link.target_id}`;
+    case "accounting.bills":
+      return `/accounting/bills/${link.target_id}`;
+    case "accounting.journal_entries":
+      return `/accounting/journal-entries/${link.target_id}`;
+    case "catalogs.accounts":
+      return `/accounting/chart-of-accounts?account_id=${link.target_id}`;
+    default:
+      return null;
   }
 }

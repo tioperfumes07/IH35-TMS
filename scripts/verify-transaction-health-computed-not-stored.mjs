@@ -28,6 +28,8 @@ const root = path.resolve(__dirname, "..");
 
 const SERVICE_FILE = "apps/backend/src/system/transaction-health.service.ts";
 const ROUTES_FILE = "apps/backend/src/system/transaction-health.routes.ts";
+const EVIDENCE_FILE = "apps/backend/src/system/transaction-health-evidence.ts";
+const PAGE_FILE = "apps/frontend/src/pages/system/SystemModulePage.tsx";
 const MIGRATIONS_DIR = "db/migrations";
 
 const FORBIDDEN_COLUMN_NAMES = ["health_status", "transaction_status", "is_healthy"];
@@ -50,9 +52,15 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 }
 
-export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migrationFiles }) {
+function extractTxHealthTab(pageSrc) {
+  const match = pageSrc.match(/function TransactionHealthTab\(\) \{[\s\S]*?\nfunction /);
+  return match ? match[0] : "";
+}
+
+export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migrationFiles, evidenceSrc: evidenceSrcRaw = "", pageSrc = "" }) {
   const serviceSrc = stripComments(serviceSrcRaw);
   const routesSrc = stripComments(routesSrcRaw);
+  const evidenceSrc = stripComments(evidenceSrcRaw);
   const failures = [];
 
   // 1. No migration adds a forbidden health/status column.
@@ -67,9 +75,12 @@ export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migr
     }
   }
 
-  // 2. No INSERT/UPDATE/DELETE in the service.
+  // 2. No INSERT/UPDATE/DELETE in the service or evidence enricher.
   if (/\bINSERT\s+INTO\b|\bUPDATE\s+\w+\s|\bDELETE\s+FROM\b/i.test(serviceSrc)) {
     failures.push(`${SERVICE_FILE}: contains an INSERT/UPDATE/DELETE — this must stay read-only`);
+  }
+  if (/\bINSERT\s+INTO\b|\bUPDATE\s+\w+\s|\bDELETE\s+FROM\b/i.test(evidenceSrc)) {
+    failures.push(`${EVIDENCE_FILE}: contains an INSERT/UPDATE/DELETE — this must stay read-only`);
   }
 
   // 3. "posted" never reads a document-level status/health column (only journal_entry_postings joins
@@ -124,6 +135,24 @@ export function check({ serviceSrc: serviceSrcRaw, routesSrc: routesSrcRaw, migr
     }
   }
 
+  // TXH-03 screen: two-pane wiring map stays on-page (list click does not navigate).
+  const tab = extractTxHealthTab(pageSrc);
+  if (tab && !tab.includes("<pre")) {
+    failures.push(`${PAGE_FILE}: TransactionHealthTab must render a monospace <pre ledger`);
+  }
+  if (pageSrc && !pageSrc.includes("<svg")) {
+    failures.push(`${PAGE_FILE}: must include an <svg wiring map`);
+  }
+  if (tab && !tab.includes("links[].state")) {
+    failures.push(`${PAGE_FILE}: TransactionHealthTab must include the literal string links[].state`);
+  }
+  if (tab && !tab.includes("gl.lines")) {
+    failures.push(`${PAGE_FILE}: TransactionHealthTab must include the literal string gl.lines`);
+  }
+  if (tab && /\bnavigate\s*\(/.test(tab)) {
+    failures.push(`${PAGE_FILE}: TransactionHealthTab must not call navigate( — list click stays on the page`);
+  }
+
   return failures;
 }
 
@@ -131,6 +160,8 @@ function readAll() {
   return {
     serviceSrc: fs.readFileSync(path.join(root, SERVICE_FILE), "utf8"),
     routesSrc: fs.readFileSync(path.join(root, ROUTES_FILE), "utf8"),
+    evidenceSrc: fs.readFileSync(path.join(root, EVIDENCE_FILE), "utf8"),
+    pageSrc: fs.readFileSync(path.join(root, PAGE_FILE), "utf8"),
     migrationFiles: fs.readdirSync(path.join(root, MIGRATIONS_DIR)).filter((f) => f.endsWith(".sql")),
   };
 }
@@ -190,6 +221,23 @@ function selftest() {
     process.exit(1);
   }
   void offenderD;
+
+  // Offender E: remove the SVG wiring map from the page.
+  const offenderE = check({ ...baseline, pageSrc: baseline.pageSrc.replaceAll("<svg", "<div") });
+  if (offenderE.length === 0) {
+    console.error("FAIL(selftest): planted offender E (removed <svg) was NOT caught");
+    process.exit(1);
+  }
+
+  // Offender F: list click navigates away instead of setSelectedKey.
+  const offenderF = check({
+    ...baseline,
+    pageSrc: baseline.pageSrc.replace("onClick={() => setSelectedKey(key)}", "onClick={() => navigate(txHealthDocumentPath(row))}"),
+  });
+  if (offenderF.length === 0) {
+    console.error("FAIL(selftest): planted offender F (navigate on list click) was NOT caught");
+    process.exit(1);
+  }
 
   console.log("PASS(selftest): all planted regressions correctly caught; baseline clean");
 }
