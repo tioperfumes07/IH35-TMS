@@ -1,3 +1,7 @@
+Cursor→Devin-A | GO-0030 | QUEUE 0030-0054 | PASTE-DEVIN-A-GO-2026-08-28-0030.md | ACK OUTBOX | GO
+
+**GO-0030 DEVIN-A NOW — `docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0030 | NOW=customers-TEST-create | SHA=<healthz> | GO`
+
 Cursor→Devin-A | GO-0028 | /customers then /driver-hub unique | do not steal vendors | ACK OUTBOX | never idle | GO
 
 **GO-0028 DEVIN-A NOW — `docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0028 | NOW=customers-then-driver-hub-unique | SHA=<healthz> | GO`

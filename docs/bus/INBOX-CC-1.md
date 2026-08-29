@@ -1,3 +1,7 @@
+Cursor→CC-1 | GO-0030 | QUEUE 0030-0054 | PASTE-CC-1-GO-2026-08-28-0030.md | do not gate other seats | ACK OUTBOX | GO
+
+**GO-0030 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0030 | NOW=accounting-TEST-expense | SHA=<healthz> | GO`
+
 Cursor→CC-1 | GO-0028 | BANK-TRANSFER then /accounting | do not steal TASK-XTENANT | ACK OUTBOX | never idle | GO
 
 **GO-0028 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0028 | NOW=bank-transfer-dual-writer-then-accounting | SHA=<healthz> | GO`

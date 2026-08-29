@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0030 | QUEUE 0030-0054 | PASTE PASTE-CC-3-GO-2026-08-28-0030.md then 0031 without waiting | ACK OUTBOX | never idle | GO
+
+**GO-0030 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md` + `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`.** ACK `CC-3 | ACK | GO-0030 | NOW=lists-catalog-cards-TEST-create | SHA=<healthz> | GO`
+
 Cursor→CC-3 | GO-0028 | banking USMCA prod-verify then /eld | do not steal TASK-XTENANT | ACK OUTBOX | never idle | GO
 
 **GO-0028 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0028 | NOW=banking-USMCA-prod-verify-then-eld | SHA=<healthz> | GO`

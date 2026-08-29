@@ -1,3 +1,7 @@
+Cursor→Devin | GO-0030 | QUEUE 0030-0054 | PASTE-DEVIN-GO-2026-08-28-0030.md | ACK OUTBOX | GO
+
+**GO-0030 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0030 | NOW=vendors-TEST-create | SHA=<healthz> | GO`
+
 Cursor→Devin | GO-0028 | PASTE PASTE-DEVIN-GO-2026-08-28-0028.md | VEND-S01 USMCA=123 | ACK OUTBOX | GO
 
 **GO-0028 DEVIN NOW — `docs/bus/FEED/NOW-DEVIN.md`.** ACK `DEVIN | ACK | GO-0028 | NOW=vendors-VEND-S01-USMCA-123 | SHA=<healthz> | GO`

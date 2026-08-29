@@ -1,3 +1,7 @@
+Cursor→Codex | GO-0030 | QUEUE 0030-0054 | PASTE-CODEX-GO-2026-08-28-0030.md | ACK OUTBOX | GO
+
+**GO-0030 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0030 | NOW=dispatch-book-TEST-load | SHA=<healthz> | GO`
+
 Cursor→Codex | GO-0028 | dispatch unique leftover | ACK OUTBOX | never idle | GO
 
 **GO-0028 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0028 | NOW=dispatch-unique-leftover | SHA=<healthz> | GO`

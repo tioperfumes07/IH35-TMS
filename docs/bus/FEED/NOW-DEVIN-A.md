@@ -1,6 +1,7 @@
-# FEED · DEVIN-A · GO-0028
+# FEED · DEVIN-A · GO-0030 (queue 0030–0054)
 
 `git pull --ff-only origin main`
-ACK: `DEVIN-A | ACK | GO-0028 | NOW=customers-then-driver-hub-unique | SHA=<healthz> | GO`
+ACK: `DEVIN-A | ACK | GO-0030 | NOW=customers-TEST-create | SHA=<healthz> | GO`
 
-**NOW:** Unique FINDING `/customers` then `/driver-hub`. Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`. Never idle.
+**Paste:** `docs/lockdown/PASTE-DEVIN-A-GO-2026-08-28-0030.md`
+Then GO-0031. Do not steal vendors. KEEP TEST.
