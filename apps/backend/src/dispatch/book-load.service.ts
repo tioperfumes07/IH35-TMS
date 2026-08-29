@@ -1824,10 +1824,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // as trip_type below, so the 39-column lockstep INSERT is untouched. customer_po_number was previously
     // accepted-but-dropped; now it stores. Entity-scoped row (the load just inserted under $1 above).
     if (input.piece_count != null || (input.customer_po_number ?? "").trim().length > 0) {
-      await client.query(
-        `UPDATE mdata.loads SET piece_count = $1, customer_po_number = $2, updated_at = now() WHERE id = $3::uuid`,
-        [input.piece_count ?? null, input.customer_po_number ?? null, String(load.id)]
+      const shipmentDetailsUpdate = await client.query<{ id: string }>(
+        `UPDATE mdata.loads SET piece_count = $1, customer_po_number = $2, updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid
+         RETURNING id::text`,
+        [input.piece_count ?? null, input.customer_po_number ?? null, String(load.id), input.operating_company_id]
       );
+      if (!shipmentDetailsUpdate.rows[0]?.id) throw new Error("book_load_shipment_details_update_failed");
     }
 
     // render-v6 §B reefer/tarp detail (migration 202606231400) — persist post-insert (same pattern), so the
@@ -1840,11 +1843,12 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       (input.tarp_size ?? "").trim().length > 0 ||
       input.temperature_type != null // W-FIX-1: Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600)
     ) {
-      await client.query(
+      const equipmentDetailsUpdate = await client.query<{ id: string }>(
         `UPDATE mdata.loads
            SET reefer_temp_f = $1, reefer_mode = $2, pre_cool = $3, tarp_qty = $4, tarp_size = $5,
                temperature_type = $6, updated_at = now()
-         WHERE id = $7::uuid`,
+         WHERE id = $7::uuid AND operating_company_id = $8::uuid
+         RETURNING id::text`,
         [
           input.reefer_temp_f ?? null,
           input.reefer_mode ?? null,
@@ -1853,8 +1857,10 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           input.tarp_size ?? null,
           input.temperature_type ?? null,
           String(load.id),
+          input.operating_company_id,
         ]
       );
+      if (!equipmentDetailsUpdate.rows[0]?.id) throw new Error("book_load_equipment_details_update_failed");
     }
 
     // Trip Pairing (Block 04): set trip_type + tour_id post-insert (additive; avoids touching the
@@ -1880,10 +1886,13 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       } else {
         tourId = null;
       }
-      await client.query(
-        `UPDATE mdata.loads SET trip_type = $1::mdata.trip_type_enum, tour_id = $2::uuid, updated_at = now() WHERE id = $3::uuid`,
-        [input.trip_type, tourId, String(load.id)]
+      const tripDetailsUpdate = await client.query<{ id: string }>(
+        `UPDATE mdata.loads SET trip_type = $1::mdata.trip_type_enum, tour_id = $2::uuid, updated_at = now()
+           WHERE id = $3::uuid AND operating_company_id = $4::uuid
+         RETURNING id::text`,
+        [input.trip_type, tourId, String(load.id), input.operating_company_id]
       );
+      if (!tripDetailsUpdate.rows[0]?.id) throw new Error("book_load_trip_details_update_failed");
     }
 
     // [HOLD-FOR-JORGE — TIER 1] Booked CASH advance → create a PENDING driver cash-advance request (owner-approval
