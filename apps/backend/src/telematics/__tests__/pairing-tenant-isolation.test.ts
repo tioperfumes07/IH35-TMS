@@ -16,6 +16,9 @@ describe("vehicle-driver pairing tenant isolation", () => {
         if (sql.includes("FROM telematics.vehicle_driver_assignments")) {
           return { rows: [] };
         }
+        if (sql.includes("INSERT INTO telematics.vehicle_driver_assignments")) {
+          return { rows: [{ id: "dddddddd-dddd-dddd-dddd-dddddddddddd" }] };
+        }
         return { rows: [] };
       }),
     };
@@ -40,6 +43,10 @@ describe("vehicle-driver pairing tenant isolation", () => {
     expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.is_authorized = true");
     expect(driverLookup?.sql).toContain("webhook_pairing_driver_dca.deactivated_at IS NULL");
     expect(driverLookup?.params[0]).toBe("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    expect(calls.some((entry) => entry.sql.includes("pg_advisory_lock"))).toBe(true);
+    expect(calls.some((entry) => entry.sql.includes("pg_advisory_unlock"))).toBe(true);
+    const insert = calls.find((entry) => entry.sql.includes("INSERT INTO telematics.vehicle_driver_assignments"));
+    expect(insert?.sql).toContain("RETURNING id::text");
 
     await getDriverForVehicleAtTime(
       client,
@@ -47,7 +54,7 @@ describe("vehicle-driver pairing tenant isolation", () => {
       "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
       "2026-05-23T20:30:00.000Z"
     );
-    const lookup = calls.find((entry) => entry.sql.includes("FROM telematics.vehicle_driver_assignments"));
+    const lookup = calls.find((entry) => entry.sql.includes("started_at <= $3::timestamptz"));
     expect(lookup?.sql).toContain("operating_company_id = $1::uuid");
   });
 });

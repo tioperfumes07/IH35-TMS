@@ -1,3 +1,5 @@
+Codex | WORKING | FLEET-F7203 | GO-0052 | CLAIM=Samsara-pairing-unit-lifecycle-serialization | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7202 | PR=#17413 @ 21dc372821 | Built=unknown status fails closed | Live=post-deploy UNVERIFIED | NEXT=GO-0052 drivers/fleet unique | GO
 Codex | WORKING | DSP-F7202 | GO-0051 | CLAIM=unknown-load-status-fails-closed | SOURCE=mdata.load_status_enum→dispatch state machine | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7201 | PR=#17412 @ c5ef33dd16 | Built=combined+draft quick-assign exact history identity | Live=post-deploy UNVERIFIED | NEXT=GO-0051 dispatch unique | GO
 Codex | WORKING | DSP-F7201 | GO-0050 | CLAIM=combined+draft-quick-assign-history-exact-identity | SOURCE=dispatch.load_assignment_history.id | SHA=da39aab | NEXT=gate+FAST-MERGE | GO
