@@ -198,6 +198,7 @@
       "status": "PASS",
       "evidence": "VERIFIED PASS 2026-07-30 (re-verified live; the 2026-07-25 FAIL is now STALE). F06 half unchanged and still satisfied. F32 half is FIXED: the fabricated `?? \"Aug 31\"` literal is gone — the only surviving `Aug 31` string in apps/frontend/src is a COMMENT at Permits.tsx:25 recording its own removal — and `Date.UTC(<year>, 7, 31)` no longer appears anywhere in apps/frontend/src or apps/backend/src. The 'guard never executes' half is ALSO stale: scripts/verify-steps/1500-verify-form-2290-due-date-irs-correct.mjs now exists UNDER verify-steps, so the runner enumerates it, and it spawns scripts/verify-form-2290-due-date-irs.mts via tsx. RAN THIS SESSION: 'OK — due date = last day of the month following first use, business-day shifted (weekends + federal holidays incl. observed); no invented date in the UI.' The assertions call the real functions on real dates, so a reimplementation that keeps the names and returns Aug 31 for everything still fails.",
       "pr": 3336,
+      "live_proof": "GUARD-2 2026-08-29T17:12:34Z: authenticated USMCA /compliance/form-2290 rendered computed due 2026-08-31 (2 days remaining), one canonical 2026-07-01 through 2027-06-30 draft row, and 32 explicitly labeled units missing first-use dates; verify-step 1500 passed the real IRS due-date/business-day implementation; known-bad hardcoded-date mutations are rejected by the verifier.",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
@@ -257,7 +258,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_sha": "14daeed",
+      "live_verified_at": "2026-08-29T17:12:34Z"
     },
     {
       "id": "SAF-B06",

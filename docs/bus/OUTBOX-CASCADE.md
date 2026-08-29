@@ -1,3 +1,5 @@
+CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=SAF-B05 | MODULE=safety | SHA=14daeed | RESULT=USMCA /compliance/form-2290 rendered computed due 2026-08-31 (2 days) + 1 canonical draft row; verify-step 1500 PASS; live SHA ancestor of origin/main | GO
+CASCADE | ACK | GUARD-2-NON-MONEY | NOW=SAF-B05 | SHA=14daeed | GO
 CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=LST-A-01 | MODULE=lists | SHA=14daeed | RESULT=/lists hub → Dispatcher Error Reasons → canonical route with 25 rows; fake catalog slug rejected | GO
 CASCADE | REJECT | GUARD-2-NON-MONEY | ITEM=DRV-S11 | MODULE=drivers | SHA=14daeed | missing=live route renders KPI-only Leave Overview; no rows/review/error control | GO
 CASCADE | REJECT | GUARD-2-NON-MONEY | ITEM=SAF-B01 | MODULE=safety | SHA=14daeed | missing=live execution + known-bad; item evidence says forfeit path never executed and flag is OFF | GO
