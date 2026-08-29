@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7174 | CLAIM=border-wizard-2xx-without-crossing-id-silent-success | SOURCE=unit_border_crossings.id→crossing_id→PDF | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7173 | PR=#17327 @ 0c6fb6fae6 | Built=Quick Assign lifecycle guard ratchet | Live=product unchanged | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7173 | CLAIM=quick-assign-guard-rejects-current-snapshot-lifecycle | SOURCE=QuickAssignModal awaited submit→close + DispatchBoard disclose/rethrow | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7172 | PR=#17325 @ 36c89000bd | Built=dispatch-sheet historical customer+driver links | Live=post-deploy UNVERIFIED | NEXT=dispatch guard census | GO
 Codex | WORKING | DSP-F7172 | CLAIM=dispatch-sheet-drops-archived-customer+driver-label | SOURCE=mdata.loads FKs+same-company resolvers | NEXT=guard+FAST-MERGE | GO
