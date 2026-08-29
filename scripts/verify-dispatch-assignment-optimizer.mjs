@@ -53,6 +53,7 @@ export function auditAvailableDriverScope(service) {
     [/available_driver_dca\.company_id\s*=\s*\$1::uuid/i, "available-driver authorization must bind the selected company"],
     [/available_driver_dca\.is_authorized\s*=\s*true/i, "available-driver authorization must be active"],
     [/available_driver_dca\.deactivated_at\s+IS\s+NULL/i, "available-driver authorization must not be deactivated"],
+    [/const scopedLoad = loadPickup\.rows\[0\];\s*if \(!scopedLoad\) throw new Error\("E_LOAD_NOT_FOUND"\);/i, "available-driver fallback must reject a missing/cross-company load before ranking candidates"],
   ];
   for (const [pattern, message] of required) if (!pattern.test(service)) failures.push(message);
   return failures;
@@ -86,6 +87,7 @@ function main() {
   if ((routeTest.match(/\bit\(/g) ?? []).length < 5) failures.push("driver-optimizer routes tests must cover at least 5 cases");
   if (!routes.includes("/api/v1/dispatch/loads/:loadId/optimal-drivers")) failures.push("routes must expose optimal-drivers endpoint");
   if (!routes.includes("listOptimalDriversForLoad")) failures.push("routes must call listOptimalDriversForLoad");
+  if (!/\/api\/v1\/dispatch\/available-drivers[\s\S]*E_LOAD_NOT_FOUND[\s\S]*reply\.code\(404\)/.test(routes)) failures.push("available-driver missing load must map to readable 404");
 
   if (!panel.includes("data-testid=\"optimal-drivers-panel\"")) failures.push("OptimalDriversPanel must expose test id");
   if (!panel.includes("Manual override")) failures.push("OptimalDriversPanel must expose manual override flag");
@@ -133,6 +135,7 @@ function selftest() {
     ["available company", "available_driver_dca.company_id = $1::uuid", "available_driver_dca.company_id = $2::uuid"],
     ["available active", "available_driver_dca.is_authorized = true", "available_driver_dca.is_authorized = false"],
     ["available deactivation", "available_driver_dca.deactivated_at IS NULL", "available_driver_dca.deactivated_at IS NOT NULL"],
+    ["available load identity", 'if (!scopedLoad) throw new Error("E_LOAD_NOT_FOUND");', ""],
   ];
   for (const [name, before, after] of availableMutations) {
     const planted = refinements.replace(before, after);
