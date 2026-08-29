@@ -4,13 +4,14 @@ import fs from "node:fs";
 
 const file = "apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx";
 const source = fs.readFileSync(file, "utf8");
+const DIRTY_CLOSE_FAILURE = "drawer and Cancel safely register shared dirty-confirmation boundary";
 
 function failures(input = source) {
   return [
     ["lifecycle generation advances per open/company", /lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*if \(!open\) return;\s*resetDraft\(\);\s*\}, \[open, operatingCompanyId, resetDraft\]\);/.test(input)],
     ["completed lifecycle retires request and resets full draft", /const completeClose = useCallback\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setSaving\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(input)],
     ["pending create cannot be dismissed", /const handleClose = useCallback\(\(\) => \{\s*if \(saving\) return;\s*completeClose\(\);\s*\}, \[completeClose, saving\]\);/.test(input)],
-    ["drawer and Cancel safely register shared dirty-confirmation boundary", /<Modal open=\{open\} onClose=\{handleClose\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isDirty\}[^>]*onRegisterAttemptClose=\{\(next\) => setAttemptClose\(\(\) => next\)\}[\s\S]*?<Button size="sm" variant="secondary" onClick=\{attemptClose\} disabled=\{saving\}>/.test(input)],
+    [DIRTY_CLOSE_FAILURE, /<Modal open=\{open\} onClose=\{handleClose\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{isDirty\}[^>]*onRegisterAttemptClose=\{\(next\) => setAttemptClose\(\(\) => next\)\}[\s\S]*?<Button size="sm" variant="secondary" onClick=\{attemptClose\} disabled=\{saving\}>/.test(input)],
     ["dirty predicate covers complete Fuel intent", /const isDirty = transactionDate !== companyToday\(\)[\s\S]*driverId \|\| unitId \|\| trailerId \|\| vendorId \|\| loadId[\s\S]*loadExemptionReason\.trim\(\)[\s\S]*fuelType !== "diesel"[\s\S]*gallons\.trim\(\) \|\| pricePerGallon\.trim\(\)[\s\S]*totalCost != null[\s\S]*locationCity\.trim\(\) \|\| locationState\.trim\(\) \|\| notes\.trim\(\)/.test(input)],
     ["submit captures lifecycle generation", /const submissionGeneration = lifecycleGenerationRef\.current;\s*setSaving\(true\);/.test(input)],
     ["stale success cannot toast, select, or close", /if \(lifecycleGenerationRef\.current !== submissionGeneration\) return;\s*pushToast\("Fuel purchase recorded", "success"\);\s*onCreated\(\);\s*completeClose\(\);/.test(input)],
@@ -34,8 +35,8 @@ if (process.argv.includes("--selftest")) {
     failures(staleContext).includes("lifecycle generation advances per open/company"),
     failures(staleDismiss).includes("completed lifecycle retires request and resets full draft"),
     failures(pendingDismiss).includes("pending create cannot be dismissed"),
-    failures(rawDrawerClose).includes("drawer and Cancel use shared dirty-confirmation boundary"),
-    failures(rawCancel).includes("drawer and Cancel use shared dirty-confirmation boundary"),
+    failures(rawDrawerClose).includes(DIRTY_CLOSE_FAILURE),
+    failures(rawCancel).includes(DIRTY_CLOSE_FAILURE),
     failures(incompleteDirty).includes("dirty predicate covers complete Fuel intent"),
     failures(staleSuccess).includes("stale success cannot toast, select, or close"),
     failures(staleError).includes("stale rejection cannot paint the next drawer"),
