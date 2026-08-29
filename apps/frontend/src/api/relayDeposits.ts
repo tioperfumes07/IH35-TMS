@@ -70,3 +70,22 @@ export function runRelayFuelBackfill(
     body: { operating_company_id: operatingCompanyId, months },
   });
 }
+
+export type RelayFuelBackfillStatus = {
+  operating_company_id: string;
+  run: null | {
+    run_id: string;
+    status: "running" | "completed" | "failed";
+    months: number;
+    started_at: string;
+    completed_at: string | null;
+    pulled: number | null;
+    upserted: number | null;
+    skipped: number | null;
+    error: string | null;
+  };
+};
+
+export function getRelayFuelBackfillStatus(operatingCompanyId: string): Promise<RelayFuelBackfillStatus> {
+  return apiRequest(`/api/integrations/relay/fuel/backfill/status?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+}
