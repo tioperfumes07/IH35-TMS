@@ -1,9 +1,16 @@
-# NOW — Devin-A (customers · GO-0055→0104 · live `b276443`)
+STOP. Devin-A is VOID. Do not ACK. Do not work `/customers`. ONE Devin only.
 
-**ACK:** `DEVIN-A | ACK | GO-0055 | NOW=customers-TEST-unique | SHA=b276443 | GO`
+# NOW — Devin-A STAND-DOWN (VOID · not a seat)
 
-You are **Devin-A**. `/customers`. Not PARKED. CREATE labeled TEST. KEEP TEST. Chrome-only.
+**STOP. You are not a seat.** There is **ONE Devin** (`devin/`). Devin-A is VOID.
 
-1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104.
-2. Seat paste: `docs/lockdown/PASTE-DEVIN-A-GO-2026-08-28-0055.md` …
-3. Do not steal `/vendors`. Never `trigger_deploy`. U14 never restamp.
+Do **not** ACK as `DEVIN-A`.
+Do **not** work `/customers`. That surface is **Devin’s** after `/vendors` unique is empty.
+Do **not** run GO-0055→0104 as Devin-A.
+Do **not** CREATE TEST on customers from this feed.
+
+If this session is already a Devin-A chat: **idle this chat.** Jorge pastes the Devin standing orders into the **one** Devin seat only.
+
+Read: `docs/bus/FEED/NOW-DEVIN.md`
+
+Never `trigger_deploy`. Never restamp U14.

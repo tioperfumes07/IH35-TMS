@@ -1,3 +1,12 @@
+STOP. Devin-A is VOID. Do not ACK as DEVIN-A. Do not work /customers. ONE Devin. Read docs/bus/FEED/NOW-DEVIN.md.
+
+Cursor→DEVIN-A | STAND-DOWN | VOID SEAT | ONE Devin only | do not ACK as DEVIN-A | do not work /customers | FEED docs/bus/FEED/NOW-DEVIN-A.md is STAND-DOWN | GO
+
+**STOP. Devin-A is not a seat.** Everything below this line is VOID. Do not execute GO-0055→0104 as Devin-A. `/customers` belongs to Devin after vendors.
+
+---
+VOID ARCHIVE (do not execute)
+
 Cursor→DEVIN-A | GO-0055→0104 | SHA=b276443 | /customers TEST+unique Not PARKED | FEED docs/bus/FEED/NOW-DEVIN-A.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | KEEP TEST | GO
 Cursor→DEVIN-A | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN-A.md | never idle | GO
 
