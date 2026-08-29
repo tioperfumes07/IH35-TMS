@@ -3,6 +3,7 @@ import { apiRequest } from "../../api/client";
 import { formatMoneyCents } from "./constants";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
+import { ListErrorState } from "../ListErrorState";
 
 /**
  * Load → Driver Pay tab reads driver_finance.driver_bills (header payables),
@@ -97,10 +98,16 @@ export function LoadDetailDriverPayTab({ loadId, operatingCompanyId, currencyCod
         </div>
       );
     }
+    // DSP-MONEY-F7105-DRIVER-PAY-READ-FAILURE-DEAD-END (GO-0027, CC-1): the 501/501-not-configured
+    // and 403-forbidden states above are deliberate terminal states, but a transient read failure
+    // (network blip, 500, timeout) has no recovery path short of closing and reopening the whole
+    // drawer. Give it a real Retry bound to the exact query instance.
     return (
-      <div className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        Failed to load driver pay data.
-      </div>
+      <ListErrorState
+        title="Failed to load driver pay data."
+        status={err?.status ?? 0}
+        onRetry={() => void billsQuery.refetch()}
+      />
     );
   }
 
