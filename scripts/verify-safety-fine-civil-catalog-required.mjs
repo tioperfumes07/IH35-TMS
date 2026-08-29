@@ -22,14 +22,14 @@ export function collectProblems(src) {
   if (!/Violation type \(catalog\) \*/.test(src)) {
     problems.push(`${TARGET}: catalog field must be labelled required (*)`);
   }
-  if (!/Violation type \(catalog\) is required/.test(src)) {
-    problems.push(`${TARGET}: must throw when civilFineTypeId missing`);
+  if (!/if \(!civilFineTypeId\) return;/.test(src)) {
+    problems.push(`${TARGET}: submit handler must stop before mutation when civilFineTypeId is missing`);
   }
   if (!/canSubmit/.test(src) || !/disabled=\{!canSubmit\}/.test(src)) {
     problems.push(`${TARGET}: Create Fine must stay disabled until catalog type selected`);
   }
-  if (!/civil_fine_type_id: civilFineTypeId/.test(src)) {
-    problems.push(`${TARGET}: submit payload must send civil_fine_type_id`);
+  if (!/civil_fine_type_id:\s*(?:input\.)?civilFineTypeId/.test(src)) {
+    problems.push(`${TARGET}: mutation payload must send the selected or snapshotted civil_fine_type_id`);
   }
   return problems;
 }
@@ -45,9 +45,10 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   }
   const bad = good
     .replace("Violation type (catalog) *", "Violation type (catalog)")
-    .replace("Violation type (catalog) is required", "missing")
-    .replace("disabled={!canSubmit}", "disabled={false}");
-  if (collectProblems(bad).length < 2) {
+    .replace("if (!civilFineTypeId) return;", "")
+    .replace("disabled={!canSubmit}", "disabled={false}")
+    .replace("civil_fine_type_id: input.civilFineTypeId", "civil_fine_type_id: null");
+  if (collectProblems(bad).length < 4) {
     console.error(`${LABEL} --selftest FAIL: broken fixture not flagged`);
     process.exit(1);
   }

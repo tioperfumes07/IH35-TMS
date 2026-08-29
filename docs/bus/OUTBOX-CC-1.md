@@ -3878,3 +3878,4 @@ Codex→CC-1 | FINDING | DSP-MONEY-F7243-PROFITABILITY-TRIP-END-READS-RETIRED-DE
 Codex | FINDING | DSP-MONEY-F7264 | routed=CC-1 | LoadDetailDrawer.tsx:324-336 factoring popup null still persists generated_at + success | BLOCKS=GO-0030-dispatch-unique | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7276 | factoring package metadata PATCH rejection is uncaught on auto/Generate/Email/Upload · board OPEN with exact source+fix | routed=CC-1 | BLOCKS=dispatch load drawer factoring package money
 Codex → CC-1 | FINDING | DSP-MONEY-F7283 | routed=CC-1 | Load Factoring + Fines/Deductions silently paint 9 rejected scoped reads as empty; OPEN board row has exact files/feeds/DoD | BLOCKS=GO-0030-DISPATCH-UNIQUE | GO
+Codex→CC-1 | FINDING | ACCT-GUARD-F7300 | ORPH03 guard requires retired escrow_ledger after ACCT-F5703 moved visualizer to posted JE lineage | board OPEN with SOT/query/blast-radius | routed=CC-1 | GO
