@@ -11,7 +11,7 @@ const trailerBodySchema = companyBodySchema.extend({ trailer_uuid: z.string().uu
 const driverBodySchema = companyBodySchema.extend({ driver_uuid: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

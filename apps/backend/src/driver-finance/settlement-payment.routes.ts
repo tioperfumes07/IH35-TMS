@@ -23,7 +23,7 @@ const markManualBodySchema = z.object({
 const reopenManualBodySchema = z.object({ reason: z.string().trim().min(3).max(500) });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 

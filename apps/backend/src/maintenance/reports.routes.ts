@@ -28,7 +28,7 @@ const reportParamsSchema = z.object({
 type ReportId = (typeof reportIds)[number];
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

@@ -227,7 +227,7 @@ const updateCustomerBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -506,7 +506,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/customers", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -656,7 +656,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/customers", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createCustomerBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -841,7 +841,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/customers/:id", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
@@ -866,7 +866,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/customers/:id/detail", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
@@ -957,7 +957,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/customers/:id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1242,7 +1242,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/customers/:id/verify-fmcsa", RL_FMCSA_VERIFY, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canForceFmcsaVerify(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1290,7 +1290,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/customers/:id/classifications", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = detailQuerySchema.safeParse(req.query ?? {});
@@ -1323,7 +1323,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/customers/:id/deactivate", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1382,7 +1382,7 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/customers/:id/reactivate", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

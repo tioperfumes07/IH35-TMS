@@ -20,7 +20,7 @@ const messageBodySchema = z.object({
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -29,7 +29,7 @@ export async function registerDriverMessagesRoutes(app: FastifyInstance) {
     config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
   }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = messageBodySchema.safeParse(req.body ?? {});

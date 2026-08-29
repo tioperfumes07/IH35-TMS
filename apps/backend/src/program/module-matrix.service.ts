@@ -20,6 +20,8 @@ import {
   accumulateTierBucket,
   assertTierTallyConsistent,
   classifyMatrixCellTier,
+  cellEmptyWhy,
+  cellQueueKind,
   emptyTierBucket,
   finalizeTierMetrics,
   fullyWiredColumnMatches,
@@ -160,6 +162,9 @@ export type MatrixCell = {
   clickedReason?: string;
   /** @deprecated use builtReason/liveReason */
   doneReason?: string;
+  /** T-03: why Box 3/4 empty — not_built=FIX, built_unproven=ERRAND. Omit when live or N/A. */
+  emptyWhy?: "not_built" | "built_unproven";
+  queueKind?: "fix" | "errand";
 };
 
 export type RequiredColumn = { id: string; group: string; label: string };
@@ -1555,6 +1560,8 @@ async function computeModuleMatrixUncached(moduleId: string, cacheKey: string): 
 
       const state = cellState(audited, built, live);
       const tier = classifyMatrixCellTier({ required: true, live, built, probeReason, audited });
+      const emptyWhy = cellEmptyWhy({ required: true, built, live });
+      const queueKind = cellQueueKind(emptyWhy);
       bumpTier(col.id, tier);
 
       cells[col.id] = {
@@ -1573,6 +1580,8 @@ async function computeModuleMatrixUncached(moduleId: string, cacheKey: string): 
         ...(clicked ? { clicked: true } : {}),
         ...(clickedReason ? { clickedReason } : {}),
         ...(liveReason || builtReason ? { doneReason: liveReason ?? builtReason } : {}),
+        ...(emptyWhy ? { emptyWhy } : {}),
+        ...(queueKind ? { queueKind } : {}),
       };
     }
 

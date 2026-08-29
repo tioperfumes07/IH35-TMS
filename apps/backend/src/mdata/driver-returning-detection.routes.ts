@@ -35,7 +35,7 @@ const checkReturningBodySchema = z
   });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -154,7 +154,7 @@ export async function findReturningDriverMatches(client: QueryableClient, input:
 export async function registerDriverReturningDetectionRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/drivers/check-returning", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedBody = checkReturningBodySchema.safeParse(req.body ?? {});

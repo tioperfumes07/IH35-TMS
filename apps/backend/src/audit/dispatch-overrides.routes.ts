@@ -13,7 +13,7 @@ const querySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -35,7 +35,7 @@ export async function registerDispatchOverrideAuditRoutes(app: FastifyInstance) 
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden_owner_admin_only" });
     }

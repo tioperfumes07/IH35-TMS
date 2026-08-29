@@ -63,7 +63,7 @@ const updateBodySchema = paymentTermsBaseSchema
   });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -101,7 +101,7 @@ const SELECT_COLS = `
 export async function registerPaymentTermsRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/payment-terms", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) {
       if (!(req.query as { operating_company_id?: string } | undefined)?.operating_company_id) {
@@ -142,7 +142,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/payment-terms", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -197,7 +197,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/payment-terms/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -221,7 +221,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/catalogs/payment-terms/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -301,7 +301,7 @@ export async function registerPaymentTermsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/payment-terms/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

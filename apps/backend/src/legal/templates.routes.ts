@@ -52,7 +52,7 @@ const approveBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -83,7 +83,7 @@ async function setOperatingCompany(client: { query: (sql: string, values?: unkno
 export async function registerLegalTemplateRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -106,7 +106,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/legal/templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -128,7 +128,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/legal/templates/versions/list", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedQuery = listVersionsQuerySchema.safeParse(req.query ?? {});
@@ -146,7 +146,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -168,7 +168,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/legal/templates/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -195,7 +195,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
   // Seed the 7 owner-activated library templates for this entity (idempotent).
   app.post("/api/v1/legal/templates/library/ensure", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
@@ -214,7 +214,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
   // Clone a template into a new draft version (the only way to revise an active body).
   app.post("/api/v1/legal/templates/:id/new-version", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -236,7 +236,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates/:id/submit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -258,7 +258,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates/:id/attorney-review-link", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -281,7 +281,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -308,7 +308,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates/:id/activate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});
@@ -331,7 +331,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/templates/:id/retire", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
 
     const parsedParams = templateIdParamSchema.safeParse(req.params ?? {});

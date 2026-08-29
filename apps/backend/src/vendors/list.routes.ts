@@ -14,14 +14,14 @@ const listQuerySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerVendorListRoutes(app: FastifyInstance) {
   app.get("/api/v1/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendZodValidation(reply, parsed.error);

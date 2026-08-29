@@ -188,7 +188,7 @@ const returningDispatcherBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -314,7 +314,7 @@ async function findReturningDispatcherMatches(
 export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/dispatcher-error-reasons", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedQuery = reasonsQuerySchema.safeParse(req.query ?? {});
@@ -353,7 +353,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.get("/api/v1/identity/users/:user_id/safety-events", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = userParamsSchema.safeParse(req.params ?? {});
@@ -432,7 +432,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.get("/api/v1/mdata/dispatcher-safety-events", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = reverseListQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -494,7 +494,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.post("/api/v1/identity/users/:user_id/safety-events", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = userParamsSchema.safeParse(req.params ?? {});
@@ -620,7 +620,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id/void", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
@@ -701,7 +701,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.patch("/api/v1/identity/users/:user_id/safety-events/:event_id", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
@@ -793,7 +793,7 @@ export async function registerDispatcherSafetyEventsRoutes(app: FastifyInstance)
 
   app.post("/api/v1/identity/users/check-returning-dispatcher", RL_WRITE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadDispatcherSafety(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedBody = returningDispatcherBodySchema.safeParse(req.body ?? {});

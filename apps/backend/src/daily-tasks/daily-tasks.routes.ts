@@ -24,7 +24,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 

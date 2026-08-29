@@ -41,6 +41,19 @@ export function classifyMatrixCellTier(input) {
   return "unaudited";
 }
 
+export function cellEmptyWhy(input) {
+  if (!input.required) return undefined;
+  if (input.live) return undefined;
+  if (input.built) return "built_unproven";
+  return "not_built";
+}
+
+export function cellQueueKind(why) {
+  if (why === "not_built") return "fix";
+  if (why === "built_unproven") return "errand";
+  return undefined;
+}
+
 export function accumulateTierBucket(bucket, tier) {
   if (tier === "na") return;
   bucket.requiredCells += 1;
@@ -125,6 +138,17 @@ export function matrixPreviewRecentProblems(preview) {
   }
   if (!/slice\(0,\s*10\)/.test(preview)) {
     problems.push("matrix last-10 must cap recentActivity at 10 rows");
+  }
+  return problems;
+}
+
+function matrixPreviewEmptyWhyProblems(preview) {
+  const problems = [];
+  if (!/module-matrix-empty-why-legend/.test(preview) || !/not_built = FIX/.test(preview) || !/built_unproven = ERRAND/.test(preview)) {
+    problems.push("module matrix must label empty cells not_built=FIX vs built_unproven=ERRAND (T-03 work queue)");
+  }
+  if (!/emptyWhyTitle\(st\)/.test(preview)) {
+    problems.push("module matrix leaf cells must tooltip emptyWhyTitle (not_built vs built_unproven)");
   }
   return problems;
 }
@@ -235,6 +259,9 @@ function repoProblems() {
     if (!svc.includes("li += c.li")) {
       problems.push("FW 1–11 must sum per-column Live (c.li) into the 4th box");
     }
+    if (!svc.includes("cellEmptyWhy") || !svc.includes("emptyWhy") || !svc.includes("queueKind")) {
+      problems.push("module-matrix.service.ts must emit emptyWhy+queueKind (not_built=fix vs built_unproven=errand)");
+    }
     if (!/clickedCells/.test(svc)) {
       problems.push("module-matrix.service.ts must expose clickedCells (Chrome click, not Box 4)");
     }
@@ -290,6 +317,9 @@ function repoProblems() {
     if (!/unpaid Live of frozen/.test(view) || !/ops Clicked of frozen cells/.test(view)) {
       problems.push("Frozen KPI = Clicked of frozen; Miss C KPI = unpaid Live of frozen (Clicked 100% must not zero Miss C)");
     }
+    if (!/per-cell why \(not_built=FIX vs built_unproven=ERRAND\)/.test(view)) {
+      problems.push("system matrix tooltip must send operators to module board for not_built vs built_unproven");
+    }
     problems.push(...missCStaleWorkProblems(view));
     problems.push(...fwLiveFourthProblems(view));
     if (/MONEY parked/.test(view) || /Miss C ignore MONEY/.test(view)) {
@@ -297,7 +327,11 @@ function repoProblems() {
     }
   }
   if (!fs.existsSync(PREVIEW)) problems.push(`MISSING ${PREVIEW}`);
-  else problems.push(...matrixPreviewRecentProblems(fs.readFileSync(PREVIEW, "utf8")));
+  else {
+    const previewSrc = fs.readFileSync(PREVIEW, "utf8");
+    problems.push(...matrixPreviewRecentProblems(previewSrc));
+    problems.push(...matrixPreviewEmptyWhyProblems(previewSrc));
+  }
   if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
   else {
     const cat = fs.readFileSync(CATALOG, "utf8");
@@ -425,6 +459,23 @@ if (SELFTEST) {
   const plantedNoRecent = previewLive.replace("module-matrix-recent-activity", "module-matrix-kpi-only");
   if (!matrixPreviewRecentProblems(plantedNoRecent).some((p) => p.includes("last-10 merged"))) {
     console.error(`${LABEL} selftest: last-10 strip mutation escaped`);
+    process.exit(1);
+  }
+  const plantedNoEmptyWhy = previewLive.replace("module-matrix-empty-why-legend", "module-matrix-kpi-only");
+  if (!matrixPreviewEmptyWhyProblems(plantedNoEmptyWhy).some((p) => p.includes("not_built=FIX"))) {
+    console.error(`${LABEL} selftest: empty-why legend mutation escaped`);
+    process.exit(1);
+  }
+  if (cellEmptyWhy({ required: true, built: false, live: false }) !== "not_built") {
+    console.error(`${LABEL} selftest: not_built expected`);
+    process.exit(1);
+  }
+  if (cellEmptyWhy({ required: true, built: true, live: false }) !== "built_unproven") {
+    console.error(`${LABEL} selftest: built_unproven expected`);
+    process.exit(1);
+  }
+  if (cellEmptyWhy({ required: true, built: true, live: true }) !== undefined) {
+    console.error(`${LABEL} selftest: live cells must not queue`);
     process.exit(1);
   }
   console.log(`${LABEL} selftest PASS`);

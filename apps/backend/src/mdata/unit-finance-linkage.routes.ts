@@ -9,7 +9,7 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -19,7 +19,7 @@ export async function registerUnitFinanceLinkageRoutes(app: FastifyInstance) {
   // CodeQL: authorized routes must be rate-limited (match peer mdata GET handlers).
   app.get("/api/v1/mdata/units/:id/finance-linkage", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     const parsedQuery = querySchema.safeParse(req.query ?? {});
     if (!parsedParams.success || !parsedQuery.success) {

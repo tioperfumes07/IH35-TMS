@@ -161,7 +161,7 @@ async function resolveDetailType(
 }
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -196,7 +196,7 @@ function mapAccountConflict(constraint?: string): string {
 export async function registerAccountRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const { limit, offset, status, search, account_type, parent_account_id, postable_only } = parsed.data;
@@ -274,7 +274,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = createAccountBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -369,7 +369,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/accounts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
@@ -400,7 +400,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/catalogs/accounts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -528,7 +528,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/accounts/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -608,7 +608,7 @@ export async function registerAccountRoutes(app: FastifyInstance) {
   // and archives the source — all inside ONE transaction under the entity GUC.
   app.post("/api/v1/catalogs/accounts/:id/merge", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     // Owner-only per blueprint 3.18.12 (`accounting.account.merge`): a merge silently re-points every
     // future posting that used to designate the source, so it is not a catalog-write-role action.
     if (authUser.role !== "Owner") {

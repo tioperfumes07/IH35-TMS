@@ -83,7 +83,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = (scoped ? companyScopedListQuerySchema : catalogListQuerySchema).safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -135,7 +135,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.get(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
@@ -176,7 +176,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.post(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = (scoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(req.query ?? {});
@@ -229,7 +229,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.patch(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -308,7 +308,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.delete(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

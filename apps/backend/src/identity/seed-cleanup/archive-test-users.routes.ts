@@ -54,7 +54,7 @@ type IdentityUserRow = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -93,7 +93,7 @@ function mapIdentityUser(row: IdentityUserRow) {
 
 async function listIdentityUsersWithArchivePolicy(req: FastifyRequest, reply: FastifyReply) {
   const authUser = currentAuthUser(req, reply);
-  if (!authUser) return;
+  if (!authUser) return reply;
 
   const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
   if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);

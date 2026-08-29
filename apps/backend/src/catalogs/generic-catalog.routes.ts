@@ -960,7 +960,7 @@ export async function registerGenericCatalogRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/excel-upload-jobs/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
 

@@ -73,7 +73,7 @@ const uuidParams = z.object({ uuid: z.string().uuid() });
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function getAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

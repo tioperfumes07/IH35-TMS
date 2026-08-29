@@ -74,7 +74,7 @@ const listQueryWithBasicSchema = listQuerySchema.extend({
 export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/safety/dot-violation-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQueryWithBasicSchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -116,7 +116,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -142,7 +142,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/safety/dot-violation-types", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -198,7 +198,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -269,7 +269,7 @@ export async function registerDotViolationTypesRoutes(app: FastifyInstance) {
 
   app.delete("/api/v1/catalogs/safety/dot-violation-types/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

@@ -32,7 +32,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 function currentAuthUser(req: any, reply: any) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

@@ -11,7 +11,7 @@ const querySchema = z.object({
 const idSchema = z.object({ unit_id: z.string().uuid().optional(), driver_id: z.string().uuid().optional(), vendor_id: z.string().uuid().optional() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

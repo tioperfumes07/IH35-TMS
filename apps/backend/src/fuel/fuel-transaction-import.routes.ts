@@ -22,7 +22,7 @@ const companyQuerySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -65,7 +65,7 @@ export async function registerFuelTransactionImportRoutes(app: FastifyInstance) 
   // persist each purchase into fuel.fuel_transactions (FUEL-1). Idempotent.
   app.post("/api/v1/fuel/transactions/import", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);

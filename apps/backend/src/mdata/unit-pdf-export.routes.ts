@@ -10,14 +10,14 @@ const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() })
 const unitParamsSchema = z.object({ id: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerUnitPdfExportRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/units/:id/export.pdf", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = unitParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });

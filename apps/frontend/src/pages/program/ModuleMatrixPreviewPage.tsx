@@ -14,6 +14,7 @@ import {
   GroupRollupTable,
   MatrixBoxTracker,
   MatrixCell4,
+  emptyWhyTitle,
   pctClass,
   type GroupRollup,
   type TierMetrics,
@@ -47,6 +48,8 @@ type LiveCell = {
   built?: boolean;
   live?: boolean;
   done?: boolean;
+  emptyWhy?: "not_built" | "built_unproven";
+  queueKind?: "fix" | "errand";
 };
 
 type LiveMatrix = {
@@ -138,6 +141,12 @@ function cellBoxes(
     return { req: false, audited: false, built: false, live: false };
   }
   const live = liveByLeaf?.get(leafId)?.[colId];
+  if (live?.emptyWhy === "built_unproven") {
+    return { req: true, audited: true, built: true, live: false };
+  }
+  if (live?.emptyWhy === "not_built") {
+    return { req: true, audited: Boolean(live.audited), built: false, live: false };
+  }
   if (live?.live || live?.done || live?.state === "live" || live?.state === "done") {
     return { req: true, audited: true, built: true, live: true };
   }
@@ -687,6 +696,9 @@ export function ModuleMatrixPreviewPage() {
           </span>
           Live verified (Box 4)
         </span>
+        <span data-testid="module-matrix-empty-why-legend">
+          Empty cell why: not_built = FIX (vertical by column) · built_unproven = ERRAND (observe live; never stamp Box 4 from another module)
+        </span>
       </div>
 
       <div className="scroll">
@@ -739,7 +751,7 @@ export function ModuleMatrixPreviewPage() {
                   </td>
                   {row.cells.map((st, ci) => (
                     <td key={cols[ci].id} className="gc">
-                      <MatrixCell4 {...st} />
+                      <MatrixCell4 {...st} title={emptyWhyTitle(st)} />
                     </td>
                   ))}
                   <td className="sum-val amb">{leafCounts.built}</td>

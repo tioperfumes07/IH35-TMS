@@ -18,14 +18,14 @@ type Queryable = {
 };
 
 function officeAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerDriverCommunicationsRoutes(app: FastifyInstance) {
   app.get("/api/v1/drivers/:id/communications", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const params = paramsSchema.safeParse(req.params ?? {});
     const query = querySchema.safeParse(req.query ?? {});

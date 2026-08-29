@@ -36,7 +36,7 @@ type Queryable = {
 };
 
 function officeAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -55,7 +55,7 @@ async function withCompanyScope<T>(
 export async function registerDriversMessagesRoutes(app: FastifyInstance) {
   app.get("/api/v1/drivers/messages/inbox", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
     const conversations = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
@@ -66,7 +66,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/drivers/messages/unread", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
     const messages = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
@@ -77,7 +77,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/drivers/messages/:driverId/thread", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
@@ -91,7 +91,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     config: { rateLimit: { max: 60, timeWindow: "1 minute" } },
   }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = messageParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });

@@ -3,14 +3,14 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerStatesRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/us-states", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     return withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `
@@ -26,7 +26,7 @@ export async function registerStatesRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/mexico-states", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     return withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
         `

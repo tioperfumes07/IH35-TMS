@@ -28,7 +28,7 @@ const companyScopeQuerySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -39,7 +39,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 export async function registerDocsFoundationRoutes(app: FastifyInstance) {
   app.get("/api/v1/docs/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -91,7 +91,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/docs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -209,7 +209,7 @@ export async function registerDocsFoundationRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/docs/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});

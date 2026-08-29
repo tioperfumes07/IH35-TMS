@@ -66,7 +66,7 @@ const updateAssetBodySchema = z
 type AuthUser = { uuid: string; role: string };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply): AuthUser | null {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as AuthUser;
 }
 
@@ -99,7 +99,7 @@ async function resolveAssetsOperatingCompanyId(
 export async function registerAssetsRoutes(app: FastifyInstance) {
   app.get("/api/v1/assets", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const { limit, offset, type, status, active, operating_company_id } = parsedQuery.data;
@@ -164,7 +164,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/assets/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = z.object({ operating_company_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
@@ -210,7 +210,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/assets/:id/status-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
@@ -248,7 +248,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/assets", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createAssetBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -308,7 +308,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/assets/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -365,7 +365,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/assets/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -443,7 +443,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/assets/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 

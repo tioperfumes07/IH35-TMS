@@ -6,7 +6,7 @@ import { deactivateTeam } from "./driver-team.service.js";
 const idParamsSchema = z.object({ teamId: z.string().uuid() });
 
 function auth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

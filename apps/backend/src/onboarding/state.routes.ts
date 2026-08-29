@@ -35,7 +35,7 @@ type InviteRow = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string; email?: string | null };
 }
 
@@ -118,7 +118,7 @@ async function ensureStateRow(client: Queryable, operatingCompanyId: string) {
 export async function registerOnboardingStateRoutes(app: FastifyInstance) {
   app.get("/api/v1/onboarding/state", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = getStateQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -154,7 +154,7 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedBody = patchStateBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const body = parsedBody.data;
@@ -233,7 +233,7 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/onboarding/seed-sample-data", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedBody = seedBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
 

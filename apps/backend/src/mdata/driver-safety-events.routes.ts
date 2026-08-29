@@ -99,7 +99,7 @@ const suspendDriverBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -125,7 +125,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const querySchema = z.object({
@@ -170,7 +170,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const bodySchema = z.object({
@@ -223,7 +223,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/catalogs/driver-termination-reasons/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -296,7 +296,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -332,7 +332,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = z.object({ id: uuidSchema }).safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -362,7 +362,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:driver_id/suspend", RL_SUSPEND, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = routeParamsSchema.safeParse(req.params ?? {});
@@ -476,7 +476,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/drivers/:driver_id/safety-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canReadSafetyFile(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = routeParamsSchema.safeParse(req.params ?? {});
@@ -577,7 +577,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:driver_id/safety-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = routeParamsSchema.safeParse(req.params ?? {});
@@ -718,7 +718,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id/void", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
@@ -791,7 +791,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/drivers/:driver_id/safety-events/:event_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});

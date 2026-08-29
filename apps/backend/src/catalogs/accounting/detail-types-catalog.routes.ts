@@ -54,7 +54,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
 
   app.get(basePath, RATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listWithTypeSchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -89,7 +89,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
 
   app.get(`${basePath}/:id`, RATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -110,7 +110,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
 
   app.post(basePath, RATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -142,7 +142,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
 
   app.patch(`${basePath}/:id`, RATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -198,7 +198,7 @@ export function registerDetailTypesCatalogRoutes(app: FastifyInstance) {
   // Void-not-delete: deactivate (is_active=false). System rows are seed-locked.
   app.delete(`${basePath}/:id`, RATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

@@ -10,7 +10,7 @@ const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() })
 const reportParamsSchema = z.object({ report_id: z.string().trim().min(1) });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

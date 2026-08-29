@@ -85,7 +85,7 @@ const assignLoadBodySchema = z
   });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -120,7 +120,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
   // Entity-scoped via app.operating_company_id (RLS policy fuel_tx_company_isolation, migration 0300).
   app.get("/api/v1/fuel/transactions", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = listFuelTransactionsQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const q = query.data;
@@ -280,7 +280,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
    */
   app.post("/api/v1/fuel/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const body = createFuelTransactionBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
@@ -506,7 +506,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;
     const params = idParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);

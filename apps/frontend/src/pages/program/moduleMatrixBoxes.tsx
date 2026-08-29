@@ -53,7 +53,18 @@ export function cumulativeBoxCounts(metrics: TierMetrics): BoxCounts {
   };
 }
 
-export function pctClass(n: number): string {
+export function emptyWhyTitle(st: {
+  req: boolean;
+  built: boolean;
+  live: boolean;
+}): string {
+  if (!st.req) return "N/A — column not required on this leaf";
+  if (st.live) return "LIVE proven — no queue (do not restamp)";
+  if (st.built) {
+    return "built_unproven · ERRAND — Box 3 green, Box 4 empty. Observe on live SHA. Never verticalize Box 4 stamps.";
+  }
+  return "not_built · FIX — Box 3 empty. Vertical by column (shared component), not per-module chrome.";
+}
   if (n >= 80) return "hi";
   if (n >= 40) return "mid";
   return "lo";

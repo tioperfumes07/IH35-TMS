@@ -11,7 +11,7 @@ const setDefaultSchema = z.object({ driver_id: z.string().uuid() });
 const clearDefaultSchema = z.object({ expected_driver_id: z.string().uuid() });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

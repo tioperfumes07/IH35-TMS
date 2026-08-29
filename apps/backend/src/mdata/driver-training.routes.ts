@@ -24,14 +24,14 @@ const patchTrainingSchema = z.object({
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerDriverTrainingRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/drivers/:id/training", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
@@ -78,7 +78,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/training", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = createTrainingSchema.safeParse(req.body ?? {});
@@ -140,7 +140,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/drivers/:id/training/:training_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = trainingParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = patchTrainingSchema.safeParse(req.body ?? {});
@@ -198,7 +198,7 @@ export async function registerDriverTrainingRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/training/:training_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = trainingParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });

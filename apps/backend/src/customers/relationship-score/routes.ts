@@ -24,7 +24,7 @@ const atRiskQuerySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -38,7 +38,7 @@ async function relationshipScoresTableExists(client: {
 export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstance) {
   app.get("/api/v1/customers/:uuid/relationship-score", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return reply.code(400).send({ error: "invalid_customer_id" });
@@ -92,7 +92,7 @@ export async function registerCustomerRelationshipScoreRoutes(app: FastifyInstan
 
   app.get("/api/v1/customers/relationship-scores/at-risk", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsedQuery = atRiskQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return reply.code(400).send({ error: "validation_error", details: parsedQuery.error.flatten() });

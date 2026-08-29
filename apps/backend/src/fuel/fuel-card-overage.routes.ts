@@ -37,7 +37,7 @@ const approveBodySchema = z.object({
 const APPROVE_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -59,7 +59,7 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const query = listQuerySchema.safeParse(req.query ?? {});
       if (!query.success) return sendValidationError(reply, query.error);
 
@@ -188,7 +188,7 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!APPROVE_ROLES.has(String(authUser.role ?? ""))) {
         return reply.code(403).send({ error: "forbidden" });
       }
@@ -263,7 +263,7 @@ export async function registerFuelCardOverageRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!new Set(["Owner", "Administrator"]).has(String(authUser.role ?? ""))) {
         return reply.code(403).send({ error: "forbidden" });
       }

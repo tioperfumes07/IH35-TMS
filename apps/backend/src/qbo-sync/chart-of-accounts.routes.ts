@@ -26,7 +26,7 @@ const EMPTY_SYNC_STATUS = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 
@@ -37,7 +37,7 @@ function isWriteRole(role: string) {
 export async function registerChartOfAccountsSyncRoutes(app: FastifyInstance) {
   app.post("/api/v1/qbo-sync/chart-of-accounts/pull-now", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsed = bodySchema.safeParse(req.body ?? {});
@@ -54,7 +54,7 @@ export async function registerChartOfAccountsSyncRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/qbo-sync/chart-of-accounts/reconcile-now", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsed = bodySchema.safeParse(req.body ?? {});
@@ -71,7 +71,7 @@ export async function registerChartOfAccountsSyncRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/qbo-sync/chart-of-accounts/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsed = statusQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });

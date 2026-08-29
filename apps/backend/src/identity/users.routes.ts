@@ -225,7 +225,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/identity/me/onboarding", RL_MUTATE, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = onboardingPatchSchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
 
@@ -447,7 +447,7 @@ export async function registerIdentityRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/identity/users/:id/detail", RL_READ, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = userIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});

@@ -24,7 +24,7 @@ type LovesRow = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -90,7 +90,7 @@ async function normalizeRowsFromWorkbook(
 export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
   app.post("/api/v1/fuel/loves-prices/upload", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
