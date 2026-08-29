@@ -229,6 +229,10 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
   const oldRow = await assertDriverScope(ctx.client, ctx.id, ctx.operatingCompanyId);
   if (!oldRow) return { ok: false, code: "E_NOT_FOUND", message: "Driver not found" };
 
+  await ctx.client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [
+    `driver-default:${ctx.operatingCompanyId}:${ctx.id}`,
+  ]);
+
   const res = await ctx.client.query(
     `
       UPDATE mdata.drivers
@@ -260,11 +264,38 @@ async function handleArchive(ctx: BulkPerEntityContext<z.infer<typeof archivePay
   const newRow = res.rows[0] as Record<string, unknown> | undefined;
   if (!newRow) return { ok: false, code: "E_ALREADY_ARCHIVED", message: "Driver already archived" };
 
+  const endedAssignments = await ctx.client.query(
+    `
+      UPDATE telematics.vehicle_driver_assignments
+      SET ended_at = now()
+      WHERE driver_id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND is_default = true
+        AND ended_at IS NULL
+      RETURNING id::text, unit_id::text
+    `,
+    [ctx.id, ctx.operatingCompanyId]
+  );
+  const clearedUnitMirrors = await ctx.client.query(
+    `
+      UPDATE mdata.units
+      SET assigned_driver_id = NULL,
+          updated_at = now()
+      WHERE assigned_driver_id = $1::uuid
+        AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)
+      RETURNING id::text
+    `,
+    [ctx.id, ctx.operatingCompanyId]
+  );
+
   await appendBulkCrudAudit(ctx.client, ctx.actorUserId, "mdata.drivers", "archive", ctx.bulkCallId, {
     resource_id: ctx.id,
     operating_company_id: ctx.operatingCompanyId,
     reason: ctx.reason,
     changes: buildPatchChanges({ archived_at: newRow.archived_at }, oldRow, newRow),
+    ended_assignment_ids: endedAssignments.rows.map((row) => String((row as { id: string }).id)),
+    ended_assignment_unit_ids: endedAssignments.rows.map((row) => String((row as { unit_id: string }).unit_id)),
+    cleared_unit_ids: clearedUnitMirrors.rows.map((row) => String((row as { id: string }).id)),
   });
 
   return { ok: true };
