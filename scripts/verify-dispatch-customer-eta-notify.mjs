@@ -128,6 +128,10 @@ function verifySources({
   if (!service.includes("sendSms")) failures.push("service must dispatch SMS");
   if (!service.includes("dispatch.notify_log"))
     failures.push("service must log delivery confirmations");
+  if (!/COALESCE\([\s\S]{0,120}c\.customer_name,[\s\S]{0,180}mdata\.resolve_customer_label_same_company\(nl\.customer_id, nl\.operating_company_id\)[\s\S]{0,80}AS customer_name/.test(service))
+    failures.push("delivery history must resolve the preserved same-company customer label");
+  if (!/LEFT JOIN mdata\.customers c ON c\.id = nl\.customer_id[\s\S]{0,100}c\.operating_company_id = nl\.operating_company_id/.test(service))
+    failures.push("delivery history customer label join must not erase preserved notifications");
   if (!/const preferences = res\.rows\[0\];[\s\S]{0,140}?if \(!preferences\?\.customer_id\)[\s\S]{0,100}?E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,600}?appendCrudAudit/.test(service)) {
     failures.push("preference upsert must prove its returned canonical customer identity before audit/success");
   }
@@ -241,6 +245,16 @@ function main() {
         "restore retired milestone events",
         "service",
         sources.service.replace("AND ls.soft_deleted_at IS NULL", "AND TRUE"),
+      ],
+      [
+        "erase notification history with an inactive-customer inner join",
+        "service",
+        sources.service.replace("LEFT JOIN mdata.customers c ON c.id = nl.customer_id", "JOIN mdata.customers c ON c.id = nl.customer_id"),
+      ],
+      [
+        "drop historical notification customer label resolution",
+        "service",
+        sources.service.replace("mdata.resolve_customer_label_same_company(nl.customer_id, nl.operating_company_id)", "NULL"),
       ],
     ];
     for (const [name, key, source] of mutations) {
