@@ -1,3 +1,5 @@
+CODEX | SHIPPED | DRIVER-F7332 | PR=#17659 @ 9ab80c214a | gate=exit0 | Live=UNVERIFIED | NEXT=dispatch-drivers-fleet-fuel unique leftover | GO
+CODEX | ACK | GO-0106 | NOW=dispatch-drivers-fleet-fuel-unique-leftover | SHA=b2448ce | GO
 CODEX | FINDING+FIXED CODE | DRIVER-F7332 | malformed/partial Driver import commit was clean success | SOURCE=drivers-import commit created+row_errors | PROVES=runtime boundary + retained partial-error review | KEEPS=registry guard+selftest | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | ACK | GO-0105-R1 | NOW=dispatch-drivers-fleet-fuel-unique | SHA=b2448ce | GO
 CODEX | FINDING+FIXED CODE | DSP-F7329 | Units needing return was permanent zero + dead KPI | SOURCE=mdata.loads+load_stops latest completed delivery independent of active-load anti-join | PROVES=exact panel+unit/driver drills | KEEPS=registry guard selftest 7/7 | Live=965789a UNVERIFIED | NEXT=gate+FAST-MERGE | GO
@@ -2305,3 +2307,4 @@ CODEX | WORKING | SHA=14daeed | FUEL=false-404-claim-retracted-#17591 | NOW=DRV-
 CODEX | FINDING+FIXED CODE | DRIVER-F7330 | real DQF counts were five dead disabled actions | PROVES=exact KPI→filtered canonical checklist+reset | KEEPS=registry guard selftest 7/7 | Live=post-deploy UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7331 | planner fallback views painted unavailable sources as real zeros | SOURCE=relation existence for route_recommendations+relay_matches | PROVES=explicit unavailable API/UI | KEEPS=registry guard selftest 7/7 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FUEL-F7331 | PR=#17653 @ 18e0495052 | gate=exit0 | Live=UNVERIFIED | NEXT=drivers/fleet/fuel unique leftover | GO
+CODEX | FINDING+FIXED CODE | DRIVER-F7333 | roster Bulk Deactivate bound to canonical company-scoped audited writer | PROVES=reason-required set_status + per-row progress + roster/DQF query-back | KEEPS=registry guard+selftest 7/7 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
