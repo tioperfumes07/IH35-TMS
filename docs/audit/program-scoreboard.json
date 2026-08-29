@@ -2123,6 +2123,51 @@
   },
   "recentActivity": [
     {
+      "number": 17829,
+      "title": "FINDING: OPS-F-DRIFT-5-QBO-ENV-SKIP-STALE",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17829",
+      "sha": "2401e15ef9",
+      "committedAtIso": "2026-08-29T18:09:42-05:00"
+    },
+    {
+      "number": 17828,
+      "title": "ChatGpt-Codex-1-chore(dispatch): claim D1 source migration",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17828",
+      "sha": "83e8a3c8cb",
+      "committedAtIso": "2026-08-29T18:08:00-05:00"
+    },
+    {
+      "number": 17827,
+      "title": "FINDING: N/A -- OUTBOX status: Wave 1 batch 7/N (#17825) + scoreboard regen (#17824)",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17827",
+      "sha": "a14b694e86",
+      "committedAtIso": "2026-08-29T18:04:31-05:00"
+    },
+    {
+      "number": 0,
+      "title": "ChatGpt-Codex-1-fix(program): refresh derived scoreboard",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:04 PM CT",
+      "url": "",
+      "sha": "656318e498",
+      "committedAtIso": "2026-08-29T18:04:09-05:00"
+    },
+    {
+      "number": 17825,
+      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 7/N) -- RE-ANCHOR 5 guards, 1 falsely accused a real security check",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17825",
+      "sha": "dee0ac6351",
+      "committedAtIso": "2026-08-29T18:03:24-05:00"
+    },
+    {
       "number": 17824,
       "title": "FINDING: N/A -- regenerate stale docs/audit/program-scoreboard.json (115 commits behind, blocked all pushes)",
       "state": "merged",
@@ -2166,51 +2211,6 @@
       "url": "",
       "sha": "9410922678",
       "committedAtIso": "2026-08-29T17:55:06-05:00"
-    },
-    {
-      "number": 17818,
-      "title": "FINDING: N/A -- OUTBOX ACK: GO-PENDING-01, batch 6/N status (#17816)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17818",
-      "sha": "20f3601ced",
-      "committedAtIso": "2026-08-29T17:52:53-05:00"
-    },
-    {
-      "number": 0,
-      "title": "ChatGpt-Codex-1-fix(fleet): FLEET-F7359 bind trailer CAS guard",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:52 PM CT",
-      "url": "",
-      "sha": "22e2277830",
-      "committedAtIso": "2026-08-29T17:52:49-05:00"
-    },
-    {
-      "number": 17816,
-      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 6/N) -- RE-ANCHOR 4 guards + 1 real registry gap",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17816",
-      "sha": "18e68e46e5",
-      "committedAtIso": "2026-08-29T17:51:40-05:00"
-    },
-    {
-      "number": 0,
-      "title": "ChatGpt-Codex-1-fix(fleet): FLEET-F7358 repair archive mutation",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:50 PM CT",
-      "url": "",
-      "sha": "d5b0dcab7f",
-      "committedAtIso": "2026-08-29T17:50:14-05:00"
-    },
-    {
-      "number": 17814,
-      "title": "FINDING: N/A -- re-anchor verify-audit-void-reversal-subject-resolver.mjs (GO-MODAL-01)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17814",
-      "sha": "e06e3f2184",
-      "committedAtIso": "2026-08-29T17:48:01-05:00"
     }
   ]
 }
