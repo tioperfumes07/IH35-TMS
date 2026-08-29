@@ -106,7 +106,7 @@ const idParamsSchema = z.object({
 });
 
 export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/qbo/vendors", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/mdata/qbo/vendors", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -257,7 +257,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/mdata/qbo/customers", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/mdata/qbo/customers", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -385,7 +385,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/mdata/qbo/items", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/mdata/qbo/items", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -516,7 +516,7 @@ export async function registerQboMasterWriteRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/mdata/qbo/accounts", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/mdata/qbo/accounts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
