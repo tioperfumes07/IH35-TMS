@@ -28,7 +28,10 @@ const submitApplicationSchema = z.object({
 });
 
 const statusPatchSchema = z.object({
-  status: z.enum(APPLICANT_STATUSES),
+  // `hired` is not an office-managed pipeline transition. Only the atomic
+  // convert-to-driver route may set it after creating the canonical driver,
+  // onboarding session, and driver-vendor linkage.
+  status: z.enum(["new", "screening", "interview", "offer", "declined", "withdrawn"]),
   status_notes: z.string().max(2000).optional().nullable(),
 });
 

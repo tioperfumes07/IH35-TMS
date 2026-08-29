@@ -188,6 +188,18 @@ describe("identity applicant routes (A24-12)", () => {
     expect(body.applicants[0].id).toBe(APPLICANT);
   });
 
+  it("rejects manually marking an applicant hired before canonical conversion", async () => {
+    const res = await app.inject({
+      method: "PATCH",
+      url: `/api/v1/identity/applicants/${APPLICANT}/status?operating_company_id=${COMPANY}`,
+      payload: { status: "hired" },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: "validation_error" });
+    expect(mockWithCurrentUser).not.toHaveBeenCalled();
+  });
+
   it("POST /api/v1/identity/applicants/:id/convert-to-driver bridges onboarding wizard", async () => {
     const sqlSeen: string[] = [];
     mockWithCurrentUser.mockImplementation(async (_uid: string, fn: (client: { query: ReturnType<typeof vi.fn> }) => Promise<unknown>) =>

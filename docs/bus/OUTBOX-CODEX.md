@@ -1,3 +1,4 @@
+CODEX | FINDING+FIXED CODE | DRV-F7313 | live TEST applicant offered manual Hired plus Convert, but conversion rejects hired and strands canonical links | SOURCE=identity.driver_applicants via applicants.routes.ts | SHA=14daeed | NEXT=focused gate+FAST-MERGE | GO
 CODEX | FINDING+FIXED CODE | DRV-F7312 | TEST applicant ab9ac0a7 POST 201 but DOB response Wed Aug 29 not 1990-08-29 | SOURCE=identity.driver_applicants via applicants.routes.ts mapApplicant | SHA=14daeed | NEXT=focused gate+FAST-MERGE | GO
 CODEX | ACK | STANDING+GO-0055 | NOW=dispatch-unique | SHA=b276443 | GO
 CODEX | FINDING | DRV-MONEY-F7311 | LIVE policy GET 200 driver_name=null · canonical driver GET 200 SAMPLE Cascade-2042 · routed=CC-1 | NEXT=drivers/fleet unique | GO
