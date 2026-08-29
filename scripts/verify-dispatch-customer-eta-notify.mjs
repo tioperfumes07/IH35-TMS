@@ -125,8 +125,13 @@ function verifySources({
   if (!/const preferences = res\.rows\[0\];[\s\S]{0,140}?if \(!preferences\?\.customer_id\)[\s\S]{0,100}?E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,600}?appendCrudAudit/.test(service)) {
     failures.push("preference upsert must prove its returned canonical customer identity before audit/success");
   }
-  if (!/E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,180}?reply\.code\(409\)\.send\(\{ error: "notify_preferences_write_failed" \}\)/.test(routes)) {
+  const preferenceWriteRoute = routes.split('app.put("/api/v1/dispatch/customer-notify/preferences/:customerId"')[1]?.split('app.post("/api/v1/dispatch/customer-notify/sync"')[0] ?? "";
+  const preferenceReadRoute = routes.split('app.get("/api/v1/dispatch/customer-notify/preferences/:customerId"')[1]?.split('app.put("/api/v1/dispatch/customer-notify/preferences/:customerId"')[0] ?? "";
+  if (!/E_NOTIFY_PREFERENCES_WRITE_FAILED[\s\S]{0,180}?reply\.code\(409\)\.send\(\{ error: "notify_preferences_write_failed" \}\)/.test(preferenceWriteRoute)) {
     failures.push("preference lost-write must return an honest typed 409 instead of 200/undefined or raw 500");
+  }
+  if (preferenceReadRoute.includes("E_NOTIFY_PREFERENCES_WRITE_FAILED")) {
+    failures.push("preference read route must not mask a misplaced write-failure mapping");
   }
   if (!index.includes("registerDispatchCustomerNotifyRoutes"))
     failures.push("backend index must register customer notify routes");
@@ -183,6 +188,14 @@ function main() {
         "drop preference lost-write route",
         "routes",
         sources.routes.replace('if ((error as Error).message === "E_NOTIFY_PREFERENCES_WRITE_FAILED") {', "if (false) {")
+      ],
+      [
+        "misplace preference lost-write mapping on read route",
+        "routes",
+        sources.routes.replace(
+          'if ((error as Error).message === "E_CUSTOMER_NOT_FOUND") return reply.code(404).send({ error: "customer_not_found" });\n      throw error;',
+          'if ((error as Error).message === "E_CUSTOMER_NOT_FOUND") return reply.code(404).send({ error: "customer_not_found" });\n      if ((error as Error).message === "E_NOTIFY_PREFERENCES_WRITE_FAILED") return reply.code(409).send({ error: "notify_preferences_write_failed" });\n      throw error;',
+        ),
       ],
       [
         "drop atomic claim",

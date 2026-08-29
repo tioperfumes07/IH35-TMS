@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7180 | CLAIM=notify-preferences-lost-write-mapped-on-GET-not-PUT | SOURCE=dispatch.customer_notify_preferences upsert RETURNING identity | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7179 | PR=#17348 @ 96c932799b | Built=load-stop geofence create/update+wake lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | SHIPPED | DSP-F7178 | PR=#17343 @ 88ba2a305c | Built=available-driver exact-load truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7179 | CLAIM=load-stop-geofence-binding-dead+silent | SOURCE=mdata.load_stops→geo.geofences | NEXT=vertical guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7177 | PR=#17339 @ b74f7e5984 | Built=stop-type validation truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
