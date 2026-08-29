@@ -96,9 +96,12 @@ export async function registerLoadCancellationsAnalyticsRoutes(app: FastifyInsta
             l.rate_total_cents,
             to_char(lc.cancelled_at AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD') AS cancelled_on,
             l.customer_id,
-            c.customer_name,
+            COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, lc.operating_company_id)) AS customer_name,
             l.assigned_primary_driver_id AS driver_id,
-            NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), '') AS driver_name
+            COALESCE(
+              NULLIF(TRIM(COALESCE(d.first_name, '') || ' ' || COALESCE(d.last_name, '')), ''),
+              mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, lc.operating_company_id)
+            ) AS driver_name
           FROM dispatch.load_cancellations lc
           LEFT JOIN mdata.loads l ON l.id = lc.load_id
                                  AND l.operating_company_id = lc.operating_company_id
