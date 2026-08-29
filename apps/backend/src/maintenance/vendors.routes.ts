@@ -313,7 +313,7 @@ async function fetchVendorDetail(
 }
 
 export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/vendors", async (req, reply) => {
+  app.get("/api/v1/maintenance/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -357,7 +357,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     return { rows, csv_import_enabled: isVendorsCsvImportEnabled() };
   });
 
-  app.get("/api/v1/maintenance/vendors/:id", async (req, reply) => {
+  app.get("/api/v1/maintenance/vendors/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -375,7 +375,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/maintenance/vendors", async (req, reply) => {
+  app.post("/api/v1/maintenance/vendors", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = createSchema.safeParse(req.body ?? {});
@@ -431,7 +431,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/maintenance/vendors/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/vendors/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -502,7 +502,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/maintenance/vendors/:id/archive", async (req, reply) => {
+  app.patch("/api/v1/maintenance/vendors/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -540,7 +540,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
   });
 
   /** @deprecated Sunset 2026-09 — use /archive; ARCHIVE-not-DELETE only. */
-  app.patch("/api/v1/maintenance/vendors/:id/void", async (req, reply) => {
+  app.patch("/api/v1/maintenance/vendors/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -578,7 +578,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/maintenance/vendors/import", async (req, reply) => {
+  app.post("/api/v1/maintenance/vendors/import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isVendorsCsvImportEnabled()) return reply.code(403).send({ error: "csv_import_disabled" });
@@ -650,7 +650,7 @@ export async function registerMaintenanceVendorsRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/maintenance/vendors/import-template", async (_req, reply) => {
+  app.get("/api/v1/maintenance/vendors/import-template", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (_req, reply) => {
     const csv =
       "code,display_name,description,type,contact_email,contact_phone,address,payment_terms,notes\n" +
       "GOODYEAR-COMMERCIAL,Goodyear Commercial,Preferred tire vendor,Tire,rep@goodyear.com,555-0100,123 Main St,Net 30,Preferred vendor\n";
