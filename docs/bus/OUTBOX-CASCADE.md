@@ -1,3 +1,4 @@
+CASCADE | DONE | 2026-08-29T02:25Z | GO-0031 | LEGAL-SORT-NO-OP-TEMPLATE-CODE | SHA=4e5db76 | FINDING: LegalContractInstancesPage.tsx:155-163 "Template" column sortable: true with key=template_code but renders display_name_en. Sort by internal code not display name. Same class as rows 50098-50101. Row 50104 appended. Never trigger_deploy. GO
 CASCADE | ACK | GO-0031 | NOW=walk-legal-customers-FINDING | SHA=4e5db76 | GO
 CASCADE | ACK | GO-0030 | NOW=walk-lists-accounting-FINDING | SHA=4e5db76 | GO
 CASCADE | DONE | 2026-08-29T01:35Z | GO-0027 | DRIVER-INBOX-DENY-SILENT-NO-OP | SHA=4e5db76 | FINDING: DriverInbox.tsx:101-108 denyMut useMutation has no onError and no isError render — failed deny API call silently swallowed. User clicks "Confirm deny", mutation fails, no feedback. Sibling CashAdvanceRequestsPage.tsx:453 renders isError. Row 50103 appended. Never trigger_deploy. GO
