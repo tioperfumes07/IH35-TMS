@@ -159,14 +159,14 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
           l.assigned_primary_driver_id::text AS driver_id,
           l.customer_id::text AS customer_id,
           l.assigned_unit_id::text AS unit_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
           pu.city AS pickup_city,
           pu.state AS pickup_state
         FROM mdata.loads l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
@@ -262,13 +262,13 @@ export async function reschedulePlannerLoad(
           l.load_number,
           l.status::text AS status,
           l.assigned_primary_driver_id::text AS driver_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           pu.id::text AS pickup_stop_id,
           COALESCE((l.quicksave_pending_fields->>'hazmat')::boolean, false) AS is_hazmat,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at
         FROM mdata.loads l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT id, scheduled_arrival_at, appointment_start_at
           FROM mdata.load_stops
@@ -280,7 +280,7 @@ export async function reschedulePlannerLoad(
           AND l.operating_company_id = $2::uuid
           AND l.soft_deleted_at IS NULL
         LIMIT 1
-        FOR UPDATE OF l, c
+        FOR UPDATE OF l
       `,
       [loadId, operatingCompanyId]
     );
@@ -405,14 +405,14 @@ export async function reschedulePlannerLoad(
           l.assigned_primary_driver_id::text AS driver_id,
           l.customer_id::text AS customer_id,
           l.assigned_unit_id::text AS unit_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           COALESCE(pu.scheduled_arrival_at, pu.appointment_start_at)::text AS start_at,
           COALESCE(del.scheduled_arrival_at, del.appointment_end_at, pu.scheduled_arrival_at + interval '24 hours')::text AS end_at,
           pu.city AS pickup_city,
           pu.state AS pickup_state
         FROM mdata.loads l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
