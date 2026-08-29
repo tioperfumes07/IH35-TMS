@@ -73,11 +73,11 @@ export function audit(src) {
   if (/\.catch\(\(\) => \(\{ rowCount: 0 \}\)\)/.test(src.lovesRoute)) {
     failures.push(`${FILES.lovesRoute}: database write failures must abort, never be counted as skipped success`);
   }
-  if (!/await client\.query\([\s\S]*UPDATE fuel\.loves_prices_daily/.test(src.lovesRoute)) {
-    failures.push(`${FILES.lovesRoute}: must retain the company-scoped Loves price update writer`);
+  if (!/await client\.query<\{ inserted: boolean \}>\([\s\S]*INSERT INTO fuel\.loves_prices_daily[\s\S]*ON CONFLICT \(operating_company_id, effective_date, station_name, station_address\)[\s\S]*DO UPDATE SET[\s\S]*RETURNING \(xmax = 0\) AS inserted/.test(src.lovesRoute)) {
+    failures.push(`${FILES.lovesRoute}: must retain the atomic company-keyed Loves price upsert writer`);
   }
-  if (!/await client\.query\([\s\S]*INSERT INTO fuel\.loves_prices_daily/.test(src.lovesRoute)) {
-    failures.push(`${FILES.lovesRoute}: must retain the company-scoped Loves price insert writer`);
+  if (!/\[\s*companyId,\s*row\.station_uuid \?\? null,/.test(src.lovesRoute)) {
+    failures.push(`${FILES.lovesRoute}: Loves price upsert must bind the selected company as parameter $1`);
   }
 
   if (!/getFuelSavingsSummary/.test(src.plannerHome) || !/SavingsPanel/.test(src.plannerHome)) {
@@ -128,16 +128,9 @@ if (process.argv.includes("--selftest")) {
     { key: "importModal", from: "${res.dead_letters} rejected", to: "0 rejected" },
     { key: "importModal", from: 'res.dead_letters > 0 ? "error" : "success"', to: '"success"' },
     { key: "uploadModal", from: "await uploadLovesPrices(operatingCompanyId", to: "await uploadLovesPrices(REMOVED" },
-    {
-      key: "lovesRoute",
-      from: ");\n        if ((updateRes.rowCount ?? 0) > 0)",
-      to: ").catch(() => ({ rowCount: 0 }));\n        if ((updateRes.rowCount ?? 0) > 0)",
-    },
-    {
-      key: "lovesRoute",
-      from: ");\n        if ((insertRes.rowCount ?? 0) > 0)",
-      to: ").catch(() => ({ rowCount: 0 }));\n        if ((insertRes.rowCount ?? 0) > 0)",
-    },
+    { key: "lovesRoute", from: "ON CONFLICT (operating_company_id, effective_date, station_name, station_address)", to: "ON CONFLICT (effective_date, station_name, station_address)" },
+    { key: "lovesRoute", from: "RETURNING (xmax = 0) AS inserted", to: "RETURNING false AS inserted" },
+    { key: "lovesRoute", from: "[\n              companyId,\n              row.station_uuid ?? null,", to: "[\n              null,\n              row.station_uuid ?? null," },
     { key: "plannerHome", from: "SavingsPanel", to: "SavingsPane1" },
     { key: "plannerHome", from: "fuel-history-savings-error", to: "fuel-history-savings-removed" },
     { key: "plannerHome", from: "fuel-planner-savings-error", to: "fuel-planner-savings-removed" },
