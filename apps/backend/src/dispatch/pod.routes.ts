@@ -5,7 +5,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireDriverSession } from "../driver/auth.js";
 import { withCurrentUser } from "../auth/db.js";
-import { generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
+import { deleteObjectBytes, generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { fetchBolPayload, generateAndStoreBol, generateBolPdf } from "./bol-generator.service.js";
 import { assembleFactoringPacket } from "../factoring/packet-assemble.service.js";
 
@@ -75,6 +75,20 @@ export async function uploadPodAsset(
   return r2Key;
 }
 
+async function deleteUploadedPodAssets(r2Keys: readonly string[]): Promise<void> {
+  const cleanupErrors: unknown[] = [];
+  for (const r2Key of r2Keys) {
+    try {
+      await deleteObjectBytes(r2Key);
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+  }
+  if (cleanupErrors.length > 0) {
+    throw new AggregateError(cleanupErrors, `pod_asset_cleanup_failed:${r2Keys.join(",")}`);
+  }
+}
+
 export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
   app.post("/api/v1/driver/loads/:loadId/stops/:stopId/pod", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
@@ -122,45 +136,59 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
 
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [stop.operating_company_id]);
 
-        const photoKey = body.data.photo_base64
-          ? await uploadPodAsset(stop.operating_company_id, params.data.loadId, params.data.stopId, "photo", body.data.photo_base64)
-          : null;
-        const signatureKey = await uploadPodAsset(
-          stop.operating_company_id,
-          params.data.loadId,
-          params.data.stopId,
-          "signature",
-          body.data.signature_base64
-        );
-
-        const insertRes = await client.query(
-          `
-            INSERT INTO dispatch.pod_documents (
-              operating_company_id, load_id, stop_id, driver_id,
-              photo_r2_key, signature_r2_key, recipient_name, notes, status
-            )
-            VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8, 'pending_review')
-            RETURNING id::text, status, created_at::text
-          `,
-          [
+        const uploadedR2Keys: string[] = [];
+        try {
+          const photoKey = body.data.photo_base64
+            ? await uploadPodAsset(stop.operating_company_id, params.data.loadId, params.data.stopId, "photo", body.data.photo_base64)
+            : null;
+          if (photoKey) uploadedR2Keys.push(photoKey);
+          const signatureKey = await uploadPodAsset(
             stop.operating_company_id,
             params.data.loadId,
             params.data.stopId,
-            driver.id,
-            photoKey,
-            signatureKey,
-            body.data.recipient_name ?? null,
-            body.data.notes ?? null,
-          ]
-        );
+            "signature",
+            body.data.signature_base64
+          );
+          uploadedR2Keys.push(signatureKey);
 
-        await appendCrudAudit(client, user.uuid, "dispatch.pod.captured", {
-          pod_id: insertRes.rows[0].id,
-          load_id: params.data.loadId,
-          stop_id: params.data.stopId,
-        });
+          const insertRes = await client.query(
+            `
+              INSERT INTO dispatch.pod_documents (
+                operating_company_id, load_id, stop_id, driver_id,
+                photo_r2_key, signature_r2_key, recipient_name, notes, status
+              )
+              VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8, 'pending_review')
+              RETURNING id::text, status, created_at::text
+            `,
+            [
+              stop.operating_company_id,
+              params.data.loadId,
+              params.data.stopId,
+              driver.id,
+              photoKey,
+              signatureKey,
+              body.data.recipient_name ?? null,
+              body.data.notes ?? null,
+            ]
+          );
+          const storedPod = insertRes.rows[0];
+          if (!storedPod?.id) throw new Error("pod_document_create_failed");
 
-        return { pod: insertRes.rows[0] };
+          await appendCrudAudit(client, user.uuid, "dispatch.pod.captured", {
+            pod_id: storedPod.id,
+            load_id: params.data.loadId,
+            stop_id: params.data.stopId,
+          });
+
+          return { pod: storedPod };
+        } catch (error) {
+          try {
+            await deleteUploadedPodAssets(uploadedR2Keys);
+          } catch (cleanupError) {
+            throw new AggregateError([error, cleanupError], `pod_capture_cleanup_failed:${uploadedR2Keys.join(",")}`);
+          }
+          throw error;
+        }
       });
 
       if ("error" in created) {
