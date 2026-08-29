@@ -35,9 +35,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id wired to pages/DriverDetail.tsx. getDriver(id, operatingCompanyId) requires company scope. Page uses ParityTable + ListErrorState, renders 12 operations sub-views via OperationsDepthNav, and links back to roster and HOS. verify-driver-detail-company-scope.mjs OK; verify-driver-detail-uses-paritytable.mjs OK; verify-driver-operations-depth.mjs OK (12 sub-views).",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id wired to pages/DriverDetail.tsx. getDriver(id, operatingCompanyId) requires company scope. Page uses ParityTable + ListErrorState, renders 12 operations sub-views via OperationsDepthNav, and links back to roster and HOS. verify-driver-detail-company-scope.mjs OK; verify-driver-detail-uses-paritytable.mjs OK; verify-driver-operations-depth.mjs OK (12 sub-views). | PROD-VERIFIED 2026-08-29 CC-2/GUARD, live healthz b276443. Live Chrome at https://app.ih35dispatch.com/drivers/7d867b16-06e2-4b2b-9ff2-1451e26c2d71 (USMCA, Owner session): Profile tab renders real driver fields matching Neon exactly (see DRV-S01 proof for the same id); clicked into the Operations sub-view -> its own inner tab set (Financial/Compliance & Safety/Operations/Engagement) renders with honest empty states ('No records found for this driver' -- genuinely 0 debt/assignment rows for this specific driver, not a crash or fabricated placeholder); the HOS Detail button navigates to /drivers/:id/hos (DRV-S03, no dead end) and Back correctly returns here (no dead end either direction).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T15:59:26.000Z",
+      "live_verified_sha": "b276443"
     },
     {
       "id": "DRV-S03",
@@ -49,9 +51,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/hos wired to pages/drivers/DriverHosDetailPage.tsx. Calls getDriver(id, operatingCompanyId) and getDriverHosDetail(id, operatingCompanyId), both gated by id + operatingCompanyId. Renders FMCSA clocks and HOS timeline, with Back to driver link. Honest empty state when no company selected.",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/hos wired to pages/drivers/DriverHosDetailPage.tsx. Calls getDriver(id, operatingCompanyId) and getDriverHosDetail(id, operatingCompanyId), both gated by id + operatingCompanyId. Renders FMCSA clocks and HOS timeline, with Back to driver link. Honest empty state when no company selected. | PROD-VERIFIED 2026-08-29 CC-2/GUARD, live healthz b276443. Neon proof first (BEGIN; SET LOCAL app.bypass_rls='lucia'; SELECT; COMMIT, discriminator current_user=ih35_app, control org.companies count=3): hos.duty_status_events WHERE driver_id=7d867b16-06e2-4b2b-9ff2-1451e26c2d71 = 0 rows total (ever), 0 in the last 24h. Then live Chrome at /drivers/7d867b16-06e2-4b2b-9ff2-1451e26c2d71/hos (USMCA, Owner session): 11HR DRIVE/14HR WINDOW/30M BREAK/70HR CYCLE clocks render at their full statutory defaults (11h/14h/8h/70h), Status=Ok, '24-hour duty status timeline: No duty status events in the last 24 hours', 'Last 8 days summary: No HOS usage in the last 8 days', 'Manual edit audit: No manual edits recorded' -- every honest-empty claim matches the Neon zero-row count exactly, nothing fabricated. Back link returns to /drivers/:id correctly (no dead end).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T15:59:26.000Z",
+      "live_verified_sha": "b276443"
     },
     {
       "id": "DRV-S04",
