@@ -1,4 +1,7 @@
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7147 | CLAIM=book-load-reservation-consume-zero-row-silent | SOURCE=dispatch.load_id_reservations→mdata.loads | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7146 | PR=#17243 @ 765585f66e | Built=canonical stop-extra-rate company chain | NEXT=load reservation lifecycle | GO
+CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7146 | CLAIM=stop-extra-rate-cross-company-load-link | SOURCE=mdata.loads→mdata.load_stops→dispatch.stop_extra_rates | NEXT=FAST-MERGE | GO
 Codex | FINDING | DSP-MONEY-F7146A | routed=CC-1 | detention customer notice check-send-stamp race | board=OPEN | GO
 Codex | FINDING | DSP-MONEY-F7146B | routed=CC-1 | cancellation approval/load-status unchecked writes | board=OPEN | GO
