@@ -2235,3 +2235,4 @@ Codex | WORKING | DSP-F7266 | GO-0030+RIDER | CLAIM=Book Load post-insert visibl
 Codex | SHIPPED | DSP-F7266 | PR=#17488 @ 5024309714 | Built=Book Load shipment+equipment+trip persistence fail-closed | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7184-R1 | GO-0030+RIDER | CLAIM=approveCancellation stale false closure | SOURCE=requested cancellation→active company load | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED SAF-F7295 | PR=#17537 @ 96c92b4cff | guard=11/11+gate PASS | Live=post-deploy UNVERIFIED | NEXT=SAF-F7296 leave-request route identity | GO
+Codex | SHIPPED SAF-F7296 | PR=#17539 @ ada0c30030 | guard=6/6+gate PASS | Live=post-deploy UNVERIFIED | NEXT=SAF-F7297 mounted-route identity sweep | GO

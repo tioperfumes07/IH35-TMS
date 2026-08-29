@@ -185,6 +185,26 @@ export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
     groupId: "compliance-monitoring",
     tab: { id: "safety-reports", label: "Safety Reports", route: "/safety/reports", badge: null },
   },
+  {
+    groupId: "compliance-monitoring",
+    tab: { id: "integrity-alerts", label: "Integrity Alerts", route: "/safety/integrity-alerts", badge: null },
+  },
+  {
+    groupId: "inspections-fmcsa",
+    tab: { id: "csa-mitigation", label: "CSA Mitigation", route: "/safety/csa-mitigation", badge: null },
+  },
+  {
+    groupId: "inspections-fmcsa",
+    tab: { id: "csa-fmcsa-trend", label: "CSA / FMCSA Trend", route: "/safety/csa-fmcsa-trend", badge: null },
+  },
+  {
+    groupId: "compliance-monitoring",
+    tab: { id: "anomaly-alerts", label: "Anomaly Alerts", route: "/safety/anomaly-alerts", badge: null },
+  },
+  {
+    groupId: "driver-files",
+    tab: { id: "driver-safety-profile", label: "Driver Safety Profile", route: "/safety/driver-profiles", badge: null },
+  },
 ];
 
 export function findSafetyTab(tabId: string) {
