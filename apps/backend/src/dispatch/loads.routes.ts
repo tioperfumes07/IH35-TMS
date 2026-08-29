@@ -646,6 +646,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
@@ -653,6 +654,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
@@ -749,6 +751,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC
             LIMIT 1
           ) sp ON true
@@ -756,6 +759,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
             SELECT city, state, scheduled_arrival_at
             FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC
             LIMIT 1
           ) sd ON true
@@ -961,6 +965,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           SELECT *
           FROM mdata.load_stops
           WHERE load_id = $1::uuid
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC
         `,
         [resolvedLoadId]
