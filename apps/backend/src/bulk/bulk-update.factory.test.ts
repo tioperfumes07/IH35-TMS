@@ -10,6 +10,7 @@ vi.mock("../middleware/rate-limit.js", () => ({
 }));
 import {
   assertBulkActionAllowed,
+  assertExactFleetBulkTargetCount,
   DEFAULT_BULK_MAX_IDS,
   FLEET_BULK_MAX_IDS,
   isOwnerOrAdmin,
@@ -70,6 +71,14 @@ describe("assertBulkActionAllowed", () => {
     expect(assertBulkActionAllowed("Owner", "archive", ["archive"]).ok).toBe(true);
     expect(isOwnerOrAdmin("Administrator")).toBe(true);
     expect(isWriteRole("Manager")).toBe(true);
+  });
+});
+
+describe("assertExactFleetBulkTargetCount", () => {
+  it("accepts exact targets and rejects partial target sets", () => {
+    expect(() => assertExactFleetBulkTargetCount(2, 2, "pre_update")).not.toThrow();
+    expect(() => assertExactFleetBulkTargetCount(2, 1, "pre_update")).toThrow(/expected 2 targets but matched 1/);
+    expect(() => assertExactFleetBulkTargetCount(2, 1, "post_update")).toThrow(/during post_update/);
   });
 });
 

@@ -4,7 +4,10 @@ import { z } from "zod";
 import { buildPatchChanges } from "../audit/crud-audit.js";
 import {
   appendLegacyFleetBulkAudit,
+  assertExactFleetBulkTargetCount,
   FLEET_BULK_MAX_IDS,
+  FleetBulkTargetMismatchError,
+  sendFleetBulkTargetMismatch,
   withLegacyBulkRequest,
 } from "../bulk/bulk-update.factory.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -25,7 +28,8 @@ const bulkUpdateQuerySchema = z.object({
 });
 
 const bulkUpdateBodySchema = z.object({
-  unit_ids: z.array(z.string().uuid()).min(1).max(100),
+  unit_ids: z.array(z.string().uuid()).min(1).max(100)
+    .refine((ids) => new Set(ids).size === ids.length, { message: "unit_ids must be unique" }),
   patch: z
     .object({
       status: bulkStatusInputSchema.optional(),
@@ -74,6 +78,7 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
       const operating_company_id = parsedQuery.data.operating_company_id;
       const dbStatus = patch.status ? bulkStatusToDb[patch.status] : undefined;
 
+      try {
       const payload = await withCurrentUser(authUser.uuid, async (client) => {
         await setScopedCompanyContext(client, authUser.uuid, operating_company_id);
 
@@ -116,6 +121,7 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
           `,
           [unit_ids, operating_company_id]
         );
+        assertExactFleetBulkTargetCount(unit_ids.length, oldRes.rows.length, "pre_update");
         const oldById = new Map(
           oldRes.rows.map((row) => [(row as { id: string }).id, row as Record<string, unknown>])
         );
@@ -134,6 +140,7 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
           `,
           values
         );
+        assertExactFleetBulkTargetCount(unit_ids.length, updateRes.rows.length, "post_update");
 
         for (const updatedRow of updateRes.rows) {
           const row = updatedRow as Record<string, unknown>;
@@ -165,6 +172,10 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
       });
 
       return payload;
+      } catch (error) {
+        if (error instanceof FleetBulkTargetMismatchError) return sendFleetBulkTargetMismatch(reply, error);
+        throw error;
+      }
     });
   });
 }
