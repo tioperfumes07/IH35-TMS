@@ -99,6 +99,16 @@ export function FinanceProjectionsPage() {
       {header}
       {summaryQuery.isLoading || detailQuery.isLoading ? (
         <p className="text-sm text-slate-500">Loading…</p>
+      ) : detailQuery.isError ? (
+        // GO-0038: same class as GO-0028 above (summaryQuery), on the second query this page
+        // fetches -- a failed detail fetch must never silently fall through to a blank content
+        // area indistinguishable from "still loading" or "no data."
+        <ListErrorState
+          title="Couldn't load scenario detail"
+          status={0}
+          message={userFacingApiError(detailQuery.error, "Failed to load scenario detail")}
+          onRetry={() => void detailQuery.refetch()}
+        />
       ) : detailQuery.data ? (
         <div className="space-y-4">
           <div className="rounded-sm border border-slate-200 bg-white p-4">
