@@ -443,6 +443,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           });
 
           await appendCrudAudit(client, authUser.uuid, "mdata.units.created", {
+            operating_company_id: operatingCompanyId,
             resource_id: row.id,
             resource_type: "mdata.units",
             id: row.id,
@@ -721,6 +722,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             ? "mdata.unit.status_changed"
             : "mdata.units.updated";
           await appendCrudAudit(client, authUser.uuid, auditAction, {
+            operating_company_id: scopedCompanyId,
             resource_id: updatedRow.id,
             resource_type: "mdata.units",
             changes,
@@ -841,6 +843,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
             authUser.uuid,
             "mdata.units.deactivated",
             {
+              operating_company_id: scopedCompanyId,
               resource_id: oldRow.id,
               resource_type: "mdata.units",
               was_already_deactivated: wasAlreadyDeactivated,
@@ -914,7 +917,9 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
         authUser.uuid,
         "mdata.unit.quick_availability_changed",
         {
+          operating_company_id: scopedCompanyId,
           resource_id: row.id,
+          resource_type: "mdata.units",
           before: oldRow.quick_availability,
           after: row.quick_availability,
           profile_fields: { quick_availability: parsedBody.data.value },

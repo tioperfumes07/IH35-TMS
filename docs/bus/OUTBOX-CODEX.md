@@ -2197,3 +2197,6 @@ Codex | WORKING | DSP-F7247 | GO-0031 | LOAD=L-20260828-0025 · is_sample_data=t
 Codex | SHIPPED | DSP-F7247 | PR=#17469 @ be84562e63 | Built=reassign selected-driver label continuity | Live=post-deploy UNVERIFIED | NEXT=GO-0032 POD/BOL | GO
 CODEX | ACK | GO-0032 | NOW=dispatch planner/POD/BOL unique | SHA=da39aab | GO
 Codex | WORKING | DSP-F7248 | GO-0032 | LIVE=app-origin BOL GET 404 · load=L-20260828-0025 | CLAIM=canonical BOL API-origin download | NEXT=guard+FAST-MERGE | GO
+CODEX | WORKING | FLEET-F7249 | GO-0033 | TEST unit=df53ccb6-a8ac-45d2-a5af-49fd50f068c3 POST=201 reload=200 audit=0 | NOW=unit lifecycle audit company scope | GO
+CODEX | ACK | GO-0033 | NOW=fleet unique + TEST unit/trailer | SHA=da39aab | GO
+Codex | SHIPPED | DSP-F7248 | PR=#17470 @ 47607ae10f | Built=canonical BOL API-origin download | Live=post-deploy UNVERIFIED | NEXT=GO-0033 fleet unique | GO
