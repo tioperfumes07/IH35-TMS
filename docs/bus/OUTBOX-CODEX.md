@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7239 | GO-0030 | CLAIM=load-list-detail-active-stops | SOURCE=active pickup+delivery→count+rows+drawer itinerary | CLOSES=none — post-deploy list/detail proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7238 | PR=#17459 @ 8154a1e712 | Built=POD capture active delivery stop | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7238 | GO-0030 | CLAIM=pod-active-delivery-stop | SOURCE=active delivery stop→POD capture+evidence linkage | CLOSES=none — post-deploy capture proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7237 | PR=#17458 @ 0eaf6948aa | Built=layover detector active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7237 | GO-0030 | CLAIM=layover-active-stops | SOURCE=active delivery release+next arrival+denominator→layover detector | CLOSES=none — post-deploy detector proof remains | NEXT=guard+FAST-MERGE | GO
