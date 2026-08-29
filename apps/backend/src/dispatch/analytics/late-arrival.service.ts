@@ -93,6 +93,7 @@ const COMPLETED_STOPS_CTE = `
       COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) AS scheduled_at
     FROM dispatch.stop_arrivals sa
     JOIN mdata.load_stops ls ON ls.id = sa.stop_id
+                            AND ls.soft_deleted_at IS NULL
     JOIN mdata.loads l ON l.id = ls.load_id
                   AND l.operating_company_id = sa.operating_company_id
     LEFT JOIN mdata.customers c ON c.id = l.customer_id
@@ -115,7 +116,9 @@ const COMPLETED_STOPS_CTE = `
       JOIN mdata.load_stops del ON del.load_id = l.id
       WHERE p.load_id = l.id
         AND p.stop_type = 'pickup'
+        AND p.soft_deleted_at IS NULL
         AND del.stop_type = 'delivery'
+        AND del.soft_deleted_at IS NULL
       ORDER BY p.sequence_number ASC, del.sequence_number DESC
       LIMIT 1
     ) lane ON true
