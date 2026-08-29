@@ -37,7 +37,7 @@
   "2956": {
     "claimed_at": "2026-08-14",
     "claimed_by": "cursor",
-    "purpose": "verify-cursor-vertical-qbo-picker-modules (reports→accounting→… vertical)"
+    "purpose": "verify-cursor-vertical-qbo-picker-modules (reports\u2192accounting\u2192\u2026 vertical)"
   },
   "2957": {
     "claimed_at": "2026-08-09",
@@ -466,7 +466,7 @@
     "claimed_by": "cursor",
     "guard": "verify-fuel-office-create-modal",
     "lane": "cursor",
-    "note": "CLAIM-RESERVE: FuelPlanner History + Create modal → POST /api/v1/fuel/transactions",
+    "note": "CLAIM-RESERVE: FuelPlanner History + Create modal \u2192 POST /api/v1/fuel/transactions",
     "purpose": "verify-fuel-office-create-modal"
   },
   "3141": {
@@ -1684,7 +1684,7 @@
     "guard": "verify-safety-dot-compliance-hooks",
     "lane": "cursor",
     "name": "verify-safety-dot-compliance-hooks",
-    "note": "LV-SAFETY-DOT-COMPLIANCE-CRASH — hooks before early return",
+    "note": "LV-SAFETY-DOT-COMPLIANCE-CRASH \u2014 hooks before early return",
     "purpose": "verify-safety-dot-compliance-hooks"
   },
   "3658": {
@@ -1825,7 +1825,7 @@
     "claimed_at": "2026-08-17",
     "claimer": "cursor",
     "guard": "verify-sys-edi-picker-applicability",
-    "note": "SYS-EDI-PICKER-APPLICABILITY-THEATER — EDI wizard owes no picker_law"
+    "note": "SYS-EDI-PICKER-APPLICABILITY-THEATER \u2014 EDI wizard owes no picker_law"
   },
   "3706": {
     "band": "cursor-even",
@@ -2025,7 +2025,7 @@
     "claimed_at": "2026-08-18T03:15:00Z",
     "claimed_by": "cursor",
     "guard": "verify-print-opens-canonical-document",
-    "note": "CLAIM-RESERVE — Print opens wrapPdfDocument HTML (invoice/settlement/dispatch-sheet), not SPA window.print chrome"
+    "note": "CLAIM-RESERVE \u2014 Print opens wrapPdfDocument HTML (invoice/settlement/dispatch-sheet), not SPA window.print chrome"
   },
   "3793": "verify-bill-allocation-assets-limit-in-bounds",
   "3797": "verify-cash-advances-view-load-column-present",
@@ -2041,115 +2041,115 @@
     "claimed_at": "2026-08-18T03:35:00Z",
     "claimed_by": "cursor",
     "guard": "verify-bill-print-opens-letter-html",
-    "note": "CLAIM-RESERVE — Bill Print opens letter HTML (wrapPdfDocument), not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Bill Print opens letter HTML (wrapPdfDocument), not SPA window.print"
   },
   "3832": {
     "claimed_at": "2026-08-18T03:40:00Z",
     "claimed_by": "cursor",
     "guard": "verify-bill-payment-print-letter",
-    "note": "CLAIM-RESERVE — Bill payment Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Bill payment Print opens letter HTML, not SPA window.print"
   },
   "3834": {
     "claimed_at": "2026-08-18T03:50:00Z",
     "claimed_by": "cursor",
     "guard": "verify-expense-print-letter",
-    "note": "CLAIM-RESERVE — Expense Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Expense Print opens letter HTML, not SPA window.print"
   },
   "3836": {
     "claimed_at": "2026-08-18T04:00:00Z",
     "claimed_by": "cursor",
     "guard": "verify-account-register-print-letter",
-    "note": "CLAIM-RESERVE — Account register Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Account register Print opens letter HTML, not SPA window.print"
   },
   "3838": {
     "claimed_at": "2026-08-18T04:05:00Z",
     "claimed_by": "cursor",
     "guard": "verify-ap-aging-print-letter",
-    "note": "CLAIM-RESERVE — AP aging Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 AP aging Print opens letter HTML, not SPA window.print"
   },
   "3840": {
     "claimed_at": "2026-08-18T04:06:00Z",
     "claimed_by": "cursor",
     "guard": "verify-ar-aging-print-letter",
-    "note": "CLAIM-RESERVE — Reports AR aging Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Reports AR aging Print opens letter HTML, not SPA window.print"
   },
   "3842": {
     "claimed_at": "2026-08-18T04:12:00Z",
     "claimed_by": "cursor",
     "guard": "verify-profit-loss-print-letter",
-    "note": "CLAIM-RESERVE — P&L Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 P&L Print opens letter HTML, not SPA window.print"
   },
   "3844": {
     "claimed_at": "2026-08-18T04:15:00Z",
     "claimed_by": "cursor",
     "guard": "verify-balance-sheet-print-letter",
-    "note": "CLAIM-RESERVE — Balance Sheet Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Balance Sheet Print opens letter HTML, not SPA window.print"
   },
   "3846": {
     "claimed_at": "2026-08-18T04:16:00Z",
     "claimed_by": "cursor",
     "guard": "verify-trial-balance-print-letter",
-    "note": "CLAIM-RESERVE — Trial Balance Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Trial Balance Print opens letter HTML, not SPA window.print"
   },
   "3848": {
     "claimed_at": "2026-08-18T04:20:00Z",
     "claimed_by": "cursor",
     "guard": "verify-cash-flow-statement-print-letter",
-    "note": "CLAIM-RESERVE — Cash Flow Statement Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Cash Flow Statement Print opens letter HTML, not SPA window.print"
   },
   "3850": {
     "claimed_at": "2026-08-18T04:25:00Z",
     "claimed_by": "cursor",
     "guard": "verify-cash-flow-overview-print-letter",
-    "note": "CLAIM-RESERVE — Cash Flow Overview Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Cash Flow Overview Print opens letter HTML, not SPA window.print"
   },
   "3852": {
     "claimed_at": "2026-08-18T04:35:00Z",
     "claimed_by": "cursor",
     "guard": "verify-reports-ap-aging-print-letter",
-    "note": "CLAIM-RESERVE — Reports AP Aging Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Reports AP Aging Print opens letter HTML, not SPA window.print"
   },
   "3854": {
     "claimed_at": "2026-08-18T04:40:00Z",
     "claimed_by": "cursor",
     "guard": "verify-profit-per-truck-print-letter",
-    "note": "CLAIM-RESERVE — Profit Per Truck Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Profit Per Truck Print opens letter HTML, not SPA window.print"
   },
   "3856": {
     "claimed_at": "2026-08-18T04:45:00Z",
     "claimed_by": "cursor",
     "guard": "verify-fuel-reconciliation-print-letter",
-    "note": "CLAIM-RESERVE — Fuel Reconciliation Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Fuel Reconciliation Print opens letter HTML, not SPA window.print"
   },
   "3858": {
     "claimed_at": "2026-08-18T04:50:00Z",
     "claimed_by": "cursor",
     "guard": "verify-maintenance-cost-per-unit-print-letter",
-    "note": "CLAIM-RESERVE — Maintenance Cost Per Unit Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Maintenance Cost Per Unit Print opens letter HTML, not SPA window.print"
   },
   "3860": {
     "claimed_at": "2026-08-18T04:55:00Z",
     "claimed_by": "cursor",
     "guard": "verify-settlement-summary-print-letter",
-    "note": "CLAIM-RESERVE — Settlement Summary Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Settlement Summary Print opens letter HTML, not SPA window.print"
   },
   "3862": {
     "claimed_at": "2026-08-18T05:00:00Z",
     "claimed_by": "cursor",
     "guard": "verify-customer-profitability-print-letter",
-    "note": "CLAIM-RESERVE — Customer Profitability Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Customer Profitability Print opens letter HTML, not SPA window.print"
   },
   "3864": {
     "claimed_at": "2026-08-18T05:05:00Z",
     "claimed_by": "cursor",
     "guard": "verify-management-report-package-print-letter",
-    "note": "CLAIM-RESERVE — Management Report Package Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Management Report Package Print opens letter HTML, not SPA window.print"
   },
   "3866": {
     "claimed_at": "2026-08-18T05:10:00Z",
     "claimed_by": "cursor",
     "guard": "verify-finance-statements-print-letter",
-    "note": "CLAIM-RESERVE — Finance FinancialStatementsPage Print opens letter HTML, not SPA window.print"
+    "note": "CLAIM-RESERVE \u2014 Finance FinancialStatementsPage Print opens letter HTML, not SPA window.print"
   },
   "3868": {
     "claimed_at": "2026-08-18",
@@ -4493,7 +4493,7 @@
     "claimed_at": "2026-08-27",
     "claimed_by": "cc-3",
     "purpose": "verify-ledger-health-no-human-resolve",
-    "note": "COLLISION RESOLVED 2026-08-28: cc-2's claim-reserve commit d837e234db (23:24:18) landed AFTER cc-3's file already merged on origin/main (a6801b12, earlier same session) with this exact number and a near-identical purpose (GET-only + no UPDATE/DELETE on _system.reconciliation_findings anywhere in the backend, table-wide not integration-scoped, so it already covers 'ledger' once that value exists). cc-2's reservation is superseded — see INBOX-CC-2.md for the redirect to 9863."
+    "note": "COLLISION RESOLVED 2026-08-28: cc-2's claim-reserve commit d837e234db (23:24:18) landed AFTER cc-3's file already merged on origin/main (a6801b12, earlier same session) with this exact number and a near-identical purpose (GET-only + no UPDATE/DELETE on _system.reconciliation_findings anywhere in the backend, table-wide not integration-scoped, so it already covers 'ledger' once that value exists). cc-2's reservation is superseded \u2014 see INBOX-CC-2.md for the redirect to 9863."
   },
   "9863": {
     "claimed_at": "2026-08-28",
@@ -4550,7 +4550,7 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
     "purpose": "verify-banking-factoring-timeline-no-silent-catch",
-    "note": "9881 was claimed first but is n%4=1 (ODD) — verify-verify-step-lane-band.mjs requires cc-2 to claim ≡3 (mod 4); 9883 is the correct number, 9881 stays reserved-but-unused"
+    "note": "9881 was claimed first but is n%4=1 (ODD) \u2014 verify-verify-step-lane-band.mjs requires cc-2 to claim \u22613 (mod 4); 9883 is the correct number, 9881 stays reserved-but-unused"
   },
   "9887": {
     "claimed_at": "2026-08-28",
@@ -4685,7 +4685,7 @@
     "locked": "2026-08-04",
     "note": "Supersedes 2026-07-28 odd/even-only. Claim-before-write required."
   },
-  "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = ≡1 (mod 4) via claude|/cc-1|/cc1; CC-2 = ≡3 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
+  "_how_to_claim": "MOD-4 BANDS + CLAIM-BEFORE-WRITE (owner-locked 2026-08-04; credit CC-2): Cursor = EVEN; CC-1 = \u22611 (mod 4) via claude|/cc-1|/cc1; CC-2 = \u22613 (mod 4) via cc-2|/cc2. Reserve first: merge a claim-only PR (chore/claim-reserve* or chore/claimed-regen* with CLAIM-RESERVE/CLAIMED-REGEN) that adds only the number here; THEN author scripts/verify-steps/NNNN-*.mjs on a feature PR. CI fails if a new step file is not already claimed on origin/main (except one-time 2400 self-bootstrap). Never claim another lane's residue. Never renumber after collisions.",
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "claimed": {
@@ -6049,12 +6049,12 @@
     "2773": {
       "lane": "cc-1",
       "script": "scripts/verify-no-hold-language-in-active-blocks.mjs",
-      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json — registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
+      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json \u2014 registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
     },
     "2777": {
       "lane": "cc-1",
       "script": "scripts/verify-no-patch-or-defer-language.mjs",
-      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json — registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
+      "why": "CC-1 ADOPTS a CC-3-authored guard so it actually RUNS. The _band map partitions every integer among cursor/cc-1/cc-2 and leaves CC-3 no residue class, so CC-3 could not claim a compliant number and parked both guards in .guard-exempt.json \u2014 registered, on disk, enforcing nothing. Squatting another lane's band would have been the collision claim-before-write exists to prevent; adopting into CC-1's band is the honest fix."
     },
     "2781": "2781-verify-bill-vendor-entity-consistent.mjs",
     "2785": "2785-verify-driver-vendor-no-uuid-fallback.mjs",
@@ -6108,19 +6108,19 @@
     "2910": "2910-verify-driver-ap-vendor-reverse-link.mjs",
     "2911": "CC-2 FAIL-BM1 verify-match-candidate-row-selects",
     "2912": "2912-verify-settlement-debt-view-not-stub.mjs",
-    "2913": "CC-2 verify-no-zero-rate-invoice-create (#4989; package.json wiring was forbidden per DoD §4)",
+    "2913": "CC-2 verify-no-zero-rate-invoice-create (#4989; package.json wiring was forbidden per DoD \u00a74)",
     "2914": "2914-verify-driver-active-30d-activity.mjs",
-    "2915": "CC-2 verify-parity-table-sort-toggle-contract (re-land: package.json wiring forbidden per DoD §4)",
+    "2915": "CC-2 verify-parity-table-sort-toggle-contract (re-land: package.json wiring forbidden per DoD \u00a74)",
     "2916": "2916-verify-load-detail-driver-pay-bills.mjs",
-    "2917": "CC-2 verify-combobox-id-label-binding (re-land: package.json wiring forbidden per DoD §4)",
-    "2919": "CC-2 verify-book-load-sample-data-wiring (re-land: package.json wiring forbidden per DoD §4)",
-    "2921": "CC-2 verify-complaint-create-contract (re-land: package.json wiring forbidden per DoD §4)",
-    "2923": "CC-2 verify-complaint-insert-notnull-columns (re-land: package.json wiring forbidden per DoD §4)",
-    "2925": "CC-2 verify-book-load-single-submit (re-land: package.json wiring forbidden per DoD §4)",
-    "2927": "CC-2 verify-book-stop-city-required (re-land: package.json wiring forbidden per DoD §4)",
-    "2929": "CC-2 verify-settlement-payment-events-honest (re-land: package.json wiring forbidden per DoD §4)",
-    "2931": "CC-2 verify-load-create-paths-tag-sample-data (re-land: package.json wiring forbidden per DoD §4)",
-    "2933": "CC-2 verify-trip-pairing-driver-from-load (re-land: package.json wiring forbidden per DoD §4)",
+    "2917": "CC-2 verify-combobox-id-label-binding (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2919": "CC-2 verify-book-load-sample-data-wiring (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2921": "CC-2 verify-complaint-create-contract (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2923": "CC-2 verify-complaint-insert-notnull-columns (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2925": "CC-2 verify-book-load-single-submit (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2927": "CC-2 verify-book-stop-city-required (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2929": "CC-2 verify-settlement-payment-events-honest (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2931": "CC-2 verify-load-create-paths-tag-sample-data (re-land: package.json wiring forbidden per DoD \u00a74)",
+    "2933": "CC-2 verify-trip-pairing-driver-from-load (re-land: package.json wiring forbidden per DoD \u00a74)",
     "2935": "CC-2 verify-loaded-miles-written-on-book",
     "2937": "CC-2 verify-money-creates-supply-sample-flag",
     "2939": "CC-2 verify-settle-due-kpi-fails-open (NO-WINDOW FAIL-S2)",
@@ -6201,12 +6201,12 @@
     },
     "3642": {
       "guard": "verify-driver-archive-implies-inactive",
-      "note": "LV-DRIVER-ARCHIVED-NOT-DEACTIVATED — archived drivers must not stay status=Active / deactivated_at NULL",
+      "note": "LV-DRIVER-ARCHIVED-NOT-DEACTIVATED \u2014 archived drivers must not stay status=Active / deactivated_at NULL",
       "owner": "cursor"
     },
     "3644": {
       "guard": "verify-vendor-bill-create-no-double-submit",
-      "note": "Bill create path is re-submittable — FE in-flight lock + stable Idempotency-Key per drawer session",
+      "note": "Bill create path is re-submittable \u2014 FE in-flight lock + stable Idempotency-Key per drawer session",
       "owner": "cursor"
     },
     "3645": {
@@ -6661,5 +6661,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1328
+  "total_claimed": 1328,
+  "9965": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-reversal-recognizes-cross-mechanism-reversal"
+  }
 }
