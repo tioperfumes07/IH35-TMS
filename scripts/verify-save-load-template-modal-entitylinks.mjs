@@ -46,6 +46,9 @@ function checkSource(modal, service = fs.readFileSync(SERVICE, "utf8")) {
   assert(/<input value=\{name\}[^\n]*disabled=\{pending\}/.test(modal), "name must be locked while saving");
   assert(/onClick=\{closeUnlessPending\} disabled=\{pending\}/.test(modal), "Cancel must be locked while saving");
   assert(/const template = res\.rows\[0\];[\s\S]*if \(!template\)[\s\S]*code: "E_TEMPLATE_CREATE_FAILED"[\s\S]*return template;/.test(service), "backend create must fail loud when INSERT RETURNING yields no canonical template identity");
+  assert(/z\.string\(\)\.uuid\(\)\.safeParse\(customerId\)/.test(service), "backend create must validate the nested customer id before its SQL UUID cast");
+  assert(/!parsedCustomerId\.success[\s\S]*statusCode: 400[\s\S]*code: "E_TEMPLATE_CUSTOMER_ID_INVALID"/.test(service), "malformed nested customer ids must return a typed client error");
+  assert(/\[parsedCustomerId\.data, input\.operating_company_id\]/.test(service), "same-company customer lookup must consume only the validated UUID");
 }
 
 function check() {
@@ -84,8 +87,20 @@ function selftest() {
   let serviceFailed = false;
   try { checkSource(original, brokenService); } catch { serviceFailed = true; }
   assert(serviceFailed, "--selftest expected FAIL when backend create-identity guard is removed");
+  const serviceMutations = [
+    [/z\.string\(\)\.uuid\(\)\.safeParse\(customerId\)/, "{ success: true, data: customerId }"],
+    [/code: "E_TEMPLATE_CUSTOMER_ID_INVALID"/, 'code: "REMOVED"'],
+    [/\[parsedCustomerId\.data, input\.operating_company_id\]/, "[customerId, input.operating_company_id]"],
+  ];
+  for (const [pattern, replacement] of serviceMutations) {
+    const broken = service.replace(pattern, replacement);
+    assert(broken !== service, `--selftest plant must mutate backend ${pattern}`);
+    let failed = false;
+    try { checkSource(original, broken); } catch { failed = true; }
+    assert(failed, `--selftest expected FAIL for backend ${pattern}`);
+  }
   check();
-  console.log(`${LABEL}: OK — selftest PASS (${mutations.length + 1} mutations)`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length + 1 + serviceMutations.length} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";
