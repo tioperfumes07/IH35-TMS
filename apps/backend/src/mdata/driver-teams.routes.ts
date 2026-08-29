@@ -257,7 +257,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     return team;
   });
 
-  app.post("/api/v1/mdata/driver-teams", async (req, reply) => {
+  app.post("/api/v1/mdata/driver-teams", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureWriteRole(req, reply);
     if (!user) return;
     const parsedBody = createDriverTeamBodySchema.safeParse(req.body ?? {});
@@ -342,7 +342,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/mdata/driver-teams/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/driver-teams/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureWriteRole(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -414,7 +414,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/mdata/driver-teams/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/mdata/driver-teams/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureWriteRole(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -458,7 +458,7 @@ export async function registerDriverTeamRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/mdata/driver-teams/:id/replace-driver", async (req, reply) => {
+  app.post("/api/v1/mdata/driver-teams/:id/replace-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureWriteRole(req, reply);
     if (!user) return;
     const parsedParams = replaceDriverParamsSchema.safeParse(req.params ?? {});

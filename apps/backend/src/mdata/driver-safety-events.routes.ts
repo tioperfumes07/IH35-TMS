@@ -168,7 +168,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reasons };
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -221,7 +221,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/catalogs/driver-termination-reasons/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/driver-termination-reasons/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -294,7 +294,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -330,7 +330,7 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
     return { reason: updated };
   });
 
-  app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/driver-termination-reasons/:id/reactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOwner(authUser.role)) return reply.code(403).send({ error: "forbidden" });

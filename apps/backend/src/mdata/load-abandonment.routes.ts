@@ -32,7 +32,7 @@ function officeDispatchRoles(role: string) {
 }
 
 export async function registerLoadAbandonmentRoutes(app: FastifyInstance) {
-  app.post("/api/v1/loads/:loadId/abandonment", async (req, reply) => {
+  app.post("/api/v1/loads/:loadId/abandonment", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
