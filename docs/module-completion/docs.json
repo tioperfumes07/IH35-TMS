@@ -1,8 +1,8 @@
 {
   "module": "docs",
   "title": "Documents (DOCS)",
-  "complete": true,
-  "as_of": "2026-08-10T06:38:46Z",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "1b3a44d",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
   "spec_sources": [
@@ -19,10 +19,11 @@
         "DOD-B"
       ],
       "spec": "DocsHomePage \u00b7 reports-docs-maintenance DOCS section",
-      "status": "PASS",
-      "evidence": "DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d.",
       "pr": "#5380",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-S02",
@@ -32,10 +33,11 @@
         "VERIFY-6"
       ],
       "spec": "Missing Required KPI honesty",
-      "status": "PASS",
-      "evidence": "compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: required_document_types n=18; healthz=1b3a44d.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: required_document_types n=18; healthz=1b3a44d.",
       "pr": "#5380",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-S03",
@@ -46,10 +48,11 @@
         "VERIFY-3"
       ],
       "spec": "UploadModal \u00b7 DocsHomePage + Upload path picker law",
-      "status": "PASS",
-      "evidence": "UploadModal: listFileCategories Combobox + optional EntityPicker (driver/unit/vendor) + ReferenceSelect createKind=customer on standalone path; DocsHomePage passes operatingCompanyId + defaultLinkEntityType from active tab; upload disabled without company. Guard: verify-docs-upload-attachments-pack.mjs + verify-docs-upload-viewed-entity.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: docs.files=54 file_links=3; upload path wired; healthz=1b3a44d.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: UploadModal: listFileCategories Combobox + optional EntityPicker (driver/unit/vendor) + ReferenceSelect createKind=customer on standalone path; DocsHomePage passes operatingCompanyId + defaultLinkEntityType from active tab; upload disabled without company. Guard: verify-docs-upload-attachments-pack.mjs + verify-docs-upload-viewed-entity.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: docs.files=54 file_links=3; upload path wired; healthz=1b3a44d.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-UPLOAD-01",
@@ -59,10 +62,11 @@
         "VERIFY-5"
       ],
       "spec": "FIX-2 docs-upload-viewed-entity \u00b7 docs-upload-company-scope",
-      "status": "PASS",
-      "evidence": "UploadModal forwards operatingCompanyId as operating_company_id; DocsHomePage + DocumentsTab + profile mount sites threaded. Guards verify-docs-upload-viewed-entity.mjs + verify-docs-upload-company-scope.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80; healthz=1b3a44d.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: UploadModal forwards operatingCompanyId as operating_company_id; DocsHomePage + DocumentsTab + profile mount sites threaded. Guards verify-docs-upload-viewed-entity.mjs + verify-docs-upload-company-scope.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80; healthz=1b3a44d.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-ECON-01",
@@ -72,10 +76,11 @@
         "VERIFY-6"
       ],
       "spec": "docs.file_links \u00b7 expiration tracking law",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 USMCA Neon lucia: docs.files=58, classified=3, linked_files=3, file_links=3. All three classified+linked records are real driver credentials for Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez (Federal License, Medical Exam, INE), not generic test PDFs; linked driver belongs to USMCA. Going-forward root fix classifies generated dispatch packets as dispatch_instructions and atomically links driver copy\u2192load+driver and customer copy\u2192load+customer. Guard verify-docs-econ-link-pack selftest 4/4 PASS.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 USMCA Neon lucia: docs.files=58, classified=3, linked_files=3, file_links=3. All three classified+linked records are real driver credentials for Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez (Federal License, Medical Exam, INE), not generic test PDFs; linked driver belongs to USMCA. Going-forward root fix classifies generated dispatch packets as dispatch_instructions and atomically links driver copy\u2192load+driver and customer copy\u2192load+customer. Guard verify-docs-econ-link-pack selftest 4/4 PASS.",
       "pr": "TBD",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-LINK-01",
@@ -85,10 +90,11 @@
         "VERIFY-4"
       ],
       "spec": "0441-mod12-docs-lowest-uuid-company-bug",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS after frontend deploy #7821: fresh cache-busted /documents rendered 67 scoped rows. Entity cells displayed canonical labels including Load: L-20260811-0032, Customer: ZZ-SAMPLE Customer A USMCA_GATEB_SAMPLE_2026-08-07, Customer: Semares Forwarding Services, and Driver: Jorge Pablo Guadalupe Muñoz Gonzalez; zero Record — not visible placeholders and zero raw UUID labels. Upload, category/entity/uploader/expiry/date/filename filters, Search, Range, gear, Preview/Download, and pagination rendered. No mutation. Code #7791; verify-docs-entity-labels normal + 8/8 planted defects.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS after frontend deploy #7821: fresh cache-busted /documents rendered 67 scoped rows. Entity cells displayed canonical labels including Load: L-20260811-0032, Customer: ZZ-SAMPLE Customer A USMCA_GATEB_SAMPLE_2026-08-07, Customer: Semares Forwarding Services, and Driver: Jorge Pablo Guadalupe Mu\u00f1oz Gonzalez; zero Record \u2014 not visible placeholders and zero raw UUID labels. Upload, category/entity/uploader/expiry/date/filename filters, Search, Range, gear, Preview/Download, and pagination rendered. No mutation. Code #7791; verify-docs-entity-labels normal + 8/8 planted defects.",
       "pr": "#7791; deployed by #7821",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DOCS-VERIFY-01",
@@ -104,14 +110,15 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED: DOCS-S01..UPLOAD/LINK/ECON packs already PASS+prod_verified on tip; Neon lucia 2026-08-10 docs.file_links=6 (density unblocked vs earlier 0/3 blocker). Cascade OUTBOX hop.pod_bol probe UNION proven green (3 POD/BOL); load docs exist on USMCA sample loads. VERIFY V1/V3/V4/V5 PASS; V6 N/A docs hub not GL terminus. Closed scaffold OPEN that ignored shipped S* + Neon density.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED: DOCS-S01..UPLOAD/LINK/ECON packs already PASS+prod_verified on tip; Neon lucia 2026-08-10 docs.file_links=6 (density unblocked vs earlier 0/3 blocker). Cascade OUTBOX hop.pod_bol probe UNION proven green (3 POD/BOL); load docs exist on USMCA sample loads. VERIFY V1/V3/V4/V5 PASS; V6 N/A docs hub not GL terminus. Closed scaffold OPEN that ignored shipped S* + Neon density.",
       "pr": "Cascade OUTBOX + Neon + tip S* PASS",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
-  "pass_count": 7,
+  "pass_count": 0,
   "total_count": 7,
-  "progress": "7 of 7",
-  "note": " | 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order)."
+  "progress": "0 of 7",
+  "note": "| 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

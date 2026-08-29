@@ -1,15 +1,15 @@
 {
   "module": "legal",
-  "title": "Legal — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-09T01:54:08.827Z",
+  "title": "Legal \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). REOPEN 2026-08-29 OWNER: 11 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "LEGAL-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
+      "evidence": "PASS 2026-08-09 \u2014 LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -36,10 +36,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalAttorneyReviewPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalAttorneyReviewPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S03",
@@ -50,10 +51,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalContractInstancesPage ParityTable settled empty (already guarded).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalContractInstancesPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S04",
@@ -64,10 +66,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalMattersListPage ParityTable settled empty (already guarded).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalMattersListPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S05",
@@ -78,10 +81,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalMatterDetailPage entity-scoped matter detail + linkage fields.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalMatterDetailPage entity-scoped matter detail + linkage fields.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S06",
@@ -92,10 +96,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalMatterNewPage create form entity-scoped; company-required path.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalMatterNewPage create form entity-scoped; company-required path.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S07",
@@ -106,10 +111,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalPoliciesPage ParityTable settled empty (already guarded).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalPoliciesPage ParityTable settled empty (already guarded).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S08",
@@ -120,10 +126,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PrivacyPolicyPage static legal chrome route mounted.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PrivacyPolicyPage static legal chrome route mounted.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S09",
@@ -134,10 +141,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalReportsLandingPage opco matters rollups + DrillKpiCard.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalReportsLandingPage opco matters rollups + DrillKpiCard.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S10",
@@ -148,10 +156,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalTemplatesListPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalTemplatesListPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S11",
@@ -162,10 +171,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — LegalTemplateDetailPage ParityTables loading= + emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 LegalTemplateDetailPage ParityTables loading= + emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LEGAL-S12",
@@ -176,16 +186,17 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — TermsOfServicePage static legal chrome route mounted.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 TermsOfServicePage static legal chrome route mounted.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 12,
-  "pass_count": 12,
+  "pass_count": 1,
   "total_count": 12,
-  "progress": "12 of 12",
+  "progress": "1 of 12",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,

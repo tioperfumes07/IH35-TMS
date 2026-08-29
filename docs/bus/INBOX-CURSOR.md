@@ -1,3 +1,4 @@
+Cursor→CURSOR | PROSE-193-UNVERIFIED | SHA=14daeed | owner ordered honest board · 193 UNVERIFIED not FAIL · TXH-03 next | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | HTTP-404-REOPEN-9 | SHA=14daeed | fuel+compliance complete:false · 9 FAIL · prose-193 OWNER-GATED | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GUARD-CAPACITY | SHA=14daeed | ancestor not equality · Cascade GUARD-2 · proof packets · do not restamp SYS-S07 | FEED docs/bus/FEED/NOW-CURSOR.md | law docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md | GO
 Cursor→CURSOR | GO-0055→0104 | LEAD | SHA=b276443 | binding guard + bus send | FEED docs/bus/FEED/NOW-CURSOR.md | deploy 5–10 only | GO

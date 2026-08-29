@@ -1,8 +1,8 @@
 {
   "module": "settlements",
   "title": "Settlements / Driver Finance",
-  "complete": true,
-  "as_of": "2026-08-24T13:20:00Z",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "49ff971",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/settlements-deep-2026-08-01.md",
   "spec_sources": [
@@ -20,9 +20,9 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "Settlements hub · AUD-F006 / SETL-settlements-empty",
+      "spec": "Settlements hub \u00b7 AUD-F006 / SETL-settlements-empty",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 — SettlementsTable ParityTable emptyText gated by loading= (listQuery pending/fetching-zero). Honest copy names create/filter. Guard verify-list-empty-settled MIGRATED. USMCA density>0 still shows list; empty path proven by loading gate + literal. | LIVE RE-CONFIRMED 2026-08-28 (CC-1, GO-0032, app.ih35dispatch.com, USMCA, healthz=4e5db76): /driver-finance/settlements renders the populated (non-empty) path correctly — real KPI row (Total Unpaid 17, This Period 6, Drivers w/ Debt 2, YTD Settlements 17), Payment Pipeline tabs, Open Driver Bills panel with 4 real rows, and the 17-row settlements table itself all render with live data; no manual create-settlement wizard exists on this page (settlements are produced only by the automated driver-bill -> pre-settlement -> close pipeline), confirming the surface's actual create-path shape.",
+      "evidence": "PASS 2026-08-09 \u2014 SettlementsTable ParityTable emptyText gated by loading= (listQuery pending/fetching-zero). Honest copy names create/filter. Guard verify-list-empty-settled MIGRATED. USMCA density>0 still shows list; empty path proven by loading gate + literal. | LIVE RE-CONFIRMED 2026-08-28 (CC-1, GO-0032, app.ih35dispatch.com, USMCA, healthz=4e5db76): /driver-finance/settlements renders the populated (non-empty) path correctly \u2014 real KPI row (Total Unpaid 17, This Period 6, Drivers w/ Debt 2, YTD Settlements 17), Payment Pipeline tabs, Open Driver Bills panel with 4 real rows, and the 17-row settlements table itself all render with live data; no manual create-settlement wizard exists on this page (settlements are produced only by the automated driver-bill -> pre-settlement -> close pipeline), confirming the surface's actual create-path shape.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-28T21:35:00.000Z",
@@ -36,11 +36,12 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "Cash advances · ECON-002",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — CashAdvancesHome useListState; empty banner only when listState.isEmpty (never mid-fetch). Was bare rows.length===0 false-empty. Guard verify-list-empty-settled.",
+      "spec": "Cash advances \u00b7 ECON-002",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CashAdvancesHome useListState; empty banner only when listState.isEmpty (never mid-fetch). Was bare rows.length===0 false-empty. Guard verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-S03",
@@ -50,11 +51,12 @@
         "DOD-B",
         "VERIFY-6"
       ],
-      "spec": "Escrow ledger · ECON-003",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — /accounting/escrow EscrowPage already MIGRATED in verify-list-empty-settled: ParityTable loading= + emptyText No escrow accounts found. Postings table same pattern.",
+      "spec": "Escrow ledger \u00b7 ECON-003",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /accounting/escrow EscrowPage already MIGRATED in verify-list-empty-settled: ParityTable loading= + emptyText No escrow accounts found. Postings table same pattern.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-PICK-01",
@@ -63,9 +65,9 @@
         "VERIFY-2",
         "DOD-D"
       ],
-      "spec": "ENUM-AUTO-DEDUCT-TYPES · settlements-deep-2026-08-01",
+      "spec": "ENUM-AUTO-DEDUCT-TYPES \u00b7 settlements-deep-2026-08-01",
       "status": "PASS",
-      "evidence": "PASS code+guard — AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog → GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971.",
+      "evidence": "PASS code+guard \u2014 AutoDeductionPolicies.tsx ReferenceSelect createKind=driver_deduction_type + useDriverDeductionTypeCatalog \u2192 GET/POST /api/v1/catalogs/driver/deduction-types; verify-setl-deduction-type-catalog.mjs + verify-setl-pick01-auto-deduction-type-catalog.mjs exit 0. | PROD-VERIFIED 2026-08-10 Neon lucia (bypass) on br-fancy-credit-akjnd07a as ih35_app: catalogs.driver_deduction_types TRANSP=8 TRK=7 USMCA=8 (sum=23 == pg_stat n_live_tup); driver_finance.auto_deduction_policies USMCA=1; healthz version=49ff971.",
       "pr": null,
       "prod_verified": true
     },
@@ -76,11 +78,12 @@
         "VERIFY-2",
         "DOD-D"
       ],
-      "spec": "ENUM-CASH-ADV-PURPOSE · CreateAdvanceModal pattern",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — CreateAdvanceModal loads catalogs.cash_advance_types via cashAdvanceTypesCatalogClient.list (is_active, opco-scoped); purposeOptions merge catalog rows + economic purposes; fallback only when catalog empty. Guard: verify-wave-h1-catalog-coa-completeness asserts cashAdvanceTypesCatalogClient. Neon lucia: cash_advance_types active TRANSP=6 TRK=6 USMCA=6. REMAINING: cash_advance_type_id FK on driver_advances (ECON-014 / CLS-ECON-EMPTY) is CC-1 money — picker read path is closed.",
+      "spec": "ENUM-CASH-ADV-PURPOSE \u00b7 CreateAdvanceModal pattern",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CreateAdvanceModal loads catalogs.cash_advance_types via cashAdvanceTypesCatalogClient.list (is_active, opco-scoped); purposeOptions merge catalog rows + economic purposes; fallback only when catalog empty. Guard: verify-wave-h1-catalog-coa-completeness asserts cashAdvanceTypesCatalogClient. Neon lucia: cash_advance_types active TRANSP=6 TRK=6 USMCA=6. REMAINING: cash_advance_type_id FK on driver_advances (ECON-014 / CLS-ECON-EMPTY) is CC-1 money \u2014 picker read path is closed.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-PICK-03",
@@ -89,11 +92,12 @@
         "VERIFY-2",
         "DOD-D"
       ],
-      "spec": "ENUM-DISPUTE-TYPES-MODAL/DETAIL · SCHEMA-FINDINGS sibling sweep",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute → POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152).",
+      "spec": "ENUM-DISPUTE-TYPES-MODAL/DETAIL \u00b7 SCHEMA-FINDINGS sibling sweep",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute \u2192 POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-ECON-01",
@@ -102,11 +106,12 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "AUD-F006 · SETL-settlements-empty",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — Neon lucia USMCA driver_finance.driver_settlements count=7 (scenario.settlement done). CLS-MONEY-HOLD HOLD-001 text claiming settlements=0 is STALE for USMCA density. SETL-ECON-01 bar is density>0 when live — met. REMAINING: settlement GL pay-run (driver_settlement_gl_*) may still be empty — tracked under CLS-MONEY-HOLD for posting, not this density item; CLS-MONEY-HOLD still lists settlements module so complete:true stays false until that wave reclass/drain.",
+      "spec": "AUD-F006 \u00b7 SETL-settlements-empty",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 Neon lucia USMCA driver_finance.driver_settlements count=7 (scenario.settlement done). CLS-MONEY-HOLD HOLD-001 text claiming settlements=0 is STALE for USMCA density. SETL-ECON-01 bar is density>0 when live \u2014 met. REMAINING: settlement GL pay-run (driver_settlement_gl_*) may still be empty \u2014 tracked under CLS-MONEY-HOLD for posting, not this density item; CLS-MONEY-HOLD still lists settlements module so complete:true stays false until that wave reclass/drain.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-LINK-01",
@@ -116,10 +121,11 @@
         "VERIFY-4"
       ],
       "spec": "driver_deduction_types.default_recovery_rail / may_draw_escrow",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — AutoDeductionPolicies consume recoveryMetaByCode: DoD §8 recovery-rail ask pre-selected from default_recovery_rail; escrow/split hidden when may_draw_escrow=false. Policy list JOIN catalogs.driver_deduction_types (policy.routes). EscrowForfeitModal labels + meta show catalog rail. Guard verify-setl-pick01-auto-deduction-type-catalog extended (SETL-LINK-01). Neon USMCA: ABANDONMENT escrow, DAMAGE split, SAFETY-FINE settlement.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 AutoDeductionPolicies consume recoveryMetaByCode: DoD \u00a78 recovery-rail ask pre-selected from default_recovery_rail; escrow/split hidden when may_draw_escrow=false. Policy list JOIN catalogs.driver_deduction_types (policy.routes). EscrowForfeitModal labels + meta show catalog rail. Guard verify-setl-pick01-auto-deduction-type-catalog extended (SETL-LINK-01). Neon USMCA: ABANDONMENT escrow, DAMAGE split, SAFETY-FINE settlement.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "SETL-VERIFY-01",
@@ -135,16 +141,17 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-10 PROD-VERIFIED Cascade+Neon: USMCA settlements total_count=8; S-20260808-0085 status=locked + paid_at set (finalize path exercised after SETL-FINALIZE SAVEPOINT). Mark Paid Manually + acknowledge/approve previously proven. TRANSP honest empty. DO NOT RE-AUDIT — see docs/audit/CLOSED-DO-NOT-REAUDIT-2026-08-10.md.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-10 PROD-VERIFIED Cascade+Neon: USMCA settlements total_count=8; S-20260808-0085 status=locked + paid_at set (finalize path exercised after SETL-FINALIZE SAVEPOINT). Mark Paid Manually + acknowledge/approve previously proven. TRANSP honest empty. DO NOT RE-AUDIT \u2014 see docs/audit/CLOSED-DO-NOT-REAUDIT-2026-08-10.md.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
-  "pass_count": 9,
+  "pass_count": 2,
   "total_count": 9,
-  "progress": "9 of 9",
-  "note": " | 2026-08-10 SETL-CERTIFIED-NEON: SETL-PICK-01 + SETL-VERIFY-01 prod_verified:true (Neon catalog density + Cascade PARTIAL API click). complete:false — CLS-MONEY-HOLD still lists settlements (R10). Finalize FAIL remains CC-1 SETL-FINALIZE-RECOMPUTE-DEBT — not claimed locked. | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS. | SETL-PICK-03 PASS | SETL-S01/S02/S03 PASS | SETL-LINK-01 PASS | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn. | 2026-08-10T06:47Z SETL-VERIFY evidence corrected — S-0085 locked; CLOSED-DO-NOT-REAUDIT.",
+  "progress": "2 of 9",
+  "note": "| 2026-08-10 SETL-CERTIFIED-NEON: SETL-PICK-01 + SETL-VERIFY-01 prod_verified:true (Neon catalog density + Cascade PARTIAL API click). complete:false \u2014 CLS-MONEY-HOLD still lists settlements (R10). Finalize FAIL remains CC-1 SETL-FINALIZE-RECOMPUTE-DEBT \u2014 not claimed locked. | 2026-08-09: SETL-PICK-02 + SETL-ECON-01 PASS. | SETL-PICK-03 PASS | SETL-S01/S02/S03 PASS | SETL-LINK-01 PASS | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn. | 2026-08-10T06:47Z SETL-VERIFY evidence corrected \u2014 S-0085 locked; CLOSED-DO-NOT-REAUDIT. REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "complete_unpinned_at": "2026-08-24T13:20:00Z",
-  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog \u2014 not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

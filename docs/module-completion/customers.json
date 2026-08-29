@@ -1,8 +1,8 @@
 {
   "module": "customers",
   "title": "Customers",
-  "complete": true,
-  "as_of": "2026-08-10T11:34:00.000Z",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -18,11 +18,12 @@
         "DOD-A",
         "VERIFY-6"
       ],
-      "spec": "Customers.tsx · mdata.customers",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY, USMCA operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80, mdata.customers=9 and active deactivated_at IS NULL=9. Backend entity-scope/density guard verify-cust-s01-roster-density-filter exits 0.",
+      "spec": "Customers.tsx \u00b7 mdata.customers",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY, USMCA operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80, mdata.customers=9 and active deactivated_at IS NULL=9. Backend entity-scope/density guard verify-cust-s01-roster-density-filter exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-S02",
@@ -33,10 +34,11 @@
         "VERIFY-6"
       ],
       "spec": "customers-deep transaction list proof",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA accounting.invoices=31, all 31 customer-linked; accounting.invoice_lines=30 through those invoices. Customers transaction list wiring guard verify-cust-s02-transaction-list-invoices exits 0.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA accounting.invoices=31, all 31 customer-linked; accounting.invoice_lines=30 through those invoices. Customers transaction list wiring guard verify-cust-s02-transaction-list-invoices exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-S03",
@@ -46,10 +48,11 @@
         "VERIFY-1"
       ],
       "spec": "Customers.tsx COMING_STATE_COPY",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: USMCA roster has 9 live customer records; all nine follow-up tabs retain named honest COMING_STATE_COPY. Guard verify-cust-s03-coming-state-copy exits 0.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: USMCA roster has 9 live customer records; all nine follow-up tabs retain named honest COMING_STATE_COPY. Guard verify-cust-s03-coming-state-copy exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-CHROME-01",
@@ -57,11 +60,12 @@
       "layers": [
         "DOD-B"
       ],
-      "spec": "CHROME-001 · CLS-CHROME-INCONSISTENCY",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: USMCA customer surface contracts retain secondary Edit beside primary New transaction with stable test IDs. Guard verify-customers-chrome-action-parity exits 0.",
+      "spec": "CHROME-001 \u00b7 CLS-CHROME-INCONSISTENCY",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: USMCA customer surface contracts retain secondary Edit beside primary New transaction with stable test IDs. Guard verify-customers-chrome-action-parity exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-CHROME-02",
@@ -70,10 +74,11 @@
         "DOD-B"
       ],
       "spec": "CHROME-002",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Customer details Edit and list-header Edit retain the same secondary Button treatment; header action parity guard exits 0 against the USMCA-ready surface.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Customer details Edit and list-header Edit retain the same secondary Button treatment; header action parity guard exits 0 against the USMCA-ready surface.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-CHROME-03",
@@ -82,24 +87,26 @@
         "DOD-B",
         "VERIFY-1"
       ],
-      "spec": "CHROME-003 · ParityTable.tsx resize handle",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Customers roster uses the guarded ParityTable resize affordance (w-2, visible grip, tooltip and parity-table-col-resize test ID); customers parity guards exit 0.",
+      "spec": "CHROME-003 \u00b7 ParityTable.tsx resize handle",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Customers roster uses the guarded ParityTable resize affordance (w-2, visible grip, tooltip and parity-table-col-resize test ID); customers parity guards exit 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-LINK-01",
-      "title": "Customer → invoice → invoice_lines chain (system-wide SS-005)",
+      "title": "Customer \u2192 invoice \u2192 invoice_lines chain (system-wide SS-005)",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "ACC-invoice-lines · WAVE-H4",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customer→invoice→invoice_lines chain has 31 invoices and 30 lines. EntityLink drill-through and honest zero-line state guard verify-cust-link-01-invoice-lines-honest exits 0.",
+      "spec": "ACC-invoice-lines \u00b7 WAVE-H4",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customer\u2192invoice\u2192invoice_lines chain has 31 invoices and 30 lines. EntityLink drill-through and honest zero-line state guard verify-cust-link-01-invoice-lines-honest exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-LINK-02",
@@ -109,10 +116,11 @@
         "VERIFY-6"
       ],
       "spec": "COI tab empty honesty",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA insurance.coi_request=0. CoiTab names the true empty state and retains Create COI; guard verify-cust-link-02-coi-honest-empty exits 0.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA insurance.coi_request=0. CoiTab names the true empty state and retains Create COI; guard verify-cust-link-02-coi-honest-empty exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "CUST-VERIFY-01",
@@ -128,29 +136,31 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customers=9 active=9, customer-linked invoices=31/31, invoice_lines=30, COI requests=0. Meta guard verify-cust-verify-01 composes routes, entity scope, honest empties, chrome, forward/reverse invoice linkage and locks all nine residual rows prod_verified=true; selftest exits 0.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PROD-VERIFIED 2026-08-10 Codex: Neon lucia READ ONLY USMCA customers=9 active=9, customer-linked invoices=31/31, invoice_lines=30, COI requests=0. Meta guard verify-cust-verify-01 composes routes, entity scope, honest empties, chrome, forward/reverse invoice linkage and locks all nine residual rows prod_verified=true; selftest exits 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "LV-001",
-      "title": "Relationship Health 500s on every customer — PG 42883, scores never written",
+      "title": "Relationship Health 500s on every customer \u2014 PG 42883, scores never written",
       "layers": [
         "DOD-A",
         "DOD-B",
         "VERIFY-1",
         "VERIFY-6"
       ],
-      "spec": "Customer detail Relationship Health · catalogs/customer quality scores",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-08 — LV-001 fixed on main via #4303 (01d2dfca7 EXTRACT-over-date-diff). Guards verify-customer-relationship-score + verify-no-extract-over-date-difference exit 0. LV-005 live-proved on deploy 2c10550: TRANSP score 56 Watch / USMCA 100 Thriving; master_data.customer_relationship_scores n_tup_ins 2709. Manifest was stale FAIL after fix — scoreboard truth PR.",
+      "spec": "Customer detail Relationship Health \u00b7 catalogs/customer quality scores",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-08 \u2014 LV-001 fixed on main via #4303 (01d2dfca7 EXTRACT-over-date-diff). Guards verify-customer-relationship-score + verify-no-extract-over-date-difference exit 0. LV-005 live-proved on deploy 2c10550: TRANSP score 56 Watch / USMCA 100 Thriving; master_data.customer_relationship_scores n_tup_ins 2709. Manifest was stale FAIL after fix \u2014 scoreboard truth PR.",
       "pr": "#4303",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
-  "pass_count": 10,
+  "pass_count": 0,
   "total_count": 10,
-  "progress": "10 of 10",
-  "note": " | LV-001 PASS 2026-08-08 scoreboard catch-up (fix already live #4303)"
+  "progress": "0 of 10",
+  "note": "| LV-001 PASS 2026-08-08 scoreboard catch-up (fix already live #4303) REOPEN 2026-08-29 OWNER: 10 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }

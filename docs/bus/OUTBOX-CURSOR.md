@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-29T16:40Z | OWNER REOPEN 193 prose → UNVERIFIED · baseline shrink · TXH-03 wiring map next | SHA=14daeed | GO
 Cursor | LEAD | 2026-08-29T16:25Z | HTTP-404 REOPEN 9 fuel+compliance FAIL · complete:false · prose-193 OWNER-GATED | SHA=14daeed | GO
 Cursor | LEAD | 2026-08-29T15:20Z | GO-0055→0104 sent all seats | binding guard install PR | SYS-S07 REOPEN | live b276443 | GO
 Cursor | LEAD | 2026-08-29T12:55Z | LANE-LOCK | deploy dep-da9dd4pf2nfc73f65t4g tip 673aa72 | STANDING §3 = GO-0030 rider fail-closed | VOID Claude-draft lanes | CC-1 money · CC-2 GUARD · CC-3 FE | GO

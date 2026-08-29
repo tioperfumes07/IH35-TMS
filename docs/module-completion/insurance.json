@@ -1,15 +1,15 @@
 {
   "module": "insurance",
-  "title": "Insurance — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-24T13:20:00Z",
+  "title": "Insurance \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "5164640be",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn. REOPEN 2026-08-29 OWNER: 5 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "INS-S01",
@@ -36,10 +36,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/policies rendered exactly 3 scoped policies and every Type cell displayed the canonical human label Auto Liability; zero raw auto_liability labels. Create policy, Filters, Search, Range, gear, pagination, and canonical policy detail links rendered. No save or mutation. Code fixes #7801/#7802; human-label guard normal + 8/8 mutations.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/policies rendered exactly 3 scoped policies and every Type cell displayed the canonical human label Auto Liability; zero raw auto_liability labels. Create policy, Filters, Search, Range, gear, pagination, and canonical policy detail links rendered. No save or mutation. Code fixes #7801/#7802; human-label guard normal + 8/8 mutations.",
       "pr": "#7801 + #7802; deployed by #7821",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INS-T02",
@@ -50,10 +51,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /safety/insurance/type-catalog rendered exactly 15 canonical entries with distinct code, human name, description, sort order, active status, and Edit/Deactivate controls. The inline + Create type surface rendered and remained disabled until required input; no save or mutation.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /safety/insurance/type-catalog rendered exactly 15 canonical entries with distinct code, human name, description, sort order, active status, and Edit/Deactivate controls. The inline + Create type surface rendered and remained disabled until required input; no save or mutation.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INS-T03",
@@ -64,10 +66,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/coverage-gaps rendered 39 uncovered units and 2 mismatched units with canonical unit drill links. Previously failing T163 displayed Auto Liability, Physical Damage, Cargo; T120 and T151 displayed Physical Damage, Cargo; zero raw underscore codes. Search, Range, gear, pagination, KPIs, and Unit picker rendered. No save or mutation. Code fixes #7801/#7802; guard normal + 8/8 mutations.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS after frontend deploy #7821 (asset index-CTHSRnxD.js): fresh cache-busted /safety/insurance/coverage-gaps rendered 39 uncovered units and 2 mismatched units with canonical unit drill links. Previously failing T163 displayed Auto Liability, Physical Damage, Cargo; T120 and T151 displayed Physical Damage, Cargo; zero raw underscore codes. Search, Range, gear, pagination, KPIs, and Unit picker rendered. No save or mutation. Code fixes #7801/#7802; guard normal + 8/8 mutations.",
       "pr": "#7801 + #7802; deployed by #7821",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INS-T04",
@@ -78,10 +81,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /safety/insurance/claims rendered exactly 4 scoped claim rows with human policy labels and canonical forward links for applicable policy, unit, trailer, driver, and load relationships. Search, Range, gear, four entity filters, and + Create claim rendered. No save or mutation.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /safety/insurance/claims rendered exactly 4 scoped claim rows with human policy labels and canonical forward links for applicable policy, unit, trailer, driver, and load relationships. Search, Range, gear, four entity filters, and + Create claim rendered. No save or mutation.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "INS-T05",
@@ -92,16 +96,17 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /safety/insurance/lawsuits rendered exactly 1 scoped lawsuit with human case, claim and court identity plus canonical lawsuit and claim drills; Search, Range, gear, + Create lawsuit, monetary columns, and honest Unassigned driver/unit states rendered. No save or mutation.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /safety/insurance/lawsuits rendered exactly 1 scoped lawsuit with human case, claim and court identity plus canonical lawsuit and claim drills; Search, Range, gear, + Create lawsuit, monetary columns, and honest Unassigned driver/unit states rendered. No save or mutation.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 6,
-  "pass_count": 6,
+  "pass_count": 1,
   "total_count": 6,
-  "progress": "6 of 6",
+  "progress": "1 of 6",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
@@ -117,5 +122,5 @@
     ]
   },
   "complete_unpinned_at": "2026-08-24T13:20:00Z",
-  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog \u2014 not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

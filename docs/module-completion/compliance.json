@@ -2,14 +2,14 @@
   "module": "compliance",
   "title": "Compliance \u2014 acceptance checklist",
   "complete": false,
-  "as_of": "2026-08-29T16:25:00Z",
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 3 -> 9 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 6 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29: 4 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 3 -> 9 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 6 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29: 4 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "COMP-S01",
@@ -20,10 +20,11 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. Compliance Dashboard with 6 tabs, filing counters (100 overdue / 1 due soon / 2 upcoming) and a filterable 103-row register citing real regulation references (49 CFR \u00a7382.701, Tax Code \u00a722.23). TRANSP and USMCA return DIFFERENT driver rosters under the same programs, and the Entity column reads TRANSP or USMCA accordingly \u2014 entity scoping proven by the differing rows, not by the count. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: VERIFIED LIVE on prod 2026-07-29 in BOTH entities. Compliance Dashboard with 6 tabs, filing counters (100 overdue / 1 due soon / 2 upcoming) and a filterable 103-row register citing real regulation references (49 CFR \u00a7382.701, Tax Code \u00a722.23). TRANSP and USMCA return DIFFERENT driver rosters under the same programs, and the Entity column reads TRANSP or USMCA accordingly \u2014 entity scoping proven by the differing rows, not by the count. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "COMP-S02",
@@ -62,10 +63,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "Tab \"Overview\" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Tab \"Overview\" in ComplianceDashboardPage renders when tab=overview; page guards missing operating company with honest empty state; overview queries (compliance-summary, compliance-dashboard, compliance-rules, compliance-log) all scoped by operating_company_id; query errors now surface ListErrorBanner with retry; summary cards, credentials table, notification rules panel, and notification log panel render entity-scoped data with export CSV wired to filtered rows. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5326",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "COMP-T02",
@@ -90,10 +92,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "Tab \"HOS Viewer\" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Tab \"HOS Viewer\" renders HosViewerSection inside ComplianceDashboardPage when tab=hos_viewer; parent page guards missing operating company; section fetches roster via getHosDailyRoster and daily ELD log via getHosDaily with operating_company_id, selected date, and driver; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and DatePicker/8-day strip wired; daily log renders remaining clocks, duty-segment ParityTable, per-status totals, and honest empty state when no ELD data. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5330",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "COMP-T04",
@@ -118,10 +121,11 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "PASS",
-      "evidence": "Tab \"HOS History\" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Tab \"HOS History\" renders HosHistorySection inside ComplianceDashboardPage when tab=hos_history; parent page guards missing operating company; section fetches roster via getHosDailyRoster and HOS duty-status events via getHosEvents with operating_company_id, selected driver, and date range; query errors now surface ListErrorBanner with retry; EntityPicker (driver) and From/To DatePickers wired; events table renders duty status, start/end CT, duration; honest empty state when no driver or no events. | PROD-VERIFIED Neon lucia 2026-08-10 br-fancy-credit-akjnd07a USMCA: property_tax_renditions=0 (honest empty); required_document_types=18; accounts_pc=1453.",
       "pr": "#5334",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "COMP-T06",
@@ -139,7 +143,7 @@
     }
   ],
   "M": 9,
-  "pass_count": 5,
+  "pass_count": 1,
   "total_count": 9,
-  "progress": "5 of 9"
+  "progress": "1 of 9"
 }

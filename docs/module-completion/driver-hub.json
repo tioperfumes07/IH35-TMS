@@ -1,8 +1,8 @@
 {
   "module": "driver-hub",
-  "title": "Driver Hub — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-10",
+  "title": "Driver Hub \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "1b3a44d",
   "desktop_audit": null,
   "spec_sources": [
@@ -10,7 +10,7 @@
     "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/pages/home/DriverHubPage.tsx"
   ],
-  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage.",
+  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "DHUB-S01",
@@ -20,7 +20,7 @@
         "DOD-B",
         "DOD-C"
       ],
-      "spec": "DriverHubPage overview tab · DriverInbox",
+      "spec": "DriverHubPage overview tab \u00b7 DriverInbox",
       "status": "PASS",
       "evidence": "Route manifest mounts DriverHubPage; overview tab hosts DriverInbox with companyId gate, canReview role gate, cash-advance EntityLink, cascade preview linkage panel, honest empty for non-cash tabs. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: drivers_active=16; cash_advance_pending=0 (honest empty); healthz=1b3a44d.",
       "pr": "#5327",
@@ -37,10 +37,11 @@
         "DOD-C"
       ],
       "spec": "DriverHubReportingPage",
-      "status": "PASS",
-      "evidence": "DriverHubReportingPage need-company + ListErrorBanner + honest empty + EntityLink + ParityTable; verify-dhub-s02-reporting-surface.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: reporting route auth-gated; guards exit 0; healthz=1b3a44d.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverHubReportingPage need-company + ListErrorBanner + honest empty + EntityLink + ParityTable; verify-dhub-s02-reporting-surface.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: reporting route auth-gated; guards exit 0; healthz=1b3a44d.",
       "pr": "#5331",
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DHUB-S03",
@@ -50,11 +51,12 @@
         "DOD-C",
         "VERIFY-3"
       ],
-      "spec": "DriverHubPage tab=scheduler · DriverSchedulerGridPage",
-      "status": "PASS",
-      "evidence": "DriverSchedulerGridPage mounted from DriverHubPage ?tab=scheduler; operatingCompanyId gate + honest empty 'No drivers are available for this operating company.'; EntityLink kind=driver on grid rows. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: drivers_active=16; healthz=1b3a44d.",
+      "spec": "DriverHubPage tab=scheduler \u00b7 DriverSchedulerGridPage",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverSchedulerGridPage mounted from DriverHubPage ?tab=scheduler; operatingCompanyId gate + honest empty 'No drivers are available for this operating company.'; EntityLink kind=driver on grid rows. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: drivers_active=16; healthz=1b3a44d.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DHUB-S04",
@@ -64,7 +66,7 @@
         "DOD-C",
         "VERIFY-3"
       ],
-      "spec": "DriverHubPage tab=leave_requests · DriverSchedulerRequestInboxPage",
+      "spec": "DriverHubPage tab=leave_requests \u00b7 DriverSchedulerRequestInboxPage",
       "status": "PASS",
       "evidence": "DriverSchedulerRequestInboxPage mounted from DriverHubPage ?tab=leave_requests; Select an operating company gate; ParityTable with EntityLink kind=driver. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: leave inbox company-scoped; healthz=1b3a44d.",
       "pr": null,
@@ -78,24 +80,26 @@
         "DOD-D",
         "VERIFY-4"
       ],
-      "spec": "DriverInbox cash_advance tab · B5 approve cascade preview",
-      "status": "PASS",
-      "evidence": "DriverInbox renders Linkage panel (load_bill / open_bill / employee loan branches), pay-from account picker, Approve & post office endpoint; EntityLink on driver name; ListErrorBanner on fetch failure. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: cash_advance_pending=0 (empty honest); cascade preview wired in FE; healthz=1b3a44d.",
+      "spec": "DriverInbox cash_advance tab \u00b7 B5 approve cascade preview",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverInbox renders Linkage panel (load_bill / open_bill / employee loan branches), pay-from account picker, Approve & post office endpoint; EntityLink on driver name; ListErrorBanner on fetch failure. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: cash_advance_pending=0 (empty honest); cascade preview wired in FE; healthz=1b3a44d.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DHUB-LINK-01",
-      "title": "Cash advance forward chain visible (driver → bill/loan → settlement deduction)",
+      "title": "Cash advance forward chain visible (driver \u2192 bill/loan \u2192 settlement deduction)",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "DriverInbox cascade preview · driver_finance.cash_advance_requests",
-      "status": "PASS",
-      "evidence": "FE displays Linked to / Posts as / Pay from / Settlement deduction on cascade preview; driver EntityLink drills to driver detail. Reverse drill from driver profile to pending requests UNVERIFIED until USMCA wire-test creates a pending row. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: linkage panel wired; 0 pending rows (honest empty, not missing wire); healthz=1b3a44d.",
+      "spec": "DriverInbox cascade preview \u00b7 driver_finance.cash_advance_requests",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: FE displays Linked to / Posts as / Pay from / Settlement deduction on cascade preview; driver EntityLink drills to driver detail. Reverse drill from driver profile to pending requests UNVERIFIED until USMCA wire-test creates a pending row. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: linkage panel wired; 0 pending rows (honest empty, not missing wire); healthz=1b3a44d.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "DHUB-VERIFY-01",
@@ -117,9 +121,9 @@
       "prod_verified": true
     }
   ],
-  "pass_count": 7,
+  "pass_count": 3,
   "total_count": 7,
-  "progress": "7 of 7",
+  "progress": "3 of 7",
   "M": 7,
   "item_count": 7
 }

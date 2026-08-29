@@ -1,15 +1,15 @@
 {
   "module": "maintenance",
-  "title": "Maintenance — acceptance checklist",
-  "complete": true,
-  "as_of": "2026-08-09T01:50:40.513Z",
+  "title": "Maintenance \u2014 acceptance checklist",
+  "complete": false,
+  "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty | MAINT-S03/S07 PASS 2026-08-09 settled empty | MAINT surface batch PASS 2026-08-09 (S04-S06,S09-S21,S23-S24) | MAINT remain-17 PASS 2026-08-09 → complete surface empty-state bar",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar \u2014 'renders real entity-scoped data' \u2014 is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty | MAINT-S03/S07 PASS 2026-08-09 settled empty | MAINT surface batch PASS 2026-08-09 (S04-S06,S09-S21,S23-S24) | MAINT remain-17 PASS 2026-08-09 \u2192 complete surface empty-state bar REOPEN 2026-08-29 OWNER: 38 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "MAINT-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 — /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
+      "evidence": "PASS 2026-08-09 \u2014 /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -36,10 +36,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S03",
@@ -50,10 +51,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — ArrivingSoonPage opco-scoped getArrivingSoon; ParityTable loading= settled gate + honest emptyText; error banner (not false-empty); mobile empty uses settled gate. Guard verify-list-empty-settled ArrivingSoonPage entry.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 ArrivingSoonPage opco-scoped getArrivingSoon; ParityTable loading= settled gate + honest emptyText; error banner (not false-empty); mobile empty uses settled gate. Guard verify-list-empty-settled ArrivingSoonPage entry.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S04",
@@ -64,10 +66,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — BrakeWearDashboard opco at-risk query + ParityTable loading + emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 BrakeWearDashboard opco at-risk query + ParityTable loading + emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S05",
@@ -78,10 +81,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — Compliance425CPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 Compliance425CPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S06",
@@ -92,10 +96,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — MaintenanceDamageRegisterTab opco + ParityTable loading/emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 MaintenanceDamageRegisterTab opco + ParityTable loading/emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S07",
@@ -106,10 +111,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — DefectsInboxPage opco-scoped listMaintenanceDvirDefects; ParityTable loading=q.isPending + emptyText No DVIR defects. Guard verify-list-empty-settled DefectsInboxPage entry.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DefectsInboxPage opco-scoped listMaintenanceDvirDefects; ParityTable loading=q.isPending + emptyText No DVIR defects. Guard verify-list-empty-settled DefectsInboxPage entry.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S08",
@@ -120,10 +126,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — DefectDetailPage opco getMaintenanceDvirDefect; loading + honest not-found empty (entity-scoped); triage history.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DefectDetailPage opco getMaintenanceDvirDefect; loading + honest not-found empty (entity-scoped); triage history.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S09",
@@ -134,10 +141,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — DriverReportsQueuePage ParityTable loading/emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DriverReportsQueuePage ParityTable loading/emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S10",
@@ -148,10 +156,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — DriversMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 DriversMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S11",
@@ -162,10 +171,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — FaultDraftsPage ParityTable loading + dual emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 FaultDraftsPage ParityTable loading + dual emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S12",
@@ -176,10 +186,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — FaultRulesPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 FaultRulesPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S13",
@@ -190,10 +201,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — FleetTablePage useListState settled empty (already guarded); verify-list-empty-settled FleetTablePage.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 FleetTablePage useListState settled empty (already guarded); verify-list-empty-settled FleetTablePage.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S14",
@@ -204,10 +216,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — InTransitIssuesTable loading= + emptyText; MaintenanceHome error banner; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 InTransitIssuesTable loading= + emptyText; MaintenanceHome error banner; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S15",
@@ -218,10 +231,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — same InTransitIssuesTable path as S14 (/maintenance/in-transit-issues).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 same InTransitIssuesTable path as S14 (/maintenance/in-transit-issues).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S16",
@@ -232,10 +246,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — InspectionsPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 InspectionsPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S17",
@@ -246,10 +261,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — MaintKpiDashboardPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 MaintKpiDashboardPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S18",
@@ -260,10 +276,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PartsMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PartsMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S19",
@@ -274,10 +291,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PartsInventoryTable loading= + honest emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PartsInventoryTable loading= + honest emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S20",
@@ -288,10 +306,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PmAutoEnginePage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PmAutoEnginePage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S21",
@@ -302,10 +321,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PmSchedulePage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PmSchedulePage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S22",
@@ -316,10 +336,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — /maintenance/position-history mounts PositionHistoryPage (safety); ParityTable loading + emptyText already list-empty-settled guarded.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /maintenance/position-history mounts PositionHistoryPage (safety); ParityTable loading + emptyText already list-empty-settled guarded.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S23",
@@ -330,10 +351,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — PreFlightDvirQueue ParityTable loading + per-tab emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 PreFlightDvirQueue ParityTable loading + per-tab emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S24",
@@ -344,10 +366,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — MaintenanceReportsPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 MaintenanceReportsPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S25",
@@ -358,10 +381,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — R&M Status Board (MaintenanceHome rm_status_board): opco KPIs + RoadServiceActivePanel + triage/severe bands; honest empty panels.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 R&M Status Board (MaintenanceHome rm_status_board): opco KPIs + RoadServiceActivePanel + triage/severe bands; honest empty panels.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S26",
@@ -372,10 +396,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — RoadServiceList opco + ParityTable loading/emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 RoadServiceList opco + ParityTable loading/emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S27",
@@ -386,10 +411,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — ServiceLocationPage opco + ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 ServiceLocationPage opco + ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S28",
@@ -400,10 +426,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — MaintenanceSettingsPage opco get/update settings; loading/error/empty banners; form chrome.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 MaintenanceSettingsPage opco get/update settings; loading/error/empty banners; form chrome.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S29",
@@ -414,10 +441,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — SevereRepairOosTab ParityTable loading/emptyText; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 SevereRepairOosTab ParityTable loading/emptyText; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S30",
@@ -428,10 +456,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — TireWearDashboard static emptyText + loading; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 TireWearDashboard static emptyText + loading; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S31",
@@ -442,10 +471,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — TireProgramPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 TireProgramPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S32",
@@ -456,10 +486,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — /maintenance/triage aliases to in-transit-issues (InTransitIssuesTable settled empty).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /maintenance/triage aliases to in-transit-issues (InTransitIssuesTable settled empty).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S33",
@@ -470,10 +501,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — VehiclesMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 VehiclesMasterDataPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S34",
@@ -484,10 +516,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — VendorsPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 VendorsPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S35",
@@ -498,10 +531,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — VendorDetailPage ParityTable settled empties; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 VendorDetailPage ParityTable settled empties; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S36",
@@ -512,10 +546,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — WarrantyClaimsPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 WarrantyClaimsPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S37",
@@ -526,10 +561,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — WorkOrdersConsoleListPage ParityTable settled empty; verify-list-empty-settled.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 WorkOrdersConsoleListPage ParityTable settled empty; verify-list-empty-settled.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S38",
@@ -540,10 +576,11 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — WorkOrderDetailPage ParityTables loading= for preview/bills/expenses; EntityLinks F+R (#5062).",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 WorkOrderDetailPage ParityTables loading= for preview/bills/expenses; EntityLinks F+R (#5062).",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
       "id": "MAINT-S39",
@@ -554,17 +591,18 @@
         "DOD-C"
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-09 — WorkOrderNewPage opens CreateWorkOrderModal entity-scoped; company-required empty copy.",
+      "status": "UNVERIFIED",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 WorkOrderNewPage opens CreateWorkOrderModal entity-scoped; company-required empty copy.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 39,
   "rescoped_on": "2026-07-31",
-  "pass_count": 39,
+  "pass_count": 1,
   "total_count": 39,
-  "progress": "39 of 39",
+  "progress": "1 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
