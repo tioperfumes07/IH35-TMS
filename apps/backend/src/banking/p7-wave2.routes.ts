@@ -273,8 +273,11 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
       .safeParse(req.body ?? {});
     if (!params.success || !body.success) return validationError(reply, params.success ? body.error! : params.error);
 
-    await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
-      await client.query(
+    const updated = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      // GO-0022-BANK-P7-W2-FAKE-SUCCESS: no RETURNING/rowCount check at all — a nonexistent or
+      // cross-company rule id silently matched 0 rows, yet the route still wrote a
+      // banking.rule_updated audit entry and returned { ok: true }.
+      const res = await client.query(
         `
           UPDATE accounting.banking_rules
           SET
@@ -282,11 +285,15 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
             is_active = COALESCE($4, is_active),
             updated_at = now()
           WHERE id = $1 AND operating_company_id = $2::uuid
+          RETURNING id
         `,
         [params.data.id, body.data.operating_company_id, body.data.priority ?? null, body.data.is_active ?? null]
       );
+      if (res.rows.length === 0) return false;
       await appendCrudAudit(client, user.uuid, "banking.rule_updated", { id: params.data.id }, "info", "P7-W2-BANK");
+      return true;
     });
+    if (!updated) return reply.code(404).send({ error: "banking_rule_not_found" });
     return { ok: true };
   });
 
@@ -298,14 +305,18 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     const q = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !q.success) return reply.code(400).send({ error: "validation_error" });
 
-    await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
+    const deactivated = await withCompanyScope(user.uuid, q.data.operating_company_id, async (client) => {
       // INV-2: void-never-delete — deactivate, never hard-delete banking rule config.
-      await client.query(`UPDATE accounting.banking_rules SET is_active = false, updated_at = now() WHERE id = $1 AND operating_company_id = $2::uuid`, [
-        params.data.id,
-        q.data.operating_company_id,
-      ]);
+      // GO-0022-BANK-P7-W2-FAKE-SUCCESS: same missing rowCount check as PATCH above.
+      const res = await client.query(
+        `UPDATE accounting.banking_rules SET is_active = false, updated_at = now() WHERE id = $1 AND operating_company_id = $2::uuid RETURNING id`,
+        [params.data.id, q.data.operating_company_id]
+      );
+      if (res.rows.length === 0) return false;
       await appendCrudAudit(client, user.uuid, "banking.rule_deleted", { id: params.data.id }, "warning", "P7-W2-BANK");
+      return true;
     });
+    if (!deactivated) return reply.code(404).send({ error: "banking_rule_not_found" });
     return { ok: true };
   });
 
@@ -469,12 +480,22 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
         `SELECT variance_cents::text FROM banking.reconciliation_sessions WHERE id = $1 AND operating_company_id = $2::uuid`,
         [params.data.id, body.data.operating_company_id]
       );
-      const variance = Number((ses.rows[0] as { variance_cents?: string } | undefined)?.variance_cents ?? 0);
+      // GO-0022-BANK-P7-W2-FAKE-SUCCESS: this used to `?? 0` a missing row straight into "variance is
+      // $0, safe to finalize" — a nonexistent or cross-company session id silently passed the variance
+      // check, then the UPDATE below matched 0 rows (also unchecked), yet the route still wrote a
+      // banking.reconciliation_finalized audit entry and returned { ok: true }: a fabricated success
+      // AND a false audit-trail entry for a session that was never touched.
+      const sessionRow = ses.rows[0] as { variance_cents?: string } | undefined;
+      if (!sessionRow) {
+        reply.code(404).send({ error: "reconciliation_session_not_found" });
+        return;
+      }
+      const variance = Number(sessionRow.variance_cents ?? 0);
       if (variance !== 0) {
         reply.code(409).send({ error: "variance_nonzero", variance_cents: variance });
         return;
       }
-      await client.query(
+      const updateRes = await client.query(
         `
           UPDATE banking.reconciliation_sessions
           SET status = 'finalized',
@@ -482,9 +503,14 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
               reconciled_at = COALESCE(reconciled_at, now()),
               reconciled_by_user_id = $3::uuid
           WHERE id = $1 AND operating_company_id = $2::uuid
+          RETURNING id
         `,
         [params.data.id, body.data.operating_company_id, user.uuid]
       );
+      if (updateRes.rows.length === 0) {
+        reply.code(404).send({ error: "reconciliation_session_not_found" });
+        return;
+      }
       await appendCrudAudit(client, user.uuid, "banking.reconciliation_finalized", { id: params.data.id }, "info", "P7-W2-BANK");
     });
     if (reply.sent) return;
