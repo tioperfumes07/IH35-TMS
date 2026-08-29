@@ -85,9 +85,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots \u2014 structural VERIFY 1\u20138 locked in CI.",
+      "evidence": "2026-08-03 Cursor: HELP-S01..S04 PASS on main; verify-help-verify-01 composes eight-categories + article-content-floor + sidebar/manifest mounts (/help, /help/overview, /help/runbooks, /help/:slug) + Driver App category. Step 2248. Browser click-through named UNVERIFIED only for screenshots \u2014 structural VERIFY 1\u20138 locked in CI. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-help-verify-01.mjs exit 0 (5 of 5). All 4 constituent HELP-S01..S04 items bound live this same session, plus this composed guard closes the browser-click-through gap the prior evidence flagged as its only open item. Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T00:00:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "pass_count": 1,
