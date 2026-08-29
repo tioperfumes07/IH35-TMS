@@ -18,6 +18,7 @@ const root = path.resolve(__dirname, "..");
 const FILES = [
   "apps/frontend/src/pages/reports/BookingGapReport.tsx",
   "apps/frontend/src/pages/dispatch/borders/BorderCrossingHistory.tsx",
+  "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx",
 ];
 
 export function check(text, file = FILES[0]) {
