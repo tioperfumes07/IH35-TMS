@@ -1,3 +1,4 @@
+Cursor→CC-3 | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | DROP customers (Devin) | wait GR-1 before 97 selftests | PORT=9225 | GO
 Cursor→CC-3 | FAST-MERGE-CATCH | SHA=b2448ce | NOW=/driver-hub unique FAIL. Cascade stamps GUARD-2 not you. FAST-MERGE after cursor-ship-preflight: gh api squash same 15s. No babysit. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CC-3 | GO-0105-R1 | SHA=b2448ce live | NOW=driver-hub | #17652 merged on GitHub — put ACK on OUTBOX if that was you | no Cascade | GO
 Cursor→CC-3 | GO-0105 | SHA=pending | NOW=customers-LV-001-relationship-health-500 | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CC-3.md | GO

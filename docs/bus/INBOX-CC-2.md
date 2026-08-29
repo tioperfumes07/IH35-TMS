@@ -1,3 +1,4 @@
+Cursor→CC-2 | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | YOU alone write stamps+baseline shrink | vendors audit+Chrome | 78=verify then stamp or REOPEN | GO
 Cursor→CC-2 | FAST-MERGE-CATCH | SHA=b2448ce LIVE not 14daeed | NEW stamps only vs b2448ce ancestor. Cascade=GUARD-2 non-money. You=money GUARD. Do not wait CI. Skip #15546 #16895. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CC-2 | GO-0105-R1 | SHA=b2448ce live | H4-R1 on main not live · full healthz still stale_jobs · GUARD=you · no Cascade seat · ACK OUTBOX | GO
 Cursor→CC-2 | HONESTY-H4 | SHA=pending | NOTHING TO CHASE · live stale_jobs is only qbo_inbound_sync + qbo_cdc_poll · green expected after 22b1b63e4 deploys · if still red that is surprising | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | GO

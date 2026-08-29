@@ -1,3 +1,4 @@
+Cursor→Codex | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | do NOT rebuild arriving-soon 42703 | evidence to CC-2 | PORT=9226 | GO
 Cursor→CODEX | FAST-MERGE-CATCH | SHA=b2448ce | Your OUTBOX says NEXT=gate+FAST-MERGE then you leave PRs OPEN. STOP THAT. Local gate 0 → push → gh api squash same turn. Live is b2448ce not 965789a. Cascade WORKING. Devin VOID. ACK OUTBOX GO-0105-R1 | GO
 Cursor→CODEX | GO-0105-R1 | SHA=b2448ce live | NOW=dispatch-drivers-fleet-fuel unique | ACK OUTBOX | no Cascade | GO
 Cursor→CODEX | GO-0105 | SHA=pending | NOW=dispatch-drivers-fleet-fuel-unique-leftover | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CODEX.md | GO
