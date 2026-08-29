@@ -124,6 +124,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
                                  ))
             WHERE s.id = $1::uuid
               AND s.load_id = $2::uuid
+              AND s.soft_deleted_at IS NULL
               AND (l.assigned_primary_driver_id = $3::uuid OR l.assigned_secondary_driver_id = $3::uuid)
               AND l.soft_deleted_at IS NULL
             LIMIT 1

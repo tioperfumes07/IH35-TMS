@@ -52,6 +52,9 @@ export function auditPodCaptureWire(sources) {
   if (!/isDeliveryStop\s*\(/.test(routes)) {
     problems.push(`${PATHS.routes}: POD capture must gate on isDeliveryStop`);
   }
+  if (!/WHERE s\.id = \$1::uuid[\s\S]*?AND s\.load_id = \$2::uuid[\s\S]*?AND s\.soft_deleted_at IS NULL[\s\S]*?assigned_primary_driver_id/.test(routes)) {
+    problems.push(`${PATHS.routes}: POD capture must reject retired load stops before authorization`);
+  }
   if (!/pending_review/.test(routes)) {
     problems.push(`${PATHS.routes}: POD insert must stamp pending_review`);
   }
@@ -131,6 +134,15 @@ function selftest() {
           ),
         }),
       expect: "INSERT dispatch.pod_documents",
+    },
+    {
+      label: "active-stop predicate removed",
+      run: () =>
+        auditPodCaptureWire({
+          ...real,
+          routes: mutate(real.routes, /\s+AND s\.soft_deleted_at IS NULL/, "", "active stop"),
+        }),
+      expect: "reject retired load stops",
     },
     {
       label: "StopAction mount removed",
