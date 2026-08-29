@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0053 | NOW=fuel-dispatch-unique | FINDING=FUEL-F7204 | Live=post-deploy UNVERIFIED | GO
+Codex | WORKING | FUEL-F7204 | GO-0053 | CLAIM=Love's-price-atomic-upsert | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | FLEET-F7203 | GO-0052 | CLAIM=Samsara-pairing-unit-lifecycle-serialization | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7202 | PR=#17413 @ 21dc372821 | Built=unknown status fails closed | Live=post-deploy UNVERIFIED | NEXT=GO-0052 drivers/fleet unique | GO
 Codex | WORKING | DSP-F7202 | GO-0051 | CLAIM=unknown-load-status-fails-closed | SOURCE=mdata.load_status_enum→dispatch state machine | NEXT=gate+FAST-MERGE | GO

@@ -134,40 +134,7 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
         rows_skipped: normalizedWorkbook.rows_rejected,
       };
       for (const row of normalizedWorkbook.rows) {
-
-        const updateRes = await client.query(
-            `
-              UPDATE fuel.loves_prices_daily
-              SET price_per_gallon = $1,
-                  station_uuid = COALESCE($2, station_uuid),
-                  city = COALESCE($3, city),
-                  state = COALESCE($4, state),
-                  uploaded_by_user_id = $5,
-                  source_file_name = $6,
-                  updated_at = now()
-              WHERE operating_company_id = $7::uuid
-                AND effective_date = current_date
-                AND station_name = $8
-                AND station_address = $9
-            `,
-            [
-              row.price_per_gallon,
-              row.station_uuid ?? null,
-              row.city ?? null,
-              row.state ?? null,
-              authUser.uuid,
-              filePart.filename,
-              companyId,
-              row.station_name,
-              row.station_address,
-            ]
-          );
-        if ((updateRes.rowCount ?? 0) > 0) {
-          counts.rows_updated += 1;
-          continue;
-        }
-
-        const insertRes = await client.query(
+        const upsertRes = await client.query<{ inserted: boolean }>(
             `
               INSERT INTO fuel.loves_prices_daily (
                 operating_company_id,
@@ -182,6 +149,16 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
                 uploaded_by_user_id
               )
               VALUES ($1, current_date, $2, $3, $4, $5, $6, $7, $8, $9)
+              ON CONFLICT (operating_company_id, effective_date, station_name, station_address)
+              DO UPDATE SET
+                price_per_gallon = EXCLUDED.price_per_gallon,
+                station_uuid = COALESCE(EXCLUDED.station_uuid, fuel.loves_prices_daily.station_uuid),
+                city = COALESCE(EXCLUDED.city, fuel.loves_prices_daily.city),
+                state = COALESCE(EXCLUDED.state, fuel.loves_prices_daily.state),
+                uploaded_by_user_id = EXCLUDED.uploaded_by_user_id,
+                source_file_name = EXCLUDED.source_file_name,
+                updated_at = now()
+              RETURNING (xmax = 0) AS inserted
             `,
             [
               companyId,
@@ -195,8 +172,10 @@ export async function registerFuelLovesUploadRoutes(app: FastifyInstance) {
               authUser.uuid,
             ]
           );
-        if ((insertRes.rowCount ?? 0) > 0) counts.rows_added += 1;
-        else counts.rows_skipped += 1;
+        const persisted = upsertRes.rows[0];
+        if (!persisted) throw new Error("loves_price_upsert_failed");
+        if (persisted.inserted) counts.rows_added += 1;
+        else counts.rows_updated += 1;
       }
 
       await appendCrudAudit(
