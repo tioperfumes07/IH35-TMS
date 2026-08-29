@@ -13,16 +13,19 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           l.customer_id,
           l.assigned_unit_id AS unit_id,
           l.assigned_primary_driver_id AS driver_id,
-          c.customer_name,
+          COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)) AS customer_name,
           u.unit_number,
-          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+          COALESCE(
+            NULLIF(CONCAT_WS(' ', d.first_name, d.last_name), ''),
+            mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+          ) AS driver_name,
           l.latest_eta_prediction,
           sp.scheduled_arrival_at AS next_stop_scheduled_at,
           sd.city AS delivery_city,
           sd.state AS delivery_state
         FROM views.dispatch_load_with_driver_status l
-        JOIN mdata.customers c ON c.id = l.customer_id
-                              AND c.operating_company_id = l.operating_company_id
+        LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                   AND c.operating_company_id = l.operating_company_id
         LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
         LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
