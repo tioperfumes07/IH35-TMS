@@ -35,6 +35,23 @@ function bolStorageFailures(bol, r2) {
   return failures;
 }
 
+function podStorageFailures(routes) {
+  const failures = [];
+  if (!/const storedPod = insertRes\.rows\[0\];[\s\S]{0,100}if \(!storedPod\?\.id\) throw new Error\("pod_document_create_failed"\)/.test(routes)) {
+    failures.push("POD metadata write must require its canonical identity");
+  }
+  if (!/const uploadedR2Keys: string\[\] = \[\];[\s\S]{0,500}uploadedR2Keys\.push\(photoKey\)[\s\S]{0,500}uploadedR2Keys\.push\(signatureKey\)/.test(routes)) {
+    failures.push("POD capture must track every uploaded asset before metadata persistence");
+  }
+  if (!/catch \(error\)[\s\S]{0,150}await deleteUploadedPodAssets\(uploadedR2Keys\)[\s\S]{0,200}pod_capture_cleanup_failed:[\s\S]{0,120}throw error/.test(routes)) {
+    failures.push("failed POD capture must compensate every uploaded R2 asset and fail loud on cleanup loss");
+  }
+  if (!/async function deleteUploadedPodAssets[\s\S]{0,500}await deleteObjectBytes\(r2Key\)[\s\S]{0,300}pod_asset_cleanup_failed:/.test(routes)) {
+    failures.push("POD cleanup must attempt canonical deletion for each uploaded object");
+  }
+  return failures;
+}
+
 function read(filePath) {
   if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
   return fs.readFileSync(filePath, "utf8");
@@ -65,6 +82,7 @@ function main() {
   const r2 = read(paths.r2);
   const failures = [];
   failures.push(...bolStorageFailures(bol, r2));
+  failures.push(...podStorageFailures(routes));
 
   if (!migration.includes("dispatch.pod_documents")) failures.push("migration 0356 must create pod_documents");
   if (!migration.includes("dispatch.bol_documents")) failures.push("migration 0356 must create bol_documents");
@@ -114,13 +132,20 @@ function main() {
       [bol, r2.replace("new DeleteObjectCommand", "new HeadObjectCommand")],
     ];
     for (const [mutantBol, mutantR2] of mutations) if (bolStorageFailures(mutantBol, mutantR2).length === 0) failures.push("BOL storage selftest mutation escaped");
+    const podMutations = [
+      routes.replace('if (!storedPod?.id) throw new Error("pod_document_create_failed");', ""),
+      routes.replace("uploadedR2Keys.push(signatureKey);", ""),
+      routes.replace("await deleteUploadedPodAssets(uploadedR2Keys);", ""),
+      routes.replace("await deleteObjectBytes(r2Key);", ""),
+    ];
+    for (const mutantRoutes of podMutations) if (podStorageFailures(mutantRoutes).length === 0) failures.push("POD storage selftest mutation escaped");
   }
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail(failures.join("; "));
   }
 
-  console.log(`verify:dispatch-pod-bol-workflow PASS${process.argv.includes("--selftest") ? " — 3/3 storage mutations caught" : ""}`);
+  console.log(`verify:dispatch-pod-bol-workflow PASS${process.argv.includes("--selftest") ? " — 7/7 storage mutations caught" : ""}`);
 }
 
 main();
