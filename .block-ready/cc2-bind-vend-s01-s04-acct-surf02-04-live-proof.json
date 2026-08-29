@@ -1,0 +1,25 @@
+{
+  "block_id": "cc2-bind-vend-s01-s04-acct-surf02-04-live-proof",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29",
+  "task": "CC-2 binds prod_verified:true for four module-completion items (VEND-S01, VEND-S04, ACCT-SURF-02, ACCT-SURF-04) that already carried complete live-verification evidence packets with live_verified_sha ancestor-confirmed against live healthz; no evidence text changed, only the binding flag. Also .gitignore hygiene for node_modules/dist/*.tsbuildinfo/.DS_Store, which were blocking the push precheck's dirty-guard.",
+  "branch": "cc2/bind-vend-s01-s04-acct-surf02-04-live-proof",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/module-completion/accounting.json",
+    "docs/module-completion/vendors.json",
+    "docs/module-completion/vendors.md",
+    ".gitignore",
+    ".block-ready/cc2-bind-vend-s01-s04-acct-surf02-04-live-proof.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "scripts/verify-prod-verified-live-binding.mjs", "note": "exit 0, bound 22->26, baseline unchanged at 78" }
+  ],
+  "linkage": "N/A -- binding flag flip on already-complete evidence, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
