@@ -1004,6 +1004,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       if (
         message.includes("r2_not_configured") ||
         message.includes("instructions_document_create_failed") ||
+        message.includes("instructions_document_link_failed") ||
         message.includes("load_distribution_cleanup_failed")
       ) {
         return reply.code(503).send({ error: "instruction_distribution_unavailable" });

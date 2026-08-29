@@ -204,12 +204,14 @@ export async function distributeLoadInstructions(input: DistributionInput) {
     if (load.assigned_primary_driver_id) fileLinks.push([fileId, "driver", load.assigned_primary_driver_id]);
     if (load.customer_id) fileLinks.push([customerFileId, "customer", load.customer_id]);
     for (const [linkedFileId, entityType, entityId] of fileLinks) {
-      await client.query(
+      const linked = await client.query<{ id: string }>(
         `INSERT INTO docs.file_links (file_id, entity_type, entity_id, created_by_user_id)
          VALUES ($1, $2, $3, $4)
-         ON CONFLICT (file_id, entity_type, entity_id) WHERE deleted_at IS NULL DO NOTHING`,
+         ON CONFLICT (file_id, entity_type, entity_id) WHERE deleted_at IS NULL DO NOTHING
+         RETURNING id::text`,
         [linkedFileId, entityType, entityId, input.requested_by_user_id]
       );
+      if (!linked.rows[0]?.id) throw new Error("instructions_document_link_failed");
     }
 
     const loadLinkUpdate = await client.query<{ id: string }>(
