@@ -15,6 +15,16 @@ const row = (id: string): DispatchCatalogRow => ({
 });
 
 describe("listAllDispatchCatalogRows", () => {
+  it("accepts an honest empty catalog without retrying or painting a false failure", async () => {
+    const list = vi.fn().mockResolvedValueOnce({ rows: [], total: 0 });
+
+    await expect(listAllDispatchCatalogRows({ list }, {
+      operating_company_id: "00000000-0000-4000-8000-000000000001",
+      is_active: "true",
+    })).resolves.toEqual({ rows: [], total: 0 });
+    expect(list).toHaveBeenCalledTimes(1);
+  });
+
   it("exhausts stable pages using returned page length", async () => {
     const list = vi
       .fn()

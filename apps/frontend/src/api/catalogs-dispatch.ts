@@ -61,6 +61,10 @@ export async function listAllDispatchCatalogRows(
     const page = await client.list({ ...filters, limit: pageSize, offset });
     if (expectedTotal === null) expectedTotal = page.total;
     else if (page.total !== expectedTotal) throw new Error("Dispatch catalog changed while loading; retry the picker.");
+    // DSP-F7286: an honest empty catalog is a complete result, not stalled pagination. The old
+    // ordering tested page.rows.length first, so { rows: [], total: 0 } threw and every mounted
+    // picker painted a false catalog failure/disabled control even though the scoped GET was 200.
+    if (rows.length === expectedTotal) break;
     if (page.rows.length === 0) throw new Error("Dispatch catalog pagination stopped before the reported total.");
 
     for (const row of page.rows) {
