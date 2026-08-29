@@ -108,7 +108,7 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
         geo_source: string | null;
       }>(
         `SELECT
-           CAST(REGEXP_REPLACE(g.label, '^load-[^-]+-stop-', '') AS integer) AS sequence_number,
+           CAST(SUBSTRING(g.label FROM '-stop-([0-9]+)$') AS integer) AS sequence_number,
            MIN(CASE WHEN ge.event_kind = 'entered' THEN ge.occurred_at::text END) AS geo_entered_at,
            MAX(CASE WHEN ge.event_kind = 'exited'  THEN ge.occurred_at::text END) AS geo_exited_at,
            MAX(ge.source::text) AS geo_source
