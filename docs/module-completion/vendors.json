@@ -48,9 +48,11 @@
       ],
       "spec": "LINK-BILL-VENDOR-ID sibling sweep · ACC-bills-vendor-link",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: BillsPage, BillDetailPage, BillPaymentsListPage, BillPaymentDetailPage, AllocationsPage EntityLink kind=vendor id=mdata_vendor_id (label may fall back to legacy vendor_id text). Backend bills.service + allocations.service expose mdata_vendor_id. Guard verify-vend-link-01-vendor-uuid-entitylink composes verify-bill-vendor-link-canonical-uuid step 1969. Step 2356.",
+      "evidence": "2026-08-04 Cursor: BillsPage, BillDetailPage, BillPaymentsListPage, BillPaymentDetailPage, AllocationsPage EntityLink kind=vendor id=mdata_vendor_id (label may fall back to legacy vendor_id text). Backend bills.service + allocations.service expose mdata_vendor_id. Guard verify-vend-link-01-vendor-uuid-entitylink composes verify-bill-vendor-link-canonical-uuid step 1969. Step 2356. RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): both guards re-run — verify-bill-vendor-link-canonical-uuid OK (every bill/payment/allocation vendor drill-through uses the canonical uuid), verify-vend-link-01-vendor-uuid-entitylink OK.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T20:05:00.000Z",
+      "live_verified_sha": "b2448ce"
     },
     {
       "id": "VEND-S03",
