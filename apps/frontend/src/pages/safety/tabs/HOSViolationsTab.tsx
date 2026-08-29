@@ -193,10 +193,10 @@ export function HOSViolationsTab() {
 
   const columns = useMemo<Array<ParityColumn<HosViolationRow>>>(
     () => [
-      { key: "driver_id", label: "Driver", sortable: true, render: (row) => (
+      { key: "driver_id", label: "Driver", sortable: true, sortValue: (row) => String(row.driver_name ?? row.driver_id ?? ""), render: (row) => (
         <EntityLinkOrTombstone kind="driver" id={row.driver_id as string | undefined} name={row.driver_name} noun="Driver" />
       ) },
-      { key: "related_load_id", label: "Load", sortable: true, render: (row) => (
+      { key: "related_load_id", label: "Load", sortable: true, sortValue: (row) => String(row.related_load_number ?? row.related_load_id ?? ""), render: (row) => (
         <EntityLinkOrTombstone kind="load" id={row.related_load_id as string | undefined} name={row.related_load_number} noun="Load" />
       ) },
       {
