@@ -280,6 +280,7 @@ export async function reschedulePlannerLoad(
           AND l.operating_company_id = $2::uuid
           AND l.soft_deleted_at IS NULL
         LIMIT 1
+        FOR UPDATE OF l, c
       `,
       [loadId, operatingCompanyId]
     );
@@ -432,6 +433,7 @@ export async function reschedulePlannerLoad(
     );
 
     const updated = refreshed.rows[0];
+    if (!updated) return { ok: false, error: "load_not_found" };
     return {
       ok: true,
       load: {
