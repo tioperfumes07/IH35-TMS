@@ -104,7 +104,7 @@ bash scripts/next-work-item.sh <your modules…>
 | Seat | Branch prefix | Lane | Does NOT |
 |---|---|---|---|
 | **CC-1** | `cc-1/` or `claude/` | **Money / GL / WORM** — accounting, banking money paths, settlements, factoring, money migrations, money Sentry P0s | Gate chrome seats; `trigger_deploy`; restamp U14; remake credited closed |
-| **CC-2** | `cc-2/` | **GUARD** — live prove after merge; set `prod_verified` only after live prod + Neon; leftover `/reports` `/cash-flow` `/finance` `/tasks` `/home` `/fuel` unique | Build money/GL; steal CC-1 money; `trigger_deploy` |
+| **CC-2** | `cc-2/` | **GUARD** — live prove after merge; set `prod_verified` only after live prod + Neon; leftover `/reports` `/cash-flow` `/finance` `/tasks` `/home` unique (**`/fuel` unique = Codex only — do not take it**) | Build money/GL; steal CC-1 money; `trigger_deploy` |
 | **CC-3** | `cc-3/` | **FE / chrome / TEST** — Lists, Legal, Maintenance, Safety, Insurance, Banking chrome, Driver Hub chrome, unique 500/dead/silent; CREATE labeled TEST | Set `prod_verified` (GUARD only = CC-2); write GL math; `trigger_deploy` |
 
 **Cursor (lead):** census, Desktop FEED, FAST-MERGE bus, deploy 5–10 only, Driver Hub / FE overflow, never idle seats.

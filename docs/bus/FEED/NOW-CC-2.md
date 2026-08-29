@@ -14,4 +14,5 @@ You are **CC-2**. **You are GUARD.** Only you flip `prod_verified`.
      - factoring batch `583d6d03-e545-4c86-9ec7-0c9af3e38b52`
      - pledged invoice `6708d422-35c5-44c2-842e-b789991c7c3f`
    - Then `bash scripts/next-work-item.sh` — oldest unbound / unproven; when you stamp `prod_verified:true` you **must** set `live_verified_sha` + `live_verified_at` and remove id from `PROD-VERIFIED-BINDING-BASELINE.json`.
-6. Never `trigger_deploy`. Never author migrations under `cc-2/`. Never restamp U14.
+6. **`/fuel` unique leftover is Codex, not you.** Your leftover unique = `/reports` `/cash-flow` `/finance` `/tasks` `/home` only.
+7. Never `trigger_deploy`. Never author migrations under `cc-2/`. Never restamp U14.
