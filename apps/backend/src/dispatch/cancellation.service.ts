@@ -467,21 +467,27 @@ export async function approveCancellation(
               approved_at = now()
           WHERE id = $1
             AND operating_company_id = $3::uuid
+            AND status = 'requested'
           RETURNING id, load_id, status
         `,
         [input.cancellation_id, userId, input.operating_company_id]
       );
       const cancellation = row.rows[0];
       if (!cancellation) throw new Error("E_NOT_FOUND");
-      await client.query(
+      const cancelledLoad = await client.query<{ id: string }>(
         `
           UPDATE mdata.loads
           SET status = 'cancelled'::mdata.load_status_enum,
               updated_at = now()
           WHERE id = $1
+            AND operating_company_id = $2::uuid
+            AND status <> 'cancelled'::mdata.load_status_enum
+            AND soft_deleted_at IS NULL
+          RETURNING id::text
         `,
-        [cancellation.load_id]
+        [cancellation.load_id, input.operating_company_id]
       );
+      if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
       await appendCrudAudit(
         client,
         userId,

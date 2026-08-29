@@ -2232,3 +2232,5 @@ Codex | ROUTED | DSP-MONEY-F7264 | owner=CC-1 | SOURCE=LoadDetailDrawer factorin
 Codex | WORKING | DSP-F7265 | GO-0030+RIDER | CLAIM=eManifest PDF SPA-origin dead links | LEAVES=wizard.border_crossing_wizard_page+queues.border_history | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7265 | PR=#17487 @ d7b7b5218c | Built=eManifest API-origin vertical wizard+history | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7266 | GO-0030+RIDER | CLAIM=Book Load post-insert visible fields silent-drop | CLOSES=none — needs deploy+GUARD Live reload | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7266 | PR=#17488 @ 5024309714 | Built=Book Load shipment+equipment+trip persistence fail-closed | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7184-R1 | GO-0030+RIDER | CLAIM=approveCancellation stale false closure | SOURCE=requested cancellation→active company load | NEXT=guard+FAST-MERGE | GO
