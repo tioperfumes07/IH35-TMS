@@ -34,7 +34,12 @@ export function checkDetail(text) {
   if (!/\["statute_of_limitations", "response", "hearing", "filing", "other"\]\.map\(\(t\) => \(\s*<option key=\{t\} value=\{t\}>\s*\{properEnumOrFilterLabel\(t\)\}/.test(text)) {
     problems.push("LegalMatterDetailPage: deadline-type create combobox is not humanized.");
   }
-  if (!/\{properEnumOrFilterLabel\(d\.deadline_type\)\} · \{String\(d\.deadline_at/.test(text)) {
+  // RE-ANCHOR (found stale 2026-08-29): deadline_at's raw `String(...)` dump was since replaced
+  // with formatDateTimeUS(...) (a real formatting improvement, not a regression) — the literal
+  // "{String(d.deadline_at" suffix no longer matches. The deadline_type humanization half (the
+  // actual thing this check protects) is unaffected; widened the date-side match to accept any
+  // reasonable formatter call on d.deadline_at instead of hardcoding String(...) specifically.
+  if (!/\{properEnumOrFilterLabel\(d\.deadline_type\)\} · \{\w+\(d\.deadline_at/.test(text)) {
     problems.push("LegalMatterDetailPage: deadline list row still shows raw deadline_type.");
   }
   if (!/subtitle=\{matter \? properEnumOrFilterLabel\(matter\.type\) : ""\}/.test(text)) {
@@ -93,8 +98,8 @@ function selftest() {
 
   const d1 = checkDetail(
     detailReal.replace(
-      "{properEnumOrFilterLabel(d.deadline_type)} · {String(d.deadline_at ?? \"\")}",
-      '{String(d.deadline_type ?? "")} · {String(d.deadline_at ?? "")}'
+      "{properEnumOrFilterLabel(d.deadline_type)} · {formatDateTimeUS(d.deadline_at as string)}",
+      '{String(d.deadline_type ?? "")} · {formatDateTimeUS(d.deadline_at as string)}'
     )
   );
   if (!d1.some((m) => m.includes("deadline list row"))) failures.push("offender-1 (raw deadline_type in list) NOT caught");

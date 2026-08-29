@@ -85,7 +85,14 @@ function selftest() {
     ["routes", "INSERT INTO accounting.prepaid_amortization_rows"],
   ];
   for (const [key, token] of mutations) {
-    const mutated = { ...source, [key]: source[key].replace(token, "BROKEN_PREPAID_CREATE_PATH") };
+    // RE-ANCHOR (found stale 2026-08-29): "operating_company_id: companyId" appears TWICE in
+    // PrepaidExpensesPage.tsx (an unrelated listCatalogAccounts query, plus the real
+    // createPrepaidExpense payload this mutation targets). A non-global .replace() only killed the
+    // first (unrelated) occurrence, leaving the real create-path token intact, so the assertion
+    // kept passing and the mutation silently escaped detection. .replaceAll() clears every
+    // occurrence, including the unrelated one — harmless, since this fixture is discarded after
+    // the assertion runs.
+    const mutated = { ...source, [key]: source[key].replaceAll(token, "BROKEN_PREPAID_CREATE_PATH") };
     if (mutated[key] === source[key]) throw new Error(`${LABEL}: selftest fixture drifted for ${token}`);
     if (assertPrepaidExpensesEntitylinkReverse(mutated).length === 0) throw new Error(`${LABEL}: mutation escaped for ${token}`);
   }
