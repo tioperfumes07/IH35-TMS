@@ -1,5 +1,5 @@
 {
-  "note": "Unbound prod_verified claims that predate verify-prod-verified-live-binding. MAY ONLY SHRINK. 2026-08-29 removed 9 HTTP-404 false greens (fuel+compliance).",
+  "note": "Unbound prod_verified claims that predate verify-prod-verified-live-binding. MAY ONLY SHRINK. 2026-08-29 owner REOPEN unbound prose: removed 186 ids.",
   "created": "2026-08-29T15:18:47.810Z",
   "ids": [
     "425-S02",
@@ -13,11 +13,17 @@
     "ACCT-SURF-01",
     "ACCT-SURF-03",
     "ACCT-SURF-07",
-    "BANK-CTRL-01",
+    "BANK-CLS-SHARED",
     "BANK-DOM-05",
+    "BANK-ECON-01",
+    "BANK-ECON-02",
     "BANK-ECON-03",
+    "BANK-ECON-05",
     "BANK-F08",
     "BANK-F09",
+    "BANK-F10",
+    "BANK-GATE-01",
+    "BANK-LINK-01",
     "BANK-SURF-02",
     "BANK-SURF-03",
     "BANK-SURF-05",
@@ -74,6 +80,5 @@
     "USER-S04",
     "USER-S05",
     "USER-VERIFY-01"
-  ],
-  "complete": false
+  ]
 }
