@@ -47,10 +47,15 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
         `
           SELECT
             l.*,
-            c.customer_name,
+            COALESCE(
+              c.customer_name,
+              mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)
+            ) AS customer_name,
             COALESCE(book.email, disp.email) AS dispatcher_email,
-            d.first_name AS driver_first_name,
-            d.last_name AS driver_last_name,
+            COALESCE(
+              NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), ''),
+              mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+            ) AS driver_name,
             d.cdl_state,
             -- ::text cast so node-postgres never hands this back as a JS Date — same class of bug
             -- already documented/fixed in bills.service.ts / void.service.ts / payments.routes.ts
@@ -66,8 +71,8 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
             tr.equipment_number AS trailer_number,
             tr.equipment_type AS trailer_equipment_type
           FROM mdata.loads l
-          JOIN mdata.customers c ON c.id = l.customer_id
-                                AND c.operating_company_id = l.operating_company_id
+          LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                                     AND c.operating_company_id = l.operating_company_id
           LEFT JOIN identity.users disp ON disp.id = l.dispatcher_user_id
           LEFT JOIN identity.users book ON book.id = l.booked_by_user_id
           LEFT JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id
@@ -192,8 +197,7 @@ export async function registerDispatchSheetHtmlRoutes(app: FastifyInstance) {
 
       const dispatcherLabel = String(load.dispatcher_email ?? user.email ?? "dispatcher").split("@")[0] ?? "dispatcher";
 
-      const driverName =
-        `${String(load.driver_first_name ?? "").trim()} ${String(load.driver_last_name ?? "").trim()}`.trim() || "Assigned driver";
+      const driverName = String(load.driver_name ?? "").trim() || "Assigned driver";
       const cdlState = load.cdl_state ? String(load.cdl_state) : "—";
       const cdlExp = load.cdl_expiration_date ? formatDate(load.cdl_expiration_date) : "—";
 

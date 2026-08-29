@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7172 | CLAIM=dispatch-sheet-drops-archived-customer+driver-label | SOURCE=mdata.loads FKs+same-company resolvers | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7171 | PR=#17323 @ c51ce987f6 | Built=instruction PDF historical labels | Live=post-deploy UNVERIFIED | NEXT=dispatch sheet linkage | GO
 Codex | WORKING | DSP-F7171 | CLAIM=instruction-pdf-loses-archived-customer+driver-labels | SOURCE=mdata same-company label resolvers | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7170 | PR=#17321 @ 775bed7300 | Built=notify preference write query-back | Live=post-deploy UNVERIFIED | NEXT=distribution PDF linkage | GO
 Codex | WORKING | DSP-F7170 | CLAIM=notify-preferences-upsert-200-undefined | SOURCE=dispatch.customer_notify_preferences RETURNING customer_id | NEXT=guard+FAST-MERGE | GO
