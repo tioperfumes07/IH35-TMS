@@ -1402,6 +1402,9 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         });
       }
       const code = (error as { code?: string }).code;
+      if (["E_LOAD_WRITE_CONFLICT", "E_LOAD_STOP_WRITE_CONFLICT", "E_LOAD_STOP_ARCHIVE_CONFLICT"].includes(code ?? "")) {
+        return reply.code(409).send({ error: code });
+      }
       if (code === "23503") return reply.code(400).send({ error: "invalid_foreign_key" });
       if (code === "23505") return reply.code(409).send({ error: "dispatch_load_conflict" });
       throw error;
