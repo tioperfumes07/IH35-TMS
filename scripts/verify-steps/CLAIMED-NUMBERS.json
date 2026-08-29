@@ -6716,5 +6716,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-tonu-invoice-line-zero-rows-check"
+  },
+  "10009": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cancellation-tonu-backlink-scoped-check"
   }
 }
