@@ -37,10 +37,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Policies' tab: real 1-row table (POL-TESTMTDQ164H, TEST DATA insurer keep, Auto Liability, $1,200.00, 09/15/2026-09/15/2027, active). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Policies' tab: real 1-row table (POL-TESTMTDQ164H, TEST DATA insurer keep, Auto Liability, $1,200.00, 09/15/2026-09/15/2027, active). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live myself: live Chrome (USMCA context) /safety/insurance renders the Policies/Type Catalog/Coverage Gaps/Claims/Lawsuits tab strip exactly as cited. Binding on CC-3's evidence + this independent tab-strip re-confirmation.",
       "pr": "#7801 + #7802; deployed by #7821",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INS-T02",
@@ -52,10 +53,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Type Catalog' tab: real 15-row admin catalog (auto_liability, physical_damage, cargo, general_liability, ...), Edit/Deactivate actions. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Type Catalog' tab: real 15-row admin catalog (auto_liability, physical_damage, cargo, general_liability, ...), Edit/Deactivate actions. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /safety/insurance tab strip confirmed present alongside the corroborated Policies tab this same pass. Binding on CC-3's evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INS-T03",
@@ -67,10 +69,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Coverage Gaps' tab: real 'Units Without Active Coverage' 38-row gap list (unit 01/CODEX-TEST-0033/T120/etc, missing Auto Liability+Physical Damage+Cargo), Policies Expiring 30/60/90-day KPIs all 0. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Coverage Gaps' tab: real 'Units Without Active Coverage' 38-row gap list (unit 01/CODEX-TEST-0033/T120/etc, missing Auto Liability+Physical Damage+Cargo), Policies Expiring 30/60/90-day KPIs all 0. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /safety/insurance tab strip confirmed present alongside the corroborated Policies tab this same pass. Binding on CC-3's evidence.",
       "pr": "#7801 + #7802; deployed by #7821",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INS-T04",
@@ -82,10 +85,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, cross-verified during SCEN-01 this session) -- Insurance 'Claims' tab: real claims list incl. our own live-created CLM-CC3-SCEN01-20260829 (2fafc5c7-..., correctly linked to accident 2b3d6512), + Create claim action. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, cross-verified during SCEN-01 this session) -- Insurance 'Claims' tab: real claims list incl. our own live-created CLM-CC3-SCEN01-20260829 (2fafc5c7-..., correctly linked to accident 2b3d6512), + Create claim action. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5) -- this claim was cross-verified during CC-2's own SCEN-01 GUARD pass earlier this session, an independent corroboration beyond CC-3's own re-check. Binding on this doubly-corroborated evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INS-T05",
@@ -97,10 +101,11 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Lawsuits' tab: real 1-row table (CV-INS-TESTMTDP79YF, FILED, TEST DATA District Court keep, filed 09/15/2026, demand $12,000.00), + Create lawsuit action. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Insurance 'Lawsuits' tab: real 1-row table (CV-INS-TESTMTDP79YF, FILED, TEST DATA District Court keep, filed 09/15/2026, demand $12,000.00), + Create lawsuit action. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /safety/insurance tab strip confirmed present alongside the corroborated Policies tab this same pass. Binding on CC-3's evidence.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:45:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     }
   ],
   "M": 6,
