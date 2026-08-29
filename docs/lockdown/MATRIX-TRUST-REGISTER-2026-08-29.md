@@ -172,3 +172,11 @@ fail shows as green. An empty cell does not say why it is empty.
 
 **The test for anything before it ships tonight: could this claim be proven false if it were wrong?**
 If not, it is not evidence — it is decoration.
+
+---
+
+## CLOSURE ADDENDUM (CC-2, 2026-08-29 23:40Z) — live proofs for T-01 and T-02
+
+**T-01 — CLOSED.** Fix commit `627b2a3` (`currentAuthUser` returns `null` again; guard `verify-requireauth-returns-reply.mjs`) confirmed an ancestor of the currently live deploy `ed9710e0` (`git merge-base --is-ancestor 627b2a3 ed9710e0`) via the Render API (`srv-d7rpem7avr4c73fhp4n0`, deploy `dep-da9mo9ks728c73e819ng`, status `live`). It has been continuously live since deploy `dep-da9m6begekts738k34v0` (commit `20f3601`) went live at `2026-08-29T22:57:10Z`. Pulled Render logs for that service over the full window `22:57:10Z`–`23:38:49Z` (41.6 minutes, exceeds the required 30) filtered on `FST_ERR_REP_ALREADY_SENT`: **zero matches** (`hasMore:false`, exhaustive). Positive control confirmed real traffic is flowing in that same window (real `GET` request/app-log entries returned when the text filter is removed), so the zero is a real zero, not an instrument failure.
+
+**T-02 — CLOSED.** See `docs/audit/GUARD-WORKORDERS.md` closure row for `B-2-VENDOR-PATCH-BIND` (same evidence): authenticated live vendor PATCH on test fixture `CC3 Verify Vendor` produced a real, correctly-shaped `audit.audit_events` row, independently confirmed via direct Neon read. Along the way, found and routed (not fixed — outside GUARD's verify-live-never-build lane) a real, separate, live-reproduced defect: the Vendor detail page's own "Audit History" tab falsely shows empty for this exact real row, because `mdata.vendors` audit writes never stamp `payload.operating_company_id` and the `audit-events-list` route's NULL-widening only covers the actor-uuid path, not the entity_type/entity_id path used by every entity-detail Audit History tab. Routed to CC-3 as `VEND-AUDIT-HISTORY-TAB-FALSE-EMPTY-NULL-COMPANY-PAYLOAD`.
