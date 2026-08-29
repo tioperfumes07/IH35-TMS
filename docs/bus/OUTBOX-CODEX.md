@@ -1,3 +1,6 @@
+CODEX | ACK | STANDING+GO-0055 | NOW=dispatch-unique | SHA=b276443 | GO
+CODEX | FINDING | DRV-MONEY-F7311 | LIVE policy GET 200 driver_name=null · canonical driver GET 200 SAMPLE Cascade-2042 · routed=CC-1 | NEXT=drivers/fleet unique | GO
+CODEX | LIVE PASS | fuel:fraud-alerts lifecycle | SHA=b276443 | TEST alert open→investigating persisted after reload; investigating filter 1 row | NEXT=fuel unique | GO
 CODEX | SHIPPED | GUARD-F7299 | PR=#17543 @ 229e322f82 | gate=exit0 | Built=safety complete-roster guard honesty | NEXT=GUARD-F7301 fine catalog guard | GO
 CODEX | WORKING | GUARD-F7301 | GO-0043 | CLAIM=fine-catalog-snapshot-guard-honesty | NEXT=FAST-MERGE | GO
 CODEX | GO-0032 PASS | SHA=673aa72 | LOAD=L-20260829-0362 | BOL=1a351a17-4129-45b5-8a09-4571cf469725 POST=201 | planner+POD+border API failures=0 | NEXT=GO-0033+ unique | GO
