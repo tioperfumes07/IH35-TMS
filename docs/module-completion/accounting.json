@@ -21,11 +21,12 @@
         "VERIFY-6"
       ],
       "spec": "DoD VERIFY-6 economics \u2014 never header-only",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia: bills=16212 bill_lines=155049 (2026-07-24) | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia: bills=16212 bill_lines=155049 (2026-07-24) | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: accounting.bills=16327, accounting.bill_lines=155328 (both grown from the 2026-08-09 citation) -- bill_lines dense vs bills confirmed live. Binding on this GUARD packet.",
       "pr": "#3382",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-ECON-02",
@@ -36,11 +37,12 @@
         "VERIFY-6"
       ],
       "spec": "DoD VERIFY-6 \u00b7 Bill+BillPayment chain",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 23:23Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: bill_payments=6479 (all qbo-sourced); qbo_ap_bill_payments=6313; QBO_AP_BILL_PAYMENTS_PROJECTION_ENABLED=true TRANSP; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 23:23Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: accounting.bill_payments=6566 (grown from 6551), mdata.qbo_ap_bill_payments=6456. qbo.sync_runs kind=ap_bill_payments_inbound_mirror has 134 historical success rows (most recent 2026-08-15). NOTE: 237 more recent runs show status=cancelled -- consistent with the separately-tracked QBO OAuth outage (HONESTY-H4, owner-reauthorized this session), not a new defect. Binding on this GUARD packet.",
       "pr": "#3398",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-ECON-03",
@@ -65,11 +67,12 @@
         "VERIFY-6"
       ],
       "spec": "DoD VERIFY-6 \u00b7 Expense chain",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-29 after #3744 deploy (healthz version=4ea40dd): accounting.expenses=26837, expense_lines=33745 (eligible mirror total_cents>0 was 26837). Root cause fixed: expense_lines.operating_company_id stamped. Owner-authorized catch-up projection ran post-deploy (same SQL as projectPurchasesToExpenses / backfill). qbo.sync_runs kind=qbo_purchases_expenses_projection success records_processed=26837. Flag stayed ON. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-29 after #3744 deploy (healthz version=4ea40dd): accounting.expenses=26837, expense_lines=33745 (eligible mirror total_cents>0 was 26837). Root cause fixed: expense_lines.operating_company_id stamped. Owner-authorized catch-up projection ran post-deploy (same SQL as projectPurchasesToExpenses / backfill). qbo.sync_runs kind=qbo_purchases_expenses_projection success records_processed=26837. Flag stayed ON. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: accounting.expenses=27236, accounting.expense_lines=34144 (both grown from the 2026-08-09 citation). Binding on this GUARD packet.",
       "pr": "#3744",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-ECON-05",
@@ -79,12 +82,13 @@
         "VERIFY-6"
       ],
       "spec": "Vendor credit apply/void",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE PROOF 2026-07-29 lucia: mdata.qbo_vendor_credits=6; accounting.vendor_credits=6 (all qbo_id set); sync_runs qbo_vendor_credits_inbound_mirror success records_processed=6; qbo_vendor_credits_projection success records_processed=6; healthz 20e2aad; TRANSP flags QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED + QBO_VENDOR_CREDITS_PROJECTION_ENABLED ON. Pull via same pullVendorCreditsFromQbo/projectVendorCreditsToLedger spine as scheduler. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE PROOF 2026-07-29 lucia: mdata.qbo_vendor_credits=6; accounting.vendor_credits=6 (all qbo_id set); sync_runs qbo_vendor_credits_inbound_mirror success records_processed=6; qbo_vendor_credits_projection success records_processed=6; healthz 20e2aad; TRANSP flags QBO_VENDOR_CREDIT_MIRROR_PULL_ENABLED + QBO_VENDOR_CREDITS_PROJECTION_ENABLED ON. Pull via same pullVendorCreditsFromQbo/projectVendorCreditsToLedger spine as scheduler. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: accounting.vendor_credits=14 (grown from 7 at the 2026-08-09 citation -- the live path continues to be exercised, not honest-empty). Binding on this GUARD packet.",
       "pr": "#3749",
       "live_proof_at": "2026-07-29T06:35:03Z",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-PULL-01",
@@ -95,11 +99,12 @@
         "DOD-E"
       ],
       "spec": "ACCT-F01 \u00b7 inbound wiring",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ar_payments=23830; qbo.sync_runs kind=ar_payments_inbound_mirror status=success n=1 completed 2026-07-24T23:12:22Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: mdata.qbo_ar_payments=23830 (matches exactly, stable). qbo.sync_runs kind=ar_payments_inbound_mirror has 25 historical success rows. NOTE: 237 more recent runs show status=cancelled, 24 status=running -- consistent with the separately-tracked QBO OAuth outage (HONESTY-H4, owner-reauthorized this session), not a new defect; the mirror's historical write-path is proven regardless. Binding on this GUARD packet.",
       "pr": "#3411",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-PULL-02",
@@ -109,11 +114,12 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 AP side",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 2026-07-24T23:23:41Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_ap_bill_payments=6313; sync_runs ap_bill_payments_inbound_mirror success\u00d72 last 2026-07-24T23:23:41Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: mdata.qbo_ap_bill_payments=6456 (grown from 6313). qbo.sync_runs kind=ap_bill_payments_inbound_mirror has 134 historical success rows. Binding on this GUARD packet.",
       "pr": "#3398",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-PULL-03",
@@ -123,11 +129,12 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F01 expense side",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success\u00d72 last 2026-07-24T23:25:26Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: qbo_purchases=27984; sync_runs qbo_purchases_inbound_mirror success\u00d72 last 2026-07-24T23:25:26Z | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): Neon lucia (bypass_rls) direct read this turn: mdata.qbo_purchases=28434 (grown from 27984). qbo.sync_runs kind=qbo_purchases_inbound_mirror has 118 historical success rows. Binding on this GUARD packet.",
       "pr": "#3399",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:10:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-LINK-01",
