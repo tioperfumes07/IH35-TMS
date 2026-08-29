@@ -125,7 +125,7 @@ export function createOperationalNoticeHandler(route: NoticeRoute): OutboxEventH
 
       let delivered = 0;
       for (const userId of userIds) {
-        await createNotification(
+        const notification = await createNotification(
           {
             operating_company_id: operatingCompanyId,
             user_id: userId,
@@ -140,6 +140,9 @@ export function createOperationalNoticeHandler(route: NoticeRoute): OutboxEventH
           },
           ctx.client
         );
+        if (!notification?.id) {
+          throw new Error(`${route.eventType}_notification_insert_returned_no_identity:${userId}`);
+        }
         delivered += 1;
       }
 

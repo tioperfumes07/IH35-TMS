@@ -2028,3 +2028,5 @@ Codex | WORKING | DSP-F7165 | CLAIM=abandoned-notice-overwritten+delivery-failur
 Codex | SHIPPED | DSP-F7164 | PR=#17309 @ 160d0efe8d2a | Built=company-scoped operational notice recipients | Live=post-deploy UNVERIFIED | NEXT=abandonment delivery durability | GO
 Codex | WORKING | DSP-F7166 | CLAIM=outbox-registry-silent-duplicate-overwrite | SOURCE=ordered handlers→registry Map | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7165 | PR=#17314 @ d5b20c9e9627 | Built=durable abandonment notice delivery+retry | Live=post-deploy UNVERIFIED | NEXT=registry duplicate ratchet | GO
+Codex | WORKING | DSP-F7167 | CLAIM=operational-notice-zero-row-acked-delivered | SOURCE=notifications.user_notifications INSERT RETURNING id | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7166 | PR=#17315 @ 3c2b7ac462a7 | Built=fail-loud unique outbox handler registry | Live=post-deploy UNVERIFIED | NEXT=notification persistence identity | GO

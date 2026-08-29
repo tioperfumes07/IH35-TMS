@@ -77,4 +77,22 @@ describe("operational notices tenant-scope role recipients", () => {
       ),
     ).rejects.toThrow("load.abandoned_multichannel_delivery_failed:1/1");
   });
+
+  it("does not acknowledge delivery when notification persistence returns no identity", async () => {
+    const query = vi.fn(async (sql: string) =>
+      sql.includes("SELECT DISTINCT u.id::text AS id") ? { rows: [{ id: USER }] } : { rows: [] },
+    );
+    createNotification.mockResolvedValueOnce(null as never);
+    const { createOperationalNoticeHandler } = await import("../operational-notice.handler.js");
+    const { NOTICE_ROUTES } = await import("../operational-notice.routes.js");
+    const route = NOTICE_ROUTES.find((candidate) => candidate.eventType === "load.abandoned");
+
+    await expect(
+      createOperationalNoticeHandler(route!).deliver(
+        { operating_company_id: COMPANY, load_id: LOAD, load_number: "TEST-LOAD" },
+        { client: { query } as never, eventId: "event-3", instanceId: "test", log: vi.fn() },
+      ),
+    ).rejects.toThrow(`load.abandoned_notification_insert_returned_no_identity:${USER}`);
+    expect(dispatchNotification).not.toHaveBeenCalled();
+  });
 });
