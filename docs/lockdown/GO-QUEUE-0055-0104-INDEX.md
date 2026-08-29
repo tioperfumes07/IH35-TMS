@@ -59,9 +59,10 @@ Execute **in order**. ACK current GO → work it → start next packet **same tu
 | GO-0102 | Module complete:false drain banking | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0102.md` |
 | GO-0103 | Module complete:false drain vendors | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0103.md` |
 | GO-0104 | Close remaining unique — never wait — loop standing §8 | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0104.md` |
-| **GO-0105** | **NOW — H4 proof + TXH-04 + SCEN leftover + CC-3 customers** | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md` |
+| **GO-0105** | H4 proof + TXH-04 + SCEN leftover + CC-3 customers | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md` |
+| **GO-0106** | **NOW — OAuth honesty + Devin STOP stamps + driver-hub** | `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md` |
 
-End: **GO-0105** is NOW (does not wait for 0104 chat). Then standing orders §8 (never idle).
+End: **GO-0106** is NOW (does not wait for 0104 chat). Then standing orders §8 (never idle).
 
 Every GO must carry `CLOSES: <ITEM-ID>` or `CLOSES: none — <why>`. Only CC-2 (GUARD) flips `prod_verified`.
 

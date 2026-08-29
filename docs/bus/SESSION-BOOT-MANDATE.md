@@ -1,5 +1,7 @@
 **Every session:** `bash gen-state-of-truth.sh > STATE.md` then read `STATE.md` (live healthz + origin/main module-completion; do not type numbers).
 
+**19:20 CT GO-0106:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md` · FEED `docs/bus/FEED/NOW-<SEAT>.md` · never ARM QBO jobs for OAuth · Devin STOP stamps · idle = defect.
+
 **19:05 CT GO-0105:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md` · FEED `docs/bus/FEED/NOW-<SEAT>.md` · TXH-04 Cursor · CC-3 customers · idle = defect.
 
 **11:22 CT GO-0009:** `git pull` → **`docs/bus/FEED/NOW-<SEAT>.md`** (one page, overwritten). Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. Desktop `~/Desktop/IH35-SEAT-FEED/`. ACK `GO-0009`. Idle = defect. Live `069d531`.

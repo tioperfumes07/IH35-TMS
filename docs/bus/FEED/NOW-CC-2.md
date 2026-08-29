@@ -1,10 +1,7 @@
-# NOW — CC-2 (GO-0105)
+# NOW — CC-2 (GO-0106)
 
-**ACK:** `CC-2 | ACK | GO-0105 | NOW=h4-nothing-to-chase-unless-post-deploy-non-qbo | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-0106 | NOW=guard-stamps-only-h4-oauth-is-owner-reauth | SHA=<healthz> | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`  
-H4 runbook: `docs/lockdown/HONESTY-PROGRAM-2026-08-29.md` (Diagnosis runbook)
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
 
-**H4: NOTHING TO CHASE.** Live yellow on `b2448ce` was only `integrations.qbo_inbound_sync` + `integrations.qbo_cdc_poll`. After H4 deploy, full `/healthz` should go green. If still `stale_jobs`, pull Render log before writing code.
-
-Otherwise: GUARD live-verify after money merges; unique leftover 500/dead/silent; live-binding on `prod_verified`. Never `trigger_deploy`. Never restamp U14.
+Your H4 catch is accepted: do not hide invalid_grant. Job-stale dormant ≠ OAuth. GUARD stamps only (live-binding). Devin must not stamp safety/lists. After H4 deploy, inbound/CDC yellow should die; oauth check should stay red until Jorge re-auths QBO. Never trigger_deploy.
