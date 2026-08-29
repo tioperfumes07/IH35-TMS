@@ -6,6 +6,8 @@ import { ReportCategoryHoverNav } from "../../components/reports/ReportCategoryH
 import { ReportsSubNav } from "./ReportsSubNav";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { fetchReportCategoryCatalog } from "./categories/catalog-api";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function ReportsHubPage() {
   const [search, setSearch] = useState("");
@@ -43,6 +45,16 @@ export function ReportsHubPage() {
         className="w-full rounded-sm border border-slate-200 px-3 py-2 text-sm"
         data-testid="reports-hub-search"
       />
+      {catalogQuery.isError ? (
+        // GO-0028: a failed catalog fetch used to render zero cards with no error message --
+        // the whole Reports Hub just looked broken/empty instead of reporting the failure.
+        <ListErrorState
+          title="Couldn't load the report catalog"
+          status={0}
+          message={userFacingApiError(catalogQuery.error, "Failed to load reports")}
+          onRetry={() => void catalogQuery.refetch()}
+        />
+      ) : null}
       {filtered.map((category) => (
         <section key={category.id} className="space-y-2">
           <EntityLink

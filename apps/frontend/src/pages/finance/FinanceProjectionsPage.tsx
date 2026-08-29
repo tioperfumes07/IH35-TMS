@@ -6,6 +6,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_SCENARIOS_FLAG, getScenarioDetail, getActiveScenarioSummary } from "../../api/financeScenarios";
 import { ScenarioLinesTable } from "./components/ScenarioLinesTable";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 export function FinanceProjectionsPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -54,6 +56,23 @@ export function FinanceProjectionsPage() {
           Financial projections are not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code>{" "}
           is off.)
         </div>
+      </div>
+    );
+  }
+
+  if (summaryQuery.isError) {
+    // GO-0028: a failed fetch must never render the same "No active scenario yet." text as a
+    // genuinely absent scenario.
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <ListErrorState
+          title="Couldn't load the active scenario"
+          status={0}
+          message={userFacingApiError(summaryQuery.error, "Failed to load projections")}
+          onRetry={() => void summaryQuery.refetch()}
+        />
       </div>
     );
   }

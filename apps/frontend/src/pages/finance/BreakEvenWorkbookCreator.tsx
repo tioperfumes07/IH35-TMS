@@ -118,7 +118,16 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
           Open scenario history
         </Link>
       </div>
-      {history.length > 0 ? (
+      {historyQuery.isError ? (
+        // GO-0028: a failed fetch used to make this line silently disappear (history=[] on
+        // error, same as genuinely no saved workbooks) -- now it says so instead.
+        <p className="mb-3 text-xs text-red-700" data-testid="break-even-workbook-history-error">
+          Unable to load saved workbook history.{" "}
+          <button type="button" className="font-semibold underline" onClick={() => void historyQuery.refetch()}>
+            Retry
+          </button>
+        </p>
+      ) : history.length > 0 ? (
         <p className="mb-3 text-xs text-slate-600" data-testid="break-even-workbook-history">
           Saved workbooks: {history.map((s) => s.name).join(" · ")}
         </p>

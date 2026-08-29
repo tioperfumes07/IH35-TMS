@@ -7,6 +7,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { activateScenario, getScenarioDetail } from "../../api/financeScenarios";
 import { ScenarioLinesTable } from "./components/ScenarioLinesTable";
+import { ListErrorState } from "../../components/ListErrorState";
 
 export function FinanceScenarioDetailPage() {
   const { scenarioId = "" } = useParams<{ scenarioId: string }>();
@@ -42,6 +43,18 @@ export function FinanceScenarioDetailPage() {
 
       {detailQuery.isLoading ? (
         <p className="mt-4 text-sm text-slate-500">Loading…</p>
+      ) : detailQuery.isError ? (
+        // GO-0028: "Scenario not found." on a genuine fetch failure is factually wrong -- the
+        // scenario may exist and the fetch simply failed. Both branches render red text, so this
+        // was easy to miss, but only isError means the scenario doesn't exist -- a real 404.
+        <div className="mt-4">
+          <ListErrorState
+            title="Couldn't load this scenario"
+            status={0}
+            message={userFacingApiError(detailQuery.error, "Failed to load scenario")}
+            onRetry={() => void detailQuery.refetch()}
+          />
+        </div>
       ) : !detailQuery.data ? (
         <p className="mt-4 text-sm text-red-600">Scenario not found.</p>
       ) : (

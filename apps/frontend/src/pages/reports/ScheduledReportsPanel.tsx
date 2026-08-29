@@ -89,7 +89,22 @@ export function ScheduledReportsPanel() {
         </div>
       </div>
       <div className="space-y-2 px-3 py-2">
-        {rows.length === 0 ? (
+        {listQuery.isError ? (
+          // GO-0028: a failed fetch must never render the same "No custom schedules" text as a
+          // genuinely empty result -- this exact panel already has a documented prior incident
+          // (LV-REPORTS-CUSTOM-SCHEDULER-CANONICAL-SOR-UNMOUNTED) of showing a false empty state
+          // while 6 real schedules existed, via a different root cause. Do not reopen that symptom.
+          <div className="flex items-center justify-between gap-2 text-xs text-red-700">
+            <span>Unable to load scheduled reports.</span>
+            <button
+              type="button"
+              className="font-semibold underline"
+              onClick={() => void listQuery.refetch()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : rows.length === 0 ? (
           <p className="text-xs text-slate-500">
             No custom schedules — add daily dispatch board or AR aging.
           </p>

@@ -266,9 +266,14 @@ export function SubscriptionManager() {
           rows={rows}
           rowKey={(row) => row.uuid}
           emptyMessage={
+            // GO-0028: this used to be a binary isSuccess check, so a genuine fetch FAILURE was
+            // indistinguishable from "still loading" -- the table showed "Loading subscriptions…"
+            // forever with no error, no retry affordance.
             subsQuery.isSuccess
               ? "No subscriptions found."
-              : "Loading subscriptions…"
+              : subsQuery.isError
+                ? "Failed to load subscriptions — please retry."
+                : "Loading subscriptions…"
           }
           columns={[
             {
@@ -362,9 +367,13 @@ export function SubscriptionManager() {
             rows={logRows}
             rowKey={(log) => log.uuid}
             emptyMessage={
+              // GO-0028: same fix as subsQuery above -- a fetch failure must not look identical
+              // to "still loading" forever.
               logQuery.isSuccess
                 ? "No deliveries logged yet."
-                : "Loading delivery history…"
+                : logQuery.isError
+                  ? "Failed to load delivery history — please retry."
+                  : "Loading delivery history…"
             }
             columns={[
               {
