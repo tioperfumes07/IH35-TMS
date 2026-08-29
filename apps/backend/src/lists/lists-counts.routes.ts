@@ -78,7 +78,7 @@ export async function countModuleRecords(
 
 export async function registerListsCountsRoutes(app: FastifyInstance) {
   for (const module of LISTS_MODULE_KEYS) {
-    app.get(`/api/v1/lists/${module}/count`, async (req, reply) => {
+    app.get(`/api/v1/lists/${module}/count`, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
       const user = currentAuthUser(req, reply);
       if (!user) return;
       const query = COMPANY_QUERY.safeParse(req.query ?? {});

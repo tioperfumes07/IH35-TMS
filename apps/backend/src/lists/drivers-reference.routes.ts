@@ -27,7 +27,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
   assertReferenceConfig(config);
   const basePath = `/api/v1/lists/drivers/${config.urlSegment}`;
 
-  app.get(basePath, async (req, reply) => {
+  app.get(basePath, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -73,7 +73,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
     return payload;
   });
 
-  app.post(basePath, async (req, reply) => {
+  app.post(basePath, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -116,7 +116,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
     return reply.code(201).send(created.row);
   });
 
-  app.patch(`${basePath}/:id`, async (req, reply) => {
+  app.patch(`${basePath}/:id`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -183,7 +183,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
     return updated.row;
   });
 
-  app.post(`${basePath}/:id/archive`, async (req, reply) => {
+  app.post(`${basePath}/:id/archive`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -214,7 +214,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
     return archived;
   });
 
-  app.post(`${basePath}/:id/restore`, async (req, reply) => {
+  app.post(`${basePath}/:id/restore`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

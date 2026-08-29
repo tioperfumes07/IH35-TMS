@@ -86,7 +86,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 export async function registerLegalMattersRoutes(app: FastifyInstance) {
-  app.get("/api/v1/legal/matters/reports/summary", async (req, reply) => {
+  app.get("/api/v1/legal/matters/reports/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
@@ -130,7 +130,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/api/v1/legal/matters/:id", async (req, reply) => {
+  app.get("/api/v1/legal/matters/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
@@ -150,7 +150,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/legal/matters/:id/documents/:documentId/download", async (req, reply) => {
+  app.get("/api/v1/legal/matters/:id/documents/:documentId/download", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
@@ -240,7 +240,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/legal/matters/:id/close", async (req, reply) => {
+  app.post("/api/v1/legal/matters/:id/close", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -263,7 +263,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/legal/matters/:id/events", async (req, reply) => {
+  app.post("/api/v1/legal/matters/:id/events", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -284,7 +284,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/legal/matters/:id/documents", async (req, reply) => {
+  app.post("/api/v1/legal/matters/:id/documents", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -329,7 +329,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/legal/matters/:id/deadlines", async (req, reply) => {
+  app.post("/api/v1/legal/matters/:id/deadlines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
@@ -350,7 +350,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     return reply.code(201).send({ deadline: row });
   });
 
-  app.patch("/api/v1/legal/matters/:id/deadlines/:deadline_id/complete", async (req, reply) => {
+  app.patch("/api/v1/legal/matters/:id/deadlines/:deadline_id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;

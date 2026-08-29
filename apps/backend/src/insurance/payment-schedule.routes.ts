@@ -65,7 +65,7 @@ function selectColumns() {
 }
 
 export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/payment-schedule", async (req, reply) => {
+  app.get("/api/v1/insurance/payment-schedule", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -98,7 +98,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
     return { payment_schedules: schedules };
   });
 
-  app.post("/api/v1/insurance/payment-schedule", async (req, reply) => {
+  app.post("/api/v1/insurance/payment-schedule", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -142,7 +142,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/insurance/payment-schedule/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/payment-schedule/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

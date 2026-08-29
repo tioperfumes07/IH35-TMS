@@ -79,7 +79,7 @@ function selectColumns(alias = "") {
 export async function registerOemPartsRoutes(app: FastifyInstance) {
   const basePath = "/api/v1/lists/oem-parts";
 
-  app.get(`${basePath}/brands`, async (req, reply) => {
+  app.get(`${basePath}/brands`, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = brandsQuerySchema.safeParse(req.query ?? {});
@@ -197,7 +197,7 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post(basePath, async (req, reply) => {
+  app.post(basePath, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -256,7 +256,7 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch(`${basePath}/:id`, async (req, reply) => {
+  app.patch(`${basePath}/:id`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -331,7 +331,7 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.post(`${basePath}/:id/archive`, async (req, reply) => {
+  app.post(`${basePath}/:id/archive`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -361,7 +361,7 @@ export async function registerOemPartsRoutes(app: FastifyInstance) {
     return archived;
   });
 
-  app.post(`${basePath}/:id/restore`, async (req, reply) => {
+  app.post(`${basePath}/:id/restore`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

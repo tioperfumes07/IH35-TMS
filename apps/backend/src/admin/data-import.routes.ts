@@ -67,7 +67,7 @@ export async function registerDataImportAdminRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/admin/data-import", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/admin/data-import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!requireAuth(req, reply)) return;
     if (!allowDataImport(req.user?.role)) return reply.code(403).send({ error: "forbidden" });
 

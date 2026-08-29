@@ -96,7 +96,7 @@ async function buildCanonicalInventory(
 }
 
 export async function registerListsHubRoutes(app: FastifyInstance) {
-  app.get("/api/v1/lists/inventory", async (req, reply) => {
+  app.get("/api/v1/lists/inventory", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -107,7 +107,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
     return { inventory };
   });
 
-  app.get("/api/v1/lists/recent-activity", async (req, reply) => {
+  app.get("/api/v1/lists/recent-activity", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -126,7 +126,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
     return { activity };
   });
 
-  app.get("/api/v1/lists/qbo-sync-health", async (req, reply) => {
+  app.get("/api/v1/lists/qbo-sync-health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});
@@ -144,7 +144,7 @@ export async function registerListsHubRoutes(app: FastifyInstance) {
     return { health };
   });
 
-  app.post("/api/v1/lists/force-qbo-sync", async (req, reply) => {
+  app.post("/api/v1/lists/force-qbo-sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const body = COMPANY_QUERY.safeParse(req.body ?? {});

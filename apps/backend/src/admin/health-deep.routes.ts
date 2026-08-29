@@ -25,7 +25,7 @@ function criticalHealthStatus(checks: DeepHealthCheck[]): boolean {
 }
 
 export async function registerHealthDeepRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/health/deep", async (req, reply) => {
+  app.get("/api/v1/admin/health/deep", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (!allowDeepHealth(req.user?.role)) {
       return reply.code(403).send({ error: "forbidden" });

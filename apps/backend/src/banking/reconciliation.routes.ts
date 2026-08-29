@@ -1011,7 +1011,7 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/reconciliation/:sessionId/complete", async (req, reply) => {
+  app.post("/api/v1/banking/reconciliation/:sessionId/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });

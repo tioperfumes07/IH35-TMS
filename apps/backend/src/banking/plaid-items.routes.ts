@@ -39,7 +39,7 @@ function extractPlaidApiError(err: unknown): { code?: string; message?: string }
 }
 
 export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/banking/plaid/items", async (req, reply) => {
+  app.get("/api/v1/banking/plaid/items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -113,7 +113,7 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
     return rows;
   });
 
-  app.post("/api/v1/banking/plaid/items/:itemId/disconnect", async (req, reply) => {
+  app.post("/api/v1/banking/plaid/items/:itemId/disconnect", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -172,7 +172,7 @@ export async function registerPlaidBankingItemsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/banking/plaid/items/:itemId/sync", async (req, reply) => {
+  app.post("/api/v1/banking/plaid/items/:itemId/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });

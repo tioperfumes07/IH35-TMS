@@ -11,7 +11,7 @@ const retryBodySchema = z.object({
 });
 
 export async function registerEmailQueueAdminRoutes(app: FastifyInstance) {
-  app.post("/api/v1/admin/email-queue/:id/retry", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/admin/email-queue/:id/retry", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

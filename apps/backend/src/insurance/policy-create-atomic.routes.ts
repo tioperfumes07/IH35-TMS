@@ -39,7 +39,7 @@ function canMutate(role: string) {
 }
 
 export async function registerInsurancePolicyCreateAtomicRoutes(app: FastifyInstance) {
-  app.post("/api/v1/insurance/policies/with-bills", async (req, reply) => {
+  app.post("/api/v1/insurance/policies/with-bills", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

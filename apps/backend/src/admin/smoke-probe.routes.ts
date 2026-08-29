@@ -44,7 +44,7 @@ async function runCheck(name: string, fn: () => Promise<void>): Promise<SmokeChe
 }
 
 export async function registerSmokeProbeRoutes(app: FastifyInstance) {
-  app.get("/api/v1/internal/smoke-probe", async (req, reply) => {
+  app.get("/api/v1/internal/smoke-probe", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireServiceToken(req, reply)) return;
 
     const checks: SmokeCheck[] = [];

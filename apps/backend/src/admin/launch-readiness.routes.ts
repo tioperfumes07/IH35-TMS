@@ -20,7 +20,7 @@ const querySchema = z.object({
 });
 
 export async function registerLaunchReadinessRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/launch-readiness", async (req, reply) => {
+  app.get("/api/v1/admin/launch-readiness", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (!allowLaunchReadiness(req.user?.role)) {
       return reply.code(403).send({ error: "forbidden" });

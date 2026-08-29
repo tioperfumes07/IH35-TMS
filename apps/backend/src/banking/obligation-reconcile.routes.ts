@@ -357,7 +357,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     return { transactions: rows };
   });
 
-  app.get("/api/v1/banking/reconcile/obligations", async (req, reply) => {
+  app.get("/api/v1/banking/reconcile/obligations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -595,7 +595,7 @@ export async function registerBankingObligationReconcileRoutes(app: FastifyInsta
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/reconcile/bulk", async (req, reply) => {
+  app.post("/api/v1/banking/reconcile/bulk", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReconcile(user.role)) return reply.code(403).send({ error: "forbidden" });

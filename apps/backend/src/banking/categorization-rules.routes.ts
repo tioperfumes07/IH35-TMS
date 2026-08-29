@@ -151,7 +151,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return { transactions };
   });
 
-  app.post("/api/v1/banking/categorization-rules", async (req, reply) => {
+  app.post("/api/v1/banking/categorization-rules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canManage(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -255,7 +255,7 @@ export async function registerCategorizationRulesRoutes(app: FastifyInstance) {
     return { ok: true, id: updated };
   });
 
-  app.delete("/api/v1/banking/categorization-rules/:id", async (req, reply) => {
+  app.delete("/api/v1/banking/categorization-rules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canDeactivate(user.role)) return reply.code(403).send({ error: "forbidden" });

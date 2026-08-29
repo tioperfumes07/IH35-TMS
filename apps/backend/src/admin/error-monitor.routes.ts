@@ -7,7 +7,7 @@ function ownerAdministrator(role: string) {
 }
 
 export async function registerErrorMonitorRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/error-monitor/recent", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/admin/error-monitor/recent", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

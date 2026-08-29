@@ -6,7 +6,7 @@ function ownerAdministrator(role: string): boolean {
 }
 
 export async function registerAdminObservabilityRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/v1/admin/observability", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/admin/observability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) {

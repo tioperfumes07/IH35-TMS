@@ -89,7 +89,7 @@ function isOwnerAdminAccountant(role: string) {
 }
 
 export async function registerBankingTransfersRoutes(app: FastifyInstance) {
-  app.post("/api/v1/banking/transfers", async (req, reply) => {
+  app.post("/api/v1/banking/transfers", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -142,7 +142,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/banking/cc-payments", async (req, reply) => {
+  app.post("/api/v1/banking/cc-payments", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -349,7 +349,7 @@ export async function registerBankingTransfersRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/banking/transfers/:id/revoke", async (req, reply) => {
+  app.post("/api/v1/banking/transfers/:id/revoke", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });

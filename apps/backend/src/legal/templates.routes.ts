@@ -81,7 +81,7 @@ async function setOperatingCompany(client: { query: (sql: string, values?: unkno
 }
 
 export async function registerLegalTemplateRoutes(app: FastifyInstance) {
-  app.get("/api/v1/legal/templates", async (req, reply) => {
+  app.get("/api/v1/legal/templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
@@ -104,7 +104,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return { templates: rows };
   });
 
-  app.get("/api/v1/legal/templates/:id", async (req, reply) => {
+  app.get("/api/v1/legal/templates/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
@@ -126,7 +126,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/legal/templates/versions/list", async (req, reply) => {
+  app.get("/api/v1/legal/templates/versions/list", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeReadRole(reply, String(authUser.role ?? ""))) return;
@@ -144,7 +144,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return { versions: rows };
   });
 
-  app.post("/api/v1/legal/templates", async (req, reply) => {
+  app.post("/api/v1/legal/templates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -166,7 +166,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/legal/templates/:id", async (req, reply) => {
+  app.patch("/api/v1/legal/templates/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -193,7 +193,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
   });
 
   // Seed the 7 owner-activated library templates for this entity (idempotent).
-  app.post("/api/v1/legal/templates/library/ensure", async (req, reply) => {
+  app.post("/api/v1/legal/templates/library/ensure", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -212,7 +212,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
   });
 
   // Clone a template into a new draft version (the only way to revise an active body).
-  app.post("/api/v1/legal/templates/:id/new-version", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/new-version", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -234,7 +234,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return reply.code(201).send(result.row);
   });
 
-  app.post("/api/v1/legal/templates/:id/submit", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/submit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -256,7 +256,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return submitted;
   });
 
-  app.post("/api/v1/legal/templates/:id/attorney-review-link", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/attorney-review-link", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -279,7 +279,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/legal/templates/:id/approve", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -306,7 +306,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return approved;
   });
 
-  app.post("/api/v1/legal/templates/:id/activate", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/activate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -329,7 +329,7 @@ export async function registerLegalTemplateRoutes(app: FastifyInstance) {
     return activated.row;
   });
 
-  app.post("/api/v1/legal/templates/:id/retire", async (req, reply) => {
+  app.post("/api/v1/legal/templates/:id/retire", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireAdminWriteRole(reply, String(authUser.role ?? ""))) return;
