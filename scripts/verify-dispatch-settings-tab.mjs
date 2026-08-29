@@ -36,6 +36,14 @@ export function checkSettingsReadBeforeWrite(page) {
   return failures;
 }
 
+export function checkSettingsWritePersistence(routes) {
+  const failures = [];
+  const patch = routes.slice(routes.indexOf('app.patch("/api/v1/dispatch/preferences"'), routes.indexOf('app.get("/api/v1/dispatch/loads"'));
+  if (!/INSERT INTO identity\.user_preferences[\s\S]*RETURNING dispatch_default_view/.test(patch)) failures.push("PATCH must write and return the canonical preference");
+  if (!/const preference = res\.rows\[0\];[\s\S]*if \(!preference\)[\s\S]*code: "E_DISPATCH_PREFERENCE_WRITE_FAILED"[\s\S]*return preference;/.test(patch)) failures.push("PATCH must fail loud when the preference upsert returns no identity");
+  return failures;
+}
+
 function main() {
   const page = read(paths.page);
   const pageTest = read(paths.pageTest);
@@ -53,6 +61,7 @@ function main() {
   if (!page.includes("dispatch-settings-auto-routing")) failures.push("DispatchSettingsPage must expose auto-routing section");
   if (!page.includes("dispatch-settings-alert-thresholds")) failures.push("DispatchSettingsPage must expose alert thresholds section");
   failures.push(...checkSettingsReadBeforeWrite(page));
+  failures.push(...checkSettingsWritePersistence(routes));
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DispatchSettingsPage tests must cover at least 3 cases");
 
   if (!dispatchApi.includes("getDispatchPreferences")) failures.push("dispatch API must export getDispatchPreferences");
@@ -84,7 +93,11 @@ if (process.argv.includes("--selftest")) {
     .replace("Retry before changing it so an unknown saved preference", "Choosing an option below will still save");
   const planted = checkSettingsReadBeforeWrite(buggy);
   const current = checkSettingsReadBeforeWrite(fixed);
-  if (planted.length >= 3 && current.length === 0) {
+  const routes = read(paths.routes);
+  const brokenRoutes = routes.replace('code: "E_DISPATCH_PREFERENCE_WRITE_FAILED"', 'code: "REMOVED"');
+  const plantedWrite = checkSettingsWritePersistence(brokenRoutes);
+  const currentWrite = checkSettingsWritePersistence(routes);
+  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0) {
     console.log("verify:dispatch-settings-tab selftest PASS — planted blind-write regression rejected");
     process.exit(0);
   }

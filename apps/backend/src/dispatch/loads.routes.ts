@@ -579,7 +579,14 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `,
         [authUser.uuid, body.data.dispatch_default_view]
       );
-      return res.rows[0];
+      const preference = res.rows[0];
+      if (!preference) {
+        throw Object.assign(new Error("Dispatch preference was not persisted."), {
+          statusCode: 409,
+          code: "E_DISPATCH_PREFERENCE_WRITE_FAILED",
+        });
+      }
+      return preference;
     });
 
     return updated;
