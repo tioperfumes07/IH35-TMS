@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -55,20 +56,33 @@ const OPENING_JE_COLUMNS: Array<ParityColumn<OpeningJeRow>> = [
   },
 ];
 
+// GO-0043-CALCULATOR-LOAN-WIZARD-DATA-LOSS: shape of the router state CalculatorPage's "Use this
+// scenario -> create loan" link passes -- optional, since this page is also reached by direct
+// navigation (Loan Wizard nav link, bookmark, back button) with no incoming state at all.
+type LoanWizardIncomingState = {
+  purchasePrice?: string;
+  downPayment?: string;
+  firstPaymentDate?: string;
+  annualRatePct?: string;
+  termMonths?: string;
+};
+
 export function LoanWizardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, companyId);
+  const location = useLocation();
+  const incoming = (location.state ?? {}) as LoanWizardIncomingState;
 
   const [form, setForm] = useState({
     assetName: "",
     vin: "",
-    purchasePrice: "",
-    downPayment: "0",
+    purchasePrice: incoming.purchasePrice ?? "",
+    downPayment: incoming.downPayment ?? "0",
     loanAmount: "",
-    annualRatePct: "",
-    termMonths: "60",
-    firstPaymentDate: "",
+    annualRatePct: incoming.annualRatePct ?? "",
+    termMonths: incoming.termMonths ?? "60",
+    firstPaymentDate: incoming.firstPaymentDate ?? "",
     lender: "",
     usefulLifeMonths: "60",
     salvageValue: "0",

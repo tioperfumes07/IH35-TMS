@@ -82,6 +82,17 @@ export async function registerBreakEvenRoutes(app: FastifyInstance) {
 
     const from_date = query.data.from_date ?? startOfYearIso();
     const to_date = query.data.to_date ?? todayIsoDate();
+    // GO-0043-BREAK-EVEN-DATE-RANGE-ORDER-UNVALIDATED: same class as GO-0036/GO-0037/GO-0039/
+    // GO-0041 -- a reversed from_date/to_date makes every downstream BETWEEN/>=+<= predicate
+    // (profit-loss.service.ts's GL revenue query, break-even.service.ts's readLoadMiles) silently
+    // unsatisfiable, returning a legitimate 200 with a fully-formed, plausible-looking zero-
+    // activity break-even payload (0 revenue, 0 miles, empty expense_lines) -- indistinguishable
+    // from a genuine no-activity period. The frontend DatePicker already blocks this via min/max,
+    // but that is a UI-only guard; any direct API caller or future UI regression hits the silent
+    // zero with no server-side backstop.
+    if (from_date > to_date) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from_date must be on or before to_date"] } });
+    }
 
     const inputs = await getBreakEvenInputs({
       userId: user.uuid,

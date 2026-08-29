@@ -158,15 +158,31 @@ export function CalculatorPage() {
                   emptyText="No amortization rows."
                 />
               </div>
+              {/* GO-0043-CALCULATOR-LOAN-WIZARD-DATA-LOSS: previously ONE shared link below both
+                  cards read "Use these -> create loan" -- ambiguous about which scenario "these"
+                  even meant, AND LoanWizardPage never read anything from it (no location.state/
+                  searchParams consumer existed), so every click landed on a fully blank form,
+                  silently discarding every number just computed. Now per-scenario (removes the
+                  ambiguity) and carries the actual computed terms via router state (financial
+                  data -- never put in the URL query string). */}
+              <div className="mt-3">
+                <Link
+                  to="/finance/loan-wizard"
+                  state={{
+                    purchasePrice: form.price,
+                    downPayment: form.down,
+                    firstPaymentDate: form.firstPaymentDate,
+                    annualRatePct: String(s.annual_rate_pct),
+                    termMonths: String(s.term_months),
+                  }}
+                  className="text-sm font-medium text-slate-700 underline"
+                >
+                  Use this scenario → create loan
+                </Link>
+              </div>
             </div>
           ))}
         </div>
-      )}
-
-      {scenarios.length > 0 && (
-        <p className="mt-4 text-sm text-slate-500">
-          <Link to="/finance/loan-wizard" className="text-slate-700 underline">Use these → create loan</Link> (opens the Loan Wizard).
-        </p>
       )}
     </div>
   );
