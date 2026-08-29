@@ -61,9 +61,11 @@
       ],
       "spec": "0243-g6-2-vendor-create-no-dedup-guard",
       "status": "PASS",
-      "evidence": "2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238.",
+      "evidence": "2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238. RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): direct source read of apps/backend/src/mdata/vendors.routes.ts confirms vendorNameConflictExists (line 257) queries `lower(btrim(vendor_name)) = lower(btrim($1)) AND operating_company_id = $2::uuid AND deactivated_at IS NULL` exactly as claimed, under setScopedCompanyContext (membership-asserted). Create path (line 492-498) calls resolveOperatingCompanyId BEFORE vendorNameConflictExists; PATCH path (line 705) does the same via patchScopedCompanyId. Guard re-run: OK.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T19:55:00.000Z",
+      "live_verified_sha": "b2448ce"
     },
     {
       "id": "VEND-S04",

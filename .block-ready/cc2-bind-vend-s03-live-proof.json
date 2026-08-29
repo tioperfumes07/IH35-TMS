@@ -1,0 +1,22 @@
+{
+  "block_id": "cc2-bind-vend-s03-live-proof",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29",
+  "task": "CC-2 independently re-verifies and binds VEND-S03 (vendor create dedup guard scoped per operating company) via direct source read of vendors.routes.ts confirming the dedup query and call-order.",
+  "branch": "cc2/bind-vend-s03-live-proof",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/module-completion/vendors.json",
+    ".block-ready/cc2-bind-vend-s03-live-proof.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "scripts/verify-prod-verified-live-binding.mjs", "note": "exit 0" }
+  ],
+  "linkage": "N/A -- binding flag flip on freshly re-verified evidence, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
