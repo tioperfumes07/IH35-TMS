@@ -24,6 +24,8 @@ function audit(s) {
   if (!/async function resolveCurrentTrailerId/.test(s.service) || !/operating_company_id = \$1::uuid[\s\S]{0,120}load_id = \$2::uuid[\s\S]{0,220}ORDER BY assigned_at DESC, created_at DESC, id DESC/.test(s.service)) failures.push("canonical current-trailer resolver must be explicitly company/load scoped and deterministically ordered");
   if ((s.service.match(/const previousTrailerId = await resolveCurrentTrailerId\(\s*client,\s*input\.operating_company_id,\s*input\.load_id,?\s*\)/g) ?? []).length < 2) failures.push("both quick-assign create paths must preserve the prior canonical trailer");
   if (!/previousTrailerId,\s*input\.trailer_id \?\? null/.test(s.service) || !/previousTrailerId,\s*resolvedTrailerId \?\? previousTrailerId,\s*userId/.test(s.service)) failures.push("both assignment-history writes must stamp previous and new trailer FKs");
+  if (!/const assignmentHistoryInsert = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?RETURNING id::text[\s\S]*?if \(!assignmentHistoryInsert\.rows\[0\]\?\.id\) throw new Error\("E_ASSIGNMENT_HISTORY_CREATE_FAILED"\)/.test(s.service)) failures.push("combined quick assign must prove canonical assignment-history identity before audit/success");
+  if (!/const draftAssignmentHistoryInsert = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?RETURNING id::text[\s\S]*?if \(!draftAssignmentHistoryInsert\.rows\[0\]\?\.id\) \{[\s\S]*?throw new Error\("E_ASSIGNMENT_HISTORY_CREATE_FAILED"\)/.test(draftPath)) failures.push("draft completion must prove canonical assignment-history identity before spine/success");
   for (const [label, scopedWriter] of [["quick-assign.service.ts", s.service], ["assignments/quicksave.service.ts", s.inlineService]]) {
     if (/client\.query\(["'`]\s*(?:BEGIN|COMMIT|ROLLBACK)\s*["'`]\)/.test(scopedWriter)) failures.push(`${label} must leave transaction ownership to withCurrentUser`);
   }
@@ -52,6 +54,10 @@ if (process.argv.includes("--selftest")) {
     ["draft-unit-lock", "service", /SELECT assigned_unit_id::text/, "SELECT NULL::uuid AS assigned_unit_id"],
     ["draft-unit-history", "service", /(export async function completeQuicksaveDraft[\s\S]*?)previous_unit_id, new_unit_id/, "$1new_unit_id"],
     ["draft-unit-values", "service", /before\.assigned_unit_id,\s*unitId \?\? before\.assigned_unit_id/, "null, unitId"],
+    ["combined-history-returning", "service", /(const assignmentHistoryInsert = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?)RETURNING id::text/, "$1"],
+    ["combined-history-check", "service", /if \(!assignmentHistoryInsert\.rows\[0\]\?\.id\) throw new Error\("E_ASSIGNMENT_HISTORY_CREATE_FAILED"\);/, ""],
+    ["draft-history-returning", "service", /(const draftAssignmentHistoryInsert = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?)RETURNING id::text/, "$1"],
+    ["draft-history-check", "service", /if \(!draftAssignmentHistoryInsert\.rows\[0\]\?\.id\) \{[\s\S]*?\}/, ""],
     ["nested-transaction", "service", /try \{/, 'await client.query("COMMIT"); try {'],
     ["inline-nested-transaction", "inlineService", /try \{/, 'await client.query("ROLLBACK"); try {'],
     ["route", "routes", /code === "E_TRAILER_NOT_FOUND"/, 'code === "E_UNKNOWN"'],
