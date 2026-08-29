@@ -12,11 +12,16 @@ function verify(s = service, r = routes) {
   const existingStart = replace.indexOf("if (existingId)");
   const existingEnd = replace.indexOf("} else {", existingStart);
   const existingWrite = existingStart >= 0 && existingEnd > existingStart ? replace.slice(existingStart, existingEnd) : "";
+  const insertStart = replace.indexOf("} else {", existingEnd);
+  const insertEnd = replace.indexOf("inserted += 1", insertStart);
+  const insertWrite = insertStart >= 0 && insertEnd > insertStart ? replace.slice(insertStart, insertEnd) : "";
   const updateStart = s.indexOf("export async function updateDispatchLoad");
   const update = updateStart >= 0 ? s.slice(updateStart) : "";
 
   if (!/WHERE id = \$1::uuid AND load_id = \$26::uuid[\s\S]*RETURNING id::text/.test(existingWrite)) failures.push("existing-stop write must bind parent load and return identity");
   if (!/updatedStop\.rows\[0\]\?\.id !== existingId[\s\S]*E_LOAD_STOP_WRITE_CONFLICT/.test(existingWrite)) failures.push("existing-stop write must reject lost identity");
+  if (!/const insertedStop = await client\.query<\{ id: string \}>\([\s\S]*INSERT INTO mdata\.load_stops[\s\S]*RETURNING id::text/.test(insertWrite)) failures.push("new-stop write must return canonical identity");
+  if (!/!insertedStop\.rows\[0\]\?\.id[\s\S]*E_LOAD_STOP_WRITE_CONFLICT/.test(insertWrite)) failures.push("new-stop write must reject lost identity");
   if (!/id = ANY\(\$2::uuid\[\]\)[\s\S]*RETURNING id::text/.test(replace)) failures.push("archive must target the selected identities and return them");
   if (!/archivedStops\.rows\.length !== expectedIds\.size[\s\S]*E_LOAD_STOP_ARCHIVE_CONFLICT/.test(replace)) failures.push("archive must reject partial persistence");
   if (!/UPDATE mdata\.loads SET[\s\S]*operating_company_id = \$\$\{values\.length\}::uuid[\s\S]*RETURNING id::text/.test(update)) failures.push("load write must be company-scoped and return identity");
@@ -36,6 +41,7 @@ if (process.argv.includes("--selftest")) {
     service.replace("archivedStops.rows.length !== expectedIds.size", "false"),
     service.replace("RETURNING id::text`,\n      values", "/* planted missing identity */`,\n      values"),
     service.replace("updatedLoad.rows[0]?.id !== loadId", "false"),
+    service.replace("if (!insertedStop.rows[0]?.id)", "if (false)"),
     routes.replace('"E_LOAD_STOP_ARCHIVE_CONFLICT"', '"PLANTED"'),
   ];
   for (const [index, mutation] of mutations.entries()) {

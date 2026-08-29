@@ -222,6 +222,26 @@ describe("updateDispatchLoad — evidence-safe stops replace", () => {
     })).rejects.toMatchObject({ code: "E_LOAD_STOP_WRITE_CONFLICT" });
   });
 
+  it("rejects a missing inserted-stop identity instead of counting it as inserted", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      noInvoice,
+      noBill,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT id::text, sequence_number FROM mdata\.load_stops/, rows: [] },
+      { match: /INSERT INTO mdata\.load_stops/, rows: [] },
+    ]);
+
+    await expect(updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { notes: "edit" },
+      stops: [{ stop_type: "pickup", city: "Laredo", state: "TX" }],
+    })).rejects.toMatchObject({ code: "E_LOAD_STOP_WRITE_CONFLICT" });
+  });
+
   it("rejects a partial stop archive instead of reporting the selected count", async () => {
     const { client } = makeClient([
       loadExists,

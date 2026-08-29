@@ -357,7 +357,7 @@ async function replaceStops(
       }
       updated += 1;
     } else {
-      await client.query(
+      const insertedStop = await client.query<{ id: string }>(
         `
           INSERT INTO mdata.load_stops (
             load_id, sequence_number, stop_type, location_id, address_line1, city, state, country, scheduled_arrival_at, status,
@@ -365,6 +365,7 @@ async function replaceStops(
             site_contact_name, site_contact_phone, gate_dock_text, postal_code, latitude, longitude
           )
           VALUES ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+          RETURNING id::text
         `,
         [
           loadId,
@@ -395,6 +396,9 @@ async function replaceStops(
           stop.longitude ?? null,
         ]
       );
+      if (!insertedStop.rows[0]?.id) {
+        throw writeConflict("E_LOAD_STOP_WRITE_CONFLICT");
+      }
       inserted += 1;
     }
   }

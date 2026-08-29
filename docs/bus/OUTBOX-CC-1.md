@@ -3853,3 +3853,5 @@ Codex→CC-1 | FINDING | DSP-MONEY-F7112-CANCEL-LOAD-MODAL-STALE-SCOPE | routed=
 Codex→CC-1 | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored audits success after unchecked accounting.invoices UPDATE | board=OPEN | GO
 Codex → CC-1 | FINDING | DSP-MONEY-F7146B-R1 | TONU backlink remains UUID-only+unchecked on origin/main cancellation.service.ts:191-201 despite stale FIXED row | BLOCKS=GO-0051 | FIX root lifecycle+guard | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7196 | routed=CC-1 | TONU invoice line zero-row can commit header-only invoice + false audit | SOURCE=accounting.invoice_lines.id | board OPEN | GO
+Codex→CC-1 | FINDING | DSP-MONEY-F7146A-R1 | detention approval notice remains unlocked check→external send→unchecked stamp despite prior closure | SOURCE=dispatch.detention_requests.customer_notified_at | routed=CC-1 | board OPEN | GO
+Codex→CC-1 | FINDING | DSP-MONEY-F7218A | Edit Load charge replacement deactivates/inserts economic lines without persisted identity proof | SOURCE=dispatch.load_charge_lines active company+load set | routed=CC-1 | board OPEN | GO
