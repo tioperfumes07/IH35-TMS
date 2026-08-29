@@ -67,6 +67,8 @@ function checkSources({ editor, drawer, api, service, routes }) {
     assertWired("refinements.service archive identity", replaceService, /const archivedStops = await client\.query<\{ id: string \}>\(\s*`UPDATE mdata\.load_stops[\s\S]*?id = ANY\(\$2::uuid\[\]\)[\s\S]*?RETURNING id::text AS id`,\s*\[loadId, existingStopIds\]\s*\)/);
     assertWired("refinements.service archive completeness", replaceService, /archivedStopIds\.size !== existingStopIds\.length[\s\S]*?existingStopIds\.some\(\(id\) => !archivedStopIds\.has\(id\)\)[\s\S]*?E_LOAD_STOP_REPLACE_ARCHIVE_CONFLICT/);
     assertWired("refinements.service insert identity", replaceService, /const insertedStop = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO mdata\.load_stops[\s\S]*?RETURNING id::text AS id[\s\S]*?if \(!insertedStop\.rows\[0\]\?\.id\)[\s\S]*?E_LOAD_STOP_REPLACE_INSERT_CONFLICT/);
+    assertWired("refinements.service wrapper transaction", replaceService, /withCurrentUser\(userId, async \(client\) =>/);
+    if (/client\.query\(["'`](?:BEGIN|COMMIT|ROLLBACK)["'`]\)/.test(replaceService)) throw new Error("refinements.service replace: nested transaction control remains");
     assertWired("refinements.service stop type", service, /code: "E_STOP_TYPE_INVALID"/);
     assertWired("refinements.routes", routes, /app\.post\(\s*["']\/api\/v1\/loads\/:loadId\/stops["']/);
     assertWired("refinements.routes", routes, /postal_code:/);
@@ -133,6 +135,15 @@ function selftest() {
     throw new Error("selftest: planted insert identity failure did not FAIL the guard");
   }
   console.log("selftest PASS — planted insert identity failure is rejected");
+
+  const wrapperMutation = sources.service.replace("export async function replaceLoadStopsRefined", "export async function replaceLoadStopsRefined_REMOVED");
+  if (wrapperMutation === sources.service || checkSources({ ...sources, service: wrapperMutation }).length === 0) {
+    throw new Error("selftest: planted replace wrapper failure did not FAIL the guard");
+  }
+  const nestedTransactionMutation = sources.service.replace("const load = await client.query(", 'await client.query("BEGIN");\n      const load = await client.query(');
+  if (nestedTransactionMutation === sources.service || checkSources({ ...sources, service: nestedTransactionMutation }).length === 0) {
+    throw new Error("selftest: planted replace nested transaction did not FAIL the guard");
+  }
 
   const routesMutation = sources.routes.replace('stop_type: z.enum(["pickup", "delivery", "dropoff", "fuel", "rest", "border", "customs"])', 'stop_type: z.string()');
   if (routesMutation === sources.routes) throw new Error("selftest: could not plant stop-type route failure");

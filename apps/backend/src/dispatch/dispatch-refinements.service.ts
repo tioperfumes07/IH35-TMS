@@ -61,8 +61,6 @@ export type LoadStopInput = {
 export async function manualReassignLoad(userId: string, input: ReassignBody) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
-    try {
       const loadRes = await client.query(
         `
           SELECT id, operating_company_id, assigned_primary_driver_id, assigned_unit_id, assigned_secondary_driver_id, load_number,
@@ -291,12 +289,7 @@ export async function manualReassignLoad(userId: string, input: ReassignBody) {
         "P6-T11191"
       );
 
-      await client.query("COMMIT");
       return { ok: true as const, load_id: input.load_id };
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    }
   });
 
 }
@@ -352,8 +345,6 @@ export async function replaceLoadStopsRefined(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
-    await client.query("BEGIN");
-    try {
       const load = await client.query(
         `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL FOR UPDATE`,
         [loadId, operatingCompanyId]
@@ -449,12 +440,7 @@ export async function replaceLoadStopsRefined(
         "P6-T11191"
       );
 
-      await client.query("COMMIT");
       return { ok: true as const, load_id: loadId };
-    } catch (e) {
-      await client.query("ROLLBACK");
-      throw e;
-    }
   });
 }
 
