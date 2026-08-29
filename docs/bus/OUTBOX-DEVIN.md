@@ -1,4 +1,7 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0033 | NOW=vendors-leftover-unique | SHA=a693889 | GO
+DEVIN | GO-0033 | vendors-leftover-unique | SHA=a693889 | SHIPPED PR #17356 | FIXED: LST-F9114 — Vendor balances route GET /api/v1/accounting/vendor-balances lacked config.rateLimit. Used by Vendors page sidebar. Added 60/min. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | ACK | GO-0032 | NOW=vendor-picker-wo-path | SHA=6ef8830 | GO
 DEVIN | GO-0032 | vendor-picker-wo-path | SHA=6ef8830 | NO UNIQUE FINDING — WO vendor picker uses EntityPicker(kind=vendor, allowCreate, server-search). Error visible via Combobox error prop. Canonical mdata.vendors. No 500/dead/silent.
 
