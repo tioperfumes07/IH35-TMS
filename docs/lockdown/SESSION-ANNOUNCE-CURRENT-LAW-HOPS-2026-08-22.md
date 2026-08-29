@@ -41,7 +41,7 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 | Cursor | 9222 | Lead **unless** `docs/bus/LEAD-SEAT.md` is `CC-1` | GO-0025 runtime /program + U6 honesty. Census. Skip #15546. Nobody kick unless gate. |
 | CC-1 | 9223 | money | GO-0025 **NOW=ACCT-SURF-02 then ACCT-SURF-04**. Never `trigger_deploy`. |
 | CC-2 | 9224 | leftover POST | GO-0026 **NOW=ACCT-R-04 then /reports unique**. Never idle. |
-| CC-3 | 9225 | FE | GO-0025 **NOW=banking USMCA prod-verify**. BANK-CTRL-01 UNVERIFIED. |
+| CC-3 | 9225 | FE | GO-0025 **NOW=banking USMCA prod-verify**. BANK-CTRL-01 = text/law, flags ON intended, do not hunt. |
 | Codex | 9226 | FE | GO-0025 **NOW=DISP-S19/26/34/35/36**. Never restamp U14 |
 | Cascade | audit | unique FINDING | GO-0025 live healthz only. No U14 restamp |
 | Devin-A | audit | unique FINDING | GO-0025. Vendors = DEVIN paste |

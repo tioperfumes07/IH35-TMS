@@ -198,7 +198,7 @@
       ],
       "spec": "Parallel books — flags ON is intended (seed default OFF is stale)",
       "status": "PASS",
-      "evidence": "FALSE ALARM WITHDRAWN. Seed default OFF. Owner override ON for parallel posting — .claude/skills/ih35-tms-standards/SKILL.md §6 + 00_LOCKED_DECISIONS. Neon 2026-08-28 lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true TRANSP+TRK+USMCA is CORRECT. Never raise all-GL-flags-ON as a defect. Nobody flips this flag. prod_verified stays false until USMCA Live Chrome (not a flag hunt). No invented JE. QBO write-back stays OFF.",
+      "evidence": "Text fix only. PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md: all GL_POSTING flags enabled on all entities is CORRECT. Seed default OFF is stale. Neon 2026-08-28 lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true TRANSP+TRK+USMCA — intended. Never raise as red. Nobody flips this flag. No invented JE. QBO write-back stays OFF. prod_verified false until USMCA Live Chrome of this item (not a flag hunt).",
       "pr": null,
       "prod_verified": false
     },
@@ -372,13 +372,13 @@
         "id": "BANK-F06",
         "rank": 6,
         "priority": "P2",
-        "title": "money-gate honesty: flags OFF + MODULE_PROGRESS = manifest",
+        "title": "money-gate honesty: flags ON (ratified) + MODULE_PROGRESS = manifest",
         "canonical_target": "docs/module-completion/banking.json",
         "bound_items": [
           "BANK-CTRL-01",
           "BANK-GATE-01"
         ],
-        "seed_claim": "banking.md: BANK_FEED_GL_POSTING_ENABLED default OFF (BANK-CTRL-01); EVERY-PR checklist process closed via verify-step 1430 (BANK-GATE-01).",
+        "seed_claim": "BANK-CTRL-01: flags ON via owner override (PARALLEL-BOOKS-CUTOVER-LOCKED); seed OFF is stale. BANK-GATE-01: EVERY-PR via verify-step 1430.",
         "fix_block": "BANK-CTRL-01+BANK-GATE-01",
         "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy — BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
       },
