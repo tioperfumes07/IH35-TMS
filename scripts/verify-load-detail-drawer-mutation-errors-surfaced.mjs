@@ -12,7 +12,8 @@
  * mounted dispatch surfaces: no toast, no revert explanation, and the chained `.then()`
  * (refetch/success-toast) never ran since the promise rejected.
  *
- * Fix: added `onError: (err) => pushToast(userFacingApiError(err, "..."), "error")` to all three
+ * Also DSP-MONEY-F7175: Create/View Invoice must fail closed while listLoadInvoices is
+ * loading/errored, View an existing id without a second create, and toast if create returns no id.
  * mutations, matching the established convention used elsewhere in the dispatch module
  * (CancelLoadModal.tsx, InlineUnitPicker.tsx, AssignDriverDropdown.tsx).
  *
@@ -41,6 +42,17 @@ function extractMutationBlock(src, mutationName) {
 
 export function checkLoadDetailDrawerMutationErrors(src) {
   const offenders = [];
+  if (!/invoiceLookupFailed/.test(src) || !/loadInvoicesQuery\.isError/.test(src)) {
+    offenders.push(
+      `${FILE}: DSP-MONEY-F7175 — Create/View Invoice must fail closed on loadInvoicesQuery.isError (absent cache is not "no invoice").`,
+    );
+  }
+  if (!/existingInvoiceId/.test(src) || !/navigate\(`\/accounting\/invoices\/\$\{existingInvoiceId\}`\)/.test(src)) {
+    offenders.push(`${FILE}: DSP-MONEY-F7175 — existing invoice must View via navigate, not createInvoiceFromLoad.`);
+  }
+  if (!/Invoice create did not return an id/.test(src)) {
+    offenders.push(`${FILE}: DSP-MONEY-F7175 — missing invoice.id after create must toast, not silent return.`);
+  }
   if (!IMPORTS_ERROR_HELPER_RE.test(src)) {
     offenders.push(`${FILE}: does not import userFacingApiError from ../../lib/api-error-message — DISP-F6320 regression.`);
   }

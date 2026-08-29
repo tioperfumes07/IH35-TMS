@@ -277,6 +277,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     const rows = loadInvoicesQuery.data?.invoices ?? [];
     return rows[0] ?? null;
   }, [loadInvoicesQuery.data?.invoices]);
+  // DSP-MONEY-F7175: absent cache is not "no invoice". A failed/in-flight listLoadInvoices
+  // must not enable createInvoiceFromLoad (duplicate) or treat missing invoice.id as a silent View.
+  const invoiceLookupUnresolved =
+    loadInvoicesQuery.isLoading || (loadInvoicesQuery.isFetching && loadInvoicesQuery.data === undefined);
+  const invoiceLookupFailed = loadInvoicesQuery.isError;
   const invoiceDocsQuery = useQuery({
     queryKey: ["docs-files", "invoice-factoring-package", load?.operating_company_id, linkedInvoice?.id],
     queryFn: () => listAllFiles({ operating_company_id: load!.operating_company_id, entity_type: "invoice", entity_id: linkedInvoice!.id }).then((res) => res.files),
@@ -639,13 +644,26 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                       <div>
                         <div className="text-xs font-semibold text-gray-700">Invoice</div>
                         <div className="text-[11px] text-gray-500">
-                          {canInvoiceFromLoad ? "Delivered loads can create/view invoice." : "Invoice creation is available once load is delivered."}
+                          {invoiceLookupFailed
+                            ? "Could not load invoices for this load. Retry before creating."
+                            : canInvoiceFromLoad
+                              ? "Delivered loads can create/view invoice."
+                              : "Invoice creation is available once load is delivered."}
                         </div>
                       </div>
                       <Button
                         size="sm"
                         onClick={async () => {
                           if (!load) return;
+                          if (invoiceLookupFailed) {
+                            pushToast("Could not confirm existing invoices for this load. Retry the lookup before creating.", "error");
+                            void loadInvoicesQuery.refetch();
+                            return;
+                          }
+                          if (invoiceLookupUnresolved) {
+                            pushToast("Invoice lookup is still running. Wait before creating.", "error");
+                            return;
+                          }
                           // LV-INVOICE-RATE-SNAPSHOT-NEVER-RESYNCS — the invoice snapshots the load's rate
                           // ONCE, at build time (accounting/from-load.ts:186 `lineTotal =
                           // load.rate_total_cents`), and NOTHING in the backend ever re-syncs it:
@@ -655,7 +673,11 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                           // the CREATE side only: if an invoice already exists we still navigate to it, so
                           // "View" keeps working and an already-broken invoice stays reachable.
                           const existingInvoiceId = loadInvoicesQuery.data?.invoices?.[0]?.id;
-                          if (!existingInvoiceId && !Number(load.rate_total_cents ?? 0)) {
+                          if (existingInvoiceId) {
+                            navigate(`/accounting/invoices/${existingInvoiceId}`);
+                            return;
+                          }
+                          if (!Number(load.rate_total_cents ?? 0)) {
                             pushToast(
                               "This load has no rate yet. Invoicing it now would create a $0 invoice that cannot be corrected later — set the load rate first.",
                               "error",
@@ -667,11 +689,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                             loadId: load.id,
                           });
                           const invoiceId = result.invoice?.id;
-                          if (!invoiceId) return;
+                          if (!invoiceId) {
+                            pushToast("Invoice create did not return an id. Nothing to open.", "error");
+                            return;
+                          }
                           navigate(`/accounting/invoices/${invoiceId}`);
                         }}
-                        loading={createInvoiceMutation.isPending}
-                        disabled={!canInvoiceFromLoad}
+                        loading={createInvoiceMutation.isPending || invoiceLookupUnresolved}
+                        disabled={!canInvoiceFromLoad || invoiceLookupFailed || invoiceLookupUnresolved}
                       >
                         Create / View Invoice
                       </Button>
