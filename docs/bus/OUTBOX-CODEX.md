@@ -2069,6 +2069,9 @@ CODEX | WORKING | GO-0045 | FINDING=DSP-F7184 | NOW=canonical cancellation/load 
 CODEX | ACK | GO-0046 | NOW=/fleet-leftover-unique | SHA=4e5db76 | GO
 CODEX | SHIPPED | GO-0045 | FINDING=DSP-F7184 | PR=#17387 @ e003eacbac | NEXT=GO-0046 /fleet | GO
 CODEX | WORKING | GO-0046 | FINDING=FLEET-F7185 | NOW=dual-ack canonical CAS | NEXT=FAST-MERGE then GO-0047 | GO
+CODEX | ACK | GO-0048 | NOW=/drivers-leftover-unique | SHA=4e5db76 | GO
+Codex | WORKING | DRIVER-F7187 | CLAIM=driver-identity-phone+language-exact-mirror | SOURCE=mdata.drivers→identity.users | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7186 | PR=#17395 @ abf2c81098 | Built=Edit Load exact write identities | Live=post-deploy UNVERIFIED | NEXT=GO-0048 /drivers | GO
 Codex | WORKING | DSP-F7186 | CLAIM=edit-load-write-exact-identities | SOURCE=mdata.loads+load_stops | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0047 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
 CODEX | SHIPPED | GO-0046 | FINDING=FLEET-F7185 | PR=#17390 @ b1e59581d7 | NEXT=GO-0047 /dispatch | GO
