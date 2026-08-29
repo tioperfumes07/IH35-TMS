@@ -22,6 +22,16 @@ export async function registerCashFlowRoutes(app: FastifyInstance) {
 
     const query = cashFlowQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // GO-0037-CASH-FLOW-STATEMENT-DATE-RANGE-ORDER-UNVALIDATED (same class as GO-0036, this file was
+    // not among the report routes fixed there): a reversed from_date/to_date range was not just a
+    // false-empty result -- getCashFlowReport() computes cash_at_start (entry_date < from_date) and
+    // cash_at_end (entry_date <= to_date) as two INDEPENDENT queries, so a reversed range produces a
+    // chronologically-inverted, self-contradictory Cash-at-start/Cash-at-end pair with all activity
+    // sections empty ($0) -- surfaced only as an unexplained "Needs review" reconciliation badge, not
+    // an actual error about the invalid input.
+    if (query.data.from_date && query.data.to_date && query.data.from_date > query.data.to_date) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from_date must be on or before to_date"] } });
+    }
     await assertCompanyMembership(user.uuid, query.data.operating_company_id);
 
     const report = await getCashFlowReport({
