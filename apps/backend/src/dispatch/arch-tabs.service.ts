@@ -41,6 +41,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           SELECT scheduled_arrival_at, city, state
           FROM mdata.load_stops
           WHERE load_id = l.id AND stop_type = 'delivery'
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number DESC
           LIMIT 1
         ) sd ON true
@@ -48,6 +49,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           SELECT scheduled_arrival_at
           FROM mdata.load_stops
           WHERE load_id = l.id
+            AND soft_deleted_at IS NULL
             AND scheduled_arrival_at IS NOT NULL
             AND scheduled_arrival_at >= now()
           ORDER BY scheduled_arrival_at ASC
