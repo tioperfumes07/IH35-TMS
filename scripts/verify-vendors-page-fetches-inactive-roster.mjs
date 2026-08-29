@@ -56,6 +56,12 @@ export function checkPageSource(src) {
   if (!/listStatus === "all"\s*\n\s*\? \(vendorsQuery\.data\?\.total \?\? 0\) \+ \(inactiveVendorsQuery\.data\?\.total \?\? 0\)/.test(src)) {
     problems.push("vendorsServerTotal no longer sums both server totals for the All tab");
   }
+  // LST-F9104 — the inactive vendors query must surface errors (not silently show "No vendors
+  // found." on the Inactive tab). The active query already had ListErrorState; the inactive
+  // query must also have its own error state.
+  if (!/inactiveVendorsQuery\.isError/.test(src)) {
+    problems.push("inactiveVendorsQuery.isError is not checked — a failed inactive fetch silently shows 'No vendors found.' on the Inactive tab (LST-F9104)");
+  }
   return problems;
 }
 
@@ -92,6 +98,9 @@ function selftest() {
       }),
       [fullVendorsRoster]
     );
+    if (inactiveVendorsQuery.isError) {
+      return <ListErrorState title="Couldn't load inactive vendors" />;
+    }
   `;
 
   const cases = [
