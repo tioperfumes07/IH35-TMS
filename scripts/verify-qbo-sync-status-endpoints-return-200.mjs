@@ -59,18 +59,38 @@ for (const route of ROUTES) {
   if (!src.includes(route.fetchFn)) {
     fail(`${route.label} routes must call ${route.fetchFn}`);
   }
-  if (!src.includes("EMPTY_SYNC_STATUS")) {
-    fail(`${route.label} routes must define EMPTY_SYNC_STATUS fallback`);
-  }
-  if (!/try\s*\{[\s\S]*await\s+\w+SyncStatus/.test(src)) {
-    fail(`${route.label} status handler must wrap sync status fetch in try/catch`);
-  }
-  if (!/catch\s*\([\s\S]*reply\.send\(EMPTY_SYNC_STATUS\)/.test(src)) {
-    fail(`${route.label} status handler must return EMPTY_SYNC_STATUS on fetch failure`);
-  }
-  for (const field of STATUS_SHAPE_FIELDS) {
-    if (!src.includes(field)) {
-      fail(`${route.label} EMPTY_SYNC_STATUS must include ${field}`);
+  // LST-F9100: vendors status endpoint was fixed to surface errors
+  // honestly (500) instead of silently returning EMPTY_SYNC_STATUS (200, all zeros). The other
+  // three routes (customers, chart-of-accounts, items) still use EMPTY_SYNC_STATUS — they are
+  // not in the /vendors lane and will be fixed in their own class sweep.
+  const isVendors = route.label === "vendors";
+  if (isVendors) {
+    // Vendors must have assertCompanyMembership (cross-entity leak fix)
+    if (!src.includes("assertCompanyMembership")) {
+      fail(`${route.label} routes must call assertCompanyMembership before sync operations`);
+    }
+    // Vendors must NOT silently swallow errors as EMPTY_SYNC_STATUS
+    if (/reply\.send\(EMPTY_SYNC_STATUS\)/.test(src)) {
+      fail(`${route.label} status handler must NOT return EMPTY_SYNC_STATUS on fetch failure (silent error swallow — LST-F9100)`);
+    }
+    // Vendors status must return 500 on error
+    if (!/reply\.code\(500\).*vendors_sync_status_failed/.test(src)) {
+      fail(`${route.label} status handler must return 500 vendors_sync_status_failed on fetch failure`);
+    }
+  } else {
+    if (!src.includes("EMPTY_SYNC_STATUS")) {
+      fail(`${route.label} routes must define EMPTY_SYNC_STATUS fallback`);
+    }
+    if (!/try\s*\{[\s\S]*await\s+\w+SyncStatus/.test(src)) {
+      fail(`${route.label} status handler must wrap sync status fetch in try/catch`);
+    }
+    if (!/catch\s*\([\s\S]*reply\.send\(EMPTY_SYNC_STATUS\)/.test(src)) {
+      fail(`${route.label} status handler must return EMPTY_SYNC_STATUS on fetch failure`);
+    }
+    for (const field of STATUS_SHAPE_FIELDS) {
+      if (!src.includes(field)) {
+        fail(`${route.label} EMPTY_SYNC_STATUS must include ${field}`);
+      }
     }
   }
 }
