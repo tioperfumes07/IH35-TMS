@@ -5,6 +5,8 @@ export interface SafetyTab {
   id: string;
   label: string;
   route: string;
+  /** Additional mounted route prefixes that belong to this tab's chrome identity. */
+  routeAliases?: string[];
   badge: TabBadge;
   status?: TabSurfaceStatus;
 }
@@ -85,7 +87,13 @@ export const SAFETY_GROUPS: SafetyGroup[] = [
     label: "Workforce Planning",
     tabs: [
       { id: "driver-scheduler", label: "Driver Scheduler", route: "/safety/driver-scheduler", badge: "new" },
-      { id: "leave-requests", label: "Leave Requests", route: "/safety/scheduler/pending-requests", badge: "new" },
+      {
+        id: "leave-requests",
+        label: "Leave Requests",
+        route: "/safety/scheduler/pending-requests",
+        routeAliases: ["/safety/scheduler/requests"],
+        badge: "new",
+      },
       { id: "leave-balances", label: "Leave Balances", route: "/safety/leave-balances", badge: null },
     ],
   },
@@ -191,6 +199,31 @@ export function findSafetyTab(tabId: string) {
     if (group) return { group, tab: alias.tab };
   }
   return null;
+}
+
+function routeMatchesPrefix(path: string, route: string): boolean {
+  return path === route || path.startsWith(`${route}/`);
+}
+
+/** Resolve mounted Safety routes, including detail routes that are siblings of their list route. */
+export function findSafetyTabByPath(path: string) {
+  const candidates: Array<{ group: SafetyGroup; tab: SafetyTab; route: string }> = [];
+  for (const group of SAFETY_GROUPS) {
+    for (const tab of group.tabs) {
+      for (const route of [tab.route, ...(tab.routeAliases ?? [])]) {
+        if (routeMatchesPrefix(path, route)) candidates.push({ group, tab, route });
+      }
+    }
+  }
+  for (const alias of SAFETY_ALIAS_TABS) {
+    const group = SAFETY_GROUPS.find((candidate) => candidate.id === alias.groupId);
+    if (!group) continue;
+    for (const route of [alias.tab.route, ...(alias.tab.routeAliases ?? [])]) {
+      if (routeMatchesPrefix(path, route)) candidates.push({ group, tab: alias.tab, route });
+    }
+  }
+  candidates.sort((a, b) => b.route.length - a.route.length);
+  return candidates[0] ?? null;
 }
 
 /** Canonical inventory for count/nav integrity guards (Block A23-2). */

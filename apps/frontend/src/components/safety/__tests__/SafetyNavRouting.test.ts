@@ -3,6 +3,7 @@ import {
   SAFETY_ALIAS_TABS,
   SAFETY_GROUPS,
   findSafetyTab,
+  findSafetyTabByPath,
   type SafetyTab,
 } from "../SAFETY_TABS_CONFIG";
 
@@ -19,17 +20,8 @@ const ALIAS_TABS = SAFETY_ALIAS_TABS.map((alias) => {
 });
 const ALL_TABS = [...CANONICAL_TABS, ...ALIAS_TABS];
 
-// Mirrors SafetyLayout's route -> activeTabId derivation (canonical first, then aliases).
 function deriveActiveTabId(path: string): string {
-  for (const group of SAFETY_GROUPS) {
-    for (const tab of group.tabs) {
-      if (tab.route === path) return tab.id;
-    }
-  }
-  for (const alias of SAFETY_ALIAS_TABS) {
-    if (alias.tab.route === path) return alias.tab.id;
-  }
-  return "driver-files";
+  return findSafetyTabByPath(path)?.tab.id ?? "driver-files";
 }
 
 describe("Safety nav routing integrity", () => {
@@ -62,6 +54,14 @@ describe("Safety nav routing integrity", () => {
     // Selecting Cert Expiry produces "Cert Expiry" active, not "DOT Compliance".
     expect(deriveActiveTabId("/safety/cert-expiry")).toBe("cert-expiry");
     expect(deriveActiveTabId("/safety/dot-compliance")).toBe("dot-compliance");
+  });
+
+  it("keeps nested leave-request details under Workforce Planning / Leave Requests", () => {
+    const detailPath = "/safety/scheduler/requests/75d49493-77a2-401d-aa54-cdbe359541e1";
+    const match = findSafetyTabByPath(detailPath);
+    expect(match?.tab.id).toBe("leave-requests");
+    expect(match?.tab.label).toBe("Leave Requests");
+    expect(match?.group.label).toBe("Workforce Planning");
   });
 
   it("alias tabs are NOT part of the canonical 28 groups", () => {

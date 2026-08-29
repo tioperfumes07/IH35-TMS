@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getLatestCsa, getSafetyKpis, getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
-import { SAFETY_ALIAS_TABS, SAFETY_GROUPS, findSafetyTab } from "../../components/safety/SAFETY_TABS_CONFIG";
+import { SAFETY_GROUPS, findSafetyTab, findSafetyTabByPath } from "../../components/safety/SAFETY_TABS_CONFIG";
 import {
   SafetyDashboardFilter,
   type SafetyActivityWindow,
@@ -102,21 +102,7 @@ export function SafetyLayout() {
     // Insurance mounts (`/safety/insurance/claims`, `/policies/:id`, …) so the chrome lied as
     // "Driver Files & Training" while Outlet correctly showed Claims. Match longest prefix first
     // with `route` or `route/` boundary (never `/safety/hos` swallowing `/safety/hos-violations`).
-    const matchRoute = (route: string) => path === route || path.startsWith(`${route}/`);
-    const candidates: { id: string; route: string }[] = [];
-    for (const group of SAFETY_GROUPS) {
-      for (const tab of group.tabs) {
-        if (matchRoute(tab.route)) candidates.push({ id: tab.id, route: tab.route });
-      }
-    }
-    for (const alias of SAFETY_ALIAS_TABS) {
-      if (matchRoute(alias.tab.route)) candidates.push({ id: alias.tab.id, route: alias.tab.route });
-    }
-    if (candidates.length > 0) {
-      candidates.sort((a, b) => b.route.length - a.route.length);
-      return candidates[0].id;
-    }
-    return "driver-files";
+    return findSafetyTabByPath(path)?.tab.id ?? "driver-files";
   }, [location.pathname]);
 
   const activeMeta = activeTabId === "home" ? null : findSafetyTab(activeTabId);
