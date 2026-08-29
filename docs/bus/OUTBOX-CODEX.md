@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0025 | NOW=next-genuine-dispatch-unique | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7151 | CLAIM=intransit-office-create-201-undefined | SOURCE=dispatch.intransit_issues INSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0023 | NOW=DISP-S19-S26-S34-S35-S36 | SHA=4e5db76 | GO
 CODEX | GO-0023 | 5/5 LIVE PASS | DISP-S19=layovers scoped+honest-zero · DISP-S26=planner scoped+populated · DISP-S34=settings auth-scoped · DISP-S35=settlements scoped+honest-handoff · DISP-S36=trip-pairing scoped+populated | SHA=4e5db76 | NEXT=FAST-MERGE
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
