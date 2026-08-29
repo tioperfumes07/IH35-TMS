@@ -771,7 +771,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
               )
             LIMIT 1
           `,
-          [parsedParams.data.id, authUser.uuid]
+          [parsedParams.data.id]
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
@@ -837,7 +837,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
             )
           LIMIT 1
         `,
-        [parsedParams.data.id, authUser.uuid]
+        [parsedParams.data.id]
       );
       const oldRow = oldRes.rows[0] ?? null;
       if (!oldRow) return null;
@@ -915,7 +915,7 @@ export async function registerVendorRoutes(app: FastifyInstance) {
                 )
               LIMIT 1
             `,
-            [parsedParams.data.id, authUser.uuid]
+            [parsedParams.data.id]
           ),
         { actorUserId: authUser.uuid }
       );
