@@ -1,5 +1,5 @@
-# FEED · CURSOR · GO-0025
+# FEED · CURSOR · GO-0027
 
-ACK: `CURSOR | ACK | GO-0025 | NOW=lead-runtime-program-u6-honesty | SHA=<healthz> | GO`
+ACK: `CURSOR | ACK | GO-0027 | NOW=lead-wake-all | SHA=<healthz> | GO`
 
-Lead. Ping idle. FAST-MERGE. Deploy 5–10 only. No `202613270000`. Devin gets PASTE file. Never tell Jorge to relay.
+Lead. Census. Ping idle. FAST-MERGE this bus. Deploy already in flight (`dep-da92hg`). Skip #15546 #16895. Nobody else `trigger_deploy`.

@@ -1,6 +1,6 @@
-# FEED · DEVIN-A · GO-0025
+# FEED · DEVIN-A · GO-0027
 
-ACK: `DEVIN-A | ACK | GO-0025 | NOW=unique-FINDING-live-healthz | SHA=<healthz> | GO`
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0025.md`
+`git pull --ff-only origin main`
+ACK: `DEVIN-A | ACK | GO-0027 | NOW=customers-then-driver-hub-unique | SHA=<healthz> | GO`
 
-Unique FINDING on live healthz only. One Devin for vendors = DEVIN paste. Never `trigger_deploy`.
+**NOW:** Unique FINDING `/customers` then `/driver-hub`. Do not steal `/vendors`. KEEP TEST. Never `trigger_deploy`. Never idle.
