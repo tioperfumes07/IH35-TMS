@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=ef2f954 | SHIPPED PR #17304 | FIXED: LST-F9105 — Vendors page had two more silent query errors: balancesQuery (showed $0 on error) and vendorPaymentMethodsQuery (showed "Not on file" on error). Both silent no-ops. Added isError checks with inline Retry for both. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=e7c2136 | SHIPPED PR #17302 | FIXED: LST-F9104 — Vendors list page only checked vendorsQuery.isError (active roster). If inactiveVendorsQuery failed, Inactive tab silently showed "No vendors found." instead of an error. Added inactiveVendorsQuery.isError check with ListErrorState + Retry. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=d05ffc6 | SHIPPED PR #17298 | FIXED: LST-F9103 — VendorDetail bill payments query only surfaced errors for HTTP 404/500/501 (vendorPaymentBackendPending). Any other error (403/429/502/503) silently showed "No payments recorded." — silent no-op. Added isError branch with Retry for non-404/500/501 errors. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
