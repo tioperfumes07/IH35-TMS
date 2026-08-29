@@ -126,6 +126,19 @@ export async function fetchTasks(params: {
   return apiRequest<{ tasks: Task[]; total_count: number }>(`/api/v1/tasks?${q}`);
 }
 
+// GO-0044-TASKS-CHAT-DEEP-LINK-HEADER-CONTEXT-LOSS: TasksChatPage's task picker only fetches a
+// fixed +/-45-day window (fetchPlannerTasks) -- a deep link to a task outside that window (the
+// Planner's own overdue-rollover logic, or a "This Year"/custom date-range preset can surface one)
+// left the chat header silently degraded to a bare "Task" label with no date/status/subject-link,
+// even though the comments/activity threads themselves loaded and posted fine. This single-task
+// fetch lets the page resolve exactly the deep-linked task regardless of the picker's window.
+export async function fetchTask(task_id: string, operating_company_id: string, signal?: AbortSignal) {
+  return apiRequest<{ task: Task }>(
+    `/api/v1/tasks/${encodeURIComponent(task_id)}?operating_company_id=${encodeURIComponent(operating_company_id)}`,
+    { signal },
+  );
+}
+
 export async function fetchTaskTypes(operating_company_id: string) {
   return apiRequest<{ types: TaskType[] }>(`/api/v1/tasks/types?operating_company_id=${encodeURIComponent(operating_company_id)}`);
 }

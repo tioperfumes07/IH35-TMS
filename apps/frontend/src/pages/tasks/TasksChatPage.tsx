@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { listAssignableUsers } from "../../api/identity";
 import {
   fetchPlannerTasks,
+  fetchTask,
   fetchTaskComments,
   createTaskComment,
   fetchTaskActivity,
@@ -108,7 +109,19 @@ export function TasksChatPage() {
     () => [...(tasksQuery.data?.tasks ?? [])].sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date)),
     [tasksQuery.data],
   );
-  const selectedTask = tasks.find((t) => t.task_id === activeTaskId);
+  const taskInWindow = tasks.find((t) => t.task_id === activeTaskId);
+  // GO-0044-TASKS-CHAT-DEEP-LINK-HEADER-CONTEXT-LOSS: the picker above only fetches a fixed
+  // +/-45-day window -- a deep link (e.g. from a task drawer's "Open task activity" link) to a
+  // task outside that window silently degraded the header to a bare "Task" label with no date/
+  // status/subject-link, even though comments/activity loaded and posted fine. Only fetch the
+  // single task by id once we know the windowed picker doesn't already have it, so the common
+  // case (task is in-window) costs nothing extra.
+  const taskByIdQuery = useQuery({
+    queryKey: ["tasks", "chat-deep-link-task", activeTaskId, companyId],
+    queryFn: ({ signal }) => fetchTask(activeTaskId, companyId, signal),
+    enabled: Boolean(activeTaskId) && Boolean(companyId) && !taskInWindow && !tasksQuery.isLoading,
+  });
+  const selectedTask = taskInWindow ?? taskByIdQuery.data?.task;
 
   const commentsQuery = useQuery({
     queryKey: ["tasks", "comments", activeTaskId, companyId],
