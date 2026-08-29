@@ -62,6 +62,9 @@ describe("LoadReassignModal (P5-T17)", () => {
     const combos = screen.getAllByRole("combobox");
     pickCombo(combos[0], /Test Driver/i);
 
+    expect(screen.getAllByText("Test Driver").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText("Driver — not visible")).not.toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: /^Reassign$/i }));
 
     await vi.waitFor(() => {

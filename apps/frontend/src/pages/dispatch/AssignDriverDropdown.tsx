@@ -14,6 +14,7 @@ export type AssignDriverDropdownProps = {
   operatingCompanyId: string;
   value: string;
   onChange: (driverId: string) => void;
+  onSelectedDriverLabelChange?: (label: string | null) => void;
   forPickupAt?: string;
   disabled?: boolean;
   /** When set (e.g. in tests), skips network fetch. */
@@ -38,6 +39,7 @@ export function AssignDriverDropdown({
   operatingCompanyId,
   value,
   onChange,
+  onSelectedDriverLabelChange,
   forPickupAt,
   disabled,
   driversOverride,
@@ -132,6 +134,7 @@ export function AssignDriverDropdown({
   const onSelectId = (id: string) => {
     const row = optionsRows.find((d) => d.driver_id === id);
     if (!row) {
+      onSelectedDriverLabelChange?.(null);
       onChange(id);
       return;
     }
@@ -139,6 +142,7 @@ export function AssignDriverDropdown({
       setPendingUnsafe(row);
       return;
     }
+    onSelectedDriverLabelChange?.(row.display_name);
     onChange(id);
   };
 
@@ -165,6 +169,7 @@ export function AssignDriverDropdown({
         }}
         onChange={(next) => {
           if (!next) {
+            onSelectedDriverLabelChange?.(null);
             onChange("");
             return;
           }
@@ -194,6 +199,7 @@ export function AssignDriverDropdown({
               type="button"
               className="rounded-sm bg-slate-600 px-2 py-1 text-white"
               onClick={() => {
+                onSelectedDriverLabelChange?.(pendingUnsafe.display_name);
                 onChange(pendingUnsafe.driver_id);
                 setPendingUnsafe(null);
               }}
@@ -213,6 +219,7 @@ export function AssignDriverDropdown({
         onClose={() => setDriverCreateOpen(false)}
         onCreated={(createdId, displayName) => {
           setCreatedOption({ driver_id: createdId, display_name: displayName });
+          onSelectedDriverLabelChange?.(displayName);
           onChange(createdId);
           setDriverCreateOpen(false);
           void q.refetch();
