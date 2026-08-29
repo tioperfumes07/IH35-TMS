@@ -51,4 +51,14 @@ describe("Driver PWA live data parity (A24-11)", () => {
     expect(backendRoutes).toContain("/api/v1/driver-pwa/recent-fuel-transactions");
     expect(backendRoutes).toContain("/api/v1/driver-pwa/equipment");
   });
+
+  // GO-0027-HOME-F: a failed loads/fuel fetch must never render the same "no loads today" /
+  // "no recent fuel" text as a genuinely empty result -- a driver reading a real backend outage
+  // as "nothing to do today" is the driver-PWA instance of this cycle's dashboard-silent-zero bug.
+  it("loadsQuery and fuelQuery both gate their empty-state text on isError, matching hosQuery", () => {
+    expect(homePage).toContain("loadsQuery.isError");
+    expect(homePage).toContain("fuelQuery.isError");
+    expect(homePage).not.toMatch(/!loadsQuery\.isLoading && !activeLoad \?/);
+    expect(homePage).not.toMatch(/!fuelQuery\.isLoading && !recentFuel \?/);
+  });
 });

@@ -212,7 +212,10 @@ export function HomePage() {
         {/* ARCHIVE-not-DELETE: Phase 1 placeholder load card replaced by live assignment (A24-11). Sunset: 2026-09-01 */}
         <PwaCard title={t("home.active_load")} subtitle={t("home.active_load_subtitle_live")}>
           {loadsQuery.isLoading ? <p className="text-sm text-pwa-text-secondary">{t("common.loading")}</p> : null}
-          {!loadsQuery.isLoading && !activeLoad ? <p className="text-sm text-pwa-text-secondary">{t("home.no_loads_today")}</p> : null}
+          {/* GO-0027-HOME-F: a failed fetch must never render the same "no loads today" text as a
+              genuinely empty result -- a driver reading a real backend outage as "nothing to do". */}
+          {loadsQuery.isError ? <p className="text-sm text-hos-violation">{t("common.error")}</p> : null}
+          {!loadsQuery.isLoading && !loadsQuery.isError && !activeLoad ? <p className="text-sm text-pwa-text-secondary">{t("home.no_loads_today")}</p> : null}
           {activeLoad ? (
             <>
               <p className="font-medium">
@@ -248,7 +251,10 @@ export function HomePage() {
         {/* ARCHIVE-not-DELETE: Phase 1 placeholder fuel card replaced by live transactions (A24-11). Sunset: 2026-09-01 */}
         <PwaCard title={t("home.fuel_recommendation")} subtitle={t("home.fuel_subtitle_live")}>
           {fuelQuery.isLoading ? <p className="text-sm text-pwa-text-secondary">{t("common.loading")}</p> : null}
-          {!fuelQuery.isLoading && !recentFuel ? <p className="text-sm text-pwa-text-secondary">{t("home.no_recent_fuel")}</p> : null}
+          {/* GO-0027-HOME-F: same class as loadsQuery above -- a failed fetch must never render
+              as "no recent fuel". */}
+          {fuelQuery.isError ? <p className="text-sm text-hos-violation">{t("common.error")}</p> : null}
+          {!fuelQuery.isLoading && !fuelQuery.isError && !recentFuel ? <p className="text-sm text-pwa-text-secondary">{t("home.no_recent_fuel")}</p> : null}
           {recentFuel ? (
             <>
               <p className="font-medium">
