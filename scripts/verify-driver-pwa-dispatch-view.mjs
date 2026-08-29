@@ -56,6 +56,19 @@ contains("apps/backend/src/dispatch/driver-pwa/dispatch-view.routes.ts", routes,
   { pattern: /assigned_primary_driver_id/, label: "driver RLS scope" },
 ]);
 
+function activeStopSelectorProblems(source) {
+  const problems = [];
+  const selectorCount = (source.match(/FROM mdata\.load_stops s/g) ?? []).length;
+  const activePredicateCount = (source.match(/AND s\.soft_deleted_at IS NULL/g) ?? []).length;
+  if (selectorCount !== 6) problems.push(`expected exactly 6 mounted load-stop selectors, found ${selectorCount}`);
+  if (activePredicateCount !== selectorCount) {
+    problems.push(`expected ${selectorCount} active-stop predicates, found ${activePredicateCount}`);
+  }
+  return problems;
+}
+
+for (const problem of activeStopSelectorProblems(routes)) fail(problem);
+
 read("apps/backend/src/dispatch/driver-pwa/__tests__/dispatch-view.test.ts");
 
 const indexTs = read("apps/backend/src/index.ts");
@@ -101,7 +114,19 @@ if (SELFTEST) {
       process.exit(1);
     }
   }
-  console.log(`verify:driver-pwa-dispatch-view SELFTEST PASS — ${mutations.length} mount/link mutations caught`);
+  const activeStopMutations = [
+    ["all active-stop predicates", routes.replace(/\s+AND s\.soft_deleted_at IS NULL/g, "")],
+    ["one active-stop predicate", routes.replace(/\s+AND s\.soft_deleted_at IS NULL/, "")],
+  ];
+  for (const [label, plantedRoutes] of activeStopMutations) {
+    if (activeStopSelectorProblems(plantedRoutes).length === 0) {
+      console.error(`verify:driver-pwa-dispatch-view SELFTEST FAILED — ${label} mutation was not caught`);
+      process.exit(1);
+    }
+  }
+  console.log(
+    `verify:driver-pwa-dispatch-view SELFTEST PASS — ${mutations.length + activeStopMutations.length} mount/link/lifecycle mutations caught`
+  );
   process.exit(0);
 }
 
