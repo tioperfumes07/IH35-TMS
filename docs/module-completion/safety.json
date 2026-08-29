@@ -358,7 +358,7 @@
       ],
       "spec": "safety.md section J boundary 8 (findings F09)",
       "status": "HOLD",
-      "evidence": "HOLD 2026-08-09 — SOFTWARE CLOSED (F09): escrow target + has_signed_clause from legal.contract_instances (not invented/inferred); EscrowRecordTab N-of-M surface (guard 2074); forfeit gate blocks unsigned. Neon lucia 2026-08-09: signed_driver_clauses=1, active_drivers=117 — density is Legal ops (LEGAL-SIGNED-CLAUSE-CAMPAIGN), not a Safety code FAIL. Tracker: docs/trackers/SAF-B08-SIGNED-CLAUSE-DENSITY.md. PRIOR FAIL correctly refused PASS on density alone.",
+      "evidence": "HOLD 2026-08-09 — SOFTWARE CLOSED (F09): escrow target + has_signed_clause from legal.contract_instances (not invented/inferred); EscrowRecordTab N-of-M surface (guard 2074); forfeit gate blocks unsigned. Neon lucia 2026-08-09: signed_driver_clauses=1, active_drivers=117 — density is Legal ops (LEGAL-SIGNED-CLAUSE-CAMPAIGN), not a Safety code FAIL. Tracker: docs/trackers/SAF-B08-SIGNED-CLAUSE-DENSITY.md. PRIOR FAIL correctly refused PASS on density alone. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-steps/2074-verify-safety-b08-signed-clause-surface.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: legal.contract_instances signed_at IS NOT NULL AND signer_type='driver' = 1, stable, matches. Software-closed HOLD status unchanged (density is legal-ops-owned by design, not a code gap). Binding on this GUARD packet.",
       "pr": 3380,
       "owner_hold": true,
       "tracker": "docs/trackers/SAF-B08-SIGNED-CLAUSE-DENSITY.md",
@@ -419,7 +419,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T02:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "SAF-B09",

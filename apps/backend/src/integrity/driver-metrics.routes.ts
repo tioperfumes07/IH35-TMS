@@ -39,7 +39,7 @@ const leaderboardQuerySchema = companyQuerySchema.extend({
 });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const role = String(req.user?.role ?? "");
   if (!["Owner", "Administrator", "Manager", "Accountant"].includes(role)) {
     reply.code(403).send({ error: "forbidden" });

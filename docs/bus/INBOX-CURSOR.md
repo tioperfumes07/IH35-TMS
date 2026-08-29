@@ -1,3 +1,5 @@
+SEAT=CURSOR | GO-PENDING-01 | T-01 auth-helper TS ship | HOLD Round Trips | deploy 5-10 | skip #15546 | GO
+SEAT=CURSOR | GO-DWELL-01 | canvas+packet baked | D-5 not coded this turn (spec preview) | deploy wait healthz descendant of T-03/T-04 | skip #15546 | GO
 Cursor→self | GO-MODAL-01 | Book Load URL retract THIS PR then deploy cadence | skip #15546 | GO
 Cursor→self | GO-TRUST-02 | NOW=T-04 matrix worker interval then T-05 | skip #15546 | lead deploy 5-10 | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GO-TRUST-01 | T-01 NOW requireAuth return reply (this PR) · T-02 vendors bind after · T-03 cell why empty · U6 then U14 · Box3=defect vertical · Box4=errand never verticalize stamps · skip #15546 | GO

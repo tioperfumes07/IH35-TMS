@@ -22,7 +22,7 @@ function safetyOfficerOrAdmin(role: string): boolean {
 }
 
 function authedSafetyOfficer(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user as { uuid: string; role: string };
   if (!safetyOfficerOrAdmin(user.role)) {
     reply.code(403).send({ error: "forbidden", message: "Safety Officer, Owner, or Administrator role required" });

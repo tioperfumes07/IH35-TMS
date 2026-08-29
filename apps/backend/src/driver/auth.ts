@@ -25,7 +25,7 @@ export async function requireDriverSession(req: FastifyRequest, reply: FastifyRe
   if (!req.user) {
     tryAttachDriverJwt(req);
   }
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return false;
   if (!req.user) return false;
   if (!isDriverRole(req.user.role)) {
     reply.code(403).send({
