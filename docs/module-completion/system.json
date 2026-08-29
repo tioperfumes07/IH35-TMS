@@ -17,9 +17,9 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "SystemModulePage \u00b7 program-system-help SYSTEM section",
+      "spec": "SystemModulePage · program-system-help SYSTEM section",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 \u00b7 open_sync_alerts=0 \u00b7 success_sync_runs=489; qbo.sync_runs n_live_tup=1086 \u00b7 integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
+      "evidence": "SystemModulePage.tsx mounts overview/qbo-recon/qbo-sync/program/software/claude-coder tabs and renders live QBO reconciliation (getQboReconciliation) + sync status (getQboSyncHealth), including unresolved alerts and connection pills. Guard: scripts/verify-system-module-surfaces-s01-s04.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia ih35_app on br-fancy-credit-akjnd07a: TRANSP opco 91e0bf0a-133f-4ce8-a734-2586cfa66d96 active_qbo_connections=1 · open_sync_alerts=0 · success_sync_runs=489; qbo.sync_runs n_live_tup=1086 · integrations.qbo_inbound_events n_live_tup=1313. healthz version=e16ebd0 (main tip 203758833).",
       "pr": "#5343",
       "prod_verified": true
     },
@@ -67,9 +67,9 @@
       "layers": [
         "DOD-B"
       ],
-      "spec": "Architecture docs \u00b7 QBO pull-only law",
+      "spec": "Architecture docs · QBO pull-only law",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false \u00b7 QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
+      "evidence": "SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false · QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
       "pr": "#5341",
       "prod_verified": true
     },
@@ -88,7 +88,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 SYS-VERIFY-01 \u2014 CDP 9225 Owner session, USMCA (+TRANSP qbo-sync). All six /system tabs clicked: overview \u00b7 qbo-recon \u00b7 qbo-sync \u00b7 program \u00b7 software \u00b7 claude-coder \u2014 each renders (not 404). QBO write-back OFF by design (SYS-S05); Software DEGRADED honest (SYS-S02); Program Tracker counts + link to /program. VERIFY V1/V3/V5/V7/V8 PASS; V2 N/A; V6 N/A. Neon 2026-08-10: audit.scenario_status has hop.book/dispatch/deliver/invoice/gl passed (CI-PROBE). Cursor closed stale scaffold evidence that predated Cascade click notes.",
+      "evidence": "PROD-VERIFIED Cascade OUTBOX 2026-08-09 SYS-VERIFY-01 — CDP 9225 Owner session, USMCA (+TRANSP qbo-sync). All six /system tabs clicked: overview · qbo-recon · qbo-sync · program · software · claude-coder — each renders (not 404). QBO write-back OFF by design (SYS-S05); Software DEGRADED honest (SYS-S02); Program Tracker counts + link to /program. VERIFY V1/V3/V5/V7/V8 PASS; V2 N/A; V6 N/A. Neon 2026-08-10: audit.scenario_status has hop.book/dispatch/deliver/invoice/gl passed (CI-PROBE). Cursor closed stale scaffold evidence that predated Cascade click notes.",
       "pr": "Cascade OUTBOX + Neon",
       "prod_verified": true
     },
@@ -100,9 +100,9 @@
         "DOD-E",
         "VERIFY-8"
       ],
-      "spec": "CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md \u00a71/\u00a73 item 6/\u00a74 \u2014 Ledger Health, self-close only",
+      "spec": "CURSOR-VERIFY-MASTER-LAUNCH-PLAN-2026-08-28.md §1/§3 item 6/§4 — Ledger Health, self-close only",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx's 7th tab (ledger-health.routes.ts / ledger-health-reads.ts) renders summary counts, per-integration last-tick, and a findings table with zero resolve/close control anywhere \u2014 enforced by scripts/verify-ledger-health-no-human-resolve.mjs. | PROD-VERIFIED 2026-08-28 live Chrome (CDP 9225, USMCA) at https://app.ih35dispatch.com/system?tab=ledger-health on deploy dep-da8i6fgae00c73d0u7b0 (healthz version ebc1c4f, git merge-base --is-ancestor a6801b12 ebc1c4f true): Open findings 102 \u00b7 Critical 96 \u00b7 Important 4 \u00b7 Cleanup 2; By-integration breakdown live for ledger (3 open \u2014 CC-2's ledger-integrity detector already producing real rows with zero code change needed on this dashboard, exactly the design intent), qbo (1 open), samsara (96 critical / 98 open); Findings table populated with 102 real rows (samsara count_drift/identity_mismatch, CRITICAL, OPEN), no resolve/close action column present in the rendered table.",
+      "evidence": "SystemModulePage.tsx's 7th tab (ledger-health.routes.ts / ledger-health-reads.ts) renders summary counts, per-integration last-tick, and a findings table with zero resolve/close control anywhere — enforced by scripts/verify-ledger-health-no-human-resolve.mjs. | PROD-VERIFIED 2026-08-28 live Chrome (CDP 9225, USMCA) at https://app.ih35dispatch.com/system?tab=ledger-health on deploy dep-da8i6fgae00c73d0u7b0 (healthz version ebc1c4f, git merge-base --is-ancestor a6801b12 ebc1c4f true): Open findings 102 · Critical 96 · Important 4 · Cleanup 2; By-integration breakdown live for ledger (3 open — CC-2's ledger-integrity detector already producing real rows with zero code change needed on this dashboard, exactly the design intent), qbo (1 open), samsara (96 critical / 98 open); Findings table populated with 102 real rows (samsara count_drift/identity_mismatch, CRITICAL, OPEN), no resolve/close action column present in the rendered table.",
       "pr": "#16836",
       "prod_verified": true
     },
@@ -114,9 +114,9 @@
         "DOD-E",
         "VERIFY-8"
       ],
-      "spec": "TXH-01 / SYS-F-TRANSACTION-HEALTH-REGISTER \u2014 owner-approved 2026-08-28",
+      "spec": "TXH-01 / SYS-F-TRANSACTION-HEALTH-REGISTER — owner-approved 2026-08-28",
       "status": "PASS",
-      "evidence": "SystemModulePage.tsx's 8th tab (transaction-health.routes.ts / .service.ts, GET /api/v1/system/transaction-health) computes posted/balanced/linked/sample-consistency at read time for 8 document types across every active entity \u2014 no health_status column, no resolve/close control (self-close only, same shape as Ledger Health). Guard: scripts/verify-system-module.mjs (8-tab assertion). | PROD-VERIFIED 2026-08-28 live Chrome at https://app.ih35dispatch.com/system?tab=tx-health on deploy 5884b8c (frontend version.json, contains 463dcfd557 per git merge-base --is-ancestor): tab bar shows all 8 SYSTEM_TABS with Transactions selected; Transactions/Filters/Documents cards render correctly with the full column set (Type/Entity/Document/Date/Posted/Balanced/Linked/Sample/Findings/Status); issues-only filter checked by default; \"Transaction health unavailable\" shown honestly in the Documents table because the BACKEND was still on healthz 069d531 at verification time, which predates the transaction-health GET (#17081) \u2014 the tab's own graceful error-state path, not a crash, and the same deploy-lag already surfaced elsewhere on this page as DEPLOY MISMATCH / service health RED. Full data-populated re-verification is owed once the backend catches up (tracked as the existing deploy-lag condition, not a new gap). | REOPENED 2026-08-29 Cursor+Claude: prod_verified was true with live_verified_sha=null while evidence admits Documents table showed Transaction health unavailable on API 069d531 \u2014 unfalsifiable green. Set prod_verified:false until CC-2 GUARD re-proves on current healthz with known-bad FAIL (factoring batch 583d6d03-e545-4c86-9ec7-0c9af3e38b52; pledged invoice 6708d422-35c5-44c2-842e-b789991c7c3f) and stamps live_verified_sha+at.",
+      "evidence": "SystemModulePage.tsx's 8th tab (transaction-health.routes.ts / .service.ts, GET /api/v1/system/transaction-health) computes posted/balanced/linked/sample-consistency at read time for 8 document types across every active entity — no health_status column, no resolve/close control (self-close only, same shape as Ledger Health). Guard: scripts/verify-system-module.mjs (8-tab assertion). | PROD-VERIFIED 2026-08-28 live Chrome at https://app.ih35dispatch.com/system?tab=tx-health on deploy 5884b8c (frontend version.json, contains 463dcfd557 per git merge-base --is-ancestor): tab bar shows all 8 SYSTEM_TABS with Transactions selected; Transactions/Filters/Documents cards render correctly with the full column set (Type/Entity/Document/Date/Posted/Balanced/Linked/Sample/Findings/Status); issues-only filter checked by default; \"Transaction health unavailable\" shown honestly in the Documents table because the BACKEND was still on healthz 069d531 at verification time, which predates the transaction-health GET (#17081) — the tab's own graceful error-state path, not a crash, and the same deploy-lag already surfaced elsewhere on this page as DEPLOY MISMATCH / service health RED. Full data-populated re-verification is owed once the backend catches up (tracked as the existing deploy-lag condition, not a new gap). | REOPENED 2026-08-29 Cursor+Claude: prod_verified was true with live_verified_sha=null while evidence admits Documents table showed Transaction health unavailable on API 069d531 — unfalsifiable green. Set prod_verified:false until CC-2 GUARD re-proves on current healthz with known-bad FAIL (factoring batch 583d6d03-e545-4c86-9ec7-0c9af3e38b52; pledged invoice 6708d422-35c5-44c2-842e-b789991c7c3f) and stamps live_verified_sha+at.",
       "pr": "#17098",
       "prod_verified": false
     },
@@ -127,11 +127,11 @@
         "DOD-E",
         "VERIFY-8"
       ],
-      "spec": "GO-0017 L6 \u2014 verification recordable",
+      "spec": "GO-0017 L6 — verification recordable",
       "status": "PASS",
-      "evidence": "Guard scripts/lib/live-verified-stamps.mjs via verify-module-completion (step 1431): empty stamps FAIL; non-ancestor SHA FAIL; GET /api/v1/healthz/shallow version must contain the stamp. First stamp = this item on live 4e5db76.",
+      "evidence": "Guard scripts/lib/live-verified-stamps.mjs via verify-module-completion (step 1431): empty stamps FAIL; non-ancestor SHA FAIL; GET /api/v1/healthz/shallow version must contain the stamp. First stamp = this item on live 4e5db76. | PROD-VERIFIED 2026-08-29 (CC-2/GUARD): GET https://api.ih35dispatch.com/api/v1/healthz/shallow -> {\"ok\":true,\"version\":\"b276443\"}; git merge-base --is-ancestor 4e5db76 b276443 confirms true (4e5db76 is a genuine ancestor of the live deployed SHA, not a coincidental substring match).",
       "pr": null,
-      "prod_verified": false,
+      "prod_verified": true,
       "live_verified_at": "2026-08-28T22:21:00.000Z",
       "live_verified_sha": "4e5db76"
     }
@@ -139,5 +139,5 @@
   "pass_count": 9,
   "total_count": 9,
   "progress": "9 of 9",
-  "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false \u2014 SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833. | 2026-08-10 Cursor CLOSED SYS-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory)."
+  "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false — SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833. | 2026-08-10 Cursor CLOSED SYS-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory)."
 }
