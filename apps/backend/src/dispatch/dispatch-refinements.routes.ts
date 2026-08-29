@@ -99,7 +99,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
   //
   // Reads audit.audit_events, which is APPEND-ONLY (WORM) — this endpoint only SELECTs; there is no
   // edit or delete path for an override record anywhere in the system, by design.
-  app.get("/api/v1/dispatch/owner-override-log", async (req, reply) => {
+  app.get("/api/v1/dispatch/owner-override-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = ownerOverrideLogQuery.safeParse(req.query ?? {});
@@ -154,7 +154,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/loads/:loadId/reassign", async (req, reply) => {
+  app.post("/api/v1/loads/:loadId/reassign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -200,7 +200,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/loads/:loadId/stops", async (req, reply) => {
+  app.get("/api/v1/loads/:loadId/stops", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -218,7 +218,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/loads/:loadId/stops", async (req, reply) => {
+  app.post("/api/v1/loads/:loadId/stops", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -251,7 +251,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/available-drivers", async (req, reply) => {
+  app.get("/api/v1/dispatch/available-drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = availableDriversQuery.safeParse(req.query ?? {});
@@ -269,7 +269,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/loads/:loadId/optimal-drivers", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/optimal-drivers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParams.safeParse(req.params ?? {});
@@ -301,7 +301,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/loads/:loadId/eta", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/eta", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ loadId: z.string().uuid() }).safeParse(req.params ?? {});
@@ -332,7 +332,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/load-templates", async (req, reply) => {
+  app.get("/api/v1/load-templates", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = companyQ.extend({ customer_id: z.string().uuid().optional(), template_id: z.string().uuid().optional() }).safeParse(req.query ?? {});
@@ -340,7 +340,7 @@ export async function registerDispatchRefinementsRoutes(app: FastifyInstance) {
     return listLoadTemplates(user.uuid, q.data.operating_company_id, { customer_id: q.data.customer_id, template_id: q.data.template_id });
   });
 
-  app.post("/api/v1/load-templates", async (req, reply) => {
+  app.post("/api/v1/load-templates", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = templateCreateBody.safeParse(req.body ?? {});

@@ -561,7 +561,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return preferences;
   });
 
-  app.patch("/api/v1/dispatch/preferences", async (req, reply) => {
+  app.patch("/api/v1/dispatch/preferences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const body = dispatchPreferenceBodySchema.safeParse(req.body ?? {});
@@ -971,7 +971,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/dispatch/loads/:id/distribute-instructions", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:id/distribute-instructions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -1267,7 +1267,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/dispatch/loads", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -1408,7 +1408,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/dispatch/loads/:id/anticipated-chargeback", async (req, reply) => {
+  app.patch("/api/v1/dispatch/loads/:id/anticipated-chargeback", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
@@ -1651,7 +1651,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/dispatch/dashboard", async (req, reply) => {
+  app.get("/api/v1/dispatch/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");

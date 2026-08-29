@@ -42,7 +42,7 @@ function mapServiceError(error: unknown) {
 }
 
 export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/cancellation-reasons", async (req, reply) => {
+  app.get("/api/v1/dispatch/cancellation-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = cancellationReasonsQuerySchema.safeParse(req.query ?? {});
@@ -50,7 +50,7 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     return listCancellationReasons(user.uuid, query.data.operating_company_id);
   });
 
-  app.post("/api/v1/dispatch/loads/:id/cancel", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
@@ -70,7 +70,7 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/load-cancellations", async (req, reply) => {
+  app.get("/api/v1/dispatch/load-cancellations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -78,7 +78,7 @@ export async function registerDispatchCancellationRoutes(app: FastifyInstance) {
     return listCancellations(user.uuid, query.data);
   });
 
-  app.post("/api/v1/dispatch/load-cancellations/:id/approve", async (req, reply) => {
+  app.post("/api/v1/dispatch/load-cancellations/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = cancellationIdParamsSchema.safeParse(req.params ?? {});

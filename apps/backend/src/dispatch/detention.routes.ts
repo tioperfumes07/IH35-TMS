@@ -36,7 +36,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/detention/board", async (req, reply) => {
+  app.get("/api/v1/dispatch/detention/board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -58,7 +58,7 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/dispatch/detention/sync", async (req, reply) => {
+  app.post("/api/v1/dispatch/detention/sync", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = companyBodySchema.safeParse(req.body ?? {});
@@ -66,7 +66,7 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     return syncDetentionEventsFromStopArrivals(user.uuid, body.data.operating_company_id);
   });
 
-  app.post("/api/v1/dispatch/detention/events/:id/close", async (req, reply) => {
+  app.post("/api/v1/dispatch/detention/events/:id/close", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = eventParamsSchema.safeParse(req.params ?? {});
@@ -87,7 +87,7 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     return result.event;
   });
 
-  app.post("/api/v1/dispatch/detention/events/:id/bridge-billing", async (req, reply) => {
+  app.post("/api/v1/dispatch/detention/events/:id/bridge-billing", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = eventParamsSchema.safeParse(req.params ?? {});
@@ -104,7 +104,7 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     return { event: result.event, bridge: result.bridge };
   });
 
-  app.post("/api/v1/dispatch/detention/events/:id/notify-customer", async (req, reply) => {
+  app.post("/api/v1/dispatch/detention/events/:id/notify-customer", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = eventParamsSchema.safeParse(req.params ?? {});

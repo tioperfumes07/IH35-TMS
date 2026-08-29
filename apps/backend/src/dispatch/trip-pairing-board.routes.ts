@@ -14,7 +14,7 @@ function currentUser(req: FastifyRequest, reply: FastifyReply) {
 
 export async function registerTripPairingBoardRoutes(app: FastifyInstance) {
   // Read-only Trip Pairing Board aggregation (entity-scoped, no cap).
-  app.get("/api/v1/dispatch/trip-pairing-board", async (req, reply) => {
+  app.get("/api/v1/dispatch/trip-pairing-board", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});

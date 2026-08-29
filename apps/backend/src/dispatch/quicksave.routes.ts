@@ -83,7 +83,7 @@ function mapQuickAssignError(error: unknown) {
 }
 
 export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dispatch/loads/:id/quick-assign", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:id/quick-assign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
@@ -103,7 +103,7 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/dispatch/loads/:id/complete-quicksave-draft", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:id/complete-quicksave-draft", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
@@ -130,7 +130,7 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/loads/quicksave-drafts", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/quicksave-drafts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -138,7 +138,7 @@ export async function registerDispatchQuicksaveRoutes(app: FastifyInstance) {
     return listQuicksaveDrafts(user.uuid, query.data.operating_company_id);
   });
 
-  app.get("/api/v1/dispatch/loads/:id/assignment-history", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:id/assignment-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
