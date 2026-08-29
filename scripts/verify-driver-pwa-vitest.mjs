@@ -19,18 +19,40 @@ function fail(msg) {
   process.exit(1);
 }
 
+function verifyDispatchViewTest(src) {
+  const failures = [];
+  if (!/\.toContain\(["']path="\/dispatch\/:load_uuid"["']\)/.test(src)) {
+    failures.push("test must require the mounted DispatchViewScreen route");
+  }
+  if (!/\.toContain\(["']DispatchViewScreen["']\)/.test(src)) {
+    failures.push("test must require DispatchViewScreen");
+  }
+  if (!/\.toContain\(["']StopActionPage["']\)/.test(src) || !/loads\/:id\/stops\/:stopId/.test(src)) {
+    failures.push("test must lock StopActionPage route");
+  }
+  if (!/navigate\(`\/dispatch\/\$\{load\.id\}`\)/.test(src)) {
+    failures.push("test must lock canonical load-detail navigation to DispatchViewScreen");
+  }
+  return failures;
+}
+
 function selftest() {
   const src = fs.readFileSync(path.join(ROOT, TEST), "utf8");
-  if (/path="\/dispatch\/:load_uuid"/.test(src) && !/\.not\.toContain/.test(src)) {
-    fail("selftest: test must not require unrouted /dispatch/:load_uuid as positive assert");
-  }
-  if (!/StopActionPage/.test(src) || !/loads\/:id\/stops\/:stopId/.test(src)) {
-    fail("selftest: test must lock StopActionPage route");
-  }
-  if (!/\.not\.toContain\(["']DispatchViewScreen["']\)/.test(src)) {
-    fail("selftest: test must assert DispatchViewScreen is unrouted");
-  }
-  console.log(`${LABEL} selftest PASS`);
+  const liveFailures = verifyDispatchViewTest(src);
+  if (liveFailures.length) fail(`selftest: live contract is unclean: ${liveFailures.join("; ")}`);
+
+  const mutations = [
+    src.replace('path="/dispatch/:load_uuid"', 'path="/dispatch/REMOVED"'),
+    src.replace('toContain("DispatchViewScreen")', 'toContain("RemovedDispatchView")'),
+    src.replace('toContain("StopActionPage")', 'toContain("RemovedStopAction")'),
+    src.replace('navigate(`/dispatch/${load.id}`)', 'navigate(`/loads/${load.id}`)'),
+  ];
+  mutations.forEach((mutation, index) => {
+    if (mutation === src || verifyDispatchViewTest(mutation).length === 0) {
+      fail(`selftest mutation escaped: ${index + 1}`);
+    }
+  });
+  console.log(`${LABEL} selftest PASS (4/4)`);
 }
 
 function main() {
