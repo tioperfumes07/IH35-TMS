@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=d05ffc6 | SHIPPED PR #17298 | FIXED: LST-F9103 — VendorDetail bill payments query only surfaced errors for HTTP 404/500/501 (vendorPaymentBackendPending). Any other error (403/429/502/503) silently showed "No payments recorded." — silent no-op. Added isError branch with Retry for non-404/500/501 errors. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=dc0e8ff | SHIPPED PR #17294 | FIXED: LST-F9102 — vendor LIST endpoint (GET /api/v1/mdata/vendors) was missing config.rateLimit (detail + classifications GETs had it). List allows limit up to 5000 rows — unthrottled DoS risk. Added matching rate limit. All vendor GET+POST endpoints now have rate limiting. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=6e47e560 | SHIPPED PR #17292 | FIXED: LST-F9101 — vendor deactivate endpoint was the ONLY vendor write endpoint missing config.rateLimit (reactivate/PATCH/ensure-drivers all had it). CodeQL js/missing-rate-limiting flags this. Added matching rate limit config. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
