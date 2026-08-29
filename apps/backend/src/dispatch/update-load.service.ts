@@ -29,6 +29,8 @@ type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
 
+const writeConflict = (code: string) => Object.assign(new Error(code), { code });
+
 export type UpdateLoadCharge = { code: string; additional_charge_id?: string; description?: string; amount_cents: number };
 
 export type UpdateLoadStopInput = {
@@ -308,7 +310,7 @@ async function replaceStops(
     if (existingId) {
       // UPDATE in place — preserves the row id and every CASCADE child (arrivals, detention, POD/BOL).
       // A previously archived stop reused at this position is reactivated to 'pending'.
-      await client.query(
+      const updatedStop = await client.query<{ id: string }>(
         `
           UPDATE mdata.load_stops SET
             stop_type = $2, location_id = $3, address_line1 = $4, city = $5, state = $6, country = $7,
@@ -318,7 +320,8 @@ async function replaceStops(
             gate_dock_text = $22, postal_code = $23, latitude = $24, longitude = $25,
             status = CASE WHEN status = 'cancelled' THEN 'pending' ELSE status END,
             updated_at = now()
-          WHERE id = $1::uuid
+          WHERE id = $1::uuid AND load_id = $26::uuid
+          RETURNING id::text
         `,
         [
           existingId,
@@ -346,8 +349,12 @@ async function replaceStops(
           stop.postal_code ?? null,
           stop.latitude ?? null,
           stop.longitude ?? null,
+          loadId,
         ]
       );
+      if (updatedStop.rows[0]?.id !== existingId) {
+        throw writeConflict("E_LOAD_STOP_WRITE_CONFLICT");
+      }
       updated += 1;
     } else {
       await client.query(
@@ -392,22 +399,29 @@ async function replaceStops(
     }
   }
 
-  // Archive (never delete) any existing stop beyond the new length. Count first via SELECT (an UPDATE
-  // exposes no row count on this client shape, and UPDATE...RETURNING can trip the RLS soft-delete
-  // landmine), then archive.
+  // Archive (never delete) any existing stop beyond the new length. Prove every selected identity was
+  // actually archived; otherwise a concurrent/RLS-filtered write must roll back rather than return 200.
   const toArchive = await client.query<{ id: string }>(
     `SELECT id::text FROM mdata.load_stops WHERE load_id = $1::uuid AND sequence_number > $2 AND status <> 'cancelled'`,
     [loadId, stops.length]
   );
   if (toArchive.rows.length > 0) {
-    await client.query(
+    const archivedStops = await client.query<{ id: string }>(
       `
         UPDATE mdata.load_stops
         SET status = 'cancelled', updated_at = now()
-        WHERE load_id = $1::uuid AND sequence_number > $2 AND status <> 'cancelled'
+        WHERE load_id = $1::uuid AND id = ANY($2::uuid[]) AND status <> 'cancelled'
+        RETURNING id::text
       `,
-      [loadId, stops.length]
+      [loadId, toArchive.rows.map((row) => row.id)]
     );
+    const expectedIds = new Set(toArchive.rows.map((row) => row.id));
+    if (
+      archivedStops.rows.length !== expectedIds.size ||
+      archivedStops.rows.some((row) => !expectedIds.has(row.id))
+    ) {
+      throw writeConflict("E_LOAD_STOP_ARCHIVE_CONFLICT");
+    }
   }
 
   return { updated, inserted, archived: toArchive.rows.length };
@@ -517,11 +531,15 @@ export async function updateDispatchLoad(
     add("updated_by_user_id", requestingUserUuid);
     setParts.push(`updated_at = now()`);
     values.push(loadId, operatingCompanyId);
-    await client.query(
+    const updatedLoad = await client.query<{ id: string }>(
       `UPDATE mdata.loads SET ${setParts.join(", ")}
-        WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid AND soft_deleted_at IS NULL`,
+        WHERE id = $${values.length - 1}::uuid AND operating_company_id = $${values.length}::uuid AND soft_deleted_at IS NULL
+        RETURNING id::text`,
       values
     );
+    if (updatedLoad.rows[0]?.id !== loadId) {
+      throw writeConflict("E_LOAD_WRITE_CONFLICT");
+    }
   }
 
   // 4) Stops replace (evidence-safe).
