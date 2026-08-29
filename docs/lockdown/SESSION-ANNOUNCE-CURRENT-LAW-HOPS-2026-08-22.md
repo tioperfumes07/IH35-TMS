@@ -1,5 +1,7 @@
 # SESSION ANNOUNCE — CURRENT-LAW + OPEN HOPS (owner 2026-08-22)
 
+**Every session:** `bash gen-state-of-truth.sh > STATE.md` then read `STATE.md` (live healthz + git + manifests; nobody types N-of-M).
+
 **Autoload every conversation.** First assistant reply of a **new** session (seats on this bus: Cursor, CC-1, CC-2, CC-3, Codex; Cascade/Devin/Devin-A = CERTIFIED-row audit overlay) **MUST** paste the bullets below. Do not invent a 15th plan. Do not reprint **CERTIFIED** modules as U14 work (audit overlay may re-walk them without restamping).
 
 Canonical lists: `docs/lockdown/URGENT-14-EXCLUSIVE-MODULE-CERTIFY-LAW-2026-08-22.md`  

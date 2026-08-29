@@ -1,3 +1,5 @@
+**Every session:** `bash gen-state-of-truth.sh > STATE.md` then read `STATE.md` (live healthz + origin/main module-completion; do not type numbers).
+
 **11:22 CT GO-0009:** `git pull` → **`docs/bus/FEED/NOW-<SEAT>.md`** (one page, overwritten). Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0009-FEED.md`. Desktop `~/Desktop/IH35-SEAT-FEED/`. ACK `GO-0009`. Idle = defect. Live `069d531`.
 
 **21:58 CT GO-2158:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-26-2158.md` · live `e3ae7a7` · CC-3 reactivate PATCH · Devin `/vendors` re-verify.
