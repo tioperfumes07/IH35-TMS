@@ -7,7 +7,7 @@ const iftaStatusQuerySchema = companyQuerySchema.extend({
 });
 
 export async function registerIftaStatusRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/ifta-status", async (req, reply) => {
+  app.get("/api/v1/reports/ifta-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = iftaStatusQuerySchema.safeParse(req.query ?? {});

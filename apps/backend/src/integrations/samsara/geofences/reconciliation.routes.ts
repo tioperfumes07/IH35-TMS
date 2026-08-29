@@ -10,7 +10,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerGeofenceReconciliationRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/samsara/geofences/reconciliation", async (req, reply) => {
+  app.get("/api/v1/integrations/samsara/geofences/reconciliation", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({
@@ -22,7 +22,7 @@ export async function registerGeofenceReconciliationRoutes(app: FastifyInstance)
     return reply.send({ data: findings });
   });
 
-  app.get("/api/v1/integrations/samsara/geofences/reconciliation/anomaly/:uuid", async (req, reply) => {
+  app.get("/api/v1/integrations/samsara/geofences/reconciliation/anomaly/:uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { uuid } = req.params as { uuid: string };
@@ -39,7 +39,7 @@ export async function registerGeofenceReconciliationRoutes(app: FastifyInstance)
     return reply.send({ data: row });
   });
 
-  app.patch("/api/v1/integrations/samsara/geofences/reconciliation/anomaly/:uuid/resolve", async (req, reply) => {
+  app.patch("/api/v1/integrations/samsara/geofences/reconciliation/anomaly/:uuid/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { uuid } = req.params as { uuid: string };

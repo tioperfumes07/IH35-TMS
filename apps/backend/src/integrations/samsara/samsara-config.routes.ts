@@ -41,7 +41,7 @@ function normalizeOrgId(raw: string | null | undefined): string | null {
 }
 
 export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/samsara/config", async (req, reply) => {
+  app.get("/api/v1/integrations/samsara/config", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOwner(req, reply);
     if (!user) return;
 
@@ -58,7 +58,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
     return toPublicConfig(row);
   });
 
-  app.post("/api/v1/integrations/samsara/config", async (req, reply) => {
+  app.post("/api/v1/integrations/samsara/config", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOwner(req, reply);
     if (!user) return;
 
@@ -117,7 +117,7 @@ export async function registerSamsaraConfigRoutes(app: FastifyInstance) {
     });
   });
 
-  app.delete("/api/v1/integrations/samsara/config", async (req, reply) => {
+  app.delete("/api/v1/integrations/samsara/config", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOwner(req, reply);
     if (!user) return;
 

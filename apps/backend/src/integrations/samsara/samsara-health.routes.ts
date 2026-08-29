@@ -19,7 +19,7 @@ function currentOfficeUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerSamsaraHealthRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/samsara/health", async (req, reply) => {
+  app.get("/api/v1/integrations/samsara/health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeUser(req, reply);
     if (!user) return;
 

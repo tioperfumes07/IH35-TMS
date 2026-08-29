@@ -21,7 +21,7 @@ function currentOfficeAdmin(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerHosDriverMapPreviewRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/hos-driver-map/preview", async (req, reply) => {
+  app.get("/api/v1/telematics/hos-driver-map/preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeAdmin(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -38,7 +38,7 @@ export async function registerHosDriverMapPreviewRoutes(app: FastifyInstance) {
   // READ-ONLY hire-date cross-validation: classifies every driver by comparing the master-list hire date
   // against the Samsara createdAtTime already stored in raw_payload (no API call). Writes NOTHING — the
   // file/HR date is authoritative; 'samsara_estimate' fills gaps, 'needs_review' (>180d) are likely rehires.
-  app.get("/api/v1/telematics/driver-hire-date/preview", async (req, reply) => {
+  app.get("/api/v1/telematics/driver-hire-date/preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeAdmin(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

@@ -65,7 +65,7 @@ function mapRow(row: Record<string, unknown>) {
 }
 
 export async function registerReportsScheduledCrudRoutes(app: FastifyInstance) {
-  app.post("/api/v1/reports/scheduled", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/reports/scheduled", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -102,7 +102,7 @@ export async function registerReportsScheduledCrudRoutes(app: FastifyInstance) {
     return reply.code(201).send(mapRow(row));
   });
 
-  app.patch("/api/v1/reports/scheduled/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/reports/scheduled/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -149,7 +149,7 @@ export async function registerReportsScheduledCrudRoutes(app: FastifyInstance) {
     return mapRow(row);
   });
 
-  app.delete("/api/v1/reports/scheduled/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.delete("/api/v1/reports/scheduled/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!accountingRoles(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

@@ -145,7 +145,7 @@ async function loadBankAccountsByIds(ids: string[], operatingCompanyId: string) 
 }
 
 export async function registerPlaidLinkRoutes(app: FastifyInstance) {
-  app.post("/api/v1/banking/plaid/create-link-token", async (req, reply) => {
+  app.post("/api/v1/banking/plaid/create-link-token", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerAdminRoles)) return;
@@ -167,7 +167,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/banking/plaid/exchange-public-token", async (req, reply) => {
+  app.post("/api/v1/banking/plaid/exchange-public-token", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerAdminRoles)) return;

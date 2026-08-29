@@ -58,7 +58,7 @@ function requireOwnerOrAdmin(user: { role: string }, reply: FastifyReply) {
 }
 
 export async function registerQboSyncAdminRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/qbo/sync-queue", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/sync-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!requireOwnerOrAdmin(user, reply)) return;
