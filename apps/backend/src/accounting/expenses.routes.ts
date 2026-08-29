@@ -1283,7 +1283,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
   });
 
   // GAP-EXPENSES Phase 2 Step 3 — explicit "Post to GL" (gated EXPENSE_GL_POSTING_ENABLED, default OFF).
-  app.post("/api/v1/expenses/:expenseId/post", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/expenses/:expenseId/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
@@ -1363,7 +1363,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
   });
 
   // VOID = reversing JE (posted) / status flip (unposted). Gated VOID_ENFORCEMENT_ENABLED, Owner+Accountant, reason required.
-  app.post("/api/v1/expenses/:expenseId/void", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/expenses/:expenseId/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = z.object({ expenseId: z.string().uuid() }).safeParse(req.params ?? {});
