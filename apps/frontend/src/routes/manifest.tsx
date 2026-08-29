@@ -537,6 +537,26 @@ function sessionGate(auth: ReturnType<typeof useAuth>) {
   return null;
 }
 
+/**
+ * React Router schedules link navigation as a transition.  A previously
+ * revealed Suspense boundary is therefore allowed to keep showing its old
+ * child while the next lazy route resolves.  Reusing that boundary across
+ * locations left detail pages visibly mounted under the destination URL when
+ * a route chunk was not already warm (most visibly Driver profile -> Fleet).
+ *
+ * Key the content boundary to the location so each navigation gets a fresh
+ * fallback/child lifecycle.  The Shell remains outside this boundary, so the
+ * sidebar and header stay mounted while the destination chunk loads.
+ */
+function RouteContentBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  return (
+    <React.Suspense key={`${location.pathname}${location.search}`} fallback={<RouteFallback />}>
+      {children}
+    </React.Suspense>
+  );
+}
+
 function RootRedirect() {
   const auth = useAuth();
   const gate = sessionGate(auth);
@@ -551,7 +571,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!auth.user) return <Navigate to="/login" replace />;
   return (
     <Shell auth={auth.user}>
-      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+      <RouteContentBoundary>{children}</RouteContentBoundary>
     </Shell>
   );
 }
@@ -567,7 +587,7 @@ function OwnerAdminRoute({ children }: { children: ReactNode }) {
   }
   return (
     <Shell auth={auth.user}>
-      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+      <RouteContentBoundary>{children}</RouteContentBoundary>
     </Shell>
   );
 }
@@ -583,7 +603,7 @@ function OwnerSuperAdminRoute({ children }: { children: ReactNode }) {
   }
   return (
     <Shell auth={auth.user}>
-      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+      <RouteContentBoundary>{children}</RouteContentBoundary>
     </Shell>
   );
 }
@@ -598,7 +618,7 @@ function OwnerOnlyRoute({ children }: { children: ReactNode }) {
   }
   return (
     <Shell auth={auth.user}>
-      <React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>
+      <RouteContentBoundary>{children}</RouteContentBoundary>
     </Shell>
   );
 }
