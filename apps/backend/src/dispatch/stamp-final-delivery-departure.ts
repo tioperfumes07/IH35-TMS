@@ -33,19 +33,23 @@ export function loadStatusRequiresDeliveryDepartureStamp(status: string): boolea
  */
 export async function stampFinalActiveDeliveryDeparture(
   client: Queryable,
+  operatingCompanyId: string,
   loadId: string,
   deliveredAt: string | Date | null | undefined = null
 ): Promise<number> {
   const res = await client.query(
     `
       UPDATE mdata.load_stops s
-         SET actual_departure_at = COALESCE($2::timestamptz, now()),
+         SET actual_departure_at = COALESCE($3::timestamptz, now()),
              status = 'departed'::mdata.stop_status_enum,
              updated_at = now()
        WHERE s.id = (
                SELECT s2.id
                  FROM mdata.load_stops s2
+                 JOIN mdata.loads l2 ON l2.id = s2.load_id
                 WHERE s2.load_id = $1
+                  AND l2.operating_company_id = $2::uuid
+                  AND l2.soft_deleted_at IS NULL
                   AND s2.stop_type::text = 'delivery'
                   AND s2.status::text <> 'cancelled'
                   AND s2.soft_deleted_at IS NULL
@@ -54,7 +58,7 @@ export async function stampFinalActiveDeliveryDeparture(
              )
          AND s.actual_departure_at IS NULL
     `,
-    [loadId, deliveredAt ?? null]
+    [loadId, operatingCompanyId, deliveredAt ?? null]
   );
   return res.rowCount ?? 0;
 }

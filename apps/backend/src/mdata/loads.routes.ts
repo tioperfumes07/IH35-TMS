@@ -1167,7 +1167,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
       // CLS-DISP-WIRE-07 — dual-path kill: this route used to flip status with zero stop evidence.
       // Same stamp as dispatch transition + bulk set_status (never overwrite driver departure).
       if (loadStatusRequiresDeliveryDepartureStamp(String(row.status))) {
-        await stampFinalActiveDeliveryDeparture(client, row.id, null);
+        await stampFinalActiveDeliveryDeparture(client, String(row.operating_company_id), row.id, null);
       }
 
       // ACCT-F277 — delivery is the final idempotent backstop. A Book-created bill is a no-op;
