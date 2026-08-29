@@ -19,6 +19,7 @@ type Props = {
   items: DriverManagerAttentionItem[];
   loading?: boolean;
   coolingDriverCount?: number;
+  isError?: boolean;
 };
 
 const SEVERITY_STYLES: Record<DriverManagerAttentionItem["severity"], string> = {
@@ -28,7 +29,7 @@ const SEVERITY_STYLES: Record<DriverManagerAttentionItem["severity"], string> = 
   info: "border-slate-300 bg-slate-100 text-slate-700",
 };
 
-export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount }: Props) {
+export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount, isError }: Props) {
   const navigate = useNavigate();
 
   if (loading) {
@@ -55,7 +56,13 @@ export function DriverManagerAttentionPanel({ items, loading, coolingDriverCount
       </div>
 
       <div className="space-y-2 p-3">
-        {items.length === 0 ? (
+        {isError ? (
+          // GO-0027-HOME-F: a FAILED fetch must never render as "looks current" -- matches the
+          // same fix applied to SafetyAlertsPanel, this component's near-identical sibling.
+          <p className="text-sm font-medium text-red-700" role="alert">
+            Unable to load driver manager attention items. Retry or check back — this is not an all-clear.
+          </p>
+        ) : items.length === 0 ? (
           <p className="text-sm text-slate-500">No driver manager actions right now — fleet operations look current.</p>
         ) : (
           items.map((item) => (

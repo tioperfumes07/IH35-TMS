@@ -43,6 +43,7 @@ export function SafetyHome({ auth }: Props) {
         alerts={roleHomeQuery.data?.alerts ?? []}
         loading={roleHomeQuery.isLoading}
         certDataStale={roleHomeQuery.data?.cert_data_stale}
+        isError={roleHomeQuery.isError}
       />
 
       <DefaultHome auth={auth} />

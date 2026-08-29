@@ -285,20 +285,13 @@ export async function registerReportsLibraryRoutes(app: FastifyInstance) {
       ifta_status: getCurrentQuarterInfo(),
     };
     } catch (error) {
+      // GO-0027-HOME-F: this used to catch a genuine query failure and return a fabricated
+      // all-zero KPI summary as a 200 -- on OwnerHome.tsx/DefaultHome.tsx that renders "0 Maint
+      // Past Due" (a `crit` alert tile) as if the fleet were clean, when the real cause is an
+      // unrelated DB error. Surface it the same way this file's own home-attention-list and
+      // home-fleet-snapshot siblings already do (503, "please retry") instead of fabricating data.
       req.log.error({ err: error }, "/api/v1/reports/kpi-summary failed");
-      return {
-        available_reports: REPORT_LIBRARY.length,
-        scheduled: 0,
-        run_last_7d: 0,
-        outstanding_ar_cents: 0,
-        tracked_assets: 0,
-        assigned_working: 0,
-        maint_past_due: 0,
-        open_damage: 0,
-        pending_qbo_sync: 0,
-        live_units: 0,
-        ifta_status: getCurrentQuarterInfo(),
-      };
+      return reply.code(503).send({ error: "timeout — please retry" });
     }
   });
 
