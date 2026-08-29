@@ -58,6 +58,18 @@ function ageYearsFromDob(dobIso: string, asOf = new Date()): number {
   return age;
 }
 
+function dateOnly(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") {
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+    if (match) return match[1];
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  return null;
+}
+
 function mapApplicant(row: Record<string, unknown>) {
   return {
     id: String(row.id),
@@ -68,7 +80,7 @@ function mapApplicant(row: Record<string, unknown>) {
     last_name: row.last_name ? String(row.last_name) : null,
     email: row.email ? String(row.email) : null,
     phone: row.phone ? String(row.phone) : null,
-    date_of_birth: row.date_of_birth ? String(row.date_of_birth).slice(0, 10) : null,
+    date_of_birth: dateOnly(row.date_of_birth),
     cdl_number: row.cdl_number ? String(row.cdl_number) : null,
     cdl_state: row.cdl_state ? String(row.cdl_state) : null,
     years_experience: row.years_experience == null ? null : Number(row.years_experience),

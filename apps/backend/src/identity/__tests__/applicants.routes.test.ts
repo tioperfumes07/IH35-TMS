@@ -119,7 +119,8 @@ describe("identity applicant routes (A24-12)", () => {
                   last_name: "Doe",
                   phone: "+15551234567",
                   email: null,
-                  date_of_birth: "1990-05-01",
+                  // node-postgres returns DATE columns as Date objects in production.
+                  date_of_birth: new Date("1990-05-01T00:00:00.000Z"),
                   application_data: {},
                   created_at: "2026-06-04T12:00:00Z",
                   updated_at: "2026-06-04T12:00:00Z",
@@ -145,7 +146,9 @@ describe("identity applicant routes (A24-12)", () => {
       },
     });
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toMatchObject({ applicant: { id: APPLICANT, status: "new" } });
+    expect(res.json()).toMatchObject({
+      applicant: { id: APPLICANT, status: "new", date_of_birth: "1990-05-01" },
+    });
   });
 
   it("GET /api/v1/identity/applicants lists pipeline applicants", async () => {
