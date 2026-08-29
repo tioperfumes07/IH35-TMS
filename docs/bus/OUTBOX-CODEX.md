@@ -1,3 +1,4 @@
+Codex | WORKING | FLEET-F7198 | GO-0046 | CLAIM=unit-create+edit-canonical-default-driver-edge | SOURCE=mdata.units+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | FUEL-F7183 | CLAIM=planner-settings-write-exact-identity | SOURCE=fuel.fuel_planner_settings | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0044 | NOW=fuel-unique | SHA=4e5db76 | GO
 Codex | SHIPPED | DRIVER-F7182 | PR=#17378 @ c2f703fee6 | Built=office+PWA message persistence exact identity | Live=post-deploy UNVERIFIED | NEXT=GO-0044 fuel unique | GO
