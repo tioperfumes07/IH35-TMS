@@ -51,6 +51,15 @@ function assertLive() {
   if (!/data-testid="dispatch-trip-pairing-honest-empty"/.test(trip)) problems.push("S36 honest empty");
   if (!/ListErrorBanner/.test(trip)) problems.push("S36 ListErrorBanner");
   if (!/enabled:\s*Boolean\(companyId\)/.test(trip)) problems.push("S36 not company-gated");
+  if (!/aria-label=\{`Book Southbound return for \$\{t\.unit_number/.test(trip)) {
+    problems.push("S36 open-return action is not an accessible button");
+  }
+  if (!/onClick=\{\(\) => setBookUnitId\(t\.unit_id\)\}/.test(trip)) {
+    problems.push("S36 open-return action does not open Book Load for the tour unit");
+  }
+  if (!/tours\.find\(\(tour\) => tour\.unit_id === bookUnitId\)\?\.driver_id/.test(trip)) {
+    problems.push("S36 open-return Book Load does not preserve the assigned driver");
+  }
 
   return problems;
 }
@@ -63,7 +72,10 @@ if (SELFTEST) {
   }
   const pagePath = path.join(ROOT, FILES.trip);
   const orig = fs.readFileSync(pagePath, "utf8");
-  fs.writeFileSync(pagePath, orig.replace(/data-testid="dispatch-trip-pairing-honest-empty"/, 'data-testid="x"'));
+  fs.writeFileSync(
+    pagePath,
+    orig.replace(/onClick=\{\(\) => setBookUnitId\(t\.unit_id\)\}/, 'data-noop="open-return"'),
+  );
   try {
     if (!assertLive().length) {
       console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
