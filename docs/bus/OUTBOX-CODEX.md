@@ -1,3 +1,4 @@
+Codex | SHIPPED | DSP-F7174 | PR=#17329 @ c9d2dd0bdd | Built=border wizard canonical success identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7174 | CLAIM=border-wizard-2xx-without-crossing-id-silent-success | SOURCE=unit_border_crossings.id→crossing_id→PDF | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7173 | PR=#17327 @ 0c6fb6fae6 | Built=Quick Assign lifecycle guard ratchet | Live=product unchanged | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7173 | CLAIM=quick-assign-guard-rejects-current-snapshot-lifecycle | SOURCE=QuickAssignModal awaited submit→close + DispatchBoard disclose/rethrow | NEXT=guard+FAST-MERGE | GO
