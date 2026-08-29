@@ -1,13 +1,13 @@
 {
-  "healthzSha": "20f3601",
-  "generated_at": "2026-08-29T23:07:19.000Z",
+  "healthzSha": "b252f3e",
+  "generated_at": "2026-08-29T23:12:58.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T18:07:19-05:00",
-    "sourceSha": "84982224be",
-    "deployedSha": "20f3601",
+    "generatedAt": "2026-08-29T18:12:58-05:00",
+    "sourceSha": "20148fd216",
+    "deployedSha": "b252f3e",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2254,
-    "failOpen": 123,
+    "ledgerRows": 2256,
+    "failOpen": 125,
     "defects": 26
   },
   "modules": [
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 17829,
+      "title": "FINDING: OPS-F-DRIFT-5-QBO-ENV-SKIP-STALE",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17829",
+      "sha": "2401e15ef9",
+      "committedAtIso": "2026-08-29T18:09:42-05:00"
+    },
+    {
+      "number": 17828,
+      "title": "ChatGpt-Codex-1-chore(dispatch): claim D1 source migration",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 06:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17828",
+      "sha": "83e8a3c8cb",
+      "committedAtIso": "2026-08-29T18:08:00-05:00"
+    },
+    {
       "number": 17827,
       "title": "FINDING: N/A -- OUTBOX status: Wave 1 batch 7/N (#17825) + scoreboard regen (#17824)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "",
       "sha": "9410922678",
       "committedAtIso": "2026-08-29T17:55:06-05:00"
-    },
-    {
-      "number": 17818,
-      "title": "FINDING: N/A -- OUTBOX ACK: GO-PENDING-01, batch 6/N status (#17816)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17818",
-      "sha": "20f3601ced",
-      "committedAtIso": "2026-08-29T17:52:53-05:00"
-    },
-    {
-      "number": 0,
-      "title": "ChatGpt-Codex-1-fix(fleet): FLEET-F7359 bind trailer CAS guard",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:52 PM CT",
-      "url": "",
-      "sha": "22e2277830",
-      "committedAtIso": "2026-08-29T17:52:49-05:00"
     }
   ]
 }
