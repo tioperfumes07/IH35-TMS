@@ -145,10 +145,10 @@
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F02",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: journal_entry_type_id FK present; backfill 202610070000 typed all non-void JEs; create path inferJournalEntryTypeCode never leaves auto NULL; guard verify-je-type-inbound-density --live PASS | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | GUARD REGRESSION FINDING (CC-2, 2026-08-29, SHA ecd3afd): NOT bound -- this item's own claim (\"all non-void JEs typed, auto NULL never left\") is FALSE on current live. Neon lucia (bypass_rls) direct read this turn: accounting.journal_entries journal_entry_type_id density is 46/2214 (2%), not the ~100% the prior evidence certified. Weekly trend query confirms a real regression, not noise: 100% typed every week through week-of-2026-07-27, then crashed to single-digit percent the following week and has stayed low since (~21% in the most recent week) -- inferJournalEntryTypeCode is no longer stamping the type on create for most new JEs. Routed to CC-1 (money/GL authorship lane) as a board finding; GUARD does not author the fix. Do not stamp prod_verified from this packet.",
       "pr": "#3697",
       "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "unverified_reason": "GUARD_REGRESSION_2026-08-29_JE_TYPE_STAMPING_SINCE_2026-07-27"
     },
     {
       "id": "ACCT-LINK-02",
@@ -159,12 +159,13 @@
         "VERIFY-5"
       ],
       "spec": "Law \u00a79 \u00b7 ACCT-F03",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: detail_type_id column + accounts_detail_type_id_fkey present; ledger 202608080000_acct_link_02_accounts_detail_type_fk.sql (DETAIL_TYPES_FK_OWNER_UNLOCK). Backfill with_dt=42/1238 live accounts; account_subtype remains TEXT display cache. Owner WIRE 2026-07-25. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-acct-link-02-accounts-detail-type-fk.mjs exit 0 (mig+held+routes+factory+AccountDrawer+NewAccountDrawerForm+api types all wired). Neon lucia (bypass_rls) direct read this turn: catalogs.accounts active=1315, with detail_type_id=43 -- stable vs the cited 42/1238 (no regression, matches the item's own honest partial-adoption claim, not a density>0 bar). Binding on this GUARD packet.",
       "pr": "#PENDING-LINK02-PASS",
-      "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "live_proof": "2026-07-30 detail_type_id col+fk+ledger; with_dt=42; RE-CONFIRMED 2026-08-29 SHA ecd3afd: with_dt=43/1315",
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:20:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-LINK-03",
@@ -174,11 +175,13 @@
         "VERIFY-4"
       ],
       "spec": "ACCT-F04 \u00b7 Claim/WO reverse",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo\u2192unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: bills.unit_id 299/16219 via unique memo\u2192unit backfill 202610080000 (owner|leased_to scope, word-boundary T###). claim=0 wo=0 remain (insurance.claim / WO close writers already stamp; 2 WOs open, no claim bills yet). createBill+autoCreateBillFromWO stamp unit_id. Guard 1700. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-acct-link-03-bill-unit-density.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: accounting.bills unit_id=311/16327 -- healthy growth vs the cited 301/16293 (same ratio, no regression). claim/wo remain low-volume as designed (writers stamp on the rare WO-close/claim-bill path, not a density bar). Binding on this GUARD packet.",
       "pr": "#3699",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "live_proof": "2026-07-28 unit_id=299/16219; RE-CONFIRMED 2026-08-29 SHA ecd3afd: unit_id=311/16327",
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:20:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-LINK-04",
@@ -188,11 +191,13 @@
         "VERIFY-5"
       ],
       "spec": "ACCT-F07",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey \u2192 catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-28 Neon lucia: accounting.expense_lines.expense_category_uuid + operating_company_id composite FK expense_lines_expense_category_same_entity_fkey \u2192 catalogs.expense_categories (island CLOSED). Mig 202608020000 in applied_held. expense_lines=0 density is ACCT-ECON-04. Original merge #3446 @ 7a0c3614; prove PR #3697. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): pg_constraint direct read this turn confirms expense_lines_expense_category_same_entity_fkey genuinely exists on accounting.expense_lines -> catalogs.expense_categories (composite operating_company_id+expense_category_uuid) -- the FK/schema bar this item's own title states (\"inbound FK ... island CLOSED\") is met. HONEST CAVEAT: expense_category_uuid density is still 0/34144 live (0 of 34,144 expense_lines populated) -- that population gap is separately tracked and left OPEN under ACCT-ECON-04, not this item's bar. Binding ACCT-LINK-04 on the FK-wiring proof only, density caveat stated explicitly rather than hidden.",
       "pr": "#3446 #3697",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "live_proof": "2026-07-28 FK present, mig applied_held; RE-CONFIRMED 2026-08-29 SHA ecd3afd: pg_constraint confirms FK live, density still 0/34144 (tracked separately under ACCT-ECON-04)",
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:20:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-LINK-05",
@@ -218,12 +223,13 @@
         "VERIFY-6"
       ],
       "spec": "ACCT-F05 \u00b7 companion BANK-ECON-02",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk\u2192maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). #3424 poster on main. apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) \u2014 THIS PR mounts it + guard 1832. Guard 1762 / 1507 allow PASS when matched_je=N/M with N>=50. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5). Dry-run sim of apply-historical rules: 1466 would match; applied via live categorize-bulk\u2192maybePostBankCategorizationToGl (BANK_FEED_GL_POSTING_ENABLED ON). #3424 poster on main. apply-historical was 404 (registerCategorizationRulesRoutes orphan HELD) \u2014 THIS PR mounts it + guard 1832. Guard 1762 / 1507 allow PASS when matched_je=N/M with N>=50. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-acct-link06-rules-call-poster.mjs + node scripts/verify-acct-link-06-bank-state-semantics.mjs both exit 0. Neon lucia (bypass_rls) direct read this turn: banking.bank_transactions matched_journal_entry_id=203/11638 -- healthy growth vs the cited 174/11142 (well above the guard's N>=50 threshold, same ratio, no regression). Binding on this GUARD packet.",
       "pr": "#3424 #PENDING-ACCT-CLOSE",
-      "live_proof": "2026-07-30 matched_je=170/10830; stamped bank_categorization batches>0",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "live_proof": "2026-07-30 matched_je=170/10830; stamped bank_categorization batches>0; RE-CONFIRMED 2026-08-29 SHA ecd3afd: matched_je=203/11638",
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T21:20:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "ACCT-SURF-01",
