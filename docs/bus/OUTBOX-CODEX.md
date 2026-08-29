@@ -2084,3 +2084,4 @@ Codex | WORKING | DSP-F7189 | CLAIM=detention-close-race-silent-success | SOURCE
 CODEX | ACK | GO-0051 | NOW=/dispatch-sweep-unique | SHA=4e5db76 | GO
 Codex | FINDING | DSP-MONEY-F7146B-R1 | routed=CC-1 | SOURCE=dispatch.load_cancellations TONU backlink | BLOCKS=GO-0051 | NEXT=dispatch non-money unique | GO
 Codex | WORKING | DSP-F7190 | CLAIM=detention-arrival-must-not-close-accrual | SOURCE=load_stops arrival/departure→detention_events | NEXT=guard+FAST-MERGE | GO
+CODEX | GO-0052 | FINDING=DRV-F7191 | replace-driver active-state race fixed with company-scoped CAS + typed 409 | NEXT=gate+FAST-MERGE then GO-0053 | GO
