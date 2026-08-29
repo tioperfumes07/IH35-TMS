@@ -1,0 +1,20 @@
+{
+  "finding": "FUEL-F7336-FRAUD-ALERT-RESOLUTION-IS-REPLAYABLE",
+  "frontend_file": "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx",
+  "routes_file": "apps/backend/src/integrations/fuel/fraud-detector/routes.ts",
+  "conflict_error": "fraud_alert_state_changed",
+  "actions": [
+    {
+      "path": "/api/v1/fuel/fraud-alerts/:uuid/investigate",
+      "status_predicate": "AND status = 'open'"
+    },
+    {
+      "path": "/api/v1/fuel/fraud-alerts/:uuid/confirm-fraud",
+      "status_predicate": "AND status IN ('open', 'investigating')"
+    },
+    {
+      "path": "/api/v1/fuel/fraud-alerts/:uuid/dismiss",
+      "status_predicate": "AND status IN ('open', 'investigating')"
+    }
+  ]
+}

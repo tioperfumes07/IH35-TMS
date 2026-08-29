@@ -7,9 +7,12 @@
 import fs from "node:fs";
 import process from "node:process";
 
-const FILE = "apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx";
+const REGISTRY_FILE = "docs/specs/fuel/FUEL-FRAUD-ALERT-LIFECYCLE-CONTRACTS.json";
+const registry = JSON.parse(fs.readFileSync(REGISTRY_FILE, "utf8"));
+const FILE = registry.frontend_file;
+const ROUTES_FILE = registry.routes_file;
 
-function inspect(source) {
+function inspect(source, routesSource) {
   const errors = [];
   if (source.includes("window.prompt")) errors.push("native dismiss prompt remains");
   if (!source.includes("<Modal") || !source.includes('title="Dismiss fuel fraud alert"')) errors.push("canonical dismiss modal missing");
@@ -29,32 +32,53 @@ function inspect(source) {
   if (!/const actionPending = investigateMut\.isPending \|\| confirmMut\.isPending \|\| dismissMut\.isPending/.test(source)) errors.push("fraud state transitions have no shared pending boundary");
   if ((source.match(/disabled=\{actionPending\}/g)?.length ?? 0) !== 3) errors.push("all three row actions must share the pending lock");
   if ((source.match(/if \(actionPending\) return;/g)?.length ?? 0) !== 3) errors.push("all three row handlers must reject concurrent transitions");
+  if ((routesSource.match(/AND status = 'open'/g)?.length ?? 0) !== 1) errors.push("investigate must transition only an open alert");
+  if ((routesSource.match(/AND status IN \('open', 'investigating'\)/g)?.length ?? 0) !== 2) errors.push("resolve actions must transition only unresolved open/investigating alerts");
+  if ((routesSource.match(/\n\s+AND resolved_at IS NULL/g)?.length ?? 0) !== 3) errors.push("all three backend actions must reject resolved alerts");
+  if ((routesSource.match(/fraud_alert_state_changed/g)?.length ?? 0) !== 3) errors.push("all three backend actions must disclose state conflicts as HTTP 409");
+  if ((routesSource.match(/return reply\.code\(409\)\.send\(\{ error: alert\.error \}\)/g)?.length ?? 0) !== 3) errors.push("all three mounted actions must map state conflicts to HTTP 409");
+  for (const action of registry.actions) {
+    const routeStart = routesSource.indexOf(`app.patch("${action.path}"`);
+    const nextRoute = routesSource.indexOf("\n  app.", routeStart + 1);
+    const routeBlock = routeStart >= 0 ? routesSource.slice(routeStart, nextRoute >= 0 ? nextRoute : undefined) : "";
+    if (!routeBlock.includes(action.status_predicate)) errors.push(`${action.path} is missing registry status transition predicate`);
+    if (!routeBlock.includes("AND resolved_at IS NULL")) errors.push(`${action.path} can mutate a resolved alert`);
+    if (!routeBlock.includes(registry.conflict_error) || !routeBlock.includes("reply.code(409)")) errors.push(`${action.path} does not fail visibly on state conflict`);
+  }
   return errors;
 }
 
 if (process.argv.includes("--selftest")) {
   const source = fs.readFileSync(FILE, "utf8");
+  const routesSource = fs.readFileSync(ROUTES_FILE, "utf8");
   const mutations = [
-    source.replace("setDismissTarget(row);", 'window.prompt("Dismiss reason");'),
-    source.replace("confirmMut.reset();", "// planted: confirm reset removed"),
-    source.replace("operating_company_id: input.companyId", "operating_company_id: companyId"),
-    source.replaceAll("input.generation !== lifecycleGenerationRef.current", "false"),
-    source.replace("confirmDiscardOnClose", ""),
-    source.replace("onClick={attemptDismissClose}", "onClick={closeDismiss}"),
-    source.replace("const actionPending = investigateMut.isPending || confirmMut.isPending || dismissMut.isPending", "const actionPending = false"),
-    source.replace("disabled={actionPending}", "disabled={investigateMut.isPending}"),
-    source.replace("if (actionPending) return;", "// planted: concurrent transition allowed"),
+    [source.replace("setDismissTarget(row);", 'window.prompt("Dismiss reason");'), routesSource],
+    [source.replace("confirmMut.reset();", "// planted: confirm reset removed"), routesSource],
+    [source.replace("operating_company_id: input.companyId", "operating_company_id: companyId"), routesSource],
+    [source.replaceAll("input.generation !== lifecycleGenerationRef.current", "false"), routesSource],
+    [source.replace("confirmDiscardOnClose", ""), routesSource],
+    [source.replace("onClick={attemptDismissClose}", "onClick={closeDismiss}"), routesSource],
+    [source.replace("const actionPending = investigateMut.isPending || confirmMut.isPending || dismissMut.isPending", "const actionPending = false"), routesSource],
+    [source.replace("disabled={actionPending}", "disabled={investigateMut.isPending}"), routesSource],
+    [source.replace("if (actionPending) return;", "// planted: concurrent transition allowed"), routesSource],
+    [source, routesSource.replace("AND status = 'open'", "")],
+    [source, routesSource.replace("AND status IN ('open', 'investigating')", "")],
+    [source, routesSource.replace("\n            AND resolved_at IS NULL", "")],
+    [source, routesSource.replace("fraud_alert_state_changed", "not_found")],
+    [source, routesSource.replace("return reply.code(409).send({ error: alert.error });", "return reply.send(alert);")],
   ];
-  const missed = mutations.filter((candidate) => inspect(candidate).length === 0);
+  const missed = mutations
+    .map(([candidateSource, candidateRoutes], index) => ({ index: index + 1, errors: inspect(candidateSource, candidateRoutes) }))
+    .filter((candidate) => candidate.errors.length === 0);
   if (missed.length) {
-    console.error(`verify-fuel-fraud-alert-action-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
+    console.error(`verify-fuel-fraud-alert-action-lifecycle SELFTEST FAIL — ${missed.length}/${mutations.length} mutation(s) survived: ${missed.map((candidate) => candidate.index).join(", ")}`);
     process.exit(1);
   }
-  console.log("verify-fuel-fraud-alert-action-lifecycle selftest PASS — 9/9 planted defects rejected");
+  console.log(`verify-fuel-fraud-alert-action-lifecycle selftest PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
   process.exit(0);
 }
 
-const errors = inspect(fs.readFileSync(FILE, "utf8"));
+const errors = inspect(fs.readFileSync(FILE, "utf8"), fs.readFileSync(ROUTES_FILE, "utf8"));
 if (errors.length) {
   console.error("verify-fuel-fraud-alert-action-lifecycle FAIL:\n" + errors.map((error) => `  - ${error}`).join("\n"));
   process.exit(1);

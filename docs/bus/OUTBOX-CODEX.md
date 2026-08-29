@@ -1,3 +1,5 @@
+CODEX | FINDING+FIXED CODE | FUEL-F7336 | resolved fraud alerts could be replayed/overwritten | SOURCE=fuel.fraud_alerts status+resolved_at | PROVES=company-scoped state CAS + HTTP409 | KEEPS=registry guard selftest 14/14 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FLT-F7335 | PR=#17668 @ 85d2faf459 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7336 fraud-alert lifecycle CAS | GO
 CODEX | SHIPPED | DRIVER-F7332 | PR=#17659 @ 9ab80c214a | gate=exit0 | Live=UNVERIFIED | NEXT=dispatch-drivers-fleet-fuel unique leftover | GO
 CODEX | ACK | GO-0106 | NOW=dispatch-drivers-fleet-fuel-unique-leftover | SHA=b2448ce | GO
 CODEX | FINDING+FIXED CODE | DRIVER-F7332 | malformed/partial Driver import commit was clean success | SOURCE=drivers-import commit created+row_errors | PROVES=runtime boundary + retained partial-error review | KEEPS=registry guard+selftest | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
