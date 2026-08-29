@@ -1,4 +1,11 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0034 | NOW=vendors-leftover-unique | SHA=ada22bc | GO
+DEVIN | GO-0034 | vendors-leftover-unique | SHA=ada22bc | SHIPPED PR #17358 | FIXED: LST-F9115 — Four FIN-20 aging routes lacked config.rateLimit: ar-aging, ar-aging/invoices, ap-aging, ap-aging/bills. All authenticated, compute aging reports, never throttled. Added 60/min. Ratchet 313→309. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0035 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+DEVIN | ACK | GO-0036 | NOW=vendors-test-picker-density | SHA=ada22bc | GO — TEST vendor already created GO-0030
+DEVIN | ACK | GO-0037 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+DEVIN | ACK | GO-0038 | NOW=vendors-leftover-unique | SHA=ada22bc | GO — continuing drain
+
 DEVIN | ACK | GO-0033 | NOW=vendors-leftover-unique | SHA=a693889 | GO
 DEVIN | GO-0033 | vendors-leftover-unique | SHA=a693889 | SHIPPED PR #17356 | FIXED: LST-F9114 — Vendor balances route GET /api/v1/accounting/vendor-balances lacked config.rateLimit. Used by Vendors page sidebar. Added 60/min. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
