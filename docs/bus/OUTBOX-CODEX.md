@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7263 | GO-0030+RIDER | CLAIM=driver-instructions-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7262 | PR=#17484 @ 027478c0bb | Built=stored-BOL popup failure honesty | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7262 | GO-0030+RIDER | CLAIM=stored-BOL-popup-silent-noop | CLOSES=none — code fix requires post-deploy GUARD Live proof | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7261 | PR=#17483 @ 7cd84daa41 | Built=cancel+approve wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7261 | GO-0030 | CLAIM=cancellation-wrapper-owned-transactions | SOURCE=cancel+approve canonical chains | NEXT=gate+FAST-MERGE | GO
