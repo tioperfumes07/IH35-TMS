@@ -322,6 +322,12 @@ export async function bridgeDetentionToBillingInClientTx(
       : [];
     const accessorial_bridge_rows = [...priorRows, bridge];
 
+    // DSP-MONEY-F7214 — this UPDATE used to bind only `WHERE id = $1`, with no
+    // operating_company_id predicate, and never checked whether a row actually came back:
+    // a lost/cross-company write silently fell through to `?? 0` below, which then resynced
+    // the proforma invoice to a rate of $0 while the detention event still went on to flip to
+    // 'billed' and notify the customer — asserting a charge was billed when the load's own
+    // rate was never actually raised. Company-scoped and required below.
     const loadUpdate = await client.query<{ rate_total_cents: string | number | null }>(
       `
         UPDATE mdata.loads
@@ -329,11 +335,15 @@ export async function bridgeDetentionToBillingInClientTx(
             quicksave_pending_fields = COALESCE(quicksave_pending_fields, '{}'::jsonb)
               || jsonb_build_object('accessorial_bridge_rows', $3::jsonb),
             updated_at = now()
-        WHERE id = $1
+        WHERE id = $1 AND operating_company_id = $4::uuid
         RETURNING rate_total_cents
       `,
-      [row.load_id, amount, JSON.stringify(accessorial_bridge_rows)]
+      [row.load_id, amount, JSON.stringify(accessorial_bridge_rows), operatingCompanyId]
     );
+    const loadRateRow = loadUpdate.rows[0];
+    if (!loadRateRow) {
+      return { ok: false as const, error: "load_rate_update_failed" as const };
+    }
 
     // ACCT-F5624 — the UPDATE above just raised the load's billable total, but a draft/proforma
     // invoice minted at booking time is a snapshot taken once and never re-read on its own
@@ -352,7 +362,7 @@ export async function bridgeDetentionToBillingInClientTx(
     await resyncProformaInvoiceFromLoadRate(client, {
       loadId: String(row.load_id),
       operatingCompanyId,
-      newRateTotalCents: Number(loadUpdate.rows[0]?.rate_total_cents ?? 0),
+      newRateTotalCents: Number(loadRateRow.rate_total_cents ?? 0),
       userId,
     });
 
@@ -370,6 +380,13 @@ export async function bridgeDetentionToBillingInClientTx(
       `,
       [eventId, operatingCompanyId, JSON.stringify(bridge), billable, amount]
     );
+    // DSP-MONEY-F7214 — the event status UPDATE above was previously unchecked: a lost write
+    // (e.g. the event flipped to 'billed' by a concurrent caller between the initial SELECT and
+    // this UPDATE) would fall through to appendCrudAudit + `{ok:true, event:undefined}` anyway,
+    // asserting the bridge succeeded when the canonical event row was never actually stamped.
+    if (!updated.rows[0]) {
+      return { ok: false as const, error: "event_billed_stamp_failed" as const };
+    }
 
     await appendCrudAudit(
       client,
