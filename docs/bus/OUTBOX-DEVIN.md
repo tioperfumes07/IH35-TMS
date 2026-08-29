@@ -1,4 +1,15 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0046 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO
+DEVIN | GO-0046 | vendors-leftover-unique | SHA=d6e7552 | SHIPPED PR #17360 | FIXED: LST-F9117 — Eight maintenance vendor routes lacked config.rateLimit: list, detail, create, update, archive, void, CSV import, template download. All authenticated, never throttled. Added 60/min reads, 30/min writes, 10/min CSV import. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0048 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=d6e7552 | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=d6e7552 | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=d6e7552 | GO — final sweep
+
 DEVIN | ACK | GO-0039 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO
 DEVIN | GO-0039 | vendors-leftover-unique | SHA=3c5ca46 | SHIPPED PR #17359 | FIXED: LST-F9116 — Two vendor category routes lacked config.rateLimit: POST /api/v1/accounting/vendors/batch-categorize (batch write) and PATCH /api/v1/accounting/vendors/:id/category. Both authenticated write paths, never throttled. Added 30/min. Ratchet 309→307. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 DEVIN | ACK | GO-0040 | NOW=vendors-leftover-unique | SHA=3c5ca46 | GO — continuing drain
