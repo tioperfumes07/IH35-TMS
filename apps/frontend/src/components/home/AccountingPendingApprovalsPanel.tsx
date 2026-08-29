@@ -93,6 +93,17 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Approval queue</div>
         {pendingQuery.isLoading ? (
           <div className="h-4 animate-pulse rounded-sm bg-slate-100" />
+        ) : pendingQuery.isError ? (
+          <div className="flex items-center justify-between gap-3 text-sm text-red-700">
+            <span>Failed to load pending journal approvals — this is not confirmed "no pending approvals."</span>
+            <button
+              type="button"
+              onClick={() => void pendingQuery.refetch()}
+              className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 text-xs font-medium hover:bg-red-100"
+            >
+              Retry
+            </button>
+          </div>
         ) : !controlAvailable ? (
           <p className="text-sm text-slate-700">{unavailableMessage}</p>
         ) : items.length === 0 ? (

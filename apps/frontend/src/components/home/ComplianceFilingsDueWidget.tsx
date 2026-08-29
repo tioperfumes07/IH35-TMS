@@ -41,6 +41,17 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
       <div className="p-3">
         {dashboardQ.isLoading ? (
           <div className="h-16 animate-pulse rounded-sm bg-slate-100" />
+        ) : dashboardQ.isError ? (
+          <div className="flex items-center justify-between gap-3 text-xs text-red-700">
+            <span>Failed to load filings due — not confirmed "nothing overdue."</span>
+            <button
+              type="button"
+              onClick={() => void dashboardQ.refetch()}
+              className="rounded-sm border border-red-300 bg-red-50 px-2 py-1 font-medium hover:bg-red-100"
+            >
+              Retry
+            </button>
+          </div>
         ) : (
           <>
             <div className="flex items-center gap-4">
