@@ -2354,3 +2354,4 @@ CODEX | FINDING+FIXED | ID=PROGRAM-F7344-EMPTY-WHY-CHANGE-DELETES-PCTCLASS-DECLA
 CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7348 | NOW=upload-guard-partial-evidence-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7349 | NOW=drivers-chrome-guard-structural-modal-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7350 | NOW=driver-column-keyed-hub-mount-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
+CODEX | WORKING | GO-TRUST-02 | FINDING=FLEET-F7351 | NOW=fleet-expense-reverse-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
