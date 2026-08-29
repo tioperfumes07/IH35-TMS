@@ -668,6 +668,19 @@ export async function createLoadTemplate(
         code: "E_TEMPLATE_CREATE_FAILED",
       });
     }
+    await appendCrudAudit(
+      client,
+      userId,
+      "dispatch.load_template.created",
+      {
+        operating_company_id: input.operating_company_id,
+        load_template_id: template.id,
+        name: template.name,
+        customer_id: customerId || null,
+      },
+      "info",
+      "DISPATCH-LOAD-TEMPLATE-CREATE",
+    );
     return template;
   });
 }
