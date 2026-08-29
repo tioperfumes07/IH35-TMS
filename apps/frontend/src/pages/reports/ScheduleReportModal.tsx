@@ -8,7 +8,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { useToast } from "../../components/Toast";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
-import { SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
+import { SCHEDULABLE_REPORT_IDS, SCHEDULED_REPORT_LABELS } from "../../lib/scheduled-report-catalog";
 
 type Props = {
   open: boolean;
@@ -34,7 +34,10 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
     queryFn: () => getScheduledReport(editId as string, operatingCompanyId),
     enabled: Boolean(editId) && Boolean(operatingCompanyId) && open,
   });
-  const [reportId, setReportId] = useState("ar-aging");
+  // GO-0045-SCHEDULED-REPORTS-UNSUPPORTED-REPORT-ID-SILENT-NEVER-SENDS: was "ar-aging" -- not
+  // one of the 6 ids the delivery worker can actually generate, so a fresh "Schedule a new
+  // report" that never touched this field defaulted straight into a silently-broken schedule.
+  const [reportId, setReportId] = useState("dispatch-board");
   const [rangeType, setRangeType] = useState<"rolling" | "calendar">("rolling");
   const [rollingDays, setRollingDays] = useState(30);
   const [calendarPreset, setCalendarPreset] = useState<"current_month" | "prev_month" | "quarter">("current_month");
@@ -88,7 +91,10 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
   // a prior edit session's values would leak into the next create.
   useEffect(() => {
     if (!open || editId) return;
-    setReportId("ar-aging");
+    // GO-0045: "ar-aging" is not one of the 6 actually-deliverable (SCHEDULABLE_REPORT_IDS) report ids —
+    // resetting to it here re-created the same non-deliverable default this effect exists to guard against
+    // every time the create-mode modal reopens, even after the initial useState default below was fixed.
+    setReportId("dispatch-board");
     setRangeType("rolling");
     setRollingDays(30);
     setCalendarPreset("current_month");
@@ -121,13 +127,21 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
     const base = rows.map((r) => ({ id: r.id, name: r.name }));
     const seen = new Set(base.map((r) => r.id));
     const combined = [...base, ...extraReports.filter((e) => !seen.has(e.id))];
-    // Belt-and-suspenders: if we're editing a row whose report_id is STILL not in either catalog (a
-    // genuinely new/unknown id), synthesize an option from the raw id rather than silently rendering
-    // a blank select for a real, non-empty value.
-    if (reportId && !combined.some((o) => o.id === reportId)) {
-      combined.push({ id: reportId, name: reportId });
+    // GO-0045-SCHEDULED-REPORTS-UNSUPPORTED-REPORT-ID-SILENT-NEVER-SENDS: `combined` above is
+    // every report the app knows about, but the delivery worker can only actually generate the 6
+    // ids in SCHEDULABLE_REPORT_IDS -- offering the rest let a user create a schedule that
+    // silently never sends (no error until 3 failed delivery cycles). Restrict the picker to only
+    // what's actually deliverable.
+    const schedulable = combined.filter((o) => SCHEDULABLE_REPORT_IDS.has(o.id));
+    // Belt-and-suspenders: if we're EDITING a row whose report_id predates this fix (or is
+    // otherwise not in either catalog), still show it as an option rather than silently rendering
+    // a blank select for a real, non-empty value -- the create/PATCH backend guard now prevents
+    // any NEW unsupported schedule; this only preserves the Edit view for a pre-existing row.
+    if (reportId && !schedulable.some((o) => o.id === reportId)) {
+      const existing = combined.find((o) => o.id === reportId);
+      schedulable.push(existing ?? { id: reportId, name: reportId });
     }
-    return combined;
+    return schedulable;
   }, [libQuery.data, extraReports, reportId]);
 
   const selectedReportName = libraryOptions.find((o) => o.id === reportId)?.name ?? reportId;

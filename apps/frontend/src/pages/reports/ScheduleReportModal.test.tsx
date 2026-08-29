@@ -21,8 +21,13 @@ function wrap(ui: ReactElement) {
 describe("ScheduleReportModal", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    // GO-0045: getReportLibrary's own catalog can list ids the scheduler can't actually deliver
+    // (e.g. "customer-profitability" — no on-demand PDF/xlsx/csv path exists for it). The Report
+    // picker must filter those out, so this mock intentionally includes one such non-deliverable id
+    // alongside "profit-per-truck-week", which IS one of the 6 SCHEDULABLE_REPORT_IDS.
     vi.spyOn(reportsApi, "getReportLibrary").mockResolvedValue([
       { id: "customer-profitability", name: "Customer profitability", category: "financial", description: "", status: "real" },
+      { id: "profit-per-truck-week", name: "Profit per truck (week)", category: "financial", description: "", status: "real" },
     ]);
   });
 
@@ -40,8 +45,17 @@ describe("ScheduleReportModal", () => {
     // while the listbox is OPEN and are addressed by VISIBLE TEXT, not by value. `user.selectOptions(el, id)`
     // therefore threw `Value "…" not found in options`, a message that names the ID and never the widget —
     // so it read as missing DATA rather than a control that changed shape.
-    pickCombo(reportSelect, /Customer profitability/);
+    pickCombo(reportSelect, /Profit per truck \(week\)/);
     expect(await screen.findByLabelText(/min revenue/i)).toBeInTheDocument();
+  });
+
+  it("GO-0045: report picker excludes a non-deliverable report_id from the library", async () => {
+    render(
+      wrap(<ScheduleReportModal open operatingCompanyId="co-1" defaultEmail="me@test.com" onClose={vi.fn()} onCreated={vi.fn()} />),
+    );
+    await screen.findByRole("heading", { name: /schedule a report/i });
+    const reportSelect = screen.getAllByRole("combobox")[0]!;
+    expect(() => pickCombo(reportSelect, /Customer profitability/)).toThrow(/no option named/);
   });
 
   it("cron toggle switches payload shape on save", async () => {
