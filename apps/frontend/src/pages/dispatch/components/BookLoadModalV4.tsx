@@ -380,9 +380,10 @@ export function BookLoadModalV4({
   const watchedCustomerId = form.watch("customer_id");
   const watchedCustomerName = form.watch("customer_name");
   const watchedTripType = form.watch("trip_type");
-  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean }>({
+  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean; hasWarnings: boolean }>({
     canDispatch: true,
     hasBlockers: false,
+    hasWarnings: false,
   });
   // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
   // server-side already enforces these on POST .../book (auth-gates preHandler, 422 dispatch_auth_gate_blocked
@@ -1702,7 +1703,13 @@ export function BookLoadModalV4({
                   {preDispatch.hasBlockers || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
-                    <b>{preDispatch.canDispatch ? "All checks pass · ready to book" : "Review warnings"}</b>
+                    <b>
+                      {preDispatch.hasWarnings
+                        ? "Warnings to review · booking allowed"
+                        : preDispatch.canDispatch
+                          ? "All checks pass · ready to book"
+                          : "Validation unavailable · retry checks"}
+                    </b>
                   ) : (
                     <span>Select driver / unit / customer to run checks</span>
                   )}
@@ -1719,7 +1726,9 @@ export function BookLoadModalV4({
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   customerLabel={watchedCustomerName || null}
-                  onValidationChange={(canDispatch, hasBlockers) => setPreDispatch({ canDispatch, hasBlockers })}
+                  onValidationChange={(canDispatch, hasBlockers, hasWarnings) =>
+                    setPreDispatch({ canDispatch, hasBlockers, hasWarnings })
+                  }
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
                   // optional-chained to a no-op — the override textarea could not receive a single
