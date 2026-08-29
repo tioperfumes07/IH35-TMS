@@ -16,6 +16,7 @@
  *    cannot leak across TRANSP / TRK / USMCA.
  */
 import { createNotification } from "../../notifications/notification.service.js";
+import { dispatchNotification } from "../../notifications/dispatcher.js";
 import type { NoticePayload, NoticeRoute } from "./operational-notice.routes.js";
 import { NOTICE_ROUTES } from "./operational-notice.routes.js";
 // Types come from the LEAF types module, never from ./registry.js: registry imports every
@@ -140,6 +141,36 @@ export function createOperationalNoticeHandler(route: NoticeRoute): OutboxEventH
           ctx.client
         );
         delivered += 1;
+      }
+
+      if (route.multiChannelRoles?.length) {
+        const channelRecipients = await resolveByRoles(ctx, operatingCompanyId, route.multiChannelRoles);
+        if (channelRecipients.length === 0) {
+          throw new Error(`${route.eventType}_no_multichannel_recipient_resolved`);
+        }
+        const headline = route.title(p);
+        const bodyText = route.body(p);
+        const results = await Promise.all(
+          channelRecipients.map((userId) =>
+            dispatchNotification({
+              user_id: userId,
+              event_type: "abandoned_load",
+              actor_user_id: asText(p.actor_user_id),
+              payload: {
+                ...p,
+                operating_company_id: operatingCompanyId,
+                headline,
+                bodyText,
+              },
+            }),
+          ),
+        );
+        const failures = results.filter((result) => !result.ok);
+        if (failures.length) {
+          throw new Error(
+            `${route.eventType}_multichannel_delivery_failed:${failures.length}/${channelRecipients.length}`,
+          );
+        }
       }
 
       ctx.log("operational notice delivered", {

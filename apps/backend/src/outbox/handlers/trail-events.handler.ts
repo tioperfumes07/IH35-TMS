@@ -24,7 +24,9 @@ export function buildTrailEventHandlers(): OutboxEventHandler[] {
     new TrailEventHandler("dispatch.equipment_transfer.requested"),
     new TrailEventHandler("dispatch.equipment_transfer.confirmed"),
     new TrailEventHandler("dispatch.equipment_transfer.rejected"),
-    new TrailEventHandler("load.abandoned"),
+    // load.abandoned is owned by the delivery-required operational notice handler. Registering a
+    // trail-only handler for the same event after it would overwrite the real consumer in registry's
+    // Map and falsely mark abandonment alerts delivered without notifying anyone.
     new TrailEventHandler("chargeback.created"),
     new TrailEventHandler("driver_finance.cash_advance_request.escalated_to_owner"),
     new TrailEventHandler("driver_finance.cash_advance_request.owner_approved"),

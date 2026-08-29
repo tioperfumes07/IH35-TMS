@@ -2024,3 +2024,5 @@ Codex | SHIPPED | DSP-F7158 | PR=#17281 | MERGE=407ff63807 | gate=exit0 | Live=B
 Codex | WORKING | DSP-F7163 | CLAIM=assignment-notices-duplicate+swallowed-direct-push | SOURCE=mdata.loads+load_assignment_history→outbox | NEXT=FAST-MERGE | GO
 Codex | WORKING | DSP-F7164 | CLAIM=operational-notice-role-recipients-cross-company | SOURCE=event.opco→identity.default_company/active-access | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7163 | PR=#17301 @ f64eb18d8530 | Built=single durable assignment notice path | Live=post-deploy UNVERIFIED | NEXT=operational notice tenant scope | GO
+Codex | WORKING | DSP-F7165 | CLAIM=abandoned-notice-overwritten+delivery-failure-discarded | SOURCE=load.abandoned→outbox handler registry | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7164 | PR=#17309 @ 160d0efe8d2a | Built=company-scoped operational notice recipients | Live=post-deploy UNVERIFIED | NEXT=abandonment delivery durability | GO

@@ -26,7 +26,6 @@ import {
   loadStatusRequiresDeliveryDepartureStamp,
   stampFinalActiveDeliveryDeparture,
 } from "./stamp-final-delivery-departure.js";
-import { notifyAbandonedLoadStakeholders } from "../notifications/dispatcher.js";
 import { isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { getCurrentClocks } from "../telematics/hos-clocks.service.js";
 import { getLatestHosClocksByDriver } from "../integrations/samsara/samsara-hos-clocks-pull.service.js";
@@ -1648,13 +1647,6 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     if ("error" in result) {
       if (result.error === "not_found") return reply.code(404).send({ error: "dispatch_load_not_found" });
       return reply.code(400).send({ error: "invalid_transition", from_status: result.from, to_status: result.to });
-    }
-    if (result.ok && body.data.new_status === "abandoned") {
-      void notifyAbandonedLoadStakeholders({
-        operatingCompanyId,
-        loadId: params.data.id,
-        actorUserId: authUser.uuid,
-      }).catch(() => undefined);
     }
     return result;
   });
