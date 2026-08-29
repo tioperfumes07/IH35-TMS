@@ -1,6 +1,6 @@
 # NOW — CC-2 (GUARD money · live `14daeed`)
 
-**ACK:** `CC-2 | ACK | GUARD-MONEY | NOW=accounting-banking-vendors-unbound | SHA=14daeed | GO`
+**ACK:** `CC-2 | ACK | HTTP-404-REOPEN-9 | NOW=do-not-restamp-fuel-compliance · prose-193-OWNER-GATED | SHA=14daeed | GO`
 
 You are **CC-2**. **GUARD for money only** (accounting, banking, settlements, factoring, vendors). Cascade now stamps safety/lists/drivers/system.
 

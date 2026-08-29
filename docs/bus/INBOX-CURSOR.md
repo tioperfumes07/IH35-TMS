@@ -1,3 +1,4 @@
+Cursor→CURSOR | HTTP-404-REOPEN-9 | SHA=14daeed | fuel+compliance complete:false · 9 FAIL · prose-193 OWNER-GATED | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GUARD-CAPACITY | SHA=14daeed | ancestor not equality · Cascade GUARD-2 · proof packets · do not restamp SYS-S07 | FEED docs/bus/FEED/NOW-CURSOR.md | law docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md | GO
 Cursor→CURSOR | GO-0055→0104 | LEAD | SHA=b276443 | binding guard + bus send | FEED docs/bus/FEED/NOW-CURSOR.md | deploy 5–10 only | GO
 Cursor→CURSOR | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | never idle | GO

@@ -62,7 +62,9 @@ export function loadManifests(dir = DIR) {
       (f) =>
         f.endsWith(".json") &&
         // Not a module manifest (binding-guard baseline — 2026-08-29).
-        f !== "PROD-VERIFIED-BINDING-BASELINE.json"
+        f !== "PROD-VERIFIED-BINDING-BASELINE.json" &&
+        f !== "PROD-VERIFIED-HTTP-RECHECK.json" &&
+        f !== "PROD-VERIFIED-EVIDENCE-CLASS.json"
     )
     .map((f) => {
       const rel = path.join("docs/module-completion", f);
@@ -109,6 +111,42 @@ export function scoreManifest(data) {
   }
   const open = items.filter((it) => !itemCountsTowardN(it, moduleId));
   return { N, M, open, progress: `${N} of ${M}` };
+}
+
+const HTTP_RECHECK_JSON = path.join(DIR, "PROD-VERIFIED-HTTP-RECHECK.json");
+
+/** Item ids whose cited HTTP evidence is live 404 must not stay PASS + prod_verified. */
+export function assertHttp404NotProdVerified(manifests, recheckPath = HTTP_RECHECK_JSON) {
+  const problems = [];
+  if (!fs.existsSync(recheckPath)) return problems;
+  let rec;
+  try {
+    rec = JSON.parse(fs.readFileSync(recheckPath, "utf8"));
+  } catch {
+    problems.push(`${path.relative(ROOT, recheckPath)} unreadable`);
+    return problems;
+  }
+  const deadIds = new Set();
+  for (const row of rec.rows || []) {
+    if (row.status !== "NOT_FOUND") continue;
+    for (const tagged of row.items || []) {
+      const colon = String(tagged).indexOf(":");
+      if (colon > 0) deadIds.add(String(tagged).slice(colon + 1));
+    }
+  }
+  if (deadIds.size === 0) return problems;
+  for (const { file, data } of manifests) {
+    if (!Array.isArray(data.items)) continue;
+    for (const it of data.items) {
+      if (!deadIds.has(it.id)) continue;
+      if (it.prod_verified === true || it.status === "PASS") {
+        problems.push(
+          `${file}: item ${it.id} cites a live HTTP 404 (PROD-VERIFIED-HTTP-RECHECK) — cannot stay PASS/prod_verified`
+        );
+      }
+    }
+  }
+  return problems;
 }
 
 export function assertManifestShape(file, data, opts = {}) {
@@ -299,6 +337,7 @@ export function runAll(opts = {}) {
       fs.writeFileSync(mdPath, renderMarkdown(data, sc));
     }
   }
+  problems.push(...assertHttp404NotProdVerified(manifests, opts.httpRecheckPath));
   if (!opts.skipCommits) {
     problems.push(...assertNoFalseCompleteClaims(listBranchCommits(), manifests));
   }
@@ -413,6 +452,22 @@ if (isMain && SELFTEST) {
   const cleanComplete = assertManifestShape("banking.json", allPassTrue, { openWaveIds: [] });
   if (cleanComplete.length) {
     failures.push(`all-PASS+no-wave+complete:true should be clean, got: ${cleanComplete.join("; ")}`);
+  }
+
+  const planted404 = path.join(ROOT, "scripts", ".http-404-selftest.json");
+  fs.writeFileSync(
+    planted404,
+    JSON.stringify({
+      rows: [{ status: "NOT_FOUND", items: ["fuel:FUEL-S01"] }],
+    }),
+  );
+  const stillGreen = assertHttp404NotProdVerified(
+    [{ file: "docs/module-completion/fuel.json", data: { items: [passItem("FUEL-S01")] } }],
+    planted404,
+  );
+  fs.rmSync(planted404, { force: true });
+  if (!stillGreen.some((x) => x.includes("FUEL-S01"))) {
+    failures.push("HTTP 404 PASS/prod_verified ratchet not caught");
   }
 
   const u6Theater = assertManifestShape(
