@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { Button } from "../Button";
@@ -28,16 +28,35 @@ export function TripCostCalculator({
 }) {
   const [open, setOpen] = useState(false);
   const [destination, setDestination] = useState("");
+  const [result, setResult] = useState<TripCostResult | null>(null);
+  const [requestError, setRequestError] = useState<unknown>(null);
+  const scopeGenerationRef = useRef(0);
 
   const mutation = useMutation({
-    mutationFn: () =>
+    mutationFn: (input: { unitId: string; companyId: string; destination: string; generation: number }) =>
       apiRequest<TripCostResult>(
-        `/api/v1/mdata/units/${unitId}/trip-cost?operating_company_id=${encodeURIComponent(companyId)}`,
-        { method: "POST", body: { destination_zip: destination } }
+        `/api/v1/mdata/units/${input.unitId}/trip-cost?operating_company_id=${encodeURIComponent(input.companyId)}`,
+        { method: "POST", body: { destination_zip: input.destination } }
       ),
+    onMutate: () => setRequestError(null),
+    onSuccess: (next, input) => {
+      if (input.generation === scopeGenerationRef.current) setResult(next);
+    },
+    onError: (error, input) => {
+      if (input.generation === scopeGenerationRef.current) setRequestError(error);
+    },
   });
 
-  const r = mutation.data;
+  useEffect(() => {
+    scopeGenerationRef.current += 1;
+    mutation.reset();
+    setOpen(false);
+    setDestination("");
+    setResult(null);
+    setRequestError(null);
+  }, [companyId, unitId]);
+
+  const r = result;
   const destinationValid = destination.trim().length >= 3;
 
   return (
@@ -68,18 +87,30 @@ export function TripCostCalculator({
             onChange={(e) => {
               setDestination(e.target.value);
               mutation.reset();
+              setResult(null);
+              setRequestError(null);
             }}
           />
-          <Button size="sm" loading={mutation.isPending} disabled={!destinationValid} onClick={() => mutation.mutate()}>
+          <Button
+            size="sm"
+            loading={mutation.isPending}
+            disabled={!destinationValid}
+            onClick={() => mutation.mutate({
+              unitId,
+              companyId,
+              destination: destination.trim(),
+              generation: scopeGenerationRef.current,
+            })}
+          >
             Compute
           </Button>
           <div id="vp-trip-cost-status" aria-live="polite">
             {!destinationValid ? (
               <p className="text-xs text-gray-600">Enter a destination ZIP (at least 3 characters) to compute.</p>
             ) : null}
-            {mutation.isError ? (
+            {requestError ? (
               <p className="text-xs text-red-700" role="alert">
-                Couldn&apos;t compute trip cost. {(mutation.error as Error)?.message ?? "Try again."}
+                Couldn&apos;t compute trip cost. {(requestError as Error)?.message ?? "Try again."}
               </p>
             ) : null}
           </div>

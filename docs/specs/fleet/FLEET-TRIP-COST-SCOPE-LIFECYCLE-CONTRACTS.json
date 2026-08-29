@@ -1,0 +1,45 @@
+{
+  "finding": "FLT-F7335-TRIP-COST-RESULT-CROSSES-UNIT-SCOPE",
+  "contracts": [
+    {
+      "id": "immutable_request_scope",
+      "file": "apps/frontend/src/components/vehicle-profile/TripCostCalculator.tsx",
+      "required_tokens": [
+        "input: { unitId: string; companyId: string; destination: string; generation: number }",
+        "input.unitId",
+        "input.companyId",
+        "input.destination",
+        "if (input.generation === scopeGenerationRef.current) setResult(next);",
+        "if (input.generation === scopeGenerationRef.current) setRequestError(error);"
+      ],
+      "forbidden_tokens": [
+        "mutationFn: () =>"
+      ]
+    },
+    {
+      "id": "profile_transition_reset",
+      "file": "apps/frontend/src/components/vehicle-profile/TripCostCalculator.tsx",
+      "required_tokens": [
+        "scopeGenerationRef.current += 1",
+        "mutation.reset()",
+        "setOpen(false)",
+        "setDestination(\"\")",
+        "setResult(null)",
+        "setRequestError(null)",
+        "[companyId, unitId]"
+      ],
+      "forbidden_tokens": []
+    },
+    {
+      "id": "submitted_snapshot",
+      "file": "apps/frontend/src/components/vehicle-profile/TripCostCalculator.tsx",
+      "required_tokens": [
+        "unitId,",
+        "companyId,",
+        "destination: destination.trim()",
+        "generation: scopeGenerationRef.current"
+      ],
+      "forbidden_tokens": []
+    }
+  ]
+}
