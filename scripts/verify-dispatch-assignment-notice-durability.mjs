@@ -8,6 +8,7 @@ const FILES = {
   loads: "apps/backend/src/dispatch/loads.routes.ts",
   dispatcher: "apps/backend/src/notifications/dispatcher.ts",
   noticeHandler: "apps/backend/src/outbox/handlers/operational-notice.handler.ts",
+  trailHandlers: "apps/backend/src/outbox/handlers/trail-events.handler.ts",
 };
 
 function count(source, literal) {
@@ -22,6 +23,7 @@ export function problems(files) {
   const loads = files.loads ?? "";
   const dispatcher = files.dispatcher ?? "";
   const noticeHandler = files.noticeHandler ?? "";
+  const trailHandlers = files.trailHandlers ?? "";
 
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
@@ -60,9 +62,17 @@ export function problems(files) {
   if (!routes.includes('eventType: "load.abandoned"')) {
     failures.push("load.abandoned needs a registered operational-notice route");
   }
-  const abandonedFn = dispatcher.slice(dispatcher.indexOf("export async function notifyAbandonedLoadStakeholders"));
-  if (/withLuciaBypass[\s\S]{0,1800}?\.catch\(\(\) => null\)/.test(abandonedFn)) {
-    failures.push("abandoned-load detail read failures must propagate, not fabricate fallback context");
+  if (/notifyAbandonedLoadStakeholders/.test(loads)) {
+    failures.push("abandoned transition must not launch a swallowed post-commit delivery outside the durable outbox");
+  }
+  if (/new TrailEventHandler\(["']load\.abandoned["']\)/.test(trailHandlers)) {
+    failures.push("trail-only load.abandoned handler must not overwrite the real operational consumer");
+  }
+  if (!/multiChannelRoles:\s*\["Owner", "Administrator"\]/.test(routes)) {
+    failures.push("load.abandoned route must declare durable Owner/Administrator multi-channel delivery");
+  }
+  if (!/route\.multiChannelRoles[\s\S]{0,1000}?dispatchNotification\([\s\S]{0,500}?failures\.length/.test(noticeHandler)) {
+    failures.push("operational handler must execute and fail loud on durable multi-channel delivery results");
   }
   if (!/LEFT JOIN org\.user_company_access uca[\s\S]{0,300}?uca\.company_id = \$1::uuid[\s\S]{0,180}?uca\.deactivated_at IS NULL/.test(noticeHandler)) {
     failures.push("role-based operational notices must resolve only active memberships for the event company");
@@ -89,7 +99,10 @@ if (process.argv.includes("--selftest")) {
     ["reassign duplicate direct push", { ...production, reassign: `${production.reassign}\nvoid notifyLoadReassignedAway({}).catch(() => undefined);` }],
     ["abandoned durable enqueue", { ...production, loads: production.loads.replace('"load.abandoned"', '"load.abandoned_REMOVED"') }],
     ["abandoned handler", { ...production, routes: production.routes.replace('eventType: "load.abandoned"', 'eventType: "load.abandoned_REMOVED"') }],
-    ["abandoned detail failure swallow", { ...production, dispatcher: production.dispatcher.replace("  });\n\n  const loadNo = String(detail?.load_number", "  }).catch(() => null);\n\n  const loadNo = String(detail?.load_number") }],
+    ["abandoned detached delivery restored", { ...production, loads: `${production.loads}\nvoid notifyAbandonedLoadStakeholders({}).catch(() => undefined);` }],
+    ["abandoned trail overwrite restored", { ...production, trailHandlers: `${production.trailHandlers}\nnew TrailEventHandler("load.abandoned");` }],
+    ["abandoned multichannel route removed", { ...production, routes: production.routes.replace('multiChannelRoles: ["Owner", "Administrator"],', "") }],
+    ["abandoned delivery failure ignored", { ...production, noticeHandler: production.noticeHandler.replace("if (failures.length) {", "if (false) {") }],
     ["notice role company join removed", { ...production, noticeHandler: production.noticeHandler.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
     ["notice default company arm removed", { ...production, noticeHandler: production.noticeHandler.replace("u.default_company_id = $1::uuid", "u.default_company_id = NULL") }],
     ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],

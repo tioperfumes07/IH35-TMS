@@ -43,6 +43,8 @@ export type NoticeRoute = {
   /** payload key holding the id this notice is about. */
   entityIdKey: string;
   audience: NoticeAudience;
+  /** Roles that also receive preference-aware email/SMS delivery through the durable event. */
+  multiChannelRoles?: string[];
   sourceBlock: string;
   title: (p: NoticePayload) => string;
   body: (p: NoticePayload) => string;
@@ -108,6 +110,7 @@ export const NOTICE_ROUTES: NoticeRoute[] = [
     entityType: "mdata.loads",
     entityIdKey: "load_id",
     audience: { kind: "roles", roles: ["Owner", "Administrator", "Dispatcher"] },
+    multiChannelRoles: ["Owner", "Administrator"],
     sourceBlock: "LOAD-ABANDONED",
     title: (p) => `Load abandoned — ${label(p, "load_number", "load_id")}`,
     body: (p) =>
