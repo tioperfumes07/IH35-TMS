@@ -293,7 +293,11 @@ export async function finalizeOcrIntakeConversion(
     if (String(row.status) !== "ready_review") return { ok: false as const, error: "not_ready" as const };
 
     const loadRes = await client.query(
-      `SELECT id FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+      `SELECT id FROM mdata.loads
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND soft_deleted_at IS NULL
+        LIMIT 1`,
       [loadId, operatingCompanyId]
     );
     if (!loadRes.rows[0]) return { ok: false as const, error: "load_not_found" as const };
