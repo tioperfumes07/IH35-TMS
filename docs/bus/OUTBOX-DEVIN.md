@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=eb86eaa | SHIPPED PR #17290 | FIXED: LST-F9100 — QBO vendor sync endpoints (status/pull-now/reconcile-now) had NO membership check (withLuciaBypass bypasses RLS → cross-entity leak). Status silently swallowed errors as EMPTY_SYNC_STATUS 200 (silent no-op). Added assertCompanyMembership to all 3 + rate limiting + 500 on status error. 3 sibling QBO sync routes (customers/COA/items) have same leak — flagged for class sweep. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=af0220c | SHIPPED PR #17280 | FIXED: VEND-F-S01-GUARD-DEAD-LISTALLVENDORS-MISMATCH (guard checked listVendors( but page uses listAllVendors( — dead guard, one of 193 pre-existing static failures). VEND-S01 UNVERIFIED→PASS: live Neon USMCA active=123 (not stale 4). Module progress 0 of 7 (Urgent-6 prod_verified=false). Live=UNVERIFIED until deploy + Chrome click-through. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | ACK | GO-0022 | NOW=drain-vendors | SHA=4e5db76 | GO
