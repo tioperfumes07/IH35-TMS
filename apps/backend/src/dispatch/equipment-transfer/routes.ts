@@ -21,6 +21,7 @@ function mapInitiateError(error: unknown) {
     return { status: 422, payload: { error: code } };
   }
   if (code === "equipment_not_found") return { status: 404, payload: { error: code } };
+  if (code === "transfer_create_failed") return { status: 409, payload: { error: code } };
   return null;
 }
 

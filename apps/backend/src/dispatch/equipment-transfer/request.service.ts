@@ -108,6 +108,7 @@ export async function initiateTransfer(
     ]
   );
   const uuid = String(res.rows[0]?.uuid ?? "");
+  if (!uuid) throw new Error("transfer_create_failed");
   await appendCrudAudit(
     client as never,
     userId,

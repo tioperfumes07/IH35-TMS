@@ -41,6 +41,17 @@ function lifecycleFailures(service, routeSource) {
   return out;
 }
 
+function initiationIdentityFailures(service, routeSource) {
+  const out = [];
+  if (!/const uuid = String\(res\.rows\[0\]\?\.uuid \?\? ""\);[\s\S]{0,100}if \(!uuid\) throw new Error\("transfer_create_failed"\);[\s\S]{0,180}appendCrudAudit/.test(service)) {
+    out.push("initiation must require the canonical INSERT identity before audit/outbox side effects");
+  }
+  if (!/code === "transfer_create_failed"[\s\S]{0,100}status: 409/.test(routeSource)) {
+    out.push("route must expose transfer_create_failed as a typed conflict");
+  }
+  return out;
+}
+
 function fail(message) {
   failures.push(message);
 }
@@ -108,6 +119,7 @@ contains("apps/backend/src/dispatch/equipment-transfer/routes.ts", routes, [
   { pattern: /requireAuth/, label: "requireAuth guard" },
 ]);
 failures.push(...lifecycleFailures(dualConfirm, routes));
+failures.push(...initiationIdentityFailures(requestService, routes));
 
 const indexTs = read("apps/backend/src/index.ts");
 contains("apps/backend/src/index.ts", indexTs, [
@@ -149,6 +161,16 @@ if (process.argv.includes("--selftest")) {
     const routeMutation = index === lifecycleMutations.length - 1;
     if (lifecycleFailures(routeMutation ? dualConfirm : mutation, routeMutation ? mutation : routes).length === 0) {
       fail(`selftest lifecycle mutation ${index + 1} escaped the guard`);
+    }
+  }
+  const initiationMutations = [
+    requestService.replace('if (!uuid) throw new Error("transfer_create_failed");', ""),
+    routes.replace('if (code === "transfer_create_failed") return { status: 409, payload: { error: code } };', ""),
+  ];
+  for (const [index, mutation] of initiationMutations.entries()) {
+    const routeMutation = index === 1;
+    if (initiationIdentityFailures(routeMutation ? requestService : mutation, routeMutation ? mutation : routes).length === 0) {
+      fail(`selftest initiation mutation ${index + 1} escaped the guard`);
     }
   }
 }
@@ -202,4 +224,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype + 7 lifecycle mutations caught" : ""}`);
+console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype + 9 lifecycle mutations caught" : ""}`);
