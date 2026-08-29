@@ -138,6 +138,9 @@ export const MODULE_ALIASES = {
   "dispatch / parity": { id: "dispatch", sub: "book_load_inline_create" },
   "dispatch / customers": { id: "dispatch", sub: "customer_picker" },
   "qbo sync": { id: "accounting", sub: "qbo_sync" },
+  "qbo-sync": { id: "accounting", sub: "qbo_sync" },
+  admin: { id: "system", sub: "admin" },
+  "driver-finance": { id: "driver-hub", sub: "inbox" },
   "accounting (bills)": { id: "accounting", sub: "bills" },
   "accounting (invoices)": { id: "accounting", sub: "invoices" },
   "banking (transfers)": { id: "bank", sub: "transfers" },
@@ -223,6 +226,16 @@ export function parseModuleCell(cell, sidebarIds) {
   const alias = MODULE_ALIASES[raw.toLowerCase()];
   if (alias && sidebarIds.includes(alias.id)) {
     return { ok: true, id: alias.id, sub: alias.sub ?? null, via: "alias" };
+  }
+
+  const aliasHead = MODULE_ALIASES[head.toLowerCase()];
+  if (aliasHead && sidebarIds.includes(aliasHead.id)) {
+    return {
+      ok: true,
+      id: aliasHead.id,
+      sub: subFromDot ?? aliasHead.sub ?? null,
+      via: "alias-head",
+    };
   }
 
   return {

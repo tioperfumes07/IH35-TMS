@@ -1,12 +1,12 @@
 {
   "meta": {
-    "generatedAt": "2026-08-28T18:31:34-05:00",
-    "sourceSha": "109258d3a",
-    "deployedSha": "4e5db76",
+    "generatedAt": "2026-08-29T10:37:03-05:00",
+    "sourceSha": "2f53cc08e5",
+    "deployedSha": "14daeed",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2136,
-    "failOpen": 5,
-    "defects": 19
+    "ledgerRows": 2145,
+    "failOpen": 14,
+    "defects": 20
   },
   "modules": [
     {
@@ -171,7 +171,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "36/39",
+      "build": "38/39",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -436,7 +436,7 @@
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "32/37",
+      "build": "37/37",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -598,7 +598,7 @@
       "build": "38/38",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "AUDIT",
         "FIX",
@@ -630,7 +630,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "AUDIT",
           "FIX",
@@ -651,7 +651,7 @@
       "build": "12/12",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "FIX",
         "FIX",
@@ -683,7 +683,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "FIX",
           "FIX",
@@ -757,7 +757,7 @@
       "build": "9/9",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "FIX",
@@ -789,7 +789,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "AUDIT",
           "FIX",
@@ -1075,7 +1075,7 @@
       "build": "8/8",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "FIX",
         "FIX",
         "FIX",
@@ -1107,7 +1107,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "FIX",
           "FIX",
@@ -1446,7 +1446,7 @@
       "build": "7/7",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "NA",
         "AUDIT",
         "AUDIT",
@@ -1478,7 +1478,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "AUDIT",
           "AUDIT",
@@ -2122,93 +2122,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "CASCADE | FINDING | COMPLIANCE-SILENT-NO-OP-NOTIFICATION-RULES-DELETE | GO-0021 | docs-only row 50096",
+      "title": "CC-3: GO-0057 done, PR #17566 live-verified",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:31 PM CT",
+      "mergedAtCt": "08/29/2026, 10:59 AM CT",
       "url": "",
-      "sha": "7ad41401c",
-      "committedAtIso": "2026-08-28T18:31:58-05:00"
+      "sha": "1ea0aa4e0a",
+      "committedAtIso": "2026-08-29T10:59:38-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: COMPLIANCE-SILENT-NO-OP-NOTIFICATION-RULES-DELETE — compliance-notification-rules.routes.ts:156-163 soft-delete UPDATE without RETURNING or rowCount check",
+      "title": "CC-3: FIXED SAFETY-INTEGRITY-REPORTS-DRIVER-VENDOR-TAB-BAR-MISSING PR #17566",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:31 PM CT",
+      "mergedAtCt": "08/29/2026, 10:54 AM CT",
       "url": "",
-      "sha": "109258d3a",
-      "committedAtIso": "2026-08-28T18:31:34-05:00"
-    },
-    {
-      "number": 17227,
-      "title": "FINDING: DSP-F7140 fail closed on missing driver identity",
-      "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17227",
-      "sha": "168ac5de3",
-      "committedAtIso": "2026-08-28T18:31:11-05:00"
-    },
-    {
-      "number": 17226,
-      "title": "FINDING: GO-0021-LEAD-CENSUS",
-      "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17226",
-      "sha": "43551f950",
-      "committedAtIso": "2026-08-28T18:29:50-05:00"
+      "sha": "14daeeda2f",
+      "committedAtIso": "2026-08-29T10:54:09-05:00"
     },
     {
       "number": 0,
-      "title": "DEVIN GO-0021: VEND-F-DEACTIVATE-REACTIVATE-PATCH-GRANTLESS-404-OWNER-NO-UCA",
+      "title": "board: CLOSE ACCT-GUARD-F7300-ORPH03-ESCROW-VISUALIZER-REQUIRES-RETIRED-LEDGER (CC-1, PR #17567)",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:29 PM CT",
+      "mergedAtCt": "08/29/2026, 10:54 AM CT",
       "url": "",
-      "sha": "09ea15ce7",
-      "committedAtIso": "2026-08-28T18:29:44-05:00"
+      "sha": "8394f58857",
+      "committedAtIso": "2026-08-29T10:54:03-05:00"
     },
     {
-      "number": 17225,
-      "title": "CC-3 ACK GO-0021",
+      "number": 17564,
+      "title": "FINDING: SYS-S07-KNOWN-BAD-PROVEN-RESTAMPED",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17225",
-      "sha": "a023ca260",
-      "committedAtIso": "2026-08-28T18:29:02-05:00"
+      "mergedAtCt": "08/29/2026, 10:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17564",
+      "sha": "e3324eecba",
+      "committedAtIso": "2026-08-29T10:53:52-05:00"
     },
     {
-      "number": 0,
-      "title": "CASCADE | ACK | GO-0021 | docs-only ACK",
+      "number": 17568,
+      "title": "FINDING: DRV-MONEY-F7311 historical driver label loss",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:28 PM CT",
-      "url": "",
-      "sha": "8a0d61bb1",
-      "committedAtIso": "2026-08-28T18:28:40-05:00"
-    },
-    {
-      "number": 0,
-      "title": "CASCADE | ACK | GO-0021 | NOW=unique-FINDING-not-u14 | SHA=4e5db76 | GO",
-      "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:28 PM CT",
-      "url": "",
-      "sha": "053322800",
-      "committedAtIso": "2026-08-28T18:28:25-05:00"
+      "mergedAtCt": "08/29/2026, 10:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17568",
+      "sha": "bf834d4abd",
+      "committedAtIso": "2026-08-29T10:53:21-05:00"
     },
     {
       "number": 0,
-      "title": "CC-1 ACK GO-0021",
+      "title": "board: CC-1 ACCT-GUARD-F7300 report (PR #17567)",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:28 PM CT",
+      "mergedAtCt": "08/29/2026, 10:53 AM CT",
       "url": "",
-      "sha": "418a83bd2",
-      "committedAtIso": "2026-08-28T18:28:07-05:00"
+      "sha": "a1e4ea9b71",
+      "committedAtIso": "2026-08-29T10:53:15-05:00"
+    },
+    {
+      "number": 17567,
+      "title": "Claude-1-ACCT-GUARD-F7300: reconcile ORPH-03 guard with ACCT-F5703 escrow repoint",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 10:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17567",
+      "sha": "2b406c4764",
+      "committedAtIso": "2026-08-29T10:51:49-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: N/A — OUTBOX status GO-0021 ACK",
+      "title": "DEVIN drain: ACK PR #17565 merged — LST-F9138 admin/banking/lists/legal/insurance rate limits (60+ routes)",
       "state": "merged",
-      "mergedAtCt": "08/28/2026, 06:27 PM CT",
+      "mergedAtCt": "08/29/2026, 10:50 AM CT",
       "url": "",
-      "sha": "34837854d",
-      "committedAtIso": "2026-08-28T18:27:58-05:00"
+      "sha": "cce42beaf8",
+      "committedAtIso": "2026-08-29T10:50:46-05:00"
+    },
+    {
+      "number": 17566,
+      "title": "FINDING: SAFETY-INTEGRITY-REPORTS-DRIVER-VENDOR-TAB-BAR-MISSING (#N/A)",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 10:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17566",
+      "sha": "9b885dda99",
+      "committedAtIso": "2026-08-29T10:50:38-05:00"
+    },
+    {
+      "number": 17565,
+      "title": "FINDING: LST-F9138",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 10:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17565",
+      "sha": "f5270fa926",
+      "committedAtIso": "2026-08-29T10:50:27-05:00"
     }
   ]
 }
