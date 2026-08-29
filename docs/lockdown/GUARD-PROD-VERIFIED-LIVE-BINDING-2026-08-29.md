@@ -1,7 +1,9 @@
 # GUARD: `verify-prod-verified-live-binding` — install + what it enforces
 
 **Built 2026-08-29 against live `b276443`. Selftest 9/9. Mutation-tested (Claude design; Cursor install).**  
-**Owner of flips:** CC-2 (GUARD). Not CC-3.
+**Owner of flips:** CC-2 (money) and Cascade GUARD-2 (safety/lists/drivers/system). Not CC-3. Not builders. See `docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md`.
+
+**SYS-S07:** bound to `b276443`. Valid on later live SHAs **if** that commit is an ancestor (measured: `b276443` ⊂ `14daeed`). Equality re-stamp is a wasted GUARD cycle.
 
 ## The hole it closes — measured
 

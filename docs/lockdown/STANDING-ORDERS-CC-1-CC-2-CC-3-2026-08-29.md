@@ -104,8 +104,8 @@ bash scripts/next-work-item.sh <your modules…>
 | Seat | Branch prefix | Lane | Does NOT |
 |---|---|---|---|
 | **CC-1** | `cc-1/` or `claude/` | **Money / GL / WORM** — accounting, banking money paths, settlements, factoring, money migrations, money Sentry P0s | Gate chrome seats; `trigger_deploy`; restamp U14; remake credited closed |
-| **CC-2** | `cc-2/` | **GUARD** — live prove after merge; set `prod_verified` only after live prod + Neon; leftover `/reports` `/cash-flow` `/finance` `/tasks` `/home` unique (**`/fuel` unique = Codex only — do not take it**) | Build money/GL; steal CC-1 money; `trigger_deploy` |
-| **CC-3** | `cc-3/` | **FE / chrome / TEST** — Lists, Legal, Maintenance, Safety, Insurance, Banking chrome, Driver Hub chrome, unique 500/dead/silent; CREATE labeled TEST | Set `prod_verified` (GUARD only = CC-2); write GL math; `trigger_deploy` |
+| **CC-2** | `cc-2/` | **GUARD (money)** — stamp `prod_verified` on accounting/banking/settlements/factoring/vendors after live + Neon **or** a builder proof packet; leftover `/reports` `/cash-flow` `/finance` `/tasks` `/home` unique (**`/fuel` = Codex**) | Build money/GL; steal CC-1 money; `trigger_deploy`; demand SYS-S07 re-stamp when SHA is still an ancestor of live |
+| **CC-3** | `cc-3/` | **FE / chrome / TEST** — Lists, Legal, Maintenance, Safety, Insurance, Banking chrome, unique 500/dead/silent; CREATE labeled TEST; **ship `docs/templates/GUARD-PROOF-PACKET.md` — do not stamp** | Set `prod_verified`; write GL math; `trigger_deploy` |
 
 **Cursor (lead):** census, Desktop FEED, FAST-MERGE bus, deploy 5–10 only, Driver Hub / FE overflow, never idle seats.
 
@@ -151,7 +151,7 @@ One item fully closed. Half-finished = zero.
 | `status` | `PASS` only when acceptance is real |
 | `evidence` | query/route + result + date + **entity** |
 | `pr` | PR that closed it |
-| `prod_verified` | `true` **only by CC-2 (GUARD)** after live prod exercise + Neon |
+| `prod_verified` | `true` **only by GUARD**: CC-2 (money modules) or Cascade GUARD-2 (safety/lists/drivers/system). Builders ship `docs/templates/GUARD-PROOF-PACKET.md`. Ancestor SHA, not equality. |
 | `live_verified_at` / `live_verified_sha` | both or neither; SHA ancestor of live healthz `version` |
 
 ### 5b. `prod_verified` LIVE BINDING (guard on main)
@@ -162,10 +162,10 @@ Guard: `scripts/verify-prod-verified-live-binding.mjs` + baseline `docs/module-c
 
 - New `prod_verified:true` **must** carry `live_verified_sha` + `live_verified_at` on an ancestor of live `healthz/shallow`.
 - Legacy unbound ids WARN only (baseline). Paying debt = stamp against live (or REOPEN `prod_verified:false`) and **remove** the id from the baseline — never re-add.
-- `SYS-S07` was the proof case (green with no SHA while TXH was unavailable on stale API). **REOPEN** until known-bad FAIL is proven on current SHA, then re-stamp with binding.
+- `SYS-S07` is **bound** (`live_verified_sha=b276443`). Valid while that SHA is an **ancestor** of live healthz. Do **not** re-walk because deploy moved to `14daeed`.
 - Shared lib: use `ancestorCheck()` (yes/no/unknown). Do not treat unresolvable SHA as “not an ancestor.”
 
-Only **CC-2 (GUARD)** flips `prod_verified`. Install note: `docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md`.
+Install note: `docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md`. Capacity: `docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md`.
 
 Neon:
 

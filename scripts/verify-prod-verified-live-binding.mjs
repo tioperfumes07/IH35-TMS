@@ -50,11 +50,15 @@ export function loadManifests(dir = DIR) {
   return fs
     .readdirSync(dir)
     .filter((f) => f.endsWith(".json") && f !== path.basename(BASELINE))
-    .map((f) => ({
-      file: path.join("docs/module-completion", f),
-      module: f.replace(/\.json$/, ""),
-      data: JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")),
-    }));
+    .map((f) => {
+      const data = JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+      return {
+        file: path.join("docs/module-completion", f),
+        module: f.replace(/\.json$/, ""),
+        data,
+      };
+    })
+    .filter((m) => Array.isArray(m.data.items));
 }
 
 /** Every prod_verified:true item, with whether it carries a usable live binding. */
