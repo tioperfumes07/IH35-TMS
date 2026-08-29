@@ -126,9 +126,9 @@
       "layers": ["DOD-E", "VERIFY-8"],
       "spec": "GO-0017 L6 — verification recordable",
       "status": "PASS",
-      "evidence": "Guard scripts/lib/live-verified-stamps.mjs via verify-module-completion (step 1431): empty stamps FAIL; non-ancestor SHA FAIL; GET /api/v1/healthz/shallow version must contain the stamp. First stamp = this item on live 4e5db76.",
+      "evidence": "Guard scripts/lib/live-verified-stamps.mjs via verify-module-completion (step 1431): empty stamps FAIL; non-ancestor SHA FAIL; GET /api/v1/healthz/shallow version must contain the stamp. First stamp = this item on live 4e5db76. | PROD-VERIFIED 2026-08-29 (CC-2/GUARD): GET https://api.ih35dispatch.com/api/v1/healthz/shallow -> {\"ok\":true,\"version\":\"b276443\"}; git merge-base --is-ancestor 4e5db76 b276443 confirms true (4e5db76 is a genuine ancestor of the live deployed SHA, not a coincidental substring match).",
       "pr": null,
-      "prod_verified": false,
+      "prod_verified": true,
       "live_verified_at": "2026-08-28T22:21:00.000Z",
       "live_verified_sha": "4e5db76"
     }
