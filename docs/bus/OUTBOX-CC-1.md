@@ -3870,3 +3870,4 @@ Codex→CC-1 | FINDING | DSP-MONEY-F7146A-R1 | detention approval notice remains
 Codex→CC-1 | FINDING | DSP-MONEY-F7218A | Edit Load charge replacement deactivates/inserts economic lines without persisted identity proof | SOURCE=dispatch.load_charge_lines active company+load set | routed=CC-1 | board OPEN | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7243-PROFITABILITY-TRIP-END-READS-RETIRED-DELIVERY | routed=CC-1 | SOURCE=apps/backend/src/dispatch/load-profitability.service.ts:95-105 | BLOCKS=GO-0030-dispatch-unique | NEXT=root-fix+guard | GO
 Codex | FINDING | DSP-MONEY-F7264 | routed=CC-1 | LoadDetailDrawer.tsx:324-336 factoring popup null still persists generated_at + success | BLOCKS=GO-0030-dispatch-unique | GO
+Codex→CC-1 | FINDING | DSP-MONEY-F7276 | factoring package metadata PATCH rejection is uncaught on auto/Generate/Email/Upload · board OPEN with exact source+fix | routed=CC-1 | BLOCKS=dispatch load drawer factoring package money
