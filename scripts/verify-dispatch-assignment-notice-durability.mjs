@@ -10,6 +10,7 @@ const FILES = {
   noticeHandler: "apps/backend/src/outbox/handlers/operational-notice.handler.ts",
   trailHandlers: "apps/backend/src/outbox/handlers/trail-events.handler.ts",
   registry: "apps/backend/src/outbox/handlers/registry.ts",
+  distributionFailure: "apps/backend/src/outbox/handlers/dispatch-distribution-failure.handler.ts",
 };
 
 function count(source, literal) {
@@ -26,6 +27,7 @@ export function problems(files) {
   const noticeHandler = files.noticeHandler ?? "";
   const trailHandlers = files.trailHandlers ?? "";
   const registry = files.registry ?? "";
+  const distributionFailure = files.distributionFailure ?? "";
 
   if (!quick.includes('enqueueOutboxEvent(\n          client,\n          "load.assigned_to_driver"')) {
     failures.push("Quick Assign must enqueue load.assigned_to_driver on its scoped transaction client");
@@ -95,6 +97,13 @@ export function problems(files) {
       !/resolveByRoles\(ctx, operatingCompanyId, route\.audience\.fallbackRoles\)/.test(noticeHandler)) {
     failures.push("both role and driver-fallback audiences must pass immutable event company scope");
   }
+  if (!/LEFT JOIN org\.user_company_access uca[\s\S]{0,260}?uca\.company_id = \$1::uuid[\s\S]{0,180}?uca\.deactivated_at IS NULL/.test(distributionFailure) ||
+      !/u\.default_company_id = \$1::uuid OR uca\.user_id IS NOT NULL/.test(distributionFailure)) {
+    failures.push("distribution-failure alerts must resolve Owner/Dispatcher recipients only inside the event company");
+  }
+  if (!/const notification = await createNotification\([\s\S]{0,700}?if \(!notification\?\.id\)[\s\S]{0,180}?distribution_failure_notification_insert_returned_no_identity/.test(distributionFailure)) {
+    failures.push("distribution-failure alerts must require persisted notification identity before acknowledging delivery");
+  }
   return failures;
 }
 
@@ -120,6 +129,8 @@ if (process.argv.includes("--selftest")) {
     ["notice role company join removed", { ...production, noticeHandler: production.noticeHandler.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
     ["notice default company arm removed", { ...production, noticeHandler: production.noticeHandler.replace("u.default_company_id = $1::uuid", "u.default_company_id = NULL") }],
     ["notice fallback scope dropped", { ...production, noticeHandler: production.noticeHandler.replace("resolveByRoles(ctx, operatingCompanyId, route.audience.fallbackRoles)", "resolveByRoles(ctx, route.audience.fallbackRoles)") }],
+    ["distribution failure company join removed", { ...production, distributionFailure: production.distributionFailure.replace("LEFT JOIN org.user_company_access uca", "LEFT JOIN org.user_company_access_REMOVED uca") }],
+    ["distribution failure identity check removed", { ...production, distributionFailure: production.distributionFailure.replace("if (!notification?.id) {", "if (false) {") }],
   ];
   const missed = mutations.filter(([, fixture]) => problems(fixture).length === 0);
   if (missed.length) {
