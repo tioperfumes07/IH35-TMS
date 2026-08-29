@@ -109,15 +109,19 @@ bash scripts/next-work-item.sh <your modules…>
 
 **Cursor (lead):** census, Desktop FEED, FAST-MERGE bus, deploy 5–10 only, Driver Hub / FE overflow, never idle seats.
 
-### Collision bands (CI-enforced)
+### Collision bands (CI-enforced — GO-0030 rider, **not** a silent skip)
 
-| Prefix | Verify-step | Migration HH |
+Same table as `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`. Do **not** invent a mod-8 split in chat.
+
+| Prefix | Verify-steps | Migrations |
 |---|---|---|
-| `claude/`, `cc-1/`, `cc1/` | n ≡ **1 (mod 4)** | **00–11** |
-| `cc-2/`, `cc2/` | n ≡ **3 (mod 4)** | (money migrations prefer CC-1 morning) |
-| `cursor/`, `cursoragent/`, chore/feat/fix when Cursor | **EVEN** | **12–23** |
+| `claude/`, `cc-1/`, `cc1/` | ≡ **1 (mod 4)** | HH **00–11** |
+| `cc-2/`, `cc2/` | ≡ **3 (mod 4)** | **FAIL if you add one** (GUARD) |
+| `cursor/`, `cursoragent/`, chore/feat/fix when Cursor | **EVEN** | HH **12–23** |
+| `cc-3/`, `cc3/`, `codex/`, `cascade/`, `devin/`, `devin-a/`, `devina/` | **chrome-only — FAIL if any new step** | **FAIL if any new migration** |
+| any other unmapped prefix | **FAIL if new step** | **FAIL if new migration** |
 
-> **Known gap:** `cc-3/` may not map in lane-band guards today (silent skip). Until Cursor ships fail-closed mapping for `cc-3/`, **CC-3 authors no new verify-steps and no migrations** — chrome + TEST + existing guards only. Do **not** invent a mod-8 split in chat; ship it in a Cursor tooling PR.
+**CC-3 / Codex / Cascade / Devin:** chrome + labeled TEST only. No new verify-steps. No migrations.
 
 Claim → merge CLAIMED → author (Rule 37). Never claim+author same PR.
 
