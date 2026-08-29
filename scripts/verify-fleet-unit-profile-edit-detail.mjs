@@ -144,6 +144,9 @@ export function audit(src) {
     failures.push(`${FILES.unitDetail}: unit.detail.tasks must scope TasksTab to targetType="unit" targetId={id}`);
   }
   if (!/getUnit\(id, companyId\)/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: detail shell must read canonical company-scoped unit identity`);
+  if (!/unitQuery\.isPending\s*\? "Loading unit…"\s*:\s*unitQuery\.isError\s*\? "Unit identity unavailable"\s*:\s*entityLabel\(unitQuery\.data\?\.unit_number, id, "Unit"\)/.test(src.unitDetail)) {
+    failures.push(`${FILES.unitDetail}: pending/error/success identity states must not paint a false Unit — not visible tombstone`);
+  }
   if (!/entityLabel\(unitQuery\.data\?\.unit_number, id, "Unit"\)/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: detail shell must resolve unit_number`);
   if (!/breadcrumb=\{\["Fleet", "Units", unitLabel\]\}/.test(src.unitDetail) || !/title=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: breadcrumb/title must consume resolved unit identity`);
   if (!/targetLabel=\{unitLabel\}/.test(src.unitDetail)) failures.push(`${FILES.unitDetail}: tasks must consume resolved unit identity`);
@@ -221,6 +224,7 @@ if (process.argv.includes("--selftest")) {
     ["unit-detail-permits", "unitDetail", /<UnitPermitsTab unitId=\{id\}/, "<UnitPermitsTab unitId={undefined}"],
     ["unit-detail-tasks", "unitDetail", /targetType="unit" targetId=\{id\}/, 'targetType="load" targetId={id}'],
     ["unit-detail-query", "unitDetail", /getUnit\(id, companyId\)/, "getUnit(id, '')"],
+    ["unit-detail-loading-honesty", "unitDetail", /unitQuery\.isPending\s*\? "Loading unit…"/, 'false ? "Loading unit…"'],
     ["unit-detail-label", "unitDetail", /entityLabel\(unitQuery\.data\?\.unit_number, id, "Unit"\)/, 'entityLabel(null, id, "Unit")'],
     ["unit-detail-title", "unitDetail", /title=\{unitLabel\}/, 'title="Unit"'],
     ["unit-detail-task-label", "unitDetail", /targetLabel=\{unitLabel\}/, 'targetLabel="Unit"'],

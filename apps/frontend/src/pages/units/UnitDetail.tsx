@@ -32,7 +32,15 @@ export function UnitDetail() {
     queryFn: () => getUnit(id, companyId),
     enabled: Boolean(companyId) && Boolean(id),
   });
-  const unitLabel = entityLabel(unitQuery.data?.unit_number, id, "Unit");
+  // FLEET-F7343: an in-flight canonical read is not an invisible unit. The
+  // compatibility detail route mounts its reverse sections immediately, so
+  // keep the header honest through the complete request lifecycle instead of
+  // showing the unresolved-entity tombstone until the identity query settles.
+  const unitLabel = unitQuery.isPending
+    ? "Loading unit…"
+    : unitQuery.isError
+      ? "Unit identity unavailable"
+      : entityLabel(unitQuery.data?.unit_number, id, "Unit");
 
   useEffect(() => {
     const tab = searchParams.get("tab");
