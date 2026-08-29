@@ -6731,5 +6731,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-detention-bridge-scoped-checks"
+  },
+  "10021": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-edit-load-charge-replacement-checked"
   }
 }
