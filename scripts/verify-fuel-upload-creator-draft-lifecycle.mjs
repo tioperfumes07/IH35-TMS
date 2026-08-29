@@ -16,7 +16,10 @@ function failures(input = source) {
     if (!/const completeClose = useCallback\([\s\S]*?lifecycleGenerationRef\.current \+= 1;\s*setLoading\(false\);\s*resetDraft\(\);\s*onClose\(\);/.test(text)) out.push(`${key} resets after current success or accepted close`);
     if (!text.includes('<Modal open={open} onClose={handleClose}')) out.push(`${key} modal dismiss resets`);
     if (!/variant="secondary" onClick=\{attemptClose\} disabled=\{loading\}/.test(text)) out.push(`${key} cancel uses guarded close`);
-    if (!/on(?:Imported|Uploaded)\(\);\s*completeClose\(\);/.test(text)) out.push(`${key} success resets`);
+    const successResets = key === "transactions"
+      ? /onImported\(\);\s*if \(res\.dead_letters === 0\) completeClose\(\);/.test(text)
+      : /onUploaded\(\);\s*completeClose\(\);/.test(text);
+    if (!successResets) out.push(`${key} clean success resets while rejected-row evidence remains visible`);
   }
   if (!/const resetDraft = useCallback\(\(\) => \{\s*setFile\(null\);\s*setEtag\(null\);/.test(input.prices)) {
     out.push("prices clears company-bound ETag");
@@ -25,16 +28,23 @@ function failures(input = source) {
 }
 
 if (process.argv.includes("--selftest")) {
+  const baseline = failures();
+  if (baseline.length) {
+    console.error(`verify-fuel-upload-creator-draft-lifecycle selftest BASELINE FAIL — ${baseline.join(", ")}`);
+    process.exit(1);
+  }
   const staleFile = { ...source, transactions: source.transactions.replace("setFile(null)", "void file") };
   const staleCompany = { ...source, prices: source.prices.replace("[open, operatingCompanyId, resetDraft]", "[open, resetDraft]") };
   const staleEtag = { ...source, prices: source.prices.replace("setEtag(null);", "void etag;") };
+  const hidesRejectedRows = { ...source, transactions: source.transactions.replace("if (res.dead_letters === 0) completeClose();", "completeClose();") };
   const checks = [
     failures(staleFile).includes("transactions clears selected file"),
     failures(staleCompany).includes("prices resets on open/company change"),
     failures(staleEtag).includes("prices clears company-bound ETag"),
+    failures(hidesRejectedRows).includes("transactions clean success resets while rejected-row evidence remains visible"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-fuel-upload-creator-draft-lifecycle selftest PASS — 3/3 cross-entity upload mutations red");
+  console.log("verify-fuel-upload-creator-draft-lifecycle selftest PASS — 4/4 cross-entity upload mutations red");
   process.exit(0);
 }
 

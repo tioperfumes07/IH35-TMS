@@ -19,28 +19,41 @@ function failures(input = source) {
     if (!/const handleClose = useCallback\(\(\) => \{\s*if \(loading\) return;\s*completeClose\(\);\s*\}, \[completeClose, loading\]\);/.test(text)) out.push(`${key} pending upload can be dismissed`);
     if (!/<Modal open=\{open\} onClose=\{handleClose\}[^>]*confirmDiscardOnClose[^>]*isDirty=\{Boolean\(file\)\}[^>]*onRegisterAttemptClose=\{\(next\) => setAttemptClose\(\(\) => next\)\}/.test(text) || !/variant="secondary" onClick=\{attemptClose\} disabled=\{loading\}/.test(text)) out.push(`${key} selected file is not safely confirm-protected across dismiss paths`);
   }
-  if (!/onImported\(\);\s*completeClose\(\);/.test(input.transactions)) out.push("transactions current success refreshes and closes");
+  if (!/onImported\(\);\s*if \(res\.dead_letters === 0\) completeClose\(\);/.test(input.transactions)) {
+    out.push("transactions current success refreshes and only clean imports close");
+  }
   if (!/setEtag\(res\.etag\);[\s\S]*?onUploaded\(\);\s*completeClose\(\);/.test(input.prices)) out.push("prices current success refreshes and closes");
   return out;
 }
 
 if (process.argv.includes("--selftest")) {
+  const baseline = failures();
+  if (baseline.length) {
+    console.error(`verify-fuel-upload-async-lifecycle selftest BASELINE FAIL — ${baseline.join(", ")}`);
+    process.exit(1);
+  }
   const staleImport = { ...source, transactions: source.transactions.replace("if (lifecycleGenerationRef.current !== submissionGeneration) return;", "void submissionGeneration;") };
   const staleFailure = { ...source, prices: source.prices.replace("catch (error) {\n      if (lifecycleGenerationRef.current !== submissionGeneration) return;", "catch (error) {\n      void submissionGeneration;") };
   const staleFinally = { ...source, prices: source.prices.replace("if (lifecycleGenerationRef.current === submissionGeneration) setLoading(false);", "setLoading(false);") };
   const pendingDismiss = { ...source, transactions: source.transactions.replace("if (loading) return;", "void loading;") };
   const rawDismiss = { ...source, prices: source.prices.replace("confirmDiscardOnClose", "") };
   const rawCancel = { ...source, transactions: source.transactions.replace("onClick={attemptClose} disabled={loading}", "onClick={handleClose}") };
+  const hidesRejectedRows = { ...source, transactions: source.transactions.replace("if (res.dead_letters === 0) completeClose();", "completeClose();") };
   const checks = [
-    failures(staleImport).includes("transactions stale success is inert"),
-    failures(staleFailure).includes("prices stale failure is inert"),
-    failures(staleFinally).includes("prices stale request cannot clear loading"),
-    failures(pendingDismiss).includes("transactions pending upload can be dismissed"),
-    failures(rawDismiss).includes("prices selected file is not confirm-protected across dismiss paths"),
-    failures(rawCancel).includes("transactions selected file is not confirm-protected across dismiss paths"),
+    ["stale success", failures(staleImport).includes("transactions stale success is inert")],
+    ["stale failure", failures(staleFailure).includes("prices stale failure is inert")],
+    ["stale finally", failures(staleFinally).includes("prices stale request cannot clear loading")],
+    ["pending dismiss", failures(pendingDismiss).includes("transactions pending upload can be dismissed")],
+    ["raw dismiss", failures(rawDismiss).includes("prices selected file is not safely confirm-protected across dismiss paths")],
+    ["raw cancel", failures(rawCancel).includes("transactions selected file is not safely confirm-protected across dismiss paths")],
+    ["rejected-row evidence", failures(hidesRejectedRows).includes("transactions current success refreshes and only clean imports close")],
   ];
-  if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-fuel-upload-async-lifecycle selftest PASS — 6/6 upload lifecycle mutations red");
+  const missed = checks.filter(([, ok]) => !ok).map(([name]) => name);
+  if (missed.length) {
+    console.error(`verify-fuel-upload-async-lifecycle selftest FAIL — missed ${missed.join(", ")}`);
+    process.exit(1);
+  }
+  console.log("verify-fuel-upload-async-lifecycle selftest PASS — 7/7 upload lifecycle mutations red");
   process.exit(0);
 }
 
