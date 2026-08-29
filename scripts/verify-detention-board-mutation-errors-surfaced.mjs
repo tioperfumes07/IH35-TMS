@@ -118,6 +118,16 @@ export function checkDetentionSyncDepartureBoundary(src) {
   if (!/AND ls\.actual_departure_at IS NOT NULL/.test(sync) || /actual_departure_at IS NOT NULL OR ls\.actual_arrival_at IS NOT NULL/.test(sync)) {
     offenders.push(`${SERVICE_FILE}: arrival alone must not close a newly accruing detention event.`);
   }
+  const dedupe = sync.match(/AND NOT EXISTS \([\s\S]*?FROM dispatch\.detention_events de[\s\S]*?\n\s*\)/)?.[0] ?? "";
+  if (!/de\.operating_company_id = sa\.operating_company_id/.test(dedupe) || !/de\.stop_id = sa\.stop_id/.test(dedupe)) {
+    offenders.push(`${SERVICE_FILE}: detention sync must deduplicate the exact company+stop lifecycle.`);
+  }
+  if (/de\.status = 'accruing'/.test(dedupe)) {
+    offenders.push(`${SERVICE_FILE}: detention sync must include closed/billed history when deduplicating a physical stop.`);
+  }
+  if (!/ON CONFLICT \(operating_company_id, stop_id\) WHERE status = 'accruing'[\s\S]*?DO NOTHING/.test(sync)) {
+    offenders.push(`${SERVICE_FILE}: concurrent detention sync ticks must use the canonical active-stop conflict boundary.`);
+  }
   return offenders;
 }
 
@@ -205,7 +215,9 @@ if (process.argv.includes("--selftest")) {
   const syncMutationsFail = [
     fixedService.replace("stopped_at = ls.actual_departure_at", "stopped_at = COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now())"),
     fixedService.replace("ls.actual_departure_at - de.started_at", "COALESCE(ls.actual_departure_at, ls.actual_arrival_at, now()) - de.started_at"),
-    fixedService.replace("AND ls.actual_departure_at IS NOT NULL", "AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)")
+    fixedService.replace("AND ls.actual_departure_at IS NOT NULL", "AND (ls.actual_departure_at IS NOT NULL OR ls.actual_arrival_at IS NOT NULL)"),
+    fixedService.replace("AND de.stop_id = sa.stop_id\n          )", "AND de.stop_id = sa.stop_id\n              AND de.status = 'accruing'\n          )"),
+    fixedService.replace("ON CONFLICT (operating_company_id, stop_id) WHERE status = 'accruing'\n        DO NOTHING", "")
   ].every((mutant) => checkDetentionSyncDepartureBoundary(mutant).length > 0);
   const syncPasses = checkDetentionSyncDepartureBoundary(fixedService).length === 0;
 
