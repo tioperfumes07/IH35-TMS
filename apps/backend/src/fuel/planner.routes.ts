@@ -211,6 +211,15 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const detail = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      // FUEL-F7341: the detail reader is independently addressable from a stale URL/query
+      // cache. Production can intentionally omit both the planner source table and its
+      // active-routes view, so do not let that direct read turn an unavailable source into 500.
+      if (
+        !(await hasRelation(client, "fuel.route_recommendations")) ||
+        !(await hasRelation(client, "views.fuel_planner_active_routes"))
+      ) {
+        return { unavailable: true as const };
+      }
       const recRes = await client.query(
         `
           SELECT *
@@ -251,6 +260,9 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       return { ...recommendation, stops, hos_aware_recommendations: hosAware };
     });
 
+    if (detail && "unavailable" in detail) {
+      return reply.code(503).send({ error: "fuel_planner_source_unavailable" });
+    }
     if (!detail) return reply.code(404).send({ error: "fuel_recommendation_not_found" });
     return detail;
   });
