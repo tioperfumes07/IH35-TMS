@@ -45,10 +45,10 @@ export function collectProblems(root = ROOT) {
   if (!/JOIN mdata\.drivers d[\s\S]*d\.operating_company_id = bc\.operating_company_id/.test(sources.background)) failures.push("background read must resolve labels through an entity-scoped driver join");
   if (!/background_check_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}background_check_create_driver_dca\.is_authorized = true[\s\S]{0,180}background_check_create_driver_dca\.deactivated_at IS NULL/.test(sources.background)) failures.push("background writer must validate owned or actively authorized selected-company driver");
   if (!/driver_id: body\.data\.driver_id/.test(sources.background) || !/appendCrudAudit/.test(sources.background)) failures.push("background writer must persist/audit the canonical driver FK");
-  if (!/listSafetyBackgroundChecks\(companyId: string, driverId\?: string\)/.test(sources.api) || !/params\.set\("driver_id", driverId\)/.test(sources.api)) failures.push("frontend client must forward the exact reverse driver filter");
+  if (!/listSafetyBackgroundChecks\(companyId: string, driverId\?: string, range:/.test(sources.api) || !/params\.set\("driver_id", driverId\)/.test(sources.api)) failures.push("frontend client must forward the exact reverse driver filter with server range support");
   if (!/DriverPickerWithCreate[\s\S]*dataField="background-check-driver"/.test(sources.section)) failures.push("background creator must use the canonical company-scoped driver picker");
   if (!/createSafetyBackgroundCheck\(input\.companyId/.test(sources.section) || !/driver_id: input\.driverId/.test(sources.section)) failures.push("background creator must submit the snapshotted selected-company driver FK");
-  if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId\)/.test(sources.section) || !/<EntityLink kind="driver"/.test(sources.section)) failures.push("background list must use exact reverse filtering and canonical driver drill-through");
+  if (!/listSafetyBackgroundChecks\(operatingCompanyId, driverId,\s*\{\s*limit:\s*pageSize,\s*offset:/.test(sources.section) || !/<EntityLink kind="driver"/.test(sources.section)) failures.push("background list must use exact reverse filtering, server range, and canonical driver drill-through");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver background-check surface");
   if (!/<BackgroundChecksSection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact background-check reverse history");
   if (!/app\.get\("\/api\/v1\/safety\/medical-cards", RL_READ/.test(sources.medical) ||
@@ -60,10 +60,10 @@ export function collectProblems(root = ROOT) {
       (sources.medical.match(/(?<!_)dca\.deactivated_at IS NULL/g) ?? []).length !== 2) failures.push("both medical-card exact reads must validate owned or authorized driver parent");
   if (!/if \(!result\.found\) return reply\.code\(404\)\.send\(\{ error: "mdata_driver_not_found" \}\)/.test(sources.medical)) failures.push("medical-card exact list filter must distinguish invalid parent from true empty cards");
   if (!/medical_card_create_driver_dca\.company_id = \$2::uuid[\s\S]{0,180}medical_card_create_driver_dca\.is_authorized = true[\s\S]{0,180}medical_card_create_driver_dca\.deactivated_at IS NULL/.test(sources.medical)) failures.push("medical-card writer must validate owned or actively authorized selected-company driver");
-  if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter");
+  if (!/listSafetyMedicalCards\(companyId: string, driverId\?: string, range:/.test(sources.api) || !/params\.set\("driver_id", driverId\)/.test(sources.api)) failures.push("frontend client must expose the exact medical-card reverse filter with server range support");
   if (!/DriverPickerWithCreate[\s\S]*dataField="medical-card-driver"/.test(sources.medicalSection)) failures.push("medical-card creator must use the canonical company-scoped driver picker");
   if (!/createSafetyMedicalCard\(input\.companyId[\s\S]*driver_id: input\.driverId/.test(sources.medicalSection)) failures.push("medical-card creator must submit the snapshotted selected-company driver FK");
-  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId\)/.test(sources.medicalSection) || !/<EntityLink kind="driver"/.test(sources.medicalSection)) failures.push("medical-card list must use exact reverse filtering and canonical driver drill-through");
+  if (!/listSafetyMedicalCards\(operatingCompanyId, driverId,\s*\{\s*limit:\s*pageSize,\s*offset:/.test(sources.medicalSection) || !/<EntityLink kind="driver"/.test(sources.medicalSection)) failures.push("medical-card list must use exact reverse filtering, server range, and canonical driver drill-through");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\}/.test(sources.dot)) failures.push("DOT compliance must mount the all-driver medical-card surface");
   if (!/<MedicalCardsHistorySection operatingCompanyId=\{companyId\} driverId=\{id\}/.test(sources.driver)) failures.push("driver profile must mount exact medical-card reverse history");
   if (!/app\.post\("\/api\/v1\/safety\/training-records", RL_WRITE/.test(sources.training)) failures.push("training-record writer must be explicitly rate-limited");
@@ -90,7 +90,7 @@ function selftest() {
       [REL.background, "d.operating_company_id = bc.operating_company_id", "TRUE"],
       [REL.background, "bc.driver_id = $${values.length}::uuid", "TRUE"],
       [REL.background, "background_check_create_driver_dca.is_authorized = true", "background_check_create_driver_dca.is_authorized = false"],
-      [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string)", "listSafetyBackgroundChecks(companyId: string)"],
+      [REL.api, "listSafetyBackgroundChecks(companyId: string, driverId?: string, range:", "listSafetyBackgroundChecks(companyId: string, range:"],
       [REL.section, 'dataField="background-check-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<BackgroundChecksSection", "<MissingBackgroundChecksSection"],
       [REL.driver, '<BackgroundChecksSection operatingCompanyId={companyId} driverId={id}', '<BackgroundChecksSection operatingCompanyId={companyId} driverId={undefined}'],
@@ -101,7 +101,7 @@ function selftest() {
       [REL.medical, 'if (!result.found) return reply.code(404)', 'if (false) return reply.code(404)'],
       [REL.medical, "mc.driver_id = $${values.length}::uuid", "TRUE"],
       [REL.medical, 'app.get("/api/v1/safety/medical-cards", RL_READ', 'app.get("/api/v1/safety/medical-cards", {}'],
-      [REL.api, "listSafetyMedicalCards(companyId: string, driverId?: string)", "listSafetyMedicalCards(companyId: string)"],
+      [REL.api, "listSafetyMedicalCards(companyId: string, driverId?: string, range:", "listSafetyMedicalCards(companyId: string, range:"],
       [REL.medicalSection, 'dataField="medical-card-driver"', 'dataField="free-text-driver"'],
       [REL.dot, "<MedicalCardsHistorySection", "<MissingMedicalCardsHistorySection"],
       [REL.driver, '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={id}', '<MedicalCardsHistorySection operatingCompanyId={companyId} driverId={undefined}'],
