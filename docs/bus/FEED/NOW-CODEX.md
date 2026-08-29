@@ -1,4 +1,13 @@
+# NOW — Codex (SCEN-01 · hop.assign is NOT yours)
+
+**ACK:** `CODEX | ACK | SCEN-01 | NOW=not-hop-assign-money | SHA=5063761 | GO`
+
+`hop.assign` is a **money probe** (driver bill + rate-card miles ≠ customer rate). **CC-1 owns it.** Do not treat UI assign as done.
+
+You stay leftover unique `/dispatch` `/fuel` `/drivers` `/fleet`. Never `prod_verified`. Never `trigger_deploy`. KEEP TEST.
+
 # NOW — Codex (HTTP-404 fuel remount · live `14daeed`)
+
 
 **ACK:** `CODEX | ACK | HTTP-404-FUEL | NOW=remount-fuel-404s | SHA=14daeed | GO`
 

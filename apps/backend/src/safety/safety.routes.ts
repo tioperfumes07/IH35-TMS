@@ -931,6 +931,35 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       );
       const after = res.rows[0];
       if (!after) return null;
+      // SCEN01-HOP1-COST-LINES-PATCH-SILENT-DROP — the PATCH body schema has always accepted
+      // cost_lines (frontend sends the full Section A/B array on every "Save Changes"), but this
+      // handler only ever wrote the accident_reports columns above; cost_lines was validated and
+      // then silently discarded — a 200 with no error, so the office UI shows a "saved" toast while
+      // the line vanishes on next load. The CREATE path (POST) already does this insert; mirror it
+      // here as a replace-all (the client always submits the complete current line set, never a
+      // delta), same forward-compat tolerance for the pre-migration table/columns.
+      if (body.data.cost_lines !== undefined) {
+        try {
+          await client.query(
+            `DELETE FROM safety.accident_cost_lines WHERE accident_id = $1 AND operating_company_id = $2::uuid`,
+            [params.data.id, companyId]
+          );
+          let ord = 0;
+          for (const line of body.data.cost_lines) {
+            await client.query(
+              `
+                INSERT INTO safety.accident_cost_lines (
+                  operating_company_id, accident_id, section, description, amount_cents, sort_order
+                ) VALUES ($1, $2, $3, $4, $5, $6)
+              `,
+              [companyId, params.data.id, line.section, line.description ?? "", Number(line.amount_cents ?? 0), line.sort_order ?? ord++]
+            );
+          }
+        } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code !== "42P01" && code !== "42703") throw err;
+        }
+      }
       await appendCrudAudit(
         client,
         user.uuid,

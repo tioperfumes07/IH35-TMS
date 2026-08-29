@@ -44,7 +44,15 @@ export function getRelayCompanyCards(operatingCompanyId: string): Promise<RelayC
 export function putRelayCompanyCard(
   operatingCompanyId: string,
   body: { card_last4: string; label?: string; source_hint?: string; is_active?: boolean }
-): Promise<{ operating_company_id: string; card_last4: string; is_active: boolean; reclassified_deposits: number }> {
+): Promise<{
+  operating_company_id: string;
+  id: string;
+  card_last4: string;
+  label: string | null;
+  source_hint: string | null;
+  is_active: boolean;
+  reclassified_deposits: number;
+}> {
   return apiRequest(`/api/integrations/relay/company-cards?operating_company_id=${encodeURIComponent(operatingCompanyId)}`, {
     method: "PUT",
     body,

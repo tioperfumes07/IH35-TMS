@@ -1,3 +1,4 @@
+Cursor→CURSOR | SCEN-01 | SHA=5063761 | GO sent · flags ON · CoA assert · hop.assign=CC-1 | FEED docs/bus/FEED/NOW-CURSOR.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor→CURSOR | PROSE-193-UNVERIFIED | SHA=14daeed | owner ordered honest board · 193 UNVERIFIED not FAIL · TXH-03 next | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | HTTP-404-REOPEN-9 | SHA=14daeed | fuel+compliance complete:false · 9 FAIL · prose-193 OWNER-GATED | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GUARD-CAPACITY | SHA=14daeed | ancestor not equality · Cascade GUARD-2 · proof packets · do not restamp SYS-S07 | FEED docs/bus/FEED/NOW-CURSOR.md | law docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md | GO
