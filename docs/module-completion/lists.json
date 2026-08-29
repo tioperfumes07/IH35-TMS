@@ -23,12 +23,14 @@
       ],
       "spec": "Owner ruling 2026-07-24 per-entity catalogs",
       "status": "PASS",
-      "evidence": "Neon lucia 2026-07-24 br-fancy-credit-akjnd07a: 9/10 fleet catalogs carry operating_company_id AND relforcerowsecurity=true (tractor_statuses, trailer_statuses, asset_condition_codes, equipment_types, unit_ownership_types, trailer_types, lease_terms, asset_statuses, asset_locations); tire_positions global by design. Positive control catalogs.accounts=1392.",
+      "evidence": "Neon lucia 2026-07-24 br-fancy-credit-akjnd07a: 9/10 fleet catalogs carry operating_company_id AND relforcerowsecurity=true (tractor_statuses, trailer_statuses, asset_condition_codes, equipment_types, unit_ownership_types, trailer_types, lease_terms, asset_statuses, asset_locations); tire_positions global by design. Positive control catalogs.accounts=1392. RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): pg_class/information_schema read on br-fancy-credit-akjnd07a confirms the same 9/10 fleet catalogs (all but tire_positions) still carry operating_company_id AND relforcerowsecurity=true today; positive control catalogs.accounts=1498; USMCA equipment_types=11 rows (nonzero, entity genuinely populated).",
       "pr": 3397,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T16:45:45.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-02",
