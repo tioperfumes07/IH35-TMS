@@ -1,9 +1,25 @@
 {
-  "note": "H2 — files that look generated but are CI rebuild-check snapshots or gitignored. Prefer deleting and shrinking DERIVED-ARTIFACTS toward zero. Matrix V1–V6 must NOT read verifier-rollup.json (live verifierRollup).",
+  "note": "H2 — generated-looking files that are CI rebuild-check snapshots, compile-time copies of a JSON parent, or schema caches. Prefer deleting and shrinking DERIVED-ARTIFACTS toward zero. Matrix V1–V6 must NOT read verifier-rollup.json (live verifierRollup). Discovery: scripts/verify-generated-artifact-registry.mjs walks docs/, program *.data.ts, db/migrations.",
   "paths": [
     {
       "path": "docs/specs/scoreboard/verifier-rollup.json",
       "why": "build-verifier-rollup --check snapshot only. GET /program/module-matrix computes verifierRollup on read. Do not treat this file as live V1–V6. Delete when --check is retired."
+    },
+    {
+      "path": "apps/frontend/src/pages/program/programScoreboard.data.ts",
+      "why": "Typed copy of docs/audit/program-scoreboard.json (the stored derived parent). Freshness is on the JSON."
+    },
+    {
+      "path": "apps/frontend/src/pages/program/classScoreboard.data.ts",
+      "why": "Typed copy of docs/audit/wave-queue.json. Not a live V-column freeze."
+    },
+    {
+      "path": "db/migrations/.ledger.json",
+      "why": "Applied-migration cache for offline verify. Regenerate: npm run db:ledger:snapshot. Not a product scoreboard."
+    },
+    {
+      "path": "docs/schema-parity-baseline.json",
+      "why": "Column inventory from verify-schema-parity --update. Schema fingerprint, not a deploy-stale board."
     }
   ]
 }

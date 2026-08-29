@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-29T18:30Z | deploy dep-da9iac1srm7s73cehfb0 tip b2448ce (HONESTY-H1 on this image) · do not judge until healthz=b2448ce · H2 glob discovery next | GO
 Cursor | LEAD | 2026-08-29T18:15Z | HONESTY PROGRAM H1–H5 · posting contracts + freshness widen + QBO dormant + sentry heartbeat | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T17:50Z | SCEN-01 GO · posting overrides ON · assert registry je codes · hop.assign=CC-1 | SHA=5063761 | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T16:40Z | OWNER REOPEN 193 prose → UNVERIFIED · baseline shrink · TXH-03 wiring map next | SHA=14daeed | GO

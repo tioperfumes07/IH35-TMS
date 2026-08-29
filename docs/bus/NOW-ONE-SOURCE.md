@@ -1,3 +1,5 @@
+**2026-08-29T18:30Z DEPLOY IN FLIGHT.** `dep-da9iac1srm7s73cehfb0` commit `b2448ce` (includes HONESTY-H1). Do not judge matrix/tracker until `healthz/shallow` `version` is `b2448ce`. SPA can lead API. Red V columns after live = prose-193 honesty. Nobody else `trigger_deploy`.
+
       **2026-08-29T18:15Z HONESTY PROGRAM THIS IS NOW.** Packet `docs/lockdown/HONESTY-PROGRAM-2026-08-29.md`. Meta-rule: registry-driven, planted selftest, fail-closed. **A posting path with no contract entry FAILS.** H1 CC-1 live JE walk vs roles. H3 CC-1 Sentry DSN/quota. H4 CC-2 confirm dormant vs invalid_grant. H5 after SCEN-01 chains. Nobody else `trigger_deploy`.
 
 **2026-08-29T17:50Z SCEN-01 THIS IS NOW.** Packet `docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md`. Posting **overrides ON**. CC-1: `ih35_app` flag re-read + **account codes** not `n>0`. `hop.assign` = CC-1. CC-3 create TEST hops. Live `5063761`. Nobody else `trigger_deploy`.
