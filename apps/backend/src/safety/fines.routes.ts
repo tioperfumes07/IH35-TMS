@@ -379,7 +379,7 @@ export async function registerSafetyFinesRoutes(app: FastifyInstance) {
     return reply.code(201).send(fine);
   });
 
-  app.patch("/api/v1/safety/fines/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/fines/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

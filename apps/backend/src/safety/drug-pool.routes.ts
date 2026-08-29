@@ -49,7 +49,7 @@ export const SAFETY_DRUG_POOL_DEPRECATION_HEADERS = {
 } as const;
 
 export async function registerSafetyDrugPoolRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/drug-pool/selections", async (req, reply) => {
+  app.post("/api/v1/safety/drug-pool/selections", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     app.log.warn("[safety] drug-pool/selections is deprecated; use drug-program/random-pools");
     reply.headers(SAFETY_DRUG_POOL_DEPRECATION_HEADERS);
     const user = authUser(req, reply);

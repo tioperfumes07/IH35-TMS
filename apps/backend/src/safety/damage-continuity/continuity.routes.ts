@@ -54,7 +54,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDamageContinuityRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/incidents/:id/start-continuity", async (req, reply) => {
+  app.post("/api/v1/safety/incidents/:id/start-continuity", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -93,7 +93,7 @@ export async function registerDamageContinuityRoutes(app: FastifyInstance) {
     return reply.code(201).send({ chain: result.chain });
   });
 
-  app.patch("/api/v1/safety/incidents/:id/link-to-chain", async (req, reply) => {
+  app.patch("/api/v1/safety/incidents/:id/link-to-chain", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -134,7 +134,7 @@ export async function registerDamageContinuityRoutes(app: FastifyInstance) {
     return reply.send({ chain: result.chain });
   });
 
-  app.get("/api/v1/safety/incidents/:id/continuity-chain", async (req, reply) => {
+  app.get("/api/v1/safety/incidents/:id/continuity-chain", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -168,7 +168,7 @@ export async function registerDamageContinuityRoutes(app: FastifyInstance) {
     return reply.send({ chain: result.chain, damages: result.damages, claim: result.claim });
   });
 
-  app.post("/api/v1/safety/incidents/:id/auto-create-claim", async (req, reply) => {
+  app.post("/api/v1/safety/incidents/:id/auto-create-claim", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });

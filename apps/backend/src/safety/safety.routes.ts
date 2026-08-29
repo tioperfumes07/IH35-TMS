@@ -373,7 +373,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/safety/events", async (req, reply) => {
+  app.get("/api/v1/safety/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = eventsQuerySchema.safeParse(req.query ?? {});
@@ -481,7 +481,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return { training_completions: result.rows, total_count: result.total_count };
   });
 
-  app.get("/api/v1/safety/drug-alcohol/tests", async (req, reply) => {
+  app.get("/api/v1/safety/drug-alcohol/tests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -642,7 +642,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return { accidents: result.rows, total_count: result.total_count };
   });
 
-  app.get("/api/v1/safety/accidents/:id", async (req, reply) => {
+  app.get("/api/v1/safety/accidents/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -995,7 +995,7 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/safety/accidents/:id/photos", async (req, reply) => {
+  app.post("/api/v1/safety/accidents/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSafetyMutationAllowed(user.role)) return reply.code(403).send({ error: "forbidden" });

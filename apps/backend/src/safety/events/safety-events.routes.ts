@@ -71,7 +71,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 export async function registerSafetyEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/events-log", async (req, reply) => {
+  app.get("/api/v1/safety/events-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
 
@@ -167,7 +167,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     return { events: rows };
   });
 
-  app.get("/api/v1/safety/events-log/kpis", async (req, reply) => {
+  app.get("/api/v1/safety/events-log/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
 
@@ -193,7 +193,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     return { kpis };
   });
 
-  app.get("/api/v1/safety/events-log/:id", async (req, reply) => {
+  app.get("/api/v1/safety/events-log/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
 
@@ -263,7 +263,7 @@ export async function registerSafetyEventsRoutes(app: FastifyInstance) {
     return { event: row };
   });
 
-  app.get("/api/v1/safety/events-log/:id/notes", async (req, reply) => {
+  app.get("/api/v1/safety/events-log/:id/notes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
 

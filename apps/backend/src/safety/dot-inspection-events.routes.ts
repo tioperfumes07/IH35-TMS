@@ -40,7 +40,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/dot-inspection-events", async (req, reply) => {
+  app.get("/api/v1/safety/dot-inspection-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -108,7 +108,7 @@ export async function registerDotInspectionEventsRoutes(app: FastifyInstance) {
     return { events: events.rows, total_count: events.total_count };
   });
 
-  app.post("/api/v1/safety/dot-inspection-events/:id/follow-up", async (req, reply) => {
+  app.post("/api/v1/safety/dot-inspection-events/:id/follow-up", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator", "Manager", "Safety"].includes(user.role)) {
