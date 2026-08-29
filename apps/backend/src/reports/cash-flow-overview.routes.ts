@@ -7,6 +7,7 @@ import {
   bankTransactionHiddenFilterSql,
   isBankAccountHideEnabled,
 } from "../banking/bank-account-visibility.js";
+import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const querySchema = companyQuerySchema.extend({
@@ -76,6 +77,19 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
       // failure silently let accounts that may be intentionally hidden back into these totals.
       // `false` is only correct after a real read; a failure must fail the request loud instead.
       const hideOn = await isBankAccountHideEnabled(client, companyId);
+      // CASHFLOW-OVERVIEW-NON-DEPOSITORY-BALANCE-LEAK: this used to SUM(current_balance_cents) over
+      // every is_active bank_accounts row with no account_class filter and no Plaid/non-Plaid split —
+      // unlike every other cash total in the codebase, which goes through
+      // sumAuthoritativeDepositoryCashCents (see internal-wallet-balance.ts) precisely because (1) a
+      // credit-card-class Plaid account (a real, populated value — see
+      // 202612100000_repoint_amex_bank_account_to_card_liability.sql) would sum straight into "cash",
+      // and (2) a non-Plaid internal wallet's current_balance_cents column is seeded at 0 and never
+      // updated again (only the wallet's own bank_transactions ledger is live), so it silently
+      // contributed $0 here no matter its real balance. The sibling /api/v1/reports/cash-flow route
+      // was already fixed for this exact class under GAP-45 (reports/cash-flow/route-fix.ts) — this
+      // route was missed. payroll/dip sub-totals are still name-matched, but now scoped to the same
+      // Plaid-linked depository population the authoritative total draws from, so a credit-card
+      // account can no longer masquerade as a payroll/DIP bucket either.
       const bankRes = await client
         .query(
           `
@@ -93,19 +107,25 @@ export async function registerCashFlowOverviewRoutes(app: FastifyInstance) {
                      OR COALESCE(account_name, '') ILIKE '%fuel%card%'
                 ),
                 0
-              )::text AS dip_cents,
-              COALESCE(SUM(current_balance_cents), 0)::text AS total_cents
+              )::text AS dip_cents
             FROM banking.bank_accounts
             WHERE operating_company_id = $1::uuid
+              AND account_class = 'depository'
               AND is_active = true
+              AND deactivated_at IS NULL
+              AND plaid_item_id IS NOT NULL
             ${bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts")}
           `,
           [companyId]
         );
 
+      const total = await sumAuthoritativeDepositoryCashCents(client, companyId, {
+        hideFilterOnBankAccounts: bankAccountHiddenFilterSql(hideOn, "banking.bank_accounts"),
+        hideFilterOnBaAlias: bankAccountHiddenFilterSql(hideOn, "ba"),
+      });
+
       const payroll = num(bankRes.rows[0]?.payroll_cents);
       const dip = num(bankRes.rows[0]?.dip_cents);
-      const total = num(bankRes.rows[0]?.total_cents);
       const operating = Math.max(0, total - payroll - dip);
 
       const factorRes = await client
