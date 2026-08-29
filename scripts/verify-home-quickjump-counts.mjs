@@ -24,7 +24,70 @@ function read(filePath) {
   return fs.readFileSync(filePath, "utf8");
 }
 
+// A prettier line-wrap (e.g. breaking a long `X = Y(Z)` assignment across two lines once it
+// crosses printWidth) does not change what the code does, but a plain `src.includes(literal)`
+// check treats it as a miss — a brittle-matcher false positive on working code (the exact class
+// SUBSCRIPTION-GRADE-DEFINITION-OF-DONE names: "matched source text, went stale, red on clean
+// main"). Whitespace between tokens in the expected literal is treated as "one or more
+// whitespace characters, including newlines" so reformatting can never break this check; every
+// other character stays literal.
+function hasPattern(src, literal) {
+  const pattern = literal
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((token) => token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("\\s+");
+  return new RegExp(pattern).test(src);
+}
+
+// Planted-mutation selftest for the whitespace-tolerant matcher itself: proves the prettier-
+// line-wrap fix doesn't quietly turn into a guard that never fails. Run: --selftest.
+function runSelftest() {
+  const cases = [
+    {
+      name: "single-line match still passes",
+      src: "export const X = countDispatchNavDestinations(DISPATCH_NAV_ITEMS);",
+      literal: "X = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)",
+      expect: true,
+    },
+    {
+      name: "prettier line-wrap (the real DispatchSubnav shape) still passes",
+      src: "export const DISPATCH_HOME_QUICK_JUMP_COUNT =\n  countDispatchNavDestinations(DISPATCH_NAV_ITEMS);",
+      literal: "DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)",
+      expect: true,
+    },
+    {
+      name: "wrong source variable is still caught (fail-closed)",
+      src: "export const DISPATCH_HOME_QUICK_JUMP_COUNT =\n  countDispatchNavDestinations(SOME_OTHER_ITEMS);",
+      literal: "DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)",
+      expect: false,
+    },
+    {
+      name: "renamed export is still caught (fail-closed)",
+      src: "export const RENAMED_COUNT =\n  countDispatchNavDestinations(DISPATCH_NAV_ITEMS);",
+      literal: "DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)",
+      expect: false,
+    },
+  ];
+  let failed = 0;
+  for (const c of cases) {
+    const got = hasPattern(c.src, c.literal);
+    const ok = got === c.expect;
+    console.log(`${ok ? "PASS" : "FAIL"}: ${c.name} (expected ${c.expect}, got ${got})`);
+    if (!ok) failed++;
+  }
+  if (failed > 0) {
+    console.error(`[verify-home-quickjump-counts] SELFTEST FAILED — ${failed}/${cases.length}`);
+    process.exit(1);
+  }
+  console.log(`[verify-home-quickjump-counts] SELFTEST OK — ${cases.length}/${cases.length}`);
+}
+
 function main() {
+  if (process.argv.includes("--selftest")) {
+    runSelftest();
+    return;
+  }
   const failures = [];
   const homeQuickJumps = read(paths.homeQuickJumps);
   const defaultHome = read(paths.defaultHome);
@@ -63,16 +126,16 @@ function main() {
     }
   }
 
-  if (!accountingManifest.includes("ACCOUNTING_HOME_QUICK_JUMP_COUNT = SUBNAV_ITEMS.length")) {
+  if (!hasPattern(accountingManifest, "ACCOUNTING_HOME_QUICK_JUMP_COUNT = SUBNAV_ITEMS.length")) {
     failures.push("subnav-manifest must alias ACCOUNTING_HOME_QUICK_JUMP_COUNT to SUBNAV_ITEMS.length");
   }
-  if (!bankingNav.includes("BANKING_HOME_QUICK_JUMP_COUNT = BANKING_MODULE_TABS.length")) {
+  if (!hasPattern(bankingNav, "BANKING_HOME_QUICK_JUMP_COUNT = BANKING_MODULE_TABS.length")) {
     failures.push("BANKING_NAV_CONFIG must alias BANKING_HOME_QUICK_JUMP_COUNT to BANKING_MODULE_TABS.length");
   }
-  if (!fuelTabsConfig.includes("FUEL_HOME_QUICK_JUMP_COUNT = FUEL_SUBNAV.length")) {
+  if (!hasPattern(fuelTabsConfig, "FUEL_HOME_QUICK_JUMP_COUNT = FUEL_SUBNAV.length")) {
     failures.push("FUEL_TABS_CONFIG must alias FUEL_HOME_QUICK_JUMP_COUNT to FUEL_SUBNAV.length");
   }
-  if (!dispatchSubnav.includes("DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)")) {
+  if (!hasPattern(dispatchSubnav, "DISPATCH_HOME_QUICK_JUMP_COUNT = countDispatchNavDestinations(DISPATCH_NAV_ITEMS)")) {
     failures.push("DispatchSubnav must export DISPATCH_HOME_QUICK_JUMP_COUNT from DISPATCH_NAV_ITEMS");
   }
   if (!bankingNav.includes('from "./BANKING_NAV_CONFIG"') && !read(path.join(ROOT, "apps/frontend/src/pages/banking/BankingHome.tsx")).includes("BANKING_NAV_CONFIG")) {

@@ -290,7 +290,7 @@ export function initializeRelayFuelIngestCron(app: FastifyInstance) {
  */
 export async function runRelayFuelBackfill(
   app: FastifyInstance,
-  opts?: { months?: number; operatingCompanyId?: string }
+  opts?: { months?: number; operatingCompanyId?: string; runId?: string }
 ): Promise<void> {
   const months =
     opts?.months ?? (Number.parseInt(process.env.RELAY_FUEL_INGEST_BACKFILL_MONTHS ?? "24", 10) || 24);
@@ -298,6 +298,9 @@ export async function runRelayFuelBackfill(
   const windows = dayWindows(isoDateMonthsAgo(months), todayIsoDate(), windowDays);
   const failures: { operating_company_id: string; error: unknown }[] = [];
   const pendingGlPosts: FuelTxnGlPostCandidate[] = [];
+  let totalPulled = 0;
+  let totalUpserted = 0;
+  let totalSkipped = 0;
 
   const activeCompanyIds = await withLuciaBypass(async (client) => listActiveCompanyIds(client));
   const companyIds = opts?.operatingCompanyId
@@ -384,6 +387,9 @@ export async function runRelayFuelBackfill(
         { operating_company_id: operatingCompanyId, months, window_days: windowDays, windows: windows.length, pulled, upserted, skipped },
         "[RELAY_FUEL_INGEST_BACKFILL] company backfill complete"
       );
+      totalPulled += pulled;
+      totalUpserted += upserted;
+      totalSkipped += skipped;
     } catch (error) {
       app.log.error(
         { err: error, operating_company_id: operatingCompanyId },
@@ -424,5 +430,12 @@ export async function runRelayFuelBackfill(
       `relay_fuel_ingest_backfill: ${failures.length} compan${failures.length === 1 ? "y" : "ies"} failed: ` +
         failures.map((f) => `${f.operating_company_id}(${String((f.error as Error)?.message ?? f.error)})`).join("; ")
     );
+  }
+  if (opts?.runId && opts.operatingCompanyId) {
+    await withLuciaBypass((client) => client.query(`SELECT audit.append_event($1, 'info', $2::jsonb, NULL, $3)`, [
+      "integrations.relay_fuel_ingest_backfill_completed",
+      JSON.stringify({ run_id: opts.runId, operating_company_id: opts.operatingCompanyId, months, pulled: totalPulled, upserted: totalUpserted, skipped: totalSkipped }),
+      RELAY_FUEL_INGEST_AUDIT_SOURCE,
+    ]));
   }
 }

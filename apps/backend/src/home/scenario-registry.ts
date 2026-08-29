@@ -38,8 +38,18 @@ export type ScenarioDefinition = {
   lane: ScenarioLane;
   /** What starts this hop in the real world. */
   trigger: string;
-  /** The journal entry (or "—" when the hop posts nothing). */
+  /** The journal entry (or "—" when the hop posts nothing). Display only. */
   je: string;
+  /** Machine-checkable JE contract. Required whenever je does not start with "—". Roles, never entity codes. */
+  je_contract?: {
+    source_type?: string | null;
+    lines: Array<{
+      side: "DR" | "CR";
+      account_role: string;
+      account_code_any_of?: string[];
+    }>;
+    must_balance: true;
+  };
   /** Spec/card reference so a dot can be traced back to its requirement. */
   spec_ref: string;
   /** Canonical prod relations this hop's predicate reads — surfaced as source_health. */
@@ -338,6 +348,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Delivery evidence exists and the entity flag is ON",
     je: "DR Unbilled Revenue / CR Line-Haul Income",
+    je_contract: { source_type: "revenue_recognition", lines: [{ side: "DR", account_role: "unbilled_revenue" }, { side: "CR", account_role: "revenue_default" }], must_balance: true },
     spec_ref: "WIRE-05",
     sources: ["lib.feature_flag_overrides", "accounting.load_revenue_recognition_postings", "accounting.journal_entries"],
     probe: {
@@ -364,6 +375,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "POD received; proforma converts and sends",
     je: "DR A/R / CR Unbilled Revenue",
+    je_contract: { source_type: "invoice", lines: [{ side: "DR", account_role: "ar_control" }, { side: "CR", account_role: "unbilled_revenue" }], must_balance: true },
     spec_ref: "WIRE-04 / ACCT-F61",
     sources: ["accounting.invoices", "audit.audit_events"],
     probe: {
@@ -386,6 +398,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Postings land in the ledger",
     je: "Balanced double entry (DR = CR)",
+    je_contract: { source_type: null, lines: [{ side: "DR", account_role: "expense_default" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "WIRE-08",
     sources: ["accounting.journal_entries"],
     probe: {
@@ -408,6 +421,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Customer payment matched and categorized",
     je: "DR Cash / CR A/R",
+    je_contract: { source_type: "customer_payment", lines: [{ side: "DR", account_role: "operating_bank" }, { side: "CR", account_role: "ar_control" }], must_balance: true },
     spec_ref: "WIRE-10",
     sources: ["banking.bank_transactions"],
     probe: {
@@ -514,6 +528,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Settlement period closes and pays the driver",
     je: "DR Driver Pay / CR Net Pay Clearing",
+    je_contract: { source_type: "settlement", lines: [{ side: "DR", account_role: "driver_pay_expense" }, { side: "CR", account_role: "driver_payroll_clearing" }], must_balance: true },
     spec_ref: "SETTLE",
     sources: ["driver_finance.driver_settlements", "driver_finance.payrun_gl_runs", "accounting.journal_entries"],
     probe: {
@@ -550,6 +565,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Advance issued to a driver",
     je: "DR Driver Cash Advance (asset) / CR Cash",
+    je_contract: { source_type: "driver_advance", lines: [{ side: "DR", account_role: "advance_recovery" }, { side: "CR", account_role: "operating_bank" }], must_balance: true },
     spec_ref: "ADV",
     sources: ["driver_finance.driver_advances", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries"],
     probe: {
@@ -595,6 +611,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Deduction applied against a settlement",
     je: "DR Net Pay Clearing / CR the deduction account",
+    je_contract: { source_type: "settlement", lines: [{ side: "DR", account_role: "driver_payroll_clearing" }, { side: "CR", account_role: "other_recovery" }], must_balance: true },
     spec_ref: "DEDUCT",
     sources: ["driver_finance.driver_settlement_deductions", "driver_finance.settlement_lines", "driver_finance.driver_settlements", "driver_finance.payrun_gl_runs", "accounting.journal_entries"],
     probe: {
@@ -640,6 +657,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Escrow withheld / returned",
     je: "DR Net Pay Clearing / CR Driver Escrow (liability)",
+    je_contract: { source_type: "settlement", lines: [{ side: "DR", account_role: "driver_payroll_clearing" }, { side: "CR", account_role: "escrow_liability_default" }], must_balance: true },
     spec_ref: "ESCROW",
     sources: ["accounting.escrow_postings", "accounting.escrow_accounts", "driver_finance.driver_settlements", "accounting.journal_entries"],
     probe: {
@@ -675,6 +693,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Vendor bill entered and paid",
     je: "DR Expense / CR A/P",
+    je_contract: { source_type: "expense", lines: [{ side: "DR", account_role: "expense_default" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "AP",
     sources: ["accounting.bills"],
     probe: {
@@ -697,6 +716,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Fuel pumped on a card / wallet",
     je: "DR Fuel Expense / CR Relay Fuel Wallet",
+    je_contract: { source_type: "fuel", lines: [{ side: "DR", account_role: "expense_default" }, { side: "CR", account_role: "operating_bank" }], must_balance: true },
     spec_ref: "FUEL/CONN-3",
     sources: ["fuel.fuel_transactions", "mdata.loads", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries", "accounting.transaction_source_links"],
     probe: {
@@ -755,6 +775,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "WO opened, parts/labor posted, completed",
     je: "DR Repair & Maintenance / CR A/P",
+    je_contract: { source_type: "bill", lines: [{ side: "DR", account_role: "heavy_repair_expense" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "MNT",
     sources: ["maintenance.work_orders"],
     probe: {
@@ -843,6 +864,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "screens",
     trigger: "Accident reported through to claim + cost",
     je: "DR Accident Loss / CR A/P or Escrow",
+    je_contract: { source_type: "bill", lines: [{ side: "DR", account_role: "heavy_repair_expense" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "SAF-ACC",
     sources: [
       "safety.accident_reports",
@@ -921,6 +943,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Policy bound; claim recovery received",
     je: "DR Cash / CR Insurance Recovery",
+    je_contract: { source_type: "insurance_claim_recovery", lines: [{ side: "DR", account_role: "operating_bank" }, { side: "CR", account_role: "insurance_recovery" }], must_balance: true },
     spec_ref: "INS",
     sources: ["insurance.policy", "insurance.claim", "accounting.insurance_claim_recovery_postings", "accounting.journal_entries"],
     probe: {
@@ -997,6 +1020,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Matter opened; fine assessed or paid",
     je: "DR Civil Fines Expense / CR Cash Clearing",
+    je_contract: { source_type: "safety_fine", lines: [{ side: "DR", account_role: "civil_fines_expense" }, { side: "CR", account_role: "cash_clearing" }], must_balance: true },
     spec_ref: "LEGAL",
     sources: ["legal.matters"],
     probe: {
@@ -1012,6 +1036,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Invoice factored; advance funded",
     je: "DR Cash + Fees / CR Factoring Advance (liability)",
+    je_contract: { source_type: "factoring", lines: [{ side: "DR", account_role: "operating_bank" }, { side: "CR", account_role: "factoring_advance_liability" }], must_balance: true },
     spec_ref: "FACTOR",
     sources: ["accounting.factoring_advances"],
     probe: {
@@ -1027,6 +1052,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Bank line categorized and reconciled",
     je: "DR/CR per the categorized account",
+    je_contract: { source_type: "bank_feed", lines: [{ side: "DR", account_role: "expense_default" }, { side: "CR", account_role: "operating_bank" }], must_balance: true },
     spec_ref: "BANK-RECON",
     sources: ["banking.bank_transactions"],
     probe: {
@@ -1042,6 +1068,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "screens",
     trigger: "In-transit breakdown, WO opened, replacement unit assigned to the same load",
     je: "Roadside bill posts DR Repair / CR A/P (see scenario.roadside_ap)",
+    je_contract: { source_type: "bill", lines: [{ side: "DR", account_role: "heavy_repair_expense" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "COMPLICATED-BATTERY-01",
     sources: [
       "dispatch.intransit_issues",
@@ -1153,6 +1180,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Vendor bill from the in-transit WO",
     je: "DR Repair / CR A/P",
+    je_contract: { source_type: "bill", lines: [{ side: "DR", account_role: "heavy_repair_expense" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "COMPLICATED-BATTERY-03",
     sources: ["accounting.bills", "maintenance.work_orders", "dispatch.intransit_issues", "accounting.posting_batches", "accounting.journal_entry_postings", "accounting.journal_entries", "accounting.transaction_source_links"],
     probe: {
@@ -1216,6 +1244,7 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     lane: "money",
     trigger: "Parts purchase receipt (optional WO consume)",
     je: "DR Inventory / CR A/P when parts GL flag ON",
+    je_contract: { source_type: "parts_purchase", lines: [{ side: "DR", account_role: "maintenance_parts_expense" }, { side: "CR", account_role: "ap_control" }], must_balance: true },
     spec_ref: "COMPLICATED-BATTERY-04",
     sources: ["maintenance.parts_purchases", "maintenance.parts_inventory"],
     probe: {

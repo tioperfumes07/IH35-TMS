@@ -31,6 +31,7 @@ export type ScenarioResult = {
   state: ScenarioState;
   evidence: string;
   je: string;
+  je_contract: ScenarioDefinition["je_contract"] | null;
   spec_ref: string;
 };
 
@@ -203,12 +204,21 @@ export async function probeScenario(
     notes.push(`test cert ignored (${cert.verified_by} @ ${cert.verified_at}): ${cert.evidence}`);
   } else if (cert) {
     state = cert.state;
+    if (def.je_contract && cert.state === "done") {
+      state = "fix";
+      notes.push("done withheld: posting scenarios require JE account_role match, not join n>0");
+    }
     // Proof is honoured from the cert row alone.
     // 'fix' is a STATE, not a stage — a scenario in fix still sits at whatever stage it reached.
     if (cert.stage === "proof" || cert.state === "fix") stage = maxStage(stage, "proof");
 
     // Passed/Complete REQUIRE the live predicate to still hold — this is the self-healing rule.
     if ((cert.stage === "passed" || cert.stage === "complete") && live?.ok) {
+      if (def.je_contract) {
+        notes.push(
+          "JE contract registered (account_role, not n>0). Live code match is verify-posting-hits-designed-accounts — join-only is not done"
+        );
+      }
       stage = maxStage(stage, "passed");
       if (cert.stage === "complete") {
         const open = await client.query<{ n: string }>(
@@ -241,6 +251,7 @@ export async function probeScenario(
     state,
     evidence: notes.join(" · "),
     je: def.je,
+    je_contract: def.je_contract ?? null,
     spec_ref: def.spec_ref,
   };
 }
@@ -301,6 +312,7 @@ export async function buildScenarioTracker(
         state: "fix",
         evidence: `probe failed: ${err instanceof Error ? err.message : "unknown error"}`,
         je: def.je,
+        je_contract: def.je_contract ?? null,
         spec_ref: def.spec_ref,
       });
     }

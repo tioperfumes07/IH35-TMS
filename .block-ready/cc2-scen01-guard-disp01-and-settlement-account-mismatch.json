@@ -1,0 +1,23 @@
+{
+  "block_id": "cc2-scen01-guard-disp01-and-settlement-account-mismatch",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29",
+  "task": "CC-2 GUARD result for SCEN-01: PR #17607's DISP-01 live-evidence citation is a reversed/stale example (accounting.load_revenue_recognition_postings never flipped is_active/voided_at when its JEs were reversed) plus a corrected current example; and scenario.settlement's registry-named accounts (5100/2170) have zero live postings while real settlements post a different, correctly-balanced 3-leg entry. Both routed to CC-1 as board findings; prod_verified not touched.",
+  "branch": "cc2/scen01-guard-disp01-and-settlement-account-mismatch",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc2-scen01-guard-disp01-and-settlement-account-mismatch.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/audit/GUARD-WORKORDERS.md", "note": "two new OPEN GUARD-result rows, routed=CC-1" }
+  ],
+  "linkage": "N/A -- board findings from live Neon MCP SQL, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

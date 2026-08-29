@@ -19,6 +19,7 @@ import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
+const RELAY_DEPOSIT_CLASSIFICATIONS = ["company", "unclassified", "canceled"] as const;
 
 type OfficeUser = { uuid: string; role: string };
 
@@ -39,7 +40,13 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
     const opco = String(q.operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
     await assertCompanyMembership(user.uuid, opco);
-    const classFilter = q.classification && ["company", "unclassified", "canceled"].includes(q.classification) ? q.classification : null;
+    const requestedClassification = q.classification?.trim();
+    if (requestedClassification && !RELAY_DEPOSIT_CLASSIFICATIONS.includes(requestedClassification as (typeof RELAY_DEPOSIT_CLASSIFICATIONS)[number])) {
+      return reply.code(400).send({
+        error: `classification must be one of: ${RELAY_DEPOSIT_CLASSIFICATIONS.join(", ")}`,
+      });
+    }
+    const classFilter = requestedClassification || null;
 
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);

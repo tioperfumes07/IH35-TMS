@@ -189,7 +189,7 @@ function accidentSpawnDescription(accidentId: string): string {
   return `Auto-created from accident report ${accidentId}. Fill external vendor WO/invoice fields before completion.`;
 }
 
-type SpawnedWoRow = { id: string; display_id: string | null };
+type SpawnedWoRow = { id: string; display_id: string | null; insurance_claim_id: string | null };
 
 async function listAccidentSpawnedWorkOrders(
   client: {
@@ -199,9 +199,12 @@ async function listAccidentSpawnedWorkOrders(
   accidentId: string
 ): Promise<SpawnedWoRow[]> {
   // Match the full token OR a bare accident uuid (covers any prior wording that still carried the id).
+  // insurance_claim_id is selected so the reuse branch below can detect and backfill a WO spawned
+  // BEFORE the accident had a claim linked (SCEN-01-WO-CLAIM-BACKFILL) — the column itself is not
+  // part of the description-token match, only carried through so the caller can compare it.
   const res = await client.query<SpawnedWoRow>(
     `
-      SELECT id::text AS id, display_id
+      SELECT id::text AS id, display_id, insurance_claim_id::text AS insurance_claim_id
       FROM maintenance.work_orders
       WHERE operating_company_id = $1::uuid
         AND source_type = 'AC'
@@ -931,6 +934,52 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       );
       const after = res.rows[0];
       if (!after) return null;
+      // SCEN01-HOP1-COST-LINES-PATCH-SILENT-DROP — the PATCH body schema has always accepted
+      // cost_lines (frontend sends the full Section A/B array on every "Save Changes"), but this
+      // handler only ever wrote the accident_reports columns above; cost_lines was validated and
+      // then silently discarded — a 200 with no error, so the office UI shows a "saved" toast while
+      // the line vanishes on next load.
+      //
+      // NOT a replace-all: `ih35_app` deliberately has no DELETE grant on accident_cost_lines
+      // (INSERT/SELECT/UPDATE only, verified live — 42501 permission denied on the first attempt at
+      // this fix) and the table has no void/deactivated column either. This is the same
+      // void-not-delete posture as every other ledger-adjacent table here, just with no reversal
+      // column yet — so this fix does not add one. Instead: append-only reconciliation, INSERT only
+      // a submitted line whose (section, description, amount_cents) tuple isn't already stored for
+      // this accident. Idempotent (re-saving unchanged lines creates no duplicates); a line the user
+      // removes in the UI before it was ever saved is simply never inserted. Editing/removing an
+      // ALREADY-SAVED line's amount is out of scope for this fix (needs a real void/reversal column
+      // on this table, an owner-scoped call this fix does not make) — same CREATE-path insert shape.
+      if (body.data.cost_lines !== undefined) {
+        try {
+          const existingRes = await client.query<{ section: string; description: string; amount_cents: string }>(
+            `SELECT section, description, amount_cents FROM safety.accident_cost_lines WHERE accident_id = $1 AND operating_company_id = $2::uuid`,
+            [params.data.id, companyId]
+          );
+          const existingKeys = new Set(
+            existingRes.rows.map((r) => `${r.section} ${r.description} ${r.amount_cents}`)
+          );
+          let ord = existingRes.rows.length;
+          for (const line of body.data.cost_lines) {
+            const description = line.description ?? "";
+            const amountCents = Number(line.amount_cents ?? 0);
+            const key = `${line.section} ${description} ${amountCents}`;
+            if (existingKeys.has(key)) continue;
+            await client.query(
+              `
+                INSERT INTO safety.accident_cost_lines (
+                  operating_company_id, accident_id, section, description, amount_cents, sort_order
+                ) VALUES ($1, $2, $3, $4, $5, $6)
+              `,
+              [companyId, params.data.id, line.section, description, amountCents, line.sort_order ?? ord++]
+            );
+            existingKeys.add(key);
+          }
+        } catch (err) {
+          const code = (err as { code?: string })?.code;
+          if (code !== "42P01" && code !== "42703") throw err;
+        }
+      }
       await appendCrudAudit(
         client,
         user.uuid,
@@ -1275,6 +1324,28 @@ export async function registerSafetyRoutes(app: FastifyInstance) {
       const existing = await listAccidentSpawnedWorkOrders(client, query.data.operating_company_id, params.data.id);
       if (existing.length > 0) {
         const first = existing[0];
+        // SCEN-01-WO-CLAIM-BACKFILL: listAccidentSpawnedWorkOrders finds the reused WO purely via
+        // the durable description token, never insurance_claim_id, so a WO spawned BEFORE the
+        // accident had a claim linked (or whose claim changed since) keeps insurance_claim_id
+        // NULL/stale forever across every future "Spawn WO" click on this same accident -- the
+        // create branch below only ever sets it once, at first-spawn time. Backfill it here on
+        // reuse so the FK a later claim link established actually reaches the WO, matching what
+        // the create branch would have written had the claim existed at spawn time. Live-confirmed
+        // 2026-08-29: accident 2b3d6512 (claim CLM-CC3-SCEN01-20260829) had a spawned AC WO
+        // (a236b27a) with insurance_claim_id=NULL, blocking SCEN-01 scenario.accident's own probe
+        // (which joins bills through this exact FK) even though every other hop was already correct.
+        const accidentClaimId = accident.insurance_claim_id ? String(accident.insurance_claim_id) : null;
+        if (accidentClaimId && accidentClaimId !== first.insurance_claim_id) {
+          await client.query(
+            `
+              UPDATE maintenance.work_orders
+              SET insurance_claim_id = $1::uuid, updated_at = now()
+              WHERE id = $2::uuid AND operating_company_id = $3::uuid
+            `,
+            [accidentClaimId, first.id, query.data.operating_company_id]
+          );
+          first.insurance_claim_id = accidentClaimId;
+        }
         await appendCrudAudit(
           client,
           user.uuid,

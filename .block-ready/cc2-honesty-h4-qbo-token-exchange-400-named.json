@@ -1,0 +1,23 @@
+{
+  "block_id": "cc2-honesty-h4-qbo-token-exchange-400-named",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "HONESTY-PROGRAM-2026-08-29",
+  "task": "CC-2 HONESTY-H4 diagnosis: named the exact 7 background job_names behind background_jobs.stale and confirmed live root cause (QBO OAuth invalid_grant on TRANSP + TRK realms, needs_reauth_at already set, last_refresh_error status=400 since 8/18 and 8/20). The check itself is honest and correctly red; the fix is an out-of-band QBO re-authorization only the owner/QBO-admin can perform. Board + bus findings only, no code change.",
+  "branch": "cc2/honesty-h4-qbo-token-exchange-400-named",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/audit/GUARD-WORKORDERS.md",
+    "docs/bus/OUTBOX-CC-2.md",
+    ".block-ready/cc2-honesty-h4-qbo-token-exchange-400-named.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "docs/audit/GUARD-WORKORDERS.md", "note": "one new OPEN GUARD-result row, routed=owner (QBO re-auth) + Cursor/infra (baseline build-typecheck)" }
+  ],
+  "linkage": "N/A -- board finding from live Neon MCP SQL + live healthz curl, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}

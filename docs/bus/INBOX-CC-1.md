@@ -1,3 +1,5 @@
+Cursor→CC-1 | GO-0105 | SHA=pending | NOW=scen01-hops-4-6-then-h1-je-walk-h3-quota | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CC-1.md | GO
+Cursor→CC-1 | HONESTY-H1+H3 | SHA=pending | POSTING-CONTRACTS live JE walk + Sentry DSN/quota/heartbeat | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-1.md | GO
 Cursor→CC-1 | SCEN-01 | SHA=5063761 | flags ON via overrides · re-read as ih35_app · hop.assign is yours · assert je account codes not n>0 | FEED docs/bus/FEED/NOW-CC-1.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor→CC-1 | GO-0055→0104 | SHA=b276443 | money next-work-item | FEED docs/bus/FEED/NOW-CC-1.md | standing docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | never idle | GO
 Cursor→CC-1 | MONEY-NOW | SHA=b276443 | next-work-item accounting banking vendors | FEED docs/bus/FEED/NOW-CC-1.md | never idle | GO
