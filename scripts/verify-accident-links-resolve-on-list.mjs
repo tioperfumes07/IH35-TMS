@@ -30,10 +30,36 @@ const LINK_CONTRACT = {
   vendor_id: { join: /LEFT JOIN mdata\.vendors v\b/, kind: "vendor" },
 };
 
+// RE-ANCHOR (found stale 2026-08-29): the accident DETAIL route (GET .../:id, registered later in
+// this same file) also LEFT JOINs mdata.loads/mdata.vendors — correctly, it's not the defect this
+// guard exists for. But `contract.join` above only ever tested the WHOLE file, so a regression
+// that dropped the LIST route's join stayed masked by the DETAIL route's identical join pattern
+// surviving elsewhere. Bound the join checks to the LIST route's own body (GET
+// "/api/v1/safety/accidents", the multi-line-call-signature form, through the next route
+// registration) so a LIST-specific regression can't hide behind the DETAIL route's copy.
+const LIST_ROUTE_MARKER = '"/api/v1/safety/accidents",';
+const NEXT_ROUTE_MARKER = '"/api/v1/safety/accidents/:id"';
+
+function extractListRouteBody(routesSrc) {
+  const start = routesSrc.indexOf(LIST_ROUTE_MARKER);
+  if (start === -1) return null;
+  const end = routesSrc.indexOf(NEXT_ROUTE_MARKER, start + LIST_ROUTE_MARKER.length);
+  return routesSrc.slice(start, end === -1 ? routesSrc.length : end);
+}
+
 export function run() {
   const drawer = readFileSync(DRAWER, "utf8");
   const page = readFileSync(LIST_PAGE, "utf8");
   const routes = readFileSync(ROUTES, "utf8");
+  const listRouteBody = extractListRouteBody(routes);
+  if (!listRouteBody) {
+    return {
+      ok: false,
+      captured: [],
+      problems: [],
+      message: "FAIL: could not find the GET /api/v1/safety/accidents (list) route registration.",
+    };
+  }
 
   // Discover what the creator actually sends, from the payload object it builds.
   const captured = Object.keys(LINK_CONTRACT).filter((key) =>
@@ -54,7 +80,7 @@ export function run() {
   const problems = [];
   for (const key of captured) {
     const contract = LINK_CONTRACT[key];
-    if (!contract.join.test(routes)) {
+    if (!contract.join.test(listRouteBody)) {
       problems.push(
         `${key} is captured by the creator but the accident list SQL does not join it — the value is stored and unreadable.`
       );
@@ -76,7 +102,7 @@ export function run() {
     const scoped = new RegExp(
       `LEFT JOIN ${table.replace(".", "\\.")} ${alias}\\b[\\s\\S]{0,200}?${alias}\\.operating_company_id = ar\\.operating_company_id`
     );
-    if (!scoped.test(routes)) {
+    if (!scoped.test(listRouteBody)) {
       problems.push(`the ${table} join is not scoped by operating_company_id — a cross-entity leak.`);
     }
   }

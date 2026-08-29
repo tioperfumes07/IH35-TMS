@@ -141,18 +141,33 @@ if (SELFTEST) {
   };
 
   // 1. backend reverts to SELECT * with a swallow.
-  expectCaught(
-    "backend-select-star-swallow",
-    {
-      ...live,
-      [ROUTE]: live[ROUTE].replace(
-        // Replace the whole entity-joined query call with a SELECT * and catch-swallow.
-        /const res = await client\.query\(\s*[\s\S]*?\s*,\s*values\s*\);/,
-        "const res = await client.query(`SELECT * FROM safety.accident_reports WHERE operating_company_id = $1 ORDER BY accident_at DESC LIMIT 500`, [query.data.operating_company_id]).catch(() => ({ rows: [] }));"
-      ),
-    },
-    "SELECT * and/or a catch-swallow"
-  );
+  //
+  // RE-ANCHOR (found stale 2026-08-29): this file has MANY `const res = await client.query(` call
+  // sites (other routes, same generic variable name) and several use a `values` array too. A
+  // whole-file, non-greedy `/const res = await client\.query\([\s\S]*?,\s*values\s*\);/` matches
+  // the FIRST such call site in THE ENTIRE FILE — not necessarily (and, live-checked, not actually)
+  // the accidents-list handler's own query — so mutating "the query" silently mangled a different,
+  // earlier route while leaving the accidents list handler (correctly scoped by
+  // accidentsListHandler() above) completely untouched. Locate the handler first, replace ONLY
+  // within its slice, then splice that back into the full file — the same discipline the real
+  // check already uses.
+  {
+    const handler = accidentsListHandler(live[ROUTE]);
+    const queryCallRe = /const res = await client\.query\(\s*[\s\S]*?\s*,\s*values\s*\);/;
+    const mutatedHandler = handler.replace(
+      queryCallRe,
+      "const res = await client.query(`SELECT * FROM safety.accident_reports WHERE operating_company_id = $1 ORDER BY accident_at DESC LIMIT 500`, [query.data.operating_company_id]).catch(() => ({ rows: [] }));"
+    );
+    if (mutatedHandler === handler) {
+      failures.push("backend-select-star-swallow-setup FAIL: query-call anchor not found inside the accidents-list handler slice");
+    } else {
+      expectCaught(
+        "backend-select-star-swallow",
+        { ...live, [ROUTE]: live[ROUTE].replace(handler, mutatedHandler) },
+        "SELECT * and/or a catch-swallow"
+      );
+    }
+  }
   // 4. exact-read loses trailer label resolution, recreating raw UUID text in deep-link drawers.
   expectCaught(
     "detail-no-trailer-label",
