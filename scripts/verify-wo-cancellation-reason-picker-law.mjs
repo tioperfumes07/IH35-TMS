@@ -98,9 +98,26 @@ if (process.argv.includes("--selftest")) {
       mutate: (t) => t.replace("export async function createWoCancellationReason", "async function _disabledCreateWoCancellationReason"),
     },
     {
+      // RE-ANCHOR (found stale 2026-08-29): createWoReasonMut.mutate() grew from a single `label`
+      // arg to a richer object (workOrderId/companyId/generation/label, a stale-scope-snapshot
+      // guard), so the old literal multi-line handler body (ending in `.mutate(label);\n  }}\n`)
+      // no longer matched anything -- anchor not found, mutation was a no-op. The real check this
+      // guard makes (line ~74) only cares whether allowAddNew is present WITHIN the same
+      // placeholder-anchored block comboboxBlock() scopes to -- this file has a second, unrelated
+      // Combobox with its own allowAddNew, so a bare whole-file first-match strip could hit the
+      // wrong one. Scope the strip the same way the real check does: anchor on the cancellation-
+      // reason placeholder first, then drop the allowAddNew line only within that nearby block.
       name: "WorkOrderDetailPage loses allowAddNew",
       file: FILES.woDetail,
-      mutate: (t) => t.replace(/allowAddNew\n\s+onAddNew=\{\(typedText\) => \{\n\s+const label = typedText\.trim\(\);\n\s+if \(label\) createWoReasonMut\.mutate\(label\);\n\s+\}\}\n/, ""),
+      mutate: (t) => {
+        const anchor = 'placeholder="Select a cancellation reason…"';
+        const idx = t.indexOf(anchor);
+        if (idx === -1) return t;
+        const before = t.slice(0, idx);
+        const block = t.slice(idx, idx + 400);
+        const after = t.slice(idx + 400);
+        return before + block.replace(/^(\s*)allowAddNew\n/m, "") + after;
+      },
     },
     {
       name: "WorkOrdersConsoleDetailPage loses onAddNew",

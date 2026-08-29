@@ -32,11 +32,19 @@ export function assertSalesTaxEntitylinkReverse() {
     errors.push(`${SALES_TAX_PAGE}: paid returns must EntityLink paid_bill_id → bill`);
   }
   // ACCT-F5063 — CLS-LINKAGE-ONEWAY: paid bill label must use joined paid_bill_number.
-  if (!/entityLabel\(\s*row\.paid_bill_number\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(salesTax)) {
-    errors.push(`${SALES_TAX_PAGE}: paid bill EntityLink must entityLabel(row.paid_bill_number, …)`);
+  // RE-ANCHOR (found stale 2026-08-29): SalesTaxPage.tsx moved from entityLabel to its documented
+  // list/register successor visibleDocumentLabel (apps/frontend/src/lib/entity-label.ts) -- same
+  // UUID-shaped-name rejection guarantee, plus it also rejects "Unknown ..." names and never claims
+  // "not visible" on a row that IS visible (its own doc comment). Accept either spelling.
+  if (
+    !/(?:entityLabel|visibleDocumentLabel)\(\s*row\.paid_bill_number\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(
+      salesTax,
+    )
+  ) {
+    errors.push(`${SALES_TAX_PAGE}: paid bill EntityLink must entityLabel/visibleDocumentLabel(row.paid_bill_number, …)`);
   }
-  if (/entityLabel\(\s*null\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(salesTax)) {
-    errors.push(`${SALES_TAX_PAGE}: must not entityLabel(null, paid_bill_id) — UUID chrome`);
+  if (/(?:entityLabel|visibleDocumentLabel)\(\s*null\s*,\s*row\.paid_bill_id\s*,\s*["']Bill["']\s*\)/.test(salesTax)) {
+    errors.push(`${SALES_TAX_PAGE}: must not entityLabel/visibleDocumentLabel(null, paid_bill_id) — UUID chrome`);
   }
   const routes = read("apps/backend/src/accounting/sales-tax/routes.ts");
   if (!/b\.bill_number AS paid_bill_number/.test(routes) || !/LEFT JOIN accounting\.bills b/.test(routes)) {
