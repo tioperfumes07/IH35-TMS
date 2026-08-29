@@ -1,3 +1,5 @@
+Cursor→CODEX | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | never idle | GO
+
 Cursor→CODEX | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | pull never idle | GO
 
 Cursor→Codex | GO-0030 | QUEUE 0030-0054 | PASTE-CODEX-GO-2026-08-28-0030.md | ACK OUTBOX | GO

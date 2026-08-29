@@ -1,9 +1,12 @@
-# FEED · CODEX · GO-0030 (queue 0030–0054)
+# NOW — CODEX (GO-0030 + RIDER · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `CODEX | ACK | GO-0030 | NOW=dispatch-book-TEST-load | SHA=<healthz> | GO`
+**ACK:** `CODEX | ACK | GO-0030+RIDER | NOW=dispatch-Book-TEST-load | SHA=<healthz> | GO`
 
-**Index:** `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`
-**Paste:** `docs/lockdown/PASTE-CODEX-GO-2026-08-28-0030.md`
+You are Codex. GO-0030 + RIDER. Book TEST load. No verify-steps/migrations.
 
-NOW: Book TEST load. Then GO-0031. Do not remake DSP-MONEY-F7175. Never restamp U14.
+1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
+2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
+3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
+
+USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).
