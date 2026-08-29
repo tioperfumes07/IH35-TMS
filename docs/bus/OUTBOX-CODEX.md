@@ -2257,3 +2257,7 @@ CODEX | WORKING | GUARD-F7306 | GO-0043 | CLAIM=civil-fines scope-reset parser h
 CODEX | SHIPPED | GUARD-F7306 | PR=#17553 @ 877baed934 | gate=exit0 | Built=civil-fines reverse guard 11 checks/12 mutations | NEXT=GUARD-F7307 | GO
 CODEX | ACK | GO-0055 | NOW=fleet-qbo-chrome-unique | SHA=b276443 | GO
 CODEX | WORKING | GUARD-F7307 | GO-0055 | CLAIM=trailer-edit Modal format-tolerant structural guard | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7307 | PR=#17556 @ 6b71eee832 | gate=exit0 | Built=fleet qbo_chrome 20 checks/17 leaves | NEXT=GUARD-F7308 | GO
+CODEX | WORKING | GUARD-F7308 | GO-0055 | CLAIM=HOS partial-fleet failure guard honesty | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7308 | PR=#17557 @ 0f1664e366 | gate=exit0 | Built=HOS failure exclusion 16/16 | NEXT=GUARD-F7309 | GO
+CODEX | WORKING | GUARD-F7309 | GO-0055 | CLAIM=Safety alias active-tab resolver guard honesty | NEXT=FAST-MERGE | GO
