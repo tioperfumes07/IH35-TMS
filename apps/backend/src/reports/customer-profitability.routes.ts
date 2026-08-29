@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 
 const querySchema = companyQuerySchema.extend({
@@ -54,6 +54,7 @@ export async function registerCustomerProfitabilityRoutes(app: FastifyInstance) 
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    if (parsed.data.period_start > parsed.data.period_end) return dateRangeOrderError(reply, "period_start", "period_end");
 
     const { operating_company_id: companyId, period_start: pStart, period_end: pEnd, min_revenue_cents } =
       parsed.data;
