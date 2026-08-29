@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7162 | CLAIM=load-instructions-nonatomic-storage+precommit-email | SOURCE=docs.files+file_links+load backlink+R2 | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7161 | PR=#17291 @ ffe74e4f15 | Built=typed canonical ratecon audit persistence | Live=post-deploy UNVERIFIED | NEXT=load instruction distribution lifecycle | GO
 Codex | WORKING | DSP-F7161 | CLAIM=ratecon-extraction-unchecked-audit-identity | SOURCE=dispatch.ratecon_extractions.id | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7160 | PR=#17289 @ 5ba8de984c | Built=atomic POD photo+signature+metadata lifecycle | Live=post-deploy UNVERIFIED | NEXT=ratecon extraction persistence | GO
 Codex | WORKING | DSP-F7160 | CLAIM=POD-photo/signature-orphan-on-partial-failure | SOURCE=dispatch.pod_documents+R2 objects | NEXT=guard+FAST-MERGE | GO

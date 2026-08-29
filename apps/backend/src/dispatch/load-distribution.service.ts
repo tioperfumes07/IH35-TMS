@@ -3,11 +3,11 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { generateLoadInstructionsPdf } from "./pdf-generator.service.js";
 import { sendEmail } from "../notifications/email.service.js";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { generatePresignedDownloadUrl } from "../storage/r2-client.js";
+import { deleteObjectBytes, generatePresignedDownloadUrl, isR2Configured, putObjectBytes } from "../storage/r2-client.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { isWhatsappChannelConfigured } from "../outbox/handlers/twilio-channel-config.js";
 import { insertDriverPwaNotification } from "../pwa/driver-notifications.js";
+import { enqueueAfterCommit } from "../lib/after-commit.js";
 
 type DistributionInput = {
   operating_company_id: string;
@@ -123,44 +123,15 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       })),
     });
 
-    const r2AccountId = process.env.R2_ACCOUNT_ID;
-    const r2AccessKey = process.env.R2_ACCESS_KEY_ID;
-    const r2Secret = process.env.R2_SECRET_ACCESS_KEY;
-    const r2Bucket = process.env.R2_BUCKET || "ih35-tms-evidence";
-    const r2Enabled = Boolean(r2AccountId && r2AccessKey && r2Secret);
-    const r2Client = r2Enabled
-      ? new S3Client({
-          region: "auto",
-          endpoint: `https://${r2AccountId}.r2.cloudflarestorage.com`,
-          credentials: {
-            accessKeyId: r2AccessKey as string,
-            secretAccessKey: r2Secret as string,
-          },
-        })
-      : null;
-
+    if (!isR2Configured()) throw new Error("r2_not_configured");
     const driverR2Key = `org/${input.operating_company_id}/dispatch/${input.load_id}/driver-${Date.now()}.pdf`;
     const customerR2Key = `org/${input.operating_company_id}/dispatch/${input.load_id}/customer-${Date.now()}.pdf`;
-    if (r2Client) {
-      await Promise.all([
-        r2Client.send(
-          new PutObjectCommand({
-            Bucket: r2Bucket,
-            Key: driverR2Key,
-            ContentType: driverPdf.mimeType,
-            Body: driverPdf.pdfBuffer,
-          })
-        ),
-        r2Client.send(
-          new PutObjectCommand({
-            Bucket: r2Bucket,
-            Key: customerR2Key,
-            ContentType: customerPdf.mimeType,
-            Body: customerPdf.pdfBuffer,
-          })
-        ),
-      ]);
-    }
+    const uploadedR2Keys: string[] = [];
+    try {
+      await putObjectBytes(driverR2Key, driverPdf.pdfBuffer, driverPdf.mimeType);
+      uploadedR2Keys.push(driverR2Key);
+      await putObjectBytes(customerR2Key, customerPdf.pdfBuffer, customerPdf.mimeType);
+      uploadedR2Keys.push(customerR2Key);
 
     const docsFile = await client.query<{ id: string }>(
       `
@@ -187,7 +158,8 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         input.load_id,
       ]
     );
-    const fileId = docsFile.rows[0].id;
+    const fileId = docsFile.rows[0]?.id;
+    if (!fileId) throw new Error("driver_instructions_document_create_failed");
     const customerFile = await client.query<{ id: string }>(
       `
         INSERT INTO docs.files (
@@ -213,7 +185,8 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         input.load_id,
       ]
     );
-    const customerFileId = customerFile.rows[0].id;
+    const customerFileId = customerFile.rows[0]?.id;
+    if (!customerFileId) throw new Error("customer_instructions_document_create_failed");
 
     // DOCS-ECON-01 / DOCS-LINK-01: generated dispatch packets are operational documents, not
     // generic uploads. Persist the forward links at creation time so Docs, Load, Driver, and
@@ -248,9 +221,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
 
     const baseUrl = process.env.FRONTEND_BASE_URL?.replace(/\/$/, "") ?? "";
     const portalLink = baseUrl ? `${baseUrl}/dispatch?load_id=${input.load_id}` : `Load ${load.load_number}`;
-    const presignedUrl = r2Enabled
-      ? (await generatePresignedDownloadUrl(driverR2Key, 60 * 60 * 24 * 7)).url
-      : portalLink;
+    const presignedUrl = (await generatePresignedDownloadUrl(driverR2Key, 60 * 60 * 24 * 7)).url;
 
     const channels: string[] = ["portal"];
     const distributionTasks: Array<Promise<unknown>> = [];
@@ -299,8 +270,9 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       channels.push("whatsapp");
     }
 
-    distributionTasks.push(
-      sendEmail({
+    const driverEmailQueued = enqueueAfterCommit(client, {
+      label: `dispatch-driver-instructions-email:${input.load_id}`,
+      run: () => sendEmail({
         sender: "dispatch",
         to: process.env.DISPATCH_DRIVER_INSTRUCTIONS_FALLBACK_EMAIL ?? process.env.EMAIL_FROM_DISPATCH ?? process.env.EMAIL_FROM_NOREPLY ?? "dispatch@example.com",
         subject: `Load ${load.load_number} dispatched`,
@@ -308,22 +280,27 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         text: `Load ${load.load_number} dispatched. Driver instructions: ${presignedUrl}`,
         eventClass: "dispatch.load.instructions_email_sent",
         actorUserId: input.requested_by_user_id,
-      })
-    );
+      }),
+    });
+    if (!driverEmailQueued) throw new Error("after_commit_scope_missing");
     channels.push("email");
 
     if (load.customer_email) {
-      distributionTasks.push(
-        sendEmail({
+      const customerEmail = load.customer_email;
+      const customerPdfUrl = (await generatePresignedDownloadUrl(customerR2Key, 60 * 60 * 24 * 7)).url;
+      const customerEmailQueued = enqueueAfterCommit(client, {
+        label: `dispatch-customer-instructions-email:${input.load_id}`,
+        run: () => sendEmail({
           sender: "dispatch",
-          to: load.customer_email,
+          to: customerEmail,
           subject: `Customer copy - Load ${load.load_number}`,
-          html: `<p>Customer dispatch copy for load ${load.load_number}.</p><p>Download PDF: <a href="${r2Enabled ? (await generatePresignedDownloadUrl(customerR2Key, 60 * 60 * 24 * 7)).url : portalLink}">Customer PDF</a></p>`,
+          html: `<p>Customer dispatch copy for load ${load.load_number}.</p><p>Download PDF: <a href="${customerPdfUrl}">Customer PDF</a></p>`,
           text: `Customer dispatch copy for load ${load.load_number}.`,
           eventClass: "dispatch.load.customer_copy_email_sent",
           actorUserId: input.requested_by_user_id,
-        })
-      );
+        }),
+      });
+      if (!customerEmailQueued) throw new Error("after_commit_scope_missing");
     }
 
     await Promise.all(distributionTasks);
@@ -361,12 +338,26 @@ export async function distributeLoadInstructions(input: DistributionInput) {
       "P6-D3"
     );
 
-    return {
+      return {
       load_id: input.load_id,
       driver_instructions_file_id: fileId,
       customer_instructions_file_id: customerFileId,
       channels,
       pdf_url: presignedUrl,
-    };
+      };
+    } catch (error) {
+      const cleanupErrors: unknown[] = [];
+      for (const r2Key of uploadedR2Keys) {
+        try {
+          await deleteObjectBytes(r2Key);
+        } catch (cleanupError) {
+          cleanupErrors.push(cleanupError);
+        }
+      }
+      if (cleanupErrors.length > 0) {
+        throw new AggregateError([error, ...cleanupErrors], `load_distribution_cleanup_failed:${uploadedR2Keys.join(",")}`);
+      }
+      throw error;
+    }
   });
 }
