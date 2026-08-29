@@ -109,6 +109,16 @@ function extractToRole(payload: Record<string, unknown>): string | null {
   return parsed.success ? parsed.data : null;
 }
 
+/** Mirrors Users.tsx `roleRequiresApprover` — Owner/Administrator role changes need a named approver. */
+function roleRequiresApprover(role: string): boolean {
+  return role === "Owner" || role === "Administrator";
+}
+
+function extractRequiredApproverId(payload: Record<string, unknown>): string | null {
+  const parsed = z.string().uuid().safeParse(payload?.["required_approver_user_id"]);
+  return parsed.success ? parsed.data : null;
+}
+
 export async function registerWorkflowRoutes(app: FastifyInstance) {
   app.post("/api/v1/identity/workflow-requests", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -130,6 +140,23 @@ export async function registerWorkflowRoutes(app: FastifyInstance) {
       return reply.code(400).send({ error: "role_change_payload_requires_to_role" });
     }
 
+    let requiredApproverId: string | null = null;
+    if (actionCode === "WF-064-IDENT-002") {
+      const toRole = extractToRole(payload);
+      if (toRole && roleRequiresApprover(toRole)) {
+        requiredApproverId = extractRequiredApproverId(payload);
+        if (!requiredApproverId) {
+          return reply.code(400).send({ error: "role_change_requires_approver" });
+        }
+        if (requiredApproverId === targetUser) {
+          return reply.code(400).send({ error: "role_change_approver_cannot_be_target" });
+        }
+        if (requiredApproverId === authUser.uuid) {
+          return reply.code(400).send({ error: "role_change_approver_cannot_be_requester" });
+        }
+      }
+    }
+
     const created = await withCurrentUser(authUser.uuid, async (client) => {
       const targetRes = await client.query<{ id: string; deactivated_at: string | null }>(
         `SELECT id, deactivated_at FROM identity.users WHERE id = $1 LIMIT 1`,
@@ -145,6 +172,17 @@ export async function registerWorkflowRoutes(app: FastifyInstance) {
         target.deactivated_at === null
       ) {
         return { error: "target_user_not_deactivated" as const };
+      }
+
+      if (requiredApproverId) {
+        const approverRes = await client.query<{ id: string; role: string; deactivated_at: string | null }>(
+          `SELECT id, role, deactivated_at FROM identity.users WHERE id = $1 LIMIT 1`,
+          [requiredApproverId]
+        );
+        const approver = approverRes.rows[0];
+        if (!approver || approver.deactivated_at !== null || !isAdminRole(approver.role)) {
+          return { error: "role_change_approver_not_eligible" as const };
+        }
       }
 
       const inserted = await client.query<WorkflowRequestRow>(
@@ -306,6 +344,15 @@ export async function registerWorkflowRoutes(app: FastifyInstance) {
           if (!toRole) {
             return { error: "role_change_payload_requires_to_role" as const };
           }
+          if (roleRequiresApprover(toRole)) {
+            const requiredApproverId = extractRequiredApproverId(workflow.payload || {});
+            if (!requiredApproverId) {
+              return { error: "role_change_missing_approver" as const };
+            }
+            if (requiredApproverId !== authUser.uuid) {
+              return { error: "role_change_wrong_approver" as const };
+            }
+          }
           await client.query(
             `UPDATE identity.users SET role = $1 WHERE id = $2`,
             [toRole, workflow.target_user]
@@ -350,7 +397,7 @@ export async function registerWorkflowRoutes(app: FastifyInstance) {
         if (result.error === "workflow_request_not_found") {
           return reply.code(404).send({ error: result.error });
         }
-        if (result.error === "cannot_decide_own_request") {
+        if (result.error === "cannot_decide_own_request" || result.error === "role_change_wrong_approver") {
           return reply.code(403).send({ error: result.error });
         }
         return reply.code(400).send({ error: result.error });
