@@ -73,6 +73,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           SELECT scheduled_arrival_at, city, state, stop_type::text AS stop_type
           FROM mdata.load_stops
           WHERE load_id = l.id
+            AND soft_deleted_at IS NULL
             AND scheduled_arrival_at IS NOT NULL
             AND COALESCE(actual_arrival_at, actual_departure_at) IS NULL
           ORDER BY scheduled_arrival_at ASC
