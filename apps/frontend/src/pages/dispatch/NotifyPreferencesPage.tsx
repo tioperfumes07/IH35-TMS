@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   getCustomerNotifyLog,
@@ -127,6 +127,15 @@ export function NotifyPreferencesPage() {
   const { pushToast } = useToast();
   const initialCustomerId = useSearchParams()[0].get("customer_id") ?? "";
   const [customerId, setCustomerId] = useState(initialCustomerId);
+
+  // DSP-F7279 — this page remains mounted when a customer-profile reverse link changes only the
+  // query string. useState(initialCustomerId) reads that deep-link identity once; without this
+  // synchronization, navigating customer A → customer B keeps A selected and can write A's
+  // preferences while the URL claims B. The URL is authoritative only when its customer_id changes;
+  // ordinary picker changes remain local until another reverse drill occurs.
+  useEffect(() => {
+    setCustomerId(initialCustomerId);
+  }, [initialCustomerId]);
 
   const prefsQuery = useQuery({
     queryKey: ["customer-notify-prefs", companyId, customerId],
