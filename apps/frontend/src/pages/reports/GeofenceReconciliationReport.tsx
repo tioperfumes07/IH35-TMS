@@ -12,6 +12,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
+import { useCompanyContext } from "../../contexts/CompanyContext";
 
 interface Finding {
   uuid: string;
@@ -41,7 +42,8 @@ const ANOMALY_COLORS: Record<string, string> = {
 };
 
 export function GeofenceReconciliationReport() {
-  const [operatingCompanyId] = useState(() => sessionStorage.getItem("operating_company_id") ?? "");
+  const { selectedCompanyId } = useCompanyContext();
+  const operatingCompanyId = selectedCompanyId ?? "";
   const today = companyToday();
   const yesterday = addDaysIso(today, -1);
   const [appliedDate, setAppliedDate] = useState(yesterday);
