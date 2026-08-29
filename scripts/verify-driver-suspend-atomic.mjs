@@ -87,7 +87,9 @@ function selftest() {
         await client.query("INSERT INTO mdata.driver_safety_events");
       });
     `,
-    suspendModal: "await suspendDriver(driverId, reason);",
+    // DRV-F7356 — the modal snapshots driver/reason/generation before await;
+    // the selftest must model that safe captured scope rather than stale props.
+    suspendModal: "await suspendDriver(input.driverId, input.reason);",
     mdataApi: "export function suspendDriver() {}",
     actionBarTest: "expect(mdataApi.suspendDriver).toHaveBeenCalled();",
   };
@@ -141,7 +143,15 @@ function selftest() {
     fail("--selftest inline comment decoy masked the planted wrong rate limit");
   }
 
-  console.log(`[${LABEL}] --selftest OK (planted failures detected)`);
+  const plantedMissingCapturedCall = {
+    ...good,
+    suspendModal: good.suspendModal.replace("suspendDriver(input.driverId, input.reason)", "Promise.resolve()"),
+  };
+  if (!checkSources(plantedMissingCapturedCall).some((message) => message.includes("must call suspendDriver"))) {
+    fail("--selftest planted missing captured suspend call was not detected");
+  }
+
+  console.log(`[${LABEL}] --selftest OK (5/5 planted failures detected)`);
 }
 
 function main() {
