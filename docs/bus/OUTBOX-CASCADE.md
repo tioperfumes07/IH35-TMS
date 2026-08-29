@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50208 | drivers · SILENT-NO-OP — AutoDeductionPolicies patch/cancel mutations no onError, no .catch on void mutateAsync | GO
 CASCADE | WAVE-3C | 33 final triage verdicts (50175-50207) | 29 REAL DEFECT + 4 GUARD IS WRONG | WAVE 3 COMPLETE — 83 total guards triaged
 CASCADE | WAVE-3B | 37 more triage verdicts (50138-50174) | 30 REAL DEFECT + 4 GUARD IS WRONG + 2 ENV + 1 STALE | NEXT=continue-triage-remaining-30
 CASCADE | WAVE-3 | 13 normal-mode triage verdicts (50125-50137) | 11 REAL DEFECT + 2 GUARD IS WRONG | NEXT=continue-triage-remaining-67
