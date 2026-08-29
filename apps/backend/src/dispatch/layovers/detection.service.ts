@@ -144,14 +144,18 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
     );
     if (existing.rows.length > 0) continue;
 
-    await client.query(
+    const created = await client.query<{ uuid: string }>(
       `INSERT INTO dispatch.driver_layovers
          (operating_company_id, driver_uuid, previous_load_uuid, next_load_uuid,
           layover_started_at, layover_ended_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING uuid::text`,
       [operatingCompanyId, row.driver_uuid, row.previous_load_uuid, row.next_load_uuid,
        row.layover_started_at, row.layover_ended_at]
     );
+    if (!created.rows[0]?.uuid) {
+      throw new LayoverDetectionUnavailableError("driver_layovers insert returned no identity");
+    }
     inserted++;
   }
     return { inserted, resolvable_deliveries: resolvableDeliveries };
