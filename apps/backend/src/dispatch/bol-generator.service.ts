@@ -5,7 +5,7 @@ import Handlebars from "handlebars";
 import puppeteer from "puppeteer";
 import crypto from "node:crypto";
 import type { PoolClient } from "pg";
-import { putObjectBytes, isR2Configured } from "../storage/r2-client.js";
+import { deleteObjectBytes, putObjectBytes, isR2Configured } from "../storage/r2-client.js";
 
 export type BolStopRow = {
   stopType: string;
@@ -271,17 +271,28 @@ export async function storeBolDocument(
   const r2Key = `dispatch/bol/${operatingCompanyId}/${loadId}/${randomUUID()}.pdf`;
   await putObjectBytes(r2Key, pdfBuffer, "application/pdf");
 
-  const res = await client.query(
-    `
-      INSERT INTO dispatch.bol_documents (
-        operating_company_id, load_id, pdf_r2_key, sha256, generated_by_user_id, template_version
-      )
-      VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6)
-      RETURNING id::text, pdf_r2_key, sha256, generated_at::text, template_version
-    `,
-    [operatingCompanyId, loadId, r2Key, sha256, userId, templateVersion]
-  );
-  return res.rows[0];
+  try {
+    const res = await client.query(
+      `
+        INSERT INTO dispatch.bol_documents (
+          operating_company_id, load_id, pdf_r2_key, sha256, generated_by_user_id, template_version
+        )
+        VALUES ($1::uuid, $2::uuid, $3, $4, $5::uuid, $6)
+        RETURNING id::text, pdf_r2_key, sha256, generated_at::text, template_version
+      `,
+      [operatingCompanyId, loadId, r2Key, sha256, userId, templateVersion]
+    );
+    const stored = res.rows[0];
+    if (!stored?.id) throw new Error("bol_document_create_failed");
+    return stored;
+  } catch (error) {
+    try {
+      await deleteObjectBytes(r2Key);
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], `bol_document_cleanup_failed:${r2Key}`);
+    }
+    throw error;
+  }
 }
 
 export async function generateAndStoreBol(client: PoolClient, operatingCompanyId: string, loadId: string, userId: string | null) {

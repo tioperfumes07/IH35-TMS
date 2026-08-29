@@ -1,4 +1,4 @@
-import { HeadObjectCommand, PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 type R2Config = {
@@ -164,6 +164,11 @@ export async function putObjectBytes(r2Key: string, body: Buffer, contentType: s
       ContentType: contentType || "application/octet-stream",
     })
   );
+}
+
+export async function deleteObjectBytes(r2Key: string) {
+  const { client, bucket } = ensureConfigured();
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: r2Key }));
 }
 
 /**

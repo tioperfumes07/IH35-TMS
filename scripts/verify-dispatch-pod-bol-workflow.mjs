@@ -24,7 +24,16 @@ const paths = {
   sidebar: path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts"),
   stopAction: path.join(ROOT, "apps/driver-pwa/src/pages/StopAction.tsx"),
   archDesign: path.join(ROOT, "docs/specs/IH35_ARCHITECTURAL_DESIGN.md"),
+  r2: path.join(ROOT, "apps/backend/src/storage/r2-client.ts"),
 };
+
+function bolStorageFailures(bol, r2) {
+  const failures = [];
+  if (!/const stored = res\.rows\[0\];[\s\S]{0,100}if \(!stored\?\.id\) throw new Error\("bol_document_create_failed"\);[\s\S]{0,80}return stored/.test(bol)) failures.push("BOL metadata write must require its canonical identity");
+  if (!/catch \(error\)[\s\S]{0,120}await deleteObjectBytes\(r2Key\)[\s\S]{0,180}bol_document_cleanup_failed:[\s\S]{0,100}throw error/.test(bol)) failures.push("failed BOL metadata writes must compensate the uploaded R2 object and fail loud on cleanup loss");
+  if (!/export async function deleteObjectBytes[\s\S]{0,180}DeleteObjectCommand/.test(r2)) failures.push("R2 client must expose canonical object deletion");
+  return failures;
+}
 
 function read(filePath) {
   if (!fs.existsSync(filePath)) throw new Error(`missing file: ${filePath}`);
@@ -53,7 +62,9 @@ function main() {
   const sidebar = read(paths.sidebar);
   const stopAction = read(paths.stopAction);
   const archDesign = read(paths.archDesign);
+  const r2 = read(paths.r2);
   const failures = [];
+  failures.push(...bolStorageFailures(bol, r2));
 
   if (!migration.includes("dispatch.pod_documents")) failures.push("migration 0356 must create pod_documents");
   if (!migration.includes("dispatch.bol_documents")) failures.push("migration 0356 must create bol_documents");
@@ -96,12 +107,20 @@ function main() {
     failures.push("ARCHITECTURAL_DESIGN must reference verify:dispatch-pod-bol-workflow");
   }
 
+  if (process.argv.includes("--selftest")) {
+    const mutations = [
+      [bol.replace('if (!stored?.id) throw new Error("bol_document_create_failed");', ""), r2],
+      [bol.replace("await deleteObjectBytes(r2Key);", ""), r2],
+      [bol, r2.replace("new DeleteObjectCommand", "new HeadObjectCommand")],
+    ];
+    for (const [mutantBol, mutantR2] of mutations) if (bolStorageFailures(mutantBol, mutantR2).length === 0) failures.push("BOL storage selftest mutation escaped");
+  }
   if (failures.length) {
     for (const f of failures) console.error(` - ${f}`);
     fail(failures.join("; "));
   }
 
-  console.log("verify:dispatch-pod-bol-workflow PASS");
+  console.log(`verify:dispatch-pod-bol-workflow PASS${process.argv.includes("--selftest") ? " — 3/3 storage mutations caught" : ""}`);
 }
 
 main();
