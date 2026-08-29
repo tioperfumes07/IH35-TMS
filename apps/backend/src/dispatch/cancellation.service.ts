@@ -105,7 +105,6 @@ export async function cancelLoad(
 
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const loadRes = await client.query(
         `
@@ -363,14 +362,12 @@ export async function cancelLoad(
         },
       });
 
-      await client.query("COMMIT");
       return {
         load_id: input.load_id,
         cancellation_id: cancellation.id,
         status: pendingOwnerApproval ? "pending_owner_approval" : "cancelled",
       };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw translateCancellationDbError(error);
     }
   });
@@ -461,7 +458,6 @@ export async function approveCancellation(
   if (!isOwner(role)) throw new Error("E_OWNER_ONLY");
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, input.operating_company_id);
-    await client.query("BEGIN");
     try {
       const row = await client.query<{ id: string; load_id: string; status: string }>(
         `
@@ -505,10 +501,8 @@ export async function approveCancellation(
         event_type: "load.cancellation_approved",
         load_id: cancellation.load_id,
       });
-      await client.query("COMMIT");
       return { id: input.cancellation_id, load_id: cancellation.load_id, status: "approved" };
     } catch (error) {
-      await client.query("ROLLBACK");
       throw error;
     }
   });

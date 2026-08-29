@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7261 | GO-0030 | CLAIM=cancellation-wrapper-owned-transactions | SOURCE=cancel+approve canonical chains | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | SAFETY-F7260 | PR=#17482 @ ba16545e2a | Built=DOT inspection wrapper-owned atomic lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | SAFETY-F7260 | GO-0054 | CLAIM=DOT-inspection-wrapper-owned-transaction | SOURCE=inspection→OOS-WO→backlink→CSA→audit | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7259 | PR=#17481 @ f5d7d235d9 | Built=dispatch refinement wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=safety unique | GO
 Codex | WORKING | DSP-F7259 | GO-0030 | CLAIM=dispatch-refinement-wrapper-owned-transactions | SOURCE=reassign+replace-stops exact lifecycle chains | CLOSES=transaction proof regression | NEXT=gate+FAST-MERGE | GO
