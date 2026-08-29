@@ -30,7 +30,7 @@ function adminRole(role: string) {
 }
 
 export async function registerPseMirrorRoutes(app: FastifyInstance) {
-  app.post("/api/v1/accounting/pse-mirror/sync-now", async (req, reply) => {
+  app.post("/api/v1/accounting/pse-mirror/sync-now", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!adminRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -41,7 +41,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/accounting/pse-mirror/enforce", async (req, reply) => {
+  app.post("/api/v1/accounting/pse-mirror/enforce", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -100,7 +100,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/accounting/pse-mirror/suggestions/vendor-subtype", async (req, reply) => {
+  app.get("/api/v1/accounting/pse-mirror/suggestions/vendor-subtype", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -131,7 +131,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/ps-categories", async (req, reply) => {
+  app.get("/api/v1/ps-categories", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -156,7 +156,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.get("/api/v1/ps-items", async (req, reply) => {
+  app.get("/api/v1/ps-items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
@@ -187,7 +187,7 @@ export async function registerPseMirrorRoutes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.get("/api/v1/coa-accounts", async (req, reply) => {
+  app.get("/api/v1/coa-accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
