@@ -420,10 +420,19 @@ export function VendorsPage() {
   }, [search, sortByName, sidebarPageSize, companyId, rosterCategory]);
 
   // AUTO-13: honest error state instead of a blank list when the vendors fetch 500s.
+  // LST-F9104: also surface inactiveVendorsQuery errors — a failed inactive fetch silently showed
+  // "No vendors found." on the Inactive tab instead of an error message (silent no-op).
   if (vendorsQuery.isError) {
     return (
       <div className="p-3">
         <ListErrorState title="Couldn't load vendors" status={0} message={(vendorsQuery.error as Error)?.message} onRetry={() => void vendorsQuery.refetch()} />
+      </div>
+    );
+  }
+  if (inactiveVendorsQuery.isError) {
+    return (
+      <div className="p-3">
+        <ListErrorState title="Couldn't load inactive vendors" status={0} message={(inactiveVendorsQuery.error as Error)?.message} onRetry={() => void inactiveVendorsQuery.refetch()} />
       </div>
     );
   }
