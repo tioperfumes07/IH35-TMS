@@ -40,7 +40,7 @@ function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number) 
 }
 
 export async function registerUnitTripCostRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/units/:id/trip-cost", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/trip-cost", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = unitParamsSchema.safeParse(req.params ?? {});

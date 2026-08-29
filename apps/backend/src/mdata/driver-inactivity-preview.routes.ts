@@ -21,7 +21,7 @@ function currentOfficeAdmin(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverInactivityPreviewRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/drivers/inactivity-preview", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/inactivity-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeAdmin(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -43,7 +43,7 @@ export async function registerDriverInactivityPreviewRoutes(app: FastifyInstance
   });
 
   // THE sweep: inactivity by DRIVING (vehicle_driver_assignment recency), per Jorge's rule. Read-only.
-  app.get("/api/v1/mdata/drivers/driving-inactivity-preview", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/driving-inactivity-preview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeAdmin(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

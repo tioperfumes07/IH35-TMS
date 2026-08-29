@@ -179,7 +179,7 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/mdata/units/:id/drivers/default", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/drivers/default", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -226,7 +226,7 @@ export async function registerUnitDefaultDriverRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/mdata/units/:id/drivers/clear-default", async (req, reply) => {
+  app.post("/api/v1/mdata/units/:id/drivers/clear-default", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });

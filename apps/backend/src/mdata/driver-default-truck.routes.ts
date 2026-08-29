@@ -138,7 +138,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/mdata/drivers/:id/truck-assignments", async (req, reply) => {
+  app.get("/api/v1/mdata/drivers/:id/truck-assignments", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -154,7 +154,7 @@ export async function registerDriverDefaultTruckRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/mdata/drivers/:id/default-truck", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/default-truck", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });
