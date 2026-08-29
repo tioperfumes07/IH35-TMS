@@ -42,6 +42,15 @@ import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 const fmtM = (cents: number) => money.format((Number(cents) || 0) / 100);
+// FACT-RESERVE-TRACKER-100X-OUTSTANDING-LIABILITY: views.factoring_summary's
+// outstanding_liability_balance (and reserve_balance) are plain decimal DOLLAR values (no _cents
+// suffix, NUMERIC in Postgres — confirmed live: "1850.0000000000000000") — FactoringHome.tsx's own
+// fmtCurrency() renders this field with no /100, and that is the correct reading. Every OTHER KPI
+// on this page (totalSubmittedFace, totalReserveHeld, totalAdvances) is genuinely built from
+// *_cents columns, so fmtM's /100 is correct for those. Do not run this one dollar-denominated
+// field through fmtM — it silently understated a real factoring liability by 100x ($1,850.00
+// rendered as $18.50).
+const fmtDollars = (value: number) => money.format(Number(value) || 0);
 const fmtD = (v: string | null | undefined) => formatDateUS(v);
 const fmtDt = (v: string | null | undefined) => formatDateUS(v);
 
@@ -362,7 +371,7 @@ export function ReserveTracker() {
         <KpiCard label="Fees Paid YTD" value={fmtM(totalFeesYtd)} to="/factoring/chargebacks-fees" />
         <KpiCard
           label="Outstanding Liability"
-          value={fmtM(outstandingLiabilityBalance)}
+          value={fmtDollars(outstandingLiabilityBalance)}
           sub={outstandingLiabilityBalance > 0 ? "advance + reserve owed" : "none"}
           to="/factoring/chargebacks-fees"
         />
