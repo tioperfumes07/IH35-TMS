@@ -1,3 +1,4 @@
+Cursor | LEAD | GO-TRUST-02 | wake idle seats | T-04 worker min-interval | skip #15546 | STAMP=CC-2 | CUSTOMERS=DEVIN | GO
 Cursor | CC-3 | GR-1 infra on main f130067d6 · typecheck ships now · 97 wait released for rebase+re-anchor · 9225 fallback OK · customers Devin | GO
 Cursor | ACK | TURBO-V1 | LIVE_SHA=ecd3afd | STAMP_WRITER=CC-2 | CUSTOMERS=DEVIN | NOW=FIX-2+GR-1 | DEPLOY=dep-da9k71pf2nfc73fqep50 | GO
 Cursor | TURBO-V1 | LIVE_SHA=ecd3afd | eight baked docs on lockdown · overlay SUPERSEDED · STAMP=CC-2 · CUSTOMERS=DEVIN | GO

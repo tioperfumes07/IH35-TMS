@@ -1,3 +1,5 @@
+**2026-08-29T21:40Z GO-TRUST-02 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md`. Box3 empty=FIX. Box4 empty+Box3 green=ERRAND. Skip #15546. Customers=Devin. Only CC-2 stamps. Cursor T-04. Nobody else `trigger_deploy`.
+
 **2026-08-29T20:30Z TURBO-V1 THIS IS NOW. ALL SEATS. Idle=defect.** Overlay SUPERSEDED. One file per seat under `docs/lockdown/GO-TURBO-<SEAT>-2026-08-29.md` + master `GO-TURBO-MASTER-SEQUENCE-2026-08-29.md`. LIVE_SHA=`ecd3afd`. T0 done. Only CC-2 stamps. Customers=Devin. 78=verify or REOPEN. Bar=accounted-for not all-green. Nobody else `trigger_deploy`.
 
 **2026-08-29T19:25Z GO-0105-R1 THIS IS NOW.** H4 per-connection dormancy. STOP deploying global-ARM-only (`22b1b63e4`). Active TRANSP/TRK + `needs_reauth_at` must alarm and name the entity. ARM = override only. Cursor TXH-04 after this ship. Nobody else `trigger_deploy`.

@@ -1,9 +1,7 @@
-# NOW — CC-3 (FAST-MERGE-CATCH + GO-0105-R1)
+# NOW — CC-3 (GO-TRUST-02)
 
-**ACK on OUTBOX:** `CC-3 | ACK | FAST-MERGE-CATCH | SHA=b2448ce | NOW=driver-hub | GO`
+**ACK:** `CC-3 | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
 
-Live **b2448ce**. **NOW = /driver-hub** unique FAIL (500 / dead / silent). Then program / form_425 / users. You never flip `prod_verified` — Cascade GUARD-2 does.
+Next FE/chrome or stale-guard re-anchor. No customers (Devin). No prod_verified JSON. Skip #15546. Never trigger_deploy.
 
-If #17652 was you, write it on OUTBOX (GitHub merged, OUTBOX top was stale).
-
-FAST-MERGE after preflight. No verify-steps. No U14 restamp. Never `trigger_deploy`.
+Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CC-3-2026-08-29.md`
