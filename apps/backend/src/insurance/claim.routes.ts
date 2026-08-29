@@ -16,6 +16,9 @@ import { type ClaimColumnCapabilities, getClaimColumnCapabilities } from "./clai
 import { postInsuranceClaimRecovery } from "../accounting/insurance-claim-recovery-posting/poster.service.js";
 import { excludeInsuranceFixtureSql } from "./insurance-visibility.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+// INS-MONEY-F6965 — companyBusinessDate(), not new Date().toISOString() (UTC): after ~19:00
+// Central this GL posting date can land one calendar day ahead of the real business day.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
@@ -902,7 +905,7 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         operating_company_id: query.data.operating_company_id,
         claim_id: params.data.id,
         actor_user_id: user.uuid,
-        entry_date_iso: new Date().toISOString().slice(0, 10),
+        entry_date_iso: companyBusinessDate(),
         amount_paid_cents: paid,
       });
     }
