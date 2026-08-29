@@ -100,7 +100,10 @@ function selftest() {
       "escrow branch loses its conversion",
       (s) => ({
         ...s,
-        [target]: s[target].replace("(el.amount_cents::numeric / 100) AS amount", "el.amount_cents AS amount"),
+        // ACCT-F5703 repointed this branch from driver_finance.escrow_ledger (alias `el`) onto
+        // accounting.escrow_postings (alias `ep`) — the mutation string must track the live alias
+        // or it silently stops changing anything (that's exactly what went stale here).
+        [target]: s[target].replace("(ep.amount_cents::numeric / 100) AS amount", "ep.amount_cents AS amount"),
       }),
     ],
   ];
