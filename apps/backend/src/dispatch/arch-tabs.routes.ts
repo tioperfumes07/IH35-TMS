@@ -47,7 +47,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/at-risk-loads", async (req, reply) => {
+  app.get("/api/v1/dispatch/at-risk-loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -55,7 +55,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     return listAtRiskLoads(user.uuid, query.data.operating_company_id);
   });
 
-  app.get("/api/v1/dispatch/intransit-issues", async (req, reply) => {
+  app.get("/api/v1/dispatch/intransit-issues", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -69,7 +69,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/dispatch/assignment-history", async (req, reply) => {
+  app.get("/api/v1/dispatch/assignment-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -84,7 +84,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/dispatch/intransit-issues/office", async (req, reply) => {
+  app.post("/api/v1/dispatch/intransit-issues/office", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createIssueBodySchema.safeParse(req.body ?? {});
@@ -94,7 +94,7 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     return reply.code(201).send(result.issue);
   });
 
-  app.post("/api/v1/dispatch/intransit-issues/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/dispatch/intransit-issues/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = issueParamsSchema.safeParse(req.params ?? {});
