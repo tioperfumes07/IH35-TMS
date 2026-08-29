@@ -1,3 +1,5 @@
+DEVIN | ACK | STANDING | NOW=vendors-TEST-unique | SHA=b276443 (healthz) / main=7e3c80a | GO
+
 DEVIN | ACK | STANDING+GO-0055 | NOW=vendors-TEST-unique | SHA=b276443 (healthz) / main=38fd5e0 | GO
 DEVIN | drain-cont12 | vendors-drain | SHA=65d872a | SHIPPED PR #17561 | FIXED: LST-F9137 — Twenty+ routes across ten accounting files lacked config.rateLimit: payments, factoring-advances, disputes, invoice-lines, daily-recon, fixed-assets, items, posting-engine, prepaid-expenses, qbo-recon, revenue-leakage, subledger-gl-control-rec, transaction-register, opening-balance-import, opening-balance-register (8), p7-wave2 sync-conflicts/periods/trial-balance/sales-tax/1099 (11 — 1099 directly vendor-related), qbo-ob-live-pull. Added 60/min reads, 30/min writes, 10/min posting-engine/imports/commits. Ratchet 180→172. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
