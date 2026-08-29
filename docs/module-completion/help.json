@@ -1,7 +1,7 @@
 {
   "module": "help",
   "title": "Help Center",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-29T16:40:00Z",
   "live_sha": null,
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
@@ -92,8 +92,8 @@
       "live_verified_sha": "ed4e2f2"
     }
   ],
-  "pass_count": 1,
+  "pass_count": 5,
   "total_count": 5,
-  "progress": "1 of 5",
-  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
+  "progress": "5 of 5",
+  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. GUARD 2026-08-29 (CC-2, module-completion legality sweep): all 5 items (HELP-S01..S04, HELP-VERIFY-01) are status:PASS and prod_verified:true (bound earlier this session, GO-TRUST-02 pass). complete:false was a stale leftover from the REOPEN that was never flipped back after binding -- verify-module-completion.mjs flags this as illegal (all-PASS + complete:false with no open wave). Corrected to complete:true; no new evidence generated, no items touched. Also fixed stale pass_count/progress metadata (was 1 of 5, actual is 5 of 5 -- cosmetic field, not guard-gating, but misleading)."
 }

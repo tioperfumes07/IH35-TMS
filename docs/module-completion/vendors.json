@@ -1,7 +1,7 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-09T00:59:06.244Z",
   "live_sha": "b93b482",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
@@ -10,6 +10,7 @@
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "apps/frontend/src/routes/manifest.tsx"
   ],
+  "note": "GUARD 2026-08-29 (CC-2, module-completion legality sweep): all 7 items (VEND-S01..S05, VEND-LINK-01, VEND-VERIFY-01) are status:PASS and prod_verified:true. complete:false was a stale flag with no corresponding open item or wave card -- verify-module-completion.mjs flags this as illegal (all-PASS + complete:false with no open wave). Corrected to complete:true; no new evidence generated, no items touched. Also fixed stale pass_count/progress metadata (was 0 of 7, actual is 7 of 7 -- cosmetic field, not guard-gating, but misleading).",
   "items": [
     {
       "id": "VEND-S01",
@@ -122,7 +123,7 @@
       "live_verified_sha": "b2448ce"
     }
   ],
-  "pass_count": 0,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "0 of 7"
+  "progress": "7 of 7"
 }
