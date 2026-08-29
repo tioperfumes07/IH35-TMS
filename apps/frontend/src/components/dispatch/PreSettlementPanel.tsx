@@ -4,6 +4,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useToast } from "../Toast";
 import { Button } from "../Button";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { ListErrorState } from "../ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 type Props = {
   driverId: string;
@@ -43,7 +45,18 @@ export function PreSettlementPanel({ driverId, operatingCompanyId, onSettled }: 
     return <div className="p-4 text-sm text-gray-500">Loading pre-settlement…</div>;
   }
 
-  if (query.isError || !query.data?.settlement) {
+  if (query.isError) {
+    return (
+      <ListErrorState
+        title="Couldn't load pre-settlement"
+        status={(query.error as { status?: number } | null)?.status ?? 0}
+        message={userFacingApiError(query.error, "Pre-settlement unavailable")}
+        onRetry={() => void query.refetch()}
+      />
+    );
+  }
+
+  if (!query.data?.settlement) {
     return (
       <div className="rounded-sm border border-gray-200 p-4 text-sm text-gray-500">
         No active pre-settlement found for this driver.

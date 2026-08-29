@@ -13,6 +13,8 @@ import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const file = join(root, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx");
 const src = readFileSync(file, "utf8");
+const panelFile = join(root, "apps/frontend/src/components/dispatch/PreSettlementPanel.tsx");
+const panelSrc = readFileSync(panelFile, "utf8");
 
 const fail = (msg) => {
   console.error(`FAIL verify-dispatch-board-sections-and-columns: ${msg}`);
@@ -29,6 +31,23 @@ function preSettlementReadIssues(content) {
   }
   if (!/onRetry=\{\(\) => void openPreSettlementsQuery\.refetch\(\)\}/.test(content)) {
     issues.push("open pre-settlement failure must retry the exact query");
+  }
+  return issues;
+}
+
+function preSettlementPanelReadIssues(content) {
+  const issues = [];
+  if (!/if \(query\.isError\)[\s\S]{0,280}<ListErrorState/.test(content)) {
+    issues.push("pre-settlement panel failure must render an explicit ListErrorState before the empty branch");
+  }
+  if (!/title="Couldn't load pre-settlement"/.test(content)) {
+    issues.push("pre-settlement panel failure needs a specific human title");
+  }
+  if (!/onRetry=\{\(\) => void query\.refetch\(\)\}/.test(content)) {
+    issues.push("pre-settlement panel failure must retry the exact query");
+  }
+  if (/query\.isError\s*\|\|\s*!query\.data\?\.settlement/.test(content)) {
+    issues.push("pre-settlement panel must not collapse a failed read into the honest empty state");
   }
   return issues;
 }
@@ -112,6 +131,7 @@ if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
 }
 
 for (const issue of preSettlementReadIssues(src)) fail(issue);
+for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const mutants = [
@@ -125,7 +145,19 @@ if (process.argv.includes("--selftest")) {
   if (!mutants.every((mutant) => preSettlementReadIssues(mutant).length > 0)) {
     fail("selftest mutation escaped open pre-settlement read-honesty guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 3/3 read-honesty defects caught");
+  const panelMutants = [
+    panelSrc.replace("if (query.isError) {", "if (false) {"),
+    panelSrc.replace('title="Couldn\'t load pre-settlement"', 'title="Pre-settlement"'),
+    panelSrc.replace("onRetry={() => void query.refetch()}", "onRetry={() => void Promise.resolve()}"),
+    panelSrc.replace(
+      "if (query.isError) {",
+      "if (query.isError || !query.data?.settlement) {"
+    ),
+  ];
+  if (!panelMutants.every((mutant) => preSettlementPanelReadIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped pre-settlement panel read-honesty guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 7/7 read-honesty defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");
