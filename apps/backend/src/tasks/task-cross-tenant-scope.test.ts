@@ -41,6 +41,14 @@ const TASK_ROW = { task_id: TASK_ID, operating_company_id: COMPANY_A, title: "Co
 
 function scopedQueryImpl(sql: string, values: unknown[] = []) {
   if (sql.includes("set_config")) return { rows: [] };
+  // GO-0034-TASKS-CROSS-TENANT-IDOR: assertCompanyMembership()'s membership check. This test's
+  // authenticated user is a legitimate member of COMPANY_A only -- COMPANY_B simulates a company
+  // the caller has no real business with (the live exploit this fix closes: naming ANY company id
+  // used to be enough to read/write its tasks, regardless of actual membership).
+  if (sql.includes("FROM org.companies")) {
+    // hasActiveCompanyMembership() checks access.rowCount, not rows.length -- must be set explicitly.
+    return values[0] === COMPANY_A ? { rows: [{ ok: 1 }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  }
   const companyParamIndex = values.findIndex((v) => v === COMPANY_A || v === COMPANY_B);
   const filteredCompany = companyParamIndex >= 0 ? values[companyParamIndex] : undefined;
 
@@ -76,13 +84,17 @@ describe("task.routes.ts — cross-tenant scope (TASK-XTENANT-SCOPE)", () => {
     await app.close();
   });
 
-  it("GET /:id returns 404 (not another company's task) when queried under the WRONG company", async () => {
+  // GO-0034-TASKS-CROSS-TENANT-IDOR: before this fix, this request reached the DB and got a 404
+  // "Task not found" -- proving the SQL WHERE clause worked, but only AFTER trusting the caller's
+  // claimed company_id with zero membership check. Now assertCompanyMembership() blocks it BEFORE
+  // any task.* query even runs, since this test's user is not a real member of COMPANY_B.
+  it("GET /:id is blocked with 403 (not a member of that company) when queried under a company the caller doesn't belong to", async () => {
     const res = await app.inject({
       method: "GET",
       url: `/api/v1/tasks/${TASK_ID}?operating_company_id=${COMPANY_B}`,
     });
-    expect(res.statusCode).toBe(404);
-    expect(JSON.parse(res.body)).toEqual({ error: "Task not found" });
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body)).toEqual({ error: "forbidden_company_membership" });
   });
 
   it("GET /:id returns the task when queried under its OWN (real) company", async () => {
@@ -94,13 +106,14 @@ describe("task.routes.ts — cross-tenant scope (TASK-XTENANT-SCOPE)", () => {
     expect(JSON.parse(res.body).task.task_id).toBe(TASK_ID);
   });
 
-  it("PATCH /:id/status cannot mutate another company's task (404, not silently accepted)", async () => {
+  it("PATCH /:id/status is blocked with 403 (not silently accepted, not a 404 either) for a company the caller doesn't belong to", async () => {
     const res = await app.inject({
       method: "PATCH",
       url: `/api/v1/tasks/${TASK_ID}/status?operating_company_id=${COMPANY_B}`,
       payload: { status: "in_progress" },
     });
-    expect(res.statusCode).toBe(404);
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body)).toEqual({ error: "forbidden_company_membership" });
   });
 
   it("PATCH /:id/status succeeds for the task's OWN company", async () => {
@@ -111,5 +124,60 @@ describe("task.routes.ts — cross-tenant scope (TASK-XTENANT-SCOPE)", () => {
     });
     expect(res.statusCode).toBe(200);
     expect(JSON.parse(res.body).task.status).toBe("in_progress");
+  });
+});
+
+// GO-0034-TASKS-CROSS-TENANT-IDOR: TASK-XTENANT-SCOPE (#17218, above) only added a WHERE-clause
+// filter on the 8 single-task routes -- it never validated the client-supplied operating_company_id
+// itself. Every route in task.routes.ts (list, planner, create, task types, links, comments,
+// activity -- 13 total) trusted that value with zero membership check: any authenticated user of
+// ANY company could read/write ANY other company's tasks by simply naming a different
+// operating_company_id, live, with a normal 200. These tests cover routes the older test file
+// above never touched at all (list + create), proving the fix closes the gap module-wide, not
+// just on the single-task routes that already had SQL-level filtering.
+describe("task.routes.ts — cross-tenant scope (GO-0034, module-wide membership check)", () => {
+  let app: FastifyInstance;
+
+  beforeEach(async () => {
+    mockQuery.mockReset();
+    mockQuery.mockImplementation(scopedQueryImpl);
+    app = await buildApp();
+  });
+
+  afterEach(async () => {
+    await app.close();
+  });
+
+  it("GET / (list) is blocked with 403 for a company the caller isn't a member of -- never reaches the task query", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/tasks?operating_company_id=${COMPANY_B}`,
+    });
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body)).toEqual({ error: "forbidden_company_membership" });
+  });
+
+  it("GET / (list) succeeds for the caller's OWN company", async () => {
+    const res = await app.inject({
+      method: "GET",
+      url: `/api/v1/tasks?operating_company_id=${COMPANY_A}`,
+    });
+    expect(res.statusCode).toBe(200);
+  });
+
+  it("POST / (create) is blocked with 403 -- a caller cannot write a task into a company they don't belong to", async () => {
+    const res = await app.inject({
+      method: "POST",
+      url: `/api/v1/tasks?operating_company_id=${COMPANY_B}`,
+      payload: {
+        operating_company_id: COMPANY_B,
+        category: "admin",
+        title: "Should never be created",
+        assigned_to_user_id: "05200000-0000-4000-8000-000000000002",
+        scheduled_date: "2026-09-01",
+      },
+    });
+    expect(res.statusCode).toBe(403);
+    expect(JSON.parse(res.body)).toEqual({ error: "forbidden_company_membership" });
   });
 });
