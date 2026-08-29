@@ -1,7 +1,7 @@
-# NOW — CODEX (GO-TRUST-02)
+# NOW — CODEX (GO-MODAL-01)
 
-**ACK:** `CODEX | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+**ACK:** `CODEX | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Dispatch / drivers / fleet leftover unique. FAST-MERGE. Skip #15546. Never trigger_deploy.
+Dispatch leftover unique except Book Load URL (Cursor).
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CODEX-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

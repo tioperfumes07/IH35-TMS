@@ -1,7 +1,7 @@
-# NOW — DEVIN (GO-TRUST-02)
+# NOW — DEVIN (GO-MODAL-01)
 
-**ACK:** `DEVIN | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+**ACK:** `DEVIN | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Customers only. Do not touch vendors certify. Skip #15546. Never trigger_deploy.
+Customers only.
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-DEVIN-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

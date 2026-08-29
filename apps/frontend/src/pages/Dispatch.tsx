@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
@@ -122,7 +122,7 @@ export function DispatchPage({
   }, [routeLoadId]);
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
-  const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
+  const [newLoadOpen, setNewLoadOpen] = useState(false);
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
@@ -205,24 +205,29 @@ export function DispatchPage({
   const loadId = pinnedLoadId ?? routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
 
-  // PROGRAM-TRACKER-F07: /dispatch/book-load used to render a stub ("use the Book Load flow")
-  // because only ?book_load=1 opened the wizard. Path AND query must open it once per visit.
-  const autoOpenedBookRef = useRef(false);
+  // PROGRAM-TRACKER-F07 + MODAL-01: one opener (this effect). Seed useState(false) — never
+  // URL-derived. Close must leave /dispatch/book-load and drop ?book_load=1 (URL wins on remount).
   useEffect(() => {
     const onBookPath = location.pathname.replace(/\/$/, "") === "/dispatch/book-load";
     const q = searchParams.get("book_load") === "1";
-    if (!onBookPath && !q) {
-      autoOpenedBookRef.current = false;
-      return;
-    }
-    if (autoOpenedBookRef.current && !q) return;
-    autoOpenedBookRef.current = true;
+    if (!onBookPath && !q) return;
     setNewLoadOpen(true);
     if (!q) return;
     const next = new URLSearchParams(searchParams);
     next.delete("book_load");
     setSearchParams(next, { replace: true });
   }, [location.pathname, searchParams, setSearchParams]);
+
+  const retractBookLoadUrl = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("book_load");
+    const onBookPath = location.pathname.replace(/\/$/, "") === "/dispatch/book-load";
+    if (onBookPath || subTab === "book_load") {
+      navigate(`/dispatch/loads${next.toString() ? `?${next}` : ""}`, { replace: true });
+      return;
+    }
+    setSearchParams(next, { replace: true });
+  };
 
   const loads = loadsQuery.data?.loads ?? [];
 
@@ -581,11 +586,13 @@ export function DispatchPage({
         onClose={() => {
           setNewLoadOpen(false);
           setBookUnitId(null);
+          retractBookLoadUrl();
         }}
         onCreated={() => {
           pushToast("Load saved", "success");
           setNewLoadOpen(false);
           setBookUnitId(null);
+          retractBookLoadUrl();
           void loadsQuery.refetch();
         }}
       />

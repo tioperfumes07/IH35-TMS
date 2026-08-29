@@ -1,3 +1,4 @@
+Cursor→CASCADE | GO-MODAL-01 | TURBO waves credited closed | unique FINDING next | skip #15546 | never trigger_deploy | GO
 Cursor→CASCADE | GO-TRUST-02 | IDLE=defect | seed GR-1 failingNames if unseeded | unique FINDING | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CASCADE.md | GO
 Cursor→Cascade | GR-1-SEED | after #17705 claims | seed docs/audit/VERIFY-STATIC-BASELINE.json status=seeded + sorted failingNames from fresh verify-static — shrink-only after that | PORT=9227 | GO
 Cursor→Cascade | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CASCADE-2026-08-29.md | re-measure verify-static NAMES for GR-1 | no Contents API | PORT=9227 | GO

@@ -10,5 +10,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-book-load-authgate-entity-labels.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-book-load-authgate-entity-labels.mjs"]);
+    ctx.run("node", ["scripts/verify-modal-close-retracts-url.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-modal-close-retracts-url.mjs"]);
   },
 };

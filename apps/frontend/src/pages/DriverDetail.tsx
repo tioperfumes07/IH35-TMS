@@ -205,6 +205,8 @@ export function DriverDetailPage() {
     }
   }, [searchParams]);
   useEffect(() => {
+    // Legacy /drivers/:id still forwards into the profile wizard. Retract lives on
+    // DriverProfilePage.closeAssignTruck (delete assign_truck) — do not strip here or the wizard never opens.
     if (searchParams.get("assign_truck") === "1" && id) {
       navigate(`/drivers/${id}/profile?assign_truck=1`, { replace: true });
     }
