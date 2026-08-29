@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7173 | CLAIM=quick-assign-guard-rejects-current-snapshot-lifecycle | SOURCE=QuickAssignModal awaited submit→close + DispatchBoard disclose/rethrow | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7172 | PR=#17325 @ 36c89000bd | Built=dispatch-sheet historical customer+driver links | Live=post-deploy UNVERIFIED | NEXT=dispatch guard census | GO
 Codex | WORKING | DSP-F7172 | CLAIM=dispatch-sheet-drops-archived-customer+driver-label | SOURCE=mdata.loads FKs+same-company resolvers | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7171 | PR=#17323 @ c51ce987f6 | Built=instruction PDF historical labels | Live=post-deploy UNVERIFIED | NEXT=dispatch sheet linkage | GO
 Codex | WORKING | DSP-F7171 | CLAIM=instruction-pdf-loses-archived-customer+driver-labels | SOURCE=mdata same-company label resolvers | NEXT=guard+FAST-MERGE | GO

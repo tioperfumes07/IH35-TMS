@@ -12,13 +12,16 @@ function verify(board, modal) {
   const failures = [];
   const quickAssignRegion = board.slice(board.indexOf("<QuickAssignModal"));
   const catchBlock = quickAssignRegion.match(/catch \(error\) \{[\s\S]{0,700}?\n\s*\}/)?.[0] ?? "";
+  const submitRegion = modal.slice(modal.indexOf("onSubmit={async"));
   if (!catchBlock.includes('userFacingApiError(error, "Quick assign failed")')) {
     failures.push("quick-assign failure must remain operator-visible");
   }
   if (!catchBlock.includes("throw error;")) {
     failures.push("DispatchBoard must reject on quick-assign failure instead of resolving success");
   }
-  if (!modal.includes("await onSubmit({") || !modal.includes("onClose();")) {
+  const awaitedSubmit = submitRegion.search(/await\s+(?:onSubmit\s*\(\s*\{|submittedOnSubmit\s*\(\s*submittedPayload\s*\))/);
+  const successfulClose = submitRegion.indexOf("handleClose();");
+  if (awaitedSubmit < 0 || successfulClose < 0 || successfulClose < awaitedSubmit) {
     failures.push("QuickAssignModal must close only after awaiting a successful submit");
   }
   return failures;
@@ -43,7 +46,24 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`PASS: ${mutations.length}/${mutations.length} planted defects caught`);
+  const modalMutations = [
+    ["unawaited submit", modal.replace("await submittedOnSubmit(submittedPayload);", "void submittedOnSubmit(submittedPayload);")],
+    [
+      "close before submit",
+      modal.replace(
+        "await submittedOnSubmit(submittedPayload);\n            if (scopeGenerationRef.current !== submittedGeneration) return;\n            handleClose();",
+        "handleClose();\n            await submittedOnSubmit(submittedPayload);\n            if (scopeGenerationRef.current !== submittedGeneration) return;"
+      ),
+    ],
+  ];
+  for (const [name, mutatedModal] of modalMutations) {
+    if (verify(board, mutatedModal).length === 0) {
+      console.error(`FAIL: selftest mutation escaped: ${name}`);
+      process.exit(1);
+    }
+  }
+  const caught = mutations.length + modalMutations.length;
+  console.log(`PASS: ${caught}/${caught} planted defects caught`);
 }
 
 console.log("PASS: failed dispatch quick assignments stay open with visible error feedback");
