@@ -16,12 +16,13 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-save-load-template-modal-entitylinks";
 const MODAL = path.join(ROOT, "apps/frontend/src/pages/dispatch/LoadTemplateLibrary.tsx");
 const DRAWER = path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");
+const SERVICE = path.join(ROOT, "apps/backend/src/dispatch/dispatch-refinements.service.ts");
 
 function assert(cond, msg) {
   if (!cond) throw new Error(`${LABEL}: ${msg}`);
 }
 
-function checkSource(modal) {
+function checkSource(modal, service = fs.readFileSync(SERVICE, "utf8")) {
   const drawer = fs.readFileSync(DRAWER, "utf8");
   assert(/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(modal), "modal must import canonical label-aware tombstones");
   assert(
@@ -44,6 +45,7 @@ function checkSource(modal) {
   assert(/<EntityPicker[\s\S]*disabled=\{pending\}[\s\S]*dataTestId="save-load-template-modal-customer"/.test(modal), "customer picker must be locked while saving");
   assert(/<input value=\{name\}[^\n]*disabled=\{pending\}/.test(modal), "name must be locked while saving");
   assert(/onClick=\{closeUnlessPending\} disabled=\{pending\}/.test(modal), "Cancel must be locked while saving");
+  assert(/const template = res\.rows\[0\];[\s\S]*if \(!template\)[\s\S]*code: "E_TEMPLATE_CREATE_FAILED"[\s\S]*return template;/.test(service), "backend create must fail loud when INSERT RETURNING yields no canonical template identity");
 }
 
 function check() {
@@ -76,8 +78,14 @@ function selftest() {
     try { checkSource(broken); } catch { failed = true; }
     assert(failed, `--selftest expected FAIL for ${pattern}`);
   }
+  const service = fs.readFileSync(SERVICE, "utf8");
+  const brokenService = service.replace('code: "E_TEMPLATE_CREATE_FAILED"', 'code: "REMOVED"');
+  assert(brokenService !== service, "--selftest must plant the missing create-identity guard");
+  let serviceFailed = false;
+  try { checkSource(original, brokenService); } catch { serviceFailed = true; }
+  assert(serviceFailed, "--selftest expected FAIL when backend create-identity guard is removed");
   check();
-  console.log(`${LABEL}: OK — selftest PASS (${mutations.length} mutations)`);
+  console.log(`${LABEL}: OK — selftest PASS (${mutations.length + 1} mutations)`);
 }
 
 const mode = process.argv.includes("--selftest") ? "selftest" : "check";

@@ -655,6 +655,13 @@ export async function createLoadTemplate(
       `,
       [input.operating_company_id, input.name.trim(), JSON.stringify(input.template_json), userId]
     );
-    return res.rows[0];
+    const template = res.rows[0];
+    if (!template) {
+      throw Object.assign(new Error("Load template was not persisted."), {
+        statusCode: 409,
+        code: "E_TEMPLATE_CREATE_FAILED",
+      });
+    }
+    return template;
   });
 }
