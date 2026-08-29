@@ -6736,5 +6736,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-edit-load-charge-replacement-checked"
+  },
+  "10025": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-profitability-trip-end-active-stop"
   }
 }
