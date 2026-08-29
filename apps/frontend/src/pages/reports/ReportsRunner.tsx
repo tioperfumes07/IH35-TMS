@@ -126,7 +126,7 @@ export function ReportsRunnerPage() {
   const canonicalAlias = CANONICAL_REPORT_ALIASES[reportId];
   if (canonicalAlias) return <Navigate replace to={canonicalAlias} />;
 
-  async function logRun(durationMs: number, rowCount: number) {
+  async function logRun(durationMs: number, rowCount: number, effectiveFilters: Record<string, unknown>) {
     try {
       await apiRequest("/api/v1/reports/run-log", {
         method: "POST",
@@ -134,7 +134,7 @@ export function ReportsRunnerPage() {
           operating_company_id: companyId,
           report_id: reportId,
           report_name: reportMeta?.name ?? reportId,
-          filters,
+          filters: effectiveFilters,
           duration_ms: durationMs,
           rows_returned: rowCount,
         },
@@ -144,13 +144,20 @@ export function ReportsRunnerPage() {
     }
   }
 
-  async function runReport() {
+  // REPORTS-RUNNER-DATEPICKER-SILENT-DISCARD: accepts the caller's up-to-date filter values
+  // explicitly instead of always closing over the `filters` state var. RunnerFilters' "Run
+  // report" click handler applies its staged draft in the same synchronous handler that calls
+  // this -- React state updates from that apply() are not visible on `filters` until the next
+  // render, so reading `filters` here would still run against the value picked BEFORE this
+  // click. The Retry button (no picker involved) omits the arg and correctly reuses the last
+  // applied `filters`.
+  async function runReport(effectiveFilters: Record<string, unknown> = filters) {
     if (!config || !companyId) return;
     setIsRunning(true);
     setError(null);
     const startedAt = Date.now();
     try {
-      const query = buildQuery(config.id, filters);
+      const query = buildQuery(config.id, effectiveFilters);
       const suffix = query.toString() ? `?${query.toString()}` : "";
       const payload = await apiRequest<any>(`${config.apiPath}${suffix}${suffix ? "&" : "?"}operating_company_id=${encodeURIComponent(companyId)}`);
       const durationMs = Date.now() - startedAt;
@@ -161,7 +168,7 @@ export function ReportsRunnerPage() {
         rows,
         csaValue: config.id === "csa-fleet" ? (payload as Record<string, unknown>) : null,
       });
-      await logRun(durationMs, rows.length);
+      await logRun(durationMs, rows.length, effectiveFilters);
     } catch (e) {
       setError("Failed to run report. Please verify filters and retry.");
     } finally {
@@ -227,7 +234,7 @@ export function ReportsRunnerPage() {
       {error ? (
         <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}{" "}
-          <button type="button" className="underline" onClick={runReport}>
+          <button type="button" className="underline" onClick={() => runReport()}>
             Retry
           </button>
         </div>

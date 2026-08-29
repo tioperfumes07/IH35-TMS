@@ -55,6 +55,16 @@ export function CollapsedListFilters({
       if (target instanceof Element) {
         // Combobox marks its portal listbox; treat it as inside the open filter panel.
         if (target.closest('[data-combobox-listbox="portal"]')) return true;
+        // REPORTS-RUNNER-DATEPICKER-SILENT-DISCARD — a consumer's own action button (e.g.
+        // RunnerFilters' "Run report") can legitimately live outside this component's own
+        // DOM subtree for layout reasons. Without this, live-confirmed: pick a new date in
+        // the open panel, click "Run report" -> mousedown fires THIS outside-click handler
+        // first (mousedown precedes click), which cancels and discards the just-picked,
+        // still-unapplied draft and closes the panel; only then does Run's own onClick fire,
+        // reading the stale pre-pick values -- the report silently runs against the OLD date
+        // range with zero error or visual indication the pick was lost. Any external trigger
+        // opted in via this marker is treated as a logical part of the filter chrome instead.
+        if (target.closest("[data-collapsed-filters-safe]")) return true;
       }
       return false;
     };
