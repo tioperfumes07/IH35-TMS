@@ -59,7 +59,7 @@ function verifyInboundWebhook(req: FastifyRequest, rawBody: Buffer): boolean {
 }
 
 export async function registerDispatchOcrIntakeRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/ocr-intake/queue", async (req, reply) => {
+  app.get("/api/v1/dispatch/ocr-intake/queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -67,7 +67,7 @@ export async function registerDispatchOcrIntakeRoutes(app: FastifyInstance) {
     return listOcrIntakeQueue(user.uuid, query.data.operating_company_id);
   });
 
-  app.post("/api/v1/dispatch/ocr-intake/items/:id/reprocess", async (req, reply) => {
+  app.post("/api/v1/dispatch/ocr-intake/items/:id/reprocess", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = itemParamsSchema.safeParse(req.params ?? {});
@@ -80,7 +80,7 @@ export async function registerDispatchOcrIntakeRoutes(app: FastifyInstance) {
     return item;
   });
 
-  app.post("/api/v1/dispatch/ocr-intake/items/:id/convert", async (req, reply) => {
+  app.post("/api/v1/dispatch/ocr-intake/items/:id/convert", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = itemParamsSchema.safeParse(req.params ?? {});
@@ -96,7 +96,7 @@ export async function registerDispatchOcrIntakeRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/dispatch/ocr-intake/items/:id/finalize", async (req, reply) => {
+  app.post("/api/v1/dispatch/ocr-intake/items/:id/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = itemParamsSchema.safeParse(req.params ?? {});

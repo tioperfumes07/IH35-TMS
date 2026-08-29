@@ -39,7 +39,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDispatchCustomerNotifyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/customer-notify/log", async (req, reply) => {
+  app.get("/api/v1/dispatch/customer-notify/log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

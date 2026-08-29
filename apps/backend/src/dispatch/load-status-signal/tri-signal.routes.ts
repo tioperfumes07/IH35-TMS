@@ -18,7 +18,7 @@ const companyQuery = z.object({
 });
 
 export async function registerTriSignalRoutes(app: FastifyInstance): Promise<void> {
-  app.get("/api/dispatch/load-status-signal/active-loads", async (req, reply) => {
+  app.get("/api/dispatch/load-status-signal/active-loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -30,7 +30,7 @@ export async function registerTriSignalRoutes(app: FastifyInstance): Promise<voi
     return reply.send({ signals });
   });
 
-  app.get("/api/dispatch/load-status-signal/:load_uuid", async (req, reply) => {
+  app.get("/api/dispatch/load-status-signal/:load_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ load_uuid: z.string().uuid() }).safeParse(req.params ?? {});
