@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=0fdb297 | SHIPPED PR #17312 | FIXED: LST-F9107 — verify-vendor-detail-page-self-referential.mjs guard had stale patterns for inactivate/reactivate (searched for updateVendor but code uses deactivateVendor/reactivateVendor). Guard was ALWAYS false-failing, masking real LST-F9103/LST-F9106 checks. Updated patterns. Guard now passes fully. Live=UNVERIFIED. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=e471b7b | SHIPPED PR #17307 | FIXED: LST-F9106 — VendorDetail had two more silent query errors: saferStatusQuery (showed "SAFER not verified" on error) and vendorIntegrityQuery (hid rework signal warning on error). Both silent no-ops on compliance/safety features. Added isError checks with Retry. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0027 | vendors-VEND-S01-USMCA-123 | SHA=ef2f954 | SHIPPED PR #17304 | FIXED: LST-F9105 — Vendors page had two more silent query errors: balancesQuery (showed $0 on error) and vendorPaymentMethodsQuery (showed "Not on file" on error). Both silent no-ops. Added isError checks with inline Retry for both. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
