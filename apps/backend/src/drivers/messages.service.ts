@@ -4,6 +4,33 @@ type Queryable = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[]; rowCount?: number }>;
 };
 
+export class DriverMessagePersistenceError extends Error {
+  constructor(readonly operation: "create" | "delivery_status") {
+    super(`driver_message_${operation}_failed`);
+    this.name = "DriverMessagePersistenceError";
+  }
+}
+
+export function requireDriverMessageRow<T>(rows: T[], operation: "create" | "delivery_status"): T {
+  const row = rows[0];
+  if (!row) throw new DriverMessagePersistenceError(operation);
+  return row;
+}
+
+async function updateDriverMessageDeliveryStatus(
+  client: Queryable,
+  input: { messageId: string; operatingCompanyId: string; driverId: string; status: "delivered" | "failed" }
+) {
+  const res = await client.query<{ id: string }>(
+    `UPDATE mdata.driver_profile_messages
+     SET delivery_status = $4
+     WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid
+     RETURNING id::text`,
+    [input.messageId, input.operatingCompanyId, input.driverId, input.status]
+  );
+  requireDriverMessageRow(res.rows, "delivery_status");
+}
+
 export type DriverMessageRow = {
   id: string;
   operating_company_id: string;
@@ -291,7 +318,8 @@ export async function insertDriverReply(
     `,
     [input.operatingCompanyId, input.driverId, input.message, input.driverUserId]
   );
-  const id = (res.rows[0] as { id: string }).id;
+  const inserted = requireDriverMessageRow(res.rows as Array<{ id: string }>, "create");
+  const id = inserted.id;
   const thread = await listDriverMessageThread(client, input.operatingCompanyId, input.driverId);
   return thread.find((m) => m.id === id) ?? mapMessageRow({ ...(res.rows[0] as Record<string, unknown>), message: input.message, channel: "in_app", delivery_status: "delivered", driver_id: input.driverId, operating_company_id: input.operatingCompanyId, created_by: input.driverUserId, created_at: new Date().toISOString(), read_at: null, read_by: null, delivery_ref: null, urgency: null, identity_user_id: input.driverUserId });
 }
@@ -308,12 +336,7 @@ export async function deliverDriverProfileMessage(
   }
 ): Promise<{ delivery_status: string; delivery_ref: string | null }> {
   if (input.channel === "in_app") {
-    await client.query(
-      `UPDATE mdata.driver_profile_messages
-       SET delivery_status = 'delivered'
-       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
-      [input.messageId, input.operatingCompanyId, input.driverId]
-    );
+    await updateDriverMessageDeliveryStatus(client, { ...input, status: "delivered" });
     return { delivery_status: "delivered", delivery_ref: null };
   }
 
@@ -335,23 +358,13 @@ export async function deliverDriverProfileMessage(
   );
   const driver = driverRes.rows[0];
   if (!driver) {
-    await client.query(
-      `UPDATE mdata.driver_profile_messages
-       SET delivery_status = 'failed'
-       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
-      [input.messageId, input.operatingCompanyId, input.driverId]
-    );
+    await updateDriverMessageDeliveryStatus(client, { ...input, status: "failed" });
     return { delivery_status: "failed", delivery_ref: null };
   }
 
   if (input.channel === "sms") {
     if (!driver.phone) {
-      await client.query(
-        `UPDATE mdata.driver_profile_messages
-         SET delivery_status = 'failed'
-         WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
-        [input.messageId, input.operatingCompanyId, input.driverId]
-      );
+      await updateDriverMessageDeliveryStatus(client, { ...input, status: "failed" });
       return { delivery_status: "failed", delivery_ref: null };
     }
     await enqueueOutboxEvent(
@@ -372,12 +385,7 @@ export async function deliverDriverProfileMessage(
   }
 
   if (!driver.email) {
-    await client.query(
-      `UPDATE mdata.driver_profile_messages
-       SET delivery_status = 'failed'
-       WHERE id = $1 AND operating_company_id = $2::uuid AND driver_id = $3::uuid`,
-      [input.messageId, input.operatingCompanyId, input.driverId]
-    );
+    await updateDriverMessageDeliveryStatus(client, { ...input, status: "failed" });
     return { delivery_status: "failed", delivery_ref: null };
   }
 

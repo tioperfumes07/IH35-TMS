@@ -4,7 +4,11 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
-import { deliverDriverProfileMessage } from "../drivers/messages.service.js";
+import {
+  deliverDriverProfileMessage,
+  DriverMessagePersistenceError,
+  requireDriverMessageRow,
+} from "../drivers/messages.service.js";
 
 const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
 const driverParamsSchema = z.object({ id: z.string().uuid() });
@@ -21,7 +25,9 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverMessagesRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/drivers/:id/messages", async (req, reply) => {
+  app.post("/api/v1/mdata/drivers/:id/messages", {
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
     const authUser = authed(req, reply);
     if (!authUser) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -81,14 +87,17 @@ export async function registerDriverMessagesRoutes(app: FastifyInstance) {
           authUser.uuid,
         ]
       );
+      const inserted = requireDriverMessageRow(
+        res.rows as Array<{ id: string; channel: string; urgency: string | null; created_at: string }>,
+        "create"
+      );
       await appendCrudAudit(client, authUser.uuid, "mdata.driver_profile_message.recorded", {
         resource_type: "mdata.driver_profile_messages",
-        resource_id: (res.rows[0] as { id?: string })?.id ?? null,
+        resource_id: inserted.id,
         operating_company_id: query.data.operating_company_id,
         driver_id: params.data.id,
         channel: body.data.channel,
       });
-      const inserted = res.rows[0] as { id: string; channel: string; urgency: string | null; created_at: string };
       const delivery = await deliverDriverProfileMessage(client, {
         messageId: inserted.id,
         operatingCompanyId: query.data.operating_company_id,
@@ -104,6 +113,9 @@ export async function registerDriverMessagesRoutes(app: FastifyInstance) {
       const message = (err as Error)?.message;
       if (message === "forbidden_company_membership") return reply.code(403).send({ error: message });
       if (message === "mdata_driver_not_found") return reply.code(404).send({ error: message });
+      if (err instanceof DriverMessagePersistenceError) {
+        return reply.code(409).send({ error: err.message, operation: err.operation });
+      }
       throw err;
     }
   });

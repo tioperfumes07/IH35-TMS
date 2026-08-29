@@ -1,3 +1,6 @@
+Codex | WORKING | DRIVER-F7182 | CLAIM=message-create+terminal-status-exact-identity | SOURCE=mdata.driver_profile_messages | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0043 | NOW=drivers-unique | SHA=4e5db76 | GO
+Codex | SHIPPED | FLEET-F7181 | PR=#17369 @ cae2307992 | Built=unit+equipment bulk atomic exact targets | Live=post-deploy UNVERIFIED | NEXT=GO-0043 drivers unique | GO
 Codex | WORKING | FLEET-F7181 | CLAIM=fleet-bulk-update-exact-target-atomicity | SOURCE=mdata.units+equipment UPDATE RETURNING | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0042 | NOW=fleet-unique | SHA=4e5db76 | GO
 Codex | SHIPPED | DSP-F7180 | PR=#17353 @ d3d20c980a | Built=notify-preferences typed write conflict | Live=post-deploy UNVERIFIED | NEXT=GO-0042 fleet unique | GO
