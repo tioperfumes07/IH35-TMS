@@ -38,7 +38,7 @@
       ],
       "spec": "Cash advances \u00b7 ECON-002",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CashAdvancesHome useListState; empty banner only when listState.isEmpty (never mid-fetch). Was bare rows.length===0 false-empty. Guard verify-list-empty-settled.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CashAdvancesHome useListState; empty banner only when listState.isEmpty (never mid-fetch). Was bare rows.length===0 false-empty. Guard verify-list-empty-settled. | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD): live healthz version 5063761. node scripts/verify-list-empty-settled.mjs exit 0 (CashAdvancesHome still in the settled-list migration, still using useListState/isEmpty, not bare rows.length===0).",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -53,7 +53,7 @@
       ],
       "spec": "Escrow ledger \u00b7 ECON-003",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /accounting/escrow EscrowPage already MIGRATED in verify-list-empty-settled: ParityTable loading= + emptyText No escrow accounts found. Postings table same pattern.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 /accounting/escrow EscrowPage already MIGRATED in verify-list-empty-settled: ParityTable loading= + emptyText No escrow accounts found. Postings table same pattern. | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD): live healthz version 5063761. node scripts/verify-list-empty-settled.mjs exit 0 (EscrowPage still covered by the same settled-list migration guard).",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -80,7 +80,7 @@
       ],
       "spec": "ENUM-CASH-ADV-PURPOSE \u00b7 CreateAdvanceModal pattern",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CreateAdvanceModal loads catalogs.cash_advance_types via cashAdvanceTypesCatalogClient.list (is_active, opco-scoped); purposeOptions merge catalog rows + economic purposes; fallback only when catalog empty. Guard: verify-wave-h1-catalog-coa-completeness asserts cashAdvanceTypesCatalogClient. Neon lucia: cash_advance_types active TRANSP=6 TRK=6 USMCA=6. REMAINING: cash_advance_type_id FK on driver_advances (ECON-014 / CLS-ECON-EMPTY) is CC-1 money \u2014 picker read path is closed.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 CreateAdvanceModal loads catalogs.cash_advance_types via cashAdvanceTypesCatalogClient.list (is_active, opco-scoped); purposeOptions merge catalog rows + economic purposes; fallback only when catalog empty. Guard: verify-wave-h1-catalog-coa-completeness asserts cashAdvanceTypesCatalogClient. Neon lucia: cash_advance_types active TRANSP=6 TRK=6 USMCA=6. REMAINING: cash_advance_type_id FK on driver_advances (ECON-014 / CLS-ECON-EMPTY) is CC-1 money \u2014 picker read path is closed. | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD): live healthz version 5063761. node scripts/verify-wave-h1-catalog-coa-completeness.mjs PASS (static wiring). Neon proof (BEGIN; SET LOCAL app.bypass_rls='lucia'; SELECT; COMMIT, br-fancy-credit-akjnd07a, discriminator current_user=ih35_app, control org.companies=3): catalogs.cash_advance_types active count unchanged at exactly 6 per entity across all 3 (TRANSP/TRK/USMCA).",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -94,7 +94,7 @@
       ],
       "spec": "ENUM-DISPUTE-TYPES-MODAL/DETAIL \u00b7 SCHEMA-FINDINGS sibling sweep",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute \u2192 POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152).",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 SettlementDisputeModal + SettlementDetailPage both import SETTLEMENT_DISPUTE_CATEGORY_OPTIONS (matches Neon CHECK dispute_category). Modal writes openSettlementDispute \u2192 POST /driver-finance/settlement-disputes (same as detail), not legacy /settlements/:id/disputes dispute_type. Guard verify-settlement-dispute-driver-picker extended (step 2152). | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD): live healthz version 5063761. node scripts/verify-settlement-dispute-driver-picker.mjs exit 0 -- SETTLEMENT_DISPUTE_CATEGORY_OPTIONS still shared between SettlementDisputeModal and SettlementDetailPage, both still posting through openSettlementDispute (the canonical route this item names), not the legacy dispute_type path.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -108,7 +108,7 @@
       ],
       "spec": "AUD-F006 \u00b7 SETL-settlements-empty",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 Neon lucia USMCA driver_finance.driver_settlements count=7 (scenario.settlement done). CLS-MONEY-HOLD HOLD-001 text claiming settlements=0 is STALE for USMCA density. SETL-ECON-01 bar is density>0 when live \u2014 met. REMAINING: settlement GL pay-run (driver_settlement_gl_*) may still be empty \u2014 tracked under CLS-MONEY-HOLD for posting, not this density item; CLS-MONEY-HOLD still lists settlements module so complete:true stays false until that wave reclass/drain.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-09 \u2014 Neon lucia USMCA driver_finance.driver_settlements count=7 (scenario.settlement done). CLS-MONEY-HOLD HOLD-001 text claiming settlements=0 is STALE for USMCA density. SETL-ECON-01 bar is density>0 when live \u2014 met. REMAINING: settlement GL pay-run (driver_settlement_gl_*) may still be empty \u2014 tracked under CLS-MONEY-HOLD for posting, not this density item; CLS-MONEY-HOLD still lists settlements module so complete:true stays false until that wave reclass/drain. | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD): live healthz version 5063761. Neon proof (same transaction as SETL-PICK-02 above): USMCA driver_finance.driver_settlements density has GROWN to 17 (was 7 at the 2026-08-09 evidence date) -- status breakdown approved=1 cancelled=8 closed=5 locked=1 open=2. Density>0 bar remains solidly met, more strongly than before. TRANSP still returns 0 rows (honest empty, matching prior claim).",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -142,7 +142,7 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-10 PROD-VERIFIED Cascade+Neon: USMCA settlements total_count=8; S-20260808-0085 status=locked + paid_at set (finalize path exercised after SETL-FINALIZE SAVEPOINT). Mark Paid Manually + acknowledge/approve previously proven. TRANSP honest empty. DO NOT RE-AUDIT \u2014 see docs/audit/CLOSED-DO-NOT-REAUDIT-2026-08-10.md.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: PASS 2026-08-10 PROD-VERIFIED Cascade+Neon: USMCA settlements total_count=8; S-20260808-0085 status=locked + paid_at set (finalize path exercised after SETL-FINALIZE SAVEPOINT). Mark Paid Manually + acknowledge/approve previously proven. TRANSP honest empty. DO NOT RE-AUDIT \u2014 see docs/audit/CLOSED-DO-NOT-REAUDIT-2026-08-10.md. | RE-VERIFIED 2026-08-29 CC-1 (evidence only, not GUARD -- and NOT a live-Chrome VERIFY-1..8 re-run, out of scope for CC-1/no Chrome tooling loaded this pass; supplying the Neon facts CC-2/GUARD needs to decide whether a fresh click-through is warranted). IMPORTANT DRIFT: the specific record this evidence cited, S-20260808-0085, has changed status since 2026-08-10 -- it is now status=cancelled (was locked+paid_at set at citation time; paid_at is still populated on the row, cancellation did not clear it). This does NOT mean the finalize path is broken -- USMCA now has 17 total settlements (up from 8), including a CURRENTLY locked record (S-2026-0002, same record DRV-MONEY-F7314 touches) and 5 in status=closed, so the lifecycle mechanism is still visibly exercised on fresher records -- but the OLD evidence's specific S-0085 citation is now stale and should not be re-cited as current without this caveat. Flagging per the never-guess law rather than silently re-asserting a fact that changed.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
