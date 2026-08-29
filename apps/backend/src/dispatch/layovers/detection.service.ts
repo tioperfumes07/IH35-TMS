@@ -79,6 +79,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
               s.actual_departure_at AS released_at
          FROM mdata.load_stops s
         WHERE s.stop_type = 'delivery'
+          AND s.soft_deleted_at IS NULL
           AND s.actual_departure_at IS NOT NULL
         ORDER BY s.load_id, s.sequence_number DESC
      ),
@@ -90,6 +91,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
               s.actual_arrival_at AS started_at
          FROM mdata.load_stops s
         WHERE s.actual_arrival_at IS NOT NULL
+          AND s.soft_deleted_at IS NULL
         ORDER BY s.load_id, s.sequence_number ASC
      ),
      driver_loads AS (
@@ -130,6 +132,7 @@ export async function detectLayovers(client: PoolClient, operatingCompanyId: str
         AND l.soft_deleted_at IS NULL
         AND l.assigned_primary_driver_id IS NOT NULL
         AND s.stop_type = 'delivery'
+        AND s.soft_deleted_at IS NULL
         AND s.actual_departure_at IS NOT NULL`,
     [operatingCompanyId]
   );

@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7237 | GO-0030 | CLAIM=layover-active-stops | SOURCE=active delivery release+next arrival+denominator→layover detector | CLOSES=none — post-deploy detector proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7236 | PR=#17457 @ b1a43297a1 | Built=deadhead optimizer active stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7236 | GO-0030 | CLAIM=deadhead-active-stops | SOURCE=active pickup+delivery→drop origin+candidate ranking | CLOSES=none — post-deploy optimizer proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7235 | PR=#17456 @ a6bf720f32 | Built=Driver PWA active stop lifecycle | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7235 | GO-0030 | CLAIM=driver-pwa-active-stop-lifecycle | SOURCE=active mdata.load_stops→contacts+itinerary+arrival/departure/document writes | CLOSES=none — post-deploy PWA proof remains | NEXT=guard+FAST-MERGE | GO

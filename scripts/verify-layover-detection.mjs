@@ -77,6 +77,15 @@ export function assertDetectorSerialization(serviceTs) {
   return errors;
 }
 
+export function assertActiveStopDetection(serviceTs) {
+  const errors = [];
+  const selectorCount = (serviceTs.match(/FROM mdata\.load_stops s|JOIN mdata\.load_stops s/g) ?? []).length;
+  const activeCount = (serviceTs.match(/s\.soft_deleted_at IS NULL/g) ?? []).length;
+  if (selectorCount !== 3) errors.push(`layover detection must retain exactly 3 canonical stop selectors; found ${selectorCount}`);
+  if (activeCount !== selectorCount) errors.push(`all ${selectorCount} layover stop selectors must exclude retired rows; found ${activeCount}`);
+  return errors;
+}
+
 function selftest() {
   const good = `
     import { registerLayoverRoutes } from "./dispatch/layovers/routes.js";
@@ -172,7 +181,27 @@ function selftest() {
     }
   }
 
-  console.log(`[${LABEL}] --selftest OK — 13/13 wiring/range/serialization/identity mutations red`);
+  const activeStops = `
+    FROM mdata.load_stops s WHERE s.soft_deleted_at IS NULL
+    FROM mdata.load_stops s WHERE s.soft_deleted_at IS NULL
+    JOIN mdata.load_stops s ON true WHERE s.soft_deleted_at IS NULL
+  `;
+  if (assertActiveStopDetection(activeStops).length) {
+    console.error(`[${LABEL}] --selftest FAIL: active-stop fixture rejected`, assertActiveStopDetection(activeStops));
+    process.exit(1);
+  }
+  const activeMutations = [
+    activeStops.replace(/\s+WHERE s\.soft_deleted_at IS NULL/g, ""),
+    activeStops.replace(/s\.soft_deleted_at IS NULL/, "TRUE"),
+  ];
+  for (const [index, mutated] of activeMutations.entries()) {
+    if (assertActiveStopDetection(mutated).length === 0) {
+      console.error(`[${LABEL}] --selftest FAIL: active-stop mutation ${index + 1} escaped`);
+      process.exit(1);
+    }
+  }
+
+  console.log(`[${LABEL}] --selftest OK — 15/15 wiring/range/serialization/identity/lifecycle mutations red`);
 }
 
 function main() {
@@ -183,7 +212,7 @@ function main() {
 
   const indexTs = readFileSync(INDEX_TS_PATH, "utf8");
   const serviceTs = readFileSync(SERVICE_TS_PATH, "utf8");
-  const errors = [...assertGuard(indexTs), ...assertCompleteRange(serviceTs), ...assertDetectorSerialization(serviceTs)];
+  const errors = [...assertGuard(indexTs), ...assertCompleteRange(serviceTs), ...assertDetectorSerialization(serviceTs), ...assertActiveStopDetection(serviceTs)];
   if (errors.length) {
     for (const e of errors) console.error(`✗ FAIL: ${e}`);
     console.error("GAP-28 CI guard failed");
