@@ -356,7 +356,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     if (!load?.driver_instructions_file_id) return;
     try {
       const result = await getDownloadUrl(load.driver_instructions_file_id);
-      window.open(result.presigned_url, "_blank", "noopener,noreferrer");
+      const popup = window.open(result.presigned_url, "_blank", "noopener,noreferrer");
+      if (!popup) throw new Error("Your browser blocked the driver instructions window. Allow pop-ups and retry.");
     } catch (error) {
       pushToast(userFacingApiError(error, "Driver instructions download failed"), "error");
     }
