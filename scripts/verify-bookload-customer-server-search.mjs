@@ -33,6 +33,12 @@ export function collectProblems(root = ROOT) {
   if (!/createKind=["']customer["']/.test(code)) {
     problems.push(`${FILE}: must keep createKind=customer`);
   }
+  if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(code)) {
+    problems.push(`${FILE}: failed customer reads must disable the dependent picker`);
+  }
+  if (!/customersQuery\.isError[\s\S]{0,180}?ListErrorBanner[\s\S]{0,180}?customersQuery\.refetch\(\)/.test(code)) {
+    problems.push(`${FILE}: failed customer reads must disclose exact Retry instead of an empty picker`);
+  }
   if (/limit:\s*5000/.test(code)) {
     problems.push(`${FILE}: must not fetch silent limit:5000 customer page`);
   }
@@ -53,6 +59,12 @@ export function collectProblems(root = ROOT) {
   }
   if (!/label:\s*String\(c\.name\s*\|\|\s*c\.customer_code/.test(liveCode) || /c\.legal_name/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: picker label must use the typed canonical Customer name/code contract`);
+  }
+  if (!/disabled=\{customersQuery\.isLoading \|\| customersQuery\.isError\}/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: failed customer reads must disable the dependent picker`);
+  }
+  if (!/customersQuery\.isError[\s\S]{0,180}?ListErrorBanner[\s\S]{0,180}?customersQuery\.refetch\(\)/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: failed customer reads must disclose exact Retry instead of an empty picker`);
   }
   return problems;
 }
