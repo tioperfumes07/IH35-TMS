@@ -195,9 +195,9 @@
           "note": "DISPOSITION: (C) owner-hold — poster code exists, no pay-run executed. Tracked under CLS-MONEY-HOLD (HOLD-001). NOT actionable here."
         },
         {
-          "path": "driver_finance.driver_advances = 0; catalogs.cash_advance_types = 18 seeded (ECON-002)",
+          "path": "driver_finance.driver_advances TEST density (ECON-002) — not 0; KEEP TEST; cash_advance_type_id may still be missing (ECON-014)",
           "entity": "ALL",
-          "note": "DISPOSITION: (B) empty state — no advances created by owner. Catalog seeded. NOT a defect."
+          "note": "DISPOSITION: (B) empty-TMS is expected; live had TEST CA-2026-0001..0005 (Cascade #16891 2026-08-28). Catalog seeded. NOT a density defect. Remaining money work is catalog FK (ECON-014), not 'zero rows'."
         },
         {
           "path": "driver_finance.escrow_ledger = 0; catalogs.escrow_types = 3 seeded (ECON-003)",
