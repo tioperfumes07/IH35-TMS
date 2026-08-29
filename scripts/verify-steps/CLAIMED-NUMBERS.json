@@ -4807,6 +4807,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-sql-placeholder-param-count"
   },
+  "10050": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-ct-timezone-rendering"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
