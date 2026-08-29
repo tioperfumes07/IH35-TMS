@@ -42,12 +42,14 @@
       ],
       "spec": "Per-entity conversion + collision guard",
       "status": "PASS",
-      "evidence": "Neon lucia: half_deactivated (is_active=false AND deactivated_at IS NULL) = 0; each entity 7 total / 5 active / 2 properly deactivated; 0 normalized-code collisions. Repaired by migration 202607911000 (prod ledger 7c44216e, applied 18:16Z).",
+      "evidence": "Neon lucia: half_deactivated (is_active=false AND deactivated_at IS NULL) = 0; each entity 7 total / 5 active / 2 properly deactivated; 0 normalized-code collisions. Repaired by migration 202607911000 (prod ledger 7c44216e, applied 18:16Z). RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): half_deactivated=0 and 0 normalized-code collisions still hold on all 3 entities today (TRANSP 7/5/2, TRK 7/5/2, USMCA 11/9/2 -- USMCA active count grew from 7 to 11 via 4 known TEST/fixture rows -- CASCADE_EQ19_001, CASCADE-ET, P47-SMOKE-20260811, TESTCC3EQ -- left active under the CREATE-TEST-THEN-VOID law, not a seed-gap regression; the 5 canonical types (Dry Van/Flatbed/Oversize/Pneumatic/Reefer) match exactly across all 3 entities).",
       "pr": 3405,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:00:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-03",
@@ -58,12 +60,14 @@
       ],
       "spec": "Per-entity conversion",
       "status": "PASS",
-      "evidence": "Neon lucia: catalogs.driver_load_statuses = 39 rows = 13 x 3 entities; opco present; FORCE RLS true.",
+      "evidence": "Neon lucia: catalogs.driver_load_statuses = 39 rows = 13 x 3 entities; opco present; FORCE RLS true. RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): catalogs.driver_load_statuses now 40 rows (was 39), all active; operating_company_id present; relforcerowsecurity=true. Minor row-count growth since 2026-07-24, not a regression -- core acceptance (opco + FORCE RLS) still holds.",
       "pr": 3403,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:05:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-04",
@@ -74,12 +78,14 @@
       ],
       "spec": "Per-entity conversion",
       "status": "PASS",
-      "evidence": "Neon lucia: 48 rows = 16 x 3 entities (TRANSP/TRK/USMCA each 16 active); opco present; FORCE RLS true.",
+      "evidence": "Neon lucia: 48 rows = 16 x 3 entities (TRANSP/TRK/USMCA each 16 active); opco present; FORCE RLS true. RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): catalogs.driver_termination_reasons now 51 rows (50 active, was 48/48), operating_company_id present, relforcerowsecurity=true.",
       "pr": 3408,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:05:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-05",
@@ -90,12 +96,14 @@
       ],
       "spec": "Per-entity conversion",
       "status": "PASS",
-      "evidence": "Neon lucia: 72 rows = 24 x 3 entities; opco present; FORCE RLS true.",
+      "evidence": "Neon lucia: 72 rows = 24 x 3 entities; opco present; FORCE RLS true. RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): catalogs.customer_quality_event_reasons now 74 rows (72 active, was 72/72), operating_company_id present, relforcerowsecurity=true.",
       "pr": 3409,
       "owner_hold": false,
       "tracker": null,
       "future_block": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:05:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-06",
@@ -558,7 +566,7 @@
       ],
       "spec": "FORCE RLS invariant",
       "status": "PASS",
-      "evidence": "CLOSED 2026-07-29: migration 202608100000 applied_held + applied_on_prod:true (owner #3549). LIVE Neon: catalogs.account_types + wo_cancellation_reasons both relrowsecurity+relforcerowsecurity true, 3 policies each, 0 DELETE policies, ih35_app INSERT/SELECT/UPDATE only. WRITE-AUTHZ ONLY (global catalogs — not entity-scoping). Guard verify-lst-rls01-global-catalog-write-authz-closed (step 1780). | BUILT AND HELD 2026-07-25 as #3549 — stays FAIL until the owner Neon-applies it. Migration 202608100000_lst_rls_01_global_catalog_write_authz.sql, registered HELD without applied_on_prod (absence = not-applied). VERDICT — both tables are SHARED-CANONICAL/GLOBAL, so this is WRITE-AUTHZ ONLY and deliberately NOT entity scoping. catalogs.account_types (202606080010:16-27) and catalogs.wo_cancellation_reasons (202606221200:31-37) have NO operating_company_id, RLS OFF, ZERO policies. 202607011700:5-13 states the locked model verbatim: account_types is a GLOBAL reference and the entity boundary sits on detail_types.operating_company_id, not on the shared type. Company-scoping all-NULL rows under FORCE RLS would return ZERO rows and break account-type-catalog.routes.ts:70-83, whose join already reads dt.operating_company_id IS NULL OR = $1 precisely because the parent is shared. Choosing scoping here would have been an outage, not a fix. WHAT WAS ACTUALLY EXPOSED, proved pre-fix in a throwaway container as a Dispatcher-role session: INSERT of a rogue account type succeeded; UPDATE HIJACKED the BANK type; DELETE destroyed a WO reason and an account type. Both tables were fully writable and deletable by any role. EXTRA DEFECT FOUND: catalogs carries ALTER DEFAULT PRIVILEGES granting DELETE to ih35_app (0065:48, 0116:45-46), and both tables were created after those ran — so DELETE reached account_types even though its own GRANT never names it. A narrower GRANT cannot fix that; the migration REVOKEs DELETE explicitly. Same landmine documented at 202607420000:80-82. POST-FIX in-container: RLS enabled AND forced, 3 policies each, ZERO delete policies, effective privs INSERT,SELECT,UPDATE. Dispatcher INSERT and DELETE blocked; owner INSERT/UPDATE allowed, owner DELETE blocked; lucia bypass reads. NO READ REGRESSION — counts identical pre/post and the detail_types FK insert still succeeds across FORCE RLS. Applied twice = silent no-op; applied to an empty DB with no catalogs schema = skip, exit 0, no RAISE (fresh-CI safe). GUARD: verify-step 1520 — FAILS on origin/main with 12 issues (6 per table: no ENABLE RLS, no FORCE RLS, no SELECT policy, no INSERT policy, no UPDATE policy, no REVOKE DELETE), passes post-fix, selftest catches 9 mutations. It also pins the ANTI-OUTAGE half: it fails if any future migration adds operating_company_id or an app.operating_company_id predicate to either table, so the scoping mistake cannot be made later. SCOPE NOTE: catalogs.cancellation_reasons is named in the LST-RLS-01 audit but deliberately excluded — it is the legacy load-cancel catalog being retired by LST-LINK-01 / 202607940000 on another in-flight branch, and securing it here would clash. CI: locked-guards PASS (that is what executes the ~250 verify-steps incl. 1520), required-checks-gate PASS, rls-migration-scan PASS. hold-merge-gate FAILS BY DESIGN — PROTECTED until JORGE-APPROVED. UNVERIFIED: everything about prod. No DB access; no prod row count, RLS state or grant is claimed. Owner Neon-applies, then ledger-backfills.",
+      "evidence": "CLOSED 2026-07-29: migration 202608100000 applied_held + applied_on_prod:true (owner #3549). LIVE Neon: catalogs.account_types + wo_cancellation_reasons both relrowsecurity+relforcerowsecurity true, 3 policies each, 0 DELETE policies, ih35_app INSERT/SELECT/UPDATE only. WRITE-AUTHZ ONLY (global catalogs — not entity-scoping). Guard verify-lst-rls01-global-catalog-write-authz-closed (step 1780). | BUILT AND HELD 2026-07-25 as #3549 — stays FAIL until the owner Neon-applies it. Migration 202608100000_lst_rls_01_global_catalog_write_authz.sql, registered HELD without applied_on_prod (absence = not-applied). VERDICT — both tables are SHARED-CANONICAL/GLOBAL, so this is WRITE-AUTHZ ONLY and deliberately NOT entity scoping. catalogs.account_types (202606080010:16-27) and catalogs.wo_cancellation_reasons (202606221200:31-37) have NO operating_company_id, RLS OFF, ZERO policies. 202607011700:5-13 states the locked model verbatim: account_types is a GLOBAL reference and the entity boundary sits on detail_types.operating_company_id, not on the shared type. Company-scoping all-NULL rows under FORCE RLS would return ZERO rows and break account-type-catalog.routes.ts:70-83, whose join already reads dt.operating_company_id IS NULL OR = $1 precisely because the parent is shared. Choosing scoping here would have been an outage, not a fix. WHAT WAS ACTUALLY EXPOSED, proved pre-fix in a throwaway container as a Dispatcher-role session: INSERT of a rogue account type succeeded; UPDATE HIJACKED the BANK type; DELETE destroyed a WO reason and an account type. Both tables were fully writable and deletable by any role. EXTRA DEFECT FOUND: catalogs carries ALTER DEFAULT PRIVILEGES granting DELETE to ih35_app (0065:48, 0116:45-46), and both tables were created after those ran — so DELETE reached account_types even though its own GRANT never names it. A narrower GRANT cannot fix that; the migration REVOKEs DELETE explicitly. Same landmine documented at 202607420000:80-82. POST-FIX in-container: RLS enabled AND forced, 3 policies each, ZERO delete policies, effective privs INSERT,SELECT,UPDATE. Dispatcher INSERT and DELETE blocked; owner INSERT/UPDATE allowed, owner DELETE blocked; lucia bypass reads. NO READ REGRESSION — counts identical pre/post and the detail_types FK insert still succeeds across FORCE RLS. Applied twice = silent no-op; applied to an empty DB with no catalogs schema = skip, exit 0, no RAISE (fresh-CI safe). GUARD: verify-step 1520 — FAILS on origin/main with 12 issues (6 per table: no ENABLE RLS, no FORCE RLS, no SELECT policy, no INSERT policy, no UPDATE policy, no REVOKE DELETE), passes post-fix, selftest catches 9 mutations. It also pins the ANTI-OUTAGE half: it fails if any future migration adds operating_company_id or an app.operating_company_id predicate to either table, so the scoping mistake cannot be made later. SCOPE NOTE: catalogs.cancellation_reasons is named in the LST-RLS-01 audit but deliberately excluded — it is the legacy load-cancel catalog being retired by LST-LINK-01 / 202607940000 on another in-flight branch, and securing it here would clash. CI: locked-guards PASS (that is what executes the ~250 verify-steps incl. 1520), required-checks-gate PASS, rls-migration-scan PASS. hold-merge-gate FAILS BY DESIGN — PROTECTED until JORGE-APPROVED. UNVERIFIED: everything about prod. No DB access; no prod row count, RLS state or grant is claimed. Owner Neon-applies, then ledger-backfills. RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): pg_policy read on br-fancy-credit-akjnd07a confirms catalogs.account_types and catalogs.wo_cancellation_reasons both still relrowsecurity=true, relforcerowsecurity=true, 3 policies each, 0 DELETE policies today -- the CLOSED/applied state (not the earlier HELD/UNVERIFIED text also present in this evidence blob from before the migration was applied) is what live prod actually shows.",
       "pr": "#3549",
       "owner_hold": false,
       "tracker": null,
@@ -620,7 +628,9 @@
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
       "live_proof": "2026-07-29 Neon account_types+wo_cancellation_reasons FORCE RLS policies=3 delete_pols=0 ih35_app INSERT,SELECT,UPDATE",
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:10:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-LINK-02",
@@ -703,7 +713,7 @@
       ],
       "spec": "Lists hub domain map",
       "status": "PASS",
-      "evidence": "CLOSED 2026-07-29: ROOT CAUSE 0066 seed ineffective under FORCE RLS (0 rows). FIX migration 202610211200 RLS-safe reseed (ih35_app+opco GUC+RESET ROLE) + agent Neon apply. LIVE Neon lucia TRANSP/USMCA/TRK: work_order_statuses=5, priority=5, labor=5, failure=5, tasks=5, shops=5 each. Guard verify-lst-maint01-reseed-rls-safe (step 1778). catalogs.parts/oem_parts remain separate shapes (not this FAIL).",
+      "evidence": "CLOSED 2026-07-29: ROOT CAUSE 0066 seed ineffective under FORCE RLS (0 rows). FIX migration 202610211200 RLS-safe reseed (ih35_app+opco GUC+RESET ROLE) + agent Neon apply. LIVE Neon lucia TRANSP/USMCA/TRK: work_order_statuses=5, priority=5, labor=5, failure=5, tasks=5, shops=5 each. Guard verify-lst-maint01-reseed-rls-safe (step 1778). catalogs.parts/oem_parts remain separate shapes (not this FAIL). RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): work_order_statuses and maintenance_labor_codes hold exactly 5/5/5 across TRANSP/TRK/USMCA unchanged; maintenance_failure_codes/maintenance_priority_levels/maintenance_service_tasks/maintenance_shop_locations hold 5/5 for TRANSP/TRK and 6 for USMCA (one extra TEST/fixture row each, consistent with the same known CREATE-TEST-THEN-VOID growth pattern seen on catalogs.equipment_types this pass, not a reseed regression).",
       "pr": "#3783",
       "owner_hold": false,
       "tracker": null,
@@ -765,7 +775,9 @@
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
       "live_proof": "2026-07-29 Neon lucia TRANSP/USMCA/TRK wo_st=pri=labor=fail=tasks=shops=5",
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:10:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-PICKER-01",
