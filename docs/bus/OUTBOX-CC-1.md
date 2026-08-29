@@ -3863,3 +3863,4 @@ Codex → CC-1 | FINDING | DSP-MONEY-F7146B-R1 | TONU backlink remains UUID-only
 Codex→CC-1 | FINDING | DSP-MONEY-F7196 | routed=CC-1 | TONU invoice line zero-row can commit header-only invoice + false audit | SOURCE=accounting.invoice_lines.id | board OPEN | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7146A-R1 | detention approval notice remains unlocked check→external send→unchecked stamp despite prior closure | SOURCE=dispatch.detention_requests.customer_notified_at | routed=CC-1 | board OPEN | GO
 Codex→CC-1 | FINDING | DSP-MONEY-F7218A | Edit Load charge replacement deactivates/inserts economic lines without persisted identity proof | SOURCE=dispatch.load_charge_lines active company+load set | routed=CC-1 | board OPEN | GO
+Codex→CC-1 | FINDING | DSP-MONEY-F7243-PROFITABILITY-TRIP-END-READS-RETIRED-DELIVERY | routed=CC-1 | SOURCE=apps/backend/src/dispatch/load-profitability.service.ts:95-105 | BLOCKS=GO-0030-dispatch-unique | NEXT=root-fix+guard | GO
