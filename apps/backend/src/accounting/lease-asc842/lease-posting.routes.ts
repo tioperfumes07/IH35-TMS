@@ -96,7 +96,7 @@ const leaseIdParams = z.object({ lease_id: z.string().uuid() });
 export async function registerLeasePostingRoutes(app: FastifyInstance) {
   // ── Subledger lifecycle (data-model writes; no GL posting) ─────────────────────────────────────────
   // Create a lessor lease contract (+ classification). Election defaults to OPERATING (owner lock).
-  app.post("/api/v1/accounting/lease-posting/leases", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/leases", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -137,7 +137,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // Attach a leased asset (FK fixed_assets + unit) to a contract.
-  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/assets", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/assets", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -169,7 +169,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // Generate (or regenerate) the period schedule from the contract totals.
-  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/schedule", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/schedule", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -193,7 +193,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // Activate a lease (draft -> active) and post period-1 ASC 842 operating entries when flag ON.
-  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/activate", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/leases/:lease_id/activate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -225,7 +225,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // READ-ONLY lease detail: contract + asset lines + schedule (forward/reverse connectivity view).
-  app.get("/api/v1/accounting/lease-posting/leases/:lease_id", async (req, reply) => {
+  app.get("/api/v1/accounting/lease-posting/leases/:lease_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -279,7 +279,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
 
   // ── GL posting (flag-gated; OFF => { result: "skipped_flag_off" }, zero JEs) ───────────────────────
   // OPERATING — post one period's rental income (Dr cash-like / Cr rental_income).
-  app.post("/api/v1/accounting/lease-posting/operating/rental", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/operating/rental", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -303,7 +303,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // OPERATING — post the end-of-term SALE (reuses accounting.fixed_asset_disposals).
-  app.post("/api/v1/accounting/lease-posting/operating/end-of-term-sale", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/operating/end-of-term-sale", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -327,7 +327,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // SALES-TYPE — post commencement (derecognition + lease receivable + selling P/L).
-  app.post("/api/v1/accounting/lease-posting/sales-type/commencement", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/sales-type/commencement", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -351,7 +351,7 @@ export async function registerLeasePostingRoutes(app: FastifyInstance) {
   });
 
   // SALES-TYPE — post one period (Dr cash / Cr lease receivable principal / Cr interest_income).
-  app.post("/api/v1/accounting/lease-posting/sales-type/interest", async (req, reply) => {
+  app.post("/api/v1/accounting/lease-posting/sales-type/interest", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

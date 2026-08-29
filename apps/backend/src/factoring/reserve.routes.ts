@@ -23,7 +23,7 @@ const forecastQuerySchema = companyQuerySchema.extend({
 });
 
 export async function registerReserveRoutes(app: FastifyInstance) {
-  app.get("/api/v1/factoring/reserves/balances", async (req, reply) => {
+  app.get("/api/v1/factoring/reserves/balances", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -37,7 +37,7 @@ export async function registerReserveRoutes(app: FastifyInstance) {
     return { balances };
   });
 
-  app.get("/api/v1/factoring/reserves/:factorId/history", async (req, reply) => {
+  app.get("/api/v1/factoring/reserves/:factorId/history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -63,7 +63,7 @@ export async function registerReserveRoutes(app: FastifyInstance) {
     return history;
   });
 
-  app.get("/api/v1/factoring/reserves/:factorId/forecast", async (req, reply) => {
+  app.get("/api/v1/factoring/reserves/:factorId/forecast", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
