@@ -23,7 +23,9 @@
       "status": "PASS",
       "evidence": "PASS 2026-08-09 — LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "LEGAL-S02",

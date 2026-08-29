@@ -95,7 +95,9 @@
       "status": "PASS",
       "evidence": "LIVE browser 2026-07-30 TRANSP: /banking Home — tiles (Platinum/6103/6129/6137/Relay), Factoring·Escrow never-delete cards, + Record Transfer, View Transfers, Uncategorized 5676 KPI, Plaid sync status, Cash GL setup, Email Queue. Account detail via account buttons. Structural guards 1465/1439. USMCA switcher available. VERIFY 1–8 click-through closed for Home+detail chrome. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking Home renders live — Plaid sync status, account tiles (USMCA FREIGHT/Relay Fuel Wallet/Factoring Reserve/Driver Escrow Pool/Cash Advance Pool), Bank Accounts table, Factoring · Virtual Bank card, Driver Escrow Visualizer, Plaid Connections panel. Account detail confirmed via drill-in. Full click-through this GO-0023 pass, no console errors.",
       "pr": "#PENDING-ACCT-CLOSE",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "BANK-SURF-02",
