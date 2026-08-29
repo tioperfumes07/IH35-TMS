@@ -2261,3 +2261,5 @@ CODEX | SHIPPED | GUARD-F7307 | PR=#17556 @ 6b71eee832 | gate=exit0 | Built=flee
 CODEX | WORKING | GUARD-F7308 | GO-0055 | CLAIM=HOS partial-fleet failure guard honesty | NEXT=FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7308 | PR=#17557 @ 0f1664e366 | gate=exit0 | Built=HOS failure exclusion 16/16 | NEXT=GUARD-F7309 | GO
 CODEX | WORKING | GUARD-F7309 | GO-0055 | CLAIM=Safety alias active-tab resolver guard honesty | NEXT=FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7309 | PR=#17558 @ 82db10dfb3 | gate=exit0 | Built=Safety alias reachability 6 planted defects | NEXT=GUARD-F7310 | GO
+CODEX | WORKING | GUARD-F7310 | GO-0055 | CLAIM=Loves atomic scoped upsert guard honesty | NEXT=FAST-MERGE | GO
