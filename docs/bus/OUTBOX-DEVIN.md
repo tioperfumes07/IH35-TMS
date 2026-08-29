@@ -1,4 +1,6 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=1ee1372 | SHIPPED PR #17346 | FIXED: LST-F9112 — Two bill GL draft routes lacked config.rateLimit: POST /bills/draft-je-preview (JE preview) and POST /bills/:id/post-gl (GL posting). Both authenticated, touch financial rows, never throttled. Added 60/min preview, 30/min post. Ratchet 317→315. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+
 DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=2a8da63 | SHIPPED PR #17345 | FIXED: LST-F9111 — Two expense mutation routes lacked config.rateLimit: POST /expenses/:expenseId/post (GL posting) and POST /expenses/:expenseId/void (void/reversal). Both authenticated, mutate financial rows, never throttled. Added 30/min. Ratchet 319→317. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 
 DEVIN | GO-0028 | vendors-VEND-S01-USMCA-123 | SHA=7c1f53e | SHIPPED PR #17341 | FIXED: LST-F9110 — Bill payments list route GET /api/v1/accounting/bills/:id/payments lacked config.rateLimit. All sibling bill routes had limits. Added 120/min (matches sibling reads). Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
