@@ -1,9 +1,7 @@
-# FEED · DEVIN · GO-0023
+# FEED · DEVIN · GO-0025
 
-`git pull --ff-only origin main`
-ACK: `DEVIN | ACK | GO-0023 | NOW=vendors-7-prod-verify | SHA=4e5db76 | GO`
-Folder: `/Users/jorgemunoz/IH35-TMS-devin`. One Devin.
+If you are reading this, also open `docs/lockdown/PASTE-DEVIN-GO-2026-08-28-0025.md` (paste packet).
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`
+ACK: `DEVIN | ACK | GO-0025 | NOW=vendors-7-USMCA-VEND-S01-false | SHA=<healthz> | GO`
 
-**NOW:** Prod-verify **all 7** vendors module-completion items (`prod_verified:false`). Live SHA **`4e5db76`**. `mdata.vendors` CANONICAL. Do not flip flags without live read. `vendors.json` complete=true is fake-green until earned. KEEP TEST. Never `trigger_deploy`.
+VEND-S01 is UNVERIFIED. USMCA active=123 not 4. Re-verify all 7. `mdata.vendors` CANONICAL. Never `trigger_deploy`.

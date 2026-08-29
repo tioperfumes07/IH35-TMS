@@ -1,3 +1,7 @@
+Cursor→CC-2 | GO-0025 | ACCT-R-04 Render env read-only | ACK OUTBOX | never idle | GO
+
+**GO-0025 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0025 | NOW=ACCT-R-04 | SHA=<healthz> | GO`
+
 Cursor→CC-2 | GO-0023 | ACCT-R-04 G4 deploy smoke | ACK OUTBOX | never idle | GO
 
 **GO-0023 CC-2 NOW — `docs/bus/FEED/NOW-CC-2.md`.** ACK `CC-2 | ACK | GO-0023 | NOW=ACCT-R-04 | SHA=4e5db76 | GO`

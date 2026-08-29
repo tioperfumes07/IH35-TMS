@@ -77,14 +77,32 @@ export function qualifiesHold(item) {
   );
 }
 
+/** Urgent-6 launch modules — PASS without prod_verified does not count toward N or complete:true. */
+export const URGENT_6_COMPLETION_IDS = new Set([
+  "accounting",
+  "banking",
+  "settlements",
+  "factoring",
+  "dispatch",
+  "vendors",
+]);
+
+export function itemCountsTowardN(item, moduleId) {
+  if (qualifiesHold(item)) return true;
+  if (item.status !== "PASS") return false;
+  if (URGENT_6_COMPLETION_IDS.has(moduleId) && item.prod_verified !== true) return false;
+  return true;
+}
+
 export function scoreManifest(data) {
   const items = Array.isArray(data.items) ? data.items : [];
+  const moduleId = typeof data.module === "string" ? data.module : "";
   const M = items.length;
   let N = 0;
   for (const it of items) {
-    if (it.status === "PASS" || qualifiesHold(it)) N += 1;
+    if (itemCountsTowardN(it, moduleId)) N += 1;
   }
-  const open = items.filter((it) => !["PASS"].includes(it.status) && !qualifiesHold(it));
+  const open = items.filter((it) => !itemCountsTowardN(it, moduleId));
   return { N, M, open, progress: `${N} of ${M}` };
 }
 
@@ -309,6 +327,7 @@ if (isMain && SELFTEST) {
     spec: "s",
     status: "PASS",
     evidence: "e",
+    prod_verified: true,
   });
   const bad = {
     module: "accounting",
@@ -389,6 +408,22 @@ if (isMain && SELFTEST) {
   const cleanComplete = assertManifestShape("banking.json", allPassTrue, { openWaveIds: [] });
   if (cleanComplete.length) {
     failures.push(`all-PASS+no-wave+complete:true should be clean, got: ${cleanComplete.join("; ")}`);
+  }
+
+  const u6Theater = assertManifestShape(
+    "banking.json",
+    {
+      module: "banking",
+      complete: true,
+      items: [
+        { ...passItem("BANK-ECON-01"), prod_verified: false },
+        passItem("BANK-CLS-SHARED"),
+      ],
+    },
+    { openWaveIds: [] }
+  );
+  if (!u6Theater.some((x) => x.includes("complete:true ILLEGAL"))) {
+    failures.push("Urgent-6 PASS without prod_verified still allowed complete:true");
   }
 
   const emptyP = assertLiveVerifiedStamps({

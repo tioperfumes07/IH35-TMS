@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { resolveApiUrl } from "../../api/client";
+import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  MODULE_COMPLETION,
   FIRST_14_MODULE_IDS,
   U14_EXCLUSIVE_ROWS,
+  type ModuleCompletion,
   type ModuleCompletionItem,
   type ModuleCompletionProof,
   type U14ExclusiveRow,
@@ -16,16 +20,29 @@ import { U14ExclusiveStatusBanner } from "./U14ExclusiveStatusBanner";
 
 type ProofFilter = "all" | ModuleCompletionProof | "undefined";
 
-// Module Completion — the build scoreboard, in the product.
+type LiveBoard = {
+  served_sha: string;
+  served_at: string;
+  source: string;
+  modules: ModuleCompletion[];
+};
+
+async function fetchModuleCompletionBoard(): Promise<LiveBoard> {
+  const r = await fetch(resolveApiUrl("/api/v1/program/module-completion"), {
+    credentials: "include",
+  });
+  if (!r.ok) {
+    throw new Error(`module-completion ${r.status}`);
+  }
+  return r.json() as Promise<LiveBoard>;
+}
+
+// Module Completion — Rule 24 N of M.
 //
-// docs/module-completion/*.json has been the source of truth for "N of M" per module and is enforced
-// in CI, but nothing in the app read it. The only way to see whether a module was advancing was to run
-// a script, so months of work were invisible from the screen. Progress you cannot see reads as no
-// progress. This surfaces it: every module, how many of its acceptance items pass, and exactly which
-// ones are still open.
-//
-// Additive: a new route under the existing Program module. No sidebar item is added, so the locked
-// sidebar count is untouched.
+// Manifests live in docs/module-completion/*.json. The generated TS file is gitignored and baked
+// into the static frontend at Vite build — that froze /program to the SPA SHA. This page fetches
+// GET /api/v1/program/module-completion so numbers follow the API process (healthz version).
+// PROG-01 snapshot table is not this path and is not started (migration 202613270000 waits Jorge).
 //
 // Proof law (2026-08-04): complete:true / all-PASS is CODE-VERIFIED only. CERTIFIED (navy solid)
 // requires every item prod_verified:true after a live GUARD click. Never paint complete:true as
@@ -64,9 +81,9 @@ function labelFor(id: string): string {
     .join(" ");
 }
 
-function buildRows(ids: readonly string[]): ModuleRow[] {
+function buildRows(ids: readonly string[], modules: ModuleCompletion[]): ModuleRow[] {
   return ids.map((id) => {
-    const m = MODULE_COMPLETION.find((x) => x.id === id);
+    const m = modules.find((x) => x.id === id);
     return {
       id,
       label: labelFor(id),
@@ -187,16 +204,22 @@ export function ModuleCompletionPage() {
     empty: { proofFilter: "all" as ProofFilter },
     onApply: (next) => setProofFilter(next.proofFilter),
   });
+  const live = useQuery({
+    queryKey: ["program", "module-completion"],
+    queryFn: fetchModuleCompletionBoard,
+    refetchInterval: 60_000,
+  });
 
   const rows = useMemo(() => {
+    const modules = live.data?.modules ?? [];
     const ids =
       scope === "first14"
         ? FIRST_14_MODULE_IDS
         : scope === "u14"
           ? U14_EXCLUSIVE_ROWS.map((r) => r.completionId)
           : [...SIDEBAR_ITEM_IDS];
-    return buildRows(ids);
-  }, [scope]);
+    return buildRows(ids, modules);
+  }, [scope, live.data]);
 
   const filteredRows = useMemo(() => {
     if (proofFilter === "all") return rows;
@@ -307,8 +330,17 @@ export function ModuleCompletionPage() {
         This is Rule 24&apos;s <b>N of M</b> checklist from <code>docs/module-completion/*.json</code> — CI
         items, not USMCA launch. <b>Code-verified</b> = repo/CI says the item passed. <b>Certified</b> =
         GUARD live-clicked it. Launch 100% is Module matrix Box 1–4 + money on USMCA, then Scenario
-        tracker. Frozen TRANSP/TRK rows here are historical.
+        tracker. Frozen TRANSP/TRK rows here are historical. This table is loaded from{" "}
+        <code>GET /api/v1/program/module-completion</code> on the running API (
+        <code>served_sha={live.data?.served_sha ?? "…"}</code>
+        ), not from the gitignored Vite bundle.
       </p>
+      {live.isError ? (
+        <ListErrorBanner
+          message={userFacingApiError(live.error, "Could not load module completion from the API.")}
+          onRetry={() => void live.refetch()}
+        />
+      ) : null}
       <U14ExclusiveStatusBanner testId="module-completion-u14-banner" />
 
       <div className="flex items-center gap-2">

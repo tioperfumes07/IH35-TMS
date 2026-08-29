@@ -1,3 +1,7 @@
+Cursor→Devin-A | GO-0025 | unique FINDING | vendors = DEVIN paste | ACK OUTBOX | GO
+
+**GO-0025 DEVIN-A NOW — `docs/bus/FEED/NOW-DEVIN-A.md`.** ACK `DEVIN-A | ACK | GO-0025 | NOW=unique-FINDING-live-healthz | SHA=<healthz> | GO`
+
 **GO-0023 DEVIN-A VOID.** Read `NOW-DEVIN.md`. Never trigger_deploy.
 
 **GO-0022 DEVIN-A VOID.** One Devin. Read `docs/bus/FEED/NOW-DEVIN.md`. Never trigger_deploy.

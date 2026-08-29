@@ -7,8 +7,9 @@
  * only way to see whether a module was advancing was to run a script. Progress that cannot be seen
  * reads as no progress.
  *
- * This copies them into the frontend bundle as a typed module. Generated, never hand-edited; a guard
- * (verify-module-completion-ui-in-sync) fails CI if the generated file drifts from the manifests.
+ * Types + FIRST_14 / U14 law table still generate here (gitignored TS). The in-app Module Completion
+ * page MUST fetch GET /api/v1/program/module-completion at runtime so /program is not frozen to the
+ * frontend static-build SHA. Do not re-commit apps/frontend/src/generated/module-completion.ts.
  *
  *   node scripts/generate-module-completion-data.mjs           # write
  *   node scripts/generate-module-completion-data.mjs --check    # verify in sync (exit 1 on drift)
@@ -19,7 +20,7 @@ import { fileURLToPath } from "node:url";
 // Import the CANONICAL scoring rule rather than re-implementing it. An earlier draft of this
 // generator counted only PASS and reported accounting as 17 of 31 while CI reported 19 of 31 — the
 // in-app scoreboard would have contradicted the guard on day one. There is one definition of done.
-import { qualifiesHold } from "./verify-module-completion.mjs";
+import { itemCountsTowardN } from "./verify-module-completion.mjs";
 
 // ALWAYS resolve from this script's location — never process.cwd(). Frontend package.json runs
 // `node ../../scripts/generate-…` from apps/frontend; cwd-relative paths then look for
@@ -90,9 +91,9 @@ export const FIRST_14 = [
   "compliance", "drivers", "fleet", "insurance", "legal", "eld", "cash-flow",
 ];
 
-/** A HOLD item counts toward N only when it is an owner-gated hold — verify-module-completion's rule. */
-function countsAsDone(item) {
-  return item.status === "PASS" || qualifiesHold(item);
+/** Same N-of-M rule as verify-module-completion (Urgent-6 requires prod_verified). */
+function countsAsDone(item, moduleId) {
+  return itemCountsTowardN(item, moduleId);
 }
 
 /**
@@ -140,7 +141,7 @@ export function buildData() {
       // Default false — only GUARD after a live Neon click may set true in the JSON.
       prod_verified: i.prod_verified === true,
     }));
-    const done = items.filter(countsAsDone).length;
+    const done = items.filter((i) => countsAsDone(i, raw.module)).length;
     const total = items.length;
     const prodVerifiedCount = mapped.filter((i) => i.prod_verified).length;
     modules.push({
