@@ -1,7 +1,7 @@
 {
   "meta": {
-    "generatedAt": "2026-08-29T10:37:03-05:00",
-    "sourceSha": "2f53cc08e5",
+    "generatedAt": "2026-08-29T11:05:18-05:00",
+    "sourceSha": "7c417c33e",
     "deployedSha": "14daeed",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2145,
@@ -2121,12 +2121,39 @@
   },
   "recentActivity": [
     {
+      "number": 17571,
+      "title": "FINDING: ACL-PARSE-50100-SCOREBOARD-STALE",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 11:05 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17571",
+      "sha": "7c417c33e",
+      "committedAtIso": "2026-08-29T11:05:18-05:00"
+    },
+    {
+      "number": 17569,
+      "title": "FINDING: DRV-S01-DRIVERS-ROSTER-PROVEN-LIVE",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 11:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17569",
+      "sha": "1f8ad2f17",
+      "committedAtIso": "2026-08-29T11:03:30-05:00"
+    },
+    {
+      "number": 17570,
+      "title": "Claude-1-VEND-LINK-01: guard/manifest-integrity reconciliation (3 manifests)",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 11:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17570",
+      "sha": "b74ab8003",
+      "committedAtIso": "2026-08-29T11:02:49-05:00"
+    },
+    {
       "number": 0,
       "title": "CC-3: GO-0057 done, PR #17566 live-verified",
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:59 AM CT",
       "url": "",
-      "sha": "1ea0aa4e0a",
+      "sha": "1ea0aa4e0",
       "committedAtIso": "2026-08-29T10:59:38-05:00"
     },
     {
@@ -2135,7 +2162,7 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:54 AM CT",
       "url": "",
-      "sha": "14daeeda2f",
+      "sha": "14daeeda2",
       "committedAtIso": "2026-08-29T10:54:09-05:00"
     },
     {
@@ -2144,7 +2171,7 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:54 AM CT",
       "url": "",
-      "sha": "8394f58857",
+      "sha": "8394f5885",
       "committedAtIso": "2026-08-29T10:54:03-05:00"
     },
     {
@@ -2153,7 +2180,7 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:53 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17564",
-      "sha": "e3324eecba",
+      "sha": "e3324eecb",
       "committedAtIso": "2026-08-29T10:53:52-05:00"
     },
     {
@@ -2162,7 +2189,7 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:53 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17568",
-      "sha": "bf834d4abd",
+      "sha": "bf834d4ab",
       "committedAtIso": "2026-08-29T10:53:21-05:00"
     },
     {
@@ -2171,7 +2198,7 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:53 AM CT",
       "url": "",
-      "sha": "a1e4ea9b71",
+      "sha": "a1e4ea9b7",
       "committedAtIso": "2026-08-29T10:53:15-05:00"
     },
     {
@@ -2180,35 +2207,8 @@
       "state": "merged",
       "mergedAtCt": "08/29/2026, 10:51 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17567",
-      "sha": "2b406c4764",
+      "sha": "2b406c476",
       "committedAtIso": "2026-08-29T10:51:49-05:00"
-    },
-    {
-      "number": 0,
-      "title": "DEVIN drain: ACK PR #17565 merged — LST-F9138 admin/banking/lists/legal/insurance rate limits (60+ routes)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:50 AM CT",
-      "url": "",
-      "sha": "cce42beaf8",
-      "committedAtIso": "2026-08-29T10:50:46-05:00"
-    },
-    {
-      "number": 17566,
-      "title": "FINDING: SAFETY-INTEGRITY-REPORTS-DRIVER-VENDOR-TAB-BAR-MISSING (#N/A)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17566",
-      "sha": "9b885dda99",
-      "committedAtIso": "2026-08-29T10:50:38-05:00"
-    },
-    {
-      "number": 17565,
-      "title": "FINDING: LST-F9138",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17565",
-      "sha": "f5270fa926",
-      "committedAtIso": "2026-08-29T10:50:27-05:00"
     }
   ]
 }
