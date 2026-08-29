@@ -737,6 +737,10 @@ export async function upsertCustomerNotifyPreferences(
         patch.notify_on_delayed ?? null,
       ],
     );
+    const preferences = res.rows[0];
+    if (!preferences?.customer_id) {
+      throw new Error("E_NOTIFY_PREFERENCES_WRITE_FAILED");
+    }
 
     await appendCrudAudit(
       client,
@@ -751,7 +755,7 @@ export async function upsertCustomerNotifyPreferences(
       "B21-D9",
     );
 
-    return { preferences: res.rows[0] };
+    return { preferences };
   });
 }
 
