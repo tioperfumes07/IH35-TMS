@@ -15,6 +15,9 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/assigned_unit_id/.test(s.service) || !/const unitId = body\.unit_id \?\? load\.assigned_unit_id/.test(s.service)) failures.push("writer must derive unit FK from selected load assignment");
+  if (!/assigned_secondary_driver_id/.test(s.service) || !/assignedDriverIds = \[load\.assigned_primary_driver_id, load\.assigned_secondary_driver_id\]\.filter\(Boolean\)/.test(s.service)) failures.push("writer must enumerate both canonical load drivers");
+  if (!/body\.driver_id && !assignedDriverIds\.includes\(body\.driver_id\)[\s\S]*driver_not_assigned_to_load/.test(s.service)) failures.push("explicit driver override must belong to the selected load");
+  if (!/body\.unit_id && body\.unit_id !== load\.assigned_unit_id[\s\S]*unit_not_assigned_to_load/.test(s.service)) failures.push("explicit unit override must equal the selected load assignment");
   if (!/if \(!driverId \|\| !unitId\) return \{ ok: false as const, error: "load_missing_assignment" \}/.test(s.service)) failures.push("writer must reject missing derived assignment");
   if (!/issue_unit_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.route) || !/unit_id:\s*query\.data\.issue_unit_id/.test(s.route)) failures.push("exact unit filter route contract missing");
   if (!/unit_id\?: string/.test(s.service) || !/i\.unit_id = \$\$\{values\.length\}::uuid/.test(s.service)) failures.push("exact server-side unit filter missing");
@@ -29,6 +32,9 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     ["derive", "service", /const unitId = body\.unit_id \?\? load\.assigned_unit_id/, "const unitId = body.unit_id"],
     ["assignment", "service", /if \(!driverId \|\| !unitId\) return \{ ok: false as const, error: "load_missing_assignment" \}/, ""],
+    ["secondary-driver", "service", /assigned_secondary_driver_id/g, "missing_secondary_driver_id"],
+    ["driver-continuity", "service", /!assignedDriverIds\.includes\(body\.driver_id\)/, "false"],
+    ["unit-continuity", "service", /body\.unit_id !== load\.assigned_unit_id/, "false"],
     ["route", "route", /unit_id:\s*query\.data\.issue_unit_id/, "unit_id: undefined"],
     ["filter", "service", /i\.unit_id = \$\$\{values\.length\}::uuid/, "TRUE"],
     ["api", "api", /q\.set\("issue_unit_id", filters\.unit_id\)/, 'q.set("status", filters.unit_id)'],

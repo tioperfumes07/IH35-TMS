@@ -278,12 +278,20 @@ export async function createOfficeIntransitIssue(
 ) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
-    const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null }>(
-      `SELECT id, assigned_unit_id, assigned_primary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
+    const loadRes = await client.query<{ id: string; assigned_unit_id: string | null; assigned_primary_driver_id: string | null; assigned_secondary_driver_id: string | null }>(
+      `SELECT id, assigned_unit_id, assigned_primary_driver_id, assigned_secondary_driver_id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1`,
       [body.load_id, operatingCompanyId]
     );
     const load = loadRes.rows[0];
     if (!load) return { ok: false as const, error: "load_not_found" };
+
+    const assignedDriverIds = [load.assigned_primary_driver_id, load.assigned_secondary_driver_id].filter(Boolean);
+    if (body.driver_id && !assignedDriverIds.includes(body.driver_id)) {
+      return { ok: false as const, error: "driver_not_assigned_to_load" as const };
+    }
+    if (body.unit_id && body.unit_id !== load.assigned_unit_id) {
+      return { ok: false as const, error: "unit_not_assigned_to_load" as const };
+    }
 
     const driverId = body.driver_id ?? load.assigned_primary_driver_id;
     const unitId = body.unit_id ?? load.assigned_unit_id;
