@@ -201,7 +201,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
   },
   );
 
-  app.get("/api/v1/factoring/chargebacks-fees", async (req, reply) => {
+  app.get("/api/v1/factoring/chargebacks-fees", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = chargebacksFeesQuerySchema.safeParse(req.query ?? {});
@@ -332,7 +332,7 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
   }
   );
 
-  app.post("/api/v1/factoring/deactivate", async (req, reply) => {
+  app.post("/api/v1/factoring/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden_owner_only" });
