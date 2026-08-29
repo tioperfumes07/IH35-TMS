@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "../shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "../shared.js";
 import { calculatePerTruckCpm } from "./cpm-calculator.service.js";
 
 const querySchema = companyQuerySchema.extend({
@@ -14,6 +14,7 @@ export async function registerPerTruckCpmRoutes(app: FastifyInstance) {
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    if (parsed.data.from > parsed.data.to) return dateRangeOrderError(reply, "from", "to");
 
     const { operating_company_id: companyId, from, to } = parsed.data;
     const rows = await withCompanyScope(user.uuid, companyId, async (client) =>
