@@ -6746,5 +6746,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-factoring-package-popup-block-honesty"
+  },
+  "10033": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-package-metadata-failures-caught"
   }
 }
