@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-08-29T16:39:59.250Z",
+  "generatedAt": "2026-08-29T16:57:41.472Z",
   "law": "docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md",
-  "claims": 87,
-  "bound": 15,
-  "unbound": 72,
-  "baseline": 72,
+  "claims": 96,
+  "bound": 18,
+  "unbound": 78,
+  "baseline": 78,
   "exclusiveBuckets": {
     "neon": 17,
     "http": 35,
-    "browser": 20,
-    "prose": 0
+    "browser": 19,
+    "prose": 7
   },
   "machineRecheckable": 52,
   "items": {
@@ -458,12 +458,6 @@
         "httpPaths": []
       },
       {
-        "id": "BANK-CTRL-01",
-        "module": "banking",
-        "inBaseline": true,
-        "httpPaths": []
-      },
-      {
         "id": "BANK-F08",
         "module": "banking",
         "inBaseline": true,
@@ -530,6 +524,49 @@
         "httpPaths": []
       }
     ],
-    "prose": []
+    "prose": [
+      {
+        "id": "BANK-ECON-01",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-ECON-02",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-ECON-05",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-LINK-01",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-GATE-01",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-F10",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      },
+      {
+        "id": "BANK-CLS-SHARED",
+        "module": "banking",
+        "inBaseline": true,
+        "httpPaths": []
+      }
+    ]
   }
 }

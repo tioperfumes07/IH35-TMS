@@ -6,13 +6,15 @@
  *
  *   node scripts/ops/recheck-prod-verified-http.mjs
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const CLASS = path.join(ROOT, "docs/module-completion/PROD-VERIFIED-EVIDENCE-CLASS.json");
+const OUT = path.join(ROOT, "docs/module-completion/PROD-VERIFIED-HTTP-RECHECK.json");
 const BASE = process.env.IH35_API_BASE || "https://api.ih35dispatch.com";
+const WRITE = process.argv.includes("--write");
 
 const doc = JSON.parse(readFileSync(CLASS, "utf8"));
 const paths = new Map();
@@ -43,4 +45,11 @@ for (const p of [...paths.keys()].sort()) {
 
 const tally = {};
 for (const r of rows) tally[r.status] = (tally[r.status] || 0) + 1;
-console.log(JSON.stringify({ base: BASE, uniquePaths: rows.length, tally, rows }, null, 2));
+const report = { base: BASE, uniquePaths: rows.length, tally, rows };
+const text = JSON.stringify(report, null, 2) + "\n";
+if (WRITE) {
+  writeFileSync(OUT, text);
+  console.log(`wrote ${path.relative(ROOT, OUT)} paths=${rows.length}`);
+} else {
+  process.stdout.write(text);
+}

@@ -20,8 +20,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "FAIL",
-      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/loves-sync/status. Prior: Route /fuel registered as ProtectedRoute wrapping FuelTabRoute tabId=home \u2192 FuelPlannerHomePage \u2192 FuelHomePage; FuelPlannerHomePage and FuelHomePage both guard against missing operating company with honest empty state; FuelHomePage fetches /api/v1/fuel/planner/dashboard and /api/v1/fuel/loves-sync/status with operating_company_id; fraud and overage KPI cards fetch entity-scoped summaries; dashboard errors use ListErrorBanner with retry; all queries enabled only when companyId is present. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "ROUTE CONTRACT CORRECTED 2026-08-29 on live SHA 14daeed: CURRENT-HTTP /api/v1/fuel/planner/dashboard and /api/v1/sync/loves/status both return HTTP 401 unauthenticated (mounted/auth-protected). The earlier fuel/loves-sync citation was historical prose and is not called by current code. prod_verified remains false until GUARD performs authenticated Live Chrome proof. Route /fuel wraps FuelPlannerHomePage and FuelHomePage; current getLovesSyncStatus calls /api/v1/sync/loves/status with operating_company_id; dashboard errors use ListErrorBanner with retry; queries enable only with companyId. | Prior Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5302",
       "prod_verified": false
     },
@@ -34,8 +34,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "FAIL",
-      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/compliance-summary. Prior: Route /fuel/compliance registered as ProtectedRoute wrapping FuelTabRoute tabId=compliance \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; compliance tab fetches /api/v1/fuel/compliance-summary via getFuelComplianceSummary(companyId) and now surfaces ListErrorBanner on query error with retry; CompliancePanel renders real entity-scoped summary data. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "ROUTE CONTRACT CORRECTED 2026-08-29 on live SHA 14daeed: CURRENT-HTTP /api/v1/fuel/planner/compliance/summary returns HTTP 401 unauthenticated (mounted/auth-protected). The earlier fuel/compliance-summary citation was historical prose and is not called by current code. prod_verified remains false until GUARD performs authenticated Live Chrome proof. Route /fuel/compliance renders FuelPlannerHomePage; getFuelComplianceSummary calls the canonical planner endpoint with operating_company_id and optional driver_id; query errors surface ListErrorBanner with retry. | Prior Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5304",
       "prod_verified": false
     },
@@ -48,8 +48,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "FAIL",
-      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/accounting/expense-category-mappings. Prior: Route /fuel/expense-mapping registered as ProtectedRoute wrapping FuelTabRoute tabId=expense_mapping \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; expense_mapping tab renders FuelGlMappingCoverage which fetches /api/v1/accounting/expense-category-mappings with operating_company_id and category_kind=fuel; component now surfaces ListErrorBanner on query error with retry, plus loading and honest empty/unmapped states; a direct link to the accounting expense category map is provided. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "ROUTE CONTRACT CORRECTED 2026-08-29 on live SHA 14daeed: CURRENT-HTTP /api/v1/accounting/expense-category-map returns HTTP 401 unauthenticated (mounted/auth-protected). The earlier plural expense-category-mappings citation was historical prose and is not called by current code. prod_verified remains false until GUARD performs authenticated Live Chrome proof. Route /fuel/expense-mapping renders FuelGlMappingCoverage, which uses the canonical accounting API with operating_company_id and category_kind=fuel; error/retry and honest empty/unmapped states remain. | Prior Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5305",
       "prod_verified": false
     },
@@ -90,8 +90,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "FAIL",
-      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/relay/deposits. Prior: Route /fuel/inbox registered as ProtectedRoute wrapping FuelTabRoute tabId=relay_inbox \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; inbox tab renders RelayDepositReview which fetches /api/v1/relay/deposits and /api/v1/relay/company-cards with operating_company_id; component now surfaces ListErrorBanner on deposits/cards query errors with retry, plus need-company, loading, and honest empty states; add/remove company-card mutations scoped to selected company. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "ROUTE CONTRACT CORRECTED 2026-08-29 on live SHA 14daeed: CURRENT-HTTP /api/integrations/relay/deposits and /api/integrations/relay/company-cards both return HTTP 401 unauthenticated (mounted/auth-protected). The earlier /api/v1/relay citations were historical prose and are not called by current code. prod_verified remains false until GUARD performs authenticated Live Chrome proof. Route /fuel/inbox renders RelayDepositReview using both canonical integration endpoints with operating_company_id; error/retry, need-company/loading/empty states, and company-scoped card mutations remain. | Prior Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5308",
       "prod_verified": false
     },
@@ -104,8 +104,8 @@
         "DOD-C"
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
-      "status": "FAIL",
-      "evidence": "REOPEN 2026-08-29 live SHA 14daeed: cited API returns HTTP 404 unauthenticated (route not mounted). prod_verified false until GUARD remounts + packet. Dead path /api/v1/fuel/loves-sync/status. Prior: Route /fuel/loves-prices registered as ProtectedRoute wrapping FuelTabRoute tabId=loves_prices \u2192 FuelPlannerHomePage; FuelPlannerHomePage guards missing operating company; loves_prices tab fetches /api/v1/fuel/loves-sync/status via getLovesSyncStatus(companyId); query errors now surface ListErrorBanner with retry; loading and honest empty states present; upload modal available. | PROD-VERIFIED Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
+      "status": "UNVERIFIED",
+      "evidence": "ROUTE CONTRACT CORRECTED 2026-08-29 on live SHA 14daeed: CURRENT-HTTP /api/v1/sync/loves/status returns HTTP 401 unauthenticated (mounted/auth-protected). The earlier fuel/loves-sync citation was historical prose and is not called by current code. prod_verified remains false until GUARD performs authenticated Live Chrome proof. Route /fuel/loves-prices renders FuelPlannerHomePage; getLovesSyncStatus calls the canonical sync endpoint with operating_company_id; error/retry, loading, honest empty state, and upload modal remain. | Prior Neon lucia 2026-08-09 USMCA: fuel.fuel_planner_settings=1; fuel.fuel_transactions=0 (honest empty TMS-native expected); accounts_pc=1453.",
       "pr": "#5311",
       "prod_verified": false
     },
