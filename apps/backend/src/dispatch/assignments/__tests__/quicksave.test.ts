@@ -89,6 +89,9 @@ function makeClient(credRow: Record<string, unknown>, log: QueryLog, isHazmat = 
       if (sql.includes("UPDATE mdata.loads")) {
         return { rows: [{ id: LOAD }] };
       }
+      if (sql.includes("INSERT INTO dispatch.load_assignment_history")) {
+        return { rows: [{ id: "66666666-6666-4666-8666-666666666666" }] };
+      }
       return { rows: [] };
     })),
   };
@@ -204,7 +207,7 @@ describe("DISP-F6157: quicksave must never write the co-driver uuid into a *_tra
           if (sql.includes("UPDATE mdata.loads")) return { rows: [{ id: LOAD }] };
           if (sql.includes("INSERT INTO dispatch.load_assignment_history")) {
             insertedValues.push(values ?? []);
-            return { rows: [] };
+            return { rows: [{ id: "66666666-6666-4666-8666-666666666666" }] };
           }
           return { rows: [] };
         })),

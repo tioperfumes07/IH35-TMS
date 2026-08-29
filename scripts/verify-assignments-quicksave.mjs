@@ -45,6 +45,11 @@ function scopedWriterFailures(source) {
     );
     if (!pattern.test(source)) issues.push(`${label} quicksave must scope and check the canonical load UPDATE`);
   }
+  if (
+    !/const assignment = await client\.query<\{ id: string \}>\([\s\S]*?INSERT INTO dispatch\.load_assignment_history[\s\S]*?RETURNING id::text[\s\S]*?if \(!assignment\.rows\[0\]\?\.id\) throw new Error\("E_ASSIGNMENT_HISTORY_WRITE_FAILED"\)[\s\S]*?return assignment\.rows\[0\]\.id/.test(source)
+  ) {
+    issues.push("all quicksave paths must require the canonical assignment-history identity before audit/success");
+  }
   return issues;
 }
 
@@ -60,6 +65,9 @@ if (process.argv.includes("--selftest")) {
     service.replace("if (!driverUpdate.rows[0])", "if (false)"),
     service.replace("[input.load_uuid, input.unit_uuid, input.operating_company_id]", "[input.load_uuid, input.unit_uuid]"),
     service.replace("[input.load_uuid, input.driver_uuid, input.operating_company_id]", "[input.load_uuid, input.driver_uuid]"),
+    service.replace("RETURNING id::text", ""),
+    service.replace('if (!assignment.rows[0]?.id) throw new Error("E_ASSIGNMENT_HISTORY_WRITE_FAILED");', ""),
+    service.replace("return assignment.rows[0].id;", 'return "";'),
   ];
   const escaped = mutations.filter((fixture) => scopedWriterFailures(fixture).length === 0);
   if (escaped.length) throw new Error(`${escaped.length}/${mutations.length} mutations escaped`);
