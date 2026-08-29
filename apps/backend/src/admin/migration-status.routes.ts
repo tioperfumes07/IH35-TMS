@@ -62,7 +62,7 @@ export async function registerMigrationStatusRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/health/migrations", readMigrationHealth);
   app.get("/api/v1/internal/migrations/status", readMigrationHealth);
 
-  app.get("/api/v1/admin/migrations/file", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/admin/migrations/file", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ownerAdministrator(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });

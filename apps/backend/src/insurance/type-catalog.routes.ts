@@ -89,7 +89,7 @@ function mapConflictError(err: unknown) {
 }
 
 export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/type-catalog", async (req, reply) => {
+  app.get("/api/v1/insurance/type-catalog", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -113,7 +113,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
     return { types: rows };
   });
 
-  app.post("/api/v1/insurance/type-catalog", async (req, reply) => {
+  app.post("/api/v1/insurance/type-catalog", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -158,7 +158,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/insurance/type-catalog/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/type-catalog/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -211,7 +211,7 @@ export async function registerInsuranceTypeCatalogRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/insurance/type-catalog/:id", async (req, reply) => {
+  app.delete("/api/v1/insurance/type-catalog/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

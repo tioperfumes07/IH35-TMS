@@ -266,7 +266,7 @@ export async function persistInsuranceDispersalBills(input: {
 }
 
 export async function registerInsuranceDispersalRoutes(app: FastifyInstance) {
-  app.post("/api/v1/insurance/policies/:id/generate-bills", async (req, reply) => {
+  app.post("/api/v1/insurance/policies/:id/generate-bills", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

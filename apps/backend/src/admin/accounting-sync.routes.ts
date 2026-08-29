@@ -36,7 +36,7 @@ function ownerGate(req: Parameters<typeof requireAuth>[0], reply: Parameters<typ
 // anything (house pattern: accounting/recon/recon.routes.ts).
 
 export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/sync/outbound", async (req, reply) => {
+  app.get("/api/v1/admin/sync/outbound", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 
@@ -86,7 +86,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     return { items: rows, next_cursor: offset + rows.length };
   });
 
-  app.post("/api/v1/admin/sync/outbound/:id/retry", async (req, reply) => {
+  app.post("/api/v1/admin/sync/outbound/:id/retry", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 
@@ -102,7 +102,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/admin/sync/outbound/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/admin/sync/outbound/:id/dismiss", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 
@@ -123,7 +123,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/admin/sync/inbound", async (req, reply) => {
+  app.get("/api/v1/admin/sync/inbound", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 
@@ -169,7 +169,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.post("/api/v1/admin/sync/inbound/replay-since", async (req, reply) => {
+  app.post("/api/v1/admin/sync/inbound/replay-since", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ownerGate(req, reply);
     if (!user) return;
 
@@ -222,7 +222,7 @@ export async function registerAdminAccountingSyncRoutes(app: FastifyInstance) {
     return reply.code(202).send({ accepted: true, job_id: jobId });
   });
 
-  app.post("/api/v1/admin/sync/reset-realm", async (req, reply) => {
+  app.post("/api/v1/admin/sync/reset-realm", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 

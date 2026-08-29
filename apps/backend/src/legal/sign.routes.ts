@@ -24,7 +24,7 @@ function requestAudit(req: FastifyRequest) {
 }
 
 export async function registerLegalSignRoutes(app: FastifyInstance) {
-  app.get("/api/v1/legal/sign/:token", async (req, reply) => {
+  app.get("/api/v1/legal/sign/:token", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const details = await getPublicSigningDetails(params.data.token, requestAudit(req));
@@ -32,7 +32,7 @@ export async function registerLegalSignRoutes(app: FastifyInstance) {
     return details;
   });
 
-  app.post("/api/v1/legal/sign/:token/verify/start", async (req, reply) => {
+  app.post("/api/v1/legal/sign/:token/verify/start", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = contractSchemas.verifyStartSchema.safeParse(req.body ?? {});
@@ -55,7 +55,7 @@ export async function registerLegalSignRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/legal/sign/:token/verify/confirm", async (req, reply) => {
+  app.post("/api/v1/legal/sign/:token/verify/confirm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = contractSchemas.verifyConfirmSchema.safeParse(req.body ?? {});
@@ -79,7 +79,7 @@ export async function registerLegalSignRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/legal/sign/:token/complete", async (req, reply) => {
+  app.post("/api/v1/legal/sign/:token/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = contractSchemas.signatureCompleteSchema.safeParse(req.body ?? {});

@@ -20,7 +20,7 @@ const cache = createTtlCache<Record<string, unknown>>();
 const CACHE_MS = 30_000;
 
 export async function registerAdminSyncHealthRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/sync/health", async (req, reply) => {
+  app.get("/api/v1/admin/sync/health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = gate(req, reply);
     if (!user) return;
 

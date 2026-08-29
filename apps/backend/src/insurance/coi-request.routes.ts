@@ -41,7 +41,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerInsuranceCoiRequestRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/coi-requests", async (req, reply) => {
+  app.get("/api/v1/insurance/coi-requests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listCoiRequestsQuerySchema.safeParse(req.query ?? {});
@@ -88,7 +88,7 @@ export async function registerInsuranceCoiRequestRoutes(app: FastifyInstance) {
     }
   );
 
-  app.patch("/api/v1/insurance/coi-requests/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/coi-requests/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

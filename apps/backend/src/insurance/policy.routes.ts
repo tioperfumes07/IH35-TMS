@@ -179,7 +179,7 @@ function policyUnitFromClause() {
 }
 
 export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/policies", async (req, reply) => {
+  app.get("/api/v1/insurance/policies", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listPoliciesQuerySchema.safeParse(req.query ?? {});
@@ -230,7 +230,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return { policies: rows };
   });
 
-  app.get("/api/v1/insurance/policies/:id", async (req, reply) => {
+  app.get("/api/v1/insurance/policies/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -369,7 +369,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     }
   );
 
-  app.patch("/api/v1/insurance/policies/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/policies/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -445,7 +445,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.delete("/api/v1/insurance/policies/:id", async (req, reply) => {
+  app.delete("/api/v1/insurance/policies/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -483,7 +483,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
   });
 
   // Block E — fleet add: idempotent, pro-rata premium delta via recordFleetPremiumJournalEntry
-  app.post("/api/v1/insurance/policies/:policy_id/units", async (req, reply) => {
+  app.post("/api/v1/insurance/policies/:policy_id/units", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -589,7 +589,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
   });
 
   // Block E — fleet remove: soft-delete + pro-rata premium credit
-  app.delete("/api/v1/insurance/policies/:policy_id/units/:unit_id", async (req, reply) => {
+  app.delete("/api/v1/insurance/policies/:policy_id/units/:unit_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -666,7 +666,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
   });
 
   // Policy renewal: clone source policy + units, regenerate bill schedule
-  app.post("/api/v1/insurance/policies/:policy_id/renew", async (req, reply) => {
+  app.post("/api/v1/insurance/policies/:policy_id/renew", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -755,7 +755,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return reply.code(201).send(result.newPolicy);
   });
 
-  app.patch("/api/v1/insurance/policy-units/:id", async (req, reply) => {
+  app.patch("/api/v1/insurance/policy-units/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -788,7 +788,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.delete("/api/v1/insurance/policy-units/:id", async (req, reply) => {
+  app.delete("/api/v1/insurance/policy-units/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -819,7 +819,7 @@ export async function registerInsurancePolicyRoutes(app: FastifyInstance) {
     return reply.code(204).send();
   });
 
-  app.get("/api/v1/assets/:id/coverage", async (req, reply) => {
+  app.get("/api/v1/assets/:id/coverage", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = assetIdParamsSchema.safeParse(req.params ?? {});

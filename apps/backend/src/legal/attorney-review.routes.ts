@@ -23,7 +23,7 @@ function requestAudit(req: FastifyRequest) {
 }
 
 export async function registerLegalAttorneyReviewRoutes(app: FastifyInstance) {
-  app.get("/api/v1/legal/attorney-review/:token", async (req, reply) => {
+  app.get("/api/v1/legal/attorney-review/:token", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const details = await getPublicAttorneyReviewDetails(params.data.token, requestAudit(req));
@@ -31,7 +31,7 @@ export async function registerLegalAttorneyReviewRoutes(app: FastifyInstance) {
     return details;
   });
 
-  app.post("/api/v1/legal/attorney-review/:token/approve", async (req, reply) => {
+  app.post("/api/v1/legal/attorney-review/:token/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const result = await attorneyPortalApprove(params.data.token, req.body ?? {}, requestAudit(req));
@@ -42,7 +42,7 @@ export async function registerLegalAttorneyReviewRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/legal/attorney-review/:token/request-changes", async (req, reply) => {
+  app.post("/api/v1/legal/attorney-review/:token/request-changes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const result = await attorneyPortalRequestChanges(params.data.token, req.body ?? {}, requestAudit(req));
@@ -53,7 +53,7 @@ export async function registerLegalAttorneyReviewRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.post("/api/v1/legal/attorney-review/:token/reject", async (req, reply) => {
+  app.post("/api/v1/legal/attorney-review/:token/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const result = await attorneyPortalReject(params.data.token, req.body ?? {}, requestAudit(req));

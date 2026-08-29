@@ -100,7 +100,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     return { contracts: rows };
   });
 
-  app.get("/api/v1/legal/contracts/:id", async (req, reply) => {
+  app.get("/api/v1/legal/contracts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
@@ -125,7 +125,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   // instance's stored content/variables with EMPTY signature fields + a "DRAFT — NOT EXECUTED"
   // watermark, returns the PDF inline, and never uploads to R2 or mutates the instance. Reuses the
   // hardened renderSignedContractPdf (draft:true).
-  app.get("/api/v1/legal/contracts/:id/draft-pdf", async (req, reply) => {
+  app.get("/api/v1/legal/contracts/:id/draft-pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
@@ -183,7 +183,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     language: z.enum(["en", "es", "bilingual"]).default("en"),
     filled_variables: z.record(z.string(), z.unknown()).default({}),
   });
-  app.post("/api/v1/legal/contracts/draft-preview", async (req, reply) => {
+  app.post("/api/v1/legal/contracts/draft-preview", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
@@ -247,7 +247,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/legal/contracts/:id/send", async (req, reply) => {
+  app.post("/api/v1/legal/contracts/:id/send", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
@@ -288,7 +288,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
 
   // ---- Truck Lease Agreement (LEGAL-TRUCK-LEASE-01) — behind LEGAL_CONTRACTS_ENABLED ----
   // Ensure canonical truck_lease template (active v1) exists for the entity + return it.
-  app.post("/api/v1/legal/contracts/truck-lease/ensure-template", async (req, reply) => {
+  app.post("/api/v1/legal/contracts/truck-lease/ensure-template", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!truckLeaseEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -309,7 +309,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
 
   // Vehicle picker: units to lease, CONFIGURABLE owner filter (default TRK, selectable) + owner badge.
   // Reads ownership as-is (TRK owns / TRANSP leases — no data rewrite). Excludes sold/totaled/disposed.
-  app.get("/api/v1/legal/contracts/lease-to-own/fleet", async (req, reply) => {
+  app.get("/api/v1/legal/contracts/lease-to-own/fleet", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
@@ -327,7 +327,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   });
 
   // Ensure the canonical lease_to_own template (active v1) exists for the entity + return seller defaults.
-  app.post("/api/v1/legal/contracts/lease-to-own/ensure-template", async (req, reply) => {
+  app.post("/api/v1/legal/contracts/lease-to-own/ensure-template", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;

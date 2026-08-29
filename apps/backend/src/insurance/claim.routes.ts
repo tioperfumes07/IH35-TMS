@@ -261,7 +261,7 @@ function canTransitionClaimStatus(currentStatus: InsuranceClaimStatus, nextStatu
 }
 
 export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/claims", async (req, reply) => {
+  app.get("/api/v1/insurance/claims", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listClaimsQuerySchema.safeParse(req.query ?? {});

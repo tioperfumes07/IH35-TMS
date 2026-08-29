@@ -39,7 +39,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 }
 
 export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/insurance/summary", async (req, reply) => {
+  app.get("/api/v1/insurance/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -110,7 +110,7 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
   // Runs the SAME canonical query/definition as the summary so the listed rows reconcile to the count:
   // coverage_gap_count === uncovered_units.length + mismatched_units.length. Read-only (SELECT), no
   // posting/GL, no writes.
-  app.get("/api/v1/insurance/coverage-gaps", async (req, reply) => {
+  app.get("/api/v1/insurance/coverage-gaps", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = coverageGapQuerySchema.safeParse(req.query ?? {});

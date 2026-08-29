@@ -26,7 +26,7 @@ function currentAdminUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerAdminJobsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/jobs/:jobId", async (req, reply) => {
+  app.get("/api/v1/admin/jobs/:jobId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAdminUser(req, reply);
     if (!user) return;
 
@@ -93,7 +93,7 @@ export async function registerAdminJobsRoutes(app: FastifyInstance) {
 
   // USERS-1 PR B: Owner-only endpoint to deactivate CI/probe fixture accounts still live in prod.
   // One run per UTC day per requesting admin (idempotency key prevents accidental double-fire).
-  app.post("/api/v1/admin/jobs/deactivate-probe-accounts", async (req, reply) => {
+  app.post("/api/v1/admin/jobs/deactivate-probe-accounts", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const user = req.user as { uuid: string; role: string };
     if (!ownerOnly.has(String(user.role ?? ""))) {

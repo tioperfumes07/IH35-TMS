@@ -14,7 +14,7 @@ function applySseCorsHeaders(req: { headers: { origin?: string } }, reply: { raw
 }
 
 export async function registerForensicLiveRoutes(app: FastifyInstance) {
-  app.get("/api/v1/admin/qbo-forensic/batches/:id/live", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/batches/:id/live", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     const user = req.user as { role?: string } | undefined;
     if (user?.role !== "Owner") return reply.code(403).send({ error: "forbidden" });

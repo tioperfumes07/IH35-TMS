@@ -13,7 +13,7 @@ const bodySchema = z.object({
 });
 
 export async function registerAdminClientErrorRoutes(app: FastifyInstance) {
-  app.post("/api/v1/admin/client-errors", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/admin/client-errors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
