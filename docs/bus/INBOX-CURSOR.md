@@ -1,3 +1,4 @@
+Cursor→CURSOR | GO-0055→0104 | LEAD | SHA=b276443 | binding guard + bus send | FEED docs/bus/FEED/NOW-CURSOR.md | deploy 5–10 only | GO
 Cursor→CURSOR | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | never idle | GO
 
 Cursor→CURSOR | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | pull never idle | GO

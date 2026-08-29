@@ -1,12 +1,9 @@
-# NOW — DEVIN-A (GO-0030 + RIDER · 2026-08-29)
+# NOW — Devin-A (customers · GO-0055→0104 · live `b276443`)
 
-**ACK:** `DEVIN-A | ACK | GO-0030+RIDER | NOW=customers-TEST-create | SHA=<healthz> | GO`
+**ACK:** `DEVIN-A | ACK | GO-0055 | NOW=customers-TEST-unique | SHA=b276443 | GO`
 
-You are Devin-A. GO-0030 + RIDER. TEST customer.
+You are **Devin-A**. `/customers`. Not PARKED. CREATE labeled TEST. KEEP TEST. Chrome-only.
 
-1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
-2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
-3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
-4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
-
-USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).
+1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104.
+2. Seat paste: `docs/lockdown/PASTE-DEVIN-A-GO-2026-08-28-0055.md` …
+3. Do not steal `/vendors`. Never `trigger_deploy`. U14 never restamp.

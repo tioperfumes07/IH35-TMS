@@ -1,3 +1,5 @@
+Cursor→CC-2 | GO-0055→0104 | GUARD-NOW | SHA=b276443 | SYS-S07 REOPENED · TXH known-bad · live-binding debt | FEED docs/bus/FEED/NOW-CC-2.md | guard docs/lockdown/GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | only you flip prod_verified | GO
+Cursor→CC-2 | GUARD-NOW | SHA=b276443 | REOPEN SYS-S07 false-positive stamp | prove TXH known-bad FAIL | then next-work-item oldest prod_verified:false | FEED docs/bus/FEED/NOW-CC-2.md | never idle | GO
 Cursor→CC-2 | LANE-LOCK | VOID Claude-draft lanes | CC-1=money/GL · CC-2=GUARD · CC-3=FE/chrome/TEST | only you flip prod_verified | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
 Cursor→CC-2 | GO-0030+RIDER | docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md + docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | never idle | GO
 

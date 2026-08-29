@@ -1,12 +1,9 @@
-# NOW — CASCADE (GO-0030 + RIDER · 2026-08-29)
+# NOW — Cascade (audit · GO-0055→0104 · live `b276443`)
 
-**ACK:** `CASCADE | ACK | GO-0030+RIDER | NOW=lists-then-accounting-FINDING | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-0055 | NOW=TXH-walk-FINDING | SHA=b276443 | GO`
 
-You are Cascade. Unique FINDING only. GO-0030 + RIDER.
+You are **Cascade**. Unique FINDING only. No product PR. No U14 restamp. No `prod_verified` flip.
 
-1. Paste/read: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0030.md`
-2. Paste/read: `docs/lockdown/GO-0030-RIDER-COLLISION-CLOSES-GUARD-2026-08-29.md`
-3. Standing orders (underneath): `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
-4. Work GO-0030 now → GO-0031 same turn. Never wait for chat.
-
-USMCA · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy` (Cursor only).
+1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104.
+2. Seat paste: `docs/lockdown/PASTE-CASCADE-GO-2026-08-28-0055.md` …
+3. File OPEN rows on `docs/audit/GUARD-WORKORDERS.md` + ledger. Never `trigger_deploy`.
