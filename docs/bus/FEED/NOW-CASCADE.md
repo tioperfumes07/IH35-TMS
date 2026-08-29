@@ -1,7 +1,7 @@
-# NOW — Cascade (GO-0105)
+# NOW — Cascade (GO-0106)
 
-**ACK:** `CASCADE | ACK | GO-0105 | NOW=unique-FINDING-live-healthz | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-0106 | NOW=unique-FINDING-guard-stamps-not-devin | SHA=<healthz> | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
 
-Unique **FINDING** only, live healthz. Append ledger. Skip #15546 #16895. Do not restamp U14 or SYS-S07. No product PRs. No money column stamps.
+Unique FINDING live healthz. **You/CC-2 stamp prod_verified**, not Devin. Devin vendors-only. Never restamp U14/SYS-S07. Skip #15546 #16895.

@@ -1,3 +1,7 @@
+**2026-08-29T19:25Z GO-0105-R1 THIS IS NOW.** H4 per-connection dormancy. STOP deploying global-ARM-only (`22b1b63e4`). Active TRANSP/TRK + `needs_reauth_at` must alarm and name the entity. ARM = override only. Cursor TXH-04 after this ship. Nobody else `trigger_deploy`.
+
+**2026-08-29T19:20Z GO-0106 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`. **Never set `IH35_QBO_JOB_HEALTH_ARMED` to hide OAuth.** `qbo.connections.oauth` / `qbo_oauth_invalid` until Jorge re-auths TRANSP/TRK in QBO. Devin **STOP stamps**. CC-3 **driver-hub**. Cursor TXH-04. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Nobody else `trigger_deploy`.
+
 **2026-08-29T19:05Z GO-0105 THIS IS NOW. ALL SEATS. Idle=defect.** Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`. TXH-04 Cursor. H4 runbook + dormancy on main, prove after deploy via **full** `/healthz`. CC-3 **customers LV-001**. CC-1 SCEN-01 hops 4/6 + H1 JE walk + H3 quota. CC-2 H4 nothing to chase. FEED `docs/bus/FEED/NOW-<SEAT>.md`. Nobody else `trigger_deploy`.
 
 **2026-08-29T18:30Z DEPLOY IN FLIGHT.** `dep-da9iac1srm7s73cehfb0` commit `b2448ce` (includes HONESTY-H1). Do not judge matrix/tracker until `healthz/shallow` `version` is `b2448ce`. SPA can lead API. Red V columns after live = prose-193 honesty. Nobody else `trigger_deploy`.

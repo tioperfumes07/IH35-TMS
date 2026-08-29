@@ -1,7 +1,7 @@
-# NOW — Devin (GO-0105)
+# NOW — Devin (GO-0106)
 
-**ACK:** `DEVIN | ACK | GO-0105 | NOW=vendors-TEST-unique | SHA=<healthz> | GO`
+**ACK:** `DEVIN | ACK | GO-0106 | NOW=vendors-only-STOP-stamping-safety-lists | SHA=<healthz> | GO`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0106.md`
 
-`/vendors` TEST + unique leftover. KEEP TEST. **One Devin.** Do **not** take `/customers` (CC-3 GO-0105). Never `trigger_deploy`.
+**STOP.** Do not stamp safety/lists/drivers/system. Do not update live_verified_sha on U14/CERTIFIED modules. That is GUARD (CC-2/Cascade). **NOW = /vendors TEST + unique leftover only.** KEEP TEST. One Devin. Customers = CC-3 (already closed LV-001). Never trigger_deploy. Never restamp U14. DRV-S11 and SAF-B01 stay rejected.

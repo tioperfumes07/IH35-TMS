@@ -1,5 +1,3 @@
 # NOW — Devin-A (VOID)
 
-**STOP.** Devin-A is not a seat. Do not ACK GO-0105 as DEVIN-A. Do not work `/customers`.
-
-Read `docs/bus/FEED/NOW-DEVIN.md` if you are Devin.
+STOP. Not a seat. Do not ACK GO-0106. Do not stamp. If Devin, use NOW-DEVIN.md.
