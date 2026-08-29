@@ -394,7 +394,7 @@
       ],
       "spec": "Rule 05 tab law / hub reachability",
       "status": "PASS",
-      "evidence": "CLOSED 2026-07-29: dispatcher-error-reasons + customer-quality-event-reasons on DOMAIN_CONFIG hub; GENERIC_CATALOG_REGISTRY + generic-catalog.routes CRUD. Companion verify-converted-catalog-reachable-from-hub OK — 83 generics hub+backend. LIVE Neon lucia: dispatcher_error_reasons=75, customer_quality_event_reasons=72. Guard verify-lst-a01-hub-reachability-closed (step 1772).",
+      "evidence": "CLOSED 2026-07-29: dispatcher-error-reasons + customer-quality-event-reasons on DOMAIN_CONFIG hub; GENERIC_CATALOG_REGISTRY + generic-catalog.routes CRUD. Companion verify-converted-catalog-reachable-from-hub OK — 83 generics hub+backend. LIVE Neon lucia: dispatcher_error_reasons=75, customer_quality_event_reasons=72. Guard verify-lst-a01-hub-reachability-closed (step 1772). GUARD-2 2026-08-29: independent USMCA Chrome walk on live healthz 14daeed opened /lists, clicked Dispatcher Error Reasons, reached /lists/catalogs/dispatch/dispatcher-error-reasons, and rendered 25 real rows with Search, Range, settings, Create, Edit, and Archive controls. Known-bad /lists/catalogs/dispatch/not-a-real-catalog was explicitly rejected as Unknown or unsupported catalog route.",
       "pr": null,
       "live_proof": "2026-07-29 Neon lucia dispatcher_error_reasons=75 customer_quality_event_reasons=72; companion 83 generics OK",
       "owner_hold": false,
@@ -456,9 +456,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": false,
-      "live_verified_at": "2026-08-29T03:43:00.000Z",
-      "live_verified_sha": "da39aab"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T16:34:30.269Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-CAT-07",
