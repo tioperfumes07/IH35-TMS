@@ -456,7 +456,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "LST-CAT-07",

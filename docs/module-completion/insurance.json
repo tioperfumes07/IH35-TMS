@@ -23,7 +23,9 @@
       "status": "PASS",
       "evidence": "2026-08-16 USMCA LIVE PASS: exact /insurance alias redirected to canonical /safety/insurance and rendered the real Insurance Dashboard with Landing, Policies, Type Catalog, Coverage Gaps, Claims, and Lawsuits routes. Scoped live KPIs were 3 active policies, 3 expiring, 41 coverage gaps, 4 open claims, and 1 open lawsuit; each KPI mounted its canonical drill route without 404/500. No mutation. Focused insurance module/dashboard-route guards exit 0.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "INS-T01",

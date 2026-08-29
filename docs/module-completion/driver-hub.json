@@ -24,7 +24,9 @@
       "status": "PASS",
       "evidence": "Route manifest mounts DriverHubPage; overview tab hosts DriverInbox with companyId gate, canReview role gate, cash-advance EntityLink, cascade preview linkage panel, honest empty for non-cash tabs. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: drivers_active=16; cash_advance_pending=0 (honest empty); healthz=1b3a44d.",
       "pr": "#5327",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "DHUB-S02",

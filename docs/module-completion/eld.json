@@ -23,7 +23,9 @@
       "status": "PASS",
       "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. 5 tabs (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD Settings). TRANSP: 6 drivers on the canonical roster from GET /api/v1/telematics/hos/daily-roster with real duty status, drive-left and shift-left values (e.g. T176 Sleeper Berth 10h54m / 3h51m). USMCA: 0 rows with an explicit honest-empty message, 'No HOS duty events for this company today (honest empty — ingest may be quiet)' — an honest empty, not a silent blank.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T03:43:00.000Z",
+      "live_verified_sha": "da39aab"
     },
     {
       "id": "ELD-T01",
