@@ -5,8 +5,10 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { StatusBadge } from "../../components/StatusBadge";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
-import { useSettlementDisputes, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
+import { useAuth } from "../../auth/useAuth";
+import { useSettlementDisputes, type SettlementDisputeRow, type SettlementDisputeStatus } from "../../hooks/useSettlementDisputes";
 import { SettlementDisputeModal } from "./SettlementDisputeModal";
+import { SettlementDisputeResolveModal } from "./SettlementDisputeResolveModal";
 
 const STATUS_FILTERS: Array<{ id: SettlementDisputeStatus | "all"; label: string }> = [
   { id: "all", label: "All" },
@@ -22,9 +24,12 @@ function money(cents: number | null | undefined) {
 }
 
 export function SettlementDisputeList() {
+  const auth = useAuth();
+  const isOwner = auth.user?.role === "Owner";
   const [statusFilter, setStatusFilter] = useState<SettlementDisputeStatus | "all">("all");
   const staged = useStagedListFilters({ applied: { statusFilter }, empty: { statusFilter: "all" as const }, onApply: (next) => setStatusFilter(next.statusFilter) });
   const [createOpen, setCreateOpen] = useState(false);
+  const [resolvingDispute, setResolvingDispute] = useState<SettlementDisputeRow | null>(null);
   const { disputes, isLoading, isError, isSuccess, refetch, reviewDispute } = useSettlementDisputes({
     status: statusFilter === "all" ? undefined : statusFilter,
   });
@@ -103,27 +108,49 @@ export function SettlementDisputeList() {
           {
             key: "actions",
             label: "Actions",
-            render: (row) =>
-              row.status === "submitted" ? (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() =>
-                    void reviewDispute({
-                      id: row.id,
-                      status: "in_review",
-                      resolution_notes: "Marked in review from drivers disputes tab",
-                    })
-                  }
-                >
-                  Start review
-                </Button>
-              ) : null,
+            render: (row) => {
+              if (row.status === "submitted") {
+                return (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() =>
+                      void reviewDispute({
+                        id: row.id,
+                        status: "in_review",
+                        resolution_notes: "Marked in review from drivers disputes tab",
+                      })
+                    }
+                  >
+                    Start review
+                  </Button>
+                );
+              }
+              // DRV-MONEY-F7314 — an in_review row used to render no action at all here, stranding
+              // it forever: the canonical review route already supports approved/denied/partial,
+              // but nothing in this list ever called it with anything but "in_review". This button
+              // is restricted to the Owner role to match the backend's own isOwner(userRole)
+              // enforcement (disputes.routes.ts) — a non-Owner would only ever see a 403 dead-click,
+              // so the button doesn't render for them rather than offering an action that always fails.
+              if (row.status === "in_review" && isOwner) {
+                return (
+                  <Button type="button" variant="secondary" onClick={() => setResolvingDispute(row)}>
+                    Resolve
+                  </Button>
+                );
+              }
+              return null;
+            },
           },
         ]}
       /> : null}
 
       <SettlementDisputeModal open={createOpen} onClose={() => setCreateOpen(false)} />
+      <SettlementDisputeResolveModal
+        dispute={resolvingDispute}
+        onClose={() => setResolvingDispute(null)}
+        onResolve={reviewDispute}
+      />
     </div>
   );
 }
