@@ -248,7 +248,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/fuel/planner/recommendations/:id/send-to-driver", async (req, reply) => {
+  app.post("/api/v1/fuel/planner/recommendations/:id/send-to-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const params = recommendationIdParamsSchema.safeParse(req.params ?? {});
@@ -400,7 +400,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.get("/api/v1/fuel/planner/settings", async (req, reply) => {
+  app.get("/api/v1/fuel/planner/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

@@ -23,7 +23,7 @@ function officeAuth(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverCommunicationsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/drivers/:id/communications", async (req, reply) => {
+  app.get("/api/v1/drivers/:id/communications", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
 

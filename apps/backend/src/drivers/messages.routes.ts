@@ -53,7 +53,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDriversMessagesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/drivers/messages/inbox", async (req, reply) => {
+  app.get("/api/v1/drivers/messages/inbox", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -64,7 +64,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     return reply.send({ conversations });
   });
 
-  app.get("/api/v1/drivers/messages/unread", async (req, reply) => {
+  app.get("/api/v1/drivers/messages/unread", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -75,7 +75,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     return reply.send({ messages, unread_count: messages.length });
   });
 
-  app.get("/api/v1/drivers/messages/:driverId/thread", async (req, reply) => {
+  app.get("/api/v1/drivers/messages/:driverId/thread", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const params = driverParamsSchema.safeParse(req.params ?? {});
@@ -179,7 +179,7 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/driver/messages/:messageId/read", async (req, reply) => {
+  app.patch("/api/v1/driver/messages/:messageId/read", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = messageParamsSchema.safeParse(req.params ?? {});
     const query = pwaReadQuerySchema.safeParse(req.query ?? {});

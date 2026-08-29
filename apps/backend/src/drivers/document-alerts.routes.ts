@@ -54,7 +54,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/drivers/document-alerts/inbox", async (req, reply) => {
+  app.get("/api/v1/drivers/document-alerts/inbox", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const query = inboxQuerySchema.safeParse(req.query ?? {});
@@ -65,7 +65,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
     return reply.send({ events: result.events, pending_count: result.totalCount, limit: query.data.limit, offset: query.data.offset });
   });
 
-  app.get("/api/v1/drivers/document-alert-rules", async (req, reply) => {
+  app.get("/api/v1/drivers/document-alert-rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -76,7 +76,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
     return reply.send({ document_alert_rules: rules });
   });
 
-  app.patch("/api/v1/drivers/document-alert-rules/:ruleId", async (req, reply) => {
+  app.patch("/api/v1/drivers/document-alert-rules/:ruleId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const params = ruleParamsSchema.safeParse(req.params ?? {});
@@ -90,7 +90,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
     return reply.send({ document_alert_rule: updated });
   });
 
-  app.post("/api/v1/drivers/document-alerts/:eventId/acknowledge", async (req, reply) => {
+  app.post("/api/v1/drivers/document-alerts/:eventId/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const params = eventParamsSchema.safeParse(req.params ?? {});
@@ -110,7 +110,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
     return reply.send({ event: row });
   });
 
-  app.post("/api/v1/drivers/document-alerts/evaluate", async (req, reply) => {
+  app.post("/api/v1/drivers/document-alerts/evaluate", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
     if (!authUser) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
