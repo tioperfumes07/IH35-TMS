@@ -26,7 +26,7 @@ const detailQuerySchema = z.object({
 });
 
 function ownerOnly(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const role = String(req.user?.role ?? "");
   if (role !== "Owner" && role !== "SuperAdmin") {
     reply.code(403).send({ error: "forbidden", reason: "Owner-only route" });

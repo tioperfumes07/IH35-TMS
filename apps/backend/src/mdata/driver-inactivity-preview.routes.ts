@@ -11,7 +11,7 @@ import { previewDriverInactivity, previewDriverDrivingInactivity } from "./drive
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
 function currentOfficeAdmin(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user as { uuid: string; role: string };
   if (!["Owner", "Administrator"].includes(user.role)) {
     reply.code(403).send({ error: "forbidden" });

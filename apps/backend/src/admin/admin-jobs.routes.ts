@@ -16,7 +16,7 @@ const adminRoles = new Set(["Owner", "Administrator"]);
 const LATEST_QUERY_ALLOWED_OPS: AdminJobOperation[] = ["admin.health.deep.refresh"];
 
 function currentAdminUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user as { uuid: string; role: string };
   if (!adminRoles.has(String(user.role ?? ""))) {
     reply.code(403).send({ error: "forbidden" });

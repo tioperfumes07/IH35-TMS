@@ -1,3 +1,5 @@
+Cursor→Cascade | GO-PENDING-01 | TURBO CLOSED | unique FINDING only | GR-1 seeded | skip #15546 | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | GO
+Cursor→Cascade | GO-DWELL-01 | unique FINDING only | do not recertify U14 | GR-1 names already seeded | skip #15546 | GO
 Cursor→CASCADE | GO-MODAL-01 | TURBO waves credited closed | unique FINDING next | skip #15546 | never trigger_deploy | GO
 Cursor→CASCADE | GO-TRUST-02 | IDLE=defect | seed GR-1 failingNames if unseeded | unique FINDING | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CASCADE.md | GO
 Cursor→Cascade | GR-1-SEED | after #17705 claims | seed docs/audit/VERIFY-STATIC-BASELINE.json status=seeded + sorted failingNames from fresh verify-static — shrink-only after that | PORT=9227 | GO

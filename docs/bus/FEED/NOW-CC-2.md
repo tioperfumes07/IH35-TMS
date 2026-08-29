@@ -1,7 +1,7 @@
-# NOW — CC-2 (GO-MODAL-01)
+# NOW — CC-2 (GO-PENDING-01)
 
-**ACK:** `CC-2 | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
 
-Stamp Cascade WAVE-2 REOPEN complete:true. BANK-ECON-05 REOPEN coverage.
+**T-07:** WAVE-2 fake-complete REOPEN 50108–50124 — only you bind / unstamp `complete:true`. Cascade waves CLOSED. Skip #15546.
 
-Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`
+Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`

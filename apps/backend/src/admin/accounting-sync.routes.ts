@@ -9,7 +9,7 @@ import { assertCompanyMembership } from "../_helpers/company-membership-guard.js
 const ownerAdmin = new Set(["Owner", "Administrator"]);
 
 function gate(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user as { role?: string; uuid?: string } | undefined;
   if (!user?.role || !ownerAdmin.has(user.role)) {
     reply.code(403).send({ error: "forbidden" });
