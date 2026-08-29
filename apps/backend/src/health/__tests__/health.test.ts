@@ -174,6 +174,23 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     }
   });
 
+  it("QBO inbound/CDC/push are dormant when no realm is connected (H4 — not stale)", () => {
+    for (const jobName of [
+      "integrations.qbo_inbound_sync",
+      "integrations.qbo_cdc_poll",
+      "sync.qbo_vendors_push",
+      "sync.qbo_customers_push",
+      "sync.qbo_accounts_push",
+    ]) {
+      const off = backgroundJobRule(jobName, false);
+      expect(off?.enabled).toBe(false);
+      expect(off?.dormantReason).toBe("no_qbo_realm_connected");
+      const on = backgroundJobRule(jobName, true);
+      expect(on?.enabled).toBe(true);
+      expect(on?.dormantReason).toBeUndefined();
+    }
+  });
+
   it("unknown job names have no rule (default null)", () => {
     expect(backgroundJobRule("does.not.exist", false)).toBeNull();
   });

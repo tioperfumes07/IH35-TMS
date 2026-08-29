@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-29T18:15Z | HONESTY PROGRAM H1–H5 · posting contracts + freshness widen + QBO dormant + sentry heartbeat | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T17:50Z | SCEN-01 GO · posting overrides ON · assert registry je codes · hop.assign=CC-1 | SHA=5063761 | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor | LEAD | 2026-08-29T16:40Z | OWNER REOPEN 193 prose → UNVERIFIED · baseline shrink · TXH-03 wiring map next | SHA=14daeed | GO
 Cursor | LEAD | 2026-08-29T16:25Z | HTTP-404 REOPEN 9 fuel+compliance FAIL · complete:false · prose-193 OWNER-GATED | SHA=14daeed | GO

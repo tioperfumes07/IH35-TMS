@@ -1,0 +1,9 @@
+{
+  "note": "H2 — files that look generated but are CI rebuild-check snapshots or gitignored. Prefer deleting and shrinking DERIVED-ARTIFACTS toward zero. Matrix V1–V6 must NOT read verifier-rollup.json (live verifierRollup).",
+  "paths": [
+    {
+      "path": "docs/specs/scoreboard/verifier-rollup.json",
+      "why": "build-verifier-rollup --check snapshot only. GET /program/module-matrix computes verifierRollup on read. Do not treat this file as live V1–V6. Delete when --check is retired."
+    }
+  ]
+}

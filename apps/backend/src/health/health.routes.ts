@@ -271,7 +271,7 @@ function envEnabled(name: string): boolean {
 export function backgroundJobRule(
   jobName: string,
   qboRealmConnected: boolean
-): { enabled: boolean; maxStaleMinutes: number } | null {
+): { enabled: boolean; maxStaleMinutes: number; dormantReason?: string } | null {
   switch (jobName) {
     // ── OPS-F76 — the 8 jobs OPS-F75 deliberately skipped, now paired BY HAND ──────────────────────
     //
@@ -528,19 +528,29 @@ export function backgroundJobRule(
       // Daily 08:00 CT (payment-reminder.service.ts) — insurance payment schedule. 26h window.
       return { enabled: true, maxStaleMinutes: 1560 };
     case "integrations.qbo_inbound_sync":
-      // 15s interval, always armed (index.ts) — pulls QBO changes. 30m window (thousands of ticks/window).
-      return { enabled: true, maxStaleMinutes: 30 };
+      // H4: no connected realm ⇒ dormant-by-design (USMCA QBO off / no write-back), not "stale".
+      // A permanently-yellow check trains operators to ignore healthz.
+      return qboRealmConnected
+        ? { enabled: true, maxStaleMinutes: 30 }
+        : { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_realm_connected" };
     case "integrations.qbo_cdc_poll":
-      // 5m interval, always armed (index.ts) — QBO change-data-capture poll. 30m window.
-      return { enabled: true, maxStaleMinutes: 30 };
+      return qboRealmConnected
+        ? { enabled: true, maxStaleMinutes: 30 }
+        : { enabled: false, maxStaleMinutes: 30, dormantReason: "no_qbo_realm_connected" };
     case "sync.qbo_vendors_push":
-      // 60s interval (qbo-vendors-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_VENDORS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     case "sync.qbo_customers_push":
-      // 60s interval (qbo-customers-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_CUSTOMERS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     case "sync.qbo_accounts_push":
-      // 60s interval (qbo-accounts-push.ts). Default-ON scheduler. 15m window.
+      if (!qboRealmConnected) {
+        return { enabled: false, maxStaleMinutes: 15, dormantReason: "no_qbo_realm_connected" };
+      }
       return { enabled: process.env.QBO_ACCOUNTS_PUSH_SCHEDULER_ENABLED !== "false", maxStaleMinutes: 15 };
     default:
       return null;
@@ -588,6 +598,9 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       const rule = backgroundJobRule(row.job_name, qboRealmConnected);
       const mins = minutesSinceIso(row.last_successful_run_at);
 
+      // H4 — dormant-by-design must not appear as never_succeeded or stale.
+      if (rule?.dormantReason && rule.enabled === false) continue;
+
       // OPS-F69 — NEVER-SUCCEEDED NEEDS NO RULE.
       //
       // Staleness is opt-in for a good reason: "late" only means something against a known cadence,
@@ -627,6 +640,15 @@ async function checkBackgroundJobStaleness(): Promise<void> {
   });
 }
 
+/** H3 — error pipeline cannot die silently. Production without DSN is unconfigured, not "no errors". */
+async function checkSentryHeartbeat(): Promise<void> {
+  const onRender = Boolean(process.env.RENDER === "true" || process.env.RENDER_GIT_COMMIT?.trim());
+  if (!onRender && process.env.NODE_ENV !== "production") return;
+  if (!process.env.SENTRY_DSN?.trim()) {
+    throw new HealthCheckError("sentry_unconfigured", "SENTRY_DSN missing");
+  }
+}
+
 export function resolveBackendVersion(): string {
   const renderCommit = process.env.RENDER_GIT_COMMIT?.trim();
   if (renderCommit) return renderCommit.slice(0, 7);
@@ -647,6 +669,7 @@ export async function runDeepHealthChecks(): Promise<HealthCheck[]> {
     () => timed("qbo.sync_alerts.unresolved_depth", "warning", checkQboSyncAlertsDepth),
     () => timed("email.queue.depth", "warning", checkEmailQueueDepth),
     () => timed("background_jobs.stale", "warning", checkBackgroundJobStaleness),
+    () => timed("sentry.heartbeat", "warning", checkSentryHeartbeat),
   ];
 
   const critical = await Promise.all(criticalFns.map((fn) => fn()));

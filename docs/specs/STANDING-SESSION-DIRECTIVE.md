@@ -129,5 +129,10 @@ Lead = census of **self-ACK** vs ping every turn. False done/wired without healt
 If the owner has to check whether one action reached every derived place, it is not done.
 **PROVES-IT-WORKS** + **KEEPS-IT-TRUE** on every block. Stored snapshots: `docs/specs/DERIVED-ARTIFACTS.json` + `scripts/verify-derived-artifact-freshness.mjs`.
 
+## 15. HONESTY PROGRAM (owner 2026-08-29)
+
+**Canonical:** `docs/lockdown/HONESTY-PROGRAM-2026-08-29.md`.
+Every guard is **registry-driven**. A posting path with no contract entry **FAILS**. `je:` is a caption; `je_contract` + `POSTING-CONTRACTS.json` are the check. H3 Sentry + H4 `background_jobs.stale` (dormant ≠ stale) are named-seat P0.
+
 ---
 *Permanent. Loaded at every session boot alongside `DELIVERY-METHOD-LOCKED.md`, `OWNER-QUALITY-COMPACT.md`, `FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`, and `ih35-tms-standards`. The `verify-no-approval-holds` guard protects §4; `verify-standing-directive-present` + `verify-owner-quality-compact-present` protect the always-read set.*
