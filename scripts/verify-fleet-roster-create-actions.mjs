@@ -74,6 +74,12 @@ export function collectFailures({
   if (!home.includes("FleetTablePage")) {
     failures.push("FleetHomePage must still mount FleetTablePage (additive create, not replace roster)");
   }
+  if (!home.includes('onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)}')) {
+    failures.push("FleetHomePage must navigate to the canonical created unit so hidden TEST rows remain verifiable");
+  }
+  if (!home.includes('onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}')) {
+    failures.push("FleetHomePage must navigate to the canonical created trailer so hidden TEST rows remain verifiable");
+  }
 
   // Unit modal → createUnit API + lease scope
   if (!createUnit.includes("createUnit(") && !createUnit.includes("createUnit({")) {
@@ -152,7 +158,7 @@ export function collectFailures({
 function selftest() {
   const base = {
     home:
-      'data-testid="fleet-roster-create-actions" + Create Unit + Create Trailer CreateUnitModal CreateTrailerModal FleetTablePage',
+      'data-testid="fleet-roster-create-actions" + Create Unit + Create Trailer CreateUnitModal CreateTrailerModal FleetTablePage onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)} onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}',
     createUnit:
       'createUnit({ unit_number, vin, currently_leased_to_company_id: operatingCompanyId }) fleet-create-unit-form + Create userFacingApiError(error, "Failed to create unit")',
     createTrailer:
@@ -178,6 +184,8 @@ export function createEquipment(body: CreateEquipmentInput) { return apiRequest<
     ["home", "CreateUnitModal", "mount CreateUnitModal"],
     ["home", "CreateTrailerModal", "mount CreateUnitModal and CreateTrailerModal"],
     ["home", "FleetTablePage", "still mount FleetTablePage"],
+    ["home", 'onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)}', "canonical created unit"],
+    ["home", 'onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}', "canonical created trailer"],
     ["createUnit", "createUnit({", "call createUnit"],
     ["createUnit", "fleet-create-unit-form", "expose form"],
     ["createUnit", "unit_number", "collect unit_number and vin"],
