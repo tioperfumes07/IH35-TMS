@@ -67,6 +67,7 @@ export function DriverManagerHome({ auth }: Props) {
         items={roleHomeQuery.data?.attention_items ?? []}
         loading={roleHomeQuery.isLoading}
         coolingDriverCount={roleHomeQuery.data?.cooling_drivers?.length ?? 0}
+        isError={roleHomeQuery.isError}
       />
 
       <DefaultHome auth={auth} />
