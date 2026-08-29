@@ -73,6 +73,14 @@ export async function initiateTransfer(
   const actualKind = String(equipment.rows[0].equipment_type ?? "") === "Chassis" ? "chassis" : "trailer";
   if (actualKind !== input.equipment_kind) throw new Error("equipment_kind_mismatch");
 
+  // Serialize the active-transfer invariant for this company/equipment pair. The schema intentionally
+  // retains completed/cancelled history, so a blanket UNIQUE constraint cannot express this lifecycle;
+  // the transaction-scoped lock closes the SELECT→INSERT race without deleting that history.
+  await client.query(
+    `SELECT pg_advisory_xact_lock(hashtextextended($1::text || ':' || $2::text, 0))`,
+    [input.operating_company_id, input.equipment_uuid]
+  );
+
   const pending = await client.query(
     `
       SELECT uuid::text

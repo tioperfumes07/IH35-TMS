@@ -45,6 +45,12 @@ function lifecycleFailures(service, routeSource) {
 
 function initiationIdentityFailures(service, routeSource) {
   const out = [];
+  const lockAt = service.indexOf("pg_advisory_xact_lock");
+  const pendingAt = service.indexOf("FROM dispatch.equipment_transfer_requests");
+  const insertAt = service.indexOf("INSERT INTO dispatch.equipment_transfer_requests");
+  if (lockAt < 0 || pendingAt < 0 || insertAt < 0 || !(lockAt < pendingAt && pendingAt < insertAt)) {
+    out.push("initiation must transaction-lock company+equipment before checking and inserting an active transfer");
+  }
   if (!/const uuid = String\(res\.rows\[0\]\?\.uuid \?\? ""\);[\s\S]{0,100}if \(!uuid\) throw new Error\("transfer_create_failed"\);[\s\S]{0,180}appendCrudAudit/.test(service)) {
     out.push("initiation must require the canonical INSERT identity before audit/outbox side effects");
   }
@@ -168,11 +174,12 @@ if (process.argv.includes("--selftest")) {
     }
   }
   const initiationMutations = [
+    requestService.replace("pg_advisory_xact_lock", "pg_advisory_lock_removed"),
     requestService.replace('if (!uuid) throw new Error("transfer_create_failed");', ""),
     routes.replace('if (code === "transfer_create_failed") return { status: 409, payload: { error: code } };', ""),
   ];
   for (const [index, mutation] of initiationMutations.entries()) {
-    const routeMutation = index === 1;
+    const routeMutation = index === 2;
     if (initiationIdentityFailures(routeMutation ? requestService : mutation, routeMutation ? mutation : routes).length === 0) {
       fail(`selftest initiation mutation ${index + 1} escaped the guard`);
     }

@@ -54,6 +54,12 @@ describe("equipment transfer request service (GAP-37)", () => {
     expect(outboxCall?.[1]?.[0]).toBe("dispatch.equipment_transfer.requested");
     const outboxPayload = JSON.parse(String(outboxCall?.[1]?.[1] ?? "{}"));
     expect(outboxPayload.driver_uuid).toBe(TO_DRIVER);
+    const lockIndex = client.query.mock.calls.findIndex((c) => String(c[0]).includes("pg_advisory_xact_lock"));
+    const pendingIndex = client.query.mock.calls.findIndex((c) => String(c[0]).includes("FROM dispatch.equipment_transfer_requests"));
+    const insertIndex = client.query.mock.calls.findIndex((c) => String(c[0]).includes("INSERT INTO dispatch.equipment_transfer_requests"));
+    expect(lockIndex).toBeGreaterThan(-1);
+    expect(lockIndex).toBeLessThan(pendingIndex);
+    expect(pendingIndex).toBeLessThan(insertIndex);
   });
 
   it("initiateTransfer rejects duplicate active transfer", async () => {

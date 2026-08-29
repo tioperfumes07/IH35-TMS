@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7217 | GO-0054 | CLAIM=equipment-transfer-active-race | SOURCE=dispatch.equipment_transfer_requests company+equipment active lifecycle | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7216 | PR=#17429 @ 18d26538cf | Built=replace-stops exact archive+insert identities | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7216 | GO-0054 | CLAIM=replace-stops-persisted-identities | SOURCE=mdata.load_stops exact archive+insert IDs | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7215 | PR=#17426 @ d047523ff7 | Built=manual reassignment reverse-history identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7212 | GO-0054 | CLAIM=delivery-stop-stamp-company-contract | SOURCE=mdata.load_stops via mdata.loads.operating_company_id | NEXT=gate+FAST-MERGE | GO
