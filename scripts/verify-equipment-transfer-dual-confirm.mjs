@@ -37,7 +37,9 @@ function lifecycleFailures(service, routeSource) {
   requirePattern(service, /status = 'pending_outbound'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "outbound confirmation must CAS and check pending_outbound");
   requirePattern(service, /status = 'outbound_confirmed'[\s\S]{0,100}RETURNING uuid::text[\s\S]{0,180}if \(!transferUpdate\.rows\[0\]\?\.uuid\) return \{ kind: "invalid_status" \}/, "inbound confirmation must CAS and check outbound_confirmed");
   requirePattern(service, /UPDATE mdata\.equipment[\s\S]{0,240}RETURNING id::text[\s\S]{0,180}if \(!equipmentUpdate\.rows\[0\]\?\.id\) return \{ kind: "equipment_not_found" \}/, "inbound confirmation must reject a missing/cross-company equipment update");
+  requirePattern(service, /const equipmentLogId = String\(logRes\.rows\[0\]\?\.id \?\? ""\);[\s\S]{0,100}if \(!equipmentLogId\) throw new Error\("equipment_log_create_failed"\);[\s\S]{0,180}appendCrudAudit/, "inbound confirmation must require the equipment-log identity before audit/notify");
   requirePattern(routeSource, /result\.kind === "equipment_not_found"[\s\S]{0,80}reply\.code\(404\)/, "route must expose equipment_not_found without a generic 500");
+  requirePattern(routeSource, /equipment_log_create_failed[\s\S]{0,120}reply\.code\(409\)/, "route must expose equipment_log_create_failed as a typed conflict");
   return out;
 }
 
@@ -156,6 +158,8 @@ if (process.argv.includes("--selftest")) {
     dualConfirm.replace("RETURNING id::text", ""),
     dualConfirm.replace('if (!equipmentUpdate.rows[0]?.id) return { kind: "equipment_not_found" };', ""),
     routes.replaceAll('if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });', ""),
+    dualConfirm.replace('if (!equipmentLogId) throw new Error("equipment_log_create_failed");', ""),
+    routes.replace('return reply.code(409).send({ error: "equipment_log_create_failed" });', 'return reply.code(500).send({ error: "equipment_log_create_failed" });'),
   ];
   for (const [index, mutation] of lifecycleMutations.entries()) {
     const routeMutation = index === lifecycleMutations.length - 1;
@@ -224,4 +228,4 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype + 9 lifecycle mutations caught" : ""}`);
+console.log(`verify:equipment-transfer-dual-confirm — OK${process.argv.includes("--selftest") ? "; 7 subtype + 11 lifecycle mutations caught" : ""}`);

@@ -159,6 +159,7 @@ export async function confirmInbound(
     ]
   );
   const equipmentLogId = String(logRes.rows[0]?.id ?? "");
+  if (!equipmentLogId) throw new Error("equipment_log_create_failed");
 
   await appendCrudAudit(
     client as never,
@@ -196,8 +197,7 @@ export async function confirmInbound(
     BLOCK_ID
   );
 
-  if (equipmentLogId) {
-    await appendCrudAudit(
+  await appendCrudAudit(
       client as never,
       userId,
       "mdata.equipment_log.created",
@@ -214,8 +214,7 @@ export async function confirmInbound(
       },
       "info",
       BLOCK_ID
-    );
-  }
+  );
 
   // Confirm (completed) → notify initiator / from_driver.
   if (req.from_driver_uuid) {

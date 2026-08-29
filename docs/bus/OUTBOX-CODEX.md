@@ -2009,3 +2009,5 @@ Codex | WORKING | DSP-F7150 | CLAIM=status-suggestion-contradictory-response-rep
 Codex | SHIPPED | DSP-F7149 | PR=#17248 @ 78c16bb21a | Built=PWA engagement real-schema reader | NEXT=status suggestion response lifecycle | GO
 Codex | FINDING | DSP-MONEY-F7155A | routed=CC-1 | bulk mark_factored unchecked invoice UPDATE | board=OPEN | NEXT=dispatch non-money unique | GO
 Codex | WORKING | DSP-F7156 | CLAIM=equipment-transfer-initiate-empty-identity-success | SOURCE=dispatch.equipment_transfer_requests INSERT RETURNING uuid | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7157 | CLAIM=equipment-transfer-completes-without-log | SOURCE=mdata.equipment_log INSERT RETURNING id | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7156 | PR=#17273 | MERGE=b074176363 | gate=exit0 | Live=BLOCKED | NEXT=DSP-F7157 | GO

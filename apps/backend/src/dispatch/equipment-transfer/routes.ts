@@ -108,13 +108,21 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
       .safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
 
-    const result = await confirmInboundForUser(
-      user.uuid,
-      body.data.operating_company_id,
-      uuid,
-      body.data.driver_uuid,
-      body.data.evidence_uuid
-    );
+    let result;
+    try {
+      result = await confirmInboundForUser(
+        user.uuid,
+        body.data.operating_company_id,
+        uuid,
+        body.data.driver_uuid,
+        body.data.evidence_uuid
+      );
+    } catch (error) {
+      if (String((error as Error)?.message ?? "") === "equipment_log_create_failed") {
+        return reply.code(409).send({ error: "equipment_log_create_failed" });
+      }
+      throw error;
+    }
     if (result.kind === "not_found") return reply.code(404).send({ error: "not_found" });
     if (result.kind === "equipment_not_found") return reply.code(404).send({ error: "equipment_not_found" });
     if (result.kind === "driver_mismatch") return reply.code(403).send({ error: "driver_mismatch" });
