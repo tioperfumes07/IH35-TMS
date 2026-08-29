@@ -1,3 +1,4 @@
+CASCADE | WAVE-3B | 37 more triage verdicts (50138-50174) | 30 REAL DEFECT + 4 GUARD IS WRONG + 2 ENV + 1 STALE | NEXT=continue-triage-remaining-30
 CASCADE | WAVE-3 | 13 normal-mode triage verdicts (50125-50137) | 11 REAL DEFECT + 2 GUARD IS WRONG | NEXT=continue-triage-remaining-67
 CASCADE | WAVE-2 | 17 fake-complete verdicts (50108-50124) | all 16 modules complete:true REOPEN | NEXT=wave3-normal-mode-triage
 CASCADE | GR-1-SEED | merged #17717 @ 460816dad9 | verify-static=209 (selftest=97 registry=16 normal=96) at ed4e2f286a | NEXT=wave2-fake-complete-flags
