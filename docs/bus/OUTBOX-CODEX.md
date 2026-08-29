@@ -2131,3 +2131,6 @@ Codex | WORKING | GO-0048 | FINDING=DRV-F7200 | MODULE=drivers | leaf=profile.tr
 Codex | SHIPPED | DSP-F7199 | PR=#17410 @ 313c835028 | root=instruction docs reverse-link identities | NEXT=GO-0048 drivers unique | GO
 Codex | SHIPPED | DSP-F7212 | PR=#17424 @ 732df14efe | Built=delivery stamp company contract | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 CODEX | WORKING | DSP-F7213 | NOW=layover detector canonical insert identity | SOURCE=dispatch.driver_layovers.uuid | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7213 | PR=#17425 @ 28fcc99d51 | Built=layover canonical insert identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | FINDING | DSP-MONEY-F7214 | routed=CC-1 | SOURCE=detention billing bridge unchecked load+event writes | BLOCKS=GO-0054 | NEXT=dispatch non-money unique | GO
+CODEX | WORKING | DSP-F7215 | NOW=manual reassign reverse-history identity | SOURCE=dispatch.load_assignment_history.id | NEXT=guard+FAST-MERGE | GO
