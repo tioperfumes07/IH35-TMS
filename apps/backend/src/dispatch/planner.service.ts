@@ -333,7 +333,9 @@ export async function reschedulePlannerLoad(
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at
           FROM mdata.load_stops
-          WHERE load_id = l.id AND stop_type = 'pickup'
+          WHERE load_id = l.id
+            AND stop_type = 'pickup'
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC
           LIMIT 1
         ) pu ON true
