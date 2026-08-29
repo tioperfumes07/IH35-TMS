@@ -170,14 +170,14 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_start_at, city, state
           FROM mdata.load_stops
-          WHERE load_id = l.id AND stop_type = 'pickup'
+          WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC
           LIMIT 1
         ) pu ON true
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_end_at
           FROM mdata.load_stops
-          WHERE load_id = l.id AND stop_type = 'delivery'
+          WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
           ORDER BY sequence_number DESC
           LIMIT 1
         ) del ON true
@@ -272,7 +272,7 @@ export async function reschedulePlannerLoad(
         LEFT JOIN LATERAL (
           SELECT id, scheduled_arrival_at, appointment_start_at
           FROM mdata.load_stops
-          WHERE load_id = l.id AND stop_type = 'pickup'
+          WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC
           LIMIT 1
         ) pu ON true
@@ -421,7 +421,7 @@ export async function reschedulePlannerLoad(
         LEFT JOIN LATERAL (
           SELECT scheduled_arrival_at, appointment_end_at
           FROM mdata.load_stops
-          WHERE load_id = l.id AND stop_type = 'delivery'
+          WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
           ORDER BY sequence_number DESC
           LIMIT 1
         ) del ON true
