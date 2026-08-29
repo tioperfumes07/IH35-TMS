@@ -19,11 +19,6 @@ services:
     startCommand: npm run start
     # HTTP ready check (not TCP-only). Live dashboard must match. Do not kick prod per merge.
     healthCheckPath: /api/v1/healthz/readyz
-    envVars:
-      - key: ENABLE_QBO_CDC_POLL
-        value: "false"
-      - key: ENABLE_QBO_INBOUND_SYNC
-        value: "false"
     # Skip rebuild on OUTBOX/bus pings only. Do NOT ignore all of docs/** — that left
     # required.json + AUDIT-COVERAGE-LIVE stale and forced GitHub-first matrix (healthz 502).
     # Dashboard service IH35-TMS must match this filter.
@@ -34,6 +29,10 @@ services:
         - AGENTS.md
         - CLAUDE.md
     envVars:
+      - key: ENABLE_QBO_CDC_POLL
+        value: "false"
+      - key: ENABLE_QBO_INBOUND_SYNC
+        value: "false"
       - key: NODE_VERSION
         value: 22
       # G4-DEPLOY (0243-g4 / ACCT-R-04): preDeploy ci:boot-aggregate-smoke must assert against a

@@ -235,6 +235,35 @@ describe("backgroundJobRule money-cron freshness coverage (G4-HEALTH guard)", ()
     }
   });
 
+  it("QBO inbound/CDC env-disabled skip even when a realm is connected (DRIFT-5)", () => {
+    const priorIn = process.env.ENABLE_QBO_INBOUND_SYNC;
+    const priorCdc = process.env.ENABLE_QBO_CDC_POLL;
+    const priorArm = process.env.IH35_QBO_JOB_HEALTH_ARMED;
+    try {
+      delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      process.env.ENABLE_QBO_INBOUND_SYNC = "false";
+      process.env.ENABLE_QBO_CDC_POLL = "false";
+      const ev = { anyActiveConnection: true, needsReauthLabels: [] as string[] };
+      const inbound = backgroundJobRule("integrations.qbo_inbound_sync", ev);
+      const cdc = backgroundJobRule("integrations.qbo_cdc_poll", ev);
+      expect(inbound?.enabled).toBe(false);
+      expect(inbound?.dormantReason).toBe("env_disabled");
+      expect(cdc?.enabled).toBe(false);
+      expect(cdc?.dormantReason).toBe("env_disabled");
+      process.env.ENABLE_QBO_INBOUND_SYNC = "true";
+      process.env.ENABLE_QBO_CDC_POLL = "true";
+      expect(backgroundJobRule("integrations.qbo_inbound_sync", ev)?.enabled).toBe(true);
+      expect(backgroundJobRule("integrations.qbo_cdc_poll", ev)?.enabled).toBe(true);
+    } finally {
+      if (priorIn === undefined) delete process.env.ENABLE_QBO_INBOUND_SYNC;
+      else process.env.ENABLE_QBO_INBOUND_SYNC = priorIn;
+      if (priorCdc === undefined) delete process.env.ENABLE_QBO_CDC_POLL;
+      else process.env.ENABLE_QBO_CDC_POLL = priorCdc;
+      if (priorArm === undefined) delete process.env.IH35_QBO_JOB_HEALTH_ARMED;
+      else process.env.IH35_QBO_JOB_HEALTH_ARMED = priorArm;
+    }
+  });
+
   it("unknown job names have no rule (default null)", () => {
     expect(backgroundJobRule("does.not.exist", false)).toBeNull();
   });

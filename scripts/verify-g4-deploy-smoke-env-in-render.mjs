@@ -17,6 +17,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -97,6 +98,23 @@ function assertConfigured() {
     if (!keyPattern.test(backendBlock)) {
       errors.push(`render.yaml ih35-tms-backend envVars missing key: ${key}`);
     }
+  }
+  for (const key of ["ENABLE_QBO_CDC_POLL", "ENABLE_QBO_INBOUND_SYNC"]) {
+    if (!new RegExp(`-\\s*key:\\s*${key}\\b`).test(backendBlock)) {
+      errors.push(`render.yaml ih35-tms-backend envVars missing key: ${key}`);
+    }
+  }
+  const envVarsHits = backendBlock.match(/^\s*envVars:/gm) || [];
+  if (envVarsHits.length !== 1) {
+    errors.push(
+      `render.yaml ih35-tms-backend must have exactly one envVars: block (duplicate keys drop QBO flags; got ${envVarsHits.length})`,
+    );
+  }
+  const healthRoutes = fs.readFileSync(path.join(ROOT, "apps/backend/src/health/health.routes.ts"), "utf8");
+  if (!healthRoutes.includes('dormantReason: "env_disabled"') || !healthRoutes.includes("ENABLE_QBO_INBOUND_SYNC")) {
+    errors.push(
+      "health.routes.ts must skip inbound/CDC staleness when ENABLE_QBO_* is false (DRIFT-5 env_disabled)",
+    );
   }
   // GO-0025-ACCT-R-04: docs/bus/PASTE-CURSOR-NOW.md was a per-cycle "paste box" for a specific
   // historical instruction round (U14/425c leftover) — deliberately deleted by
@@ -212,12 +230,45 @@ ci:boot-aggregate-smoke
   }
 }
 
+function assertLivePreDeployMatchesYaml(errors) {
+  const token = process.env.RENDER_API_KEY?.trim();
+  const sid = process.env.IH35_RENDER_API_SERVICE_ID?.trim();
+  if (!token || !sid) return;
+  const res = spawnSync(
+    "curl",
+    ["-sS", "-H", `Authorization: Bearer ${token}`, `https://api.render.com/v1/services/${sid}`],
+    { encoding: "utf8", timeout: 20000 },
+  );
+  if ((res.status ?? 1) !== 0) {
+    errors.push(`live Render GET service ${sid} failed (exit ${res.status})`);
+    return;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(res.stdout || "{}");
+  } catch {
+    errors.push("live Render GET service: body is not JSON");
+    return;
+  }
+  const live =
+    parsed.serviceDetails?.envSpecificDetails?.preDeployCommand ||
+    parsed.service?.serviceDetails?.envSpecificDetails?.preDeployCommand ||
+    "";
+  const yamlLine = fs.readFileSync(RENDER, "utf8").match(/preDeployCommand:\s*(.+)/)?.[1]?.trim() ?? "";
+  if (!live || live.trim() !== yamlLine) {
+    errors.push(
+      `live preDeployCommand ${JSON.stringify(live)} !== render.yaml ${JSON.stringify(yamlLine)} (DRIFT-3)`,
+    );
+  }
+}
+
 function main() {
   if (process.argv.includes("--selftest")) {
     selftest();
     return;
   }
   const errors = assertConfigured();
+  assertLivePreDeployMatchesYaml(errors);
   if (errors.length) {
     console.error(`FAIL ${LABEL}:`);
     for (const e of errors) console.error(`  - ${e}`);
