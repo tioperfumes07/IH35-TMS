@@ -178,6 +178,7 @@ async function resolveDropCoordinates(
         SELECT s.latitude, s.longitude
         FROM mdata.load_stops s
         WHERE s.load_id = l.id AND s.stop_type = 'delivery'::mdata.stop_type_enum
+          AND s.soft_deleted_at IS NULL
         ORDER BY s.sequence_number DESC
         LIMIT 1
       ) loc ON true
@@ -196,6 +197,7 @@ async function resolveDropCoordinates(
           SELECT MAX(COALESCE(ds.scheduled_departure_at, ds.scheduled_arrival_at))
           FROM mdata.load_stops ds
           WHERE ds.load_id = l.id AND ds.stop_type = 'delivery'::mdata.stop_type_enum
+            AND ds.soft_deleted_at IS NULL
         ),
         l.updated_at
       ) DESC
@@ -239,12 +241,14 @@ export async function findBestLoadForUnit(userId: string, input: FindBestLoadFor
             SELECT MIN(COALESCE(ps.scheduled_arrival_at, ps.scheduled_departure_at))::text
             FROM mdata.load_stops ps
             WHERE ps.load_id = l.id AND ps.stop_type = 'pickup'::mdata.stop_type_enum
+              AND ps.soft_deleted_at IS NULL
           ) AS first_pickup_at
         FROM mdata.loads l
         LEFT JOIN LATERAL (
           SELECT city, state, latitude, longitude
           FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'pickup'::mdata.stop_type_enum
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number ASC
           LIMIT 1
         ) sp ON true
@@ -252,6 +256,7 @@ export async function findBestLoadForUnit(userId: string, input: FindBestLoadFor
           SELECT city, state, latitude, longitude
           FROM mdata.load_stops s
           WHERE s.load_id = l.id AND s.stop_type = 'delivery'::mdata.stop_type_enum
+            AND s.soft_deleted_at IS NULL
           ORDER BY s.sequence_number DESC
           LIMIT 1
         ) sd ON true
@@ -264,6 +269,7 @@ export async function findBestLoadForUnit(userId: string, input: FindBestLoadFor
               SELECT MIN(COALESCE(ps.scheduled_arrival_at, ps.scheduled_departure_at))
               FROM mdata.load_stops ps
               WHERE ps.load_id = l.id AND ps.stop_type = 'pickup'::mdata.stop_type_enum
+                AND ps.soft_deleted_at IS NULL
             ),
             l.created_at
           ) >= $3::timestamptz

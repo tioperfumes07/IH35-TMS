@@ -41,6 +41,15 @@ function auditPanelRecovery(panel) {
   return failures;
 }
 
+function auditActiveStopTruth(service) {
+  const failures = [];
+  const selectorCount = (service.match(/FROM mdata\.load_stops (?:s|ds|ps)/g) ?? []).length;
+  const activeCount = (service.match(/(?:s|ds|ps)\.soft_deleted_at IS NULL/g) ?? []).length;
+  if (selectorCount !== 6) failures.push(`expected 6 deadhead stop selectors, found ${selectorCount}`);
+  if (activeCount !== selectorCount) failures.push(`expected ${selectorCount} active-stop predicates, found ${activeCount}`);
+  return failures;
+}
+
 function main() {
   const service = read(paths.service);
   const routes = read(paths.routes);
@@ -58,6 +67,7 @@ function main() {
   if (!service.includes("findBestLoadForUnit")) failures.push("optimizer service must export findBestLoadForUnit");
   if (!service.includes("haversineMiles")) failures.push("optimizer service must use haversine distance");
   if (!service.includes("computeSuggestionScore")) failures.push("optimizer service must compute score formula");
+  failures.push(...auditActiveStopTruth(service));
   if (!routes.includes("/api/v1/dispatch/deadhead/next-load-suggestions")) failures.push("routes must expose next-load-suggestions");
   if (!routes.includes("operating_company_id")) failures.push("routes must require operating_company_id");
   if ((tests.match(/\bit\(/g) ?? []).length < 5) failures.push("optimizer tests must cover at least 5 cases");
@@ -83,6 +93,7 @@ function main() {
 
 function selftest() {
   const panel = read(paths.panel);
+  const service = read(paths.service);
   const mutations = [
     ["retry", "onRetry={() => void q.refetch()}", "onRetry={() => undefined}"],
     ["empty honesty", "!q.isLoading && !q.isError && suggestions.length === 0", "!q.isLoading && suggestions.length === 0"],
@@ -92,7 +103,16 @@ function selftest() {
     const planted = panel.replace(before, after);
     if (planted === panel || auditPanelRecovery(planted).length === 0) fail(`${name} mutation escaped`);
   }
-  console.log(`verify:deadhead-optimizer selftest PASS — ${mutations.length}/${mutations.length} recovery mutations caught`);
+  const stopMutations = [
+    ["all active-stop predicates", service.replace(/\s+AND (?:s|ds|ps)\.soft_deleted_at IS NULL/g, "")],
+    ["one active-stop predicate", service.replace(/\s+AND (?:s|ds|ps)\.soft_deleted_at IS NULL/, "")],
+  ];
+  for (const [name, planted] of stopMutations) {
+    if (planted === service || auditActiveStopTruth(planted).length === 0) fail(`${name} mutation escaped`);
+  }
+  console.log(
+    `verify:deadhead-optimizer selftest PASS — ${mutations.length + stopMutations.length}/${mutations.length + stopMutations.length} recovery/lifecycle mutations caught`
+  );
 }
 
 if (process.argv.includes("--selftest")) selftest();
