@@ -250,14 +250,15 @@ export function SafetyLayout() {
           </div>
         </div>
 
-        <SafetyGroupNav
-          groups={SAFETY_GROUPS}
-          activeTabId={activeTabId}
-          onTabChange={(tabId) => {
-            const target = findSafetyTab(tabId)?.tab.route ?? "/safety/driver-files";
-            navigate(target);
-          }}
-        />
+        {/* SAFETY-STUCK-RENDER-ON-DUAL-NAVIGATE: onTabChange used to call navigate(target) here on
+            EVERY click, racing against the NavLink's own built-in navigation to the identical
+            `to={tab.route}` destination (SafetyGroupNav.tsx). Two synchronous navigate() calls to
+            the same target in one click handler could leave the URL updated but the routed
+            <Outlet/> child un-swapped — reproduced live: clicking a group-nav item while on a
+            client-state driver-detail view (DriverFilesTab's internal `driverId`) left that view
+            stuck on screen under the new URL until a hard reload. NavLink's `to` prop is already
+            the single source of truth for this navigation; no second imperative navigate() call. */}
+        <SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />
         <div className="px-[22px] py-3">
           <Outlet />
         </div>
