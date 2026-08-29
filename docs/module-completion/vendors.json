@@ -74,9 +74,11 @@
       ],
       "spec": "08-BLOCK catalog re-verification",
       "status": "PASS",
-      "evidence": "2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238.",
+      "evidence": "2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238. LIVE RE-VERIFIED (CC-1, 2026-08-29, SHA b276443): raw count(*) for USMCA is now 10, not 8 — investigated before trusting either number (never-guess law): Neon shows the 8 original is_system=true/is_active=true rows (Fuel/Repair/Tires/Towing/Insurance/Permit/Toll/Other) unchanged, PLUS 2 is_active=false rows created 2026-08-22/23 by another seat (\"CC3 Test Vendor Type\", \"CC3 TEST Vendor Type\", is_system=false) — TEST fixtures, correctly deactivated not deleted (void-not-delete), not a regression. Live Chrome /vendors?create=1 (USMCA Freight Solutions Inc) Vendor type dropdown shows exactly the same 8 active options, confirming the picker correctly filters is_active=true and the 2 inactive TEST rows are properly hidden from create flow. UI-to-DB parity confirmed at the ACTIVE-only layer, which is the layer this item's acceptance actually depends on.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T15:39:08.000Z",
+      "live_verified_sha": "b276443"
     },
     {
       "id": "VEND-S05",
