@@ -46,8 +46,8 @@
       ],
       "spec": "ModuleCompletionPage \u00b7 verify-module-completion",
       "status": "PASS",
-      "evidence": "Route /program/modules -> ModuleCompletionPage; imports generated MODULE_COMPLETION and renders N-of-M progress for every manifest. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 docs/module-completion/*.json n=30 manifests; node scripts/verify-module-completion.mjs PASS (all manifests legal); ModuleCompletionPage buildRows() wired on main #5373; healthz=50ce01b.",
-      "pr": "#5373",
+      "evidence": "Route /program/modules -> ModuleCompletionPage fetches GET /api/v1/program/module-completion (types-only import from generated). Guard: scripts/verify-program-surfaces-s01-s05.mjs. LIVE 2026-08-28 browser USMCA: FE version.json f16f7f5 fetches API; API healthz 4e5db76 returns 404 Route not found; page showed module-completion 404 + false 'not yet defined' for all rows before boardReady gate. Table must not paint empty as undefined when fetch fails.",
+      "pr": "#5373 #17257",
       "prod_verified": true
     },
     {

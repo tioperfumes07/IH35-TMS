@@ -61,6 +61,9 @@ export function run() {
   assert(moduleComp.includes("/api/v1/program/module-completion"), "ModuleCompletionPage must fetch /api/v1/program/module-completion", errors);
   assert(moduleComp.includes("buildRows"), "ModuleCompletionPage must build rows from manifests", errors);
   assert(!/import \{\s*MODULE_COMPLETION,/.test(moduleComp), "ModuleCompletionPage must not import baked MODULE_COMPLETION", errors);
+  assert(moduleComp.includes("boardReady"), "ModuleCompletionPage must gate the table on a successful API board (no false 'not yet defined' on fetch error)", errors);
+  assert(moduleComp.includes("live.isSuccess"), "ModuleCompletionPage boardReady must require live.isSuccess", errors);
+  assert(moduleComp.includes("{boardReady ?"), "ModuleCompletionPage must not render the N-of-M table while the API board failed", errors);
 
   // S04: program tracker renders per-block status from registry.
   assert(tracker.includes("getProgramTracker"), "ProgramTrackerPage must fetch program tracker", errors);
