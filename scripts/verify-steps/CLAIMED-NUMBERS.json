@@ -4787,6 +4787,16 @@
     "claimed_by": "cc-1",
     "purpose": "verify-load-drawer-money-query-error-disclosure"
   },
+  "10042": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-static-ratchet"
+  },
+  "10044": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-audit-coverage-ledger-integrity"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6771,5 +6781,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1329
+  "total_claimed": 1331
 }
