@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7259 | GO-0030 | CLAIM=dispatch-refinement-wrapper-owned-transactions | SOURCE=reassign+replace-stops exact lifecycle chains | CLOSES=transaction proof regression | NEXT=gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7258 | PR=#17480 @ c1cc68ac5e | Built=equipment-transfer wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | FLEET-F7258 | GO-0054 | CLAIM=equipment-transfer-wrapper-owned-transactions | SOURCE=transfer→equipment assignment→log→audit four callbacks | CLOSES=F6845/F6846 transaction proof gap | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7257 | PR=#17479 @ d6b4d08c5a | Built=Unit create+PATCH wrapper-owned atomic vertical | Live=post-deploy UNVERIFIED | NEXT=fleet unique | GO
 Codex | WORKING | FLEET-F7257 | GO-0054 | CLAIM=unit-writers-wrapper-owned-transaction | SOURCE=withCurrentUser→unit+asset+default-driver+audit/spine | CLOSES=F7198 transaction proof regression | NEXT=gate+FAST-MERGE | GO
