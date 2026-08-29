@@ -75,7 +75,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/qbo/vendors", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -85,7 +85,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/integrations/qbo/vendor-suggestions/:entity_type/:entity_id", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/vendor-suggestions/:entity_type/:entity_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -97,7 +97,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/integrations/qbo/vendor-link", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/vendor-link", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -126,7 +126,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     }
   });
 
-  app.delete("/api/v1/integrations/qbo/vendor-link/:entity_type/:entity_id", async (req, reply) => {
+  app.delete("/api/v1/integrations/qbo/vendor-link/:entity_type/:entity_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canUnlink(user.role)) return reply.code(403).send({ error: "forbidden_owner_admin_only" });
@@ -149,7 +149,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/integrations/qbo/vendor-linkage-history", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/vendor-linkage-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -164,7 +164,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/master-data/drivers/:id/link-qbo-vendor", async (req, reply) => {
+  app.post("/api/v1/master-data/drivers/:id/link-qbo-vendor", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -196,7 +196,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/master-data/units/:id/link-qbo-class", async (req, reply) => {
+  app.post("/api/v1/master-data/units/:id/link-qbo-class", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -222,7 +222,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/master-data/trailers/:id/link-qbo-class", async (req, reply) => {
+  app.post("/api/v1/master-data/trailers/:id/link-qbo-class", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -248,7 +248,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/master-data/drivers/qbo-mapping-status", async (req, reply) => {
+  app.get("/api/v1/master-data/drivers/qbo-mapping-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canLink(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -258,7 +258,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/master-data/units/:id/unlink-qbo-class", async (req, reply) => {
+  app.post("/api/v1/master-data/units/:id/unlink-qbo-class", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canUnlink(user.role)) return reply.code(403).send({ error: "forbidden_owner_admin_only" });
@@ -275,7 +275,7 @@ export async function registerQboVendorLinkageRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/master-data/trailers/:id/unlink-qbo-class", async (req, reply) => {
+  app.post("/api/v1/master-data/trailers/:id/unlink-qbo-class", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canUnlink(user.role)) return reply.code(403).send({ error: "forbidden_owner_admin_only" });
