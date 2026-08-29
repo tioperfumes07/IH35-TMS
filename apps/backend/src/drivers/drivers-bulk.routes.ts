@@ -283,6 +283,19 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
     await ctx.client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1::text, 0))`, [lockKey]);
   }
 
+  const clearedUnitMirrors = await ctx.client.query(
+    `
+      UPDATE mdata.units
+      SET assigned_driver_id = NULL,
+          updated_at = now()
+      WHERE assigned_driver_id = $1::uuid
+        AND ($2::uuid IS NULL OR id IS DISTINCT FROM $2::uuid)
+        AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+      RETURNING id::text
+    `,
+    [ctx.id, unitId, ctx.operatingCompanyId]
+  );
+
   if (unitId) {
     const unitOk = await assertUnitScope(ctx.client, unitId, ctx.operatingCompanyId);
     if (!unitOk) return { ok: false, code: "E_UNIT_NOT_FOUND", message: "Truck not found in operating company" };
@@ -309,6 +322,20 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
       `,
       [ctx.id, ctx.operatingCompanyId]
     );
+    const unitMirror = await ctx.client.query(
+      `
+        UPDATE mdata.units
+        SET assigned_driver_id = $2::uuid,
+            updated_at = now()
+        WHERE id = $1::uuid
+          AND (owner_company_id = $3::uuid OR currently_leased_to_company_id = $3::uuid)
+        RETURNING id::text
+      `,
+      [unitId, ctx.id, ctx.operatingCompanyId]
+    );
+    if (!(unitMirror.rows[0] as { id?: string } | undefined)?.id) {
+      throw new Error("driver_bulk_unit_mirror_write_failed");
+    }
     const inserted = await ctx.client.query(
       `
         INSERT INTO telematics.vehicle_driver_assignments (
@@ -339,6 +366,7 @@ async function handleAssignTruck(ctx: BulkPerEntityContext<z.infer<typeof assign
     resource_id: ctx.id,
     operating_company_id: ctx.operatingCompanyId,
     unit_id: unitId,
+    cleared_unit_ids: clearedUnitMirrors.rows.map((row) => String((row as { id: string }).id)),
     reason: ctx.reason,
   });
 
