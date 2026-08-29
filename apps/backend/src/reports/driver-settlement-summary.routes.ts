@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 
 const querySchema = companyQuerySchema.extend({
   cycle_start: z.string().optional(),
@@ -29,6 +29,7 @@ export async function registerDriverSettlementSummaryRoutes(app: FastifyInstance
     const cycle = previousCycleWindow();
     const cycleStart = query.data.cycle_start ?? cycle.start;
     const cycleEnd = query.data.cycle_end ?? cycle.end;
+    if (cycleStart > cycleEnd) return dateRangeOrderError(reply, "cycle_start", "cycle_end");
 
     const rows = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const res = await client.query(

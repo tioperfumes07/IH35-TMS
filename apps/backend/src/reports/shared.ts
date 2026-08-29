@@ -170,6 +170,18 @@ export function validationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
 }
 
+// GO-0036-REPORTS-DATE-RANGE-ORDER-UNVALIDATED: neither the shared DatePicker (frontend) nor most
+// report query schemas here validate that a from/period_start/cycle_start value is on-or-before its
+// to/period_end/cycle_end pair. A reversed range passes every existing guard, the SQL BETWEEN/>=+<=
+// predicate becomes unsatisfiable (always false, never an error), and the endpoint returns a
+// legitimate 200 with all-zero totals and an empty row set -- indistinguishable from a genuine
+// zero-activity period. detention-claims.routes.ts / fuel-price-variance.routes.ts /
+// maintenance-cost-per-unit.routes.ts already guard this exact condition; this is the shared form of
+// that same check for every other report route that takes a date range.
+export function dateRangeOrderError(reply: FastifyReply, fromLabel: string, toLabel: string) {
+  return reply.code(400).send({ error: "validation_error", details: { period: [`${fromLabel} must be on or before ${toLabel}`] } });
+}
+
 export async function withCompanyScope<T>(userId: string, operatingCompanyId: string, fn: (client: any) => Promise<T>) {
   await assertCompanyMembership(userId, operatingCompanyId);
   return withCurrentUser(userId, async (client) => {

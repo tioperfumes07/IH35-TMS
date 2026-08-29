@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 
 const querySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid(),
@@ -16,6 +16,7 @@ export async function registerDriverPayHistoryRoutes(app: FastifyInstance) {
     if (!query.success) return validationError(reply, query.error);
     const start = query.data.start ?? "1900-01-01";
     const end = query.data.end ?? "2999-12-31";
+    if (start > end) return dateRangeOrderError(reply, "start", "end");
 
     const payload = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const settlementsRes = await client.query(

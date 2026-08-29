@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, validationError, withCompanyScope } from "./shared.js";
 import {
   getLaneLoadDetails,
   readLaneProfitabilityCache,
@@ -53,7 +53,7 @@ function buildTotals(lanes: LaneSummary[]) {
 }
 
 export async function registerLaneProfitabilityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/lane-profitability", async (req, reply) => {
+  app.get("/api/v1/reports/lane-profitability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -61,10 +61,13 @@ export async function registerLaneProfitabilityRoutes(app: FastifyInstance) {
     if (!parsed.success) return validationError(reply, parsed.error);
 
     const { operating_company_id: companyId, period, start, end } = parsed.data;
-    const bounds = resolveLanePeriod(period, start, end);
     if (period === "custom" && (!start || !end)) {
       return reply.status(400).send({ error: "Custom period requires start and end dates" });
     }
+    if (period === "custom" && start && end && start > end) {
+      return dateRangeOrderError(reply, "start", "end");
+    }
+    const bounds = resolveLanePeriod(period, start, end);
 
     const payload = await withCompanyScope(user.uuid, companyId, async (client) => {
       const cached = await readLaneProfitabilityCache(client, companyId, bounds.start, bounds.end);
@@ -96,12 +99,13 @@ export async function registerLaneProfitabilityRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/reports/lane-profitability/loads", async (req, reply) => {
+  app.get("/api/v1/reports/lane-profitability/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
     const parsed = detailQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+    if (parsed.data.period_start > parsed.data.period_end) return dateRangeOrderError(reply, "period_start", "period_end");
 
     const {
       operating_company_id: companyId,

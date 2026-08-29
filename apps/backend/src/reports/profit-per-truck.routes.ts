@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { companyQuerySchema, currentAuthUser, parseMonthWindow, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
+import { companyQuerySchema, currentAuthUser, dateRangeOrderError, parseMonthWindow, reportBasisSchema, validationError, withCompanyScope } from "./shared.js";
 import { createTtlCache } from "../lib/ttl-cache.js";
 // FLEET-VISIBILITY-F4583-SAMPLE-DATA-GAP (continued): same shared exclusion already required on the
 // Fleet roster/KPI (mdata/fleet-visibility.ts) — a fixture unit's fixture loads must not surface as
@@ -86,6 +86,9 @@ export async function registerProfitPerTruckRoutes(app: FastifyInstance) {
     const q = req.query ?? {};
     const periodParsed = periodQuerySchema.safeParse(q);
     if (periodParsed.success) {
+      if (periodParsed.data.period_start > periodParsed.data.period_end) {
+        return dateRangeOrderError(reply, "period_start", "period_end");
+      }
       const { operating_company_id: companyId, period_start: pStart, period_end: pEnd, basis } = periodParsed.data;
       const cacheKey = `${companyId}:${pStart}:${pEnd}:${basis}`;
       const hit = extendedCache.get(cacheKey);
