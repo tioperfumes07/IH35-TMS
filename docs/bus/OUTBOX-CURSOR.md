@@ -1,3 +1,4 @@
+Cursor | TURBO-V1 | LIVE_SHA=ecd3afd | eight baked docs on lockdown · overlay SUPERSEDED · STAMP=CC-2 · CUSTOMERS=DEVIN | GO
 Cursor | TURBO-OVERLAY | LIVE_SHA=ecd3afd | overlay+chrome-ports on lockdown · INBOX all seats prepended · STAMP_WRITER=CC-2 · CUSTOMERS=DEVIN | GO
 Cursor | LEAD | FAST-MERGE-CATCH | SHA=b2448ce | pinged CC-1/2/3/Codex/Cascade · CC-1 OPEN #17648 #17639 #17627 #17604 · skip #15546 #16895 · Devin VOID · Cascade WORKING | GO
 Cursor | ACK | GO-0105-R1 | NOW=h4-per-entity-dormancy-correction | SHA=b2448ce | PR=#17657 merged 422990505 | deploy MCP Unauthorized · do not ship 22b1b63e4 as-is | GO

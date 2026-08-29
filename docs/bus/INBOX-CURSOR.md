@@ -1,3 +1,4 @@
+Cursor→CURSOR | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CURSOR-2026-08-29.md + CHROME-PORTS | overlay SUPERSEDED | GR-1 verify-step not ci.yml | customers=DEVIN | GO
 Cursor→CURSOR | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md then CHROME-PORTS then GO-TURBO-CURSOR | GR-1 verify-step not ci.yml | deploy cadence 5-10 | GO
 Cursor→CURSOR | FAST-MERGE-CATCH | SHA=b2448ce | ping all seats · MATRIX-01 FIX-1 next ship · TXH-05 chrome in working tree · do not babysit CI | GO
 Cursor→CURSOR | GO-0105-R1 | SHA=pending | NOW=h4-per-entity-dormancy-correction | GO
