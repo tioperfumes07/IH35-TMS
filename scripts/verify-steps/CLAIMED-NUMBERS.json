@@ -6726,5 +6726,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-detention-notify-claim-before-send"
+  },
+  "10017": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-bridge-scoped-checks"
   }
 }
