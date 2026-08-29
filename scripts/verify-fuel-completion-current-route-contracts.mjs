@@ -62,6 +62,14 @@ function inspect(sources) {
   if (!sources.accountingApi.includes('`/api/v1/accounting/expense-category-map?${query.toString()}`')) {
     errors.push("FUEL-S03: listExpenseCategoryMappings does not call the canonical query endpoint");
   }
+  if (!sources.lovesRoutes.includes('import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";')) {
+    errors.push("FUEL-S01/S07: Love's status route lacks canonical company-membership guard");
+  }
+  const lovesMembershipIndex = sources.lovesRoutes.indexOf("await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);");
+  const lovesReadIndex = sources.lovesRoutes.indexOf("await fetchLovesSyncStatus(parsed.data.operating_company_id)");
+  if (lovesMembershipIndex < 0 || lovesReadIndex < 0 || lovesMembershipIndex > lovesReadIndex) {
+    errors.push("FUEL-S01/S07: company membership must be proven before the bypass-backed status read");
+  }
   const stale = [
     "/api/v1/fuel/loves-sync/status",
     "/api/v1/fuel/compliance-summary",
@@ -95,6 +103,7 @@ function selftest() {
     ["relay mount", { index: good.index.replace("registerRelayDepositReviewRoutes(app)", "registerRelayDepositReviewRoutesMissing(app)") }],
     ["honesty state", { manifest: good.manifest.replace('"id": "FUEL-S02"', '"id": "FUEL-S02"').replace('"status": "UNVERIFIED"', '"status": "PASS"') }],
     ["artifact refresh", { httpRecheck: good.httpRecheck.replace("writeFileSync(OUT, text)", "") }],
+    ["Love's membership", { lovesRoutes: good.lovesRoutes.replace("await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);", "// planted: membership removed") }],
   ];
   for (const [name, mutation] of mutations) {
     if (inspect({ ...good, ...mutation }).length === 0) throw new Error(`mutation escaped: ${name}`);
