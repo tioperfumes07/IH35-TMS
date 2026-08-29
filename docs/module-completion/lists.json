@@ -115,7 +115,7 @@
       ],
       "spec": "Owner ruling: derive entity from related load/dispatch, never dispatcher default company",
       "status": "PASS",
-      "evidence": "CLOSED 2026-07-29: migration 202608010000 applied_held + applied_on_prod:true. LIVE Neon lucia: operating_company_id column present; 75 rows across 3 entities; relrowsecurity+relforcerowsecurity true. Route load-derived GUC pinned by verify-dispatcher-error-reasons-per-entity (1454). Guard verify-lst-cat06-dispatcher-error-reasons-closed (step 1774).",
+      "evidence": "CLOSED 2026-07-29: migration 202608010000 applied_held + applied_on_prod:true. LIVE Neon lucia: operating_company_id column present; 75 rows across 3 entities; relrowsecurity+relforcerowsecurity true. Route load-derived GUC pinned by verify-dispatcher-error-reasons-per-entity (1454). Guard verify-lst-cat06-dispatcher-error-reasons-closed (step 1774). RE-CONFIRMED LIVE (CC-3 2026-08-29, healthz 14daeed): catalogs.dispatcher_error_reasons still relrowsecurity=true, relforcerowsecurity=true; row count grew 75->78 across the same 3 entities (natural drift, not a regression).",
       "pr": null,
       "live_proof": "2026-07-29 Neon lucia dispatcher_error_reasons n=75 entities=3 FORCE RLS; applied_held checksum on file",
       "owner_hold": false,
@@ -177,7 +177,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "NON-FINANCIAL — self-mergeable on green CI per §1.2, provided it touches no migration and no accounting.*/catalogs.*/mdata.* schema or data.",
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:20:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-LINK-01",
@@ -479,7 +481,7 @@
       ],
       "spec": "catalog-registry.routes.ts",
       "status": "PASS",
-      "evidence": "VERIFIED 2026-07-25. One source of truth: catalog-registry.routes.ts:23-38 CATALOG_REGISTRY_STATS_SQL, :40-45 enum derived via Object.keys, :48 preview, :52 create schema. Unsupported -> stats_supported:false (:92-105), never a fabricated 0. The 8 codes match exactly the 8 rows seeded by the table's only writer, migration 0020_catalog_metadata.sql:49-57. Registered index.ts:71,805. Guard 1360 (4-case selftest). PREMISE REFUTED: 'two hand-written 8-item lists' — all three surfaces derive from one map.",
+      "evidence": "VERIFIED 2026-07-25. One source of truth: catalog-registry.routes.ts:23-38 CATALOG_REGISTRY_STATS_SQL, :40-45 enum derived via Object.keys, :48 preview, :52 create schema. Unsupported -> stats_supported:false (:92-105), never a fabricated 0. The 8 codes match exactly the 8 rows seeded by the table's only writer, migration 0020_catalog_metadata.sql:49-57. Registered index.ts:71,805. Guard 1360 (4-case selftest). PREMISE REFUTED: 'two hand-written 8-item lists' — all three surfaces derive from one map. RE-CONFIRMED (CC-3 2026-08-29, healthz 14daeed): apps/backend/src/catalogs/catalog-registry.routes.ts still derives CATALOG_REGISTRY_CODES via Object.keys(CATALOG_REGISTRY_STATS_SQL) and returns stats_supported:false (not a fabricated 0) for any unsupported code -- the single-source-of-truth structure is unchanged.",
       "pr": 3489,
       "owner_hold": false,
       "tracker": null,
@@ -540,7 +542,9 @@
         "evidence_bar": "LIVE PROOF must carry a concrete artifact (sha 7-40 hex, URL/endpoint, or a row count). Bare \"verified\" is rejected. When it cannot be produced: the literal token UNVERIFIED plus a named blocker."
       },
       "gate": "HOLD — financial / migration / owner-decision. Rule 13: build, HOLD, never self-merge; needs JORGE-APPROVED. Rule 11: independent reviewer required.",
-      "prod_verified": false
+      "prod_verified": false,
+      "live_verified_at": "2026-08-29T17:20:00.000Z",
+      "live_verified_sha": "14daeed"
     },
     {
       "id": "LST-SEED-01",
