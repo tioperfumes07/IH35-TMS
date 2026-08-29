@@ -6,6 +6,7 @@ import type { DispatchLoadRow } from "../../api/loads";
 import "../../design/design-tokens.css";
 import { ToastProvider } from "../../components/Toast";
 import { DispatchBoard } from "./DispatchBoard";
+import { listOpenPreSettlements } from "../../api/driverFinance";
 
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
@@ -26,6 +27,14 @@ vi.mock("../../api/dispatch", async (importOriginal) => {
       ],
     }),
     listDispatchInShopUnits: vi.fn().mockResolvedValue({ units: [] }),
+  };
+});
+
+vi.mock("../../api/driverFinance", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/driverFinance")>();
+  return {
+    ...actual,
+    listOpenPreSettlements: vi.fn().mockResolvedValue({ pre_settlements: [] }),
   };
 });
 
@@ -221,5 +230,35 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
     await screen.getAllByTestId("dispatch-board-mode-assignment")[0].click();
     fireEvent.click((await screen.findAllByText("T-1"))[0].closest("tr")!);
     expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("does not disguise a failed pre-settlement linkage read as no open cycle", async () => {
+    vi.mocked(listOpenPreSettlements).mockRejectedValueOnce(new Error("pre-settlement unavailable"));
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={qc}>
+        <MemoryRouter>
+          <ToastProvider>
+            <DispatchBoard
+              loads={[mockLoad()]}
+              totalCount={1}
+              limit={50}
+              offset={0}
+              loading={false}
+              sortField="created_at"
+              sortDirection="desc"
+              onSortChange={vi.fn()}
+              onPageChange={vi.fn()}
+              onRowClick={vi.fn()}
+              onExportCsv={vi.fn()}
+              operatingCompanyId="00000000-0000-4000-8000-0000000000bb"
+            />
+          </ToastProvider>
+        </MemoryRouter>
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText("Couldn't load open pre-settlements")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeTruthy();
   });
 });
