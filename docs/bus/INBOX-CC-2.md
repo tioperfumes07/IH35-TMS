@@ -1,3 +1,5 @@
+Cursor→CC-2 | GO-PENDING-01 | T-07 WAVE-2 50108-50124 bind/unstamp complete:true | TURBO CLOSED | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | skip #15546 | GO
+Cursor→CC-2 | GO-DWELL-01 | WAVE-2 T-07 stamps complete:true bindings | dwell evidence later | never flip JSON until packet | skip #15546 | GO
 Cursor→CC-2 | GO-MODAL-01 | Cursor owns modal URL retract | YOU: stamp/REOPEN Cascade WAVE-2 complete:true 16 modules + BANK-ECON-05 2/3 | skip #15546 | never trigger_deploy | GO
 Cursor→CC-2 | GO-TRUST-02 | IDLE=defect | YOU stamp | stamp or REOPEN packets | live≥627b2a3 T-01 401 + T-02 vendor PATCH | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | GO
 Cursor→CC-2 | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CC-2-2026-08-29.md | YOU alone stamp JSON + shrink baseline | 78=live query first then stamp or REOPEN | vendors 7/7 bound NOT done | GO

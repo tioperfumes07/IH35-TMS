@@ -12,7 +12,7 @@ const actionBodySchema = z.object({
 });
 
 function currentOwner(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user;
   if (!user || user.role !== "Owner") {
     void reply.code(403).send({ error: "owner_only" });

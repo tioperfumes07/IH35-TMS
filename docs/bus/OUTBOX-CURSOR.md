@@ -1,3 +1,5 @@
+CURSOR | GO-PENDING-01 | T-01 helpers + bus wake CC-1 | HOLD D-5 | GO
+CURSOR | GO-DWELL-01 | packet+canvas | CC-3 GR-1 slice | CC-1 D-3/D-4 | Codex D-1 | T-06 names exist | T-07 CC-2 | T-08 CC-3 | GO
 Cursor | LEAD | GO-MODAL-01 | Book Load cancel must leave /dispatch/book-load | TURBO 3 waves credited | deploy after merge | skip #15546 | GO
 Cursor | LEAD | GO-TRUST-02 | wake idle seats | T-04 worker min-interval | skip #15546 | STAMP=CC-2 | CUSTOMERS=DEVIN | GO
 Cursor | CC-3 | GR-1 infra on main f130067d6 · typecheck ships now · 97 wait released for rebase+re-anchor · 9225 fallback OK · customers Devin | GO

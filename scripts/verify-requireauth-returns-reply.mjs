@@ -15,8 +15,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "apps/backend/src");
 const LABEL = "verify-requireauth-returns-reply";
 
-/** Bad: handler returns undefined/false after 401. currentAuthUser MUST return null (narrowing). */
-const BAD = /if\s*\(\s*!requireAuth\(\s*req\s*,\s*reply\s*\)\s*\)\s*return(?:\s+false)?\s*;/g;
+/** Bad: handler returns undefined after 401. Helpers may return null/false. */
+const BAD = /if\s*\(\s*!requireAuth\(\s*req\s*,\s*reply\s*\)\s*\)\s*return\s*;/g;
 
 function walkTs(dir, acc = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -33,6 +33,20 @@ export function findCurrentAuthUserReplyReturns(srcRoot = SRC) {
   for (const file of walkTs(srcRoot)) {
     const text = fs.readFileSync(file, "utf8");
     if (re.test(text)) hits.push(path.relative(ROOT, file));
+  }
+  return hits;
+}
+
+/** Named helpers / local `auth()` that return FastifyReply — TS2339 on `.uuid` (Render build_failed). */
+export function findAuthHelperReplyReturns(srcRoot = SRC) {
+  const hits = [];
+  const named = /function\s+\w+\s*\([^)]*reply[^)]*\)\s*\{[\s\S]{0,220}?if\s*\(\s*!requireAuth\(\s*req\s*,\s*reply\s*\)\s*\)\s*return reply/;
+  const localAuth = /const\s+auth\s*=\s*\([^)]*reply[^)]*\)\s*=>\s*\{[\s\S]{0,180}?if\s*\(\s*!requireAuth\(\s*req\s*,\s*reply\s*\)\s*\)\s*return reply/;
+  const driverSess = /function requireDriverSession[\s\S]{0,400}?if\s*\(\s*!requireAuth\(\s*req\s*,\s*reply\s*\)\s*\)\s*return reply/;
+  for (const file of walkTs(srcRoot)) {
+    const text = fs.readFileSync(file, "utf8");
+    const rel = path.relative(ROOT, file);
+    if (named.test(text) || localAuth.test(text) || driverSess.test(text)) hits.push(rel);
   }
   return hits;
 }
@@ -63,6 +77,11 @@ function selftest() {
     if (!findCurrentAuthUserReplyReturns(tmp).some((f) => f.endsWith("authbad.ts"))) {
       throw new Error(`${LABEL} selftest: currentAuthUser return reply must FAIL (TS2339 narrowing)`);
     }
+    const helperBad = `function authUser(req, reply) {\n  if (!requireAuth(req, reply)) return reply;\n  return req.user;\n}\n`;
+    fs.writeFileSync(path.join(tmp, "helperbad.ts"), helperBad);
+    if (!findAuthHelperReplyReturns(tmp).some((f) => f.endsWith("helperbad.ts"))) {
+      throw new Error(`${LABEL} selftest: named auth helper return reply must FAIL`);
+    }
     const badHits = findBadRequireAuthReturns(tmp);
     if (!badHits.some((h) => h.file.endsWith("bad.ts"))) {
       throw new Error(`${LABEL} selftest: planted return; must FAIL`);
@@ -88,10 +107,16 @@ function live() {
     for (const f of authHits.slice(0, 20)) console.error(`  ${f}`);
     process.exit(1);
   }
-  console.log(`${LABEL}: PASS — requireAuth handlers return reply; currentAuthUser returns null`);
+  const helperHits = findAuthHelperReplyReturns();
+  if (helperHits.length) {
+    console.error(`${LABEL}: FAIL auth helpers must return null/false (not reply) so User narrows:`);
+    for (const f of helperHits.slice(0, 30)) console.error(`  ${f}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: PASS — requireAuth handlers return reply; auth helpers return null/false`);
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = Boolean(process.argv[1] && path.basename(String(process.argv[1])) === "verify-requireauth-returns-reply.mjs");
 if (isMain) {
   if (process.argv.includes("--selftest")) {
     selftest();

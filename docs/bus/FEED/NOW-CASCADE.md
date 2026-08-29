@@ -1,7 +1,7 @@
-# NOW — CASCADE (GO-MODAL-01)
+# NOW — CASCADE (GO-PENDING-01)
 
-**ACK:** `CASCADE | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
 
-TURBO waves complete. Unique FINDING. Skip #15546.
+TURBO waves CLOSED. Unique FINDING only. GR-1 seeded. Skip #15546. Do not recertify U14.
 
-Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`
+Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`

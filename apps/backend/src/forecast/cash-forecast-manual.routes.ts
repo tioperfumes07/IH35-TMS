@@ -57,7 +57,7 @@ const openingBalanceBody = z.object({
 
 export async function registerCashForecastManualRoutes(app: FastifyInstance) {
   const auth = (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return reply;
+    if (!requireAuth(req, reply)) return null;
     const user = req.user as { uuid: string; role: string };
     if (!officeRole(String(user.role ?? ""))) {
       reply.code(403).send({ error: "forbidden" });

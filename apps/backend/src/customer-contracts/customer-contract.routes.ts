@@ -10,7 +10,7 @@ const SOURCE_TAG = "C3-CUSTOMER-CONTRACT-UPLOAD";
 const ALLOWED_ROLES = new Set(["Owner", "Administrator", "Manager", "Accountant", "Dispatcher"]);
 
 function guardAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user!;
   if (!ALLOWED_ROLES.has(user.role ?? "")) {
     reply.code(403).send({ error: "forbidden" });

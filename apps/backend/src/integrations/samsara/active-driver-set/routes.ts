@@ -34,7 +34,7 @@ const recomputeBodySchema = z.object({
 });
 
 function officeUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   const user = req.user as { uuid: string; role: string };
   if (user.role === "Driver") {
     reply.code(403).send({ error: "forbidden" });
