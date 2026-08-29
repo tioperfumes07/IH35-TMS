@@ -265,6 +265,12 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const result = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      // FUEL-F7338: production can intentionally run without the planner source relation.
+      // Read surfaces already disclose that state; a stale/direct Send request must do the
+      // same instead of querying a missing table and turning source unavailability into HTTP 500.
+      if (!(await hasRelation(client, "fuel.route_recommendations"))) {
+        return { unavailable: true as const };
+      }
       const recRes = await client.query(
         `
           SELECT id, operating_company_id, driver_id, load_id, computed_at
@@ -316,6 +322,9 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       };
     });
 
+    if (result && "unavailable" in result) {
+      return reply.code(503).send({ error: "fuel_planner_source_unavailable" });
+    }
     if (!result) return reply.code(404).send({ error: "fuel_recommendation_not_found" });
     return result;
   });
