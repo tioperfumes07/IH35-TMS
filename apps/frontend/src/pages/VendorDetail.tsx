@@ -1136,6 +1136,13 @@ export function VendorDetailPage() {
               <p className="text-sm text-slate-700">
                 Backend pending — history unavailable until backend ships (P6-T11204).
               </p>
+            ) : vendorPaymentsQuery.isError ? (
+              <p className="text-sm text-red-600">
+                Failed to load bill payments.{" "}
+                <button type="button" className="font-semibold text-red-700 underline" onClick={() => void vendorPaymentsQuery.refetch()}>
+                  Retry
+                </button>
+              </p>
             ) : (
               <ParityTable<VendorBillPaymentListRow>
                 rows={vendorPaymentsQuery.data?.payments ?? vendorPaymentsQuery.data?.rows ?? []}
