@@ -114,6 +114,7 @@ export async function enrichLoadsLiveEta(
         SELECT scheduled_arrival_at
         FROM mdata.load_stops
         WHERE load_id = l.id AND stop_type = 'delivery'
+          AND soft_deleted_at IS NULL
         ORDER BY sequence_number DESC
         LIMIT 1
       ) sd ON true

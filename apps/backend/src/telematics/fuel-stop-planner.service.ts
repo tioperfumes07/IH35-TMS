@@ -154,6 +154,7 @@ async function fetchRouteStops(client: DbClient, input: RecommendFuelStopsInput,
                                     AND loc.operating_company_id = $2::uuid
       WHERE s.load_id = $1::uuid
         AND l.operating_company_id = $2::uuid
+        AND s.soft_deleted_at IS NULL
       ORDER BY s.sequence_number ASC
     `,
     [loadId, input.operating_company_id]

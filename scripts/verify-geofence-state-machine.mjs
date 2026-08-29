@@ -68,11 +68,29 @@ contains("apps/backend/src/index.ts", indexTs, [
 read("apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/engine.test.ts");
 read("apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/transitions.test.ts");
 const binding = read("apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts");
+const autoGeofence = read("apps/backend/src/telematics/auto-geofence.service.ts");
+const shipperMilestones = read("apps/backend/src/shipper-portal/load-milestone.service.ts");
+const liveEta = read("apps/backend/src/telematics/dispatch-live-eta.service.ts");
+const fuelPlanner = read("apps/backend/src/telematics/fuel-stop-planner.service.ts");
 const bookLoad = read("apps/backend/src/dispatch/book-load.service.ts");
 const refinements = read("apps/backend/src/dispatch/dispatch-refinements.service.ts");
 contains("apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts", binding, [
   { pattern: /if \(!refreshed\.rows\[0\]\?\.id\) throw new Error\("load_geofence_refresh_failed"\)/, label: "existing geometry refresh result check" },
   { pattern: /if \(!inserted\.rows\[0\]\?\.id\) throw new Error\("load_geofence_insert_failed"\)/, label: "new geofence identity check" },
+  { pattern: /AND ls\.soft_deleted_at IS NULL/, label: "active stops for bound geofences" },
+]);
+contains("apps/backend/src/telematics/auto-geofence.service.ts", autoGeofence, [
+  { pattern: /AND s\.soft_deleted_at IS NULL/, label: "active stops for auto-geofence generation" },
+]);
+contains("apps/backend/src/shipper-portal/load-milestone.service.ts", shipperMilestones, [
+  { pattern: /stop_type = 'pickup' AND soft_deleted_at IS NULL/, label: "active pickup for shipper route label" },
+  { pattern: /stop_type = 'delivery' AND soft_deleted_at IS NULL/, label: "active delivery for shipper route label" },
+]);
+contains("apps/backend/src/telematics/dispatch-live-eta.service.ts", liveEta, [
+  { pattern: /stop_type = 'delivery'[\s\S]{0,80}?AND soft_deleted_at IS NULL/, label: "active delivery for live ETA" },
+]);
+contains("apps/backend/src/telematics/fuel-stop-planner.service.ts", fuelPlanner, [
+  { pattern: /AND s\.soft_deleted_at IS NULL/, label: "active route for fuel-stop planning" },
 ]);
 contains("apps/backend/src/dispatch/book-load.service.ts", bookLoad, [
   { pattern: /await bindLoadToGeofences\(client, input\.operating_company_id, String\(load\.id\)\)/, label: "Book Load geofence binding" },
@@ -100,12 +118,24 @@ if (process.argv.includes("--selftest")) {
     ["replace-stops binding", refinements, refinements.replace("await bindLoadToGeofences(client, operatingCompanyId, loadId);", "")],
     ["insert identity", binding, binding.replace('throw new Error("load_geofence_insert_failed")', 'void 0')],
     ["refresh identity", binding, binding.replace('throw new Error("load_geofence_refresh_failed")', 'void 0')],
+    ["bound active stops", binding, binding.replace(/\s+AND ls\.soft_deleted_at IS NULL/, "")],
+    ["auto-geofence active stops", autoGeofence, autoGeofence.replace(/\s+AND s\.soft_deleted_at IS NULL/, "")],
+    ["shipper pickup active stop", shipperMilestones, shipperMilestones.replace("stop_type = 'pickup' AND soft_deleted_at IS NULL", "stop_type = 'pickup'")],
+    ["shipper delivery active stop", shipperMilestones, shipperMilestones.replace("stop_type = 'delivery' AND soft_deleted_at IS NULL", "stop_type = 'delivery'")],
+    ["live ETA active stop", liveEta, liveEta.replace(/\s+AND soft_deleted_at IS NULL/, "")],
+    ["fuel planner active stops", fuelPlanner, fuelPlanner.replace(/\s+AND s\.soft_deleted_at IS NULL/, "")],
   ];
   const patterns = [
     /await bindLoadToGeofences\(client, input\.operating_company_id, String\(load\.id\)\)/,
     /await bindLoadToGeofences\(client, operatingCompanyId, loadId\)/,
     /throw new Error\("load_geofence_insert_failed"\)/,
     /throw new Error\("load_geofence_refresh_failed"\)/,
+    /AND ls\.soft_deleted_at IS NULL/,
+    /AND s\.soft_deleted_at IS NULL/,
+    /stop_type = 'pickup' AND soft_deleted_at IS NULL/,
+    /stop_type = 'delivery' AND soft_deleted_at IS NULL/,
+    /stop_type = 'delivery'[\s\S]{0,80}?AND soft_deleted_at IS NULL/,
+    /AND s\.soft_deleted_at IS NULL/,
   ];
   mutations.forEach(([label, original, planted], index) => {
     if (original === planted || patterns[index].test(planted)) {

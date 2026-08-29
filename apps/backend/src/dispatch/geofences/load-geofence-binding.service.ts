@@ -29,6 +29,7 @@ export async function bindLoadToGeofences(
       JOIN mdata.loads l ON l.id = ls.load_id
       WHERE l.id = $1::uuid
         AND l.operating_company_id = $2::uuid
+        AND ls.soft_deleted_at IS NULL
         AND ls.latitude IS NOT NULL
         AND ls.longitude IS NOT NULL
       ORDER BY ls.sequence_number

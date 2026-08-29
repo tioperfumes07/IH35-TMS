@@ -105,6 +105,7 @@ async function loadStopsForGeofencing(client: DbClient, input: AutoGeofenceInput
                                     AND loc.operating_company_id = $1::uuid
       WHERE l.operating_company_id = $1::uuid
         AND l.id = $2::uuid
+        AND s.soft_deleted_at IS NULL
       ORDER BY s.sequence_number ASC
     `,
     [input.operating_company_id, input.load_id]
