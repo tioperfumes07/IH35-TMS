@@ -1,3 +1,6 @@
+Codex | WORKING | FUEL-F7183 | CLAIM=planner-settings-write-exact-identity | SOURCE=fuel.fuel_planner_settings | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0044 | NOW=fuel-unique | SHA=4e5db76 | GO
+Codex | SHIPPED | DRIVER-F7182 | PR=#17378 @ c2f703fee6 | Built=office+PWA message persistence exact identity | Live=post-deploy UNVERIFIED | NEXT=GO-0044 fuel unique | GO
 Codex | WORKING | DRIVER-F7182 | CLAIM=message-create+terminal-status-exact-identity | SOURCE=mdata.driver_profile_messages | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0043 | NOW=drivers-unique | SHA=4e5db76 | GO
 Codex | SHIPPED | FLEET-F7181 | PR=#17369 @ cae2307992 | Built=unit+equipment bulk atomic exact targets | Live=post-deploy UNVERIFIED | NEXT=GO-0043 drivers unique | GO
