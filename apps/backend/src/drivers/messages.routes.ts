@@ -7,6 +7,7 @@ import { requireDriverSession } from "../driver/auth.js";
 import {
   assertDriverActingCompany,
   deliverDriverProfileMessage,
+  DriverMessagePersistenceError,
   insertDriverReply,
   listDriverMessageThread,
   listDriverPwaMessages,
@@ -123,7 +124,9 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     return reply.send({ driver_id: driver.id, messages });
   });
 
-  app.post("/api/v1/driver/messages", async (req, reply) => {
+  app.post("/api/v1/driver/messages", {
+    config: { rateLimit: { max: 30, timeWindow: "1 minute" } },
+  }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const body = replyBodySchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error" });
@@ -168,6 +171,9 @@ export async function registerDriversMessagesRoutes(app: FastifyInstance) {
     } catch (err) {
       if ((err as Error).message === "driver_company_not_authorized") {
         return reply.code(403).send({ error: "driver_company_not_authorized" });
+      }
+      if (err instanceof DriverMessagePersistenceError) {
+        return reply.code(409).send({ error: err.message, operation: err.operation });
       }
       throw err;
     }

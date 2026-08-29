@@ -60,7 +60,21 @@ vi.mock("../auth/db.js", () => ({
     fn({ query: queryMock }),
 }));
 vi.mock("../audit/crud-audit.js", () => ({ appendCrudAudit: vi.fn(async () => undefined) }));
-vi.mock("../drivers/messages.service.js", () => ({ deliverDriverProfileMessage: deliverMock }));
+vi.mock("../drivers/messages.service.js", () => {
+  class DriverMessagePersistenceError extends Error {
+    constructor(readonly operation: "create" | "delivery_status") {
+      super(`driver_message_${operation}_failed`);
+    }
+  }
+  return {
+    deliverDriverProfileMessage: deliverMock,
+    DriverMessagePersistenceError,
+    requireDriverMessageRow: <T>(rows: T[], operation: "create" | "delivery_status") => {
+      if (!rows[0]) throw new DriverMessagePersistenceError(operation);
+      return rows[0];
+    },
+  };
+});
 
 describe("driver profile messages — cross-entity gate (MDATA-F09)", () => {
   const apps: Array<ReturnType<typeof Fastify>> = [];
