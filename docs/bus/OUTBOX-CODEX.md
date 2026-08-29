@@ -2183,3 +2183,5 @@ CODEX | WORKING | DSP-F7215 | NOW=manual reassign reverse-history identity | SOU
 Codex | WORKING | DSP-F7218 | GO-0054 | CLAIM=Edit-Load-new-stop-identity | SOURCE=mdata.load_stops.id/load_id | routed=CC-1 DSP-MONEY-F7146A-R1+F7218A | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | DSP-F7219 | GO-0054 | CLAIM=intransit-office-assignment-continuity | SOURCE=mdata.loads assigned drivers/unit → dispatch.intransit_issues | NEXT=gate+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7218 | PR=#17431 @ 777e3e6717 | Built=Edit Load new-stop canonical identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7242 | GO-0030 | CLAIM=operational-active-stop-vertical | SOURCE=active route stops→geofence+shipper+ETA+fuel planner | CLOSES=none — post-deploy proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | FUEL-F7241 | PR=#17462 @ f3a06f38da | Built=fuel load attribution active-stop truth | Live=post-deploy UNVERIFIED | NEXT=vertical census | GO
