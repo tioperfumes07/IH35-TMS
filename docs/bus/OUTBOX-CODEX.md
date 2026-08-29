@@ -2138,3 +2138,4 @@ CODEX | WORKING | DSP-F7213 | NOW=layover detector canonical insert identity | S
 Codex | SHIPPED | DSP-F7213 | PR=#17425 @ 28fcc99d51 | Built=layover canonical insert identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | FINDING | DSP-MONEY-F7214 | routed=CC-1 | SOURCE=detention billing bridge unchecked load+event writes | BLOCKS=GO-0054 | NEXT=dispatch non-money unique | GO
 CODEX | WORKING | DSP-F7215 | NOW=manual reassign reverse-history identity | SOURCE=dispatch.load_assignment_history.id | NEXT=guard+FAST-MERGE | GO
+Codex | WORKING | DSP-F7218 | GO-0054 | CLAIM=Edit-Load-new-stop-identity | SOURCE=mdata.load_stops.id/load_id | routed=CC-1 DSP-MONEY-F7146A-R1+F7218A | NEXT=gate+FAST-MERGE | GO
