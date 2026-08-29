@@ -1,7 +1,7 @@
-# NOW — CURSOR (GO-TRUST-02)
+# NOW — CURSOR (GO-MODAL-01)
 
-**ACK:** `CURSOR | ACK | GO-TRUST-02 | NOW=T-04-worker-interval | GO`
+**ACK:** `CURSOR | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Lead. T-04 then T-05. Deploy only 5–10. Skip #15546.
+MODAL-01 ship + deploy 5–10.
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

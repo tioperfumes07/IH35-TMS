@@ -1,7 +1,7 @@
-# NOW — CC-3 (GO-TRUST-02)
+# NOW — CC-3 (GO-MODAL-01)
 
-**ACK:** `CC-3 | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+**ACK:** `CC-3 | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Next FE/chrome or stale-guard re-anchor. No customers (Devin). No prod_verified JSON. Skip #15546. Never trigger_deploy.
+Next stale-guard batch. No customers.
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CC-3-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

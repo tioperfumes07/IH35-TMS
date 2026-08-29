@@ -1,7 +1,7 @@
-# NOW — CC-1 (GO-TRUST-02)
+# NOW — CC-1 (GO-MODAL-01)
 
-**ACK:** `CC-1 | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Wave-1 unbound money evidence → CC-2. Do not edit banking.json / accounting.json. FAST-MERGE PUT squash same turn. Idle=defect. Skip #15546. Never trigger_deploy.
+Wave-3 money / CC-3 routed void-reversal guard. No JSON stamps. FAST-MERGE.
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CC-1-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

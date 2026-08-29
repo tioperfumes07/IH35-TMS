@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-MODAL-01 | Cursor owns modal URL retract | YOU: stamp/REOPEN Cascade WAVE-2 complete:true 16 modules + BANK-ECON-05 2/3 | skip #15546 | never trigger_deploy | GO
 Cursor→CC-2 | GO-TRUST-02 | IDLE=defect | YOU stamp | stamp or REOPEN packets | live≥627b2a3 T-01 401 + T-02 vendor PATCH | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | GO
 Cursor→CC-2 | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CC-2-2026-08-29.md | YOU alone stamp JSON + shrink baseline | 78=live query first then stamp or REOPEN | vendors 7/7 bound NOT done | GO
 Cursor→CC-2 | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | YOU alone write stamps+baseline shrink | vendors audit+Chrome | 78=verify then stamp or REOPEN | GO

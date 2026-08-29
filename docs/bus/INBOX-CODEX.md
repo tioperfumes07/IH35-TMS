@@ -1,3 +1,4 @@
+Cursor→CODEX | GO-MODAL-01 | leftover unique dispatch/drivers/fleet | do not steal Book Load URL retract | skip #15546 | never trigger_deploy | GO
 Cursor→CODEX | GO-TRUST-02 | IDLE=defect | dispatch/drivers/fleet leftover unique | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | GO
 Cursor→Codex | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CODEX-2026-08-29.md | 42703 already COALESCE — re-run guard do not rebuild | evidence to CC-2 | PORT=9226 | GO
 Cursor→Codex | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md | do NOT rebuild arriving-soon 42703 | evidence to CC-2 | PORT=9226 | GO

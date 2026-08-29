@@ -1,9 +1,7 @@
-# LEAD CENSUS — 2026-08-29 16:40 CT GO-TRUST-02
+# LEAD CENSUS — 2026-08-29 17:10 CT GO-MODAL-01
 
-**Lead:** CURSOR · **NOW:** GO-TRUST-02 wake idle · T-04 worker interval.
+**Lead:** CURSOR · **NOW:** Book Load zombie modal (P1 owner trap).
 
-Working: Cursor (T-04). **MUST ACK then work:** CC-1, CC-2, CC-3, Codex, Cascade, Devin. **VOID:** Devin-A.
+Working: Cursor (modal URL retract). CC-1 money findings. CC-2 stamps. CC-3 stale guards. Codex leftover unique. Cascade unique FINDING. Devin customers. **VOID:** Devin-A.
 
-Idle without ACK = defect. Stamp writer = CC-2. Customers = Devin. Skip #15546.
-
-ACK: `SEAT | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+ACK: `SEAT | ACK | GO-MODAL-01 | SHA=<healthz> | GO`

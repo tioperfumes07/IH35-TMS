@@ -1,7 +1,7 @@
-# NOW — CASCADE (GO-TRUST-02)
+# NOW — CASCADE (GO-MODAL-01)
 
-**ACK:** `CASCADE | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
 
-Seed GR-1 failingNames if still unseeded. Unique FINDING only. Skip #15546. Never trigger_deploy.
+TURBO waves complete. Unique FINDING. Skip #15546.
 
-Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CASCADE-2026-08-29.md`
+Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`

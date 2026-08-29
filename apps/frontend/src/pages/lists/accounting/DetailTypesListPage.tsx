@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
 import { ApiError } from "../../../api/client";
 import { getAccountTypeCatalog } from "../../../api/account-type-catalog";
 import { detailTypesCatalogClient, type DetailTypeRow } from "../../../api/detail-types-catalog";
@@ -12,6 +11,7 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
+import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 
 type StatusFilter = "true" | "false" | "all";
 
@@ -28,7 +28,6 @@ export function DetailTypesListPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
 
   const [typeFilter, setTypeFilter] = useState("");
   const [status, setStatus] = useState<StatusFilter>("true");
@@ -123,13 +122,14 @@ export function DetailTypesListPage() {
 
   const nextSort = rows.length ? Math.max(...rows.map((r) => r.sort_order ?? 0)) + 1 : 100;
 
-  useEffect(() => {
-    if (searchParams.get("create") === "1" && companyId) {
+  useCreateQueryParam({
+    companyId,
+    onOpenCreate: () => {
       setSubmitError("");
       setActiveRow(null);
       setModalMode("create");
-    }
-  }, [searchParams, companyId]);
+    },
+  });
 
   return (
     <div className="space-y-3">
