@@ -1,9 +1,9 @@
 {
   "module": "cash-flow",
   "title": "Cash Flow \u2014 acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-29T16:40:00Z",
-  "live_sha": null,
+  "complete": true,
+  "as_of": "2026-08-29T19:15:00Z",
+  "live_sha": "b2448ce",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
@@ -36,8 +36,8 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /cash-flow?tab=actual_vs_projected rendered scoped KPIs and exactly 3 dated rows (Aug 11, 12, 16), including projected income $6,250.00, actual expense $297.60, and net variance \u2212$6,547.60. Search, Range, gear, pagination, and From/To dates rendered. The separately inventoried missing Filters panel remains OPEN and is not credited here. No mutation.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Cash Flow 'Actual vs Projected' tab: real 6-row variance table (Income Accuracy Proj $0.00/Act $6,665.75, Expense Accuracy Proj $124.80/Act $2,518.25, Net Variance), per-day rows incl. real Aug 22/24/26/27 figures. healthz=b2448ce.",
       "pr": "#5340",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -51,15 +51,15 @@
         "DOD-C"
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-16 USMCA LIVE PASS: /cash-flow?tab=manual_daily_projections mounted the real manual projection surface with opening cash, shared day picker, unit/customer selectors, vendor/driver and bill/expense fields, income and expense create controls, and honest empty-line states. No save and no mutation.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Cash Flow 'Manual Daily Projections' tab: real bank balances (USMCA Freight $1,993.68, TEST DATA Amex $0.00, Relay Fuel Wallet $1,200.00, Total $3,193.68), History list (2026-08-27, 2026-08-26), + Create income/expense line forms. healthz=b2448ce.",
       "pr": "#5340",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 3,
-  "pass_count": 1,
+  "pass_count": 3,
   "total_count": 3,
-  "progress": "1 of 3"
+  "progress": "3/3"
 }
