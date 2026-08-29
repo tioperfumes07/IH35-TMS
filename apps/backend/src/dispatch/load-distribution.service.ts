@@ -38,12 +38,18 @@ export async function distributeLoadInstructions(input: DistributionInput) {
           l.load_number,
           l.operating_company_id,
           l.customer_id::text,
-          c.customer_name,
+          COALESCE(
+            c.customer_name,
+            mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)
+          ) AS customer_name,
           c.ar_email AS customer_email,
           l.notes,
           NULL::text AS commodity,
           l.assigned_primary_driver_id::text,
-          CONCAT_WS(' ', d.first_name, d.last_name) AS driver_name,
+          COALESCE(
+            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), ''),
+            mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)
+          ) AS driver_name,
           d.phone AS driver_phone
         FROM mdata.loads l
         LEFT JOIN mdata.customers c ON c.id = l.customer_id

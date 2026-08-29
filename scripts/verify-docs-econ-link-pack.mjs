@@ -47,6 +47,12 @@ function inspect(writer, page, routes) {
   if (!/message\.includes\("r2_not_configured"\)[\s\S]{0,240}message\.includes\("instructions_document_create_failed"\)[\s\S]{0,240}message\.includes\("load_distribution_cleanup_failed"\)[\s\S]{0,180}code\(503\)\.send\(\{ error: "instruction_distribution_unavailable" \}\)/.test(routes)) {
     problems.push("mounted distribution route must expose storage/persistence failure as typed retryable 503");
   }
+  if (!/COALESCE\([\s\S]{0,100}?c\.customer_name,[\s\S]{0,160}?mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)[\s\S]{0,60}?AS customer_name/.test(writer)) {
+    problems.push("generated instructions must retain the same-company historical customer label after archive");
+  }
+  if (!/COALESCE\([\s\S]{0,160}?CONCAT_WS\(' ', d\.first_name, d\.last_name\)[\s\S]{0,180}?mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, l\.operating_company_id\)[\s\S]{0,60}?AS driver_name/.test(writer)) {
+    problems.push("generated instructions must retain the same-company historical assigned-driver label after archive");
+  }
   if (!/links\.map\(\(link\)[\s\S]*<EntityLink[\s\S]*id=\{link\.entity_id\}/.test(page)) {
     problems.push("Docs Entity column must render every persisted link with EntityLink");
   }
@@ -77,6 +83,8 @@ function main() {
       writer.replace('if (!fileId) throw new Error("driver_instructions_document_create_failed");', ""),
       writer.replace("enqueueAfterCommit(client", "runBeforeCommit(client"),
       writer.replace("await deleteObjectBytes(r2Key);", ""),
+      writer.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"),
+      writer.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"),
     ];
     const detected = mutations.filter((mutant) => inspect(mutant, page, routes).length > 0).length;
     const pageMutant = page.replace("links.map((link)", "links.slice(0, 1).map((link)");
@@ -85,7 +93,7 @@ function main() {
       console.error(`${LABEL}: selftest FAIL`);
       process.exit(1);
     }
-    console.log(`${LABEL}: selftest 12/12`);
+    console.log(`${LABEL}: selftest 14/14`);
   }
   console.log(`${LABEL}: PASS`);
 }
