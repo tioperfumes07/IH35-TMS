@@ -482,7 +482,19 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
       if (count === 0) setPullError("No new software bills, expenses, payments, or invoices for this date (already pulled or empty).");
     },
-    onError: (e) => setPullError(e instanceof Error ? e.message : "Pull from software failed"),
+    // GO-0042-CASH-FLOW-MANUAL-PULL-RETRY-DUPLICATE-ENTRIES: this loop POSTs one
+    // createForecastEntry() per candidate row, sequentially, with no idempotency key tying a
+    // row to its create -- POST /api/v1/forecast/cash-entries is rate-limited to 30/min, and a
+    // real backlog pull (up to ~400 candidate rows across 4 categories) can exceed that mid-loop,
+    // throwing AFTER some rows already committed. Without invalidating here (only onSuccess did),
+    // a retry rebuilt existingKeys from the STALE query cache -- missing the rows just created --
+    // and re-created them, silently doubling Expected Expenses/Income with no error on the
+    // eventual successful retry. Invalidate on error too so the next attempt (gated by
+    // entriesQuery.isFetching below) always sees the rows that already landed.
+    onError: (e) => {
+      setPullError(e instanceof Error ? e.message : "Pull from software failed");
+      void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
+    },
   });
 
   const onChanged = () => void qc.invalidateQueries({ queryKey: ["forecast", "entries", operatingCompanyId] });
@@ -616,7 +628,12 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         <button
           type="button"
           className="ml-auto h-7 rounded-sm bg-slate-700 px-3 font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
-          disabled={pullMutation.isPending || !projectionDate}
+          // GO-0042: also gate on entriesQuery.isFetching -- after a failed pull, onError now
+          // invalidates the cache, but the refetch is async. Without this, a user who retries
+          // before that refetch lands would still hand pullMutation a stale existingKeys set via
+          // the closure over `allEntries`, reopening the exact duplicate-creation window the
+          // onError invalidation above is meant to close.
+          disabled={pullMutation.isPending || entriesQuery.isFetching || !projectionDate}
           onClick={() => pullMutation.mutate()}
         >
           Pull bills / expenses / payments
