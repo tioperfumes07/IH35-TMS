@@ -47,7 +47,7 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
     cronRegistered = true;
   }
 
-  app.get("/api/v1/compliance/dashboard", async (req, reply) => {
+  app.get("/api/v1/compliance/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = dashboardQuery.safeParse(req.query ?? {});
@@ -63,7 +63,7 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
     return reply.send({ credentials });
   });
 
-  app.get("/api/v1/compliance/dashboard/summary", async (req, reply) => {
+  app.get("/api/v1/compliance/dashboard/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = dashboardQuery.safeParse(req.query ?? {});
@@ -75,7 +75,7 @@ export async function registerComplianceRoutes(app: FastifyInstance) {
     return reply.send(summarizeComplianceCredentials(credentials));
   });
 
-  app.get("/api/v1/compliance/notification-log", async (req, reply) => {
+  app.get("/api/v1/compliance/notification-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = logQuery.safeParse(req.query ?? {});

@@ -68,7 +68,7 @@ async function parseCompanyQuery(req: FastifyRequest, reply: FastifyReply, userI
 }
 
 export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
-  app.post("/api/v1/driver-pay/settlements/:id/queue-payment", async (req, reply) => {
+  app.post("/api/v1/driver-pay/settlements/:id/queue-payment", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -84,7 +84,7 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pay/settlements/:id/mark-sent", async (req, reply) => {
+  app.post("/api/v1/driver-pay/settlements/:id/mark-sent", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -102,7 +102,7 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pay/settlements/:id/mark-cleared", async (req, reply) => {
+  app.post("/api/v1/driver-pay/settlements/:id/mark-cleared", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -118,7 +118,7 @@ export async function registerSettlementPaymentRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pay/settlements/:id/mark-bounced", async (req, reply) => {
+  app.post("/api/v1/driver-pay/settlements/:id/mark-bounced", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerAdminAccountant(user.role)) return reply.code(403).send({ error: "forbidden" });

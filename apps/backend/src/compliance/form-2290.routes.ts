@@ -82,7 +82,7 @@ async function loadActiveTractors(client: Queryable, companyId: string): Promise
 }
 
 export async function registerForm2290Routes(app: FastifyInstance) {
-  app.get("/api/v1/compliance/form-2290/upcoming-deadline", async (req, reply) => {
+  app.get("/api/v1/compliance/form-2290/upcoming-deadline", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuery.safeParse(req.query ?? {});
@@ -160,7 +160,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/compliance/form-2290", async (req, reply) => {
+  app.get("/api/v1/compliance/form-2290", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = filingListQuery.safeParse(req.query ?? {});
@@ -189,7 +189,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
     return { filings };
   });
 
-  app.post("/api/v1/compliance/form-2290/generate-draft", async (req, reply) => {
+  app.post("/api/v1/compliance/form-2290/generate-draft", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = generateSchema.safeParse({ ...(req.query as object), ...(req.body as object) });
@@ -300,7 +300,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
-  app.get("/api/v1/compliance/form-2290/draft/:id", async (req, reply) => {
+  app.get("/api/v1/compliance/form-2290/draft/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -350,7 +350,7 @@ export async function registerForm2290Routes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/compliance/form-2290/:id/mark-submitted", async (req, reply) => {
+  app.post("/api/v1/compliance/form-2290/:id/mark-submitted", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});

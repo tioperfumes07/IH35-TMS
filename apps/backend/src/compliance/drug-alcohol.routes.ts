@@ -74,7 +74,7 @@ async function withCompanyScope<T>(userId: string, companyId: string, fn: (clien
 }
 
 export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/compliance/drug-alcohol/annual-rate-status", async (req, reply) => {
+  app.get("/api/v1/compliance/drug-alcohol/annual-rate-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -86,7 +86,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send(status);
   });
 
-  app.get("/api/v1/compliance/drug-alcohol/pool", async (req, reply) => {
+  app.get("/api/v1/compliance/drug-alcohol/pool", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -98,7 +98,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send({ members });
   });
 
-  app.get("/api/v1/compliance/drug-alcohol/draws", async (req, reply) => {
+  app.get("/api/v1/compliance/drug-alcohol/draws", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -162,7 +162,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send(rows);
   });
 
-  app.post("/api/v1/compliance/drug-alcohol/draws/run", async (req, reply) => {
+  app.post("/api/v1/compliance/drug-alcohol/draws/run", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -189,7 +189,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send(result);
   });
 
-  app.get("/api/v1/compliance/drug-alcohol/results", async (req, reply) => {
+  app.get("/api/v1/compliance/drug-alcohol/results", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -223,7 +223,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send({ results });
   });
 
-  app.post("/api/v1/compliance/drug-alcohol/results", async (req, reply) => {
+  app.post("/api/v1/compliance/drug-alcohol/results", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -257,7 +257,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send(created);
   });
 
-  app.get("/api/v1/compliance/drug-alcohol/rtd", async (req, reply) => {
+  app.get("/api/v1/compliance/drug-alcohol/rtd", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuery.safeParse(req.query ?? {});
@@ -268,7 +268,7 @@ export async function registerDrugAlcoholComplianceRoutes(app: FastifyInstance) 
     return reply.send({ processes });
   });
 
-  app.patch("/api/v1/compliance/drug-alcohol/results/:id/clearinghouse", async (req, reply) => {
+  app.patch("/api/v1/compliance/drug-alcohol/results/:id/clearinghouse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

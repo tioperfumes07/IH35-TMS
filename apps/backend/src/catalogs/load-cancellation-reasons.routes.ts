@@ -128,7 +128,7 @@ export async function registerLoadCancellationReasonRoutes(app: FastifyInstance)
     return { reasons: rows };
   });
 
-  app.post("/api/v1/catalogs/load-cancellation-reasons", async (req, reply) => {
+  app.post("/api/v1/catalogs/load-cancellation-reasons", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureCatalogWriteRole(req, reply);
     if (!user) return;
     const parsedBody = createReasonBodySchema.safeParse(req.body ?? {});

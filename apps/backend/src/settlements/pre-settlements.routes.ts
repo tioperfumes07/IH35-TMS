@@ -48,7 +48,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
    *   "Settlements" surface 500. Canonical replacement: apps/backend/src/driver-finance/settlements.routes.ts
    * ────────────────────────────────────────────────────────────────────────────────────────────────
    */
-  app.get("/api/v1/settlements", async (req, reply) => {
+  app.get("/api/v1/settlements", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const rawUrl = req.raw.url ?? "";
     const qs = rawUrl.includes("?") ? rawUrl.slice(rawUrl.indexOf("?")) : "";
     const canonical = `/api/v1/driver-finance/settlements${qs}`;
@@ -71,7 +71,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
    * (QBO/NetSuite/McLeod/Alvys): NEVER resurrect a 2nd settlement ledger. MUST NOT read/write
    * `settlement.*` / `payroll.*`. Guarded by scripts/verify-chain07-settlements-redirect.mjs.
    */
-  app.get("/api/v1/settlements/:id", async (req, reply) => {
+  app.get("/api/v1/settlements/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = idParamsSchema.safeParse(req.params);
     if (!params.success) return reply.code(400).send({ error: "validation_error" });
     const rawUrl = req.raw.url ?? "";
@@ -86,7 +86,7 @@ export async function registerPreSettlementsRoutes(app: FastifyInstance) {
   });
 
   /** GET /api/v1/settlements/pending-deductions — pending deductions for a driver */
-  app.get("/api/v1/settlements/pending-deductions", async (req, reply) => {
+  app.get("/api/v1/settlements/pending-deductions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!authGuard(req, reply)) return;
     const parsed = pendingDedQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });

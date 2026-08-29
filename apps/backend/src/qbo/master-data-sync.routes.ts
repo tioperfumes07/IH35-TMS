@@ -9,7 +9,7 @@ const bodySchema = z.object({
 });
 
 export async function registerMasterDataSyncRoutes(app: FastifyInstance) {
-  app.post("/api/v1/qbo/master-data-sync/trigger-full", async (req, reply) => {
+  app.post("/api/v1/qbo/master-data-sync/trigger-full", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
     if (String(req.user?.role ?? "") !== "Owner") return reply.code(403).send({ error: "forbidden" });
 

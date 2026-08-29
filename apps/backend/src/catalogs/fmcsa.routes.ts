@@ -222,7 +222,7 @@ export async function registerFmcsaRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.post("/api/v1/mdata/customers/:id/fmcsa-link", async (req, reply) => {
+  app.post("/api/v1/mdata/customers/:id/fmcsa-link", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!ensureRole(reply, authUser.role, LINK_ROLES)) return;

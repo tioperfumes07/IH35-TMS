@@ -82,7 +82,7 @@ async function loadEntitySaferStatus(client: DbClient, entityType: SaferEntityTy
 export async function registerFmcsaSaferRoutes(app: FastifyInstance) {
   initializeFmcsaSaferVerificationCron(app);
 
-  app.get("/api/v1/compliance/fmcsa-safer/status", async (req, reply) => {
+  app.get("/api/v1/compliance/fmcsa-safer/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -135,7 +135,7 @@ export async function registerFmcsaSaferRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.get("/api/v1/compliance/fmcsa-safer/entity/:entity_type/:entity_id", async (req, reply) => {
+  app.get("/api/v1/compliance/fmcsa-safer/entity/:entity_type/:entity_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const params = entityParamsSchema.safeParse(req.params ?? {});
@@ -150,7 +150,7 @@ export async function registerFmcsaSaferRoutes(app: FastifyInstance) {
     return reply.send({ entity_type: params.data.entity_type, entity_id: params.data.entity_id, safer: entity });
   });
 
-  app.post("/api/v1/compliance/fmcsa-safer/verify-now", async (req, reply) => {
+  app.post("/api/v1/compliance/fmcsa-safer/verify-now", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

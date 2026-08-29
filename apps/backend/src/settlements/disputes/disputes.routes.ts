@@ -404,7 +404,7 @@ export async function reviewSettlementDispute(
 }
 
 export async function registerSettlementsDisputesRoutes(app: FastifyInstance) {
-  app.post("/api/v1/settlements/:id/disputes", async (req, reply) => {
+  app.post("/api/v1/settlements/:id/disputes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = settlementIdParamsSchema.safeParse(req.params ?? {});
@@ -420,7 +420,7 @@ export async function registerSettlementsDisputesRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/settlement-disputes", async (req, reply) => {
+  app.get("/api/v1/settlement-disputes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -434,7 +434,7 @@ export async function registerSettlementsDisputesRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/settlement-disputes/:id/review", async (req, reply) => {
+  app.patch("/api/v1/settlement-disputes/:id/review", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const params = disputeIdParamsSchema.safeParse(req.params ?? {});

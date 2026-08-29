@@ -12,7 +12,7 @@ const reportingQuerySchema = companyQuerySchema.extend({
 });
 
 export function registerDriverInboxReportingRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver-finance/inbox-reporting", async (req, reply) => {
+  app.get("/api/v1/driver-finance/inbox-reporting", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!REVIEW_ROLES.includes(String(user.role ?? ""))) {

@@ -23,7 +23,7 @@ function requestAudit(req: FastifyRequest) {
 }
 
 export async function registerOwnerApprovalPortalRoutes(app: FastifyInstance) {
-  app.get("/api/v1/owner-approval/:token", async (req, reply) => {
+  app.get("/api/v1/owner-approval/:token", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const details = await getPublicOwnerApprovalDetails(params.data.token, requestAudit(req));
@@ -31,7 +31,7 @@ export async function registerOwnerApprovalPortalRoutes(app: FastifyInstance) {
     return details;
   });
 
-  app.post("/api/v1/owner-approval/:token/approve", async (req, reply) => {
+  app.post("/api/v1/owner-approval/:token/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const result = await ownerTokenApproveCashAdvanceRequest(params.data.token, req.body ?? {}, requestAudit(req));
@@ -51,7 +51,7 @@ export async function registerOwnerApprovalPortalRoutes(app: FastifyInstance) {
     return { request: result.request, advance: result.advance };
   });
 
-  app.post("/api/v1/owner-approval/:token/deny", async (req, reply) => {
+  app.post("/api/v1/owner-approval/:token/deny", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const result = await ownerTokenDenyCashAdvanceRequest(params.data.token, req.body ?? {}, requestAudit(req));

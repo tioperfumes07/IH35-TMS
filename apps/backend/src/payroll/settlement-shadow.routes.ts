@@ -13,7 +13,7 @@ const shadowQuerySchema = z.object({
 const REVIEW_ROLES = new Set(["Owner", "Administrator", "Accountant", "SuperAdmin"]);
 
 export async function registerSettlementShadowRoutes(app: FastifyInstance) {
-  app.get("/api/v1/payroll/settlement-shadow-run", async (req, reply) => {
+  app.get("/api/v1/payroll/settlement-shadow-run", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!REVIEW_ROLES.has(String((user as { role?: string }).role ?? ""))) {

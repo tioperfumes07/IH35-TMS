@@ -62,7 +62,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   
   // GET /api/v1/settlements/:id/approval-summary
-  app.get("/api/v1/settlements/:id/approval-summary", async (req, reply) => {
+  app.get("/api/v1/settlements/:id/approval-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -86,7 +86,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/settlements/:id/line-items
-  app.get("/api/v1/settlements/:id/line-items", async (req, reply) => {
+  app.get("/api/v1/settlements/:id/line-items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -108,7 +108,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/settlements/approve-line
-  app.post("/api/v1/settlements/approve-line", async (req, reply) => {
+  app.post("/api/v1/settlements/approve-line", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -137,7 +137,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/settlements/reject-line
-  app.post("/api/v1/settlements/reject-line", async (req, reply) => {
+  app.post("/api/v1/settlements/reject-line", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -166,7 +166,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/settlements/approve
-  app.post("/api/v1/settlements/approve", async (req, reply) => {
+  app.post("/api/v1/settlements/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -191,7 +191,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/settlements/finalize
-  app.post("/api/v1/settlements/finalize", async (req, reply) => {
+  app.post("/api/v1/settlements/finalize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -215,7 +215,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/trip-link-queue
-  app.get("/api/v1/trip-link-queue", async (req, reply) => {
+  app.get("/api/v1/trip-link-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -252,7 +252,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/trip-link-queue/assign
-  app.post("/api/v1/trip-link-queue/assign", async (req, reply) => {
+  app.post("/api/v1/trip-link-queue/assign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -288,7 +288,7 @@ export async function registerSettlementApprovalRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/settlements/generate-pdf
-  app.post("/api/v1/settlements/generate-pdf", async (req, reply) => {
+  app.post("/api/v1/settlements/generate-pdf", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

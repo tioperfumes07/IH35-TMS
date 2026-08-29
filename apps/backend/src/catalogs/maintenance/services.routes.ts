@@ -77,7 +77,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
 }
 
 export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/maintenance/services-catalog", async (req, reply) => {
+  app.get("/api/v1/catalogs/maintenance/services-catalog", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -102,7 +102,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
     });
   });
 
-  app.get("/api/v1/maintenance/services/eta", async (req, reply) => {
+  app.get("/api/v1/maintenance/services/eta", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = etaQuerySchema.safeParse(req.query ?? {});
@@ -155,7 +155,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
     });
   });
 
-  app.post("/api/v1/catalogs/maintenance/services-catalog", async (req, reply) => {
+  app.post("/api/v1/catalogs/maintenance/services-catalog", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator", "Manager", "Mechanic"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -187,7 +187,7 @@ export async function registerMaintenanceServicesCatalogRoutes(app: FastifyInsta
   // row). Mirrors the create route's withCompany scoping (sets app.operating_company_id before
   // the query, matching this table's FORCE RLS `maintenance_services_company` policy) plus an
   // explicit operating_company_id predicate in the UPDATE itself as belt-and-suspenders.
-  app.patch("/api/v1/catalogs/maintenance/services-catalog/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/maintenance/services-catalog/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator", "Manager", "Mechanic"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

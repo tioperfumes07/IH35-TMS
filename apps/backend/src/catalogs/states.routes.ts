@@ -8,7 +8,7 @@ function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerStatesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/us-states", async (req, reply) => {
+  app.get("/api/v1/catalogs/us-states", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     return withCurrentUser(authUser.uuid, async (client) => {
@@ -24,7 +24,7 @@ export async function registerStatesRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/catalogs/mexico-states", async (req, reply) => {
+  app.get("/api/v1/catalogs/mexico-states", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     return withCurrentUser(authUser.uuid, async (client) => {

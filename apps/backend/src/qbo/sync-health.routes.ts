@@ -24,7 +24,7 @@ function officeRole(role: string) {
 }
 
 export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo/sync-health", async (req, reply) => {
+  app.get("/api/v1/qbo/sync-health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -204,7 +204,7 @@ export async function registerQboSyncHealthRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/qbo/sync/health", async (req, reply) => {
+  app.get("/api/v1/qbo/sync/health", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeRole(user.role)) return reply.code(403).send({ error: "forbidden" });

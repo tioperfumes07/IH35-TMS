@@ -86,7 +86,7 @@ async function partsMasterTableExists(client: {
 }
 
 export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance) {
-  app.get("/api/v1/catalogs/maintenance/parts-master", async (req, reply) => {
+  app.get("/api/v1/catalogs/maintenance/parts-master", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -112,7 +112,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     });
   });
 
-  app.post("/api/v1/catalogs/maintenance/parts-master", async (req, reply) => {
+  app.post("/api/v1/catalogs/maintenance/parts-master", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator", "Manager", "Mechanic"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -132,7 +132,7 @@ export async function registerMaintenancePartsMasterRoutes(app: FastifyInstance)
     return reply.code(201).send(created);
   });
 
-  app.patch("/api/v1/catalogs/maintenance/parts-master/:id", async (req, reply) => {
+  app.patch("/api/v1/catalogs/maintenance/parts-master/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!["Owner", "Administrator", "Manager", "Mechanic"].includes(user.role)) return reply.code(403).send({ error: "forbidden" });

@@ -260,7 +260,7 @@ function plusDaysIso(days: number) {
 export async function registerCsaRoutes(app: FastifyInstance) {
   initializeCsaBasicPullCron(app);
 
-  app.get("/api/v1/compliance/csa/current", async (req, reply) => {
+  app.get("/api/v1/compliance/csa/current", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -327,7 +327,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.get("/api/v1/compliance/csa/trend", async (req, reply) => {
+  app.get("/api/v1/compliance/csa/trend", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = trendQuerySchema.safeParse(req.query ?? {});
@@ -347,7 +347,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.get("/api/v1/compliance/csa/mitigation-queue", async (req, reply) => {
+  app.get("/api/v1/compliance/csa/mitigation-queue", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -367,7 +367,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.post("/api/v1/compliance/csa/mitigation-actions", async (req, reply) => {
+  app.post("/api/v1/compliance/csa/mitigation-actions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -460,7 +460,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     return reply.code(201).send({ mitigation_action: created });
   });
 
-  app.patch("/api/v1/compliance/csa/mitigation-actions/:id", async (req, reply) => {
+  app.patch("/api/v1/compliance/csa/mitigation-actions/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -581,7 +581,7 @@ export async function registerCsaRoutes(app: FastifyInstance) {
     return reply.send({ mitigation_action: updated });
   });
 
-  app.post("/api/v1/compliance/csa/pull-now", async (req, reply) => {
+  app.post("/api/v1/compliance/csa/pull-now", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
