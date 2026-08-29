@@ -9,6 +9,7 @@ import { useToast } from "../Toast";
 import { ListErrorState } from "../ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useRef, useState } from "react";
+import { resolveApiUrl } from "../../api/client";
 
 /**
  * CLS-DISP-WIRE-09 — office BOL generate/download for a load.
@@ -75,7 +76,7 @@ export function LoadBolPanel({ loadId, companyId }: { loadId: string; companyId:
         <div className="flex gap-2">
           <a
             className="rounded-sm border border-slate-300 px-3 py-1 text-sm text-[#1f2a44]"
-            href={`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`}
+            href={resolveApiUrl(`/api/v1/dispatch/loads/${encodeURIComponent(loadId)}/bol.pdf?operating_company_id=${encodeURIComponent(companyId)}`)}
             data-testid="bol-download-link"
           >
             Download BOL PDF

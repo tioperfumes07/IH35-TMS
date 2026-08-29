@@ -2194,3 +2194,6 @@ Codex | SHIPPED | DSP-F7245 | PR=#17465 @ 662edc8c5f | Built=pre-settlement feed
 Codex | SHIPPED | DSP-F7246 | PR=#17466 @ cc801a3f6f | Built=Book Load customer read honesty | Live=post-deploy UNVERIFIED | NEXT=GO-0031 assign TEST | GO
 CODEX | ACK | GO-0031 | NOW=TEST-assign | SHA=da39aab | GO
 Codex | WORKING | DSP-F7247 | GO-0031 | LOAD=L-20260828-0025 · is_sample_data=true | ASSIGN=UNCHANGED 422 E_DRIVER_NOT_QUALIFIED cdl_missing+medical_card_missing | CLAIM=reassign selected-driver human label continuity | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7247 | PR=#17469 @ be84562e63 | Built=reassign selected-driver label continuity | Live=post-deploy UNVERIFIED | NEXT=GO-0032 POD/BOL | GO
+CODEX | ACK | GO-0032 | NOW=dispatch planner/POD/BOL unique | SHA=da39aab | GO
+Codex | WORKING | DSP-F7248 | GO-0032 | LIVE=app-origin BOL GET 404 · load=L-20260828-0025 | CLAIM=canonical BOL API-origin download | NEXT=guard+FAST-MERGE | GO
