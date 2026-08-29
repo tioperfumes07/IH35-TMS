@@ -2,6 +2,9 @@ import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { createJournalEntry } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
+// INS-MONEY-F6965 — companyBusinessDate(), not new Date().toISOString() (UTC): after ~19:00
+// Central this fleet-premium JE date can land one calendar day ahead of the real business day.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 /**
  * Block E — Insurance Fleet Add/Remove pro-rata premium posting.
@@ -105,7 +108,7 @@ export async function recordFleetPremiumJournalEntry(params: {
   return withCurrentUser(params.actorUserId, async (client) => {
     await setScopedCompanyContext(client, params.actorUserId, params.operatingCompanyId);
     const accounts = await pickFleetPremiumAccounts(client as Queryable, params.operatingCompanyId);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = companyBusinessDate();
 
     const debitAccountId =
       params.direction === "add" ? accounts.expenseAccountId : accounts.payableAccountId;

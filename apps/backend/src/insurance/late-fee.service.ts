@@ -3,6 +3,10 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+// INS-MONEY-F6965 — companyBusinessDate(), not new Date().toISOString() (UTC): this "today" gates
+// the due_date < today late-fee cutoff, so a UTC calendar date after ~19:00 Central can assess a
+// fee one business day early relative to the real due date.
+import { companyBusinessDate } from "../lib/company-business-date.js";
 
 export function calculateLateFee(amountCents: number | bigint, lateFeePct: number): bigint {
   const amount = typeof amountCents === "bigint" ? amountCents : BigInt(Math.max(0, amountCents));
@@ -112,7 +116,7 @@ export function initializeInsuranceLateFeeCron(app: FastifyInstance) {
                 ORDER BY id
               `
             );
-            const today = new Date().toISOString().slice(0, 10);
+            const today = companyBusinessDate();
             for (const company of companies.rows) {
               assertTenantContext(company.id, "insurance.late_fee_cron");
               await applyOverdueLateFeesForTenant(company.id, today);
