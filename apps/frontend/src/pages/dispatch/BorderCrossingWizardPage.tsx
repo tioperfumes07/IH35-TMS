@@ -103,6 +103,12 @@ export function BorderCrossingWizardPage() {
       };
       if (!res.ok) throw new Error(payload.error ?? "Wizard submission failed");
       if (scopeGeneration.current !== input.generation) return;
+      // DSP-F7174: a 2xx response without the canonical crossing identity is not a
+      // completed wizard. Advancing to step 5 here would report success while the
+      // eManifest/PDF action remains impossible to render.
+      if (!payload.crossing_id) {
+        throw new Error("Wizard completed without a crossing ID");
+      }
       setResult({
         crossingId: payload.crossing_id,
         emanifestReference: payload.emanifest_reference,

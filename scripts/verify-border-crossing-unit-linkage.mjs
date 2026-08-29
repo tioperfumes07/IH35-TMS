@@ -59,6 +59,7 @@ function audit(s) {
   if (!/const input = \{[\s\S]{0,180}companyId: selectedCompanyId[\s\S]{0,180}form: \{ \.\.\.form \}[\s\S]{0,120}generation: scopeGeneration\.current/.test(s.submit)) failures.push("wizard submit must snapshot company, full draft, and generation");
   if (!/operating_company_id: input\.companyId[\s\S]{0,500}unit_id: input\.form\.unitId/.test(s.submit)) failures.push("wizard writer must consume immutable company and unit snapshot");
   if ((s.submit.match(/scopeGeneration\.current !== input\.generation/g) ?? []).length < 2) failures.push("wizard must suppress stale success and error callbacks");
+  if (!/if \(!payload\.crossing_id\) \{[\s\S]{0,120}throw new Error\("Wizard completed without a crossing ID"\)/.test(s.submit)) failures.push("wizard must reject a successful response without canonical crossing identity");
   if (!/finally \{[\s\S]{0,100}scopeGeneration\.current === input\.generation[\s\S]{0,80}setSubmitting\(false\)/.test(s.submit)) failures.push("stale completion must not clear replacement-scope pending state");
   if ((s.submit.match(/disabled=\{submitting/g) ?? []).length < 4 || (s.submit.match(/disabled=\{submitting \|\| !canNext\}/g) ?? []).length < 2) failures.push("wizard navigation must lock while the crossing write is pending");
   if (!/FROM mdata\.units[\s\S]{0,220}COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.writer)) failures.push("writer active tenant unit validation missing");
@@ -104,6 +105,7 @@ if (process.argv.includes("--selftest")) {
     ["consume-unit-snapshot", "submit", /unit_id: input\.form\.unitId/, "unit_id: form.unitId"],
     ["stale-success", "submit", /if \(scopeGeneration\.current !== input\.generation\) return;/, "void input.generation;"],
     ["stale-error", "submit", /if \(scopeGeneration\.current !== input\.generation\) return;/g, (match, offset) => offset > 0 ? "void input.generation;" : match],
+    ["response-identity", "submit", /if \(!payload\.crossing_id\) \{[\s\S]{0,120}?\n      \}/, "void payload.crossing_id;"],
     ["pending-finally", "submit", /if \(scopeGeneration\.current === input\.generation\) setSubmitting\(false\);/, "setSubmitting(false);"],
     ["pending-navigation", "submit", /disabled=\{submitting\}/, "disabled={false}"],
     ["scope", "writer", /COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$2::uuid/, "TRUE"],
