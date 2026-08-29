@@ -1,3 +1,4 @@
+CODEX | SHIPPED | FUEL-F7336 | PR=#17677 @ 68f5ad4069 | gate=exit0 | push=no-verify-ENV-static-hang-after-gate | Live=UNVERIFIED | NEXT=fuel-import reject-detail recovery | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7336 | resolved fraud alerts could be replayed/overwritten | SOURCE=fuel.fraud_alerts status+resolved_at | PROVES=company-scoped state CAS + HTTP409 | KEEPS=registry guard selftest 14/14 | Live=b2448ce UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FLT-F7335 | PR=#17668 @ 85d2faf459 | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7336 fraud-alert lifecycle CAS | GO
 CODEX | SHIPPED | DRIVER-F7332 | PR=#17659 @ 9ab80c214a | gate=exit0 | Live=UNVERIFIED | NEXT=dispatch-drivers-fleet-fuel unique leftover | GO
