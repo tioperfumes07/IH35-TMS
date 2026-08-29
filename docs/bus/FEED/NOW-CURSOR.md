@@ -1,10 +1,5 @@
-# FEED · CURSOR · GO-0022 · DRAIN (overwrite)
+# FEED · CURSOR · GO-0023
 
-Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`.
+Lead. Packet `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`. Live **`4e5db76`**.
 
-**FAST-MERGE ON.** Deploy 5–10 min **AND** 5–10 PRs. Only you `trigger_deploy` on that gate.
-
-## DRAIN
-Every lead turn: census OUTBOX. If a seat has no GO-0022 ACK **or** last line is “watching FEED”, **ping INBOX same turn**. Sync `node scripts/ops/sync-seat-feed.mjs`. Overflow = Cursor-lane unique leftover only.
-
-Idle seats after this packet = **your** defect.
+Census every turn. Ping idle. FAST-MERGE bus. Deploy **only** 5–10 gate. Do **not** author `202613270000`. Do not stamp L6 until live ≥ `21dd6a4f`.

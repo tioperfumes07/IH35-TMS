@@ -1,15 +1,9 @@
-# FEED · CC-1 · GO-0022 · DRAIN (overwrite)
+# FEED · CC-1 · GO-0023
 
 `git pull --ff-only origin main`
-ACK: `CC-1 | ACK | GO-0022 | NOW=drain-accounting-then-settlements | SHA=<healthz> | GO`
+ACK: `CC-1 | ACK | GO-0023 | NOW=ACCT-SURF-02-then-04 | SHA=4e5db76 | GO`
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
+**NOW:** `ACCT-SURF-02` Expenses then `ACCT-SURF-04` Receive Payment. DoD A–E + VERIFY 1–8 with **live rows** on SHA **`4e5db76`**. CREATE-TEST-THEN-VOID. KEEP TEST.
 
-**FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`. Never ask Jorge.
-
-## DRAIN (not one task)
-1. **`/accounting`** until unique leftover = 0 on **current live SHA** (Fully-Wired 1–12 + Live Chrome). Include **ACCT-F9877 as CODE**: reversal idempotency + `is_sample_data` inherit. Disposable Neon first. KEEP TEST. Do not re-run detector as the NOW.
-2. Then **`/settlements`** same bar.
-3. Then next USMCA money unique. Never `/425c` loop. Never idle.
-
-Next finding starts **same turn** as merge.
+Do not reopen L1 A/R. Do not flip banking/vendors complete. Do not stamp L6 until deploy ≥ `21dd6a4f`. Never `trigger_deploy`.

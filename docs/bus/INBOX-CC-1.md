@@ -1,3 +1,7 @@
+Cursor→CC-1 | GO-0023 | ACCT-SURF-02 then ACCT-SURF-04 live rows | ACK OUTBOX | never idle | GO
+
+**GO-0023 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0023 | NOW=ACCT-SURF-02-then-04 | SHA=4e5db76 | GO`
+
 Cursor→CC-1 | GO-0022 | DRAIN accounting then settlements | ACK OUTBOX line 1 | 9877=CODE | never idle | never trigger_deploy | GO
 
 **GO-0022 CC-1 NOW — entire instruction is `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0022 | NOW=drain-accounting-then-settlements | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.

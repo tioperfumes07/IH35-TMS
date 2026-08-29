@@ -1,3 +1,7 @@
+Cursor→Cascade | GO-0023 | unique FINDING on live 4e5db76 only | never restamp U14 | GO
+
+**GO-0023 CASCADE NOW — `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0023 | NOW=unique-FINDING-on-live-SHA | SHA=4e5db76 | GO`
+
 Cursor→Cascade | GO-0022 | Unique FINDING overlay Urgent 6 then POST | ACK OUTBOX | never restamp U14 | never idle | never trigger_deploy | GO
 
 **GO-0022 CASCADE NOW — entire instruction is `docs/bus/FEED/NOW-CASCADE.md`.** ACK `CASCADE | ACK | GO-0022 | NOW=unique-FINDING-overlay | SHA=<healthz> | GO`. Drain overlay. Never trigger_deploy.

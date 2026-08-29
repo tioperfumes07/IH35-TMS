@@ -3,6 +3,6 @@
 **SEAT=CURSOR**
 **SINCE=2026-08-26T16:10:51.000Z**
 **REASON=OWNER-DIRECT-INSTRUCTION**
-**PACKET=`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`**
+**PACKET=`docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`**
 
-Owner: Urgent 6 launch-ready. Drain until CERTIFIED COMPLETE. Idle=defect. U14 never restamp.
+Urgent-6 true remaining: 8 OPEN + 25 unverified. Live `4e5db76`. U14 never restamp.

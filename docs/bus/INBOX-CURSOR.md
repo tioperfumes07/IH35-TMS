@@ -1,3 +1,5 @@
+**GO-0023 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0023 | NOW=lead-u6-true-remaining | SHA=4e5db76 | GO`
+
 **GO-0022 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0022 | NOW=lead-drain-census-deploy | SHA=<healthz> | GO`. Census+ping idle every turn. Drain Urgent 6 via seats. Nobody else trigger_deploy.
 
 **GO-0021 CURSOR NOW — entire instruction is `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0021 | NOW=lead+feed | SHA=4e5db76 | GO`. Sync FEED. No 202613270000. Nobody trigger_deploy.

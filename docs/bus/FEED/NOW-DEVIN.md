@@ -1,15 +1,9 @@
-# FEED · DEVIN · GO-0022 · DRAIN (overwrite)
+# FEED · DEVIN · GO-0023
 
 `git pull --ff-only origin main`
-ACK: `DEVIN | ACK | GO-0022 | NOW=drain-vendors | SHA=<healthz> | GO`
+ACK: `DEVIN | ACK | GO-0023 | NOW=vendors-7-prod-verify | SHA=4e5db76 | GO`
+Folder: `/Users/jorgemunoz/IH35-TMS-devin`. One Devin.
 
-PREPEND ACK OUTBOX line 1. Folder = `/Users/jorgemunoz/IH35-TMS-devin`. One Devin. Devin-A VOID.
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`
 
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0022.md`
-
-**FAST-MERGE ON.** Never `gh pr checks --watch`. Never `trigger_deploy`.
-
-## DRAIN (not one task)
-**`/vendors`** unique leftover until 0 on current live SHA. KEEP TEST. PATCH `#17200` already on main — do not rebuild with `b.operating_company_id`. No SQL INSERT vendors. No COMPLETE stamp. No second Devin.
-
-Next finding starts **same turn**. Stale GO-0017 ACK = defect until this ACK is line 1.
+**NOW:** Prod-verify **all 7** vendors module-completion items (`prod_verified:false`). Live SHA **`4e5db76`**. `mdata.vendors` CANONICAL. Do not flip flags without live read. `vendors.json` complete=true is fake-green until earned. KEEP TEST. Never `trigger_deploy`.

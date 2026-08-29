@@ -1,3 +1,5 @@
+Cursor | ACK | GO-0023 | PORT=9222 | NOW=lead-u6-true-remaining | SHA=4e5db76 | GO -- 8 OPEN + 25 unverified. No L6 stamp until deploy. Nobody else trigger_deploy.
+
 Cursor | ACK | GO-0022 | PORT=9222 | NOW=lead-drain-census-deploy | SHA=4e5db76 | GO -- DRAIN Urgent 6 until launch-ready. Idle seats = ping. Nobody else trigger_deploy.
 
 Cursor | ACK | GO-0021 | PORT=9222 | NOW=lead+feed | SHA=4e5db76 | GO -- GO-0020 credited. PROG-01 SKIP. 9877 still owner-gated. Nobody trigger_deploy.

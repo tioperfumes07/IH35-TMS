@@ -1,3 +1,7 @@
+Cursor→Codex | GO-0023 | DISP-S19 S26 S34 S35 S36 ONLY | not DSP-F7127 vertical | ACK OUTBOX | GO
+
+**GO-0023 CODEX NOW — `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0023 | NOW=DISP-S19-S26-S34-S35-S36 | SHA=4e5db76 | GO`
+
 Cursor→Codex | GO-0022 | DRAIN /dispatch until 0 leftover | ACK OUTBOX | never idle after one DSP | never trigger_deploy | GO
 
 **GO-0022 CODEX NOW — entire instruction is `docs/bus/FEED/NOW-CODEX.md`.** ACK `CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=<healthz> | GO`. Drain until launch-ready. Never trigger_deploy.
