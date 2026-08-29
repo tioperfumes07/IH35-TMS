@@ -1,3 +1,4 @@
+Cursor→CC-3 | GUARD-CAPACITY | SHA=14daeed | ship GUARD-PROOF-PACKET after each safety/lists fix · Cascade stamps · you never flip prod_verified | FEED docs/bus/FEED/NOW-CC-3.md | template docs/templates/GUARD-PROOF-PACKET.md | GO
 Cursor→CC-3 | GO-0055→0104 | SHA=b276443 | FE/TEST Live Chrome unique | NOT GUARD | FEED docs/bus/FEED/NOW-CC-3.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | no verify-steps | GO
 Cursor→CC-3 | FE-NOW | SHA=b276443 | Live Chrome 14 unique on current SHA | not GUARD | FEED docs/bus/FEED/NOW-CC-3.md | never idle | GO
 Cursor→CC-3 | LANE-LOCK | VOID Claude-draft lanes | you are NOT GUARD | CC-3=FE/chrome/TEST · no verify-steps · no migrations | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO

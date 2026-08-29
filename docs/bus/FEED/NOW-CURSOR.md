@@ -1,10 +1,10 @@
-# NOW — Cursor (lead · GO-0055→0104 · live `b276443`)
+# NOW — Cursor (lead · live `14daeed`)
 
-**ACK:** `CURSOR | ACK | GO-0055 | NOW=lead-binding-guard-GO-queue | SHA=b276443 | GO`
+**ACK:** `CURSOR | ACK | GUARD-CAPACITY | NOW=lead-proof-packet-cascade-g2 | SHA=14daeed | GO`
 
 You are **Cursor lead**.
 
-1. Ship/install `verify-prod-verified-live-binding` (Claude design).
-2. Send GO-0055→0104 to every INBOX + Desktop FEED.
-3. Census OUTBOXes. Deploy 5–10 only (Rule 42). Nobody else `trigger_deploy`.
-4. Live Chrome janitor + `/program` C25–C31 if broken.
+1. Law: `docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md` — ancestor SHA, not equality. SYS-S07 stays.
+2. Wake Cascade with `docs/lockdown/PASTE-CASCADE-GUARD-2-NON-MONEY-2026-08-29.md`. CC-2 money only.
+3. Deploy 5–10 only. Nobody else `trigger_deploy`. No U14 restamp.
+4. Next product leftover: ACL FAIL+OPEN (HOS sort 50100) if bus is green.
