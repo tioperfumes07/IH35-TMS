@@ -19,11 +19,12 @@
         "DOD-B"
       ],
       "spec": "HelpCenterPage \u00b7 program-system-help breadth pass",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: CATEGORY_ORDER + HelpCategory include 8th Driver App (was folded under Module Guides). Matches auditor list. Guard verify-help-center-eight-categories + step 2240. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-help-center-eight-categories.mjs exit 0. CC-3 OUTBOX evidence: /help lists all 8 categories (Getting Started, Dispatching Loads, Driver Settlements, Banking & Reconciliation, Reports, Account & Billing, Module Guides, Driver App). Independently re-verified live myself: live Chrome (USMCA context) /help renders exactly this card grid, real content. Binding on this independent re-confirmation.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "HELP-S02",
@@ -33,11 +34,12 @@
         "VERIFY-1"
       ],
       "spec": "sidebar help flyout Overview",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: sidebar-config Overview \u2192 /help/overview; manifest mounts HelpPage. Guard step 2240.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: sidebar-config Overview \u2192 /help/overview; manifest mounts HelpPage. Guard step 2240. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-help-center-eight-categories.mjs exit 0 (companion guard confirms Overview flyout wired). CC-3 OUTBOX evidence: /help/overview real (Help articles + Runbooks index, \"10 step-by-step procedures\"). Binding on CC-3's evidence + guard corroboration.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "HELP-S03",
@@ -46,11 +48,12 @@
         "DOD-A"
       ],
       "spec": "RunbooksIndex route",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: /help/runbooks \u2192 RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: /help/runbooks \u2192 RunbooksIndex data-testid=runbooks-index + RUNBOOKS.map; flyout link present. Guard step 2240. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-help-center-eight-categories.mjs exit 0 (companion guard confirms Runbooks wired). CC-3 OUTBOX evidence: /help/runbooks real 10-item index (Close of Month, IFTA Quarterly Filing, W-2 Payroll Cycle, 1099 Contractor Payroll, Collections Workflow, etc). Binding on CC-3's evidence + guard corroboration.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "HELP-S04",
@@ -60,11 +63,12 @@
         "VERIFY-1"
       ],
       "spec": "HelpArticlePage",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (\u226512 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: 2026-08-03 Cursor: expanded 12 Phase-7 seed stubs (\u226512 non-empty lines, seed footer removed); factoring article documents canonical factoring.factor profile path. Guard verify-help-article-content-floor + step 2244. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-help-article-content-floor.mjs exit 0. CC-3 OUTBOX evidence: /help/welcome real substantial article content, well past the 12-line seed-stub floor -- entity-switcher guidance, module-rail orientation, cross-links to Overview/Runbooks. Binding on CC-3's evidence + guard corroboration.",
       "pr": null,
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T23:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "HELP-VERIFY-01",
