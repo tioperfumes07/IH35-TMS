@@ -88,9 +88,11 @@
       ],
       "spec": "Vendors default filter",
       "status": "PASS",
-      "evidence": "2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus=\"active\" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236.",
+      "evidence": "2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus=\"active\" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236. RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): structural re-read of Vendors.tsx confirms parseVendorListTab(searchParams.get(\"listTab\") ?? \"active\") defaults to active, listStatus===\"active\" filters vendor.deactivated_at==null, data-list-status-filter=\"vendors\" present. Neon lucia (bypass_rls) direct count this turn: TRANSP active=571 inactive=387 total=958 -- inactive count matches exactly. Guard re-run: OK, TRANSP active=564 inactive=387 (guard's own live query, same inactive count).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T19:45:00.000Z",
+      "live_verified_sha": "b2448ce"
     },
     {
       "id": "VEND-VERIFY-01",

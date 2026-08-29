@@ -1,0 +1,22 @@
+{
+  "block_id": "cc2-bind-vend-s05-live-proof",
+  "status": "GUARD",
+  "classification": "DOCS",
+  "phase": "GUARD-PROD-VERIFIED-LIVE-BINDING-2026-08-29",
+  "task": "CC-2 independently re-verifies and binds VEND-S05 (inactive vendor filter excludes 387 inactive from default Active view) with a fresh live_verified_sha, structural + live-data re-check.",
+  "branch": "cc2/bind-vend-s05-live-proof",
+  "lane": "GUARD-2 MONEY",
+  "runtime_path": "docs",
+  "allowed_files": [
+    "docs/module-completion/vendors.json",
+    ".block-ready/cc2-bind-vend-s05-live-proof.json"
+  ],
+  "acceptance": [
+    { "kind": "route", "value": "scripts/verify-prod-verified-live-binding.mjs", "note": "exit 0, bound 26->30, baseline unchanged at 78" }
+  ],
+  "linkage": "N/A -- binding flag flip on freshly re-verified evidence, no data/code change.",
+  "db_required": false,
+  "guard_required": false,
+  "extra_gates": [],
+  "hold": "DOCS, self-merge on green per owner law."
+}
