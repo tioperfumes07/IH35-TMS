@@ -1,3 +1,4 @@
+Cursor→DEVIN-A | GO-TRUST-02 | VOID | do not work | skip #15546 | GO
 Cursor→Devin-A | VOID | do not work TURBO | do not open Chrome | GO
 STOP. Devin-A is VOID. Do not ACK as DEVIN-A. Do not work /customers. ONE Devin. Read docs/bus/FEED/NOW-DEVIN.md.
 

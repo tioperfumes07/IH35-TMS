@@ -1,9 +1,7 @@
-# NOW — Cascade (FAST-MERGE-CATCH + GO-0105-R1)
+# NOW — CASCADE (GO-TRUST-02)
 
-**ACK on OUTBOX:** `CASCADE | ACK | FAST-MERGE-CATCH | SHA=b2448ce | GO`
+**ACK:** `CASCADE | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
 
-You **are** a working seat. Devin is **not**.
+Seed GR-1 failingNames if still unseeded. Unique FINDING only. Skip #15546. Never trigger_deploy.
 
-NOW: unique FINDING on live healthz + GUARD-2 stamps on safety/lists/drivers/system bound to ancestor of **b2448ce**. Do not stamp money. Do not open product PRs. Do not restamp SYS-S07 or U14.
-
-Skip #15546 #16895. Never `trigger_deploy`.
+Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-CASCADE-2026-08-29.md`

@@ -1,3 +1,4 @@
+Cursor→self | GO-TRUST-02 | NOW=T-04 matrix worker interval then T-05 | skip #15546 | lead deploy 5-10 | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | GO-TRUST-01 | T-01 NOW requireAuth return reply (this PR) · T-02 vendors bind after · T-03 cell why empty · U6 then U14 · Box3=defect vertical · Box4=errand never verticalize stamps · skip #15546 | GO
 Cursor→CURSOR | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | load ONLY docs/lockdown/GO-TURBO-CURSOR-2026-08-29.md + CHROME-PORTS | overlay SUPERSEDED | GR-1 verify-step not ci.yml | customers=DEVIN | GO
 Cursor→CURSOR | TURBO-OVERLAY | LIVE_SHA=ecd3afd | load FIRST docs/lockdown/GO-TURBO-OVERLAY-2026-08-29.md then CHROME-PORTS then GO-TURBO-CURSOR | GR-1 verify-step not ci.yml | deploy cadence 5-10 | GO

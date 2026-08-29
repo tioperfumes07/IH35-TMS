@@ -1,3 +1,7 @@
-# NOW — Devin (VOID)
+# NOW — DEVIN (GO-TRUST-02)
 
-**STOP.** Devin is not a seat. Do not ACK GO-0105-R1. Do not stamp. Do not work `/vendors`. Cascade + CC-2 cover GUARD; CC-1 money leftover includes vendors if a unique money FAIL exists.
+**ACK:** `DEVIN | ACK | GO-TRUST-02 | SHA=<healthz> | GO`
+
+Customers only. Do not touch vendors certify. Skip #15546. Never trigger_deploy.
+
+Packet: `docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md` + `docs/lockdown/GO-TURBO-DEVIN-2026-08-29.md`

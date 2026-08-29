@@ -1470,8 +1470,6 @@ export async function buildModuleMatrix(moduleId: string, userUuid?: string): Pr
     return hit.payload;
   }
 
-  kickMatrixComputeOffThread();
-
   // Stale-while-revalidate: serve last full payload immediately; worker refreshes.
   if (hit) {
     kickMatrixComputeOffThread();
@@ -1985,12 +1983,12 @@ async function loadMatrixModuleOrder(): Promise<Array<{ id: string; label: strin
 export async function buildSystemModuleMatrix(userUuid?: string): Promise<SystemModuleMatrixPayload> {
   const probeScope = userUuid ? "neon_live" : "committed_stale";
   const now = Date.now();
-  kickMatrixComputeOffThread();
+  // T-04: fresh cache is the board; do not spawn a 3,399-cell worker on every poll.
   if (systemCache && systemCache.probeScope === probeScope && now - systemCache.atMs < MATRIX_CACHE_MS) {
     return overlayMatrixWorkerMeta(systemCache.payload);
   }
+  kickMatrixComputeOffThread();
   if (systemCache && systemCache.probeScope === probeScope) {
-    kickMatrixComputeOffThread();
     return overlayMatrixWorkerMeta(systemCache.payload);
   }
   const lastGood = await readSystemLastGood();
@@ -2247,6 +2245,8 @@ export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = fa
 
 let matrixWorker: Worker | null = null;
 let matrixWorkerLog: { info?: (obj: unknown, msg: string) => void; warn?: (obj: unknown, msg: string) => void } | undefined;
+/** T-04: last Worker spawn. Same window as MATRIX_CACHE_MS so polls cannot re-project every request. */
+let matrixLastSpawnAtMs = 0;
 
 type MatrixWorkerSnap = {
   state: "running" | "failed" | "never_started";
@@ -2267,10 +2267,16 @@ export function overlayMatrixWorkerMeta(payload: SystemModuleMatrixPayload): Sys
   };
 }
 
-/** HTTP thread must never run computeSystemModuleMatrix(full). Spawn at most one worker. */
-export function kickMatrixComputeOffThread(): void {
+/** HTTP thread must never run computeSystemModuleMatrix(full). Spawn at most one worker. T-04: min interval = cache TTL unless failed or force. */
+export function kickMatrixComputeOffThread(force = false): void {
   if (!isMainThread) return;
   if (matrixWorker) return;
+  const now = Date.now();
+  const failed = matrixWorkerSnap.state === "failed";
+  if (!force && !failed && matrixLastSpawnAtMs > 0 && now - matrixLastSpawnAtMs < MATRIX_CACHE_MS) {
+    return;
+  }
+  matrixLastSpawnAtMs = now;
   try {
     matrixWorker = new Worker(new URL("./module-matrix.worker.js", import.meta.url));
     matrixWorkerSnap = { state: "running" };
@@ -2318,7 +2324,7 @@ export function warmSystemModuleMatrixAtBoot(log?: {
   warn?: (obj: unknown, msg: string) => void;
 }): void {
   matrixWorkerLog = log;
-  kickMatrixComputeOffThread();
+  kickMatrixComputeOffThread(true);
 }
 
 /** Test helper — clear request cache between assertions. */
@@ -2327,6 +2333,7 @@ export function clearModuleMatrixCache(): void {
   moduleMatrixInflight.clear();
   systemCache = null;
   systemInflight = null;
+  matrixLastSpawnAtMs = 0;
   ledgerCache = null;
   clickedOutboxCache = null;
   guardLinesCache = null;

@@ -95,7 +95,13 @@ function failures(sources) {
   if (!/module-matrix-system-projection-failed/.test(system) || !/SCOREBOARD PROJECTION FAILED/.test(system)) {
     out.push("ModuleMatrixSystemView: worker failure must render RED projection-failed banner, never computing copy");
   }
-  if (/projectionFailed[\s\S]*computing in the background/.test(system.replace(/\n/g, " "))) {
+  const failedBannerStart = system.indexOf("{projectionFailed ? (");
+  const failedBannerEnd = system.indexOf(": workerNeverStarted ? (");
+  const failedBanner =
+    failedBannerStart !== -1 && failedBannerEnd > failedBannerStart
+      ? system.slice(failedBannerStart, failedBannerEnd)
+      : "";
+  if (!failedBanner || /computing in the background/.test(failedBanner)) {
     out.push("ModuleMatrixSystemView: failed branch must not contain computing-in-the-background copy");
   }
   if (!/function buildSystemMatrixRequiredFallback/.test(system)) {
@@ -131,8 +137,11 @@ function failures(sources) {
     if (/return systemInflight/.test(sysWrap) || /systemInflight = computeSystemModuleMatrix/.test(sysWrap)) {
       out.push("module-matrix.service: buildSystemModuleMatrix must not await computeSystemModuleMatrix on the HTTP thread");
     }
-    if (!/computeSystemModuleMatrix\(userUuid, true\)/.test(sysWrap) && !/seedOnly/.test(sysWrap)) {
-      out.push("module-matrix.service: cold system rollup must return required-maps seed (seedOnly), not the ledger projection");
+    if (/kickMatrixComputeOffThread\(\);\s*\n\s*if \(systemCache && systemCache.probeScope === probeScope && now - systemCache.atMs < MATRIX_CACHE_MS\)/.test(sysWrap)) {
+      out.push("T-04: buildSystemModuleMatrix must not kick the worker before a fresh cache hit");
+    }
+    if (!/T-04: fresh cache is the board/.test(sysWrap) || !/matrixLastSpawnAtMs/.test(svc)) {
+      out.push("T-04: matrix worker must skip spawn on fresh cache and min-interval MATRIX_CACHE_MS");
     }
   }
   if (!/REQUIRED-SEED/.test(svc)) {
