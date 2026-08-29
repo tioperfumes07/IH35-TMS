@@ -36,7 +36,7 @@ const CHECKS = [
   ["apps/frontend/src/components/driver-inbox/DriverInbox.tsx", /kind="driver" id=\{String\(row\.driver_id \?\? ""\)\}/],
   ["apps/frontend/src/pages/home/DriverHubReportingPage.tsx", /kind="driver" id=\{r\.driver_id\}/],
   // driver-hub: home, tab.overview, tab.scheduler, tab.leave_requests, reporting, inbox
-  ["apps/frontend/src/pages/home/DriverHubPage.tsx", /\{tab === "overview" && <DriverInbox companyId=\{companyId\} canReview=\{canReview\} \/>\}/],
+  ["apps/frontend/src/pages/home/DriverHubPage.tsx", /\{tab === "overview" && <DriverInbox\s+(?=[^>]*companyId=\{companyId\})(?=[^>]*canReview=\{canReview\})[^>]*\/>\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx", /kind="driver" id=\{a\.primary_driver_id\}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerRequestInboxPage.tsx", /kind="driver" id=\{String\(r\.driver_id \?\? ""\)\}/],
   // tasks: nav.board, nav.mine, board.planner_grid, board.create, mine.list
