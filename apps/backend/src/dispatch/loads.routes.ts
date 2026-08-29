@@ -991,8 +991,16 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       });
       return result;
     } catch (error) {
-      if (String((error as Error)?.message ?? "").includes("E_LOAD_NOT_FOUND")) {
+      const message = String((error as Error)?.message ?? "");
+      if (message.includes("E_LOAD_NOT_FOUND")) {
         return reply.code(404).send({ error: "dispatch_load_not_found" });
+      }
+      if (
+        message.includes("r2_not_configured") ||
+        message.includes("instructions_document_create_failed") ||
+        message.includes("load_distribution_cleanup_failed")
+      ) {
+        return reply.code(503).send({ error: "instruction_distribution_unavailable" });
       }
       throw error;
     }
