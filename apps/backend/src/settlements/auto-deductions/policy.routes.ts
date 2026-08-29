@@ -55,7 +55,12 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
         `
           SELECT
             p.*,
-            NULLIF(TRIM(CONCAT_WS(' ', d.first_name, d.last_name)), '') AS driver_name,
+            -- DRV-MONEY-F7311: resolve_driver_label_same_company carries no deactivated_at/
+            -- archived_at filter (unlike a plain mdata.drivers join would), so a deactivated or
+            -- archived driver still resolves their durable historical name instead of silently
+            -- rendering "Driver — not visible" for a policy row that is still real, company-bound
+            -- history. Same pattern already locked for load/dispatch drivers and customers.
+            mdata.resolve_driver_label_same_company(p.driver_id, p.operating_company_id) AS driver_name,
             -- AUTO-DEDUCTION-POLICY-HISTORY-NO-HUMAN-LABEL: the deduction-type join already existed
             -- (default_recovery_rail/may_draw_escrow/survives_separation), but never selected the
             -- one column a human reads — display_name — so the completed-policy history card had
@@ -65,11 +70,6 @@ export async function registerAutoDeductionPolicyRoutes(app: FastifyInstance) {
             ddt.may_draw_escrow,
             ddt.survives_separation
           FROM driver_finance.auto_deduction_policies p
-          LEFT JOIN mdata.drivers d
-            ON d.id = p.driver_id
-           AND d.operating_company_id = p.operating_company_id
-           AND d.deactivated_at IS NULL
-           AND d.archived_at IS NULL
           LEFT JOIN catalogs.driver_deduction_types ddt
             ON ddt.operating_company_id = p.operating_company_id
            AND ddt.code = p.deduction_type
