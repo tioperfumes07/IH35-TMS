@@ -208,6 +208,12 @@ async function handleLoadBulk(ctx: BulkPerEntityContext<LoadBulkPayload>): Promi
       `,
       [invoice.id, operatingCompanyId, actorUserId]
     );
+    // DSP-MONEY-F7155A (GO-0027, CC-1): a concurrent lifecycle change or lost invoice row between
+    // the read above and this UPDATE must not reach appendBulkCrudAudit with an undefined post-write
+    // snapshot and report success anyway — mirrors mark_paid's own zero-row check below.
+    if (updateRes.rows.length === 0) {
+      return { ok: false, code: "E_UPDATE_FAILED", message: "Load mark factored failed" };
+    }
     auditPayload.changes = buildPatchChanges(
       { factoring_status: "submitted", factor_id: factoredPayload.factor_id, invoice_id: invoice.id },
       oldRow,
