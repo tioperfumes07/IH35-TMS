@@ -7,6 +7,7 @@ import {
   assertDriverQualifiedForLoad,
   type DriverQualificationBlock,
 } from "./driver-qualification.service.js";
+import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 
 export type ReassignBody = {
   operating_company_id: string;
@@ -349,7 +350,7 @@ export async function replaceLoadStopsRefined(
     await client.query("BEGIN");
     try {
       const load = await client.query(
-        `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL`,
+        `SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL FOR UPDATE`,
         [loadId, operatingCompanyId]
       );
       if (!load.rows[0]) throw new Error("E_LOAD_NOT_FOUND");
@@ -403,6 +404,8 @@ export async function replaceLoadStopsRefined(
           ]
         );
       }
+
+      await bindLoadToGeofences(client, operatingCompanyId, loadId);
 
       await appendCrudAudit(
         client,

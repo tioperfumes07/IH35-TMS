@@ -38,6 +38,15 @@ export async function bindLoadToGeofences(
 
   const geofenceIds: string[] = [];
   for (const stop of stops.rows) {
+    const radiusDeg = 250 / 364000;
+    const lat = stop.lat;
+    const lng = stop.lng;
+    const vertices = [
+      { lat: lat + radiusDeg, lng },
+      { lat, lng: lng + radiusDeg },
+      { lat: lat - radiusDeg, lng },
+      { lat, lng: lng - radiusDeg },
+    ];
     const existing = await client.query<{ id: string }>(
       `
         SELECT id::text
@@ -52,19 +61,20 @@ export async function bindLoadToGeofences(
       [operatingCompanyId, `load-${loadId}-stop-${stop.sequence}`]
     );
     if (existing.rows[0]?.id) {
-      geofenceIds.push(existing.rows[0].id);
+      const refreshed = await client.query<{ id: string }>(
+        `UPDATE geo.geofences
+            SET vertices_json = $3::jsonb, updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND is_active = true
+          RETURNING id::text`,
+        [existing.rows[0].id, operatingCompanyId, JSON.stringify(vertices)]
+      );
+      if (!refreshed.rows[0]?.id) throw new Error("load_geofence_refresh_failed");
+      geofenceIds.push(refreshed.rows[0].id);
       continue;
     }
 
-    const radiusDeg = 250 / 364000;
-    const lat = stop.lat;
-    const lng = stop.lng;
-    const vertices = [
-      { lat: lat + radiusDeg, lng },
-      { lat, lng: lng + radiusDeg },
-      { lat: lat - radiusDeg, lng },
-      { lat, lng: lng - radiusDeg },
-    ];
     const inserted = await client.query<{ id: string }>(
       `
         INSERT INTO geo.geofences (
@@ -75,7 +85,8 @@ export async function bindLoadToGeofences(
       `,
       [operatingCompanyId, `load-${loadId}-stop-${stop.sequence}`, JSON.stringify(vertices)]
     );
-    if (inserted.rows[0]?.id) geofenceIds.push(inserted.rows[0].id);
+    if (!inserted.rows[0]?.id) throw new Error("load_geofence_insert_failed");
+    geofenceIds.push(inserted.rows[0].id);
   }
 
   return { bound: geofenceIds.length, geofence_ids: geofenceIds };

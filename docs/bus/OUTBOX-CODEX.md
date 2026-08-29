@@ -1,3 +1,5 @@
+Codex | SHIPPED | DSP-F7178 | PR=#17343 @ 88ba2a305c | Built=available-driver exact-load truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
+Codex | WORKING | DSP-F7179 | CLAIM=load-stop-geofence-binding-dead+silent | SOURCE=mdata.load_stops→geo.geofences | NEXT=vertical guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7177 | PR=#17339 @ b74f7e5984 | Built=stop-type validation truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7178 | CLAIM=available-drivers-missing-load-returns-all-candidates | SOURCE=mdata.loads.id+operating_company_id | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0028 | NOW=dispatch-unique-leftover | SHA=4e5db76 | GO
