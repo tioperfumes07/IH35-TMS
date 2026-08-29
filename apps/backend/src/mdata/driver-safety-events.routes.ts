@@ -675,14 +675,19 @@ export async function registerDriverSafetyEventsRoutes(app: FastifyInstance) {
       const row = insertRes.rows[0];
 
       if (body.event_type === "termination") {
-        await client.query(
+        const driverUpdateRes = await client.query<{ id: string }>(
           `
             UPDATE mdata.drivers
             SET status = 'Terminated', termination_date = $2, updated_by_user_id = $3
             WHERE id = $1
+              AND operating_company_id = $4::uuid
+            RETURNING id::text
           `,
-          [parsedParams.data.driver_id, body.event_date, authUser.uuid]
+          [parsedParams.data.driver_id, body.event_date, authUser.uuid, opco]
         );
+        if (driverUpdateRes.rows[0]?.id !== parsedParams.data.driver_id) {
+          throw new Error("driver_termination_status_write_failed");
+        }
       }
 
       await appendCrudAudit(
