@@ -59,6 +59,12 @@ function inspect(source, routes) {
   if (!routes.includes("source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint)")) {
     errors.push("is_active-only card lifecycle can erase the existing funding source hint");
   }
+  if (!routes.includes('const RELAY_DEPOSIT_CLASSIFICATIONS = ["company", "unclassified", "canceled"] as const;')) {
+    errors.push("Relay deposit filter has no canonical classification allowlist");
+  }
+  if (!/requestedClassification[\s\S]*!RELAY_DEPOSIT_CLASSIFICATIONS\.includes[\s\S]*reply\.code\(400\)/.test(routes)) {
+    errors.push("invalid Relay deposit classification silently fails open to the full queue");
+  }
   return errors;
 }
 
@@ -74,13 +80,14 @@ if (process.argv.includes("--selftest")) {
     [source, routes.replace('"integrations.relay_company_card.updated"', '"planted.audit.removed"')],
     [source, routes.replace("label = COALESCE(EXCLUDED.label, existing.label)", "label = EXCLUDED.label")],
     [source, routes.replace("source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint)", "source_hint = EXCLUDED.source_hint")],
+    [source, routes.replace("!RELAY_DEPOSIT_CLASSIFICATIONS.includes", "RELAY_DEPOSIT_CLASSIFICATIONS.includes")],
   ];
   const missed = mutations.filter(([candidateSource, candidateRoutes]) => inspect(candidateSource, candidateRoutes).length === 0);
   if (missed.length) {
-    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/8 mutation(s) survived`);
+    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/9 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 8/8 planted defects rejected");
+  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 9/9 planted defects rejected");
   process.exit(0);
 }
 
