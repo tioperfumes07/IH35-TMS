@@ -63,11 +63,16 @@ function resumeFailures({ wizardPage, frontendTest }) {
 
 function completionFailures({ onboardingRoutes, backendTest }) {
   const failures = [];
+  const completionStart = onboardingRoutes.indexOf('/api/v1/safety/onboarding/sessions/:session_id/complete');
+  const completionEnd = onboardingRoutes.indexOf('/api/v1/safety/onboarding/sessions/:session_id/admin-override', completionStart);
+  const completionRoute = completionStart >= 0
+    ? onboardingRoutes.slice(completionStart, completionEnd > completionStart ? completionEnd : undefined)
+    : "";
   const required = [
-    [onboardingRoutes, "missingRequiredOnboardingSteps(existing.step_data ?? {})", "completion must validate qualification evidence"],
-    [onboardingRoutes, "FOR UPDATE", "completion validation and status write must share one locked transaction"],
-    [onboardingRoutes, 'error: "onboarding_incomplete"', "incomplete qualification must return a named error"],
-    [onboardingRoutes, "missing_steps: result.missing_steps", "completion response must identify missing steps"],
+    [completionRoute, "missingRequiredOnboardingSteps(existing.step_data ?? {})", "completion must validate qualification evidence"],
+    [completionRoute, "FOR UPDATE", "completion validation and status write must share one locked transaction"],
+    [completionRoute, 'error: "onboarding_incomplete"', "incomplete qualification must return a named error"],
+    [completionRoute, "missing_steps: result.missing_steps", "completion response must identify missing steps"],
     [onboardingRoutes, "signatures.acknowledged !== true", "signature acknowledgement is required"],
     [onboardingRoutes, "i9.section1_completed !== true", "I-9 completion is required"],
     [backendTest, "rejects missing qualification evidence without updating or auditing", "backend must test false completion rejection"],
@@ -75,6 +80,16 @@ function completionFailures({ onboardingRoutes, backendTest }) {
   ];
   for (const [source, needle, label] of required) if (!source.includes(needle)) failures.push(label);
   return failures;
+}
+
+function mutateCompletionRoute(source, before, after) {
+  const start = source.indexOf('/api/v1/safety/onboarding/sessions/:session_id/complete');
+  const end = source.indexOf('/api/v1/safety/onboarding/sessions/:session_id/admin-override', start);
+  if (start < 0) return source;
+  const route = source.slice(start, end > start ? end : undefined);
+  const mutated = route.replace(before, after);
+  if (mutated === route) return source;
+  return `${source.slice(0, start)}${mutated}${end > start ? source.slice(end) : ""}`;
 }
 
 function main() {
@@ -169,7 +184,7 @@ function main() {
     const total = mutations.length + resumeMutations.length;
     const completionMutations = [
       { key: "completion validator", onboardingRoutes: onboardingRoutes.replace("missingRequiredOnboardingSteps(existing.step_data ?? {})", "[]") },
-      { key: "transaction lock", onboardingRoutes: onboardingRoutes.replace("FOR UPDATE", "") },
+      { key: "transaction lock", onboardingRoutes: mutateCompletionRoute(onboardingRoutes, "FOR UPDATE", "") },
       { key: "named incomplete error", onboardingRoutes: onboardingRoutes.replaceAll('error: "onboarding_incomplete"', 'error: "not_found"') },
       { key: "missing step response", onboardingRoutes: onboardingRoutes.replace("missing_steps: result.missing_steps", "missing_steps: []") },
       { key: "signature requirement", onboardingRoutes: onboardingRoutes.replace("signatures.acknowledged !== true", "false") },
