@@ -51,7 +51,7 @@ const reverseBody = z.object({
 
 async function registerLoanPaymentPostingRoutes(app: FastifyInstance) {
   // Post every due, unposted scheduled payment for one loan (flag-gated; OFF => no-op).
-  app.post("/api/v1/accounting/finance-hub-amortization-posting/loan-payments/post", async (req, reply) => {
+  app.post("/api/v1/accounting/finance-hub-amortization-posting/loan-payments/post", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -79,7 +79,7 @@ async function registerLoanPaymentPostingRoutes(app: FastifyInstance) {
   });
 
   // Reverse posted loan payments (equal-and-opposite reversing JE; never delete).
-  app.post("/api/v1/accounting/finance-hub-amortization-posting/loan-payments/reverse", async (req, reply) => {
+  app.post("/api/v1/accounting/finance-hub-amortization-posting/loan-payments/reverse", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureFinanceUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

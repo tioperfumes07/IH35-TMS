@@ -36,7 +36,7 @@ function monthCloser(req: Parameters<typeof currentAuthUser>[0], reply: Paramete
 }
 
 export async function registerMonthCloseRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/month-close-status", async (req, reply) => {
+  app.get("/api/v1/accounting/month-close-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = monthCloser(req, reply);
     if (!user) return;
     const query = monthCloseStatusQuerySchema.safeParse(req.query ?? {});
@@ -57,7 +57,7 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/month-close", async (req, reply) => {
+  app.post("/api/v1/accounting/month-close", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = monthCloser(req, reply);
     if (!user) return;
     const body = monthCloseBodySchema.safeParse(req.body ?? {});
@@ -87,7 +87,7 @@ export async function registerMonthCloseRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/accounting/month-close-acknowledge", async (req, reply) => {
+  app.post("/api/v1/accounting/month-close-acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = monthCloser(req, reply);
     if (!user) return;
     const body = monthCloseAckBodySchema.safeParse(req.body ?? {});
