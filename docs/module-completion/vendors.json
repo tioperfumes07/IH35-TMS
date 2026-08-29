@@ -22,7 +22,7 @@
       "status": "PASS",
       "evidence": "LIVE 2026-08-29 Neon lucia br-fancy-credit-akjnd07a: USMCA total=142 active=123 inactive=19 (1 sample, 95 driver-linked, 28 non-driver, 0 QBO-mirrored). TRANSP total=958 active=571 inactive=387. TRK total=1873 active=1873. Stale 2026-08-03 stamp said USMCA=4 — FALSE, live Neon=123. Vendors.tsx uses listAllVendors (wraps listVendors with pagination) + active_company_only=true. Guard verify-vend-s01-roster-active-filter.mjs fixed to accept listAllVendors + updated Neon counts. CLOSED THE PENDING CHROME CLICK-THROUGH (CC-1, 2026-08-29, SHA b276443): live /vendors (USMCA Freight Solutions Inc context) shows All (148) / Active (129) / Inactive (19); same-turn Neon read (current_user=neondb_owner, control mdata.drivers=271 nonempty) confirms USMCA total=148 active=129 inactive=19 on the SAME SHA — exact parity, roster count grew from the prior snapshot (new vendors created since 08-24, inactive count unchanged at 19), no drift between UI and Neon.",
       "pr": null,
-      "prod_verified": false,
+      "prod_verified": true,
       "live_verified_at": "2026-08-29T15:30:14.000Z",
       "live_verified_sha": "b276443"
     },
@@ -76,7 +76,7 @@
       "status": "PASS",
       "evidence": "2026-08-03 Neon lucia: catalogs.vendor_types 8/TRANSP · 8/TRK · 8/USMCA. VendorCreateModal + NewVendorDrawerForm createKind=vendor_type → catalogs.vendor_types. Guard step 2238. LIVE RE-VERIFIED (CC-1, 2026-08-29, SHA b276443): raw count(*) for USMCA is now 10, not 8 — investigated before trusting either number (never-guess law): Neon shows the 8 original is_system=true/is_active=true rows (Fuel/Repair/Tires/Towing/Insurance/Permit/Toll/Other) unchanged, PLUS 2 is_active=false rows created 2026-08-22/23 by another seat (\"CC3 Test Vendor Type\", \"CC3 TEST Vendor Type\", is_system=false) — TEST fixtures, correctly deactivated not deleted (void-not-delete), not a regression. Live Chrome /vendors?create=1 (USMCA Freight Solutions Inc) Vendor type dropdown shows exactly the same 8 active options, confirming the picker correctly filters is_active=true and the 2 inactive TEST rows are properly hidden from create flow. UI-to-DB parity confirmed at the ACTIVE-only layer, which is the layer this item's acceptance actually depends on.",
       "pr": null,
-      "prod_verified": false,
+      "prod_verified": true,
       "live_verified_at": "2026-08-29T15:39:08.000Z",
       "live_verified_sha": "b276443"
     },
