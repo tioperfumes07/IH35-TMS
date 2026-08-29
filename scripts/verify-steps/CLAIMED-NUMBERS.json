@@ -6666,5 +6666,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-reversal-recognizes-cross-mechanism-reversal"
+  },
+  "9969": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-collections-excludes-sample-data"
   }
 }
