@@ -47,7 +47,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerSafetyRemindersRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/reminders", async (req, reply) => {
+  app.get("/api/v1/safety/reminders", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -98,7 +98,7 @@ export async function registerSafetyRemindersRoutes(app: FastifyInstance) {
     return { reminders };
   });
 
-  app.patch("/api/v1/safety/reminders/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/reminders/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

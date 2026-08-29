@@ -45,7 +45,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, s
 }
 
 export async function registerGeofenceBreachRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/geofence-breaches", async (req, reply) => {
+  app.get("/api/v1/safety/geofence-breaches", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -134,7 +134,7 @@ export async function registerGeofenceBreachRoutes(app: FastifyInstance) {
     return { ...events, from, to, filter: query.data.filter, page_size: query.data.page_size, offset: query.data.offset };
   });
 
-  app.post("/api/v1/safety/geofence-breaches/:id/acknowledge", async (req, reply) => {
+  app.post("/api/v1/safety/geofence-breaches/:id/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

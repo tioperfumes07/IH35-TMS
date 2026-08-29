@@ -105,7 +105,7 @@ function validationError(reply: FastifyReply, err: z.ZodError) {
 }
 
 export async function registerSafetyV5Routes(app: FastifyInstance) {
-  app.get("/api/v1/safety/v5/dot-inspections", async (req, reply) => {
+  app.get("/api/v1/safety/v5/dot-inspections", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -251,7 +251,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return reply.code(201).send({ inspection: created.inspection, spawned_wo: created.spawned_wo });
   });
 
-  app.post("/api/v1/safety/internal-fines", async (req, reply) => {
+  app.post("/api/v1/safety/internal-fines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -649,7 +649,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return { fine: outcome.row };
   });
 
-  app.post("/api/v1/safety/v5/complaints", async (req, reply) => {
+  app.post("/api/v1/safety/v5/complaints", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -701,7 +701,7 @@ export async function registerSafetyV5Routes(app: FastifyInstance) {
     return reply.code(201).send({ complaint });
   });
 
-  app.get("/api/v1/safety/v5/complaints", async (req, reply) => {
+  app.get("/api/v1/safety/v5/complaints", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!validateRole(user.role)) return reply.code(403).send({ error: "forbidden" });

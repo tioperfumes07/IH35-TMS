@@ -82,7 +82,7 @@ async function buildKpis(client: any, companyId: string) {
 }
 
 export async function registerSafetyFoundationKpiRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/:group/:tab/kpis", async (req, reply) => {
+  app.get("/api/v1/safety/:group/:tab/kpis", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});

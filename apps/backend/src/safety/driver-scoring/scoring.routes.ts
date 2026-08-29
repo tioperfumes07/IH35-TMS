@@ -42,7 +42,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerDriverCompositeScoringRoutes(app: FastifyInstance) {
-  app.get("/api/safety/driver-scoring/period", async (req, reply) => {
+  app.get("/api/safety/driver-scoring/period", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = periodQuerySchema.safeParse(req.query ?? {});
@@ -61,7 +61,7 @@ export async function registerDriverCompositeScoringRoutes(app: FastifyInstance)
     });
   });
 
-  app.get("/api/safety/driver-scoring/driver/:uuid", async (req, reply) => {
+  app.get("/api/safety/driver-scoring/driver/:uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsedQuery = driverTrendQuerySchema.safeParse(req.query ?? {});

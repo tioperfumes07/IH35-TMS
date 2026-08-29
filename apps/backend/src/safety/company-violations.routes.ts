@@ -654,6 +654,7 @@ export async function registerSafetyCompanyViolationsRoutes(
 
   app.post(
     "/api/v1/safety/company-violations/:id/complete-corrective-action",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const user = currentAuthUser(req, reply);
       if (!user) return;

@@ -129,7 +129,7 @@ async function getOrCreateRenewalReminder(client: Queryable, companyId: string) 
 }
 
 export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/permits", async (req, reply) => {
+  app.get("/api/v1/safety/permits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -200,7 +200,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/safety/permits/renewal-reminder", async (req, reply) => {
+  app.get("/api/v1/safety/permits/renewal-reminder", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -212,7 +212,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return { renewal_reminder: reminder };
   });
 
-  app.patch("/api/v1/safety/permits/renewal-reminder", async (req, reply) => {
+  app.patch("/api/v1/safety/permits/renewal-reminder", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -414,7 +414,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return { permit: updated.row };
   });
 
-  app.post("/api/v1/safety/permits/:id/archive", async (req, reply) => {
+  app.post("/api/v1/safety/permits/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -458,7 +458,7 @@ export async function registerSafetyPermitsRoutes(app: FastifyInstance) {
     return { permit: archived };
   });
 
-  app.post("/api/v1/safety/permits/:id/restore", async (req, reply) => {
+  app.post("/api/v1/safety/permits/:id/restore", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

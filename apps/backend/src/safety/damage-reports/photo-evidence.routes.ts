@@ -75,7 +75,7 @@ export async function registerDamagePhotoEvidenceRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/safety/damage-reports/:uuid/photos", async (req, reply) => {
+  app.get("/api/safety/damage-reports/:uuid/photos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = damageParamsSchema.safeParse(req.params ?? {});
@@ -89,7 +89,7 @@ export async function registerDamagePhotoEvidenceRoutes(app: FastifyInstance) {
     return { photos };
   });
 
-  app.get("/api/safety/damage-reports/:uuid/photos/:evidence_uuid/custody-chain", async (req, reply) => {
+  app.get("/api/safety/damage-reports/:uuid/photos/:evidence_uuid/custody-chain", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = evidenceParamsSchema.safeParse(req.params ?? {});

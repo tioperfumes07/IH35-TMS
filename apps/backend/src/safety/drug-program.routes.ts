@@ -150,7 +150,7 @@ async function hasActiveDriverInCompany(client: Queryable, operatingCompanyId: s
 }
 
 export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/drug-program/tests", async (req, reply) => {
+  app.get("/api/v1/safety/drug-program/tests", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = drugTestsListQuerySchema.safeParse(req.query ?? {});
@@ -269,7 +269,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch("/api/v1/safety/drug-program/tests/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/drug-program/tests/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -377,7 +377,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.get("/api/v1/safety/drug-program/random-pools", async (req, reply) => {
+  app.get("/api/v1/safety/drug-program/random-pools", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = historyListQuerySchema.safeParse(req.query ?? {});
@@ -476,7 +476,7 @@ export async function registerSafetyDrugProgramRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.get("/api/v1/safety/drug-program/clearinghouse-queries", async (req, reply) => {
+  app.get("/api/v1/safety/drug-program/clearinghouse-queries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = historyListQuerySchema.safeParse(req.query ?? {});

@@ -18,7 +18,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerFuelGpsMatchRoutes(app: FastifyInstance) {
-  app.post("/api/v1/safety/fuel-gps-match/rematch/:transaction_id", async (req, reply) => {
+  app.post("/api/v1/safety/fuel-gps-match/rematch/:transaction_id", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
