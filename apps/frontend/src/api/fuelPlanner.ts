@@ -247,7 +247,7 @@ export type FuelTransactionImportResult = {
   rows_skipped: number;
   rows_unlinked_to_load: number;
   dead_letters: number;
-  dead_letter_details: Array<Record<string, unknown>>;
+  dead_letter_details: Array<{ line_number: number; reason: string }>;
 };
 
 export function importFuelTransactions(companyId: string, file: File): Promise<FuelTransactionImportResult> {
