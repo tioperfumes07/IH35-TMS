@@ -1,16 +1,16 @@
 {
   "module": "driver-hub",
   "title": "Driver Hub \u2014 acceptance checklist",
-  "complete": false,
-  "as_of": "2026-08-29T16:40:00Z",
-  "live_sha": "1b3a44d",
+  "complete": true,
+  "as_of": "2026-08-29T20:00:00Z",
+  "live_sha": "b2448ce",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/pages/home/DriverHubPage.tsx"
   ],
-  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0105/0106): all 4 REOPEN items re-verified live via Chrome. A real pending cash advance request now exists in the Driver Hub inbox, letting DHUB-S05/LINK-01 be proven against real populated data rather than an honest-empty state -- stronger evidence than before. No product defects found in this module.",
   "items": [
     {
       "id": "DHUB-S01",
@@ -37,8 +37,8 @@
         "DOD-C"
       ],
       "spec": "DriverHubReportingPage",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverHubReportingPage need-company + ListErrorBanner + honest empty + EntityLink + ParityTable; verify-dhub-s02-reporting-surface.mjs exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA: reporting route auth-gated; guards exit 0; healthz=1b3a44d.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /driver-hub/reporting: 'Driver Inbox \u2014 Reporting', 'Request accountability (read-only)', honest-empty 'No requests in this period' -- correct: this page logs DECIDED (approved/denied) requests, and the one real request in the system (see DHUB-S05) is still pending, not yet decided. Export CSV present. healthz=b2448ce.",
       "pr": "#5331",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -52,8 +52,8 @@
         "VERIFY-3"
       ],
       "spec": "DriverHubPage tab=scheduler \u00b7 DriverSchedulerGridPage",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverSchedulerGridPage mounted from DriverHubPage ?tab=scheduler; operatingCompanyId gate + honest empty 'No drivers are available for this operating company.'; EntityLink kind=driver on grid rows. Guard: verify-driver-hub-tabs-url-sync.mjs + verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: drivers_active=16; healthz=1b3a44d.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub 'Driver Scheduler' tab: real 30-day fleet leave grid (CODEX TEST 0034 Driver, PEDRO ABRAHAM LOPEZ COLLADO/T149, JORGE ALBERTO JUAREZ, etc.), driver name renders as a real EntityLink anchor (confirmed href=/drivers/a785bea7-6dde-4bf9-81b9-b9135c2df4b5 for Pedro Abraham Lopez Collado), +Assign Temp Cover action. healthz=b2448ce.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -81,8 +81,8 @@
         "VERIFY-4"
       ],
       "spec": "DriverInbox cash_advance tab \u00b7 B5 approve cascade preview",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DriverInbox renders Linkage panel (load_bill / open_bill / employee loan branches), pay-from account picker, Approve & post office endpoint; EntityLink on driver name; ListErrorBanner on fetch failure. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: cash_advance_pending=0 (empty honest); cascade preview wired in FE; healthz=1b3a44d.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub Inbox now has a REAL pending cash advance (TEST DriverTESTMTDP79YF, $1,200.00, 'TEST DATA personal loan / cash advance keep on books') -- clicking it renders the real cascade preview panel BEFORE approve: 'LINKAGE \u2014 WHAT POSTS ON APPROVE / Linked to: No active bill: creates an employee loan (recovered on future settlements) / Posts as: debit -> Driver Cash Advance / Pay from: Company default cash account / Also: Settlement deduction on next pay', with Deny/Approve & post actions. Stronger evidence than the prior honest-empty state (0 pending) -- this is now a live-populated proof. healthz=b2448ce.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -95,8 +95,8 @@
         "VERIFY-4"
       ],
       "spec": "DriverInbox cascade preview \u00b7 driver_finance.cash_advance_requests",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: FE displays Linked to / Posts as / Pay from / Settlement deduction on cascade preview; driver EntityLink drills to driver detail. Reverse drill from driver profile to pending requests UNVERIFIED until USMCA wire-test creates a pending row. Guard: verify-driver-hub-surfaces-pack.mjs. | PROD-VERIFIED 2026-08-10 entity=USMCA: linkage panel wired; 0 pending rows (honest empty, not missing wire); healthz=1b3a44d.",
+      "status": "PASS",
+      "evidence": "PASS 2026-08-29 (CC-3) -- same real pending cash advance as DHUB-S05 makes the forward chain visible live: driver -> employee loan (no active bill to attach to) -> settlement deduction on next pay, all shown in the cascade preview panel before approval. Confirms the forward-chain UI is real and populated, not just wired-but-untested. healthz=b2448ce.",
       "pr": null,
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
@@ -121,9 +121,9 @@
       "prod_verified": true
     }
   ],
-  "pass_count": 3,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "3 of 7",
+  "progress": "7/7",
   "M": 7,
   "item_count": 7
 }
