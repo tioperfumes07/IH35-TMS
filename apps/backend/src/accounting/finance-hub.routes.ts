@@ -44,7 +44,7 @@ function canAccessFinanceHub(role: string): boolean {
 }
 
 export async function registerFinanceHubRoutes(app: FastifyInstance) {
-  app.get("/api/v1/finance/hub/overview", async (req, reply) => {
+  app.get("/api/v1/finance/hub/overview", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

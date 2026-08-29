@@ -20,7 +20,7 @@ const periodIdParamSchema = z.object({
 });
 
 export async function registerAccountingPeriodsReadRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/periods", async (req, reply) => {
+  app.get("/api/v1/accounting/periods", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = accountingReader(req, reply);
     if (!user) return;
 
@@ -65,7 +65,7 @@ export async function registerAccountingPeriodsReadRoutes(app: FastifyInstance) 
     return { periods: rows };
   });
 
-  app.get("/api/v1/accounting/periods/:id", async (req, reply) => {
+  app.get("/api/v1/accounting/periods/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = accountingReader(req, reply);
     if (!user) return;
 
