@@ -209,6 +209,14 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // GO-0037-CASH-FLOW-STATEMENT-DATE-RANGE-ORDER-UNVALIDATED: this export calls the SAME
+    // getCashFlowReport() as GET /api/v1/accounting/cash-flow, which already gained this check --
+    // but the export route parses its own query independently, so it needs the same guard, not a
+    // pass-through. See cash-flow.routes.ts for the full mechanism (reversed range -> chronologically
+    // inverted, self-contradictory cash_at_start/cash_at_end pair, not just a false-empty result).
+    if (query.data.from_date && query.data.to_date && query.data.from_date > query.data.to_date) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from_date must be on or before to_date"] } });
+    }
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
     // service sets app.operating_company_id from this exact caller-supplied value with no independent
@@ -237,6 +245,11 @@ export async function registerStatementExportRoutes(app: FastifyInstance) {
     if (!canAccessStatementExport(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const query = rangedQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
+    // GO-0037-CASH-FLOW-STATEMENT-DATE-RANGE-ORDER-UNVALIDATED: see the pdf export handler above and
+    // cash-flow.routes.ts for the full mechanism.
+    if (query.data.from_date && query.data.to_date && query.data.from_date > query.data.to_date) {
+      return reply.code(400).send({ error: "validation_error", details: { period: ["from_date must be on or before to_date"] } });
+    }
     // ACCT-F5593: no backstop -- this is the same class as the trial-balance/export/pdf route above
     // (which already had this check), and as ACCT-F5592 in accounting/bills.routes.ts: the export
     // service sets app.operating_company_id from this exact caller-supplied value with no independent
