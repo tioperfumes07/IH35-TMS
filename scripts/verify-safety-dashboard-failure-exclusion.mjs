@@ -12,10 +12,12 @@ const contracts = [
   ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError ? [] : fleetQuery.data?.rows ?? []"],
   ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError ? 0 : fleetQuery.data?.total"],
   ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "violationsQuery.isError ? [] : violationsQuery.data?.hos_violations ?? []"],
-  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError ? \"—\" : metrics.onDuty"],
-  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError ? \"—\" : metrics.offDuty"],
-  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError ? \"—\" : metrics.approachingCap"],
-  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "!fleetQuery.isError && metrics.nearViolations.length > 0"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "const fleetIncomplete = failedDriverCount > 0"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError || fleetIncomplete ? \"—\" : metrics.onDuty"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError || fleetIncomplete ? \"—\" : metrics.offDuty"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "fleetQuery.isError || fleetIncomplete ? \"—\" : metrics.approachingCap"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "!fleetQuery.isError && !fleetIncomplete && metrics.nearViolations.length > 0"],
+  ["apps/frontend/src/pages/safety/HoursOfServicePage.tsx", "!fleetQuery.isError && fleetIncomplete ? ("],
 ];
 const missingContract = (source, contract) => !source.includes(contract);
 const check = () => contracts.filter(([file, contract]) => missingContract(fs.readFileSync(file, "utf8"), contract));
