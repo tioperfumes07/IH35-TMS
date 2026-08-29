@@ -6756,5 +6756,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
+  },
+  "10041": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-drawer-money-query-error-disclosure"
   }
 }
