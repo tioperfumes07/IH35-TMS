@@ -1,3 +1,4 @@
+Codex | WORKING | DRIVER-F7207 | GO-0054 | CLAIM=bulk-truck-assignment-unit-mirror-R=W | SOURCE=mdata.units.assigned_driver_id+telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | DRIVER-F7206 | GO-0054 | CLAIM=bulk-truck-assignment-serialized-exact-edge | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO
 CODEX | ACK | GO-0054 | NOW=dispatch-drivers-fleet-fuel-unique | FINDING=FUEL-F7205 | Live=post-deploy UNVERIFIED | GO
 Codex | WORKING | FUEL-F7205 | GO-0054 | CLAIM=Love's-cron-write-fail-loud-atomic | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
