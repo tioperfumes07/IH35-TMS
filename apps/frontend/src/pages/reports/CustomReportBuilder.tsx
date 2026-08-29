@@ -175,7 +175,16 @@ export function CustomReportBuilder() {
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h3 className="text-sm font-semibold text-slate-900">Saved custom reports</h3>
         <div className="mt-2 space-y-2">
-          {(savedQuery.data?.rows ?? []).length === 0 ? (
+          {savedQuery.isError ? (
+            // GO-0028: a failed fetch must never render the same "No saved reports yet." text as
+            // a genuinely empty result.
+            <div className="flex items-center justify-between gap-2 text-xs text-red-700">
+              <span>Unable to load saved reports.</span>
+              <button type="button" className="font-semibold underline" onClick={() => void savedQuery.refetch()}>
+                Retry
+              </button>
+            </div>
+          ) : (savedQuery.data?.rows ?? []).length === 0 ? (
             <p className="text-xs text-slate-500">No saved reports yet.</p>
           ) : null}
           {(savedQuery.data?.rows ?? []).map((row) => (

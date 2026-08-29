@@ -6,6 +6,8 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_SCENARIOS_FLAG, getActiveScenarioSummary } from "../../api/financeScenarios";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { ListErrorState } from "../../components/ListErrorState";
+import { userFacingApiError } from "../../lib/api-error-message";
 
 const dollars = (cents: number) => (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 
@@ -64,6 +66,24 @@ export function FinanceOverviewPage() {
           Financial planning is not yet enabled for this company. (Feature flag <code>{FINANCE_HUB_SCENARIOS_FLAG}</code> is
           off.)
         </div>
+      </div>
+    );
+  }
+
+  if (summaryQuery.isError) {
+    // GO-0028: a failed fetch must never render the same "No active scenario yet." text as a
+    // genuinely absent scenario -- the owner would be told to go create a new one that may
+    // already exist and simply failed to load.
+    return (
+      <div className="p-6">
+        <FinanceModuleTabs />
+        {header}
+        <ListErrorState
+          title="Couldn't load the active scenario"
+          status={0}
+          message={userFacingApiError(summaryQuery.error, "Failed to load finance overview")}
+          onRetry={() => void summaryQuery.refetch()}
+        />
       </div>
     );
   }

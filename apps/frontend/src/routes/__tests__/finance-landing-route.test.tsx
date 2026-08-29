@@ -17,6 +17,7 @@ import { BreakEvenPage } from "../../pages/finance/BreakEvenPage";
 import { FinanceHubPage } from "../../pages/finance/FinanceHubPage";
 import { FinanceOverviewPage } from "../../pages/finance/FinanceOverviewPage";
 import financeTabsSource from "../../pages/finance/FinanceModuleTabs.tsx?raw";
+import { ToastProvider } from "../../components/Toast";
 
 const apiMocks = vi.hoisted(() => ({
   getBreakEvenInputs: vi.fn(),
@@ -59,8 +60,10 @@ function testBoundary(page: ReactNode) {
   });
   return (
     <QueryClientProvider client={queryClient}>
-      {page}
-      <LocationProbe />
+      <ToastProvider>
+        {page}
+        <LocationProbe />
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
