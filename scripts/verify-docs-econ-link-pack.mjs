@@ -56,6 +56,9 @@ function inspect(writer, page, routes) {
   if (!/COALESCE\([\s\S]{0,160}?CONCAT_WS\(' ', d\.first_name, d\.last_name\)[\s\S]{0,180}?mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, l\.operating_company_id\)[\s\S]{0,60}?AS driver_name/.test(writer)) {
     problems.push("generated instructions must retain the same-company historical assigned-driver label after archive");
   }
+  if (!/FROM mdata\.load_stops[\s\S]{0,100}WHERE load_id = \$1[\s\S]{0,100}soft_deleted_at IS NULL[\s\S]{0,100}ORDER BY sequence_number ASC/.test(writer)) {
+    problems.push("generated instructions must render only active load stops");
+  }
   if (!/links\.map\(\(link\)[\s\S]*<EntityLink[\s\S]*id=\{link\.entity_id\}/.test(page)) {
     problems.push("Docs Entity column must render every persisted link with EntityLink");
   }
@@ -89,6 +92,7 @@ function main() {
       writer.replace("await deleteObjectBytes(r2Key);", ""),
       writer.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"),
       writer.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"),
+      writer.replace("AND soft_deleted_at IS NULL", "AND TRUE"),
     ];
     const detected = mutations.filter((mutant) => inspect(mutant, page, routes).length > 0).length;
     const pageMutant = page.replace("links.map((link)", "links.slice(0, 1).map((link)");
@@ -97,7 +101,7 @@ function main() {
       console.error(`${LABEL}: selftest FAIL`);
       process.exit(1);
     }
-    console.log(`${LABEL}: selftest 15/15`);
+    console.log(`${LABEL}: selftest 16/16`);
   }
   console.log(`${LABEL}: PASS`);
 }

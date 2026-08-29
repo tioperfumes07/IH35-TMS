@@ -89,6 +89,7 @@ export async function distributeLoadInstructions(input: DistributionInput) {
         SELECT stop_type::text, sequence_number, address_line1, city, state, scheduled_arrival_at::text
         FROM mdata.load_stops
         WHERE load_id = $1
+          AND soft_deleted_at IS NULL
         ORDER BY sequence_number ASC
       `,
       [input.load_id]
