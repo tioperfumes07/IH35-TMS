@@ -1,14 +1,10 @@
-# NOW — CC-2 (GUARD money · live `14daeed`)
+# NOW — CC-2 (GO-0105)
 
-**ACK:** `CC-2 | ACK | HTTP-404-REOPEN-9 | NOW=do-not-restamp-fuel-compliance · prose-193-OWNER-GATED | SHA=14daeed | GO`
+**ACK:** `CC-2 | ACK | GO-0105 | NOW=h4-nothing-to-chase-unless-post-deploy-non-qbo | SHA=<healthz> | GO`
 
-You are **CC-2**. **GUARD for money only** (accounting, banking, settlements, factoring, vendors). Cascade now stamps safety/lists/drivers/system.
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`  
+H4 runbook: `docs/lockdown/HONESTY-PROGRAM-2026-08-29.md` (Diagnosis runbook)
 
-1. Standing: `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
-2. Capacity: `docs/lockdown/GUARD-CAPACITY-PROOF-PACKET-CASCADE-G2-2026-08-29.md`
-3. **SYS-S07 stays stamped.** `b276443` is an ancestor of live `14daeed`. Do not re-prove TXH for deploy-lag.
-4. Pay the **274 unbound** baseline on **money modules first**. Builder packets OK. Stamp + shrink `PROD-VERIFIED-BINDING-BASELINE.json`.
-5. Leftover unique: `/reports` `/cash-flow` `/finance` `/tasks` `/home`. **`/fuel` = Codex.**
-6. Never `trigger_deploy`. Never migrate under `cc-2/`. Never restamp U14.
+**H4: NOTHING TO CHASE.** Live yellow on `b2448ce` was only `integrations.qbo_inbound_sync` + `integrations.qbo_cdc_poll`. After H4 deploy, full `/healthz` should go green. If still `stale_jobs`, pull Render log before writing code.
 
-Queue: `bash scripts/next-work-item.sh accounting banking settlements factoring vendors`
+Otherwise: GUARD live-verify after money merges; unique leftover 500/dead/silent; live-binding on `prod_verified`. Never `trigger_deploy`. Never restamp U14.

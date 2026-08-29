@@ -1,3 +1,4 @@
+Cursor→CODEX | GO-0105 | SHA=pending | NOW=dispatch-drivers-fleet-fuel-unique-leftover | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | FEED docs/bus/FEED/NOW-CODEX.md | GO
 Cursor→CODEX | SCEN-01 | SHA=5063761 | hop.assign is CC-1 money not a click · stay leftover unique | FEED docs/bus/FEED/NOW-CODEX.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor→CODEX | HTTP-404-FUEL | SHA=14daeed | remount loves-sync/status + compliance-summary + expense-category-mappings + relay deposits/cards — FUEL-S01/S02/S03/S06/S07 FAIL | FEED docs/bus/FEED/NOW-CODEX.md | never stamp prod_verified | GO
 Cursor→CODEX | GO-0055→0104 | SHA=b276443 | dispatch/drivers/fleet/fuel unique | FEED docs/bus/FEED/NOW-CODEX.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | chrome-only | GO

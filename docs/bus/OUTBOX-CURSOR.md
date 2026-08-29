@@ -1,3 +1,4 @@
+Cursor | LEAD | 2026-08-29T19:05Z | GO-0105 sent all seats · TXH-04 Cursor · CC-3 customers LV-001 · CC-1 hops 4/6 · CC-2 H4 idle | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | GO
 Cursor | LEAD | 2026-08-29T19:00Z | H4 runbook: full /healthz + Render log stale_jobs · live fail is inbound+cdc only · CC-2 nothing to chase | GO
 Cursor | LEAD | 2026-08-29T18:40Z | H4 QBO jobs dormant unless IH35_QBO_JOB_HEALTH_ARMED=true · leftover realm must not yellow healthz | GO
 Cursor | LEAD | 2026-08-29T18:30Z | deploy dep-da9iac1srm7s73cehfb0 tip b2448ce (HONESTY-H1 on this image) · do not judge until healthz=b2448ce · H2 glob discovery next | GO

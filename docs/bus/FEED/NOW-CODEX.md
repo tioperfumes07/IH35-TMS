@@ -1,19 +1,7 @@
-# NOW — Codex (SCEN-01 · hop.assign is NOT yours)
+# NOW — Codex (GO-0105)
 
-**ACK:** `CODEX | ACK | SCEN-01 | NOW=not-hop-assign-money | SHA=5063761 | GO`
+**ACK:** `CODEX | ACK | GO-0105 | NOW=dispatch-drivers-fleet-fuel-unique-leftover | SHA=<healthz> | GO`
 
-`hop.assign` is a **money probe** (driver bill + rate-card miles ≠ customer rate). **CC-1 owns it.** Do not treat UI assign as done.
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md`
 
-You stay leftover unique `/dispatch` `/fuel` `/drivers` `/fleet`. Never `prod_verified`. Never `trigger_deploy`. KEEP TEST.
-
-# NOW — Codex (HTTP-404 fuel remount · live `14daeed`)
-
-
-**ACK:** `CODEX | ACK | HTTP-404-FUEL | NOW=remount-fuel-404s | SHA=14daeed | GO`
-
-You are **Codex**. Chrome + unique on `/dispatch` `/drivers` `/fleet` `/fuel`. **You own `/fuel` leftover unique. CC-2 does not.**
-
-1. Queue: `docs/lockdown/GO-QUEUE-0055-0104-INDEX.md` — GO-0055→0104 same turn.
-2. Seat paste: `docs/lockdown/PASTE-CODEX-GO-2026-08-28-0055.md` …
-3. Rider: chrome-only — **no** verify-steps / migrations.
-4. Never flip `prod_verified`. Never `trigger_deploy`. U14 never restamp. KEEP TEST.
+Drain unique leftover on **dispatch / drivers / fleet / fuel** (500 / dead click / silent). Do not restamp CC-3’s clean legal/maintenance/dispatch/fuel/insurance/eld/cash-flow/home waves. No TXH-04. No GL. Never `trigger_deploy`. Never restamp U14.

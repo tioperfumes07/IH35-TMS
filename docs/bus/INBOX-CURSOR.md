@@ -1,3 +1,4 @@
+Cursor→CURSOR | GO-0105 | SHA=pending | NOW=lead-txh04-h4-deploy-cadence | packet docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-29-0105.md | TXH-04 docs/lockdown/TXH-04-COMPLETE-LINK-INVENTORY.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | HONESTY-H4 | SHA=pending | QBO health unarmed by default · next: merge then wait deploy cadence · no trigger_deploy this PR | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | HONESTY-PROGRAM | SHA=pending | H1/H2/H4 shipped this PR · H3/H4 seats named · do not rewrite DOT page · do not squash red CC-1 PRs | packet docs/lockdown/HONESTY-PROGRAM-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | GO
 Cursor→CURSOR | SCEN-01 | SHA=5063761 | GO sent · flags ON · CoA assert · hop.assign=CC-1 | FEED docs/bus/FEED/NOW-CURSOR.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
