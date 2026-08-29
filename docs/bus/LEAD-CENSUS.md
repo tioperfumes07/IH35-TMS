@@ -1,7 +1,15 @@
-# LEAD CENSUS — 2026-08-29 18:05 CT GO-BUILD-01
+# LEAD CENSUS — 2026-08-29 18:25 CT GO-VERIFY-NOT-RECERTIFY
 
-**Lead:** CURSOR · **NOW:** B-1 proofs (CC-2) · B-3 DRIFT-5 healthz env skip (this PR) · DRIFT-3 live preDeploy restore is dashboard (MCP has no web-service update) · B-2 SELECT bind already on origin/main.
+**Lead:** CURSOR · **NOW:** unique leftover FINDING only. **Never recertify U14.**
 
-Idle named: none this tick (CC-1 still GO-PENDING D-3; CC-3 GR-1/GR-2; Codex leftover unique). **VOID:** Devin-A. Skip #15546.
+| Seat | Idle? | Evidence |
+|------|-------|----------|
+| CC-1 | no ACK of this GO | OUTBOX still BANK-CTRL / next-work-item — not this GO id |
+| CC-2 | no ACK of this GO | last ACK GO-PENDING T-07 |
+| CC-3 | no ACK of this GO | OUTBOX SYS/lists L6 |
+| Codex | WORKING older GO-MODAL | OUTBOX FUEL/FLEET/DRV — keep unique leftover |
+| Cascade | FINDING 50208-12 | unique only |
+| Devin | customers | Devin-A VOID |
+| Cursor | lead | deploy in flight |
 
-ACK: `SEAT | ACK | GO-BUILD-01 | SHA=20f3601 | GO`
+ACK: `SEAT | ACK | GO-VERIFY-NOT-RECERTIFY | SHA=<healthz after dep-da9mjm> | GO`

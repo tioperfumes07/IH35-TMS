@@ -60,6 +60,9 @@ function assertMigrated(src) {
   if (!src.includes("Step 1 · State miles")) {
     errors.push(`${PAGE}: must keep Step 1 · State miles heading`);
   }
+  if (!src.includes("useToast") || !src.includes("onError:")) {
+    errors.push(`${PAGE}: runMutation must surface failures via toast onError (FINDING 50209)`);
+  }
   return errors;
 }
 
@@ -82,6 +85,8 @@ function selftest() {
       />
       <div>Total: {fmtNum(total)}</div>
     </section>
+    onError: (e) => pushToast(e)
+    useToast
   `;
   const bad = `
     export function IFTAStepMiles() {
@@ -112,6 +117,10 @@ function main() {
   }
   const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
   const errors = assertMigrated(src);
+  const csv = fs.readFileSync(path.join(ROOT, "apps/frontend/src/pages/reports/ifta/IFTAStepCSVExport.tsx"), "utf8");
+  if ((csv.match(/onError:/g) ?? []).length < 2) {
+    errors.push("IFTAStepCSVExport.tsx: csv + submit mutations must toast onError (FINDING 50212)");
+  }
   if (errors.length) {
     console.error(`${LABEL} FAIL:`);
     for (const e of errors) console.error(`  - ${e}`);

@@ -53,6 +53,9 @@ function assertMigrated(source) {
   if (!source.includes("text-green-700")) {
     errors.push(`${PAGE}: must keep credit (negative tax) green styling`);
   }
+  if (!source.includes("useToast") || !source.includes("onError:")) {
+    errors.push(`${PAGE}: runMutation must surface failures via toast onError (FINDING 50211)`);
+  }
   return errors;
 }
 
@@ -79,6 +82,8 @@ function selftest() {
         </section>
       );
     }
+    onError: () => {}
+    useToast
   `;
   const bad = `
     export function IFTAStepTax() {

@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
+import { useToast } from "../components/Toast";
+import { userFacingApiError } from "../lib/api-error-message";
 
 /** catalogs.driver_deduction_types.code */
 export type AutoDeductionDeductionType = string;
@@ -67,6 +69,7 @@ export function useAutoDeductionPolicies(operatingCompanyId: string, driverId?: 
 
 export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const queryKey = ["auto-deduction-policies", operatingCompanyId];
 
   const createMutation = useMutation({
@@ -76,6 +79,7 @@ export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
         body,
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: (error) => pushToast(userFacingApiError(error, "Could not create auto-deduction policy"), "error"),
   });
 
   const patchMutation = useMutation({
@@ -85,6 +89,7 @@ export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
         body,
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: (error) => pushToast(userFacingApiError(error, "Could not update auto-deduction policy"), "error"),
   });
 
   const cancelMutation = useMutation({
@@ -93,6 +98,7 @@ export function useAutoDeductionPolicyMutations(operatingCompanyId: string) {
         method: "DELETE",
       }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
+    onError: (error) => pushToast(userFacingApiError(error, "Could not cancel auto-deduction policy"), "error"),
   });
 
   return { createMutation, patchMutation, cancelMutation };

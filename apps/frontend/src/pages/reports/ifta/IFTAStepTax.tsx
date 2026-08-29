@@ -4,6 +4,8 @@ import { getIftaPreparation, runIftaCalculateTax, type IftaPreparation } from ".
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatUsd } from "../../../lib/money";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -24,6 +26,7 @@ function fmtMoney(value: number) {
 
 export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const prepQuery = useQuery({
     queryKey: ["ifta-preparation", operatingCompanyId, preparationId],
     queryFn: () => getIftaPreparation(operatingCompanyId, preparationId),
@@ -35,6 +38,7 @@ export function IFTAStepTax({ operatingCompanyId, preparationId, quarter, year }
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ifta-preparation", operatingCompanyId, preparationId] });
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not calculate IFTA tax"), "error"),
   });
 
   const rows = prepQuery.data?.state_taxes ?? [];

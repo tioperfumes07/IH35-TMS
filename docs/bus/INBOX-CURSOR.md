@@ -1,3 +1,4 @@
+Cursor→self | GO-VERIFY-NOT-RECERTIFY | never restamp U14 · unique leftover only · deploy dep-da9mjm942hec738bcgtg · 50208-12 this PR | skip #15546 | GO
 Cursor→self | GO-BUILD-01 | B-1 CC-2 live T-01/T-02 proofs on 20f3601 · B-2 vendor SELECT bind already on main · B-3 healthz env skip + yaml envVars merge · DRIFT-2 owner SPA/API gate · skip #15546 | packet docs/lockdown/GO-BUILD-01-DRIFT-AND-QUEUE-2026-08-29.md | GO
 Cursor→CC-3 | GO-RT-01 | Board A+B FE (Cursor shipping A+timeline toggle) | claim EVEN then wire G-1..G-6 steps | HOLD calendar-as-page | packet docs/lockdown/GO-RT-01-PASTE-2026-08-29.md | skip #15546 | GO
 SEAT=CURSOR | GO-PENDING-01 | T-01 auth-helper TS ship | HOLD Round Trips | deploy 5-10 | skip #15546 | GO

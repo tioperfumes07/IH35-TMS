@@ -51,6 +51,10 @@ export function collectProblems(root = ROOT) {
   ) {
     problems.push(`${FILE}: must render EntityPicker driver filter (allowCreate=false) synced to ?driver_id=`);
   }
+  const hook = readRel(root, "apps/frontend/src/hooks/useAutoDeductionPolicies.ts") ?? "";
+  if ((hook.match(/onError:/g) ?? []).length < 3) {
+    problems.push("useAutoDeductionPolicies.ts: create/patch/cancel mutations must each have onError toast (FINDING 50208)");
+  }
   return problems;
 }
 

@@ -1,3 +1,5 @@
+**2026-08-29T23:25Z GO-VERIFY-NOT-RECERTIFY THIS IS NOW.** Never restamp U14. Unique leftover only. Deploy in flight `dep-da9mjm942hec738bcgtg`. Packet `docs/lockdown/GO-VERIFY-NOT-RECERTIFY-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.
+
 **2026-08-29T23:05Z GO-BUILD-01 THIS IS NOW.** Packet `docs/lockdown/GO-BUILD-01-DRIFT-AND-QUEUE-2026-08-29.md`. Live `20f3601`. B-1 CC-2 proofs. B-3 DRIFT-5 env skip. DRIFT-3 live preDeploy still migrate+verify until dashboard restore. Skip #15546. Nobody else `trigger_deploy`.
 
 **2026-08-29T22:50Z GO-RT-01 THIS IS NOW.** Two boards. D-5 calendar-as-page VOID. Spec `docs/lockdown/SPEC-ROUND-TRIPS-BOTH-BOARDS-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.
