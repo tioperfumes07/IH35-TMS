@@ -138,10 +138,12 @@ export async function getTripPairingBoard(client: DbClient, operatingCompanyId: 
           )
         )
        LEFT JOIN LATERAL (
-         SELECT scheduled_arrival_at FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'pickup'
+         SELECT scheduled_arrival_at FROM mdata.load_stops
+         WHERE load_id = l.id AND stop_type = 'pickup' AND soft_deleted_at IS NULL
          ORDER BY sequence_number ASC LIMIT 1) pu ON true
        LEFT JOIN LATERAL (
-         SELECT city, state, scheduled_arrival_at FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery'
+         SELECT city, state, scheduled_arrival_at FROM mdata.load_stops
+         WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL
          ORDER BY sequence_number DESC LIMIT 1) de ON true
       WHERE l.operating_company_id = $1::uuid
         AND l.assigned_unit_id IS NOT NULL AND l.trip_type IS NOT NULL AND l.soft_deleted_at IS NULL

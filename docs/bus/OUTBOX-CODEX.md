@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7226 | GO-0030 | CLAIM=trip-pairing-active-stops | SOURCE=active mdata.load_stops→dispatch trip pairing | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7225 | PR=#17446 @ 1db411f13a | Built=factoring queue active delivery-stop truth | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7225 | GO-0032 | CLAIM=factoring-queue-active-delivery | SOURCE=active mdata.load_stops→dispatch factoring queue | CLOSES=none — post-deploy retired-stop proof remains | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7224 | PR=#17445 @ 882c0d8a32 | Built=BOL transaction-bound audit evidence | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7224 | GO-0032 | CLAIM=BOL-generation-audit | SOURCE=dispatch.bol_documents→audit.audit_events | CLOSES=none — post-deploy audit-row proof remains | NEXT=gate+FAST-MERGE | GO
