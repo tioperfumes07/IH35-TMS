@@ -137,6 +137,8 @@ export type DispatchLoadRow = {
   miles_shortest?: number | null;
   miles_deadhead?: number | null;
   loaded_miles?: number | null;
+  /** mdata.loads.trip_type — never infer from geography. */
+  trip_type?: "NB" | "TR" | "SB" | null;
 };
 
 export type LoadsListResponse = {
