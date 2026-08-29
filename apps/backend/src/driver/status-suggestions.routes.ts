@@ -90,18 +90,26 @@ export async function registerDriverStatusSuggestionsRoutes(app: FastifyInstance
       if (!operatingCompanyId) return false;
       await setScopedCompanyContext(client, user.uuid, operatingCompanyId);
 
-      const suggestion = await client.query(
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [params.data.id]);
+      const suggestion = await client.query<{ id: string; already_responded: boolean }>(
         `
-          SELECT id::text
-          FROM dispatch.auto_status_suggestions
-          WHERE id = $1::uuid
-            AND operating_company_id = $2::uuid
-            AND driver_id = $3::uuid
+          SELECT s.id::text,
+                 EXISTS (
+                   SELECT 1
+                   FROM dispatch.auto_status_suggestion_responses r
+                   WHERE r.suggestion_id = s.id
+                     AND r.operating_company_id = s.operating_company_id
+                 ) AS already_responded
+          FROM dispatch.auto_status_suggestions s
+          WHERE s.id = $1::uuid
+            AND s.operating_company_id = $2::uuid
+            AND s.driver_id = $3::uuid
           LIMIT 1
         `,
         [params.data.id, operatingCompanyId, driver.id]
       );
       if (!suggestion.rows[0]) return false;
+      if (suggestion.rows[0].already_responded) return true;
 
       await client.query(
         `

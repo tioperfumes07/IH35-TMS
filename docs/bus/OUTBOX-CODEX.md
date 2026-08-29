@@ -1997,3 +1997,6 @@ Codex | SHIPPED | DSP-F7147 | PR=#17244 @ 9a67f6ef37 | Built=atomic load-reserva
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7149 | CLAIM=PWA-engagement-undefined-driver_id+created_at-500 | SOURCE=dispatch.auto_status_suggestions→auto_status_suggestion_responses | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7148 | PR=#17247 @ b739f1c02d | Built=atomic company-scoped arrival confirm | NEXT=PWA engagement schema truth | GO
+CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7150 | CLAIM=status-suggestion-contradictory-response-replay | SOURCE=auto_status_suggestions→auto_status_suggestion_responses | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7149 | PR=#17248 @ 78c16bb21a | Built=PWA engagement real-schema reader | NEXT=status suggestion response lifecycle | GO
