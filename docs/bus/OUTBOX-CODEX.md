@@ -2105,3 +2105,5 @@ Codex | SHIPPED | FLEET-F7194 | PR=#17404 @ 8cfc3f86ef | Built=unit+trailer cano
 CODEX | WORKING | GO-0045 | FINDING=DSP-F7197 | NOW=quicksave assignment-history identity | NEXT=dispatch unique | GO
 Codex | WORKING | GO-0047 | FINDING=DSP-F7199 | MODULE=dispatch | leaf=dispatch.modal.driver_instructions:reverse_link | root=unchecked docs.file_links identities | NEXT=guard+gate+FAST-MERGE | GO
 Codex | SHIPPED | FLEET-F7198 | PR=#17409 @ fd3a9e5146 | root=unit default-driver canonical assignment edge | NEXT=GO-0047 dispatch unique | GO
+Codex | WORKING | GO-0048 | FINDING=DRV-F7200 | MODULE=drivers | leaf=profile.training:audit | root=edit/archive omit audit | NEXT=guard+gate+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7199 | PR=#17410 @ 313c835028 | root=instruction docs reverse-link identities | NEXT=GO-0048 drivers unique | GO
