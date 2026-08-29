@@ -73,12 +73,12 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-29 |
 | Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-29 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-29 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **50 / 150** | 2026-08-29 |
-| Rows in this file | **2247** | 2026-08-29 |
-| Rows `FAIL` + `OPEN` | **116** | 2026-08-29 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **49 / 150** | 2026-08-29 |
+| Rows in this file | **2248** | 2026-08-29 |
+| Rows `FAIL` + `OPEN` | **117** | 2026-08-29 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-29 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-29 |
-| Verdict tally (all rows) | FAIL=340 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-29 |
+| Verdict tally (all rows) | FAIL=341 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-29 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2337,3 +2337,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50205 | system · WAVE3-TRIAGE — verify-bill-header-only-refused GUARD IS WRONG | B | USMCA | FAIL — PASSES STANDALONE (guard triage) | Passes standalone (OK). GUARD IS WRONG for static. | OPEN | scripts/verify-bill-header-only-refused.mjs | NO | 2026-08-29 | CASCADE |
 | 50206 | system · WAVE3-TRIAGE — verify-reports-dot-audit-pack-connectivity GUARD IS WRONG | B | USMCA | FAIL — PASSES STANDALONE (guard triage) | Passes standalone (OK). GUARD IS WRONG for static. | OPEN | scripts/verify-reports-dot-audit-pack-connectivity.mjs | NO | 2026-08-29 | CASCADE |
 | 50207 | system · WAVE3-TRIAGE — verify-1099-recipient-shared-driver-identity GUARD IS WRONG | B | USMCA | FAIL — PASSES STANDALONE (guard triage) | Passes standalone (OK). GUARD IS WRONG for static. | OPEN | scripts/verify-1099-recipient-shared-driver-identity.mjs | NO | 2026-08-29 | CASCADE |
+| 50208 | drivers · SILENT-NO-OP — AutoDeductionPolicies patchMutation and cancelMutation have no onError, no isError render, no .catch() on void mutateAsync() | B | USMCA | FAIL — SILENT NO-OP (product) | **Context:** `useAutoDeductionPolicies.ts:81-96` — `patchMutation` and `cancelMutation` useMutation hooks have `onSuccess` but **no `onError` handler**. In `AutoDeductionPolicies.tsx:224,227,233` they are called as `void patchMutation.mutateAsync()` and `void cancelMutation.mutateAsync()` with **no `.catch()`**. No `isError` or `.error` is rendered anywhere in the file (grep confirmed). If the PATCH or DELETE API call fails, the promise rejects silently — unhandled promise rejection. User clicks Pause/Cancel/Resume on a deduction policy, API fails, nothing happens — no toast, no error message, no feedback. The `createMutation` IS properly handled with try/catch at lines 286-299, making the patch/cancel omission an inconsistency within the same component. Same silent-no-op class as rows 50103 and 50105. **FIX:** add `onError: (e) => setError(userFacingApiError(e, "Failed to update deduction policy"))` to both mutations, or chain `.catch()` on `mutateAsync()`, and render the error in the policy card. | OPEN — add onError to patchMutation and cancelMutation | `apps/frontend/src/hooks/useAutoDeductionPolicies.ts:81-96`; `apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx:224,227,233` | NO | 2026-08-29 | CASCADE |
