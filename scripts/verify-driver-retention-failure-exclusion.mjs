@@ -11,6 +11,9 @@ function audit(src) {
   if (!src.includes("onRetry={() => void scoresQ.refetch()}")) failures.push("retention failure state needs exact Retry");
   if (!src.includes("rows.map((row) =>")) failures.push("successful rows must still render canonical cards");
   if (!src.includes("entityLabel(row.driver_name, row.driver_uuid, \"Driver\")")) failures.push("cards must retain human driver labels");
+  if (!src.includes("scoresQ.isSuccess && rows.length === 0")) failures.push("successful zero-row reads need an exact empty-state branch");
+  if (!src.includes('data-testid="driver-retention-empty-state"')) failures.push("retention empty state needs a stable semantic hook");
+  if (!src.includes("No at-risk drivers")) failures.push("retention empty state needs honest user-facing copy");
   return failures;
 }
 
@@ -19,6 +22,8 @@ if (process.argv.includes("--selftest")) {
     ["restore cached rows on failure", "const rows = scoresQ.isError ? [] : scoresQ.data?.rows ?? []", "const rows = scoresQ.data?.rows ?? []"],
     ["remove Retry", "onRetry={() => void scoresQ.refetch()}", "onRetry={undefined}"],
     ["remove human label", 'entityLabel(row.driver_name, row.driver_uuid, "Driver")', "row.driver_uuid"],
+    ["remove successful empty state", "scoresQ.isSuccess && rows.length === 0", "false"],
+    ["remove empty-state copy", "No at-risk drivers", ""],
   ];
   const missed = mutations.filter(([, from, to]) => audit(source.replace(from, to)).length === 0);
   if (missed.length) {
@@ -34,4 +39,4 @@ if (failures.length) {
   console.error(`verify-driver-retention-failure-exclusion FAILED:\n- ${failures.join("\n- ")}`);
   process.exit(1);
 }
-console.log("verify-driver-retention-failure-exclusion PASS — failed retention reads suppress cached risk cards and expose Retry");
+console.log("verify-driver-retention-failure-exclusion PASS — failed reads expose Retry and successful zero-row reads expose an honest empty state");
