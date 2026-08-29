@@ -59,6 +59,7 @@ const STEPS = [
   // Rule 30 — tip commit LIVE PROOF must be Claude-green (not "UNVERIFIED browser" theater).
   ["verify-claude-green-evidence-shape", "scripts/verify-claude-green-evidence-shape.mjs"],
   ["verify-economic-columns-c25-c31-present", "scripts/verify-economic-columns-c25-c31-present.mjs"],
+  ["verify-declared-is-rendered", "scripts/verify-declared-is-rendered.mjs"],
   ["verify-module-progress-not-authored", "scripts/verify-module-progress-not-authored.mjs"],
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).
@@ -89,6 +90,9 @@ const STEPS = [
   ["verify-fine-create-suggest-load", "scripts/verify-fine-create-suggest-load.mjs"],
   ["verify-internal-fine-create-suggest-load", "scripts/verify-internal-fine-create-suggest-load.mjs"],
   ["verify-safety-event-create-suggest-load", "scripts/verify-safety-event-create-suggest-load.mjs"],
+  // 2026-08-29 — literal `draft.col` matcher redded origin/main after page moved to input.draft.col;
+  // four CC-1 PRs burned a full build-typecheck each. Run here so local gate catches source-shape drift.
+  ["verify-safety-log-event-dot-fields", "scripts/verify-safety-log-event-dot-fields.mjs"],
   ["verify-cargo-claim-create-suggest-load", "scripts/verify-cargo-claim-create-suggest-load.mjs"],
   ["verify-incidents-cluster-create-suggest-load", "scripts/verify-incidents-cluster-create-suggest-load.mjs"],
   ["verify-abandonment-driver-picker", "scripts/verify-abandonment-driver-picker.mjs"],
