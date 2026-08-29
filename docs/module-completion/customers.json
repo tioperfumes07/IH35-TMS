@@ -2,7 +2,7 @@
   "module": "customers",
   "title": "Customers",
   "complete": true,
-  "as_of": "2026-08-29T19:35:00Z",
+  "as_of": "2026-08-29T19:45:00Z",
   "live_sha": "b2448ce",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/customers-deep-2026-08-01.md",
   "spec_sources": [
@@ -153,7 +153,7 @@
       ],
       "spec": "Customer detail Relationship Health \u00b7 catalogs/customer quality scores",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, re-verified after 2026-08-29 REOPEN) -- confirmed the #4303 fix still holds live: /customers roster renders real relationship-health statuses (P43-CUSTOMER-FK-20260811 'Good', P44-LISTS-RW-20260811 'Watch') with zero 500s across the full 31-customer roster. Neon proof: master_data.customer_relationship_scores has 29 real rows for USMCA, freshly computed today (computed_at 2026-08-29T18:33:19Z, e.g. customer 857f4bf3 score=100.00 tier=thriving) -- scores are live and being written, not stale/broken. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, GO-0105 exhaustive re-investigation) -- no 500 reproduces anywhere. Hit GET /api/v1/customers/:uuid/relationship-score?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 directly (authenticated fetch, not lucia bypass) for ALL 31 real USMCA customers: 15 return 200 (active customers, real scores e.g. customer 857f4bf3 score=100.00 tier=thriving), 16 return 404 {\"error\":\"customer_not_found\"} -- ZERO 500s. Root-caused the 404 split (it exactly matches Active(15)/Inactive(16)): mdata.customers RLS policy customers_select requires 'deactivated_at IS NULL' for a non-bypass session (pg_policies, verified live) -- an inactive customer is invisible to this route's own SELECT under RLS, so it correctly reports customer_not_found rather than crashing. Confirmed the frontend handles this gracefully: clicked into inactive customer 'Cascade-void-test-20260826' in the live UI -- renders cleanly as 'No history', no error toast, no crash. Also hit GET /api/v1/customers/relationship-scores/at-risk -- 200, honest count=0. This is the #4303 fix holding, not a live defect -- filing per GO-0105's 'fix or file with exact URL + status + SHA': exact URL above, statuses 200/404 (never 500) across all 31 customers, healthz/shallow=b2448ce.",
       "pr": "#4303",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
