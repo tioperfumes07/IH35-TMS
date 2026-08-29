@@ -21,9 +21,11 @@
       ],
       "spec": "inventory-deep-2026-08-01 roster",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory rendered 2 scoped Parts & Stock rows; authenticated GET /api/v1/maintenance/parts with the same operating_company_id returned exactly 2 rows with matching IDs, names, quantities, and costs. Guard verify-inv-s01-parts-roster-density step 2256 remains green.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory rendered 2 scoped Parts & Stock rows; authenticated GET /api/v1/maintenance/parts with the same operating_company_id returned exactly 2 rows with matching IDs, names, quantities, and costs. Guard verify-inv-s01-parts-roster-density step 2256 remains green. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): STATE CHANGE since 08-16 (real growth, not a regression) -- 5 rows now (grown from 2), tabs Parts & Stock/Assignments/Purchase History, Category column honestly N/A. Independently re-verified live myself via Chrome (USMCA context). Binding on this fresh live re-verification.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INV-CAT-01",
@@ -48,9 +50,11 @@
       ],
       "spec": "sidebar flyout Assignments",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/assignments rendered its exact Assignment trail with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-invoice-links for the same operating company returned exactly 0 rows. Guard step 2264 remains green.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/assignments rendered its exact Assignment trail with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-invoice-links for the same operating company returned exactly 0 rows. Guard step 2264 remains green. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): STATE CHANGE since 08-16 (real growth, not a regression) -- 4 real assignment rows now (grown from 0 honest-empty) -- 8/25/2026 WO-USMCA-001-IS-08-25-2026-0005-V-001, $60.00, real vendor/invoice. Independently re-verified live myself via Chrome (USMCA context). Binding on this fresh live re-verification.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INV-S03",
@@ -61,9 +65,11 @@
       ],
       "spec": "sidebar flyout Purchase History",
       "status": "PASS",
-      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/purchases rendered append-only Purchase History with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-inventory/purchases for the same operating company returned exactly 0 rows. The old HOLD is superseded by the shipped append-only purchase ledger. Guard step 2264 remains green.",
+      "evidence": "2026-08-16 USMCA LIVE PASS: /inventory/purchases rendered append-only Purchase History with honest 0-row copy; authenticated GET /api/v1/maintenance/parts-inventory/purchases for the same operating company returned exactly 0 rows. The old HOLD is superseded by the shipped append-only purchase ledger. Guard step 2264 remains green. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): STATE CHANGE since 08-16 (real growth, not a regression) -- 2 real purchase history rows now (grown from 0 honest-empty) -- 8/24/2026 TEST-CC3-PARTS-INV-001, $125.00, Void status shown honestly. Independently re-verified live myself via Chrome (USMCA context). Binding on this fresh live re-verification.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "INV-PICK-01",
