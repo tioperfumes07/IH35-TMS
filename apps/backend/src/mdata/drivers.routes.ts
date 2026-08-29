@@ -3,6 +3,32 @@ import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { randomBytes } from "crypto";
 import { z } from "zod";
+
+type DriverConflictBody = {
+  error: string;
+  message: string;
+  fieldErrors?: Record<string, string>;
+};
+
+// DRIVER-F7250-CONFLICT-MISLABELS-PHONE-AS-CDL — PostgreSQL 23505 is not synonymous with CDL.
+// Driver create also provisions/reuses identity.users, whose phone/email indexes can raise the same
+// code. Report the actual constrained field and keep unknown future constraints honest/generic.
+export function mapDriverUniqueConflict(error: unknown): DriverConflictBody {
+  const constraint = String((error as { constraint?: unknown } | null)?.constraint ?? "").toLowerCase();
+  if (constraint.includes("phone")) {
+    return { error: "identity_user_phone_conflict", message: "Phone number is already in use", fieldErrors: { phone: "Already in use" } };
+  }
+  if (constraint.includes("email")) {
+    return { error: "identity_user_email_conflict", message: "Email address is already in use", fieldErrors: { email: "Already in use" } };
+  }
+  if (constraint.includes("curp")) {
+    return { error: "mdata_driver_curp_conflict", message: "CURP is already in use", fieldErrors: { curp: "Already in use" } };
+  }
+  if (constraint.includes("ine")) {
+    return { error: "mdata_driver_ine_conflict", message: "INE number is already in use", fieldErrors: { ine_number: "Already in use" } };
+  }
+  return { error: "mdata_driver_conflict", message: "Driver conflicts with an existing record" };
+}
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -1177,15 +1203,7 @@ export async function createDriverCanonical(
       };
     }
     const code = (err as { code?: string }).code;
-    if (code === "23505")
-      return {
-        status: 409,
-        body: {
-          error: "mdata_driver_conflict",
-          message: "Driver with this CDL already exists",
-          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
-        },
-      };
+    if (code === "23505") return { status: 409, body: mapDriverUniqueConflict(err) };
     if (code === "23503") return { status: 400, body: { error: "invalid_identity_user_id" } };
     throw err;
   }
@@ -2224,12 +2242,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
       return updated;
     } catch (err) {
       const code = (err as { code?: string }).code;
-      if (code === "23505")
-        return reply.code(409).send({
-          error: "mdata_driver_conflict",
-          message: "Driver with this CDL already exists",
-          fieldErrors: { cdl_number: "Already in use", cdl_state: "Already in use" },
-        });
+      if (code === "23505") return reply.code(409).send(mapDriverUniqueConflict(err));
       if (code === "23503") return reply.code(400).send({ error: "invalid_identity_user_id" });
       if (code === "E_DRIVER_IDENTITY_MIRROR_WRITE_CONFLICT") {
         return reply.code(409).send({ error: code });

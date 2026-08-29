@@ -2200,3 +2200,6 @@ Codex | WORKING | DSP-F7248 | GO-0032 | LIVE=app-origin BOL GET 404 · load=L-20
 CODEX | WORKING | FLEET-F7249 | GO-0033 | TEST unit=df53ccb6-a8ac-45d2-a5af-49fd50f068c3 POST=201 reload=200 audit=0 | NOW=unit lifecycle audit company scope | GO
 CODEX | ACK | GO-0033 | NOW=fleet unique + TEST unit/trailer | SHA=da39aab | GO
 Codex | SHIPPED | DSP-F7248 | PR=#17470 @ 47607ae10f | Built=canonical BOL API-origin download | Live=post-deploy UNVERIFIED | NEXT=GO-0033 fleet unique | GO
+CODEX | WORKING | DRIVER-F7250 | GO-0034 | 409 phone falsely labeled CDL; same CDL + new phone POST=201 driver=dab084fb-910b-4000-9407-cfcacd6288cd | NOW=constraint-aware conflict mapping | GO
+CODEX | ACK | GO-0034 | NOW=drivers canonical Create TEST | SHA=da39aab | GO
+Codex | SHIPPED | FLEET-F7249 | PR=#17471 @ bcf66e0d71 | Built=unit lifecycle audit company scope 4/4 | Live=post-deploy UNVERIFIED | NEXT=GO-0034 drivers unique | GO
