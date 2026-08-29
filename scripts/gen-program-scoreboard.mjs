@@ -42,6 +42,11 @@ for (const k of required) {
   if (!(k in data)) fail(`contract JSON missing required key: ${k}`);
 }
 if (!Array.isArray(data.modules) || data.modules.length === 0) fail("modules[] is empty");
+if ("rows" in data) {
+  fail(
+    "T-05: program-scoreboard.json must not have a `rows` key — the module table is `modules`. Class scoreboard owns `rows` (classScoreboard.data.ts).",
+  );
+}
 const OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
 const BOARD_ENTS = ["TRANSP", "USMCA"];
 for (const m of data.modules) {

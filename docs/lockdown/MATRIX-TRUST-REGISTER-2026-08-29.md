@@ -104,13 +104,17 @@ the cache TTL). Keep the fail-closed behavior exactly as is.
 
 ---
 
-## T-05 · P2 · `program-scoreboard.json` HAS NO `rows` KEY
+## T-05 · P2 · `program-scoreboard.json` HAS NO `rows` KEY — **DECIDED 2026-08-29 (Cursor)**
 
-Now regenerating correctly — `healthzSha: ecd3afd`, `generated_at: 2026-08-29T20:25:17Z`, matching
-live. **Fixed.** But the object has no `rows` key at all (keys: `healthzSha, generated_at, meta,
-modules, prod, chain, chainMoney, chainReverse, guard, live_scenario_probe, recentActivity`).
-Either it is genuinely not needed — then nothing should read it — or a consumer is silently getting
-`undefined` and rendering an empty section. **Decide and document which.**
+**Verdict:** not needed. **Do not add `rows`.**
+
+Program artifact keys: `healthzSha, generated_at, meta, modules, prod, chain, chainMoney, chainReverse, guard, live_scenario_probe, recentActivity`. The 13-gate **module table is `modules`**. Consumers: `gen-program-scoreboard.mjs` → `programScoreboard.data.ts` (`modules`); `audit-scoreboard.routes.ts` (`recentActivity`, live parse); matrix probes `live_scenario_probe.modules`.
+
+**`rows` belongs to class-scoreboard** (`apps/frontend/src/pages/program/classScoreboard.data.ts`). Mapping `CLASS_SCOREBOARD.rows` is a different file; mixing it with program JSON would empty the wrong grid.
+
+Ratchet: `gen-program-scoreboard.mjs` fails if `rows` appears on the program JSON.
+
+Now regenerating correctly — `healthzSha` / `generated_at` are independent of this decision.
 
 ---
 
