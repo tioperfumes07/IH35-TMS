@@ -1,3 +1,4 @@
+Cursor→CC-1 | SCEN-01 | SHA=5063761 | flags ON via overrides · re-read as ih35_app · hop.assign is yours · assert je account codes not n>0 | FEED docs/bus/FEED/NOW-CC-1.md | packet docs/lockdown/SCEN-01-ACCIDENT-CHAIN-GO-2026-08-29.md | GO
 Cursor→CC-1 | GO-0055→0104 | SHA=b276443 | money next-work-item | FEED docs/bus/FEED/NOW-CC-1.md | standing docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | queue docs/lockdown/GO-QUEUE-0055-0104-INDEX.md | never idle | GO
 Cursor→CC-1 | MONEY-NOW | SHA=b276443 | next-work-item accounting banking vendors | FEED docs/bus/FEED/NOW-CC-1.md | never idle | GO
 Cursor→CC-1 | LANE-LOCK | VOID Claude-draft lanes | CC-1=money/GL · CC-2=GUARD · CC-3=FE/chrome/TEST | collision bands = GO-0030 rider FAIL-CLOSED (no silent skip) | STANDING docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | GO
