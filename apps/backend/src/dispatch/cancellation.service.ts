@@ -48,7 +48,7 @@ export async function writeLoadCancellationRecord(
     approved_by_user_id: string | null;
   }
 ) {
-  return client.query<{ id: string; status: string }>(
+  const result = await client.query<{ id: string; status: string }>(
     `
       INSERT INTO dispatch.load_cancellations (
         operating_company_id, load_id, reason_code, reason_code_id, cancellation_notes,
@@ -82,6 +82,9 @@ export async function writeLoadCancellationRecord(
       input.approved_by_user_id,
     ]
   );
+  const cancellation = result.rows[0];
+  if (!cancellation?.id) throw new Error("E_CANCELLATION_RECORD_WRITE_FAILED");
+  return cancellation;
 }
 
 export async function cancelLoad(
@@ -150,7 +153,7 @@ export async function cancelLoad(
       }
 
       const pendingOwnerApproval = reason.requires_owner_approval && !isOwner(role);
-      const row = await writeLoadCancellationRecord(client, {
+      const cancellation = await writeLoadCancellationRecord(client, {
         operating_company_id: input.operating_company_id,
         load_id: input.load_id,
         reason_code: input.reason_code,
@@ -194,21 +197,24 @@ export async function cancelLoad(
                      charged_by_user_id = $4
                WHERE id = $1
             `,
-            [row.rows[0]?.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId]
+            [cancellation.id, tonuInvoice.invoiceId, tonuInvoice.invoiceLineId, userId]
           );
         }
       }
 
       if (!pendingOwnerApproval) {
-        await client.query(
+        const cancelledLoad = await client.query<{ id: string }>(
           `
             UPDATE mdata.loads
             SET status = 'cancelled'::mdata.load_status_enum,
                 updated_at = now()
             WHERE id = $1
+              AND operating_company_id = $2::uuid
+            RETURNING id
           `,
-          [input.load_id]
+          [input.load_id, input.operating_company_id]
         );
+        if (!cancelledLoad.rows[0]?.id) throw new Error("E_CANCELLATION_LOAD_WRITE_FAILED");
       }
 
       // WIRE-10 — cancelling a load must not leave its money artifacts alive.
@@ -346,7 +352,7 @@ export async function cancelLoad(
       await client.query("COMMIT");
       return {
         load_id: input.load_id,
-        cancellation_id: row.rows[0]?.id,
+        cancellation_id: cancellation.id,
         status: pendingOwnerApproval ? "pending_owner_approval" : "cancelled",
       };
     } catch (error) {
