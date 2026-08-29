@@ -428,7 +428,7 @@ async function maintenanceReady(client: any) {
 }
 
 export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/work-orders/by-bucket", async (req, reply) => {
+  app.get("/api/v1/maintenance/work-orders/by-bucket", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listByBucketQuerySchema.safeParse(req.query ?? {});
@@ -441,7 +441,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/maintenance/work-orders", async (req, reply) => {
+  app.get("/api/v1/maintenance/work-orders", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -551,7 +551,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { work_orders: payload.rows, total_count: payload.total };
   });
 
-  app.get("/api/v1/maintenance/work-orders/:id", async (req, reply) => {
+  app.get("/api/v1/maintenance/work-orders/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -615,7 +615,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/maintenance/work-orders/:id/pdf", async (req, reply) => {
+  app.get("/api/v1/maintenance/work-orders/:id/pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -630,7 +630,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     );
   });
 
-  app.get("/api/v1/maintenance/part-locations", async (req, reply) => {
+  app.get("/api/v1/maintenance/part-locations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const companyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -657,7 +657,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/maintenance/work-orders", async (req, reply) => {
+  app.post("/api/v1/maintenance/work-orders", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const v5Parsed = createWorkOrderV5Schema.safeParse(req.body ?? {});
@@ -1148,7 +1148,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return reply.code(201).send(created.row);
   });
 
-  app.patch("/api/v1/maintenance/work-orders/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/work-orders/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -1298,7 +1298,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return result.row;
   });
 
-  app.patch("/api/v1/maintenance/work-orders/:id/complete", async (req, reply) => {
+  app.patch("/api/v1/maintenance/work-orders/:id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -1414,7 +1414,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { ok: true, work_order: result.row };
   });
 
-  app.patch("/api/v1/maintenance/work-orders/:id/transition", async (req, reply) => {
+  app.patch("/api/v1/maintenance/work-orders/:id/transition", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -1509,7 +1509,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/maintenance/work-orders/:id/status", async (req, reply) => {
+  app.post("/api/v1/maintenance/work-orders/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -1604,7 +1604,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/maintenance/work-orders/:id/line-items", async (req, reply) => {
+  app.post("/api/v1/maintenance/work-orders/:id/line-items", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -1676,7 +1676,7 @@ export async function registerMaintenanceWorkOrderRoutes(app: FastifyInstance) {
     return reply.code(201).send(row);
   });
 
-  app.delete("/api/v1/maintenance/work-orders/:id/line-items/:lid", async (req, reply) => {
+  app.delete("/api/v1/maintenance/work-orders/:id/line-items/:lid", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = lineItemParamsSchema.safeParse(req.params ?? {});

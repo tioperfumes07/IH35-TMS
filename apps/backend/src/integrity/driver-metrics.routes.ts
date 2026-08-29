@@ -65,7 +65,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: Qu
 }
 
 export async function registerDriverMetricsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrity/driver-metrics", async (req, reply) => {
+  app.get("/api/v1/integrity/driver-metrics", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 
@@ -95,7 +95,7 @@ export async function registerDriverMetricsRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/integrity/driver-metrics/leaderboard", async (req, reply) => {
+  app.get("/api/v1/integrity/driver-metrics/leaderboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

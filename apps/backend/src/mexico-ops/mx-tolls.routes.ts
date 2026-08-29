@@ -36,7 +36,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 
 export async function mxTollsRoutes(app: FastifyInstance) {
   // GET /api/v1/mx-tolls
-  app.get("/api/v1/mx-tolls", async (req, reply) => {
+  app.get("/api/v1/mx-tolls", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({
@@ -84,7 +84,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/mx-tolls/report — spend by unit
-  app.get("/api/v1/mx-tolls/report", async (req, reply) => {
+  app.get("/api/v1/mx-tolls/report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({
@@ -113,7 +113,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/mx-tolls
-  app.post("/api/v1/mx-tolls", async (req, reply) => {
+  app.post("/api/v1/mx-tolls", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = createTollBody.parse(req.body);
@@ -147,7 +147,7 @@ export async function mxTollsRoutes(app: FastifyInstance) {
   });
 
   // DELETE /api/v1/mx-tolls/:id
-  app.delete("/api/v1/mx-tolls/:id", async (req, reply) => {
+  app.delete("/api/v1/mx-tolls/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const { id } = idParams.parse(req.params);

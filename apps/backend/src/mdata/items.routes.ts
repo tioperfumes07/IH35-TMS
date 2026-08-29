@@ -38,7 +38,7 @@ function isWriteRole(role: string): boolean {
 }
 
 export async function registerMdataItemsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/items", async (req, reply) => {
+  app.get("/api/v1/mdata/items", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -81,7 +81,7 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
     return { items: rows };
   });
 
-  app.get("/api/v1/mdata/items/:id", async (req, reply) => {
+  app.get("/api/v1/mdata/items/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -110,7 +110,7 @@ export async function registerMdataItemsRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.patch("/api/v1/mdata/items/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/items/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

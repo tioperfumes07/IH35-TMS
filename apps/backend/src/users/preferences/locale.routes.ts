@@ -23,7 +23,7 @@ function pickLocalePreference(preferences: Record<string, unknown>) {
 }
 
 export async function registerUserLocalePreferenceRoutes(app: FastifyInstance) {
-  app.get("/api/v1/users/preferences/locale", async (req, reply) => {
+  app.get("/api/v1/users/preferences/locale", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});
@@ -36,7 +36,7 @@ export async function registerUserLocalePreferenceRoutes(app: FastifyInstance) {
     };
   });
 
-  app.patch("/api/v1/users/preferences/locale", async (req, reply) => {
+  app.patch("/api/v1/users/preferences/locale", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsedQuery = tenantQuerySchema.safeParse(req.query ?? {});

@@ -30,7 +30,7 @@ function readTableWidths(preferences: Record<string, unknown>, tableId: string) 
 }
 
 export async function registerTableColumnPreferencesRoutes(app: FastifyInstance) {
-  app.get("/api/v1/users/me/table-preferences", async (req, reply) => {
+  app.get("/api/v1/users/me/table-preferences", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsedQuery = tableIdQuerySchema.safeParse(req.query ?? {});
@@ -45,7 +45,7 @@ export async function registerTableColumnPreferencesRoutes(app: FastifyInstance)
     };
   });
 
-  app.patch("/api/v1/users/me/table-preferences", async (req, reply) => {
+  app.patch("/api/v1/users/me/table-preferences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = patchBodySchema.safeParse(req.body ?? {});

@@ -42,7 +42,7 @@ async function withCompany<T>(userUuid: string, companyId: string, fn: (client: 
 }
 
 export async function registerDriverHubRequestRoutes(app: FastifyInstance) {
-  app.get("/api/v1/cash-advances/hub/requests/pending", async (req, reply) => {
+  app.get("/api/v1/cash-advances/hub/requests/pending", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewDriverHubRequest(String(user.role ?? ""))) {
@@ -57,7 +57,7 @@ export async function registerDriverHubRequestRoutes(app: FastifyInstance) {
     return { requests: rows };
   });
 
-  app.post("/api/v1/cash-advances/hub/requests/:id/approve", async (req, reply) => {
+  app.post("/api/v1/cash-advances/hub/requests/:id/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewDriverHubRequest(String(user.role ?? ""))) {
@@ -86,7 +86,7 @@ export async function registerDriverHubRequestRoutes(app: FastifyInstance) {
     return { request: result.request, deduction: result.deduction };
   });
 
-  app.post("/api/v1/cash-advances/hub/requests/:id/deny", async (req, reply) => {
+  app.post("/api/v1/cash-advances/hub/requests/:id/deny", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     if (!canReviewDriverHubRequest(String(user.role ?? ""))) {

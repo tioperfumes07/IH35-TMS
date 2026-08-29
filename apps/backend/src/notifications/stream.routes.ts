@@ -29,7 +29,7 @@ async function notificationsTableReady(client: Queryable): Promise<boolean> {
 }
 
 export async function registerNotificationStreamRoutes(app: FastifyInstance) {
-  app.get("/api/v1/notifications/stream", async (req, reply) => {
+  app.get("/api/v1/notifications/stream", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

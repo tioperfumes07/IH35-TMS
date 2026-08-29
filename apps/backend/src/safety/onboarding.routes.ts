@@ -177,7 +177,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/api/v1/safety/onboarding/sessions/:session_id", async (req, reply) => {
+  app.get("/api/v1/safety/onboarding/sessions/:session_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = sessionParamsSchema.safeParse(req.params ?? {});
@@ -213,7 +213,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     return reply.send({ session, steps: ONBOARDING_STEP_KEYS });
   });
 
-  app.patch("/api/v1/safety/onboarding/sessions/:session_id/step", async (req, reply) => {
+  app.patch("/api/v1/safety/onboarding/sessions/:session_id/step", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = sessionParamsSchema.safeParse(req.params ?? {});
@@ -263,7 +263,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     return reply.send(updated);
   });
 
-  app.post("/api/v1/safety/onboarding/sessions/:session_id/complete", async (req, reply) => {
+  app.post("/api/v1/safety/onboarding/sessions/:session_id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = sessionParamsSchema.safeParse(req.params ?? {});
@@ -325,7 +325,7 @@ export async function registerSafetyOnboardingRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.post("/api/v1/safety/onboarding/sessions/:session_id/admin-override", async (req, reply) => {
+  app.post("/api/v1/safety/onboarding/sessions/:session_id/admin-override", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = sessionParamsSchema.safeParse(req.params ?? {});

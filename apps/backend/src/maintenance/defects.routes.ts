@@ -60,7 +60,7 @@ function triageStatusFromRow(row: Record<string, unknown>): string {
 }
 
 export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/dvir-defects", async (req, reply) => {
+  app.get("/api/v1/maintenance/dvir-defects", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -128,7 +128,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
     return { defects: rows };
   });
 
-  app.get("/api/v1/maintenance/dvir-defects/:id", async (req, reply) => {
+  app.get("/api/v1/maintenance/dvir-defects/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -206,7 +206,7 @@ export async function registerMaintenanceDefectsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/maintenance/dvir-defects/:id/triage", async (req, reply) => {
+  app.post("/api/v1/maintenance/dvir-defects/:id/triage", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

@@ -40,7 +40,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
-  app.post("/api/v1/dashcam/request-clip", async (req, reply) => {
+  app.post("/api/v1/dashcam/request-clip", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canAccessDashcam(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -74,7 +74,7 @@ export async function registerDashcamOnDemandRoutes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
-  app.get("/api/v1/safety/harsh-events/:id/dashcam-clips", async (req, reply) => {
+  app.get("/api/v1/safety/harsh-events/:id/dashcam-clips", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!canAccessDashcam(user.role)) return reply.code(403).send({ error: "forbidden" });

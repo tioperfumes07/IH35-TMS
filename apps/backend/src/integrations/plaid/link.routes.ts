@@ -180,7 +180,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { accounts, plaid_item_id: exchanged.item_id };
   });
 
-  app.get("/api/v1/banking/plaid/accounts", async (req, reply) => {
+  app.get("/api/v1/banking/plaid/accounts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -279,7 +279,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { account };
   });
 
-  app.get("/api/v1/banking/plaid/accounts/:id/transactions", async (req, reply) => {
+  app.get("/api/v1/banking/plaid/accounts/:id/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -486,7 +486,7 @@ export async function registerPlaidLinkRoutes(app: FastifyInstance) {
     return { ok: true, id: result.id };
   });
 
-  app.post("/api/v1/banking/plaid/create-update-link-token", async (req, reply) => {
+  app.post("/api/v1/banking/plaid/create-update-link-token", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!ensureRole(reply, user.role, ownerAdminRoles)) return;

@@ -177,7 +177,7 @@ async function validateRtdTestForAdvance(
 }
 
 export async function registerSafetyRtdRoutes(app: FastifyInstance) {
-  app.get("/api/v1/safety/rtd/cases", async (req, reply) => {
+  app.get("/api/v1/safety/rtd/cases", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const company = companyQuerySchema.safeParse(req.query ?? {});
@@ -283,7 +283,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
     return { case: payload.rtdCase };
   });
 
-  app.post("/api/v1/safety/rtd/cases", async (req, reply) => {
+  app.post("/api/v1/safety/rtd/cases", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -377,7 +377,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
     return reply.code(201).send(created);
   });
 
-  app.post("/api/v1/safety/rtd/cases/:id/advance", async (req, reply) => {
+  app.post("/api/v1/safety/rtd/cases/:id/advance", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -539,7 +539,7 @@ export async function registerSafetyRtdRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/safety/rtd/cases/:id", async (req, reply) => {
+  app.patch("/api/v1/safety/rtd/cases/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });

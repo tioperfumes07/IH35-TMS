@@ -279,7 +279,7 @@ export async function registerDispatchFlagColorRoutes(app: FastifyInstance) {
     return { flag: updated };
   });
 
-  app.post("/api/v1/catalogs/dispatch-flag-colors/:id/reactivate", async (req, reply) => {
+  app.post("/api/v1/catalogs/dispatch-flag-colors/:id/reactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureAdmin(req, reply);
     if (!user) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

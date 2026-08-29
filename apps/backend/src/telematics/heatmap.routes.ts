@@ -21,7 +21,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerTelematicsHeatmapRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/heatmap", async (req, reply) => {
+  app.get("/api/v1/telematics/heatmap", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

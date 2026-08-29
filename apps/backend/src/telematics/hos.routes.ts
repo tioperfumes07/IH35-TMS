@@ -47,7 +47,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerTelematicsHosRoutes(app: FastifyInstance) {
-  app.get("/api/v1/telematics/drivers/:driver_id/hos", async (req, reply) => {
+  app.get("/api/v1/telematics/drivers/:driver_id/hos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const params = paramsSchema.safeParse(req.params ?? {});
@@ -170,7 +170,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
   // Batched cycle clocks for the dispatch board (read-only). Returns only the two values the
   // board needs per driver plus the status flag for green/amber. Drivers not in this entity are
   // simply absent from the map (RLS + operating_company filter prevent cross-entity reads).
-  app.get("/api/v1/dispatch/hos-clocks", async (req, reply) => {
+  app.get("/api/v1/dispatch/hos-clocks", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = batchQuerySchema.safeParse(req.query ?? {});
@@ -219,7 +219,7 @@ export async function registerTelematicsHosRoutes(app: FastifyInstance) {
   // Batched last-known GPS positions for the dispatch board's Live GPS column — one call returns
   // the latest in-app position (from integrations.samsara_vehicle_positions) for every visible
   // load's assigned unit. Per-entity scoped. Replaces the hardcoded null stub on the board.
-  app.get("/api/v1/dispatch/load-positions", async (req, reply) => {
+  app.get("/api/v1/dispatch/load-positions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const query = batchLoadQuerySchema.safeParse(req.query ?? {});

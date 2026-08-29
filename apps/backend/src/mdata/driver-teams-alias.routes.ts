@@ -26,7 +26,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 
 // DELETE-only: GET/POST/PATCH live on registerDriverTeamSplitRoutes (same URLs collided here).
 export async function registerDriverTeamsAliasRoutes(app: FastifyInstance) {
-  app.delete("/api/v1/driver-teams/:teamId", async (req, reply) => {
+  app.delete("/api/v1/driver-teams/:teamId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = ensureOffice(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

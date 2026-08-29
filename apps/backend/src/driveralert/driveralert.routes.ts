@@ -12,7 +12,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 
 export async function registerDriverAlertRoutes(app: FastifyInstance) {
   // POST /api/v1/driver-alerts — office dispatches a blocking alert to a driver
-  app.post("/api/v1/driver-alerts", async (req, reply) => {
+  app.post("/api/v1/driver-alerts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = z.object({
@@ -68,7 +68,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/driver-alerts/pending/:driver_id — PWA polls for unacked alerts
-  app.get("/api/v1/driver-alerts/pending/:driver_id", async (req, reply) => {
+  app.get("/api/v1/driver-alerts/pending/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { driver_id } = req.params as { driver_id: string };
@@ -95,7 +95,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/driver-alerts/:id/ack — driver acknowledges the alert
-  app.post("/api/v1/driver-alerts/:id/ack", async (req, reply) => {
+  app.post("/api/v1/driver-alerts/:id/ack", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };
@@ -139,7 +139,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/driver-alerts/:id/re-alarm — system or office triggers re-alarm
-  app.post("/api/v1/driver-alerts/:id/re-alarm", async (req, reply) => {
+  app.post("/api/v1/driver-alerts/:id/re-alarm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };
@@ -182,7 +182,7 @@ export async function registerDriverAlertRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/driver-alerts/:id/evidence — office views ack evidence
-  app.get("/api/v1/driver-alerts/:id/evidence", async (req, reply) => {
+  app.get("/api/v1/driver-alerts/:id/evidence", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };

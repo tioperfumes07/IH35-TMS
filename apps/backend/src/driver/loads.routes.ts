@@ -352,7 +352,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/driver/loads/:id", async (req, reply) => {
+  app.get("/api/v1/driver/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -370,7 +370,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/driver/loads/:id/accept", async (req, reply) => {
+  app.post("/api/v1/driver/loads/:id/accept", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = loadIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);

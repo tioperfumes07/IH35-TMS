@@ -20,7 +20,7 @@ const periodQuery = z.object({
 
 export async function registerUtilizationRoutes(app: FastifyInstance) {
   // GET /api/v1/utilization/by-driver — Finance > Time Utilization, By Driver
-  app.get("/api/v1/utilization/by-driver", async (req, reply) => {
+  app.get("/api/v1/utilization/by-driver", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = periodQuery.parse(req.query);
@@ -49,7 +49,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/utilization/by-truck — Finance > Time Utilization, By Truck
-  app.get("/api/v1/utilization/by-truck", async (req, reply) => {
+  app.get("/api/v1/utilization/by-truck", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = periodQuery.parse(req.query);
@@ -75,7 +75,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/utilization/driver/:driver_id — Finance > Time Utilization, Detail
-  app.get("/api/v1/utilization/driver/:driver_id", async (req, reply) => {
+  app.get("/api/v1/utilization/driver/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { driver_id } = req.params as { driver_id: string };
@@ -106,7 +106,7 @@ export async function registerUtilizationRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/utilization/unit/:unit_id — Detail for a specific truck
-  app.get("/api/v1/utilization/unit/:unit_id", async (req, reply) => {
+  app.get("/api/v1/utilization/unit/:unit_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { unit_id } = req.params as { unit_id: string };

@@ -151,7 +151,7 @@ export async function renderMaintenanceReportXlsx(rows: Array<Record<string, unk
 }
 
 export async function registerMaintenanceReportsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/reports/:report", async (req, reply) => {
+  app.get("/api/v1/maintenance/reports/:report", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = reportParamsSchema.safeParse(req.params ?? {});
@@ -164,7 +164,7 @@ export async function registerMaintenanceReportsRoutes(app: FastifyInstance) {
     return { report: params.data.report, rows, total_count: rows.length };
   });
 
-  app.get("/api/v1/maintenance/reports/:report/export.xlsx", async (req, reply) => {
+  app.get("/api/v1/maintenance/reports/:report/export.xlsx", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = reportParamsSchema.safeParse(req.params ?? {});

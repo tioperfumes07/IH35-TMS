@@ -341,7 +341,7 @@ async function nextLoadNumber(
 }
 
 export async function registerLoadRoutes(app: FastifyInstance) {
-  app.post("/api/v1/mdata/loads", async (req, reply) => {
+  app.post("/api/v1/mdata/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -1020,7 +1020,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/mdata/loads/:id/audit", async (req, reply) => {
+  app.get("/api/v1/mdata/loads/:id/audit", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});

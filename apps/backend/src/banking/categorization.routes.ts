@@ -321,7 +321,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/banking/transactions/:id/categorize", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/:id/categorize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -1112,7 +1112,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/banking/transactions/bulk-categorize", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/bulk-categorize", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -1221,7 +1221,7 @@ export async function registerBankTxCategorizationRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/banking/transactions/bulk-post-as-bills", async (req, reply) => {
+  app.post("/api/v1/banking/transactions/bulk-post-as-bills", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

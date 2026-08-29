@@ -21,7 +21,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverFuelReceiptRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/fuel/units", async (req, reply) => {
+  app.get("/api/v1/driver/fuel/units", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     const user = req.user;

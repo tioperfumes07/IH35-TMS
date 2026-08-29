@@ -20,7 +20,7 @@ export async function registerNotificationRoutes(app: FastifyInstance) {
   await registerNotificationStreamRoutes(app);
   await registerNotificationPreferencesRoutes(app);
 
-  app.post("/api/v1/notifications/:id/read", async (req, reply) => {
+  app.post("/api/v1/notifications/:id/read", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -42,7 +42,7 @@ export async function registerNotificationRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/notifications/:id/dismiss", async (req, reply) => {
+  app.post("/api/v1/notifications/:id/dismiss", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = idParams.safeParse(req.params ?? {});
@@ -65,7 +65,7 @@ export async function registerNotificationRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.post("/api/v1/notifications/mark-all-read", async (req, reply) => {
+  app.post("/api/v1/notifications/mark-all-read", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
 

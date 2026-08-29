@@ -13,7 +13,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 export async function registerDriverDvirRoutes(app: FastifyInstance) {
-  app.post("/api/v1/driver/dvir", async (req, reply) => {
+  app.post("/api/v1/driver/dvir", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const body = submitDvirBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
@@ -31,7 +31,7 @@ export async function registerDriverDvirRoutes(app: FastifyInstance) {
     return result;
   });
 
-  app.get("/api/v1/driver/dvir/:loadId", async (req, reply) => {
+  app.get("/api/v1/driver/dvir/:loadId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);

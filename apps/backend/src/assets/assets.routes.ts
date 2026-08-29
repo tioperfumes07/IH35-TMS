@@ -97,7 +97,7 @@ async function resolveAssetsOperatingCompanyId(
 }
 
 export async function registerAssetsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/assets", async (req, reply) => {
+  app.get("/api/v1/assets", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -162,7 +162,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return { assets };
   });
 
-  app.get("/api/v1/assets/:id", async (req, reply) => {
+  app.get("/api/v1/assets/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -208,7 +208,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return asset;
   });
 
-  app.get("/api/v1/assets/:id/status-history", async (req, reply) => {
+  app.get("/api/v1/assets/:id/status-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -246,7 +246,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return { history };
   });
 
-  app.post("/api/v1/assets", async (req, reply) => {
+  app.post("/api/v1/assets", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -306,7 +306,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     }
   });
 
-  app.patch("/api/v1/assets/:id", async (req, reply) => {
+  app.patch("/api/v1/assets/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -363,7 +363,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.patch("/api/v1/assets/:id/status", async (req, reply) => {
+  app.patch("/api/v1/assets/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -441,7 +441,7 @@ export async function registerAssetsRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.get("/api/v1/assets/summary", async (req, reply) => {
+  app.get("/api/v1/assets/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = companyScopeQuerySchema.safeParse(req.query ?? {});

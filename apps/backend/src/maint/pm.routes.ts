@@ -139,7 +139,7 @@ const GONE_BODY = {
 } as const;
 
 export async function registerMaintPmRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maint/pm/schedules", async (req, reply) => {
+  app.get("/api/v1/maint/pm/schedules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -152,7 +152,7 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maint/pm/due", async (req, reply) => {
+  app.get("/api/v1/maint/pm/due", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
@@ -167,11 +167,11 @@ export async function registerMaintPmRoutes(app: FastifyInstance) {
     return { rows, computed_from: "live_odometer_and_schedule_dates" };
   });
 
-  app.post("/api/v1/maint/pm/schedules", async (_req, reply) => {
+  app.post("/api/v1/maint/pm/schedules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {
     return reply.code(410).send(GONE_BODY);
   });
 
-  app.patch("/api/v1/maint/pm/schedules/:id", async (_req, reply) => {
+  app.patch("/api/v1/maint/pm/schedules/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (_req, reply) => {
     return reply.code(410).send(GONE_BODY);
   });
 }

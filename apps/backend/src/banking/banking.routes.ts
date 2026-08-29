@@ -263,7 +263,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { tiles };
   });
 
-  app.get("/api/v1/banking/accounts/all", async (req, reply) => {
+  app.get("/api/v1/banking/accounts/all", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = accountsAllQuerySchema.safeParse(req.query ?? {});
@@ -466,7 +466,7 @@ export async function registerBankingRoutes(app: FastifyInstance) {
     return { register_rows: rows };
   });
 
-  app.get("/api/v1/banking/transactions/:id/suggestions", async (req, reply) => {
+  app.get("/api/v1/banking/transactions/:id/suggestions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = transactionIdParamsSchema.safeParse(req.params ?? {});

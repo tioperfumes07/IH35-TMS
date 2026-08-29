@@ -30,7 +30,7 @@ const eventsSchema = z.object({
 export async function registerHosTrackerRoutes(app: FastifyInstance) {
   // Per-driver daily duty-status timeline + clocks for the Compliance HOS Tracker tab. Reads the ingested
   // hos.duty_status_events; returns honest "available:false" + null clocks when a driver-day has no events.
-  app.get("/api/v1/telematics/hos/daily", async (req, reply) => {
+  app.get("/api/v1/telematics/hos/daily", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const q = dailySchema.safeParse(req.query ?? {});
@@ -45,7 +45,7 @@ export async function registerHosTrackerRoutes(app: FastifyInstance) {
 
   // CANONICAL roster for the Compliance HOS Tracker tab — every active board driver's daily timeline + clocks from
   // ONE source, so the timeline (Block 03) and the dense table (Block 04) agree per driver. Includes KPI counts.
-  app.get("/api/v1/telematics/hos/daily-roster", async (req, reply) => {
+  app.get("/api/v1/telematics/hos/daily-roster", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const q = rosterSchema.safeParse(req.query ?? {});
@@ -59,7 +59,7 @@ export async function registerHosTrackerRoutes(app: FastifyInstance) {
   });
 
   // Raw duty-status segments for a driver over a window (FMCSA audit / drill-down).
-  app.get("/api/v1/telematics/hos/events", async (req, reply) => {
+  app.get("/api/v1/telematics/hos/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentUser(req, reply);
     if (!user) return;
     const q = eventsSchema.safeParse(req.query ?? {});

@@ -321,7 +321,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     },
   );
 
-  app.post("/api/v1/mdata/units", async (req, reply) => {
+  app.post("/api/v1/mdata/units", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role))
@@ -516,7 +516,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get("/api/v1/mdata/units/:id/financial", async (req, reply) => {
+  app.get("/api/v1/mdata/units/:id/financial", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

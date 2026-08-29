@@ -128,7 +128,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/integrations/qbo/driver-vendor-merges", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/driver-vendor-merges", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -151,7 +151,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/factoring/faro-imports", async (req, reply) => {
+  app.get("/api/v1/factoring/faro-imports", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -160,7 +160,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/factoring/faro-imports/:id", async (req, reply) => {
+  app.get("/api/v1/factoring/faro-imports/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -202,7 +202,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.post("/api/v1/banking/equipment-loans", async (req, reply) => {
+  app.post("/api/v1/banking/equipment-loans", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -221,7 +221,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { ok: true, id: result.id };
   });
 
-  app.get("/api/v1/banking/equipment-loans/:id/ledger", async (req, reply) => {
+  app.get("/api/v1/banking/equipment-loans/:id/ledger", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -237,7 +237,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/banking/equipment-loans/:id/attributions", async (req, reply) => {
+  app.post("/api/v1/banking/equipment-loans/:id/attributions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -256,7 +256,7 @@ export async function registerDataInfrastructureRoutes(app: FastifyInstance) {
     return { ok: true, id: result.id };
   });
 
-  app.post("/api/v1/banking/equipment-loans/:id/payments", async (req, reply) => {
+  app.post("/api/v1/banking/equipment-loans/:id/payments", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOfficeRole(user.role)) return reply.code(403).send({ error: "forbidden" });

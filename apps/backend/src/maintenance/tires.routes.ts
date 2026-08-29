@@ -313,7 +313,7 @@ async function workOrderBelongsToCompany(
 }
 
 export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/tires/brands", async (req, reply) => {
+  app.get("/api/v1/maintenance/tires/brands", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -332,7 +332,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/tires/brands", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/brands", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = brandCreateSchema.safeParse(req.body);
@@ -359,7 +359,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.code(201).send(row);
   });
 
-  app.get("/api/v1/maintenance/tires/layout", async (req, reply) => {
+  app.get("/api/v1/maintenance/tires/layout", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -391,7 +391,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send(payload);
   });
 
-  app.get("/api/v1/maintenance/tires/records", async (req, reply) => {
+  app.get("/api/v1/maintenance/tires/records", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -418,7 +418,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send({ rows });
   });
 
-  app.post("/api/v1/maintenance/tires/records", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/records", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = recordCreateSchema.safeParse(req.body);
@@ -481,7 +481,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.code(201).send(mapTireRecordRow(row));
   });
 
-  app.patch("/api/v1/maintenance/tires/records/:id", async (req, reply) => {
+  app.patch("/api/v1/maintenance/tires/records/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -540,7 +540,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send(mapTireRecordRow(row));
   });
 
-  app.post("/api/v1/maintenance/tires/records/:id/archive", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/records/:id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params);
@@ -568,7 +568,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, id: params.data.id });
   });
 
-  app.get("/api/v1/maintenance/tires/events", async (req, reply) => {
+  app.get("/api/v1/maintenance/tires/events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);
@@ -614,7 +614,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send(result);
   });
 
-  app.post("/api/v1/maintenance/tires/rotate", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/rotate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = rotateSchema.safeParse(req.body);
@@ -707,7 +707,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send({ record: mapTireRecordRow(result) });
   });
 
-  app.post("/api/v1/maintenance/tires/replace", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/replace", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = replaceSchema.safeParse(req.body);
@@ -786,7 +786,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     return reply.send({ record: mapTireRecordRow(result) });
   });
 
-  app.post("/api/v1/maintenance/tires/tread-audit", async (req, reply) => {
+  app.post("/api/v1/maintenance/tires/tread-audit", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = treadAuditSchema.safeParse(req.body);
@@ -830,7 +830,7 @@ export async function registerMaintenanceTiresRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/maintenance/tires/alerts", async (req, reply) => {
+  app.get("/api/v1/maintenance/tires/alerts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query);

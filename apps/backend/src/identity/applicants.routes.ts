@@ -118,7 +118,7 @@ async function resolvePortalByToken(token: string) {
 }
 
 export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
-  app.get("/api/v1/public/apply/:token", async (req, reply) => {
+  app.get("/api/v1/public/apply/:token", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return reply.code(400).send({ error: "validation_error" });
     const portal = await resolvePortalByToken(params.data.token);
@@ -135,7 +135,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post("/api/v1/public/apply/:token", async (req, reply) => {
+  app.post("/api/v1/public/apply/:token", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const params = tokenParamsSchema.safeParse(req.params ?? {});
     const body = submitApplicationSchema.safeParse(req.body ?? {});
     if (!params.success || !body.success) {
@@ -189,7 +189,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     return reply.code(201).send({ applicant: mapApplicant(applicant) });
   });
 
-  app.post("/api/v1/identity/applicants/ensure-portal", async (req, reply) => {
+  app.post("/api/v1/identity/applicants/ensure-portal", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const body = companyQuerySchema.safeParse(req.body ?? {});
@@ -244,7 +244,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     };
   });
 
-  app.get("/api/v1/identity/applicants", async (req, reply) => {
+  app.get("/api/v1/identity/applicants", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -268,7 +268,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     return { applicants };
   });
 
-  app.patch("/api/v1/identity/applicants/:id/status", async (req, reply) => {
+  app.patch("/api/v1/identity/applicants/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = applicantParamsSchema.safeParse(req.params ?? {});
@@ -315,7 +315,7 @@ export async function registerIdentityApplicantRoutes(app: FastifyInstance) {
     return { applicant: mapApplicant(updated) };
   });
 
-  app.post("/api/v1/identity/applicants/:id/convert-to-driver", async (req, reply) => {
+  app.post("/api/v1/identity/applicants/:id/convert-to-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const params = applicantParamsSchema.safeParse(req.params ?? {});

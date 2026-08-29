@@ -116,7 +116,7 @@ async function ensureStateRow(client: Queryable, operatingCompanyId: string) {
 }
 
 export async function registerOnboardingStateRoutes(app: FastifyInstance) {
-  app.get("/api/v1/onboarding/state", async (req, reply) => {
+  app.get("/api/v1/onboarding/state", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = getStateQuerySchema.safeParse(req.query ?? {});
@@ -231,7 +231,7 @@ export async function registerOnboardingStateRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/api/v1/onboarding/seed-sample-data", async (req, reply) => {
+  app.post("/api/v1/onboarding/seed-sample-data", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedBody = seedBodySchema.safeParse(req.body ?? {});

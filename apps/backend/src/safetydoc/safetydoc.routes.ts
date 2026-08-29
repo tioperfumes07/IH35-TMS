@@ -12,7 +12,7 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 
 export async function registerSafetyDocRoutes(app: FastifyInstance) {
   // POST /api/v1/safety-docs — create a document template
-  app.post("/api/v1/safety-docs", async (req, reply) => {
+  app.post("/api/v1/safety-docs", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = z.object({
@@ -34,7 +34,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/safety-docs — list document templates
-  app.get("/api/v1/safety-docs", async (req, reply) => {
+  app.get("/api/v1/safety-docs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { operating_company_id } = z
@@ -55,7 +55,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/safety-docs/assign — send document to driver
-  app.post("/api/v1/safety-docs/assign", async (req, reply) => {
+  app.post("/api/v1/safety-docs/assign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const input = z.object({
@@ -78,7 +78,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/safety-docs/assignments/:driver_id — driver PWA fetches pending docs
-  app.get("/api/v1/safety-docs/assignments/:driver_id", async (req, reply) => {
+  app.get("/api/v1/safety-docs/assignments/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { driver_id } = req.params as { driver_id: string };
@@ -105,7 +105,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/safety-docs/assignments/:id/read — driver marks as read
-  app.post("/api/v1/safety-docs/assignments/:id/read", async (req, reply) => {
+  app.post("/api/v1/safety-docs/assignments/:id/read", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };
@@ -128,7 +128,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // POST /api/v1/safety-docs/assignments/:id/sign — driver e-signs (immutable after this)
-  app.post("/api/v1/safety-docs/assignments/:id/sign", async (req, reply) => {
+  app.post("/api/v1/safety-docs/assignments/:id/sign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };
@@ -164,7 +164,7 @@ export async function registerSafetyDocRoutes(app: FastifyInstance) {
   });
 
   // GET /api/v1/safety-docs/assignments/:id/evidence — office views signed record
-  app.get("/api/v1/safety-docs/assignments/:id/evidence", async (req, reply) => {
+  app.get("/api/v1/safety-docs/assignments/:id/evidence", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
     if (!user) return;
     const { id } = req.params as { id: string };

@@ -84,7 +84,7 @@ async function assertTrailerScope(
 }
 
 export async function registerAssignmentsQuicksaveRoutes(app: FastifyInstance) {
-  app.post("/api/v1/assignments/quicksave", async (req, reply) => {
+  app.post("/api/v1/assignments/quicksave", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isWriteRole(user.role)) return reply.code(403).send({ error: "forbidden" });

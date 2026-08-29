@@ -118,7 +118,7 @@ async function buildCurrentCompanyPayload(
 }
 
 export async function registerCompanyContextRoutes(app: FastifyInstance) {
-  app.get("/api/v1/identity/me/current-company", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/identity/me/current-company", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -127,7 +127,7 @@ export async function registerCompanyContextRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/identity/me/switch-company", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/identity/me/switch-company", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
 

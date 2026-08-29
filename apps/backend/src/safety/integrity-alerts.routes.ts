@@ -187,7 +187,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return { integrity_alerts: result.rows, total_count: result.totalCount };
   });
 
-  app.get("/api/v1/safety/integrity-alert-rules", async (req, reply) => {
+  app.get("/api/v1/safety/integrity-alert-rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -198,7 +198,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return { integrity_alert_rules: rows };
   });
 
-  app.post("/api/v1/safety/integrity-alert-rules", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alert-rules", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canMutate(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -480,7 +480,7 @@ export async function registerSafetyIntegrityAlertsRoutes(app: FastifyInstance) 
     return updated;
   });
 
-  app.post("/api/v1/safety/integrity-alerts", async (req, reply) => {
+  app.post("/api/v1/safety/integrity-alerts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

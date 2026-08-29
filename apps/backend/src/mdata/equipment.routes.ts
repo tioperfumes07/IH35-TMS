@@ -449,7 +449,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     return updated.row;
   });
 
-  app.patch("/api/v1/mdata/equipment/:id", async (req, reply) => {
+  app.patch("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });

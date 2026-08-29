@@ -318,7 +318,7 @@ export async function registerCashAdvancesRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.post("/api/v1/cash-advances", async (req, reply) => {
+  app.post("/api/v1/cash-advances", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = COMPANY_QUERY.safeParse(req.query ?? {});

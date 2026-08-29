@@ -33,7 +33,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerBankAccountCompanyAuditRoutes(app: FastifyInstance) {
-  app.get("/api/banking/integrity/account-company-audit", async (req, reply) => {
+  app.get("/api/banking/integrity/account-company-audit", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -45,7 +45,7 @@ export async function registerBankAccountCompanyAuditRoutes(app: FastifyInstance
     return { findings };
   });
 
-  app.post("/api/banking/integrity/account-company-audit/reassign", async (req, reply) => {
+  app.post("/api/banking/integrity/account-company-audit/reassign", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (String(user.role ?? "") !== "Owner") {

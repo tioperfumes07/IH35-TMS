@@ -50,7 +50,7 @@ const listQuerySchema = z.object({
 const idParamSchema = z.object({ id: z.string().uuid() });
 
 export async function registerCustomerContractRoutes(app: FastifyInstance) {
-  app.post("/api/v1/customer-contracts", async (req, reply) => {
+  app.post("/api/v1/customer-contracts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = guardAuth(req, reply);
     if (!user) return;
     const body = createBodySchema.safeParse(req.body ?? {});
@@ -115,7 +115,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/customer-contracts", async (req, reply) => {
+  app.get("/api/v1/customer-contracts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = guardAuth(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -147,7 +147,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     });
   });
 
-  app.get("/api/v1/customer-contracts/:id", async (req, reply) => {
+  app.get("/api/v1/customer-contracts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = guardAuth(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});
@@ -181,7 +181,7 @@ export async function registerCustomerContractRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/customer-contracts/:id/supersede", async (req, reply) => {
+  app.post("/api/v1/customer-contracts/:id/supersede", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = guardAuth(req, reply);
     if (!user) return;
     const params = idParamSchema.safeParse(req.params ?? {});

@@ -168,7 +168,7 @@ async function buildCycle(
 }
 
 export async function registerDriverEarningsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/driver/earnings/cycle", async (req, reply) => {
+  app.get("/api/v1/driver/earnings/cycle", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
     if (!driver || !req.user) return reply.code(403).send({ error: "forbidden" });
@@ -184,7 +184,7 @@ export async function registerDriverEarningsRoutes(app: FastifyInstance) {
     return cycle;
   });
 
-  app.get("/api/v1/driver/earnings/cycles", async (req, reply) => {
+  app.get("/api/v1/driver/earnings/cycles", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const query = cyclesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);

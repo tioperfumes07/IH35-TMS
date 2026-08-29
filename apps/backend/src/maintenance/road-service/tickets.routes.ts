@@ -72,7 +72,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: Db
 }
 
 export async function registerRoadServiceTicketRoutes(app: FastifyInstance) {
-  app.get("/api/v1/road-service-tickets", async (req, reply) => {
+  app.get("/api/v1/road-service-tickets", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = auth(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});

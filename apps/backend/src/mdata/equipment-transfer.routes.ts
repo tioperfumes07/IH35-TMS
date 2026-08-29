@@ -87,7 +87,7 @@ async function resolveOperatingCompanyForUser(userId: string) {
 }
 
 export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
-  app.post("/api/v1/equipment/:id/initiate-transfer", async (req, reply) => {
+  app.post("/api/v1/equipment/:id/initiate-transfer", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = equipmentIdParamsSchema.safeParse(req.params ?? {});
@@ -106,7 +106,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/equipment-transfers", async (req, reply) => {
+  app.get("/api/v1/equipment-transfers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = listQuerySchema.safeParse(req.query ?? {});
@@ -114,7 +114,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     return listTransfers(user.uuid, query.data);
   });
 
-  app.post("/api/v1/equipment-transfers/:id/confirm", async (req, reply) => {
+  app.post("/api/v1/equipment-transfers/:id/confirm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
@@ -134,7 +134,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/equipment-transfers/:id/reject", async (req, reply) => {
+  app.post("/api/v1/equipment-transfers/:id/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
@@ -155,7 +155,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/driver-pwa/my-outbound-transfers", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/my-outbound-transfers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const driverId = await resolveDriverIdForUser(user.uuid);
@@ -172,7 +172,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/driver-pwa/my-pending-transfers", async (req, reply) => {
+  app.get("/api/v1/driver-pwa/my-pending-transfers", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const driverId = await resolveDriverIdForUser(user.uuid);
@@ -188,7 +188,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     });
   });
 
-  app.post("/api/v1/driver-pwa/transfers/:id/ack-dropoff", async (req, reply) => {
+  app.post("/api/v1/driver-pwa/transfers/:id/ack-dropoff", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
@@ -210,7 +210,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pwa/transfers/:id/ack-pickup", async (req, reply) => {
+  app.post("/api/v1/driver-pwa/transfers/:id/ack-pickup", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
@@ -232,7 +232,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pwa/transfers/:id/confirm", async (req, reply) => {
+  app.post("/api/v1/driver-pwa/transfers/:id/confirm", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
@@ -256,7 +256,7 @@ export async function registerEquipmentTransferRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/driver-pwa/transfers/:id/reject", async (req, reply) => {
+  app.post("/api/v1/driver-pwa/transfers/:id/reject", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = transferIdParamsSchema.safeParse(req.params ?? {});
