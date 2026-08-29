@@ -6,6 +6,7 @@ import { CappedListNotice } from "../../../components/CappedListNotice";
 import { ReferenceSelect } from "../../../components/parity/ReferenceSelect";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 
 export type BookLoadFormValues = {
   customer_id: string;
@@ -98,6 +99,7 @@ export function BookLoadCustomerSection({
               placeholder="Search customers…"
               onSearch={setCustomerSearch}
               loading={customersQuery.isLoading}
+              disabled={customersQuery.isLoading || customersQuery.isError}
               onOptionCreated={(opt) => {
                 void queryClient.invalidateQueries({ queryKey: ["book-load-customer-section", "customers"] });
                 setValue("customer_id", opt.value, { shouldDirty: true, shouldValidate: true });
@@ -107,6 +109,9 @@ export function BookLoadCustomerSection({
           ) : (
             <div className="rounded-sm border border-slate-200 bg-white px-2 py-2 text-xs text-slate-700">Company context required for customer lookup.</div>
           )}
+          {customersQuery.isError ? (
+            <ListErrorBanner message="Could not load customers." onRetry={() => void customersQuery.refetch()} />
+          ) : null}
           {/* CLS-SILENT-CAP: book-load customer picker caps at 500 (no search) / 200 (search). Surface truncation so a customer past the cap is not silently missing. */}
           <CappedListNotice
             shown={customerOptions.length}
