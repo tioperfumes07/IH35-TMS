@@ -25,6 +25,9 @@ function inspect(writer, page, routes) {
   if (!/INSERT INTO docs\.file_links[\s\S]*ON CONFLICT \(file_id, entity_type, entity_id\)/.test(writer)) {
     problems.push("writer must persist idempotent docs.file_links in the same transaction");
   }
+  if (!/const linked = await client\.query<\{ id: string \}>\([\s\S]{0,280}INSERT INTO docs\.file_links[\s\S]{0,240}RETURNING id::text[\s\S]{0,180}if \(!linked\.rows\[0\]\?\.id\) throw new Error\("instructions_document_link_failed"\)/.test(writer)) {
+    problems.push("every generated document reverse link must prove its canonical identity before success");
+  }
   if (!/const loadLinkUpdate = await client\.query<\{ id: string \}>\([\s\S]{0,420}UPDATE mdata\.loads[\s\S]{0,240}AND operating_company_id = \$3::uuid[\s\S]{0,100}RETURNING id[\s\S]{0,180}input\.operating_company_id[\s\S]{0,160}if \(!loadLinkUpdate\.rows\[0\]\?\.id\) throw new Error\("E_LOAD_NOT_FOUND"\)/.test(writer)) {
     problems.push("driver instructions backlink must bind company and prove the canonical load row changed");
   }
@@ -44,7 +47,7 @@ function inspect(writer, page, routes) {
   if (!/catch \(error\)[\s\S]{0,220}for \(const r2Key of uploadedR2Keys\)[\s\S]{0,180}await deleteObjectBytes\(r2Key\)[\s\S]{0,300}load_distribution_cleanup_failed:[\s\S]{0,140}throw error/.test(writer)) {
     problems.push("failed distribution must compensate every uploaded object and fail loud on cleanup loss");
   }
-  if (!/message\.includes\("r2_not_configured"\)[\s\S]{0,240}message\.includes\("instructions_document_create_failed"\)[\s\S]{0,240}message\.includes\("load_distribution_cleanup_failed"\)[\s\S]{0,180}code\(503\)\.send\(\{ error: "instruction_distribution_unavailable" \}\)/.test(routes)) {
+  if (!/message\.includes\("r2_not_configured"\)[\s\S]{0,240}message\.includes\("instructions_document_create_failed"\)[\s\S]{0,240}message\.includes\("instructions_document_link_failed"\)[\s\S]{0,240}message\.includes\("load_distribution_cleanup_failed"\)[\s\S]{0,180}code\(503\)\.send\(\{ error: "instruction_distribution_unavailable" \}\)/.test(routes)) {
     problems.push("mounted distribution route must expose storage/persistence failure as typed retryable 503");
   }
   if (!/COALESCE\([\s\S]{0,100}?c\.customer_name,[\s\S]{0,160}?mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)[\s\S]{0,60}?AS customer_name/.test(writer)) {
@@ -76,6 +79,7 @@ function main() {
       writer.replace("code = 'dispatch_instructions'", "code = 'other'"),
       writer.replace('[fileId, "driver", load.assigned_primary_driver_id]', '[fileId, "load", load.id]'),
       writer.replace("INSERT INTO docs.file_links", "INSERT INTO docs.missing_links"),
+      writer.replace('if (!linked.rows[0]?.id) throw new Error("instructions_document_link_failed");', ""),
       writer.replace("AND operating_company_id = $3::uuid", "AND TRUE"),
       writer.replace("if (!loadLinkUpdate.rows[0]?.id)", "if (false)"),
       writer.replace('if (!isR2Configured()) throw new Error("r2_not_configured");', ""),
@@ -93,7 +97,7 @@ function main() {
       console.error(`${LABEL}: selftest FAIL`);
       process.exit(1);
     }
-    console.log(`${LABEL}: selftest 14/14`);
+    console.log(`${LABEL}: selftest 15/15`);
   }
   console.log(`${LABEL}: PASS`);
 }

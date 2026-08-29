@@ -2103,3 +2103,5 @@ CODEX | PASS | GO-0035 | URL=/fuel | LIVE=da39aab · planner/settings/mapping/hi
 CODEX | PASS | GO-0034 | URL=/drivers/44398e9f-c92d-4ca6-9784-53d00ca16d53 | TEST=TEST CODEX GO0034 kept · canonical profile R=W | NEXT=GO-0035 | GO
 Codex | SHIPPED | FLEET-F7194 | PR=#17404 @ 8cfc3f86ef | Built=unit+trailer canonical post-create navigation | NEXT=GO-0034 | GO
 CODEX | WORKING | GO-0045 | FINDING=DSP-F7197 | NOW=quicksave assignment-history identity | NEXT=dispatch unique | GO
+Codex | WORKING | GO-0047 | FINDING=DSP-F7199 | MODULE=dispatch | leaf=dispatch.modal.driver_instructions:reverse_link | root=unchecked docs.file_links identities | NEXT=guard+gate+FAST-MERGE | GO
+Codex | SHIPPED | FLEET-F7198 | PR=#17409 @ fd3a9e5146 | root=unit default-driver canonical assignment edge | NEXT=GO-0047 dispatch unique | GO
