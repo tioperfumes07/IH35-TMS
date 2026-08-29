@@ -21,9 +21,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fleet registered; FleetHomePage uses CompanyContext and renders FleetTablePage with operatingCompanyId; GET /api/v1/mdata/units?include=trailers resolves entity scope via resolveOperatingCompanyId + owner/leased predicate; FleetTable renders unit_number, VIN, type, status, location with no uuid-fallback labels; + Create Unit / + Create Trailer actions wired; honest empty state when no company selected; tests pass. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453.",
+      "evidence": "Route /fleet registered; FleetHomePage uses CompanyContext and renders FleetTablePage with operatingCompanyId; GET /api/v1/mdata/units?include=trailers resolves entity scope via resolveOperatingCompanyId + owner/leased predicate; FleetTable renders unit_number, VIN, type, status, location with no uuid-fallback labels; + Create Unit / + Create Trailer actions wired; honest empty state when no company selected; tests pass. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2, both cited: 44 total assets, 38 trucks, 6 trailers). Independently re-verified live myself: live Chrome (USMCA context) /fleet shows Total Fleet=44, Trucks=38, Trailers=6 -- exact match; rows show real unit numbers (010101, CODEX-RELAY-TRAILER-20260824, ...), no raw UUID labels. Binding on this independent re-confirmation.",
       "pr": "#5289",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "FLEET-S02",
@@ -65,9 +67,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /fleet/trailers/:id registered as ProtectedRoute wrapping TrailerProfilePage; fetches /api/v1/mdata/equipment/:id with operating_company_id; buildEquipmentAggregate scopes by owner/lessee and returns 404 for cross-entity; page renders identity, specs, assignment, reefer, maintenance, compliance, reverse insurance/safety/legal/bank linkages, documents, audit history; archive action wired to soft-delete endpoint; honest empty states for missing company/profile; TrailerProfilePage.test.tsx passes. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453.",
+      "evidence": "Route /fleet/trailers/:id registered as ProtectedRoute wrapping TrailerProfilePage; fetches /api/v1/mdata/equipment/:id with operating_company_id; buildEquipmentAggregate scopes by owner/lessee and returns 404 for cross-entity; page renders identity, specs, assignment, reefer, maintenance, compliance, reverse insurance/safety/legal/bank linkages, documents, audit history; archive action wired to soft-delete endpoint; honest empty states for missing company/profile; TrailerProfilePage.test.tsx passes. | PROD-VERIFIED Neon lucia 2026-08-09 br-fancy-credit-akjnd07a USMCA: mdata.units owner/leased=40; mdata.equipment=4; accounts_pc=1453. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2, CLAIM_SHA=4e5db76, confirmed ancestor). Codex's live re-check: CODEX-TEST-0033-TRAILER profile renders identity, assignment, loads/transfers, maintenance/tires/compliance, insurance/safety/fuel/expense/document/bank/legal/audit reverse surfaces, exact trailer/equipment query links and named empty states -- USMCA. Route confirmed registered (/fleet/trailers/:id in manifest.tsx). Binding on Codex's evidence + route/SHA-ancestry corroboration.",
       "pr": "#5295",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:30:00.000Z",
+      "live_verified_sha": "ed4e2f2"
     },
     {
       "id": "FLEET-S05",
