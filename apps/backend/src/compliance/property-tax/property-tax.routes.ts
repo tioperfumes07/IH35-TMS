@@ -17,7 +17,7 @@ import { renderPropertyTaxRenditionPdfBody } from "./property-tax-pdf-renderer.s
 import { wrapPdfDocument } from "../../render/pdf-template.js";
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

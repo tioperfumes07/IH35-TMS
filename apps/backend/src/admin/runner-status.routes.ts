@@ -4,7 +4,7 @@ import { getRunnerState } from "./runner-status.store.js";
 
 export async function registerRunnerStatusRoutes(app: FastifyInstance) {
   app.get("/api/v1/admin/qbo-forensic/runner-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user as { role?: string } | undefined;
     if (user?.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
 

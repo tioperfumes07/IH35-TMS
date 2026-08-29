@@ -16,7 +16,7 @@ const adminRoles = new Set(["Owner", "Administrator"]);
 const LATEST_QUERY_ALLOWED_OPS: AdminJobOperation[] = ["admin.health.deep.refresh"];
 
 function currentAdminUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const user = req.user as { uuid: string; role: string };
   if (!adminRoles.has(String(user.role ?? ""))) {
     reply.code(403).send({ error: "forbidden" });
@@ -94,7 +94,7 @@ export async function registerAdminJobsRoutes(app: FastifyInstance) {
   // USERS-1 PR B: Owner-only endpoint to deactivate CI/probe fixture accounts still live in prod.
   // One run per UTC day per requesting admin (idempotency key prevents accidental double-fire).
   app.post("/api/v1/admin/jobs/deactivate-probe-accounts", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     const user = req.user as { uuid: string; role: string };
     if (!ownerOnly.has(String(user.role ?? ""))) {
       return reply.code(403).send({ error: "owner_only" });

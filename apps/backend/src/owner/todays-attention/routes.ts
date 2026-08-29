@@ -29,7 +29,7 @@ function ownerOrAdmin(role: string): boolean {
 }
 
 function authedOwner(req: Parameters<typeof requireAuth>[0], reply: Parameters<typeof requireAuth>[1]) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   const user = req.user as { uuid: string; role: string };
   if (!ownerOrAdmin(user.role)) {
     reply.code(403).send({ error: "forbidden", message: "Owner or Administrator role required" });

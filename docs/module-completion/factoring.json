@@ -21,9 +21,11 @@
       ],
       "spec": "FactoringHome summary \u00b7 Neon factoring.factor",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 getFactoringSummary KPI + need-company + ListErrorBanner; verify-fact-s01-home-surface + FactoringHome.kpi-error.test.tsx. | PROD-VERIFIED 2026-08-10 Neon lucia on br-fancy-credit-akjnd07a as ih35_app: factoring.factor visible=1 == n_live_tup=1 (TRANSP Faro Factoring Full Recourse V1 advance_rate=0.9700 fee=0.0150 reserve=0.0150 active=t); USMCA app-path (no lucia, opco 5c854333\u2026) factor=0 honest empty; live CDP9227 USMCA /factoring h1=Factoring (No active factor) KPI ACTIVE FACTOR Not configured \u00b7 RESERVE $0.00 \u00b7 CHARGEBACK $0.00. healthz version=ed061c2 (main tip 0a18dc1ce; deploy healthz was ed061c2 at prove).",
+      "evidence": "PASS code+guard \u2014 getFactoringSummary KPI + need-company + ListErrorBanner; verify-fact-s01-home-surface + FactoringHome.kpi-error.test.tsx. | PROD-VERIFIED 2026-08-10 Neon lucia on br-fancy-credit-akjnd07a as ih35_app: factoring.factor visible=1 == n_live_tup=1 (TRANSP Faro Factoring Full Recourse V1 advance_rate=0.9700 fee=0.0150 reserve=0.0150 active=t); USMCA app-path (no lucia, opco 5c854333\u2026) factor=0 honest empty; live CDP9227 USMCA /factoring h1=Factoring (No active factor) KPI ACTIVE FACTOR Not configured \u00b7 RESERVE $0.00 \u00b7 CHARGEBACK $0.00. healthz version=ed061c2 (main tip 0a18dc1ce; deploy healthz was ed061c2 at prove). | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-fact-s01-home-surface.mjs exit 0. STATE CHANGE since 08-10 (not a regression, a real onboarding): USMCA now HAS an active factor too. Live Chrome (USMCA context) /factoring shows Active Factor=Faro Factoring, Reserve Balance=$55.50, Outstanding Liability=$1,850.00, Advance/Fee/Reserve=97%/1.5%/1.5% \u2014 exact parity with Neon lucia (bypass_rls) direct read this turn: factoring.factor now has 2 rows (TRANSP + USMCA, id 40b3690b\u2026 for USMCA), same rates on both. KPI row correctly reflects the canonical row on both entities. Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "FACT-DUAL-01",
@@ -34,9 +36,11 @@
       ],
       "spec": "DUAL-FACTOR-HOME-NOTES \u00b7 CLS-DUAL-PATH",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface. | PROD-VERIFIED 2026-08-10 Neon lucia: factoring.factor columns advance_rate/fee_rate/reserve_rate/remittance_details populated on TRANSP id=5240378c\u2026 (not notes parse); canonical_factor_agreements visible=1 == n_live_tup=1 (FARO_FULL_RECOURSE_V1 \u2192 factor_profile_id=5240378c\u2026). USMCA factors admin live CDP: No factors configured yet (entity-honest).",
+      "evidence": "PASS code+guard \u2014 listFactors/updateFactor + no vendor-notes; verify-factoring-home-canonical-factor-profile + verify-fact-s01-home-surface. | PROD-VERIFIED 2026-08-10 Neon lucia: factoring.factor columns advance_rate/fee_rate/reserve_rate/remittance_details populated on TRANSP id=5240378c\u2026 (not notes parse); canonical_factor_agreements visible=1 == n_live_tup=1 (FARO_FULL_RECOURSE_V1 \u2192 factor_profile_id=5240378c\u2026). USMCA factors admin live CDP: No factors configured yet (entity-honest). | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-factoring-home-canonical-factor-profile.mjs exit 0. STATE CHANGE since 08-10: USMCA onboarded its own factor. Neon lucia (bypass_rls) direct read this turn: factoring.canonical_factor_agreements now has 2 rows \u2014 TRANSP (tenant 91e0bf0a\u2026, factor_profile_id=5240378c\u2026) and USMCA (tenant 5c854333\u2026, factor_profile_id=40b3690b\u2026), both FARO_FULL_RECOURSE_V1, both correctly linked to their own factoring.factor row via canonical columns (not a vendor-notes parse). Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "FACT-DUAL-02",
@@ -78,9 +82,11 @@
       ],
       "spec": "Route manifest /factoring/submit",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 SubmissionQueue need-company + ListErrorBanner; verify-fact-s02-submit-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (n_tup_ins=0 true zero); live CDP9227 USMCA /factoring/submit h1=Submit to Factor body=No invoices in submission queue (honest empty, not false-empty).",
+      "evidence": "PASS code+guard \u2014 SubmissionQueue need-company + ListErrorBanner; verify-fact-s02-submit-surface.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (n_tup_ins=0 true zero); live CDP9227 USMCA /factoring/submit h1=Submit to Factor body=No invoices in submission queue (honest empty, not false-empty). | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-fact-s02-submit-surface.mjs exit 0. Live Chrome (USMCA context) /factoring/submit still shows \"0 of 0 invoices ready to submit \u2014 No invoices in submission queue\" \u2014 still honest empty even though accounting.factoring_advances now has 1 realized advance (that table tracks funded advances, not the pre-submission queue, so this is not a contradiction). Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "FACT-S03",
@@ -107,9 +113,11 @@
       ],
       "spec": "ReserveDashboard \u00b7 FACT-kpi-vs-profile",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 ReserveDashboard need-company + ListErrorBanner; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.reserve_movement visible=0 == n_live_tup=0 (n_tup_ins=0); live CDP9227 USMCA /factoring/reserves h1=Reserve Dashboard No reserve balances found \u00b7 forecast $0.00 \u2014 honest empty matches Neon (CLS-MONEY-HOLD HOLD-002 still open for density).",
+      "evidence": "PASS code+guard \u2014 ReserveDashboard need-company + ListErrorBanner; verify-fact-s04-reserves-surface.mjs; Rule 19 no CoA reserve mutations. | PROD-VERIFIED 2026-08-10 Neon lucia factoring.reserve_movement visible=0 == n_live_tup=0 (n_tup_ins=0); live CDP9227 USMCA /factoring/reserves h1=Reserve Dashboard No reserve balances found \u00b7 forecast $0.00 \u2014 honest empty matches Neon (CLS-MONEY-HOLD HOLD-002 still open for density). | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-fact-s04-reserves-surface.mjs exit 0. Live Chrome (USMCA context) /factoring/reserves still shows \"No reserve balances found\", forecast $0.00 all windows. Neon lucia (bypass_rls) direct read this turn: factoring.reserve_movement still 0 rows \u2014 still a true, honest zero (HOLD-002 unchanged). Binding on this GUARD packet.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "FACT-S05",
@@ -134,9 +142,11 @@
       ],
       "spec": "UNIT-BANK-FACTOR-REGISTER \u00b7 CLS-UNIT-SCALE sibling",
       "status": "PASS",
-      "evidence": "PASS code+guard \u2014 banking.routes.ts (fa.advance_amount_cents::numeric / 100) AS amount; verify-fact-unit-01-banking-factor-register-scale.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (true zero \u2014 no invented advance rows); column advance_amount_cents present on accounting.factoring_advances (information_schema). Scale path remains /100; empty register is honest until HOLD-002 advances exist.",
+      "evidence": "PASS code+guard \u2014 banking.routes.ts (fa.advance_amount_cents::numeric / 100) AS amount; verify-fact-unit-01-banking-factor-register-scale.mjs. | PROD-VERIFIED 2026-08-10 Neon lucia accounting.factoring_advances visible=0 == n_live_tup=0 (true zero \u2014 no invented advance rows); column advance_amount_cents present on accounting.factoring_advances (information_schema). Scale path remains /100; empty register is honest until HOLD-002 advances exist. | GUARD PACKET (CC-2, 2026-08-29, SHA ecd3afd): node scripts/verify-fact-unit-01-banking-factor-register-scale.mjs exit 0. STATE CHANGE since 08-10 -- HOLD-002 no longer empty: accounting.factoring_advances now has 1 real row (FAC-2026-00001, advance_amount_cents=179450, status=advanced). Live Chrome /banking/factoring \"Recent Faro Advances\" row shows FAC-2026-00001 \u00b7 ADVANCED \u00b7 $1,794.50 -- exact match to 179450/100, a real non-trivial scale-conversion proof (stronger than the prior empty-register claim). Binding on this GUARD packet.",
       "pr": "#5339",
-      "prod_verified": true
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T22:00:00.000Z",
+      "live_verified_sha": "ecd3afd"
     },
     {
       "id": "FACT-VERIFY-01",
@@ -152,10 +162,11 @@
         "VERIFY-8"
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
-      "status": "PASS",
-      "evidence": "PASS 2026-08-10 PARTIAL live CDP9227 + Neon (healthz=ed061c2) \u2014 NOT full TRANSP browser DOM. USMCA (5c854333\u2026): V1 PARTIAL home/submit/reserves/batch-wizard chrome; V2 UNVERIFIED +Add new picker DOM; V3 PASS /factoring + /submit + /reserves + /batches/new land live (bare /batches \u2192 /home \u2014 no list route); V4 PARTIAL canonical factor+agreement on TRANSP Neon only; V5 PASS entity scope (USMCA factor=0 app-path; TRANSP factor=1); V6 PARTIAL KPIs $0 + advances/batch/reserve_movement=0 honest (CLS-MONEY-HOLD); V7 PARTIAL FACT nav leaves exercised; V8 PASS FORCE RLS on all 7 factoring.* tables + opco predicate. TRANSP factor profile browser click UNVERIFIED this seat (switcher stayed USMCA).",
+      "status": "UNVERIFIED",
+      "evidence": "PASS 2026-08-10 PARTIAL live CDP9227 + Neon (healthz=ed061c2) \u2014 NOT full TRANSP browser DOM. USMCA (5c854333\u2026): V1 PARTIAL home/submit/reserves/batch-wizard chrome; V2 UNVERIFIED +Add new picker DOM; V3 PASS /factoring + /submit + /reserves + /batches/new land live (bare /batches \u2192 /home \u2014 no list route); V4 PARTIAL canonical factor+agreement on TRANSP Neon only; V5 PASS entity scope (USMCA factor=0 app-path; TRANSP factor=1); V6 PARTIAL KPIs $0 + advances/batch/reserve_movement=0 honest (CLS-MONEY-HOLD); V7 PARTIAL FACT nav leaves exercised; V8 PASS FORCE RLS on all 7 factoring.* tables + opco predicate. TRANSP factor profile browser click UNVERIFIED this seat (switcher stayed USMCA). | GUARD DECISION (CC-2, 2026-08-29, SHA ecd3afd): NOT bound to full PASS -- this item's own prior evidence honestly self-reports PARTIAL/UNVERIFIED sub-points (V2, V4-TRANSP-only, V7), and I have not completed a full V1-V8 sweep this pass either. What I DID re-verify live this turn (folded into FACT-S01/DUAL-01/S02/S04/UNIT-01 above): V1 home/submit/reserves chrome now current on ecd3afd; V3 routes still land; V5's entity-scope claim is now STALE, not wrong -- USMCA no longer has factor=0, it has its own real factor+agreement row as of 2026-08-16 (onboarded since this item was last checked), scope enforcement itself still holds (each entity sees only its own row); V6 KPIs are no longer all-zero -- 1 real advance now exists and displays correctly with correct cents/100 scaling. STILL NOT verified this pass: V2 (+Add new picker DOM), V4 full canonical agreement check beyond what's covered above, V7 (full nav-leaves sweep), V8 (RLS FORCE re-scan across all 7 factoring.* tables), and the TRANSP-context factor profile browser click (still unverified \u2014 same gap noted in 08-10). Leaving UNVERIFIED/prod_verified:false rather than rubber-stamping; a future full click-through pass (both entities, V1-V8 explicitly) should close this cleanly.",
       "pr": null,
-      "prod_verified": true
+      "prod_verified": false,
+      "unverified_reason": "GUARD_PARTIAL_2026-08-29_V2_V4TRANSP_V7_V8_NOT_RECHECKED"
     }
   ],
   "pass_count": 7,

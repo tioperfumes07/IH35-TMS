@@ -90,7 +90,7 @@ const voidCustomerQualityEventBodySchema = z.object({
 const DISPUTE_TYPES = new Set(["lumper_dispute", "detention_dispute", "tonu_dispute", "rate_dispute", "damage_claim"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

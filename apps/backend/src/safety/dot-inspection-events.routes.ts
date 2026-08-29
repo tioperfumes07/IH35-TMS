@@ -23,7 +23,7 @@ const followUpBodySchema = z.object({
 });
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

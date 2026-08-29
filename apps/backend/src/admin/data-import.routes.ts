@@ -46,7 +46,7 @@ export async function registerDataImportAdminRoutes(app: FastifyInstance) {
   app.get<{ Params: { entity_type: string } }>(
     "/api/v1/admin/data-import/template/:entity_type",
     async (req: FastifyRequest<{ Params: { entity_type: string } }>, reply: FastifyReply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       if (!allowDataImport(req.user?.role)) return reply.code(403).send({ error: "forbidden" });
 
       const slug = req.params.entity_type.trim().toLowerCase();
@@ -68,7 +68,7 @@ export async function registerDataImportAdminRoutes(app: FastifyInstance) {
   );
 
   app.post("/api/v1/admin/data-import", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    if (!requireAuth(req, reply)) return;
+    if (!requireAuth(req, reply)) return reply;
     if (!allowDataImport(req.user?.role)) return reply.code(403).send({ error: "forbidden" });
 
     const q = req.query as Record<string, string | undefined>;

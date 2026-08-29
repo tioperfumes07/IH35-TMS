@@ -66,7 +66,7 @@ const updateAssetBodySchema = z
 type AuthUser = { uuid: string; role: string };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply): AuthUser | null {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user as AuthUser;
 }
 

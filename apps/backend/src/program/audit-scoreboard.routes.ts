@@ -783,7 +783,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     "/api/v1/program/audit-scoreboard",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       try {
         const { data, source } = await loadScoreboardPayload();
         const generatedAt = typeof data.meta?.generatedAt === "string" ? data.meta.generatedAt : null;
@@ -824,7 +824,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     "/api/v1/program/audit-scoreboard/recent-activity",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       const recent = await loadRecentActivityFromGitHub(10);
       reply.header("cache-control", "public, max-age=60");
       return reply.send({
@@ -841,7 +841,7 @@ export async function registerAuditScoreboardRoutes(app: FastifyInstance) {
     "/api/v1/program/module-matrix",
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
-      if (!requireAuth(req, reply)) return;
+      if (!requireAuth(req, reply)) return reply;
       const clientIp = resolveClientIp(req as never);
       if (matrixThrottleExceeded(clientIp, Date.now())) {
         reply.header("retry-after", "60");

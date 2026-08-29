@@ -725,6 +725,11 @@ export function ModuleMatrixSystemView() {
           <b>Scoreboard is computing in the background — the API is up.</b> You are seeing Required
           cell counts only until the worker finishes. This is not a 502 and not launch truth.
         </div>
+      ) : httpErr?.status === 401 ? (
+        <div className="banner" data-testid="module-matrix-system-session-expired" role="alert">
+          <b>SESSION EXPIRED — sign in again.</b> The scoreboard API returned HTTP 401. This is not an
+          outage and not launch truth. Boxes 2/3/4 are hidden until you have a session.
+        </div>
       ) : fallbackFeed || (isFetched && isError && !hasLastGoodNumbers) ? (
         <div className="banner" data-testid="module-matrix-system-unavailable">
           <b>API FEED UNAVAILABLE — showing Required skeleton.</b> Could not load{" "}

@@ -23,7 +23,7 @@ export const idParamSchema = z.object({
 export const catalogCodeSchema = z.string().trim().regex(/^[A-Z][A-Z0-9-]+$/);
 
 export function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 

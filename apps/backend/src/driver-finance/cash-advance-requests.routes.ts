@@ -52,7 +52,7 @@ function sendValidationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
+  if (!requireAuth(req, reply)) return reply;
   return req.user;
 }
 
