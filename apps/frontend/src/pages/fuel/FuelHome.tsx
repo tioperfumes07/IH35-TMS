@@ -41,10 +41,12 @@ export function FuelFraudAlertsKpiCard() {
         <FuelFraudBadge hasOpenCritical={openCritical > 0} />
       </div>
       <div className={`text-lg font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
-        {openCritical}
+        {/* GO-0027-HOME-F: a failed fetch must never render as "0 Open Fraud Alerts" -- matches
+            the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract. */}
+        {summaryQuery.isError ? "—" : openCritical}
       </div>
       <div className="text-[10px] text-gray-600">
-        {summaryQuery.data?.open_total ?? 0} total open · CAP-11 fraud monitor
+        {summaryQuery.isError ? "Unable to load" : `${summaryQuery.data?.open_total ?? 0} total open`} · CAP-11 fraud monitor
       </div>
     </Link>
   );
