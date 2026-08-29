@@ -24,7 +24,7 @@ const paramsSchema = z.object({ driverId: z.string().uuid() });
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
 export async function registerDriverDispatchEligibilityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/drivers/:driverId/eligibility", async (req, reply) => {
+  app.get("/api/v1/dispatch/drivers/:driverId/eligibility", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

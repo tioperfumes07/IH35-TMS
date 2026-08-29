@@ -23,7 +23,7 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
    * GET /api/v1/dispatch/loads/:loadId/profitability
    * Per-load profitability breakdown. Read-only; all from existing tables.
    */
-  app.get("/api/v1/dispatch/loads/:loadId/profitability", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/profitability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -52,7 +52,7 @@ export async function registerLoadProfitabilityRoutes(app: FastifyInstance) {
    * GET /api/v1/reports/trip-profitability
    * Company Settlement / Trip Profitability report. Aggregates NB+SB per settlement.
    */
-  app.get("/api/v1/reports/trip-profitability", async (req, reply) => {
+  app.get("/api/v1/reports/trip-profitability", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 

@@ -27,7 +27,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/analytics/late-arrivals", async (req, reply) => {
+  app.get("/api/v1/dispatch/analytics/late-arrivals", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -41,7 +41,7 @@ export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
     );
   });
 
-  app.get("/api/v1/dispatch/analytics/late-arrivals/driver/:uuid", async (req, reply) => {
+  app.get("/api/v1/dispatch/analytics/late-arrivals/driver/:uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ uuid: z.string().uuid() }).safeParse(req.params ?? {});
@@ -60,7 +60,7 @@ export async function registerLateArrivalAnalyticsRoutes(app: FastifyInstance) {
     return detail;
   });
 
-  app.get("/api/v1/dispatch/analytics/late-arrivals/customer/:uuid", async (req, reply) => {
+  app.get("/api/v1/dispatch/analytics/late-arrivals/customer/:uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ uuid: z.string().uuid() }).safeParse(req.params ?? {});

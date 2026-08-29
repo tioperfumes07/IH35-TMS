@@ -351,7 +351,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get("/api/v1/dispatch/loads/:loadId/pod-bol", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/pod-bol", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -388,7 +388,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     return summary;
   });
 
-  app.post("/api/v1/dispatch/loads/:loadId/bol/generate", async (req, reply) => {
+  app.post("/api/v1/dispatch/loads/:loadId/bol/generate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -410,7 +410,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/dispatch/loads/:loadId/bol.pdf", async (req, reply) => {
+  app.get("/api/v1/dispatch/loads/:loadId/bol.pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -429,7 +429,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     return reply.send(rendered.pdfBuffer);
   });
 
-  app.get("/api/v1/dispatch/pod-documents/:id/download/:asset", async (req, reply) => {
+  app.get("/api/v1/dispatch/pod-documents/:id/download/:asset", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -464,7 +464,7 @@ export async function registerDispatchPodBolRoutes(app: FastifyInstance) {
     return signed;
   });
 
-  app.get("/api/v1/dispatch/bol-documents/:id/download", async (req, reply) => {
+  app.get("/api/v1/dispatch/bol-documents/:id/download", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!officeDispatchRoles(user.role)) return reply.code(403).send({ error: "forbidden" });

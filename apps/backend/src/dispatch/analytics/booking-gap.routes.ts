@@ -17,7 +17,7 @@ const periodSchema = z.object({
 });
 
 export async function registerBookingGapRoutes(app: FastifyInstance) {
-  app.get("/api/v1/dispatch/analytics/booking-gap", async (req, reply) => {
+  app.get("/api/v1/dispatch/analytics/booking-gap", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -35,7 +35,7 @@ export async function registerBookingGapRoutes(app: FastifyInstance) {
     return reply.send({ data: result });
   });
 
-  app.get("/api/v1/dispatch/analytics/booking-gap/dispatcher/:dispatcherId", async (req, reply) => {
+  app.get("/api/v1/dispatch/analytics/booking-gap/dispatcher/:dispatcherId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
