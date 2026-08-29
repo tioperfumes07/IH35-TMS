@@ -10,7 +10,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerSamsaraLivePositionRoutes(app: FastifyInstance) {
-  app.get("/api/integrations/samsara/positions/active-loads", async (req, reply) => {
+  app.get("/api/integrations/samsara/positions/active-loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -21,7 +21,7 @@ export async function registerSamsaraLivePositionRoutes(app: FastifyInstance) {
     return { positions: rows };
   });
 
-  app.get("/api/integrations/samsara/positions/unit/:unit_uuid", async (req, reply) => {
+  app.get("/api/integrations/samsara/positions/unit/:unit_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = z.object({ unit_uuid: z.string().uuid() }).safeParse(req.params ?? {});
@@ -33,7 +33,7 @@ export async function registerSamsaraLivePositionRoutes(app: FastifyInstance) {
     return { position: row };
   });
 
-  app.get("/api/integrations/samsara/positions/driver/self", async (req, reply) => {
+  app.get("/api/integrations/samsara/positions/driver/self", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const q = z.object({ operating_company_id: z.string().uuid(), unit_uuid: z.string().uuid() }).safeParse(req.query ?? {});

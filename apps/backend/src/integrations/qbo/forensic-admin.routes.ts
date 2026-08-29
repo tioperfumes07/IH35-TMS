@@ -198,11 +198,11 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get("/api/v1/admin/qbo-forensic/batch/:batchId", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/batch/:batchId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return getBatchById(req, reply, req.params, req.query);
   });
 
-  app.get("/api/v1/admin/qbo-forensic/batches/:batchId", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/batches/:batchId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     return getBatchById(req, reply, req.params, req.query);
   });
 
@@ -231,7 +231,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return { batches: rows };
   });
 
-  app.post("/api/v1/admin/qbo-forensic/batch/:batchId/generate-report", async (req, reply) => {
+  app.post("/api/v1/admin/qbo-forensic/batch/:batchId/generate-report", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -243,7 +243,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return { r2_url: report.r2_key, filename: report.filename };
   });
 
-  app.get("/api/v1/admin/qbo-forensic/anomalies", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/anomalies", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -263,7 +263,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return { anomalies: rows };
   });
 
-  app.post("/api/v1/admin/qbo-forensic/anomaly/:id/review", async (req, reply) => {
+  app.post("/api/v1/admin/qbo-forensic/anomaly/:id/review", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -309,7 +309,7 @@ export async function registerQboForensicAdminRoutes(app: FastifyInstance) {
     return { ok: true, id: updated.id };
   });
 
-  app.get("/api/v1/admin/qbo-forensic/batches/:batchId/audit-log", async (req, reply) => {
+  app.get("/api/v1/admin/qbo-forensic/batches/:batchId/audit-log", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });

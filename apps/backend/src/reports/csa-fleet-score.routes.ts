@@ -9,7 +9,7 @@ function nullableNumber(value: unknown): number | null {
 }
 
 export async function registerCsaFleetScoreRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/csa-fleet-score", async (req, reply) => {
+  app.get("/api/v1/reports/csa-fleet-score", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});

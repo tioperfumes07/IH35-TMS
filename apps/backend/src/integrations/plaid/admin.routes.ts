@@ -38,7 +38,7 @@ async function loadBankAccountContext(bankAccountId: string) {
 }
 
 export async function registerPlaidAdminRoutes(app: FastifyInstance) {
-  app.post("/api/v1/admin/plaid/sync-account", async (req, reply) => {
+  app.post("/api/v1/admin/plaid/sync-account", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(user.role)) return reply.code(403).send({ error: "forbidden" });

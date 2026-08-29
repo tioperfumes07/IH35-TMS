@@ -37,7 +37,7 @@ function readEncryptedToken(config: Record<string, unknown> | null): Buffer | nu
 }
 
 export async function registerSamsaraStatsProbeRoutes(app: FastifyInstance) {
-  app.get("/api/v1/integrations/samsara/stats-probe", async (req, reply) => {
+  app.get("/api/v1/integrations/samsara/stats-probe", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentOfficeAdmin(req, reply);
     if (!user) return;
     const parsed = querySchema.safeParse(req.query ?? {});

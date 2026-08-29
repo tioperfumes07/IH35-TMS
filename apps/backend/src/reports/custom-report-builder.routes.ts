@@ -61,11 +61,11 @@ function mapDefinition(row: Record<string, unknown>) {
 }
 
 export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/custom-definitions/fields", async (_req, reply) => {
+  app.get("/api/v1/reports/custom-definitions/fields", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (_req, reply) => {
     return { fields: AVAILABLE_FIELDS };
   });
 
-  app.get("/api/v1/reports/custom-definitions", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get("/api/v1/reports/custom-definitions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -89,7 +89,7 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     return { rows: rows.map(mapDefinition) };
   });
 
-  app.post("/api/v1/reports/custom-definitions", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/reports/custom-definitions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const parsed = createBodySchema.safeParse(req.body ?? {});
@@ -123,7 +123,7 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     return reply.code(201).send(mapDefinition(row));
   });
 
-  app.patch("/api/v1/reports/custom-definitions/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch("/api/v1/reports/custom-definitions/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -167,7 +167,7 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     return mapDefinition(row);
   });
 
-  app.delete("/api/v1/reports/custom-definitions/:id", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.delete("/api/v1/reports/custom-definitions/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
@@ -191,7 +191,7 @@ export async function registerCustomReportBuilderRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.post("/api/v1/reports/custom-definitions/:id/run", async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post("/api/v1/reports/custom-definitions/:id/run", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     const params = idParamsSchema.safeParse(req.params ?? {});

@@ -13,7 +13,7 @@ const suggestionsParamsSchema = z.object({
 });
 
 export async function registerDeadheadRoutes(app: FastifyInstance) {
-  app.get("/api/v1/reports/deadhead", async (req, reply) => {
+  app.get("/api/v1/reports/deadhead", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -27,7 +27,7 @@ export async function registerDeadheadRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.get("/api/v1/reports/deadhead/suggestions/:unit_id", async (req, reply) => {
+  app.get("/api/v1/reports/deadhead/suggestions/:unit_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 
@@ -44,7 +44,7 @@ export async function registerDeadheadRoutes(app: FastifyInstance) {
     return payload;
   });
 
-  app.post("/api/v1/reports/deadhead/refresh", async (req, reply) => {
+  app.post("/api/v1/reports/deadhead/refresh", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
 

@@ -68,7 +68,7 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
     return "https://app.ih35dispatch.com";
   }
 
-  app.get("/api/v1/integrations/qbo/oauth-start", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/oauth-start", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -100,7 +100,7 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
     return reply.redirect(url);
   });
 
-  app.get("/api/v1/integrations/qbo/oauth-callback", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/oauth-callback", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const query = callbackQuerySchema.safeParse(req.query ?? {});
     const rawQuery = (req.query ?? {}) as Record<string, unknown>;
     req.log.info(
@@ -225,7 +225,7 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
     }
   });
 
-  app.post("/api/v1/integrations/qbo/disconnect/:operating_company_id", async (req, reply) => {
+  app.post("/api/v1/integrations/qbo/disconnect/:operating_company_id", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });
@@ -241,7 +241,7 @@ export async function registerQboOAuthRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get("/api/v1/integrations/qbo/status", async (req, reply) => {
+  app.get("/api/v1/integrations/qbo/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (user.role !== "Owner") return reply.code(403).send({ error: "forbidden" });

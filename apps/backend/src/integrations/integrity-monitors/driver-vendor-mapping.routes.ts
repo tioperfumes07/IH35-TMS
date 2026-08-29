@@ -14,7 +14,7 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyInstance) {
-  app.get("/api/integrations/integrity/driver-vendor-mapping", async (req, reply) => {
+  app.get("/api/integrations/integrity/driver-vendor-mapping", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -25,7 +25,7 @@ export async function registerDriverVendorMappingIntegrityRoutes(app: FastifyIns
     return { snapshot: latestSnapshotsByCompany.get(query.data.operating_company_id) ?? null };
   });
 
-  app.post("/api/integrations/integrity/driver-vendor-mapping/scan", async (req, reply) => {
+  app.post("/api/integrations/integrity/driver-vendor-mapping/scan", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const body = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.body ?? {});
