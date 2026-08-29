@@ -10,6 +10,7 @@ export type OptimalDriversPanelProps = {
   operatingCompanyId: string;
   selectedDriverId: string;
   onSelectDriver: (driverId: string) => void;
+  onSelectedDriverLabelChange?: (label: string | null) => void;
   /** Book-load preview when load row does not exist yet. */
   preview?: {
     pickup_city?: string;
@@ -31,6 +32,7 @@ export function OptimalDriversPanel({
   operatingCompanyId,
   selectedDriverId,
   onSelectDriver,
+  onSelectedDriverLabelChange,
   preview,
   driversOverride,
   disabled,
@@ -111,11 +113,15 @@ export function OptimalDriversPanel({
                   selected ? "bg-slate-100" : "bg-white hover:bg-slate-50"
                 } ${blocked ? "cursor-not-allowed opacity-50" : ""}`}
                 onClick={() => {
-                  if (!rowDisabled) onSelectDriver(d.driver_id);
+                  if (!rowDisabled) {
+                    onSelectedDriverLabelChange?.(d.display_name);
+                    onSelectDriver(d.driver_id);
+                  }
                 }}
                 onKeyDown={(event) => {
                   if (!rowDisabled && (event.key === "Enter" || event.key === " ")) {
                     event.preventDefault();
+                    onSelectedDriverLabelChange?.(d.display_name);
                     onSelectDriver(d.driver_id);
                   }
                 }}
