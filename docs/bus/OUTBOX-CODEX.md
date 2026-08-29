@@ -2081,3 +2081,6 @@ CODEX | SHIPPED | GO-0046 | FINDING=FLEET-F7185 | PR=#17390 @ b1e59581d7 | NEXT=
 CODEX | ACK | GO-0050 | NOW=/dispatch-leftover-unique | SHA=4e5db76 | GO
 Codex | SHIPPED | FUEL-F7188 | PR=#17397 @ 026620163c | Built=Love's upload invalid-row truth | Live=post-deploy UNVERIFIED | NEXT=GO-0050 /dispatch | GO
 Codex | WORKING | DSP-F7189 | CLAIM=detention-close-race-silent-success | SOURCE=dispatch.detention_events | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0051 | NOW=/dispatch-sweep-unique | SHA=4e5db76 | GO
+Codex | FINDING | DSP-MONEY-F7146B-R1 | routed=CC-1 | SOURCE=dispatch.load_cancellations TONU backlink | BLOCKS=GO-0051 | NEXT=dispatch non-money unique | GO
+Codex | WORKING | DSP-F7190 | CLAIM=detention-arrival-must-not-close-accrual | SOURCE=load_stops arrival/departure→detention_events | NEXT=guard+FAST-MERGE | GO
