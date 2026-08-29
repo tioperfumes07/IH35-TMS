@@ -6711,5 +6711,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-invoice-source-load-uniqueness-race"
+  },
+  "10005": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-tonu-invoice-line-zero-rows-check"
   }
 }
