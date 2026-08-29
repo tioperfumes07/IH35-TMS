@@ -25,7 +25,7 @@ if (process.argv.includes("--selftest")) {
     [route.replace(/,\n\s*`fuel:recommendation:\$\{companyId\}:\$\{params\.data\.id\}:driver-notice`/, ""), api, page],
     [route.replace("if (enqueueResult.enqueued) {", "if (true) {"), api, page],
     [route.replace(': ("already_queued" as const)', ': ("queued" as const)'), api, page],
-    [route.replace(" : null,", " : new Date().toISOString(),"), api, page],
+    [route.replace("queued_at: enqueueResult.enqueued ? new Date().toISOString() : null,", "queued_at: new Date().toISOString(),"), api, page],
     [route, api.replace('"queued" | "already_queued"', '"queued"'), page],
     [route, api, page.replace("Recommendation is already queued", "Recommendation queued for delivery")],
   ];
