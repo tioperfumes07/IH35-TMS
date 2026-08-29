@@ -57,9 +57,10 @@ export function run() {
   assert(threadLeaf?.route_hint === "/program/legacy-board", "program.panel.thread must point at its real Program Board route", errors);
   assert(threadLeaf?.surface_path === "pages/program/ProgramBoardPage.tsx", "program.panel.thread must name its real consumer", errors);
 
-  // S03: module-completion page surfaces generated manifests.
-  assert(moduleComp.includes("MODULE_COMPLETION"), "ModuleCompletionPage must import MODULE_COMPLETION", errors);
+  // S03: module-completion page fetches API manifests (not the gitignored Vite bake).
+  assert(moduleComp.includes("/api/v1/program/module-completion"), "ModuleCompletionPage must fetch /api/v1/program/module-completion", errors);
   assert(moduleComp.includes("buildRows"), "ModuleCompletionPage must build rows from manifests", errors);
+  assert(!/import \{\s*MODULE_COMPLETION,/.test(moduleComp), "ModuleCompletionPage must not import baked MODULE_COMPLETION", errors);
 
   // S04: program tracker renders per-block status from registry.
   assert(tracker.includes("getProgramTracker"), "ProgramTrackerPage must fetch program tracker", errors);

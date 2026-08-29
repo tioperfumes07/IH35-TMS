@@ -38,10 +38,10 @@ Until Cursor stamps CERTIFIED, these are the hops. Empty unique-FINDING → next
 
 | Seat | Port | Current | Hops |
 |------|------|---------|------|
-| Cursor | 9222 | Lead **unless** `docs/bus/LEAD-SEAT.md` is `CC-1` | GO-2310 + leftover. Census every turn (`LEAD-CONTRACT.md`). Skip #15546. Nobody kick unless gate. |
-| CC-1 | 9223 | money | GO-2237 **NOW=#3 expense 57cabbab**. Then 4–35. STOP `/425c`. Never `trigger_deploy`. |
-| CC-2 | 9224 | leftover POST | GO-2237 **NOW=#1 `/cash-flow` walk** then 2–35. Do not remake #15947 #16002. |
-| CC-3 | 9225 | FE | GO-2237 **NOW=#1 matrix lists/legal** then 2–35. #22 waits money #6. |
-| Codex | 9226 | FE | GO-2237 **NOW=#1 hop.assign UI** then 2–35. Never restamp U14 |
-| Cascade | audit | **LIVE WALK now** | GO-2237 35 walks. Unique FINDING. No U14 restamp |
-| Devin-A | audit | **LIVE WALK** | GO-2237 35 walks. Not PARKED |
+| Cursor | 9222 | Lead **unless** `docs/bus/LEAD-SEAT.md` is `CC-1` | GO-0025 runtime /program + U6 honesty. Census. Skip #15546. Nobody kick unless gate. |
+| CC-1 | 9223 | money | GO-0025 **NOW=ACCT-SURF-02 then ACCT-SURF-04**. Never `trigger_deploy`. |
+| CC-2 | 9224 | leftover POST | GO-0025 **NOW=ACCT-R-04** Render env read-only. |
+| CC-3 | 9225 | FE | GO-0025 **NOW=banking USMCA prod-verify**. BANK-CTRL-01 UNVERIFIED. |
+| Codex | 9226 | FE | GO-0025 **NOW=DISP-S19/26/34/35/36**. Never restamp U14 |
+| Cascade | audit | unique FINDING | GO-0025 live healthz only. No U14 restamp |
+| Devin-A | audit | unique FINDING | GO-0025. Vendors = DEVIN paste |

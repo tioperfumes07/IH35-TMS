@@ -7,6 +7,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { getProgramBoard, insertOwnerNote } from "./program-board.service.js";
 import { computeProgramTrackerLive } from "./program-tracker.service.js";
+import { loadModuleCompletionBoard } from "./module-completion-live.service.js";
 
 const noteSchema = z.object({
   block_id: z.string().trim().min(1).max(200).nullish(),
@@ -65,4 +66,21 @@ export async function registerProgramBoardRoutes(app: FastifyInstance) {
         .send({ error: "tracker_unavailable", message: "Program tracker source (phase manifest / block registry) is unreadable in this deploy." });
     }
   });
+
+  app.get(
+    "/api/v1/program/module-completion",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      if (!requireAuth(req, reply)) return;
+      try {
+        return reply.send(await loadModuleCompletionBoard());
+      } catch (err) {
+        req.log.error({ err }, "module-completion board read failed");
+        return reply.code(503).send({
+          error: "module_completion_unavailable",
+          message: "Module completion manifests are unreadable in this API process.",
+        });
+      }
+    }
+  );
 }

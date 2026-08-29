@@ -1,7 +1,7 @@
-# FEED · CC-2 · GO-0023
+# FEED · CC-2 · GO-0025
 
 `git pull --ff-only origin main`
-ACK: `CC-2 | ACK | GO-0023 | NOW=ACCT-R-04 | SHA=4e5db76 | GO`
-Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0023.md`
+ACK: `CC-2 | ACK | GO-0025 | NOW=ACCT-R-04 | SHA=<healthz> | GO`
+Packet: `docs/lockdown/PASTE-ALL-SEATS-GO-2026-08-28-0025.md`
 
-**NOW:** `ACCT-R-04` G4 deploy smoke — fixed unit env + test-owner excluded from prod listings. Prove live on **`4e5db76`**. Never GL. Never `trigger_deploy`. Do not remake TASK RLS.
+**NOW:** `ACCT-R-04` G4 smoke env on Render service **IH35-TMS**. Read-only. `sync:false` in render.yaml. Never `trigger_deploy`.

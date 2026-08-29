@@ -1,7 +1,7 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": true,
+  "complete": false,
   "as_of": "2026-08-09T00:59:06.244Z",
   "live_sha": "b93b482",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
@@ -19,8 +19,8 @@
         "VERIFY-6"
       ],
       "spec": "Vendors list · ITEM-03B active_company_only",
-      "status": "PASS",
-      "evidence": "2026-08-03 Neon lucia br-fancy-credit-akjnd07a: TRANSP active=564 inactive=387 · TRK=1873 · USMCA=4 (deactivated_at IS NULL). Vendors.tsx listVendors + default Active filter. Guard verify-vend-s01-roster-active-filter + step 2236. (Auditor 563 was prior snapshot; live lucia now 564.)",
+      "status": "UNVERIFIED",
+      "evidence": "STALE 2026-08-03 said USMCA=4. LIVE 2026-08-28 Neon lucia br-fancy-credit-akjnd07a (visible=n_live_tup=2973): TRANSP total=958 active=571 inactive=387 · TRK total=1873 active=1873 · USMCA total=142 active=123 inactive=19. Roster count does not match the Aug 3 stamp. Re-verify UI vs Neon before PASS.",
       "pr": null,
       "prod_verified": false
     },
@@ -108,7 +108,7 @@
       "prod_verified": false
     }
   ],
-  "pass_count": 7,
+  "pass_count": 0,
   "total_count": 7,
-  "progress": "7 of 7"
+  "progress": "0 of 7"
 }

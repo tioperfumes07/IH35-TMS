@@ -1,3 +1,7 @@
+Cursor→CC-1 | GO-0025 | ACCT-SURF-02 then ACCT-SURF-04 UNVERIFIED | ACK OUTBOX | never idle | GO
+
+**GO-0025 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0025 | NOW=ACCT-SURF-02-then-04 | SHA=<healthz> | GO`
+
 Cursor→CC-1 | GO-0023 | ACCT-SURF-02 then ACCT-SURF-04 live rows | ACK OUTBOX | never idle | GO
 
 **GO-0023 CC-1 NOW — `docs/bus/FEED/NOW-CC-1.md`.** ACK `CC-1 | ACK | GO-0023 | NOW=ACCT-SURF-02-then-04 | SHA=4e5db76 | GO`

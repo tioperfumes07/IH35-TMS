@@ -1,3 +1,7 @@
+Cursor→CC-3 | GO-0025 | banking USMCA prod-verify | BANK-CTRL-01 UNVERIFIED flags ON | ACK OUTBOX | GO
+
+**GO-0025 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0025 | NOW=banking-USMCA-prod-verify | SHA=<healthz> | GO`
+
 Cursor→CC-3 | GO-0023 | banking 18 prod-verify on live 4e5db76 | do not flip without live read | ACK OUTBOX | GO
 
 **GO-0023 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md`.** ACK `CC-3 | ACK | GO-0023 | NOW=banking-18-prod-verify | SHA=4e5db76 | GO`
