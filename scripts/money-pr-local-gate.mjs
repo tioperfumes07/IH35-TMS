@@ -68,6 +68,7 @@ const STEPS = [
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).
   ["verify-prod-verified-live-binding", "scripts/verify-prod-verified-live-binding.mjs"],
+  ["verify-fuel-planner-source-availability", "scripts/verify-fuel-planner-source-availability.mjs"],
 
   // ── GLOBAL FE COMPONENT STANDARDS (added 2026-08-05, CC-3) ──────────────────────────────────
   // WHY: this gate covered money/DoD/palette/EntityLink but NOT the shared-component ratchets, so a

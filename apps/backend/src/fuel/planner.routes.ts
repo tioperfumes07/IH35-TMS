@@ -92,6 +92,8 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      const plannerSourceAvailable = await hasRelation(client, "fuel.route_recommendations");
+      const complianceSourceAvailable = await hasRelation(client, "fuel.relay_matches");
       const activeRes = await client.query<{ count: number }>(
         `
           SELECT count(*)::int AS count
@@ -153,12 +155,14 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       );
 
       return {
-        active_plans: Number(activeRes.rows[0]?.count ?? 0),
+        planner_source_available: plannerSourceAvailable,
+        compliance_source_available: complianceSourceAvailable,
+        active_plans: plannerSourceAvailable ? Number(activeRes.rows[0]?.count ?? 0) : null,
         mtd_spend: Number(spendRes.rows[0]?.spend ?? 0),
         avg_price_per_gallon: Number(spendRes.rows[0]?.avg_price ?? 0),
-        mtd_savings: Number(savingsRes.rows[0]?.savings ?? 0),
-        compliance_pct: Number(complianceRes.rows[0]?.pct ?? 0),
-        fleet_mpg: Number(mpgRes.rows[0]?.mpg ?? 0),
+        mtd_savings: plannerSourceAvailable ? Number(savingsRes.rows[0]?.savings ?? 0) : null,
+        compliance_pct: complianceSourceAvailable ? Number(complianceRes.rows[0]?.pct ?? 0) : null,
+        fleet_mpg: plannerSourceAvailable ? Number(mpgRes.rows[0]?.mpg ?? 0) : null,
         loves_sync_at: lovesSyncRes.rows[0]?.synced_at ?? null,
       };
     });
@@ -174,7 +178,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const { operating_company_id: companyId, limit, offset } = query.data;
 
     const result = await withCompanyScope(authUser.uuid, companyId, async (client) => {
-      if (!(await hasRelation(client, "views.fuel_planner_active_routes"))) return { routes: [], total_count: 0 };
+      const sourceAvailable = await hasRelation(client, "fuel.route_recommendations");
+      if (!sourceAvailable || !(await hasRelation(client, "views.fuel_planner_active_routes"))) {
+        return { routes: [], total_count: null, source_available: false };
+      }
       const countRes = await client.query<{ total_count: number }>(
         `SELECT count(*)::int AS total_count FROM views.fuel_planner_active_routes WHERE operating_company_id = $1::uuid`,
         [companyId]
@@ -189,7 +196,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         `,
         [companyId, limit, offset]
       );
-      return { routes: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };
+      return { routes: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0), source_available: true };
     });
     return { ...result, limit, offset };
   });
@@ -322,6 +329,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const driverId = query.data.driver_id ?? null;
 
     const summary = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      const sourceAvailable = await hasRelation(client, "fuel.relay_matches");
       const fleetRes = await client.query<{ pct: number; total_recs: number }>(
         `
           SELECT
@@ -350,8 +358,9 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         [companyId, driverId]
       );
       return {
-        fleet_pct_followed: Number(fleetRes.rows[0]?.pct ?? 0),
-        fleet_total_recommendations: Number(fleetRes.rows[0]?.total_recs ?? 0),
+        source_available: sourceAvailable,
+        fleet_pct_followed: sourceAvailable ? Number(fleetRes.rows[0]?.pct ?? 0) : null,
+        fleet_total_recommendations: sourceAvailable ? Number(fleetRes.rows[0]?.total_recs ?? 0) : null,
         per_driver: perDriverRes.rows,
       };
     });
@@ -366,6 +375,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const summary = await withCompanyScope(authUser.uuid, companyId, async (client) => {
+      const sourceAvailable = await hasRelation(client, "fuel.relay_matches");
       const fleetRes = await client.query<{ savings_ytd: number; lost_savings_ytd: number }>(
         `
           SELECT
@@ -392,9 +402,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         [companyId]
       );
       return {
-        fleet_savings_ytd: Number(fleetRes.rows[0]?.savings_ytd ?? 0),
-        fleet_lost_savings_ytd: Number(fleetRes.rows[0]?.lost_savings_ytd ?? 0),
-        top_driver: topRes.rows[0] ?? null,
+        source_available: sourceAvailable,
+        fleet_savings_ytd: sourceAvailable ? Number(fleetRes.rows[0]?.savings_ytd ?? 0) : null,
+        fleet_lost_savings_ytd: sourceAvailable ? Number(fleetRes.rows[0]?.lost_savings_ytd ?? 0) : null,
+        top_driver: sourceAvailable ? topRes.rows[0] ?? null : null,
       };
     });
     return summary;
