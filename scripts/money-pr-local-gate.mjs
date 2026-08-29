@@ -61,6 +61,9 @@ const STEPS = [
   ["verify-economic-columns-c25-c31-present", "scripts/verify-economic-columns-c25-c31-present.mjs"],
   ["verify-declared-is-rendered", "scripts/verify-declared-is-rendered.mjs"],
   ["verify-derived-artifact-freshness", "scripts/verify-derived-artifact-freshness.mjs"],
+  ["verify-generated-artifact-registry", "scripts/verify-generated-artifact-registry.mjs"],
+  ["verify-posting-hits-designed-accounts", "scripts/verify-posting-hits-designed-accounts.mjs"],
+  ["verify-reversal-symmetry", "scripts/verify-reversal-symmetry.mjs"],
   ["verify-module-progress-not-authored", "scripts/verify-module-progress-not-authored.mjs"],
   ["verify-no-bulk-test-void", "scripts/verify-no-bulk-test-void.mjs"],
   // 2026-08-29 — 275/285 prod_verified greens had no live_verified_sha (SYS-S07 proof case).

@@ -206,6 +206,12 @@ export function ScenarioTrackerHome() {
                   </div>
                 ) : null}
                 {hop.je ? <div className="st-je">{hop.je}</div> : null}
+                {hop.je_contract ? (
+                  <div className="st-je-contract">
+                    Contract: {hop.je_contract.lines.map((l) => `${l.side} ${l.account_role}`).join(" / ")}
+                    {hop.je_contract.must_balance ? " · DR=CR" : ""}
+                  </div>
+                ) : null}
                 {hop.spec_ref ? (
                   <div className="st-spec">
                     <b>Spec:</b> {hop.spec_ref}
@@ -238,6 +244,11 @@ export function ScenarioTrackerHome() {
               </div>
             ) : null}
             {item.je ? <div className="st-je">{item.je}</div> : null}
+            {item.je_contract ? (
+              <div className="st-je-contract">
+                Contract: {item.je_contract.lines.map((l) => `${l.side} ${l.account_role}`).join(" / ")}
+              </div>
+            ) : null}
             {links ? (
               <div className="st-lk">
                 <b>Links:</b> {links}
