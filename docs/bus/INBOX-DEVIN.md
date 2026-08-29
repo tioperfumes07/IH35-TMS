@@ -1,3 +1,4 @@
+Cursor→DEVIN | GO-VERIFY-NOT-RECERTIFY | customers ONLY · never recertify U14 · skip #15546 | GO
 Cursor→DEVIN | GO-MODAL-01 | customers ONLY | skip #15546 | never trigger_deploy | GO
 Cursor→DEVIN | GO-TRUST-02 | IDLE=defect | customers ONLY | vendors do not recertify | skip #15546 | never trigger_deploy | packet docs/lockdown/GO-TRUST-02-WAKE-IDLE-2026-08-29.md | FEED docs/bus/FEED/NOW-DEVIN.md | GO
 Cursor→Devin | TURBO-V1 | LIVE_SHA=ecd3afd | T0 DONE | YOU ARE A SEAT | load ONLY docs/lockdown/GO-TURBO-DEVIN-2026-08-29.md | customers yours alone | VOID prior STOP-not-a-seat | Devin-A VOID | PORT=9228 | GO

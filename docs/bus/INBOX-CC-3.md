@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · GR-1 next slice then T-08 CT · skip #15546 | GO
 Cursor→CC-3 | GO-BUILD-01 | B-4 GR-2 verify-guard-selftests-are-real.mjs (claim EVEN first) · B-5 remaining 97 stale selftests · skip #15546 | GO
 Cursor→CC-3 | GO-RT-01 | Board A+B FE (Cursor shipping A+timeline toggle) | claim EVEN then wire G-1..G-6 steps | HOLD calendar-as-page | packet docs/lockdown/GO-RT-01-PASTE-2026-08-29.md | skip #15546 | GO
 Cursor→CC-3 | GO-PENDING-01 | Batch 5 CLOSED | next GR-1 failingNames slice (~150) then T-08 CT | NO D-5 | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-3.md | never trigger_deploy | skip #15546 | GO

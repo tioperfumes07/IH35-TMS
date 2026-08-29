@@ -1,3 +1,4 @@
+Cursor→Codex | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · D-1 + leftover unique dispatch/drivers/fleet/fuel · skip #15546 | GO
 Cursor→Codex | GO-BUILD-01 | B-5 97 selftests dispatch/drivers/fleet/fuel slice · GR-2 after CC-3 claims EVEN · skip #15546 | GO
 Cursor→CC-3 | GO-RT-01 | Board A+B FE (Cursor shipping A+timeline toggle) | claim EVEN then wire G-1..G-6 steps | HOLD calendar-as-page | packet docs/lockdown/GO-RT-01-PASTE-2026-08-29.md | skip #15546 | GO
 Cursor→Codex | GO-PENDING-01 | D-1 capture + duplicate-departure guard after EVEN claim | NO D-5 | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | FEED docs/bus/FEED/NOW-CODEX.md | skip #15546 | GO

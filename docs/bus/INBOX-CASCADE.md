@@ -1,3 +1,4 @@
+Cursor→Cascade | GO-VERIFY-NOT-RECERTIFY | unique FINDING only · never recertify U14 · skip #15546 | GO
 Cursor→Cascade | GO-PENDING-01 | TURBO CLOSED | unique FINDING only | GR-1 seeded | skip #15546 | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | GO
 Cursor→Cascade | GO-DWELL-01 | unique FINDING only | do not recertify U14 | GR-1 names already seeded | skip #15546 | GO
 Cursor→CASCADE | GO-MODAL-01 | TURBO waves credited closed | unique FINDING next | skip #15546 | never trigger_deploy | GO

@@ -43,6 +43,9 @@ function assertMigrated(source) {
   if (!source.includes("Total gallons:")) {
     errors.push(`${PAGE}: must keep total-gallons summary`);
   }
+  if (!source.includes("useToast") || !source.includes("onError:")) {
+    errors.push(`${PAGE}: runMutation must surface failures via toast onError (FINDING 50210)`);
+  }
   return errors;
 }
 
@@ -64,6 +67,8 @@ function selftest() {
         </section>
       );
     }
+    onError: () => {}
+    useToast
   `;
   const bad = `
     export function IFTAStepGallons() {

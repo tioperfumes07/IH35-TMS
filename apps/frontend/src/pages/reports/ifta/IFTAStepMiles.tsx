@@ -3,6 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIftaPreparation, runIftaAggregateMiles } from "../../../api/ifta";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -23,6 +25,7 @@ function fmtNum(value: number, digits = 1) {
 
 export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const prepQuery = useQuery({
     queryKey: ["ifta-preparation", operatingCompanyId, preparationId],
     queryFn: () => getIftaPreparation(operatingCompanyId, preparationId),
@@ -34,6 +37,7 @@ export function IFTAStepMiles({ operatingCompanyId, preparationId, quarter, year
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ifta-preparation", operatingCompanyId, preparationId] });
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not aggregate IFTA miles"), "error"),
   });
 
   const rows = useMemo<StateMilesRow[]>(

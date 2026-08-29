@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { generateIftaCsv, getIftaPreparation, submitIftaPreparation } from "../../../api/ifta";
+import { useToast } from "../../../components/Toast";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type Props = {
   operatingCompanyId: string;
@@ -10,6 +12,7 @@ type Props = {
 
 export function IFTAStepCSVExport({ operatingCompanyId, preparationId, quarter, year }: Props) {
   const queryClient = useQueryClient();
+  const { pushToast } = useToast();
   const prepQuery = useQuery({
     queryKey: ["ifta-preparation", operatingCompanyId, preparationId],
     queryFn: () => getIftaPreparation(operatingCompanyId, preparationId),
@@ -21,6 +24,7 @@ export function IFTAStepCSVExport({ operatingCompanyId, preparationId, quarter, 
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ifta-preparation", operatingCompanyId, preparationId] });
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not generate IFTA CSV"), "error"),
   });
 
   const submitMutation = useMutation({
@@ -28,6 +32,7 @@ export function IFTAStepCSVExport({ operatingCompanyId, preparationId, quarter, 
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ifta-preparation", operatingCompanyId, preparationId] });
     },
+    onError: (error) => pushToast(userFacingApiError(error, "Could not mark IFTA as submitted"), "error"),
   });
 
   const downloadUrl = csvMutation.data?.download_url ?? null;
