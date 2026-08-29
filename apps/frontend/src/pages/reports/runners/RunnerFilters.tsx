@@ -10,7 +10,8 @@ type Props = {
   filters: RunnerFilter[];
   values: Record<string, unknown>;
   onChange: (key: string, val: unknown) => void;
-  onRun: () => void;
+  /** Called with the currently-displayed (draft) filter values -- see REPORTS-RUNNER-DATEPICKER-SILENT-DISCARD. */
+  onRun: (effectiveValues: Record<string, unknown>) => void;
   isRunning: boolean;
 };
 
@@ -82,7 +83,7 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
         <div className="flex justify-end">
           <button
             type="button"
-            onClick={onRun}
+            onClick={() => onRun(values)}
             disabled={isRunning}
             className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -176,7 +177,15 @@ export function RunnerFilters({ filters, values, onChange, onRun, isRunning }: P
       <div className="flex justify-end">
         <button
           type="button"
-          onClick={onRun}
+          data-collapsed-filters-safe
+          onClick={() => {
+            // REPORTS-RUNNER-DATEPICKER-SILENT-DISCARD: `draft` is always the value the
+            // operator currently sees in the date fields (kept in sync with `values` while
+            // not dirty). Commit it before running so "Run report" always reflects what is
+            // on screen, whether or not the operator separately clicked "Apply" first.
+            if (staged.dirty) staged.apply();
+            onRun(draft);
+          }}
           disabled={requiredMissing || isRunning}
           className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
