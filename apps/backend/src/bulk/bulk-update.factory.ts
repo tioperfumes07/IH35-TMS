@@ -18,6 +18,37 @@ export const BULK_OPS_SOURCE_TAG = "BULK-OPS";
 export const DEFAULT_BULK_MAX_IDS = 200;
 export const FLEET_BULK_MAX_IDS = 100;
 
+export class FleetBulkTargetMismatchError extends Error {
+  readonly code = "fleet_bulk_target_mismatch";
+  constructor(
+    readonly requestedCount: number,
+    readonly matchedCount: number,
+    readonly stage: "pre_update" | "post_update"
+  ) {
+    super(`Fleet bulk update expected ${requestedCount} targets but matched ${matchedCount} during ${stage}`);
+    this.name = "FleetBulkTargetMismatchError";
+  }
+}
+
+export function assertExactFleetBulkTargetCount(
+  requestedCount: number,
+  matchedCount: number,
+  stage: "pre_update" | "post_update"
+) {
+  if (matchedCount !== requestedCount) {
+    throw new FleetBulkTargetMismatchError(requestedCount, matchedCount, stage);
+  }
+}
+
+export function sendFleetBulkTargetMismatch(reply: FastifyReply, error: FleetBulkTargetMismatchError) {
+  return reply.code(409).send({
+    error: error.code,
+    stage: error.stage,
+    requested_count: error.requestedCount,
+    matched_count: error.matchedCount,
+  });
+}
+
 const bulkQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
 });

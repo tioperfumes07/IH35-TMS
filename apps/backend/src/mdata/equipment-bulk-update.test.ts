@@ -28,6 +28,13 @@ describe("equipment bulk-update route", () => {
     expect(routes).toMatch(/too_many_equipment_ids/);
   });
 
+  it("rejects duplicates and fails partial scoped writes", () => {
+    expect(routes).toMatch(/equipment_ids must be unique/);
+    expect(routes).toMatch(/oldRes\.rows\.length, "pre_update"/);
+    expect(routes).toMatch(/updateRes\.rows\.length, "post_update"/);
+    expect(routes).toMatch(/sendFleetBulkTargetMismatch/);
+  });
+
   it("emits equipment.bulk_update audit rows per affected trailer", () => {
     expect(routes).toMatch(/equipment\.bulk_update/);
     expect(routes).toMatch(/appendLegacyFleetBulkAudit/);
