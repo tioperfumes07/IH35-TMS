@@ -70,13 +70,20 @@ function assertMigrated(src) {
 
 function selftest() {
   const columns = REQUIRED_LABELS.map((label) => `{ key: "${label}", label: "${label}" }`).join(",");
+  // RE-ANCHOR (found stale 2026-08-29): the real assertMigrated() check (line ~53) was re-anchored
+  // 2026-08-20 to require emptyText as a JSX expression container (emptyText={ternary}), matching
+  // HosTrackerSection.tsx's real per-driver-vs-general-empty ternary — but this "good" self-test
+  // fixture was never updated and still used the OLD plain-string prop shape
+  // (emptyText="No active drivers."), which the new check correctly rejects. The fixture itself was
+  // failing assertMigrated(), not the real page (the plain guard run passes clean) — the selftest
+  // was blind to real regressions because its own "known good" input was already red.
   const good = `
     import { ListErrorState } from "../../components/ListErrorState";
     import { ParityTable } from "../../components/parity/ParityTable";
     function buildDayStrip() {}
     const configuredColumns = [${columns}];
     <ListErrorState title="Couldn't load HOS roster" onRetry={() => void rosterQ.refetch()} />;
-    <ParityTable storageKey="compliance-hos-tracker" emptyText="No active drivers."
+    <ParityTable storageKey="compliance-hos-tracker" emptyText={effectiveDriverId ? "No HOS roster row for this driver on the selected day." : "No active drivers."}
       onRowClick={setSelectedDriver} />;
     selectedDriver ? (<div />) : null;
   `;

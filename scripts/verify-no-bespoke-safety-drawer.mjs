@@ -111,8 +111,13 @@ function selftest() {
     process.exit(1);
   }
 
+  // RE-ANCHOR (found stale 2026-08-29): CompanyViolationDetailDrawer.tsx's <ParityDrawer> tag was
+  // since reformatted onto multiple lines with more props (confirmDiscardOnClose, isDirty,
+  // onRegisterAttemptClose, footer) and its onClose handler renamed to handleClose — the exact
+  // single-line literal never matched again, so the revert was a silent no-op. Match the opening
+  // <ParityDrawer through its first `>` instead of the exact prop list/order/name.
   const reverted = original.replace(
-    /<ParityDrawer open onClose=\{onClose\} title=\{DRAWER_TITLE\} size="wide">/,
+    /<ParityDrawer\b[\s\S]*?>/,
     '<aside role="dialog" aria-modal="true" className="fixed right-0 top-0 z-50">'
   );
   if (reverted === original) {
