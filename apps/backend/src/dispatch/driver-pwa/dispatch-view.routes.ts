@@ -155,15 +155,18 @@ async function fetchDriverOwnedLoad(
         l.load_number,
         l.status::text,
         l.operating_company_id::text,
-        c.customer_name,
+        COALESCE(
+          c.customer_name,
+          mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)
+        ) AS customer_name,
         NULL::text AS special_instructions,
         pickup.site_contact_name AS pickup_contact_name,
         pickup.site_contact_phone AS pickup_contact_phone,
         delivery.site_contact_name AS delivery_contact_name,
         delivery.site_contact_phone AS delivery_contact_phone
       FROM mdata.loads l
-      JOIN mdata.customers c ON c.id = l.customer_id
-                          AND c.operating_company_id = l.operating_company_id
+      LEFT JOIN mdata.customers c ON c.id = l.customer_id
+                               AND c.operating_company_id = l.operating_company_id
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the load itself carries no entity predicate above,
       -- so bind it here via the driver acting on it — the JOIN only matches when the driver identified
       -- by $2 belongs to the SAME company as the load, which fails closed (no row) on a cross-entity FK.
