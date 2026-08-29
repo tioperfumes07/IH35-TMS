@@ -2300,3 +2300,4 @@ CODEX | WORKING | GUARD-F7310 | GO-0055 | CLAIM=Loves atomic scoped upsert guard
 CODEX | ACK+WORKING | GO-0055 | NOW=DRV-F7315 drivers:leave connectivity | SHA=14daeed | NEXT=guard+FAST-MERGE | GO
 CODEX | FINDING CORRECTED | HTTP-404-FUEL-5-R1 | canonical paths 401x5 · obsolete prose paths 404x5 | prod_verified=false | NEXT=guard+FAST-MERGE | GO
 CODEX | WORKING | SHA=14daeed | FUEL=false-404-claim-retracted-#17591 | NOW=DRV-F7317 protected-route stale DOM | NEXT=focused gate + FAST-MERGE | GO
+CODEX | FINDING+FIXED CODE | DRIVER-F7330 | real DQF counts were five dead disabled actions | PROVES=exact KPI→filtered canonical checklist+reset | KEEPS=registry guard selftest 7/7 | Live=post-deploy UNVERIFIED | NEXT=gate+FAST-MERGE | GO

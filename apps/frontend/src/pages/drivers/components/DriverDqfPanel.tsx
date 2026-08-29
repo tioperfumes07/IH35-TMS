@@ -15,9 +15,11 @@ type Props = {
   companyId: string;
   driverId: string;
   editable?: boolean;
+  focus?: "all" | "present" | "missing" | "expired" | "expiry_alerts";
+  onClearFocus?: () => void;
 };
 
-export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) {
+export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "all", onClearFocus }: Props) {
   const queryClient = useQueryClient();
   const [itemName, setItemName] = useState("");
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -68,6 +70,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
     },
   });
 
+  const visibleItems = (itemsQ.data ?? []).filter((item) => {
+    if (focus === "all") return true;
+    if (focus === "expiry_alerts") return item.expiry_pill === "red" || item.expiry_pill === "amber";
+    return item.status === focus;
+  });
+
   if (!driverId) {
     return (
       <div className="rounded-sm border border-dashed border-gray-300 p-4 text-center text-xs text-slate-500">
@@ -78,6 +86,14 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
 
   return (
     <div className="space-y-3">
+      {focus !== "all" ? (
+        <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          <span>Showing DQF items: {focus === "expiry_alerts" ? "expiry alerts" : focus}</span>
+          <button type="button" className="font-medium text-slate-900 underline" onClick={onClearFocus}>
+            Show all
+          </button>
+        </div>
+      ) : null}
       {editable ? (
         <form
           className="flex flex-wrap items-end gap-2"
@@ -126,12 +142,12 @@ export function DriverDqfPanel({ companyId, driverId, editable = true }: Props) 
         />
       ) : (
         <ParityTable<DriverQualificationFileItem>
-          rows={itemsQ.data ?? []}
+          rows={visibleItems}
           rowKey={(item) => item.id}
           loading={itemsQ.isLoading}
           storageKey="driver-dqf-checklist"
           tableTestId="driver-dqf-checklist-table"
-          emptyText={editable ? "No DQF items yet. Create the first checklist row above." : "No DQF items yet."}
+          emptyText={focus === "all" ? (editable ? "No DQF items yet. Create the first checklist row above." : "No DQF items yet.") : `No ${focus === "expiry_alerts" ? "expiry alert" : focus} DQF items.`}
           columns={[
             {
               key: "item_name",
