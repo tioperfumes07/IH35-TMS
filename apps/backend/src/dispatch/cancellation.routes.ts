@@ -32,6 +32,9 @@ function mapServiceError(error: unknown) {
   const code = String((error as Error)?.message ?? "");
   if (code === "E_CANCELLATION_NOTES_MIN_20") return { status: 400, payload: { error: code } };
   if (code === "E_CANCELLATION_CHARGE_REQUIRED_WHEN_BILLABLE") return { status: 400, payload: { error: code } };
+  if (code === "E_CANCELLATION_RECORD_WRITE_FAILED" || code === "E_CANCELLATION_LOAD_WRITE_FAILED") {
+    return { status: 409, payload: { error: code } };
+  }
   if (code === "E_LOAD_NOT_FOUND" || code === "E_NOT_FOUND") return { status: 404, payload: { error: code } };
   if (code === "E_REASON_NOT_FOUND") return { status: 400, payload: { error: code } };
   if (code === "E_OWNER_ONLY") return { status: 403, payload: { error: code } };

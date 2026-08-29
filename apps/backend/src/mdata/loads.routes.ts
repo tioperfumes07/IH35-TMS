@@ -1243,7 +1243,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
         // dispatch cancel route uses, so this path can never again flip a status without one.
         let cancellationRecordId: string | null = null;
         if (resolvedReason) {
-          const rec = await writeLoadCancellationRecord(client, {
+          const cancellationRecord = await writeLoadCancellationRecord(client, {
             operating_company_id: current.operating_company_id,
             load_id: row.id,
             reason_code: resolvedReason.reason_code,
@@ -1259,7 +1259,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             // of record, matching the standalone approveCancellation() flow's provenance.
             approved_by_user_id: authUser.uuid,
           });
-          cancellationRecordId = rec.rows[0]?.id ?? null;
+          cancellationRecordId = cancellationRecord.id;
         }
 
         await appendCrudAudit(
