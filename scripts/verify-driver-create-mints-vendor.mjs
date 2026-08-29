@@ -37,10 +37,6 @@ const LABEL = "verify-driver-create-mints-vendor";
  */
 const KNOWN_GAPS = new Map([
   [
-    "apps/backend/src/mdata/drivers-import.routes.ts",
-    "Bulk driver import. Imported rows are exempt under the row-origin ruling — an importer is not an operator hire surface, and the ensure-drivers route covers the cohort afterwards.",
-  ],
-  [
     "apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts",
     "QBO mirror projection: rows are clones of QBO records. Minting a payee from a mirror would fabricate an A/P counterparty the source system does not have.",
   ],
@@ -132,7 +128,7 @@ function selftest() {
     },
     {
       name: "a stale KNOWN_GAPS entry is caught",
-      files: [mk("apps/backend/src/mdata/drivers-import.routes.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
+      files: [mk("apps/backend/src/integrations/qbo/qbo-vendor-linkage.service.ts", "INSERT INTO mdata.drivers (a); await ensureDriverVendor(c, {});")],
       expectAtLeast: 1,
     },
   ];
