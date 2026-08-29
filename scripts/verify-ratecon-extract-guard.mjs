@@ -15,6 +15,17 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => { try { return fs.readFileSync(path.join(ROOT, p), "utf8"); } catch { return ""; } };
 const errs = [];
 
+function extractionPersistenceErrors(source) {
+  const failures = [];
+  if (!/const extractionId = rec\.rows\[0\]\?\.id;[\s\S]{0,100}if \(!extractionId\) throw new Error\("ratecon_extraction_create_failed"\);[\s\S]{0,160}extraction_id: extractionId/.test(source)) {
+    failures.push("rate-con extraction must require its canonical audit-row identity before success");
+  }
+  if (!/msg === "ratecon_extraction_create_failed"[\s\S]{0,180}status: 503[\s\S]{0,160}error: "extraction_persistence_failed"[\s\S]{0,160}capture: true/.test(source)) {
+    failures.push("missing extraction identity must be a captured, typed persistence failure");
+  }
+  return failures;
+}
+
 // (1) flag-before-AI in the endpoint
 const routes = read("apps/backend/src/dispatch/ratecon-extract.routes.ts");
 if (!routes) errs.push("missing ratecon-extract.routes.ts");
@@ -30,6 +41,17 @@ else {
   // (4) Sentry capture on the error path (RATECON-3 — no more silent 5xx)
   if (!/from ["']@sentry\/node["']/.test(routes) || !/Sentry\.captureException\s*\(/.test(routes))
     errs.push("endpoint must capture exceptions to Sentry on its error path (import * as Sentry from '@sentry/node' + Sentry.captureException)");
+  errs.push(...extractionPersistenceErrors(routes));
+  if (process.argv.includes("--selftest")) {
+    const persistenceMutations = [
+      routes.replace('if (!extractionId) throw new Error("ratecon_extraction_create_failed");', ""),
+      routes.replace("extraction_id: extractionId", "extraction_id: rec.rows[0].id"),
+      routes.replace('error: "extraction_persistence_failed"', 'error: "internal_error"'),
+    ];
+    for (const [index, mutation] of persistenceMutations.entries()) {
+      if (extractionPersistenceErrors(mutation).length === 0) errs.push(`persistence selftest mutation ${index + 1} survived`);
+    }
+  }
 }
 
 // (2) single ANTHROPIC_API_KEY path
@@ -103,4 +125,4 @@ if (errs.length) {
   for (const e of errs) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log("[ratecon-extract-guard] OK — flag-before-AI, single key path, no tools on untrusted document.");
+console.log(`[ratecon-extract-guard] OK — flag-before-AI, single key path, no tools on untrusted document${process.argv.includes("--selftest") ? ", 6/6 mutations caught" : ""}.`);

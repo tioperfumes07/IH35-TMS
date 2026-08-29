@@ -55,4 +55,14 @@ describe("classifyRateconExtractError", () => {
     expect(c.body).toMatchObject({ error: "internal_error" });
     expect(c.capture).toBe(true);
   });
+
+  it("missing canonical extraction row → 503 persistence failure, captured", () => {
+    const c = classifyRateconExtractError(new Error("ratecon_extraction_create_failed"));
+    expect(c).toEqual({
+      status: 503,
+      body: { error: "extraction_persistence_failed" },
+      capture: true,
+      phase: "persistence_failed",
+    });
+  });
 });
