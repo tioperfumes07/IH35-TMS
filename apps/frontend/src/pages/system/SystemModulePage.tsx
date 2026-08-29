@@ -538,7 +538,8 @@ function strokeForLink(state: TxHealthLink["state"]): { color: string; dash?: st
   if (state === "wired") return { color: "#334155" };
   if (state === "missing") return { color: "#dc2626", dash: "6 4" };
   if (state === "not_applicable") return { color: "#94a3b8", dash: "1 3" };
-  return { color: "#b45309" };
+  if (state === "blocked_by_constraint") return { color: "#b45309", dash: "4 3" };
+  return { color: "#334155" };
 }
 
 function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
@@ -581,6 +582,11 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
                 ✕
               </text>
             ) : null}
+            {link.state === "blocked_by_constraint" ? (
+              <text x={nodeX - 16} y={ny + 4} fill="#b45309" fontSize="11">
+                !
+              </text>
+            ) : null}
             {link.state === "wired" && txHealthLinkPath(link) ? (
               <a href={txHealthLinkPath(link) ?? undefined} target="_blank" rel="noreferrer">
                 <text x={nodeX + 10} y={ny + 4} fill="#334155" fontSize="11">
@@ -593,6 +599,10 @@ function TxHealthWiringMap({ links }: { links: TxHealthLink[] }) {
                 {link.label}
                 {link.target_label ? ` — ${link.target_label}` : ""}
                 {link.state === "missing" ? " (missing)" : ""}
+                {link.state === "not_applicable" ? " (n/a)" : ""}
+                {link.state === "blocked_by_constraint"
+                  ? ` (blocked: ${link.target_label ?? "constraint"})`
+                  : ""}
               </text>
             )}
           </g>
