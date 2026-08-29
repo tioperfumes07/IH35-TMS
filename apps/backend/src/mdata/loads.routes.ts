@@ -1008,6 +1008,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             site_contact_name, site_contact_phone, gate_dock_text, postal_code
           FROM mdata.load_stops
           WHERE load_id = $1::uuid
+            AND soft_deleted_at IS NULL
           ORDER BY sequence_number ASC, created_at ASC
         `,
         [resolvedLoadId]
@@ -1719,6 +1720,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             FROM mdata.load_stops
             WHERE load_id = $1
               AND id = $2
+              AND soft_deleted_at IS NULL
             LIMIT 1
           `,
           [parsedParams.data.id, parsedParams.data.stopId]
@@ -1732,6 +1734,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
             SET ${setParts.join(", ")}
             WHERE load_id = $${loadIdx}
               AND id = $${stopIdx}
+              AND soft_deleted_at IS NULL
             RETURNING
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
               scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at, status, notes, created_at, updated_at
@@ -1912,11 +1915,13 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'pickup'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number ASC LIMIT 1
           ) sp ON true
           LEFT JOIN LATERAL (
             SELECT city, scheduled_arrival_at FROM mdata.load_stops
             WHERE load_id = l.id AND stop_type = 'delivery'
+              AND soft_deleted_at IS NULL
             ORDER BY sequence_number DESC LIMIT 1
           ) sd ON true
           WHERE l.operating_company_id = $2::uuid

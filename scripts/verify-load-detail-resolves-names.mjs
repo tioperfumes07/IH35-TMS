@@ -66,6 +66,24 @@ const TARGETS = [
   },
 ];
 
+export function auditMdataActiveStopLifecycle(src) {
+  const problems = [];
+  if (!/FROM mdata\.load_stops\s+WHERE load_id = \$1::uuid\s+AND soft_deleted_at IS NULL\s+ORDER BY sequence_number ASC, created_at ASC/.test(src)) {
+    problems.push("mdata load detail must expose only active itinerary stops");
+  }
+  if (!/FROM mdata\.load_stops\s+WHERE load_id = \$1\s+AND id = \$2\s+AND soft_deleted_at IS NULL\s+LIMIT 1/.test(src)) {
+    problems.push("mdata stop PATCH must snapshot only an active stop");
+  }
+  if (!/UPDATE mdata\.load_stops[\s\S]*?WHERE load_id = \$\$\{loadIdx\}[\s\S]*?AND id = \$\$\{stopIdx\}[\s\S]*?AND soft_deleted_at IS NULL[\s\S]*?RETURNING/.test(src)) {
+    problems.push("mdata stop PATCH must not update a retired stop");
+  }
+  const reverseSelectors = src.match(/FROM mdata\.load_stops\s+WHERE load_id = l\.id\s+AND stop_type = '(?:pickup|delivery)'\s+AND soft_deleted_at IS NULL/g) ?? [];
+  if (reverseSelectors.length !== 6) {
+    problems.push(`all six mdata list/reverse pickup-delivery selectors must use active stops; found ${reverseSelectors.length}`);
+  }
+  return problems;
+}
+
 /**
  * The body of one route handler: from its `app.<verb>("<route>"` declaration to the next route
  * declaration at the same indent.
@@ -328,6 +346,21 @@ if (process.argv.includes("--selftest")) {
       bad++;
     }
   }
+  const realMdata = fs.readFileSync(path.join(ROOT, TARGETS[1].file), "utf8");
+  if (auditMdataActiveStopLifecycle(realMdata).length) {
+    console.error("SELFTEST FAIL: real mdata active-stop lifecycle rejected", auditMdataActiveStopLifecycle(realMdata));
+    bad++;
+  }
+  const activeStopMutations = [
+    realMdata.replace(/\s+AND soft_deleted_at IS NULL/g, ""),
+    realMdata.replace(/(WHERE load_id = \$1\s+AND id = \$2)\s+AND soft_deleted_at IS NULL/, "$1"),
+  ];
+  for (const [index, mutated] of activeStopMutations.entries()) {
+    if (auditMdataActiveStopLifecycle(mutated).length === 0) {
+      console.error(`SELFTEST FAIL: mdata active-stop mutation ${index + 1} escaped`);
+      bad++;
+    }
+  }
   if (bad) process.exit(1);
   console.log(`${LABEL} SELFTEST PASS — ${cases.length} mutations detected correctly`);
   process.exit(0);
@@ -342,6 +375,7 @@ for (const target of TARGETS) {
   }
   problems.push(...auditSource(fs.readFileSync(abs, "utf8"), target.file, target.columns, target.route));
 }
+problems.push(...auditMdataActiveStopLifecycle(fs.readFileSync(path.join(ROOT, TARGETS[1].file), "utf8")));
 
 if (problems.length) {
   console.error(`${LABEL} FAIL — the load-detail drawer will render a covered load as uncovered:\n`);
