@@ -71,6 +71,7 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
            ls.status::text
          FROM mdata.load_stops ls
          WHERE ls.load_id = $1
+           AND ls.soft_deleted_at IS NULL
            AND ls.stop_type IN ('pickup', 'delivery')
          ORDER BY ls.sequence_number ASC`,
         [loadId]
