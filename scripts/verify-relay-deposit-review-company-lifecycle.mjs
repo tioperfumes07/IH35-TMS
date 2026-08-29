@@ -53,6 +53,12 @@ function inspect(source, routes) {
   const auditIndex = routes.indexOf('"integrations.relay_company_card.updated"');
   const responseIndex = routes.indexOf("return reply.code(200).send({", routes.indexOf("app.put"));
   if (auditIndex < 0 || responseIndex < 0 || auditIndex > responseIndex) errors.push("card audit must complete before HTTP success");
+  if (!routes.includes("label = COALESCE(EXCLUDED.label, existing.label)")) {
+    errors.push("is_active-only card lifecycle can erase the existing human label");
+  }
+  if (!routes.includes("source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint)")) {
+    errors.push("is_active-only card lifecycle can erase the existing funding source hint");
+  }
   return errors;
 }
 
@@ -66,13 +72,15 @@ if (process.argv.includes("--selftest")) {
     [source, routes.replace("await assertCompanyMembership(user.uuid, opco);", "// planted: membership removed")],
     [source, routes.replace("RETURNING id::text, label, source_hint, is_active", "RETURNING label, source_hint, is_active")],
     [source, routes.replace('"integrations.relay_company_card.updated"', '"planted.audit.removed"')],
+    [source, routes.replace("label = COALESCE(EXCLUDED.label, existing.label)", "label = EXCLUDED.label")],
+    [source, routes.replace("source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint)", "source_hint = EXCLUDED.source_hint")],
   ];
   const missed = mutations.filter(([candidateSource, candidateRoutes]) => inspect(candidateSource, candidateRoutes).length === 0);
   if (missed.length) {
-    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/6 mutation(s) survived`);
+    console.error(`verify-relay-deposit-review-company-lifecycle SELFTEST FAIL — ${missed.length}/8 mutation(s) survived`);
     process.exit(1);
   }
-  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 6/6 planted defects rejected");
+  console.log("verify-relay-deposit-review-company-lifecycle selftest PASS — 8/8 planted defects rejected");
   process.exit(0);
 }
 
