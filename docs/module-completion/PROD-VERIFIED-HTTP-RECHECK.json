@@ -1,9 +1,8 @@
 {
   "base": "https://api.ih35dispatch.com",
-  "uniquePaths": 42,
+  "uniquePaths": 30,
   "tally": {
-    "MOUNTED_AUTH": 30,
-    "NOT_FOUND": 11,
+    "MOUNTED_AUTH": 29,
     "HTTP_OK": 1
   },
   "rows": [
@@ -13,14 +12,6 @@
       "status": "MOUNTED_AUTH",
       "items": [
         "accounting:ACCT-R-15"
-      ]
-    },
-    {
-      "path": "/api/v1/accounting/expense-category-mappings",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "fuel:FUEL-S03"
       ]
     },
     {
@@ -128,36 +119,11 @@
       ]
     },
     {
-      "path": "/api/v1/fuel/compliance-summary",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "fuel:FUEL-S02"
-      ]
-    },
-    {
       "path": "/api/v1/fuel/fraud-alerts",
       "code": 401,
       "status": "MOUNTED_AUTH",
       "items": [
         "fuel:FUEL-S04"
-      ]
-    },
-    {
-      "path": "/api/v1/fuel/loves-sync/status",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "fuel:FUEL-S01",
-        "fuel:FUEL-S07"
-      ]
-    },
-    {
-      "path": "/api/v1/fuel/planner/dashboard",
-      "code": 401,
-      "status": "MOUNTED_AUTH",
-      "items": [
-        "fuel:FUEL-S01"
       ]
     },
     {
@@ -183,14 +149,6 @@
       "items": [
         "system:SYS-S02",
         "system:SYS-S04"
-      ]
-    },
-    {
-      "path": "/api/v1/hos/daily-roster",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-T02"
       ]
     },
     {
@@ -267,54 +225,6 @@
       ]
     },
     {
-      "path": "/api/v1/property-tax/appraisal-districts",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-S02"
-      ]
-    },
-    {
-      "path": "/api/v1/property-tax/candidate-assets",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-S03"
-      ]
-    },
-    {
-      "path": "/api/v1/property-tax/renditions",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-S02"
-      ]
-    },
-    {
-      "path": "/api/v1/property-tax/renditions/",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-S03"
-      ]
-    },
-    {
-      "path": "/api/v1/relay/company-cards",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "fuel:FUEL-S06"
-      ]
-    },
-    {
-      "path": "/api/v1/relay/deposits",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "fuel:FUEL-S06"
-      ]
-    },
-    {
       "path": "/api/v1/reports/form-425c/exhibits/build",
       "code": 401,
       "status": "MOUNTED_AUTH",
@@ -328,14 +238,6 @@
       "status": "MOUNTED_AUTH",
       "items": [
         "reports:RPT-S03"
-      ]
-    },
-    {
-      "path": "/api/v1/required-documents/types",
-      "code": 404,
-      "status": "NOT_FOUND",
-      "items": [
-        "compliance:COMP-T06"
       ]
     },
     {

@@ -2269,3 +2269,4 @@ CODEX | WORKING | GUARD-F7309 | GO-0055 | CLAIM=Safety alias active-tab resolver
 CODEX | SHIPPED | GUARD-F7309 | PR=#17558 @ 82db10dfb3 | gate=exit0 | Built=Safety alias reachability 6 planted defects | NEXT=GUARD-F7310 | GO
 CODEX | WORKING | GUARD-F7310 | GO-0055 | CLAIM=Loves atomic scoped upsert guard honesty | NEXT=FAST-MERGE | GO
 CODEX | ACK+WORKING | GO-0055 | NOW=DRV-F7315 drivers:leave connectivity | SHA=14daeed | NEXT=guard+FAST-MERGE | GO
+CODEX | FINDING CORRECTED | HTTP-404-FUEL-5-R1 | canonical paths 401x5 · obsolete prose paths 404x5 | prod_verified=false | NEXT=guard+FAST-MERGE | GO
