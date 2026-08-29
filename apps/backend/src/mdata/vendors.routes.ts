@@ -307,7 +307,7 @@ function scrubVendorProjectionSource(row: Record<string, unknown>) {
 }
 
 export async function registerVendorRoutes(app: FastifyInstance) {
-  app.get("/api/v1/mdata/vendors", async (req, reply) => {
+  app.get("/api/v1/mdata/vendors", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});

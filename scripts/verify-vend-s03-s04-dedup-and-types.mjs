@@ -110,6 +110,12 @@ function assert(files) {
   if (deactivateHead && !/rateLimit/.test(deactivateHead)) {
     problems.push(`${ROUTES}: deactivate endpoint must have config.rateLimit (CodeQL js/missing-rate-limiting — LST-F9101)`);
   }
+  // LST-F9102 — vendor LIST endpoint must have rateLimit config. The detail and classifications
+  // GETs already had it; the list GET was the only vendor read endpoint missing it.
+  const listHead = routes.match(/app\.get\("\/api\/v1\/mdata\/vendors"[^)]*\)/)?.[0] ?? "";
+  if (listHead && !/rateLimit/.test(listHead)) {
+    problems.push(`${ROUTES}: vendor list endpoint must have config.rateLimit (CodeQL js/missing-rate-limiting — LST-F9102)`);
+  }
   return problems;
 }
 
