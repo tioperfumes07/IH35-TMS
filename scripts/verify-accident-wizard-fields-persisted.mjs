@@ -47,6 +47,28 @@ const ENUM_FIELDS = [
 
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 
+// RE-ANCHOR (found stale 2026-08-29): PR #17629 (SCEN01-HOP1-COST-LINES-PATCH-SILENT-DROP) added
+// a SECOND `INSERT INTO safety.accident_cost_lines` inside the PATCH handler (append-only
+// reconciliation, not a plain re-insert). A whole-file /INSERT INTO safety\.accident_cost_lines/
+// test can no longer detect a regression in the CREATE (POST) handler specifically — the PATCH
+// handler's copy keeps the assertion true even if the POST handler's INSERT is removed. Bound the
+// check to the POST route's own body, the same way the sibling
+// verify-safety-accident-patch-persists-cost-lines.mjs guard bounds its PATCH-only check.
+const POST_ROUTE_MARKER = `app.post("/api/v1/safety/accidents",`;
+const NEXT_ROUTE_MARKERS = [`app.patch("/api/v1/safety/accidents/:id",`, `app.get("/api/v1/safety/accidents/:id/`];
+
+function extractPostRouteBody(routeSrc) {
+  const start = routeSrc.indexOf(POST_ROUTE_MARKER);
+  if (start === -1) return null;
+  let end = routeSrc.length;
+  for (const marker of NEXT_ROUTE_MARKERS) {
+    const idx = routeSrc.indexOf(marker, start + POST_ROUTE_MARKER.length);
+    if (idx !== -1) end = Math.min(end, idx);
+  }
+  if (end === routeSrc.length) end = Math.min(routeSrc.length, start + 6000);
+  return routeSrc.slice(start, end);
+}
+
 export function assertAccidentFieldsPersisted(sources) {
   const drawer = sources?.[DRAWER] ?? read(DRAWER);
   const client = sources?.[CLIENT] ?? read(CLIENT);
@@ -54,6 +76,10 @@ export function assertAccidentFieldsPersisted(sources) {
   const migration = sources?.[MIGRATION] ?? read(MIGRATION);
   const page = sources?.[PAGE] ?? read(PAGE);
   const problems = [];
+  const postRouteBody = extractPostRouteBody(route);
+  if (!postRouteBody) {
+    problems.push(`${ROUTE}: could not find the POST /api/v1/safety/accidents route registration.`);
+  }
 
   for (const f of FIELDS) {
     // 1. Drawer controls the input (value={state}) — not uncontrolled, not defaultValue.
@@ -163,8 +189,8 @@ export function assertAccidentFieldsPersisted(sources) {
   if (!/cost_lines:\s*z\.array/.test(route)) {
     problems.push(`${ROUTE}: the accident zod schema does not accept cost_lines as an array.`);
   }
-  if (!/INSERT INTO safety\.accident_cost_lines/.test(route)) {
-    problems.push(`${ROUTE}: cost lines are accepted but never INSERTed into safety.accident_cost_lines.`);
+  if (postRouteBody && !/INSERT INTO safety\.accident_cost_lines/.test(postRouteBody)) {
+    problems.push(`${ROUTE}: the POST /api/v1/safety/accidents handler accepts cost lines but never INSERTs them into safety.accident_cost_lines.`);
   }
   if (!/getSafetyAccidentDetail\(String\(accidentIdParam\), operatingCompanyId\)/.test(page)) {
     problems.push(`${PAGE}: deep-linked accident does not use the exact company/id detail read.`);
@@ -259,8 +285,30 @@ if (SELFTEST) {
   expectCaught(
     "cost-lines-not-inserted",
     { ...live, [ROUTE]: live[ROUTE].replace("INSERT INTO safety.accident_cost_lines", "SELECT 1 -- safety.accident_cost_lines") },
-    "never INSERTed into safety.accident_cost_lines"
+    "never INSERTs them into safety.accident_cost_lines"
   );
+  // 9b. RE-ANCHOR REGRESSION GUARD: the mutation above only removes the FIRST occurrence in the
+  // whole file (String.replace is non-global) — since PR #17629 there are TWO (POST create + PATCH
+  // append-only reconciliation). If a future edit removed the POST-route scoping added in this
+  // re-anchor and went back to a whole-file test, the PATCH handler's copy would mask a POST
+  // regression again. Prove the bounded check actually looks at the POST route, not the whole file,
+  // by mutating ONLY the PATCH handler's copy (the second occurrence) and confirming that alone
+  // does NOT trip this guard (a real PATCH-only regression is verify-safety-accident-patch-persists-
+  // cost-lines.mjs's job, not this file's).
+  {
+    const patchOnlyMutated = live[ROUTE].replace(
+      /(app\.patch\("\/api\/v1\/safety\/accidents\/:id",[\s\S]*?)INSERT INTO safety\.accident_cost_lines/,
+      "$1SELECT 1 -- safety.accident_cost_lines"
+    );
+    if (patchOnlyMutated === live[ROUTE]) {
+      failures.push("post-route-scope-selftest-setup FAIL: could not locate the PATCH handler's INSERT to mutate");
+    } else {
+      const problems = assertAccidentFieldsPersisted({ ...live, [ROUTE]: patchOnlyMutated });
+      if (problems.some((p) => p.includes("never INSERTs them into safety.accident_cost_lines"))) {
+        failures.push("post-route-scope FAIL: mutating only the PATCH handler's copy wrongly tripped the POST-scoped check — the bounding is not actually scoped to POST");
+      }
+    }
+  }
 
   const liveProblems = assertAccidentFieldsPersisted(live);
   if (liveProblems.length) failures.push(`live sources FAIL: ${liveProblems.join(" | ")}`);

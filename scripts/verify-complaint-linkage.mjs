@@ -16,7 +16,15 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 
 function audit(s) {
   const failures = [];
-  if (!/listAssignableUsers\(companyId\)/.test(s.page)) failures.push("employee picker must request the selected company");
+  // RE-ANCHOR (found stale 2026-08-29): both patterns below required an EXACT call shape
+  // (`listAssignableUsers(companyId)` with nothing else, `getComplaints(operatingCompanyId, filter)`
+  // with the bare filter var) and went genuinely red — not a rotted selftest, the base guard itself
+  // — once legitimate features (an AbortSignal param on the picker; pagination merged into the
+  // reverse-section query) changed those call sites' shape without dropping what this guard actually
+  // protects: companyId is still the first arg passed, filter is still forwarded intact. Widened to
+  // accept a trailing arg / a spread of `...filter` into a larger object, while still rejecting the
+  // real defects (no companyId at all; filter dropped instead of spread).
+  if (!/listAssignableUsers\(companyId[,)]/.test(s.page)) failures.push("employee picker must request the selected company");
   if (!/listAssignableUsers[\s\S]{0,180}\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}/.test(s.identityApi)) failures.push("assignable-user client must forward operating_company_id");
   for (const alias of ["complainant_driver_ok", "respondent_driver_ok", "customer_ok", "complainant_user_ok", "respondent_user_ok", "complaint_type_ok"]) {
     if (!s.route.includes(`AS ${alias}`)) failures.push(`writer must validate ${alias}`);
@@ -25,7 +33,11 @@ function audit(s) {
   if (!/complainant_customer_id = \$\$\{values\.length\}/.test(s.route)) failures.push("customer reverse filter must run in SQL");
   if (!/complainant_user_id = \$\$\{values\.length\} OR c\.respondent_user_id = \$\$\{values\.length\}/.test(s.route)) failures.push("employee reverse filter must cover both roles in SQL");
   if (!/params\.customer_id\) qs\.set\("customer_id"/.test(s.safetyApi) || !/params\.user_id\) qs\.set\("user_id"/.test(s.safetyApi)) failures.push("client must forward customer and employee reverse filters");
-  if (!/getComplaints\(operatingCompanyId, filter\)/.test(s.reverse) || !/ListErrorBanner/.test(s.reverse)) failures.push("reverse section must use exact server filters and expose errors");
+  if (
+    !/getComplaints\(operatingCompanyId,\s*(filter|\{[^}]*\.\.\.filter[^}]*\})\)/.test(s.reverse) ||
+    !/ListErrorBanner/.test(s.reverse)
+  )
+    failures.push("reverse section must use exact server filters and expose errors");
   if (!/<EntityLinkOrTombstone[\s\S]{0,100}kind="complaint"[\s\S]{0,140}id=\{row\.id == null \? null : String\(row\.id\)\}[\s\S]{0,100}name=\{row\.summary\}[\s\S]{0,80}noun="Complaint"/.test(s.reverse)) failures.push("reverse section must drill valid complaint IDs and tombstone missing identities");
   if (!/<ComplaintsReverseSection[\s\S]{0,240}filter=\{\{ customer_id: id \}\}/.test(s.customer)) failures.push("customer profile must mount complaint reverse links");
   if (!/<ComplaintsReverseSection[\s\S]{0,240}filter=\{\{ user_id: userId \}\}/.test(s.user)) failures.push("user profile must mount complaint reverse links");
@@ -36,7 +48,7 @@ function audit(s) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["picker scope", "page", /listAssignableUsers\(companyId\)/, "listAssignableUsers()"],
+    ["picker scope", "page", /listAssignableUsers\(companyId, signal\)/, "listAssignableUsers(signal)"],
     ["identity query", "identityApi", /\?operating_company_id=\$\{encodeURIComponent\(operatingCompanyId\)\}/, "?company=${encodeURIComponent(operatingCompanyId)}"],
     ["driver writer", "route", /AS complainant_driver_ok/, "AS driver_ok"],
     ["customer writer", "route", /AS customer_ok/, "AS client_ok"],
@@ -46,7 +58,7 @@ if (process.argv.includes("--selftest")) {
     ["customer filter", "route", /c\.complainant_customer_id = \$\$\{values\.length\}/, "TRUE"],
     ["user filter", "route", /c\.complainant_user_id = \$\$\{values\.length\}/, "FALSE"],
     ["api customer", "safetyApi", /qs\.set\("customer_id", params\.customer_id\)/, 'qs.set("driver_id", params.customer_id)'],
-    ["reverse read", "reverse", /getComplaints\(operatingCompanyId, filter\)/, "getComplaints(operatingCompanyId)"],
+    ["reverse read", "reverse", /getComplaints\(operatingCompanyId, \{ \.\.\.filter,/, "getComplaints(operatingCompanyId, {"],
     ["reverse drill", "reverse", /noun="Complaint"/, 'noun="Record"'],
     ["customer mount", "customer", /ComplaintsReverseSection/g, "MissingComplaintSection"],
     ["user mount", "user", /ComplaintsReverseSection/g, "MissingComplaintSection"],

@@ -98,17 +98,30 @@ if (SELFTEST) {
   };
 
   // 1. backend reverts the list join to SELECT *.
-  expectCaught(
-    "backend-select-star",
-    {
-      ...live,
-      [ROUTE]: live[ROUTE].replace(
-        /SELECT cf\.\*,[\s\S]*?LIMIT 500/,
-        "SELECT * FROM safety.civil_fines WHERE cf.operating_company_id = $1 LIMIT 500"
-      ),
-    },
-    "SELECT * with no driver join"
-  );
+  //
+  // RE-ANCHOR (found stale 2026-08-29): the mutation targeted a literal `LIMIT 500` end marker,
+  // but the list query was since changed to real pagination (`LIMIT $N OFFSET $N`) — "LIMIT 500"
+  // no longer appears anywhere in this file, so the mutation was a genuine no-op (inert). Bound the
+  // mutation to the LIST route's own registration (through the next route, GET .../:id) and replace
+  // its SELECT cf.* clause specifically, instead of relying on a literal suffix that can drift again.
+  {
+    const listStart = live[ROUTE].indexOf('app.get("/api/v1/safety/fines",');
+    const listEnd = live[ROUTE].indexOf('app.get("/api/v1/safety/fines/:id"', listStart);
+    const listHandler = listStart === -1 || listEnd === -1 ? "" : live[ROUTE].slice(listStart, listEnd);
+    const mutatedHandler = listHandler.replace(
+      /SELECT cf\.\*,[\s\S]*?FROM safety\.civil_fines cf[\s\S]*?LEFT JOIN mdata\.drivers d[\s\S]*?\)\s*\n\s*\)/,
+      "SELECT * FROM safety.civil_fines cf"
+    );
+    if (!listHandler || mutatedHandler === listHandler) {
+      failures.push("backend-select-star-setup FAIL: could not locate the fines-list SELECT/driver-join to mutate");
+    } else {
+      expectCaught(
+        "backend-select-star",
+        { ...live, [ROUTE]: live[ROUTE].replace(listHandler, mutatedHandler) },
+        "SELECT * with no driver join"
+      );
+    }
+  }
   // 2. the Driver column is removed.
   expectCaught("no-driver-column", { ...live, [PAGE]: live[PAGE].replace(/label:\s*"Driver"/, 'label: "X"') }, 'no "Driver" column');
   // 2b. reverse driver filter removed.
