@@ -53,6 +53,34 @@ describe("load-id-reservation.service", () => {
     expect(res.reservedUntilIso).toContain("2026-05-13");
   });
 
+  it("renews only the exact company/user reservation instead of minting another number", async () => {
+    const queries: Array<{ sql: string; values?: unknown[] }> = [];
+    const client = {
+      async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {
+        queries.push({ sql, values });
+        if (sql.includes("SET expires_at = now()")) {
+          return { rows: [{
+            id: "018bcd5c-e1a2-4b70-9b1c-7d9a2b111111",
+            reserved_load_number: "L-20260513-0003",
+            expires_at: "2026-05-13T12:01:01Z",
+          }] as T[] };
+        }
+        return { rows: [] };
+      },
+    };
+    const result = await reserveNextLoadId(client, {
+      operatingCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
+      reservedByUserId: "11111111-1111-4111-8111-111111111111",
+      reservationId: "018bcd5c-e1a2-4b70-9b1c-7d9a2b111111",
+    });
+    expect(result.loadNumber).toBe("L-20260513-0003");
+    expect(queries.some(({ sql }) => sql.includes("INSERT INTO dispatch.load_id_reservations"))).toBe(false);
+    expect(queries[0]?.sql).toContain("operating_company_id = $2::uuid");
+    expect(queries[0]?.sql).toContain("reserved_by_user_id = $3::uuid");
+    expect(queries[0]?.sql).toContain("status = 'reserved'");
+    expect(queries[0]?.sql).toContain("expires_at > now() -");
+  });
+
   it("claimReservation requires matching reserved_by user", async () => {
     const client = {
       async query<T = Record<string, unknown>>(sql: string, values?: unknown[]): Promise<{ rows: T[] }> {

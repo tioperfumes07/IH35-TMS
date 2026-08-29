@@ -1,3 +1,5 @@
+Codex | WORKING | DSP-F7210 | GO-0054 | CLAIM=load-id-exact-lease-renewal | SOURCE=dispatch.load_id_reservations | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7209 | PR=#17421 @ c2d46c241c | Built=bulk lifecycle locked before effects | Live=post-deploy UNVERIFIED | NEXT=GO-0054 load-id renewal | GO
 Codex | WORKING | DSP-F7209 | GO-0054 | CLAIM=bulk-status-locked-lifecycle | SOURCE=mdata.loads.status | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DRIVER-F7208 | PR=#17420 @ 917944c9b9 | Built=archive closes assignment+unit mirror | Live=post-deploy UNVERIFIED | NEXT=GO-0054 dispatch unique | GO
 Codex | WORKING | DRIVER-F7208 | GO-0054 | CLAIM=bulk-archive-closes-assignment+unit-mirror | SOURCE=mdata.drivers+telematics.vehicle_driver_assignments+mdata.units.assigned_driver_id | NEXT=gate+FAST-MERGE | GO

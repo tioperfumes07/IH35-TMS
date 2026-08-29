@@ -428,6 +428,7 @@ const updateDispatchLoadBodySchema = z.object({
 
 const reserveLoadIdBodySchema = z.object({
   operating_company_id: z.string().uuid(),
+  reservation_uuid: z.string().uuid().optional(),
 });
 
 const anticipatedChargebackBodySchema = z.object({
@@ -473,6 +474,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
       return reserveNextLoadId(client, {
         operatingCompanyId: body.data.operating_company_id,
         reservedByUserId: authUser.uuid,
+        reservationId: body.data.reservation_uuid,
       });
     });
     return {
