@@ -1,0 +1,12 @@
+{
+  "surface": "drivers.driver_profile.dqf_kpis",
+  "source": "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  "target": "apps/frontend/src/pages/drivers/components/DriverDqfPanel.tsx",
+  "actions": [
+    { "label": "Checklist items", "focus": "all" },
+    { "label": "Present", "focus": "present" },
+    { "label": "Missing", "focus": "missing" },
+    { "label": "Expired", "focus": "expired" },
+    { "label": "Expiry alerts", "focus": "expiry_alerts" }
+  ]
+}
