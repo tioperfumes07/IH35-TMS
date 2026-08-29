@@ -24,7 +24,7 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
 }
 
 export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/integrity/unit-history", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/unit-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -39,7 +39,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/integrity/unit-history/:unit_id", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/unit-history/:unit_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idSchema.safeParse(req.params ?? {});
@@ -57,7 +57,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.get("/api/v1/maintenance/integrity/driver-history", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/driver-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -72,7 +72,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/integrity/driver-history/:driver_id", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/driver-history/:driver_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idSchema.safeParse(req.params ?? {});
@@ -90,7 +90,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.get("/api/v1/maintenance/integrity/vendor-history", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/vendor-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
@@ -105,7 +105,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return { rows };
   });
 
-  app.get("/api/v1/maintenance/integrity/vendor-history/:vendor_id", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/vendor-history/:vendor_id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const params = idSchema.safeParse(req.params ?? {});
@@ -123,7 +123,7 @@ export async function registerMaintenanceIntegrityRoutes(app: FastifyInstance) {
     return row;
   });
 
-  app.get("/api/v1/maintenance/integrity/fleet-baselines", async (req, reply) => {
+  app.get("/api/v1/maintenance/integrity/fleet-baselines", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = querySchema.safeParse(req.query ?? {});
