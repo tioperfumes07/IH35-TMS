@@ -25,6 +25,7 @@ function audit(s) {
   if (!/FROM mdata\.loads l[\s\S]*d\.identity_user_id = \$1::uuid[\s\S]*d\.id IN \(l\.assigned_primary_driver_id, l\.assigned_secondary_driver_id\)[\s\S]*WHERE l\.id = \$2::uuid/.test(s.driverRoute)) failures.push("driver issue writer must derive company and driver from the assigned load");
   if (!/set_config\('app\.operating_company_id', \$1::text, true\)[\s\S]*assignment\.operating_company_id/.test(s.driverRoute)) failures.push("driver issue writer must set exact load-company RLS scope");
   if (!/\[\["operating_company_id"\], assignment\.operating_company_id\]/.test(s.driverRoute)) failures.push("driver issue insert must stamp explicit canonical company");
+  if (!/const inserted = insertedRes\.rows\[0\];[\s\S]{0,180}if \(!inserted\)[\s\S]{0,180}error: "intransit_issue_create_failed"[\s\S]{0,180}appendCrudAudit/.test(s.driverRoute)) failures.push("driver issue writer must reject a zero-row insert before audit/outbox success");
   if (!/filters\.load_id[\s\S]{0,100}q\.set\("load_id", filters\.load_id\)/.test(s.api)) failures.push("frontend exact load query parameter missing");
   if (!/listDispatchIntransitIssues\(operatingCompanyId, \{ load_id: loadId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No in-transit issues linked to this load/.test(s.reverse)) failures.push("honest load reverse section missing");
   if (!/<ListErrorState[\s\S]*?Could not load in-transit issues for this load\.[\s\S]*?onRetry=\{\(\) => void query\.refetch\(\)\}/.test(s.reverse)) failures.push("load reverse failure must retry the exact scoped query");
@@ -47,6 +48,7 @@ if (process.argv.includes("--selftest")) {
     ["driver-assignment", "driverRoute", /d\.id IN \(l\.assigned_primary_driver_id, l\.assigned_secondary_driver_id\)/, "d.id = l.assigned_primary_driver_id"],
     ["driver-rls-scope", "driverRoute", /set_config\('app\.operating_company_id', \$1::text, true\)/, "set_config('app.unscoped', $1::text, true)"],
     ["driver-company-stamp", "driverRoute", /\[\["operating_company_id"\], assignment\.operating_company_id\]/, '[["operating_company_id"], null]'],
+    ["driver-create-identity", "driverRoute", /error: "intransit_issue_create_failed"/, 'error: "removed"'],
     ["api", "api", /q\.set\("load_id", filters\.load_id\)/, 'q.set("status", filters.load_id)'],
     ["reverse", "reverse", /load_id: loadId/, "load_id: operatingCompanyId"],
     ["reverse-retry", "reverse", /onRetry=\{\(\) => void query\.refetch\(\)\}/, "onRetry={() => undefined}"],

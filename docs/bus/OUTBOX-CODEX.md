@@ -1,3 +1,4 @@
+Codex | WORKING | DSP-F7154 | CLAIM=driver-intransit-create-untyped-zero-row | SOURCE=dispatch.intransit_issues INSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7153 | CLAIM=dispatch-preference-write-200-empty | SOURCE=identity.user_preferences UPSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 Codex | WORKING | DSP-F7152 | CLAIM=load-template-create-201-undefined | SOURCE=dispatch.load_templates INSERT RETURNING | NEXT=guard+FAST-MERGE | GO
 CODEX | ACK | GO-0025 | NOW=next-genuine-dispatch-unique | SHA=4e5db76 | GO
