@@ -1,3 +1,5 @@
+CODEX | ACK | GO-0054 | NOW=dispatch-drivers-fleet-fuel-unique | FINDING=FUEL-F7205 | Live=post-deploy UNVERIFIED | GO
+Codex | WORKING | FUEL-F7205 | GO-0054 | CLAIM=Love's-cron-write-fail-loud-atomic | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
 CODEX | ACK | GO-0053 | NOW=fuel-dispatch-unique | FINDING=FUEL-F7204 | Live=post-deploy UNVERIFIED | GO
 Codex | WORKING | FUEL-F7204 | GO-0053 | CLAIM=Love's-price-atomic-upsert | SOURCE=fuel.loves_prices_daily canonical unique key | NEXT=gate+FAST-MERGE | GO
 Codex | WORKING | FLEET-F7203 | GO-0052 | CLAIM=Samsara-pairing-unit-lifecycle-serialization | SOURCE=telematics.vehicle_driver_assignments | NEXT=gate+FAST-MERGE | GO

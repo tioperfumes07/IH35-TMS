@@ -196,40 +196,7 @@ export async function importLovesRowsForCompany(
   };
 
   for (const row of parsed.rows) {
-    const updateRes = await client
-      .query(
-        `
-          UPDATE fuel.loves_prices_daily
-          SET price_per_gallon = $1,
-              station_uuid = COALESCE($2, station_uuid),
-              city = COALESCE($3, city),
-              state = COALESCE($4, state),
-              source_file_name = $5,
-              updated_at = now()
-          WHERE operating_company_id = $6::uuid
-            AND effective_date = current_date
-            AND station_name = $7
-            AND station_address = $8
-        `,
-        [
-          row.price_per_gallon,
-          row.station_uuid ?? null,
-          row.city ?? null,
-          row.state ?? null,
-          LOVES_CARD_IMPORT_SOURCE,
-          operatingCompanyId,
-          row.station_name,
-          row.station_address,
-        ]
-      )
-      .catch(() => ({ rowCount: 0 }));
-    if ((updateRes.rowCount ?? 0) > 0) {
-      counts.rows_updated += 1;
-      continue;
-    }
-
-    const insertRes = await client
-      .query(
+    const upsertRes = await client.query<{ inserted: boolean }>(
         `
           INSERT INTO fuel.loves_prices_daily (
             operating_company_id,
@@ -244,6 +211,15 @@ export async function importLovesRowsForCompany(
             uploaded_by_user_id
           )
           VALUES ($1, current_date, $2, $3, $4, $5, $6, $7, $8, NULL)
+          ON CONFLICT (operating_company_id, effective_date, station_name, station_address)
+          DO UPDATE SET
+            price_per_gallon = EXCLUDED.price_per_gallon,
+            station_uuid = COALESCE(EXCLUDED.station_uuid, fuel.loves_prices_daily.station_uuid),
+            city = COALESCE(EXCLUDED.city, fuel.loves_prices_daily.city),
+            state = COALESCE(EXCLUDED.state, fuel.loves_prices_daily.state),
+            source_file_name = EXCLUDED.source_file_name,
+            updated_at = now()
+          RETURNING (xmax = 0) AS inserted
         `,
         [
           operatingCompanyId,
@@ -255,10 +231,11 @@ export async function importLovesRowsForCompany(
           row.price_per_gallon,
           LOVES_CARD_IMPORT_SOURCE,
         ]
-      )
-      .catch(() => ({ rowCount: 0 }));
-    if ((insertRes.rowCount ?? 0) > 0) counts.rows_added += 1;
-    else counts.rows_skipped += 1;
+      );
+    const persisted = upsertRes.rows[0];
+    if (!persisted) throw new Error("loves_card_price_upsert_failed");
+    if (persisted.inserted) counts.rows_added += 1;
+    else counts.rows_updated += 1;
   }
 
   await appendDeadLetterAudit(client, operatingCompanyId, parsed.dead_letters);
