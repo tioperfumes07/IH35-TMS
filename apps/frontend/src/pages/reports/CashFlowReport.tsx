@@ -7,6 +7,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { companyToday } from "../../lib/businessDate";
 
 type CashFlowReportResponse = {
   operating_company_id: string;
@@ -22,7 +23,7 @@ function money(cents: number) {
 export function CashFlowReport() {
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const today = new Date().toISOString().slice(0, 10);
+  const today = companyToday();
   const [appliedAsOf, setAppliedAsOf] = useState(today);
   const staged = useStagedListFilters({
     applied: { asOfDate: appliedAsOf },
