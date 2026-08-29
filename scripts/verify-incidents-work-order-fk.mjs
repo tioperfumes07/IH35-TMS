@@ -168,7 +168,11 @@ function selftest() {
     ["display allocator swallow", "      );\n    generatedDisplayId"],
     ["work-order insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;"],
     ["domain insert swallow", "      values\n    );\n  return res.rows[0]?.id ?? null;\n}\n\nasync function enqueueIncidentStakeholderNotifications"],
-    ["incident FK update swallow", "          input.incident_id,\n        ]);"],
+    // RE-ANCHOR (found stale 2026-08-29): a third bind param (input.operating_company_id) was added
+    // to this UPDATE's values array after this anchor was written, so the literal
+    // "input.incident_id,\n]);" no longer matched (the closing bracket moved one line down) and the
+    // mutation was a silent no-op. Anchored on the current 3-line shape.
+    ["incident FK update swallow", "          input.incident_id,\n          input.operating_company_id,\n        ]);"],
   ]) {
     plant(
       label,

@@ -28,6 +28,25 @@
  * PASS: Modal.tsx's z-index >= that max, so it can never be occluded by a known drawer, and Combobox's
  * listbox z-index remains >= Modal's, so a picker inside a Modal still paints on top of the Modal.
  *
+ * RE-ANCHOR (found stale 2026-08-29): the blanket frontend-wide z-[N] scan started tripping on two
+ * files that were never added to the exclusion list even though each is a documented, deliberate,
+ * separately-guarded exception — the same class of exclusion as Combobox/ParityDrawer/
+ * ConfirmDiscardDialog above, just missed when those files were added:
+ *   - apps/frontend/src/pages/driver/DriverOnboardingTour.tsx's z-[60001] — a completion-error
+ *     toast deliberately pinned ONE ABOVE the third-party react-joyride tour overlay's own
+ *     zIndex:60000 option, so the error is visible over an active guided tour if saving completion
+ *     state fails. This is the Driver PWA onboarding flow, an entirely separate UI subsystem with
+ *     no relationship to the office app's Modal/Drawer stacking-tier system this guard protects.
+ *   - apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx's z-[216] — a hand-rolled
+ *     (non-Modal.tsx) portal fixed for BOOK-LOAD-MODAL-INVISIBLE-BEHIND-DRAWER by deliberately
+ *     sitting ONE ABOVE Modal.tsx's own z-[215] ("keeps it unambiguously topmost even alongside a
+ *     Modal.tsx-based dialog", its own file comment) — the exact same "other-direction, separately
+ *     locked" shape as ParityDrawer/ConfirmDiscardDialog, just with its own dedicated guard
+ *     (verify-book-load-modal-z-index-above-drawer.mjs) instead of one named in this file's header.
+ * Blindly bumping Modal.tsx to clear either would be a meaningless number chase that could break
+ * the deliberate ordering both exceptions rely on — excluded by name instead, same as the other
+ * four.
+ *
  * Self-test: node scripts/verify-modal-z-index-above-drawers.mjs --selftest
  */
 import fs from "node:fs";
@@ -40,6 +59,13 @@ const MODAL = path.join(ROOT, "apps/frontend/src/components/Modal.tsx");
 const COMBOBOX = path.join(ROOT, "apps/frontend/src/components/Combobox.tsx");
 const PARITY_DRAWER = path.join(ROOT, "apps/frontend/src/components/parity/ParityDrawer.tsx");
 const CONFIRM_DISCARD_DIALOG = path.join(ROOT, "apps/frontend/src/components/dialogs/ConfirmDiscardDialog.tsx");
+// Driver PWA onboarding tour (react-joyride) — its own separate zIndex convention, not an office
+// app drawer; see the file-header comment above for why this is excluded rather than chased.
+const DRIVER_ONBOARDING_TOUR = path.join(ROOT, "apps/frontend/src/pages/driver/DriverOnboardingTour.tsx");
+// BookLoadModalV4 deliberately sits ONE ABOVE Modal.tsx (z-[216] vs z-[215]) — locked by its own
+// dedicated verify-book-load-modal-z-index-above-drawer.mjs, same "other-direction" shape as
+// ParityDrawer/ConfirmDiscardDialog above; see the file-header comment for the full reasoning.
+const BOOK_LOAD_MODAL_V4 = path.join(ROOT, "apps/frontend/src/pages/dispatch/components/BookLoadModalV4.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -101,7 +127,14 @@ function comboboxListboxZIndex() {
 
 function check() {
   const modalZ = modalZIndex();
-  const maxOther = maxArbitraryZIndex([MODAL, COMBOBOX, PARITY_DRAWER, CONFIRM_DISCARD_DIALOG]);
+  const maxOther = maxArbitraryZIndex([
+    MODAL,
+    COMBOBOX,
+    PARITY_DRAWER,
+    CONFIRM_DISCARD_DIALOG,
+    DRIVER_ONBOARDING_TOUR,
+    BOOK_LOAD_MODAL_V4,
+  ]);
   assert(
     modalZ >= maxOther,
     `Modal.tsx z-index (${modalZ}) is below the highest z-[N] used elsewhere in the frontend (${maxOther}). ` +

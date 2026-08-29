@@ -20,6 +20,15 @@
  * FAIL: Combobox's listbox zIndex < the highest `z-[NNN]` used anywhere else in the frontend.
  * PASS: Combobox's listbox zIndex >= that max, so it can never be occluded by a known drawer.
  *
+ * RE-ANCHOR (found stale 2026-08-29): the blanket scan started tripping on
+ * apps/frontend/src/pages/driver/DriverOnboardingTour.tsx's z-[60001] — a completion-error toast
+ * deliberately pinned ONE ABOVE the third-party react-joyride tour overlay's own zIndex:60000
+ * option (visible over an active guided tour if saving completion state fails). This is the Driver
+ * PWA onboarding flow, an entirely separate UI subsystem — a Combobox/ReferenceSelect dropdown is
+ * never opened while that tour overlay is showing, so there is no real occlusion risk to guard
+ * against, and chasing an unrelated third-party library's z-index convention would be a meaningless
+ * number race. Excluded by name, same as the sibling verify-modal-z-index-above-drawers.mjs guard.
+ *
  * Self-test: node scripts/verify-combobox-listbox-z-index-above-drawers.mjs --selftest
  */
 import fs from "node:fs";
@@ -29,6 +38,9 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-combobox-listbox-z-index-above-drawers";
 const COMBOBOX = path.join(ROOT, "apps/frontend/src/components/Combobox.tsx");
+// Driver PWA onboarding tour (react-joyride) — its own separate zIndex convention, unrelated to
+// office-app Combobox occlusion; see the file-header comment above for the full reasoning.
+const DRIVER_ONBOARDING_TOUR = path.join(ROOT, "apps/frontend/src/pages/driver/DriverOnboardingTour.tsx");
 const FRONTEND_SRC = path.join(ROOT, "apps/frontend/src");
 
 function assert(cond, msg) {
@@ -45,12 +57,13 @@ function walk(dir, out) {
   return out;
 }
 
-function maxArbitraryZIndex(excludeFile) {
+function maxArbitraryZIndex(excludeFiles) {
   const files = walk(FRONTEND_SRC, []);
+  const excluded = excludeFiles.map((f) => path.resolve(f));
   let max = 0;
   const re = /z-\[(\d+)\]/g;
   for (const file of files) {
-    if (path.resolve(file) === path.resolve(excludeFile)) continue;
+    if (excluded.includes(path.resolve(file))) continue;
     if (file.endsWith(".test.tsx") || file.endsWith(".test.ts")) continue;
     const text = fs.readFileSync(file, "utf8");
     let m;
@@ -77,7 +90,7 @@ function comboboxListboxZIndex() {
 
 function check() {
   const listboxZ = comboboxListboxZIndex();
-  const maxOther = maxArbitraryZIndex(COMBOBOX);
+  const maxOther = maxArbitraryZIndex([COMBOBOX, DRIVER_ONBOARDING_TOUR]);
   assert(
     listboxZ >= maxOther,
     `Combobox listbox zIndex (${listboxZ}) is below the highest z-[N] used elsewhere in the frontend (${maxOther}). ` +
