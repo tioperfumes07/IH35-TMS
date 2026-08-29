@@ -120,14 +120,24 @@ function contractErrors(src) {
     errors.push("VERIFY-4: BillPaymentsListPage must EntityLink vendor");
   }
   // ACCT-F5060 — CLS-LINKAGE-ONEWAY: list must use joined bill_number / JE memo+date, not null→UUID chrome.
-  if (!/entityLabel\(\s*row\.bill_number\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
-    errors.push("VERIFY-4: BillPaymentsListPage bill EntityLink must entityLabel(row.bill_number, …)");
+  // GUARD RE-ANCHOR (CC-2, 2026-08-29): entityLabel(row.bill_number, …) was superseded by
+  // visibleDocumentLabel(row.bill_number, …) (lib/entity-label.ts) — a deliberate, documented
+  // successor for list/register/audit rows that shows the noun instead of a "not visible"
+  // RLS-tombstone-confusing string when the number is missing. Accept either call shape so this
+  // guard tracks the real behavior (bill number preferred over UUID) instead of one specific
+  // helper name.
+  if (
+    !/(?:entityLabel|visibleDocumentLabel)\(\s*row\.bill_number\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(
+      src.list
+    )
+  ) {
+    errors.push("VERIFY-4: BillPaymentsListPage bill EntityLink must entityLabel/visibleDocumentLabel(row.bill_number, …)");
   }
   if (!/journal_entry_date/.test(src.list) || !/journal_entry_memo/.test(src.list)) {
     errors.push("VERIFY-4: BillPaymentsListPage JE EntityLink must prefer journal_entry_date/memo");
   }
-  if (/entityLabel\(\s*null\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
-    errors.push("VERIFY-4: BillPaymentsListPage must not entityLabel(null, bill_id) — UUID chrome");
+  if (/(?:entityLabel|visibleDocumentLabel)\(\s*null\s*,\s*row\.bill_id\s*,\s*["']Bill["']\s*\)/.test(src.list)) {
+    errors.push("VERIFY-4: BillPaymentsListPage must not entityLabel/visibleDocumentLabel(null, bill_id) — UUID chrome");
   }
   // ACCT-F5073 — bank txn human labels on list (connectivity).
   if (/entityLabel\(\s*null\s*,\s*row\.matched_bank_transaction_id/.test(src.list)) {
@@ -168,7 +178,7 @@ function selftest() {
     map: "ACCT-SURF-03 `/accounting/bill-payments`",
     manifest: 'path="/accounting/bill-payments"\n<BillPaymentsListPage />\n',
     subnav: "/accounting/bill-payments",
-    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nentityLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nvisibleDocumentLabel(row.bill_number, row.bill_id, "Bill")\njournal_entry_date\njournal_entry_memo\nmatched_bank_transaction_date\nmatched_bank_transaction_description\n',
     pay: [
       "ParityDrawer",
       "<ParityDrawer",
@@ -196,6 +206,17 @@ function selftest() {
   };
   if (!contractErrors(thinList).some((e) => /bill_number|UUID chrome/.test(e))) {
     console.error(`${LABEL} --selftest FAIL: must catch null bill_number label`);
+    process.exit(1);
+  }
+  // GUARD RE-ANCHOR (CC-2, 2026-08-29): same UUID-chrome mutation, but through the
+  // visibleDocumentLabel successor — proves the re-anchored regex catches a real regression
+  // under the CURRENT helper name, not just the retired entityLabel spelling.
+  const thinListVisibleDoc = {
+    ...good,
+    list: 'PayBillModal\nkind="journal_entry"\nkind="bill"\nkind="vendor"\nsearchParams.get("create") === "1"\nparams.set("create", "1")\nparams.delete("create")\nvisibleDocumentLabel(null, row.bill_id, "Bill")\n',
+  };
+  if (!contractErrors(thinListVisibleDoc).some((e) => /bill_number|UUID chrome/.test(e))) {
+    console.error(`${LABEL} --selftest FAIL: must catch null bill_number label via visibleDocumentLabel`);
     process.exit(1);
   }
   const thin = { ...good, pay: "export function PayBillModal(){ return <div>thin</div> }" };
