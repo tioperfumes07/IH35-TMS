@@ -315,7 +315,7 @@ export function RoundTrips({ loads, operatingCompanyId, loading, listError, onLo
   return (
     <div className="overflow-x-hidden space-y-2" data-testid="dispatch-round-trips-view">
       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600">
-        <span>Canonical reads: mdata.loads · mdata.units · mdata.drivers · mdata.customers. TR sits between NB and SB.</span>
+        <span>Load board orders NB, then triangulation, then SB. TR sits between NB and SB.</span>
         <label className="ml-auto inline-flex items-center gap-1">
           Sort
           <select
