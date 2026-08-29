@@ -2353,3 +2353,4 @@ CODEX | FINDING | ID=FLEET-F7343-UNIT-DETAIL-PENDING-READ-PAINTS-FALSE-INVISIBLE
 CODEX | FINDING+FIXED | ID=PROGRAM-F7344-EMPTY-WHY-CHANGE-DELETES-PCTCLASS-DECLARATION | SOURCE=moduleMatrixBoxes DualPct pctClass | ROOT=#17749 replaced declaration but orphaned body | FIX=restore exported pctClass boundary; retain emptyWhyTitle | BLOCKS=all pushes | NEXT=full gate | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=FUEL-F7348 | NOW=upload-guard-partial-evidence-root-fix | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7349 | NOW=drivers-chrome-guard-structural-modal-root-fix | NEXT=unique dispatch/drivers/fleet | GO
+CODEX | WORKING | GO-TRUST-02 | FINDING=DRV-F7350 | NOW=driver-column-keyed-hub-mount-guard-root-fix | NEXT=unique dispatch/drivers/fleet | GO
