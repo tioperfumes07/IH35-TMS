@@ -262,16 +262,41 @@ function envEnabled(name: string): boolean {
   return v === "true";
 }
 
+/** QBO jobs by name prefix (not Samsara / bank / TMS money crons). */
+export function isQboBackgroundJob(jobName: string): boolean {
+  return (
+    jobName.startsWith("qbo.") ||
+    jobName.startsWith("qbo_sync.") ||
+    jobName.startsWith("integrations.qbo") ||
+    jobName.startsWith("sync.qbo_") ||
+    jobName.startsWith("reconciliation.qbo_")
+  );
+}
+
+/**
+ * USMCA-launch-first (H4): leftover TRANSP QBO realm + invalid_grant must not paint
+ * public healthz `stale_jobs` forever. Opt in with IH35_QBO_JOB_HEALTH_ARMED=true
+ * when QBO ops are intentionally on. A1-1 realm+mirror alarm applies only when armed.
+ */
+export function qboJobHealthArmed(): boolean {
+  return process.env.IH35_QBO_JOB_HEALTH_ARMED === "true";
+}
+
 // A1-1 (observability): the QBO master-data mirror-staleness alarm must NOT self-disable.
 // It was gated only on QBO_MASTERDATA_SYNC_ENABLED, so with the sync flag OFF the staleness
 // check was skipped entirely — a stale/broken QBO mirror never alarmed even while a realm was
 // live-connected. `qboRealmConnected` (any non-revoked integrations.qbo_connections row) now
 // arms the mirror-health alarm independently of the sync flag: connected realm ⇒ a stale mirror
 // always surfaces; no connected realm ⇒ still silent (correct).
+// H4: that A1-1 path is behind IH35_QBO_JOB_HEALTH_ARMED so USMCA-only launch is not yellow
+// from a dormant QBO integration.
 export function backgroundJobRule(
   jobName: string,
   qboRealmConnected: boolean
 ): { enabled: boolean; maxStaleMinutes: number; dormantReason?: string } | null {
+  if (isQboBackgroundJob(jobName) && !qboJobHealthArmed()) {
+    return { enabled: false, maxStaleMinutes: 30, dormantReason: "usmca_qbo_health_unarmed" };
+  }
   switch (jobName) {
     // ── OPS-F76 — the 8 jobs OPS-F75 deliberately skipped, now paired BY HAND ──────────────────────
     //
