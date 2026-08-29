@@ -115,9 +115,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. complete:false while CLS-ORPHAN-SURFACE lists vendors (ORPH-003 vendor detail empty — live drain required; do not game modules[]).",
+      "evidence": "2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. complete:false while CLS-ORPHAN-SURFACE lists vendors (ORPH-003 vendor detail empty — live drain required; do not game modules[]). RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): guard re-run PASS (7 of 7 checklist; complete_flag per false-green law). ORPH-003 remains a genuine, separate OPEN data-model gap (vendor has no ACH/bank field at all, owner decision pending) -- does not contradict this item's own VERIFY-1..8 composition, not claimed here as module completeness.",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-29T20:15:00.000Z",
+      "live_verified_sha": "b2448ce"
     }
   ],
   "pass_count": 0,
