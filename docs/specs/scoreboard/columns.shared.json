@@ -1,6 +1,6 @@
 {
-  "version": 2,
-  "note": "Modules pick a subset. chrome/wiring part of full linkage \u2014 owner 2026-08-08. 2026-08-12 owner: added claim/work_order/accident/policy/settlement/legal_matter/invoice/bank + full surface inventory leaves (modal/drawer/panel/wizard/popup/parity).",
+  "version": 3,
+  "note": "Modules pick a subset. chrome/wiring part of full linkage \u2014 owner 2026-08-08. 2026-08-12 owner: added claim/work_order/accident/policy/settlement/legal_matter/invoice/bank + full surface inventory leaves (modal/drawer/panel/wizard/popup/parity). 2026-08-29: C25–C31 economics stay; added verifier group V1–V6 (l6, bound, proven, evidence_class, route_alive, proof_age). evidence_class id is not the generic word evidence. Spec is a promise the matrix draws — verify-declared-is-rendered is spec-vs-SOURCE.",
   "columns": [
     {
       "id": "driver",
@@ -171,6 +171,36 @@
       "id": "non_empty_proof",
       "group": "economics",
       "label": "C31 Living doc"
+    },
+    {
+      "id": "l6",
+      "group": "verifier",
+      "label": "V1 L6"
+    },
+    {
+      "id": "bound",
+      "group": "verifier",
+      "label": "V2 BOUND"
+    },
+    {
+      "id": "proven",
+      "group": "verifier",
+      "label": "V3 PROVEN"
+    },
+    {
+      "id": "evidence_class",
+      "group": "verifier",
+      "label": "V4 EVIDENCE"
+    },
+    {
+      "id": "route_alive",
+      "group": "verifier",
+      "label": "V5 ROUTE"
+    },
+    {
+      "id": "proof_age",
+      "group": "verifier",
+      "label": "V6 AGE"
     }
   ]
 }

@@ -2127,7 +2127,18 @@ export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = fa
     }),
   );
 
-  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "other"];
+  // Spec is a promise: C25–C31 + V1–V6 exist even when a board's required map has not listed them yet.
+  try {
+    const sharedRaw = await readFile(path.join(REPO_ROOT, "docs/specs/scoreboard/columns.shared.json"), "utf8");
+    const shared = JSON.parse(sharedRaw) as { columns?: SystemMatrixColumn[] };
+    for (const c of shared.columns ?? []) {
+      if (c?.id && !colMeta.has(c.id)) colMeta.set(c.id, { id: c.id, label: c.label, group: c.group });
+    }
+  } catch {
+    /* fail open on missing spec file — frontend mergeColumns still draws from the same JSON */
+  }
+
+  const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
   const columns = [...colMeta.values()].sort((a, b) => {
     const ga = GROUP_ORDER.indexOf(a.group);
     const gb = GROUP_ORDER.indexOf(b.group);

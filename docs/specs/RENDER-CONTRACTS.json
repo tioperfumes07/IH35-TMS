@@ -1,0 +1,29 @@
+{
+  "note": "A spec entry is a PROMISE THAT SOMETHING APPEARS ON A SCREEN. verify-declared-is-rendered.mjs proves each promised id/element is actually referenced by the component chain that draws it. Adding a spec entry without wiring the renderer FAILS. This file may grow; the waiver list may only shrink.",
+  "contracts": [
+    {
+      "id": "scoreboard-columns",
+      "spec": "docs/specs/scoreboard/columns.shared.json",
+      "idPath": "columns[].id",
+      "renderers": [
+        "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx",
+        "apps/frontend/src/pages/program/moduleMatrixCatalog.ts",
+        "apps/frontend/src/pages/program/moduleMatrixBoxes.tsx",
+        "apps/frontend/src/pages/program/moduleMatrixRequiredMaps.ts",
+        "apps/frontend/src/pages/program/classScoreboard.data.ts",
+        "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx"
+      ],
+      "why": "C25-C31 were declared in the spec, a guard proved they were declared, and no component ever drew them. Owner looked for months."
+    },
+    {
+      "id": "transaction-health-screen",
+      "spec": "docs/specs/screens/transaction-health.contract.json",
+      "idPath": "elements[].token",
+      "renderers": [
+        "apps/frontend/src/pages/system/SystemModulePage.tsx"
+      ],
+      "why": "TXH-01 specified a two-pane wiring map. A flat table shipped. The block was scored on its backend contract; nothing asserted the screen."
+    }
+  ],
+  "waivers": []
+}
