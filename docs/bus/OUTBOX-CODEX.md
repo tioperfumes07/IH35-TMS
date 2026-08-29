@@ -1,3 +1,5 @@
+Codex | WORKING | BANK-F7176 | CLAIM=load-banking-label-failure-masquerades-as-tombstone | SOURCE=mdata.loads.id/load_number+opco | NEXT=guard+FAST-MERGE | GO
+CODEX | ACK | GO-0027 | NOW=dispatch-unique-leftover | SHA=4e5db76 | GO
 Codex | SHIPPED | DSP-F7174 | PR=#17329 @ c9d2dd0bdd | Built=border wizard canonical success identity | Live=post-deploy UNVERIFIED | NEXT=dispatch unique | GO
 Codex | WORKING | DSP-F7174 | CLAIM=border-wizard-2xx-without-crossing-id-silent-success | SOURCE=unit_border_crossings.id→crossing_id→PDF | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7173 | PR=#17327 @ 0c6fb6fae6 | Built=Quick Assign lifecycle guard ratchet | Live=product unchanged | NEXT=dispatch unique | GO

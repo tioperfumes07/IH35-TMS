@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { entityLabel } from "../../lib/entity-label";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -51,6 +52,13 @@ export function LoadBankingLinkagePage() {
           />
         }
       />
+      {/* BANK-F7176: distinguish a failed canonical-label read from an honest historical tombstone. */}
+      {loadQuery.isError ? (
+        <ListErrorBanner
+          message="Could not load the canonical load label. Bank links are still available below."
+          onRetry={() => void loadQuery.refetch()}
+        />
+      ) : null}
       <p className="text-xs text-gray-600">
         Reverse Law §9 for this load. Persisted categorization tags only — draft Match/Categorize fields are not
         links. EntityLink <code className="text-[11px]">kind=&quot;load&quot;</code> opens the board at{" "}
