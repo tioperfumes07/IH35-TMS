@@ -7,9 +7,10 @@ const ASSET = "apps/backend/src/mdata/ensure-unit-asset.shared.ts";
 
 function inspect(route, asset) {
   const failures = [];
+  const createStart = route.indexOf('app.post("/api/v1/mdata/units"');
   const create = route.slice(
-    route.indexOf('app.post("/api/v1/mdata/units"'),
-    route.indexOf('app.get("/api/v1/mdata/units/:id"'),
+    createStart,
+    route.indexOf("\n  app.get(", createStart),
   );
   const checks = [
     [
@@ -42,6 +43,7 @@ function inspect(route, asset) {
       create,
       /if \(!row\?\.id\) throw new Error\("unit_insert_returned_no_row"\)/,
     ],
+    ["canonical default-driver edge", create, /syncCanonicalDefaultDriver\(client,[\s\S]*driverId: b\.assigned_driver_id[\s\S]*default_driver_assignment_id: defaultDriverAssignmentId/],
     [
       "asset audit link",
       create,
@@ -86,6 +88,7 @@ if (process.argv.includes("--selftest")) {
       asset,
     ],
     [route.replace("asset_id: assetId", "asset_id: null"), asset],
+    [route.replace("driverId: b.assigned_driver_id", "driverId: null"), asset],
     [
       route,
       asset.replace(
