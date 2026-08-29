@@ -6721,5 +6721,10 @@
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-cancellation-tonu-backlink-scoped-check"
+  },
+  "10013": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-notify-claim-before-send"
   }
 }
