@@ -106,7 +106,7 @@ async function fetchLastAlert(client: import("pg").PoolClient, operatingCompanyI
 }
 
 export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) {
-  app.get("/api/v1/qbo-sync/drift-dashboard", async (req, reply) => {
+  app.get("/api/v1/qbo-sync/drift-dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!accountingRoles(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -204,7 +204,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     return reply.send(payload);
   });
 
-  app.post("/api/v1/qbo-sync/drift-log/:id/resolve", async (req, reply) => {
+  app.post("/api/v1/qbo-sync/drift-log/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
     if (!authUser) return;
     if (!accountingRoles(authUser.role)) return reply.code(403).send({ error: "forbidden" });
