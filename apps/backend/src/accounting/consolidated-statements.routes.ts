@@ -51,7 +51,7 @@ async function assertScope(userId: string, role: string, companyIds: string[]): 
 }
 
 export async function registerConsolidatedStatementsRoutes(app: FastifyInstance) {
-  app.get("/api/v1/accounting/consolidated/pnl", async (req, reply) => {
+  app.get("/api/v1/accounting/consolidated/pnl", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReadConsolidated(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -71,7 +71,7 @@ export async function registerConsolidatedStatementsRoutes(app: FastifyInstance)
     return reply.code(200).send(report);
   });
 
-  app.get("/api/v1/accounting/consolidated/balance-sheet", async (req, reply) => {
+  app.get("/api/v1/accounting/consolidated/balance-sheet", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReadConsolidated(user.role)) return reply.code(403).send({ error: "forbidden" });
@@ -90,7 +90,7 @@ export async function registerConsolidatedStatementsRoutes(app: FastifyInstance)
     return reply.code(200).send(report);
   });
 
-  app.get("/api/v1/accounting/consolidated/cash-flow", async (req, reply) => {
+  app.get("/api/v1/accounting/consolidated/cash-flow", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!canReadConsolidated(user.role)) return reply.code(403).send({ error: "forbidden" });
