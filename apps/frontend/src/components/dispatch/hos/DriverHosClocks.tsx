@@ -11,6 +11,7 @@ import {
   eldStatusDot,
   HOS_COLUMNS,
   HOS_PROJECTED_TOOLTIP,
+  HOS_SOURCE_TOOLTIP,
   hosStatusDot,
   type HosColumnKey,
   type HosStatusRow,
@@ -113,7 +114,7 @@ export function DriverHosClocksBlock({
         // "—" until a driver is selected and HOS data flows. This keeps the design's clock set on screen.
         <div className="grid grid-cols-3 gap-x-3 gap-y-0.5 text-[11px] sm:grid-cols-6">
           {HOS_COLUMNS.map((col) => (
-            <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : col.samsaraField}>
+            <div key={col.key} title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}>
               <div className="text-[9px] uppercase tracking-[0.3px] text-gray-500">
                 {col.label}
                 {col.derived ? <span className="ml-0.5 text-gray-400">*</span> : null}
@@ -169,7 +170,7 @@ export function DriverHosClockValue({
     <span
       className="font-mono text-[11px] text-gray-700"
       data-hos-col={colKey}
-      title={col?.derived ? HOS_PROJECTED_TOOLTIP : col?.samsaraField}
+      title={col?.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}
     >
       {clocks ? clocks[colKey] : "—"}
     </span>
@@ -200,7 +201,7 @@ export function DriverHosClockCells({ driverId, operatingCompanyId }: { driverId
           key={col.key}
           className="px-3 py-2 font-mono text-[11px] text-gray-700"
           data-hos-col={col.key}
-          title={col.derived ? HOS_PROJECTED_TOOLTIP : col.samsaraField}
+          title={col.derived ? HOS_PROJECTED_TOOLTIP : HOS_SOURCE_TOOLTIP}
         >
           {clocks ? clocks[col.key] : "—"}
         </td>
