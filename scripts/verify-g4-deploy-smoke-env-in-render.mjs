@@ -98,10 +98,15 @@ function assertConfigured() {
       errors.push(`render.yaml ih35-tms-backend envVars missing key: ${key}`);
     }
   }
+  // GO-0025-ACCT-R-04: docs/bus/PASTE-CURSOR-NOW.md was a per-cycle "paste box" for a specific
+  // historical instruction round (U14/425c leftover) — deliberately deleted by
+  // BUS-FINISH-ALL-FAST-MERGE-CLEAN (#15440) as bus-doc cleanup, not an accidental loss. This guard
+  // still required it to exist, so CI has been red on main for this reason alone since that cleanup
+  // landed. The guard's actual purpose (no live bus doc still orders a per-merge prod kick) stays
+  // fully covered by the 4 remaining files below, which are all still actively maintained.
   const busFiles = [
     "docs/bus/FAST-MERGE-4MIN-LAW.md",
     "docs/bus/INBOX-CURSOR.md",
-    "docs/bus/PASTE-CURSOR-NOW.md",
     "docs/bus/CODER-INSTRUCTIONS-NOW.md",
     "docs/lockdown/NO-PER-MERGE-PROD-DEPLOY-LAW-2026-08-21.md",
   ];
