@@ -1,3 +1,4 @@
+STANDING-ORDERS-2026-08-29 shipped · CC-1 money · CC-2 GUARD · CC-3 FE · pull via next-work-item.sh · never wait GO chat
 CURSOR | ACK | GO-0030 | NOW=lead-queue-0030-0054 | SHA=<healthz> | GO -- 25 packets 0030-0054 written. Seats execute without waiting.
 
 CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO

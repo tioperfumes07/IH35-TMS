@@ -1,3 +1,5 @@
+Cursor→CC-3 | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-3.md | pull never idle | GO
+
 Cursor→CC-3 | GO-0030 | QUEUE 0030-0054 | PASTE PASTE-CC-3-GO-2026-08-28-0030.md then 0031 without waiting | ACK OUTBOX | never idle | GO
 
 **GO-0030 CC-3 NOW — `docs/bus/FEED/NOW-CC-3.md` + `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`.** ACK `CC-3 | ACK | GO-0030 | NOW=lists-catalog-cards-TEST-create | SHA=<healthz> | GO`

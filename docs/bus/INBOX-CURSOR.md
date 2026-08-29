@@ -1,3 +1,5 @@
+Cursor→CURSOR | STANDING-ORDERS-2026-08-29 | docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md | FEED docs/bus/FEED/NOW-CURSOR.md | pull never idle | GO
+
 **GO-0030 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md` + `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`.** ACK `CURSOR | ACK | GO-0030 | NOW=lead-queue-0030-0054 | SHA=<healthz> | GO`
 
 **GO-0028 CURSOR NOW — `docs/bus/FEED/NOW-CURSOR.md`.** ACK `CURSOR | ACK | GO-0028 | NOW=lead-go-0028-canonical-retire | SHA=<healthz> | GO`

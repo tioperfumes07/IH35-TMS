@@ -1,9 +1,22 @@
-# FEED · CC-1 · GO-0030 (queue 0030–0054)
+# NOW — CC-1 (STANDING ORDERS · 2026-08-29)
 
-`git pull --ff-only origin main`
-ACK: `CC-1 | ACK | GO-0030 | NOW=accounting-TEST-expense | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | STANDING-ORDERS-2026-08-29 | NOW=standing-orders-then-money-pull | SHA=<healthz> | GO`
 
-**Index:** `docs/lockdown/GO-QUEUE-0030-0054-INDEX.md`
-**Paste:** `docs/lockdown/PASTE-CC-1-GO-2026-08-28-0030.md`
+## Paste first line then entire standing orders
 
-NOW: `/accounting` TEST expense then leftover money. Do not gate other seats. Then GO-0031 same turn. PROG-01 SKIP. Never `trigger_deploy`.
+`You are CC-1. These are your standing orders. Begin at §1 and do not stop. (Money/GL — do not gate chrome seats.)`
+
+Then paste **all** of: `docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`
+
+## Immediate next
+
+```bash
+git pull --ff-only origin main
+bash scripts/next-work-item.sh
+```
+
+Filter to YOUR lane. GO-0030→0054 remains routing only — **never idle waiting for chat**.
+
+USMCA only · CREATE-TEST-THEN-VOID · KEEP TEST · U14 never restamp · PROG-01 SKIP · never `trigger_deploy`.
+
+Urgent 14 bar: Fully-Wired 1–12 + Live Chrome on current healthz + zero unique leftover.
