@@ -1,4 +1,12 @@
 DEVIN | ACK | GO-0027 | NOW=vendors-VEND-S01-USMCA-123 | SHA=4e5db76 | GO
+DEVIN | ACK | GO-0049 | NOW=vendors-leftover-unique | SHA=bdd2698 | GO
+DEVIN | GO-0049 | vendors-leftover-unique | SHA=bdd2698 | SHIPPED PR #17364 | FIXED: LST-F9120 — Thirteen routes across four files lacked config.rateLimit: names search, audit events list, 6 QBO master read routes (customers/vendors list+detail, items, expense-categories), 4 QBO master write routes (qbo vendors/customers/items/accounts). Added 60/min reads, 30/min writes. Ratchet 305→299. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
+DEVIN | ACK | GO-0050 | NOW=vendors-leftover-unique | SHA=bdd2698 | GO — continuing drain
+DEVIN | ACK | GO-0051 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0052 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0053 | NOW=vendors-sweep-unique | SHA=bdd2698 | GO — continuing sweep
+DEVIN | ACK | GO-0054 | NOW=vendors-mine-leftover-unique | SHA=bdd2698 | GO — final sweep
+
 DEVIN | ACK | GO-0047 | NOW=vendors-leftover-unique | SHA=24ae06c | GO
 DEVIN | GO-0047 | vendors-leftover-unique | SHA=24ae06c | SHIPPED PR #17361 | FIXED: LST-F9118 — Two reclassify routes lacked config.rateLimit: POST /api/v1/customers/:id/flag-duplicate (write) and GET /api/v1/vendors/:id/reclassification-history (read, vendor-specific). Added 30/min write, 120/min read. Ratchet 307→306. Live=UNVERIFIED until deploy. KEEP TEST. No trigger_deploy. No COMPLETE.
 DEVIN | ACK | GO-0048 | NOW=vendors-leftover-unique | SHA=5dee9eb | GO
