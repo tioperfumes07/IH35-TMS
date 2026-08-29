@@ -2069,6 +2069,9 @@ CODEX | WORKING | GO-0045 | FINDING=DSP-F7184 | NOW=canonical cancellation/load 
 CODEX | ACK | GO-0046 | NOW=/fleet-leftover-unique | SHA=4e5db76 | GO
 CODEX | SHIPPED | GO-0045 | FINDING=DSP-F7184 | PR=#17387 @ e003eacbac | NEXT=GO-0046 /fleet | GO
 CODEX | WORKING | GO-0046 | FINDING=FLEET-F7185 | NOW=dual-ack canonical CAS | NEXT=FAST-MERGE then GO-0047 | GO
+CODEX | ACK | GO-0049 | NOW=/fuel-leftover-unique | SHA=4e5db76 | GO
+Codex | WORKING | FUEL-F7188 | CLAIM=loves-upload-invalid-row-truth | SOURCE=fuel.loves_prices_daily | NEXT=guard+FAST-MERGE | GO
+Codex | SHIPPED | DRIVER-F7187 | PR=#17396 @ 8e37b3f6b1 | Built=driver→identity phone+language exact mirror | Live=post-deploy UNVERIFIED | NEXT=GO-0049 /fuel | GO
 CODEX | ACK | GO-0048 | NOW=/drivers-leftover-unique | SHA=4e5db76 | GO
 Codex | WORKING | DRIVER-F7187 | CLAIM=driver-identity-phone+language-exact-mirror | SOURCE=mdata.drivers→identity.users | NEXT=guard+FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7186 | PR=#17395 @ abf2c81098 | Built=Edit Load exact write identities | Live=post-deploy UNVERIFIED | NEXT=GO-0048 /drivers | GO
