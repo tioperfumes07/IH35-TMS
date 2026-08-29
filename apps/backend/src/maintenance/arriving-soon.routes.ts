@@ -61,7 +61,7 @@ function suggestedWoSourceType(issues: Array<{ issue_type?: string; severity?: s
 }
 
 export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/arriving-soon", async (req, reply) => {
+  app.get("/api/v1/maintenance/arriving-soon", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
@@ -491,7 +491,7 @@ export async function registerMaintenanceArrivingSoonRoutes(app: FastifyInstance
     }
   );
 
-  app.post("/api/v1/maintenance/arriving-soon/audit-view", async (req, reply) => {
+  app.post("/api/v1/maintenance/arriving-soon/audit-view", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});

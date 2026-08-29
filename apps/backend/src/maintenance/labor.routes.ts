@@ -128,7 +128,7 @@ async function laborCodesReady(client: { query: (sql: string, values?: unknown[]
 }
 
 export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/labor-codes", async (req, reply) => {
+  app.get("/api/v1/maintenance/labor-codes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -145,7 +145,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { labor_codes: payload.rows };
   });
 
-  app.post("/api/v1/work-orders/:woId/time-entries/start", async (req, reply) => {
+  app.post("/api/v1/work-orders/:woId/time-entries/start", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -216,7 +216,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { time_entry: payload.entry };
   });
 
-  app.get("/api/v1/work-orders/:woId/time-entries", async (req, reply) => {
+  app.get("/api/v1/work-orders/:woId/time-entries", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -253,7 +253,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { time_entries: payload.entries };
   });
 
-  app.post("/api/v1/time-entries/:entryId/stop", async (req, reply) => {
+  app.post("/api/v1/time-entries/:entryId/stop", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -295,7 +295,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { time_entry: payload.entry };
   });
 
-  app.post("/api/v1/time-entries", async (req, reply) => {
+  app.post("/api/v1/time-entries", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 
@@ -369,7 +369,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { time_entry: payload.entry };
   });
 
-  app.patch("/api/v1/time-entries/:entryId", async (req, reply) => {
+  app.patch("/api/v1/time-entries/:entryId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     if (!isOwnerOrAdmin(String(user.role ?? ""))) return reply.code(403).send({ error: "owner_admin_only" });
@@ -412,7 +412,7 @@ export async function registerMaintenanceLaborRoutes(app: FastifyInstance) {
     return { time_entry: payload.entry };
   });
 
-  app.delete("/api/v1/time-entries/:entryId", async (req, reply) => {
+  app.delete("/api/v1/time-entries/:entryId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
 

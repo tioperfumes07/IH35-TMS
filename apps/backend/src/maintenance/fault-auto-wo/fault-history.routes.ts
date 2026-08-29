@@ -37,7 +37,7 @@ async function withCompanyScope<T>(
 }
 
 export async function registerFaultHistoryRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/fault-history", async (req, reply) => {
+  app.get("/api/v1/maintenance/fault-history", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authed(req, reply);
     if (!user) return;
     const parsed = companyQuerySchema.safeParse(req.query ?? {});
