@@ -13,25 +13,31 @@
  * All Owner/Administrator only. No GL. posted_to_gl untouched.
  */
 import type { FastifyInstance } from "fastify";
+import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withLuciaBypass } from "../../auth/db.js";
 
 const UUID_RE = /^[0-9a-f-]{36}$/i;
 
-function requireOwnerAdmin(req: unknown, reply: { code: (n: number) => { send: (b: unknown) => unknown } }): boolean {
-  const role = String((req as { user?: { role?: string } }).user?.role ?? "");
-  if (!["Owner", "Administrator"].includes(role)) { reply.code(403).send({ error: "forbidden" }); return false; }
-  return true;
+type OfficeUser = { uuid: string; role: string };
+
+function requireOwnerAdmin(req: unknown, reply: { code: (n: number) => { send: (b: unknown) => unknown } }): OfficeUser | null {
+  const user = (req as { user?: OfficeUser }).user;
+  const role = String(user?.role ?? "");
+  if (!["Owner", "Administrator"].includes(role)) { reply.code(403).send({ error: "forbidden" }); return null; }
+  return user ?? null;
 }
 
 export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Review queue: deposits + summary ──
   app.get("/api/integrations/relay/deposits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const q = (req.query ?? {}) as { operating_company_id?: string; classification?: string };
     const opco = String(q.operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    await assertCompanyMembership(user.uuid, opco);
     const classFilter = q.classification && ["company", "unclassified", "canceled"].includes(q.classification) ? q.classification : null;
 
     return withLuciaBypass(async (client) => {
@@ -75,9 +81,11 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Company-card map: read ──
   app.get("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    await assertCompanyMembership(user.uuid, opco);
     return withLuciaBypass(async (client) => {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const rows = (await client.query(
@@ -108,9 +116,11 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
   // ── Company-card map: upsert one card (owner adds/labels/deactivates). Re-classifies deposits. ──
   app.put("/api/integrations/relay/company-cards", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return;
-    if (!requireOwnerAdmin(req, reply)) return;
+    const user = requireOwnerAdmin(req, reply);
+    if (!user) return;
     const opco = String(((req.query ?? {}) as { operating_company_id?: string }).operating_company_id ?? "");
     if (!UUID_RE.test(opco)) return reply.code(400).send({ error: "operating_company_id query param required (uuid)" });
+    await assertCompanyMembership(user.uuid, opco);
     const body = (req.body ?? {}) as { card_last4?: string; label?: string; source_hint?: string; is_active?: boolean };
     const card = String(body.card_last4 ?? "").trim();
     if (!/^[0-9]{4}$/.test(card)) return reply.code(400).send({ error: "card_last4 must be exactly 4 digits" });
