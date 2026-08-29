@@ -67,7 +67,20 @@ contains("apps/backend/src/index.ts", indexTs, [
 
 read("apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/engine.test.ts");
 read("apps/backend/src/integrations/samsara/geofences/state-machine/__tests__/transitions.test.ts");
-read("apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts");
+const binding = read("apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts");
+const bookLoad = read("apps/backend/src/dispatch/book-load.service.ts");
+const refinements = read("apps/backend/src/dispatch/dispatch-refinements.service.ts");
+contains("apps/backend/src/dispatch/geofences/load-geofence-binding.service.ts", binding, [
+  { pattern: /if \(!refreshed\.rows\[0\]\?\.id\) throw new Error\("load_geofence_refresh_failed"\)/, label: "existing geometry refresh result check" },
+  { pattern: /if \(!inserted\.rows\[0\]\?\.id\) throw new Error\("load_geofence_insert_failed"\)/, label: "new geofence identity check" },
+]);
+contains("apps/backend/src/dispatch/book-load.service.ts", bookLoad, [
+  { pattern: /await bindLoadToGeofences\(client, input\.operating_company_id, String\(load\.id\)\)/, label: "Book Load geofence binding" },
+]);
+contains("apps/backend/src/dispatch/dispatch-refinements.service.ts", refinements, [
+  { pattern: /SELECT id FROM mdata\.loads[^`]*FOR UPDATE/, label: "replace-stops load lock" },
+  { pattern: /await bindLoadToGeofences\(client, operatingCompanyId, loadId\)/, label: "replace-stops geofence binding" },
+]);
 read("docs/specs/gap-39-geofence-state-machine.md");
 
 const manifest = read(".block-ready/GAP-39.json");
@@ -80,6 +93,29 @@ const pkg = read("package.json");
 contains("package.json", pkg, [
   { pattern: /verify:geofence-state-machine/, label: "npm verify script" },
 ]);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["Book Load binding", bookLoad, bookLoad.replace("await bindLoadToGeofences(client, input.operating_company_id, String(load.id));", "")],
+    ["replace-stops binding", refinements, refinements.replace("await bindLoadToGeofences(client, operatingCompanyId, loadId);", "")],
+    ["insert identity", binding, binding.replace('throw new Error("load_geofence_insert_failed")', 'void 0')],
+    ["refresh identity", binding, binding.replace('throw new Error("load_geofence_refresh_failed")', 'void 0')],
+  ];
+  const patterns = [
+    /await bindLoadToGeofences\(client, input\.operating_company_id, String\(load\.id\)\)/,
+    /await bindLoadToGeofences\(client, operatingCompanyId, loadId\)/,
+    /throw new Error\("load_geofence_insert_failed"\)/,
+    /throw new Error\("load_geofence_refresh_failed"\)/,
+  ];
+  mutations.forEach(([label, original, planted], index) => {
+    if (original === planted || patterns[index].test(planted)) {
+      console.error(`verify-geofence-state-machine SELFTEST FAIL: ${label} mutation escaped`);
+      process.exit(1);
+    }
+  });
+  console.log(`verify-geofence-state-machine SELFTEST PASS — ${mutations.length}/${mutations.length}`);
+  process.exit(0);
+}
 
 if (failures.length > 0) {
   console.error("verify-geofence-state-machine FAILED:");

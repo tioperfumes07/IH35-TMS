@@ -19,6 +19,7 @@ import {
 } from "./load-id-reservation.service.js";
 import { toMdataStatus, type DispatchStatus } from "./load-state-machine.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
+import { bindLoadToGeofences } from "./geofences/load-geofence-binding.service.js";
 
 type BookLoadStop = {
   stop_type: "pickup" | "delivery";
@@ -1969,6 +1970,8 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
         ]
       );
     }
+
+    await bindLoadToGeofences(client, input.operating_company_id, String(load.id));
 
     if (input.driver_instructions_text?.trim()) {
       await appendCrudAudit(

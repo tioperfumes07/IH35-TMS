@@ -44,6 +44,7 @@ import { initializeDriverVendorMappingWorker } from "./jobs/driver-vendor-mappin
 import { registerGeofenceReconciliationRoutes } from "./integrations/samsara/geofences/reconciliation.routes.js";
 import { registerGeofenceStateMachineRoutes } from "./integrations/samsara/geofences/state-machine/routes.js";
 import { initializeGeofenceReconciliationWorker } from "./jobs/geofence-reconciliation-daily.js";
+import { initializeGeofenceStateWatcher } from "./jobs/geofence-state-watcher.js";
 import { registerBorderCrossingDetectorRoutes } from "./integrations/samsara/border-crossings/routes.js";
 import { registerAutoStatusSwitchRoutes } from "./integrations/samsara/auto-status-switch/routes.js";
 import { initializeBorderCrossingDetectorWorker } from "./jobs/border-crossing-detector.js";
@@ -1457,6 +1458,7 @@ async function main() {
     try {
       initializeDriverVendorMappingWorker(app);
       initializeSamsaraPositionPollWorker(app);
+      initializeGeofenceStateWatcher(app);
       initializeGeofenceReconciliationWorker(app);
       initializeAnomalyDetectorWorker(app);
       initializeFuelFraudDetectorWorker(app);
