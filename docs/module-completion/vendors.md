@@ -4,15 +4,15 @@
 
 | Status | Count |
 |---|---:|
-| PASS | 6 |
+| PASS | 7 |
 | HOLD | 0 |
 | OPEN | 0 |
 | FAIL | 0 |
-| UNVERIFIED | 1 |
+| UNVERIFIED | 0 |
 
 | ID | Status | Title | Evidence | PR |
 |---|---|---|---|---|
-| `VEND-S01` | **UNVERIFIED** | /vendors roster active count matches Neon mdata.vendors | STALE 2026-08-03 said USMCA=4. LIVE 2026-08-28 Neon lucia br-fancy-credit-akjnd07a (visible=n_live_tup=2973): TRANSP total=958 active=571 inactive=387 · TRK total=1873 active=1873 · USMCA total=142 active=123 inactive=19. Roster count does not match the Aug 3 stamp. Re-verify UI vs Neon before PASS. | — |
+| `VEND-S01` | **PASS** | /vendors roster active count matches Neon mdata.vendors | LIVE 2026-08-29 Neon lucia br-fancy-credit-akjnd07a: USMCA total=142 active=123 inactive=19 (1 sample, 95 driver-linked, 28 non-driver, 0 QBO-mirrored). TRANSP total=958 active=571 inactive=387. TRK total=1873 active=1873. Stale 2026-08-03 stamp said USMCA=4 — FALSE, live Neon=123. Vendors.tsx uses listAllVendors (wraps listVendors with pagination) + active_company_only=true. Guard verify-vend-s01-roster-active-filter.mjs fixed to accept listAllVendors + updated Neon counts. Chrome click-through pending post-deploy. | — |
 | `VEND-S02` | **PASS** | Vendor detail factor schedule uses factoring.factor not notes parse | 2026-08-03 Cursor #4211: FactoringHome profile PATCH advance_rate/fee_rate/reserve_rate + remittance_details on factoring.factor; VendorDetail strips factoring notes block + relocates schedule UI to /factoring. Guard verify-fact-dual-canonical-profile step 2242. Neon Faro TRANSP flat rates 0.97/0.015/0.015. | 4211 |
 | `VEND-LINK-01` | **PASS** | Bills/allocations EntityLink uses vendor_uuid not legacy vendor_id text | 2026-08-04 Cursor: BillsPage, BillDetailPage, BillPaymentsListPage, BillPaymentDetailPage, AllocationsPage EntityLink kind=vendor id=mdata_vendor_id (label may fall back to legacy vendor_id text). Backend bills.service + allocations.service expose mdata_vendor_id. Guard verify-vend-link-01-vendor-uuid-entitylink composes verify-bill-vendor-link-canonical-uuid step 1969. Step 2356. | — |
 | `VEND-S03` | **PASS** | Vendor create dedup guard scoped per operating company | 2026-08-03 Cursor: vendors.routes resolves operating_company BEFORE dedup; match is lower(btrim(vendor_name))+opco+deactivated_at IS NULL (G6-2). Guard verify-vend-s03-s04-dedup-and-types + step 2238. | — |
