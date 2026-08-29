@@ -1994,3 +1994,6 @@ Codex | SHIPPED | DSP-F7127O | PR=#17193 @ 4f878f7a3b | Built=planner write cont
 CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
 Codex | WORKING | DSP-F7148 | CLAIM=arrival-confirm-hides-prompt-after-canonical-stop-zero-row | SOURCE=dispatch.stop_arrivals→mdata.load_stops→mdata.loads | NEXT=FAST-MERGE | GO
 Codex | SHIPPED | DSP-F7147 | PR=#17244 @ 9a67f6ef37 | Built=atomic load-reservation consumption | NEXT=arrival confirm lifecycle | GO
+CODEX | ACK | GO-0022 | NOW=drain-dispatch | SHA=4e5db76 | GO
+Codex | WORKING | DSP-F7149 | CLAIM=PWA-engagement-undefined-driver_id+created_at-500 | SOURCE=dispatch.auto_status_suggestions→auto_status_suggestion_responses | NEXT=FAST-MERGE | GO
+Codex | SHIPPED | DSP-F7148 | PR=#17247 @ b739f1c02d | Built=atomic company-scoped arrival confirm | NEXT=PWA engagement schema truth | GO

@@ -32,9 +32,12 @@ export async function getDriverPwaEngagement(
   const totalRes = await client.query<{ total: string }>(
     `
       SELECT COUNT(*)::text AS total
-      FROM dispatch.auto_status_suggestion_responses
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
+      FROM dispatch.auto_status_suggestion_responses r
+      JOIN dispatch.auto_status_suggestions s
+        ON s.id = r.suggestion_id
+       AND s.operating_company_id = r.operating_company_id
+      WHERE s.driver_id = $1::uuid
+        AND r.operating_company_id = $2::uuid
     `,
     [driverUuid, operatingCompanyId]
   );
@@ -42,19 +45,22 @@ export async function getDriverPwaEngagement(
   const res = await client.query<PwaEngagementRow>(
     `
       SELECT
-        id::text AS uuid,
-        driver_id::text,
-        operating_company_id::text,
-        suggestion_id::text,
-        response,
-        response_at::text AS responded_at,
-        (response = 'confirmed') AS accepted,
-        response_by_user_uuid::text,
-        created_at::text
-      FROM dispatch.auto_status_suggestion_responses
-      WHERE driver_id = $1::uuid
-        AND operating_company_id = $2::uuid
-      ORDER BY response_at DESC NULLS LAST, created_at DESC
+        r.id::text AS uuid,
+        s.driver_id::text,
+        r.operating_company_id::text,
+        r.suggestion_id::text,
+        r.response,
+        r.response_at::text AS responded_at,
+        (r.response = 'confirmed') AS accepted,
+        r.response_by_user_uuid::text,
+        r.response_at::text AS created_at
+      FROM dispatch.auto_status_suggestion_responses r
+      JOIN dispatch.auto_status_suggestions s
+        ON s.id = r.suggestion_id
+       AND s.operating_company_id = r.operating_company_id
+      WHERE s.driver_id = $1::uuid
+        AND r.operating_company_id = $2::uuid
+      ORDER BY r.response_at DESC
       LIMIT $3 OFFSET $4
     `,
     [driverUuid, operatingCompanyId, limit, offset]
