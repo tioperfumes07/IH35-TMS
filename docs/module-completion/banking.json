@@ -191,14 +191,14 @@
     },
     {
       "id": "BANK-CTRL-01",
-      "title": "BANK_FEED_GL_POSTING_ENABLED default OFF; no invented JE",
+      "title": "BANK_FEED_GL_POSTING_ENABLED ON via owner override; no invented JE; no QBO write-back",
       "layers": [
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "Parallel books",
-      "status": "UNVERIFIED",
-      "evidence": "JSON said Flags OFF by design. LIVE Neon 2026-08-28 br-fancy-credit-akjnd07a lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true on TRANSP, TRK, and USMCA. Do not flip prod_verified. Do not flip the flags in this PR.",
+      "spec": "Parallel books — flags ON is intended (seed default OFF is stale)",
+      "status": "PASS",
+      "evidence": "FALSE ALARM WITHDRAWN. Seed default OFF. Owner override ON for parallel posting — .claude/skills/ih35-tms-standards/SKILL.md §6 + 00_LOCKED_DECISIONS. Neon 2026-08-28 lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true TRANSP+TRK+USMCA is CORRECT. Never raise all-GL-flags-ON as a defect. Nobody flips this flag. prod_verified stays false until USMCA Live Chrome (not a flag hunt). No invented JE. QBO write-back stays OFF.",
       "pr": null,
       "prod_verified": false
     },

@@ -1,3 +1,5 @@
+CURSOR | ACK | GO-0026 | NOW=cc2-next-reports | SHA=4e5db76 | GO
+
 CURSOR | ACK | GO-0025 | NOW=lead-runtime-program-u6-honesty | SHA=4e5db76 | GO
 
 Cursor | ACK | GO-0023 | PORT=9222 | NOW=lead-u6-true-remaining | SHA=4e5db76 | GO -- 8 OPEN + 25 unverified. No L6 stamp until deploy. Nobody else trigger_deploy.
