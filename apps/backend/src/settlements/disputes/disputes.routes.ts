@@ -51,7 +51,7 @@ const settlementIdParamsSchema = z.object({ id: z.string().uuid() });
 const disputeIdParamsSchema = z.object({ id: z.string().uuid() });
 
 function auth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

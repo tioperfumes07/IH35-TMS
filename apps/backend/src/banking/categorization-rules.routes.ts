@@ -30,7 +30,7 @@ const patchBodySchema = z
   .refine((payload) => Object.keys(payload).length > 0, { message: "at_least_one_field_required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 

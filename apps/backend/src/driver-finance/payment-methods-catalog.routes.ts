@@ -29,7 +29,7 @@ const voidBodySchema = companyQuerySchema.extend({ reason: z.string().trim().min
 const WRITE_ROLES = new Set(["Owner", "Administrator"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 function requireWriter(reply: FastifyReply, role: string): boolean {

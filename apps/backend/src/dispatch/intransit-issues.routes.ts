@@ -31,7 +31,7 @@ type AppUser = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply): AppUser | null {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -60,7 +60,7 @@ function pickExistingColumn(existingColumns: Set<string>, candidates: string[]):
 export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/intransit-issues", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const bodyParsed = createIssueBodySchema.safeParse(req.body ?? {});
     if (!bodyParsed.success) return sendValidationError(reply, bodyParsed.error);
     const body = bodyParsed.data;

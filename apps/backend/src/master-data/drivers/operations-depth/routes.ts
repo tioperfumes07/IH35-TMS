@@ -48,7 +48,7 @@ export const OPERATIONS_DEPTH_SUBVIEWS: ReadonlyArray<{ slug: string; loader: Su
 ];
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

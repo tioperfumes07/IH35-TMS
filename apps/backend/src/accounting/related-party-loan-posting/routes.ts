@@ -79,7 +79,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsed = listQuerySchema.safeParse(req.query ?? {});
       if (!parsed.success) return validationError(reply, parsed.error);
       const q = parsed.data;
@@ -191,7 +191,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = idParamSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -241,7 +241,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const params = idParamSchema.safeParse(req.params ?? {});
       if (!params.success) return validationError(reply, params.error);
       const q = z.object({ operating_company_id: z.string().uuid() }).safeParse(req.query ?? {});
@@ -338,7 +338,7 @@ export async function registerRelatedPartyLoanRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsed = createBodySchema.safeParse(req.body ?? {});
       if (!parsed.success) return validationError(reply, parsed.error);
       const b = parsed.data;

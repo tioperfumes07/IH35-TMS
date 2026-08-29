@@ -90,7 +90,7 @@ const voidCustomerQualityEventBodySchema = z.object({
 const DISPUTE_TYPES = new Set(["lumper_dispute", "detention_dispute", "tonu_dispute", "rate_dispute", "damage_claim"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -125,7 +125,7 @@ function todayIsoDate() {
 export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/customer-quality-event-reasons", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = reasonsQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -167,7 +167,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
   app.get("/api/v1/mdata/customers/:customer_id/quality-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canRead(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = customerParamsSchema.safeParse(req.params ?? {});
@@ -237,7 +237,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
   app.post("/api/v1/mdata/customers/:customer_id/quality-events", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = customerParamsSchema.safeParse(req.params ?? {});
@@ -394,7 +394,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
   app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});
@@ -486,7 +486,7 @@ export async function registerCustomerQualityEventsRoutes(app: FastifyInstance) 
 
   app.patch("/api/v1/mdata/customers/:customer_id/quality-events/:event_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canWrite(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = eventParamsSchema.safeParse(req.params ?? {});

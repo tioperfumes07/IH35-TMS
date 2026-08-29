@@ -53,7 +53,7 @@ const updateContactSchema = z
   });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -116,7 +116,7 @@ async function ensureCustomerInScope(
 export async function registerCustomerContactRoutes(app: FastifyInstance) {
   app.get<{ Params: { customer_id: string } }>("/api/v1/mdata/customers/:customer_id/contacts", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = customerIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
@@ -167,7 +167,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { customer_id: string } }>("/api/v1/mdata/customers/:customer_id/contacts", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageContacts(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = customerIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -259,7 +259,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     "/api/v1/mdata/customers/:customer_id/contacts/:id",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageContacts(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = customerContactParamsSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -369,7 +369,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     "/api/v1/mdata/customers/:customer_id/contacts/:id",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageContacts(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = customerContactParamsSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -421,7 +421,7 @@ export async function registerCustomerContactRoutes(app: FastifyInstance) {
     "/api/v1/mdata/customers/:customer_id/contacts/:id/reactivate",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageContacts(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = customerContactParamsSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

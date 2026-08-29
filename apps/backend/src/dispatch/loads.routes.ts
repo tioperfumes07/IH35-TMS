@@ -438,7 +438,7 @@ const anticipatedChargebackBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -463,7 +463,7 @@ async function withCompanyScope<T>(
 export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   app.post("/api/v1/dispatch/loads/reserve-id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -487,7 +487,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.delete("/api/v1/dispatch/loads/reserve-id/:reservation_uuid", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -508,7 +508,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/dispatch/loads/ocr-upload", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -546,7 +546,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/preferences", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const preferences = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query<{ dispatch_default_view: "home" | "loads" }>(
@@ -565,7 +565,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/dispatch/preferences", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const body = dispatchPreferenceBodySchema.safeParse(req.body ?? {});
     if (!body.success) return sendValidationError(reply, body.error);
 
@@ -595,7 +595,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listDispatchLoadsQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const query = parsed.data;
@@ -805,7 +805,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     // LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK: GET accepts UUID or human load_number (mutations stay UUID-only).
     const params = loadRefParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
@@ -987,7 +987,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/dispatch/loads/:id/distribute-instructions", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -1022,7 +1022,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/units/:unit_id/dispatch-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -1067,7 +1067,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/units/:unit_id/insurance-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchUnitIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const query = dispatchUnitInsuranceQuerySchema.safeParse(req.query ?? {});
@@ -1093,7 +1093,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/drivers/:driver_id/hos-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -1158,7 +1158,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/drivers/:driver_id/drug-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchDriverIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
@@ -1284,7 +1284,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/dispatch/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -1376,7 +1376,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
   // (archive-not-delete). GATED PR — financial-adjacent (edits rate_total_cents). Jorge merges.
   app.patch("/api/v1/dispatch/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -1428,7 +1428,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/dispatch/loads/:id/anticipated-chargeback", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!["Owner", "Administrator", "Manager", "Dispatcher"].includes(authUser.role)) {
       return reply.code(403).send({ error: "forbidden" });
     }
@@ -1488,7 +1488,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/dispatch/loads/:id/transition", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const body = transitionBodySchema.safeParse(req.body ?? {});
@@ -1676,7 +1676,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
@@ -1732,7 +1732,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/units-without-load", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
@@ -1869,7 +1869,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/dispatch/loads/:id/driver-status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = dispatchLoadIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");

@@ -47,7 +47,7 @@ const updateLaneSchema = z
   .refine((body) => Object.keys(body).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -62,7 +62,7 @@ function canManageLanes(role: string) {
 export async function registerCustomerLanesRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = querySchema.safeParse(req.query ?? {});
@@ -97,7 +97,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/customers/:customer_id/lanes", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -147,7 +147,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = laneParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -195,7 +195,7 @@ export async function registerCustomerLanesRoutes(app: FastifyInstance) {
 
   app.delete("/api/v1/mdata/customers/:customer_id/lanes/:lane_id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageLanes(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = laneParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

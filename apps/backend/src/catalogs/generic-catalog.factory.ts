@@ -212,7 +212,7 @@ export function createCatalogRoutes(
     if (mode === "all") {
       app.get(basePath, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
-        if (!authUser) return;
+        if (!authUser) return reply;
         const parsed = (entityScoped ? companyScopedListQuerySchema : listQuerySchema).safeParse(req.query ?? {});
         if (!parsed.success) return validationError(reply, parsed.error);
         const q = parsed.data;
@@ -278,7 +278,7 @@ export function createCatalogRoutes(
 
       app.post(basePath, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
-        if (!authUser) return;
+        if (!authUser) return reply;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
         const parsedQuery = (entityScoped ? companyScopedCompanyQuerySchema : companyQuerySchema).safeParse(
@@ -358,7 +358,7 @@ export function createCatalogRoutes(
 
       app.patch(`${basePath}/:id`, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
-        if (!authUser) return;
+        if (!authUser) return reply;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
         const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -466,7 +466,7 @@ export function createCatalogRoutes(
 
       app.delete(`${basePath}/:id`, async (req, reply) => {
         const authUser = currentAuthUser(req, reply);
-        if (!authUser) return;
+        if (!authUser) return reply;
         if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
         if (!config.softDeleteColumn) return reply.code(405).send({ error: "catalog_no_soft_delete" });
         if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -536,7 +536,7 @@ export function createCatalogRoutes(
 
     app.post(`${basePath}/:id/restore`, async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
       if (!config.softDeleteColumn) return reply.code(405).send({ error: "catalog_no_soft_delete" });
       if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
@@ -600,7 +600,7 @@ export function createCatalogRoutes(
 
     app.get(`${basePath}/export.csv`, async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
       if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
 
@@ -628,7 +628,7 @@ export function createCatalogRoutes(
 
     app.post(`${basePath}/import`, async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
       if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});

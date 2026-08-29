@@ -46,7 +46,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -97,7 +97,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.get(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -133,7 +133,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.post(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -198,7 +198,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.patch(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -278,7 +278,7 @@ export function createCatalogRoutes(app: FastifyInstance, config: CatalogFactory
 
   app.delete(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

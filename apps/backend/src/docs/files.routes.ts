@@ -110,7 +110,7 @@ const createVersionBodySchema = z.object({
 type AuthUser = { uuid: string; role: string; email: string | null };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply): AuthUser | null {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as AuthUser;
 }
 

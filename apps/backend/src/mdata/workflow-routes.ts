@@ -84,7 +84,7 @@ type WorkflowRequestRow = {
 };
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -204,7 +204,7 @@ function parsePayloadForAction(
 export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/workflow-requests", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsedBody = createBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -263,7 +263,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/workflow-requests", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -310,7 +310,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/workflow-requests/:id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = workflowIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
@@ -335,7 +335,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/workflow-requests/:id/approve", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isAdminRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = workflowIdParamSchema.safeParse(req.params ?? {});
@@ -456,7 +456,7 @@ export async function registerMdataWorkflowRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/workflow-requests/:id/reject", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isAdminRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = workflowIdParamSchema.safeParse(req.params ?? {});

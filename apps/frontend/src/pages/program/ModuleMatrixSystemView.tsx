@@ -502,7 +502,7 @@ export function buildSystemMatrixRequiredFallback(): SystemPayload {
 
 function ablTitle(abl: AblPct): string {
   if (abl.requiredCells <= 0) return "N/A — column not required on this module";
-  return `Req ${abl.requiredCells} · Audited ${abl.auditedPct}% · Built ${abl.builtPct}% · Live ${abl.livePct}%`;
+  return `Req ${abl.requiredCells} · Audited ${abl.auditedPct}% · Built ${abl.builtPct}% · Live ${abl.livePct}% · per-cell why (not_built=FIX vs built_unproven=ERRAND) is on the module board`;
 }
 
 function moduleMissC(row: SystemModuleRow | undefined): number {

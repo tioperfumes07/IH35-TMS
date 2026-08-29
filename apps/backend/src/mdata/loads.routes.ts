@@ -243,7 +243,7 @@ async function gateMdataLoadDriverAssignment(
 }
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -343,7 +343,7 @@ async function nextLoadNumber(
 export async function registerLoadRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/loads", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedBody = createLoadBodySchema.safeParse(req.body ?? {});
@@ -584,7 +584,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
   // the file; the plugin is registered global:false, so an un-configured route has NO limit at all.
   app.get("/api/v1/mdata/loads", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listLoadsQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const {
@@ -873,7 +873,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     // LV-DOCS-LOAD-DISPLAY-ID-DEEPLINK: GET accepts UUID or human load_number (mutations stay UUID-only).
     const parsedParams = loadRefParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1022,7 +1022,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/loads/:id/audit", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
@@ -1063,7 +1063,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/loads/:id/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
@@ -1333,7 +1333,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
@@ -1626,7 +1626,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/loads/:id/stops", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1706,7 +1706,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/loads/:id/stops/:stopId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = loadStopParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1834,7 +1834,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
 
   app.delete("/api/v1/mdata/loads/:id/stops/:stopId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOfficeWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = loadStopParamsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1900,7 +1900,7 @@ export async function registerLoadRoutes(app: FastifyInstance) {
   });
   app.get("/api/v1/drivers/:id/loads", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverLoadsParamSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const parsedQuery = driverLoadsQuerySchema.safeParse(req.query ?? {});

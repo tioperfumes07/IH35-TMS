@@ -59,7 +59,7 @@ const deadlineCompleteParamsSchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -88,7 +88,7 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 export async function registerLegalMattersRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/matters/reports/summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const parsed = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -103,7 +103,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -132,7 +132,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/legal/matters/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -152,7 +152,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/legal/matters/:id/documents/:documentId/download", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_READ_ROLES)) return;
     const p = documentIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -178,7 +178,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const q = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!q.success) return sendValidationError(reply, q.error);
@@ -211,7 +211,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -242,7 +242,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/matters/:id/close", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -265,7 +265,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/matters/:id/events", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -286,7 +286,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/matters/:id/documents", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -331,7 +331,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/matters/:id/deadlines", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = matterIdParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);
@@ -352,7 +352,7 @@ export async function registerLegalMattersRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/legal/matters/:id/deadlines/:deadline_id/complete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireRole(reply, String(authUser.role ?? ""), LEGAL_MATTERS_MANAGE_ROLES)) return;
     const p = deadlineCompleteParamsSchema.safeParse(req.params ?? {});
     if (!p.success) return sendValidationError(reply, p.error);

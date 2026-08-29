@@ -24,7 +24,7 @@ const querySchema = z.object({ operating_company_id: z.string().uuid() });
 const coverageGapQuerySchema = querySchema.extend({ unit_id: z.string().uuid().optional() });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

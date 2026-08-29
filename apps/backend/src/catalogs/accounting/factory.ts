@@ -89,7 +89,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -153,7 +153,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
   app.get(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -199,7 +199,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
   app.post(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -303,7 +303,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
   app.patch(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -375,7 +375,7 @@ export function registerLegacyAccountingCatalogRoutes(app: FastifyInstance, conf
 
   app.delete(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (config.readOnly) return reply.code(405).send({ error: "catalog_read_only" });
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -425,7 +425,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
   app.get(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -462,7 +462,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
   app.get(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -488,7 +488,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
   app.post(basePath, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return validationError(reply, parsedQuery.error);
@@ -513,7 +513,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
   app.patch(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -556,7 +556,7 @@ export function registerQboCategoriesCatalogRoutes(app: FastifyInstance) {
 
   app.delete(`${basePath}/:id`, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);

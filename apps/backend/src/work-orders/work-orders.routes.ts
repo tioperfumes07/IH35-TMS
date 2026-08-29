@@ -119,7 +119,7 @@ const appendPhotoSchema = z.object({
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

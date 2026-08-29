@@ -327,7 +327,7 @@ const updateDriverBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -1219,7 +1219,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/drivers", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
 
@@ -1338,7 +1338,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/drivers/me", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const row = await withCurrentUser(authUser.uuid, async (client) => {
       const res = await client.query(
@@ -1367,7 +1367,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createDriverBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -1385,7 +1385,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/drivers/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
@@ -1511,7 +1511,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
       const parsedQuery = z
@@ -1600,7 +1600,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 5, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedBody = bulkInviteBodySchema.safeParse(req.body ?? {});
@@ -1804,7 +1804,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   // driver-pdf-export.routes.ts:17 — the other endpoint here that produces something outside the app.
   app.post("/api/v1/mdata/drivers/:id/resend-invite", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isOwnerOrAdmin(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1995,7 +1995,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/drivers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -2253,7 +2253,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/deactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -2345,7 +2345,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
   // write; preserves a deliberate 'Terminated' end-state (never un-terminates). Mirrors the deactivate audit.
   app.post("/api/v1/mdata/drivers/:id/reactivate", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -2420,7 +2420,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/enable-phone-login", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -2551,7 +2551,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/disable-phone-login", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

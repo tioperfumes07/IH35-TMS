@@ -8,7 +8,7 @@ import { getTripPairingBoard } from "./trip-pairing-board.service.js";
 const querySchema = z.object({ operating_company_id: z.string().uuid() });
 
 function currentUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

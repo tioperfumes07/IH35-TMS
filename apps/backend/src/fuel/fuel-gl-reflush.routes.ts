@@ -18,7 +18,7 @@ const bodySchema = z.object({
 const ALLOWED = new Set(["Owner", "Administrator", "Accountant"]);
 
 function auth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

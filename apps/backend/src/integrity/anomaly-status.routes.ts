@@ -41,7 +41,7 @@ function validationError(reply: FastifyReply, error: z.ZodError) {
 }
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

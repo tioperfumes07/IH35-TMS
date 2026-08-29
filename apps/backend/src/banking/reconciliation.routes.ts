@@ -73,7 +73,7 @@ const RECON_ROLES = new Set<ReconciliationRole>(["Owner", "Administrator", "Acco
 const OWNER_ADMIN_ROLES = new Set<ReconciliationRole>(["Owner", "Administrator"]);
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

@@ -37,7 +37,7 @@ type Queryable = {
 };
 
 function officeAuth(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -56,7 +56,7 @@ async function withCompanyScope<T>(
 export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) {
   app.get("/api/v1/drivers/document-alerts/inbox", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = inboxQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
     const result = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
@@ -67,7 +67,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
 
   app.get("/api/v1/drivers/document-alert-rules", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
     const rules = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>
@@ -78,7 +78,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
 
   app.patch("/api/v1/drivers/document-alert-rules/:ruleId", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = ruleParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = updateRuleBodySchema.safeParse(req.body ?? {});
@@ -92,7 +92,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
 
   app.post("/api/v1/drivers/document-alerts/:eventId/acknowledge", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = eventParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = acknowledgeBodySchema.safeParse(req.body ?? {});
@@ -112,7 +112,7 @@ export async function registerDriversDocumentAlertsRoutes(app: FastifyInstance) 
 
   app.post("/api/v1/drivers/document-alerts/evaluate", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = officeAuth(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error" });
     const result = await withCompanyScope(authUser.uuid, query.data.operating_company_id, (client) =>

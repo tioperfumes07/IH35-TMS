@@ -21,7 +21,7 @@ const resolveBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user as { uuid: string; role: string };
 }
 
@@ -108,7 +108,7 @@ async function fetchLastAlert(client: import("pg").PoolClient, operatingCompanyI
 export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) {
   app.get("/api/v1/qbo-sync/drift-dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!accountingRoles(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const parsed = querySchema.safeParse(req.query ?? {});
@@ -206,7 +206,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
 
   app.post("/api/v1/qbo-sync/drift-log/:id/resolve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!accountingRoles(authUser.role)) return reply.code(403).send({ error: "forbidden" });
 
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
@@ -246,7 +246,7 @@ export async function registerQboSyncDriftDashboardRoutes(app: FastifyInstance) 
     { config: { rateLimit: { max: 6, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (authUser.role !== "Owner") return reply.code(403).send({ error: "forbidden", detail: "owner only" });
       if (triggerRunning) return reply.code(409).send({ error: "already_running", detail: "a manual QBO sync is already in progress" });
       triggerRunning = true;

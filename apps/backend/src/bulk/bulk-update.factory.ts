@@ -83,7 +83,7 @@ export function assertBulkActionAllowed(
 }
 
 export function currentBulkAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -175,7 +175,7 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
 
   options.app.post(options.path, async (req, reply) => {
     const authUser = currentBulkAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
 
@@ -277,7 +277,7 @@ export async function withLegacyBulkRequest(
   run: (ctx: { authUser: NonNullable<ReturnType<typeof currentBulkAuthUser>>; bulkCallId: string }) => Promise<unknown>
 ) {
   const authUser = currentBulkAuthUser(req, reply);
-  if (!authUser) return;
+  if (!authUser) return reply;
   if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
   if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
 

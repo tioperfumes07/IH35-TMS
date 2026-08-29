@@ -40,7 +40,7 @@ class FuelPlannerSettingsWriteError extends Error {
 }
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -86,7 +86,7 @@ async function hasColumn(
 export async function registerFuelPlannerRoutes(app: FastifyInstance) {
   app.get("/api/v1/fuel/planner/dashboard", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
@@ -172,7 +172,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/fuel/planner/active-routes", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = activeRoutesQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const { operating_company_id: companyId, limit, offset } = query.data;
@@ -203,7 +203,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/fuel/planner/recommendations/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = recommendationIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -269,7 +269,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/fuel/planner/recommendations/:id/send-to-driver", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = recommendationIdParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -343,7 +343,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/fuel/planner/compliance/summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = complianceSummaryQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
@@ -390,7 +390,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/fuel/planner/savings/summary", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
@@ -434,7 +434,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/fuel/planner/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const companyId = query.data.operating_company_id;
@@ -472,7 +472,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/fuel/planner/settings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return sendValidationError(reply, query.error);
     const body = plannerSettingsPatchSchema.safeParse(req.body ?? {});

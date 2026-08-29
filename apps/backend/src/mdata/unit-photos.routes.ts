@@ -17,14 +17,14 @@ const createPhotoSchema = z.object({
 });
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
 export async function registerUnitPhotosRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/units/:id/photos", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = unitParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
@@ -59,7 +59,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/units/:id/photos", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = unitParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = createPhotoSchema.safeParse(req.body ?? {});
@@ -103,7 +103,7 @@ export async function registerUnitPhotosRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/units/:id/photos/:photo_id/archive", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = photoParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });

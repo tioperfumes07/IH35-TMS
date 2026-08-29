@@ -73,7 +73,7 @@ const updateCompanyAuthorizationSchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -92,7 +92,7 @@ function canManageCompanyAuth(role: string) {
 export async function registerDriverProfileRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = idParamSchema.safeParse(req.params ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const parsedQuery = listQualificationsQuerySchema.safeParse(req.query ?? {});
@@ -229,7 +229,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -410,7 +410,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.patch<{ Params: { id: string; qual_id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications/:qual_id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = qualificationIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -479,7 +479,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsedParams = qualificationRateHistoryParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
       const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
@@ -590,7 +590,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     "/api/v1/mdata/drivers/:id/qualifications/:qual_id/rates/change",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = qualificationIdParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -731,7 +731,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string; qual_id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications/:qual_id", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = qualificationIdParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -796,7 +796,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     "/api/v1/mdata/drivers/:id/qualifications/:qual_id/reactivate",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageDriverRates(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = qualificationIdParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -970,7 +970,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = idParamSchema.safeParse(req.params ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
     const parsedQuery = qualificationHistoryQuerySchema.safeParse(req.query ?? {});
@@ -1052,7 +1052,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/company-authorizations", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!canManageCompanyAuth(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -1113,7 +1113,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
     "/api/v1/mdata/drivers/:id/company-authorizations/:auth_id",
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!canManageCompanyAuth(authUser.role)) return reply.code(403).send({ error: "forbidden" });
       const parsedParams = companyAuthorizationIdParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

@@ -84,7 +84,7 @@ const updateEquipmentBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -139,7 +139,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
     const { limit, offset, status, search, equipment_kind, operating_company_id } = parsedQuery.data;
@@ -248,7 +248,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createEquipmentBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
@@ -363,7 +363,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
 
@@ -387,7 +387,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/equipment/:id/status-change", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     const query = aggregateQuerySchema.safeParse(req.query ?? {});
@@ -451,7 +451,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/equipment/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
@@ -625,7 +625,7 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/equipment/:id/deactivate", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

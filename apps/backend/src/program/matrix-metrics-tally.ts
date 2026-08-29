@@ -67,6 +67,27 @@ export function classifyMatrixCellTier(input: {
   return "unaudited";
 }
 
+/** T-03: empty Box 3 vs empty Box 4 — work queue, not a scoreboard. */
+export type MatrixEmptyWhy = "not_built" | "built_unproven";
+export type MatrixQueueKind = "fix" | "errand";
+
+export function cellEmptyWhy(input: {
+  required: boolean;
+  built: boolean;
+  live: boolean;
+}): MatrixEmptyWhy | undefined {
+  if (!input.required) return undefined;
+  if (input.live) return undefined;
+  if (input.built) return "built_unproven";
+  return "not_built";
+}
+
+export function cellQueueKind(why: MatrixEmptyWhy | undefined): MatrixQueueKind | undefined {
+  if (why === "not_built") return "fix";
+  if (why === "built_unproven") return "errand";
+  return undefined;
+}
+
 export function accumulateTierBucket(bucket: MatrixTierBucket, tier: MatrixCellTier): void {
   if (tier === "na") return;
   bucket.requiredCells += 1;

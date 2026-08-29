@@ -76,7 +76,7 @@ const patchTrailerBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -91,7 +91,7 @@ function isWriteRole(role: string): boolean {
 export async function registerTrailerFleetRoutes(app: FastifyInstance) {
   app.put("/api/v1/fleet/trailers/:id/status", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
@@ -207,7 +207,7 @@ export async function registerTrailerFleetRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/fleet/trailers/:id", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});

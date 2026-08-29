@@ -24,9 +24,10 @@ interface AccountTypeCatalogEntry {
 export function registerAccountTypeCatalogRoutes(app: FastifyInstance) {
   app.get(
     "/api/v1/accounting/account-type-catalog",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
 
       // Optional entity scope: when provided, include system detail types (opco NULL) PLUS this
       // entity's custom rows. Without it, only system/global rows are reliable under FORCED RLS.

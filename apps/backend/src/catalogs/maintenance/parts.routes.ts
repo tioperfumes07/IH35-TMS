@@ -57,7 +57,7 @@ const updateSchema = z.object({
 }).refine((v) => Object.keys(v).length > 0, { message: "at least one field required" });
 
 function authUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 

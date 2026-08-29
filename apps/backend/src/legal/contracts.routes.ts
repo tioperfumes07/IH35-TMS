@@ -43,7 +43,7 @@ const idParamSchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -83,7 +83,7 @@ function getAuditContext(req: FastifyRequest, authUser: NonNullable<FastifyReque
 export async function registerLegalContractRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/contracts", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -102,7 +102,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/legal/contracts/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -127,7 +127,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   // hardened renderSignedContractPdf (draft:true).
   app.get("/api/v1/legal/contracts/:id/draft-pdf", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -185,7 +185,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   });
   app.post("/api/v1/legal/contracts/draft-preview", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -216,7 +216,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/contracts", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -249,7 +249,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/legal/contracts/:id/send", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
     const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
@@ -291,7 +291,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/contracts/truck-lease/ensure-template", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!truckLeaseEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!writeRoles.has(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const parsed = operatingCompanyQuerySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -312,7 +312,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   app.get("/api/v1/legal/contracts/lease-to-own/fleet", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!requireOfficeRole(reply, String(authUser.role ?? ""))) return;
     const parsed = leaseFleetQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -330,7 +330,7 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
   app.post("/api/v1/legal/contracts/lease-to-own/ensure-template", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!leaseToOwnEnabled()) return reply.code(404).send({ error: "not_found" });
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!writeRoles.has(String(authUser.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
     const parsed = operatingCompanyQuerySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);

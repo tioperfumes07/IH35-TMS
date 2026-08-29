@@ -44,7 +44,7 @@ const updateBodySchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "at least one field is required" });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -86,7 +86,7 @@ async function findBindingIdByRoleKey(
 export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
   app.get("/api/v1/catalogs/account-role-bindings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success) {
       return reply.code(400).send({ error: "operating_company_id_required" });
@@ -127,7 +127,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/catalogs/account-role-bindings", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsed = createBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
@@ -200,7 +200,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/catalogs/account-role-bindings/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
     const parsedQuery = companyQuerySchema.safeParse(req.query ?? {});
@@ -230,7 +230,7 @@ export async function registerAccountRoleBindingRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/catalogs/account-role-bindings/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

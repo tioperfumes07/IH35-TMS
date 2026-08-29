@@ -14,7 +14,7 @@ const querySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -43,7 +43,7 @@ const EMPTY_AGING_ROW = {
 export async function registerCustomerBillingRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/customers/:customer_id/billing-summary", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
 
     const parsedParams = paramsSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);

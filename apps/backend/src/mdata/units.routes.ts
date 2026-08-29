@@ -107,7 +107,7 @@ const quickAvailabilityBodySchema = z.object({
 });
 
 function currentAuthUser(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -206,7 +206,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedQuery = listQuerySchema.safeParse(req.query ?? {});
     if (!parsedQuery.success)
       return sendValidationError(reply, parsedQuery.error);
@@ -323,7 +323,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/units", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role))
       return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createUnitBodySchema.safeParse(req.body ?? {});
@@ -486,7 +486,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
       if (!parsedParams.success)
         return sendValidationError(reply, parsedParams.error);
@@ -518,7 +518,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/mdata/units/:id/financial", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success)
       return sendValidationError(reply, parsedParams.error);
@@ -553,7 +553,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!isWriteRole(authUser.role))
         return reply.code(403).send({ error: "forbidden" });
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -747,7 +747,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
     async (req, reply) => {
       const authUser = currentAuthUser(req, reply);
-      if (!authUser) return;
+      if (!authUser) return reply;
       if (!isWriteRole(authUser.role))
         return reply.code(403).send({ error: "forbidden" });
       const parsedParams = idParamSchema.safeParse(req.params ?? {});
@@ -852,7 +852,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
     { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
     async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isWriteRole(authUser.role))
       return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});

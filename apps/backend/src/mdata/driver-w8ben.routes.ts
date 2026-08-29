@@ -87,7 +87,7 @@ function irsExpirationFor(signedDate: string): string {
 }
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -125,7 +125,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
   // List W-8BEN certificates for a driver (newest signing first).
   app.get("/api/v1/mdata/drivers/:id/w8ben", RL_READ, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });
@@ -154,7 +154,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
 
   app.post("/api/v1/mdata/drivers/:id/w8ben", RL, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = driverParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = createW8benSchema.safeParse(req.body ?? {});
@@ -226,7 +226,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
 
   app.patch("/api/v1/mdata/drivers/:id/w8ben/:w8ben_id", RL, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = w8benParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = patchW8benSchema.safeParse(req.body ?? {});
@@ -303,7 +303,7 @@ export async function registerDriverW8benRoutes(app: FastifyInstance) {
   // Archive (void-not-delete) an existing certificate.
   app.post("/api/v1/mdata/drivers/:id/w8ben/:w8ben_id/archive", RL, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = w8benParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!params.success || !query.success) return reply.code(400).send({ error: "validation_error" });

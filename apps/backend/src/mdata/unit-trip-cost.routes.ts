@@ -24,7 +24,7 @@ const MAINTENANCE_USD_PER_MILE = 0.15;
 const DEFAULT_CPM_CENTS = 55;
 
 function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return reply;
+  if (!requireAuth(req, reply)) return null;
   return req.user;
 }
 
@@ -42,7 +42,7 @@ function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number) 
 export async function registerUnitTripCostRoutes(app: FastifyInstance) {
   app.post("/api/v1/mdata/units/:id/trip-cost", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = authed(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const params = unitParamsSchema.safeParse(req.params ?? {});
     const query = companyQuerySchema.safeParse(req.query ?? {});
     const body = tripCostBodySchema.safeParse(req.body ?? {});

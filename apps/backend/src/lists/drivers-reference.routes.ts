@@ -29,7 +29,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
 
   app.get(basePath, { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     const parsed = listQuerySchema.safeParse(req.query ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
     const q = parsed.data;
@@ -75,7 +75,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
 
   app.post(basePath, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedBody = createBodySchema.safeParse(req.body ?? {});
     if (!parsedBody.success) return validationError(reply, parsedBody.error);
@@ -118,7 +118,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
 
   app.patch(`${basePath}/:id`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -185,7 +185,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
 
   app.post(`${basePath}/:id/archive`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
@@ -216,7 +216,7 @@ function registerReferenceRoutes(app: FastifyInstance, config: DriversReferenceC
 
   app.post(`${basePath}/:id/restore`, { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
-    if (!authUser) return;
+    if (!authUser) return reply;
     if (!isCatalogWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
     const parsedParams = idParamSchema.safeParse(req.params ?? {});
     if (!parsedParams.success) return validationError(reply, parsedParams.error);
