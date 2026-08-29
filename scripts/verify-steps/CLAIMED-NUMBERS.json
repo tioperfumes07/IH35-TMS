@@ -6691,5 +6691,10 @@
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-driver-pay-tab-generic-error-has-retry"
+  },
+  "9989": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-bulk-mark-factored-zero-rows-check"
   }
 }
