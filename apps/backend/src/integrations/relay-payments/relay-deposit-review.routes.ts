@@ -135,10 +135,12 @@ export async function registerRelayDepositReviewRoutes(app: FastifyInstance) {
         source_hint: string | null;
         is_active: boolean;
       }>(
-        `INSERT INTO integrations.relay_company_cards (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
+        `INSERT INTO integrations.relay_company_cards AS existing (operating_company_id, card_last4, label, source_hint, is_active, voided_at)
          VALUES ($1::uuid, $2, $3, $4, $5, NULL)
          ON CONFLICT (operating_company_id, card_last4)
-         DO UPDATE SET label = EXCLUDED.label, source_hint = EXCLUDED.source_hint, is_active = EXCLUDED.is_active,
+         DO UPDATE SET label = COALESCE(EXCLUDED.label, existing.label),
+                       source_hint = COALESCE(EXCLUDED.source_hint, existing.source_hint),
+                       is_active = EXCLUDED.is_active,
                        voided_at = NULL, updated_at = now()
          RETURNING id::text, label, source_hint, is_active`,
         [opco, card, body.label ?? null, body.source_hint ?? null, isActive]
