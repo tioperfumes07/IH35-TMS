@@ -1,3 +1,5 @@
+CODEX | HANDOFF | FUEL-MONEY-F7328 | routed=CC-1 | board OPEN + OUTBOX-CC-1 | NEXT=fuel non-money unique | GO
+CODEX | SHIPPED | FUEL-F7327 | PR=#17631 @ 61648a30b1 | gate=exit0 | Live=UNVERIFIED | NEXT=fuel non-money unique | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7327 | Relay backfill status now durable/query-backed | PROVES=started+terminal audit events | KEEPS=recompute GET+poll | Live=965789a UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FUEL-F7326 | PR=#17624 @ 0599664abc | gate=exit0 | Live=UNVERIFIED | NEXT=FUEL-F7327 durable backfill status | GO
 CODEX | FINDING+FIXED CODE | FUEL-F7326 | Fuel History lost deactivated driver/vendor labels | SOURCE=fuel.fuel_transactions IDs+same-company resolvers | Live=66724ce | NEXT=gate+FAST-MERGE | GO
