@@ -27,21 +27,23 @@ const current = failures(source);
 if (current.length) { console.error(`FAIL: ${current.join(", ")}`); process.exit(1); }
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["route", /COUNT\(\*\) OVER\(\)::int AS total_count/, "0 AS total_count"],
-    ["route", /LIMIT \$\$\{params\.length - 1\} OFFSET \$\$\{params\.length\}/, "LIMIT 500"],
-    ["route", /total_count: events\.total_count/, "total_count: 0"],
-    ["api", /qs\.set\("offset", String\(range\.offset\)\)/, "qs.delete(\"offset\")"],
-    ["page", /offset: dwellPage \* dwellPageSize/, "offset: 0"],
-    ["page", /\(openEventsQuery\.data\?\.events \?\? \[\]\)\.map/, "(openEventsQuery.data?.events ?? []).slice(0, 20).map"],
-    ["page", /data-testid="dot-dwell-events-server-pager"/, "data-testid=\"missing-pager\""],
-    ["page", /onRetry=\{\(\) => void openEventsQuery\.refetch\(\)\}/, "onRetry={() => undefined}"],
+    ["window-total", "route", /COUNT\(\*\) OVER\(\)::int AS total_count/, "0 AS total_count"],
+    ["server-range", "route", /LIMIT \$\$\{params\.length - 1\} OFFSET \$\$\{params\.length\}/, "LIMIT 500"],
+    ["response-total", "route", /total_count: events\.total_count/, "total_count: 0"],
+    ["api-offset", "api", /(export function listDotInspectionEvents[\s\S]*?)qs\.set\("offset", String\(range\.offset\)\)/, "$1qs.delete(\"offset\")"],
+    ["mounted-offset", "page", /offset: dwellPage \* dwellPageSize/, "offset: 0"],
+    ["client-truncation", "page", /\(openEventsQuery\.data\?\.events \?\? \[\]\)\.map/, "(openEventsQuery.data?.events ?? []).slice(0, 20).map"],
+    ["pager", "page", /data-testid="dot-dwell-events-server-pager"/, "data-testid=\"missing-pager\""],
+    ["retry", "page", /onRetry=\{\(\) => void openEventsQuery\.refetch\(\)\}/, "onRetry={() => undefined}"],
   ];
   let caught = 0;
-  for (const [key, pattern, replacement] of mutations) {
+  const survived = [];
+  for (const [name, key, pattern, replacement] of mutations) {
     const fixture = { ...source, [key]: source[key].replace(pattern, replacement) };
     if (failures(fixture).length) caught += 1;
+    else survived.push(name);
   }
-  if (caught !== mutations.length) throw new Error(`selftest caught ${caught}/${mutations.length}`);
+  if (caught !== mutations.length) throw new Error(`selftest caught ${caught}/${mutations.length}; survived: ${survived.join(", ")}`);
   console.log(`PASS(selftest): ${caught}/${mutations.length} DOT dwell range mutations detected`);
   process.exit(0);
 }
