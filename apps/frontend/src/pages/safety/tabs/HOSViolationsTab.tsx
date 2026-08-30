@@ -18,6 +18,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../../components/Button";
 import { useStagedListFilters } from "../../../components/table";
+import { userFacingApiError } from "../../../lib/api-error-message";
 
 type HosViolationRow = Record<string, unknown>;
 type Source = "samsara_auto" | "manual_office" | "dot_citation";
@@ -441,6 +442,13 @@ export function HOSViolationsTab() {
         </div>
       ) : null}
 
+      {voidMutation.isError &&
+      voidMutation.variables?.companyId === companyId &&
+      voidMutation.variables?.generation === companyGenerationRef.current ? (
+        <p className="text-xs text-red-700" role="alert" data-testid="hos-violation-void-error">
+          {userFacingApiError(voidMutation.error, "Could not void the HOS violation.")}
+        </p>
+      ) : null}
       <VoidReasonModal
         open={Boolean(voidTarget)}
         title="Void HOS Violation"
