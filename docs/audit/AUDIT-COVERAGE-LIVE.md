@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **28 / 30** | 2026-08-30 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-30 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **45 / 150** | 2026-08-30 |
-| Rows in this file | **2347** | 2026-08-30 |
-| Rows `FAIL` + `OPEN` | **216** | 2026-08-30 |
+| Rows in this file | **2356** | 2026-08-30 |
+| Rows `FAIL` + `OPEN` | **225** | 2026-08-30 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-30 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-30 |
-| Verdict tally (all rows) | FAIL=440 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-30 |
+| Verdict tally (all rows) | FAIL=449 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-30 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2437,3 +2437,12 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50306 | lists · SILENT-QUERY-FAILURE — FleetCatalogListPage 2 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 2 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/lists/fleet/FleetCatalogListPage.tsx` | NO | 2026-08-30 | CASCADE |
 | 50307 | lists · SILENT-QUERY-FAILURE — FuelCatalogListPage 2 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 2 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/lists/fuel/FuelCatalogListPage.tsx` | NO | 2026-08-30 | CASCADE |
 | 50308 | lists · SILENT-QUERY-FAILURE — MaintenanceCatalogListPage 2 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 2 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/lists/maintenance/MaintenanceCatalogListPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50309 | safety · SILENT-QUERY-FAILURE — SafetyHome 8 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 8 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/SafetyHome.tsx` | NO | 2026-08-30 | CASCADE |
+| 50310 | safety · SILENT-QUERY-FAILURE — DrugAlcoholDashboard 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/DrugAlcoholDashboard.tsx` | NO | 2026-08-30 | CASCADE |
+| 50311 | safety · SILENT-QUERY-FAILURE — InternalFinesPage 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/InternalFinesPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50312 | safety · SILENT-QUERY-FAILURE — SafetyIncidentsClusterSurface 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/components/SafetyIncidentsClusterSurface.tsx` | NO | 2026-08-30 | CASCADE |
+| 50313 | safety · SILENT-QUERY-FAILURE — SafetyReportsPage 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/reports/SafetyReportsPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50314 | safety · SILENT-QUERY-FAILURE — ComplaintsTab 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/tabs/ComplaintsTab.tsx` | NO | 2026-08-30 | CASCADE |
+| 50315 | safety · SILENT-QUERY-FAILURE — AccidentsPage 4 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 4 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/AccidentsPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50316 | safety · SILENT-QUERY-FAILURE — CSAScore 4 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 4 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/CSAScore.tsx` | NO | 2026-08-30 | CASCADE |
+| 50317 | safety · SILENT-QUERY-FAILURE — DotInspectionsPage 4 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 4 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/safety/DotInspectionsPage.tsx` | NO | 2026-08-30 | CASCADE |
