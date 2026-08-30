@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7493 | ROOT=Dispatch-KPI-guard-demanded-retired-atRiskQ+lateQ-after-canonical-atRiskLateQ-consolidation | NEXT=normal+selftest+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7492 | PR=#18132 @ a4ce2146a5 | focused=normal+selftest4/4+full-gate | NOTE=#18133-empty-tree-duplicate-from-gh-local-worktree-error | NEXT=verify-money-kpi-strip-no-fake-zero-on-error | GO
 CODEX | WORKING | GUARD-F7492 | ROOT=ReferenceSelect-census-classified-whole-file-so-RoundTrips-Sort-became-customer-picker | NEXT=normal+selftest+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7491 | PR=#18129 @ 453ffef54c | focused=guard+selftest+component2/2+frontend-tsc+full-gate | NEXT=verify-non-accounting-referenceselect-coverage | GO
 CODEX | WORKING | GUARD-F7491 | ROOT=Border-Credentials-category-query-guarded-data-but-not-categories-before-upload-find | NEXT=focused+selftest+FAST-MERGE | GO
