@@ -1,13 +1,31 @@
 import { apiRequest } from "./client";
 
-export type FileEntityType = "driver" | "customer" | "vendor" | "unit" | "equipment" | "load" | "settlement" | "invoice";
+export type FileEntityType =
+  | "driver"
+  | "customer"
+  | "vendor"
+  | "unit"
+  | "equipment"
+  | "load"
+  | "settlement"
+  | "invoice"
+  | "medical_card"
+  | "background_check"
+  | "fine"
+  | "company_violation"
+  | "drug_test"
+  | "hos_violation"
+  | "dot_inspection"
+  | "fuel_transaction"
+  | "expense"
+  | "bill";
 
 export type FileCategory = {
   id: string;
   code: string;
   label: string;
   description: string | null;
-  applies_to: Array<"driver" | "customer" | "vendor" | "unit" | "equipment" | "load" | "settlement" | "invoice" | "standalone">;
+  applies_to: Array<FileEntityType | "standalone">;
   typical_expiration_months: number | null;
   requires_expiration_date: boolean;
   is_active: boolean;
