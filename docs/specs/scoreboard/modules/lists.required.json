@@ -959,7 +959,7 @@
     {
       "id": "catalog.maintenance.part_locations.list",
       "tab": "Maintenance",
-      "sub": "Labor Rates",
+      "sub": "Part Locations",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
         "qbo_chrome",
@@ -969,7 +969,7 @@
     {
       "id": "catalog.maintenance.part_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create \u2014 Part Locations",
       "route_hint": "/lists/maintenance/part-locations",
       "required": [
         "qbo_chrome",
@@ -979,7 +979,7 @@
     {
       "id": "catalog.maintenance.air_bag_catalog.list",
       "tab": "Maintenance",
-      "sub": "Labor Rates",
+      "sub": "Air Bag",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
         "qbo_chrome",
@@ -989,7 +989,7 @@
     {
       "id": "catalog.maintenance.air_bag_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create \u2014 Air Bag",
       "route_hint": "/lists/maintenance/air-bag-catalog",
       "required": [
         "qbo_chrome",
@@ -999,7 +999,7 @@
     {
       "id": "catalog.maintenance.battery_catalog.list",
       "tab": "Maintenance",
-      "sub": "Labor Rates",
+      "sub": "Battery",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
         "qbo_chrome",
@@ -1009,7 +1009,7 @@
     {
       "id": "catalog.maintenance.battery_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Labor Rates",
+      "sub": "+ Create \u2014 Battery",
       "route_hint": "/lists/maintenance/battery-catalog",
       "required": [
         "qbo_chrome",
@@ -1019,7 +1019,7 @@
     {
       "id": "catalog.maintenance.pm_intervals.list",
       "tab": "Maintenance",
-      "sub": "Part Locations",
+      "sub": "Pm Intervals",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
         "qbo_chrome",
@@ -1029,7 +1029,7 @@
     {
       "id": "catalog.maintenance.pm_intervals.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Part Locations",
+      "sub": "+ Create \u2014 Pm Intervals",
       "route_hint": "/lists/maintenance/pm-intervals",
       "required": [
         "qbo_chrome",
@@ -1039,7 +1039,7 @@
     {
       "id": "catalog.maintenance.repair_locations.list",
       "tab": "Maintenance",
-      "sub": "Air Bag Catalog",
+      "sub": "Repair Locations",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
         "qbo_chrome",
@@ -1049,7 +1049,7 @@
     {
       "id": "catalog.maintenance.repair_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Air Bag Catalog",
+      "sub": "+ Create \u2014 Repair Locations",
       "route_hint": "/lists/maintenance/repair-locations",
       "required": [
         "qbo_chrome",
@@ -1059,7 +1059,7 @@
     {
       "id": "catalog.maintenance.tire_catalog.list",
       "tab": "Maintenance",
-      "sub": "Battery Catalog",
+      "sub": "Tire",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
         "qbo_chrome",
@@ -1069,7 +1069,7 @@
     {
       "id": "catalog.maintenance.tire_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Battery Catalog",
+      "sub": "+ Create \u2014 Tire",
       "route_hint": "/lists/maintenance/tire-catalog",
       "required": [
         "qbo_chrome",
@@ -1079,7 +1079,7 @@
     {
       "id": "catalog.maintenance.trailer_parts.list",
       "tab": "Maintenance",
-      "sub": "PM Intervals",
+      "sub": "Trailer Parts",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
         "qbo_chrome",
@@ -1089,7 +1089,7 @@
     {
       "id": "catalog.maintenance.trailer_parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 PM Intervals",
+      "sub": "+ Create \u2014 Trailer Parts",
       "route_hint": "/lists/maintenance/trailer-parts",
       "required": [
         "qbo_chrome",
@@ -1099,7 +1099,7 @@
     {
       "id": "catalog.maintenance.truck_parts.list",
       "tab": "Maintenance",
-      "sub": "Repair Locations",
+      "sub": "Truck Parts",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
         "qbo_chrome",
@@ -1109,7 +1109,7 @@
     {
       "id": "catalog.maintenance.truck_parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Repair Locations",
+      "sub": "+ Create \u2014 Truck Parts",
       "route_hint": "/lists/maintenance/truck-parts",
       "required": [
         "qbo_chrome",
@@ -1119,7 +1119,7 @@
     {
       "id": "catalog.maintenance.work_order_templates.list",
       "tab": "Maintenance",
-      "sub": "Tire Catalog",
+      "sub": "Work Order Templates",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
         "qbo_chrome",
@@ -1129,7 +1129,7 @@
     {
       "id": "catalog.maintenance.work_order_templates.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Tire Catalog",
+      "sub": "+ Create \u2014 Work Order Templates",
       "route_hint": "/lists/maintenance/work-order-templates",
       "required": [
         "qbo_chrome",
@@ -1139,7 +1139,7 @@
     {
       "id": "catalog.maintenance.failure_codes.list",
       "tab": "Maintenance",
-      "sub": "Trailer Parts",
+      "sub": "Maintenance Failure Codes",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
         "qbo_chrome",
@@ -1149,7 +1149,7 @@
     {
       "id": "catalog.maintenance.failure_codes.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Trailer Parts",
+      "sub": "+ Create \u2014 Maintenance Failure Codes",
       "route_hint": "/lists/maintenance/failure-codes",
       "required": [
         "qbo_chrome",
@@ -1159,7 +1159,7 @@
     {
       "id": "catalog.maintenance.labor_codes.list",
       "tab": "Maintenance",
-      "sub": "Truck Parts",
+      "sub": "Maintenance Labor Codes",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
         "qbo_chrome",
@@ -1169,7 +1169,7 @@
     {
       "id": "catalog.maintenance.labor_codes.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Truck Parts",
+      "sub": "+ Create \u2014 Maintenance Labor Codes",
       "route_hint": "/lists/maintenance/labor-codes",
       "required": [
         "qbo_chrome",
@@ -1179,7 +1179,7 @@
     {
       "id": "catalog.maintenance.parts.list",
       "tab": "Maintenance",
-      "sub": "Work Order Templates",
+      "sub": "Maintenance Parts",
       "route_hint": "/lists/maintenance/parts",
       "required": [
         "qbo_chrome",
@@ -1189,7 +1189,7 @@
     {
       "id": "catalog.maintenance.parts.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Work Order Templates",
+      "sub": "+ Create \u2014 Maintenance Parts",
       "route_hint": "/lists/maintenance/parts",
       "required": [
         "qbo_chrome",
@@ -1199,7 +1199,7 @@
     {
       "id": "catalog.maintenance.parts_catalog.list",
       "tab": "Maintenance",
-      "sub": "Maintenance Parts",
+      "sub": "Maintenance Parts Catalog",
       "route_hint": "/lists/maintenance/parts-catalog",
       "required": [
         "picker_law",
@@ -1210,7 +1210,7 @@
     {
       "id": "catalog.maintenance.parts_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Parts",
+      "sub": "+ Create \u2014 Maintenance Parts Catalog",
       "route_hint": "/lists/maintenance/parts-catalog",
       "surface_kind": "modal",
       "surface_path": "pages/lists/CreateMaintPartModal.tsx",
@@ -1223,7 +1223,7 @@
     {
       "id": "catalog.maintenance.oem_parts_reference.list",
       "tab": "Maintenance",
-      "sub": "Parts Catalog",
+      "sub": "OEM Parts Reference",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
         "qbo_chrome",
@@ -1233,7 +1233,7 @@
     {
       "id": "catalog.maintenance.oem_parts_reference.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create \u2014 OEM Parts Reference",
       "route_hint": "/lists/maintenance/oem-parts-reference",
       "required": [
         "qbo_chrome",
@@ -1243,7 +1243,7 @@
     {
       "id": "catalog.maintenance.priority_levels.list",
       "tab": "Maintenance",
-      "sub": "Parts Catalog",
+      "sub": "Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
         "qbo_chrome",
@@ -1253,7 +1253,7 @@
     {
       "id": "catalog.maintenance.priority_levels.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create \u2014 Maintenance Priority Levels",
       "route_hint": "/lists/maintenance/priority-levels",
       "required": [
         "qbo_chrome",
@@ -1263,7 +1263,7 @@
     {
       "id": "catalog.maintenance.service_tasks.list",
       "tab": "Maintenance",
-      "sub": "Parts Catalog",
+      "sub": "Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
         "qbo_chrome",
@@ -1273,7 +1273,7 @@
     {
       "id": "catalog.maintenance.service_tasks.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Parts Catalog",
+      "sub": "+ Create \u2014 Maintenance Service Tasks",
       "route_hint": "/lists/maintenance/service-tasks",
       "required": [
         "qbo_chrome",
@@ -1283,7 +1283,7 @@
     {
       "id": "catalog.maintenance.services_catalog.list",
       "tab": "Maintenance",
-      "sub": "OEM Parts Reference",
+      "sub": "Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/services-catalog",
       "required": [
         "picker_law",
@@ -1294,7 +1294,7 @@
     {
       "id": "catalog.maintenance.services_catalog.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Services",
+      "sub": "+ Create \u2014 Maintenance Services Catalog",
       "route_hint": "/lists/maintenance/services-catalog",
       "surface_kind": "modal",
       "surface_path": "pages/lists/MaintenanceServicesCatalog.tsx",
@@ -1307,7 +1307,7 @@
     {
       "id": "catalog.maintenance.shop_locations.list",
       "tab": "Maintenance",
-      "sub": "Maintenance Priority Levels",
+      "sub": "Maintenance Shop Locations",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
         "qbo_chrome",
@@ -1317,7 +1317,7 @@
     {
       "id": "catalog.maintenance.shop_locations.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Priority Levels",
+      "sub": "+ Create \u2014 Maintenance Shop Locations",
       "route_hint": "/lists/maintenance/shop-locations",
       "required": [
         "qbo_chrome",
@@ -1327,7 +1327,7 @@
     {
       "id": "catalog.maintenance.vendors.list",
       "tab": "Maintenance",
-      "sub": "Maintenance Service Tasks",
+      "sub": "Maintenance Vendors",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
         "qbo_chrome",
@@ -1337,7 +1337,7 @@
     {
       "id": "catalog.maintenance.vendors.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Service Tasks",
+      "sub": "+ Create \u2014 Maintenance Vendors",
       "route_hint": "/lists/maintenance/vendors",
       "required": [
         "qbo_chrome",
@@ -1347,7 +1347,7 @@
     {
       "id": "catalog.maintenance.work_order_statuses.list",
       "tab": "Maintenance",
-      "sub": "Maintenance Services Catalog",
+      "sub": "Work Order Statuses",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
         "qbo_chrome",
@@ -1357,7 +1357,7 @@
     {
       "id": "catalog.maintenance.work_order_statuses.create",
       "tab": "Maintenance",
-      "sub": "+ Create \u2014 Maintenance Services Catalog",
+      "sub": "+ Create \u2014 Work Order Statuses",
       "route_hint": "/lists/maintenance/work-order-statuses",
       "required": [
         "qbo_chrome",
