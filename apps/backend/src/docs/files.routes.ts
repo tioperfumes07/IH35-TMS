@@ -28,6 +28,12 @@ const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
 // 202613290000), so the DOT medical card / background-check upload buttons had nowhere to save
 // to. Each type has a real target table + FK path (Rule 14): docs.file_links.entity_type CHECK
 // widened in the same migration; entity-labels.ts's ENTITY_LABEL_SQL map extended below.
+// DOC-01 D2 slice 2: `fine` + `company_violation` added (migration 202613290200) -- both tables
+// already carry their own source_doc_id shortcut FK; this adds the SEPARATE, additive many-
+// document capability every other entity type already has (docs/lockdown/DOC-01-CANONICAL-STACK-
+// DECISION-2026-08-29.md). LESSON FROM DOC-F10063: ensureLinkEntityExists() below MUST gain a
+// branch for every type added here, in the SAME commit -- a type declared here with no reachable
+// branch there silently rejects every real link attempt despite passing every other check.
 const SUPPORTED_LINK_ENTITY_TYPES = [
   "driver",
   "customer",
@@ -39,6 +45,8 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "settlement",
   "medical_card",
   "background_check",
+  "fine",
+  "company_violation",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -54,6 +62,8 @@ const entityTypeSchema = z.enum([
   "invoice",
   "medical_card",
   "background_check",
+  "fine",
+  "company_violation",
 ]);
 
 function optionalQueryString() {
@@ -242,6 +252,14 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "background_check") {
     const res = await client.query("SELECT id FROM safety.background_checks WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "fine") {
+    const res = await client.query("SELECT id FROM safety.civil_fines WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "company_violation") {
+    const res = await client.query("SELECT id FROM safety.company_violations WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   return false;
