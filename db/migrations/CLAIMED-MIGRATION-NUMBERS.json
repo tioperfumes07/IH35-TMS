@@ -441,6 +441,16 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-30",
       "purpose": "chart_of_accounts_roles_unique_per_company_role"
+    },
+    "202613300900": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-30",
+      "purpose": "fleet_lease_08_unit_status_repossessed_returned_to_lessor"
+    },
+    "202613301000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-30",
+      "purpose": "fleet_lease_08_lease_contract_rate_per_unit_basis"
     }
   }
 }
