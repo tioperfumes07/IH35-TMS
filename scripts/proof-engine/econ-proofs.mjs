@@ -30,6 +30,17 @@ export const DISCRIMINATOR = { column: "je_control", value: 2214 };
  */
 export const PROBE_QUERY_ID = "INV-0";
 
+/**
+ * C30's own probe (packet 10, section 3, 2026-08-30). INV-0 runs under bypass -- useless as a
+ * discriminator for the one proof that MUST run under enforced RLS. INV-0B proves visibility
+ * under enforced RLS WITH a company context set, so a zero-duplicates result can be trusted
+ * instead of mistaken for "RLS scoped this connection to nothing."
+ */
+export const C30_PROBE_QUERY_ID = "INV-0B";
+
+/** A real, live entity (USMCA) used only to give C30's enforced-RLS probe something to see. */
+export const C30_COMPANY_CONTEXT = "5c854333-6ea5-4faa-af31-67cb272fef80";
+
 export const ECON_PROOFS = {
   gl_delta: {
     n: "C25", auto_check: "verify-gl-delta-matches-matrix",
@@ -111,17 +122,29 @@ export const ECON_PROOFS = {
     proof: {
       kind: "sql", name: "C30 no duplicate role rows",
       file: INVARIANTS_FILE, query_id: "INV-10", sub_id: "10c",
-      discriminator: DISCRIMINATOR,
-      expect_rows: 0, probe_query_id: PROBE_QUERY_ID,
+      // C30's own discriminator + probe (2026-08-30): INV-10c's own GROUP BY (opco, role) is
+      // ALREADY per-entity in shape -- it needs no rewriting, only a real company context to
+      // see anything at all under enforced RLS. role_control=49 is the live USMCA row count
+      // (chart_of_accounts_roles), read the same way this discriminator convention already
+      // works (a known, non-zero, re-readable control value -- never a guess).
+      discriminator: { column: "role_control", value: 49 },
+      expect_rows: 0, probe_query_id: C30_PROBE_QUERY_ID,
       expect: [],
       rls_sensitive: true,
       // packet 10 (2026-08-30) — explicit, not relying on the fail-closed default, because this
       // is THE line that must never read "bypass": bypassing RLS to prove RLS is the purest
-      // closed loop the whole R5 rule exists to forbid. With no company context set, this
-      // means C30 CANNOT currently pass (INV-0's shared probe reads blind under real RLS) —
-      // that is honest, not a bug. A dedicated C30 probe that proves visibility under enforced
-      // RLS WITH a company context is the next, separate piece of work (not this fix).
+      // closed loop the whole R5 rule exists to forbid.
       rls: "enforced",
+      // Scopes BOTH the probe and the main 10c query to one real entity (USMCA) under enforced
+      // RLS. Live-verified before wiring: 10c's own duplicate-detection logic works correctly
+      // scoped to a single company (it does not need cross-entity visibility to prove "THIS
+      // entity's own role resolution is unambiguous" -- C30's actual definition) -- and, scoped
+      // this way, it currently and correctly finds 4 real duplicate role groups for USMCA
+      // (damage_recovery, driver_payroll_clearing, escrow_liability_default,
+      // reimbursement_expense), matching the owner's own manual count exactly. C30 will keep
+      // FAILing honestly until CC-2 lands the UNIQUE(operating_company_id, role) constraint
+      // (work order, packet 7) -- that is the real defect, not a probe problem anymore.
+      company_context: C30_COMPANY_CONTEXT,
       note: "Order-dependent role resolution is the defect. Zero duplicate groups is the only pass.",
     },
   },
