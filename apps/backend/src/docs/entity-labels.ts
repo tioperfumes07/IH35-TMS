@@ -37,6 +37,11 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // directly (no cross-company authorization bridge needed, unlike driver above).
   medical_card: { table: "safety.medical_cards", labelSelect: "NULLIF(TRIM(COALESCE(d.card_number, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   background_check: { table: "safety.background_checks", labelSelect: "NULLIF(TRIM(COALESCE(d.check_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  // DOC-01 D2 slice 2 (owner 2026-08-29): safety.civil_fines / safety.company_violations already
+  // carry their own source_doc_id shortcut FK -- this is the separate, additive many-document
+  // capability (migration 202613290200).
+  fine: { table: "safety.civil_fines", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_code, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  company_violation: { table: "safety.company_violations", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */
