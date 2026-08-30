@@ -1,3 +1,5 @@
+CODEX | WORKING | DSP-F7362-D1 | ROOT=source-columns-live-but-mounted-writers-unattributed | guard=11/11 | tests=8/8 | typecheck=PASS | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRV-F7317-R2 | PR=#17984 @ a0c0588700 | gate=exit0 | Live=UNVERIFIED | NEXT=DSP-F7362-D1 | GO
 CODEX | WORKING | DRV-F7317-R2 | ROOT=BrowserRouter-default-startTransition-retains-old-committed-route | guard=6/6+selftest | typecheck=PASS | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7404 | PR=#17980 @ d1e83a0b0d | gate=exit0 | NEXT=DRV-F7317-R2 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7392 | NOW=auto-routing settings→mounted optimizer connectivity | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO

@@ -548,6 +548,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         `
           UPDATE mdata.load_stops
           SET actual_arrival_at = now(),
+              actual_arrival_source = 'driver_app',
               status = 'arrived'
           WHERE id = $1
             AND load_id = $2
@@ -669,6 +670,7 @@ export async function registerDriverLoadsRoutes(app: FastifyInstance) {
         `
           UPDATE mdata.load_stops
           SET actual_departure_at = now(),
+              actual_departure_source = 'driver_app',
               status = 'departed'
           WHERE id = $1
             AND load_id = $2

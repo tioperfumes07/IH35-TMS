@@ -41,6 +41,7 @@ export async function stampFinalActiveDeliveryDeparture(
     `
       UPDATE mdata.load_stops s
          SET actual_departure_at = COALESCE($3::timestamptz, now()),
+             actual_departure_source = 'manual',
              status = 'departed'::mdata.stop_status_enum,
              updated_at = now()
        WHERE s.id = (

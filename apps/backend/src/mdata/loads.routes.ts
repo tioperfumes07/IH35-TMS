@@ -1650,9 +1650,12 @@ export async function registerLoadRoutes(app: FastifyInstance) {
           `
             INSERT INTO mdata.load_stops (
               load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
-              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at, status, notes
+              scheduled_arrival_at, scheduled_departure_at, actual_arrival_at, actual_departure_at,
+              actual_arrival_source, actual_departure_source, status, notes
             ) VALUES (
-              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+              CASE WHEN $11::timestamptz IS NULL THEN NULL ELSE 'manual' END,
+              CASE WHEN $12::timestamptz IS NULL THEN NULL ELSE 'manual' END,$13,$14
             )
             RETURNING
               id, load_id, sequence_number, stop_type, location_id, address_line1, city, state, country,
@@ -1730,8 +1733,14 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     if ("country" in b) add("country", b.country ?? null);
     if ("scheduled_arrival_at" in b) add("scheduled_arrival_at", b.scheduled_arrival_at ?? null);
     if ("scheduled_departure_at" in b) add("scheduled_departure_at", b.scheduled_departure_at ?? null);
-    if ("actual_arrival_at" in b) add("actual_arrival_at", b.actual_arrival_at ?? null);
-    if ("actual_departure_at" in b) add("actual_departure_at", b.actual_departure_at ?? null);
+    if ("actual_arrival_at" in b) {
+      add("actual_arrival_at", b.actual_arrival_at ?? null);
+      add("actual_arrival_source", b.actual_arrival_at ? "manual" : null);
+    }
+    if ("actual_departure_at" in b) {
+      add("actual_departure_at", b.actual_departure_at ?? null);
+      add("actual_departure_source", b.actual_departure_at ? "manual" : null);
+    }
     if ("status" in b) add("status", b.status);
     if ("notes" in b) add("notes", b.notes ?? null);
 
