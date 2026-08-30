@@ -2123,7 +2123,10 @@
       "statement_balance_cents",
       "status",
       "updated_at",
-      "variance_cents"
+      "variance_cents",
+      "void_reason",
+      "voided_at",
+      "voided_by_user_id"
     ],
     "banking.transaction_categories": [
       "coa_account_id",
