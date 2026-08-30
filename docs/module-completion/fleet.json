@@ -26,7 +26,7 @@
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:30:00.000Z",
       "live_verified_sha": "ed4e2f2",
-      "proven_at_sha": "b8fc09c",
+      "proven_at_sha": "d41124e",
       "proofs": [
         {
           "kind": "http",
@@ -59,7 +59,25 @@
       "pr": "#5290",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:15:00.000Z",
-      "live_verified_sha": "ed4e2f2"
+      "live_verified_sha": "ed4e2f2",
+      "proven_at_sha": "d41124e",
+      "proofs": [
+        {
+          "kind": "http",
+          "url": "https://app.ih35dispatch.com/fleet/395352db-7b51-4f07-8dc7-f1e2f1a321bc",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "http",
+          "url": "https://api.ih35dispatch.com/api/v1/mdata/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "guard",
+          "script": "scripts/verify-canonical-load-nav.mjs",
+          "expect": { "exit": 0 }
+        }
+      ]
     },
     {
       "id": "FLEET-S03",
