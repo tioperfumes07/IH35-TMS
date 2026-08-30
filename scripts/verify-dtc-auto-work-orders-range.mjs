@@ -21,13 +21,16 @@ function mutateDtcRoute(source, from, to) {
 
 function failures(source = live) {
   const route = dtcRoute(source.route);
+  const rowMaps = source.card.match(/\{rows\.map\(\(row\) =>/g) ?? [];
   return [
     ["backend exact total", route.includes("COUNT(*) OVER()::int AS total_count") && route.includes("total_count: Number(res.rows[0]?.total_count ?? 0)")],
     ["missing-relation response shape", route.includes('return { rows: [], total_count: 0 }')],
     ["typed API total", source.api.includes("rows: DtcAutoWorkOrderRow[]; total_count: number")],
-    ["shared visible rows", source.card.includes("const visibleRows = rows.slice(0, 10)") && source.card.includes("const totalCount = query.data?.total_count ?? rows.length")],
-    ["compact exact range", source.card.includes('data-testid="dtc-auto-work-orders-compact-range"') && source.card.includes("Showing {visibleRows.length} of {totalCount} open DTC work orders")],
-    ["full exact range", source.card.includes('data-testid="dtc-auto-work-orders-range"') && source.card.includes("totalCount > visibleRows.length")],
+    ["server page request", source.card.includes('["maintenance", "dtc-auto-wos", operatingCompanyId, page]') && source.card.includes("{ limit: pageSize, offset: page * pageSize }")],
+    ["shared server-page rows", rowMaps.length === 2 && source.card.includes("const totalCount = query.data?.total_count ?? rows.length")],
+    ["exact range math", source.card.includes('const range = totalCount === 0 ? "0 of 0"') && source.card.includes("Math.min((page + 1) * pageSize, totalCount)")],
+    ["compact exact range", source.card.includes('pager("dtc-auto-work-orders-compact-range")')],
+    ["full exact range", source.card.includes('pager("dtc-auto-work-orders-range")')],
     ["GET failure is explicit and retryable", source.card.includes("if (query.isError)") && source.card.includes("Couldn't load DTC auto-created work orders") && source.card.includes("onRetry={() => void query.refetch()}")],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -37,9 +40,11 @@ if (process.argv.includes("--selftest")) {
     { ...live, route: mutateDtcRoute(live.route, "COUNT(*) OVER()::int AS total_count", "50 AS hidden_count") },
     { ...live, route: mutateDtcRoute(live.route, 'return { rows: [], total_count: 0 }', "return []") },
     { ...live, api: live.api.replace("rows: DtcAutoWorkOrderRow[]; total_count: number", "rows: DtcAutoWorkOrderRow[]") },
-    { ...live, card: live.card.replace("const visibleRows = rows.slice(0, 10)", "const visibleRows = rows") },
-    { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-compact-range"', 'data-testid="missing-range"') },
-    { ...live, card: live.card.replace('data-testid="dtc-auto-work-orders-range"', 'data-testid="missing-range"') },
+    { ...live, card: live.card.replace("{ limit: pageSize, offset: page * pageSize }", "{ limit: pageSize, offset: 0 }") },
+    { ...live, card: live.card.replace("{rows.map((row) =>", "{rows_REMOVED.map((row) =>") },
+    { ...live, card: live.card.replace('const range = totalCount === 0 ? "0 of 0"', 'const range = "unknown"') },
+    { ...live, card: live.card.replace('pager("dtc-auto-work-orders-compact-range")', "null") },
+    { ...live, card: live.card.replace('pager("dtc-auto-work-orders-range")', "null") },
     { ...live, card: live.card.replace("if (query.isError)", "if (false)") },
     { ...live, card: live.card.replace("onRetry={() => void query.refetch()}", "onRetry={undefined}") },
   ];
@@ -48,7 +53,7 @@ if (process.argv.includes("--selftest")) {
     console.error(`verify-dtc-auto-work-orders-range SELFTEST FAIL — mutations ${escaped.join(", ")} stayed green`);
     process.exit(1);
   }
-  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 8/8 mutations red");
+  console.log("verify-dtc-auto-work-orders-range SELFTEST PASS — 10/10 mutations red");
   process.exit(0);
 }
 
