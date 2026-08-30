@@ -41,18 +41,33 @@ function inspect(sources) {
       errors.push(`${id}: manifest item missing`);
       continue;
     }
-    if (!String(item.evidence).includes(`CURRENT-HTTP ${endpoint}`) && !String(item.evidence).includes(`and ${endpoint}`)) {
-      errors.push(`${id}: evidence must name canonical CURRENT-HTTP ${endpoint}`);
+    const isUnverified = item.status === "UNVERIFIED" && item.prod_verified === false;
+    const isGuardVerified =
+      item.status === "PASS" &&
+      item.prod_verified === true &&
+      typeof item.live_verified_sha === "string" &&
+      item.live_verified_sha.length >= 7 &&
+      typeof item.live_verified_at === "string" &&
+      String(item.evidence).includes("GUARD PACKET");
+    if (!isUnverified && !isGuardVerified) {
+      errors.push(`${id}: state must be UNVERIFIED/prod_verified=false or PASS with bound GUARD live proof`);
     }
-    if (item.prod_verified !== false || item.status !== "UNVERIFIED") {
-      errors.push(`${id}: correction must remain UNVERIFIED/prod_verified=false until authenticated GUARD proof`);
+    if (
+      isUnverified &&
+      !String(item.evidence).includes(`CURRENT-HTTP ${endpoint}`) &&
+      !String(item.evidence).includes(`and ${endpoint}`)
+    ) {
+      errors.push(`${id}: unverified route correction must name canonical CURRENT-HTTP ${endpoint}`);
     }
     if (!client.includes(endpoint)) errors.push(`${id}: frontend caller does not use ${endpoint}`);
     if (!routes.includes(endpoint)) errors.push(`${id}: backend does not declare ${endpoint}`);
     if (mount && !sources.index.includes(mount)) errors.push(`${id}: backend index does not mount ${mount}`);
   }
-  const s06 = String(items.get("FUEL-S06")?.evidence ?? "");
-  if (!s06.includes("/api/integrations/relay/company-cards")) errors.push("FUEL-S06: company-cards route missing from corrected evidence");
+  const s06Item = items.get("FUEL-S06");
+  const s06 = String(s06Item?.evidence ?? "");
+  if (s06Item?.status === "UNVERIFIED" && !s06.includes("/api/integrations/relay/company-cards")) {
+    errors.push("FUEL-S06: company-cards route missing from unverified route evidence");
+  }
   if (!sources.relayApi.includes("/api/integrations/relay/company-cards") || !sources.relayRoutes.includes("/api/integrations/relay/company-cards")) {
     errors.push("FUEL-S06: company-cards caller/route contract missing");
   }
@@ -92,6 +107,14 @@ function sourceSet() {
   return Object.fromEntries(Object.entries(FILES).map(([key, rel]) => [key, read(rel)]));
 }
 
+function mutateManifest(text, id, mutate) {
+  const manifest = JSON.parse(text);
+  const item = manifest.items.find((candidate) => candidate.id === id);
+  if (!item) throw new Error(`selftest fixture missing ${id}`);
+  mutate(item);
+  return JSON.stringify(manifest);
+}
+
 function selftest() {
   const good = sourceSet();
   if (inspect(good).length) throw new Error("good fixture rejected");
@@ -101,7 +124,8 @@ function selftest() {
     ["expense caller", { accountingApi: good.accountingApi.replace("/api/v1/accounting/expense-category-map?", "/api/v1/accounting/expense-category-mappings?") }],
     ["expense autoload mount", { expensePlugin: good.expensePlugin.replace("registerExpenseCategoryMapRoutes(app)", "registerExpenseCategoryMapRoutesMissing(app)") }],
     ["relay mount", { index: good.index.replace("registerRelayDepositReviewRoutes(app)", "registerRelayDepositReviewRoutesMissing(app)") }],
-    ["honesty state", { manifest: good.manifest.replace('"id": "FUEL-S02"', '"id": "FUEL-S02"').replace('"status": "UNVERIFIED"', '"status": "PASS"') }],
+    ["verified state requires live SHA", { manifest: mutateManifest(good.manifest, "FUEL-S02", (item) => delete item.live_verified_sha) }],
+    ["verified state requires GUARD packet", { manifest: mutateManifest(good.manifest, "FUEL-S03", (item) => { item.evidence = item.evidence.replace("GUARD PACKET", "UNBOUND PACKET"); }) }],
     ["artifact refresh", { httpRecheck: good.httpRecheck.replace("writeFileSync(OUT, text)", "") }],
     ["Love's membership", { lovesRoutes: good.lovesRoutes.replace("await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);", "// planted: membership removed") }],
   ];
