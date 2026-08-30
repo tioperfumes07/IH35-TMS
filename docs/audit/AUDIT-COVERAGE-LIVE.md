@@ -70,15 +70,15 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 
 | Metric | Value | As of |
 |---|---|---|
-| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-29 |
-| Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-29 |
-| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-29 |
-| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **49 / 150** | 2026-08-29 |
-| Rows in this file | **2256** | 2026-08-29 |
-| Rows `FAIL` + `OPEN` | **125** | 2026-08-29 |
-| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-29 |
-| Rows `VERIFIED` by GUARD | **156** | 2026-08-29 |
-| Verdict tally (all rows) | FAIL=349 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-29 |
+| Modules certified full-PASS (all 5 layers, TRANSP) | **0 / 30** | 2026-08-30 |
+| Modules with a confirmed live defect (non-superseded FAIL) | **26 / 30** | 2026-08-30 |
+| Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-30 |
+| Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **49 / 150** | 2026-08-30 |
+| Rows in this file | **2257** | 2026-08-30 |
+| Rows `FAIL` + `OPEN` | **126** | 2026-08-30 |
+| Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-30 |
+| Rows `VERIFIED` by GUARD | **156** | 2026-08-30 |
+| Verdict tally (all rows) | FAIL=350 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-30 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2346,3 +2346,4 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50214 | accounting · SILENT-QUERY-FAILURE — LoanApplicationWizard accountsQuery has no isError rendering | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** `LoanApplicationWizard.tsx:162-166` — `accountsQuery` useQuery hook fetches postable catalog accounts for the loan/advance account dropdown. If `listCatalogAccounts()` fails, `accountsQuery.data` is `undefined`, `accounts` is `[]`, and the account dropdown shows **empty with no error message**. The user cannot select an account (required for submit), but gets no explanation — the submit validation at line 188 catches the missing account with a generic "Principal, interest rate and account are required" message that doesn't explain WHY the list is empty. **FIX:** add `{accountsQuery.isError ? <p className="text-red-600">Failed to load accounts: {accountsQuery.error.message}</p> : null}` near the account selector. | OPEN | `apps/frontend/src/pages/accounting/loans/LoanApplicationWizard.tsx:162-166,168-177` | NO | 2026-08-29 | CASCADE |
 | 50215 | customers · DOUBLE-SUBMIT — CustomersListView batch action buttons missing disabled={isPending} guard | B | USMCA | FAIL — DOUBLE-SUBMIT (product) | **Context:** `CustomersListView.tsx:271-305` — 4 batch action buttons (Tag Late-pay, Tag Medium, Tag Active, Deactivate) call `bulkMutation.mutate()` on click but have **no `disabled={bulkMutation.isPending}`** attribute. A rapid double-click fires duplicate `bulkUpdate` API calls. The `bulkMutation` at line 128 has proper `onSuccess`/`onError` handlers, so this is not a silent no-op — but the duplicate requests can cause race conditions, double-writes, or confusing dual toast messages. Compare `BankingObligationReconcilePage.tsx:183-204` where all 4 bulk buttons correctly use `disabled={bulkMutation.isPending}`, and `CoaBatchActions.tsx:109-115` which uses a `busy` state guard. **FIX:** add `disabled={bulkMutation.isPending}` to all 4 batch action buttons. | OPEN | `apps/frontend/src/pages/customers/CustomersListView.tsx:271-305` | NO | 2026-08-29 | CASCADE |
 | 50216 | vendors · DOUBLE-SUBMIT — VendorsListView Deactivate batch button missing disabled={isPending} guard | B | USMCA | FAIL — DOUBLE-SUBMIT (product) | **Context:** `VendorsListView.tsx:210-223` — The Deactivate batch action button calls `bulkMutation.mutate()` on click but has **no `disabled={bulkMutation.isPending}`** attribute. A rapid double-click fires duplicate `bulkUpdate` API calls. Same pattern as finding 50215 in CustomersListView. The `bulkMutation` at line 132 has proper `onSuccess`/`onError` handlers. **FIX:** add `disabled={bulkMutation.isPending}` to the Deactivate button. | OPEN | `apps/frontend/src/pages/vendors/VendorsListView.tsx:210-223` | NO | 2026-08-29 | CASCADE |
+| 50218 | lists · STALE-DATA-AFTER-MUTATION — ListsHubPage forceSyncMutation onSuccess only toasts, does not invalidate qboHealthQuery or activityQuery | B | USMCA | FAIL — STALE DATA (product) | **Context:** `ListsHubPage.tsx:64-68` — `forceSyncMutation` useMutation hook calls `postForceListsQboSync(companyId)`. Its `onSuccess` only calls `pushToast("QBO full-sync trigger queued", "success")` — it does **not** call `queryClient.invalidateQueries` for `qboHealthQuery` (`["lists-hub", "qbo-sync-health", companyId]`) or `activityQuery` (`["lists-hub", "recent-activity", companyId]`). Neither query has `refetchInterval` set (lines 48-62), so they won't auto-refresh. After a successful sync trigger, the sync health status and recent activity feed remain stale — the user sees the pre-sync state with no indication that a sync is in progress or has completed. The component does have `useQueryClient` available (used elsewhere in the file). **FIX:** add `onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["lists-hub"] }); pushToast("QBO full-sync trigger queued", "success"); }` to `forceSyncMutation`. | OPEN | `apps/frontend/src/pages/lists/ListsHubPage.tsx:64-68,48-62` | NO | 2026-08-29 | CASCADE |

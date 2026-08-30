@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50218 | lists · STALE-DATA-AFTER-MUTATION — ListsHubPage forceSyncMutation only toasts, does not invalidate qboHealthQuery or activityQuery | GO
 CASCADE | FINDING | 50215-50216 | customers+vendors · DOUBLE-SUBMIT — batch action buttons missing disabled={isPending} guard | GO
 CASCADE | FINDING | 50213-50214 | accounting · SILENT-QUERY-FAILURE — MultiEntityAccountingPage companiesQuery + LoanApplicationWizard accountsQuery have no isError rendering | GO
 CASCADE | FINDING | 50209-50212 | reports · SILENT-NO-OP — IFTA 4-step wizard all runMutation/submitMutation have no onError, no .catch on void mutateAsync | GO
