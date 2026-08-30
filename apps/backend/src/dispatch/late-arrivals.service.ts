@@ -96,6 +96,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
             SELECT 1
             FROM mdata.loads sample_load
             WHERE sample_load.id = l.id
+              AND sample_load.operating_company_id = l.operating_company_id
               AND sample_load.is_sample_data IS NOT TRUE
           )
           AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})

@@ -29,7 +29,7 @@ const SERVICE_FILE = "apps/backend/src/dispatch/late-arrivals.service.ts";
 const WHERE_MARKER = "WHERE l.operating_company_id = $1::uuid";
 const PHANTOM_VIEW_COL = /FROM\s+views\.dispatch_load_with_driver_status[\s\S]{0,2500}l\.is_sample_data/i;
 const CANONICAL_LOADS_EXCLUSION =
-  /FROM\s+mdata\.loads\s+sample_load[\s\S]{0,220}sample_load\.is_sample_data\s+IS\s+NOT\s+TRUE/i;
+  /FROM\s+mdata\.loads\s+sample_load[\s\S]{0,160}sample_load\.id\s*=\s*l\.id[\s\S]{0,140}sample_load\.operating_company_id\s*=\s*l\.operating_company_id[\s\S]{0,140}sample_load\.is_sample_data\s+IS\s+NOT\s+TRUE/i;
 
 export function checkExcludesSample(src) {
   const offenders = [];
@@ -46,7 +46,7 @@ export function checkExcludesSample(src) {
   const window = src.slice(whereIdx, whereIdx + 900);
   if (!CANONICAL_LOADS_EXCLUSION.test(window)) {
     offenders.push(
-      `${SERVICE_FILE}: listLateArrivalLoads() must exclude sample loads via mdata.loads.is_sample_data (view has no such column)`
+      `${SERVICE_FILE}: listLateArrivalLoads() must company-scope the canonical mdata.loads row before excluding sample data`
     );
   }
   return offenders;
@@ -76,6 +76,7 @@ if (process.argv.includes("--selftest")) {
             SELECT 1
             FROM mdata.loads sample_load
             WHERE sample_load.id = l.id
+              AND sample_load.operating_company_id = l.operating_company_id
               AND sample_load.is_sample_data IS NOT TRUE
           )
       AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
