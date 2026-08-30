@@ -164,6 +164,9 @@ export async function listDetentionEventsForLoad(userId: string, operatingCompan
           ...row,
           billable_minutes: accrual.billable_minutes,
           live_accrued_amount_cents: accrual.accrued_amount_cents,
+          operational_state: row.status === "accruing" ? "active" : "complete",
+          billing_state:
+            row.status === "billed" ? "billed" : row.status === "closed" ? "unbilled_receivable" : "estimated",
         };
       }),
     };
@@ -230,6 +233,8 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
         ...row,
         billable_minutes: accrual.billable_minutes,
         live_accrued_amount_cents: accrual.accrued_amount_cents,
+        operational_state: row.status === "accruing" ? "active" : "complete",
+        billing_state: row.status === "closed" ? "unbilled_receivable" : "estimated",
         notify_due: shouldNotifyCustomerAtThreshold({
           billable_minutes: accrual.billable_minutes,
           notify_threshold_minutes: Number(row.notify_threshold_minutes ?? 0),

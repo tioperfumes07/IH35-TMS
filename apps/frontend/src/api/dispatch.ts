@@ -1083,6 +1083,8 @@ export type DetentionBoardEvent = {
   driver_name: string | null;
   unit_number: string | null;
   status: string;
+  operational_state: "active" | "complete";
+  billing_state: "estimated" | "unbilled_receivable" | "billed";
   started_at: string;
   stopped_at: string | null;
   free_time_minutes: number;
