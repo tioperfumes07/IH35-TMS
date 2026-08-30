@@ -4822,6 +4822,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
   },
+  "10054": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-cert-fw6-leaf-specific CERT-01 B4 leafRe theater"
+  },
   "10053": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
