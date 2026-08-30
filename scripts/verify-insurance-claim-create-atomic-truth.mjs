@@ -5,7 +5,13 @@ const FILE = "apps/backend/src/insurance/claim.routes.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
 function failures(candidate) {
-  const route = candidate.slice(candidate.indexOf('/api/v1/insurance/claims"'));
+  const routeStart = candidate.indexOf('app.post("/api/v1/insurance/claims"');
+  const nextRoute = routeStart < 0
+    ? -1
+    : candidate.indexOf('app.patch("/api/v1/insurance/claims/:id"', routeStart);
+  const route = routeStart < 0 || nextRoute < 0
+    ? ""
+    : candidate.slice(routeStart, nextRoute);
   const checks = [
     ["creator limiter", /insurance\/claims"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/],
     ["insert rollback", /if \(!createdId\) throw new Error\("insurance_claim_insert_failed"\)/],

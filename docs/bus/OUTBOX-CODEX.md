@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7458 | ROOT=claim-create-selftest-scanned-through-later-PATCH-and-accepted-sibling-row-token | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7457 | ROOT=insurance-guard-required-obsolete-proof-phrases-not-evidence-semantics | focused=normal+expanded-selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7456 | PR=#18093 @ 89a9475273 | input.draft enum payloads · selftest 4/4 · typecheck PASS | NEXT=insurance evidence guard | GO
 CODEX | SHIPPED | GUARD-F7455 | PR=#18092 @ 29b13d9f08 | 4 htmlFor/id pairs + no nesting · selftest 2/2 · typecheck PASS | NEXT=Safety Events red guard | GO
