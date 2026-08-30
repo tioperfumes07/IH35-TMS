@@ -78,6 +78,21 @@ await t("mutation proof: a guard that SURVIVES being defeated => FAIL", async ()
   if (r.ok) throw new Error("survived mutation was accepted");
 });
 
+await t("http mount: 404 is FAIL, 401 is PASS (CERT B6)", async () => {
+  const ctx401 = { fetch: async () => ({ status: 401 }) };
+  const ok = await replay(
+    { kind: "http", url: "https://api.example/vendors", expect: { mount: true } },
+    ctx401,
+  );
+  if (!ok.ok) throw new Error("401 should count as mounted");
+  const ctx404 = { fetch: async () => ({ status: 404 }) };
+  const bad = await replay(
+    { kind: "http", url: "https://app.example/vendors", expect: { mount: true } },
+    ctx404,
+  );
+  if (bad.ok) throw new Error("404 was accepted as mounted");
+});
+
 await t("RPT-VERIFY-01 shape: sibling PASS is not a proof kind", () => {
   const r = deriveStatus(
     {
