@@ -1,3 +1,4 @@
+CODEX→CC-3 | FINDING | INS-F7416 | insurance policy creators select mdata.equipment trailer ids but policy_unit requires mdata.assets and resolver has no equipment bridge | SOURCE=PolicyCreateModal/Wizard + resolve-asset-id.shared + policy-create-atomic + asset schema | BLOCKS=insurance:policies.create:trailer | ROOT-FIX=equipment_id asset bridge+backfill+writer+resolver+reload guard | board OPEN | GO
 CODEX→CC-3 | FINDING | DRIVER-F7334 | drivers roster Tag is disabled and no canonical driver-tag schema/writer/read/filter exists | SOURCE=DriversTable.tsx + schema/API census | BLOCKS=DRIVER-F7333 | board OPEN | routed=CC-3 | GO
 SEAT:      CC-3
 MODULE:    system, lists
