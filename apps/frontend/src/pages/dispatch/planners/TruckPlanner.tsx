@@ -8,7 +8,8 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
-import { formatPlannerDayLabel } from "./plannerDayLabel";
+import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
+import { plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
@@ -168,17 +169,16 @@ export function TruckPlanner() {
       {!isLoading && !isError ? (
           <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-max border-collapse text-[10px]">
-            <thead>
-              <tr>
-                <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Unit</th>
-                <th className="border-b border-r bg-gray-50 px-1 py-1">Driver</th>
-                {days.map((d) => (
-                  <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
-                    {formatPlannerDayLabel(d)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+            <PlannerAxisHead
+              days={days}
+              frozenColSpan={2}
+              frozenDayCells={
+                <>
+                  <th className={plannerFrozenThClass(true)}>Unit</th>
+                  <th className={plannerFrozenThClass()}>Driver</th>
+                </>
+              }
+            />
             <tbody>
               {truckRows.length === 0 ? (
                 <tr>
@@ -193,13 +193,13 @@ export function TruckPlanner() {
                 </tr>
               ) : (
               truckRows.map((row) => (
-                <tr key={row.unitId} className="border-t border-gray-100">
-                  <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
+                <tr key={row.unitId} className="h-[34px] border-t border-gray-100">
+                  <td className="sticky left-0 z-10 border-r-2 border-slate-400 bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                     <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
                   </td>
-                  <td className="border-r px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" /></td>
+                  <td className="border-r-2 border-slate-400 px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" /></td>
                   {days.map((d) => (
-                    <td key={d} className={`border-l border-slate-300 px-0 py-0 text-center ${truckStatusClass(row.status)}`} title={row.status}>
+                    <td key={d} className={plannerDayBodyClass(d, todayYmdAmericaChicago(), truckStatusClass(row.status))} title={row.status}>
                       <span className="text-[9px]">{truckStatusLabel(row.status)}</span>
                     </td>
                   ))}

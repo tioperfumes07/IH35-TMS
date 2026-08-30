@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { Fragment, useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerDriverRow, type PlannerLoadEvent } from "../../../api/dispatch";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
@@ -10,8 +10,9 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
-import { formatPlannerDayLabel } from "./plannerDayLabel";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
+import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
+import { formatPlannerDwell, plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
 
 /**
  * Unified Dispatch Planner — Phase 1 "Timeline" view (Tasks-module pattern: one dataset, resource rows ×
@@ -74,6 +75,27 @@ function loadSpan(load: PlannerLoadEvent, days: string[], startIdx: number): num
   return Math.max(1, lastIdx - startIdx + 1);
 }
 
+function dayCoveredByLoad(load: PlannerLoadEvent, day: string): boolean {
+  const startDay = toDayKey(load.start_at);
+  const endDay = toDayKey(load.end_at) ?? startDay;
+  if (!startDay) return false;
+  return day >= startDay && day <= (endDay ?? startDay);
+}
+
+function utilPct(loads: PlannerLoadEvent[], days: string[]): number {
+  if (days.length === 0) return 0;
+  let covered = 0;
+  for (const day of days) {
+    if (loads.some((load) => dayCoveredByLoad(load, day))) covered += 1;
+  }
+  return Math.round((covered / days.length) * 100);
+}
+
+const LOAD_HATCH =
+  "bg-[repeating-linear-gradient(-45deg,#cbd5e1,#cbd5e1_3px,#e2e8f0_3px,#e2e8f0_6px)]";
+const DWELL_HATCH =
+  "bg-[repeating-linear-gradient(45deg,#e2e8f0,#e2e8f0_3px,#f8fafc_3px,#f8fafc_6px)]";
+
 function StatusPill({ status }: { status: "Available" | "On-load" | "On-leave" | "Unknown" }) {
   // §7-safe — slate only (no green/blue). On-leave gets the single allowed amber accent.
   const cls =
@@ -112,7 +134,15 @@ export function UnifiedTimelinePlanner() {
     queryFn: () => driverSchedulerOfficeApi.getGrid(operatingCompanyId, range.start, range.end),
   });
 
-  const drivers = useMemo(() => timelineQuery.data?.drivers ?? [], [timelineQuery.data]);
+  const drivers = useMemo(() => {
+    const list = [...(timelineQuery.data?.drivers ?? [])];
+    list.sort((a, b) => {
+      const ao = a.hos_status === "violation" ? 1 : 0;
+      const bo = b.hos_status === "violation" ? 1 : 0;
+      return ao - bo;
+    });
+    return list;
+  }, [timelineQuery.data]);
   const loadsByDriver = useMemo(() => {
     const m = new Map<string, PlannerLoadEvent[]>();
     for (const load of timelineQuery.data?.loads ?? []) {
@@ -172,18 +202,17 @@ export function UnifiedTimelinePlanner() {
       ) : null}
       <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
         <table className="min-w-max border-collapse text-[10px]">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-10 border-b border-r border-slate-300 bg-gray-50 px-2 py-1 text-left">Driver / Unit</th>
-              <th className="border-b border-r border-slate-300 bg-gray-50 px-1 py-1 text-left">Book</th>
-              <th className="border-b border-r border-slate-300 bg-gray-50 px-1 py-1 text-left">Status</th>
-              {days.map((d) => (
-                <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
-                  {formatPlannerDayLabel(d)}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <PlannerAxisHead
+            days={days}
+            frozenColSpan={3}
+            frozenDayCells={
+              <>
+                <th className={plannerFrozenThClass(true)}>Driver / Unit</th>
+                <th className={plannerFrozenThClass()}>Util</th>
+                <th className={plannerFrozenThClass()}>Book</th>
+              </>
+            }
+          />
           <tbody>
             {drivers.length === 0 ? (
               <tr>
@@ -197,20 +226,39 @@ export function UnifiedTimelinePlanner() {
                 </td>
               </tr>
             ) : (
-              drivers.map((driver) => {
+              drivers.map((driver, driverIdx) => {
                 const status = statusFor(driver);
                 const sorted = [...(loadsByDriver.get(driver.id) ?? [])].sort((a, b) =>
                   String(a.start_at).localeCompare(String(b.start_at))
                 );
+                const pct = utilPct(sorted, days);
+                const today = todayYmdAmericaChicago();
                 const cells: ReactNode[] = [];
                 let dayIdx = 0;
+                let availableHint = false;
+                const rangeStart = days[0];
+                const rangeEnd = days[days.length - 1];
                 while (dayIdx < days.length) {
                   const day = days[dayIdx];
                   const load = sorted.find((l) => toDayKey(l.start_at) === day);
                   if (load) {
                     const span = loadSpan(load, days, dayIdx);
+                    const startDay = toDayKey(load.start_at);
+                    const endDay = toDayKey(load.end_at) ?? startDay;
+                    const contL = Boolean(startDay && rangeStart && startDay < rangeStart);
+                    const contR = Boolean(endDay && rangeEnd && endDay > rangeEnd);
+                    const lane = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ");
                     cells.push(
-                      <td key={`${driver.id}-${day}`} colSpan={span} className="border-l border-slate-300 bg-slate-100 px-1 py-0.5 text-center">
+                      <td
+                        key={`${driver.id}-${day}`}
+                        colSpan={span}
+                        className={`${plannerDayBodyClass(day, today, contL || contR ? LOAD_HATCH : "bg-slate-100")} px-1`}
+                      >
+                        <span className="mr-0.5 rounded-sm bg-slate-700 px-0.5 text-[8px] font-semibold uppercase text-white">
+                          {contL ? "◀" : ""}
+                          {String(load.status).slice(0, 4)}
+                          {contR ? "▶" : ""}
+                        </span>
                         <EntityLink
                           kind="load"
                           id={load.id}
@@ -218,45 +266,93 @@ export function UnifiedTimelinePlanner() {
                           className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
                           data-testid={`timeline-load-${load.id}`}
                         />
-                        <span className="block text-[9px]"><EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></span>
+                        {lane ? <span className="block truncate text-[8px] text-slate-500">{lane}</span> : null}
+                        <span className="block text-[9px]">
+                          <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
+                        </span>
                       </td>
                     );
                     dayIdx += span;
+                    const next = sorted.find((l) => String(l.start_at) > String(load.start_at));
+                    const nextStart = next ? toDayKey(next.start_at) : null;
+                    if (next && nextStart && dayIdx < days.length && days[dayIdx] < nextStart) {
+                      let dwell = 0;
+                      while (dayIdx + dwell < days.length && days[dayIdx + dwell] < nextStart) dwell += 1;
+                      if (dwell > 0) {
+                        cells.push(
+                          <td
+                            key={`${driver.id}-dwell-${days[dayIdx]}`}
+                            colSpan={dwell}
+                            className={`${plannerDayBodyClass(days[dayIdx], today, DWELL_HATCH)} text-[8px] italic text-slate-500`}
+                            data-testid={`timeline-dwell-${driver.id}`}
+                          >
+                            {formatPlannerDwell(load.end_at ?? load.start_at, next.start_at) || "dwell"}
+                          </td>
+                        );
+                        dayIdx += dwell;
+                      }
+                    }
                   } else {
                     const leaveType = leaveByCell.get(`${driver.id}|${day}`);
+                    const showAvail = status === "Available" && !leaveType && !availableHint;
+                    if (showAvail) availableHint = true;
                     cells.push(
                       <td
                         key={`${driver.id}-${day}`}
-                        className={`border-l border-slate-300 px-0 py-0 text-center ${leaveType ? "bg-slate-100" : "bg-white"}`}
+                        className={plannerDayBodyClass(day, today, leaveType ? "bg-slate-100" : "")}
                         title={leaveType ?? ""}
                       >
-                        {leaveType ? <span className="text-[9px] text-[#854F0B]">{leaveType.slice(0, 3)}</span> : null}
+                        {leaveType ? (
+                          <span className="text-[9px] text-[#854F0B]">{leaveType.slice(0, 3)}</span>
+                        ) : showAvail ? (
+                          <span className="text-[8px] italic text-slate-400">Available</span>
+                        ) : null}
                       </td>
                     );
                     dayIdx += 1;
                   }
                 }
+                const oosBanner =
+                  driver.hos_status === "violation" &&
+                  (driverIdx === 0 || drivers[driverIdx - 1]?.hos_status !== "violation");
                 return (
-                  <tr key={driver.id} className="border-t border-gray-100">
-                    <td className="sticky left-0 z-10 border-r border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                      <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
-                      <span className="ml-1 text-[10px] text-gray-500"><EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" /></span>
-                    </td>
-                    <td className="border-r border-slate-300 px-1 py-0.5 text-center">
-                      {status === "Available" ? (
-                        <button
-                          type="button"
-                          data-testid={`timeline-book-${driver.id}`}
-                          onClick={() => openBookForUnit(driver.unit_id)}
-                          className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
-                        >
-                          + Book
-                        </button>
-                      ) : null}
-                    </td>
-                    <td className="border-r border-slate-300 px-1 py-0.5"><StatusPill status={status} /></td>
-                    {cells}
-                  </tr>
+                  <Fragment key={driver.id}>
+                    {oosBanner ? (
+                      <tr data-testid="planner-oos-group">
+                        <td colSpan={3 + days.length} className="bg-slate-200 px-2 py-0.5 text-[9px] font-semibold text-slate-700">
+                          Out of service
+                        </td>
+                      </tr>
+                    ) : null}
+                    <tr className="h-[34px] border-t border-gray-100">
+                      <td className="sticky left-0 z-10 border-r-2 border-slate-400 bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
+                        <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
+                        <span className="ml-1 text-[10px] text-gray-500">
+                          <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
+                        </span>
+                        <span className="ml-1"><StatusPill status={status} /></span>
+                      </td>
+                      <td className="border-r-2 border-slate-400 px-1 py-0.5" data-testid={`timeline-util-${driver.id}`}>
+                        <div className="h-1.5 w-12 overflow-hidden rounded-sm bg-slate-200">
+                          <div className="h-full bg-slate-600" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="text-[8px] text-slate-600">{pct}%</span>
+                      </td>
+                      <td className="border-r-2 border-slate-400 px-1 py-0.5 text-center">
+                        {status === "Available" ? (
+                          <button
+                            type="button"
+                            data-testid={`timeline-book-${driver.id}`}
+                            onClick={() => openBookForUnit(driver.unit_id)}
+                            className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
+                          >
+                            + Book
+                          </button>
+                        ) : null}
+                      </td>
+                      {cells}
+                    </tr>
+                  </Fragment>
                 );
               })
             )}

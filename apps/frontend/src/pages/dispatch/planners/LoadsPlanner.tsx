@@ -7,7 +7,8 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { formatPlannerDayLabel } from "./plannerDayLabel";
+import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
+import { plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
@@ -90,17 +91,16 @@ export function LoadsPlanner() {
       {!loadsQuery.isLoading && !loadsQuery.isError ? (
           <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
           <table className="min-w-max border-collapse text-[10px]">
-            <thead>
-              <tr>
-                <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Load</th>
-                <th className="border-b border-r bg-gray-50 px-1 py-1">Lane</th>
-                {days.map((d) => (
-                  <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
-                    {formatPlannerDayLabel(d)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+            <PlannerAxisHead
+              days={days}
+              frozenColSpan={2}
+              frozenDayCells={
+                <>
+                  <th className={plannerFrozenThClass(true)}>Load</th>
+                  <th className={plannerFrozenThClass()}>Lane</th>
+                </>
+              }
+            />
             <tbody>
               {rows.length === 0 ? (
                 <tr>
@@ -126,7 +126,7 @@ export function LoadsPlanner() {
                         <td
                           key={`${load.id}-${days[dayIdx]}`}
                           colSpan={span.span}
-                          className="border-l border-slate-300 bg-slate-100 px-1 py-0.5 text-center"
+                          className={`${plannerDayBodyClass(days[dayIdx], todayYmdAmericaChicago(), "bg-slate-100")} px-1`}
                         >
                           <EntityLinkOrTombstone
                             kind="load"
@@ -140,13 +140,18 @@ export function LoadsPlanner() {
                       );
                       dayIdx += span.span;
                     } else {
-                      cells.push(<td key={`${load.id}-${days[dayIdx]}`} className="border-l border-slate-300 bg-white" />);
+                      cells.push(
+                        <td
+                          key={`${load.id}-${days[dayIdx]}`}
+                          className={plannerDayBodyClass(days[dayIdx], todayYmdAmericaChicago())}
+                        />
+                      );
                       dayIdx += 1;
                     }
                   }
 
                   return (
-                    <tr key={load.id} className="border-t border-gray-100">
+                    <tr key={load.id} className="h-[34px] border-t border-gray-100">
                       <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                         <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />
                         <span className="block text-[9px]"><EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></span>

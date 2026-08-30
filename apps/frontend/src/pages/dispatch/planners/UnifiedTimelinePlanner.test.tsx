@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -61,6 +62,9 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
   it("renders driver rows fed from the DISPATCH feed (not the empty leave grid) with a clickable load bar", async () => {
     wrap(<UnifiedTimelinePlanner />);
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
+    expect(await screen.findByTestId("planner-time-axis")).toBeTruthy();
+    expect(await screen.findByTestId("planner-axis-month-row")).toBeTruthy();
+    expect(screen.getByTestId("timeline-util-d1")).toBeTruthy();
     // The load bar comes from getDispatchPlannerWeek loads[] — the fix for the empty grid.
     // The load bar's testid is keyed on the load's stable id (load-500), not its display number
     // (L-500) — matches the `data-testid={`timeline-load-${load.id}`}` convention.
@@ -72,7 +76,7 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     await screen.findByText("Jane Driver");
     expect(screen.getByText("On-load")).toBeTruthy(); // d1 has a load
     expect(screen.getByText("On-leave")).toBeTruthy(); // d2 has leave, no load
-    expect(screen.getByText("Available")).toBeTruthy(); // d3 free
+    expect(screen.getAllByText("Available").length).toBeGreaterThan(0); // d3 free + idle cell hint
     // Idle/available driver gets a + Book affordance.
     expect(screen.getByTestId("timeline-book-d3")).toBeTruthy();
   });
