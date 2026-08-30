@@ -34,7 +34,7 @@ function audit(s) {
     if (!route.test(s.routes)) failures.push(`${path} canonical roster redirect missing`);
   }
   if (!/listAllCustomers\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.customers)) failures.push("customer roster complete company scope missing");
-  if (!/listVendors\(\{ operating_company_id: companyId, limit: 5000, active_company_only: true \}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
+  if (!/listAllVendors\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
   if (!/onRowClick=\{\(row\) => onSelectCustomer\?\.\(row\.id\)\}/.test(s.customerList)) failures.push("customer list row drill missing");
   if (!/onRowClick=\{\(row\) => onSelectVendor\?\.\(row\.id\)\}/.test(s.vendorList)) failures.push("vendor list row drill missing");
   if (!/<CardLink href=\{`\/customers\/\$\{customer\.id\}`\}/.test(s.customerSidebar)) failures.push("customer profile anchor missing");
