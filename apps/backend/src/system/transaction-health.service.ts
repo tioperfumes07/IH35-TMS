@@ -44,69 +44,26 @@
  * false positive is not (an id that doesn't appear in the row cannot match).
  */
 import { enrichTxHealthEvidence } from "./transaction-health-evidence.js";
+import type {
+  TxHealthChecks,
+  TxHealthClient,
+  TxHealthDocType,
+  TxHealthGl,
+  TxHealthLink,
+  TxHealthRow,
+} from "./transaction-health.types.js";
 
-export type TxHealthDocType =
-  | "invoice"
-  | "bill"
-  | "bill_payment"
-  | "customer_payment"
-  | "expense"
-  | "journal_entry"
-  | "factoring_batch"
-  | "settlement";
-
-export type TxHealthChecks = {
-  posted: boolean;
-  balanced: boolean;
-  linked: boolean;
-  sample_consistent: boolean | null; // null = UNVERIFIABLE
-};
-
-export type TxHealthLinkState = "wired" | "missing" | "not_applicable" | "blocked_by_constraint";
-export type TxHealthLinkGroup = "GENERAL LEDGER" | "OPERATIONS" | "MASTER DATA";
-
-export type TxHealthGlLine = {
-  account_code: string;
-  account_name: string;
-  account_id: string | null;
-  dr: number;
-  cr: number;
-};
-
-export type TxHealthGl = null | {
-  lines: TxHealthGlLine[];
-  dr_total: number;
-  cr_total: number;
-  balanced: boolean;
-};
-
-export type TxHealthLink = {
-  label: string;
-  target_type: string;
-  target_id: string | null;
-  target_label: string | null;
-  state: TxHealthLinkState;
-  group: TxHealthLinkGroup;
-};
-
-export type TxHealthRow = {
-  doc_type: TxHealthDocType;
-  id: string;
-  operating_company_id: string;
-  entity_code: string;
-  display_label: string;
-  event_at: string;
-  is_sample_data: boolean | null;
-  checks: TxHealthChecks;
-  findings: Array<{ id: string; finding_type: string; severity: string }>;
-  status: "OK" | "WARN" | "FAIL";
-  gl: TxHealthGl;
-  links: TxHealthLink[];
-};
-
-export type TxHealthClient = {
-  query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
-};
+export type {
+  TxHealthChecks,
+  TxHealthClient,
+  TxHealthDocType,
+  TxHealthGl,
+  TxHealthGlLine,
+  TxHealthLink,
+  TxHealthLinkGroup,
+  TxHealthLinkState,
+  TxHealthRow,
+} from "./transaction-health.types.js";
 
 type RawRow = {
   doc_type: TxHealthDocType;
