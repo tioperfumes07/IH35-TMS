@@ -20,9 +20,10 @@ export function addDaysIso(iso: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
-export function buildPlannerRange(windowDays: number, startIso?: string): PlannerRange {
-  const start = startIso ?? companyToday();
-  return { start, end: addDaysIso(start, windowDays - 1) };
+/** End-anchored window ending today (or endIso) so operators can see last week, not only forward. */
+export function buildPlannerRange(windowDays: number, endIso?: string): PlannerRange {
+  const end = endIso ?? companyToday();
+  return { start: addDaysIso(end, -(windowDays - 1)), end };
 }
 
 export function listPlannerDays(range: PlannerRange): string[] {
@@ -46,7 +47,8 @@ export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLA
     ? (rangeLength as PlannerRangeDays)
     : null;
   const setWindowDays = (days: PlannerRangeDays) => {
-    setRangeState(buildPlannerRange(days, range.start));
+    // Keep the end anchor (usually today); widen/narrow backward.
+    setRangeState(buildPlannerRange(days, range.end));
   };
   const setRange = (next: PlannerRange) => {
     if (next.start > next.end) return;

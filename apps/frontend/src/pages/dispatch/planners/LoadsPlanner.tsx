@@ -7,6 +7,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { formatPlannerDayLabel } from "./plannerDayLabel";
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
@@ -94,8 +95,8 @@ export function LoadsPlanner() {
                 <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Load</th>
                 <th className="border-b border-r bg-gray-50 px-1 py-1">Lane</th>
                 {days.map((d) => (
-                  <th key={d} className="border-b border-gray-100 px-0.5 py-1 text-center font-normal text-gray-500">
-                    {d.slice(5)}
+                  <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
+                    {formatPlannerDayLabel(d)}
                   </th>
                 ))}
               </tr>
@@ -125,7 +126,7 @@ export function LoadsPlanner() {
                         <td
                           key={`${load.id}-${days[dayIdx]}`}
                           colSpan={span.span}
-                          className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center"
+                          className="border-l border-slate-300 bg-slate-100 px-1 py-0.5 text-center"
                         >
                           <EntityLinkOrTombstone
                             kind="load"
@@ -139,7 +140,7 @@ export function LoadsPlanner() {
                       );
                       dayIdx += span.span;
                     } else {
-                      cells.push(<td key={`${load.id}-${days[dayIdx]}`} className="border-l border-gray-50 bg-white" />);
+                      cells.push(<td key={`${load.id}-${days[dayIdx]}`} className="border-l border-slate-300 bg-white" />);
                       dayIdx += 1;
                     }
                   }

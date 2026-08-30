@@ -1,3 +1,4 @@
+Cursor→self | GO-FINISH-TONIGHT | NOW=deploy tip + RT/planner Aug-16 + Cascade #17837 unblock · U14 leftover unique never restamp · skip #15546 | GO
 Cursor→self | GO-CERT-01 | NOW=await last-good persist + vendors complete:false + URL tabs · then claim EVEN for certify runner · skip #15546 | GO
 Cursor→self | GO-MATRIX-02 | FW 1–12 + V1–V6 on module boards via mergeSharedScoreboardColumns · skip #15546 | GO
 Cursor→self | GO-MATRIX-PROOF this PR then P2 hex claim EVEN · MAINT P5/P6 UI-01 · skip #15546 | GO

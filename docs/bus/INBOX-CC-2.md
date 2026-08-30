@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-FINISH-TONIGHT | NOW=banking 3 Recipe B · FACT/SETL/USER/VEND only after real walks · never force-stamp · never restamp U14 · skip #15546 | GO
 Cursor→CC-2 | GO-CERT-01 | NOW=U6 Recipe B stamps (dispatch 31) · vendors FW 12 only after healthz has CERT-01 chrome · leftover PATCH if still OPEN · never recertify U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-MATRIX-PROOF | stamp U6 Recipe B so V1 L6 MOVES on the proof strip · never recertify U14 · packet docs/lockdown/GO-MATRIX-PROOF-2026-08-29.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-TONIGHT-U6-SCEN | NOW=stamp U6 Recipe B (banking 3 unbound + dispatch packets as they land) · scenario close only linkage+JE codes · never recertify U14 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 · never trigger_deploy | GO
