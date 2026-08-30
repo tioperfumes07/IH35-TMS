@@ -1670,9 +1670,12 @@ async function computeModuleMatrixUncached(moduleId: string, cacheKey: string): 
   };
 
   moduleMatrixCache.set(cacheKey, { atMs: Date.now(), payload });
-  // Fire-and-forget: never delay the response for the last-good disk write (same pattern as
-  // persistSystemLastGood).
-  void persistModuleLastGood(cacheKey, payload);
+  // MATRIX-HANDOFF-02: same race as SYSTEM (MATRIX-HANDOFF-01). The system worker awaits
+  // persistSystemLastGood after Promise.all(modules), but each module used fire-and-forget
+  // persist — so GET ?module=accounting readModuleLastGood raced empty disk and stayed
+  // REQUIRED-SEED while scope=system already served last-good. Await so each module
+  // last-good is on disk before the worker posts ok / before the next HTTP read.
+  await persistModuleLastGood(cacheKey, payload);
   return payload;
 }
 
