@@ -49,8 +49,8 @@ if (process.argv.includes("--selftest")) {
     failures(staleSuccess).includes("stale success cannot close new context"),
     failures(staleError).includes("stale rejection cannot paint new context"),
     failures(pendingDismiss).includes("pending create cannot be dismissed"),
-    failures(noConfirm).includes("dirty drawer uses one confirmation boundary"),
-    failures(rawCancel).includes("dirty drawer uses one confirmation boundary"),
+    failures(noConfirm).includes("dirty drawer safely registers one confirmation boundary"),
+    failures(rawCancel).includes("dirty drawer safely registers one confirmation boundary"),
     failures(incompleteDirty).includes("dirty predicate covers full fine intent"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
