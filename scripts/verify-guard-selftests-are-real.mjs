@@ -80,9 +80,20 @@ const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === SELF_PA
 // Cheap, static, gated: does this guard have a --selftest arm at all? Presence only — never a
 // judgment about what the arm does once found (that question is answered by running it, below).
 export function hasSelftestArm(source) {
-  return /\bargv\s*(?:\.includes\s*\(\s*["']--selftest["']\s*\)|\.indexOf\s*\(\s*["']--selftest["']\s*\))/.test(
-    source,
-  );
+  const directDispatch =
+    /\bargv\s*(?:\.includes\s*\(\s*["']--selftest["']\s*\)|\.indexOf\s*\(\s*["']--selftest["']\s*\))/.test(source);
+  if (directDispatch) return true;
+
+  // The six C25-C31 economics guards are deliberately thin wrappers around one shared runner.
+  // That runner owns the --selftest dispatch and plants the mutation once; verify-step 10121 also
+  // executes every wrapper with --selftest, so duplicating an inert argv.includes() in each wrapper
+  // would only satisfy this scanner without strengthening execution. Credit delegation only when
+  // BOTH halves of the exact contract are present: the named import from the canonical helper and
+  // an awaited call. A lookalike import, an unused import, or an unrelated helper remains weak.
+  const importsDelegatedSelftest =
+    /import\s*\{\s*runInvWrapper\s*\}\s*from\s*["']\.\/lib\/econ-inv-auto-check\.mjs["']\s*;/.test(source);
+  const invokesDelegatedSelftest = /\bawait\s+runInvWrapper\s*\(/.test(source);
+  return importsDelegatedSelftest && invokesDelegatedSelftest;
 }
 
 function listGuardFiles(dir = SCRIPTS, self = SELF_NAME) {
@@ -208,6 +219,22 @@ function selftest() {
     checks.push([
       "hasSelftestArm(): false when the guard never dispatches on --selftest",
       hasSelftestArm("console.log('no selftest arm here at all');") === false,
+    ]);
+    checks.push([
+      "hasSelftestArm(): true for the canonical delegated economics selftest contract",
+      hasSelftestArm(
+        'import { runInvWrapper } from "./lib/econ-inv-auto-check.mjs";\nawait runInvWrapper({ label: "fixture" });',
+      ) === true,
+    ]);
+    checks.push([
+      "hasSelftestArm(): false for an unused delegated-helper import",
+      hasSelftestArm('import { runInvWrapper } from "./lib/econ-inv-auto-check.mjs";') === false,
+    ]);
+    checks.push([
+      "hasSelftestArm(): false for a lookalike helper path",
+      hasSelftestArm(
+        'import { runInvWrapper } from "./lib/not-the-canonical-helper.mjs";\nawait runInvWrapper({});',
+      ) === false,
     ]);
 
     checks.push([

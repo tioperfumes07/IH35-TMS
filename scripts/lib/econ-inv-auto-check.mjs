@@ -49,7 +49,7 @@ export async function runInvWrapper(opts) {
       console.error(`${label} --selftest FAIL — clean SQL missing ${cleanMiss.join(",")}`);
       process.exit(1);
     }
-    console.log(`${label} --selftest PASS`);
+    console.log(`${label} SELFTEST caught 2/2 planted checks (removed invariant RED, clean invariant GREEN)`);
     process.exit(0);
   }
 
