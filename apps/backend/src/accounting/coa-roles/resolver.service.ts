@@ -63,6 +63,12 @@ export const COA_ROLE_VALUES = [
   "driver_pay_expense",
   "driver_payroll_clearing",
   "reimbursement_expense",
+  // DWELL-01-D3 slice 2 (2026-08-30) — driver-side detention pay, the NET-formula/JE-integration slice
+  // of a 3-slice finding (slice 1: detention-pay-posting.service.ts's postDetentionPayForEvent, already
+  // shipped and live). Dr detention_pay_expense — a single debit leg, mirroring reimbursement_expense's
+  // shape exactly (no paired credit leg here; the JE balances against the final net-cash credit).
+  // DELIBERATELY absent from ROLE_FALLBACKS — owner designates; fails closed until then.
+  "detention_pay_expense",
   "advance_recovery",
   "damage_recovery",
   "lease_recovery",
@@ -155,6 +161,7 @@ const LEGACY_ROLE_BINDINGS: Partial<Record<CoaRole, string>> = {
   driver_pay_expense: "driver_pay_expense",
   driver_payroll_clearing: "driver_payroll_clearing",
   reimbursement_expense: "reimbursement_expense",
+  detention_pay_expense: "detention_pay_expense",
   advance_recovery: "advance_recovery",
   damage_recovery: "damage_recovery",
   lease_recovery: "lease_recovery",

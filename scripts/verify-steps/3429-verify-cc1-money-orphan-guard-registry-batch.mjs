@@ -46,6 +46,7 @@ const guards = [
   "verify-credit-vendor-apply-idempotent-replay.mjs",
   "verify-depreciation-reversal-cross-entity-books.mjs",
   "verify-detention-billing-bridge-resyncs-invoice.mjs",
+  "verify-detention-pay-posting-scoped.mjs",
   "verify-driver-dispute-opco-mismatch-rejected.mjs",
   "verify-driver-escrow-grandparent-alias-resolution.mjs",
   "verify-driver-finance-reverse-leaves.mjs",

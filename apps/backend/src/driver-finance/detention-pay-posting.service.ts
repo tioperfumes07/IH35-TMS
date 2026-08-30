@@ -25,12 +25,12 @@
 //     line (and, if the owning settlement already posted a JE, that JE too) -- filed as the next
 //     slice of this same finding, not attempted in this pass.
 //
-// NOT YET WIRED TO A JE: this function only writes the driver_finance.settlement_lines row.
-// settlement-payrun-close.service.ts's NET formula and its balanced-JE poster do not yet know about
-// line_type='detention_pay' -- that integration (a new aggregation query mirroring
-// loadReimbursementsCents, a new NET-formula term, a new DR/CR JE leg) is the next slice of this
-// same finding, not attempted in this pass. A posted line is real and driver-visible/disputable
-// immediately; it simply does not yet reach a settlement's JE until that integration lands.
+// SLICE 2 (2026-08-30, settlement-payrun-close.service.ts): this function's settlement_lines row now
+// DOES reach a settlement's JE -- loadDetentionPayCents() aggregates active 'detention_pay' lines into
+// the NET formula and a "Dr detention_pay_expense" leg, mirroring the reimbursement_expense pattern
+// exactly. That integration requires the owner to designate a 'detention_pay_expense' CoA role
+// (accounting.chart_of_accounts_roles) -- posting fails closed with DETENTION_PAY_EXPENSE_ACCOUNT_MISSING
+// until then, same as every other pay-run role. Reversal-on-void (slice 3) is still not built.
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { getActiveSettlementForDriver } from "./settlements-load-bookended.service.js";
@@ -109,11 +109,15 @@ export async function postDetentionPayForEvent(
   });
   if (!settlement) return { kind: "no_active_settlement" };
 
-  const rateRes = await client.query<{ detention_driver_pay_per_hour_cents: number | null }>(
-    `SELECT detention_driver_pay_per_hour_cents FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+  // ACCT-F212 pattern (also settlements-load-bookended.service.ts's own pingSettlementOnLoadEvent) —
+  // a money-bearing row created FROM a source document inherits that document's is_sample_data flag,
+  // so subledger and ledger agree and a sample fixture can never silently show up in a real total.
+  const rateRes = await client.query<{ detention_driver_pay_per_hour_cents: number | null; is_sample_data: boolean | null }>(
+    `SELECT detention_driver_pay_per_hour_cents, is_sample_data FROM mdata.loads WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
     [event.load_id, operatingCompanyId]
   );
   const rateCents = Number(rateRes.rows[0]?.detention_driver_pay_per_hour_cents ?? 0);
+  const isSampleData = rateRes.rows[0]?.is_sample_data ?? false;
   if (!(rateCents > 0)) return { kind: "no_driver_pay_rate" };
 
   const billableMinutes = Number(event.accrued_minutes ?? 0);
@@ -126,10 +130,12 @@ export async function postDetentionPayForEvent(
     `
       INSERT INTO driver_finance.settlement_lines
         (settlement_id, line_type, description, amount, load_id, operating_company_id,
-         source_table, source_reference_id, category, source_type, driver_visible, approval_status)
+         source_table, source_reference_id, category, source_type, driver_visible, approval_status,
+         is_sample_data)
       VALUES
         ($1::uuid, 'detention_pay', $2, $3, $4::uuid, $5::uuid,
-         'dispatch.detention_events', $6::uuid, 'detention', 'linked_expense', true, 'pending')
+         'dispatch.detention_events', $6::uuid, 'detention', 'linked_expense', true, 'pending',
+         $7)
       RETURNING id::text
     `,
     [
@@ -139,6 +145,7 @@ export async function postDetentionPayForEvent(
       event.load_id,
       operatingCompanyId,
       detentionEventId,
+      isSampleData,
     ]
   );
   const settlementLineId = String(lineRes.rows[0]!.id);

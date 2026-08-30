@@ -14,6 +14,10 @@
  *      (no_active_settlement) rather than opening/guessing one.
  *   5. Route authorization gate present (Owner/Administrator/Accountant).
  *   6. Full audit trail — "detention_pay.posted" event tag present.
+ *   7. is_sample_data inherited from the source load (ACCT-F212 pattern) — the settlement_lines row
+ *      must carry the SAME sample flag as mdata.loads, or a TEST-fixture detention event silently
+ *      produces an untagged, real-looking money row (the "verify-money-create-tags-sample-data.mjs"
+ *      class found live 2026-08-29 and fixed here).
  */
 import { readFileSync } from "node:fs";
 
@@ -52,6 +56,14 @@ function analyze(service, routes) {
 
   if (!/"detention_pay\.posted"/.test(service)) {
     failures.push(`${servicePath}: audit event tag "detention_pay.posted" missing`);
+  }
+
+  if (!/is_sample_data[\s\S]{0,400}INSERT INTO driver_finance\.settlement_lines/.test(service) &&
+      !/INSERT INTO driver_finance\.settlement_lines[\s\S]{0,400}is_sample_data/.test(service)) {
+    failures.push(`${servicePath}: settlement_lines INSERT does not carry is_sample_data — a TEST-fixture load would produce an untagged real-looking money row`);
+  }
+  if (!/isSampleData/.test(service)) {
+    failures.push(`${servicePath}: does not derive isSampleData from the source load (mdata.loads.is_sample_data)`);
   }
 
   return failures;
@@ -97,6 +109,21 @@ function selftest() {
       name: "audit tag removed",
       target: "service",
       apply: () => serviceSrc.replace(`"detention_pay.posted"`, `"detention_pay_posted_untagged"`),
+    },
+    {
+      name: "is_sample_data dropped from the settlement_lines INSERT",
+      target: "service",
+      apply: () =>
+        serviceSrc
+          .replace(
+            "source_table, source_reference_id, category, source_type, driver_visible, approval_status,\n         is_sample_data)",
+            "source_table, source_reference_id, category, source_type, driver_visible, approval_status)"
+          )
+          .replace(
+            "'dispatch.detention_events', $6::uuid, 'detention', 'linked_expense', true, 'pending',\n         $7)",
+            "'dispatch.detention_events', $6::uuid, 'detention', 'linked_expense', true, 'pending')"
+          )
+          .replace("      detentionEventId,\n      isSampleData,\n    ]", "      detentionEventId,\n    ]"),
     },
   ];
 
