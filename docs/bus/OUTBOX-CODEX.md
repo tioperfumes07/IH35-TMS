@@ -2421,3 +2421,5 @@ Codex | WORKING | GUARD-F7397 | fuel POST role-gate mutation re-anchored to live
 Codex | SHIPPED | GUARD-F7396 | PR=#17965 @ d248d026e5 | gate=exit0 | NEXT=GUARD-F7397 | GO
 Codex | WORKING | GUARD-F7398 | load reassignment selected-driver label selftest now plants real handoff removal | NEXT=FAST-MERGE then next domain census red | GO
 Codex | SHIPPED | GUARD-F7397 | PR=#17968 @ 32e167b288 | gate=exit0 | NEXT=GUARD-F7398 | GO
+Codex | WORKING | GUARD-F7399 | Dispatch overview at-risk/late query rename re-anchored | five panel error paths retained | NEXT=FAST-MERGE then next domain census red | GO
+Codex | SHIPPED | GUARD-F7398 | PR=#17970 @ 293a43adb8 | gate=exit0 | NEXT=GUARD-F7399 | GO

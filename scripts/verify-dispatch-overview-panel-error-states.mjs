@@ -27,7 +27,7 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILE_PATH = path.join(root, "apps/frontend/src/pages/dispatch/DispatchOverview.tsx");
 const LABEL = "verify-dispatch-overview-panel-error-states";
 
-const QUERIES = ["exposureLoadsQ", "atRiskQ", "detentionQ", "borderQ", "oosLoadsQ"];
+const QUERIES = ["exposureLoadsQ", "atRiskLateQ", "detentionQ", "borderQ", "oosLoadsQ"];
 
 export function checkDispatchOverviewPanelErrorStates(src) {
   const problems = [];
@@ -54,7 +54,7 @@ if (process.argv.includes("--selftest")) {
 
   const bad = `
     {exposureLoadsQ.isLoading ? (<PanelLoading />) : exposureLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
-    {atRiskQ.isLoading ? (<PanelLoading />) : atRiskLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
+    {atRiskLateQ.isLoading ? (<PanelLoading />) : atRiskLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
     {detentionQ.isLoading ? (<PanelLoading />) : detentionEvents.length === 0 ? (PanelEmpty("x")) : (rows)}
     {borderQ.isLoading ? (<PanelLoading />) : borderEvents.length === 0 ? (PanelEmpty("x")) : (rows)}
     {oosLoadsQ.isLoading ? (<PanelLoading />) : oosLoads.length === 0 ? (PanelEmpty("x")) : (rows)}
