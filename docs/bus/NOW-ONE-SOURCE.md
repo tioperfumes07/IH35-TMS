@@ -1,3 +1,5 @@
+**2026-08-30T17:47Z GO-CASCADE-FALSE-POSITIVE-GREP THIS IS NOW (Cascade).** B then A, never C. Stop filing. Re-audit 50277–50344 per file, single-term grep, SUPERSEDE only false, keep genuine (50309 unless proven present). Packet `docs/lockdown/GO-CASCADE-FALSE-POSITIVE-GREP-2026-08-30.md`. Other seats: do not steal. Skip #15546.
+
 **2026-08-30T16:54Z GO-INSTRUMENT-PLANNER THIS IS NOW.** Live `d41124e`. Packet `docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md`. CC-1 sql paste. CC-2 re-verify on this SHA. Codex claim EVEN + planner guard. Cascade unique FINDING only. VOID ECON-waiting-on-definitions. Skip #15546.
 
 **2026-08-30T15:20Z GO-CLOSE-188 ACCEPTANCE LOCKED.** Owner reply in `docs/lockdown/GO-CLOSE-188/OWNER/3-OWNER-REPLY-C25-C31-APPROVED.txt`. Live SHA `b8fc09ce` (#18170). Period close = own session. CC-1 B→A→G1. CC-3 lists+customers (no Devin). Skip #15546.
