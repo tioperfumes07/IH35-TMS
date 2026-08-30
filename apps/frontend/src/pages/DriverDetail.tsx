@@ -49,6 +49,7 @@ import { DriverReportsReverseSection } from "../components/maintenance/DriverRep
 import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { DriverEquipmentTransfersReverseSection } from "../components/dispatch/DriverEquipmentTransfersReverseSection";
 import { DriverHosViolationsReverseSection } from "../components/safety/DriverHosViolationsReverseSection";
+import { SafetyAlertsReverseSection } from "../components/safety/SafetyAlertsReverseSection";
 import { BackgroundChecksSection } from "../components/safety/BackgroundChecksSection";
 import { MedicalCardsHistorySection } from "../components/safety/MedicalCardsHistorySection";
 import { Button } from "../components/Button";
@@ -1722,6 +1723,15 @@ export function DriverDetailPage() {
                   <DriverReportsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverTempCoverReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <DriverHosViolationsReverseSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
+                  {/* SAF-F7527 — EntityLink's canonical driver target is /drivers/:id, not the
+                      secondary /drivers/:id/profile route. Keep the same governed reverse reader on
+                      the Safety File users actually reach so company violations, integrity alerts,
+                      and anomaly records remain drillable in both directions. */}
+                  <SafetyAlertsReverseSection
+                    operatingCompanyId={String(driver.operating_company_id)}
+                    subjectKind="driver"
+                    subjectId={id}
+                  />
                   <MedicalCardsHistorySection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                   <BackgroundChecksSection operatingCompanyId={String(driver.operating_company_id)} driverId={id} />
                 </>

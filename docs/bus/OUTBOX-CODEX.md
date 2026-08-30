@@ -2614,3 +2614,5 @@ CODEX | WORKING | DRIVER-F7522 | ROOT=generic-visa-UI-and-dedicated-B1-operation
 CODEX | SHIPPED | FLEET-F7521 | PR=#18171 @ e9038421bc | focused=guard+selftest33/33+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7522-B1-visa | GO
 CODEX | WORKING | DRIVER-F7523 | ROOT=referral-reward-consumed-an-FK-no-creator-or-profile-could-set-and-no-reverse-list-existed | focused=guard+selftest28/28+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRIVER-F7522 | PR=#18179 @ 1ba69824cf | focused=guard+selftest18/18+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7523-referral | GO
+CODEX | WORKING | SAF-F7527 | GO-CLOSE-188=safety-14 | LIVE_PRE=b8fc09c company violation forward driver drill lands canonical /drivers/:id but Safety File omits alert/violation reverse | NEXT=guard+gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7526 | PR=#18196 @ 3d8e9226cd | focused=guard+selftest8/8+Vitest1/1+root-tsc+full-gate | Live=UNVERIFIED | NEXT=company_violation reverse | GO
