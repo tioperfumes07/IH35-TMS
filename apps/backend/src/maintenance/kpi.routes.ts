@@ -77,8 +77,14 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: { 
   });
 }
 
+// CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: every caller below that short-circuits on `!relationExists(...)`
+// must fold an honest `<table>_unavailable: true` into its response instead of returning a bare empty/zero
+// payload that is indistinguishable from a genuinely empty, healthy fleet. Do not add a new caller that
+// returns a permissive default with no such signal.
 async function relationExists(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }> }, rel: string) {
   const res = await client.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [rel]);
+  // false here means the caller must fold an honest `<table>_unavailable: true` into its own
+  // response (see the 3 call sites below) rather than returning a bare permissive default.
   return Boolean(res.rows[0]?.ok);
 }
 
@@ -105,6 +111,11 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
 
     const payload = await withCompany(user.uuid, companyId, async (client) => {
       if (!(await relationExists(client, "maintenance.work_orders"))) {
+        // CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: an empty/100%-compliant payload with no signal
+        // looks identical to "this fleet genuinely has zero downtime and perfect PM compliance" --
+        // the same class of bug fuel.loves_prices_daily already fixed by adding an honest
+        // unavailable marker instead of a fabricated value. work_orders_unavailable is additive
+        // (existing zeroed fields are unchanged) so no consumer that ignores it regresses.
         return {
           period: { start: startDay, end: endDay },
           unit_id: unitId ?? null,
@@ -114,6 +125,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
           cost_per_truck_cents: 0,
           pm_compliance_pct: 100,
           sparklines: { downtime: [], mtbf: [], cpm: [], cost_per_truck: [], pm_compliance: [] },
+          work_orders_unavailable: true,
         };
       }
 
@@ -310,7 +322,7 @@ export async function registerMaintenanceKpiRoutes(app: FastifyInstance) {
     const { operating_company_id: companyId, unit_id: unitId, limit, offset } = parsed.data;
 
     const payload = await withCompany(user.uuid, companyId, async (client) => {
-      if (!(await relationExists(client, "maintenance.pm_schedules"))) return { rows: [], total_count: 0 };
+      if (!(await relationExists(client, "maintenance.pm_schedules"))) return { rows: [], total_count: 0, pm_schedules_unavailable: true };
       const params: unknown[] = [companyId];
       if (unitId) params.push(unitId);
       params.push(limit, offset);
@@ -387,7 +399,7 @@ async function kpiDrilldown(req: FastifyRequest, reply: FastifyReply, kind: "dow
   }
 
   const payload = await withCompany(user.uuid, q.operating_company_id, async (client) => {
-    if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0 };
+    if (!(await relationExists(client, "maintenance.work_orders"))) return { rows: [], total_count: 0, work_orders_unavailable: true };
     const unitClause = unitFilter(q.unit_id, "wo");
     const params: unknown[] = [q.operating_company_id, q.period_start, q.period_end, ...unitParams(q.unit_id)];
     let dataSql: string;

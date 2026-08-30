@@ -184,10 +184,10 @@ export async function registerEquipmentLogRoutes(app: FastifyInstance) {
                WHERE u.id = $4 AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)
              )) AS to_unit_ok,
              ($5::uuid IS NULL OR EXISTS (
-               SELECT 1 FROM mdata.locations loc WHERE loc.id = $5 AND loc.operating_company_id = $1
+               SELECT 1 FROM mdata.locations loc WHERE loc.id = $5 AND loc.operating_company_id = $1::uuid
              )) AS from_location_ok,
              ($6::uuid IS NULL OR EXISTS (
-               SELECT 1 FROM mdata.locations loc WHERE loc.id = $6 AND loc.operating_company_id = $1
+               SELECT 1 FROM mdata.locations loc WHERE loc.id = $6 AND loc.operating_company_id = $1::uuid
              )) AS to_location_ok`,
           [scopedCompanyId, b.equipment_id, b.from_unit_id ?? null, effectiveToUnitId, b.from_location_id ?? null, effectiveToLocationId]
         );

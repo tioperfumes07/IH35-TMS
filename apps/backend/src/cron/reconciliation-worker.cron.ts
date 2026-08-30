@@ -50,7 +50,13 @@ export async function catchUpOverdueReconciliationTicks(app: FastifyInstance): P
   try {
     await withLuciaBypass(async (client) => {
       const reg = await client.query(`SELECT to_regclass('_system.background_jobs') IS NOT NULL AS ok`);
-      if (!reg.rows[0]?.ok) return;
+      if (!reg.rows[0]?.ok) {
+        // CLS-LATCH-TABLE-ABSENT-SILENT-DEGRADE: honest signal instead of a bare skip — a fresh/
+        // unmigrated DB fails closed (no catch-up runs) rather than silently doing nothing with no
+        // trace anywhere that the health-window mechanism could not even check its own ledger.
+        app.log.warn("[reconciliation-catchup] _system.background_jobs not available — fails closed, no catch-up");
+        return;
+      }
       const res = await client.query<{ job_name: string; last_successful_run_at: string | null }>(
         `SELECT job_name, last_successful_run_at
            FROM _system.background_jobs

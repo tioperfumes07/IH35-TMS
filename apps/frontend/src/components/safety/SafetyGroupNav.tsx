@@ -13,7 +13,7 @@ type Props = {
 export function SafetyGroupNav({ groups, activeTabId, onTabChange }: Props) {
   const groupsWithCertExpiry = useMemo(() => {
     return groups.map((group) => {
-      const aliases = SAFETY_ALIAS_TABS.filter((alias) => alias.groupId === group.id).map((alias) => alias.tab);
+      const aliases = SAFETY_ALIAS_TABS.filter((alias) => alias.groupId === group.id && !alias.tab.navHidden).map((alias) => alias.tab);
       if (aliases.length === 0) return group;
       const missing = aliases.filter((alias) => !group.tabs.some((tab) => tab.id === alias.id));
       if (missing.length === 0) return group;

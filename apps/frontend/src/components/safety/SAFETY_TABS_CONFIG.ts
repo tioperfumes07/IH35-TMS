@@ -9,6 +9,14 @@ export interface SafetyTab {
   routeAliases?: string[];
   badge: TabBadge;
   status?: TabSurfaceStatus;
+  /**
+   * True for a tab whose `route` is a parameterized prefix (needs a real entity id to resolve) and
+   * therefore must never be rendered as a bare clickable NavLink -- SafetyGroupNav excludes it from
+   * the dropdown it merges alias tabs into. The tab still participates fully in findSafetyTab /
+   * findSafetyTabByPath, so active-tab/breadcrumb resolution for the real drilled-into page is
+   * unaffected. See the driver-safety-profile entry below (SAF-F22 follow-up, found 2026-08-29).
+   */
+  navHidden?: boolean;
 }
 
 export interface SafetyGroup {
@@ -202,8 +210,15 @@ export const SAFETY_ALIAS_TABS: { groupId: string; tab: SafetyTab }[] = [
     tab: { id: "anomaly-alerts", label: "Anomaly Alerts", route: "/safety/anomaly-alerts", badge: null },
   },
   {
+    // found stale 2026-08-29 (verify-nav-integrity): this entry's route is a bare parent path
+    // ("/safety/driver-profiles") but the only mounted route is the parameterized
+    // "driver-profiles/:driverId" (DriverSafetyReverseSection.tsx's own comment already documents
+    // this: "it cannot be a nav entry like the other ... orphans; the driver's own page is its
+    // natural entry point"). Rendering it as a clickable NavLink (the normal alias-tab treatment)
+    // produced a real dead link with no driver id. navHidden keeps it out of the dropdown while
+    // findSafetyTabByPath's prefix match still resolves the real per-driver route correctly.
     groupId: "driver-files",
-    tab: { id: "driver-safety-profile", label: "Driver Safety Profile", route: "/safety/driver-profiles", badge: null },
+    tab: { id: "driver-safety-profile", label: "Driver Safety Profile", route: "/safety/driver-profiles", badge: null, navHidden: true },
   },
 ];
 

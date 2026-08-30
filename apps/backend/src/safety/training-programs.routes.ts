@@ -61,7 +61,7 @@ export async function registerSafetyTrainingProgramsRoutes(app: FastifyInstance)
           SELECT id, operating_company_id, name, category, frequency,
                  recertify_months, passing_grade, created_at, updated_at
           FROM safety.training_programs
-          WHERE operating_company_id = $1
+          WHERE operating_company_id = $1::uuid
             AND voided_at IS NULL
           ORDER BY lower(name), created_at, id
         `,

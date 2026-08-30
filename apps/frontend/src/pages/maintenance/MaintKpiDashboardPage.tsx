@@ -253,6 +253,13 @@ export function MaintKpiDashboardPage() {
           message={(summaryQ.error as Error)?.message}
           onRetry={() => void summaryQ.refetch()}
         />
+      ) : summary?.work_orders_unavailable ? (
+        <ListErrorState
+          title="Maintenance KPI data unavailable"
+          status={0}
+          message="maintenance.work_orders is not available yet — the figures below are placeholders, not real fleet data."
+          onRetry={() => void summaryQ.refetch()}
+        />
       ) : (
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         {tiles.map((tile) => (

@@ -154,8 +154,8 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
           FROM catalogs.equipment_types et
           LEFT JOIN catalogs.equipment_line_item_templates lit
             ON lit.equipment_type_id = et.id
-           AND lit.operating_company_id = $1
-          WHERE et.operating_company_id = $1
+           AND lit.operating_company_id = $1::uuid
+          WHERE et.operating_company_id = $1::uuid
           ${activeFilter}
           GROUP BY et.id
           ORDER BY et.sort_order, et.name
@@ -202,9 +202,9 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
           FROM catalogs.equipment_types et
           LEFT JOIN catalogs.equipment_line_item_templates lit
             ON lit.equipment_type_id = et.id
-           AND lit.operating_company_id = $2
+           AND lit.operating_company_id = $2::uuid
           WHERE et.id = $1
-            AND et.operating_company_id = $2
+            AND et.operating_company_id = $2::uuid
             AND et.deactivated_at IS NULL
           GROUP BY et.id
         `,
@@ -239,7 +239,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
         `
           SELECT id
           FROM catalogs.equipment_types et
-          WHERE et.operating_company_id = $3
+          WHERE et.operating_company_id = $3::uuid
             AND et.deactivated_at IS NULL
             AND (
               regexp_replace(
@@ -341,7 +341,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(operatingCompanyId);
       const companyParameter = values.length;
       const res = await client.query(
-        `UPDATE catalogs.equipment_types SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter} RETURNING id`,
+        `UPDATE catalogs.equipment_types SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter}::uuid RETURNING id`,
         values
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "not_found" });
@@ -380,7 +380,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       if (!operatingCompanyId) return reply.code(403).send({ error: "forbidden" });
       // The explicit company predicate is required because Owner sessions can bypass RLS.
       const parentRes = await client.query(
-        `SELECT id FROM catalogs.equipment_types WHERE id = $1 AND operating_company_id = $2 LIMIT 1`,
+        `SELECT id FROM catalogs.equipment_types WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1`,
         [parsedParams.data.id, operatingCompanyId]
       );
       if (parentRes.rows.length === 0) return reply.code(404).send({ error: "equipment_type_not_found" });
@@ -463,7 +463,7 @@ export async function registerEquipmentTypeRoutes(app: FastifyInstance) {
       values.push(operatingCompanyId);
       const companyParameter = values.length;
       const res = await client.query(
-        `UPDATE catalogs.equipment_line_item_templates SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter} RETURNING id`,
+        `UPDATE catalogs.equipment_line_item_templates SET ${fields.join(", ")} WHERE id = $${idParameter} AND operating_company_id = $${companyParameter}::uuid RETURNING id`,
         values
       );
       if (res.rows.length === 0) return reply.code(404).send({ error: "not_found" });

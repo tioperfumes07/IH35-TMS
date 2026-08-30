@@ -60,10 +60,20 @@ function fail(msg) {
 }
 
 function extractGroupRoutes(tabsConfigSrc) {
+  // RE-ANCHOR (found stale 2026-08-29): this scanned the WHOLE file, not just SAFETY_GROUPS (the
+  // check's own stated purpose, line 11 above) -- it also picked up SAFETY_ALIAS_TABS entries,
+  // including ones whose route is a deliberately-parameterized prefix with no bare-path manifest
+  // registration (e.g. driver-safety-profile's navHidden "/safety/driver-profiles", real mount is
+  // "driver-profiles/:driverId"). Scoped to the SAFETY_GROUPS array literal only, matching the
+  // function's documented intent; alias-tab routes were never meant to be asserted here.
+  const groupsOnly = tabsConfigSrc.slice(
+    tabsConfigSrc.indexOf("export const SAFETY_GROUPS"),
+    tabsConfigSrc.indexOf("export const SAFETY_ALIAS_TABS"),
+  );
   const routes = [];
   const re = /route:\s*"(\/safety\/[^"]+)"/g;
   let m;
-  while ((m = re.exec(tabsConfigSrc)) !== null) {
+  while ((m = re.exec(groupsOnly)) !== null) {
     routes.push(m[1]);
   }
   return [...new Set(routes)];
