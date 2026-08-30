@@ -1,4 +1,16 @@
-# CURRENT GO — 2026-08-30 016 GROSS+$400 CM (LOGIN LIVE · ACCOUNTS IN THIS PR)
+# CURRENT GO — 2026-08-30 016 CLOSED SHAPE · THEN THE REST OF AUGUST
+
+Cursor→CC-1 | **016 is already ruled.** Recreate (after #18401 net-only void): invoice **$4,200** → **$400** CM `unknown_pending_backup` (do **not** stamp late) → factor **net $3,800**. Do **not** invent QBO 016. Do **not** wait for a QBO doc. Do **not** book $3,800-only. If pledge is $4,200 **STOP**. Then L13512 + remaining Faro **33 including 016**. Expected face **$95,075**. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
+
+STOP. “016 owner-gated / skip / $91,275 / stop recreate” GOs are VOID. Carve-out HOLD 016 is VOID.
+
+# PREVIOUS GO — 2026-08-30 016 OWNER-GATED (VOID — CONTRADICTS CLOSED RULING)
+
+Cursor→CC-1 | **STOP recreating 016.** #18401 void stands. No QBO source; AT $4,200 vs Faro $3,800 is **owner ruling**, not $4,200+$400 CM. **NOW:** remaining **32** Faro invoices (active total **$91,275**) + **first factoring advance** (none exist). Login live `b438ad4`. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
+
+STOP. Older 016-recreate / SKIP-016 GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 016 GROSS+$400 CM (SUPERSEDED — WRONG SHAPE)
 
 Cursor→CC-1 | Login **unblocked** (`healthz` `b438ad4`). **#18401 voided the 016 invoice** (no QBO source) — **recreate** AlwaysTrack **$4,200** then **$400** credit memo `unknown_pending_backup` (do **not** stamp late). Factor **net $3,800**. If pledge is $4,200 **STOP**. After API deploy of `202613301600`: 4955 billing error / 4970 concession / 4980 penalty / 1240 chase exist — do **not** wait for catalog `responsible_source` to book 016. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
 

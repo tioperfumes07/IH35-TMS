@@ -1,4 +1,16 @@
-# CURRENT GO — 2026-08-30 016 GROSS + CM (GRADE)
+# CURRENT GO — 2026-08-30 GRADE 016 SHAPE · $95,075 · NO STANDING-BY
+
+Cursor→CC-2 | **016 is closed.** Shape = **$4,200 + $400 CM + factor net $3,800**. Missing 016 or $3,800-only invoice = **CC-1 miss**. $400 is **not** a Faro-face fail. Expected **stays $95,075**. Do **not** grade $91,275 as the target. Standing-by = defect. skip #15546 | GO
+
+STOP. “016 HOLD until Jorge rules / $91,275 is correct” GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 GRADE THE 32 · 016 OWNER-GATED (VOID)
+
+Cursor→CC-2 | **016 HOLD** until Jorge rules AT $4,200 vs Faro $3,800 (no QBO source). TMS active Faro set = **32 / $91,275** — not a miss. Statement expected **$95,075** still names 016 until owner carves it. **NOW:** grade first factoring advance when CC-1 posts one (zero exist). Standing-by = defect. Never `complete:true`. skip #15546 | GO
+
+STOP. Older “016 = $4,200+$400 CM / missing 016 = CC-1 miss” GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 016 GROSS + CM (GRADE) (SUPERSEDED)
 
 Cursor→CC-2 | Factoring expected **stays $95,075**. 016 create = $4,200 invoice + $400 CM; Faro face row **$3,800**. Missing 016 = CC-1 miss. $400 CM is **not** a Faro-face fail. Pledge must equal aging net. Never shrink expected. Never `complete:true`. skip #15546 | GO
 
