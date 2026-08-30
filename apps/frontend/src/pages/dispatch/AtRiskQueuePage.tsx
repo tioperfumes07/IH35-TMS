@@ -125,10 +125,10 @@ export function AtRiskQueuePage() {
           storageKey="dispatch-at-risk-late-queue"
           exportFilename="at-risk-late-queue"
           suppressToolbarRange
-          sortKey={sort.sort === "event_at" ? "next_stop_scheduled_at" : sort.sort}
+          sortKey={sort.sort === "event_at" ? "next_stop_scheduled_at" : (sort.sort ?? "next_stop_scheduled_at")}
           sortDirection={sort.direction}
           sortMode="external"
-          onSortChange={(key, direction) => setSort({ sort: key === "next_stop_scheduled_at" ? "event_at" : key as DispatchAlertQuery["sort"], direction })}
+          onSortChange={(key, direction) => setSort({ sort: key === "next_stop_scheduled_at" ? "event_at" : key as NonNullable<DispatchAlertQuery["sort"]>, direction })}
         />
       )}
     </div>

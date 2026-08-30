@@ -281,10 +281,10 @@ export function DetentionBoardPage() {
         storageKey="dispatch-detention-board"
         exportFilename="detention-board"
         suppressToolbarRange
-        sortKey={sort.sort === "event_at" ? "started_at" : sort.sort}
+        sortKey={sort.sort === "event_at" ? "started_at" : (sort.sort ?? "started_at")}
         sortDirection={sort.direction}
         sortMode="external"
-        onSortChange={(key, direction) => setSort({ sort: key === "started_at" ? "event_at" : key as DispatchAlertQuery["sort"], direction })}
+        onSortChange={(key, direction) => setSort({ sort: key === "started_at" ? "event_at" : key as NonNullable<DispatchAlertQuery["sort"]>, direction })}
         />
       )}
     </div>
