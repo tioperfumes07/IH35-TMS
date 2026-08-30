@@ -1,9 +1,9 @@
 {
   "healthzSha": "48e08e5",
-  "generated_at": "2026-08-30T05:08:09.000Z",
+  "generated_at": "2026-08-30T05:21:02.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T00:08:09-05:00",
-    "sourceSha": "2965da48fb",
+    "generatedAt": "2026-08-30T00:21:02-05:00",
+    "sourceSha": "9d0bab482",
     "deployedSha": "48e08e5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2281,
@@ -332,7 +332,7 @@
     {
       "tier": "1",
       "module": "settlements",
-      "build": "8/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -968,7 +968,7 @@
     {
       "tier": "3",
       "module": "factoring",
-      "build": "9/10",
+      "build": "10/10",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,12 +2123,75 @@
   },
   "recentActivity": [
     {
+      "number": 18043,
+      "title": "FINDING: 50236-50242 — 7 module home pages with zero isError rendering (MaintenanceHome, Customers, Drivers, BankingHome, ReserveTracker, FactoringHome, FuelPlannerHome)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18043",
+      "sha": "9d0bab482",
+      "committedAtIso": "2026-08-30T00:21:02-05:00"
+    },
+    {
+      "number": 18042,
+      "title": "FINDING: GUARD-F7414-LOAD-INVENTORY-IGNORES-FACTORING-HONESTY-CORRECTION LANE: NON-FINANCIAL GUARD INTEGRITY",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18042",
+      "sha": "f8939d2fb",
+      "committedAtIso": "2026-08-30T00:19:48-05:00"
+    },
+    {
+      "number": 18041,
+      "title": "FINDING: N/A -- FACT-VERIFY-01 live-Chrome VERIFY-1..8 walk (GO-LAST-26-v2)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18041",
+      "sha": "ccaafcc43",
+      "committedAtIso": "2026-08-30T00:19:21-05:00"
+    },
+    {
+      "number": 18040,
+      "title": "FINDING: GUARD-F7413-DISPATCH-RESERVE-CANONICAL-PATH-PARSER-DRIFT LANE: NON-FINANCIAL GUARD INTEGRITY",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18040",
+      "sha": "751d7a54b",
+      "committedAtIso": "2026-08-30T00:15:50-05:00"
+    },
+    {
+      "number": 18039,
+      "title": "FINDING: N/A -- SETL-VERIFY-01 live-Chrome VERIFY-1..8 walk (GO-LAST-26-v2)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18039",
+      "sha": "be2a009e7",
+      "committedAtIso": "2026-08-30T00:15:23-05:00"
+    },
+    {
+      "number": 18038,
+      "title": "FINDING: GUARD-F7412-WAVE-A-UNIT-COLUMN-BORDER-PAYLOAD-ENVELOPE-DRIFT",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:10 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18038",
+      "sha": "f038c48bb",
+      "committedAtIso": "2026-08-30T00:10:46-05:00"
+    },
+    {
+      "number": 18037,
+      "title": "FINDING: N/A -- regenerate stale drivers.md scoreboard (DRV-S04 bind, PR #18027)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18037",
+      "sha": "81705cff3",
+      "committedAtIso": "2026-08-30T00:09:42-05:00"
+    },
+    {
       "number": 18036,
       "title": "FINDING: 50232-50235 — SettlementDisputeList silent no-op + CustomerDetail/DriverDetail/VendorDetail silent query failures",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:08 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18036",
-      "sha": "2965da48fb",
+      "sha": "2965da48f",
       "committedAtIso": "2026-08-30T00:08:09-05:00"
     },
     {
@@ -2137,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:07 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18035",
-      "sha": "143bc93cfe",
+      "sha": "143bc93cf",
       "committedAtIso": "2026-08-30T00:07:45-05:00"
     },
     {
@@ -2146,71 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:06 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18029",
-      "sha": "3966e23ace",
+      "sha": "3966e23ac",
       "committedAtIso": "2026-08-30T00:06:03-05:00"
-    },
-    {
-      "number": 18034,
-      "title": "FINDING: GUARD-F7411-DRIVER-HUB-UNIT-COLUMN-KEYED-MOUNT-DRIFT",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18034",
-      "sha": "b95b324336",
-      "committedAtIso": "2026-08-30T00:05:31-05:00"
-    },
-    {
-      "number": 18033,
-      "title": "FINDING: N/A -- banking: resolve BANK-ECON-05 live, correct BANK-ECON-04/SURF-04 status",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18033",
-      "sha": "2c17db8312",
-      "committedAtIso": "2026-08-30T00:05:25-05:00"
-    },
-    {
-      "number": 18032,
-      "title": "FINDING: WONUM-F10102 refresh_wo_display_id() shared D1's UUID-fallback bug + had no D2 V5 lock",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18032",
-      "sha": "d7d91510fd",
-      "committedAtIso": "2026-08-30T00:04:48-05:00"
-    },
-    {
-      "number": 18031,
-      "title": "FINDING: GUARD-F7410-TEMP-COVER-UNIT-PAGINATED-FILTER-SIGNATURE-DRIFT",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18031",
-      "sha": "0428c7434b",
-      "committedAtIso": "2026-08-30T00:02:40-05:00"
-    },
-    {
-      "number": 18030,
-      "title": "FINDING: N/A -- §9 ACK: GO-LAST-26 v2 read, DEFECT-1 formally withdrawn, DRV-S04 now CC-2-stamped",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18030",
-      "sha": "b8168b1c4b",
-      "committedAtIso": "2026-08-30T00:02:19-05:00"
-    },
-    {
-      "number": 18028,
-      "title": "FINDING: N/A -- claim verify-step 10101 for WONUM D2 guard (GO-WONUM-01)",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18028",
-      "sha": "8170935c13",
-      "committedAtIso": "2026-08-30T00:00:55-05:00"
-    },
-    {
-      "number": 18027,
-      "title": "FINDING: N/A -- bind DRV-S04: drivers 19/20 -> 20/20, complete:true; corrected a packet error",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 11:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18027",
-      "sha": "e13e7aa0b6",
-      "committedAtIso": "2026-08-29T23:59:15-05:00"
     }
   ]
 }

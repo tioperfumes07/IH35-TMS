@@ -29,25 +29,25 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "626602b",
-  "generated_at": "2026-08-30T04:20:26.000Z",
+  "healthzSha": "48e08e5",
+  "generated_at": "2026-08-30T05:21:02.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T23:20:26-05:00",
-    "sourceSha": "d822b77d4",
-    "deployedSha": "626602b",
+    "generatedAt": "2026-08-30T00:21:02-05:00",
+    "sourceSha": "9d0bab482",
+    "deployedSha": "48e08e5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2268,
-    "failOpen": 137,
-    "defects": 27
+    "ledgerRows": 2281,
+    "failOpen": 150,
+    "defects": 28
   },
   "modules": [
     {
       "tier": "0",
       "module": "banking",
-      "build": "19/19",
+      "build": "17/19",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "FAIL",
@@ -79,7 +79,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "NA",
           "FAIL",
@@ -362,7 +362,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "settlements",
-      "build": "8/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -521,7 +521,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "drivers",
-      "build": "19/20",
+      "build": "20/20",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -998,10 +998,10 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "factoring",
-      "build": "9/10",
+      "build": "10/10",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "NA",
         "AUDIT",
@@ -1033,7 +1033,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -1104,7 +1104,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "reports",
-      "build": "7/8",
+      "build": "8/8",
       "cells": [
         "AUDIT",
         "FAIL",
