@@ -4877,6 +4877,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-cert01-fw-server-assertions (CERT-01 B2+B7, GO-1405)"
   },
+  "10103": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
+  },
   "10101": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
