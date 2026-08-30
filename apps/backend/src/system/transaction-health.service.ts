@@ -126,13 +126,15 @@ const BRANCHES: string[] = [
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text
+        AND p.operating_company_id = i.operating_company_id
     ) AS posted,
     NOT EXISTS (
       SELECT 1 FROM (
         SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text
+          AND p.operating_company_id = i.operating_company_id
         GROUP BY je.id
       ) x WHERE x.diff <> 0
     ) AS balanced,
@@ -156,8 +158,9 @@ const BRANCHES: string[] = [
       i.is_sample_data = COALESCE((
         SELECT bool_or(je.is_sample_data)
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'invoice' AND p.source_transaction_id = i.id::text
+          AND p.operating_company_id = i.operating_company_id
       ), i.is_sample_data)
     ) END AS sample_consistent
   FROM accounting.invoices i
@@ -173,13 +176,15 @@ const BRANCHES: string[] = [
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
+        AND p.operating_company_id = b.operating_company_id
     ),
     NOT EXISTS (
       SELECT 1 FROM (
         SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
+          AND p.operating_company_id = b.operating_company_id
         GROUP BY je.id
       ) x WHERE x.diff <> 0
     ),
@@ -190,8 +195,9 @@ const BRANCHES: string[] = [
       b.is_sample_data = COALESCE((
         SELECT bool_or(je.is_sample_data)
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'bill' AND p.source_transaction_id = b.id::text
+          AND p.operating_company_id = b.operating_company_id
       ), b.is_sample_data)
     ) END
   FROM accounting.bills b
@@ -207,13 +213,15 @@ const BRANCHES: string[] = [
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
+        AND p.operating_company_id = bp.operating_company_id
     ),
     NOT EXISTS (
       SELECT 1 FROM (
         SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
+          AND p.operating_company_id = bp.operating_company_id
         GROUP BY je.id
       ) x WHERE x.diff <> 0
     ),
@@ -223,8 +231,9 @@ const BRANCHES: string[] = [
       bp.is_sample_data = COALESCE((
         SELECT bool_or(je.is_sample_data)
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'bill_payment' AND p.source_transaction_id = bp.id::text
+          AND p.operating_company_id = bp.operating_company_id
       ), bp.is_sample_data)
     ) END
   FROM accounting.bill_payments bp
@@ -239,13 +248,15 @@ const BRANCHES: string[] = [
     EXISTS (
       SELECT 1 FROM accounting.journal_entry_postings p
       WHERE p.source_transaction_type = 'customer_payment' AND p.source_transaction_id = py.id::text
+        AND p.operating_company_id = py.operating_company_id
     ),
     NOT EXISTS (
       SELECT 1 FROM (
         SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'customer_payment' AND p.source_transaction_id = py.id::text
+          AND p.operating_company_id = py.operating_company_id
         GROUP BY je.id
       ) x WHERE x.diff <> 0
     ),
@@ -254,8 +265,9 @@ const BRANCHES: string[] = [
       py.is_sample_data = COALESCE((
         SELECT bool_or(je.is_sample_data)
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE p.source_transaction_type = 'customer_payment' AND p.source_transaction_id = py.id::text
+          AND p.operating_company_id = py.operating_company_id
       ), py.is_sample_data)
     ) END
   FROM accounting.payments py
@@ -274,8 +286,9 @@ const BRANCHES: string[] = [
       SELECT 1 FROM (
         SELECT je.id, SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) AS diff
         FROM accounting.journal_entry_postings p
-        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
+        JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid AND je.operating_company_id = p.operating_company_id
         WHERE je.id = e.journal_entry_id
+          AND je.operating_company_id = e.operating_company_id
         GROUP BY je.id
       ) x WHERE x.diff <> 0
     ),
@@ -284,7 +297,7 @@ const BRANCHES: string[] = [
     (e.vendor_uuid IS NOT NULL OR e.driver_uuid IS NOT NULL OR e.load_id IS NOT NULL),
     CASE WHEN e.is_sample_data IS NULL THEN NULL ELSE (
       e.journal_entry_id IS NULL OR e.is_sample_data = COALESCE(
-        (SELECT je.is_sample_data FROM accounting.journal_entries je WHERE je.id = e.journal_entry_id),
+        (SELECT je.is_sample_data FROM accounting.journal_entries je WHERE je.id = e.journal_entry_id AND je.operating_company_id = e.operating_company_id),
         e.is_sample_data
       )
     ) END
@@ -342,17 +355,19 @@ const BRANCHES: string[] = [
     -- separate, narrower defect than "this batch never touched the GL at all").
     EXISTS (
       SELECT 1 FROM accounting.invoices fi
-      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id
+      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id AND fa.operating_company_id = fi.operating_company_id
       JOIN accounting.journal_entry_postings p
         ON p.source_transaction_type = 'factoring_advance' AND p.source_transaction_id = fa.id::text
+       AND p.operating_company_id = fa.operating_company_id
       WHERE fi.id = ANY (fb.invoice_ids) AND fi.operating_company_id = fb.operating_company_id
     ),
     NOT EXISTS (
       SELECT 1 FROM accounting.invoices fi
-      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id
+      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id AND fa.operating_company_id = fi.operating_company_id
       JOIN accounting.journal_entry_postings p
         ON p.source_transaction_type = 'factoring_advance' AND p.source_transaction_id = fa.id::text
-      JOIN accounting.journal_entries jje ON jje.id = p.journal_entry_uuid
+       AND p.operating_company_id = fa.operating_company_id
+      JOIN accounting.journal_entries jje ON jje.id = p.journal_entry_uuid AND jje.operating_company_id = p.operating_company_id
       WHERE fi.id = ANY (fb.invoice_ids) AND fi.operating_company_id = fb.operating_company_id
       GROUP BY jje.id
       HAVING SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) <> 0
@@ -376,15 +391,17 @@ const BRANCHES: string[] = [
       SELECT 1 FROM accounting.bills sb
       JOIN accounting.journal_entry_postings p
         ON p.source_transaction_type = 'bill' AND p.source_transaction_id = sb.id::text
-      JOIN accounting.journal_entries sje ON sje.id = p.journal_entry_uuid
+       AND p.operating_company_id = sb.operating_company_id
+      JOIN accounting.journal_entries sje ON sje.id = p.journal_entry_uuid AND sje.operating_company_id = p.operating_company_id
       WHERE sb.id = s.accounting_bill_id
+        AND sb.operating_company_id = s.operating_company_id
       GROUP BY sje.id
       HAVING SUM(CASE WHEN p.debit_or_credit = 'debit' THEN p.amount_cents ELSE -p.amount_cents END) <> 0
     ),
     (s.driver_id IS NOT NULL),
     CASE WHEN s.is_sample_data IS NULL THEN NULL ELSE (
       s.accounting_bill_id IS NULL OR s.is_sample_data = COALESCE(
-        (SELECT sb.is_sample_data FROM accounting.bills sb WHERE sb.id = s.accounting_bill_id),
+        (SELECT sb.is_sample_data FROM accounting.bills sb WHERE sb.id = s.accounting_bill_id AND sb.operating_company_id = s.operating_company_id),
         s.is_sample_data
       )
     ) END
