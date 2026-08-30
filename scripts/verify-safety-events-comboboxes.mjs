@@ -20,22 +20,31 @@ function assertContract(source) {
   for (const token of [
     'dataTestId="safety-events-type-filter"',
     'onClick={staged.apply}',
-    'kpi_bucket: draft.kpi_bucket',
-    'subject_type: draft.subject_type',
-    'severity: draft.severity',
-    'status: draft.status',
+    'kpi_bucket: input.draft.kpi_bucket',
+    'subject_type: input.draft.subject_type',
+    'severity: input.draft.severity',
+    'status: input.draft.status',
   ]) if (!source.includes(token)) throw new Error(`missing Safety Events filter/create contract: ${token}`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = diskSource.replace("subject_type: draft.subject_type", "subject_type: 'company'");
-  const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    env: { ...process.env, SAFETY_F6483_PLANTED_SOURCE: planted },
-    encoding: "utf8",
-  });
-  if (child.status === 0) throw new Error("selftest failed: planted subject-type payload miswire stayed green");
-  console.log("verify-safety-events-comboboxes --selftest PASS");
+  const mutations = [
+    ["subject type", "subject_type: input.draft.subject_type", "subject_type: 'company'"],
+    ["KPI bucket", "kpi_bucket: input.draft.kpi_bucket", "kpi_bucket: 'incidents'"],
+    ["severity", "severity: input.draft.severity", "severity: 'low'"],
+    ["status", "status: input.draft.status", "status: 'open'"],
+  ];
+  for (const [name, from, to] of mutations) {
+    const planted = diskSource.replace(from, to);
+    if (planted === diskSource) throw new Error(`selftest failed to plant ${name}`);
+    const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      env: { ...process.env, SAFETY_F6483_PLANTED_SOURCE: planted },
+      encoding: "utf8",
+    });
+    if (child.status === 0) throw new Error(`selftest failed: planted ${name} payload miswire stayed green`);
+  }
+  console.log(`verify-safety-events-comboboxes --selftest PASS — ${mutations.length}/${mutations.length}`);
   process.exit(0);
 }
 
