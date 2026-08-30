@@ -1,0 +1,71 @@
+===============================================================================
+CURSOR — FARO LANE. 2026-08-30. SUPERSEDES EARLIER FARO PACKETS.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+Rule 42: you deploy. Rule 37: CLAIM -> MERGE -> AUTHOR, EVEN numbers.
+
+-------------------------------------------------------------------------------
+VERIFIED — YOUR FARO WORK LANDED AND IS CORRECT. INDEPENDENTLY CONFIRMED.
+-------------------------------------------------------------------------------
+  FARO DIGITAL ACCOUNT (#18348): banking.bank_accounts "Faro Factoring - USMCA",
+    depository, active, no Plaid, ledger_account_id -> catalogs.accounts 1296
+    "Faro Factoring - USMCA". Its OWN GL account. Not 1090. Not shared with
+    USMCA FREIGHT (1000) or Relay Fuel Wallet (1295). is_dip false. Correct.
+  FAIL-CLOSED INPUTS (#18323): SubmitFactoringModal.tsx:38-40 now useState("") on all
+    three rates; factoring-advances.routes.ts:47 factor_fee_pct is REQUIRED
+    (.optional().default(0) removed). Money can no longer be priced at a default.
+
+-------------------------------------------------------------------------------
+STILL YOURS, IN THIS ORDER
+-------------------------------------------------------------------------------
+1. TIEOUT BAR (bar-2). Highest value item in the program. SCHEMA class, the
+   verify-module-completion gate, proof-engine re-execution so it runs every deploy, the
+   guard, and WORM versioning (bar_version 1 stamps stay; nothing retracted).
+   The factoring TIEOUT target: face 9507500 -> reserve 142613 fee 142613 wire 12000
+   cash 9210274; and from the GL, 2150 (95,075.00) - 1230 (6,426.13) = 88,648.87 = NFE.
+
+2. FARO FACTOR -> BANK LINKAGE. The account exists; the wiring does not.
+   * factoring.factor 40b3690b-... -> the 1296 account: proceeds land THERE, not in 1090
+   * accounting.factoring_reserve_movements visible on that account
+   * Faro -> BoA "USMCA FREIGHT" wires are a BANK-TO-BANK TRANSFER, not a deposit from
+     nowhere
+   * bill payments drawn on reserves must be payable FROM that account, reducing 1230
+
+3. RESERVE-TRANSFER MODELLING — NEW, FROM THE AUGUST DATA.
+   Faro's own ledgers contain INTERNAL TRANSFERS BETWEEN CLIENT RESERVE ACCOUNTS. In
+   August, USMCA moved 7,241.00 into IH 35 Transportation's Faro reserve
+   (1,800.00 on 08/13; 688.00 + 4,753.00 on 08/14), confirmed on both sides and on
+   Transportation's statement header ("Payments from You" 7,241.00).
+   The system has NO concept of this today. It is not a customer payment, not a wire out
+   to a bank, and not a fee - it is a transfer between two entities' reserve balances at
+   the same factor. Model it explicitly or it will be miscategorised the moment real Faro
+   data loads.
+   ALSO: Faro books some lines BOTH WAYS same-day (a 1,649.00 deposit and a 1,649.00
+   payment on Watco inv 004, net zero). Any importer that sums one column will overstate.
+   Sum NET, and carry both legs. This exact trap produced a false $3,298.00 mismatch on my
+   first pass and is the whole reason the owner's $8,890.00 differs from the real 7,241.00.
+
+4. GUARDS 4C (settlement header write-back) and 4D (unit disposition not overloaded).
+   4A/4B are numbered 10133/10137 - confirm wired, not just claimed.
+
+5. INBOX HYGIENE. INBOX-CC-1.md still stacks ~24 "THIS IS NOW" lines from different days.
+   Truncate to the current GO or mark superseded. A seat reading down acts on Thursday.
+
+-------------------------------------------------------------------------------
+FLAG RELIABILITY — FEED THIS INTO THE TIEOUT DESIGN
+-------------------------------------------------------------------------------
+Three columns proved unreliable today: mdata.customers.is_duplicate (0 while 61 dupe groups
+exist), mdata.units.is_sample_data (FALSE on obvious CODEX-TEST rows counted as real fleet),
+driver_settlements.accounting_bill_id (NULL on a settlement that fully posted).
+CONSEQUENCE FOR BAR-2: a TIEOUT auto_check must never filter on an unverified flag to decide
+what is "real" - it would inherit that flag's lie. Either tie out against ALL rows, or make
+the flag a checked precondition of the tie-out. Write that into SCHEMA.md.
+
+-------------------------------------------------------------------------------
+STANDING — WHY BAR-2 OUTRANKS EVERYTHING ELSE ON YOUR LIST
+-------------------------------------------------------------------------------
+factoring scored 10 of 10 complete=true, every item prod_verified, while carrying a live
+balanced-but-wrong GL defect. FACT-S04 "reserve dashboard economics honest" was PASS while
+the reserve shown was DOUBLE and the fee was ZERO. All ten items test wiring, reads or
+display. None tests whether a number is right. Nothing in the current bar forces a claim to
+be checked against reality - that is what bar-2 fixes.

@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Cursor lead)
+# CURRENT GO — 2026-08-30 (Coders-Faro)
 
-Cursor→CC-1 | P0=3 of 7 name rulings (NCC / Simple / Watco) · THEN remaining Faro 33 invoices · THEN bind Faro funding cash to USMCA 1296 (not global cash_clearing) · THEN ITEM 1 CoA: partial UNIQUE (operating_company_id, role) WHERE is_active on chart_of_accounts_roles — migration 202613300800 + verify-step 10129 already claimed on main, do not reclaim, latent not live P0, do not delete inactive history · skip #15546 | GO
+Cursor→CC-1 | Pack=docs/lockdown/Coders-Faro/ · P0=remaining 3/7 names · THEN HUMAN UI replay L13512 (CC-1-HUMAN-SEQUENCE-REPLAY.txt) — through the app, date order, USMCA only, no silent SQL fix-forward · $1,649 is Faro purchase price NOT customer fuel advance · intercompany bill $7,241 not $8,890 · TRANSP report only · skip #15546 | GO
 
 LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 

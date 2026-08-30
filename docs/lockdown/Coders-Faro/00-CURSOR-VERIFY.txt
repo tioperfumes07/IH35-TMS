@@ -1,0 +1,39 @@
+===============================================================================
+CURSOR INDEPENDENT VERIFY — 2026-08-30. Same files Claude used. Not memory.
+===============================================================================
+
+$8,890 vs $7,241
+  From CC-1-USMCA-FARO-33-INVOICES.csv remit_events:
+    004 Watco  Internal Transfer 1,649.00 TWICE + Wire 1,639.00
+    005 Magna  Internal Transfer 1,800.00
+    012 CTS    Internal Transfer 688.00
+    013 Sethmar Internal Transfer 4,753.00
+  Gross of four PAYMENT-side internals (counting Watco once): 1,649+1,800+688+4,753 = 8,890.00
+  That is Jorge's number. It is real as a sum of remittance tokens.
+  Watco 004 has two identical Internal Transfer 1,649 lines the same day plus wire 1,639.
+  Net cash that is NOT a same-day in-and-out: 1,800+688+4,753 = 7,241.00
+  33-invoice face totals 95,075.00 (33 rows).
+
+NOT a customer diesel / cash advance
+  CC-1-INVOICES.csv: 65 rows, Advances = 0 on EVERY row, including 13512.
+  13512: Invoiced 1,700, Advances 0, Date of Advance blank, QuickPay 25.50, Total 1,674.50.
+  Faro math on 004: 1,700.00 - 25.50 reserve - 25.50 discount = 1,649.00 purchase price;
+    minus $10 wire = 1,639.00 proceeds. That is the factoring agreement, to the cent.
+  AlwaysTrack load-history Fuel = 1,066.44 on 13512 is COMPANY fuel on the load P&L
+    (profit 68.38). It is not Invoiced Advances. Driver-expense export on that load
+    shows Fuel-DEF 67.22 (reimbursed), not 1,066.44. Do not treat 1,066.44 as a
+    customer fuel advance and do not treat it as the $1,649.
+
+2EMS L13555: owner said 2EMS also provides loads = freight revenue, not lease billing.
+
+JOIN: PO / W.O. never customer+amount.
+
+HUMAN TEST: docs/lockdown/Coders-Faro/CC-1/CC-1-HUMAN-SEQUENCE-REPLAY.txt
+  Through the app. One at a time. USMCA only. Start L13512 / Faro 004 / settlement 5772 USMCA half.
+
+CODEX: execute ITEM 2 only. Item 1 (migration 202613300800 + step 10129) is CC-1.
+  A codex/ branch cannot add migrations or verify-steps (chrome-only fail-closed).
+  Claude's "Execute BOTH" paste is VOID for Codex.
+
+BILL: book $7,241.00 USMCA→Transportation Faro reserve reimbursement unless Jorge
+  replies in chat to use gross $8,890. Cursor default = $7,241.

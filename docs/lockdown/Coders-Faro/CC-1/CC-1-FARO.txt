@@ -1,0 +1,117 @@
+===============================================================================
+CC-1 — AUGUST ENTITY SPLIT.  REV B — SUPERSEDES THE EARLIER VERSION.
+Rebuilt on BOTH Faro schedules after the owner supplied Transportation's.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+DATA-BUILD order. Do it AFTER your open corrections.
+
+-------------------------------------------------------------------------------
+WHAT CHANGED FROM REV A — TWO OF MY OWN ERRORS, BOTH CORRECTED
+-------------------------------------------------------------------------------
+1. REV A matched loads to the USMCA Faro schedule on (customer name + amount). That was
+   too loose and produced FALSE POSITIVES. Example: load 13503 S E Mares $4,900 PO SMX14551
+   is on TRANSPORTATION's Faro schedule, but the fuzzy match also tied it to USMCA Faro #023
+   (S E Mares, $4,900, PO SEM66495) - a different load with the same customer and amount.
+   S E Mares runs many $4,900 loads; amount is not a key.
+   REV B MATCHES ON PO / W.O. REFERENCE. That is the real join key. Zero collisions now.
+2. REV A said "the northbound/southbound rule does not hold." That conclusion still stands,
+   but it was reached on the bad join, so treat REV B as the evidence for it.
+
+-------------------------------------------------------------------------------
+THE CORRECT PICTURE — 60 REAL AUGUST LOADS, JOINED ON PO
+-------------------------------------------------------------------------------
+   USMCA Faro purchased      29 loads    $86,825.00   (33 invoices, $95,075.00 face)
+   TRANSPORTATION Faro       13 loads    $49,310.00   (26 invoices, $98,488.00 face)
+   NEITHER factor            18 loads    $43,925.00
+Entity is decided by WHICH FACTOR BOUGHT THE INVOICE. Both schedules are third-party
+documents. Do not infer entity from trip direction - the owner's remembered
+"northbound = Transportation, southbound = USMCA" rule is not what the data shows.
+
+   13 of 22 settlements contain loads owned by MORE THAN ONE side:
+       revenue      USMCA  36,325.00   TRANSP  37,950.00   UNFACTORED  16,225.00
+       driver pay   USMCA   7,874.03   TRANSP   5,897.45   UNFACTORED   3,157.95
+
+-------------------------------------------------------------------------------
+THE 10 UNFACTORED-BUT-SETTLED LOADS — THE OWNER'S "PAID DIRECT" QUESTION
+-------------------------------------------------------------------------------
+The owner believed 1 or 2 loads were paid direct rather than to Faro. Settled loads with
+revenue that appear on NEITHER Faro schedule: TEN, $28,425.00.
+   L13498 5769 Value Logistics    LAREDO->PLAINFIELD IN        3,800.00
+   L13501 5766 PAYPA TRANSPORT    Laredo->BAYTOWN TX           1,500.00
+   L13507 5772 TWIN CITIES        MARION KY->DRAKESVILLE IA    1,200.00
+   L13509 5770 ES Logistics       CRESSONA PA->Laredo          4,400.00
+   L13515 5776 FLS Transportation SEAGOVILLE->LAREDO             525.00
+   L13524 5778 MPH CARRIER        Storm Lake IA->Laredo        4,200.00
+   L13526 5779 JRAYL TRANSPORT    Uhrichsville OH->MESQUITE    3,500.00
+   L13527 5779 EGRO TRANSPORT     Laredo->TALLMADGE OH         3,000.00
+   L13540 5782 IM Specialized     CLINTON NC->Laredo           3,120.00
+   L13555 5787 2EMS TRANSPORTATION LAREDO->Fountain CO         3,180.00
+Separately: 7 late-August loads have NO settlement yet ($15,500.00) - most likely simply
+not factored yet, not direct-pay. And L13525 Refrigerx settled at $0.00 revenue - that is a
+triangulation / repositioning leg, per the owner's own note that Maryland Heights->Waco is
+triangulation. Treat $0 legs as repositioning, not as revenue loads.
+=> OWNER MUST RULE on the 10. Each needs an entity AND a collection path. DO NOT GUESS.
+   Note L13555 is billed TO 2EMS TRANSPORTATION - the same party Trucking leases 14 units
+   to. Confirm whether that is freight revenue or a lease-related billing before posting.
+
+-------------------------------------------------------------------------------
+INTERCOMPANY — VERIFIED TO THE CENT ACROSS THREE INDEPENDENT SOURCES
+-------------------------------------------------------------------------------
+USMCA moved money into TRANSPORTATION's Faro reserve account in August:
+   08/13/2026  Magna Transport Solutions   "USMCA Internal Transfer IH35"   1,800.00
+   08/14/2026  CTS Xpress                  "Transfer to IH35 neg res"         688.00
+   08/14/2026  Sethmar Transportation      "Transfer to IH35 neg res"       4,753.00
+                                                                    TOTAL   7,241.00
+   TRANSPORTATION reserve ledger inflow  = 7,241.00  (1,800.00 + 5,441.00)
+   TRANSPORTATION Faro statement header  = 7,241.00  ("Payments from You")
+   ALL THREE AGREE EXACTLY.
+   (A 4th USMCA line, Watco 1,649.00 on 08/12, appears as BOTH a deposit and a payment -
+    a reversal pair, net zero. Do not count it. I did on my first pass and it produced a
+    false $3,298.00 mismatch.)
+
+THE CCG PAYMENT — from TRANSPORTATION's Faro reserve, not USMCA's:
+   08/03/2026  Rsv Deposit "CCG Pmt 08/03/2026"                +22,000.00
+   08/03/2026  Wire Fee                                            -10.00
+   08/03/2026  Client Payable "CCG Pmt August 08/03/2026"      -45,512.57
+   That is the confirmed-plan figure exactly. It left Transportation, funded partly by the
+   $22,000 deposit and partly by running the reserve negative (-23,540.56 after).
+
+*** THE $8,890 — RESOLVED. IT IS REAL BUT IT IS A GROSS FIGURE. ***
+It is the sum of the four "Faro Internal Transfer" PAYMENT lines on USMCA's remittance file:
+    08/12 Watco inv 004  1,649.00 | 08/13 Magna inv 005  1,800.00
+    08/14 CTS   inv 012    688.00 | 08/14 Sethmar inv 013 4,753.00   = 8,890.00
+The Watco 1,649.00 is booked BOTH WAYS the same day - a 1,649.00 deposit AND a 1,649.00
+payment, same date, same reference "Internal Transfer to IH35 Reserves 08/12/26". Net ZERO.
+(Watco 004's real advance that day was 1,639.00 wired to USMCA Tank; the 1,649.00 pair is
+the same money before the $10 wire fee, in and straight back out.)
+Cash that actually moved: 1,800 + 688 + 4,753 = 7,241.00 - confirmed twice on the
+Transportation side (reserve ledger inflow, and the statement's "Payments from You").
+I searched Transportation's whole reserve ledger for 1,649.00 and for any 08/12 USMCA line:
+ZERO matches. It never arrived there.
+=> The bill is $7,241.00 unless the owner rules otherwise. DO NOT build against 8,890.00.
+   Do not "fix" the Watco pair either - it is Faro's own ledger, not ours.
+
+-------------------------------------------------------------------------------
+FILES
+-------------------------------------------------------------------------------
+  AUG-LOADS-BY-FACTOR.csv             60 loads: settlement, driver, customer, W.O., route,
+                                      FACTOR_OWNER, both Faro invoice refs, revenue, pay
+  AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv the 13 mixed settlements, per-side totals
+  AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv  195 line items tagged via Load #
+  TRANSP-FARO-PURCHASED.csv / TRANSP-FARO-AGING.csv  Transportation's Faro schedules
+  Plus the 9 AlwaysTrack exports as clean CSVs.
+
+-------------------------------------------------------------------------------
+BUILD
+-------------------------------------------------------------------------------
+1. Load the USMCA-side loads (29) into mdata.loads for USMCA. is_sample_data FALSE. Carry
+   the AlwaysTrack Load# and the Faro invoice ref so this is re-runnable and auditable.
+2. Build USMCA settlements from USMCA loads only, using each load's OWN expenses and
+   deductions (they all carry Load #, so this is a regroup, not an allocation).
+3. TRANSPORTATION AND UNFACTORED: BUILD NOTHING. Produce a report. TRANSP/TRK stay frozen.
+4. Settlements span months - a settlement closing in August may contain July loads. Filter
+   by LOAD, never by settlement date. 46 expense/deduction rows point at loads outside the
+   August set; report them, do not silently drop them.
+5. Reconcile and report: USMCA loads built ($86,825.00 revenue) vs the USMCA Faro face
+   ($95,075.00). Name the $8,250.00 difference - which Faro invoices have no August load
+   behind them. Do not force a match.

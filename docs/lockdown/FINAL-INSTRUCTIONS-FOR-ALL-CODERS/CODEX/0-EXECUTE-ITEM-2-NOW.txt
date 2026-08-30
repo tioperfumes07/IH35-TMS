@@ -1,7 +1,8 @@
-EXECUTE ITEM 2 ONLY. Do not wait. Do not ask Jorge. The ChatGPT “My request” field is this sentence.
+Execute ITEM 2 ONLY. Do not execute Item 1. Claude's "Execute BOTH" paste is VOID.
 
-Start: scripts/verify-codex-merged-findings-not-open.mjs then the rest of the 29 in docs/specs/CLOSED-LOOP-BASELINE.json. Count only goes DOWN. Cite the loop-close line or why it was over-flagged.
+Item 1 needs db/migrations + verify-step 10129. A `codex/` branch is chrome-only: CI fails if you add those files. CC-1 owns Item 1.
 
-ITEM 1 is CC-1. You cannot author db/migrations or scripts/verify-steps/NNNN-*.mjs on a codex/ branch.
+Start: scripts/verify-codex-merged-findings-not-open.mjs then the rest of docs/specs/CLOSED-LOOP-BASELINE.json. Count only goes DOWN.
 
-Skip #15546. Never trigger_deploy. Never recertify U14.
+Ignore CODEX-WORK-ORDER-2026-08-30_1.txt (identical). Skip #15546. Never trigger_deploy.
+

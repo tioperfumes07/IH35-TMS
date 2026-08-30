@@ -1,0 +1,88 @@
+===============================================================================
+JORGE — READ THIS ONE. EVERYTHING FARO IS IN THIS FOLDER. 2026-08-30.
+CURSOR VERIFY (independent): 00-CURSOR-VERIFY.txt
+===============================================================================
+
+  CC-1/     paste CC-1-FARO.txt      + everything else in that folder
+  CC-2/     paste CC-2-FARO.txt      + everything else in that folder
+  CURSOR/   paste CURSOR-FARO.txt    (no attachments)
+
+Nothing else. Older Faro packets are superseded by these three.
+
+-------------------------------------------------------------------------------
+THE $8,890 — VERIFIED. YOU WERE RIGHT THAT IT EXISTS. IT IS A GROSS FIGURE.
+-------------------------------------------------------------------------------
+It is the sum of the four "Faro Internal Transfer" PAYMENT lines on USMCA's own
+Faro remittance file:
+
+    08/12/2026  Watco Supply Chain   inv 004    1,649.00
+    08/13/2026  Magna Transport      inv 005    1,800.00
+    08/14/2026  CTS Xpress           inv 012      688.00
+    08/14/2026  Sethmar Transp.      inv 013    4,753.00
+                                    TOTAL       8,890.00   <- your number
+
+BUT the Watco 1,649.00 is booked BOTH WAYS on the same day - a deposit of 1,649.00
+AND a payment of 1,649.00, same date, same reference. Net movement on that line is
+ZERO. (Watco 004's real cash advance that day was 1,639.00, wired to USMCA Tank; the
+1,649.00 pair is the same money before the $10 wire fee, in and back out.)
+
+So the money that ACTUALLY left USMCA is:
+       1,800.00 + 688.00 + 4,753.00  =  7,241.00
+
+And that is confirmed independently, twice, on Transportation's side:
+    Transportation's Faro reserve ledger inflow    7,241.00  (1,800.00 + 5,441.00)
+    Transportation's Faro statement header         7,241.00  ("Payments from You")
+
+I searched Transportation's entire reserve ledger for the 1,649.00 and for any
+08/12 USMCA line. ZERO matches. It never arrived there.
+
+=> THE BILL SHOULD BE $7,241.00, NOT $8,890.00.
+   $8,890.00 is the gross of four ledger lines, one of which nets to zero.
+   Three independent documents agree on $7,241.00. Nothing supports $8,890.00
+   as cash that moved.
+
+   If you believe a separate $1,649.00 really did go somewhere (to Trucking's
+   reserves rather than Transportation's, for instance), say so and I will chase it -
+   but it is not in any file you have given me.
+
+-------------------------------------------------------------------------------
+WHERE THE CCG MONEY ACTUALLY WENT
+-------------------------------------------------------------------------------
+    08/03/2026  Rsv Deposit "CCG Pmt 08/03/2026"                 +22,000.00
+    08/03/2026  Wire Fee                                             -10.00
+    08/03/2026  Client Payable "CCG Pmt August 08/03/2026"       -45,512.57
+                                            reserve balance after -23,540.56
+
+CCG was paid $45,512.57 out of TRANSPORTATION's Faro reserve on 08/03 - your exact
+confirmed-plan figure. It was funded by the $22,000 deposit that day plus running the
+reserve negative. USMCA's $7,241.00 arrived on 08/13-08/14, AFTER the CCG payment -
+so it reads as USMCA reimbursing Transportation for covering the shortfall, not as
+USMCA funding the payment directly.
+
+That timing matters for how the bill is described. It is a reimbursement of a
+reserve shortfall, which is consistent with your own words: "removed from USMCA
+factoring and sent to Transportation factoring."
+
+-------------------------------------------------------------------------------
+YOUR DECISIONS — 3 THINGS, NOTHING ELSE
+-------------------------------------------------------------------------------
+1. BILL AMOUNT: $7,241.00 (recommended, tied 3 ways) or $8,890.00 (gross)?
+   Nobody posts anything until you say.
+
+2. THE 10 UNFACTORED LOADS ($28,425.00) - settled, real revenue, on NEITHER Faro
+   schedule. You thought it was 1 or 2. Which entity, and how was each collected?
+   The list is in CC-1's folder. One of them is billed TO 2EMS ($3,180) - you said
+   2EMS also gives you loads, so confirm that one is freight revenue and not lease
+   billing.
+
+3. THE $8,250 GAP: USMCA's Faro face is $95,075.00 but only $86,825.00 of it has an
+   August load behind it. Which Faro invoices have no load? (Likely July loads
+   factored in August - settlements span months, as you said.)
+
+-------------------------------------------------------------------------------
+NOT ASKING YOU FOR
+-------------------------------------------------------------------------------
+Repos/2EMS unit data (parked), Dispatcher login (CC-2 handles it), anything else.
+I did not use your AlwaysTrack or Faro browser sessions - the files you uploaded
+answered the $8,890 question completely. If item 2 or 3 above needs a lookup in
+Faro, tell me and I will use the browser then, with a specific question.

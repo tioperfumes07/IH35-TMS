@@ -1,0 +1,113 @@
+===============================================================================
+CC-1 — THE HUMAN-SEQUENCE REPLAY.  OWNER-DIRECTED, 2026-08-30.
+THIS IS THE REAL TEST OF WHETHER THE URGENT 6 ARE DONE.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+-------------------------------------------------------------------------------
+THE OWNER'S INSTRUCTION, AND WHY IT IS THE RIGHT TEST
+-------------------------------------------------------------------------------
+"upload all invoices, settlements, factoring purchases one by one in the app by the
+coders, as if they were human creating and following the transactions, making sure that
+everything is recording as it should be. this should show us for these 6 modules at least
+if they are truly done."
+
+That is a better test than any checklist, and it replaces guesswork with a business
+process. A module is done when a person can carry a real transaction through it and the
+money lands correctly at every step. Anything that cannot be done in the UI, or that
+records the wrong number, is the answer.
+
+RULES THAT MAKE THIS A TEST INSTEAD OF A DATA LOAD:
+ 1. GO THROUGH THE APP. No bulk SQL insert. No seed script. If a step cannot be done in
+    the UI, THAT IS THE FINDING - write it down and keep going.
+ 2. ONE AT A TIME, IN DATE ORDER. Real sequence, real dependencies.
+ 3. DO NOT FIX FORWARD SILENTLY. If a screen forces a wrong value, record what it forced
+    and what the right value was. Do not hand-correct in the database afterwards - that
+    erases the evidence the owner is paying for.
+ 4. RECORD EVERY BLOCKER with: screen, field, what you expected, what happened.
+ 5. USMCA ONLY. TRANSP and TRK stay frozen. Their loads are a report, not a build.
+
+-------------------------------------------------------------------------------
+START WITH ONE FULL SPECIMEN — L13512. IT EXERCISES ALL SIX MODULES.
+-------------------------------------------------------------------------------
+Do this ONE completely before touching the other 28. If it breaks, stop and report.
+
+  load        13512, settlement 5772, driver PEDRO ABRAHAM LOPEZ COLLADO, truck T152
+  customer    Watco Supply Chain Services LLC DBA Watco Logistics   (owner-ruled name)
+  route       MARYLAND HEIGHTS, MO -> WACO, TX   (triangulation leg, per the owner)
+  pickup      2026-08-10   delivery 2026-08-12   invoice date 2026-08-17
+  W.O.        2239480      miles 721.4 loaded / 232.8 empty
+  revenue     1,700.00     QuickPay fee 25.50   ->  invoice total 1,674.50
+  driver      pay 422.46 | addl pay 50.00 | reimb expense 67.22 | deduction 25.00
+  fuel        1,066.44 on the load
+  factoring   USMCA Faro invoice 004, PO 2239480, purchased 08/12/2026
+              face 1,700.00 - reserve 25.50 - discount 25.50 = purchase price 1,649.00
+              - wire fee 10.00 = proceeds 1,639.00 wired to "USMCA Tank" 08/12/2026
+
+  THE 12 STEPS, IN ORDER, EACH IN THE UI:
+   1  customer exists and is the owner-ruled row (not the bare "Watco Supply Chain
+      Services") ............................................ CUSTOMERS
+   2  create the load with the real route, dates, miles, W.O. .. DISPATCH
+   3  assign driver + unit T152 ............................... DISPATCH / FLEET
+   4  mark delivered, attach POD ............................... DISPATCH
+   5  create the invoice - 1,700.00 face, QuickPay 25.50 ....... ACCOUNTING (AR)
+      ASSERT: an invoice JE posted. AR debit = 1,700.00.
+   6  submit to factoring, factor = Faro ....................... FACTORING
+      ASSERT: reserve 25.50 and fee 25.50 computed INDEPENDENTLY (not 3% / not 0)
+   7  fund the advance .......................................... FACTORING -> GL
+      ASSERT under secured borrowing: Dr cash 1,639.00 + Dr reserve 25.50
+      + Dr fee 25.50 + Dr wire fee 10.00 / Cr Factoring Advance 1,700.00.
+      A/R IS NOT TOUCHED. If A/R moves here, STOP - that is the sale-model defect.
+   8  proceeds land in "Faro Factoring - USMCA" (GL 1296) ....... BANKING
+      ASSERT: not 1090 Undeposited Funds.
+   9  wire Faro -> BoA USMCA FREIGHT as a bank-to-bank TRANSFER . BANKING
+      ASSERT: a transfer, not a deposit from nowhere.
+  10  match the bank line ....................................... BANKING (recon)
+  11  build settlement 5772's USMCA portion: earnings 422.46, addl pay 50.00,
+      reimb expense 67.22, deduction 25.00 ...................... SETTLEMENTS
+      ASSERT: every line carries load_id AND posting_account_id, and every line
+      reaches approval_status='approved' (that gate has NEVER been achieved - expect
+      it to break, fix root cause, do not bypass).
+  12  close the pay run ......................................... SETTLEMENTS -> GL
+      ASSERT all of: driver_settlement_gl_runs + gl_bills populated; bill JE balances;
+      cash JE balances; the DEDUCTION leg fires (deduction_journal_entry_id and
+      deduction_bill_payment_id have NEVER been non-null system-wide); AND
+      driver_settlements.accounting_bill_id / accounting_bill_payment_id are written
+      by the LIVE poster (your header write-back fix).
+
+  NOTE ON 5772: it is a MIXED settlement - 4 loads, two of them USMCA (13512, 13513)
+  and two Transportation (13502, 13507). Build ONLY the USMCA portion. That is the whole
+  point of the split. Do not rebuild the driver's full AlwaysTrack settlement.
+
+-------------------------------------------------------------------------------
+THEN THE REST — 29 USMCA LOADS, 33 FARO INVOICES, IN DATE ORDER
+-------------------------------------------------------------------------------
+Source of truth files, all in this folder:
+  CC-1-AUG-LOADS-BY-FACTOR.csv        which of the 60 loads belongs to which factor
+  CC-1-USMCA-FARO-33-INVOICES.csv     the 33 Faro purchases with exact reserve/fee/net
+  CC-1-AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv   the 13 settlements that straddle entities
+  CC-1-AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv 195 line items, each tagged by Load #
+  CC-1-LOAD-HISTORY.csv / DRIVER-*.csv / INVOICES.csv   the raw AlwaysTrack exports
+
+Order: by invoice date. Settlements span months - a settlement closing in August can
+contain July loads, so filter by LOAD, never by settlement date.
+
+-------------------------------------------------------------------------------
+THE SCORECARD — WHAT THIS PROVES, PER MODULE
+-------------------------------------------------------------------------------
+For each of the six, report DONE / NOT DONE with the step number that failed:
+  ACCOUNTING   invoice JE posts, AR correct, TB balances
+  BANKING      proceeds land in 1296, Faro->bank is a transfer, the line matches
+  FACTORING    reserve and fee computed independently; secured borrowing, A/R untouched
+  SETTLEMENTS  lines approve, deduction leg fires, header back-link written
+  DISPATCH     load -> driver -> unit -> POD -> invoice, no orphans
+  VENDORS      driver-vendor link resolves to mdata.vendors (never mdata.qbo_vendors)
+
+FINAL TIE-OUTS, tolerance 0:
+  USMCA loads built            -> $86,825.00 revenue
+  USMCA Faro face              -> $95,075.00 (name the $8,250.00 that has no August load)
+  reserve 142613 / fee 142613 / wire 12000 / cash 9210274
+  GL identity: 2150 (95,075.00) - 1230 (6,426.13) = 88,648.87 = Faro statement NFE
+
+A module is NOT done because the screens exist. It is done when a real transaction goes
+through it and the number is right. Report failures as findings, not as work to hide.

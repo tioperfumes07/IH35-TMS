@@ -1,0 +1,27 @@
+faro_debtor,transportation_source_row,action,owner_decision
+BV LOGISTICS INC,BV Logistics Inc,COPY_FROM_TRANSP,resolved
+CORE LOGISTICS BROKERAGE,CORE LOGISTICS BROKERAGE,COPY_FROM_TRANSP,resolved
+"DEL-CAN LOGISTICS, LLC.",Del-Can Logistics LLC,COPY_FROM_TRANSP,resolved
+HUMMINGBIRD LOGISTIX LLC,"Hummingbird Logistix, LLC.",COPY_FROM_TRANSP,resolved
+Hawkeye Transportation Services,Hawkeye Transportation Services,COPY_FROM_TRANSP,resolved
+"ITS LOGISTICS, LLC",ITS Logistics LLC,COPY_FROM_TRANSP,resolved
+Jericho Freight LLC,Jericho freight LLC,COPY_FROM_TRANSP,resolved
+John J Jerue Truck Broker Inc.,"John J. Jerue Truck Broker, Inc",COPY_FROM_TRANSP,resolved
+MPH CARRIER SERVICES INC,"MPH CARRIER SERVICES, INC",COPY_FROM_TRANSP,resolved
+Magna Transport Solutions LLC,Magna Transport Solutions LLC,COPY_FROM_TRANSP,resolved
+OSTT LOGISTICS LLC,OSTT LOGISTICS LLC,COPY_FROM_TRANSP,resolved
+PFL LOGISTICS LLC,PFL Logistics LLC,COPY_FROM_TRANSP,resolved
+Prodigee Logistics LLC,PRODIGEE LOGISTICS LLC,COPY_FROM_TRANSP,resolved
+R2X LLC,R2X LLC,COPY_FROM_TRANSP,resolved
+REHMANN TRANSPORTATION CORP.,Rehmann Transportation Corp.,COPY_FROM_TRANSP,resolved
+IMPACT BULK LOGISTICS LLC,Impact Bulk Logistics,COPY_FROM_TRANSP,OWNER 2026-08-30: YES same company
+Sethmar Transportation Inc,Sethmar Transportation,COPY_FROM_TRANSP,OWNER 2026-08-30: YES same company
+"Watco Supply Chain Services, LLC",Watco Supply Chain Services LLC DBA Watco Logistics,COPY_FROM_TRANSP,OWNER 2026-08-30: use (b) the DBA row NOT the bare name
+SAJACKS FREIGHT INC,Sajacks Freight,COPY_FROM_TRANSP,"OWNER 2026-08-30: use Sajacks Freight. 'Sajacks Freigth' is a TYPO DUPE - do not copy it"
+NCC LOGISTICS USA INC,NCC Logistics,COPY_FROM_TRANSP,OWNER 2026-08-30: use NCC Logistics NOT NCC Logistics Mexico
+Simple Logistics Solutions,Simple Logistics LLC,COPY_FROM_TRANSP,OWNER 2026-08-30: use Simple Logistics LLC NOT Simplex logistics
+CTS XPRESS LLC,CTS EXPRESS LLC,COPY_FROM_TRANSP,OWNER 2026-08-30: YES same company (X = E spelling)
+DARDINI LLC,none,CREATE_NEW,"resolved - DLS Dardini Logistics Services is a DIFFERENT entity"
+FLS Transport Inc.,none,CREATE_NEW,"resolved - FLS TRANSPORTATION SERVICES LIMITED is a different legal entity"
+J RAYL TRANSPORT INC,none,CREATE_NEW,resolved
+S E Mares Forwarding Service LLC,none,CREATE_NEW,"resolved - do NOT merge with USMCA test row 'Semares Forwarding Services'"

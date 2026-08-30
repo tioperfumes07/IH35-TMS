@@ -1,0 +1,97 @@
+===============================================================================
+CC-2 — FARO VERIFICATION. 2026-08-30. SUPERSEDES EARLIER FARO PACKETS.
+HARD RULE 5: ONLY YOU WRITE prod_verified. NEVER FORCE-STAMP.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+LANE, OWNER-RULED: YOU DO NOT BUILD THE FARO BOOKS. CC-1 creates customers, assignments,
+invoices, advances and the August loads. YOU GRADE what they built. If the rows do not
+exist yet, say so and wait - that is the correct answer, not a reason to build them.
+
+-------------------------------------------------------------------------------
+TASK 1 — THE 007 / 008 / FULL-SCHEDULE GATE. Run when CC-1's rows exist.
+-------------------------------------------------------------------------------
+FACT-RESERVE-01 (#18318) is merged and live (API 8f866830). Confirm healthz >= 8f86683.
+
+  inv 007  ITS Logistics LLC   face $350.00 -> reserve $5.25  fee $5.25  cash $339.50
+  inv 008  FLS Transport Inc.  face $525.00 -> cash $509.24   NOT $509.25
+  FULL     face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+
+Your answer key is CC-2-FARO-33-ANSWER-KEY.csv. Verified against all 33 real invoices:
+0 mismatches. If your numbers differ, the CODE is wrong, not the file.
+
+*** EXPECTED FAILURE MODES - REPORT, DO NOT WORK AROUND ***
+  reserve $28.00 / fee $0.00 on the $350 -> ungoverned modal defaults reached the payload.
+     Cursor shipped the fail-closed fix (#18323); if you still see this, the deploy did not
+     reach the running code or a caller bypasses the modal. REPORT IT. Never hand-enter a
+     percentage to make a total tie.
+  cash $334.25 -> someone set advance_rate to 0.985. STOP AND ESCALATE.
+  reserve $10.50 -> the fix did not reach the running code. Check healthz SHA first.
+
+-------------------------------------------------------------------------------
+TASK 2 — DO NOT GRADE AGAINST A DIRTY CUSTOMER SET. CHECK THIS FIRST.
+-------------------------------------------------------------------------------
+CC-1's TRANSP->USMCA copy landed with open defects. Before grading anything, verify these
+are closed, because invoices built on duplicates or missing debtors will grade green and
+be wrong:
+  a. the owner's 7 name rulings applied - Watco keeps ONLY the "LLC DBA Watco Logistics"
+     row; NCC keeps ONLY "NCC Logistics" (not Mexico); Simple keeps ONLY
+     "Simple Logistics LLC"; "Sajacks Freigth" (typo) must NOT exist
+  b. all 4 CREATE_NEW debtors exist: DARDINI LLC, FLS Transport Inc.,
+     J RAYL TRANSPORT INC, S E Mares Forwarding Service LLC
+     - S E Mares carries 2 invoices worth $9,800.00 and did not exist at last check
+     - do NOT accept "Semares Forwarding Services" or "SEMARES, INC." as that debtor
+  c. factoring.customer_factor_assignment rows have operating_company_id NOT NULL
+     (1,124 rows were all NULL at last check)
+  d. every USMCA customer has an assignment (116 had none at last check)
+Report the counts you observe. Do not fix them - that is CC-1's lane.
+
+-------------------------------------------------------------------------------
+TASK 3 — THE AUGUST ENTITY SPLIT. VERIFY THE JOIN, NOT JUST THE TOTALS.
+-------------------------------------------------------------------------------
+CC-1 is loading 60 real August loads split by which factor bought the invoice.
+CC-2-AUG-LOADS-BY-FACTOR.csv is the expected assignment.
+
+  USMCA Faro bought      29 loads   $86,825.00
+  TRANSPORTATION Faro    13 loads   $49,310.00
+  NEITHER                18 loads   $43,925.00
+
+*** THE JOIN KEY IS PO / W.O. REFERENCE. NOT customer+amount. ***
+My first pass joined on customer+amount and produced FALSE POSITIVES: load 13503
+(S E Mares, $4,900, PO SMX14551 - on TRANSPORTATION's schedule) matched USMCA Faro #023
+(S E Mares, $4,900, PO SEM66495). Different loads, same customer, same amount. S E Mares
+runs many $4,900 loads. If CC-1's build used amount matching anywhere, it will have the
+same false positives - CHECK THE JOIN, not just whether the totals look plausible.
+
+ASSERT:
+  * every loaded August load carries its AlwaysTrack Load# and its Faro invoice ref
+  * zero loads assigned to BOTH factors
+  * TRANSPORTATION-side and UNFACTORED loads were NOT posted - report only. TRANSP/TRK
+    are frozen. If anything posted to TRANSP, that is a P0 - escalate immediately.
+  * expenses/deductions/addl-pay were regrouped BY LOAD #, not allocated pro-rata. Every
+    one of those rows carries a Load #, so any averaging is a defect.
+  * settlements span months. A settlement closing in August may contain July loads.
+    Filtering by settlement date instead of by load is a defect - check which they used.
+
+-------------------------------------------------------------------------------
+TASK 4 — THE TIE-OUT. This is what makes factoring actually done.
+-------------------------------------------------------------------------------
+Cursor is building the bar-2 TIEOUT gate. You prove the factoring one. Tolerance 0.
+  external source: Faro Capital statement 2026-08-10..2026-08-28
+  face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+  and FROM THE GL, not typed:
+      2150 Factoring Advance    95,075.00
+    - 1230 Factoring Reserves    6,426.13   (escrow 1,426.13 + cash reserve 5,000.00)
+    =                           88,648.87   = Faro statement NFE
+RULES: record the observed value pass or fail. An empty result is never a pass. If it
+fails, report the difference and its cause - never adjust the expected value to match the
+system. The statement is the truth; the system is what is on trial.
+
+-------------------------------------------------------------------------------
+STANDING LESSON — IT COST FOUR SEATS TODAY, ME INCLUDED
+-------------------------------------------------------------------------------
+A NULL header column is not proof a subsystem never ran. You, Claude and Cursor all called
+the settlement poster never-fired because all three read driver_settlements headers instead
+of the gl_runs/gl_bills subledger - it had fully posted and been reversed. Then an OUTBOX
+reported a dedupe prod does not show. Then I joined on the wrong key and produced 5 false
+matches. Query the thing itself. A summary is not the system, and neither is a total.

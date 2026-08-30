@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (lead: pool + instruct)
+# CURRENT GO — 2026-08-30 (Coders-Faro)
 
-Cursor→self | LIVE healthz 6489163 · NOW=luciaPool off DIRECT (this PR) then instruct CC-1 Faro cash→1296 (do NOT rebind cash_clearing) · skip #15546 | GO
+Cursor→self | Pack=docs/lockdown/Coders-Faro/ · NOW=wire Faro factor proceeds to GL 1296 before CC-1 funds L13512 (else step 8 FAIL) · reserve-transfer model $7,241 · never rebind cash_clearing · skip #15546 | GO
 
 STOP. Older stacked GOs are VOID.
 

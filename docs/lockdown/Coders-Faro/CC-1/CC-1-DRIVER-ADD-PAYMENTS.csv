@@ -1,0 +1,33 @@
+Item,Description,Driver,Carrier,Truck#,Load #,Settlement #,Load Start,Load End,Amount
+Driver Pay-Extra Delivery/Drop,Driver Pay-Extra Delivery/Drop,HUGO GAYTAN SARABIA,,T173,13494,5768,2026-07-31,2026-08-03,25
+Driver Pay-Enlonada,Driver Pay-Enlonada,Jorge Luis Infante Corona,,T175,13493,5764,2026-07-31,2026-08-03,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Jorge Luis Infante Corona,,T175,13493,5764,2026-07-31,2026-08-03,25
+Driver Pay-Enlonada,Driver Pay-Enlonada,Neftali Coronado Urbano,,T176,13492,5765,2026-07-31,2026-08-03,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Neftali Coronado Urbano,,T176,13492,5765,2026-07-31,2026-08-03,25
+Driver Pay-Layover-Estancia,Driver Pay-Layover-Estancia 5-6-7-8 DE AGOSTO,Leonel Antonio Morales,,T147,13505,5776,2026-08-03,2026-08-07,100
+Driver Pay-Bonus,Driver Pay-Bono por Contratatacion 1/4,PEDRO ABRAHAM LOPEZ COLLADO,,T152,13502,5772,2026-08-03,2026-08-05,50
+Driver Pay-Enlonada,Driver Pay-Enlonada,Neftali Coronado Urbano,,T176,13503,5770,2026-08-04,2026-08-07,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Neftali Coronado Urbano,,T176,13503,5770,2026-08-04,2026-08-07,25
+Driver Pay-Enlonada,Driver Pay-Enlonada,Jorge Luis Infante Corona,,T177,13504,5771,2026-08-04,2026-08-07,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Jorge Luis Infante Corona,,T177,13504,5771,2026-08-04,2026-08-07,25
+Driver Pay-Enlonada,Driver Pay-Enlonada,Neftali Coronado Urbano,,T176,13509,5770,2026-08-07,2026-08-10,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Neftali Coronado Urbano,,T176,13509,5770,2026-08-07,2026-08-10,25
+Driver Pay-Layover-Estancia,Driver Pay-Layover-Estancia 8 y 9 de Agosto,ALFONSO HIDALGO CHAVEZ,,T164,13514,5775,2026-08-10,2026-08-12,50
+Driver Pay-Layover-Estancia,Driver Pay-Layover-Estancia 8y9 de agosto,PEDRO ABRAHAM LOPEZ COLLADO,,T152,13512,5772,2026-08-10,2026-08-12,50
+Driver Pay-Enlonada,Driver Pay-Enlonada,Jorge Luis Infante Corona,,T177,13519,5777,2026-08-11,2026-08-14,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Jorge Luis Infante Corona,,T177,13519,5777,2026-08-11,2026-08-14,25
+Driver Pay-Bonus,Driver Pay-Bono por Contratacion 1/4,ALFONSO HIDALGO CHAVEZ,,T164,13516,5775,2026-08-13,2026-08-14,50
+Driver Pay-Layover-Estancia,Driver Pay-Layover-Estancia 10Y11 DE AGOSTO,HUGO GAYTAN SARABIA,,T173,13524,5778,2026-08-14,2026-08-17,50
+Driver Pay-Enlonada,Driver Pay-Enlonada,Jorge Luis Infante Corona,,T177,13535,5783,2026-08-18,2026-08-21,25
+Driver Pay-Desenlonada,Driver Pay-Desenlonada,Jorge Luis Infante Corona,,T177,13535,5783,2026-08-18,2026-08-21,25
+Driver Pay-Bonus,Driver Pay-Bonus 60 MILLAS EXTRA X.45 CENTAVOS,LUIS ARMANDO SOSA PEREZ,,T170,13526,5779,2026-08-18,2026-08-19,27
+Driver Pay-Extra Delivery/Drop,Driver Pay-Extra Delivery/Drop,JOSE ANTONIO VICENTE MARTINEZ,,T171,13528,5784,2026-08-18,2026-08-19,25
+Driver Pay-Enlonada,"Driver Pay-Enlonada- EDISON, NJ",Jorge Luis Infante Corona,,T177,13537,5783,2026-08-21,2026-08-24,25
+Driver Pay-Desenlonada,"Driver Pay-Desenlonada- BAYTOWN, TX",Jorge Luis Infante Corona,,T177,13537,5783,2026-08-21,2026-08-24,25
+Driver Pay-Enlonada,"Driver Pay-Enlonada - BAYTOWN, TX",Jorge Luis Infante Corona,,T177,13537,5783,2026-08-21,2026-08-24,25
+Driver Pay-Desenlonada,"Driver Pay-Desenlonada - Houston, TX",Jorge Luis Infante Corona,,T177,13537,5783,2026-08-21,2026-08-24,25
+Driver Pay-Extra Delivery/Drop,Driver Pay-Extra Delivery/Drop,Jorge Luis Infante Corona,,T177,13537,5783,2026-08-21,2026-08-24,25
+Driver Pay-Extra Delivery/Drop,Driver Pay-Extra Delivery/Drop,Genaro Guerrero Chavez,,T152,13538,5785,2026-08-21,2026-08-22,25
+Driver Pay-Layover-Estancia,Driver Pay-Layover-Estancia 21 de Agosto,HUGO GAYTAN SARABIA,,T173,13540,5782,2026-08-22,2026-08-24,25
+Driver Pay-Layover-Estancia,"Driver Pay-Layover-Estancia 22,23y24 de Agosto",Genaro Guerrero Chavez,,T152,13543,5785,2026-08-24,2026-08-26,75
+Driver Pay-Layover-Estancia,"Driver Pay-Layover-Estancia 22,23,24 De Agosto",ALFONSO HIDALGO CHAVEZ,,T164,13549,5787,2026-08-25,2026-08-27,75
