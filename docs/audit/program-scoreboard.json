@@ -1,10 +1,10 @@
 {
-  "healthzSha": "48e08e5",
+  "healthzSha": "9c61c63",
   "generated_at": "2026-08-30T05:49:21.000Z",
   "meta": {
     "generatedAt": "2026-08-30T00:49:21-05:00",
-    "sourceSha": "295320d25",
-    "deployedSha": "48e08e5",
+    "sourceSha": "295320d259",
+    "deployedSha": "9c61c63",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2308,
     "failOpen": 177,
@@ -597,7 +597,7 @@
     {
       "tier": "2",
       "module": "safety",
-      "build": "37/38",
+      "build": "38/38",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18052,
-      "title": "FINDING: 50253-50269 — 17 more pages zero isError rendering (tasks, vendors, accounting, bank, compliance, insurance, reports, safety, driver-finance, drivers, fleet, maintenance)",
+      "number": 18130,
+      "title": "FINDING: PROOF-ENGINE-SELFTEST-ASYNC-FIRE-AND-FORGET",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18052",
-      "sha": "295320d25",
-      "committedAtIso": "2026-08-30T00:49:21-05:00"
+      "mergedAtCt": "08/30/2026, 06:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18130",
+      "sha": "9d43f1a405",
+      "committedAtIso": "2026-08-30T06:49:37-05:00"
     },
     {
-      "number": 18053,
-      "title": "FINDING: FUEL-MONEY-F7418 route silent load-suggestion failure",
+      "number": 18129,
+      "title": "FINDING: guard Border Credential category response chain",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18053",
-      "sha": "2c65049a0",
-      "committedAtIso": "2026-08-30T00:48:17-05:00"
+      "mergedAtCt": "08/30/2026, 06:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18129",
+      "sha": "453ffef54c",
+      "committedAtIso": "2026-08-30T06:48:57-05:00"
     },
     {
-      "number": 18051,
-      "title": "FINDING: GUARD-F7417 fuel route evidence proof-state drift",
+      "number": 18128,
+      "title": "FINDING: GUARD-F7490-BOOK-LOAD-URL-LIFECYCLE-REJECTS-FIRST-PAINT-OPENER",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:42 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18051",
-      "sha": "7e54b2630",
-      "committedAtIso": "2026-08-30T00:42:53-05:00"
+      "mergedAtCt": "08/30/2026, 06:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18128",
+      "sha": "9c61c638a8",
+      "committedAtIso": "2026-08-30T06:43:59-05:00"
     },
     {
-      "number": 18050,
-      "title": "FINDING: INS-F7416 route trailer asset identity gap",
+      "number": 18127,
+      "title": "FINDING: GUARD-F7489-AT-RISK-SETTLED-EMPTY-PROOF-RETAINS-RETIRED-SCOPE",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18050",
-      "sha": "42abb914b",
-      "committedAtIso": "2026-08-30T00:35:46-05:00"
+      "mergedAtCt": "08/30/2026, 06:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18127",
+      "sha": "8cc51c4c93",
+      "committedAtIso": "2026-08-30T06:40:59-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 18126,
+      "title": "FINDING: SURFACE-F7488-COMBOBOX-HOSTS-MISSING-EXACT-LEAF-OWNERSHIP",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:34 AM CT",
-      "url": "",
-      "sha": "fe06f7f67",
-      "committedAtIso": "2026-08-30T05:34:59Z"
+      "mergedAtCt": "08/30/2026, 06:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18126",
+      "sha": "fda8207a75",
+      "committedAtIso": "2026-08-30T06:19:24-05:00"
     },
     {
-      "number": 18049,
-      "title": "FINDING: N/A -- CC-1 OUTBOX: FUEL-MONEY-F7387B closed + route-recommendation-engine gap filed",
+      "number": 18125,
+      "title": "ChatGpt-Codex-1- fix(chrome): SURFACE-F7487 bind Modal hosts to exact leaves",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18049",
-      "sha": "aa0876e40",
-      "committedAtIso": "2026-08-30T00:33:40-05:00"
+      "mergedAtCt": "08/30/2026, 06:09 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18125",
+      "sha": "c642886d1c",
+      "committedAtIso": "2026-08-30T06:09:51-05:00"
     },
     {
-      "number": 18046,
-      "title": "FINDING: 50243-50252 — 10 more pages zero isError rendering (dispatch, safety, banking, factoring, system)",
+      "number": 18124,
+      "title": "ChatGpt-Codex-1- fix(chrome): GUARD-F7486 exclude shared ParityDrawer engine",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18046",
-      "sha": "1d3dd0981",
-      "committedAtIso": "2026-08-30T00:33:12-05:00"
+      "mergedAtCt": "08/30/2026, 06:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18124",
+      "sha": "934b5bab71",
+      "committedAtIso": "2026-08-30T06:02:27-05:00"
     },
     {
-      "number": 18048,
-      "title": "FINDING: GUARD-F7415 detention parser drift",
+      "number": 18123,
+      "title": "ChatGpt-Codex-1- fix(inventory): GUARD-F7485 bind server-paged assignment range",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18048",
-      "sha": "b314d9b21",
-      "committedAtIso": "2026-08-30T00:32:26-05:00"
+      "mergedAtCt": "08/30/2026, 06:00 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18123",
+      "sha": "7c62e8b791",
+      "committedAtIso": "2026-08-30T06:00:05-05:00"
     },
     {
-      "number": 18047,
-      "title": "FINDING: FUEL-MONEY-F7387B nullable planner economics coerced to fake zero + a one-gallon denominator",
+      "number": 18122,
+      "title": "ChatGpt-Codex-1- fix(inventory): GUARD-F7484 accept scoped parts cost query",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18047",
-      "sha": "e7ca9071d",
-      "committedAtIso": "2026-08-30T00:32:04-05:00"
+      "mergedAtCt": "08/30/2026, 05:57 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18122",
+      "sha": "89f4a62c3e",
+      "committedAtIso": "2026-08-30T05:57:22-05:00"
     },
     {
-      "number": 18045,
-      "title": "FINDING: N/A -- CC-1 OUTBOX: GO-LAST-26-v2 closed (accounting-14 confirmed + 3 VERIFY items live-walked)",
+      "number": 18121,
+      "title": "FINDING: GUARD-F7483 prove shared-driver WO labels",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18045",
-      "sha": "820930cd1",
-      "committedAtIso": "2026-08-30T00:24:48-05:00"
+      "mergedAtCt": "08/30/2026, 05:51 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18121",
+      "sha": "0de57cab36",
+      "committedAtIso": "2026-08-30T05:51:25-05:00"
     }
   ]
 }
