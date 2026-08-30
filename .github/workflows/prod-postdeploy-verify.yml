@@ -78,6 +78,10 @@ jobs:
           node-version: "22"
 
       - name: Replay proofs at the live SHA
+        # SHADOW: continue-on-error + replay exit 0 unless PROOF_REPLAY_FAIL_ON_FAIL=1.
+        # That env is unset. Do not call this enforcement. Pull per module only when
+        # that module's disagreement list is empty — never globally.
+        # docs/lockdown/PROOF-ENGINE-SHADOW-LEVER-2026-08-30.md
         id: proof_replay
         continue-on-error: true
         env:
@@ -91,6 +95,27 @@ jobs:
           echo "Proof replay wrote docs/module-completion/PROOF-ENGINE-REPLAY.json for ${SHORT}"
           if [ -z "${DATABASE_URL:-}" ]; then
             echo "::warning::PROD_READONLY_DATABASE_URL unset — sql proofs cannot connect; artifact records that honestly."
+          fi
+          if [ -f docs/module-completion/PROOF-ENGINE-REPLAY.json ]; then
+            FAIL=$(jq -r '.disagreement_count // .fail // "n/a"' docs/module-completion/PROOF-ENGINE-REPLAY.json)
+            PASS=$(jq -r '.pass // "n/a"' docs/module-completion/PROOF-ENGINE-REPLAY.json)
+            OTHER=$(jq -r '.other // "n/a"' docs/module-completion/PROOF-ENGINE-REPLAY.json)
+            ARMED=$(jq -r '.enforcement.armed // false' docs/module-completion/PROOF-ENGINE-REPLAY.json)
+            URL=$(jq -r '.database_url_present // false' docs/module-completion/PROOF-ENGINE-REPLAY.json)
+            {
+              echo "## Proof-engine replay (shadow)"
+              echo ""
+              echo "| Metric | Value |"
+              echo "|---|---|"
+              echo "| live_sha | \`${SHORT}\` |"
+              echo "| **disagreement_count** | **${FAIL}** |"
+              echo "| pass | ${PASS} |"
+              echo "| other | ${OTHER} |"
+              echo "| database_url_present | ${URL} |"
+              echo "| PROOF_REPLAY_FAIL_ON_FAIL armed | ${ARMED} |"
+              echo ""
+              echo "Shadow mode: this step cannot fail the job. Lever law: \`docs/lockdown/PROOF-ENGINE-SHADOW-LEVER-2026-08-30.md\`."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload proof-replay artifact
