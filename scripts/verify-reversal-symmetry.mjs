@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking","cash-flow","customers","dispatch","drivers","factoring","finance","fleet","insurance","legal","lists","maintenance","safety","settlements","vendors"],"cols":["reversal_symmetry"],"leaves":["economics.invariants"],"task":"ECON-C28-INV-11-WRAPPER"} */
 /**
  * H5 — reversal_symmetry producer is registry-driven (same POSTING-CONTRACTS as H1).
  * Drawn is not computed. Every path must declare reversal.mode + surfaces.

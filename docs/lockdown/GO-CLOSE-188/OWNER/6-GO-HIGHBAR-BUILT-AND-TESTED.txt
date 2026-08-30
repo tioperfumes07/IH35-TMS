@@ -1,0 +1,176 @@
+GO-HIGHBAR — THE INSTRUMENT IS BUILT, TESTED, AND ATTACHED
+2026-08-30 · owner: "I need the highest bar always. Create whatever is necessary."
+Built against origin/main 3c18536. Ship file: HIGH-BAR-INSTRUMENT.tar.gz
+
+===============================================================================
+FIRST — WHAT I FOUND WHILE BUILDING IT, AND IT IS WORSE THAN THE 112 CELLS
+===============================================================================
+scripts/proof-engine/proof-engine.mjs, line 79, as merged:
+
+    if (proof.kind === "sql" || proof.kind === "dom")
+      return done(false, null, `${proof.kind} runner not wired in this prototype`);
+
+THE SQL PROOF KIND WAS NEVER WIRED.
+
+Every economics column C25-C31 is a LEDGER assertion, and a ledger assertion can
+only be replayed as SQL. So C25-C31 were not merely unproven. They were
+UNPROVABLE BY CONSTRUCTION. No seat could ever have closed one honestly, no
+matter how much work they did. The instrument I have been calling the permanent
+fix could not run the one proof kind the money columns require.
+
+I have been telling you the proof engine is the answer. It was half an answer.
+That is on me and it is now fixed.
+
+===============================================================================
+WHAT I BUILT — four files, two edits, 36 passing mutation tests
+===============================================================================
+1. scripts/proof-engine/sql-runner.mjs           THE KEYSTONE
+2. scripts/proof-engine/sql-runner.selftest.mjs  20/20, every arm plants a defect
+3. scripts/proof-engine/econ-proofs.mjs          the seven columns, bound to INV queries
+4. scripts/verify-no-closed-loop-guards.mjs      8/8, and it found 29 real ones
+   EDIT proof-engine.mjs        kind "sql" now routes to the runner
+   EDIT verify-gl-invariants.sql adds INV-0 CONTROL. Additive only, nothing rewritten.
+
+===============================================================================
+THE SIX RULES — each one closes a way a green result could be a lie.
+Not one is stylistic. Every one traces to a failure that already happened here.
+===============================================================================
+R1  A DISCRIMINATOR IS MANDATORY, AND IT RUNS FIRST, EVERY TIME.
+    An RLS-scoped read that returns nothing satisfies "difference == 0" vacuously.
+    That trap produced a false "zero reconciliation sessions exist" read on
+    2026-08-30 and a false "board broken, 0/14" read before it. Both mine.
+    A proof with no probe block is REJECTED at load — not failed, rejected, so it
+    can never be mistaken for a passing assertion.
+
+R1-b THE ZERO-ROWS HOLE.  This one nearly got past me.
+    Half the invariants pass by returning NO rows (INV-4 documents with no GL,
+    INV-6 stranded accounts, INV-10c duplicate roles). A discriminator cannot
+    ride on a result set that is required to be empty. So zero rows from a blind
+    read would have looked exactly like zero rows from a clean ledger, and the
+    engine would have certified a ledger it could not see.
+    Fixed: a separate INV-0 CONTROL block runs first on EVERY proof. If the probe
+    cannot see the ledger, nothing after it is evidence of anything.
+
+R2  AN EMPTY RESULT IS A FAIL, NEVER A PASS.
+    "No rows" is the shape of both "clean" and "I could not see the data." Those
+    must never map to the same verdict.
+
+R3  NO INLINE SQL. The query comes from a committed .sql file, by block id.
+    This is the closed-loop defence. If the query and the assertion live in one
+    file, a seat chasing green can weaken the query and satisfy its own
+    assertion, and no claim visibly changes.
+
+R4  READ-ONLY, TWICE.
+    Parsed for INSERT/UPDATE/DELETE/DROP/ALTER/GRANT/CREATE/COPY before
+    connecting, then run inside BEGIN + SET TRANSACTION READ ONLY + ROLLBACK.
+    A verifier that can write is a verifier that can fix its own evidence.
+
+R5  bypass_rls IS FORBIDDEN IN AN ENTITY-ISOLATION PROOF.
+    C30 asserts a TRANSP user cannot see a USMCA row. Bypassing RLS to check RLS
+    is the purest closed loop available. Rejected at load.
+
+R6  THE OBSERVED VALUE IS ALWAYS RECORDED, PASS OR FAIL.
+    A verdict without the number it saw cannot be audited later.
+
+PLUS one more the build itself forced:
+    A MULTI-STATEMENT BLOCK IS REFUSED. INV-10 holds four sub-queries. Run whole,
+    the driver returns only the LAST result — so a proof aimed at 10c would have
+    been silently graded on 10d and nobody would ever have known. A proof must
+    name its sub-query. C30 now names 10c explicitly.
+
+===============================================================================
+THE CHAIN, REPLAYED END TO END AGAINST REAL PROD VALUES
+===============================================================================
+je_control 2214 on every read. These are the machine's verdicts, not mine:
+
+    C25  gl_delta            FAIL   4 invoices sent/paid with no GL posting
+    C26  subledger_tie       FAIL   ar_difference = -65.75, expected == 0
+    C27  lifecycle_complete  FAIL   1150 Unbilled 22,746.50 · 1090 Undep 10,540.15
+    C28  reversal_symmetry   PASS
+    C29  period_guard        FAIL   future_dated = 58, expected == 0
+         (second half)       FAIL   with_lock_date = 0, expected > 0
+    C30  entity_isolation    FAIL   14 duplicate role groups
+    C31  non_empty_proof     FAIL   sample_jes = 208, expected == 0
+
+Six FAIL, one PASS. Identical to what I derived by hand this morning — but now a
+machine says it, from a committed query, and nobody can type it green.
+
+===============================================================================
+THE CLOSED-LOOP DETECTOR — the guard that stops the class from returning
+===============================================================================
+The single most expensive pattern on this project, three appearances:
+  1. verify-economic-columns-c25-c31-present read columns.shared.json and
+     asserted the ids were in columns.shared.json. Printed OK while 28 of 29
+     modules rendered no ECON group.
+  2. The matrix proves a LEDGER column by text-matching LEDGER PROSE naming that
+     column. Writing the sentence turns the cell green.
+  3. DRV-S04: prose asserted PASS; the only reader of the prose was a human.
+
+The rule it enforces: a verifier whose ONLY input is a spec under docs/ is a
+DECLARATION RATCHET. Ratchets are useful — they stop a spec regressing. What
+they are not is evidence a product behaves. So a ratchet must say so in its
+header with @ratchet, and a @ratchet may NEVER back a Live / prod_verified claim.
+
+I deliberately made it narrow. Reading one product source file is a source-read
+guard, not a closed loop, and calling 3,500 honest guards defective would have
+been a false accusation — the exact error this whole instrument exists to stop.
+A verifier with no literal path is reported as UNKNOWN, never as guilty.
+
+  RESULT ON THIS REPO: 7,029 verifiers · 29 UNDECLARED CLOSED LOOPS · 507 unknown
+
+Two of the 29 are worth reading out loud:
+    verify-baseline-columns-exist-in-db.mjs   its name claims a DATABASE fact.
+                                              Its only input is a JSON file.
+                                              It never touches the database.
+    verify-no-posting-gate-on-empty-table.mjs asserts about empty tables.
+                                              Only input is a spec file.
+
+29 is small enough to fix this week.
+
+===============================================================================
+WHAT IS NOT DONE — and I will not let this be claimed
+===============================================================================
+THE LIVE DATABASE PATH HAS NOT BEEN EXECUTED. This container has no DATABASE_URL.
+Everything above is proven with an injected query function against the exact rows
+I read from prod through the read-only connection. The runner is proven CORRECT.
+It is not yet proven CONNECTED.
+
+CC-1 runs it once with the real DATABASE_URL and posts the raw output. Until that
+exists, no economics cell may be cited, and no one writes "sql runner verified."
+
+Also not done, and deliberately: the six auto_check wrapper scripts named in
+columns.economic.json. econ-proofs.mjs already binds all seven columns to their
+invariants, so the wrappers are now thin. Write them after the live run, not
+before — a wrapper around an unconnected runner is a wrapper around nothing.
+
+===============================================================================
+INSTALL AND VERIFY
+===============================================================================
+  node scripts/proof-engine/selftest.mjs                    expect 8/8
+  node scripts/proof-engine/sql-runner.selftest.mjs         expect 20/20
+  node scripts/verify-no-closed-loop-guards.mjs --selftest  expect 8/8
+  node scripts/verify-no-closed-loop-guards.mjs --report    expect 29
+
+All four green, or it did not install. Details in PATCH/README-INSTALL.txt.
+
+===============================================================================
+SEQUENCE
+===============================================================================
+CURSOR  Land these six files. Then merge columns.economic.json into
+        columns.shared.json unedited. Then the C29 posting guard against the
+        EXISTING accounting.periods (status + locks_txn_dates_le) — not a new
+        table. Deploy stays yours alone; live is 9 behind main, still inside law.
+
+CC-1    GO-ACCT-01 DEFECT B then A. Then run the sql runner once against real
+        prod and post the raw output. Then the six auto_check wrappers. Then G1.
+
+CC-2    BANK-ECON-04 / BANK-SURF-04 stay FAIL. Then the UNIQUE constraints —
+        chart_of_accounts_roles (operating_company_id, role) AND
+        bank_accounts.ledger_account_id. One class, one guard, both fixed.
+        C30 cannot pass until the first one lands.
+
+ALL     The 29 closed loops. Each is either declared @ratchet honestly, or given
+        a real second input. Neither takes long. Both stop a lie.
+
+Nobody touches moduleMatrixBoxes.tsx or any cell colour. No TMS to QuickBooks
+write-back. Do not void the TEST corpus. Skip #15546. Do not restamp U14.

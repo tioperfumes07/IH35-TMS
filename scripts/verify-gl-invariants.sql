@@ -13,6 +13,12 @@
 \set TRANSP '91e0bf0a-133f-4ce8-a734-2586cfa66d96'
 \set TRK    'b49a737b-6cf0-43bb-8758-a6c8ff8a2c4e'
 
+\echo '=== INV-0  CONTROL (discriminator: proves this connection can SEE the ledger) ==='
+-- Any invariant whose pass condition is "zero rows" MUST be preceded by this probe.
+-- Zero rows from an RLS-scoped blind read is indistinguishable from zero rows from a
+-- clean ledger. Only a non-zero control read can tell them apart.
+SELECT count(*) AS je_control FROM accounting.journal_entries;
+
 \echo '=== INV-1  TRIAL BALANCE (expect difference_cents = 0) ==='
 SELECT sum(CASE WHEN debit_or_credit='debit'  THEN amount_cents ELSE 0 END) AS total_debits_cents,
        sum(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END) AS total_credits_cents,

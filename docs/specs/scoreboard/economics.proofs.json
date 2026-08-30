@@ -1,0 +1,127 @@
+{
+  "_comment": "C25–C31 proofs[] bound from scripts/proof-engine/econ-proofs.mjs. kind sql requires ctx.runSql (sql-runner). Cannot PASS from disk. CC-1 must run with DATABASE_URL before citing cells. LIVE DB PATH NOT EXECUTED in this container.",
+  "items": [
+    {
+      "id": "ECON-C25",
+      "column": "gl_delta",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C25 GL delta matches posting matrix",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-4",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect_rows": 0,
+          "expect": []
+        }
+      ]
+    },
+    {
+      "id": "ECON-C26",
+      "column": "subledger_tie",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C26 subledger ties to control account",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-3",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect": [
+            { "column": "ar_difference", "op": "==", "value": 0 },
+            { "column": "ap_difference", "op": "==", "value": 0 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ECON-C27",
+      "column": "lifecycle_complete",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C27 no stranded intermediate",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-6",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect_rows": 0,
+          "expect": []
+        }
+      ]
+    },
+    {
+      "id": "ECON-C28",
+      "column": "reversal_symmetry",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C28 reversal symmetry",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-11",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect": [{ "column": "je_voided_in_place_must_be_0", "op": "==", "value": 0 }]
+        }
+      ]
+    },
+    {
+      "id": "ECON-C29",
+      "column": "period_guard",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C29 future-dated entries",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-9",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect": [{ "column": "future_dated", "op": "==", "value": 0 }]
+        },
+        {
+          "kind": "sql",
+          "name": "C29 at least one period closed with a lock date",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-8",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect": [{ "column": "with_lock_date", "op": ">", "value": 0 }]
+        }
+      ]
+    },
+    {
+      "id": "ECON-C30",
+      "column": "entity_isolation",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C30 no duplicate role rows",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-10",
+          "sub_id": "10c",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect_rows": 0,
+          "expect": [],
+          "rls_sensitive": true
+        }
+      ]
+    },
+    {
+      "id": "ECON-C31",
+      "column": "non_empty_proof",
+      "proofs": [
+        {
+          "kind": "sql",
+          "name": "C31 no sample data inside the trial balance",
+          "file": "scripts/verify-gl-invariants.sql",
+          "query_id": "INV-7",
+          "probe_query_id": "INV-0",
+          "discriminator": { "column": "je_control", "value": 2214 },
+          "expect": [{ "column": "sample_jes", "op": "==", "value": 0 }]
+        }
+      ]
+    }
+  ]
+}

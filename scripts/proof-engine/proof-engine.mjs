@@ -76,7 +76,16 @@ export async function replay(proof, ctx) {
       const rc = await ctx.exec(proof.script, [...(proof.args || []), "--defeat=" + proof.defeat]);
       return done(rc !== 0, `exit ${rc} (must be non-zero)`);
     }
-    if (proof.kind === "sql" || proof.kind === "dom")
+    if (proof.kind === "sql") {
+      // Wired 2026-08-30. Was: "runner not wired in this prototype" — which meant every
+      // economics column C25-C31 was UNPROVABLE BY CONSTRUCTION, since a ledger assertion can
+      // only be replayed as SQL. ctx.runSql comes from proof-engine/sql-runner.mjs and carries
+      // the mandatory-probe and empty-is-never-PASS rules.
+      if (typeof ctx.runSql !== "function")
+        return done(false, null, "sql proof supplied but ctx.runSql is not wired");
+      return await ctx.runSql(proof);
+    }
+    if (proof.kind === "dom")
       return done(false, null, `${proof.kind} runner not wired in this prototype`);
     return done(false, null, `unknown kind "${proof.kind}"`);
   } catch (e) { return done(false, null, String(e.message || e).slice(0, 120)); }

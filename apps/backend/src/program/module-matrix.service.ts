@@ -5,12 +5,14 @@
  * Audited: leaf-scoped ledger / GUARD / wave-queue / module-completion (NOT module-wide keyword flood)
  * Built (Box 3): auto from @matrix-built tags + wire-sprint-built.json when guard exists on deployed SHA.
  * Live (Box 4): PROD-VERIFIED ledger leaf×column only.
+ * ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE — C25–C31 cannot go Live from ledger text.
  * Probes: Audited (yellow ●) density signal only — never Built.
  *
  * % = done ÷ required. Unsure → unaudited. Never invent Done.
  */
 
 import { execFileSync, execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -47,6 +49,18 @@ const REPO_ROOT = (() => {
     return process.cwd();
   }
 })();
+
+/** Scoreboard columns with group "economics" (C25–C31). Loaded from shared.json — not a second id list. */
+function isEconomicsMatrixColumn(colId: string): boolean {
+  try {
+    const shared = JSON.parse(
+      readFileSync(path.join(REPO_ROOT, "docs/specs/scoreboard/columns.shared.json"), "utf8"),
+    ) as { columns?: Array<{ id?: string; group?: string }> };
+    return (shared.columns ?? []).some((c) => c.group === "economics" && c.id === colId);
+  } catch {
+    return false;
+  }
+}
 
 const SCOREBOARD_SCRIPT = path.join(REPO_ROOT, "scripts/audit-coverage-scoreboard.mjs");
 const PROGRAM_SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scoreboard.json");
@@ -1071,6 +1085,8 @@ function leafColumnAuditedReason(
   guardHits: string[],
   waveHits: string[],
 ): string | undefined {
+  // ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE — also Audited: a sentence naming gl_delta is not INV-4.
+  if (isEconomicsMatrixColumn(colId)) return undefined;
   for (const row of ledger) {
     if (!rowTouchesModule(row, moduleId)) continue;
     if (!isAuditSignalVerdict(row.verdict, row.status)) continue;
@@ -1120,6 +1136,8 @@ function leafColumnLiveReason(
   moduleId: string,
   ledger: LedgerRow[],
 ): string | undefined {
+  // ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE — C25–C31 cannot be greened by naming the column in a ledger row.
+  if (isEconomicsMatrixColumn(colId)) return undefined;
   for (const row of ledger) {
     if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;
@@ -1146,6 +1164,7 @@ function leafColumnClosedAllowlistReason(
   moduleId: string,
   ledger: LedgerRow[],
 ): string | undefined {
+  if (isEconomicsMatrixColumn(colId)) return undefined;
   for (const row of ledger) {
     if (!rowTouchesModuleOrNamedLeaf(row, moduleId, leaf)) continue;
     if (isSupersededRow(row)) continue;

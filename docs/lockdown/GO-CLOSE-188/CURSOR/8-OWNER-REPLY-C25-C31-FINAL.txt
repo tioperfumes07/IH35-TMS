@@ -1,0 +1,179 @@
+OWNER REPLY — C25 THROUGH C31
+Jorge Pablo Munoz · 2026-08-30 · answers docs/lockdown/GO-CLOSE-188/OWNER/0-APPROVE-C25-C31.txt
+
+*** THIS REPLACES THE VERSION I SENT EARLIER TODAY. DESTROY THAT ONE. ***
+I asserted the seven columns had no definitions. They do. I did not search the
+repo before saying it. That is a LAW-7 violation — STANDING-SESSION-DIRECTIVE
+section 6: "Asserting something the files already answer is a defect." It was
+mine. What follows is corrected against the files.
+
+===============================================================================
+THE REPLY — one paragraph, this is what you send
+===============================================================================
+There is nothing to author. The definitions already exist, complete, at
+
+    docs/specs/scoreboard/columns.economic.json      (authored 2026-08-28)
+
+Seven columns, each with proves, evidence, auto_check and fail_is_unique.
+I RATIFY THAT FILE AS WRITTEN. No edits. No re-authoring. Merge it into
+docs/specs/scoreboard/columns.shared.json exactly as it stands.
+
+ECON is not 0% because nobody knew what the columns meant. It is 0% because
+the definition file was never merged and 6 of its 7 auto_check scripts were
+never written. That is the actual root cause, and it is a much smaller
+problem than the one I described this morning.
+
+===============================================================================
+WHAT IS ACTUALLY IN THE REPO — verified by direct read
+===============================================================================
+PRESENT
+  docs/specs/scoreboard/columns.economic.json     4,559 bytes, all 7 defined
+  scripts/verify-gl-invariants.sql               11,350 bytes, INV-1..INV-15
+  scripts/verify-reversal-symmetry.mjs           the C28 check
+  scripts/verify-economic-columns-c25-c31-present.mjs  URGENT-16 ratchet
+  economics.invariants leaf in all 16 module required.json files, each
+    requiring all seven ids — the binding is already wired
+
+MISSING — this is the whole gap
+  columns.economic.json is NOT merged into columns.shared.json.
+    columns.shared.json version 3 carries only {id, group, label} for the seven.
+    The board reads shared.json, so it renders labels with nothing behind them.
+  6 of 7 auto_check scripts do not exist:
+      verify-gl-delta-matches-matrix.mjs        MISSING   (C25)
+      verify-subledger-tieout.mjs               MISSING   (C26)
+      verify-no-stranded-intermediate.mjs       MISSING   (C27)
+      verify-reversal-symmetry.mjs              PRESENT   (C28)
+      verify-period-and-date-guard.mjs          MISSING   (C29)
+      verify-posting-flag-has-roles.mjs         MISSING   (C30)
+      verify-non-empty-certification.mjs        MISSING   (C31)
+
+The SQL that backs every one of them is already written in verify-gl-invariants
+.sql. The scripts are wrappers around invariants that exist. This is a day of
+work, not a research project.
+
+===============================================================================
+WHERE EACH COLUMN STANDS RIGHT NOW — I ran the invariants against prod
+===============================================================================
+je_control = 2214 on every query. Read 2026-08-30.
+
+C25 gl_delta            FAIL   INV-4: 4 TMS invoices marked sent/partial/paid
+                               with no invoice-sourced GL posting. Same 4 as
+                               2026-08-28. Two days, no movement.
+
+C26 subledger_tie       FAIL   INV-3, USMCA, real-only basis:
+                                 A/R GL      696.25   subledger    762.00
+                                 difference  -65.75
+                                 A/P GL    3,722.10   subledger  5,060.00
+                                 difference -1,337.90
+                               Improved since 08-28 (A/R was -2,845.50) but
+                               neither is zero, so the column is FAIL.
+
+C27 lifecycle_complete  FAIL   INV-6, stranded intermediates, USMCA:
+                                 1150 Unbilled Revenue    22,746.50
+                                 1090 Undeposited Funds   10,540.15
+                               *** 1150 was 13,651.00 on 2026-08-28. It has
+                               GROWN 9,095.50 in two days. This defect is
+                               actively getting worse while we work. ***
+
+C28 reversal_symmetry   PASS   INV-11: marked_reversal 118 = marked_reversed
+                               118, voided_in_place 0. Clean. The only one of
+                               the seven that passes, and it also has the only
+                               auto_check script that exists.
+
+C29 period_guard        FAIL   INV-8: 120 periods, 0 closed, 0 lock dates set.
+                               INV-9: 58 future-dated entries, furthest
+                               2027-07-05.
+                               *** Future-dated was 44 on 08-28. Now 58.
+                               Also growing. ***
+
+C30 entity_isolation    FAIL   INV-10c: 14+ role groups with duplicate rows —
+                               USMCA damage_recovery 3 rows, USMCA
+                               driver_payroll_clearing 3, TRANSP cash_dip 3,
+                               plus escrow_liability_default, reimbursement_
+                               expense, ar_control, ap_control and more at 2.
+                               INV-10d: the ONLY constraint on
+                               accounting.chart_of_accounts_roles is
+                               PRIMARY KEY (id). There is NO unique on
+                               (operating_company_id, role). Role resolution
+                               is order-dependent.
+
+C31 non_empty_proof     FAIL   INV-7: 208 sample journal entries, 416 lines,
+                               213,289.36 in sample debits sitting inside the
+                               trial balance.
+                               *** Was 187,833.25 on 08-28. Grew 25,456.11. ***
+
+Six of seven FAIL. That was true on 2026-08-28 and it is still true. Three of
+them are measurably WORSE than they were two days ago.
+
+===============================================================================
+THE PATTERN NOBODY HAS NAMED YET
+===============================================================================
+C30 fails because chart_of_accounts_roles has no unique on
+(operating_company_id, role) — only a primary key on id.
+
+Banking fails because two bank accounts share one ledger_account_id — there is
+no unique on it either.
+
+Same defect, twice, in the money layer: a constraint demanded NON-NULL and
+never demanded UNIQUE. Both let a control read as satisfied while the ledger
+cannot say which row is authoritative. Whoever fixes one should fix both, and
+the guard should be written once as a class.
+
+===============================================================================
+THREE THINGS I GOT WRONG EARLIER — CORRECTED
+===============================================================================
+1. NO CPA. My GO-ACCT-01 packet routed the RTS account and the Unauthorized
+   Expenses classification to "a CPA and an attorney" and called them Martin's
+   call. That contradicts OPERATING-FACT-no-CPA-owner-decides-2026-07-26 and
+   LAW-6 in MASTER-LAUNCH-PLAN-2026-08-28: there is no CPA, the OWNER is the
+   sole decider on every accounting, tax and financial-policy question, and
+   Martin does cleanup and is not a decision authority. Wherever that packet
+   says CPA-gated, read OWNER-GATED. Withdrawn and corrected.
+
+2. PERIOD CLOSE IS NOT GREENFIELD. I said no mechanism exists. The schema
+   already exists: accounting.periods carries status, closed_at,
+   closed_by_user_id, closing_notes, retained_earnings_entry_id and
+   locks_txn_dates_le — the posting-cutoff date. 120 rows, all open. What is
+   missing is the POSTING GUARD that refuses a JE whose date is on or before
+   the entity's effective lock, plus the future-date horizon. Cursor's job is
+   the guard, not a new table. Creating a second period table would be a
+   duplicate-truth violation.
+
+3. C31 AND TEST DATA. Earlier today I told you a labeled TEST row satisfies
+   C31. columns.economic.json says the opposite: "at least one real,
+   non-voided, NON-SAMPLE document," and "honest empty alone = UNVERIFIED, not
+   PASS." The existing definition wins. TEST rows prove Fully-Wired item 2 —
+   they do not satisfy C31.
+
+===============================================================================
+STANDING G1 DEFECT — still stands, and INV-7 corroborates it
+===============================================================================
+Your word 2026-08-28: the TEST label must actually set is_sample_data.
+It does not. mdata.customers: 14 rows named TEST, 14 of 14 unflagged.
+mdata.vendors: 39 named TEST, 36 unflagged. INV-7 shows 213,289.36 of sample
+debits already in the trial balance and climbing. Fix the write path first,
+then backfill, then guard.
+
+===============================================================================
+WORK ORDER
+===============================================================================
+CURSOR   Merge columns.economic.json into columns.shared.json unedited. Then
+         the C29 posting guard against the EXISTING accounting.periods —
+         status + locks_txn_dates_le — plus the future-date horizon. No new
+         table. Deploy stays yours alone.
+
+CC-1     GO-ACCT-01 DEFECT B then A first. Then write the three cheapest
+         missing checks, each a wrapper over SQL that already exists in
+         verify-gl-invariants.sql: verify-subledger-tieout (INV-3),
+         verify-no-stranded-intermediate (INV-6), verify-period-and-date-guard
+         (INV-8+INV-9). Then G1.
+
+CC-2     BANK-ECON-04 / BANK-SURF-04 stay FAIL. Add the UNIQUE on
+         chart_of_accounts_roles (operating_company_id, role) AND the unique on
+         bank_accounts.ledger_account_id. One class, one guard, both fixed.
+
+CC-3 / CODEX / CASCADE / DEVIN — unchanged, the 76 non-economics Miss-C cells.
+
+Nobody touches moduleMatrixBoxes.tsx or any cell colour.
+No TMS to QuickBooks write-back. Skip #15546. Do not restamp U14.
+Do not void the TEST corpus. Fix the flag.

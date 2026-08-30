@@ -1,6 +1,6 @@
 {
   "version": 3,
-  "note": "Modules pick a subset. chrome/wiring part of full linkage \u2014 owner 2026-08-08. 2026-08-12 owner: added claim/work_order/accident/policy/settlement/legal_matter/invoice/bank + full surface inventory leaves (modal/drawer/panel/wizard/popup/parity). 2026-08-29: C25–C31 economics stay; added verifier group V1–V6 (l6, bound, proven, evidence_class, route_alive, proof_age). evidence_class id is not the generic word evidence. Spec is a promise the matrix draws — verify-declared-is-rendered is spec-vs-SOURCE. 2026-08-30: C25–C31 acceptance locked by owner reply docs/lockdown/GO-CLOSE-188/OWNER/3-OWNER-REPLY-C25-C31-APPROVED.txt. C30 proofs must never use SET LOCAL app.bypass_rls. C29 unbuildable until dedicated period-close session.",
+  "note": "Modules pick a subset. 2026-08-30: C25–C31 fields merged from columns.economic.json (proves/evidence/auto_check/fail_is_unique unedited). Header labels stay C25…C31 short. Morning owner_status/acceptance on those seven is VOID — RATIFY economic.json. ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE.",
   "columns": [
     {
       "id": "driver",
@@ -139,52 +139,74 @@
     },
     {
       "id": "gl_delta",
+      "n": "C25",
       "group": "economics",
       "label": "C25 GL Δ",
-      "owner_status": "APPROVED 2026-08-30",
-      "acceptance": "Every money-moving action on the leaf writes a balanced journal entry, and the GL delta equals the amount the surface displayed. PROOF: kind sql. Create through the live UI, then assert sum(debit_amount)=sum(credit_amount) AND net movement on the target account equals the amount rendered. Both required. A leaf that moves no money is NA, not PASS."
+      "proves": "The journal entry this leaf produced hits the EXACT accounts and signs the posting matrix specifies for this transaction type. Balanced is not correct — DR Unbilled / CR Revenue balances and is wrong for an issued invoice.",
+      "evidence": "Neon: the JE's account_number + debit_or_credit per line, compared to the signed posting matrix row.",
+      "auto_check": "verify-gl-delta-matches-matrix.mjs",
+      "fail_is_unique": true
     },
     {
       "id": "subledger_tie",
+      "n": "C26",
       "group": "economics",
       "label": "C26 Subledger",
-      "owner_status": "APPROVED 2026-08-30",
-      "acceptance": "The module's subledger total ties to its GL control account for a stated period. AR=AR control. AP=AP control. Driver escrow=escrow liability. Bank register=cash control. PROOF: kind sql, (subledger_sum - control_sum)=0. Period must be named in the proof. Accounting C26 stays red until GO-ACCT-01 DEFECT A nets (cash credits $177,411.20 vs debits $13,503.70)."
+      "proves": "After this leaf's action the module's subledger still equals its GL control account, to the cent.",
+      "evidence": "INV-3 in scripts/verify-gl-invariants.sql — ar_difference = 0.00 AND ap_difference = 0.00.",
+      "auto_check": "verify-subledger-tieout.mjs",
+      "fail_is_unique": true
     },
     {
       "id": "lifecycle_complete",
+      "n": "C27",
       "group": "economics",
       "label": "C27 Lifecycle",
-      "owner_status": "APPROVED 2026-08-30",
-      "acceptance": "Every status the record can hold is reachable, and every terminal status either posts or reverses. No status may strand money. PROOF: kind sql or dom. Enumerate statuses from the enum or check constraint — not a hand-written list — and show GL effect of each transition, all exercised. A DB status missing from the proof is automatic FAIL."
+      "proves": "Every downstream leg fired. invoice -> A/R -> cash. bill -> A/P -> payment. settlement -> liability -> cash. Nothing left parked in Unbilled Revenue, Undeposited Funds or Cash Clearing.",
+      "evidence": "INV-6 — those three system_purpose accounts net to 0.00 for closed documents.",
+      "auto_check": "verify-no-stranded-intermediate.mjs",
+      "fail_is_unique": true
     },
     {
       "id": "reversal_symmetry",
+      "n": "C28",
       "group": "economics",
       "label": "C28 Reversal",
-      "owner_status": "APPROVED 2026-08-30",
-      "acceptance": "Voiding or reversing a posted transaction writes an equal and opposite entry. Never delete and never edit the original. Debits and credits swap. Original stays readable forever. PROOF: kind sql. Post, reverse; two entries exist, net to zero; original unchanged (same id, amounts, created_at). WORM: void by UUID, never DELETE a financial row."
+      "proves": "Voiding produces a reversing JE linked by reverses_je_id / reversed_by_je_id, net GL effect returns to zero, and no JE is ever voided in place.",
+      "evidence": "INV-11 — je_voided_in_place = 0 and the two link counts match.",
+      "auto_check": "verify-reversal-symmetry.mjs",
+      "fail_is_unique": false
     },
     {
       "id": "period_guard",
+      "n": "C29",
       "group": "economics",
       "label": "C29 Period",
-      "owner_status": "APPROVED 2026-08-30 UNBUILDABLE until period close ships",
-      "acceptance": "No transaction may post into a closed accounting period, by anyone. Reopening is owner-only and recorded with who, when, and why. STANDARD: NetSuite closed period prevents GL posting for any date in the period by anyone; system notes are the audit trail. QuickBooks closing date/password. PROOF: kind mutation. Close a period, ATTEMPT a post into it, assert the write is REFUSED. 16 C29 cells stay red until Cursor ships period close in its own dedicated session."
+      "proves": "The entry cannot post into a closed period, and cannot be dated beyond the approved future horizon.",
+      "evidence": "INV-8 + INV-9 — at least one period closed with a lock date; future_dated = 0.",
+      "auto_check": "verify-period-and-date-guard.mjs",
+      "fail_is_unique": true
     },
     {
       "id": "entity_isolation",
+      "n": "C30",
       "group": "economics",
       "label": "C30 Entity",
-      "owner_status": "APPROVED 2026-08-30",
-      "acceptance": "A user scoped to TRANSP can never read or write a USMCA row. At the database layer, through RLS — not a UI filter. PROOF: kind sql, RLS ON, no bypass. Same query under each company context; zero cross-entity rows. HARD RULE: any C30 proof that uses SET LOCAL app.bypass_rls is void on its face and the cell is FAIL regardless of result."
+      "proves": "The posting used ONLY accounts belonging to this operating_company_id, AND every chart_of_accounts_role its poster resolves is active in THIS entity. A TRANSP or TRK pass never satisfies this for USMCA.",
+      "evidence": "INV-10b/10c — no role required by an enabled posting flag is inactive or duplicate-order-dependent in this entity.",
+      "auto_check": "verify-posting-flag-has-roles.mjs",
+      "fail_is_unique": true
     },
     {
       "id": "non_empty_proof",
+      "n": "C31",
       "group": "economics",
       "label": "C31 Living doc",
-      "owner_status": "CORRECTED then APPROVED 2026-08-30",
-      "acceptance": "Surface returns count>0 from PROD on the CURRENT live SHA. A labeled TEST row counts as a real row. Emptiness is a C31 FAIL only if the seat failed to create the TEST hop first (CREATE-TEST-THEN-VOID rule 5). AND every TEST row carries is_sample_data=true, and trial balance, P&L, balance sheet, cash flow, and register all exclude it. Both halves or C31 is FAIL. PROOF: kind sql + kind http. Customers/vendors C31 blocked until G1 write-path sets the flag (CC-1 after GO-ACCT-01 B then A). Do not void the TEST corpus."
+      "proves": "Certified against at least one real, non-voided, non-sample document. An honest-empty render is a valid FIRST test and is never sufficient alone.",
+      "evidence": "The row id of the living document, plus its GL entry id. 'honest empty' alone = UNVERIFIED, not PASS.",
+      "auto_check": "verify-non-empty-certification.mjs",
+      "fail_is_unique": false,
+      "note": "Closes the 'verified against 0 rows' pattern."
     },
     {
       "id": "l6",
