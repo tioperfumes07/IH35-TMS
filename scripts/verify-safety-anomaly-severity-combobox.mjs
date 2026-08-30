@@ -19,19 +19,29 @@ function assertContract(source) {
     'params.delete("severity")',
     'params.set("severity", next)',
     "severity ? `&severity=${severity}` : \"\"",
-    'queryKey: ["anomaly-alerts", operatingCompanyId, severity]',
+    'queryKey: ["anomaly-alerts", operatingCompanyId, severity, page]',
+    'limit=${pageSize}&offset=${page * pageSize}',
+    'data-testid="anomaly-alerts-server-pager"',
   ]) if (!source.includes(token)) throw new Error(`missing Anomaly severity contract: ${token}`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const planted = diskSource.replace('params.set("severity", next)', 'params.set("severity", "critical")');
-  const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
-    cwd: ROOT,
-    env: { ...process.env, SAFETY_F6489_PLANTED_SOURCE: planted },
-    encoding: "utf8",
-  });
-  if (child.status === 0) throw new Error("selftest failed: planted constant URL filter stayed green");
-  console.log("verify-safety-anomaly-severity-combobox --selftest PASS");
+  const mutations = [
+    ["constant severity", 'params.set("severity", next)', 'params.set("severity", "critical")'],
+    ["page omitted from query key", 'queryKey: ["anomaly-alerts", operatingCompanyId, severity, page]', 'queryKey: ["anomaly-alerts", operatingCompanyId, severity]'],
+    ["offset omitted from request", 'limit=${pageSize}&offset=${page * pageSize}', 'limit=${pageSize}'],
+  ];
+  for (const [name, from, to] of mutations) {
+    const planted = diskSource.replace(from, to);
+    if (planted === diskSource) throw new Error(`selftest failed to plant ${name}`);
+    const child = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      env: { ...process.env, SAFETY_F6489_PLANTED_SOURCE: planted },
+      encoding: "utf8",
+    });
+    if (child.status === 0) throw new Error(`selftest failed: planted ${name} stayed green`);
+  }
+  console.log(`verify-safety-anomaly-severity-combobox --selftest PASS — ${mutations.length}/${mutations.length}`);
   process.exit(0);
 }
 
