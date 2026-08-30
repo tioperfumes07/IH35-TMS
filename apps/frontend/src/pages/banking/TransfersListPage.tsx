@@ -448,7 +448,15 @@ export function TransfersListPage() {
         loading={listState.isLoading}
         storageKey="banking-transfers-list"
         tableTestId="banking-transfers-list-table"
-        initialPageSize={PAGE_SIZE}
+        // PARITYTABLE-MISSING-HIDEPAGER-CLASS: this list already fetches one server page
+        // (limit: PAGE_SIZE/offset above, own Previous/Next below) -- initialPageSize alone left
+        // ParityTable's own internal pager active, computing a contradicting total off just this
+        // page's rows.length once transfers exceed PAGE_SIZE. pageSize (controlled) + hidePager
+        // matches the fix already shipped for the identical class on Names Master / Legal
+        // Matters / Safety Position History.
+        pageSize={PAGE_SIZE}
+        pageSizeOptions={[PAGE_SIZE]}
+        hidePager
         rowClassName={(row) =>
           deepLinkTransferId && row.id === deepLinkTransferId ? "bg-slate-100 ring-1 ring-slate-400" : ""
         }
