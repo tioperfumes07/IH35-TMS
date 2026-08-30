@@ -1,7 +1,7 @@
 {
   "module": "docs",
   "title": "Documents (DOCS)",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "1b3a44d",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/reports-docs-maintenance-2026-08-01.md",
@@ -19,8 +19,8 @@
         "DOD-B"
       ],
       "spec": "DocsHomePage \u00b7 reports-docs-maintenance DOCS section",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-docs-entity-column-entitylink.mjs exit 0. CC-3 OUTBOX evidence + Neon lucia (bypass_rls) direct read this turn: docs.files=94 for USMCA (grown from 54). Independently re-verified live myself: live Chrome /docs (USMCA) TOTAL DOCS 93, MISSING REQUIRED 63, RECENT UPLOADS 24 -- exact match to CC-3's numbers. Binding on this independent re-confirmation.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: DocsHomePage KPIs (Total/Expiring/Missing/Recent) + ParityTable list + Upload scoped to selectedCompanyId; Entity column EntityLink when links exist, em-dash when unlinked. Guards verify-docs-routes-bootstrapped + verify-docs-entity-column-entitylink + verify-docs-home-page-uses-paritytable exit 0. | PROD-VERIFIED 2026-08-10 entity=USMCA opco=5c854333-6ea5-4faa-af31-67cb272fef80 Neon lucia: docs.files n=54; healthz=1b3a44d. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-docs-entity-column-entitylink.mjs exit 0. CC-3 OUTBOX evidence + Neon lucia (bypass_rls) direct read this turn: docs.files=94 for USMCA (grown from 54). Independently re-verified live myself: live Chrome /docs (USMCA) TOTAL DOCS 93, MISSING REQUIRED 63, RECENT UPLOADS 24 -- exact match to CC-3's numbers. Binding on this independent re-confirmation. | CC-3 2026-08-30 (GO-T07-FOUR Part B): status label corrected UNVERIFIED->PASS to match this item's own already-complete evidence (prod_verified:true + live_verified_sha=ed4e2f2, confirmed ancestor of live healthz 2ffb1d4 this turn) -- the REOPEN preamble text was stale, left over from before CC-2's same-day binding pass; the binding itself was never in question.",
       "pr": "#5380",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:30:00.000Z",
@@ -34,8 +34,8 @@
         "VERIFY-6"
       ],
       "spec": "Missing Required KPI honesty",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: required_document_types n=18; healthz=1b3a44d. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 OUTBOX evidence: DOCS-S02 Missing Required KPI (63) matches the server predicate, not a client guess. Live Chrome /docs (USMCA) confirms MISSING REQUIRED=63, exact match. Binding on this corroboration.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: compliance.required_document_types seeded per opco; Missing Required KPI uses server predicate lockstep with /docs/kpis. | PROD-VERIFIED 2026-08-10 entity=USMCA: required_document_types n=18; healthz=1b3a44d. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 OUTBOX evidence: DOCS-S02 Missing Required KPI (63) matches the server predicate, not a client guess. Live Chrome /docs (USMCA) confirms MISSING REQUIRED=63, exact match. Binding on this corroboration. | CC-3 2026-08-30 (GO-T07-FOUR Part B): status label corrected UNVERIFIED->PASS to match this item's own already-complete evidence (prod_verified:true + live_verified_sha=ed4e2f2, confirmed ancestor of live healthz 2ffb1d4 this turn) -- the REOPEN preamble text was stale, left over from before CC-2's same-day binding pass; the binding itself was never in question.",
       "pr": "#5380",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:30:00.000Z",
@@ -124,8 +124,8 @@
       "live_verified_sha": "ed4e2f2"
     }
   ],
-  "pass_count": 0,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "0 of 7",
-  "note": "| 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
+  "progress": "7 of 7",
+  "note": "| 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | CC-3 2026-08-30 (GO-T07-FOUR Part B, external packet 00-MASTER-GO-ALL-SEATS.txt): spot-checked -- all 7 items already prod_verified:true with live_verified_sha=ed4e2f2, confirmed an ancestor of live healthz (2ffb1d4) this turn. Only DOCS-S01/S02 had a stale status:UNVERIFIED label left over from before their same-day binding; corrected to PASS to match their own evidence. complete:true is now genuine (7 of 7, all independently stamped by CC-2/GUARD)."
 }
