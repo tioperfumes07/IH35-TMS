@@ -104,7 +104,13 @@ export const URGENT_6_COMPLETION_IDS = new Set([
  * membership or count. safety.json was 2/38 prod_verified while complete:true (docs/module-
  * completion/safety.json note, GO-CC-1.txt packet /Users/jorgemunoz/Downloads/IH35-GO-NOW-2026-08-29/).
  */
-export const OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS = new Set(["safety"]);
+// GO-T07-FOUR (owner 2026-08-29, external packet CC-3/YOUR-JOB-CC-3.txt): the same fake-green
+// class as safety above, independently found across four more modules -- complete:true resting on
+// status:PASS self-reports while most items were never independently prod_verified:
+//   driver-hub 3/7, cash-flow 1/3, fleet 6/7 bound; users was ALREADY corrected to complete:false
+// mid-session by CC-2 (see docs/module-completion/users.json note) but is added here too so it
+// cannot silently regress back to fake-complete if a future PASS item lands without a stamp.
+export const OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS = new Set(["safety", "driver-hub", "cash-flow", "fleet", "users"]);
 
 export function itemCountsTowardN(item, moduleId) {
   if (qualifiesHold(item)) return true;

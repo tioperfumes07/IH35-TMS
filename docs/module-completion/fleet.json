@@ -1,7 +1,7 @@
 {
   "module": "fleet",
-  "title": "Fleet \u2014 acceptance checklist",
-  "complete": true,
+  "title": "Fleet — acceptance checklist",
+  "complete": false,
   "as_of": "2026-08-29T19:20:00Z",
   "live_sha": "b2448ce",
   "desktop_audit": null,
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "2026-08-10 USMCA-PV-STACK: FLEET-S01..S07 prod_verified:true (Neon lucia shared fleet USMCA 5c854333-6ea5-4faa-af31-67cb272fef80). complete:true. healthz=a1a7b50. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 3 REOPEN items (S02/S03/S07) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
+  "note": "2026-08-10 USMCA-PV-STACK: FLEET-S01..S07 prod_verified:true (Neon lucia shared fleet USMCA 5c854333-6ea5-4faa-af31-67cb272fef80). complete:true. healthz=a1a7b50. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 3 REOPEN items (S02/S03/S07) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp). CC-3 2026-08-30 (GO-T07-FOUR): the top-level complete field was still stuck at true despite this note (F-B fake-green class, external packet 00-MASTER-GO-ALL-SEATS.txt) -- flipped complete:false and added fleet to verify-module-completion.mjs's OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS (same mechanism CC-1 used for safety) so the guard now enforces prod_verified-gated N (6 of 7: FLEET-S07 remains UNBOUND_PROSE_EVIDENCE, awaiting CC-2/GUARD stamp) instead of accepting status:PASS self-reports alone. S02/S03 were already stamped by CC-2 since the prior pass -- only S07 remains.",
   "items": [
     {
       "id": "FLEET-S01",
@@ -53,7 +53,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/map redirects to /dispatch/map, renders \"Active Load Map\", \"Map provider not configured\", \"3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins).\" -- exact match. Binding on this independent re-confirmation.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS — positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/map redirects to /dispatch/map, renders \"Active Load Map\", \"Map provider not configured\", \"3 active loads with GPS — positions are not shown here until map rendering is enabled (no fake map pins).\" -- exact match. Binding on this independent re-confirmation.",
       "pr": "#5291",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:15:00.000Z",
@@ -117,14 +117,14 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 \u2014 Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 — Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce.",
       "pr": "#5301",
       "prod_verified": false,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "M": 7,
-  "pass_count": 7,
+  "pass_count": 6,
   "total_count": 7,
-  "progress": "7/7"
+  "progress": "6 of 7"
 }
