@@ -1,13 +1,13 @@
 {
   "healthzSha": "48e08e5",
-  "generated_at": "2026-08-30T05:33:12.000Z",
+  "generated_at": "2026-08-30T05:48:18.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T00:33:12-05:00",
-    "sourceSha": "1d3dd0981",
+    "generatedAt": "2026-08-30T00:48:18-05:00",
+    "sourceSha": "bf6408abb8",
     "deployedSha": "48e08e5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2291,
-    "failOpen": 160,
+    "ledgerRows": 2308,
+    "failOpen": 177,
     "defects": 28
   },
   "modules": [
@@ -2123,12 +2123,39 @@
   },
   "recentActivity": [
     {
+      "number": 18051,
+      "title": "FINDING: GUARD-F7417 fuel route evidence proof-state drift",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:42 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18051",
+      "sha": "7e54b2630a",
+      "committedAtIso": "2026-08-30T00:42:53-05:00"
+    },
+    {
+      "number": 18050,
+      "title": "FINDING: INS-F7416 route trailer asset identity gap",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18050",
+      "sha": "42abb914b4",
+      "committedAtIso": "2026-08-30T00:35:46-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:34 AM CT",
+      "url": "",
+      "sha": "fe06f7f675",
+      "committedAtIso": "2026-08-30T05:34:59Z"
+    },
+    {
       "number": 18049,
       "title": "FINDING: N/A -- CC-1 OUTBOX: FUEL-MONEY-F7387B closed + route-recommendation-engine gap filed",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:33 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18049",
-      "sha": "aa0876e40",
+      "sha": "aa0876e405",
       "committedAtIso": "2026-08-30T00:33:40-05:00"
     },
     {
@@ -2137,7 +2164,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:33 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18046",
-      "sha": "1d3dd0981",
+      "sha": "1d3dd09812",
       "committedAtIso": "2026-08-30T00:33:12-05:00"
     },
     {
@@ -2146,7 +2173,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:32 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18048",
-      "sha": "b314d9b21",
+      "sha": "b314d9b219",
       "committedAtIso": "2026-08-30T00:32:26-05:00"
     },
     {
@@ -2155,7 +2182,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:32 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18047",
-      "sha": "e7ca9071d",
+      "sha": "e7ca9071de",
       "committedAtIso": "2026-08-30T00:32:04-05:00"
     },
     {
@@ -2164,7 +2191,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:24 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18045",
-      "sha": "820930cd1",
+      "sha": "820930cd11",
       "committedAtIso": "2026-08-30T00:24:48-05:00"
     },
     {
@@ -2173,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:22 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18044",
-      "sha": "4dee9af93",
+      "sha": "4dee9af937",
       "committedAtIso": "2026-08-30T00:22:58-05:00"
     },
     {
@@ -2182,35 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:22 AM CT",
       "url": "",
-      "sha": "e4e651753",
+      "sha": "e4e6517532",
       "committedAtIso": "2026-08-30T05:22:35Z"
-    },
-    {
-      "number": 18043,
-      "title": "FINDING: 50236-50242 — 7 module home pages with zero isError rendering (MaintenanceHome, Customers, Drivers, BankingHome, ReserveTracker, FactoringHome, FuelPlannerHome)",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18043",
-      "sha": "9d0bab482",
-      "committedAtIso": "2026-08-30T00:21:02-05:00"
-    },
-    {
-      "number": 18042,
-      "title": "FINDING: GUARD-F7414-LOAD-INVENTORY-IGNORES-FACTORING-HONESTY-CORRECTION LANE: NON-FINANCIAL GUARD INTEGRITY",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18042",
-      "sha": "f8939d2fb",
-      "committedAtIso": "2026-08-30T00:19:48-05:00"
-    },
-    {
-      "number": 18041,
-      "title": "FINDING: N/A -- FACT-VERIFY-01 live-Chrome VERIFY-1..8 walk (GO-LAST-26-v2)",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18041",
-      "sha": "ccaafcc43",
-      "committedAtIso": "2026-08-30T00:19:21-05:00"
     }
   ]
 }
