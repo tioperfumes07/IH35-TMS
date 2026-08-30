@@ -1,3 +1,4 @@
+CODEX | WORKING | FLEET-PROOF-F7536 | GO-CLOSE-188=fleet-13 | FLEET-S04 exact TEST trailer app+scoped-api+2 guards @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7535 | GO-CLOSE-188=fleet-13 | FLEET-S03 derived proof binding @ d41124e | app+scoped-api+CAP1 guard | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7534 | GO-CLOSE-188=fleet-13 | S01+S02 derived PASS 3/3 each @ d41124e | nav-guard+selftest24/24+engine8/8 | no-verdict/no-matrix-paint | NEXT=FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7533 | GO-CLOSE-188=fleet-13 | FLEET-S01 derived PASS 3/3 @ b8fc09c | guard+selftest4/4+engine8/8 | no-verdict/no-matrix-paint | NEXT=FAST-MERGE | GO
