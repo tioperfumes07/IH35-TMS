@@ -12,23 +12,15 @@ import type { DataTableErrorState } from "../../lib/tableError";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, orderedLegsForUnit, resolvedTripType } from "./roundTripsLegs";
+import { RT_KANBAN_CARD_CLASS, RT_KANBAN_COL_MIN, RT_PAIRING_ACTIVE_STATUSES, orderedLegsForUnit, pairOutboundReturn, resolvedTripType } from "./roundTripsLegs";
 import { RoundTripsTimeline, defaultTimelineRange } from "./RoundTripsTimeline";
 
 const SORT_KEY = "ih35.roundTrips.sort";
 const VIEW_KEY = "ih35.roundTrips.view";
 
-const ACTIVE_STATUSES = new Set([
-  "assigned",
-  "dispatched",
-  "at_pickup",
-  "in_transit",
-  "at_delivery",
-  "delivered",
-  "delivered_pending_docs",
-]);
+const ACTIVE_STATUSES = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
 
-const NEEDS_RETURN_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery", "delivered", "delivered_pending_docs"]);
+const NEEDS_RETURN_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
 
 type UnitPair = {
   unitId: string;
@@ -144,7 +136,6 @@ function buildUnitPairs(
 ): UnitPair[] {
   const loadById = new Map(loads.map((load) => [load.id, load]));
   const loadsByUnit = new Map<string, DispatchLoadRow[]>();
-  const preByDriver = new Map(preSettlements.map((row) => [row.driver_id, row]));
 
   for (const load of loads) {
     const unitId = load.assigned_unit_id;
@@ -156,32 +147,14 @@ function buildUnitPairs(
   const pairByUnit = new Map<string, UnitPair>();
 
   for (const [unitId, unitLoads] of loadsByUnit) {
-    const sorted = [...unitLoads].sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
-    const driverId = sorted[0]?.assigned_primary_driver_id ?? null;
-    const pre = driverId ? preByDriver.get(driverId) : undefined;
-
-    let outbound: DispatchLoadRow | null = null;
-    let returnLoad: DispatchLoadRow | null = null;
-
-    if (pre?.first_load_id) {
-      outbound = loadById.get(pre.first_load_id) ?? sorted.find((load) => load.id === pre.first_load_id) ?? sorted[0] ?? null;
-    } else {
-      outbound = sorted[0] ?? null;
-    }
-
-    if (pre?.last_load_id && pre.last_load_id !== pre.first_load_id) {
-      returnLoad = loadById.get(pre.last_load_id) ?? sorted.find((load) => load.id === pre.last_load_id) ?? null;
-    } else if (sorted.length >= 2) {
-      returnLoad = sorted.find((load) => load.id !== outbound?.id) ?? null;
-    }
-
+    const { outbound, returnLoad } = pairOutboundReturn(unitLoads);
     const needsReturn = Boolean(outbound && !returnLoad && NEEDS_RETURN_STATUSES.has(outbound.status));
 
     pairByUnit.set(unitId, {
       unitId,
-      unitNumber: outbound?.assigned_unit_number ?? sorted[0]?.assigned_unit_number ?? null,
-      driverName: outbound?.assigned_primary_driver_name ?? sorted[0]?.assigned_primary_driver_name ?? null,
-      driverId: outbound?.assigned_primary_driver_id ?? sorted[0]?.assigned_primary_driver_id ?? null,
+      unitNumber: outbound?.assigned_unit_number ?? unitLoads[0]?.assigned_unit_number ?? null,
+      driverName: outbound?.assigned_primary_driver_name ?? unitLoads[0]?.assigned_primary_driver_name ?? null,
+      driverId: outbound?.assigned_primary_driver_id ?? unitLoads[0]?.assigned_primary_driver_id ?? null,
       outbound,
       returnLoad,
       needsReturn,

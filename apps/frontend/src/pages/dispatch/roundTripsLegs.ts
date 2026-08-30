@@ -29,6 +29,29 @@ export function orderedLegsForUnit(unitLoads: DispatchLoadRow[]): DispatchLoadRo
   return [...nb, ...tr, ...sb];
 }
 
+/** Must match trip-pairing-board.service.ts ACTIVE_LOAD_STATUSES — one pairing engine. */
+export const RT_PAIRING_ACTIVE_STATUSES = [
+  "assigned",
+  "assigned_not_dispatched",
+  "dispatched",
+  "at_pickup",
+  "in_transit",
+  "at_delivery",
+] as const;
+
+export function pairOutboundReturn(unitLoads: DispatchLoadRow[]): {
+  outbound: DispatchLoadRow | null;
+  returnLoad: DispatchLoadRow | null;
+} {
+  const chrono = [...unitLoads].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+  const legs = orderedLegsForUnit(unitLoads);
+  const kindOf = (load: DispatchLoadRow) => resolvedTripType(load, chrono.indexOf(load), chrono);
+  const outbound = legs.find((load) => kindOf(load) === "NB") ?? null;
+  const returnLoad =
+    [...legs].reverse().find((load) => kindOf(load) === "SB" && load.id !== outbound?.id) ?? null;
+  return { outbound, returnLoad };
+}
+
 export function loadSpanStartMs(load: DispatchLoadRow): number {
   return Date.parse(load.created_at);
 }
