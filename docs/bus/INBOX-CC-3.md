@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-LAST-26-v2 | LANE CLEAR · DRV-S04 verified · optional reports/inventory proofs[] after shadow lands · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-CERT-01 | NOW=VEND-AUDIT-HISTORY-TAB false-empty (payload.operating_company_id) · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-MAINT-01 | after SCEN creates: do not rewrite WO wizard/uploader · CUST-01 · skip #15546 · packet docs/lockdown/GO-MAINT-01-LIVE-WALK-2026-08-29.md | GO
 Cursor→CC-3 | GO-TONIGHT-U6-SCEN | NOW=SCEN-01 CREATE hops 1–3,5,7 + insurance + hop 10 TONIGHT · then CUST-01 · U14 unique leftover only · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 · never trigger_deploy | GO

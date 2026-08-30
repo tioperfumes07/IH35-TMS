@@ -1,3 +1,5 @@
+CURSOR | GO-LAST-26-v2 | SUPERSEDES v1 · DEFECT-1 WITHDRAWN · VEND-CERT-01 + proof shadow · skip #15546 | GO
+
 CURSOR | GO-CERT-01 | vendors complete:false + VEND-CERT-01 OPEN · await persist last-good · quote 71/121 bound not matrix 0% · skip #15546 | GO
 
 CURSOR | GO-MATRIX-PROOF+MAINT-01 | proof strip L6/Clicked/Guard · CC-1 P0/P1/WONUM D1-D3 · CC-2 stamps L6 · Codex P3/P4 | skip #15546 | GO

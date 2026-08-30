@@ -15,8 +15,15 @@ const RUNNER = path.join(ROOT, "scripts/certify-module.mjs");
 function failures(src) {
   const out = [];
   if (!/evaluateFw6/.test(src)) out.push("certify-module.mjs must export evaluateFw6");
+  if (!/httpMountVerdict/.test(src)) out.push("certify-module.mjs must export httpMountVerdict (B5/B6 execute, not evidence regex)");
   if (!/items\?\.fw6 === "FAIL"/.test(src)) {
     out.push("displayCertVerdict must refuse CERTIFIED when fw6 is FAIL");
+  }
+  if (!/items\?\.fw5 === "FAIL"/.test(src)) {
+    out.push("displayCertVerdict must refuse CERTIFIED when fw5 is FAIL");
+  }
+  if (!/items\?\.fw_rev === "FAIL"/.test(src)) {
+    out.push("displayCertVerdict must refuse CERTIFIED when fw_rev is FAIL");
   }
   if (/CERT_OVERRIDE|FORCE_CERTIFIED|IH35_CERT_FORCE/.test(src)) {
     out.push("no override flag");
@@ -30,6 +37,11 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
   const theater = displayCertVerdict({ sha: "5c82530", verdict: "CERTIFIED", items: { fw6: "FAIL" } }, "5c82530");
   if (theater !== "INCOMPLETE") {
     console.error(`${LABEL} SELFTEST FAIL — CERTIFIED+fw6 FAIL displayed ${theater}`);
+    process.exit(1);
+  }
+  const deadRoute = displayCertVerdict({ sha: "5c82530", verdict: "CERTIFIED", items: { fw5: "FAIL" } }, "5c82530");
+  if (deadRoute !== "INCOMPLETE") {
+    console.error(`${LABEL} SELFTEST FAIL — CERTIFIED+fw5 FAIL displayed ${deadRoute}`);
     process.exit(1);
   }
   if (evaluateFw6([{ file: "f", cols: ["load"], leafRe: ".*" }]).fw6 !== "FAIL") {

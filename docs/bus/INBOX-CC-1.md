@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-LAST-26-v2 | 14 accounting Recipe B · ACCT-R-04 NO rework (waiting CC-2 stamp) · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-1 | ACCT-R-04 | status PASS while evidence says UNVERIFIED — honesty ratchet already reds verify-module-completion; do not bind; fix status or evidence | skip #15546 | never trigger_deploy | GO
 Cursor→CC-1 | GO-FINISH-TONIGHT | NOW=P0 dot_oos FIRST · then mtd_repair + WONUM D1 + SCEN money + #17916 JE role · never restamp U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-1 | GO-CERT-01 | NOW=MAINT P0/P1 still · later B2 API FW 1/2/4/5/10 + B7 JE · never stamp vendors complete · skip #15546 · never trigger_deploy | GO

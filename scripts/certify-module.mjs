@@ -12,6 +12,8 @@
  *   never CERTIFIED while SHAs diverge.
  *
  * B4 (FW 6): illegal leafRe Built (`.*` / `|.*` / word-blanket) cannot display CERTIFIED.
+ * B5 (FW 7 surface): GET live SPA `/vendors` — 404 = FAIL. Pattern-matching evidence is forbidden.
+ * B6 (FW 5 reverse/API): GET live `/api/v1/mdata/vendors` — 404 = unmounted FAIL; 401/403/200 = mounted.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -42,6 +44,8 @@ export function displayCertVerdict(artifact, liveVersion) {
   const inner = artifact?.verdict;
   // FW 6: leafRe=.* theater can never render CERTIFIED, even if someone wrote that verdict.
   if (artifact?.items?.fw6 === "FAIL") return "INCOMPLETE";
+  if (artifact?.items?.fw5 === "FAIL") return "INCOMPLETE";
+  if (artifact?.items?.fw_rev === "FAIL") return "INCOMPLETE";
   if (inner === "CERTIFIED" || inner === "INCOMPLETE" || inner === "STALE") return inner;
   return "INCOMPLETE";
 }
@@ -53,6 +57,36 @@ export function evaluateFw6(entries) {
     fw6: broad.length === 0 ? "PASS" : "FAIL",
     broadCount: broad.length,
   };
+}
+
+const DEFAULT_SPA = "https://app.ih35dispatch.com";
+const DEFAULT_API = "https://api.ih35dispatch.com";
+
+/** 404 = route not mounted. 401/403/200 = executed and the path exists. */
+export function httpMountVerdict(status) {
+  const n = Number(status);
+  if (!Number.isFinite(n) || n === 0 || n === 404) return "FAIL";
+  return "PASS";
+}
+
+export async function evaluateFw5Route({ spaBase = DEFAULT_SPA, fetchImpl = fetch } = {}) {
+  const url = `${String(spaBase).replace(/\/$/, "")}/vendors`;
+  try {
+    const res = await fetchImpl(url, { method: "GET", redirect: "follow" });
+    return { fw5: httpMountVerdict(res.status), status: res.status, url };
+  } catch {
+    return { fw5: "FAIL", status: 0, url };
+  }
+}
+
+export async function evaluateFwReverseApi({ apiBase = DEFAULT_API, fetchImpl = fetch } = {}) {
+  const url = `${String(apiBase).replace(/\/$/, "")}/api/v1/mdata/vendors`;
+  try {
+    const res = await fetchImpl(url, { method: "GET", headers: { Accept: "application/json" } });
+    return { fw_rev: httpMountVerdict(res.status), status: res.status, url };
+  } catch {
+    return { fw_rev: "FAIL", status: 0, url };
+  }
 }
 
 export function buildArtifact({ moduleId, liveVersion, ranAt, leftoversOpen = null, items = {} }) {
@@ -144,7 +178,27 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — exact leafRe must PASS FW6`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 7/7 STALE + FW6`);
+  if (httpMountVerdict(404) !== "FAIL" || httpMountVerdict(401) !== "PASS" || httpMountVerdict(200) !== "PASS") {
+    console.error(`${LABEL} SELFTEST FAIL — httpMountVerdict 404/401/200`);
+    process.exit(1);
+  }
+  const routeDead = displayCertVerdict(
+    { sha: "5c82530", verdict: "CERTIFIED", items: { fw5: "FAIL" } },
+    "5c82530",
+  );
+  if (routeDead !== "INCOMPLETE") {
+    console.error(`${LABEL} SELFTEST FAIL — CERTIFIED + fw5 FAIL must display INCOMPLETE`);
+    process.exit(1);
+  }
+  const apiDead = displayCertVerdict(
+    { sha: "5c82530", verdict: "CERTIFIED", items: { fw_rev: "FAIL" } },
+    "5c82530",
+  );
+  if (apiDead !== "INCOMPLETE") {
+    console.error(`${LABEL} SELFTEST FAIL — CERTIFIED + fw_rev FAIL must display INCOMPLETE`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — STALE + FW6 + FW5/FW-rev HTTP mount`);
   process.exit(0);
 }
 
@@ -163,10 +217,20 @@ if (isCertifyCli() && (process.argv.includes("--selftest") || process.argv.inclu
 if (isCertifyCli() && !process.argv.includes("--selftest") && !process.argv.includes("--self-test")) {
   const args = parseArgs(process.argv.slice(2));
   const liveVersion = await fetchLiveVersion(args.healthz);
+  const fw5 = await evaluateFw5Route();
+  const fwRev = await evaluateFwReverseApi();
   const artifact = buildArtifact({
     moduleId: args.moduleId,
     liveVersion,
     ranAt: new Date().toISOString(),
+    items: {
+      fw5: fw5.fw5,
+      fw5_http: fw5.status,
+      fw5_url: fw5.url,
+      fw_rev: fwRev.fw_rev,
+      fw_rev_http: fwRev.status,
+      fw_rev_url: fwRev.url,
+    },
   });
   const json = `${JSON.stringify(artifact, null, 2)}\n`;
   if (args.write) {
