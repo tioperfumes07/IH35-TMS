@@ -431,6 +431,11 @@
       "claimed_by": "claude",
       "claimed_at": "2026-08-30",
       "purpose": "saf_f7527a_fuel_mpg_anomaly_source_table_fix_disable_rule_archive_false_alerts"
+    },
+    "202613300700": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-30",
+      "purpose": "go_acct_01_recon_sessions_void_status_and_unique_per_account_period"
     }
   }
 }
