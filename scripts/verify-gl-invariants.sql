@@ -19,6 +19,17 @@
 -- clean ledger. Only a non-zero control read can tell them apart.
 SELECT count(*) AS je_control FROM accounting.journal_entries;
 
+\echo '=== INV-0B  ENTITY-SCOPED CONTROL (discriminator: proves this connection can see role rows under ENFORCED RLS with a company context set) ==='
+-- packet 10-RLS-WILL-BREAK-THE-FIRST-RUN.txt, 2026-08-30, section 3: INV-0's own probe runs
+-- under app.bypass_rls -- useless as a discriminator for C30 (entity_isolation), which MUST run
+-- under enforced RLS (R5 forbids bypass on an isolation proof) and therefore needs its OWN
+-- probe that proves visibility under enforced RLS WITH a company context, or a zero-rows
+-- "no duplicates" result would be indistinguishable from "RLS scoped this connection to
+-- nothing." The runner sets app.operating_company_id as its own statement (never inline SQL,
+-- same pattern as app.bypass_rls) before this query runs -- this block itself carries no
+-- WHERE clause. FORCE ROW LEVEL SECURITY does the entity-scoping.
+SELECT count(*) AS role_control FROM accounting.chart_of_accounts_roles;
+
 \echo '=== INV-1  TRIAL BALANCE (expect difference_cents = 0) ==='
 SELECT sum(CASE WHEN debit_or_credit='debit'  THEN amount_cents ELSE 0 END) AS total_debits_cents,
        sum(CASE WHEN debit_or_credit='credit' THEN amount_cents ELSE 0 END) AS total_credits_cents,

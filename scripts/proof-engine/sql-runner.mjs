@@ -104,8 +104,18 @@ export function extractBlock(src, blockId, subId) {
     body = body.slice(s2, e2);
   }
 
-  // Strip psql meta-commands — they are not SQL and a driver cannot run them.
-  const sql = body.filter((l) => !/^\s*\\/.test(l)).join("\n").trim();
+  // Strip psql meta-commands (they are not SQL and a driver cannot run them) AND full-line SQL
+  // comments. Found 2026-08-30 wiring C30's own probe: a `--` comment's ENGLISH PROSE semicolon
+  // ("...carries no WHERE clause; FORCE ROW LEVEL SECURITY...") was silently counted as a
+  // statement separator by the naive split(";") below, corrupting the returned query. Comments
+  // are harmless to a real driver (Postgres ignores them), but the DELIBERATELY naive
+  // one-statement-per-block check below cannot tell a comment's semicolon from a real one, so
+  // comments must be gone before that check runs — not just before execution.
+  const sql = body
+    .filter((l) => !/^\s*\\/.test(l))
+    .filter((l) => !/^\s*--/.test(l))
+    .join("\n")
+    .trim();
 
   // One statement, one graded result. More than one and the verdict is ambiguous.
   const statements = sql.split(";").map((x) => x.trim()).filter(Boolean);
@@ -182,6 +192,16 @@ export function assertSqlProofShape(proof) {
   if (proof.rls_sensitive === true && rls === "bypass")
     throw new Error(`SQL PROOF REJECTED ${id}: bypass_rls may never be used to prove entity isolation (R5) — resolved rls:"bypass" on an rls_sensitive proof.`);
 
+  // packet 10 section 3 (2026-08-30): an enforced-RLS proof that needs to see anything at all
+  // must set a company context, or its probe reads blind for the same reason INV-0 does without
+  // bypass. Validated here (real UUID shape), issued by the runner as its own statement — never
+  // inline SQL, same discipline as bypass_rls.
+  if (proof.company_context !== undefined) {
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (typeof proof.company_context !== "string" || !uuidRe.test(proof.company_context))
+      throw new Error(`SQL PROOF REJECTED ${id}: company_context must be a real UUID string (got ${JSON.stringify(proof.company_context)}).`);
+  }
+
   return true;
 }
 
@@ -216,6 +236,8 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
       // Fail-closed default, mirrored from assertSqlProofShape: a proof with no rls field
       // never bypasses RLS.
       const rlsMode = proof.rls ?? "enforced";
+      // Absent unless a proof needs enforced-RLS visibility scoped to one real entity (C30).
+      const companyContext = proof.company_context;
 
       const abs = path.join(repoRoot, proof.file);
       const src = fs.readFileSync(abs, "utf8");
@@ -234,7 +256,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         const probeBody = resolvePsqlVars(src, extractBlock(src, proof.probe_query_id, proof.probe_sub_id));
         if (WRITE_TOKENS.test(probeBody))
           return done(false, null, `read-only violation in probe block (R4)`);
-        const probeRows = await exec(probeBody, { readOnly: true, rls: rlsMode });
+        const probeRows = await exec(probeBody, { readOnly: true, rls: rlsMode, company_context: companyContext });
         if (probeRows.length === 0)
           return done(false, "probe returned 0 rows",
             `the discriminator probe itself came back empty — the connection cannot see the data (R1-b)`);
@@ -248,7 +270,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         }
       }
 
-      const rows = await exec(body, { readOnly: true, rls: rlsMode });
+      const rows = await exec(body, { readOnly: true, rls: rlsMode, company_context: companyContext });
 
       // R2 — empty is never a silent pass.
       const expectRows = proof.expect_rows;
@@ -301,6 +323,39 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
 // always resolves to "enforced" (assertSqlProofShape rejects any other combination at load),
 // so its query runs under real RLS with no company context — it CANNOT see chart_of_accounts_
 // roles and will correctly fail, not silently pass on an empty result (R2 still applies).
+//
+// R7 CONNECTION-ROLE VERIFICATION (found 2026-08-30 wiring C30's own company-context probe).
+// The pooled Neon connection string (DATABASE_URL) role-downgrades a superuser-authenticated
+// session to ih35_app (rolbypassrls=false) — but this was measured, live, to happen
+// INCONSISTENTLY: of 5 back-to-back connections against the identical pooled endpoint, some
+// landed on ih35_app (correctly RLS-enforced) and some landed on neondb_owner
+// (rolbypassrls=true, silently seeing all 3 entities regardless of any GUC). A flaky
+// enforcement signal on the ONE proof whose entire purpose is proving entity isolation is worse
+// than an always-failing one — it could occasionally, silently, report PASS on a run that never
+// actually enforced anything. So: whenever rls:"enforced" is requested, the runner checks the
+// CONNECTED role's own rolbypassrls attribute before trusting any result from it, and refuses
+// (throws, never returns rows) if the connection landed on a bypass-capable role — regardless
+// of whether that particular run's GUC happened to take. Never silently trust an ambiguous
+// enforcement; fail loud and let the caller retry.
+/**
+ * R7's own assertion, extracted as a pure function so it is unit-testable without a real DB
+ * connection (mirrors assertSqlProofShape's own load-time-rejection style). Throws when the
+ * connected role can bypass RLS at all -- rolbypassrls===true, or the lookup itself came back
+ * empty/undefined (an unrecognized role is exactly as untrustworthy as a known-bypass one; fail
+ * closed, never assume safe).
+ */
+export function assertConnectionCanEnforceRls(rolbypassrls) {
+  if (rolbypassrls !== false) {
+    throw new Error(
+      `R7 REJECTED: rls:"enforced" was requested but this connection's role cannot be confirmed ` +
+      `RLS-safe (rolbypassrls=${JSON.stringify(rolbypassrls)}) -- refusing to trust an ambiguous ` +
+      `enforcement. Retry; a pooled connection's role-downgrade can land on a bypass-capable role ` +
+      `run-to-run, which is not a code defect in the proof itself.`
+    );
+  }
+  return true;
+}
+
 function defaultPgQuery(connectionString) {
   return async function (sql, opts = {}) {
     const { default: pg } = await import("pg");
@@ -310,7 +365,22 @@ function defaultPgQuery(connectionString) {
       await client.query("BEGIN");
       await client.query("SET TRANSACTION READ ONLY");
       await client.query("SET LOCAL statement_timeout = '30s'");
+      if (opts.rls === "enforced") {
+        const roleCheck = await client.query(
+          "SELECT rolbypassrls FROM pg_roles WHERE rolname = current_user"
+        );
+        try {
+          assertConnectionCanEnforceRls(roleCheck.rows[0]?.rolbypassrls);
+        } catch (e) {
+          await client.query("ROLLBACK");
+          throw e;
+        }
+      }
       if (opts.rls === "bypass") await client.query("SET LOCAL app.bypass_rls = 'lucia'");
+      // SET LOCAL does not accept a bind parameter in this position (Postgres requires a
+      // literal). Safe to inline: assertSqlProofShape already rejected anything that is not
+      // exactly a UUID shape before this proof was ever allowed to run (R1/R3-adjacent).
+      if (opts.company_context) await client.query(`SET LOCAL app.operating_company_id = '${opts.company_context}'`);
       const res = await client.query(sql);
       await client.query("ROLLBACK");
       return res.rows;
