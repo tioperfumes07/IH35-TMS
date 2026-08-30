@@ -6,6 +6,7 @@ export default {
     await ctx.run("node", ["scripts/verify-economic-columns-c25-c31-present.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-economic-columns-c25-c31-present.mjs"]);
     await ctx.run("node", ["scripts/proof-engine/sql-runner.selftest.mjs"]);
+    await ctx.run("node", ["scripts/proof-engine/dom-runner.selftest.mjs"]);
     await ctx.run("node", ["scripts/verify-no-closed-loop-guards.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-no-closed-loop-guards.mjs"]);
     await ctx.run("node", ["scripts/verify-guard-can-fail.mjs", "--selftest"]);
