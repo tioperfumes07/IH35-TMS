@@ -14,6 +14,14 @@ function read(rel) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");
 }
 
+function honorsCreateQueryParam(src) {
+  const directSearchParam =
+    /useSearchParams/.test(src) && /searchParams\.get\("create"\)/.test(src);
+  const sharedCreateHook =
+    /\buseCreateQueryParam\s*\(\s*\{[\s\S]*?\bonOpenCreate\s*:/.test(src);
+  return directSearchParam || sharedCreateHook;
+}
+
 /** LST-F3354 — NewAccountDrawerForm may embed AccountDrawer (single create chrome). */
 function newFormEmbedsAccountDrawer(newFormSrc) {
   return (
@@ -81,7 +89,7 @@ function assertAccountTypeCatalogCreate(sources) {
   if (!/data-testid="account-type-catalog-create-detail-type"/.test(page)) {
     errors.push("AccountTypeCatalogPage: create affordance test id missing");
   }
-  if (!/useSearchParams/.test(detailTypes) || !/searchParams\.get\("create"\)/.test(detailTypes)) {
+  if (!honorsCreateQueryParam(detailTypes)) {
     errors.push("DetailTypesListPage: must honor ?create=1 to open create modal");
   }
   return errors;
@@ -112,7 +120,12 @@ function selftest() {
     ["opco scope dropped", { ...live, page: live.page.replace(/getAccountTypeCatalog\(companyId/g, "getAccountTypeCatalog(") }, "must pass operating company"],
     ["create link dropped", { ...live, page: live.page.replace(/\/lists\/accounting\/detail-types\?create=1/g, "/lists/accounting/detail-types") }, "must expose + Create"],
     ["test id dropped", { ...live, page: live.page.replace(/data-testid="account-type-catalog-create-detail-type"/g, "") }, "test id missing"],
-    ["?create=1 no longer honored", { ...live, detailTypes: live.detailTypes.replace(/searchParams\.get\("create"\)/g, 'searchParams.get("other")') }, "must honor ?create=1"],
+    ["?create=1 no longer honored", {
+      ...live,
+      detailTypes: live.detailTypes
+        .replace(/\buseCreateQueryParam\s*\(/, "useIgnoredCreateQueryParam(")
+        .replace(/searchParams\.get\("create"\)/g, 'searchParams.get("other")'),
+    }, "must honor ?create=1"],
   ];
 
   for (const [name, mutated, expectFragment] of cases) {
