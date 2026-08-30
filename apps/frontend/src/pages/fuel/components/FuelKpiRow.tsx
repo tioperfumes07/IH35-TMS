@@ -32,8 +32,11 @@ function formatLovesSyncLabel(
   lovesSyncStatus: LovesSyncStatus | undefined
 ) {
   const syncedAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
-  if (!syncedAt) return "Never";
-  return new Date(syncedAt).toLocaleTimeString();
+  if (syncedAt) return new Date(syncedAt).toLocaleTimeString();
+  // Undefined is unresolved/unavailable, not historical proof that a sync never occurred. Both
+  // company-scoped readers must answer successfully before the card may assert "Never".
+  if (dashboard === undefined || lovesSyncStatus === undefined) return null;
+  return "Never";
 }
 
 /** Absent stays absent. */

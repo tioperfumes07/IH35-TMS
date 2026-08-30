@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7382 | NOW=Loves sync unresolved-history honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7381 | PR=#17926 @ bb71d5ec60 | gate=exit0 | NEXT=FUEL-F7382 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7381 | NOW=Fuel Home unresolved KPI honesty vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=CUST-DSP-F7380 | PR=#17925 @ 65cf581fad | gate=exit0 | NEXT=FUEL-F7381 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=CUST-DSP-F7380 | NOW=zero-dollar quality impact F+R vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO

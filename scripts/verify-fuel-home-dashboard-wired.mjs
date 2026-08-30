@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = path.join(ROOT, "apps/frontend/src/pages/fuel/FuelHome.tsx");
+const KPI = path.join(ROOT, "apps/frontend/src/pages/fuel/components/FuelKpiRow.tsx");
 const PLANNER = path.join(ROOT, "apps/backend/src/fuel/planner.routes.ts");
 const LABEL = "verify-fuel-home-dashboard-wired";
 const SPEND_FAKE_ZERO_RE =
@@ -67,6 +68,14 @@ export function computeFailures(source) {
   return errors;
 }
 
+export function computeKpiFailures(source) {
+  const errors = [];
+  if (!/dashboard === undefined \|\| lovesSyncStatus === undefined\) return null/.test(source)) {
+    errors.push("FuelKpiRow must not assert Never until both authoritative sync feeds resolve");
+  }
+  return errors;
+}
+
 function selftest() {
   const plannerGood = `
       const spendRes = await client.query(\`SELECT COALESCE(sum(total_cost), 0)::numeric AS spend FROM fuel.fuel_transactions\`);
@@ -115,6 +124,17 @@ function selftest() {
     process.exit(1);
   }
   console.log("selftest ok — planner detail fail-loud");
+  const kpiSource = fs.readFileSync(KPI, "utf8");
+  if (computeKpiFailures(kpiSource).length) {
+    console.error("SELFTEST FAIL — shipped Fuel KPI sync honesty baseline is red");
+    process.exit(1);
+  }
+  const kpiMutant = kpiSource.replace("if (dashboard === undefined || lovesSyncStatus === undefined) return null;", 'return "Never";');
+  if (kpiMutant === kpiSource || computeKpiFailures(kpiMutant).length === 0) {
+    console.error("SELFTEST FAIL — false Never sync mutation escaped");
+    process.exit(1);
+  }
+  console.log("selftest ok — unresolved Love's sync cannot assert Never");
   const good = `
     import { getFuelDashboard } from "../../api/fuelPlanner";
     import { FuelKpiRow } from "./components/FuelKpiRow";
@@ -155,7 +175,8 @@ function selftest() {
 function run() {
   const source = fs.readFileSync(PAGE, "utf8");
   const planner = fs.readFileSync(PLANNER, "utf8");
-  const failures = [...computeFailures(source), ...computePlannerFailures(planner)];
+  const kpi = fs.readFileSync(KPI, "utf8");
+  const failures = [...computeFailures(source), ...computePlannerFailures(planner), ...computeKpiFailures(kpi)];
   if (failures.length) {
     console.error(`[${LABEL}] FAIL:`);
     for (const f of failures) console.error(`  - ${f}`);
