@@ -27,11 +27,11 @@ type Props = {
   page: number;
   pageSize: number;
   search: string;
-  sortByName: "name_asc" | "name_desc";
+  sortByName: "name_asc" | "name_desc" | "balance_asc" | "balance_desc";
   selectedVendorId: string;
   openByVendorId: Map<string, number>;
   onSearchChange: (value: string) => void;
-  onSortChange: (value: "name_asc" | "name_desc") => void;
+  onSortChange: (value: "name_asc" | "name_desc" | "balance_asc" | "balance_desc") => void;
   onPageChange: (page: number) => void;
   onPageSizeChange: (pageSize: number) => void;
   onSelectVendor: (vendorId: string) => void;
@@ -63,12 +63,22 @@ export function VendorListSidebar({
         String(vendor.email ?? "").toLowerCase().includes(q)
       );
     });
-    rows.sort((a, b) => {
-      const cmp = a.name.localeCompare(b.name);
-      return sortByName === "name_asc" ? cmp : -cmp;
-    });
+    // CUST-01 C4: default sidebar was name-only; balance sort existed only in the opt-in List
+    // view (same gap, same fix as CustomerListSidebar). Reuses the already-fetched
+    // openByVendorId map used for the Open Balance column.
+    if (sortByName === "balance_asc" || sortByName === "balance_desc") {
+      rows.sort((a, b) => {
+        const cmp = (openByVendorId.get(a.id) ?? 0) - (openByVendorId.get(b.id) ?? 0);
+        return sortByName === "balance_asc" ? cmp : -cmp;
+      });
+    } else {
+      rows.sort((a, b) => {
+        const cmp = a.name.localeCompare(b.name);
+        return sortByName === "name_asc" ? cmp : -cmp;
+      });
+    }
     return rows;
-  }, [vendors, search, sortByName]);
+  }, [vendors, search, sortByName, openByVendorId]);
 
   // PAGER-SERVERTOTAL-01: the pager count/totalPages reflect the server roster total
   // (totalCount prop, e.g. "440 of 490"), NOT the current in-memory array length.
@@ -104,11 +114,13 @@ export function VendorListSidebar({
       />
       <SelectCombobox
         value={sortByName}
-        onChange={(event) => onSortChange(event.target.value as "name_asc" | "name_desc")}
+        onChange={(event) => onSortChange(event.target.value as "name_asc" | "name_desc" | "balance_asc" | "balance_desc")}
         className="mb-2 w-full rounded-sm border border-gray-300 px-2 py-1 text-sm"
       >
         <option value="name_asc">Sort by name</option>
         <option value="name_desc">Sort by name (Z-A)</option>
+        <option value="balance_desc">Sort by balance (high-low)</option>
+        <option value="balance_asc">Sort by balance (low-high)</option>
       </SelectCombobox>
       {/* QBO columnar list: resizable, per-user-persisted column widths (shared ResizableTable/ResizableTh). */}
       <div className="max-h-[760px] overflow-y-auto">

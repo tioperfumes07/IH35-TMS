@@ -81,6 +81,25 @@ function fmtMoney(cents: number | null | undefined) {
   return formatUsdCents(cents);
 }
 
+/**
+ * CUST-01 C8: shipping_address_line1/line2/city/state/postal_code/country are real columns
+ * (migration 202607110240_customer_qbo_parity) the FE never read -- the detail panel hardcoded
+ * an em-dash instead. Same-as-billing is the common case and gets its own label rather than a
+ * confusing duplicate address; otherwise join the present parts, comma-separated.
+ */
+function formatShippingAddress(customer: Customer): string {
+  if (customer.shipping_same_as_billing) return "Same as billing";
+  const parts = [
+    customer.shipping_address_line1,
+    customer.shipping_address_line2,
+    customer.shipping_city,
+    customer.shipping_state,
+    customer.shipping_postal_code,
+    customer.shipping_country,
+  ].filter((p): p is string => Boolean(p && p.trim()));
+  return parts.length ? parts.join(", ") : "—";
+}
+
 function customerQualityRating(paymentScore: string | null | undefined, overallFlag: "preferred" | "standard" | "caution" | "avoid") {
   // CUST-2: rate only from real data; no score/flag → neutral "No history" (was defaulting to amber "Watch").
   const kind = customerQualityKind(paymentScore, overallFlag);
@@ -359,10 +378,15 @@ export function CustomersPage() {
   // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
   // (same contract as accounting CustomersListView / #2609). Default (no params) = A→Z.
   const { sortKey, sortDirection, onSortChange: onUrlSortChange } = useUrlSort();
-  const sortByName: "name_asc" | "name_desc" =
-    sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
-  const setSortByName = (value: "name_asc" | "name_desc") => {
-    onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
+  // CUST-01 C4: balance sort added alongside name -- default (no params, or unrecognized key)
+  // stays name A->Z, matching the pre-existing contract.
+  const sortByName: "name_asc" | "name_desc" | "balance_asc" | "balance_desc" =
+    sortKey === "balance" ? (sortDirection === "asc" ? "balance_asc" : "balance_desc")
+    : sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
+  const setSortByName = (value: "name_asc" | "name_desc" | "balance_asc" | "balance_desc") => {
+    if (value === "balance_asc") onUrlSortChange("balance", "asc");
+    else if (value === "balance_desc") onUrlSortChange("balance", "desc");
+    else onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = parseCustomerDetailTab(searchParams.get("tab"));
@@ -1036,9 +1060,8 @@ export function CustomersPage() {
                     <p><span className="font-semibold text-gray-600">Email:</span> {selectedCustomer.email ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Phone:</span> {selectedCustomer.phone ?? "—"}</p>
                     <p><span className="font-semibold text-gray-600">Billing address:</span> {selectedCustomer.billing_address ?? "—"}</p>
-                    <p><span className="font-semibold text-gray-600">Shipping address:</span> —</p>
+                    <p><span className="font-semibold text-gray-600">Shipping address:</span> {formatShippingAddress(selectedCustomer)}</p>
                     <p><span className="font-semibold text-gray-600">Notes:</span> {displayEntityNotes(selectedCustomer.notes) || "—"}</p>
-                    <p><span className="font-semibold text-gray-600">Custom fields:</span> —</p>
                   </div>
                 </section>
                 <section className="rounded-sm border border-gray-200 bg-white p-3">
