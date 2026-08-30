@@ -1,34 +1,4 @@
 {
-  "10073": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-expense-bill-linkage"
-  },
-  "10069": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-dot-inspection-fuel-transaction-linkage"
-  },
-  "10065": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-drug-test-hos-violation-linkage"
-  },
-  "10061": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-fine-company-violation-linkage"
-  },
-  "10057": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-dqf01-required-document-types-and-file-fks"
-  },
-  "10053": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-medical-card-background-check-linkage"
-  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4842,10 +4812,50 @@
     "claimed_by": "cursor",
     "purpose": "verify-ct-timezone-rendering"
   },
+  "10051": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-2",
+    "purpose": "verify-guard-selftests-are-real (GR-2 meta-guard, GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2)"
+  },
   "10052": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cursor",
     "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
+  },
+  "10053": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-medical-card-background-check-linkage"
+  },
+  "10057": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dqf01-required-document-types-and-file-fks"
+  },
+  "10061": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-fine-company-violation-linkage"
+  },
+  "10065": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-drug-test-hos-violation-linkage"
+  },
+  "10069": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-dot-inspection-fuel-transaction-linkage"
+  },
+  "10073": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-expense-bill-linkage"
+  },
+  "10077": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dot-oos-fmcsa-inspection-reconcile (GO-1405 P0)"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -6831,10 +6841,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1333,
-  "10051": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-2",
-    "purpose": "verify-guard-selftests-are-real (GR-2 meta-guard, GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2)"
-  }
+  "total_claimed": 1333
 }
