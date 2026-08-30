@@ -47,6 +47,13 @@ export const DEFAULT_AVG_SPEED_MPH = 60;
 export const DEFAULT_MPG = 6.5;
 export const DEFAULT_SAFETY_THRESHOLD_MILES = 50;
 
+export class FuelPlannerSourceUnavailableError extends Error {
+  constructor() {
+    super("fuel_route_recommendations_unavailable");
+    this.name = "FuelPlannerSourceUnavailableError";
+  }
+}
+
 export function estimateRouteMilesByStop(stops: RouteStopRow[]): Array<RouteStopRow & { estimated_route_mile: number }> {
   if (stops.length === 0) return [];
   let cumulative = 0;
@@ -118,7 +125,7 @@ async function fetchRouteContext(client: DbClient, input: RecommendFuelStopsInpu
   const exists = await client.query<{ ok: boolean }>(
     `SELECT to_regclass('fuel.route_recommendations') IS NOT NULL AS ok`
   );
-  if (!exists.rows[0]?.ok) return null;
+  if (!exists.rows[0]?.ok) throw new FuelPlannerSourceUnavailableError();
   const res = await client.query<FuelRouteContextRow>(
     `
       SELECT

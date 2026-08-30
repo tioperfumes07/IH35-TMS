@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7377 | NOW=fuel missing-source honesty vertical | tests=17/17 · TS=exit0 · guard=fuel-clean/banking-routed | NEXT=FAST-MERGE then next unique fuel/dispatch | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7376 | PR=#17921 @ 8d7e5ce1d0 | gate=exit0 | NEXT=FUEL-F7377 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7376 | NOW=DISP-02 active driver/unit eligibility vertical | guard=PASS+selftest11/11 | NEXT=FAST-MERGE then dispatch unique | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7375 | PR=#17919 @ e35d660247 | gate=exit0 | NEXT=DISP-02 active-only logic | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7375 | NOW=DISP-02 shared planner date filter | guard=PASS+selftest6/6 | NEXT=FAST-MERGE then active-only planner logic | GO

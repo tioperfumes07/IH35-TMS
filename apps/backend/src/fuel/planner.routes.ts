@@ -62,9 +62,19 @@ async function withCompanyScope<T>(
   });
 }
 
-async function hasRelation(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> }, name: string) {
+type RelationAvailability =
+  | { available: true; unavailable_reason: null }
+  | { available: false; unavailable_reason: "fuel_planner_source_unavailable" };
+
+async function relationAvailability(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> }, name: string): Promise<RelationAvailability> {
   const res = await client.query(`SELECT to_regclass($1::text) IS NOT NULL AS ok`, [name]);
-  return Boolean(res.rows[0]?.ok);
+  return res.rows[0]?.ok
+    ? { available: true, unavailable_reason: null }
+    : { available: false, unavailable_reason: "fuel_planner_source_unavailable" };
+}
+
+async function hasRelation(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: Array<{ ok: boolean }> }> }, name: string) {
+  return (await relationAvailability(client, name)).available;
 }
 
 async function hasColumn(
@@ -140,7 +150,7 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         [companyId]
       );
       // LIAB-F9927-SILENT-CATCH-SWEEP (fuel leg): fuel.loves_prices_daily is foundational (confirmed
-      // live, to_regclass non-null) — unlike fuel.recommended_stops/views.fuel_planner_active_routes
+      // live, relation-present) — unlike fuel.recommended_stops/views.fuel_planner_active_routes
       // above, which genuinely ARE conditional and correctly gate on hasRelation() first, this table
       // has no such gate and was queried directly. MAX(updated_at) on an existing-but-empty table
       // already returns NULL with no error, so the .catch() only ever fired on a real query failure —

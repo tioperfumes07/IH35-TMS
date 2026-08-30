@@ -1,7 +1,7 @@
 /**
  * GAP-61 — Fuel fraud detection rules tests.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_TANK_CAPACITY_GAL,
   evaluateGpsMismatch,
@@ -9,6 +9,7 @@ import {
   evaluateOffDuty,
   evaluateRapidMulti,
   evaluateTankOverflow,
+  evaluateTransactionRules,
   haversineMiles,
   type FuelTransactionContext,
 } from "../rules.service.js";
@@ -70,6 +71,35 @@ describe("RULE_TANK_OVERFLOW", () => {
 
   it("does not fire for normal fill volumes", () => {
     expect(evaluateTankOverflow(baseTxn, DEFAULT_TANK_CAPACITY_GAL)).toBeNull();
+  });
+
+  it("discloses the conservative default when the route capacity source is unavailable", async () => {
+    const client = {
+      query: vi.fn(async (sql: string) => {
+        if (sql.includes("to_regclass('fuel.route_recommendations')")) {
+          return { rows: [{ ok: false }] };
+        }
+        return { rows: [] };
+      }),
+    };
+
+    const matches = await evaluateTransactionRules(client, {
+      ...baseTxn,
+      unit_id: null,
+      driver_id: null,
+      load_id: "11111111-1111-1111-1111-111111111111",
+      gallons: 200,
+    });
+
+    expect(matches).toContainEqual(
+      expect.objectContaining({
+        rule_id: "RULE_TANK_OVERFLOW",
+        evidence: expect.objectContaining({
+          tank_capacity_gal: DEFAULT_TANK_CAPACITY_GAL,
+          tank_capacity_source: "fleet_default_route_source_unavailable",
+        }),
+      })
+    );
   });
 });
 
