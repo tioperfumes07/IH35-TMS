@@ -6,8 +6,9 @@ import process from "node:process";
 
 const root = process.cwd();
 const manifestPath = path.join(root, "apps/frontend/src/routes/manifest.tsx");
+const mainPath = path.join(root, "apps/frontend/src/main.tsx");
 
-function verify(source) {
+function verify(source, mainSource) {
   const failures = [];
   const boundary = source.match(
     /function RouteContentBoundary[\s\S]*?\n}\n/
@@ -30,11 +31,15 @@ function verify(source) {
   if (/React\.Suspense fallback={<RouteFallback \/>}>{children}<\/React\.Suspense>/.test(source)) {
     failures.push("an unkeyed protected-route Suspense boundary remains");
   }
+  if (!/<BrowserRouter\s+useTransitions=\{false\}>/.test(mainSource)) {
+    failures.push("BrowserRouter must synchronously commit route state so a pending transition cannot retain stale route DOM");
+  }
   return failures;
 }
 
 const source = fs.readFileSync(manifestPath, "utf8");
-const failures = verify(source);
+const mainSource = fs.readFileSync(mainPath, "utf8");
+const failures = verify(source, mainSource);
 if (failures.length) {
   console.error(`verify-route-content-boundary-location-key: FAIL\n- ${failures.join("\n- ")}`);
   process.exit(1);
@@ -42,13 +47,15 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["remove location read", source.replace("const location = useLocation();", "const location = { pathname: '', search: '' };" )],
-    ["remove location key", source.replace(' key={`${location.pathname}${location.search}`}', "")],
-    ["remove fallback", source.replace(" fallback={<RouteFallback />}", "")],
-    ["restore one unkeyed wrapper", source.replace("<RouteContentBoundary>{children}</RouteContentBoundary>", "<React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>")],
+    ["remove location read", source.replace("const location = useLocation();", "const location = { pathname: '', search: '' };" ), mainSource],
+    ["remove location key", source.replace(' key={`${location.pathname}${location.search}`}', ""), mainSource],
+    ["remove fallback", source.replace(" fallback={<RouteFallback />}", ""), mainSource],
+    ["restore one unkeyed wrapper", source.replace("<RouteContentBoundary>{children}</RouteContentBoundary>", "<React.Suspense fallback={<RouteFallback />}>{children}</React.Suspense>"), mainSource],
+    ["restore transition-wrapped router updates", source, mainSource.replace("<BrowserRouter useTransitions={false}>", "<BrowserRouter>")],
+    ["enable transition-wrapped router updates", source, mainSource.replace("useTransitions={false}", "useTransitions={true}")],
   ];
-  for (const [name, mutated] of mutations) {
-    if (verify(mutated).length === 0) {
+  for (const [name, mutatedSource, mutatedMainSource] of mutations) {
+    if (verify(mutatedSource, mutatedMainSource).length === 0) {
       console.error(`verify-route-content-boundary-location-key: selftest FAIL — mutation survived: ${name}`);
       process.exit(1);
     }

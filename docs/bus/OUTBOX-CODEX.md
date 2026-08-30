@@ -1,3 +1,5 @@
+CODEX | WORKING | DRV-F7317-R2 | ROOT=BrowserRouter-default-startTransition-retains-old-committed-route | guard=6/6+selftest | typecheck=PASS | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7404 | PR=#17980 @ d1e83a0b0d | gate=exit0 | NEXT=DRV-F7317-R2 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7392 | NOW=auto-routing settings→mounted optimizer connectivity | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7391 | PR=#17948 @ f30e3bb3d5 | gate=exit0 | NEXT=DSP-F7392 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7391 | NOW=alert-threshold settings→Board+Kanban connectivity | NEXT=guard+FAST-MERGE then auto-routing/unique census | GO
