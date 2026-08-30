@@ -25,6 +25,9 @@ function fails(src) {
 
 function fuelFails(src) {
   const out = [];
+  if (!/const rows = fuelQ\.isError \? \[\] : \(fuelQ\.data\?\.transactions \?\? \[\]\)/.test(src)) {
+    out.push("fuel reverse failure does not suppress stale cached rows");
+  }
   if (!/<ListErrorState[\s\S]*?userFacingApiError\(fuelQ\.error[\s\S]*?onRetry=\{\(\) => void fuelQ\.refetch\(\)\}/.test(src)) {
     out.push("fuel reverse GET failure has no detailed retry path");
   }
@@ -47,6 +50,10 @@ if (process.argv.includes("--selftest")) {
   }
   if (fuelFails(fuelLive).length || !fuelFails(fuelLive.replace("onRetry={() => void fuelQ.refetch()}", "onRetry={() => undefined}")).length) {
     console.error(`${LABEL} SELFTEST FAIL fuel retry mutation`);
+    process.exit(1);
+  }
+  if (!fuelFails(fuelLive.replace("fuelQ.isError ? []", "false ? []")).includes("fuel reverse failure does not suppress stale cached rows")) {
+    console.error(`${LABEL} SELFTEST FAIL fuel stale-row mutation`);
     process.exit(1);
   }
   console.log(`${LABEL} SELFTEST PASS`);
