@@ -10,6 +10,7 @@ import {
   dispatchLocalSettingsKey,
 } from "../DispatchSettingsPage";
 import * as dispatchApi from "../../../api/dispatch";
+import { readDispatchBoardDefaultSort } from "../../../lib/dispatch-local-settings";
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
@@ -95,6 +96,19 @@ describe("DispatchSettingsPage (B21-D11)", () => {
     window.localStorage.setItem(DISPATCH_LOCAL_SETTINGS_KEY, JSON.stringify({ alert_yellow_minutes: 99 }));
     wrap(<DispatchSettingsPage />);
     expect((await screen.findByTestId("dispatch-alert-yellow-minutes") as HTMLInputElement).value).toBe("1");
+  });
+
+  it("maps saved sort options to real board columns and falls back safely", () => {
+    const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
+    const key = dispatchLocalSettingsKey(companyId);
+    window.localStorage.setItem(key, JSON.stringify({ default_sort: "load_number:asc" }));
+    expect(readDispatchBoardDefaultSort(companyId)).toEqual({ key: "load", direction: "asc" });
+
+    window.localStorage.setItem(key, JSON.stringify({ default_sort: "rate_total_cents:desc" }));
+    expect(readDispatchBoardDefaultSort(companyId)).toEqual({ key: "linehaul", direction: "desc" });
+
+    window.localStorage.setItem(key, JSON.stringify({ default_sort: "not-a-column:sideways" }));
+    expect(readDispatchBoardDefaultSort(companyId)).toEqual({ key: "created_at", direction: "desc" });
   });
 
   // DISP-S34: getDispatchPreferences failing silently fell back to the "home" default with no

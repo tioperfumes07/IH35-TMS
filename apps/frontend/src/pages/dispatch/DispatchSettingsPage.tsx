@@ -10,30 +10,13 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-
-export const DISPATCH_LOCAL_SETTINGS_KEY = "ih35.dispatch.local_settings";
-
-export function dispatchLocalSettingsKey(operatingCompanyId: string) {
-  return `${DISPATCH_LOCAL_SETTINGS_KEY}.${operatingCompanyId}`;
-}
-
-export type DispatchLocalSettings = {
-  default_sort: string;
-  alert_yellow_minutes: number;
-  alert_red_minutes: number;
-  auto_routing_enabled: boolean;
-  auto_routing_respect_hos: boolean;
-  auto_routing_respect_equipment: boolean;
-};
-
-export const DEFAULT_DISPATCH_LOCAL_SETTINGS: DispatchLocalSettings = {
-  default_sort: "created_at:desc",
-  alert_yellow_minutes: 1,
-  alert_red_minutes: 30,
-  auto_routing_enabled: true,
-  auto_routing_respect_hos: true,
-  auto_routing_respect_equipment: true,
-};
+import {
+  DEFAULT_DISPATCH_LOCAL_SETTINGS,
+  readDispatchLocalSettings,
+  writeDispatchLocalSettings,
+  type DispatchLocalSettings,
+} from "../../lib/dispatch-local-settings";
+export { DISPATCH_LOCAL_SETTINGS_KEY, dispatchLocalSettingsKey } from "../../lib/dispatch-local-settings";
 
 const SORT_OPTIONS = [
   { value: "created_at:desc", label: "Created (newest first)" },
@@ -43,25 +26,6 @@ const SORT_OPTIONS = [
   { value: "status:asc", label: "Status (A→Z)" },
   { value: "rate_total_cents:desc", label: "Rate (high→low)" },
 ] as const;
-
-function readDispatchLocalSettings(operatingCompanyId: string): DispatchLocalSettings {
-  if (typeof window === "undefined") return DEFAULT_DISPATCH_LOCAL_SETTINGS;
-  if (!operatingCompanyId) return DEFAULT_DISPATCH_LOCAL_SETTINGS;
-  try {
-    const raw = window.localStorage.getItem(dispatchLocalSettingsKey(operatingCompanyId));
-    if (!raw) return DEFAULT_DISPATCH_LOCAL_SETTINGS;
-    const parsed = JSON.parse(raw) as Partial<DispatchLocalSettings>;
-    return { ...DEFAULT_DISPATCH_LOCAL_SETTINGS, ...parsed };
-  } catch {
-    return DEFAULT_DISPATCH_LOCAL_SETTINGS;
-  }
-}
-
-function writeDispatchLocalSettings(operatingCompanyId: string, partial: Partial<DispatchLocalSettings>) {
-  const next = { ...readDispatchLocalSettings(operatingCompanyId), ...partial };
-  window.localStorage.setItem(dispatchLocalSettingsKey(operatingCompanyId), JSON.stringify(next));
-  return next;
-}
 
 function PrefToggle({
   label,

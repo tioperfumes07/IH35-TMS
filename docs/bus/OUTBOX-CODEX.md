@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7389 | NOW=default-sort settings→board connectivity | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7388 | PR=#17934 @ 8da60f589b | gate=exit0 | NEXT=DSP-F7389 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7388 | NOW=company-scoped dispatch local settings | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7387 | PR=#17932 @ f00ec5dea0 | gate=exit0 | routed=CC-1 FUEL-MONEY-F7387B | NEXT=DSP-F7388 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7387 | NOW=nullable recommended gallons truth | routed=CC-1 FUEL-MONEY-F7387B | NEXT=guard+FAST-MERGE | GO
