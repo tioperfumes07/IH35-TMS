@@ -19,6 +19,24 @@ if (!src.includes("INVOICE_PLEDGE_CENTS_SQL")) fail("missing INVOICE_PLEDGE_CENT
 if (!src.includes("credit_memo_applications")) fail("factoring routes must join credit_memo_applications");
 if (!src.includes("FACT-PLEDGE-NET-CM")) fail("missing FACT-PLEDGE-NET-CM marker");
 if (!src.includes("pledge_cents")) fail("missing pledge_cents");
+
+const cm = readFileSync(join(root, "apps/backend/src/accounting/credit-memos.routes.ts"), "utf8");
+for (const code of [
+  "billing_error_ours",
+  "penalty_assessed",
+  "agreed_concession",
+  "quick_pay_discount",
+  "unauthorized_deduction",
+]) {
+  if (!cm.includes(`"${code}"`)) fail(`credit-memos.routes missing reason ${code}`);
+}
+const mig = readFileSync(
+  join(root, "db/migrations/202613301600_shortpay_accountability_close_the_gaps.sql"),
+  "utf8",
+);
+for (const acct of ["4955", "4970", "4980", "1240"]) {
+  if (!mig.includes(`'${acct}'`)) fail(`accountability migration missing account ${acct}`);
+}
 if (/invoiceRes\.rows\.reduce\(\s*\(sum[^)]*total_cents/.test(src)) {
   fail("create still sums total_cents instead of pledge_cents");
 }

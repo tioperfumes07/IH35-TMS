@@ -15,6 +15,13 @@ export type CreditMemoReason =
   | "detention_denied"
   | "factoring_dilution"
   | "unknown_pending_backup"
+  | "billing_error_ours"
+  | "penalty_assessed"
+  | "agreed_concession"
+  | "quick_pay_discount"
+  | "unauthorized_deduction"
+  | "unearned_discount"
+  | "rate_underpaid"
   | "other";
 
 export const CREDIT_MEMO_REASONS: Array<{ value: CreditMemoReason; label: string }> = [
@@ -29,6 +36,13 @@ export const CREDIT_MEMO_REASONS: Array<{ value: CreditMemoReason; label: string
   { value: "detention_denied", label: "Detention / layover denied" },
   { value: "factoring_dilution", label: "Factoring dilution / reserve take" },
   { value: "unknown_pending_backup", label: "Unknown / backup not received" },
+  { value: "billing_error_ours", label: "Our billing error (4955)" },
+  { value: "penalty_assessed", label: "Penalty / fine assessed (4980)" },
+  { value: "agreed_concession", label: "Agreed concession (4970)" },
+  { value: "quick_pay_discount", label: "Quick-pay discount (4970)" },
+  { value: "unauthorized_deduction", label: "Unauthorized deduction (1240 chase)" },
+  { value: "unearned_discount", label: "Unearned discount (1240 chase)" },
+  { value: "rate_underpaid", label: "Rate underpaid (1240 chase)" },
   { value: "other", label: "Other" },
 ];
 

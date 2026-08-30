@@ -1,4 +1,10 @@
-# CURRENT GO — 2026-08-30 FACT-PLEDGE-NET-CM + DILUTION GO (THIS PR)
+# CURRENT GO — 2026-08-30 SHORTPAY 4955/4970/4980/1240 + 016 UNBLOCKED
+
+Cursor→self | Claim 202613301600 merged (#18403). Author migration + CM reasons. Deploy API after this feature merges (Rule 42). CC-1 books 016. Catalog `responsible_source` + dilution report = next, not a 016 gate. skip #15546 | GO
+
+STOP. Older stacked GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 FACT-PLEDGE-NET-CM + DILUTION GO (SUPERSEDED TOP)
 
 Cursor→self | Ship pledge = aging net (credit memos). Do **not** messenger Jorge. Wake CC-1/CC-2 INBOX. Apply Neon 202608301800. Deploy API after merge. 016 wait until pledge live. skip #15546 | GO
 
