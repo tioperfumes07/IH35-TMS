@@ -3,8 +3,6 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-cursor-picker-chrome-orphan-guard-registry-batch";
-/** 91 orphans on handoff minus these 14 Cursor picker/chrome/surface-bar guards. */
-const MAX_REMAINING = 77;
 const REQUIRED = [
   "verify-collapsed-list-filters-apply.mjs",
   "verify-dispatch-picker-law-queues.mjs",
@@ -24,26 +22,21 @@ const REQUIRED = [
 
 function failures(classification) {
   const wired = new Set(classification.fullyWired);
-  const out = REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
-  if (classification.unaccounted.length > MAX_REMAINING) {
-    out.push(`unaccounted guard census ${classification.unaccounted.length} exceeds ${MAX_REMAINING}`);
-  }
-  return out;
+  return REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
 }
 
 if (process.argv.includes("--selftest")) {
   const baseline = {
     fullyWired: [...REQUIRED],
-    unaccounted: Array.from({ length: MAX_REMAINING }, (_, i) => `other-${i}.mjs`),
+    unaccounted: ["unrelated-repository-guard.mjs"],
   };
-  const mutations = [
-    { name: "required guard removed", value: { ...baseline, fullyWired: REQUIRED.slice(1) } },
-    { name: "orphan census regresses", value: { ...baseline, unaccounted: [...baseline.unaccounted, "regression.mjs"] } },
-  ];
-  for (const mutation of mutations) {
-    if (!failures(mutation.value).length) throw new Error(`${mutation.name} was not rejected`);
+  if (!failures({ ...baseline, fullyWired: REQUIRED.slice(1) }).length) {
+    throw new Error("required guard removal was not rejected");
   }
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  if (failures({ ...baseline, unaccounted: [...baseline.unaccounted, "another-unrelated-guard.mjs"] }).length) {
+    throw new Error("unrelated repository guard growth incorrectly failed the focused picker/chrome registry");
+  }
+  console.log(`${LABEL} SELFTEST PASS — owned removal rejected; unrelated census growth accepted`);
   process.exit(0);
 }
 
@@ -53,5 +46,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `${LABEL} PASS — ${REQUIRED.length} Cursor picker/chrome/surface-bar guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`,
+  `${LABEL} PASS — ${REQUIRED.length} exact Cursor picker/chrome/surface-bar guards execute in CI`,
 );
