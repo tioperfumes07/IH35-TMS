@@ -9061,6 +9061,7 @@
       "notes",
       "operating_company_id",
       "result",
+      "source_doc_id",
       "updated_at",
       "voided_at",
       "voided_reason"
@@ -9792,6 +9793,7 @@
       "issued_date",
       "notes",
       "operating_company_id",
+      "source_doc_id",
       "updated_at",
       "voided_at",
       "voided_reason"
