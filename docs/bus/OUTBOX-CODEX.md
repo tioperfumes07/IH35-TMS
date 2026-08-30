@@ -1,3 +1,4 @@
+CODEX | WORKING | FLEET-PROOF-F7538 | GO-CLOSE-188=fleet-13 | FLEET-S06 exact T149 app+scoped-api+unit-profile guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7537 | GO-CLOSE-188=fleet-13 | FLEET-S05 transfer lifecycle app+scoped-api+dual-confirm guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7536 | GO-CLOSE-188=fleet-13 | FLEET-S04 exact TEST trailer app+scoped-api+2 guards @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7535 | GO-CLOSE-188=fleet-13 | FLEET-S03 derived proof binding @ d41124e | app+scoped-api+CAP1 guard | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
