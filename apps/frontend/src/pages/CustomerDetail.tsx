@@ -1281,7 +1281,12 @@ export function CustomerDetailPage() {
           <CustomerFactoringRecourseReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
           <CustomerFactoringSubmitQueueReverseSection operatingCompanyId={operatingCompanyId} customerId={id} />
         </>
-      ) : null}
+      ) : (
+        // CUST-01 C7: this whole block (dispatcher/safety events, complaints, ETA notifications,
+        // cargo claims, safety alerts, cash forecast, load templates, 4 factoring sections) used
+        // to vanish with no explanation when no operating company was selected.
+        <p className="text-sm text-red-600">Select an operating company to view linked records.</p>
+      )}
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 

@@ -83,13 +83,18 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
           <h2 className="text-lg font-semibold text-gray-900">Portal users</h2>
           <p className="text-sm text-gray-600">Shipper logins scoped to this customer&apos;s loads only.</p>
         </div>
-        <Button onClick={() => setOpen(true)} disabled={!operatingCompanyId}>
+        <Button onClick={() => setOpen(true)} disabled={!operatingCompanyId} title={operatingCompanyId ? undefined : "Select an operating company first"}>
           Create portal login
         </Button>
       </div>
 
       <DataPanel title="Active portal accounts">
-        {usersQuery.isError ? (
+        {/* CUST-01 C5: with no operating company selected the query never fires (enabled gate
+            above) and the table below silently rendered "No portal users yet." -- indistinguishable
+            from a customer that genuinely has zero portal users. Say why instead of guessing. */}
+        {!operatingCompanyId ? (
+          <p className="py-4 text-center text-sm text-gray-500">Select an operating company to view portal users.</p>
+        ) : usersQuery.isError ? (
           <ListErrorState
             title="Couldn't load portal users"
             status={0}
