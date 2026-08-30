@@ -22,6 +22,8 @@ const FE = path.join(ROOT, "apps/frontend/src");
 
 const ALLOWED_NESTED = new Set([
   "components/Modal.tsx",
+  // Shared drawer engine, not a business surface. Its concrete consumers remain inventoried.
+  "components/parity/ParityDrawer.tsx",
   "components/parity/EntityPicker.tsx",
   "components/parity/ReferenceSelect.tsx",
   "components/parity/InlineCreateDrawer.tsx",
