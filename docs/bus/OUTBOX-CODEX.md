@@ -1,3 +1,4 @@
+CODEX | WORKING | MAINT-PROOF-F7540 | GO-CLOSE-188=maint-11 | MAINT-S01 home app+scoped-kpi-api+tab/read-recovery guards @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7539 | GO-CLOSE-188=fleet-13 | FLEET-S07 exact T149 detail app+scoped-api+unit-detail guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7538 | GO-CLOSE-188=fleet-13 | FLEET-S06 exact T149 app+scoped-api+unit-profile guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7537 | GO-CLOSE-188=fleet-13 | FLEET-S05 transfer lifecycle app+scoped-api+dual-confirm guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
