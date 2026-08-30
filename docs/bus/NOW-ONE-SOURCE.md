@@ -1,3 +1,5 @@
+**2026-08-30T18:28Z GO-NOW.** No packets through Jorge. CC-1 wrappers/R7 done — DEFECT-A next. DOM #18286 shipped. Secret `PROD_READONLY_DATABASE_URL` owner-only. Skip #15546.
+
 **2026-08-30T18:22Z GO-USMCA-ONLY-SISTER-PROOF.** Do not work TRANSP/TRK. Posting stay ON. Sister TESTs = **MECHANISM only**. Never money/RLS/C30/Live Chrome 12. LAW-8 stands. Packet `docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md`. Skip #15546.
 
 **2026-08-30T18:08Z GO-KEEP-MOVING.** SPA #18270 **live**. API deploy `dep-daa731ss728c73fj1400`. Packet `docs/lockdown/GO-KEEP-MOVING-2026-08-30.md`. Skip #15546.
