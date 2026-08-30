@@ -1907,7 +1907,7 @@
     {
       "id": "catalog.accounting.detail_types_lookup.list",
       "tab": "Accounting",
-      "sub": "Account Types",
+      "sub": "Detail Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
         "picker_law",
@@ -1918,7 +1918,7 @@
     {
       "id": "catalog.accounting.detail_types_lookup.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create \u2014 Detail Types",
       "route_hint": "/lists/accounting/detail-types-lookup",
       "required": [
         "picker_law",
@@ -1929,7 +1929,7 @@
     {
       "id": "catalog.accounting.audit_event_types.list",
       "tab": "Accounting",
-      "sub": "Account Types",
+      "sub": "Audit Event Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
         "qbo_chrome",
@@ -1939,7 +1939,7 @@
     {
       "id": "catalog.accounting.audit_event_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create \u2014 Audit Event Types",
       "route_hint": "/lists/accounting/audit-event-types",
       "required": [
         "qbo_chrome"
@@ -1948,7 +1948,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts.list",
       "tab": "Accounting",
-      "sub": "Account Types",
+      "sub": "Chart of Accounts",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
         "picker_law",
@@ -1959,7 +1959,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Types",
+      "sub": "+ Create \u2014 Chart of Accounts",
       "route_hint": "/lists/accounting/chart-of-accounts",
       "required": [
         "picker_law",
@@ -1970,7 +1970,7 @@
     {
       "id": "catalog.accounting.account_types.list",
       "tab": "Accounting",
-      "sub": "Detail Types",
+      "sub": "Account Type Catalog",
       "route_hint": "/lists/accounting/account-types",
       "required": [
         "qbo_chrome",
@@ -1980,7 +1980,7 @@
     {
       "id": "catalog.accounting.account_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Detail Types",
+      "sub": "+ Create \u2014 Account Type Catalog",
       "route_hint": "/lists/accounting/account-types",
       "required": [
         "qbo_chrome"
@@ -1989,7 +1989,7 @@
     {
       "id": "catalog.accounting.detail_types.list",
       "tab": "Accounting",
-      "sub": "Audit Event Types",
+      "sub": "Detail Type",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
         "picker_law",
@@ -2000,7 +2000,7 @@
     {
       "id": "catalog.accounting.detail_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Audit Event Types",
+      "sub": "+ Create \u2014 Detail Type",
       "route_hint": "/lists/accounting/detail-types",
       "required": [
         "picker_law",
@@ -2011,7 +2011,7 @@
     {
       "id": "catalog.accounting.classes.list",
       "tab": "Accounting",
-      "sub": "Chart of Accounts",
+      "sub": "Classes",
       "route_hint": "/lists/accounting/classes",
       "required": [
         "qbo_chrome",
@@ -2021,7 +2021,7 @@
     {
       "id": "catalog.accounting.classes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Chart of Accounts",
+      "sub": "+ Create \u2014 Classes",
       "route_hint": "/lists/accounting/classes",
       "required": [
         "qbo_chrome",
@@ -2031,7 +2031,7 @@
     {
       "id": "catalog.accounting.payment_terms.list",
       "tab": "Accounting",
-      "sub": "Account Type",
+      "sub": "Payment Terms",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
         "qbo_chrome",
@@ -2041,7 +2041,7 @@
     {
       "id": "catalog.accounting.payment_terms.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Type",
+      "sub": "+ Create \u2014 Payment Terms",
       "route_hint": "/lists/accounting/payment-terms",
       "required": [
         "qbo_chrome",
@@ -2051,7 +2051,7 @@
     {
       "id": "catalog.accounting.posting_templates.list",
       "tab": "Accounting",
-      "sub": "Detail Type",
+      "sub": "Posting Templates",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
         "picker_law",
@@ -2062,7 +2062,7 @@
     {
       "id": "catalog.accounting.posting_templates.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Detail Type",
+      "sub": "+ Create \u2014 Posting Templates",
       "route_hint": "/lists/accounting/posting-templates",
       "required": [
         "picker_law",
@@ -2073,7 +2073,7 @@
     {
       "id": "catalog.accounting.journal_entry_types.list",
       "tab": "Accounting",
-      "sub": "Classes",
+      "sub": "Journal Entry Types",
       "route_hint": "/lists/accounting/journal-entry-types",
       "required": [
         "picker_law",
@@ -2084,7 +2084,7 @@
     {
       "id": "catalog.accounting.journal_entry_types.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Classes",
+      "sub": "+ Create \u2014 Journal Entry Types",
       "route_hint": "/lists/accounting/journal-entry-types",
       "owned_surface_paths": [
         "components/accounting/JournalEntryTypePicker.tsx"
@@ -2098,7 +2098,7 @@
     {
       "id": "catalog.accounting.qbo_bulk_link.list",
       "tab": "Accounting",
-      "sub": "Payment Terms",
+      "sub": "QBO vendor / class bulk-link",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
         "qbo_chrome",
@@ -2108,7 +2108,7 @@
     {
       "id": "catalog.accounting.qbo_bulk_link.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Payment Terms",
+      "sub": "+ Create \u2014 QBO vendor / class bulk-link",
       "route_hint": "/lists/accounting/qbo-bulk-link",
       "required": [
         "qbo_chrome",
@@ -2118,7 +2118,7 @@
     {
       "id": "catalog.accounting.qbo_categories.list",
       "tab": "Accounting",
-      "sub": "Posting Templates",
+      "sub": "Product & Service Categories",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
         "qbo_chrome",
@@ -2128,7 +2128,7 @@
     {
       "id": "catalog.accounting.qbo_categories.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Posting Templates",
+      "sub": "+ Create \u2014 Product & Service Categories",
       "route_hint": "/lists/accounting/qbo-categories",
       "required": [
         "qbo_chrome",
@@ -2138,7 +2138,7 @@
     {
       "id": "catalog.accounting.items.list",
       "tab": "Accounting",
-      "sub": "Journal Entry Types",
+      "sub": "Products & Services",
       "route_hint": "/lists/accounting/items",
       "required": [
         "picker_law",
@@ -2149,7 +2149,7 @@
     {
       "id": "catalog.accounting.items.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Journal Entry Types",
+      "sub": "+ Create \u2014 Products & Services",
       "route_hint": "/lists/accounting/items",
       "required": [
         "picker_law",
@@ -2160,7 +2160,7 @@
     {
       "id": "catalog.accounting.account_role_bindings.list",
       "tab": "Accounting",
-      "sub": "QBO bulk-link",
+      "sub": "Account Role Bindings",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
         "qbo_chrome",
@@ -2170,7 +2170,7 @@
     {
       "id": "catalog.accounting.account_role_bindings.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 QBO bulk-link",
+      "sub": "+ Create \u2014 Account Role Bindings",
       "route_hint": "/lists/accounting/account-role-bindings",
       "required": [
         "qbo_chrome",
@@ -2180,7 +2180,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts_seeds.list",
       "tab": "Accounting",
-      "sub": "Product & Service Categories",
+      "sub": "Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
         "qbo_chrome",
@@ -2190,7 +2190,7 @@
     {
       "id": "catalog.accounting.chart_of_accounts_seeds.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Product & Service Categories",
+      "sub": "+ Create \u2014 Chart of Accounts Seeds",
       "route_hint": "/lists/accounting/chart-of-accounts-seeds",
       "required": [
         "qbo_chrome",
@@ -2200,7 +2200,7 @@
     {
       "id": "catalog.accounting.expense_categories.list",
       "tab": "Accounting",
-      "sub": "Items",
+      "sub": "Expense Categories",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
         "qbo_chrome",
@@ -2210,7 +2210,7 @@
     {
       "id": "catalog.accounting.expense_categories.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Items",
+      "sub": "+ Create \u2014 Expense Categories",
       "route_hint": "/lists/accounting/expense-categories",
       "required": [
         "qbo_chrome",
@@ -2220,7 +2220,7 @@
     {
       "id": "catalog.accounting.payment_methods.list",
       "tab": "Accounting",
-      "sub": "Account Role Bindings",
+      "sub": "Payment Methods",
       "route_hint": "/lists/accounting/payment-methods",
       "required": [
         "picker_law",
@@ -2231,7 +2231,7 @@
     {
       "id": "catalog.accounting.payment_methods.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Account Role Bindings",
+      "sub": "+ Create \u2014 Payment Methods",
       "route_hint": "/lists/accounting/payment-methods",
       "owned_surface_paths": [
         "components/driver-finance/PaymentMethodPicker.tsx"
@@ -2245,7 +2245,7 @@
     {
       "id": "catalog.accounting.tax_codes.list",
       "tab": "Accounting",
-      "sub": "Chart of Accounts Seeds",
+      "sub": "Tax Codes",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
         "qbo_chrome",
@@ -2255,7 +2255,7 @@
     {
       "id": "catalog.accounting.tax_codes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Chart of Accounts Seeds",
+      "sub": "+ Create \u2014 Tax Codes",
       "route_hint": "/lists/accounting/tax-codes",
       "required": [
         "qbo_chrome",
@@ -2265,7 +2265,7 @@
     {
       "id": "catalog.accounting.currency_codes.list",
       "tab": "Accounting",
-      "sub": "Expense Categories",
+      "sub": "Currency Codes",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
         "qbo_chrome",
@@ -2275,7 +2275,7 @@
     {
       "id": "catalog.accounting.currency_codes.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Expense Categories",
+      "sub": "+ Create \u2014 Currency Codes",
       "route_hint": "/lists/accounting/currency-codes",
       "required": [
         "qbo_chrome",
@@ -2285,7 +2285,7 @@
     {
       "id": "catalog.accounting.void_cancel_reasons.list",
       "tab": "Accounting",
-      "sub": "Payment Methods",
+      "sub": "Void/Cancel Reasons",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
         "qbo_chrome",
@@ -2295,7 +2295,7 @@
     {
       "id": "catalog.accounting.void_cancel_reasons.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Payment Methods",
+      "sub": "+ Create \u2014 Void/Cancel Reasons",
       "route_hint": "/lists/accounting/void-cancel-reasons",
       "required": [
         "qbo_chrome",
@@ -2305,7 +2305,7 @@
     {
       "id": "catalog.accounting.abandonment_defaults.list",
       "tab": "Accounting",
-      "sub": "Currency Codes",
+      "sub": "Abandonment defaults",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
         "qbo_chrome",
@@ -2315,7 +2315,7 @@
     {
       "id": "catalog.accounting.abandonment_defaults.create",
       "tab": "Accounting",
-      "sub": "+ Create \u2014 Currency Codes",
+      "sub": "+ Create \u2014 Abandonment defaults",
       "route_hint": "/lists/accounting/abandonment-defaults",
       "required": [
         "qbo_chrome",
