@@ -280,6 +280,8 @@ export type CreateFuelTransactionInput = {
   load_id?: string | null;
   load_exemption_reason?: string;
   cash_advance?: boolean;
+  /** DOC-01 remainder (GO-1405) — docs.files id, uploaded via requestUploadUrlFromFile first. */
+  source_doc_id?: string | null;
 };
 
 export function createFuelTransaction(companyId: string, body: CreateFuelTransactionInput) {

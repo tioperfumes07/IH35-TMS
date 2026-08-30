@@ -64,6 +64,13 @@ const createFuelTransactionBodySchema = z
     load_exemption_reason: z.string().trim().min(3).max(200).optional(),
     /** True when this purchase draws down a driver's fuel cash advance rather than company-direct. */
     cash_advance: z.boolean().default(false),
+    /**
+     * DOC-01 remainder (GO-1405, owner packet IH35-FINISH-2026-08-29/CC-1): fuel.fuel_transactions
+     * has carried this FK -> docs.files(id) since migration 202613290400 but no create surface ever
+     * collected it. No manual existence pre-check -- the FK constraint itself rejects an invalid
+     * file id, matching the fines.routes.ts source_doc_id reference pattern this mirrors.
+     */
+    source_doc_id: z.string().uuid().nullable().optional(),
   })
   .refine((v) => Boolean(v.load_id) || Boolean(v.load_exemption_reason), {
     message: "load_id or load_exemption_reason is required — an unattributed fuel purchase needs a stated reason (G18)",
@@ -386,11 +393,12 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
             notes,
             load_required,
             load_exemption_reason,
-            created_by_user_id
+            created_by_user_id,
+            source_doc_id
           )
           VALUES (
             $1::uuid, $2::timestamptz, $2::timestamptz, $3, $4, $5, $6, $7, $8, $9,
-            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid
+            $10, $11, $12, $13, $14, $15, 'manual', $16, $18, $17, $19::uuid, $20::uuid
           )
           RETURNING id::text AS id
         `,
@@ -419,6 +427,7 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           // verify-disp-wire-06-load-expense-link).
           Boolean(b.load_id),
           authUser.uuid,
+          b.source_doc_id ?? null,
         ]
       )) as { rows: Array<{ id: string }> };
       const fuelTransactionId = insertRes.rows[0]?.id;
