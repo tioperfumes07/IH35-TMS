@@ -48,16 +48,22 @@ const REQUIRED_DOCS = [
   ".claude/skills/ih35-evidence-before-done/SKILL.md",
 ];
 
-const GITIGNORE_UNIGNORES = [
-  "!.cursor/rules/06-quality-hardline-and-law.mdc",
-  "!.cursor/rules/07-never-delete-only-add.mdc",
-  "!.cursor/rules/10-verification-and-neon-rls.mdc",
-  "!.cursor/rules/15-research-mandate.mdc",
-  "!.cursor/rules/16-fix-not-patch-evidence-law.mdc",
-  "!.cursor/rules/33-standing-session-directive.mdc",
-];
-
 const failures = [];
+
+function hasAlwaysApply(body) {
+  return /^---[\s\S]*?alwaysApply:\s*true[\s\S]*?---/m.test(body);
+}
+
+if (process.argv.includes("--selftest")) {
+  const valid = "---\nalwaysApply: true\n---\n# Session law\n";
+  const plantedDefect = valid.replace("alwaysApply: true", "alwaysApply: false");
+  if (!hasAlwaysApply(valid) || hasAlwaysApply(plantedDefect)) {
+    console.error("verify-session-law-autoload SELFTEST FAIL — planted alwaysApply defect escaped");
+    process.exit(1);
+  }
+  console.log("verify-session-law-autoload SELFTEST PASS — planted alwaysApply defect rejected");
+  process.exit(0);
+}
 
 for (const name of REQUIRED) {
   const filePath = path.join(RULES_DIR, name);
@@ -66,7 +72,7 @@ for (const name of REQUIRED) {
     continue;
   }
   const body = fs.readFileSync(filePath, "utf8");
-  if (!/^---[\s\S]*?alwaysApply:\s*true[\s\S]*?---/m.test(body)) {
+  if (!hasAlwaysApply(body)) {
     failures.push(`alwaysApply: true missing in .cursor/rules/${name}`);
   }
   try {
@@ -86,13 +92,6 @@ for (const name of REQUIRED) {
 for (const rel of REQUIRED_DOCS) {
   if (!fs.existsSync(path.join(ROOT, rel))) {
     failures.push(`MISSING canonical doc: ${rel}`);
-  }
-}
-
-const gitignore = fs.readFileSync(path.join(ROOT, ".gitignore"), "utf8");
-for (const line of GITIGNORE_UNIGNORES) {
-  if (!gitignore.includes(line)) {
-    failures.push(`.gitignore must un-ignore ${line}`);
   }
 }
 
