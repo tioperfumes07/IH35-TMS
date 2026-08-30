@@ -38,6 +38,8 @@ vi.mock("../../api/mdata", () => ({
 
 vi.mock("../../api/safety", () => ({
   listDriverQualificationItems: vi.fn().mockResolvedValue({ items: [] }),
+  // DRIVER-DQF-KPI-PAGE-1-SILENT-TRUNCATION: the fleet-wide summary the KPI cards now read from.
+  getDriverQualificationSummary: vi.fn().mockResolvedValue({ total: 1, compliant: 0, attention: 0, non_compliant: 0, empty: 1 }),
   // The shared Modal (pulled in via CreateDriverModal) reads/writes size prefs through api/safety.
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
   patchUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),

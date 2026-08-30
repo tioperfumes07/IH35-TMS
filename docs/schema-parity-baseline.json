@@ -5003,6 +5003,7 @@
       "qbo_class_id",
       "qbo_expense_id",
       "source",
+      "source_doc_id",
       "source_row_hash",
       "total_cost",
       "trailer_id",

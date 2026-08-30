@@ -23,6 +23,7 @@ vi.mock("../../api/mdata", () => ({
 
 vi.mock("../../api/safety", () => ({
   listDriverQualificationItems: vi.fn().mockResolvedValue({ items: [] }),
+  getDriverQualificationSummary: vi.fn().mockResolvedValue({ total: 1, compliant: 0, attention: 0, non_compliant: 0, empty: 1 }),
   getUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
   patchUserPreferences: vi.fn().mockResolvedValue({ preferences: {} }),
 }));

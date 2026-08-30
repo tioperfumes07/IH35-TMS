@@ -143,6 +143,20 @@ export function listDriverQualificationItems(driverId: string, companyId: string
   );
 }
 
+export type DriverQualificationSummary = {
+  total: number;
+  compliant: number;
+  attention: number;
+  non_compliant: number;
+  empty: number;
+};
+
+/** DRIVER-DQF-KPI-PAGE-1-SILENT-TRUNCATION: fleet-wide DQF compliance counts, computed server-side
+ * over every scoped driver -- not just the current page of the Drivers "Profiles" table. */
+export function getDriverQualificationSummary(companyId: string) {
+  return apiRequest<DriverQualificationSummary>(`/api/v1/safety/driver-qualification/summary?${q(companyId)}`);
+}
+
 export function createDriverQualificationItem(
   companyId: string,
   body: {

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listDrivers } from "../../api/mdata";
 import { DriverImportModal } from "./DriverImportModal";
-import { listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
+import { getDriverQualificationSummary, listDriverQualificationItems, type DriverQualificationFileItem } from "../../api/safety";
 import { Button } from "../../components/Button";
 import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -84,7 +84,30 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
     });
   }, [dqfQ.data, pageDrivers]);
 
+  // DRIVER-DQF-KPI-PAGE-1-SILENT-TRUNCATION: these counts used to be derived from `rows` (the
+  // CURRENTLY LOADED PAGE of pageSize=25 drivers), so a fleet of any size beyond one page silently
+  // showed a compliance dashboard covering only that page while the "Drivers" card showed the real
+  // fleet total -- a fleet manager reading "0 Non-compliant" had no way to know that was true only
+  // for 25 of e.g. 159 drivers. Fetch the real fleet-wide counts from a dedicated backend aggregate
+  // instead (computed over every scoped driver in one query, not an N+1 walk).
+  const summaryQ = useQuery({
+    queryKey: ["drivers", "dqf-summary", companyId],
+    enabled: Boolean(companyId),
+    queryFn: () => getDriverQualificationSummary(companyId),
+  });
+
   const totals = useMemo(() => {
+    if (summaryQ.data) {
+      return {
+        total: summaryQ.data.total,
+        compliant: summaryQ.data.compliant,
+        attention: summaryQ.data.attention,
+        nonCompliant: summaryQ.data.non_compliant,
+        empty: summaryQ.data.empty,
+      };
+    }
+    // Fallback only while the fleet-wide summary hasn't loaded yet (or failed) -- the page-scoped
+    // numbers below are an honest floor, never the final answer once summaryQ settles.
     const compliant = rows.filter((row) => row.summary.level === "compliant").length;
     const attention = rows.filter((row) => row.summary.level === "attention").length;
     const nonCompliant = rows.filter((row) => row.summary.level === "non_compliant").length;
@@ -96,7 +119,7 @@ export function DriversListPage({ onOpenProfile }: DriversListPageProps) {
       nonCompliant,
       empty,
     };
-  }, [rows, totalDrivers]);
+  }, [rows, totalDrivers, summaryQ.data]);
 
   const focusedRows = useMemo(() => {
     if (!dqfFocus) return rows;
