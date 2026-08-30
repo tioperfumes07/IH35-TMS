@@ -15,6 +15,7 @@ import { registerSessionMiddleware } from "./auth/session-middleware.js";
 import { registerQboOAuthRoutes } from "./integrations/qbo/oauth.routes.js";
 import { registerQboWebhookRoutes } from "./integrations/qbo/qbo-webhook.routes.js";
 import { registerSamsaraConfigRoutes } from "./integrations/samsara/samsara-config.routes.js";
+import { registerSamsaraMasterSyncRoutes } from "./integrations/samsara/samsara-master-sync.routes.js";
 import { registerSamsaraLivePositionRoutes } from "./integrations/samsara/positions/live-position.routes.js";
 import { registerTriSignalRoutes } from "./dispatch/load-status-signal/tri-signal.routes.js";
 import { initializeSamsaraPositionPollWorker } from "./jobs/samsara-position-poll-worker.js";
@@ -735,6 +736,11 @@ async function main() {
   await registerRelayHealthRoutes(app);
   await registerSamsaraEngineFaultRoutes(app);
   await registerSamsaraConfigRoutes(app);
+  // SAMSARA-MASTER-SYNC-ROUTES-ORPHANED: this file has no `export default fp(...)`, so it is not
+  // covered by any directory-wide autoload (every other integrations/samsara/*.routes.ts file gets
+  // its own explicit register call here too) -- it was simply never added, so the manual "sync now"
+  // drivers/assets endpoints 404'd live despite existing in the repo and being fully implemented.
+  await registerSamsaraMasterSyncRoutes(app);
   await registerSamsaraLivePositionRoutes(app);
   await registerTriSignalRoutes(app);
   await registerSamsaraHealthRoutes(app);
