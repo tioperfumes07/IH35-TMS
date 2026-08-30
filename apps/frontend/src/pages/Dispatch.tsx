@@ -122,7 +122,7 @@ export function DispatchPage({
   }, [routeLoadId]);
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
-  const [newLoadOpen, setNewLoadOpen] = useState(false);
+  const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
@@ -205,8 +205,9 @@ export function DispatchPage({
   const loadId = pinnedLoadId ?? routeLoadId ?? searchParams.get("load_id") ?? searchParams.get("load");
   const canEdit = true;
 
-  // PROGRAM-TRACKER-F07 + MODAL-01: one opener (this effect). Seed useState(false) — never
-  // URL-derived. Close must leave /dispatch/book-load and drop ?book_load=1 (URL wins on remount).
+  // PROGRAM-TRACKER-F07 + MODAL-01: the canonical /dispatch/book-load route opens on first paint;
+  // this effect additionally honors legacy ?book_load=1. Close retracts both URL forms below, so a
+  // later remount cannot resurrect a wizard the operator already dismissed.
   useEffect(() => {
     const onBookPath = location.pathname.replace(/\/$/, "") === "/dispatch/book-load";
     const q = searchParams.get("book_load") === "1";
