@@ -279,7 +279,7 @@ export function DispatchPage({
         title="Dispatch"
         subtitle="Loads, stops, assignments, geofencing"
         actions={
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2 overflow-x-auto">
             <Button
               type="button"
               variant={view === "overview" ? "primary" : "secondary"}

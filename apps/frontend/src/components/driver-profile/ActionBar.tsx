@@ -4,6 +4,7 @@ import { SendMessageModal } from "../drivers/SendMessageModal";
 import { SuspendConfirmModal } from "../drivers/SuspendConfirmModal";
 import { TerminateConfirmModal } from "../drivers/TerminateConfirmModal";
 import { Button } from "../Button";
+import { resolveApiUrl } from "../../api/client";
 
 const linkClass =
   "inline-flex h-8 items-center justify-center rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-medium text-gray-800";
@@ -28,7 +29,9 @@ export function ActionBar({
   const [suspendOpen, setSuspendOpen] = useState(false);
   const [terminateOpen, setTerminateOpen] = useState(false);
 
-  const pdfUrl = `/api/v1/mdata/drivers/${driverId}/export.pdf?operating_company_id=${encodeURIComponent(companyId)}`;
+  const pdfUrl = resolveApiUrl(
+    `/api/v1/mdata/drivers/${driverId}/export.pdf?operating_company_id=${encodeURIComponent(companyId)}`,
+  );
   const isTerminated = driverStatus === "Terminated";
 
   return (

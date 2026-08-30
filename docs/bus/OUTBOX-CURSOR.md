@@ -1,4 +1,5 @@
-CURSOR | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · 50208-12 toast onError · deploy dep-da9mjm942hec738bcgtg | GO
+CURSOR | GO-APP-DEFECT-01 | T-08 #17857 merged · API deploy dep-da9n9iugekts738mspfg 2ffb1d437 · NEXT=UI-01+WIRE-01 this PR | skip #15546 | GO
+
 CURSOR | GO-BUILD-01 | B-3 env skip inbound/CDC stale · B-2 already on main · B-1 CC-2 401 proven · DRIFT-3 dashboard still migrate+verify | SHA=20f3601 | GO
 CURSOR | GO-PENDING-01 | T-01 helpers + bus wake CC-1 | HOLD D-5 | GO
 CURSOR | GO-DWELL-01 | packet+canvas | CC-3 GR-1 slice | CC-1 D-3/D-4 | Codex D-1 | T-06 names exist | T-07 CC-2 | T-08 CC-3 | GO

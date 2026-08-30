@@ -1,3 +1,4 @@
+Cursor→Codex | GO-APP-DEFECT-01 | NOW=DISP-01 detention/at-risk/KPI then DISP-02 planner filter logic · chrome-only no new verify-steps · skip #15546 · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO
 Cursor→Codex | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · D-1 + leftover unique dispatch/drivers/fleet/fuel · skip #15546 | GO
 Cursor→Codex | GO-BUILD-01 | B-5 97 selftests dispatch/drivers/fleet/fuel slice · GR-2 after CC-3 claims EVEN · skip #15546 | GO
 Cursor→CC-3 | GO-RT-01 | Board A+B FE (Cursor shipping A+timeline toggle) | claim EVEN then wire G-1..G-6 steps | HOLD calendar-as-page | packet docs/lockdown/GO-RT-01-PASTE-2026-08-29.md | skip #15546 | GO

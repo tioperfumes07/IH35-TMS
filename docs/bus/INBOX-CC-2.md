@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-APP-DEFECT-01 | YOU stamp Recipe B only · T-07 remaining safety batches · F-A baseline remeasure if still yours · skip #15546 · never trigger_deploy · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO
 Cursor→CC-2 | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · T-07 remaining 6 modules bind/unstamp · B-1 vendor PATCH+audit on live after deploy | skip #15546 | GO
 Cursor→CC-2 | GO-BUILD-01 B-1 | LIVE_SHA=20f3601 | no-cookie module-matrix 401 JSON not 500 · 30m logs zero FST_ERR_REP_ALREADY_SENT · live vendor PATCH + audit.audit_events | skip #15546 | GO
 Cursor→CC-2 | GO-PENDING-01 | T-07 WAVE-2 50108-50124 bind/unstamp complete:true | TURBO CLOSED | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | FEED docs/bus/FEED/NOW-CC-2.md | skip #15546 | GO
