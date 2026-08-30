@@ -1,9 +1,9 @@
 {
   "healthzSha": "48e08e5",
-  "generated_at": "2026-08-30T05:48:18.000Z",
+  "generated_at": "2026-08-30T05:49:21.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T00:48:18-05:00",
-    "sourceSha": "bf6408abb8",
+    "generatedAt": "2026-08-30T00:49:21-05:00",
+    "sourceSha": "295320d25",
     "deployedSha": "48e08e5",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2308,
@@ -2123,12 +2123,30 @@
   },
   "recentActivity": [
     {
+      "number": 18052,
+      "title": "FINDING: 50253-50269 — 17 more pages zero isError rendering (tasks, vendors, accounting, bank, compliance, insurance, reports, safety, driver-finance, drivers, fleet, maintenance)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18052",
+      "sha": "295320d25",
+      "committedAtIso": "2026-08-30T00:49:21-05:00"
+    },
+    {
+      "number": 18053,
+      "title": "FINDING: FUEL-MONEY-F7418 route silent load-suggestion failure",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 12:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18053",
+      "sha": "2c65049a0",
+      "committedAtIso": "2026-08-30T00:48:17-05:00"
+    },
+    {
       "number": 18051,
       "title": "FINDING: GUARD-F7417 fuel route evidence proof-state drift",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:42 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18051",
-      "sha": "7e54b2630a",
+      "sha": "7e54b2630",
       "committedAtIso": "2026-08-30T00:42:53-05:00"
     },
     {
@@ -2137,7 +2155,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:35 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18050",
-      "sha": "42abb914b4",
+      "sha": "42abb914b",
       "committedAtIso": "2026-08-30T00:35:46-05:00"
     },
     {
@@ -2146,7 +2164,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:34 AM CT",
       "url": "",
-      "sha": "fe06f7f675",
+      "sha": "fe06f7f67",
       "committedAtIso": "2026-08-30T05:34:59Z"
     },
     {
@@ -2155,7 +2173,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:33 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18049",
-      "sha": "aa0876e405",
+      "sha": "aa0876e40",
       "committedAtIso": "2026-08-30T00:33:40-05:00"
     },
     {
@@ -2164,7 +2182,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:33 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18046",
-      "sha": "1d3dd09812",
+      "sha": "1d3dd0981",
       "committedAtIso": "2026-08-30T00:33:12-05:00"
     },
     {
@@ -2173,7 +2191,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:32 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18048",
-      "sha": "b314d9b219",
+      "sha": "b314d9b21",
       "committedAtIso": "2026-08-30T00:32:26-05:00"
     },
     {
@@ -2182,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:32 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18047",
-      "sha": "e7ca9071de",
+      "sha": "e7ca9071d",
       "committedAtIso": "2026-08-30T00:32:04-05:00"
     },
     {
@@ -2191,26 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 12:24 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18045",
-      "sha": "820930cd11",
+      "sha": "820930cd1",
       "committedAtIso": "2026-08-30T00:24:48-05:00"
-    },
-    {
-      "number": 18044,
-      "title": "FINDING: N/A -- USER-VERIFY-01 live-Chrome VERIFY-1..8 walk, permission matrix (GO-LAST-26-v2)",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18044",
-      "sha": "4dee9af937",
-      "committedAtIso": "2026-08-30T00:22:58-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:22 AM CT",
-      "url": "",
-      "sha": "e4e6517532",
-      "committedAtIso": "2026-08-30T05:22:35Z"
     }
   ]
 }
