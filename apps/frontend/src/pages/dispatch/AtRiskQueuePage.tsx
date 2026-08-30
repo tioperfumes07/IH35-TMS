@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { listAtRiskDispatchLoads } from "../../api/dispatch";
+import { listAtRiskOrLateDispatchLoads } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -22,8 +22,8 @@ export function AtRiskQueuePage() {
   const companyId = selectedCompanyId ?? "";
 
   const loadsQ = useQuery({
-    queryKey: ["dispatch", "at-risk-loads", companyId],
-    queryFn: () => listAtRiskDispatchLoads(companyId),
+    queryKey: ["dispatch", "at-risk-or-late-loads", companyId],
+    queryFn: () => listAtRiskOrLateDispatchLoads(companyId),
     enabled: Boolean(companyId),
   });
 
@@ -68,6 +68,11 @@ export function AtRiskQueuePage() {
         render: (load) => [load.delivery_city, load.delivery_state].filter(Boolean).join(", ") || "—",
       },
       {
+        key: "risk_state",
+        label: "Risk state",
+        render: (load) => [load.is_at_risk ? "At-risk" : null, load.is_late ? "Late" : null].filter(Boolean).join(" + "),
+      },
+      {
         key: "eta_signal",
         label: "ETA signal",
         render: (load) => (
@@ -88,8 +93,8 @@ export function AtRiskQueuePage() {
   return (
     <div data-testid="dispatch-at-risk-page" className="mx-auto max-w-6xl space-y-4">
       <PageHeader
-        title="At-Risk Queue"
-        subtitle="In-transit loads with late or near-late ETA predictions"
+        title="At-Risk / Late Queue"
+        subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal"
         actions={
           <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-sm">
             Dispatch Home
@@ -110,9 +115,9 @@ export function AtRiskQueuePage() {
           rows={loads}
           rowKey={(load) => load.id}
           loading={loadsQ.isLoading}
-          emptyText="No at-risk loads right now."
-          storageKey="dispatch-at-risk-queue"
-          exportFilename="at-risk-queue"
+          emptyText="No at-risk or late loads right now."
+          storageKey="dispatch-at-risk-late-queue"
+          exportFilename="at-risk-late-queue"
         />
       )}
     </div>

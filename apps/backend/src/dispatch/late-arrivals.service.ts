@@ -1,5 +1,6 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
+import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
 
 const DEFAULT_LATE_GRACE_MINUTES = 30;
 
@@ -90,7 +91,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
             WHERE sample_load.id = l.id
               AND sample_load.is_sample_data IS NOT TRUE
           )
-          AND l.status IN ('dispatched', 'at_pickup', 'in_transit', 'at_delivery')
+          AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})
           AND sp.scheduled_arrival_at IS NOT NULL
           AND (
             COALESCE(l.latest_eta_prediction->>'confidence_class', '') = 'late'

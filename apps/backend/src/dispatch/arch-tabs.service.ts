@@ -1,5 +1,6 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
+import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
 
 export async function listAtRiskLoads(userId: string, operatingCompanyId: string) {
   return withCurrentUser(userId, async (client) => {
@@ -60,7 +61,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
         ) sp ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.status = 'in_transit'
+          AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})
           AND (
             COALESCE(l.latest_eta_prediction->>'confidence_class', '') IN ('late_risk', 'late')
             OR (
