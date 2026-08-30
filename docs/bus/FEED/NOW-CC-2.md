@@ -1,8 +1,7 @@
-# NOW — CC-2 (GO-ACCT-01)
+# NOW — CC-2 (GO-CLOSE-188)
 
-**ACK:** `CC-2 | ACK | GO-ACCT-01 | NOW=keep-FAIL-then-one-session-per-account-period | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-CLOSE-188 | NOW=keep-FAIL-then-one-session | SHA=<healthz> | GO`
 
-`BANK-ECON-04` and `BANK-SURF-04` stay **honest FAIL**. Then one reconciliation session per account per period (USMCA Aug 2026 has three). Leave `force_complete`. Never `trigger_deploy`. Skip #15546.
+BANK-ECON-04 / BANK-SURF-04 stay FAIL. One rec session per account per period. No prose `prod_verified`. Never `trigger_deploy`.
 
-Packet: `docs/lockdown/GO-ACCT-01/CC-2/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt`
-Canonical: `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`
+Paste: `docs/lockdown/GO-CLOSE-188/CC-2/1-GO-CLOSE-188.txt`

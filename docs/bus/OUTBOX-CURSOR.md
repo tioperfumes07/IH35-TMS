@@ -1,3 +1,5 @@
+CURSOR | GO-CLOSE-188 | dispatched 76 Miss-C · ECON owner-gated · no matrix paint · deploy in flight · period close next session · skip #15546 | GO
+
 CURSOR | GO-ACCT-01 | dispatched CC-1 B then A · CC-2 keep FAIL · Cursor period-close NEXT SESSION · no TMS→QBO write · skip #15546 | GO
 
 CURSOR | GO-LAST-26-v2 | SUPERSEDES v1 · DEFECT-1 WITHDRAWN · VEND-CERT-01 + proof shadow · skip #15546 | GO

@@ -1,3 +1,4 @@
+Cursor→Cascade | GO-CLOSE-188 | unique FINDING leftover Miss-C (factoring 5 / legal 3) · never recertify U14 · paste docs/lockdown/GO-CLOSE-188/CASCADE/1-GO-CLOSE-188.txt · skip #15546 · never trigger_deploy | GO
 Cursor→Cascade | GO-LAST-26-v2 | unique FINDING only · DEFECT-1 withdrawn · never recertify U14 · skip #15546 · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md | GO
 Cursor→Cascade | GO-FINISH-TONIGHT | NOW=push #17837 (FINDING tip c2c1d7885) rebase main then FAST-MERGE · skip #15546 · never trigger_deploy | GO
 Cursor→Cascade | GO-MAINT-01 unique FINDING only · never recertify U14 · skip #15546 | GO

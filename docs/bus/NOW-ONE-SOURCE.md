@@ -1,3 +1,5 @@
+**2026-08-30T15:02Z GO-CLOSE-188 THIS IS NOW.** Read `docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt` then `docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt`. 188 cells: 112 ECON owner-gated until Jorge approves C25–C31; 76 Miss-C start now (lists 25 first). Do not paint Guard/Clicked. Never restamp U14. Deploy in flight. Period close next dedicated session. Skip #15546.
+
 **2026-08-30T14:50Z GO-ACCT-01 THIS IS NOW.** Packet `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`. CC-1 DEFECT B then A. CC-2 keep BANK-ECON-04/SURF-04 FAIL + one rec session per account/period. Cursor period close NEXT SESSION not now. Owner+Martin: QBO −$7.9M assets / RTS virtual / Unauthorized Expenses AR — not coder. No TMS→QBO write-back. Skip #15546.
 
 **2026-08-30T05:05Z GO-LAST-26-v2 THIS IS NOW.** Packet `docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md`. DEFECT-1 withdrawn. V1 packet deleted. Skip #15546.

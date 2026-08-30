@@ -1,0 +1,6 @@
+GO-CLOSE-188 — CASCADE
+Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+
+Unique FINDING only on leftover Miss-C (factoring 5, legal 3, remaining after CC-3/Codex). Never recertify U14. Skip #15546 #17851 unless you own that PR. Never trigger_deploy. Do not paint matrix colours. Do not stamp.
+
+ACK: CASCADE | ACK | GO-CLOSE-188 | NOW=unique-FINDING-miss-c | SHA=<healthz> | GO

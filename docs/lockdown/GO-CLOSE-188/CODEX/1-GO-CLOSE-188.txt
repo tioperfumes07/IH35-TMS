@@ -1,0 +1,8 @@
+GO-CLOSE-188 — CODEX
+Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+
+76 non-econ Miss-C: take safety 14 / fleet 13 / maintenance 11 after CC-3 claims lists 25 (coordinate; no hotfile collide). No new verify-steps — route through a band seat (Rule 37). SAF-ORPH stays HOLD — do not un-hold.
+
+Never recertify U14. Skip #15546. Never trigger_deploy. Do not paint the matrix. Do not write C25–C31 until owner approves.
+
+ACK: CODEX | ACK | GO-CLOSE-188 | NOW=safety-fleet-maint-miss-c | SHA=<healthz> | GO

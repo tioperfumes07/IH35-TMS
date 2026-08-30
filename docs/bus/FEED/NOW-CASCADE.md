@@ -1,5 +1,7 @@
-# NOW — Cascade (GO-TONIGHT-U6-SCEN)
+# NOW — Cascade (GO-CLOSE-188)
 
-Unique FINDING only. T-08 inventory #17851. Never recertify U14. Never treat screenshot as scenario-done. Skip #15546.
+**ACK:** `CASCADE | ACK | GO-CLOSE-188 | NOW=unique-FINDING-miss-c | SHA=<healthz> | GO`
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+Unique FINDING on leftover Miss-C (factoring 5, legal 3). Never recertify U14. Skip #15546. Never `trigger_deploy`.
+
+Paste: `docs/lockdown/GO-CLOSE-188/CASCADE/1-GO-CLOSE-188.txt`
