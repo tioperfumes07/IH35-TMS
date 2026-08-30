@@ -48,6 +48,17 @@ export function collectProblems(sources) {
   if (!/trailer_id/.test(api)) {
     problems.push(`${FILES.api}: create body must include trailer_id`);
   }
+
+  // FUEL-MONEY-F7418 — suggestExpenseLoad rejecting was previously silent: the effect that
+  // auto-fills loadId from a suggestion simply never ran, indistinguishable from "no matching load
+  // found," and the operator could still submit via the G18 exemption unaware auto-linkage was
+  // never evaluated. Fail-loud + non-blocking (manual load pick and G18 exemption must still work).
+  if (!/suggestionQuery\.isError/.test(modal)) {
+    problems.push(`${FILES.modal}: must branch on suggestionQuery.isError (a failed load-suggestion read must not render as a silent "no suggestion")`);
+  }
+  if (!/<ListErrorState[\s\S]{0,200}onRetry=\{\(\) => void suggestionQuery\.refetch\(\)\}/.test(modal)) {
+    problems.push(`${FILES.modal}: must render ListErrorState wired to suggestionQuery.refetch() on error`);
+  }
   return problems;
 }
 
@@ -66,6 +77,9 @@ if (SELFTEST) {
       <EntityPicker kind="driver" />
       <EntityPicker kind="vendor" />
       const loadId = "";
+      {suggestionQuery.isError ? (
+        <ListErrorState title="x" status={0} message={y} onRetry={() => void suggestionQuery.refetch()} />
+      ) : null}
     `,
     home: `CreateFuelTransactionModal\n+ Create`,
     api: `
@@ -80,7 +94,30 @@ if (SELFTEST) {
     console.error(`${LABEL} SELFTEST FAIL`, { badP, goodP });
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST OK`);
+
+  // FUEL-MONEY-F7418 planted regressions: each mutation removes ONE piece of the fix and must
+  // independently fail against the otherwise-good fixture.
+  const mutations = [
+    {
+      name: "drops the isError branch entirely (read failure renders as a silent no-suggestion)",
+      apply: (s) => ({ ...s, modal: s.modal.replace(/suggestionQuery\.isError/g, "false") }),
+    },
+    {
+      name: "ListErrorState's Retry is disconnected from suggestionQuery.refetch()",
+      apply: (s) => ({ ...s, modal: s.modal.replace("onRetry={() => void suggestionQuery.refetch()}", "onRetry={() => {}}") }),
+    },
+  ];
+  let allCaught = true;
+  for (const m of mutations) {
+    const mutated = m.apply(good);
+    if (collectProblems(mutated).length === 0) {
+      console.error(`${LABEL} SELFTEST FAIL — NOT CAUGHT: ${m.name}`);
+      allCaught = false;
+    }
+  }
+  if (!allCaught) process.exit(1);
+
+  console.log(`${LABEL} SELFTEST OK (${mutations.length} FUEL-MONEY-F7418 regressions caught)`);
   process.exit(0);
 }
 
