@@ -2480,3 +2480,5 @@ CODEX | WORKING | GUARD-F7404 | human-label guard accepts canonical tombstone re
 CODEX | SHIPPED | GUARD-F7403 | PR=#17978 @ 6bfdd74b19 | gate=exit0 | NEXT=GUARD-F7404 | GO
 CODEX | WORKING | FLT-F7425 | ROOT=unit-aggregate-telemetry-bare-id-ownership-rereads-after-authorization | focused=snapshot+selftest+backend-tsc | census=27→26 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRV-F7424 | PR=#18060 @ aeddb5cf16 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=FLT-F7425 | GO
+CODEX | WORKING | MNT-F7426 | ROOT=maintenance-unit-scope-composed-outside-executed-SQL-blocks | focused=owner-lease+selftest+sample+visibility+backend-tsc | census=26→25 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | FLT-F7425 | PR=#18061 @ 5d6cc897e1 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=MNT-F7426 | GO

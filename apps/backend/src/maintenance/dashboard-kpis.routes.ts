@@ -140,12 +140,6 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
 
         let totalUnits = 0;
         let activeUnits = 0;
-        const fleetUnitsWhereSql = `
-          (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-            AND deactivated_at IS NULL
-            AND ${excludeDemoPhantomSql("unit_number")}
-            AND ${excludeSampleDataSql()}
-        `;
         if (await relationExists(client, "mdata.units")) {
           const fleetRes = await client.query<{
             total_units: number;
@@ -156,7 +150,10 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
                 COUNT(*)::int AS total_units,
                 COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units
               FROM mdata.units
-              WHERE ${fleetUnitsWhereSql}
+              WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
+                AND deactivated_at IS NULL
+                AND ${excludeDemoPhantomSql("unit_number")}
+                AND ${excludeSampleDataSql()}
             `,
             [companyId]
           );
@@ -188,7 +185,12 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
                 FROM safety.dot_inspections di
                 WHERE di.voided_at IS NULL
                   AND di.unit_id IN (
-                    SELECT id FROM mdata.units WHERE ${fleetUnitsWhereSql}
+                    SELECT id
+                    FROM mdata.units
+                    WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
+                      AND deactivated_at IS NULL
+                      AND ${excludeDemoPhantomSql("unit_number")}
+                      AND ${excludeSampleDataSql()}
                   )
                 ORDER BY di.unit_id, di.inspection_date DESC, di.created_at DESC, (di.outcome = 'OOS') DESC
               ) latest_outcome_per_unit
