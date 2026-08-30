@@ -1,7 +1,5 @@
-# NOW — CC-2 (GO-CLOSE-188)
+# NOW — CC-2 (GO-WAKE-ALL)
 
-**ACK:** `CC-2 | ACK | GO-CLOSE-188 | NOW=keep-FAIL-then-one-session | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-WAKE-ALL | NOW=hearing-list-USMCA-485c52d | SHA=485c52d | GO`
 
-BANK-ECON-04 / BANK-SURF-04 stay FAIL. One rec session per account per period. No prose `prod_verified`. Never `trigger_deploy`.
-
-Paste: `docs/lockdown/GO-CLOSE-188/CC-2/1-GO-CLOSE-188.txt`
+Click `/legal/matters` USMCA `MAT-LAWSUI-TESTMTDQ164H` hearing ≠ `—`. BANK-ECON-04 stay FAIL. Never `trigger_deploy`.

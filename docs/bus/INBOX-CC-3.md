@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · do NOT start DRIVER-F7334 schema · NOW=next chrome-only unique leftover FAIL · no isError mass-wire · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · USMCA leftover · TRANSP/TRK mechanism only never money/RLS · packet docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-KEEP-MOVING | THIS IS NOW · hearing code shipped #18266 do not rebuild · NOW=DRIVER-F7334 leftover unique · no isError mass-wire · packet docs/lockdown/GO-KEEP-MOVING-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-CC2-CC3-NOW | THIS IS NOW · STOP WAITING · LEGAL-HEARING-DEADLINES list+overview from legal.matter_deadlines (#18252) · guard · no isError mass-wire · no 50309 · no planners · packet docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md · skip #15546 · never trigger_deploy | GO

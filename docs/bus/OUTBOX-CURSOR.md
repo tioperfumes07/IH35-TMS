@@ -1,3 +1,4 @@
+CURSOR | GO-WAKE-ALL | live=485c52d · INBOX rewritten all seats · IDLE=CC-1 · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md | GO
 CURSOR | GO-NOW | secret SET · API dep-daa7hmon74is73a2vl80 · shadow-report exec wired · leftover USMCA · skip #15546 | GO
 
 CURSOR | GO-USMCA-ONLY-SISTER-PROOF | USMCA only · MECHANISM transfers BINDING does not · LAW-8/C30 · no flag flip | GO

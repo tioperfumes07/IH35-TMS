@@ -1,7 +1,5 @@
-# NOW — Cascade (GO-CLOSE-188)
+# NOW — Cascade (GO-WAKE-ALL)
 
-**ACK:** `CASCADE | ACK | GO-CLOSE-188 | NOW=unique-FINDING-miss-c | SHA=<healthz> | GO`
+**ACK:** `CASCADE | ACK | GO-WAKE-ALL | NOW=detector-1-3-then-SUPERSEDE | SHA=485c52d | GO`
 
-Unique FINDING on leftover Miss-C (factoring 5, legal 3). Never recertify U14. Skip #15546. Never `trigger_deploy`.
-
-Paste: `docs/lockdown/GO-CLOSE-188/CASCADE/1-GO-CLOSE-188.txt`
+Stop filing 50277–50344. Detector then SUPERSEDE false grep class. 50309 not proven. Never recertify U14.

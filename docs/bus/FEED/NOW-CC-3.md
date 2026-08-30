@@ -1,7 +1,5 @@
-# NOW — CC-3 (GO-CLOSE-188)
+# NOW — CC-3 (GO-WAKE-ALL)
 
-**ACK:** `CC-3 | ACK | GO-CLOSE-188 | NOW=lists-25-then-customers-3 | SHA=b8fc09ce | GO`
+**ACK:** `CC-3 | ACK | GO-WAKE-ALL | NOW=chrome-only-unique-leftover | SHA=485c52d | GO`
 
-No Devin. lists 25 then customers 3 Miss-C. Skip #15546.
-
-Paste: `docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt`
+Do not start DRIVER-F7334 schema. Next chrome-only unique FAIL. No isError mass-wire. Never `trigger_deploy`.

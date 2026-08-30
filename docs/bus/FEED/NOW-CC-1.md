@@ -1,7 +1,5 @@
-# NOW — CC-1 (GO-CLOSE-188)
+# NOW — CC-1 (GO-WAKE-ALL)
 
-**ACK:** `CC-1 | ACK | GO-CLOSE-188 | NOW=B-then-A-then-G1 | SHA=b8fc09ce | GO`
+**ACK:** `CC-1 | ACK | GO-WAKE-ALL | NOW=DEFECT-A-then-recon-unique | SHA=485c52d | GO`
 
-DEFECT B, then A, then G1 TEST→is_sample_data write path. Never `trigger_deploy`.
-
-Paste: `docs/lockdown/GO-CLOSE-188/CC-1/6-OWNER-REPLY-C25-C31-AND-G1-DEFECT.txt`
+Live `485c52d`. Secret already set. DEFECT-A cash debit USMCA. Then recon unique. Never `trigger_deploy`.
