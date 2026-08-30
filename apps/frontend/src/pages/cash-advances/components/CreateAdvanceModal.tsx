@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createCashAdvance,
   listUnpaidBills,
@@ -17,6 +17,7 @@ import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { ParityDrawer } from "../../../components/parity/ParityDrawer";
 import { useToast } from "../../../components/Toast";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { Combobox } from "../../../components/Combobox";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { CappedListNotice } from "../../../components/CappedListNotice";
@@ -82,11 +83,21 @@ function requiresLoad(purpose: CashAdvancePurpose) {
 
 export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const [driverId, setDriverId] = useState<string | null>(null);
   const [amount, setAmount] = useState("300");
   const [purpose, setPurpose] = useState<CashAdvancePurpose>("family_emergency");
   const [advanceTypeCode, setAdvanceTypeCode] = useState<string>("EMERGENCY");
   const [method, setMethod] = useState<CashAdvanceMethod>("direct_bank_transfer");
+  // LISTS-PICKER-LAW-MISS-C: catalogs.cash_advance_types had no inline "+ Add new" affordance on
+  // its one live consuming picker — the Purpose field below read the catalog but could never
+  // write to it. New rows go through the SAME purposeFromCatalogCode() mapping any existing
+  // catalog row already does (still "other" for anything but FUEL/EMERGENCY, per ECON-014, an
+  // independent, already-open, money-lane issue this does not touch or worsen).
+  const [advanceTypeCreateOpen, setAdvanceTypeCreateOpen] = useState(false);
+  const [newAdvanceTypeCode, setNewAdvanceTypeCode] = useState("");
+  const [newAdvanceTypeName, setNewAdvanceTypeName] = useState("");
+  const [savingAdvanceType, setSavingAdvanceType] = useState(false);
 
   const advanceTypesQuery = useQuery({
     queryKey: ["catalogs", "cash-advance-types", operatingCompanyId],
@@ -98,6 +109,31 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
       }),
     enabled: open && Boolean(operatingCompanyId),
   });
+
+  const saveNewAdvanceType = async () => {
+    const code = newAdvanceTypeCode.trim().toUpperCase();
+    const display_name = newAdvanceTypeName.trim();
+    if (!code || !display_name) {
+      pushToast("Code and name are required", "error");
+      return;
+    }
+    setSavingAdvanceType(true);
+    try {
+      const created = await cashAdvanceTypesCatalogClient.create(operatingCompanyId, { code, display_name });
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "cash-advance-types", operatingCompanyId] });
+      setPurpose(purposeFromCatalogCode(created.code));
+      setAdvanceTypeCode(created.code);
+      setAdvanceTypeCreateOpen(false);
+      setNewAdvanceTypeCode("");
+      setNewAdvanceTypeName("");
+      pushToast("Cash advance type created", "success");
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Create failed"), "error");
+    } finally {
+      setSavingAdvanceType(false);
+    }
+  };
+
   const [fromBankAccountId, setFromBankAccountId] = useState("");
   const [recipientName, setRecipientName] = useState("");
   const [linkedBillEnabled, setLinkedBillEnabled] = useState(false);
@@ -359,26 +395,25 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
 
             <label className="space-y-1" data-testid="advance-purpose">
               <span className="font-medium text-gray-700">Purpose</span>
-              <SelectCombobox
-                className="w-full rounded-sm border border-gray-300 px-2 py-1"
+              <Combobox
+                className="w-full"
+                dataField="purpose"
                 value={selectedOptionKey}
-                onChange={(e) => {
-                  const key = e.target.value;
+                options={purposeOptions.map((option) => ({
+                  value: option.catalogCode ?? option.value,
+                  label: option.label,
+                }))}
+                onChange={(key) => {
                   const match = purposeOptions.find((o) => (o.catalogCode ?? o.value) === key);
                   if (!match) return;
                   setPurpose(match.value);
                   setAdvanceTypeCode(match.catalogCode ?? "");
                 }}
-              >
-                {purposeOptions.map((option) => (
-                  <option
-                    key={`${option.catalogCode ?? option.value}-${option.label}`}
-                    value={option.catalogCode ?? option.value}
-                  >
-                    {option.label}
-                  </option>
-                ))}
-              </SelectCombobox>
+                allowAddNew={{
+                  label: "+ Add new cash advance type",
+                  onAdd: () => setAdvanceTypeCreateOpen(true),
+                }}
+              />
               {purposeMeta ? <p className="text-[11px] text-gray-500">{purposeMeta.hint}</p> : null}
               {advanceTypesQuery.isError ? (
                 <p className="text-[11px] text-slate-600">
@@ -659,6 +694,41 @@ export function CreateAdvanceModal({ open, operatingCompanyId, onClose, onCreate
           {abovePolicyWarn ? (
             <div className="rounded-sm border border-slate-300 bg-slate-50 p-2 text-slate-800">{abovePolicyWarn}</div>
           ) : null}
+        </div>
+      </ParityDrawer>
+      <ParityDrawer
+        open={advanceTypeCreateOpen}
+        onClose={() => setAdvanceTypeCreateOpen(false)}
+        title="Create cash advance type"
+        size="regular"
+      >
+        <div className="space-y-2 text-xs">
+          <label className="block">
+            Code
+            <input
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
+              value={newAdvanceTypeCode}
+              onChange={(e) => setNewAdvanceTypeCode(e.target.value)}
+              placeholder="e.g. TIRE"
+            />
+          </label>
+          <label className="block">
+            Name
+            <input
+              className="mt-1 h-9 w-full rounded-sm border border-gray-300 px-2"
+              value={newAdvanceTypeName}
+              onChange={(e) => setNewAdvanceTypeName(e.target.value)}
+              placeholder="e.g. Tire replacement"
+            />
+          </label>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="secondary" onClick={() => setAdvanceTypeCreateOpen(false)} disabled={savingAdvanceType}>
+              Cancel
+            </Button>
+            <Button onClick={() => void saveNewAdvanceType()} disabled={savingAdvanceType}>
+              {savingAdvanceType ? "Saving…" : "Save"}
+            </Button>
+          </div>
         </div>
       </ParityDrawer>
     </>
