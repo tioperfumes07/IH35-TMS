@@ -536,22 +536,35 @@ export function VendorsPage() {
         ]}
       />
       {listStatus === "by-category" ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
-            Vendor type
-          </label>
-          <ReferenceSelect
-            id="vendor-category-filter"
-            value={categoryFilter}
-            onChange={(value) => setCategoryFilter(value ?? "")}
-            options={vendorTypes}
-            createKind="vendor_type"
-            operatingCompanyId={companyId}
-            placeholder="All types"
-            addNewLabel="+ Add new vendor type"
-            createdValueField="code"
-            onOptionCreated={() => void vendorTypesQuery.refetch()}
-          />
+        <div className="space-y-2">
+          {vendorTypesQuery.isError ? (
+            <div data-testid="vendors-type-catalog-error">
+              <ListErrorState
+                title="Couldn't load vendor types"
+                status={0}
+                message={(vendorTypesQuery.error as Error)?.message}
+                onRetry={() => void vendorTypesQuery.refetch()}
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs font-semibold text-gray-600" htmlFor="vendor-category-filter">
+              Vendor type
+            </label>
+            <ReferenceSelect
+              id="vendor-category-filter"
+              value={categoryFilter}
+              onChange={(value) => setCategoryFilter(value ?? "")}
+              options={vendorTypes}
+              createKind="vendor_type"
+              operatingCompanyId={companyId}
+              placeholder="All types"
+              addNewLabel="+ Add new vendor type"
+              createdValueField="code"
+              disabled={vendorTypesQuery.isError}
+              onOptionCreated={() => void vendorTypesQuery.refetch()}
+            />
+          </div>
         </div>
       ) : null}
       {viewMode === "list" ? (
