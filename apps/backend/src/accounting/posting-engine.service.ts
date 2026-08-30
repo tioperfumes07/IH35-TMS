@@ -48,6 +48,13 @@ export const POSTING_SOURCE_TYPES = [
   // LOAN-02: related-party lending (owner/spouse/employee/driver, both directions). Posts through the
   // shared poster onto accounting.journal_entries — no new GL math, no second ledger.
   "related_party_loan",
+  // GO-CLOSE-188 DEFECT A: the customer_payment poster's own JE (Dr undeposited_funds/cash_clearing /
+  // Cr AR) is correct but stops at a HOLDING account. Nothing ever swept that balance into the real
+  // bank register, so the actual cash account never saw the collection. This source type posts the
+  // missing second leg -- Dr the real bank's ledger_account_id / Cr the payment's original holding
+  // account -- fired once, at the moment bank-recon MATCHES the payment to its real bank_transaction
+  // (match.service.ts), reusing this same idempotent/period-gated poster. sourceId = accounting.payments.id.
+  "customer_payment_deposit",
 ] as const;
 
 export type PostingSourceType = (typeof POSTING_SOURCE_TYPES)[number];
@@ -166,7 +173,9 @@ export type PostingErrorCode =
   | "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED"
   | "QBO_INVOICE_POST_GL_REFUSED"
   | "POSTING_BATCH_SETTLED_WITHOUT_LINES"
-  | "POSTING_BATCH_RECLAIM_HAS_LINES";
+  | "POSTING_BATCH_RECLAIM_HAS_LINES"
+  | "DEPOSIT_ALREADY_AT_BANK"
+  | "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING";
 
 export class PostingEngineError extends Error {
   code: PostingErrorCode;
@@ -1537,6 +1546,103 @@ async function buildCustomerPaymentLines(client: DbClient, operatingCompanyId: s
   };
 }
 
+// GO-CLOSE-188 DEFECT A — the deposit-sweep leg. sourceId is the SAME accounting.payments.id the
+// original customer_payment poster used; this is a SECOND, independent posting under a different
+// source_transaction_type (its own idempotency key, its own posting_batches row), not a repost of the
+// first. Fires once, from match.service.ts, at the moment a bank_transaction is matched to this
+// payment -- that match is exactly the fact ("this money really arrived at this real bank account")
+// the sweep needs and had no other way to learn.
+async function buildCustomerPaymentDepositSweepLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const paymentRes = await client.query<{
+    id: string;
+    payment_date: string;
+    amount_cents: number;
+    display_id: string | null;
+    deposited_to_account_id: string | null;
+    voided_at: string | null;
+    source_system: string | null;
+    qbo_payment_id: string | null;
+    source_bank_transaction_id: string | null;
+  }>(
+    `
+      SELECT id::text, payment_date::text, amount_cents::bigint, display_id, deposited_to_account_id, voided_at::text,
+             source_system::text, qbo_payment_id, source_bank_transaction_id::text
+      FROM accounting.payments
+      WHERE operating_company_id = $1::uuid
+        AND id::text = $2
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [operatingCompanyId, sourceId]
+  );
+  const payment = paymentRes.rows[0];
+  if (!payment) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer payment not found");
+  if (payment.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer payment is not deposit-sweep eligible");
+  if ((payment.source_system ?? "").toLowerCase() === "qbo" || (payment.qbo_payment_id ?? "").trim() !== "") {
+    throw new PostingEngineError(
+      "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
+      "Refusing Customer Payment deposit-sweep for a QBO-origin payment — parallel books; QBO already holds this receipt's GL."
+    );
+  }
+  if (!payment.source_bank_transaction_id) {
+    throw new PostingEngineError(
+      "PAYMENT_NOT_POSTING_ELIGIBLE",
+      "Customer payment has no source_bank_transaction_id yet — deposit-sweep requires a confirmed bank-recon match"
+    );
+  }
+
+  const bankRes = await client.query<{ bank_ledger_account_id: string | null }>(
+    `
+      SELECT ba.ledger_account_id::text AS bank_ledger_account_id
+      FROM banking.bank_transactions bt
+      JOIN banking.bank_accounts ba ON ba.id = bt.bank_account_id
+      WHERE bt.id = $1::uuid
+        AND bt.operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [payment.source_bank_transaction_id, operatingCompanyId]
+  );
+  const bankLedgerAccountId = bankRes.rows[0]?.bank_ledger_account_id ?? null;
+  if (!bankLedgerAccountId) {
+    throw new PostingEngineError(
+      "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING",
+      "Matched bank account has no ledger_account_id — cannot sweep into an unbridged bank register (see ACCT-F10109 for the class of bug this guards)"
+    );
+  }
+
+  const holdingAccount = await resolveCustomerPaymentDepositAccount(client, operatingCompanyId, payment.deposited_to_account_id);
+  if (!holdingAccount) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "Cash account mapping is missing");
+
+  if (holdingAccount === bankLedgerAccountId) {
+    // The original receipt was ALREADY posted straight to this real bank account (deposited_to_account_id
+    // was the bank itself, not a holding account) — nothing to sweep. Caller treats this as a no-op skip.
+    throw new PostingEngineError("DEPOSIT_ALREADY_AT_BANK", "Customer payment already posted directly to the matched bank account — no deposit-sweep needed");
+  }
+
+  const label = payment.display_id ? `Customer payment ${payment.display_id}` : "Customer payment";
+  const amount = Number(payment.amount_cents ?? 0);
+  return {
+    postingDate: payment.payment_date,
+    memo: `${label} deposit`,
+    lines: [
+      {
+        account_id: bankLedgerAccountId,
+        debit_or_credit: "debit",
+        amount_cents: amount,
+        description: `${label} deposited to bank`,
+        source_transaction_line_id: null,
+      },
+      {
+        account_id: holdingAccount,
+        debit_or_credit: "credit",
+        amount_cents: amount,
+        description: `${label} cleared from holding`,
+        source_transaction_line_id: null,
+      },
+    ],
+  };
+}
+
 async function buildBillPaymentLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
   const paymentRes = await client.query<{
     id: string;
@@ -2258,6 +2364,7 @@ async function buildPostingDraft(
   if (sourceType === "bill") return buildBillLines(client, operatingCompanyId, sourceId);
   if (sourceType === "expense") return buildExpenseLines(client, operatingCompanyId, sourceId);
   if (sourceType === "customer_payment") return buildCustomerPaymentLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "customer_payment_deposit") return buildCustomerPaymentDepositSweepLines(client, operatingCompanyId, sourceId);
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);

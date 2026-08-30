@@ -13,7 +13,10 @@ import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backl
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
 // ACCT-PERIOD-CLOSE-01: this variance-JE insert had no closed-period check at all.
-import { ensureOpenPeriod } from "../posting-engine.service.js";
+// GO-CLOSE-188 DEFECT A: matching a payment to its real bank_transaction is the ONLY place that learns
+// "this collection really landed at this real bank account" — fire the deposit-sweep JE (Dr real bank /
+// Cr the payment's original holding account) right here, reusing the shared idempotent/period-gated poster.
+import { ensureOpenPeriod, postSourceTransactionInClientTx, PostingEngineError } from "../posting-engine.service.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
@@ -1058,6 +1061,35 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
         input.ledger_entry_id,
         invoiceRes.rows.map((r) => r.invoice_id)
       );
+
+      // GO-CLOSE-188 DEFECT A — deposit-sweep. source_bank_transaction_id is now set (above), so the
+      // sweep poster can resolve the real bank's ledger account and move the payment's GL out of its
+      // holding account (Undeposited Funds / cash_clearing) into the account bank reconciliation
+      // actually reconciles. Best-effort: a genuinely ineligible payment (voided, QBO-origin, already
+      // posted straight to this bank, or the matched bank has no ledger_account_id) is a normal,
+      // expected skip — never fails the match itself. Any OTHER error still surfaces (fail loud, not
+      // silent) since it would mean real money moved with no GL trail.
+      try {
+        await postSourceTransactionInClientTx(
+          client,
+          {
+            operating_company_id: input.operating_company_id,
+            source_transaction_type: "customer_payment_deposit",
+            source_transaction_id: input.ledger_entry_id,
+          },
+          { userId: input.actor_user_uuid }
+        );
+      } catch (sweepError) {
+        const skippable: string[] = [
+          "DEPOSIT_ALREADY_AT_BANK",
+          "PAYMENT_NOT_POSTING_ELIGIBLE",
+          "QBO_CUSTOMER_PAYMENT_POST_GL_REFUSED",
+          "DEPOSIT_BANK_LEDGER_ACCOUNT_MISSING",
+        ];
+        if (!(sweepError instanceof PostingEngineError) || !skippable.includes(sweepError.code)) {
+          throw sweepError;
+        }
+      }
     } else if (input.ledger_entry_kind === "bill_payment") {
       await client.query(
         `UPDATE accounting.bill_payments

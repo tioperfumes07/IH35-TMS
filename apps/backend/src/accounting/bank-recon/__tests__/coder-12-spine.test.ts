@@ -44,6 +44,26 @@ describe("CODER-12 audit-spine — bank-recon variance JE", () => {
         };
       }
       if (sql.includes("SELECT amount_cents::int FROM accounting.payments")) return { rows: [{ amount_cents: 9000 }] };
+      // GO-CLOSE-188 DEFECT A: the deposit-sweep poster's own payment lookup (FOR UPDATE). No
+      // source_bank_transaction_id yet in this fixture's reality -> sweep skips (PAYMENT_NOT_POSTING_ELIGIBLE),
+      // so it adds no audit/link calls beyond what this test already asserts.
+      if (sql.includes("FROM accounting.payments") && sql.includes("FOR UPDATE")) {
+        return {
+          rows: [
+            {
+              id: "pay-0001",
+              payment_date: "2026-05-22",
+              amount_cents: 9000,
+              display_id: "PMT-1",
+              deposited_to_account_id: null,
+              voided_at: null,
+              source_system: null,
+              qbo_payment_id: null,
+              source_bank_transaction_id: null,
+            },
+          ],
+        };
+      }
       if (sql.includes("FROM banking.bank_accounts")) return { rows: [{ ledger_account_id: "cash-account-1" }] };
       if (sql.includes("INSERT INTO banking.reconciliation_matches")) return { rows: [] };
       if (sql.includes("INSERT INTO accounting.journal_entries")) return { rows: [{ id: "je-diff-1" }] };
