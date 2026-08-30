@@ -19,6 +19,7 @@ import { EntityLink } from "../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
+import { listAllFiles } from "../api/docs";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { Button } from "../components/Button";
@@ -495,6 +496,19 @@ export function VendorDetailPage() {
     [user?.role]
   );
 
+  // CUST-01 C6: "W-9 on file" used to be a static chip ("Managed in Documents") that queried
+  // nothing. catalogs.file_categories has no dedicated w9 code -- W-9/1099/IFTA all share the
+  // broader "tax_form" category (0028_docs_schema.sql) -- so the honest check is "at least one
+  // tax-form document is attached", not a false claim of certainty it's specifically the W-9.
+  const taxFormDocsQuery = useQuery({
+    queryKey: ["docs-files", companyId, "vendor", id, "tax_form"],
+    queryFn: () =>
+      listAllFiles({ operating_company_id: companyId, entity_type: "vendor", entity_id: id }).then((result) =>
+        result.files.filter((f) => f.category_code === "tax_form" && !f.deleted_at)
+      ),
+    enabled: Boolean(companyId) && Boolean(id),
+  });
+
   // ORPH-003 — matches the backend's write-role gate for mdata.vendor_payment_methods exactly
   // (migration 202613110000's RLS write policy: Owner/Administrator only, narrower than the
   // Manager/Accountant band above — this records how money leaves the company).
@@ -623,6 +637,12 @@ export function VendorDetailPage() {
 
       {activeTab === "Profile" ? (
         <div className="space-y-2">
+        {/* CUST-01 C7: the 16 reverse-link sections below (work orders, road service, warranty,
+            insurance, legal, border crossings, parts, maintenance catalog, safety alerts, cash
+            forecast, equipment loans, merges, A/P aging, payment methods, bank transactions) each
+            silently render nothing when companyId is empty -- same honest-message convention
+            already used on the A/P tab below. */}
+        {!companyId ? <p className="text-sm text-red-600">Select an operating company to view linked records.</p> : null}
         <DataPanel title="Vendor Profile">
           {/* FAIL-AP1 — Vendor → Driver reverse when mdata.vendors.driver_id is set.
               Distinct from QBO Mapping. */}
@@ -1334,9 +1354,22 @@ export function VendorDetailPage() {
           <DataPanelRow>
             <span className="text-xs font-semibold text-gray-600">W-9 on file</span>
             <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-              <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
-                Managed in Documents
-              </span>
+              {/* CUST-01 C6: real check against docs.files -- there is no dedicated w9 category
+                  (tax_form covers W-9/1099/IFTA alike, 0028_docs_schema.sql), so this honestly
+                  reports "tax-form document(s) attached", never a bare unverified "on file" claim. */}
+              {taxFormDocsQuery.isLoading ? (
+                <span className="text-xs text-gray-500">Checking…</span>
+              ) : taxFormDocsQuery.isError ? (
+                <span className="rounded-sm bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-800">Couldn&apos;t check</span>
+              ) : (taxFormDocsQuery.data?.length ?? 0) > 0 ? (
+                <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-700">
+                  {taxFormDocsQuery.data!.length} tax-form document{taxFormDocsQuery.data!.length === 1 ? "" : "s"} attached
+                </span>
+              ) : (
+                <span className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                  No tax-form document on file
+                </span>
+              )}
               {canViewDocuments ? (
                 <Button type="button" size="sm" variant="secondary" onClick={() => setActiveTab("Documents")}>
                   Open Documents tab
@@ -1349,6 +1382,8 @@ export function VendorDetailPage() {
           <p className="mt-2 text-xs text-gray-500">
             A signed W-9 is required before issuing a Form 1099-NEC. This panel is read-only — set
             1099 eligibility and Tax ID on the Profile tab; attach the W-9 file on the Documents tab.
+            "Tax-form" documents are not verified to specifically be the W-9 (the category is shared
+            with 1099/IFTA filings) — confirm the actual file in the Documents tab.
           </p>
         </DataPanel>
       ) : null}
