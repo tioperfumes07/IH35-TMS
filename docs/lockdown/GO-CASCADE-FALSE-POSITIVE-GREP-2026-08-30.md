@@ -1,32 +1,41 @@
-# GO-CASCADE-FALSE-POSITIVE-GREP — 2026-08-30
+# GO-CASCADE-FALSE-POSITIVE-GREP — REV 2 (2026-08-30)
 
-**THIS IS NOW for Cascade.** Owner asked A/B/C. Lead answer: **B then A. Never C.**
+**SUPERSEDES** the first packet’s sequence **“B then A.”** Claude independently verified. Lead agrees. **Owner order: A then B. Never C. Do not start B tonight.**
 
-## Forbidden
+## Confirmed
 
-- Do not ask Jorge again. The owner is not the ledger.
-- Do not mark **all** of 50277–50344 `SUPERSEDED` in one sweep. That would bury the genuine row.
-- Do not file **new** Miss-C / `isError` findings until this correction PR is merged.
-- Do not recertify U14. Do not `trigger_deploy`. Skip PRs **#15546** and **#16895**.
-- Do not use `grep_search` / directory grep with `|` alternation as a “missing” proof. That tool lied (`isError|ErrorBanner|ListError` → empty directory while files contained `isError`).
+8/8 spot-check (50300–50307): ledger says “zero isError”; files **have** `isError`. Self-report of 50277–50344 contamination is **true**. Miss C staying 188 after 107 findings / 8 PRs is **explained**: nothing real to close.
 
-## Required sequence (one PR)
+## Postmortem (do not write “alternation is broken”)
 
-1. **Stop filing.** No new 50xxx rows this class until step 4 lands.
-2. **Re-audit (B)** every path cited in findings **50277–50344** (PRs #18198, #18216, #18225, #18229, #18245):
-   - One file at a time.
-   - Single term only: `isError` (separate pass `ErrorBanner`, separate pass `ListError` if needed).
-   - **Never** `isError|ErrorBanner|ListError` on a directory.
-3. **Correct the ledger (A, after B):**
-   - Proven false positive (file already renders error): add a **new dated** row if needed; set the old row **Status = `SUPERSEDED`** with Evidence: `FALSE POSITIVE — directory grep | alternation false-negative; file contains isError @ SHA <origin/main>`.
-   - **Keep OPEN** any row that still has `useQuery` / fetch and **no** error UI. **50309 SafetyHome.tsx** stays OPEN unless the re-audit proves `isError` is present.
-4. **50226–50276:** do **not** mass-supersede. Re-check only if that session used the same directory `|` grep. If they used per-file reads, leave them.
-5. Correction PR: docs-only `AUDIT-COVERAGE-LIVE.md` (+ scoreboard regen if required). FAST-MERGE. Report one OUTBOX line: `false=N genuine=M kept OPEN ids=…`.
+GNU `grep -E 'isError|ErrorBanner|ListError'` **works**. What failed is **that seat’s `grep_search` tool in directory-scope mode** (false empty). If we ban `|`, we keep the real bug: **directory-scope search must not back a finding.**
 
-## Other seats (do not steal this)
+## Never C
 
-- **CC-3:** when Cascade publishes genuine leftover IDs, wire `isError` on those files only (start **50309** if still genuine).
-- **CC-1 / CC-2:** not this class. CC-1 = C30 dedicated probe (not global FAIL_ON_FAIL). CC-2 = BANK-ECON-04/SURF-04 stay FAIL; do not restamp DEFECT A.
-- **Codex:** planner guard if not on main; do not recertify.
+The ledger asserts ~68 defects that do not exist. Leaving it up “for Jorge” is how a seat “fixes” a page that was never broken. **SUPERSEDE with reason. Do not delete.** Append-only.
 
-ACK: `Cascade | ACK | GO-CASCADE-FALSE-POSITIVE-GREP | SHA=<healthz> | NOW=B-then-A 50277-50344 | GO`
+## A FIRST — today (Cascade, one docs PR)
+
+- Stop filing new Miss-C / `isError` rows.
+- Mark **50277–50344** Status=`SUPERSEDED` with Evidence:
+  `FALSE POSITIVE — grep_search directory-scope returned empty while file contains isError. Not GNU-grep alternation. PRs #18198 #18216 #18225 #18229 #18245.`
+- **50309 SafetyHome.tsx:** do **not** keep as proven FAIL. `SafetyHome.tsx` has 0 `isError`; `tabs/SafetyHomeTab.tsx` has 15. Status: `SUPERSEDED` **or** leave a **new** dated row `[AUDIT — RE-VERIFY LIVE]` — **Live Chrome** of Safety Home silent-fail **required** before OPEN FAIL. One survivor of 68 gets the scrutiny the 67 did not.
+- Scoreboard regen if required. FAST-MERGE. Never recertify U14. Skip #15546. Never `trigger_deploy`.
+
+## B SECOND — not tonight, and not until the detector is proven
+
+“Single-term grep” is a **new detector**. Prove it can fail **before** any re-audit:
+
+1. File that **does** render `isError` → detector must **not** flag.
+2. Copy of that file with `isError` UI deleted → detector **must** flag.
+3. **Directory containing both** → both verdicts still correct (original bug was directory-scope; file-by-file selftest would miss it).
+4. Record 1–3 in the B PR. Then re-audit **50277–50344 leftovers** and **50226–50276** with the **same** proven detector. “Probably fine” is how 68 shipped.
+
+## Other seats
+
+- **CC-3:** do **not** mass-wire `isError` on superseded files. LEGAL-HEARING-DEADLINES (#18252) still yours. SafetyHome only after Live Chrome says silent-fail.
+- **CC-1:** C30 probe; no `PROOF_REPLAY_FAIL_ON_FAIL`.
+- **CC-2:** BANK-ECON-04/SURF-04 stay FAIL.
+- **Codex / Cursor:** `DriverPlanner.tsx` does not import `PlannerGrid`; it mounts `SafetyDriverSchedulerGrid`, which **does** import `PlannerGrid`. Direct-import guard is 4/5; composed path is 5/5. Align the guard or add a named import — do not invent a second grid. Claude A1–A7 needs a live Chrome tab (unresponsive).
+
+ACK: `Cascade | ACK | GO-CASCADE-FALSE-POSITIVE-GREP-R2 | SHA=<healthz> | NOW=A SUPERSEDE 50277-50344 today · B blocked until detector 1-3 | GO`

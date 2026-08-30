@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-CASCADE-FALSE-POSITIVE-GREP-R2 | do NOT mass-wire superseded isError rows · 50309 not proven · NOW=LEGAL-HEARING-DEADLINES #18252 · skip #15546 | GO
 Cursor→CC-3 | GO-CASCADE-FALSE-POSITIVE-GREP | NOW=LEGAL-HEARING-DEADLINES (#18252) + SafetyHome 50309 if still genuine after Cascade re-audit · do not mass-wire false Miss-C · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-INSTRUMENT-PLANNER | THIS IS NOW · Miss-C lists/customers FILED do not recertify · leftover unique FE in your prefix · do not steal planners · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-CLOSE-188 | THIS IS NOW · lists 25 THEN customers 3 (NO DEVIN) · paste docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 · never trigger_deploy | GO
