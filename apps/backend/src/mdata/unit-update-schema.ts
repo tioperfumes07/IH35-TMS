@@ -18,6 +18,10 @@ export const UNIT_PATCH_OWNER_ONLY_COLUMNS = [
   "transferred_date",
   "transferred_to_entity",
   "repair_estimate",
+  // FLEET-LEASE-08 A) -- same class as sold_to/transferred_to_entity: names the counterparty on a
+  // disposal, not just a status flag.
+  "repossessed_by_lender",
+  "returned_to_lessor_entity",
 ] as const;
 
 /** All user-patchable mdata.units columns (schema-derived, excludes forbidden system cols). */
@@ -56,6 +60,12 @@ export const UNIT_PATCHABLE_FIELD_KEYS = [
   "damage_date",
   "damage_description",
   "repair_estimate",
+  "repossessed_date",
+  "repossessed_by_lender",
+  "repossessed_notes",
+  "returned_to_lessor_date",
+  "returned_to_lessor_entity",
+  "returned_to_lessor_notes",
   "oos_date",
   "quick_availability",
   "texas_irp_number",
@@ -91,6 +101,10 @@ export const unitStatusSchema = z.enum([
   "Sold",
   "Damaged",
   "Transferred",
+  // FLEET-LEASE-08 A) -- repossession and return-to-lessor are neither a sale (no proceeds
+  // existed) nor an intercompany transfer. Distinct disposal classes; do not overload either.
+  "Repossessed",
+  "ReturnedToLessor",
 ]);
 
 const quickAvailabilitySchema = z.enum(["available", "booked", "holding"]).nullable();
@@ -131,6 +145,12 @@ const fieldSchemas: Record<UnitPatchableFieldKey, z.ZodTypeAny> = {
   damage_date: isoDateSchema.nullable(),
   damage_description: z.string().trim().max(4000).nullable(),
   repair_estimate: z.number().nonnegative().nullable(),
+  repossessed_date: isoDateSchema.nullable(),
+  repossessed_by_lender: z.string().trim().max(200).nullable(),
+  repossessed_notes: z.string().trim().max(4000).nullable(),
+  returned_to_lessor_date: isoDateSchema.nullable(),
+  returned_to_lessor_entity: z.string().trim().max(200).nullable(),
+  returned_to_lessor_notes: z.string().trim().max(4000).nullable(),
   oos_date: isoDateSchema.nullable(),
   quick_availability: quickAvailabilitySchema,
   texas_irp_number: z.string().trim().max(120).nullable(),
