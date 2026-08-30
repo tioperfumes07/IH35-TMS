@@ -6911,11 +6911,14 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1335,
+  "total_claimed": 1336,
   "10125": [
     "10125-verify-recon-sessions-void-and-unique-period.mjs"
   ],
   "10129": [
     "10129-verify-coa-roles-unique-per-company-role.mjs"
+  ],
+  "10133": [
+    "10133-verify-factoring-advance-reserve-fee-independent.mjs"
   ]
 }
