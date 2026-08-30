@@ -1,3 +1,5 @@
+CODEX | WORKING | CLS-F7509 | class=create-surface-drawer | modules=reports+compliance | ROOT=two-create-forms-used-centered-Modal | focused=guard+selftest+components | NEXT=census-to-zero+gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7508 | PR=#18154 @ ce68839039 | focused=normal+selftest2/2+full-gate | NEXT=create-surface-drawer-red | GO
 CODEX | WORKING | GUARD-F7508 | ROOT=ParityDrawer-Escape-guard-required-direct-onClose-and-rejected-dirty-draft-safe-attemptClose | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | CLS-F7507 | PR=#18153 @ 20fdd096b1 | class=no-box-in-box | modules=fleet+dispatch+drivers+insurance | NEXT=ParityDrawer-Escape-red | GO
 CODEX | WORKING | CLS-F7507 | class=no-box-in-box | modules=fleet+dispatch+drivers+insurance | offenders=7→0-in-touched-files | baseline=unchanged | NEXT=focused+gate+FAST-MERGE | GO

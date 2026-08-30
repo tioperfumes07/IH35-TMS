@@ -183,7 +183,7 @@ export function ScheduleReportModal({ open, onClose, operatingCompanyId, default
   }
 
   return (
-    <Modal open={open} onClose={onClose} title={isEdit ? "Edit scheduled report" : "Schedule a report"}>
+    <Modal variant="drawer" open={open} onClose={onClose} title={isEdit ? "Edit scheduled report" : "Schedule a report"}>
       <div className="max-h-[70vh] space-y-3 overflow-auto pr-1 text-sm">
         <label className="block text-xs text-gray-600">
           Report
