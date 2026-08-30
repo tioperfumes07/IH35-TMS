@@ -15,7 +15,20 @@ import { nextCreditMemoDisplayId } from "./display-id.js";
 
 const idParamSchema = z.object({ id: z.string().uuid() });
 
-const CREDIT_MEMO_REASONS = ["damage", "shortage", "rate_dispute", "duplicate_billing", "detention_dispute", "other"] as const;
+const CREDIT_MEMO_REASONS = [
+  "damage",
+  "shortage",
+  "rate_dispute",
+  "duplicate_billing",
+  "detention_dispute",
+  "late_delivery",
+  "missing_paperwork",
+  "lumper_receipt_missing",
+  "detention_denied",
+  "factoring_dilution",
+  "unknown_pending_backup",
+  "other",
+] as const;
 
 const createBodySchema = z.object({
   customer_id: z.string().trim().uuid(),

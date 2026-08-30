@@ -1,3 +1,4 @@
+CURSOR | FACT-PLEDGE-NET-CM | pledge=aging net · reason codes + 4900–4960 USMCA · 016 after deploy | GO
 CURSOR | AMENDMENT | STOP Faro-33 · 32 + HOLD 016 · deploy dep-daaarmpf2nfc739ol8rg | GO
 CURSOR | USMCA LIVE BOOKS | CC-1 app: invoices+settlements+Faro · L13512 first · QBO file=USMCA books · 1296 Cursor | GO
 CURSOR | Coders-Faro pack on main · L13512 human UI test · $1649=purchase price not customer advance · $7241 bill · Codex ITEM 2 only | GO

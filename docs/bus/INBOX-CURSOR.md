@@ -1,6 +1,14 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
+# CURRENT GO — 2026-08-30 FACT-PLEDGE-NET-CM + DILUTION GO (THIS PR)
 
-Cursor→self | Amendment live. Deploy kicked. **1296.** Guard one-load-one-open-invoice. Never cite stale QBO mirror as absence. skip #15546 | GO
+Cursor→self | Ship pledge = aging net (credit memos). Do **not** messenger Jorge. Wake CC-1/CC-2 INBOX. Apply Neon 202608301800. Deploy API after merge. 016 wait until pledge live. skip #15546 | GO
+
+Law: docs/lockdown/GO-DILUTION-CONTROL-HOLE-2026-08-30.md
+
+STOP. Older stacked GOs are VOID for 016 skip.
+
+# PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT (SUPERSEDED TOP)
+
+Cursor→self | Agree Claude bar-1≠certify. Land bar-2 vs Faro JSON (never shrink). 1296 + one-load-one-open-invoice. skip #15546 | GO
 
 STOP. Older stacked GOs are VOID.
 

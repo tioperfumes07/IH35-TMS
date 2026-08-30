@@ -86,7 +86,11 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
   }, [invoicesQuery.data, selectedInvoiceIds]);
 
   const selectedTotal = useMemo(
-    () => selectedInvoices.reduce((sum, row) => sum + Number(row.total_cents ?? 0), 0),
+    () =>
+      selectedInvoices.reduce(
+        (sum, row) => sum + Number(row.pledge_cents ?? row.total_cents ?? 0),
+        0
+      ),
     [selectedInvoices]
   );
 
@@ -276,9 +280,15 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
               },
               {
                 key: "total",
-                label: "Total",
+                label: "Invoice",
                 cellClass: "text-gray-700",
                 render: (row) => money(row.total_cents),
+              },
+              {
+                key: "pledge",
+                label: "Pledge (net)",
+                cellClass: "text-gray-700",
+                render: (row) => money(row.pledge_cents ?? row.total_cents),
               },
               {
                 key: "recourse",
