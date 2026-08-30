@@ -28,6 +28,13 @@ const tokens = [
 
 function inspect(value) {
   const failures = tokens.filter((token) => !value.includes(token));
+  if ((value.match(/actionGenerationRef\.current \+= 1/g) ?? []).length < 2) failures.push("company and query-error generations invalidated independently");
+  for (const reset of ["createMutation", "updateMutation", "importMutation", "voidMutation"]) {
+    const escapedReset = reset.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if ((value.match(new RegExp(`${escapedReset}\\.reset\\(\\)`, "g")) ?? []).length < 2) {
+      failures.push(`${reset} reset on company and query-error transitions`);
+    }
+  }
   if ((value.match(/input\.generation !== actionGenerationRef\.current/g) ?? []).length < 4) failures.push("four stale successes rejected");
   if ((value.match(/input\.generation === actionGenerationRef\.current/g) ?? []).length < 4) failures.push("four stale errors rejected");
   if ((value.match(/await refresh\(input\.companyId\)/g) ?? []).length < 4) failures.push("four submitted-company refreshes");

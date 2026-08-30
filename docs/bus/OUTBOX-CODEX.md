@@ -2660,3 +2660,4 @@ CODEX | SHIPPED+LIVE | ACCT-COA-ROLE-UNIQUE-PERMANENCE | PR=#18382 @ 33442f1396 
 CODEX | WORKING | GUARD-F7535 | ROOT=hidden-reverse-selftest-filewide-driver-matcher-masked-history-plant-with-overlap-link | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7536 | ROOT=DQF-error-guard-retained-retired-itemName-reset-after-catalog-lifecycle | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7537 | ROOT=fault-rule-creator-limiter-plant-masked-by-identical-GET-limiter | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7538 | ROOT=maintenance-parts-generation-plant-masked-by-sibling-query-error-effect | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
