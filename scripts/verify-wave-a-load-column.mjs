@@ -21,7 +21,7 @@ const checks = [
   ["banking resolved-load drill", "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx", /<EntityLink[^>]{0,180}?kind="load"[^>]{0,180}?id=\{tx\.resolved_load_id\}[^>]{0,220}?label=\{entityLabel\(tx\.resolved_load_number,\s*tx\.resolved_load_id,\s*"Load"\)\}/],
   ["expense create load FK", "apps/frontend/src/components/expenses/recordExpenseSubmit.ts", /values\.loadId\s*\?\s*\{\s*load_id:\s*values\.loadId\s*\}/],
   ["insurance claim create load FK", "apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /load_id:\s*form\.load_id\s*\|\|\s*null/],
-  ["border crossing create load FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /load_id:\s*form\.loadId\s*\|\|\s*undefined/],
+  ["border crossing create load FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /load_id:\s*input\.form\.loadId\s*\|\|\s*undefined/],
   ["cargo claim create load FK", "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx", /load_id:\s*form\.loadId\s*\|\|\s*null/],
   ["dispatch margin load drill", "apps/frontend/src/pages/reports/DispatchMarginPage.tsx", /<EntityLink kind="load" id=\{row\.load_id\}/],
 ];
