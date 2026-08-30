@@ -22,6 +22,11 @@ function inspect(be, fe) {
     [be, /safety\.anomaly_alert\.resolve[\s\S]{0,180}operating_company_id: body\.data\.operating_company_id/, "alert resolve lacks scoped audit"],
     [be, /app\.post\("\/api\/safety\/anomaly\/seed-defaults"[\s\S]{0,260}role\?\.toLowerCase\(\) !== "owner"/, "default-rule seed is not Owner-only"],
     [be, /safety\.anomaly_rules\.seed_defaults[\s\S]{0,160}operating_company_id: q\.data\.operating_company_id/, "default-rule seed lacks scoped audit"],
+    [be, /JOIN safety\.anomaly_alert_rules r[\s\S]{0,160}r\.operating_company_id = a\.operating_company_id/, "alert reader does not bind the human rule label to the same company"],
+    [be, /mdata\.resolve_driver_label_same_company\(a\.subject_uuid, a\.operating_company_id\)/, "alert reader does not resolve the canonical driver label"],
+    [be, /FROM mdata\.units u[\s\S]{0,180}COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = a\.operating_company_id/, "alert reader does not resolve the company-owned unit label"],
+    [be, /FROM mdata\.loads l[\s\S]{0,160}l\.operating_company_id = a\.operating_company_id/, "alert reader does not resolve the company-scoped load label"],
+    [be, /FROM geo\.geofences g[\s\S]{0,520}g\.operating_company_id = a\.operating_company_id/, "alert reader does not resolve the company-scoped geofence label"],
     [fe, /actionGenerationRef = useRef\(0\)/, "frontend lacks action generation"],
     [fe, /body: \{ operating_company_id: input\.companyId \}/, "ack omits submitted company"],
     [fe, /body: \{ operating_company_id: input\.companyId, status: "resolved", notes: input\.notes \}/, "resolve omits submitted company"],
@@ -29,6 +34,9 @@ function inspect(be, fe) {
     [fe, /queryKey: \["anomaly-alerts", input\.companyId, input\.severity\]/g, "submitted company/filter query is not refreshed"],
     [fe, /actionGenerationRef\.current \+= 1[\s\S]*ack\.reset\(\)[\s\S]*resolve\.reset\(\)/, "company transition does not reset actions"],
     [fe, /input\.generation === actionGenerationRef\.current/g, "stale errors are not rejected"],
+    [fe, /LINKABLE_SUBJECT_KINDS = new Set<EntityKind>\(\["driver", "unit", "load", "geofence"\]\)/, "frontend lacks an explicit supported anomaly-subject registry"],
+    [fe, /<EntityLink kind=\{kind\} id=\{id\} label=\{label\}/, "anomaly subjects do not drill through the shared EntityLink"],
+    [fe, /id \? "Related record unavailable" : "No related record"/, "missing anomaly relationships are not rendered honestly"],
   ];
   for (const [source, pattern, message] of checks) {
     const matches = source.match(pattern);
@@ -50,9 +58,16 @@ if (process.argv.includes("--selftest")) {
     ["be", '"safety.anomaly_alert.acknowledge"'],
     ["be", '"safety.anomaly_alert.resolve"'],
     ["be", '"safety.anomaly_rules.seed_defaults"'],
+    ["be", "JOIN safety.anomaly_alert_rules r"],
+    ["be", "mdata.resolve_driver_label_same_company(a.subject_uuid, a.operating_company_id)"],
+    ["be", "FROM mdata.units u"],
+    ["be", "FROM mdata.loads l"],
+    ["be", "FROM geo.geofences g"],
     ["fe", "actionGenerationRef = useRef(0)"],
     ["fe", "body: { operating_company_id: input.companyId }"],
     ["fe", "actionGenerationRef.current += 1"],
+    ["fe", 'LINKABLE_SUBJECT_KINDS = new Set<EntityKind>(["driver", "unit", "load", "geofence"])'],
+    ["fe", '<EntityLink kind={kind} id={id} label={label}'],
   ];
   for (const [target, token] of mutations) {
     const source = target === "be" ? backend : frontend;

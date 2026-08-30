@@ -6,12 +6,19 @@ import { Button } from "../../../components/Button";
 import { MobileOptimizedTable } from "../../../components/shared/MobileOptimizedTable";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { Combobox } from "../../../components/Combobox";
+import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 
 type Props = { operatingCompanyId: string };
 
 type AlertRow = Record<string, unknown>;
 
 const SEVERITY_VALUES = new Set(["critical", "high", "warn"]);
+const LINKABLE_SUBJECT_KINDS = new Set<EntityKind>(["driver", "unit", "load", "geofence"]);
+
+function anomalySubjectKind(row: AlertRow): EntityKind | null {
+  const kind = String(row.subject_kind ?? "") as EntityKind;
+  return LINKABLE_SUBJECT_KINDS.has(kind) ? kind : null;
+}
 
 function parseSeverity(raw: string | null): string {
   return raw && SEVERITY_VALUES.has(raw) ? raw : "";
@@ -108,6 +115,17 @@ export function AnomalyDashboard({ operatingCompanyId }: Props) {
           columns={[
             { key: "detected_at", header: "Detected", render: (row) => String(row.detected_at ?? "") },
             { key: "severity", header: "Severity", render: (row) => <span className="font-semibold">{String(row.severity ?? "")}</span> },
+            { key: "rule_name", header: "Rule", render: (row) => String(row.rule_name ?? "Anomaly") },
+            {
+              key: "subject",
+              header: "Subject",
+              render: (row) => {
+                const kind = anomalySubjectKind(row);
+                const id = String(row.resolved_subject_uuid ?? row.subject_uuid ?? "") || null;
+                const label = String(row.subject_label ?? "") || (id ? "Related record unavailable" : "No related record");
+                return kind && id ? <EntityLink kind={kind} id={id} label={label} /> : <span>{label}</span>;
+              },
+            },
             { key: "evidence", header: "Evidence", render: (row) => <span className="font-mono text-xs">{JSON.stringify(row.evidence ?? {})}</span> },
             {
               key: "actions",
