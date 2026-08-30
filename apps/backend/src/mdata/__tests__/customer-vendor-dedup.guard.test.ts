@@ -56,8 +56,11 @@ describe("vendor dedup (G6-2)", () => {
   });
 
   it("rename (patch) path is also guarded against collisions", () => {
+    // Pre-existing drift found while testing an unrelated G1 change: vendors.routes.ts's PATCH
+    // handler gained an `as string` cast on patchScopedCompanyId after this assertion was written;
+    // the call itself was never removed. Fixed to match the real source, not weakened.
     expect(vendorSource).toContain(
-      "vendorNameConflictExists(authUser.uuid, patchScopedCompanyId, b.name, parsedParams.data.id)"
+      "vendorNameConflictExists(authUser.uuid, patchScopedCompanyId as string, b.name, parsedParams.data.id)"
     );
   });
 });

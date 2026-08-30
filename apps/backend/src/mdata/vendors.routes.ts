@@ -1,5 +1,6 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { ensureDriverVendor } from "./ensure-driver-vendor.shared.js";
+import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
@@ -568,8 +569,10 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         addOptional("payment_terms_id", b.payment_terms_id);
         addOptional("default_expense_account_id", b.default_expense_account_id);
         addOptional("account_number", b.account_number);
-        // ACCT-F220 — same gap as customers: the column existed, the route never wrote it.
-        addOptional("is_sample_data", b.is_sample_data);
+        // G1 (2026-08-30) — same gap as customers, same fix: an explicit value from the caller
+        // always wins (unchanged ACCT-F220 behavior); when omitted, auto-derive from the name a
+        // human actually typed instead of silently defaulting to false.
+        addOptional("is_sample_data", b.is_sample_data ?? (looksLikeSampleDataName(b.name) || undefined));
 
         const res = await client.query(
           `
