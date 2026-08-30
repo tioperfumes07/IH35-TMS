@@ -1,6 +1,6 @@
 # Module completion — Driver Hub — acceptance checklist
 
-**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-29T20:00:00Z · live_sha: `b2448ce`
+**PROGRESS: 3 of 7** · complete: `false` · as_of: 2026-08-29T20:00:00Z · live_sha: `b2448ce`
 
 | Status | Count |
 |---|---:|
