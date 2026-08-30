@@ -1,14 +1,3 @@
-# CURRENT GO — 2026-08-30 FINAL-INSTRUCTIONS-FOR-ALL-CODERS
-
-Cursor→self | FINAL pack CURSOR/ | Faro 1296 LIVE Neon · NOW=TIEOUT bar-2 (task 1) · skip #15546 | GO
-
-STOP. Every older THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 / TURBO line is VOID. Do not scroll git archaeology to pick a Thursday order.
-
-In-repo pack (named by seat — attach the files in the same folder):
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CURSOR/CURSOR.txt
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/../00-INVENTORY-EVERYTHING-YOU-ASKED-TODAY.txt
-
-===== BEGIN FULL PACKET =====
 ===============================================================================
 CURSOR — WORK ORDER 2026-08-30 FINAL. SUPERSEDES EVERY EARLIER PACKET.
 YOU OWN THE PERMANENT BAR CHANGE. THIS IS THE MOST IMPORTANT WORK IN THE QUEUE.
@@ -260,5 +249,3 @@ TASK 6 — DEPLOY LANE (standing)
 Confirmed live 2026-08-30 19:51Z: API dep-daa8i1cs728c73fn1ro0 LIVE 8f866830 (#18319),
 which includes #18318, so FACT-RESERVE-01 is deployed and CC-2's 007 gate is unblocked.
 Keep the API within 10 commits of main. Deploy on the same pass as any prod migration.
-===== END FULL PACKET =====
-

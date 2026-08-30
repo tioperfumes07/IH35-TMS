@@ -1,16 +1,3 @@
-# CURRENT GO — 2026-08-30 FINAL-INSTRUCTIONS-FOR-ALL-CODERS
-
-Cursor→CC-1 | FINAL pack CC-1/ | attach 3 CSVs in same folder | NOW=packet task order · FAC-00001 voided (task 2 DONE) · Transportation vendor for $8890 · skip #15546 | GO
-
-STOP. Every older THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 / TURBO line is VOID. Do not scroll git archaeology to pick a Thursday order.
-
-In-repo pack (named by seat — attach the files in the same folder):
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1.txt
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-26-CUSTOMERS-TO-CREATE.csv
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-33-INVOICES.csv
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-DEBTOR-NAME-MATCH.csv
-
-===== BEGIN FULL PACKET =====
 ===============================================================================
 CC-1 — WORK ORDER 2026-08-30 FINAL. SUPERSEDES EVERY EARLIER PACKET.
 YOU OWN THE MONEY LANE. EIGHT TASKS, IN ORDER. DO NOT REORDER.
@@ -305,5 +292,3 @@ D) STRUCTURE, per owner: IH 35 Trucking OWNS the equipment and leases to IH 35
    repos, returns, and the 2EMS lease. Do NOT hardcode the $8,890. Any lease contract must
    carry a PER-UNIT PER-MONTH basis so the amount recomputes when the fleet changes.
    The owner books the bill and the bill payment personally. DO NOT post them.
-===== END FULL PACKET =====
-

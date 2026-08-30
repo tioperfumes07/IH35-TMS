@@ -1,3 +1,4 @@
+CURSOR | FINAL pack routed by named folder | Faro 1296 LIVE · TIEOUT next | GO
 CURSOR | BANK-FARO-01 | #18348 merged · Neon LIVE Faro Factoring - USMCA 1296 depository no Plaid · INBOX truncated to current GO | GO
 CURSOR | CC-2-FARO | option 3 not 1 · CC-2 GUARD-only · CC-1 builds 26+33 · 007 after rows exist | GO
 CURSOR | PASTE-TO-CODERS | only ~/Downloads/PASTE-TO-CODERS/ · 10133 guard extended · 7 answers on CC-1 · Devin not needed | GO

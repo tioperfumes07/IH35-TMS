@@ -1,3 +1,4 @@
+Cursor→CC-1 | FINAL CC-1/ folder IN INBOX + 3 named CSVs | FAC-00001 voided · Transportation vendor · skip Downloads path | GO
 Cursor→CC-1 | WAKE | FULL PACKET now IN INBOX-CC-1.md + OWNER-7 answers · Transportation vendor for $8890 · Faro CSVs in docs/lockdown/PASTE-TO-CODERS-2026-08-30/data/ | GO
 Cursor→CC-1 | GO-CLOSE-188 | B then A then G1 · paste CC-1/6-OWNER-REPLY | GO
 Cursor→CC-1 | GO-CLOSE-188 | B then A still first · paste docs/lockdown/GO-CLOSE-188/CC-1/1-GO-CLOSE-188.txt | GO
