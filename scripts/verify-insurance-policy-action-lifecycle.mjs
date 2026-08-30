@@ -59,7 +59,7 @@ if (process.argv.includes("--selftest")) {
   ];
   for (const token of mutations) {
     if (!source.includes(token)) throw new Error(`fixture missing ${token}`);
-    if (inspect(source.replace(token, "REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
+    if (inspect(source.split(token).join("REMOVED_BY_SELFTEST")).length === 0) throw new Error(`missed ${token}`);
   }
   console.log(`verify-insurance-policy-action-lifecycle selftest PASS — ${mutations.length}/${mutations.length} policy identity/lifecycle defects red`);
   process.exit(0);

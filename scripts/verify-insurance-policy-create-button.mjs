@@ -14,13 +14,13 @@ const CHECKS = [
   ["policies:administrator-rbac", "policies", /Administrator/],
   ["policies:accountant-rbac", "policies", /Accountant/],
   ["modal:type-catalog", "modal", /listInsuranceTypeCatalog/],
-  ["modal:canonical-units", "modal", /listUnits/],
+  ["modal:canonical-units", "modal", /<EntityPicker[\s\S]{0,180}kind=["']unit["'][\s\S]{0,260}operatingCompanyId=\{operatingCompanyId\}/],
   ["modal:create-endpoint", "modal", /\/api\/v1\/insurance\/policies/],
   ["modal:create-title", "modal", /title="Create Policy"/],
   ["modal:type-error-truth", "modal", /typesQuery\.isError[\s\S]{0,240}Couldn't load coverage types[\s\S]{0,240}typesQuery\.refetch/],
-  ["modal:units-error-truth", "modal", /unitsQuery\.isError[\s\S]{0,240}Couldn't load units[\s\S]{0,240}unitsQuery\.refetch/],
-  ["modal:units-empty-after-success", "modal", /!unitsQuery\.isLoading && !unitsQuery\.isError && units\.length === 0/],
-  ["modal:submit-fails-closed", "modal", /disabled=\{createMutation\.isPending \|\| typesQuery\.isError \|\| unitsQuery\.isError\}/],
+  ["modal:unit-picker-change", "modal", /onChange=\{addCoveredUnit\}/],
+  ["modal:selected-unit-labels", "modal", /selectedUnits\.map\(\(unit\)[\s\S]{0,500}\{unit\.label\} ×/],
+  ["modal:submit-fails-closed", "modal", /disabled=\{createMutation\.isPending \|\| typesQuery\.isError\}/],
 ];
 
 export function collectProblems(sources) {

@@ -26,10 +26,10 @@ const CHECKS = [
   ["apps/frontend/src/pages/insurance/CoverageGapDashboard.tsx", /onApply:\s*\(next\)\s*=>\s*setUnitFilter\(next\.unitId\)/],
   ["apps/frontend/src/pages/insurance/ClaimsTab.tsx", /<EntityLinkOrTombstone kind="unit" id=\{claim\.unit_id\} name=\{claim\.unit_display_id\} noun="Unit" \/>/],
   ["apps/frontend/src/components/insurance/ClaimCreateModal.tsx", /kind="unit"/],
-  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /const toggleUnit = \(unitId: string\) => \{/],
-  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /entityLabel\(unit\.unit_number, unit\.id, "Unit"\)/],
-  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /const \[selectedUnitIds, setSelectedUnitIds\] = useState<string\[\]>\(\[\]\)/],
-  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /entityLabel\(unit\.unit_number, unit\.id, "Unit"\)/],
+  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /<EntityPicker[\s\S]{0,180}kind="unit"/],
+  ["apps/frontend/src/components/insurance/PolicyCreateModal.tsx", /unitIds:\s*selectedUnits\.map\(\(unit\) => unit\.value\)/],
+  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /<EntityPicker[\s\S]{0,180}kind="unit"/],
+  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnits\.map\(\(unit\) => unit\.value\)/],
 ];
 
 export function audit(files) {

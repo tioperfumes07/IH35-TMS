@@ -21,7 +21,7 @@ const CHECKS = [
   ["wizard:equal-split-default", "wizard", /equal_split.*default|default.*equal_split|allocation_method.*equal_split/],
   ["wizard:term-months", "wizard", /term_months|termMonths/],
   ["wizard:unit-ids", "wizard", /unit_ids|unitIds/],
-  ["wizard:zero-unit-guard", "wizard", /selectedUnitIds\.length\s*===\s*0/],
+  ["wizard:zero-unit-guard", "wizard", /selectedUnits\.length\s*===\s*0/],
   ["wizard:vendor-picker", "wizard", /<EntityPicker[\s\S]{0,180}kind=["']vendor["']/],
   ["wizard:nested-vendor-create", "wizard", /<EntityPicker[\s\S]{0,260}kind=["']vendor["'][\s\S]{0,260}allowCreate[\s\S]{0,260}nestedInDrawer/],
   ["wizard:vendor-not-found-ux", "wizard", /insurance_vendor_not_found/],
