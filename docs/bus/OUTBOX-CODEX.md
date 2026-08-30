@@ -1,4 +1,5 @@
-CODEX | WORKING | NOTIFY-F7516 | ROOT=suppression-check-read-existence-only-and-dropped-reason+automatic-provenance-from-audit | dead-schema=7→5 | NEXT=gate+FAST-MERGE-then-PWA-read_at | GO
+CODEX | WORKING | PWA-F7517 | ROOT=notifications-write-only-no-driver-read-route-inbox-or-read-lifecycle | dead-schema=5→4 | NEXT=gate+FAST-MERGE-then-DQF-metadata | GO
+CODEX | SHIPPED | NOTIFY-F7516 | PR=#18162 @ 686ea26348 | focused=Vitest3/3+backend-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=PWA-read_at | GO
 CODEX | SHIPPED | GUARD-F7515 | PR=#18161 @ 79a19105b8 | focused=2-normal+2-selftests+full-gate | runtime=unchanged | NEXT=dead-schema-red | GO
 CODEX | WORKING | GUARD-F7515 | ROOT=route-manifest-parser-ignored-default-as-import-and-ran-main-on-import | runtime=already-mounted | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRIVER-F7514 | PR=#18160 @ 987807f827 | focused=guard+selftest+Vitest2/2+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=route-manifest-red | GO

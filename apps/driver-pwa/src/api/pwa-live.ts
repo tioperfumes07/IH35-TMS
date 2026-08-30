@@ -31,6 +31,15 @@ export type DriverEquipmentAssignment = {
   } | null;
 };
 
+export type DriverNotification = {
+  id: string;
+  title: string;
+  message: string;
+  payload: unknown;
+  read_at: string | null;
+  created_at: string;
+};
+
 export async function getPwaHosClocks(): Promise<PwaHosClocks> {
   return apiRequest<PwaHosClocks>("/api/v1/driver-pwa/hos-clocks");
 }
@@ -42,4 +51,13 @@ export async function getRecentFuelTransactions(): Promise<RecentFuelTransaction
 
 export async function getMyEquipment(): Promise<DriverEquipmentAssignment> {
   return apiRequest<DriverEquipmentAssignment>("/api/v1/driver-pwa/equipment");
+}
+
+export async function getDriverNotifications(): Promise<DriverNotification[]> {
+  const payload = await apiRequest<{ rows: DriverNotification[] }>("/api/v1/driver-pwa/notifications");
+  return payload.rows ?? [];
+}
+
+export async function markDriverNotificationRead(id: string): Promise<{ id: string; read_at: string }> {
+  return apiRequest(`/api/v1/driver-pwa/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH" });
 }

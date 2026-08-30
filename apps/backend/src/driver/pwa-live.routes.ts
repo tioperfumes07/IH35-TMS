@@ -38,6 +38,55 @@ async function resolveDriverCompany(
 }
 
 export async function registerDriverPwaLiveRoutes(app: FastifyInstance) {
+  app.get("/api/v1/driver-pwa/notifications", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const driver = req.driver;
+    if (!driver || !req.user) return sendForbidden(reply);
+
+    const rows = await withCurrentUser(req.user.uuid, async (client) => {
+      const operatingCompanyId = await resolveDriverCompany(client, driver.id);
+      if (!operatingCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      const result = await client.query<{
+        id: string; title: string; message: string; payload: unknown; read_at: string | null; created_at: string;
+      }>(
+        `SELECT id::text, title, message, payload, read_at::text, created_at::text
+           FROM pwa.driver_notifications
+          WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid
+          ORDER BY created_at DESC
+          LIMIT 20`,
+        [operatingCompanyId, driver.id]
+      );
+      return result.rows;
+    });
+    if (rows === null) return reply.code(404).send({ error: "driver_not_found" });
+    return { rows };
+  });
+
+  app.patch("/api/v1/driver-pwa/notifications/:id/read", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    if (!(await requireDriverSession(req, reply))) return;
+    const driver = req.driver;
+    if (!driver || !req.user) return sendForbidden(reply);
+    const notificationId = (req.params as { id?: string }).id;
+    if (!notificationId) return reply.code(400).send({ error: "notification_id_required" });
+
+    const row = await withCurrentUser(req.user.uuid, async (client) => {
+      const operatingCompanyId = await resolveDriverCompany(client, driver.id);
+      if (!operatingCompanyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+      const result = await client.query<{ id: string; read_at: string }>(
+        `UPDATE pwa.driver_notifications
+            SET read_at = COALESCE(read_at, now())
+          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND driver_id = $3::uuid
+          RETURNING id::text, read_at::text`,
+        [notificationId, operatingCompanyId, driver.id]
+      );
+      return result.rows[0] ?? null;
+    });
+    if (!row) return reply.code(404).send({ error: "notification_not_found" });
+    return row;
+  });
+
   app.get("/api/v1/driver-pwa/hos-clocks", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!(await requireDriverSession(req, reply))) return;
     const driver = req.driver;
