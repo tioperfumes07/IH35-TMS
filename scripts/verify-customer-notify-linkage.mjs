@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","customers"],"cols":["customer","connectivity","reverse_link","picker_law"],"leafRe":"^settings\\.notify$|^detail\\.profile$","task":"THEATER-CUSTOMER-NOTIFY-LEAFRE","vertical":"column-wave"} */
+/** @matrix-built {"modules":["dispatch"],"cols":["customer","connectivity","reverse_link","picker_law"],"leaves":["settings.notify"],"task":"CUSTOMER-NOTIFY-LINKAGE-EXACT","vertical":"column-wave"} */
+/** @matrix-built {"modules":["customers"],"cols":["customer","connectivity","reverse_link"],"leaves":["detail.profile"],"task":"CUSTOMER-NOTIFY-LINKAGE-EXACT","vertical":"column-wave"} */
 import fs from "node:fs";
 const LABEL = "verify-customer-notify-linkage";
 const files = {
@@ -12,7 +13,9 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
-  if (!/<EntityPicker[\s\S]{0,200}kind=["']customer["']/.test(s.page) || !/updateCustomerNotifyPreferences\(customerId/.test(s.page)) failures.push("customer picker-to-writer missing");
+  if (!/<EntityPicker[\s\S]{0,240}kind=["']customer["']/.test(s.page)) failures.push("canonical customer picker missing");
+  if (!/mutationFn:\s*\(input:\s*\{\s*companyId:\s*string;\s*customerId:\s*string;\s*patch:/.test(s.page)) failures.push("customer-scoped mutation input missing");
+  if (!/updateCustomerNotifyPreferences\(input\.customerId,\s*\{\s*operating_company_id:\s*input\.companyId,\s*\.\.\.input\.patch\s*\}\)/.test(s.page)) failures.push("customer picker identity does not reach the company-scoped writer payload");
   if (!/import\s*\{\s*EntityLinkOrTombstone\s*\}\s*from\s*["'][^"']*\/EntityLinkOrTombstone["']/.test(s.page)) failures.push("notify log must import canonical label-aware tombstones");
   if (!/kind="load" id=\{entry\.load_id\} name=\{entry\.load_number\} noun="Load"/.test(s.page)) failures.push("notify log load must couple canonical id to human load number");
   if (!/kind="customer"[\s\S]{0,100}id=\{entry\.customer_id\}[\s\S]{0,100}name=\{entry\.customer_name\}[\s\S]{0,60}noun="Customer"/.test(s.page)) failures.push("notify log customer must couple canonical id to human name");
@@ -32,7 +35,8 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "page", /<EntityPicker[\s\S]{0,200}kind=["']customer["']/, '<EntityPicker kind="vendor"'],
-    ["payload", "page", /updateCustomerNotifyPreferences\(customerId/, "updateCustomerNotifyPreferences(companyId"],
+    ["mutation-input", "page", /customerId:\s*string;\s*patch:/, "customerKey: string; patch:"],
+    ["payload", "page", /updateCustomerNotifyPreferences\(input\.customerId/, "updateCustomerNotifyPreferences(input.companyId"],
     ["load-label", "page", /name=\{entry\.load_number\}/, "name={entry.load_id}"],
     ["customer-label", "page", /name=\{entry\.customer_name\}/, "name={entry.customer_id}"],
     ["scope", "service", /(customerBelongsToCompany[\s\S]{0,420})operating_company_id = \$1::uuid/, "$1TRUE"],

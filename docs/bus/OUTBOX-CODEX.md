@@ -1,3 +1,4 @@
+CODEX | WORKING | GR1-CUSTOMER-NOTIFY-PICKER-WRITER-MATCHER-STALE | normal PASS · selftest 16/16 | exact dispatch settings.notify + customers detail.profile metadata | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING | GR1-MONEY-GUARDS-STALE-AFTER-CANONICAL-REFRACTORS | routed=CC-1 | banking escrow slice · settlement route-options matcher+selftest · Wave-C direct-JE matcher | product canonical paths still present | GO
 CODEX | WORKING | PLANNER-GRID-CANONICAL-GUARD | GO-INSTRUMENT-PLANNER | A1-A3+A5-A7 source plants · A4 data-load-id hook · 5 route bindings · adopted by locked planner guard | LIVE-A4=count===1 remains Chrome/CC-2 | NEXT=focused+FAST-MERGE | GO
 CODEX | WORKING | MAINT-PROOF-F7540 | GO-CLOSE-188=maint-11 | MAINT-S01 home app+scoped-kpi-api+tab/read-recovery guards @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
