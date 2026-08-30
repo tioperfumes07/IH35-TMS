@@ -92,6 +92,9 @@ describe("safety incidents routes (A23-7)", () => {
     let seenParams: unknown[] = [];
     mockQuery.mockImplementation(async (sql: string, values?: unknown[]) => {
       if (sql.includes("SET LOCAL") || sql.includes("set_config")) return { rows: [], rowCount: 0 };
+      if (sql.includes("FROM mdata.drivers d")) {
+        return { rows: [{ exists: 1 }], rowCount: 1 };
+      }
       if (sql.includes("FROM safety.incidents")) {
         seenSql = sql;
         seenParams = values ?? [];
