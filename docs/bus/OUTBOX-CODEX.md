@@ -2493,3 +2493,5 @@ Codex | SHIPPED | GUARD-F7432 | PR=#18068 @ 60d5f31069 | NEXT=GUARD-F7433 existi
 Codex | WORKING | GUARD-F7433 | task activity URL→company-scoped reverse guard | NEXT=gate→FAST-MERGE
 Codex | SHIPPED | GUARD-F7433 | PR=#18069 @ 33669088b7 | NEXT=GUARD-F7434 master-detail canonical invoice client
 Codex | WORKING | GUARD-F7434 | customers transaction exact company/customer scope guard | NEXT=focused+selftest
+Codex | SHIPPED | GUARD-F7434 | PR=#18070 @ 1e8cc734d3 | NEXT=GUARD-F7435 POD/BOL split canonical category arms
+Codex | WORKING | GUARD-F7435 | hop.pod_bol canonical three-store connectivity guard | NEXT=gate→FAST-MERGE
