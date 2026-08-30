@@ -252,7 +252,7 @@ export function auditUnifiedDrugAlcoholSource(sources) {
       ["d.operating_company_id::text = t.operating_company_id::text", 1],
     ]],
     [DA_RANDOM_POOL, daRandomPool, [
-      ["e.operating_company_id::text = $1::uuid::text", 2],
+      ["e.operating_company_id::text = $1::uuid::text", 1],
       ["WHERE operating_company_id::text = $1::uuid::text", 1],
     ]],
   ]) {
@@ -426,6 +426,11 @@ if (SELFTEST) {
     "program-test-update-scope-regresses-to-uuid",
     { [DA_PROGRAM]: live[DA_PROGRAM].replace("operating_company_id::text = $2::uuid::text", "operating_company_id = $2::uuid") },
     "expected at least 3 portable GAP-81 company-scope occurrence"
+  );
+  expectCaught(
+    "random-pool-enrollment-roster-scope-regresses-to-uuid",
+    { [DA_RANDOM_POOL]: live[DA_RANDOM_POOL].replace("e.operating_company_id::text = $1::uuid::text", "e.operating_company_id = $1::uuid") },
+    "expected at least 1 portable GAP-81 company-scope occurrence"
   );
   expectCaught(
     "random-draw-history-scope-regresses-to-uuid",

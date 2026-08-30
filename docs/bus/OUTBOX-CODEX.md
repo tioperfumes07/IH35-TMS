@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7503 | ROOT=COMP01-random-pool-guard-required-retired-duplicate-enrollment-reader | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7502 | PR=#18148 @ 5c4cc76a15 | focused=normal+selftest12/12+full-gate | NEXT=COMP01-random-pool-red | GO
 CODEX | WORKING | GUARD-F7502 | ROOT=unit-aggregate-void-guard-froze-pre-status-filter-clause-adjacency | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7501 | PR=#18147 @ 1bf98457c9 | focused=normal+selftest+full-gate | NEXT=aggregate-shape-route-red | GO
 CODEX | WORKING | GUARD-F7501 | ROOT=session-autoload-guard-required-obsolete-gitignore-literals | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
