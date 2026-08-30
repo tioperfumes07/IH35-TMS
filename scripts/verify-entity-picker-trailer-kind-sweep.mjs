@@ -16,6 +16,14 @@ const SURFACES = [
   "apps/frontend/src/pages/banking/components/BankTransactionSplitModal.tsx",
 ];
 
+// insurance.policy_unit.asset_id resolves mdata.units -> mdata.assets. Trailers are linked on
+// insurance.claim.trailer_id instead, so policy creators must never widen their unit roster with
+// include:"trailers" (an equipment id cannot resolve through resolveMdataAssetId).
+const POLICY_UNIT_SURFACES = [
+  "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+  "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
+];
+
 const BANNED_FILE = "apps/frontend/src/components/banking/TrailerAutocomplete.tsx";
 
 /** listUnits(include:trailers) allowed only for fleet roster tables — not pickers. */
@@ -85,6 +93,21 @@ export function collectProblems(root = ROOT) {
     }
   }
 
+  for (const rel of POLICY_UNIT_SURFACES) {
+    const src = readRel(root, rel);
+    if (!src) {
+      problems.push(`missing ${rel}`);
+      continue;
+    }
+    const code = stripComments(src);
+    if (!/EntityPicker[\s\S]*?kind=["']unit["']/.test(code)) {
+      problems.push(`${rel}: covered policy assets must use EntityPicker kind=unit`);
+    }
+    if (/include:\s*["']trailers["']/.test(code)) {
+      problems.push(`${rel}: insurance.policy_unit cannot accept mdata.equipment ids`);
+    }
+  }
+
   const feRoot = path.join(root, "apps/frontend/src");
   if (fs.existsSync(feRoot)) {
     for (const abs of walkTsx(feRoot)) {
@@ -132,8 +155,15 @@ listUnits({ include: "trailers", limit: 500 })
     );
     fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/banking"), { recursive: true });
     fs.writeFileSync(path.join(stubRoot, "apps/frontend/src/components/banking/TrailerAutocomplete.tsx"), "export {}");
+    fs.mkdirSync(path.join(stubRoot, "apps/frontend/src/components/insurance"), { recursive: true });
+    for (const file of ["PolicyCreateModal.tsx", "PolicyCreateWizard.tsx"]) {
+      fs.writeFileSync(
+        path.join(stubRoot, "apps/frontend/src/components/insurance", file),
+        `listAllUnits({ include: "trailers" })\n<EntityPicker kind="trailer" />`,
+      );
+    }
     const planted = collectProblems(stubRoot);
-    if (planted.length < 3) {
+    if (planted.length < 7) {
       console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL hard enough`, planted);
       process.exit(1);
     }

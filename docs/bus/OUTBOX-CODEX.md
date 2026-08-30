@@ -1,3 +1,5 @@
+CODEX | WORKING | INS-F7494 | ROOT=policy-covered-unit-pickers-included-equipment-trailers-that-policy_unit-resolver-cannot-accept | focused=guard+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7493 | PR=#18137 @ 15cb9f4574 | focused=normal+selftest14/14+full-gate | NEXT=verify-entity-picker-trailer-kind-sweep | GO
 CODEX | WORKING | GUARD-F7493 | ROOT=Dispatch-KPI-guard-demanded-retired-atRiskQ+lateQ-after-canonical-atRiskLateQ-consolidation | NEXT=normal+selftest+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7492 | PR=#18132 @ a4ce2146a5 | focused=normal+selftest4/4+full-gate | NOTE=#18133-empty-tree-duplicate-from-gh-local-worktree-error | NEXT=verify-money-kpi-strip-no-fake-zero-on-error | GO
 CODEX | WORKING | GUARD-F7492 | ROOT=ReferenceSelect-census-classified-whole-file-so-RoundTrips-Sort-became-customer-picker | NEXT=normal+selftest+FAST-MERGE | GO
