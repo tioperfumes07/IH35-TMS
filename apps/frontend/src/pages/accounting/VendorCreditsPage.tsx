@@ -219,10 +219,20 @@ export function VendorCreditsPage() {
     [],
   );
 
+  // ACCT-F5606-C — sibling of CreditMemosPage's ACCT-F5606-B: this used to derive the filter-badge
+  // name ONLY from creditsQuery's data -- which is ALREADY filtered to this same vendor_id. Any
+  // vendor with zero vendor credits (the common case) made .find() return undefined, so a perfectly
+  // valid, visible vendor rendered as "Vendor — not visible" -- a label entity-label.ts reserves for
+  // a real RLS/deactivation signal (a row entity-scoped joins can't resolve). vendorOptions (from
+  // listVendors, unfiltered by vendor-credit activity) is the complete roster for this company, so
+  // check it first; only fall back to the credits row if the id is somehow absent from the roster too
+  // (that IS a genuine not-visible signal).
   const filterVendorName = useMemo(() => {
     if (!vendorFilter) return null;
+    const fromRoster = vendorOptions.find((v) => v.value === vendorFilter)?.label ?? null;
+    if (fromRoster) return fromRoster;
     return (creditsQuery.data?.credits ?? []).find((c) => c.vendor_id === vendorFilter)?.vendor_name ?? null;
-  }, [creditsQuery.data?.credits, vendorFilter]);
+  }, [vendorOptions, creditsQuery.data?.credits, vendorFilter]);
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-vendor-credits-filter-toolbar="collapsed">
