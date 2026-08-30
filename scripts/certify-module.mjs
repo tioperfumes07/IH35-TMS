@@ -11,11 +11,12 @@
  *   if norm(cert.sha) !== norm(live healthz/shallow version) → display STALE
  *   never CERTIFIED while SHAs diverge.
  *
- * Do not add package.json verify:* (Rule 17). Call this file directly.
+ * B4 (FW 6): illegal leafRe Built (`.*` / `|.*` / word-blanket) cannot display CERTIFIED.
  */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { audit, scanEntries } from "./verify-matrix-built-leaf-specific.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "certify-module";
@@ -39,18 +40,30 @@ export function displayCertVerdict(artifact, liveVersion) {
   const liveSha = normalizeSha(liveVersion);
   if (!certSha || !liveSha || certSha !== liveSha) return "STALE";
   const inner = artifact?.verdict;
+  // FW 6: leafRe=.* theater can never render CERTIFIED, even if someone wrote that verdict.
+  if (artifact?.items?.fw6 === "FAIL") return "INCOMPLETE";
   if (inner === "CERTIFIED" || inner === "INCOMPLETE" || inner === "STALE") return inner;
   return "INCOMPLETE";
 }
 
+/** FW 6 — every Built claim must be leaf-specific. `leafRe:.*` is theater and FAILS. */
+export function evaluateFw6(entries) {
+  const broad = audit(entries ?? []);
+  return {
+    fw6: broad.length === 0 ? "PASS" : "FAIL",
+    broadCount: broad.length,
+  };
+}
+
 export function buildArtifact({ moduleId, liveVersion, ranAt, leftoversOpen = null, items = {} }) {
   const sha = normalizeSha(liveVersion);
+  const fw6 = items.fw6 ? { fw6: items.fw6, broadCount: items.broadCount } : evaluateFw6(scanEntries());
   const artifact = {
     module: moduleId,
     sha,
     healthz_version_at_run: sha,
     ran_at: ranAt,
-    items,
+    items: { ...items, fw6: fw6.fw6, fw6_broadCount: fw6.broadCount ?? items.fw6_broadCount ?? null },
     leftovers_open: leftoversOpen,
     verdict: "INCOMPLETE",
   };
@@ -102,6 +115,7 @@ function selftest() {
     moduleId: "vendors",
     liveVersion: "5c82530",
     ranAt: "2026-08-29T22:00:00-05:00",
+    items: { fw6: "FAIL" },
   });
   if (incomplete.display_verdict !== "INCOMPLETE" || incomplete.verdict === "CERTIFIED") {
     console.error(`${LABEL} SELFTEST FAIL — B1 writer must not emit CERTIFIED`);
@@ -112,28 +126,56 @@ function selftest() {
     console.error(`${LABEL} SELFTEST FAIL — override field must not prevent STALE`);
     process.exit(1);
   }
-  console.log(`${LABEL} SELFTEST PASS — 4/4 STALE rule`);
+  const theater = displayCertVerdict(
+    { sha: "5c82530", verdict: "CERTIFIED", items: { fw6: "FAIL" } },
+    "5c82530",
+  );
+  if (theater !== "INCOMPLETE") {
+    console.error(`${LABEL} SELFTEST FAIL — CERTIFIED + fw6 FAIL must display INCOMPLETE, got ${theater}`);
+    process.exit(1);
+  }
+  const fw6Broad = evaluateFw6([{ file: "x", cols: ["driver"], leafRe: ".*" }]);
+  if (fw6Broad.fw6 !== "FAIL") {
+    console.error(`${LABEL} SELFTEST FAIL — leafRe=.* must FAIL FW6`);
+    process.exit(1);
+  }
+  const fw6Ok = evaluateFw6([{ file: "x", cols: ["driver"], leafRe: "^list\\.create$" }]);
+  if (fw6Ok.fw6 !== "PASS") {
+    console.error(`${LABEL} SELFTEST FAIL — exact leafRe must PASS FW6`);
+    process.exit(1);
+  }
+  console.log(`${LABEL} SELFTEST PASS — 7/7 STALE + FW6`);
   process.exit(0);
 }
 
-if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
+function isCertifyCli() {
+  try {
+    return path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (isCertifyCli() && (process.argv.includes("--selftest") || process.argv.includes("--self-test"))) {
   selftest();
 }
 
-const args = parseArgs(process.argv.slice(2));
-const liveVersion = await fetchLiveVersion(args.healthz);
-const artifact = buildArtifact({
-  moduleId: args.moduleId,
-  liveVersion,
-  ranAt: new Date().toISOString(),
-});
-const json = `${JSON.stringify(artifact, null, 2)}\n`;
-if (args.write) {
-  const dir = path.join(ROOT, "docs/certification");
-  fs.mkdirSync(dir, { recursive: true });
-  const dest = path.join(dir, `${args.moduleId}.cert.json`);
-  fs.writeFileSync(dest, json);
-  console.log(`${LABEL} wrote ${path.relative(ROOT, dest)} display_verdict=${artifact.display_verdict} sha=${artifact.sha}`);
-} else {
-  process.stdout.write(json);
+if (isCertifyCli() && !process.argv.includes("--selftest") && !process.argv.includes("--self-test")) {
+  const args = parseArgs(process.argv.slice(2));
+  const liveVersion = await fetchLiveVersion(args.healthz);
+  const artifact = buildArtifact({
+    moduleId: args.moduleId,
+    liveVersion,
+    ranAt: new Date().toISOString(),
+  });
+  const json = `${JSON.stringify(artifact, null, 2)}\n`;
+  if (args.write) {
+    const dir = path.join(ROOT, "docs/certification");
+    fs.mkdirSync(dir, { recursive: true });
+    const dest = path.join(dir, `${args.moduleId}.cert.json`);
+    fs.writeFileSync(dest, json);
+    console.log(`${LABEL} wrote ${path.relative(ROOT, dest)} display_verdict=${artifact.display_verdict} sha=${artifact.sha}`);
+  } else {
+    process.stdout.write(json);
+  }
 }
