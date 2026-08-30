@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -23,6 +24,7 @@ const gridPayload: driverSchedulerApi.FleetScheduleResponse = {
 };
 
 function wrap(ui: ReactNode) {
+  cleanup();
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
@@ -59,8 +61,9 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
   it("switches shared range to 7d", async () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     await screen.findByTestId("dispatch-driver-planner-grid");
-    await userEvent.click(screen.getByRole("button", { name: "7d" }));
-    expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-slate-800");
+    const bar = screen.getByTestId("dispatch-planner-range-toolbar");
+    await userEvent.click(within(bar).getByRole("button", { name: "7d" }));
+    expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-slate-800");
     expect(driverSchedulerApi.driverSchedulerOfficeApi.getGrid).toHaveBeenCalled();
   });
 });

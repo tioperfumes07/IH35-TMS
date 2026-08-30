@@ -136,7 +136,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
 
   return (
     <div
-      className="sticky bottom-0 z-20 mt-3 rounded-sm border border-slate-200 bg-slate-100/95 shadow-xs backdrop-blur-xs"
+      className="mt-3 rounded-sm border border-slate-200 bg-slate-100/95 shadow-xs"
       data-testid="dispatch-fleet-oos-strip"
     >
       <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-1.5">
