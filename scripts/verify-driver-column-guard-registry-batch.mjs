@@ -3,7 +3,6 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-driver-column-guard-registry-batch";
-const MAX_REMAINING = 233;
 const REQUIRED = [
   "verify-accident-driver-reverse.mjs", "verify-border-crossing-driver-linkage.mjs",
   "verify-cash-forecast-driver-linkage.mjs", "verify-compliance-driver-wiring.mjs",
@@ -27,18 +26,18 @@ const REQUIRED = [
 
 function failures(classification) {
   const wired = new Set(classification.fullyWired);
-  const out = REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
-  if (classification.unaccounted.length > MAX_REMAINING) out.push(`unaccounted guard census ${classification.unaccounted.length} exceeds ${MAX_REMAINING}`);
-  return out;
+  return REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
 }
 
 if (process.argv.includes("--selftest")) {
-  const baseline = { fullyWired: [...REQUIRED], unaccounted: Array.from({ length: MAX_REMAINING }, (_, i) => `other-${i}.mjs`) };
+  const baseline = { fullyWired: [...REQUIRED], unaccounted: ["unrelated-repository-guard.mjs"] };
   const mutations = [
     { name: "required guard removed", value: { ...baseline, fullyWired: REQUIRED.slice(1) } },
-    { name: "orphan census regresses", value: { ...baseline, unaccounted: [...baseline.unaccounted, "regression.mjs"] } },
   ];
   for (const mutation of mutations) if (!failures(mutation.value).length) throw new Error(`${mutation.name} was not rejected`);
+  if (failures({ ...baseline, unaccounted: [...baseline.unaccounted, "another-unrelated-guard.mjs"] }).length) {
+    throw new Error("unrelated repository guard growth incorrectly failed the driver-column registry");
+  }
   console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
   process.exit(0);
 }
@@ -48,4 +47,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.map((problem) => `  - ${problem}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 35 driver-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — ${REQUIRED.length} exact driver-column guards execute in CI`);
