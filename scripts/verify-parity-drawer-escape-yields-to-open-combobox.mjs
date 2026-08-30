@@ -24,12 +24,12 @@ function audit(src) {
     return failures;
   }
   const guardIndex = onKeyBody.indexOf('document.querySelector(\'[data-combobox-listbox="portal"]\')');
-  const closeIndex = onKeyBody.indexOf("onClose();");
+  const closeIndex = onKeyBody.indexOf("attemptClose();");
   if (guardIndex === -1) {
     failures.push('onKey must check document.querySelector(\'[data-combobox-listbox="portal"]\') before closing');
   }
   if (closeIndex === -1) {
-    failures.push("onKey must still call onClose() for the normal (no open Combobox) case");
+    failures.push("onKey must still call attemptClose() for the normal (no open Combobox) case");
   }
   if (guardIndex !== -1 && closeIndex !== -1 && guardIndex > closeIndex) {
     failures.push("the open-Combobox guard must run BEFORE onClose(), not after");
@@ -41,6 +41,7 @@ if (process.argv.includes("--selftest")) {
   const src = fs.readFileSync(FILE, "utf8");
   const mutations = [
     ["strip-combobox-guard", (s) => s.replace('if (document.querySelector(\'[data-combobox-listbox="portal"]\')) return;\n      ', "")],
+    ["bypass-guarded-close", (s) => s.replace("      attemptClose();\n", "      onClose();\n")],
   ];
   for (const [name, mutate] of mutations) {
     const candidate = mutate(src);
