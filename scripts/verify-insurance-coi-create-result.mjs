@@ -7,12 +7,19 @@ const service = fs.readFileSync(SERVICE, "utf8");
 const routes = fs.readFileSync(ROUTES, "utf8");
 
 function failures(input) {
+  const createStart = input.routes.indexOf('app.post(\n    "/api/v1/insurance/coi-requests"');
+  const patchStart = createStart < 0
+    ? -1
+    : input.routes.indexOf('app.patch("/api/v1/insurance/coi-requests/:id"', createStart);
+  const createRoute = createStart < 0 || patchStart < 0
+    ? ""
+    : input.routes.slice(createStart, patchStart);
   const checks = [
-    ["creator limiter", /coi-requests"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/.test(input.routes)],
+    ["creator limiter", /coi-requests"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/.test(createRoute)],
     ["service insert identity", /const created = insert\.rows\[0\];\s*if \(!created\?\.id\) throw new Error\("insurance_coi_request_insert_failed"\)/.test(input.service)],
     ["service returns proven row", /return \{ kind: "ok" as const, row: created \}/.test(input.service)],
-    ["audit uses service row id", /insurance\.coi_request\.created[\s\S]{0,140}resource_id: result\.row\?\.id/.test(input.routes)],
-    ["201 uses proven service row", /reply\.code\(201\)\.send\(created\.row\)/.test(input.routes)],
+    ["audit uses service row id", /insurance\.coi_request\.created[\s\S]{0,140}resource_id: result\.row\?\.id/.test(createRoute)],
+    ["201 uses proven service row", /reply\.code\(201\)\.send\(created\.row\)/.test(createRoute)],
   ];
   return checks.filter(([, ok]) => !ok).map(([label]) => label);
 }
@@ -26,7 +33,7 @@ if (problems.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["routes", '{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', ""],
+    ["routes", '"/api/v1/insurance/coi-requests",\n    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', '"/api/v1/insurance/coi-requests",\n    { config: {} },'],
     ["service", 'if (!created?.id) throw new Error("insurance_coi_request_insert_failed");', ""],
     ["service", 'row: created', 'row: insert.rows[0]'],
     ["routes", "reply.code(201).send(created.row)", "reply.code(201).send(undefined)"],
