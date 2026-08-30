@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { OptimalDriversPanel } from "./OptimalDriversPanel";
+import { DEFAULT_DISPATCH_LOCAL_SETTINGS } from "../../lib/dispatch-local-settings";
 
 const sampleDrivers = [
   {
@@ -74,17 +75,38 @@ describe("OptimalDriversPanel (B21-D8)", () => {
   it("selects a ranked driver on row click", async () => {
     const user = userEvent.setup();
     const onSelect = vi.fn();
+    const companyId = "00000000-0000-4000-8000-000000000002";
     wrap(
       <OptimalDriversPanel
         loadId="00000000-0000-4000-8000-000000000001"
-        operatingCompanyId="00000000-0000-4000-8000-000000000002"
+        operatingCompanyId={companyId}
         selectedDriverId=""
         onSelectDriver={onSelect}
         driversOverride={sampleDrivers}
+        routingSettingsOverride={{ ...DEFAULT_DISPATCH_LOCAL_SETTINGS, auto_routing_respect_hos: false }}
       />
     );
     await user.click(screen.getByTestId("optimal-driver-row-2"));
     expect(onSelect).toHaveBeenCalledWith("00000000-0000-4000-8000-000000000011");
+  });
+
+  it("applies each company auto-routing rule to the mounted optimizer", async () => {
+    const user = userEvent.setup();
+    const companyId = "00000000-0000-4000-8000-000000000099";
+    const onSelect = vi.fn();
+    const strictSettings = { ...DEFAULT_DISPATCH_LOCAL_SETTINGS, auto_routing_enabled: true, auto_routing_respect_hos: true, auto_routing_respect_equipment: true };
+    const view = wrap(
+      <OptimalDriversPanel loadId="00000000-0000-4000-8000-000000000001" operatingCompanyId={companyId} selectedDriverId="" onSelectDriver={onSelect} driversOverride={sampleDrivers} routingSettingsOverride={strictSettings} />
+    );
+    expect(screen.getByTestId("optimal-driver-row-2").getAttribute("aria-disabled")).toBe("true");
+    await user.click(screen.getByTestId("optimal-driver-row-2"));
+    expect(onSelect).not.toHaveBeenCalled();
+
+    view.rerender(
+      <MemoryRouter><QueryClientProvider client={new QueryClient()}><OptimalDriversPanel loadId="00000000-0000-4000-8000-000000000001" operatingCompanyId={companyId} selectedDriverId="" onSelectDriver={onSelect} driversOverride={sampleDrivers} routingSettingsOverride={{ ...strictSettings, auto_routing_respect_hos: false }} /></QueryClientProvider></MemoryRouter>
+    );
+    await user.click(screen.getByTestId("optimal-driver-row-2"));
+    expect(onSelect).toHaveBeenCalledWith(sampleDrivers[1].driver_id);
   });
 
   it("shows override warning when non-top driver selected without override flag", async () => {

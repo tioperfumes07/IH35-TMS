@@ -12,6 +12,8 @@ const paths = {
   pageTest: path.join(ROOT, "apps/frontend/src/pages/dispatch/__tests__/DispatchSettingsPage.test.tsx"),
   board: path.join(ROOT, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"),
   kanban: path.join(ROOT, "apps/frontend/src/components/dispatch/DispatchKanban.tsx"),
+  optimizer: path.join(ROOT, "apps/frontend/src/components/dispatch/OptimalDriversPanel.tsx"),
+  optimizerTest: path.join(ROOT, "apps/frontend/src/components/dispatch/OptimalDriversPanel.test.tsx"),
   localSettings: path.join(ROOT, "apps/frontend/src/lib/dispatch-local-settings.ts"),
   dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
@@ -79,11 +81,23 @@ export function checkSettingsAlertThresholdWiring(board, kanban, localSettings, 
   return failures;
 }
 
+export function checkSettingsAutoRoutingWiring(optimizer, optimizerTest) {
+  const failures = [];
+  if (!optimizer.includes("readDispatchLocalSettings(operatingCompanyId)")) failures.push("optimizer must read selected-company routing settings");
+  if (!optimizer.includes("if (!routingSettings.auto_routing_enabled) return null")) failures.push("disabled suggestions must not render");
+  if (!optimizer.includes("routingSettings.auto_routing_respect_hos && !d.hos_safe")) failures.push("HOS rule must govern suggestion selection");
+  if (!optimizer.includes("routingSettings.auto_routing_respect_equipment && !d.eligible")) failures.push("equipment/endorsement rule must govern suggestion selection");
+  if (!optimizerTest.includes("applies each company auto-routing rule to the mounted optimizer")) failures.push("mounted optimizer settings test missing");
+  return failures;
+}
+
 function main() {
   const page = read(paths.page);
   const pageTest = read(paths.pageTest);
   const board = read(paths.board);
   const kanban = read(paths.kanban);
+  const optimizer = read(paths.optimizer);
+  const optimizerTest = read(paths.optimizerTest);
   const localSettings = read(paths.localSettings);
   const dispatchApi = read(paths.dispatchApi);
   const manifest = read(paths.manifest);
@@ -103,6 +117,7 @@ function main() {
   failures.push(...checkSettingsCompanyScope(page, pageTest, localSettings));
   failures.push(...checkSettingsDefaultSortWiring(board, localSettings));
   failures.push(...checkSettingsAlertThresholdWiring(board, kanban, localSettings, pageTest));
+  failures.push(...checkSettingsAutoRoutingWiring(optimizer, optimizerTest));
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DispatchSettingsPage tests must cover at least 3 cases");
 
   if (!dispatchApi.includes("getDispatchPreferences")) failures.push("dispatch API must export getDispatchPreferences");
@@ -157,7 +172,10 @@ if (process.argv.includes("--selftest")) {
     read(paths.pageTest).replace("applies company alert thresholds to ETA variance", "removed threshold test")
   );
   const currentAlerts = checkSettingsAlertThresholdWiring(fixedBoard, fixedKanban, fixedLocalSettings, read(paths.pageTest));
-  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0 && plantedScope.length >= 4 && currentScope.length === 0 && plantedSort.length >= 3 && currentSort.length === 0 && plantedAlerts.length >= 4 && currentAlerts.length === 0) {
+  const fixedOptimizer = read(paths.optimizer);
+  const plantedRouting = checkSettingsAutoRoutingWiring(fixedOptimizer.replace("routingSettings.auto_routing_respect_hos && !d.hos_safe", "false").replace("routingSettings.auto_routing_respect_equipment && !d.eligible", "false"), read(paths.optimizerTest).replace("applies each company auto-routing rule to the mounted optimizer", "removed"));
+  const currentRouting = checkSettingsAutoRoutingWiring(fixedOptimizer, read(paths.optimizerTest));
+  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0 && plantedScope.length >= 4 && currentScope.length === 0 && plantedSort.length >= 3 && currentSort.length === 0 && plantedAlerts.length >= 4 && currentAlerts.length === 0 && plantedRouting.length >= 3 && currentRouting.length === 0) {
     console.log("verify:dispatch-settings-tab selftest PASS — planted blind-write regression rejected");
     process.exit(0);
   }

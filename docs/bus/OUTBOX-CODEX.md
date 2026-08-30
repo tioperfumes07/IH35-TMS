@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7392 | NOW=auto-routing settings→mounted optimizer connectivity | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7391 | PR=#17948 @ f30e3bb3d5 | gate=exit0 | NEXT=DSP-F7392 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7391 | NOW=alert-threshold settings→Board+Kanban connectivity | NEXT=guard+FAST-MERGE then auto-routing/unique census | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7390 | PR=#17945 @ b3d138f188 | gate=exit0 | NEXT=DSP-F7391 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7390 | NOW=null gallons honesty API→history/CSV/reverse | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
