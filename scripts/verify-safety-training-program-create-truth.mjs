@@ -6,10 +6,13 @@ const source = fs.readFileSync(file, "utf8");
 
 function verify(text) {
   const failures = [];
-  if (!/app\.post\("\/api\/v1\/safety\/training-programs", \{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/.test(text)) failures.push("creator must be rate limited");
-  if (!/const trainingProgram = res\.rows\[0\];[\s\S]*?if \(!trainingProgram\?\.id\) throw new Error\("safety_training_program_insert_failed"\)/.test(text)) failures.push("creator must require inserted identity");
-  if (!/resource_id: trainingProgram\.id/.test(text)) failures.push("audit must use proven identity");
-  if (!/return trainingProgram;/.test(text)) failures.push("201 response must use proven row");
+  const createStart = text.indexOf('app.post("/api/v1/safety/training-programs"');
+  const createEnd = createStart >= 0 ? text.indexOf("\n  });", createStart) : -1;
+  const create = createStart >= 0 && createEnd >= 0 ? text.slice(createStart, createEnd) : "";
+  if (!/app\.post\("\/api\/v1\/safety\/training-programs", \{ config: \{ rateLimit: \{ max: 60, timeWindow: "1 minute" \} \} \}/.test(create)) failures.push("creator must be rate limited");
+  if (!/const trainingProgram = res\.rows\[0\];[\s\S]*?if \(!trainingProgram\?\.id\) throw new Error\("safety_training_program_insert_failed"\)/.test(create)) failures.push("creator must require inserted identity");
+  if (!/resource_id: trainingProgram\.id/.test(create)) failures.push("audit must use proven identity");
+  if (!/return trainingProgram;/.test(create)) failures.push("201 response must use proven row");
   return failures;
 }
 
@@ -21,7 +24,10 @@ if (failures.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace('max: 60, timeWindow: "1 minute"', 'max: 0, timeWindow: "1 minute"'),
+    source.replace(
+      'app.post("/api/v1/safety/training-programs", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }',
+      'app.post("/api/v1/safety/training-programs", { config: { rateLimit: { max: 0, timeWindow: "1 minute" } } }'
+    ),
     source.replace("if (!trainingProgram?.id)", "if (false)"),
     source.replace("resource_id: trainingProgram.id", "resource_id: null"),
     source.replace("return trainingProgram;", "return res.rows[0];"),
