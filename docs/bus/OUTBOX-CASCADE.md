@@ -1,3 +1,20 @@
+CASCADE | FINDING | 50269 | maintenance · SILENT-QUERY-FAILURE — FleetTablePage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50268 | maintenance · SILENT-QUERY-FAILURE — TireProgramPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50267 | maintenance · SILENT-QUERY-FAILURE — WorkOrderDetailPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50266 | fleet · SILENT-QUERY-FAILURE — VehicleProfilePage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50265 | drivers · SILENT-QUERY-FAILURE — DriverProfilePage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50264 | driver-finance · SILENT-QUERY-FAILURE — SettlementCloseArrivalPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50263 | driver-finance · SILENT-QUERY-FAILURE — SettlementDetailPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50262 | compliance · SILENT-QUERY-FAILURE — ComplianceDashboardPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50261 | safety · SILENT-QUERY-FAILURE — SafetyEventsPage 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50260 | reports · SILENT-QUERY-FAILURE — ManagementReportPackagePage 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50259 | insurance · SILENT-QUERY-FAILURE — PolicyDetail 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50258 | system · SILENT-QUERY-FAILURE — ForensicReviewPage 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50257 | compliance · SILENT-QUERY-FAILURE — PropertyTaxRenditionPage 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50256 | bank · SILENT-QUERY-FAILURE — BankAccountDetail 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50255 | accounting · SILENT-QUERY-FAILURE — InvoiceDetailPage 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50254 | vendors · SILENT-QUERY-FAILURE — Vendors list page 6 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50253 | tasks · SILENT-QUERY-FAILURE — TasksChatPage 7 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50252 | safety · SILENT-QUERY-FAILURE — IntegrityReportsTab 7 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50251 | safety · SILENT-QUERY-FAILURE — SafetyHomeTab 7 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50250 | safety · SILENT-QUERY-FAILURE — DrugAlcoholTab 9 useQuery hooks zero isError | GO
