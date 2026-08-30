@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7515 | ROOT=route-manifest-parser-ignored-default-as-import-and-ran-main-on-import | runtime=already-mounted | NEXT=focused+gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRIVER-F7514 | PR=#18160 @ 987807f827 | focused=guard+selftest+Vitest2/2+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=route-manifest-red | GO
 CODEX | WORKING | DRIVER-F7514 | ROOT=profile-message-outbox-worker-updated-FORCE-RLS-table-without-worker-context-after-external-send | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | SHIPPED | FUEL-F7513 | PR=#18159 @ 699cbb65a8 | focused=guard+selftest+backend-tsc+full-gate | NEXT=outbox-RLS-red | GO
 CODEX | WORKING | FUEL-F7513 | ROOT=Relay-backfill-status-GET-had-no-per-route-budget-under-global-false-rate-limiter | NEXT=focused+gate+FAST-MERGE | GO

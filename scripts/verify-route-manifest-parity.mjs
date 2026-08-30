@@ -40,6 +40,7 @@
 // registration being dropped.
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const BACKEND_SRC = "apps/backend/src";
 const ENTRYPOINT = "index.ts";
@@ -322,7 +323,7 @@ export function parseModule(root, rel, text) {
         const parts = piece.trim().split(/\s+as\s+/);
         const local = (parts[1] ?? parts[0]).trim();
         const original = parts[0].trim();
-        imports.push({ local, original, target, kind: "named" });
+        imports.push({ local, original, target, kind: original === "default" ? "default" : "named" });
       }
     }
     const defaultName = /^([A-Za-z0-9_$]+)\s*(?:,|$)/.exec(clause);
@@ -554,16 +555,20 @@ function selftest() {
     writeTree(tmp, {
       "index.ts": [
         `import { registerMountedRoutes } from "./mounted.routes.js";`,
+        `import { default as registerDefaultAliasRoutes } from "./default-alias.routes.js";`,
         `import { registerGroupRoutes } from "./group/index.js";`,
         `import { registerBarrelRoutes } from "./barrel.routes.js";`,
         `const app = {} as any;`,
         `await registerMountedRoutes(app);`,
+        `await registerDefaultAliasRoutes(app);`,
         `await registerGroupRoutes(app);`,
         `await registerBarrelRoutes(app);`,
         `await registerAccountingRoutes(app);`,
       ].join("\n"),
       // control 1 — mounted by a direct call from the entrypoint
       "mounted.routes.ts": `export async function registerMountedRoutes(app: any) {}`,
+      // control 1b — TypeScript's named-looking default alias is still a default plugin import.
+      "default-alias.routes.ts": `export default fp(async (app: any) => {});`,
       // control 2 — mounted transitively through a group index
       "group/index.ts": [
         `import { registerChildRoutes } from "./child.routes.js";`,
@@ -612,6 +617,7 @@ function selftest() {
     // arms 4-8 — the controls. A guard that flags a correctly-mounted module is worse than no guard.
     for (const control of [
       "mounted.routes.ts",
+      "default-alias.routes.ts",
       "child.routes.ts",
       "barrel.routes.ts",
       "impl.routes.ts",
@@ -770,4 +776,6 @@ function main() {
   );
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main();
+}
