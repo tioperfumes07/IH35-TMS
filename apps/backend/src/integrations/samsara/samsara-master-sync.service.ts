@@ -177,6 +177,10 @@ export async function syncSamsaraDriversMaster(client: PgClient, operatingCompan
     rowsAdded: added,
     rowsUpdated: updated,
     rowsRemoved: 0,
+    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: same gap as the vehicles/trailers sync functions --
+    // errors was computed but never passed through, so a success:false row here had nothing to
+    // debug from.
+    errorMessage: errors.length > 0 ? errors.join("; ") : null,
     payload: { remote_count: drivers.length },
   });
 
@@ -427,6 +431,13 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     rowsAdded: added,
     rowsUpdated: updated,
     rowsRemoved: 0,
+    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: this call recorded success:false whenever a per-row
+    // SAVEPOINT caught a unit_upsert_failed/equipment_upsert_failed error (see above), but never
+    // passed errorMessage, so the actual failure reason was computed into `errors` and then
+    // discarded -- integration_sync_log showed a bare "success: false" with nothing to debug from.
+    // writeSyncLog already supports errorMessage (used on the early-exit path above); this call
+    // just never passed it.
+    errorMessage: errors.length > 0 ? errors.join("; ") : null,
     payload: { remote_count: vehicles.length },
   });
 
@@ -618,6 +629,10 @@ export async function syncSamsaraTrailersMaster(client: PgClient, operatingCompa
     rowsAdded: added,
     rowsUpdated: updated,
     rowsRemoved: 0,
+    // SAMSARA-SYNC-ERRORS-SILENTLY-DROPPED: same gap as the vehicles/drivers sync functions --
+    // errors was computed (per-row SAVEPOINT catches) but never passed through, so a success:false
+    // row here had nothing to debug from.
+    errorMessage: errors.length > 0 ? errors.join("; ") : null,
     payload: { remote_count: trailers.length, excluded_company_vehicles: skipped },
   });
 
