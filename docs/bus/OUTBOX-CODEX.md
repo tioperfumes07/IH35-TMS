@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7438 | VERTICAL=dispatch planner range+write integrity | ROOT=guards-froze-start-anchor-and-nullable-customer-lock | focused=2-normal+2-selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7437 | VERTICAL=safety eld_audit.list connectivity | ROOT=guard-froze-pre-authorization-company-join-shape | focused=normal+selftest-7/7-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7431 | VERTICAL=maintenance severe-alert range+unit+WO reverse | ROOT=guard-froze-capped-list-before-all-row-exposure-contract | focused=normal+selftest-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7430 | VERTICAL=dispatch+vendors broker FK | ROOT=guard-still-read-direct-form-after-submit-snapshot-envelope | NEXT=focused+gate+FAST-MERGE | GO
