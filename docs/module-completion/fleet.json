@@ -25,7 +25,25 @@
       "pr": "#5289",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:30:00.000Z",
-      "live_verified_sha": "ed4e2f2"
+      "live_verified_sha": "ed4e2f2",
+      "proven_at_sha": "b8fc09c",
+      "proofs": [
+        {
+          "kind": "http",
+          "url": "https://app.ih35dispatch.com/fleet",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "http",
+          "url": "https://api.ih35dispatch.com/api/v1/mdata/units?include=trailers",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "guard",
+          "script": "scripts/verify-fleet-table-complete-unified-roster.mjs",
+          "expect": { "exit": 0 }
+        }
+      ]
     },
     {
       "id": "FLEET-S02",
