@@ -1840,7 +1840,7 @@ export function CustomerDetailPage() {
                     <span className="rounded-sm bg-gray-100 px-2 py-0.5 text-[11px]">{formatDateUS(event.event_date)}</span>
                     <StatusBadge variant={event.severity === "severe" ? "crit" : event.severity === "warning" ? "warn" : "info"}>{event.severity}</StatusBadge>
                     <span className="text-xs uppercase tracking-wide">{event.event_type.replaceAll("_", " ")}</span>
-                    {event.dollar_impact_amount ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
+                    {event.dollar_impact_amount != null ? <strong className="text-sm">${Number(event.dollar_impact_amount).toFixed(2)}</strong> : null}
                     {typeof event.days_late === "number" ? <span className="text-xs">Days late: {event.days_late}</span> : null}
                   </div>
                   <div className={event.voided_at ? "mt-1 text-sm line-through" : "mt-1 text-sm"}>{event.summary}</div>

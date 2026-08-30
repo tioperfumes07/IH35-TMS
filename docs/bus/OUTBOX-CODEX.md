@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=CUST-DSP-F7380 | NOW=zero-dollar quality impact F+R vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7379 | PR=#17924 @ 51d714649b | gate=exit0 | NEXT=CUST-DSP-F7380 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7379 | NOW=border zero-minute wait honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7378 | PR=#17923 @ 2f5831fab6 | gate=exit0 | NEXT=DSP-F7379 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7378 | NOW=planner conditional-view 500 vertical | guard=PASS+selftest16/16 · TS=exit0 | NEXT=FAST-MERGE then unique dispatch/fuel | GO

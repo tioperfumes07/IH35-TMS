@@ -68,7 +68,7 @@ export function LoadQualityEventsReverseSection({
                 </StatusBadge>{" "}
                 <span className="text-xs uppercase tracking-wide text-gray-600">{event.event_type.replaceAll("_", " ")}</span>
                 <div className={event.voided_at ? "text-gray-500 line-through" : ""}>{event.summary}</div>
-                {event.dollar_impact_amount ? (
+                {event.dollar_impact_amount != null ? (
                   <span className="text-xs text-gray-600">${Number(event.dollar_impact_amount).toFixed(2)}</span>
                 ) : null}
                 {event.voided_at ? <span className="ml-2 text-xs text-gray-500">Voided</span> : null}

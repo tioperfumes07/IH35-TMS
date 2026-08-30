@@ -31,12 +31,14 @@ const CHECKS = [
   { name: "reverse section hides cached rows on failure", file: F.section, pattern: /const rows: CustomerQualityEvent\[\] = query\.isError\s*\n\s*\? \[\]/ },
   { name: "reverse section failure retries the exact query", file: F.section, pattern: /<ListErrorState[\s\S]{0,180}onRetry=\{\(\) => void query\.refetch\(\)\}/ },
   { name: "reverse section marker", file: F.section, pattern: /data-testid="load-reverse-quality-events"/ },
+  { name: "reverse section renders a legitimate zero-dollar impact", file: F.section, pattern: /event\.dollar_impact_amount != null \? \(/ },
   { name: "load drawer imports the reverse section", file: F.drawer, pattern: /import \{ LoadQualityEventsReverseSection \}/ },
   { name: "load drawer mounts the reverse section bound to the load's own customer_id", file: F.drawer, pattern: /<LoadQualityEventsReverseSection\s+operatingCompanyId=\{load\.operating_company_id\}\s+customerId=\{load\.customer_id\}\s+loadId=\{load\.id\}/ },
   { name: "customer-loads query also fires while the Create Quality Event modal is open (feeds the picker)", file: F.detail, pattern: /enabled: Boolean\(id && operatingCompanyId && \(activeTab === "Loads" \|\| qualityModalOpen\)\)/ },
   { name: "quality form state carries related_load_id", file: F.detail, pattern: /const \[qualityForm, setQualityForm\] = useState\(\{[\s\S]{0,1000}related_load_id: "",/ },
   { name: "create mutation sends related_load_id to the backend", file: F.detail, pattern: /days_late: qualityForm\.days_late \? Number\(qualityForm\.days_late\) : undefined,\s*\n\s*related_load_id: qualityForm\.related_load_id \|\| undefined,/ },
   { name: "create form renders a Related Load picker sourced from this customer's own loads", file: F.detail, pattern: /options=\{customerLoads\.map\(\(load\) => \(\{ value: load\.id, label: load\.load_number \?\? load\.id \}\)\)\}\s*\n\s*value=\{qualityForm\.related_load_id \|\| null\}/ },
+  { name: "customer detail renders a legitimate zero-dollar impact", file: F.detail, pattern: /event\.dollar_impact_amount != null \? <strong className="text-sm">/ },
   { name: "backend client type still accepts related_load_id (unchanged contract, not silently dropped)", file: F.api, pattern: /export function createCustomerQualityEvent\([\s\S]{0,500}related_load_id\?: string/ },
 ];
 
