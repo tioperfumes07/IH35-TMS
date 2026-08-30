@@ -1,3 +1,5 @@
+**2026-08-30T16:54Z GO-INSTRUMENT-PLANNER THIS IS NOW.** Live `d41124e`. Packet `docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md`. CC-1 sql paste. CC-2 re-verify on this SHA. Codex claim EVEN + planner guard. Cascade unique FINDING only. VOID ECON-waiting-on-definitions. Skip #15546.
+
 **2026-08-30T15:20Z GO-CLOSE-188 ACCEPTANCE LOCKED.** Owner reply in `docs/lockdown/GO-CLOSE-188/OWNER/3-OWNER-REPLY-C25-C31-APPROVED.txt`. Live SHA `b8fc09ce` (#18170). Period close = own session. CC-1 B→A→G1. CC-3 lists+customers (no Devin). Skip #15546.
 
 **2026-08-30T15:02Z GO-CLOSE-188 THIS IS NOW.** Read `docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt` then `docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt`. 188 cells: 112 ECON owner-gated until Jorge approves C25–C31; 76 Miss-C start now (lists 25 first). Do not paint Guard/Clicked. Never restamp U14. Deploy in flight. Period close next dedicated session. Skip #15546.

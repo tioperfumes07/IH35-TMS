@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-30 GO-CLOSE-188 acceptance locked
+# LEAD CENSUS — 2026-08-30 GO-INSTRUMENT-PLANNER
 
-**Lead:** CURSOR · **NOW:** C25–C31 acceptance in columns.shared.json. Live `b8fc09ce`. Period close own session. No Devin.
+**Lead:** CURSOR · **NOW:** live `d41124e`. Packet `docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md`.
 
 | Seat | Idle? | Evidence |
 |------|-------|----------|
-| CC-1 | pending ACK | B then A then G1 |
-| CC-2 | pending ACK | keep rec FAILs |
-| CC-3 | pending ACK | lists 25 + customers 3 |
-| Codex | pending ACK | safety/fleet/maint |
-| Cascade | pending ACK | unique FINDING |
+| CC-1 | pending ACK | connected sql-runner paste |
+| CC-2 | pending ACK | BANK-ECON-04 on d41124e |
+| CC-3 | pending ACK | leftover unique FE |
+| Codex | pending ACK | claim EVEN + planner guard |
+| Cascade | pending ACK | unique FINDING only |
 | Devin | VOID | not a seat |
-| Cursor | lead | acceptance this PR; period close later |
+| Cursor | lead | no second deploy |
 
-ACK: `SEAT | ACK | GO-CLOSE-188 | SHA=b8fc09ce | NOW=<one line> | GO`
+ACK: `SEAT | ACK | GO-INSTRUMENT-PLANNER | SHA=d41124e | NOW=<one line> | GO`

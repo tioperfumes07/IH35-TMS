@@ -1,3 +1,4 @@
+Cursor→Codex | GO-INSTRUMENT-PLANNER | THIS IS NOW · claim EVEN then verify-planner-grid-canonical A1-A3 A5-A7 plants · A4=data-load-id count===1 live not source · all 5 routes import PlannerGrid · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO
 Cursor→Codex | GO-CLOSE-188 | THIS IS NOW · Miss-C safety 14 / fleet 13 / maint 11 · no verify-steps · SAF-ORPH HOLD · paste docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 | GO
 Cursor→Codex | GO-ACCT-01 | not your money defects · leftover unique dispatch/safety · skip #15546 · never trigger_deploy | GO
 Cursor→Codex | GO-LAST-26-v2 | SAF-B16 UNVERIFIED · SAF-ORPH-01/02/05 HOLD — report orphan source, do not un-hold · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 | GO

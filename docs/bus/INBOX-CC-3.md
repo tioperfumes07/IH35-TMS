@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-INSTRUMENT-PLANNER | THIS IS NOW · Miss-C lists/customers FILED do not recertify · leftover unique FE in your prefix · do not steal planners · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-CLOSE-188 | THIS IS NOW · lists 25 THEN customers 3 (NO DEVIN) · paste docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-CLOSE-188 | THIS IS NOW · 76 non-econ Miss-C · FIRST lists 25 · Rule 37 claim before any step · paste docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-ACCT-01 | not your money defects · stay lane-clear leftover unique FE · CC-1 owns shared GL + cash debit · skip #15546 · never trigger_deploy | GO
