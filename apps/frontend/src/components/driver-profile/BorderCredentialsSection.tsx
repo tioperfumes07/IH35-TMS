@@ -130,7 +130,7 @@ export function BorderCredentialsSection({
   // use — a credential the operator believes was attached must never silently not exist.
   const uploadCredentialFile = async (key: CredentialKey, file: File | null): Promise<void> => {
     if (!file || !driverId) return;
-    const category = categoriesQuery.data?.categories.find((c) => c.code === key);
+    const category = categoriesQuery.data?.categories?.find((c) => c.code === key);
     const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
       category_id: category?.id,
       entity_links: [{ entity_type: "driver", entity_id: driverId }],

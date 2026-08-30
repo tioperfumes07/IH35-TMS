@@ -135,6 +135,21 @@ function selftest() {
     console.log("SELFTEST: re-planting the original openCount defect into useSettlementDisputes -> caught");
   }
 
+  // Re-plant the current upload-lifecycle defect into the exact repaired component. This keeps the
+  // generic class guard tied to the Driver Border Credentials path that exposed the second-hop gap.
+  const borderTarget = "apps/frontend/src/components/driver-profile/BorderCredentialsSection.tsx";
+  const borderReal = readFileSync(resolve(ROOT, borderTarget), "utf8");
+  const borderReverted = borderReal.replace(/\.data\?\.categories\?\.find/, ".data?.categories.find");
+  if (borderReverted === borderReal) {
+    console.error(`SELFTEST FAIL: could not re-plant the defect into ${borderTarget} — the case proves nothing`);
+    ok = false;
+  } else if (!partialChainProblems(borderTarget, borderReverted).length) {
+    console.error(`SELFTEST FAIL: re-planting the partial chain into ${borderTarget} was not caught`);
+    ok = false;
+  } else {
+    console.log("SELFTEST: re-planting the Border Credentials category lookup defect -> caught");
+  }
+
   if (!ok) process.exit(1);
   console.log(`[${LABEL}] SELFTEST PASS`);
 }
