@@ -2345,7 +2345,7 @@
     {
       "id": "catalog.customers.customer_quality_event_reasons.list",
       "tab": "Customers",
-      "sub": "Customer Types",
+      "sub": "Customer Quality Event Reasons",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
         "qbo_chrome",
@@ -2355,7 +2355,7 @@
     {
       "id": "catalog.customers.customer_quality_event_reasons.create",
       "tab": "Customers",
-      "sub": "+ Create \u2014 Customer Types",
+      "sub": "+ Create \u2014 Customer Quality Event Reasons",
       "route_hint": "/lists/customers/customer-quality-event-reasons",
       "required": [
         "qbo_chrome",
@@ -2385,7 +2385,7 @@
     {
       "id": "catalog.names_master.brokers.list",
       "tab": "Names master",
-      "sub": "Shippers",
+      "sub": "Brokers",
       "route_hint": "/lists/names/brokers",
       "required": [
         "connectivity"
@@ -2394,7 +2394,7 @@
     {
       "id": "catalog.names_master.brokers.create",
       "tab": "Names master",
-      "sub": "+ Create \u2014 Shippers",
+      "sub": "+ Create \u2014 Brokers",
       "route_hint": "/lists/names/brokers",
       "required": [
         "connectivity"
