@@ -23,8 +23,10 @@ function scan(source) {
     ["diagram refuses to plot unknown mileage at origin", diagram.includes("if (stop.mile_marker == null) return []") && diagram.includes("need route-mile data before they can be plotted") && !diagram.includes("stop.mile_marker ?? 0")],
     ["diagram labels unknown gallons honestly", diagram.includes('(stop.gallons_added ?? stop.gallons) == null ? "—"')],
     ["route distance contract remains nullable", api.includes("total_distance_miles: number | null")],
+    ["recommended gallons contract remains nullable", api.includes("recommended_total_fuel_gallons: number | null")],
     ["active trip strip does not fabricate route zero", activeStrip.includes("route?.total_distance_miles != null") && !activeStrip.includes("total_distance_miles ?? 0")],
     ["trip summary does not fabricate route zero", summary.includes("route?.total_distance_miles != null") && !summary.includes("total_distance_miles ?? 0")],
+    ["trip summary does not fabricate gallons zero", summary.includes("route?.recommended_total_fuel_gallons != null") && !summary.includes('label="Gallons needed">{route ?')],
     ["route diagram requires authoritative route length", diagram.includes("if (totalMiles == null || totalMiles <= 0)") && diagram.includes("Route distance is unavailable") && !diagram.includes("Number(totalMiles || 1)")],
   ];
 }
@@ -42,8 +44,10 @@ if (process.argv.includes("--selftest")) {
     ["plot-at-origin", { ...source, diagram: source.diagram.replace("if (stop.mile_marker == null) return [];", "") }],
     ["diagram-gallons-zero", { ...source, diagram: source.diagram.replace('(stop.gallons_added ?? stop.gallons) == null ? "—"', 'stop.gallons_added ?? stop.gallons ?? 0') }],
     ["distance-contract-required", { ...source, api: source.api.replace("total_distance_miles: number | null", "total_distance_miles: number") }],
+    ["gallons-contract-required", { ...source, api: source.api.replace("recommended_total_fuel_gallons: number | null", "recommended_total_fuel_gallons: number") }],
     ["active-route-zero", { ...source, activeStrip: source.activeStrip.replace("route?.total_distance_miles != null", "route") + "\n// total_distance_miles ?? 0" }],
     ["summary-route-zero", { ...source, summary: source.summary.replace("route?.total_distance_miles != null", "route") + "\n// total_distance_miles ?? 0" }],
+    ["summary-gallons-zero", { ...source, summary: source.summary.replace("route?.recommended_total_fuel_gallons != null", "route") + '\n// label="Gallons needed">{route ?' }],
     ["diagram-fake-denominator", { ...source, diagram: source.diagram.replace("if (totalMiles == null || totalMiles <= 0)", "if (false)") + "\n// Number(totalMiles || 1)" }],
   ];
   for (const [label, mutated] of mutations) {
