@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { listVehicleDriverHistory, type VehicleDriverHistoryRow } from "../../api/vehicleDriverPairing";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listVehicleDriverHistory, listVehicleDriverOverlaps, resolveVehicleDriverOverlap, type VehicleDriverHistoryRow, type VehicleDriverOverlapRow } from "../../api/vehicleDriverPairing";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -54,6 +54,7 @@ type UnitDriverHistoryStripProps = {
 };
 
 export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, days = 30 }: UnitDriverHistoryStripProps) {
+  const queryClient = useQueryClient();
   const pageSize = 25;
   const [page, setPage] = useState(0);
   const enabled = Boolean(operatingCompanyId) && (Boolean(unitId) || Boolean(driverId));
@@ -70,6 +71,15 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
       }),
     enabled,
   });
+  const overlapQuery = useQuery({
+    queryKey: ["vehicle-driver-overlaps", operatingCompanyId, unitId, driverId],
+    queryFn: () => listVehicleDriverOverlaps({ operating_company_id: operatingCompanyId, unit_id: unitId, driver_id: driverId, status: "all", limit: 100 }),
+    enabled,
+  });
+  const resolveMutation = useMutation({
+    mutationFn: (overlapId: string) => resolveVehicleDriverOverlap(overlapId, operatingCompanyId),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["vehicle-driver-overlaps", operatingCompanyId, unitId, driverId] }),
+  });
 
   useEffect(() => setPage(0), [operatingCompanyId, unitId, driverId, days]);
 
@@ -82,6 +92,15 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
   const rows = historyQuery.data?.rows ?? [];
   const totalCount = historyQuery.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+  const overlapColumns = useMemo<Array<ParityColumn<VehicleDriverOverlapRow>>>(() => [
+    { key: "driver_name", label: "Driver", render: (row) => <EntityLinkOrTombstone kind="driver" id={row.driver_id} name={row.driver_name} noun="Driver" /> },
+    { key: "unit_number_a", label: "Unit A", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id_a} name={row.unit_number_a} noun="Unit" /> },
+    { key: "unit_number_b", label: "Unit B", render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unit_id_b} name={row.unit_number_b} noun="Unit" /> },
+    { key: "overlap_started_at", label: "Overlap started", render: (row) => formatDateTime(row.overlap_started_at) },
+    { key: "detected_at", label: "Detected", render: (row) => formatDateTime(row.detected_at) },
+    { key: "resolved_at", label: "Status", render: (row) => row.resolved_at ? `Resolved ${formatDateTime(row.resolved_at)}` : "Open" },
+    { key: "action", label: "Action", render: (row) => row.resolved_at ? "—" : <Button size="sm" variant="secondary" disabled={resolveMutation.isPending} onClick={() => resolveMutation.mutate(row.id)}>Resolve</Button> },
+  ], [resolveMutation]);
 
   useEffect(() => {
     if (historyQuery.isSuccess && !historyQuery.isFetching && page > 0 && rows.length === 0) setPage(0);
@@ -125,6 +144,27 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
           ) : null}
         </div>
       )}
+      <div className="mt-4" data-testid="vehicle-driver-overlaps">
+        <h3 className="mb-2 text-sm font-semibold text-gray-900">Assignment overlaps</h3>
+        {resolveMutation.isError ? (
+          <p role="alert" className="mb-2 text-sm text-red-700">
+            {(resolveMutation.error as Error)?.message || "Couldn't resolve assignment overlap."}
+          </p>
+        ) : null}
+        {overlapQuery.isError ? (
+          <ListErrorState title="Couldn't load assignment overlaps" status={0} message={(overlapQuery.error as Error)?.message} onRetry={() => void overlapQuery.refetch()} />
+        ) : (
+          <ParityTable
+            columns={overlapColumns}
+            rows={overlapQuery.data?.rows ?? []}
+            rowKey={(row) => row.id}
+            loading={overlapQuery.isLoading}
+            emptyText="No overlapping driver assignments found."
+            storageKey="vehicle-driver-overlaps"
+            tableTestId="vehicle-driver-overlaps-table"
+          />
+        )}
+      </div>
     </section>
   );
 }
