@@ -7,6 +7,7 @@ import { MemoryRouter } from "react-router-dom";
 import {
   DISPATCH_LOCAL_SETTINGS_KEY,
   DispatchSettingsPage,
+  dispatchLocalSettingsKey,
 } from "../DispatchSettingsPage";
 import * as dispatchApi from "../../../api/dispatch";
 
@@ -39,7 +40,17 @@ function wrap(ui: ReactNode) {
 describe("DispatchSettingsPage (B21-D11)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.localStorage.removeItem(DISPATCH_LOCAL_SETTINGS_KEY);
+    const values = new Map<string, string>();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: {
+        clear: () => values.clear(),
+        getItem: (key: string) => values.get(key) ?? null,
+        removeItem: (key: string) => values.delete(key),
+        setItem: (key: string, value: string) => values.set(key, String(value)),
+      },
+    });
+    window.localStorage.clear();
   });
 
   it("renders dispatch settings shell with preference sections", async () => {
@@ -66,6 +77,24 @@ describe("DispatchSettingsPage (B21-D11)", () => {
     const loadsRadio = await screen.findByTestId("dispatch-default-view-loads");
     await user.click(loadsRadio);
     expect(updateDispatchPreferences).toHaveBeenCalledWith("loads");
+  });
+
+  it("stores browser-local dispatcher settings under the selected company only", async () => {
+    const user = userEvent.setup();
+    wrap(<DispatchSettingsPage />);
+    const yellow = await screen.findByTestId("dispatch-alert-yellow-minutes");
+    await user.clear(yellow);
+    await user.type(yellow, "12");
+
+    const companyKey = dispatchLocalSettingsKey("91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071");
+    expect(JSON.parse(window.localStorage.getItem(companyKey) ?? "{}").alert_yellow_minutes).toBe(12);
+    expect(window.localStorage.getItem(DISPATCH_LOCAL_SETTINGS_KEY)).toBeNull();
+  });
+
+  it("does not load a legacy global setting into the selected company", async () => {
+    window.localStorage.setItem(DISPATCH_LOCAL_SETTINGS_KEY, JSON.stringify({ alert_yellow_minutes: 99 }));
+    wrap(<DispatchSettingsPage />);
+    expect((await screen.findByTestId("dispatch-alert-yellow-minutes") as HTMLInputElement).value).toBe("1");
   });
 
   // DISP-S34: getDispatchPreferences failing silently fell back to the "home" default with no
