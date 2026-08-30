@@ -1,3 +1,17 @@
+CASCADE | FINDING | 50229 | reports · SILENT-QUERY-FAILURE — ReportsHome kpiQuery + frequentQuery + iftaQuery no isError rendering | GO
+CASCADE | FINDING | 50228 | finance · SILENT-QUERY-FAILURE — LiabilitiesHome 3 queries no isError rendering | GO
+CASCADE | FINDING | 50227 | legal · SILENT-QUERY-FAILURE — LegalLandingPage templatesQuery + contractsQuery no isError rendering | GO
+CASCADE | FINDING | 50226 | customers · SILENT-NO-OP — PortalProfilePage saveMutation no onError, no isError, fire-and-forget .mutate() | GO
+CASCADE | FINDING | 50225 | drivers · SILENT-NO-OP — DriverPaymentMethodsCard setDefault/void no onError, no isError, fire-and-forget .mutate() | GO
+CASCADE | FINDING | 50224 | lists · SILENT-NO-OP — GenericCatalogPage saveRow create/update mutateAsync no try/catch, mutations no onError | GO
+CASCADE | FINDING | 50223 | reports · SILENT-NO-OP — IFTAPreparer createMutation no onError, no isError, void mutateAsync no .catch | GO
+CASCADE | FINDING | 50222 | safety · SILENT-NO-OP — 3 safety tabs voidMutation no onError/no isError, await mutateAsync no try/catch | GO
+CASCADE | FINDING | 50221 | accounting · SILENT-NO-OP — ExpenseDetailPage + ExpensesListPage voidMutation no onError, await mutateAsync no try/catch on financial void | GO
+CASCADE | FINDING | 50220 | system · SILENT-NO-OP — CarrierSwitcher "Make default" no try/catch, setDefaultMutation no onError | GO
+CASCADE | FINDING | 50219 | safety · SILENT-NO-OP — SafetyLayout prefsMutation no onError, void mutateAsync unhandled rejection | GO
+CASCADE | FINDING | 50218 | lists · STALE-DATA-AFTER-MUTATION — ListsHubPage forceSyncMutation only toasts, does not invalidate qboHealthQuery or activityQuery | GO
+CASCADE | FINDING | 50215-50216 | customers+vendors · DOUBLE-SUBMIT — batch action buttons missing disabled={isPending} guard | GO
+CASCADE | FINDING | 50213-50214 | accounting · SILENT-QUERY-FAILURE — MultiEntityAccountingPage companiesQuery + LoanApplicationWizard accountsQuery have no isError rendering | GO
 CASCADE | FINDING | 50209-50212 | reports · SILENT-NO-OP — IFTA 4-step wizard all runMutation/submitMutation have no onError, no .catch on void mutateAsync | GO
 CASCADE | FINDING | 50208 | drivers · SILENT-NO-OP — AutoDeductionPolicies patch/cancel mutations no onError, no .catch on void mutateAsync | GO
 CASCADE | WAVE-3C | 33 final triage verdicts (50175-50207) | 29 REAL DEFECT + 4 GUARD IS WRONG | WAVE 3 COMPLETE — 83 total guards triaged

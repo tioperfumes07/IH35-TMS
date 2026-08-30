@@ -1,14 +1,14 @@
 {
-  "healthzSha": "1d4bd5e",
-  "generated_at": "2026-08-29T22:47:25.000Z",
+  "healthzSha": "5c82530",
+  "generated_at": "2026-08-30T03:38:53.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T17:47:25-05:00",
-    "sourceSha": "59cac5aa7c",
-    "deployedSha": "1d4bd5e",
+    "generatedAt": "2026-08-29T22:38:53-05:00",
+    "sourceSha": "0279cad7df",
+    "deployedSha": "5c82530",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2252,
-    "failOpen": 121,
-    "defects": 26
+    "ledgerRows": 2268,
+    "failOpen": 137,
+    "defects": 27
   },
   "modules": [
     {
@@ -1024,7 +1024,7 @@
       "build": "2/9",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "AUDIT",
         "AUDIT",
         "AUDIT",
@@ -1056,7 +1056,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "NA",
           "AUDIT",
           "AUDIT",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17907,
-      "title": "FINDING: DOC-F10064 (DOC-01 D2 slice 2) -- fine + company_violation document linkage",
+      "number": 17966,
+      "title": "STATUS: CC-3 ACK alive/working -- dispatch split needs correcting in writing, not assuming",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17907",
-      "sha": "240cc3665e",
-      "committedAtIso": "2026-08-29T20:37:05-05:00"
+      "mergedAtCt": "08/29/2026, 10:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17966",
+      "sha": "8ef03c1a03",
+      "committedAtIso": "2026-08-29T22:33:16-05:00"
     },
     {
-      "number": 0,
-      "title": "ChatGpt-Codex-1- fix(maintenance): MAINT-F7374 human incident and GPS references",
+      "number": 17965,
+      "title": "FINDING: GUARD-F7396 fleet leased-scope blind spot",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:36 PM CT",
-      "url": "",
-      "sha": "78829270ec",
-      "committedAtIso": "2026-08-29T20:36:26-05:00"
+      "mergedAtCt": "08/29/2026, 10:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17965",
+      "sha": "d248d026e5",
+      "committedAtIso": "2026-08-29T22:32:50-05:00"
     },
     {
-      "number": 17905,
-      "title": "FINDING: N/A -- CC-2 OUTBOX: Recipe-B sweep, 5 modules now genuinely complete",
+      "number": 17964,
+      "title": "STATUS: §9 report -- all 3 GO-FINISH-TONIGHT fixes LIVE-verified (#17937/#17947/#17960)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17905",
-      "sha": "1d4bd5eea1",
-      "committedAtIso": "2026-08-29T20:33:49-05:00"
+      "mergedAtCt": "08/29/2026, 10:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17964",
+      "sha": "9f6dd629a4",
+      "committedAtIso": "2026-08-29T22:32:01-05:00"
     },
     {
-      "number": 17904,
-      "title": "FINDING: N/A -- claim verify-step 10061 for DOC-01 fine/company_violation linkage guard",
+      "number": 17963,
+      "title": "STATUS: §9 report -- driver-DQF-KPI LIVE-verified (#17947) + reports hover-clip fix shipped (#17960)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17904",
-      "sha": "1e3752dfde",
-      "committedAtIso": "2026-08-29T20:33:36-05:00"
+      "mergedAtCt": "08/29/2026, 10:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17963",
+      "sha": "8b6add2e9e",
+      "committedAtIso": "2026-08-29T22:31:01-05:00"
     },
     {
-      "number": 17903,
-      "title": "FINDING: N/A -- bind dispatch module: 6/37 -> 37/37 genuine",
+      "number": 17962,
+      "title": "FINDING: GO-1405 P0 dot_oos is a fleet-status mirror, not an FMCSA out-of-service condition",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17903",
-      "sha": "71902e2857",
-      "committedAtIso": "2026-08-29T20:31:56-05:00"
+      "mergedAtCt": "08/29/2026, 10:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17962",
+      "sha": "53f7ac8ed7",
+      "committedAtIso": "2026-08-29T22:29:46-05:00"
     },
     {
-      "number": 17902,
-      "title": "FINDING: N/A -- claim migration 202613290200 for DOC-01 fine + company_violation file_links widen",
+      "number": 17961,
+      "title": "FINDING: GUARD-F7395 driver inventory floor stale",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17902",
-      "sha": "18e2a8aae7",
-      "committedAtIso": "2026-08-29T20:30:17-05:00"
+      "mergedAtCt": "08/29/2026, 10:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17961",
+      "sha": "97cfb60714",
+      "committedAtIso": "2026-08-29T22:28:10-05:00"
     },
     {
-      "number": 17901,
-      "title": "FINDING: CERT-01-MATRIX-HANDOFF",
+      "number": 17960,
+      "title": "FINDING: CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR -- Reports category hover-to-run-report was silently non-functional",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17901",
-      "sha": "97629b1f79",
-      "committedAtIso": "2026-08-29T20:29:52-05:00"
+      "mergedAtCt": "08/29/2026, 10:28 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17960",
+      "sha": "af11b4fe6d",
+      "committedAtIso": "2026-08-29T22:28:03-05:00"
     },
     {
-      "number": 0,
-      "title": "ChatGpt-Codex-1- fix(dispatch): DSP-F7373 server alert range and sort",
+      "number": 17959,
+      "title": "FINDING: N/A -- claim verify-step 10077 for dot_oos FMCSA-inspection reconciliation guard (GO-1405 P0)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:27 PM CT",
-      "url": "",
-      "sha": "1b06cf8517",
-      "committedAtIso": "2026-08-29T20:27:30-05:00"
+      "mergedAtCt": "08/29/2026, 10:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17959",
+      "sha": "0ec0d5340f",
+      "committedAtIso": "2026-08-29T22:26:18-05:00"
     },
     {
-      "number": 17899,
-      "title": "FINDING: N/A -- DOC-01 self-fix board + outbox report",
+      "number": 17958,
+      "title": "FINDING: DOCS-F7393 frontend file-entity contract drift",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17899",
-      "sha": "adea9b48b4",
-      "committedAtIso": "2026-08-29T20:25:18-05:00"
+      "mergedAtCt": "08/29/2026, 10:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17958",
+      "sha": "4235eaa33c",
+      "committedAtIso": "2026-08-29T22:25:12-05:00"
     },
     {
-      "number": 17898,
-      "title": "FINDING: DOC-F10063 -- medical_card/background_check link-creation silently rejected (ensureLinkEntityExists gap)",
+      "number": 17957,
+      "title": "FINDING: CERT-01-B1-STALE",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 08:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17898",
-      "sha": "eb1abf2e3f",
-      "committedAtIso": "2026-08-29T20:23:41-05:00"
+      "mergedAtCt": "08/29/2026, 10:24 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17957",
+      "sha": "c33b38b426",
+      "committedAtIso": "2026-08-29T22:24:00-05:00"
     }
   ]
 }
