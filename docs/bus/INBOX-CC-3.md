@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-KEEP-MOVING | THIS IS NOW · hearing code shipped #18266 do not rebuild · NOW=DRIVER-F7334 leftover unique · no isError mass-wire · packet docs/lockdown/GO-KEEP-MOVING-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-CC2-CC3-NOW | THIS IS NOW · STOP WAITING · LEGAL-HEARING-DEADLINES list+overview from legal.matter_deadlines (#18252) · guard · no isError mass-wire · no 50309 · no planners · packet docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-CASCADE-FALSE-POSITIVE-GREP-R2 | do NOT mass-wire superseded isError rows · 50309 not proven · NOW=LEGAL-HEARING-DEADLINES #18252 · skip #15546 | GO
 Cursor→CC-3 | GO-CASCADE-FALSE-POSITIVE-GREP | NOW=LEGAL-HEARING-DEADLINES (#18252) + SafetyHome 50309 if still genuine after Cascade re-audit · do not mass-wire false Miss-C · skip #15546 · never trigger_deploy | GO

@@ -7,8 +7,9 @@ const api = fs.readFileSync("apps/frontend/src/api/maintenance.ts", "utf8");
 const page = fs.readFileSync("apps/frontend/src/pages/maintenance/ArrivingSoonPage.tsx", "utf8");
 
 function failures(routeSource = route, pageSource = page) {
+  const companyScopedWoJoins = routeSource.match(/wo\.operating_company_id = \$1::uuid/g)?.length ?? 0;
   return [
-    ["company-scoped WO join", routeSource.includes("wo.id = ii.promoted_to_wo_id") && routeSource.includes("wo.operating_company_id = $1::uuid")],
+    ["both data/count WO joins company-scoped", routeSource.includes("wo.id = ii.promoted_to_wo_id") && companyScopedWoJoins === 2],
     ["converted-only history", routeSource.includes("ii.promoted_to_wo_id IS NOT NULL")],
     ["human WO label", routeSource.includes("wo.display_id AS work_order_display_id")],
     ["durable source surface", pageSource.includes('data-testid="maint-arriving-soon-recent-conversions"')],
@@ -23,11 +24,11 @@ if (process.argv.includes("--selftest")) {
   const badRoute = route.replace("wo.operating_company_id = $1::uuid", "TRUE");
   const badPage = page.replace('kind="work_order"', 'kind="unit"');
   const checks = [
-    failures(badRoute, page).includes("company-scoped WO join"),
+    failures(badRoute, page).includes("both data/count WO joins company-scoped"),
     failures(route, badPage).includes("canonical WO drill"),
   ];
   if (checks.some((ok) => !ok)) process.exit(1);
-  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 scope/drill mutations red");
+  console.log("verify-arriving-soon-work-order-reverse selftest PASS — 2/2 data/count scope and drill mutations red");
   process.exit(0);
 }
 

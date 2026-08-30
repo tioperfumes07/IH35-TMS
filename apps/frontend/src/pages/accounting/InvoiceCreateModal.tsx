@@ -149,7 +149,11 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
                 <option value="in_transit">In transit</option>
               </select>
             </div>
-            {/* ACCT-F3594: embedded ParityTable owns Search+Range+gear on from-load pick list. */}
+            {/* ACCT-F3594: embedded ParityTable owns Search+Range+gear on from-load pick list.
+                PARITYTABLE-MISSING-HIDEPAGER-CLASS: this list is already server-paginated
+                (loadPage/pageSize above, own Previous/Next below) -- hidePager stops ParityTable's
+                own internal pager from computing a contradicting total off just this page's
+                rows.length once loads exceed one server page. */}
             <ParityTable
               embedded
               rows={loads}
@@ -157,6 +161,9 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
               storageKey="invoice-create-modal-from-load"
               exportFilename="invoice-create-from-load"
               tableTestId="invoice-create-from-load-table"
+              pageSize={pageSize}
+              pageSizeOptions={[pageSize]}
+              hidePager
               emptyText={
                 isLoading
                   ? "Loading loads…"
