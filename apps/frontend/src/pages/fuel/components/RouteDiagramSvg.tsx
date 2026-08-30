@@ -22,12 +22,16 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const stopPoints = useMemo(
     () =>
-      stops.map((stop, idx) => ({
-        ...stop,
-        pointId: stop.id || `stop-${idx}`,
-        mile: Number(stop.mile_marker ?? 0),
-        x: toX(Number(stop.mile_marker ?? 0), Number(totalMiles || 1)),
-      })),
+      stops.flatMap((stop, idx) => {
+        if (stop.mile_marker == null) return [];
+        const mile = Number(stop.mile_marker);
+        return [{
+          ...stop,
+          pointId: stop.id || `stop-${idx}`,
+          mile,
+          x: toX(mile, Number(totalMiles || 1)),
+        }];
+      }),
     [stops, totalMiles]
   );
 
@@ -37,7 +41,9 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
   if (stopPoints.length === 0) {
     return (
       <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-        No recommended fuel stops yet — the route diagram is generated from an active dispatch load.
+        {stops.length > 0
+          ? "Recommended stops need route-mile data before they can be plotted."
+          : "No recommended fuel stops yet — the route diagram is generated from an active dispatch load."}
       </div>
     );
   }
@@ -83,7 +89,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 {String(stop.station_name ?? `Stop ${idx + 1}`).slice(0, 16)}
               </text>
               <text x={stop.x} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-[9px]">
-                {String(stop.station_state ?? stop.state ?? "")} · mi {Number(stop.mile_marker ?? 0).toFixed(0)} · {Number(stop.gallons_added ?? stop.gallons ?? 0).toFixed(0)} gal
+                {String(stop.station_state ?? stop.state ?? "")} · mi {stop.mile.toFixed(0)} · {(stop.gallons_added ?? stop.gallons) == null ? "—" : Number(stop.gallons_added ?? stop.gallons).toFixed(0)} gal
               </text>
               {strategic ? (
                 <text x={stop.x} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-[10px]">

@@ -12,9 +12,14 @@ type StopRow = RecommendedStop & {
 };
 
 function stateMile(stop: RecommendedStop): string {
-  const state = String(stop.station_state ?? stop.state ?? "");
-  const mile = Number(stop.mile_marker ?? 0).toFixed(0);
+  const state = String(stop.station_state ?? stop.state ?? "").trim() || "—";
+  const mile = stop.mile_marker == null ? "—" : Number(stop.mile_marker).toFixed(0);
   return `${state} / ${mile}`;
+}
+
+function gallonsLabel(stop: RecommendedStop): string {
+  const gallons = stop.gallons_added ?? stop.gallons;
+  return gallons == null ? "—" : Number(gallons).toFixed(1);
 }
 
 function whyThisStop(stop: RecommendedStop): string {
@@ -60,8 +65,8 @@ const COLUMNS: Array<ParityColumn<StopRow>> = [
     key: "gallons",
     label: "Gallons",
     sortable: true,
-    sortValue: (row) => Number(row.gallons_added ?? row.gallons ?? 0),
-    render: (row) => Number(row.gallons_added ?? row.gallons ?? 0).toFixed(1),
+    sortValue: (row) => row.gallons_added ?? row.gallons ?? Number.POSITIVE_INFINITY,
+    render: (row) => gallonsLabel(row),
   },
   {
     key: "why_this_stop",
