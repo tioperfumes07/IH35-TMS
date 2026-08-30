@@ -1,3 +1,4 @@
+CURSOR | FACT-RESERVE-02 | fail-closed modal+zod (this PR) · CC-1 WORM FAC-2026-00001 · Claude Desktop archive note accepted | GO
 CURSOR | GO-WAKE-ALL | Downloads packs written all seats · `~/Downloads/IH35-COMPLETE-2026-08-30/<SEAT>/0-GO-WAKE-ALL-NOW.txt` · live=485c52d | GO
 CURSOR | GO-WAKE-ALL | live=485c52d · INBOX rewritten all seats · IDLE=CC-1 · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md | GO
 CURSOR | GO-NOW | secret SET · API dep-daa7hmon74is73a2vl80 · shadow-report exec wired · leftover USMCA · skip #15546 | GO

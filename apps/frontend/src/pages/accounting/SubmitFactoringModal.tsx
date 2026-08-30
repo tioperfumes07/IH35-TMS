@@ -35,9 +35,9 @@ type Props = {
 export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCreated }: Props) {
   const [vendorId, setVendorId] = useState("");
   const [submissionRef, setSubmissionRef] = useState("");
-  const [advanceRatePct, setAdvanceRatePct] = useState("92");
-  const [reservePct, setReservePct] = useState("8");
-  const [factorFeePct, setFactorFeePct] = useState("0");
+  const [advanceRatePct, setAdvanceRatePct] = useState("");
+  const [reservePct, setReservePct] = useState("");
+  const [factorFeePct, setFactorFeePct] = useState("");
   const [notes, setNotes] = useState("");
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -74,8 +74,9 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
       if (byName) return byName;
     }
     const activeFactors = factors.filter((factor) => factor.active);
+    // FACT-RESERVE-02: never silent-price from activeFactors[0] while assignment is empty.
     if (activeFactors.length === 1) return activeFactors[0];
-    return activeFactors[0] ?? null;
+    return null;
   }, [factorsQuery.data, factoringSummaryQuery.data?.active_factor_name]);
 
   const selectedInvoices = useMemo(() => {
@@ -114,6 +115,15 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
     setError(null);
     if (!vendorId) return setError("Pick a factoring company.");
     if (selectedInvoiceIds.length === 0) return setError("Select at least one invoice.");
+    if (!activeFactor) {
+      return setError("No factor resolved for this company. Assign Faro (or the active factor) before submitting — do not price at 92/8/0 defaults.");
+    }
+    const advance = Number(advanceRatePct);
+    const reserve = Number(reservePct);
+    const fee = Number(factorFeePct);
+    if (![advance, reserve, fee].every((n) => Number.isFinite(n))) {
+      return setError("Advance, reserve, and factor fee % must come from the resolved factor row.");
+    }
 
     setIsSubmitting(true);
     try {
@@ -121,9 +131,9 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
         factoring_company_vendor_id: vendorId,
         submission_batch_ref: submissionRef || undefined,
         invoice_ids: selectedInvoiceIds,
-        advance_rate_pct: Number(advanceRatePct || 0),
-        reserve_pct: Number(reservePct || 0),
-        factor_fee_pct: Number(factorFeePct || 0),
+        advance_rate_pct: advance,
+        reserve_pct: reserve,
+        factor_fee_pct: fee,
         notes: notes || undefined,
       });
       onCreated(result.id);
@@ -152,7 +162,7 @@ export function SubmitFactoringModal({ open, operatingCompanyId, onClose, onCrea
             <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button onClick={() => void onSubmit()} loading={isSubmitting}>
+            <Button onClick={() => void onSubmit()} loading={isSubmitting} disabled={!activeFactor}>
               Submit
             </Button>
           </div>

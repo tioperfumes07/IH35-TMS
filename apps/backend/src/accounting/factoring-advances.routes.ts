@@ -44,7 +44,7 @@ const createBodySchema = z.object({
   invoice_ids: z.array(z.string().uuid()).min(1).max(500),
   advance_rate_pct: z.coerce.number().min(0).max(100),
   reserve_pct: z.coerce.number().min(0).max(100),
-  factor_fee_pct: z.coerce.number().min(0).max(100).optional().default(0),
+  factor_fee_pct: z.coerce.number().min(0).max(100),
   notes: z.string().trim().max(5000).optional(),
 });
 
@@ -406,7 +406,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       // change advance_amount_cents (still advance_rate_pct of the invoice total, the cash actually
       // funded), only how the remaining holdback is classified between reserve and fee.
       const reserveAmount = Math.round((invoiceTotalCents * Number(body.data.reserve_pct)) / 100);
-      const feeAmount = Math.round((invoiceTotalCents * Number(body.data.factor_fee_pct ?? 0)) / 100);
+      const feeAmount = Math.round((invoiceTotalCents * Number(body.data.factor_fee_pct)) / 100);
       const displayId = await nextFactoringDisplayId(client, query.data.operating_company_id, new Date());
 
       const insertRes = await client.query(
@@ -441,7 +441,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           advanceAmount,
           body.data.reserve_pct,
           reserveAmount,
-          body.data.factor_fee_pct ?? 0,
+          body.data.factor_fee_pct,
           feeAmount,
           body.data.notes ?? null,
           user.uuid,
