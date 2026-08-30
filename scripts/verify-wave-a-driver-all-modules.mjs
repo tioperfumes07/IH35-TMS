@@ -56,8 +56,8 @@ const composedGuards = [
 export function auditDriverColumn(sources, leaves) {
   const failures = [];
   const p10Leaves = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10Leaves.length < 139) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
-  if (leaves.length < 209) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
+  if (p10Leaves.length < 140) failures.push(`priority-10 driver inventory unexpectedly shrank to ${p10Leaves.length}`);
+  if (leaves.length < 210) failures.push(`all-module driver inventory unexpectedly shrank to ${leaves.length}`);
   const modules = new Set(leaves.map((leaf) => leaf.module));
   if (modules.size < 23) failures.push(`driver module inventory unexpectedly shrank to ${modules.size}`);
   failures.push(...auditConnectivity(sources.routes, leaves, 0));

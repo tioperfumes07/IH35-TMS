@@ -2413,3 +2413,5 @@ CODEX | WORKING | GO-MAINT-01 | FINDING=MAINT-F7374 | NOW=P4 human incident→WO
 CODEX | SHIPPED | GO-APP-DEFECT-01 | FINDING=DSP-F7373 | PR=#17900 @ 1b06cf8517 | gate=exit0 | NEXT=GO-MAINT-01 P4 | GO
 Codex | WORKING | DOCS-F7393 | frontend FileEntityType=backend validated runtime set | guard=verify-docs-file-link-entity-contract | NEXT=FAST-MERGE then WAVE-A-driver selftest floor | GO
 Codex | SHIPPED | DSP-F7392 | PR=#17953 @ 43f39a66a3 | gate=exit0 | NEXT=DOCS-F7393 | GO
+Codex | WORKING | GUARD-F7395 | driver inventory=140 P10 / 210 all / 23 modules | planted leaf removal now rejected | NEXT=FAST-MERGE then next census failure | GO
+Codex | SHIPPED | DOCS-F7393 | PR=#17958 @ 4235eaa33c | gate=exit0 | NEXT=GUARD-F7395 | GO
