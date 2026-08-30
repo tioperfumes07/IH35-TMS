@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deriveStatus, replay } from "./proof-engine.mjs";
+import { makeSqlRunner } from "./sql-runner.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DIR = path.join(ROOT, "docs/module-completion");
@@ -81,6 +82,10 @@ async function main() {
     base: "https://api.ih35dispatch.com",
     fetch: (u, o) => fetch(u, o),
     exec: async () => 1,
+    runSql: makeSqlRunner({
+      repoRoot: ROOT,
+      connectionString: process.env.DATABASE_URL,
+    }),
   };
   const rows = loadItems();
   const disagreements = [];

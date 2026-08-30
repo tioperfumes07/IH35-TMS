@@ -1,5 +1,5 @@
 {
-  "_comment": "IH35-TMS · ECONOMIC VERIFICATION COLUMNS C25-C31. Matrix cell ACCEPTANCE is columns.shared.json acceptance field (owner 2026-08-30 GO-CLOSE-188). This file is the older INV-* auto_check map — do not treat it as overriding owner acceptance.",
+  "_comment": "IH35-TMS · ECONOMIC VERIFICATION COLUMNS C25-C31. Canonical proves/evidence/auto_check/fail_is_unique (owner-ratified 2026-08-30). Merge into columns.shared.json keeping short header labels. Board MUST consume these fields. A miss with fail_is_unique:true is HTTP-500 severity. Chrome walks and ledger prose cannot satisfy these columns.",
   "_authored": "2026-08-28",
   "_rationale": "accounting was stamped 14/14 CERTIFIED and 39-of-39 while INV-2026-00037/00044/00045 sat marked PAID with no invoice-sourced GL. Under C01-C24 that is a legitimate PASS. It is a FAIL under C25.",
   "columns": [

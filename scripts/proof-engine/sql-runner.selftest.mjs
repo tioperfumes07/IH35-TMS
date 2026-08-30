@@ -1,0 +1,152 @@
+#!/usr/bin/env node
+/**
+ * SQL RUNNER SELFTEST — every arm PLANTS a defect and DEMANDS rejection.
+ * A selftest that only exercises the happy path proves nothing.
+ * No database required: the query function is injected.
+ */
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
+import { makeSqlRunner, assertSqlProofShape, extractBlock, resolvePsqlVars } from "./sql-runner.mjs";
+import fs from "node:fs";
+
+const REPO = process.env.IH35_REPO || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const FILE = "scripts/verify-gl-invariants.sql";
+
+let pass = 0, fail = 0;
+const t = (name, ok, detail) => {
+  if (ok) { pass++; console.log(`  PASS  ${name}`); }
+  else { fail++; console.log(`  FAIL  ${name}${detail ? "  -> " + detail : ""}`); }
+};
+
+const GOOD = {
+  kind: "sql", name: "C26 subledger tie", file: FILE, query_id: "INV-3",
+  discriminator: { column: "je_control", value: 2214 }, probe_query_id: "INV-0",
+  expect: [{ column: "ar_difference", op: "==", value: 0 },
+           { column: "ap_difference", op: "==", value: 0 }],
+};
+const runner = (rows) => {
+  // probe first, then the graded block
+  let n = 0;
+  return makeSqlRunner({ repoRoot: REPO, query: async () => (++n === 1 ? [{ je_control: 2214 }] : rows) });
+};
+/** a runner whose PROBE is broken */
+const blindRunner = (probeRows) => makeSqlRunner({ repoRoot: REPO, query: async () => probeRows });
+
+console.log("SQL RUNNER SELFTEST — each arm plants a defect and demands rejection\n");
+
+// --- R3: inline SQL is forbidden
+try { assertSqlProofShape({ ...GOOD, query: "SELECT 1" }); t("R3 inline SQL is rejected", false, "accepted"); }
+catch { t("R3 inline SQL is rejected", true); }
+
+// --- R3: must name a committed .sql file and a block
+try { assertSqlProofShape({ ...GOOD, file: "notes.md" }); t("R3 non-.sql source is rejected", false, "accepted"); }
+catch { t("R3 non-.sql source is rejected", true); }
+try { const p = { ...GOOD }; delete p.query_id; assertSqlProofShape(p); t("R3 missing query_id is rejected", false, "accepted"); }
+catch { t("R3 missing query_id is rejected", true); }
+
+// --- R1: discriminator is mandatory, and 0 is not a discriminator
+try { const p = { ...GOOD }; delete p.discriminator; assertSqlProofShape(p); t("R1 missing discriminator is rejected", false, "accepted"); }
+catch { t("R1 missing discriminator is rejected", true); }
+try { assertSqlProofShape({ ...GOOD, discriminator: { column: "je_control", value: 0 } }); t("R1 zero discriminator is rejected", false, "accepted"); }
+catch { t("R1 zero discriminator is rejected", true); }
+
+// --- R5: bypass_rls may not prove entity isolation
+try { assertSqlProofShape({ ...GOOD, rls_sensitive: true, allow_bypass_rls: true }); t("R5 bypass_rls in an isolation proof is rejected", false, "accepted"); }
+catch { t("R5 bypass_rls in an isolation proof is rejected", true); }
+
+// --- THE BIG ONE. R2: an RLS-empty read must never satisfy "difference == 0".
+{
+  const r = await runner([])(GOOD);
+  t("R2 empty result set is FAIL, not a vacuous PASS", r.ok === false && /empty result set/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- R1 at runtime: right answer, wrong discriminator = the query did not see the data
+{
+  const r = await blindRunner([{ je_control: 0, ar_difference: 0, ap_difference: 0 }])(GOOD);
+  t("R1 correct numbers with a WRONG discriminator still FAIL", r.ok === false && /discriminator mismatch/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- honest pass
+{
+  const r = await runner([{ je_control: 2214, ar_difference: 0, ap_difference: 0 }])(GOOD);
+  t("all assertions met at the right discriminator = PASS", r.ok === true, JSON.stringify(r));
+}
+
+// --- a real non-zero difference must fail, and must record what it saw (R6)
+{
+  const r = await runner([{ je_control: 2214, ar_difference: -65.75, ap_difference: 0 }])(GOOD);
+  t("a real variance FAILs and records the observed value (R6)",
+    r.ok === false && /-65\.75/.test(JSON.stringify(r)), JSON.stringify(r));
+}
+
+// --- R4: a write statement in the referenced block is refused before connecting
+{
+  const tmp = path.join(REPO, "scripts/.selftest-write.sql");
+  fs.writeFileSync(tmp, "\\echo '=== INV-X  planted ==='\nDELETE FROM accounting.journal_entries;\n");
+  const r = await makeSqlRunner({ repoRoot: REPO, query: async () => [{ je_control: 2214 }] })(
+    { ...GOOD, file: "scripts/.selftest-write.sql", query_id: "INV-X", probe_query_id: "INV-X" });
+  fs.unlinkSync(tmp);
+  t("R4 a write statement is refused BEFORE connecting", r.ok === false && /read-only violation/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- the block extractor is anchored, not a loose search
+{
+  const src = fs.readFileSync(path.join(REPO, FILE), "utf8");
+  const b = resolvePsqlVars(src, extractBlock(src, "INV-3"));
+  t("extractBlock isolates INV-3 only", /accounts_receivable/.test(b) && !/INV-4/.test(b) && !/future_dated/.test(b));
+  t("psql :'USMCA' is resolved to the literal uuid", b.includes("'5c854333-6ea5-4faa-af31-67cb272fef80'") && !b.includes(":'USMCA'"));
+}
+
+// --- a proof pointing at a block that no longer exists must fail loudly, not silently pass
+{
+  const r = await runner([{ je_control: 2214 }])({ ...GOOD, query_id: "INV-999" });
+  t("a stale query_id fails loudly", r.ok === false && /not found/i.test(r.err || ""), JSON.stringify(r));
+}
+
+
+// --- R1-b THE ZERO-ROWS HOLE: a zero-rows proof with no probe is rejected at load
+const ZERO = { kind:"sql", name:"C25", file:FILE, query_id:"INV-4",
+               discriminator:{column:"je_control",value:2214}, expect_rows:0, expect:[] };
+// (no probe_query_id on purpose — that is what this arm tests)
+try { assertSqlProofShape(ZERO); t("R1-b a proof without a probe is rejected", false, "accepted"); }
+catch { t("R1-b a proof without a probe is rejected", true); }
+
+// --- R1-b: with a probe that comes back EMPTY, a zero-rows proof must FAIL, not pass
+{
+  const r = await blindRunner([])({ ...ZERO, probe_query_id: "INV-0" });
+  t("R1-b a blind read cannot pass a zero-rows proof",
+    r.ok === false && /probe/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- R1-b: probe good, main block empty = the honest PASS
+{
+  const r = await runner([])({ ...ZERO, probe_query_id: "INV-0" });
+  t("R1-b probe sees the ledger + main block empty = honest PASS", r.ok === true, JSON.stringify(r));
+}
+
+// --- R1-b: probe with the WRONG control still fails even though the main block is empty
+{
+  const r = await blindRunner([{ je_control: 0 }])({ ...ZERO, probe_query_id: "INV-0" });
+  t("R1-b a wrong probe control fails a zero-rows proof",
+    r.ok === false && /probe discriminator mismatch/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- a multi-statement block is refused rather than silently graded on its last statement
+{
+  const r = await makeSqlRunner({ repoRoot: REPO, query: async () => { throw new Error("MUST NOT RUN"); } })(
+    { ...GOOD, query_id: "INV-10" });
+  t("a multi-statement block is REFUSED, not graded on its last statement",
+    r.ok === false && /contains 4 statements/i.test(r.err || ""), JSON.stringify(r));
+}
+
+// --- naming the sub-query makes it legal and isolates the right one
+{
+  const src2 = fs.readFileSync(path.join(REPO, FILE), "utf8");
+  const b = resolvePsqlVars(src2, extractBlock(src2, "INV-10", "10c"));
+  t("sub_id 10c isolates the duplicate-role query only",
+    /dup_rows/.test(b) && !/pg_get_constraintdef/.test(b) && !/missing_in_opco/.test(b));
+}
+
+console.log(`\nSELFTEST ${fail === 0 ? "PASS" : "FAIL"} ${pass}/${pass + fail}`);
+process.exit(fail === 0 ? 0 : 1);
