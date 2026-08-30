@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 import { deriveStatus, replay } from "./proof-engine.mjs";
 import { makeSqlRunner } from "./sql-runner.mjs";
 import { makeDomRunner } from "./dom-runner.mjs";
+import { makeExec } from "./make-exec.mjs";
 import { ECON_PROOFS } from "./econ-proofs.mjs";
 import { PLANNER_DOM_ITEMS } from "./planner-dom-proofs.mjs";
 
@@ -89,13 +90,7 @@ async function main() {
   const ctx = {
     base: "https://api.ih35dispatch.com",
     fetch: (u, o) => fetch(u, o),
-    exec: async (script, args = []) => {
-      const { spawnSync } = await import("node:child_process");
-      const r = spawnSync(process.execPath, [path.join(ROOT, script), ...args], {
-        encoding: "utf8",
-      });
-      return r.status === null ? 1 : r.status;
-    },
+    exec: makeExec(ROOT),
     runSql: makeSqlRunner({
       repoRoot: ROOT,
       connectionString: process.env.DATABASE_URL,

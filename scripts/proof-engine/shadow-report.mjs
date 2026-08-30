@@ -11,6 +11,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deriveStatus, replay } from "./proof-engine.mjs";
 import { makeSqlRunner } from "./sql-runner.mjs";
+import { makeExec } from "./make-exec.mjs";
+import { makeDomRunner } from "./dom-runner.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DIR = path.join(ROOT, "docs/module-completion");
@@ -81,10 +83,14 @@ async function main() {
   const ctx = {
     base: "https://api.ih35dispatch.com",
     fetch: (u, o) => fetch(u, o),
-    exec: async () => 1,
+    exec: makeExec(ROOT),
     runSql: makeSqlRunner({
       repoRoot: ROOT,
       connectionString: process.env.DATABASE_URL,
+    }),
+    runDom: makeDomRunner({
+      fetch: (u, o) => fetch(u, o),
+      session: process.env.IH35_DOM_SESSION || null,
     }),
   };
   const rows = loadItems();

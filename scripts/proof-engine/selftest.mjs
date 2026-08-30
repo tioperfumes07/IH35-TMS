@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 import { replay, deriveStatus, assertNoHandWrittenVerdict } from "./proof-engine.mjs";
+import { makeExec } from "./make-exec.mjs";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 let pass = 0;
 let fail = 0;
@@ -101,6 +105,36 @@ await t("unverified dom result is UNVERIFIED never PASS", () => {
   );
   eq(r.status, "UNVERIFIED", "status");
   eq(r.prod_verified, false, "pv");
+});
+
+await t("guard proof uses ctx.exec exit (hardcoded 1 is FAIL)", async () => {
+  const fail = await replay(
+    { kind: "guard", script: "scripts/x.mjs", expect: { exit: 0 } },
+    { exec: async () => 1 },
+  );
+  if (fail.ok) throw new Error("exit 1 was accepted as PASS");
+  const ok = await replay(
+    { kind: "guard", script: "scripts/x.mjs", expect: { exit: 0 } },
+    { exec: async () => 0 },
+  );
+  if (!ok.ok) throw new Error("exit 0 was rejected");
+});
+
+await t("shadow-report must not stub exec to 1", () => {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const src = fs.readFileSync(path.join(here, "shadow-report.mjs"), "utf8");
+  if (/exec:\s*async\s*\(\)\s*=>\s*1/.test(src)) {
+    throw new Error("shadow-report still stubs ctx.exec to 1");
+  }
+  if (!src.includes("makeExec(")) {
+    throw new Error("shadow-report missing makeExec");
+  }
+});
+
+await t("makeExec rejects path traversal", async () => {
+  const exec = makeExec(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.."));
+  const rc = await exec("../etc/passwd", []);
+  if (rc !== 1) throw new Error("traversal must return 1");
 });
 
 await t("RPT-VERIFY-01 shape: sibling PASS is not a proof kind", () => {
