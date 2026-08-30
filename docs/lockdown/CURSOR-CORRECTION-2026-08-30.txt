@@ -1,0 +1,104 @@
+===============================================================================
+CURSOR — CORRECTION + STATUS. 2026-08-30.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+Rule 42: you deploy. Rule 37: CLAIM -> MERGE -> AUTHOR, EVEN numbers.
+
+-------------------------------------------------------------------------------
+VERIFIED — YOUR WORK LANDED AND IT IS CORRECT. INDEPENDENTLY CONFIRMED.
+-------------------------------------------------------------------------------
+  FARO DIGITAL ACCOUNT (#18348) — REAL, and built to spec:
+    banking.bank_accounts "Faro Factoring - USMCA" · depository · active · no Plaid
+    ledger_account_id -> catalogs.accounts 1296 "Faro Factoring - USMCA"
+    Its OWN GL account. Not 1090 Undeposited Funds. Not shared with USMCA FREIGHT (1000).
+    Not shared with Relay Fuel Wallet (1295). is_dip false. Balance 0. Correct.
+  FAIL-CLOSED INPUTS (#18323) — REAL:
+    SubmitFactoringModal.tsx:38-40 now useState("") on advanceRatePct / reservePct /
+    factorFeePct. The 92 / 8 / 0 seeds are gone.
+    factoring-advances.routes.ts:47 factor_fee_pct is now REQUIRED -
+    .optional().default(0) removed. Money can no longer be priced at a default.
+This unblocked the owner's $8,890 payment leg. Good work.
+
+-------------------------------------------------------------------------------
+STILL YOURS, IN THIS ORDER
+-------------------------------------------------------------------------------
+1. TIEOUT BAR (bar-2). Highest value item in the whole queue. Unchanged from CURSOR.txt
+   task 1: SCHEMA class, verify-module-completion gate, proof-engine re-execution,
+   guard, and WORM versioning (bar_version 1 stamps stay, nothing retracted).
+2. FARO FACTOR -> BANK LINKAGE. The account exists; the wiring does not. Factoring
+   proceeds must land in 1296, not 1090. Reserve movements
+   (accounting.factoring_reserve_movements) must be visible on that account. Wires
+   Faro -> BoA USMCA FREIGHT must be a bank-to-bank TRANSFER, not a deposit from nowhere.
+3. GUARDS 4C (settlement header write-back) and 4D (unit disposition not overloaded).
+   4A/4B are numbered 10133/10137 - confirm they are wired, not just claimed.
+4. INBOX HYGIENE. INBOX-CC-1.md still stacks ~24 "THIS IS NOW" lines from different days.
+   Truncate to the current GO or mark superseded lines. A seat reading down acts on
+   Thursday's orders.
+
+-------------------------------------------------------------------------------
+INFRA — CC-3 FOUND A PRODUCTION STABILITY ISSUE THAT IS NOT A CODE BUG. IT IS YOURS.
+-------------------------------------------------------------------------------
+CC-3 read two representative issues in full from an ~11-issue withLuciaBypass(auth:db)
+Sentry cluster and identified ONE shared root cause: POSTGRES CONNECTION-POOL EXHAUSTION
+UNDER LOAD. Not a per-route defect. They correctly declined to "fix" it in code - guessing
+a mechanical fix at a pool problem would have produced 11 fake resolutions.
+
+That leaves a real, unowned production stability issue. It is infra/Neon tuning, which is
+your lane, not a coder seat's:
+  * check Neon compute size, pool mode (transaction vs session) and max connections against
+    actual concurrency
+  * check whether withLuciaBypass acquires and holds a connection longer than it needs to,
+    and whether any path leaks one on the error branch
+  * check pooled vs direct endpoint usage - a direct-endpoint call in a hot path burns a
+    real connection where a pooled one would not
+  * ~11 Sentry issues collapse to one fix; treat it as one item, not eleven
+
+Do not let anyone mark those 11 resolved until the pool behavior is actually changed and
+the cluster stops recurring. A stale-but-resolved infra issue is a false green of exactly
+the kind bar-2 exists to prevent.
+
+-------------------------------------------------------------------------------
+NEW GUARD TO ADD — THE DEFECT CLASS THAT BIT US TODAY
+-------------------------------------------------------------------------------
+Claim an EVEN step and author NNNN-intercompany-copy-integrity.mjs (or fold into the
+bar-2 tie-out work). It must FAIL when a cross-company master-data copy leaves:
+  * any qbo_customer_id / qbo_vendor_id populated on the destination company's copied rows
+  * any factoring.customer_factor_assignment row with operating_company_id NULL
+  * normalized-name duplicate groups in the destination that do not exist in an approved
+    survivor list
+Reason: CC-1's copy landed with 1,124 assignment rows at operating_company_id NULL, 116
+customers unassigned, 3 of the owner's 7 dedupe rulings unapplied, and 2 UTF-8 corrupted
+rows - while the OUTBOX reported the dedupe as done. The QBO-ID half was honored perfectly.
+The difference between those two outcomes is that one had a rule someone could check and
+the other did not. Make it checkable.
+
+-------------------------------------------------------------------------------
+FLAG RELIABILITY — FEED THIS INTO THE TIEOUT DESIGN
+-------------------------------------------------------------------------------
+Three columns proved unreliable today, all the same shape:
+  mdata.customers.is_duplicate           reads 0 while 61 dupe groups exist
+  mdata.units.is_sample_data             reads FALSE on CODEX-TEST-0033, TEST-CODEX-956214,
+                                         USMCA-001 - two of them InService and counted as
+                                         real leased fleet
+  driver_settlements.accounting_bill_id  reads NULL on a settlement that fully posted
+A flag added, never maintained, then trusted. Every count built on it is silently wrong and
+nothing fails.
+
+CONSEQUENCE FOR BAR-2: a TIEOUT auto_check must never filter on an unverified flag to decide
+what is "real". If a tie-out excludes rows on is_sample_data, the tie-out inherits that
+flag's lie. Either tie out against ALL rows, or make the flag itself a checked precondition
+of the tie-out. Write that constraint into SCHEMA.md.
+
+Cascade has the systemic sweep (CASCADE-CORRECTION-2026-08-30.txt); route their proposed
+guard numbers when they come back.
+
+-------------------------------------------------------------------------------
+STANDING — WHY THE TIEOUT BAR MATTERS, RESTATED WITH TODAY'S EVIDENCE
+-------------------------------------------------------------------------------
+Today, four separate times, a seat reported state that prod did not agree with:
+CC-2, Claude and Cursor all called the settlement poster never-fired (header vs subledger);
+CC-1's OUTBOX reported a dedupe prod does not show; CC-1's own counts (1,209 / 475) do not
+match prod (1,240 / 626).
+None of those are laziness. They are all the same structural gap: nothing forces a claim to
+be checked against the system. That is precisely what bar-2 fixes, and it is why it
+outranks every other item on your list.

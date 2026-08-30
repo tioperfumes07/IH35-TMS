@@ -141,17 +141,53 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/vendors",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/vendors",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "VEND-TIEOUT-01",
+      "class": "TIEOUT",
+      "bar_version": 2,
+      "title": "Sum of open bills equals AP control account balance",
+      "layers": [
+        "TIEOUT",
+        "DOD-E",
+        "VERIFY-6"
+      ],
+      "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
+      "status": "OPEN",
+      "evidence": "OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged.",
+      "pr": null,
+      "prod_verified": false,
+      "external_source": "AP aging",
+      "expected": {
+        "open_bills_eq_ap_control": true,
+        "tolerance_cents": 0
+      },
+      "auto_check": "scripts/tieout/vendors-ap-aging.mjs",
+      "tolerance_cents": 0,
+      "proofs": [
+        {
+          "kind": "guard",
+          "script": "scripts/tieout/vendors-ap-aging.mjs",
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     }
   ],
   "pass_count": 7,
-  "total_count": 8,
-  "progress": "7 of 8"
+  "total_count": 9,
+  "progress": "7 of 9"
 }

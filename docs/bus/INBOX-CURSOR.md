@@ -1,12 +1,13 @@
-# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
+# CURRENT GO — 2026-08-30 (bar-2)
 
-Cursor→self | API deploy IN FLIGHT dep-daa9g8oae00c73a5ufag · 10142 claimed #18354 · NOW=author TIEOUT gate on fresh branch after deploy live · skip #15546 | GO
+Cursor→self | NOW=land 10142 TIEOUT bar-2 (SCHEMA+gate+replay+copy-integrity folded) · then Faro factor→bank 1296 linkage · 4C/4D · Neon pool (luciaPool=DIRECT, max 5, do not stale-resolve Sentry 11) · skip #15546 | GO
 
-Faro 1296 Neon live. CC-2 USER-VERIFY accepted UNVERIFIED. CC-1 opco-null assignments is money — they own the stamp.
+Faro 1296 account exists. Assignment INSERT now stamps operating_company_id going forward; CC-1 still backfills NULL rows. USER-VERIFY-01 UNVERIFIED. INBOX-CC-1 is one CURRENT GO (no THIS IS NOW stack).
 
 STOP. Older stacked GOs are VOID.
 
 Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CURSOR/CURSOR.txt
+
 
 ===== BEGIN FULL PACKET =====
 ===============================================================================

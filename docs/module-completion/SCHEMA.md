@@ -30,6 +30,34 @@
 **COMPLETE** = N === M and `complete: true` in JSON (guard sets/validates).  
 **CERTIFIED (scoreboard)** = every item `prod_verified: true`. `complete:true` alone renders as **code-verified**, never certified.
 
+## Bar versioning (WORM — reverse, never erase)
+
+A bar-1 PASS was never wrong. It was never sufficient. Do **not** flip existing `PASS` / `prod_verified` stamps to false. Do **not** delete or rewrite existing items.
+
+| `bar_version` | Meaning |
+|---|---|
+| **1** (default if omitted) | Wiring / density / surface. Historical stamps stay. |
+| **2** | External **TIEOUT** class. Module `complete` is recomputed under bar 2. |
+
+Urgent-6 modules (`accounting`, `banking`, `settlements`, `factoring`, `dispatch`, `vendors`) **cannot** set `complete: true` without at least one **TIEOUT** item at `PASS` + `prod_verified: true`. That is a supersede of the bar, not a retraction of bar-1 history.
+
+## Item class `TIEOUT` (required fields)
+
+A TIEOUT item (`"class": "TIEOUT"`) MUST carry:
+
+| Field | Rule |
+|---|---|
+| `external_source` | Human-readable name of the **outside** document |
+| `expected` | Exact values from that document (cents object, hardcoded) |
+| `auto_check` | Repo path to an **executable** (`scripts/…`) that computes the same values from the system |
+| `tolerance_cents` | Default **0**. Non-zero requires `owner_tolerance_note` naming why |
+| `bar_version` | **2** |
+
+`auto_check` must not treat empty TMS as PASS (R2). Missing `DATABASE_URL` is UNVERIFIED (nonzero exit), never PASS.
+
+**Unverified flags are not a population filter (CURSOR-CORRECTION 2026-08-30).**
+`auto_check` must **never** decide what is “real” by filtering on an unverified flag. Measured liars: `mdata.customers.is_duplicate` (reads 0 while dupe groups exist), `mdata.units.is_sample_data` (FALSE on labeled TEST units in service), `driver_finance.driver_settlements.accounting_bill_id` (NULL on a settlement that fully posted). Either tie out against **all** in-scope rows, or the flag itself is a checked precondition of the tie-out (machine-proven, not trusted). A tie-out that `WHERE is_sample_data = false` inherits that flag’s lie.
+
 ## Required fields per item
 
 ```json

@@ -1,12 +1,12 @@
 # Module completion — Vendors
 
-**PROGRESS: 7 of 8** · complete: `false` · as_of: 2026-08-30T01:20:00.000Z · live_sha: `pending-cert-01`
+**PROGRESS: 7 of 9** · complete: `false` · as_of: 2026-08-30T01:20:00.000Z · live_sha: `pending-cert-01`
 
 | Status | Count |
 |---|---:|
 | PASS | 7 |
 | HOLD | 0 |
-| OPEN | 1 |
+| OPEN | 2 |
 | FAIL | 0 |
 | UNVERIFIED | 0 |
 
@@ -20,5 +20,6 @@
 | `VEND-S05` | **PASS** | Inactive vendor filter excludes 387 inactive from default Active view | 2026-08-03 Neon lucia TRANSP inactive=387 exact. Vendors.tsx default listStatus="active" filters deactivated_at==null; data-list-status-filter=vendors. Guard verify-vend-s01-roster-active-filter + step 2236. RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): structural re-read of Vendors.tsx confirms parseVendorListTab(searchParams.get("listTab") ?? "active") defaults to active, listStatus==="active" filters vendor.deactivated_at==null, data-list-status-filter="vendors" present. Neon lucia (bypass_rls) direct count this turn: TRANSP active=571 inactive=387 total=958 -- inactive count matches exactly. Guard re-run: OK, TRANSP active=564 inactive=387 (guard's own live query, same inactive count). | — |
 | `VEND-VERIFY-01` | **PASS** | Vendors module VERIFY-1..8 TRANSP + USMCA | 2026-08-04 Cursor: meta guard verify-vend-verify-01 composes S01 roster (TRANSP 564/USMCA 4 lucia), S03/S04 dedup+types, S02 fact-dual canonical profile, VEND-LINK-01 bill/allocation vendor uuid EntityLink; manifest /vendors + /vendors/:id; VendorDetail vendor-factor-schedule-relocated + emptyFactoringProfileMeta. Steps 2252 + 2356. complete:false while CLS-ORPHAN-SURFACE lists vendors (ORPH-003 vendor detail empty — live drain required; do not game modules[]). RE-VERIFIED LIVE (CC-2, 2026-08-29, SHA b2448ce): guard re-run PASS (7 of 7 checklist; complete_flag per false-green law). ORPH-003 remains a genuine, separate OPEN data-model gap (vendor has no ACH/bank field at all, owner decision pending) -- does not contradict this item's own VERIFY-1..8 composition, not claimed here as module completeness. | — |
 | `VEND-CERT-01` | **OPEN** | Fully-Wired 7–12 on current healthz (URL tabs, responsive master-detail, leftover audit PATCH closed) | OPEN 2026-08-29 CERT-01: item stamps VEND-S01..VERIFY-01 are not module certify. Master-detail must stack (Customers pattern). Tabs URL-addressable. FW 12 only after 1–11 Built on then-current healthz. Do not set complete:true until this item PASS + prod_verified by CC-2. 2026-08-30 Cursor: additive proofs[] (SPA /vendors + API GET mdata/vendors, mount≠404) for shadow-report only — typed OPEN stays; no proven_at_sha so derived cannot be PASS; Live Chrome FW 8–12 still owed on then-current healthz. | — |
+| `VEND-TIEOUT-01` | **OPEN** | Sum of open bills equals AP control account balance | OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged. | — |
 
 Desktop audit: ~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md
