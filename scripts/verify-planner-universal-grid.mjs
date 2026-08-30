@@ -38,8 +38,8 @@ function plannerRangeFailures({ layout, context, range }) {
   if (!range.includes("setRangeState(next)")) {
     failures.push("custom date ranges must persist in the planner range state");
   }
-  if (!range.includes("buildPlannerRange(days, range.start)")) {
-    failures.push("7/14/30/40 shortcuts must retain the selected historical start date");
+  if (!range.includes("buildPlannerRange(days, range.end)")) {
+    failures.push("7/14/30/40 shortcuts must retain the selected historical end anchor");
   }
   if (!range.includes("if (next.start > next.end) return")) {
     failures.push("invalid reversed custom ranges must fail closed");
@@ -82,7 +82,7 @@ if (process.argv.includes("--selftest")) {
     { key: "layout", from: "<PlannerControls />", to: "<PlannerRangeToolbar />" },
     { key: "context", from: "setRange: (range: PlannerRange) => void", to: "" },
     { key: "range", from: "setRangeState(next)", to: "void next" },
-    { key: "range", from: "buildPlannerRange(days, range.start)", to: "buildPlannerRange(days)" },
+    { key: "range", from: "buildPlannerRange(days, range.end)", to: "buildPlannerRange(days)" },
     { key: "range", from: "if (next.start > next.end) return", to: "" },
   ];
   let caught = 0;
