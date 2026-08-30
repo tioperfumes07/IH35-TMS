@@ -1,14 +1,13 @@
-import { entityLabel } from "../../lib/entity-label";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, apiRequest } from "../../api/client";
 import { insurancePoliciesApi, listInsuranceTypeCatalog, type InsurancePolicyStatus } from "../../api/insurance";
-import { listAllUnits } from "../../api/mdata";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../parity/EntityPicker";
+import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { useToast } from "../Toast";
@@ -38,13 +37,6 @@ type FormState = {
   status: InsurancePolicyStatus;
 };
 
-type UnitOption = {
-  id: string;
-  unit_code?: string | null;
-  unit_number?: string | null;
-  status?: string | null;
-};
-
 const INITIAL_FORM: FormState = {
   insurer_vendor_id: "",
   insurer_name: "",
@@ -62,10 +54,6 @@ const INITIAL_FORM: FormState = {
   agent_contact: "",
   status: "pending",
 };
-
-function unitLabel(unit: UnitOption) {
-  return unit.unit_code || entityLabel(unit.unit_number, unit.id, "Unit");
-}
 
 function parseCurrencyToCents(raw: string) {
   if (!raw.trim()) return undefined;
@@ -133,7 +121,8 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
+  const [selectedUnits, setSelectedUnits] = useState<EntityPickerOption[]>([]);
+  const [unitPickerValue, setUnitPickerValue] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState | "covered_units", string>>>({});
   const [formError, setFormError] = useState<string>("");
   const [serverError, setServerError] = useState<string>("");
@@ -144,28 +133,11 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((result) => result.types),
   });
 
-  // SAF-B29: never silent listUnits(limit:500) — covered-units multi-select must re-query on type-ahead.
-  const [unitSearch, setUnitSearch] = useState("");
-  const unitsQuery = useQuery({
-    queryKey: ["insurance", "policy-create", "units", operatingCompanyId, unitSearch],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: async () => {
-      const result = await listAllUnits({
-        operating_company_id: operatingCompanyId,
-        search: unitSearch || undefined,
-        include: "trailers",
-      });
-      return (result.units as UnitOption[]).filter((unit) => Boolean(unit.id));
-    },
-  });
-
-  const units = useMemo(() => unitsQuery.data ?? [], [unitsQuery.data]);
-
   useEffect(() => {
     if (!open) return;
     setForm(INITIAL_FORM);
-    setSelectedUnitIds([]);
-    setUnitSearch("");
+    setSelectedUnits([]);
+    setUnitPickerValue(null);
     setFieldErrors({});
     setFormError("");
     setServerError("");
@@ -223,11 +195,11 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     },
   });
 
-  const toggleUnit = (unitId: string) => {
-    setSelectedUnitIds((current) => {
-      if (current.includes(unitId)) return current.filter((id) => id !== unitId);
-      return [...current, unitId];
-    });
+  const addCoveredUnit = (unitId: string | null, option?: EntityPickerOption | null) => {
+    if (!unitId || !option) return;
+    setSelectedUnits((current) => current.some((unit) => unit.value === unitId) ? current : [...current, option]);
+    setUnitPickerValue(null);
+    setFieldErrors((current) => ({ ...current, covered_units: undefined }));
   };
 
   const updateField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
@@ -247,7 +219,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     if (!form.coverage_type) nextFieldErrors.coverage_type = "Coverage type is required.";
     if (!form.effective_date) nextFieldErrors.effective_date = "Effective date is required.";
     if (!form.expiry_date) nextFieldErrors.expiry_date = "Expiry date is required.";
-    if (!selectedUnitIds.length) nextFieldErrors.covered_units = "Select at least one covered unit.";
+    if (!selectedUnits.length) nextFieldErrors.covered_units = "Select at least one covered unit.";
 
     if (form.effective_date && form.expiry_date && form.expiry_date < form.effective_date) {
       nextFieldErrors.expiry_date = "Expiry date must be on or after effective date.";
@@ -295,7 +267,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
       },
       totalPremiumCents: typeof totalPremiumCents === "number" ? totalPremiumCents : undefined,
       downPaymentCents: typeof downPaymentCents === "number" ? downPaymentCents : undefined,
-      unitIds: selectedUnitIds,
+      unitIds: selectedUnits.map((unit) => unit.value),
     });
   };
 
@@ -522,41 +494,31 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700">Covered Units *</span>
-            <span className="text-xs text-slate-500">{selectedUnitIds.length} selected</span>
+            <span className="text-xs text-slate-500">{selectedUnits.length} selected</span>
           </div>
-          <input
-            type="search"
-            className="mb-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs"
+          <EntityPicker
+            kind="unit"
+            operatingCompanyId={operatingCompanyId}
+            value={unitPickerValue}
+            onChange={addCoveredUnit}
+            enabled={open}
+            nestedInDrawer
             placeholder="Search units…"
-            value={unitSearch}
-            onChange={(event) => setUnitSearch(event.target.value)}
-            data-testid="policy-create-unit-search"
+            ariaLabel="Add covered unit"
+            dataTestId="policy-create-unit-search"
           />
-          <div className="max-h-40 overflow-y-auto rounded-sm border border-gray-200 p-2">
-            {unitsQuery.isError ? (
-              <ListErrorState
-                title="Couldn't load units"
-                {...formatQueryErrorDetail(unitsQuery.error)}
-                onRetry={() => void unitsQuery.refetch()}
-                className="py-4"
-              />
-            ) : unitsQuery.isLoading ? (
-              <p className="text-xs text-slate-500">Loading units...</p>
-            ) : units.map((unit) => (
-              <label key={unit.id} className="flex cursor-pointer items-center gap-2 py-1 text-xs text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={selectedUnitIds.includes(unit.id)}
-                  onChange={() => {
-                    toggleUnit(unit.id);
-                    setFieldErrors((current) => ({ ...current, covered_units: undefined }));
-                  }}
-                />
-                <span>{unitLabel(unit)}</span>
-                {unit.status ? <span className="text-slate-500">({unit.status})</span> : null}
-              </label>
+          <div className="flex flex-wrap gap-1.5" data-testid="policy-create-selected-units">
+            {selectedUnits.map((unit) => (
+              <button
+                key={unit.value}
+                type="button"
+                className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                onClick={() => setSelectedUnits((current) => current.filter((item) => item.value !== unit.value))}
+                aria-label={`Remove ${unit.label}`}
+              >
+                {unit.label} ×
+              </button>
             ))}
-            {!unitsQuery.isLoading && !unitsQuery.isError && units.length === 0 ? <p className="text-xs text-slate-500">No units found.</p> : null}
           </div>
           {fieldErrors.covered_units ? <span className="text-xs text-red-700">{fieldErrors.covered_units}</span> : null}
         </div>
@@ -568,7 +530,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <button
             type="submit"
             className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-60"
-            disabled={createMutation.isPending || typesQuery.isError || unitsQuery.isError}
+            disabled={createMutation.isPending || typesQuery.isError}
           >
             {createMutation.isPending ? "Creating..." : "+ Policy"}
           </button>

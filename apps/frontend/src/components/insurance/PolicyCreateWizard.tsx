@@ -1,4 +1,3 @@
-import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,10 +8,10 @@ import {
   type AllocationMethod,
   type InsuranceCoverageType,
 } from "../../api/insurance";
-import { listAllUnits } from "../../api/mdata";
 import { ListErrorState } from "../ListErrorState";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { EntityPicker } from "../parity/EntityPicker";
+import type { EntityPickerOption } from "../parity/entityPickerRegistry";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
 import { MoneyInput } from "../forms/MoneyInput";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -56,16 +55,6 @@ type Props = {
   onCreated: (policyId?: string) => void;
 };
 
-type UnitRow = {
-  id: string;
-  unit_code?: string | null;
-  unit_number?: string | null;
-  vin?: string | null;
-  asset_type?: string | null;
-  status?: string | null;
-  operating_company_id?: string | null;
-};
-
 type Step1 = {
   /** Canonical mdata.vendors id — picker value (R=W with premium-bill vendor lookup). */
   insurer_vendor_id: string;
@@ -98,12 +87,6 @@ const ALLOCATION_LABELS: Record<AllocationMethod, string> = {
   pro_rata: "Pro-rata by value",
   weighted: "Weighted custom %",
 };
-
-const UNIT_TYPE_CHIPS = ["All", "Tractor", "Trailer", "Reefer"] as const;
-
-function unitLabel(unit: UnitRow) {
-  return unit.unit_code ?? entityLabel(unit.unit_number, unit.id, "Unit");
-}
 
 function parsePremiumCents(raw: string): number | null {
   if (!raw.trim()) return null;
@@ -155,9 +138,8 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const [step, setStep] = useState(1);
   const [step1, setStep1] = useState<Step1>(INITIAL_STEP1);
   const [step1Errors, setStep1Errors] = useState<Partial<Record<keyof Step1, string>>>({});
-  const [selectedUnitIds, setSelectedUnitIds] = useState<string[]>([]);
-  const [unitSearchQuery, setUnitSearchQuery] = useState("");
-  const [activeChip, setActiveChip] = useState<(typeof UNIT_TYPE_CHIPS)[number]>("All");
+  const [selectedUnits, setSelectedUnits] = useState<EntityPickerOption[]>([]);
+  const [unitPickerValue, setUnitPickerValue] = useState<string | null>(null);
   const [step3, setStep3] = useState<Step3>(INITIAL_STEP3);
   const [step3Errors, setStep3Errors] = useState<Partial<Record<keyof Step3, string>>>({});
   const [serverError, setServerError] = useState("");
@@ -178,23 +160,6 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     queryFn: () => listInsuranceTypeCatalog({ operating_company_id: operatingCompanyId }).then((r) => r.types),
   });
 
-  const unitsQuery = useQuery({
-    queryKey: ["insurance", "wizard", "units", operatingCompanyId, unitSearchQuery, activeChip],
-    enabled: open && Boolean(operatingCompanyId),
-    queryFn: () =>
-      listAllUnits({
-        operating_company_id: operatingCompanyId,
-        search: unitSearchQuery.trim() || undefined,
-        include: "trailers",
-        type: activeChip === "All" ? undefined : activeChip,
-      }).then((r) => r.units as UnitRow[]),
-  });
-
-  const allUnits = useMemo(() => (unitsQuery.data ?? []).filter((u) => Boolean(u.id)), [unitsQuery.data]);
-
-  // Type chips and text search are both server-side so the result is complete beyond page one.
-  const filteredUnits = allUnits;
-
   useEffect(() => {
     // Bump the generation on EVERY mount of this effect (open transition OR a company switch while
     // already open) — a mutation snapshot taken before this point is now stale and its
@@ -204,9 +169,8 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     setStep(1);
     setStep1(INITIAL_STEP1);
     setStep1Errors({});
-    setSelectedUnitIds([]);
-    setUnitSearchQuery("");
-    setActiveChip("All");
+    setSelectedUnits([]);
+    setUnitPickerValue(null);
     setStep3(INITIAL_STEP3);
     setStep3Errors({});
     setServerError("");
@@ -219,7 +183,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     return Number.isInteger(v) && v > 0 ? v : 0;
   }, [step3.term_months]);
 
-  const costInfo = useCostPerVehicle(premiumCents, termMonths, selectedUnitIds.length, step3.allocation_method);
+  const costInfo = useCostPerVehicle(premiumCents, termMonths, selectedUnits.length, step3.allocation_method);
 
   const billPreview = useMemo(() => {
     if (premiumCents <= 0 || termMonths <= 0) return [];
@@ -338,7 +302,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
         down_payment_cents: downPaymentCents,
         term_months: termMonths,
         allocation_method: step3.allocation_method,
-        unit_ids: selectedUnitIds,
+        unit_ids: selectedUnits.map((unit) => unit.value),
         status: step1.status as "active" | "pending",
         insurer_email: step1.insurer_email.trim() || null,
         agent_contact: step1.agent_contact.trim() || null,
@@ -480,66 +444,40 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700">Select Vehicles *</span>
               <span className="text-xs font-medium text-slate-600">
-                {selectedUnitIds.length} selected
+                {selectedUnits.length} selected
               </span>
             </div>
-            <input
-              className="w-full rounded-sm border border-gray-300 px-2 py-1.5 text-xs"
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={operatingCompanyId}
+              value={unitPickerValue}
+              onChange={(unitId, option) => {
+                if (!unitId || !option) return;
+                setSelectedUnits((current) => current.some((unit) => unit.value === unitId) ? current : [...current, option]);
+                setUnitPickerValue(null);
+              }}
+              enabled={open}
+              nestedInDrawer
               placeholder="Search by unit / VIN..."
-              value={unitSearchQuery}
-              onChange={(e) => setUnitSearchQuery(e.target.value)}
+              ariaLabel="Add covered unit"
+              dataTestId="policy-wizard-unit-search"
             />
-            <div className="flex flex-wrap gap-1.5">
-              {UNIT_TYPE_CHIPS.map((chip) => (
+            <div className="flex flex-wrap gap-1.5" data-testid="policy-wizard-selected-units">
+              {selectedUnits.map((unit) => (
                 <button
-                  key={chip}
+                  key={unit.value}
                   type="button"
-                  onClick={() => setActiveChip(chip)}
-                  className={`rounded-full px-3 py-0.5 text-xs font-medium transition-colors ${
-                    activeChip === chip
-                      ? "bg-emerald-600 text-white"
-                      : "bg-gray-100 text-slate-700 hover:bg-gray-200"
-                  }`}
+                  onClick={() => setSelectedUnits((current) => current.filter((item) => item.value !== unit.value))}
+                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                  aria-label={`Remove ${unit.label}`}
                 >
-                  {chip}
+                  {unit.label} ×
                 </button>
               ))}
             </div>
-            {selectedUnitIds.length === 0 && (
+            {selectedUnits.length === 0 && (
               <p className="text-xs text-slate-700">Select at least one vehicle to continue.</p>
             )}
-            <div className="max-h-52 overflow-y-auto rounded-sm border border-gray-200 p-2">
-              {unitsQuery.isError ? (
-                <ListErrorState
-                  title="Couldn't load units"
-                  {...formatQueryErrorDetail(unitsQuery.error)}
-                  onRetry={() => void unitsQuery.refetch()}
-                  className="py-4"
-                />
-              ) : unitsQuery.isLoading ? (
-                <p className="text-xs text-slate-500">Loading units...</p>
-              ) : filteredUnits.length === 0 ? (
-                <p className="text-xs text-slate-500">No units match the current filter.</p>
-              ) : (
-                filteredUnits.map((unit) => (
-                  <label key={unit.id} className="flex cursor-pointer items-center gap-2 py-1 text-xs text-slate-700">
-                    <input
-                      type="checkbox"
-                      checked={selectedUnitIds.includes(unit.id)}
-                      onChange={() => {
-                        setSelectedUnitIds((prev) =>
-                          prev.includes(unit.id) ? prev.filter((id) => id !== unit.id) : [...prev, unit.id]
-                        );
-                      }}
-                    />
-                    <span className="font-medium">{unitLabel(unit)}</span>
-                    {unit.asset_type ? <span className="text-slate-400">{unit.asset_type}</span> : null}
-                    {unit.vin ? <span className="text-slate-400 font-mono">{unit.vin}</span> : null}
-                    {unit.status ? <span className="text-slate-400">({unit.status})</span> : null}
-                  </label>
-                ))
-              )}
-            </div>
           </div>
         )}
 
@@ -588,12 +526,12 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
                 ))}
               </div>
             </Field>
-            {premiumCents > 0 && termMonths > 0 && selectedUnitIds.length > 0 ? (
+            {premiumCents > 0 && termMonths > 0 && selectedUnits.length > 0 ? (
               <div className="rounded-sm border border-slate-200 bg-slate-100 px-4 py-3">
                 <p className="text-xs font-semibold text-slate-700">Cost per vehicle insured per month</p>
                 <p className="mt-0.5 text-lg font-bold text-slate-700">{costInfo.costPerVehicleDisplay}</p>
                 <p className="mt-0.5 text-xs text-slate-600">
-                  {selectedUnitIds.length} vehicle{selectedUnitIds.length !== 1 ? "s" : ""} ·{" "}
+                  {selectedUnits.length} vehicle{selectedUnits.length !== 1 ? "s" : ""} ·{" "}
                   {formatMoney(costInfo.totalMonthlyPremiumCents)} / mo total · {termMonths} month term
                 </p>
               </div>
@@ -616,7 +554,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-700">Vehicles</span>
-                <span className="text-slate-700">{selectedUnitIds.length}</span>
+                <span className="text-slate-700">{selectedUnits.length}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold text-slate-700">Total premium</span>
@@ -662,7 +600,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             {step < 4 && (
               <button
                 type="button"
-                disabled={step === 2 && selectedUnitIds.length === 0}
+                disabled={step === 2 && selectedUnits.length === 0}
                 className="rounded-sm border border-[#1f2a44] bg-[#1f2a44] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0f1729] disabled:opacity-50"
                 onClick={() => {
                   if (step === 1 && !validateStep1()) return;
