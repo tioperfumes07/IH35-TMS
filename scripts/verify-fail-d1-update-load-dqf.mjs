@@ -48,7 +48,7 @@ function selftest() {
     const broken = backup.replace(`${GATE}(client,`, "/* removed gate */(");
     fs.writeFileSync(targetPath, broken, "utf8");
     const planted = run();
-    if (!planted.some((e) => e.includes(`${GATE}(client,`))) {
+    if (!planted.some((e) => e.includes(`must call ${GATE} when driver assignment changes`))) {
       throw new Error("planted gate removal not detected");
     }
     console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures detected)`);
