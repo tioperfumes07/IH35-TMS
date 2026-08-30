@@ -14,11 +14,15 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
   const failures = [];
+  const listStart = s.api.indexOf("listTempAssignments(");
+  const listEnd = listStart >= 0 ? s.api.indexOf("= {},", listStart) : -1;
+  const listSignature = listStart >= 0 && listEnd > listStart ? s.api.slice(listStart, listEnd) : "";
   if (!/<EntityPicker[\s\S]{0,120}kind="unit"/.test(s.creator) || !/unit_id: input\.form\.unitId/.test(s.creator)) failures.push("unit picker-to-assignment payload missing");
   if (!/const unit = await client\.query[\s\S]{0,260}FROM mdata\.units[\s\S]{0,160}COALESCE\(currently_leased_to_company_id, owner_company_id\) = \$1::uuid[\s\S]{0,100}deactivated_at IS NULL/.test(s.service) || !/temp_cover_unit_not_found/.test(s.service)) failures.push("active tenant unit validation missing");
-  if (!/\(\$3::uuid IS NULL OR t\.unit_id = \$3::uuid\)/.test(s.service)) failures.push("exact unit reverse filter missing");
+  const unitFilterCount = [...s.service.matchAll(/\(\$3::uuid IS NULL OR t\.unit_id = \$3::uuid\)/g)].length;
+  if (unitFilterCount !== 2) failures.push("both row and count queries must retain the exact unit reverse filter");
   if (!/unit_id: z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.routes) || !/unitId: parsed\.data\.unit_id/.test(s.routes)) failures.push("route unit filter contract missing");
-  if (!/listTempAssignments\(operatingCompanyId: string, filters: \{ driver_id\?: string; unit_id\?: string \}/.test(s.api) || !/unit_id: unitId/.test(s.creator)) failures.push("frontend filtered list contract missing");
+  if (!/operatingCompanyId:\s*string/.test(listSignature) || !/driver_id\?:\s*string/.test(listSignature) || !/unit_id\?:\s*string/.test(listSignature) || !/unit_id: unitId/.test(s.creator)) failures.push("frontend filtered list contract missing");
   if (!/listTempAssignments\(operatingCompanyId, \{ unit_id: unitId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No active temporary driver coverage is linked to this unit/.test(s.reverse)) failures.push("honest unit reverse missing");
   if (!(/kind="driver_scheduler_unit"/.test(s.reverse) || /safety\/driver-scheduler\?unit_id=/.test(s.reverse))) {
     failures.push("canonical filtered scheduler drill missing");
