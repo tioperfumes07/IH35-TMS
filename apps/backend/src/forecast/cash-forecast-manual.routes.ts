@@ -86,7 +86,12 @@ export async function registerCashForecastManualRoutes(app: FastifyInstance) {
       // do not ask Postgres to evaluate `text = uuid` (42883).
       if (q.data.party_ref_id) { values.push(q.data.party_ref_id); filters.push(`party_ref_id = $${values.length}::text`); }
       if (q.data.ref_kind) { values.push(q.data.ref_kind); filters.push(`ref_kind = $${values.length}`); }
-      if (q.data.ref_external_id) { values.push(q.data.ref_external_id); filters.push(`ref_external_id = $${values.length}`); }
+      // CASH-FORECAST-REF-EXTERNAL-ID-TEXT-UUID-500: same class as party_ref_id above --
+      // ref_external_id is TEXT on forecast.cash_entries (migration 202606161800), but the query
+      // param validates as a UUID string (unit ids), so an unspecified-type bind here asks
+      // Postgres to evaluate `text = uuid` (42883). Bind as text, matching party_ref_id's own
+      // already-fixed pattern (CUST-F5985) exactly.
+      if (q.data.ref_external_id) { values.push(q.data.ref_external_id); filters.push(`ref_external_id = $${values.length}::text`); }
       const res = await client.query(
         `SELECT id, entry_date, direction, amount_cents, party_name, invoice_no, category, memo,
                 ref_kind, ref_label, ref_external_id,
