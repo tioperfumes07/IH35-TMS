@@ -214,10 +214,10 @@
       "table": "mdata.customer_contacts",
       "forceRlsStatus": "enforced",
       "disposition": "inherit_via_parent",
-      "parentIdCol": "customer_id",
+      "parentIdCol": "customer_uuid",
       "parent": "mdata.customers",
-      "fkStatus": "deferred",
-      "parentIsolationStatus": "deferred"
+      "fkStatus": "enforced",
+      "parentIsolationStatus": "enforced"
     },
     {
       "table": "mdata.customer_quality_events",
