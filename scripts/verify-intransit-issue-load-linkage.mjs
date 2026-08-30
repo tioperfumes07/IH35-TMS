@@ -30,6 +30,7 @@ function audit(s) {
   if (!/filters\.load_id[\s\S]{0,100}q\.set\("load_id", filters\.load_id\)/.test(s.api)) failures.push("frontend exact load query parameter missing");
   if (!/listDispatchIntransitIssues\(operatingCompanyId, \{ load_id: loadId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No in-transit issues linked to this load/.test(s.reverse)) failures.push("honest load reverse section missing");
   if (!/<ListErrorState[\s\S]*?Could not load in-transit issues for this load\.[\s\S]*?onRetry=\{\(\) => void query\.refetch\(\)\}/.test(s.reverse)) failures.push("load reverse failure must retry the exact scoped query");
+  if (!/const rows = query\.isError \? \[\] : \(query\.data\?\.issues \?\? \[\]\)/.test(s.reverse)) failures.push("failed reverse read must suppress stale issue rows and heading count");
   if (!/!query\.isError && rows\.length \? \(/.test(s.reverse)) failures.push("failed reverse read must not render stale issue rows");
   if (!/LoadInTransitIssuesReverseSection[\s\S]{0,180}loadId=\{load\.id\}/.test(s.drawer)) failures.push("load drawer reverse mount missing");
   return failures;
@@ -54,6 +55,7 @@ if (process.argv.includes("--selftest")) {
     ["api", "api", /q\.set\("load_id", filters\.load_id\)/, 'q.set("status", filters.load_id)'],
     ["reverse", "reverse", /load_id: loadId/, "load_id: operatingCompanyId"],
     ["reverse-retry", "reverse", /onRetry=\{\(\) => void query\.refetch\(\)\}/, "onRetry={() => undefined}"],
+    ["reverse-error-count", "reverse", /query\.isError \? \[\] :/, "false ? [] :"],
     ["reverse-error-rows", "reverse", /!query\.isError && rows\.length \? \(/, "rows.length ? ("],
     ["mount", "drawer", /LoadInTransitIssuesReverseSection/g, "MissingIssueReverse"],
   ];
