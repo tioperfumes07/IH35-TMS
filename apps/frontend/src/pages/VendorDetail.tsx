@@ -20,6 +20,7 @@ import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombston
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { listAllFiles } from "../api/docs";
+import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { Button } from "../components/Button";
@@ -78,6 +79,26 @@ type SaferEntityStatus = {
 const tabs = ["Profile", "A/P", "Documents", "Audit History", "Tasks", "W-9 / 1099"] as const;
 type VendorTab = (typeof tabs)[number];
 
+// CUST-01 C9: tab state was local useState only -- no deep-link, no shareable tab, browser back
+// did nothing. Matches CustomerDetail's ?tab=<slug> contract exactly (AUDIT 2730); Profile stays
+// the clean-URL default.
+const VENDOR_DETAIL_TAB_QUERY: Record<VendorTab, string> = {
+  Profile: "profile",
+  "A/P": "ap",
+  Documents: "documents",
+  "Audit History": "audit",
+  Tasks: "tasks",
+  "W-9 / 1099": "w9",
+};
+const VENDOR_DETAIL_TAB_FROM_QUERY: Record<string, VendorTab> = Object.fromEntries(
+  Object.entries(VENDOR_DETAIL_TAB_QUERY).map(([label, slug]) => [slug, label as VendorTab]),
+) as Record<string, VendorTab>;
+
+function parseVendorDetailTab(raw: string | null): VendorTab {
+  if (!raw) return "Profile";
+  return VENDOR_DETAIL_TAB_FROM_QUERY[raw.trim().toLowerCase()] ?? "Profile";
+}
+
 const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 
 function billOpenBalanceCents(b: { balance_cents?: number; amount_cents: number; paid_cents: number }) {
@@ -101,7 +122,7 @@ type VendorProfileForm = VendorProfileMeta & {
 
 export function VendorDetailPage() {
   const { id = "" } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -124,7 +145,18 @@ export function VendorDetailPage() {
     sortDirection: expenseSortDirection,
     onSortChange: onExpenseSortChange,
   } = useUrlSort({ key: "expense_sort", dir: "expense_dir" });
-  const [activeTab, setActiveTab] = useState<VendorTab>("Profile");
+  // CUST-01 C9: was local useState only (see the old ?tab=ap-only, one-directional useEffect
+  // this replaces below) -- matches CustomerDetail's setActiveTab(next) contract exactly so
+  // every tab (not just A/P) is deep-linkable, shareable, and back-button-safe.
+  const [activeTab, setActiveTabState] = useState<VendorTab>(() => parseVendorDetailTab(searchParams.get("tab")));
+  const setActiveTab = (next: VendorTab) => {
+    setActiveTabState(next);
+    const params = new URLSearchParams(searchParams);
+    const slug = VENDOR_DETAIL_TAB_QUERY[next];
+    if (next === "Profile") params.delete("tab");
+    else params.set("tab", slug);
+    setSearchParams(params, { replace: true });
+  };
   const [billPayOpen, setBillPayOpen] = useState(false);
   const [billPayDate, setBillPayDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [billPayAmount, setBillPayAmount] = useState("");
@@ -154,7 +186,8 @@ export function VendorDetailPage() {
   });
 
   useEffect(() => {
-    if (searchParams.get("tab") === "ap") setActiveTab("A/P");
+    const fromUrl = parseVendorDetailTab(searchParams.get("tab"));
+    setActiveTabState((prev) => (prev === fromUrl ? prev : fromUrl));
   }, [searchParams]);
 
   const vendorQuery = useQuery({
@@ -618,22 +651,13 @@ export function VendorDetailPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-gray-200 bg-white p-0.5">
-        <div className="flex min-w-max gap-1">
-          {tabs
-            .filter((tab) => tab !== "Documents" || canViewDocuments)
-            .map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-sm px-2.5 py-1.5 text-xs font-medium ${activeTab === tab ? "bg-slate-100 text-slate-700" : "text-gray-700 hover:bg-gray-100"}`}
-              >
-                {tab}
-              </button>
-            ))}
-        </div>
-      </div>
+      {/* CUST-01 C9: raw buttons replaced with the shared SecondaryNavTabs -- matches
+          CustomerDetail's tab strip exactly (same component, same ?tab=<slug> contract above). */}
+      <SecondaryNavTabs
+        tabs={tabs.filter((tab) => tab !== "Documents" || canViewDocuments).map((tab) => ({ id: tab, label: tab }))}
+        activeId={activeTab}
+        onChange={(nextTab) => setActiveTab(nextTab as VendorTab)}
+      />
 
       {activeTab === "Profile" ? (
         <div className="space-y-2">
