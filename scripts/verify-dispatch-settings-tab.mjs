@@ -11,6 +11,7 @@ const paths = {
   page: path.join(ROOT, "apps/frontend/src/pages/dispatch/DispatchSettingsPage.tsx"),
   pageTest: path.join(ROOT, "apps/frontend/src/pages/dispatch/__tests__/DispatchSettingsPage.test.tsx"),
   board: path.join(ROOT, "apps/frontend/src/pages/dispatch/DispatchBoard.tsx"),
+  kanban: path.join(ROOT, "apps/frontend/src/components/dispatch/DispatchKanban.tsx"),
   localSettings: path.join(ROOT, "apps/frontend/src/lib/dispatch-local-settings.ts"),
   dispatchApi: path.join(ROOT, "apps/frontend/src/api/dispatch.ts"),
   manifest: path.join(ROOT, "apps/frontend/src/routes/manifest.tsx"),
@@ -67,10 +68,22 @@ export function checkSettingsDefaultSortWiring(board, localSettings) {
   return failures;
 }
 
+export function checkSettingsAlertThresholdWiring(board, kanban, localSettings, pageTest) {
+  const failures = [];
+  if (!localSettings.includes("export function readDispatchAlertTier")) failures.push("shared alert-tier reader missing");
+  if (!localSettings.includes("etaDeltaMinutes >= redMinutes")) failures.push("red threshold is not consumed");
+  if (!localSettings.includes("etaDeltaMinutes >= yellowMinutes")) failures.push("yellow threshold is not consumed");
+  if ((board.match(/readDispatchAlertTier\(load\.operating_company_id, load\.progress_eta_delta_minutes\)/g) ?? []).length < 3) failures.push("DispatchBoard risk class/label/predicate must consume company thresholds");
+  if ((kanban.match(/readDispatchAlertTier\(load\.operating_company_id, load\.progress_eta_delta_minutes\)/g) ?? []).length < 2) failures.push("Kanban class/label must consume company thresholds");
+  if (!pageTest.includes("applies company alert thresholds to ETA variance")) failures.push("threshold boundary/company test missing");
+  return failures;
+}
+
 function main() {
   const page = read(paths.page);
   const pageTest = read(paths.pageTest);
   const board = read(paths.board);
+  const kanban = read(paths.kanban);
   const localSettings = read(paths.localSettings);
   const dispatchApi = read(paths.dispatchApi);
   const manifest = read(paths.manifest);
@@ -89,6 +102,7 @@ function main() {
   failures.push(...checkSettingsWritePersistence(routes));
   failures.push(...checkSettingsCompanyScope(page, pageTest, localSettings));
   failures.push(...checkSettingsDefaultSortWiring(board, localSettings));
+  failures.push(...checkSettingsAlertThresholdWiring(board, kanban, localSettings, pageTest));
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DispatchSettingsPage tests must cover at least 3 cases");
 
   if (!dispatchApi.includes("getDispatchPreferences")) failures.push("dispatch API must export getDispatchPreferences");
@@ -132,10 +146,18 @@ if (process.argv.includes("--selftest")) {
   const plantedScope = checkSettingsCompanyScope(brokenScope, read(paths.pageTest), plantedLocalSettings);
   const currentScope = checkSettingsCompanyScope(fixed, read(paths.pageTest), fixedLocalSettings);
   const fixedBoard = read(paths.board);
+  const fixedKanban = read(paths.kanban);
   const plantedBoard = fixedBoard.replace("readDispatchBoardDefaultSort(companyId)", '{ key: "", direction: "asc" }').replace("rawDispatchSortKey ? urlDispatchSortDir : defaultDispatchSort.direction", "urlDispatchSortDir");
   const plantedSort = checkSettingsDefaultSortWiring(plantedBoard, fixedLocalSettings.replace('load_number: "load"', 'load_number: "load_number"'));
   const currentSort = checkSettingsDefaultSortWiring(fixedBoard, fixedLocalSettings);
-  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0 && plantedScope.length >= 4 && currentScope.length === 0 && plantedSort.length >= 3 && currentSort.length === 0) {
+  const plantedAlerts = checkSettingsAlertThresholdWiring(
+    fixedBoard.replaceAll("readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes)", "null"),
+    fixedKanban.replaceAll("readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes)", "null"),
+    fixedLocalSettings.replace("etaDeltaMinutes >= redMinutes", "false"),
+    read(paths.pageTest).replace("applies company alert thresholds to ETA variance", "removed threshold test")
+  );
+  const currentAlerts = checkSettingsAlertThresholdWiring(fixedBoard, fixedKanban, fixedLocalSettings, read(paths.pageTest));
+  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0 && plantedScope.length >= 4 && currentScope.length === 0 && plantedSort.length >= 3 && currentSort.length === 0 && plantedAlerts.length >= 4 && currentAlerts.length === 0) {
     console.log("verify:dispatch-settings-tab selftest PASS — planted blind-write regression rejected");
     process.exit(0);
   }
