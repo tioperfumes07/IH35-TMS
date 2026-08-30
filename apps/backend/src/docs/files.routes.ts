@@ -47,6 +47,8 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "background_check",
   "fine",
   "company_violation",
+  "drug_test",
+  "hos_violation",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -64,6 +66,8 @@ const entityTypeSchema = z.enum([
   "background_check",
   "fine",
   "company_violation",
+  "drug_test",
+  "hos_violation",
 ]);
 
 function optionalQueryString() {
@@ -260,6 +264,14 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "company_violation") {
     const res = await client.query("SELECT id FROM safety.company_violations WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "drug_test") {
+    const res = await client.query("SELECT id FROM safety.drug_test WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "hos_violation") {
+    const res = await client.query("SELECT id FROM safety.hos_violations WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   return false;

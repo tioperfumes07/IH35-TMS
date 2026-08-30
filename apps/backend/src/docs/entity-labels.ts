@@ -42,6 +42,10 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // capability (migration 202613290200).
   fine: { table: "safety.civil_fines", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_code, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   company_violation: { table: "safety.company_violations", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  // DOC-01 D2/D3 slice 3 (owner 2026-08-29): safety.drug_test / safety.hos_violations previously
+  // had no document column at all (migration 202613290300).
+  drug_test: { table: "safety.drug_test", labelSelect: "NULLIF(TRIM(COALESCE(d.test_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  hos_violation: { table: "safety.hos_violations", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */
