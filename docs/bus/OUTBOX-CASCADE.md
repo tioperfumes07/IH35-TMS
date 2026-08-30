@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50226 | customers · SILENT-NO-OP — PortalProfilePage saveMutation no onError, no isError, fire-and-forget .mutate() | GO
 CASCADE | FINDING | 50225 | drivers · SILENT-NO-OP — DriverPaymentMethodsCard setDefault/void no onError, no isError, fire-and-forget .mutate() | GO
 CASCADE | FINDING | 50224 | lists · SILENT-NO-OP — GenericCatalogPage saveRow create/update mutateAsync no try/catch, mutations no onError | GO
 CASCADE | FINDING | 50223 | reports · SILENT-NO-OP — IFTAPreparer createMutation no onError, no isError, void mutateAsync no .catch | GO
