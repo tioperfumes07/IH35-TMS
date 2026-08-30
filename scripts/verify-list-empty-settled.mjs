@@ -297,7 +297,7 @@ const MIGRATED = [
   },
   {
     file: "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx",
-    empties: ["No at-risk loads right now."],
+    empties: ["No at-risk or late loads right now."],
   },
   {
     file: "apps/frontend/src/pages/dispatch/BorderCrossingHistoryPage.tsx",

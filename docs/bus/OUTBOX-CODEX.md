@@ -2539,3 +2539,5 @@ CODEX | WORKING | GUARD-F7474 | ROOT=DOT-inspection-reverse-reset-guard-expected
 CODEX | WORKING | SAF-F7475 | ROOT=random-pool-test-required-retired-racy-NOT-EXISTS-after-partial-unique-index | SAFETY=SAF-B16-fixed-awaiting-GUARD;ORPH01-no-live-forfeit-delta-flag-OFF;ORPH02-no-live-dual-subledger-forfeit-flag-OFF;ORPH05-no-full-tab-wizard-depth-packet | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | WORKING | FLEET-F7476 | ROOT=permit-expiry-test-called-midnight-UTC-June1-while-company-business-date-was-May31 | focused=permit+cert-suites+business-date-guard | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | SURFACE-F7487 | PR=#18125 @ c642886d1c | Built=fuel:fraud_alerts:{connectivity,qbo_chrome} | NEXT=Combobox vertical census | GO
+CODEX | SHIPPED | SURFACE-F7488 | PR=#18126 @ fda8207a75 | Built=safety:home:{connectivity,qbo_chrome} | hosts=74/74 exact-owned | NEXT=filter/gear vertical census | GO
+CODEX | WORKING | GUARD-F7489 | ROOT=At-Risk-settled-empty-proof-retained-retired-at-risk-only-copy-and-API-mock | NEXT=focused+selftest+FAST-MERGE | GO
