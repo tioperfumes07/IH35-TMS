@@ -63,13 +63,11 @@ export function assertGuard(sources) {
   if (!/VoidReasonModal/.test(tab)) {
     errors.push(`${FILES.tab}: HOSViolationsTab must prompt via VoidReasonModal`);
   }
-  if (!/voidHosViolation\(companyId,\s*[^,]+,\s*reason\)/.test(tab) && !/voidHosViolation\(companyId,\s*id,\s*reason\)/.test(tab)) {
-    // also accept mutateAsync destructure path
-    if (!/voidHosViolation\(companyId,\s*String\(voidTarget\.id\),\s*reason\)/.test(tab) && !/voidHosViolation\(companyId,\s*[^,]+,\s*reason\)/.test(tab)) {
-      if (!/mutationFn:\s*\(\{\s*id,\s*reason\s*\}/.test(tab) || !/voidHosViolation\(companyId,\s*id,\s*reason\)/.test(tab)) {
-        errors.push(`${FILES.tab}: void mutation must pass user-supplied reason to voidHosViolation`);
-      }
-    }
+  // Accept typed mutation envelopes (`input.companyId`, `input.id`) as well as
+  // destructured locals. The contract is semantic: the third argument must be
+  // the operator-supplied reason; identifier spelling is not architecture.
+  if (!/voidHosViolation\(\s*[\w.]+\s*,\s*(?:String\([^)]*\)|[\w.]+)\s*,\s*(?:[A-Za-z_$][\w$]*\.)?reason\s*\)/.test(tab)) {
+    errors.push(`${FILES.tab}: void mutation must pass user-supplied reason to voidHosViolation`);
   }
 
   if (/safety-hos-create-violation-link/.test(dashboard) || /to="\/safety\/hos-violations"[\s\S]{0,200}\+\s*Create violation/.test(dashboard)) {
@@ -107,7 +105,8 @@ export function assertGuard(sources) {
   if (!/z\.enum\(\[\s*"samsara_auto"\s*,\s*"manual_office"\s*,\s*"dot_citation"\s*\]\)/.test(backend)) {
     errors.push(`${FILES.backend}: create source enum must match prod CHECK (samsara_auto|manual_office|dot_citation)`);
   }
-  if (!/violation_type:\s*form\.violation_type/.test(createModal) && !/violation_type:\s*form\.violation_type\.trim\(\)/.test(createModal)) {
+  // Both inline forms and typed submission envelopes are canonical callers.
+  if (!/violation_type:\s*(?:[A-Za-z_$][\w$]*\.)*violation_type(?:\.trim\(\))?/.test(createModal)) {
     errors.push(`${FILES.createModal}: must POST violation_type (prod column), not violation_code`);
   }
   if (/source:\s*"manual"\s*as/.test(createModal) || /value="manual"(?!_)/.test(createModal)) {
@@ -140,7 +139,7 @@ function selftest() {
     `,
     tab: `
       import { VoidReasonModal } from "...";
-      mutationFn: ({ id, reason }: { id: string; reason: string }) => voidHosViolation(companyId, id, reason),
+      mutationFn: (input: { id: string; reason: string; companyId: string }) => voidHosViolation(input.companyId, input.id, input.reason),
       <VoidReasonModal onSubmit={async (reason) => { await voidMutation.mutateAsync({ id, reason }); }} />
     `,
     dashboard: `
@@ -148,7 +147,7 @@ function selftest() {
       <HosViolationCreateModal open={createOpen} />
     `,
     createModal: `
-      createHosViolation(operatingCompanyId, { driver_id: form.driver_id, violation_type: form.violation_type.trim(), occurred_at: new Date().toISOString(), source: "manual_office" });
+      createHosViolation(input.companyId, { driver_id: input.draft.driver_id, violation_type: input.draft.violation_type.trim(), occurred_at: new Date().toISOString(), source: "manual_office" });
       <Button type="submit">+ Create</Button>
       <option value="manual_office">manual_office</option>
     `,
@@ -183,6 +182,24 @@ function selftest() {
     !fail.some((e) => e.includes("dead Link"))
   ) {
     console.error(`[${LABEL}] --selftest FAIL: legacy defects not rejected`, fail);
+    process.exit(1);
+  }
+
+  const droppedReason = assertGuard({
+    ...good,
+    tab: good.tab.replace("input.reason", '"voided via UI"'),
+  });
+  if (!droppedReason.some((e) => e.includes("must pass user-supplied reason"))) {
+    console.error(`[${LABEL}] --selftest FAIL: typed mutation dropping reason was not rejected`, droppedReason);
+    process.exit(1);
+  }
+
+  const phantomCreate = assertGuard({
+    ...good,
+    createModal: good.createModal.replace("violation_type: input.draft.violation_type", "violation_code: input.draft.violation_type"),
+  });
+  if (!phantomCreate.some((e) => e.includes("must POST violation_type"))) {
+    console.error(`[${LABEL}] --selftest FAIL: phantom create field was not rejected`, phantomCreate);
     process.exit(1);
   }
 
