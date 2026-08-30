@@ -137,6 +137,20 @@ const BACKEND_SRC = path.join(ROOT, "apps/backend/src");
 const CANONICAL_FLAG_DIR = path.join("lib", "feature-flags"); // the ONLY place allowed to query the tables
 const RAW_FLAG_READ = /FROM\s+lib\.feature_flag/i; // matches lib.feature_flags AND lib.feature_flag_overrides
 
+export function rawFlagReadFailures(files) {
+  const out = [];
+  for (const [rel, src] of Object.entries(files)) {
+    if (rel.includes(path.join("apps/backend/src", CANONICAL_FLAG_DIR))) continue;
+    if (/\.test\.ts$/.test(rel) || rel.includes(`${path.sep}__tests__${path.sep}`)) continue;
+    if (RAW_FLAG_READ.test(src)) {
+      out.push(
+        `${rel}: raw feature-flag read (\`FROM lib.feature_flag...\`) outside lib/feature-flags — route it through isEnabled(key, { operating_company_id }) so per-entity/user overrides + the posting OFF short-circuit apply`,
+      );
+    }
+  }
+  return out;
+}
+
 function walkTsFiles(dir, acc) {
   let entries = [];
   try {
@@ -156,18 +170,10 @@ function walkTsFiles(dir, acc) {
   return acc;
 }
 
-for (const file of walkTsFiles(BACKEND_SRC, [])) {
-  const rel = path.relative(ROOT, file);
-  // The canonical resolver + admin CRUD legitimately query the tables; tests may seed them directly.
-  if (rel.includes(path.join("apps/backend/src", CANONICAL_FLAG_DIR))) continue;
-  if (/\.test\.ts$/.test(file) || file.includes(`${path.sep}__tests__${path.sep}`)) continue;
-  const src = readFileSync(file, "utf8");
-  if (RAW_FLAG_READ.test(src)) {
-    failures.push(
-      `${rel}: raw feature-flag read (\`FROM lib.feature_flag...\`) outside lib/feature-flags — route it through isEnabled(key, { operating_company_id }) so per-entity/user overrides + the posting OFF short-circuit apply`
-    );
-  }
-}
+const backendFiles = Object.fromEntries(
+  walkTsFiles(BACKEND_SRC, []).map((file) => [path.relative(ROOT, file), readFileSync(file, "utf8")]),
+);
+failures.push(...rawFlagReadFailures(backendFiles));
 
 // (6) H3-1: BANK_DRIVER_ADVANCE_ENABLED is a REAL money-posting flag (BLOCK-6 posts a balanced
 //     driver-advance JE) whose key does NOT match the `*_GL_POSTING*` / `*_POSTING_ENABLED` pattern that
@@ -198,6 +204,21 @@ if (advSvc) {
       "bank-driver-advance.service.ts must NOT read BANK_DRIVER_ADVANCE_ENABLED from process.env — a raw env read bypasses the per-entity kill-switch; use isEnabled()"
     );
   }
+}
+
+if (process.argv.includes("--selftest")) {
+  const planted = rawFlagReadFailures({
+    [path.join("apps/backend/src/home/planted.ts")]:
+      "SELECT enabled FROM lib.feature_flag_overrides WHERE flag_key = $1",
+  });
+  if (planted.length !== 1) throw new Error("raw feature-flag read mutation escaped");
+  const canonical = rawFlagReadFailures({
+    [path.join("apps/backend/src/home/good.ts")]:
+      'await isEnabled(client, "FLAG", { operating_company_id: companyId })',
+  });
+  if (canonical.length !== 0) throw new Error("canonical isEnabled call was falsely rejected");
+  console.log("verify:per-entity-only-flag-gates SELFTEST PASS — raw read rejected; canonical resolver accepted");
+  process.exit(0);
 }
 
 if (failures.length > 0) {

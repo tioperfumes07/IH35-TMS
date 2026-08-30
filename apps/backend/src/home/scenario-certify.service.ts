@@ -11,7 +11,8 @@
  * were never provisioned in this repo — crons run in-process — so the cron is the real schedule and the
  * script is for on-demand runs.
  */
-import { SCENARIO_REGISTRY, probeHolds } from "./scenario-registry.js";
+import { SCENARIO_REGISTRY } from "./scenario-registry.js";
+import { runScenarioProbe } from "./scenario-probe.service.js";
 
 type CertifyClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -94,10 +95,13 @@ export async function certifyAllScenarios(client: CertifyClient): Promise<Certif
         continue;
       }
       try {
-        const res = await client.query<{ n: string }>(def.probe.sql, [scope.id]);
-        const n = Number(res.rows[0]?.n ?? 0);
-        const holds = probeHolds(n);
-        const evidence = def.probe.describe(n);
+        const live = await runScenarioProbe(client, def, scope.id);
+        if (!live) {
+          summary.skipped += 1;
+          continue;
+        }
+        const holds = live.ok;
+        const evidence = live.evidence;
 
         let stage = "built";
         let state = "go";

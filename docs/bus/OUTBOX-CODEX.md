@@ -1,3 +1,5 @@
+CODEX | WORKING | SYSTEM-F7511 | ROOT=parts-receive-scenario-read-feature-flag-overrides-raw-and-could-disagree-with-canonical-poster-gate | focused=flag-guard+selftest+Vitest+backend-tsc | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7510 | PR=#18156 @ 2b579a7752 | exact=14 | focused=normal+selftest+full-gate | NEXT=per-entity-flag-raw-read-red | GO
 CODEX | WORKING | GUARD-F7510 | ROOT=picker-chrome-registry-coupled-exact-owned-membership-to-obsolete-global-orphan-threshold | exact=14 | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | CLS-F7509 | PR=#18155 @ 552aa0cfc4 | modules=reports+compliance | census=73/73 | focused=selftest24/24+Vitest7/7+full-gate | NEXT=picker-chrome-registry-red | GO
 CODEX | WORKING | CLS-F7509 | class=create-surface-drawer | modules=reports+compliance | ROOT=two-create-forms-used-centered-Modal | focused=guard+selftest+components | NEXT=census-to-zero+gate+FAST-MERGE | GO

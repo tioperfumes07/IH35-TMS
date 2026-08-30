@@ -29,6 +29,15 @@ export type ScenarioProbe = {
   sql: string;
   /** Renders the measured count into the evidence string a human reads on the dot. */
   describe: (n: number) => string;
+  /**
+   * Optional per-entity flag-dependent count from the SAME query row. The shared evaluator resolves
+   * the flag through isEnabled(); raw feature-flag SQL is forbidden in registry probes.
+   */
+  flag_gate?: {
+    key: string;
+    enabled_count_column: string;
+    enabled_describe: (n: number) => string;
+  };
 };
 
 export type ScenarioDefinition = {
@@ -1249,7 +1258,35 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
     sources: ["maintenance.parts_purchases", "maintenance.parts_inventory"],
     probe: {
       sql: `
-        SELECT count(*)::text AS n
+        SELECT count(*)::text AS n,
+               count(*) FILTER (
+                 WHERE EXISTS (
+                   SELECT 1
+                     FROM accounting.parts_purchase_postings ppp
+                     JOIN accounting.journal_entries je
+                       ON je.id = ppp.expense_je_id
+                      AND je.operating_company_id = ppp.operating_company_id
+                      AND je.status = 'posted'
+                      AND je.voided_at IS NULL
+                    WHERE ppp.parts_purchase_id = p.id
+                      AND ppp.parts_inventory_id = p.parts_inventory_id
+                      AND ppp.operating_company_id = p.operating_company_id
+                      AND ppp.amount_cents = p.purchase_amount_cents
+                      AND ppp.status = 'posted'
+                      AND ppp.is_active = true
+                      AND ppp.voided_at IS NULL
+                      AND EXISTS (
+                        SELECT 1
+                          FROM accounting.journal_entry_postings balance
+                         WHERE balance.journal_entry_uuid = je.id
+                           AND balance.operating_company_id = je.operating_company_id
+                         GROUP BY balance.journal_entry_uuid
+                        HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) =
+                               SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
+                           AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
+                      )
+                 )
+               )::text AS posting_n
           FROM maintenance.parts_purchases p
           JOIN maintenance.parts_inventory pi
             ON pi.id = p.parts_inventory_id
@@ -1270,46 +1307,14 @@ export const SCENARIO_REGISTRY: ScenarioDefinition[] = [
            AND NULLIF(BTRIM(pi.part_description), '') IS NOT NULL
            AND (p.vendor_id IS NULL OR v.id IS NOT NULL)
            AND (p.work_order_id IS NULL OR w.id IS NOT NULL)
-           AND (
-             NOT EXISTS (
-               SELECT 1
-                 FROM lib.feature_flag_overrides ffo
-                WHERE ffo.flag_key = 'PARTS_PURCHASE_GL_POSTING_ENABLED'
-                  AND ffo.operating_company_id = p.operating_company_id
-                  AND ffo.user_uuid IS NULL
-                  AND ffo.enabled = true
-                  AND (ffo.expires_at IS NULL OR ffo.expires_at > now())
-             )
-             OR EXISTS (
-               SELECT 1
-                 FROM accounting.parts_purchase_postings ppp
-                 JOIN accounting.journal_entries je
-                   ON je.id = ppp.expense_je_id
-                  AND je.operating_company_id = ppp.operating_company_id
-                  AND je.status = 'posted'
-                  AND je.voided_at IS NULL
-                WHERE ppp.parts_purchase_id = p.id
-                  AND ppp.parts_inventory_id = p.parts_inventory_id
-                  AND ppp.operating_company_id = p.operating_company_id
-                  AND ppp.amount_cents = p.purchase_amount_cents
-                  AND ppp.status = 'posted'
-                  AND ppp.is_active = true
-                  AND ppp.voided_at IS NULL
-                  AND EXISTS (
-                    SELECT 1
-                      FROM accounting.journal_entry_postings balance
-                     WHERE balance.journal_entry_uuid = je.id
-                       AND balance.operating_company_id = je.operating_company_id
-                     GROUP BY balance.journal_entry_uuid
-                    HAVING SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) =
-                           SUM(CASE WHEN balance.debit_or_credit = 'credit' THEN balance.amount_cents ELSE 0 END)
-                       AND SUM(CASE WHEN balance.debit_or_credit = 'debit' THEN balance.amount_cents ELSE 0 END) > 0
-                  )
-             )
-           )
            AND ($1::uuid IS NULL OR p.operating_company_id = $1::uuid)
       `,
       describe: (n) => `${n} live parts receipt(s)`,
+      flag_gate: {
+        key: "PARTS_PURCHASE_GL_POSTING_ENABLED",
+        enabled_count_column: "posting_n",
+        enabled_describe: (n) => `${n} live parts receipt(s) with balanced posted JE(s)`,
+      },
     },
   },
 ];
