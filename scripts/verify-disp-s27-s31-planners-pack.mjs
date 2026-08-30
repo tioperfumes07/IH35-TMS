@@ -82,6 +82,9 @@ function assertLive(overrides = {}) {
   if (!/<EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/.test(timeline)) problems.push("S30 timeline rows missing canonical customer link or tombstone");
   if (!/<EntityLink kind="driver" id=\{driver\.id\}/.test(timeline)) problems.push("S30 driver rows missing canonical driver link");
   if (!/<EntityLinkOrTombstone kind="unit" id=\{driver\.unit_id\} name=\{driver\.unit_number\} noun="Unit"/.test(timeline)) problems.push("S30 driver rows missing canonical unit link or tombstone");
+  if (!/PlannerAxisHead/.test(timeline)) problems.push("S30 timeline missing two-row PlannerAxisHead");
+  if (!/timeline-util-/.test(timeline)) problems.push("S30 timeline missing util column");
+  if (!/h-\[34px\]/.test(timeline)) problems.push("S30 timeline missing 34px row height");
 
   const truck = get(FILES.truck);
   if (!/data-testid="dispatch-truck-planner-need-company"/.test(truck)) problems.push("S31 missing need-company");
@@ -91,6 +94,9 @@ function assertLive(overrides = {}) {
   if (!/driverId:\s*dr\.driver_id \? String\(dr\.driver_id\) : null/.test(truck)) problems.push("S31 drops driver FK while shaping truck rows");
   if (!/<EntityLinkOrTombstone kind="unit" id=\{row\.unitId\} name=\{row\.unitNumber\} noun="Unit"/.test(truck)) problems.push("S31 missing canonical unit links");
   if (!/<EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{row\.driverName\} noun="Driver"/.test(truck)) problems.push("S31 missing canonical driver links");
+  if (!/PlannerAxisHead/.test(truck)) problems.push("S31 truck missing two-row PlannerAxisHead");
+  if (!/PlannerAxisHead/.test(loads)) problems.push("S29 loads missing two-row PlannerAxisHead");
+  if (!/PlannerAxisHead/.test(grid)) problems.push("S28 grid missing two-row PlannerAxisHead");
 
   return problems;
 }
@@ -102,7 +108,7 @@ if (SELFTEST) {
     process.exit(1);
   }
   const cases = [
-    [FILES.timeline, 'data-testid="dispatch-timeline-honest-empty"'],
+    [FILES.timeline, "timeline-util-"],
     [FILES.grid, '<EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver"'],
     [FILES.grid, '<EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit"'],
     [FILES.truck, '<EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit"'],
