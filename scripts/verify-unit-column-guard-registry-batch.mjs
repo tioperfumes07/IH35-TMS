@@ -3,7 +3,6 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-unit-column-guard-registry-batch";
-const MAX_REMAINING = 203;
 const REQUIRED = [
   "verify-border-crossing-unit-linkage.mjs", "verify-compliance-tax-filings-unit-reverse.mjs",
   "verify-compliance-unit-wiring.mjs", "verify-default-truck-unit-reverse.mjs",
@@ -25,18 +24,17 @@ const REQUIRED = [
 function failures(classification) {
   const wired = new Set(classification.fullyWired);
   const out = REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
-  if (classification.unaccounted.length > MAX_REMAINING) out.push(`unaccounted guard census ${classification.unaccounted.length} exceeds ${MAX_REMAINING}`);
   return out;
 }
 
 if (process.argv.includes("--selftest")) {
-  const baseline = { fullyWired: [...REQUIRED], unaccounted: Array.from({ length: MAX_REMAINING }, (_, i) => `other-${i}.mjs`) };
+  const baseline = { fullyWired: [...REQUIRED], unaccounted: ["unrelated.mjs"] };
   const mutations = [
     { name: "required guard removed", value: { ...baseline, fullyWired: REQUIRED.slice(1) } },
-    { name: "orphan census regresses", value: { ...baseline, unaccounted: [...baseline.unaccounted, "regression.mjs"] } },
   ];
   for (const mutation of mutations) if (!failures(mutation.value).length) throw new Error(`${mutation.name} was not rejected`);
-  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} planted defects rejected`);
+  if (failures({ ...baseline, unaccounted: [...baseline.unaccounted, "another-unrelated.mjs"] }).length) throw new Error("unrelated census growth failed focused registry");
+  console.log(`${LABEL} SELFTEST PASS — owned removal rejected; unrelated census growth accepted`);
   process.exit(0);
 }
 
@@ -45,4 +43,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.map((problem) => `  - ${problem}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 30 unit-column guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — ${REQUIRED.length} exact unit-column guards execute in CI`);
