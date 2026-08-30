@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7508 | ROOT=ParityDrawer-Escape-guard-required-direct-onClose-and-rejected-dirty-draft-safe-attemptClose | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | CLS-F7507 | PR=#18153 @ 20fdd096b1 | class=no-box-in-box | modules=fleet+dispatch+drivers+insurance | NEXT=ParityDrawer-Escape-red | GO
 CODEX | WORKING | CLS-F7507 | class=no-box-in-box | modules=fleet+dispatch+drivers+insurance | offenders=7→0-in-touched-files | baseline=unchanged | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | SHIPPED | SAF-F7506 | PR=#18152 @ 261785b530 | focused=guard+selftest+full-gate | Live=UNVERIFIED | NEXT=no-box-in-box-class-red | GO
 CODEX | WORKING | SAF-F7506 | ROOT=DOT-dwell-query-error-state-lacked-stable-evidence-hook | focused=guard+selftest+frontend | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
