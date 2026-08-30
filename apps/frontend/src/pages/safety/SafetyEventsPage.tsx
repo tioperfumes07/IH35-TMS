@@ -25,6 +25,7 @@ import { useStagedListFilters } from "../../components/table";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { Combobox } from "../../components/Combobox";
 import { companyToday } from "../../lib/businessDate";
+import { ListErrorState } from "../../components/ListErrorState";
 
 type Props = {
   operatingCompanyId: string;
@@ -438,6 +439,17 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         />
       </div>
 
+      {kpiQuery.isError ? (
+        <div data-testid="safety-events-kpi-error">
+          <ListErrorState
+            title="Couldn't load Safety event totals"
+            status={0}
+            message={userFacingApiError(kpiQuery.error, "Safety event totals are unavailable.")}
+            onRetry={() => void kpiQuery.refetch()}
+          />
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-2">
         <div className="relative flex flex-wrap items-end gap-2" data-testid="safety-events-filters">
           <Combobox
@@ -573,11 +585,22 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
         </div>
       </div>
 
-      <SafetyEventsTable
-        rows={bulkTableRows}
-        loading={eventsQuery.isPending || eventsQuery.isFetching}
-        onOpenAccident={(row) => setSelectedEventId(String(row.id))}
-      />
+      {eventsQuery.isError ? (
+        <div data-testid="safety-events-list-error">
+          <ListErrorState
+            title="Couldn't load Safety events"
+            status={0}
+            message={userFacingApiError(eventsQuery.error, "The Safety event list is unavailable.")}
+            onRetry={() => void eventsQuery.refetch()}
+          />
+        </div>
+      ) : (
+        <SafetyEventsTable
+          rows={bulkTableRows}
+          loading={eventsQuery.isPending || eventsQuery.isFetching}
+          onOpenAccident={(row) => setSelectedEventId(String(row.id))}
+        />
+      )}
 
       {selectedEventId ? (
         <div className="fixed inset-y-0 right-0 z-40 w-full max-w-md border-l border-gray-200 bg-white p-4 shadow-xl">
@@ -587,6 +610,17 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
               Close
             </button>
           </div>
+
+          {detailQuery.isError ? (
+            <div className="mt-3" data-testid="safety-event-detail-error">
+              <ListErrorState
+                title="Couldn't refresh Safety event details"
+                status={0}
+                message={userFacingApiError(detailQuery.error, "Showing the list snapshot while the exact detail is unavailable.")}
+                onRetry={() => void detailQuery.refetch()}
+              />
+            </div>
+          ) : null}
 
           <div className="mt-3 space-y-2 text-xs text-gray-700">
             <div><span className="font-semibold">Title:</span> {selectedEvent?.title ?? "—"}</div>
@@ -620,15 +654,28 @@ export function SafetyEventsPage({ operatingCompanyId }: Props) {
           <div className="mt-4 border-t border-gray-200 pt-3">
             <h4 className="text-xs font-semibold uppercase text-gray-500">Event log notes</h4>
             <div className="mt-2 space-y-2">
-              {(notesQuery.data ?? []).map((note) => (
-                <div key={note.id} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
-                  <div className="text-gray-700">{note.note}</div>
-                  <div className="mt-1 text-[10px] text-gray-500">
-                    {String(note.created_at ?? "").slice(0, 19).replace("T", " ")} · {note.created_by_name ?? note.created_by}
-                  </div>
+              {notesQuery.isError ? (
+                <div data-testid="safety-event-notes-error">
+                  <ListErrorState
+                    title="Couldn't load event notes"
+                    status={0}
+                    message={userFacingApiError(notesQuery.error, "Event notes are unavailable.")}
+                    onRetry={() => void notesQuery.refetch()}
+                  />
                 </div>
-              ))}
-              {notesListState.isEmpty ? <div className="text-xs text-gray-500">No notes yet.</div> : null}
+              ) : (
+                <>
+                  {(notesQuery.data ?? []).map((note) => (
+                    <div key={note.id} className="rounded-sm border border-gray-200 bg-gray-50 p-2 text-xs">
+                      <div className="text-gray-700">{note.note}</div>
+                      <div className="mt-1 text-[10px] text-gray-500">
+                        {String(note.created_at ?? "").slice(0, 19).replace("T", " ")} · {note.created_by_name ?? note.created_by}
+                      </div>
+                    </div>
+                  ))}
+                  {notesListState.isEmpty ? <div className="text-xs text-gray-500">No notes yet.</div> : null}
+                </>
+              )}
             </div>
           </div>
         </div>
