@@ -218,8 +218,8 @@ function checkDispatchOverview(src) {
   if (!src.includes("dashboardQ.isLoading || dashboardQ.isError ? \"—\"")) {
     fail(`${DISPATCH_OVERVIEW}: Active loads KPI must treat dashboardQ.isError like loading (show "—", not fabricated 0).`);
   }
-  if (!/atRiskQ\.isError\s*\|\|\s*lateQ\.isError/.test(src) && !src.includes("atRiskQ.isError || lateQ.isError")) {
-    fail(`${DISPATCH_OVERVIEW}: At-risk / late KPI must branch on atRiskQ.isError || lateQ.isError.`);
+  if (!src.includes('atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal')) {
+    fail(`${DISPATCH_OVERVIEW}: At-risk / late KPI must branch on the canonical combined atRiskLateQ loading/error state.`);
   }
   if (!src.includes("unitsWithoutLoadQ.isLoading || unitsWithoutLoadQ.isError ? \"—\"")) {
     fail(`${DISPATCH_OVERVIEW}: Units available KPI must treat unitsWithoutLoadQ.isError like loading.`);
@@ -518,6 +518,34 @@ function selftest() {
     }
     if (!caught) {
       console.error("SELFTEST INERT: dropping DispatchOverview dashboardQ.isError was not caught.");
+      process.exitCode = 1;
+      return;
+    }
+    probesProven++;
+  }
+
+  // Mutation 11: the canonical combined at-risk/late KPI loses its error branch. The former guard
+  // named the retired atRiskQ + lateQ split and therefore rejected the stronger consolidated feed.
+  {
+    const original = fs.readFileSync(DISPATCH_OVERVIEW, "utf8");
+    const mutated = original.replace(
+      'atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal',
+      'atRiskLateQ.isLoading ? "—" : atRiskLateTotal'
+    );
+    if (mutated === original) {
+      console.error("SELFTEST SETUP FAILED: DispatchOverview atRiskLateQ.isError pattern not found.");
+      process.exitCode = 1;
+      return;
+    }
+    let caught = false;
+    try {
+      checkDispatchOverview(mutated);
+      caught = process.exitCode === 1;
+    } finally {
+      process.exitCode = undefined;
+    }
+    if (!caught) {
+      console.error("SELFTEST INERT: dropping DispatchOverview atRiskLateQ.isError was not caught.");
       process.exitCode = 1;
       return;
     }
