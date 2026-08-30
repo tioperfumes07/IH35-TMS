@@ -1,4 +1,4 @@
-**2026-08-30T04:50Z GO-LAST-26 THIS IS NOW.** Packet `docs/lockdown/GO-LAST-26-ALL-SEATS-2026-08-30.md`. 26 named items. Cursor VEND-CERT-01. Skip #15546.
+**2026-08-30T05:05Z GO-LAST-26-v2 THIS IS NOW.** Packet `docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md`. DEFECT-1 withdrawn. V1 packet deleted. Skip #15546.
 
 **2026-08-29T21:45Z GO-FINISH-TONIGHT THIS IS NOW.** Deploy `dep-da9pjs2jnfac73ehstqg`. U14 exclusive stamps ≠ Fully-Wired complete — leftover unique only, never restamp. CC-1 `dot_oos` P0. Cascade push #17837. Cursor RT/planner Aug-16. Packet `docs/lockdown/GO-FINISH-TONIGHT-2026-08-29.md`. Skip #15546.
 
