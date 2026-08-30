@@ -23,7 +23,7 @@ function problems(b = backend, a = api, p = page) {
     [a.includes("range: { limit?: number; offset?: number } = {}") && a.includes('params.set("offset"'), "typed API range"],
     [p.includes("offset: (pmPage - 1) * pmPageSize"), "page reaches API"],
     [p.includes('data-testid="maint-kpi-pm-server-pager"'), "visible exact pager"],
-    [p.includes("setPmPage(1)") && p.includes("companyId, periodStart, periodEnd, unitId"), "scope reset"],
+    [p.includes("useEffect(() => { setPmPage(1); setDrillPage(1); }, [companyId, periodStart, periodEnd, unitId]);"), "scope reset"],
   ];
   return checks.filter(([ok]) => !ok).map(([, label]) => label);
 }

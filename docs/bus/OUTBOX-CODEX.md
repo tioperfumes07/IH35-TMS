@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7464 | ROOT=PM-scope-reset-selftest-removal-was-masked-by-active-KPI-reset-plus-detached-dependency-list | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7463 | ROOT=arriving-soon-offset-selftest-removal-was-masked-by-recent_offset-and-sibling-API-signatures | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7462 | ROOT=policy-filter-selftest-mutated-row-label-error-branch-instead-of-Type-filter-UI | focused=normal+selftest-3/3 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7461 | ROOT=policy-limiter-selftest-targeted-retired-inline-config-and-create-checks-crossed-all-later-routes | focused=normal+selftest-7/7 | NEXT=gate+FAST-MERGE | GO
