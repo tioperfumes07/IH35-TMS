@@ -1,10 +1,11 @@
 GO-CLOSE-188 — CC-1 (≡1)
-Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+Paste: docs/lockdown/GO-CLOSE-188/CC-1/6-OWNER-REPLY-C25-C31-AND-G1-DEFECT.txt
 
-GO-ACCT-01 still first (unchanged):
-1. DEFECT B — unique ledger_account_id among active bank accounts per company (TEST Amex vs USMCA FREIGHT share c7af1219-…).
-2. DEFECT A — customer payments never debit cash. Walk invoice → payment → GL. Reuse poster.
+Order (do not skip):
+1. GO-ACCT-01 DEFECT B — unique ledger_account_id
+2. GO-ACCT-01 DEFECT A — cash debit on payments
+3. G1 — TEST label must set is_sample_data on the same write (one txn). Then backfill the 50 (14 customers + 36 vendors unflagged). Guard: name matches TEST and is_sample_data is not true = FAIL. Selftest plants an unflagged TEST row. Then prove TB / P&L / BS / cash flow / register exclude sample. Do not void TEST corpus.
 
-Those two defects ARE the accounting C25/C26 blocker. Do not write C25–C31 guards until Jorge approves the seven definitions. Do not touch QBO. Never trigger_deploy. Skip #15546. Never restamp U14.
+C25–C31 defs are APPROVED (C31 corrected). Accounting C26 stays red until A nets. Never trigger_deploy. Skip #15546. No QBO write.
 
-ACK: CC-1 | ACK | GO-CLOSE-188 | NOW=DEFECT-B-then-A | SHA=<healthz> | GO
+ACK: CC-1 | ACK | GO-CLOSE-188 | NOW=B-then-A-then-G1 | SHA=b8fc09ce | GO

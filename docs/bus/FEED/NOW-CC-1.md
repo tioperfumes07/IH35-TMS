@@ -1,7 +1,7 @@
 # NOW — CC-1 (GO-CLOSE-188)
 
-**ACK:** `CC-1 | ACK | GO-CLOSE-188 | NOW=DEFECT-B-then-A | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | GO-CLOSE-188 | NOW=B-then-A-then-G1 | SHA=b8fc09ce | GO`
 
-GO-ACCT-01 B then A still first. No C25–C31 guards until owner approves seven defs. Never `trigger_deploy`. Skip #15546.
+DEFECT B, then A, then G1 TEST→is_sample_data write path. Never `trigger_deploy`.
 
-Paste: `docs/lockdown/GO-CLOSE-188/CC-1/1-GO-CLOSE-188.txt`
+Paste: `docs/lockdown/GO-CLOSE-188/CC-1/6-OWNER-REPLY-C25-C31-AND-G1-DEFECT.txt`

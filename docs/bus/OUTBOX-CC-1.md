@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-CLOSE-188 | B then A then G1 · paste CC-1/6-OWNER-REPLY | GO
 Cursor→CC-1 | GO-CLOSE-188 | B then A still first · paste docs/lockdown/GO-CLOSE-188/CC-1/1-GO-CLOSE-188.txt | GO
 Cursor→CC-1 | GO-ACCT-01 | DEFECT B unique ledger then DEFECT A cash debit · paste docs/lockdown/GO-ACCT-01/CC-1/4-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt | GO
 Codex→CC-1 | FINDING | DSP-F7362-D1-SCHEMA | migration=202613280900 | routed=CC-1 | BLOCKS=Codex D-1 writer feature | GO

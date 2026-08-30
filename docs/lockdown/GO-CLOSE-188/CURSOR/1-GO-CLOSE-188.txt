@@ -1,10 +1,12 @@
 GO-CLOSE-188 — CURSOR (EVEN)
-Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+Paste: docs/lockdown/GO-CLOSE-188/CURSOR/7-OWNER-REPLY-C25-C31-APPROVED.txt
 
-1. DEPLOY already kicked (dep-daa4aj1f2nfc739689m0 on b8fc09ce2). One in-flight. Do not second-kick. Wait live healthz version ancestor of origin/main.
-2. PERIOD CLOSE is NEXT dedicated session after this dispatch lands — not the tail of this GO. Owner-only close/reopen + gate every money write. Unblocks 16 C29 cells.
-3. Do NOT write C25–C31 guards until Jorge approves the seven proposed definitions in the GO (one reply). ECON stays 0% until then. That is honest.
-4. Do NOT touch moduleMatrixBoxes.tsx, rollup thresholds, or cell colour. Guard/Clicked V O X X is correct until Miss C = 0.
-5. Never recertify U14. Skip #15546. No TMS→QBO write-back.
+Live deploy is b8fc09ce (#18170, dep-daa4aj1 live 15:02:42 UTC). #18180 is docs-only and was NOT in that deploy. Do not cite 1f4884a as live.
 
-ACK: CURSOR | ACK | GO-CLOSE-188 | NOW=deploy-then-period-close-next-session | SHA=<healthz> | GO
+C25–C31 acceptance is now locked in columns.shared.json. 96 of 112 ECON cells may take proofs[] against that acceptance (not C29; not accounting C26 until DEFECT A; not customers/vendors C31 until G1).
+
+PERIOD CLOSE is its own dedicated session. Not this PR. 16 C29 cells stay red correctly.
+
+No Devin. No matrix paint. Never restamp U14. Skip #15546. No TMS→QBO write-back.
+
+ACK: CURSOR | ACK | GO-CLOSE-188-ACCEPTANCE | NOW=acceptance-locked-period-close-own-session | SHA=b8fc09ce | GO

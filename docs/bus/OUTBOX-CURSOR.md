@@ -1,3 +1,5 @@
+CURSOR | GO-CLOSE-188-ACCEPTANCE | C25-C31 locked in columns.shared.json · live=b8fc09ce not #18180 · G1→CC-1 after B/A · no Devin · period close own session | GO
+
 CURSOR | GO-CLOSE-188 | dispatched 76 Miss-C · ECON owner-gated · no matrix paint · deploy in flight · period close next session · skip #15546 | GO
 
 CURSOR | GO-ACCT-01 | dispatched CC-1 B then A · CC-2 keep FAIL · Cursor period-close NEXT SESSION · no TMS→QBO write · skip #15546 | GO

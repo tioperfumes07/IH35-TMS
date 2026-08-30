@@ -1,0 +1,145 @@
+OWNER REPLY — C25 THROUGH C31 DEFINITIONS
+Jorge Pablo Munoz · 2026-08-30 · answers docs/lockdown/GO-CLOSE-188/OWNER/0-APPROVE-C25-C31.txt
+
+APPROVED. Write these seven into docs/specs/scoreboard/columns.shared.json as an
+"acceptance" field on each economics column. The label alone was never enough.
+Six are approved as proposed. C31 is CORRECTED — the premise behind the question
+was wrong, and there is a live defect underneath it. See C31 and G1 below.
+
+-------------------------------------------------------------------------------
+C25 gl_delta — "C25 GL Δ"                                          APPROVED
+-------------------------------------------------------------------------------
+Every money-moving action on the leaf writes a balanced journal entry, and the
+GL delta equals the amount the surface displayed.
+PROOF SHAPE: kind sql. Create through the live UI, then assert on the resulting
+entry: sum(debit_amount) = sum(credit_amount), AND the net movement on the
+target account equals the amount rendered. Two assertions, both required.
+A leaf that moves no money is NA, not PASS.
+
+-------------------------------------------------------------------------------
+C26 subledger_tie — "C26 Subledger"                                APPROVED
+-------------------------------------------------------------------------------
+The module's subledger total ties to its GL control account for a stated period.
+AR subledger = AR control. AP subledger = AP control. Driver escrow subledger =
+escrow liability control. Bank register = cash control.
+PROOF SHAPE: kind sql, returning (subledger_sum - control_sum) and asserting 0.
+The period must be named in the proof, not implied.
+NOTE: accounting cannot pass C26 today. Cash carries $177,411.20 in credits
+against $13,503.70 in debits. CC-1 owns that (GO-ACCT-01 DEFECT A). C26 on
+accounting stays red until it nets.
+
+-------------------------------------------------------------------------------
+C27 lifecycle_complete — "C27 Lifecycle"                           APPROVED
+-------------------------------------------------------------------------------
+Every status the record can hold is reachable, and every terminal status either
+posts or reverses. No status may strand money.
+PROOF SHAPE: kind sql or dom. Enumerate the statuses from the enum or check
+constraint — not from a hand-written list — and show the GL effect of each
+transition, all exercised. A status that exists in the database and is not in
+the proof is an automatic FAIL.
+
+-------------------------------------------------------------------------------
+C28 reversal_symmetry — "C28 Reversal"                             APPROVED
+-------------------------------------------------------------------------------
+Voiding or reversing a posted transaction writes an equal and opposite entry.
+It never deletes and never edits the original. Debits and credits swap. The
+original stays readable forever.
+PROOF SHAPE: kind sql. Post, reverse, then assert: two entries exist, they net
+to zero, and the original row is unchanged (same id, same amounts, same
+created_at). This is WORM and it is already our law — void by UUID, never
+DELETE a financial row.
+
+-------------------------------------------------------------------------------
+C29 period_guard — "C29 Period"                                    APPROVED
+-------------------------------------------------------------------------------
+No transaction may post into a closed accounting period, by anyone. Reopening
+is owner-only and is recorded with who, when, and why.
+STANDARD: NetSuite states a closed period "prevents posting to the general
+ledger for any dates included in the period, by anyone," and keeps system notes
+as the audit trail. That is the bar. QuickBooks does the same through the
+closing date and password.
+PROOF SHAPE: kind mutation. Close a period, then ATTEMPT a post into it and
+assert the write is REFUSED. A guard that does not reject when defeated is not
+a guard — the proof engine already tests for exactly this.
+STATUS: UNBUILDABLE TODAY. There is no period close in the backend. All 16 C29
+cells stay red until Cursor ships it in its own dedicated session. Correct as-is.
+
+-------------------------------------------------------------------------------
+C30 entity_isolation — "C30 Entity"                                APPROVED
+-------------------------------------------------------------------------------
+A user scoped to TRANSP can never read or write a USMCA row. At the database
+layer, through RLS — not by a filter in the UI.
+PROOF SHAPE: kind sql, RLS ON, no bypass. Run the same query under each company
+context and assert zero cross-entity rows.
+HARD RULE: any proof for C30 that uses SET LOCAL app.bypass_rls is void on its
+face. Bypass is a diagnostic tool for me and Claude reading prod; it can never
+appear in a C30 proof. If it does, the cell is FAIL regardless of the result.
+
+-------------------------------------------------------------------------------
+C31 non_empty_proof — "C31 Living doc"                CORRECTED, THEN APPROVED
+-------------------------------------------------------------------------------
+Cursor asked how C31 treats labeled TEST versus empty, because CREATE-TEST-THEN
+-VOID says an empty TMS table is expected. Fair question, wrong premise. I read
+prod. The tables are not empty:
+
+    accounting.bills      16,327 rows        54 flagged is_sample_data
+    accounting.expenses   27,237 rows       146 flagged
+    accounting.payments   12,139 rows         6 flagged
+    accounting.invoices   12,033 rows        17 flagged
+    mdata.vendors          2,982 rows         3 flagged
+    mdata.customers        2,739 rows         0 flagged
+    accounting.journal_entries 2,214 rows   208 flagged
+    (je_control 2214 on every query — RLS bypassed for the read, values real)
+
+So emptiness is not our risk. The opposite is. C31 is therefore defined as:
+
+  The surface returns count > 0 from PROD on the CURRENT live SHA. A labeled
+  TEST row counts as a real row — that is the whole point of the law. Emptiness
+  is only a C31 FAIL if the seat failed to create the TEST hop first, which is
+  already forbidden by rule 5 of CREATE-TEST-THEN-VOID.
+
+  AND — the half that actually protects the company — every TEST row carries
+  is_sample_data = true, and every financial report excludes it: trial balance,
+  P&L, balance sheet, cash flow, and register. Both halves, or C31 is FAIL.
+
+PROOF SHAPE: kind sql + kind http. count > 0 on the live SHA, plus a second
+assertion that the report query filters is_sample_data.
+
+-------------------------------------------------------------------------------
+NEW DEFECT FOUND WHILE ANSWERING THIS — G1 IS NOT WORKING
+-------------------------------------------------------------------------------
+Owner word 2026-08-28 was: "G1 = the label must actually set is_sample_data."
+It does not. Read live from prod just now:
+
+    mdata.customers   14 rows named TEST   —  14 of 14 NOT flagged
+    mdata.vendors     39 rows named TEST   —  36 of 39 NOT flagged
+
+Fifty records say TEST in their own name and carry no flag. Every report that
+excludes by is_sample_data still includes all fifty of them. The label writes
+text into a name field and nothing else.
+
+This is not a paperwork problem. It is unlabeled test data sitting inside the
+books, and it is the same class of error as the shared cash GL account — a
+control that looks satisfied and is not. It also makes C31 unpassable on
+customers and vendors until it is fixed.
+
+ASSIGN: CC-1, after GO-ACCT-01 DEFECT B and A.
+  1. Find where the TEST label is written and make it set is_sample_data = true
+     on the same write, in one transaction. Not a backfill script — the write path.
+  2. Backfill the existing 50 only after the write path is fixed, so the fix is
+     provable against new rows.
+  3. Add a guard: a row whose name matches TEST and whose is_sample_data is not
+     true is a FAIL. Selftest must plant an unflagged TEST row and be rejected.
+  4. Then verify the exclusion actually holds in trial balance, P&L, balance
+     sheet, cash flow and register — all five, named individually.
+
+-------------------------------------------------------------------------------
+STANDING ITEMS CONFIRMED
+-------------------------------------------------------------------------------
+  - No TMS to QuickBooks write-back. Still standing. QBO total assets are
+    -$7,945,173.68; nothing goes into that ledger until Martin resolves it.
+  - Nobody touches moduleMatrixBoxes.tsx or any cell colour. Guard and Clicked
+    stay red until Built and Live are genuinely 100%.
+  - Skip #15546. Do not restamp U14.
+  - Period close is its own session. Not the tail of this one.
+  - Do NOT void the TEST corpus. Keep the rows. Fix the flag.
