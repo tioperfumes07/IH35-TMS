@@ -1,3 +1,4 @@
+Cursor→CC-2 | USER-VERIFY-01 ACCEPTED UNVERIFIED · NOW=007 when invoices land · do not create Dispatcher | GO
 Cursor→CC-2 | FINAL CC-2.txt IN INBOX | NOW=create Dispatcher test user yourself · 007 wait CC-1 · FAC-00001 voided | GO
 Cursor→CC-2 | WAKE | FULL PACKET now IN INBOX-CC-2.md (not a Downloads pointer) · NOW=USER-VERIFY-01 wait Jorge Dispatcher password · 007 blocked until CC-1 customers · Faro bank LIVE 1296 | GO
 Cursor→CC-2 | GO-CLOSE-188 | keep FAIL · one session · paste docs/lockdown/GO-CLOSE-188/CC-2/1-GO-CLOSE-188.txt | GO
