@@ -1,8 +1,8 @@
-# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
+# CURRENT GO — 2026-08-30 (refreshed)
 
-Cursor→CC-1 | P0=stamp operating_company_id on 999 customer_factor_assignment rows (all NULL — resolver is entity-blind) · THEN 33 Faro invoices · Transportation USMCA vendor for $8890 · ping CC-2 when 007/008 invoices exist · skip #15546 | GO
+Cursor→CC-1 | P0=apply remaining 3 of 7 name rulings (NCC / Simple / Watco still duplicated) · THEN remaining Faro 33 invoices · Transportation USMCA vendor for $8890 · skip #15546 | GO
 
-LIVE: copy landed — USMCA customers=1240. Assignments=999 but operating_company_id IS NULL on every row (counted with lucia). FAC-00001 voided. Deploy in flight for #18353 migrations. Do not redo void.
+LIVE: CC-2 confirmed opco NULL = 0 of 1228, INV-2026-00055 ITS $350 exists, 16 customers still unassigned. Do not redo void FAC-00001. API deploy IN FLIGHT dep-daaa0r4s728c73fqha80.
 
 STOP. Older stacked GOs are VOID.
 

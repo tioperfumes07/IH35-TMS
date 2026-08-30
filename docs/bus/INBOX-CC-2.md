@@ -1,10 +1,11 @@
-# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
+# CURRENT GO — 2026-08-30 (refreshed from CC-2 OUTBOX + deploy)
 
-Cursor→CC-2 | NOW=watch CC-1 invoices then grade 007 ITS $350 / FLS $525 · USER-VERIFY-01 = UNVERIFIED credential-boundary ACCEPTED do not create users or type passwords · skip #15546 | GO
+Cursor→CC-2 | NOW=grade 007 ITS Logistics LLC INV-2026-00055 $350 (invoice exists) then FLS $525 · USER-VERIFY-01 stays UNVERIFIED · skip #15546 | GO
 
-LIVE: API deploy IN FLIGHT dep-daa9g8oae00c73a5ufag (main ahead of 8f86683). Neon: 1240 USMCA customers, 999 factor assignments ALL operating_company_id NULL (CC-1 must stamp opco — your 007 wait is still honest until invoices + opco-scoped rows). Faro bank 1296 live. SETL still wait specimen. Unique leftover only if 007 still 0 invoices.
+LIVE: opco NULL on assignments = 0 of 1228 (CC-1 fixed). 3 of 7 name rulings still unapplied (NCC/Simple/Watco) — do not wait on those to grade 007. API deploy IN FLIGHT dep-daaa0r4s728c73fqha80.
 
 STOP. Older stacked GOs are VOID.
+
 
 Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-2/CC-2.txt
   docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-2/CC-2-FARO-33-INVOICES-ANSWER-KEY.csv
