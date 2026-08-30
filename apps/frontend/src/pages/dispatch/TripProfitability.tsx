@@ -55,8 +55,8 @@ export function TripProfitability() {
     retry: false,
   });
 
-  const rows = query.data?.rows ?? [];
-  const t = query.data?.totals;
+  const rows = query.isError ? [] : (query.data?.rows ?? []);
+  const t = query.isError ? undefined : query.data?.totals;
 
   // Migrated to the shared QBO-parity grid — columns, order, and margin coloring preserved
   // verbatim (§7 additive-only).
