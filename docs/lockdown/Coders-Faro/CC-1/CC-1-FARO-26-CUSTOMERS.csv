@@ -1,0 +1,27 @@
+customer_name,operating_company_id,factoring_eligible,is_sample_data,status,factor_id,effective_from,invoice_count,total_face_usd,invoice_numbers,source
+BV LOGISTICS INC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,2600.00,006,Faro Capital schedule + aging 2026-08-30
+CORE LOGISTICS BROKERAGE,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3500.00,014,Faro Capital schedule + aging 2026-08-30
+CTS XPRESS LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,4000.00,012,Faro Capital schedule + aging 2026-08-30
+DARDINI LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,2,7500.00,015;018,Faro Capital schedule + aging 2026-08-30
+"DEL-CAN LOGISTICS, LLC.",5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,2,4100.00,020;022,Faro Capital schedule + aging 2026-08-30
+FLS Transport Inc.,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,525.00,008,Faro Capital schedule + aging 2026-08-30
+HUMMINGBIRD LOGISTIX LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,4000.00,036,Faro Capital schedule + aging 2026-08-30
+Hawkeye Transportation Services,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,600.00,028,Faro Capital schedule + aging 2026-08-30
+IMPACT BULK LOGISTICS LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3000.00,002,Faro Capital schedule + aging 2026-08-30
+"ITS LOGISTICS, LLC",5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,350.00,007,Faro Capital schedule + aging 2026-08-30
+J RAYL TRANSPORT INC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3500.00,019,Faro Capital schedule + aging 2026-08-30
+Jericho Freight LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,800.00,025,Faro Capital schedule + aging 2026-08-30
+John J Jerue Truck Broker Inc.,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,3,10700.00,030;031;032,Faro Capital schedule + aging 2026-08-30
+MPH CARRIER SERVICES INC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,2,6100.00,016;033,Faro Capital schedule + aging 2026-08-30
+Magna Transport Solutions LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,2700.00,005,Faro Capital schedule + aging 2026-08-30
+NCC LOGISTICS USA INC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,2500.00,003,Faro Capital schedule + aging 2026-08-30
+OSTT LOGISTICS LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3300.00,021,Faro Capital schedule + aging 2026-08-30
+PFL LOGISTICS LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,2500.00,027,Faro Capital schedule + aging 2026-08-30
+Prodigee Logistics LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,4000.00,024,Faro Capital schedule + aging 2026-08-30
+R2X LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,1000.00,034,Faro Capital schedule + aging 2026-08-30
+REHMANN TRANSPORTATION CORP.,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3600.00,001,Faro Capital schedule + aging 2026-08-30
+S E Mares Forwarding Service LLC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,2,9800.00,023;035,Faro Capital schedule + aging 2026-08-30
+SAJACKS FREIGHT INC,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,3100.00,017,Faro Capital schedule + aging 2026-08-30
+Sethmar Transportation Inc,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,2,5600.00,011;013,Faro Capital schedule + aging 2026-08-30
+Simple Logistics Solutions,5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,4000.00,029,Faro Capital schedule + aging 2026-08-30
+"Watco Supply Chain Services, LLC",5c854333-6ea5-4faa-af31-67cb272fef80,TRUE,FALSE,active,40b3690b-f1d4-44b4-90cf-c1cfd4f79c33,2026-08-10,1,1700.00,004,Faro Capital schedule + aging 2026-08-30

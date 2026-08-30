@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Cursor lead)
+# CURRENT GO — 2026-08-30 (Coders-Faro)
 
-Cursor→CC-2 | NOW=grade 007 ITS Logistics LLC INV-2026-00055 $350 then FLS $525 · USER-VERIFY-01 UNVERIFIED forever · skip #15546 | GO
+Cursor→CC-2 | Pack=docs/lockdown/Coders-Faro/CC-2/ · STANDING-BY=DEFECT · grade L13512 specimen as CC-1 completes UI steps · PO join not customer+amount · USER-VERIFY UNVERIFIED · skip #15546 | GO
 
 LIVE: healthz 6489163. opco NULL = 0 of 1228. Do not wait on NCC/Simple/Watco to grade 007. Do not trigger_deploy.
 
