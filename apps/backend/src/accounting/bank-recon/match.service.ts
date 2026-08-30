@@ -12,6 +12,8 @@ import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backl
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
+// ACCT-PERIOD-CLOSE-01: this variance-JE insert had no closed-period check at all.
+import { ensureOpenPeriod } from "../posting-engine.service.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
@@ -714,6 +716,7 @@ async function postDifferenceJournalEntry(
   // (bank-recon:<bank_transaction_id>) and the posting descriptions below, exactly like every
   // other 'auto' JE conveys its specific origin via memo, not source.
   const bankReconMemo = `bank-recon:${input.bank_transaction_id}`;
+  await ensureOpenPeriod(client, input.operating_company_id, input.transaction_date);
   const typeColPresent = await hasJournalEntryTypeColumn(client);
   const typeId = typeColPresent
     ? await resolveJournalEntryTypeId(client, { source: "auto", memo: bankReconMemo })

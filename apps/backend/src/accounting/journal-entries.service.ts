@@ -6,6 +6,11 @@ import { enqueueSyncJob } from "../integrations/qbo/qbo-sync.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { pushJournalEntryToQuickBooksImmediateBestEffort } from "./journal-entry-qbo-push.service.js";
 import { auditVoid, canVoid, postVoidReversal } from "./void.service.js";
+// ACCT-PERIOD-CLOSE-01: this manual/API create path was the one JE-insert choke point with no
+// closed-period check at all -- accounting.periods' DB triggers (migration 0183) already block the
+// raw INSERT as a last resort, but this call gives a clean, typed PostingEngineError("PERIOD_LOCKED")
+// refusal before the DB round-trip, matching every other poster's own ensureOpenPeriod call.
+import { ensureOpenPeriod } from "./posting-engine.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): the type-resolution helpers moved to
 // this leaf module so void.service.ts (which this file already imports FROM) and every other
 // direct-insert poster can use them too without an import cycle. Re-exported here so this file's
@@ -157,6 +162,7 @@ export async function createJournalEntryOnClient(
   }
 
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operating_company_id]);
+  await ensureOpenPeriod(client, input.operating_company_id, input.entry_date);
   const typeColPresent = await hasJournalEntryTypeColumn(client);
   const typeId = typeColPresent
     ? await resolveJournalEntryTypeId(client, {

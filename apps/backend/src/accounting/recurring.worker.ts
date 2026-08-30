@@ -10,6 +10,8 @@ import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 // never populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "./journal-entry-type-resolver.js";
+// ACCT-PERIOD-CLOSE-01: this recurring-JE template insert had no closed-period check at all.
+import { ensureOpenPeriod } from "./posting-engine.service.js";
 import { nextInvoiceDisplayId } from "./display-id.js";
 import { recomputeInvoiceTotals } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
@@ -259,6 +261,7 @@ async function materializeJournal(client: PoolClient, tmpl: Record<string, unkno
   }
   if (debits !== credits || debits <= 0) throw new Error("recurring_journal_not_balanced");
 
+  await ensureOpenPeriod(client, oc, entryDate);
   const recurringTypeColPresent = await hasJournalEntryTypeColumn(client);
   const recurringTypeId = recurringTypeColPresent
     ? await resolveJournalEntryTypeId(client, { source: "auto", memo })

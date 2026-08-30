@@ -1,7 +1,12 @@
 import { withLuciaBypass } from "../../auth/db.js";
 import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
-import { resolvePostingTemplateId } from "../posting-engine.service.js";
+// ACCT-PERIOD-CLOSE-01: reuse the shared, exported ensureOpenPeriod (posting-engine.service.ts's
+// own PostingEngineError("PERIOD_LOCKED", ...) class) instead of this file's own local copy, which
+// had drifted: it silently swallowed a closed_period_cutoff() query failure into cutoff=null
+// (fail-OPEN on error, instead of failing closed or propagating) and threw a differently-shaped
+// plain Error rather than the typed PostingEngineError every other poster's callers expect.
+import { ensureOpenPeriod, resolvePostingTemplateId } from "../posting-engine.service.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this fuel-event JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -69,16 +74,6 @@ function normalizeFuelKind(input: string): FuelCategoryCode {
 
 function buildFuelIdempotencyKey(input: Pick<FuelPostingInput, "operating_company_id" | "fuel_event_id" | "posting_path">) {
   return ["ih35:fuel-posting:v1", input.operating_company_id.toLowerCase(), input.fuel_event_id, input.posting_path].join(":");
-}
-
-async function ensureOpenPeriod(client: DbClient, operatingCompanyId: string, postingDate: string) {
-  const cutoff = await client
-    .query<{ cutoff: string | null }>(`SELECT accounting.closed_period_cutoff($1::uuid)::text AS cutoff`, [operatingCompanyId])
-    .catch(() => ({ rows: [{ cutoff: null }] }));
-  const closedThrough = cutoff.rows[0]?.cutoff;
-  if (closedThrough && postingDate <= closedThrough) {
-    throw new Error(`IH35_CLOSED_PERIOD closed_through=${closedThrough} txn_date=${postingDate}`);
-  }
 }
 
 async function resolveFuelAdvanceLiabilityAccount(client: DbClient, operatingCompanyId: string): Promise<string> {
