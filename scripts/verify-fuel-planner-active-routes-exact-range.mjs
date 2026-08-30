@@ -15,6 +15,7 @@ function failures(s) {
   if (!s.api.includes("{ routes: FuelActiveRoute[]; total_count: number | null;") || !s.api.includes("&limit=${range.limit}&offset=${range.offset}")) out.push("API must carry range and exact total-or-unavailable contract");
   if (!s.page.includes('activeRoutePage, setActiveRoutePage') || !s.page.includes('activeRoutePageCount')) out.push("mounted planner needs controlled server paging");
   if (!s.page.includes('data-testid="fuel-active-route-selector"') || !s.page.includes("setSelectedActiveRouteId")) out.push("operator must be able to choose the active plan");
+  if (!/activeRoutesQuery\.isLoading[\s\S]{0,100}"Loading active plans…"[\s\S]{0,180}`Page \$\{activeRoutePage\}/.test(s.page)) out.push("active-route pager must not announce a false zero while unresolved");
   if (/routes\?\.\[0\]/.test(s.page)) out.push("planner must not silently force the first route");
   return out;
 }
@@ -30,6 +31,7 @@ if (process.argv.includes("--selftest")) {
     { ...source, backend: source.backend.replace("LIMIT $2 OFFSET $3", "LIMIT 100") },
     { ...source, api: source.api.replace("{ routes: FuelActiveRoute[]; total_count: number | null;", "{ routes: FuelActiveRoute[];") },
     { ...source, page: source.page.replace('data-testid="fuel-active-route-selector"', 'data-testid="disabled"') },
+    { ...source, page: source.page.replace('activeRoutesQuery.isLoading\n                    ? "Loading active plans…"', 'false\n                    ? "Loading active plans…"') },
     { ...source, page: `${source.page}\nconst regression = routes?.[0];` },
   ];
   const missed = mutations.filter((mutation) => failures(mutation).length === 0).length;

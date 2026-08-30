@@ -582,7 +582,13 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
                 >
                   Previous plans
                 </ActionButton>
-                <span>{plannerSourceAvailable ? `Page ${activeRoutePage} of ${activeRoutePageCount} · ${activeRouteTotal} active plans` : "Fuel planner source not available"}</span>
+                <span>
+                  {activeRoutesQuery.isLoading
+                    ? "Loading active plans…"
+                    : plannerSourceAvailable
+                      ? `Page ${activeRoutePage} of ${activeRoutePageCount} · ${activeRouteTotal} active plans`
+                      : "Fuel planner source not available"}
+                </span>
                 <ActionButton
                   disabled={!plannerSourceAvailable || activeRoutePage >= activeRoutePageCount || activeRoutesQuery.isFetching}
                   onClick={() => setActiveRoutePage((page) => Math.min(activeRoutePageCount, page + 1))}
