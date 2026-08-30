@@ -124,6 +124,11 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         ),
       },
       { key: "type", label: "Type", sortable: true, render: (row) => String(row.type ?? "—").replace("_", " ") },
+      {
+        key: "correction_count",
+        label: "Corrections",
+        render: (row) => row.corrects_dvir_id ? "Correction" : String(row.correction_count ?? 0),
+      },
       { key: "defect_count", label: "Defects", sortable: true, render: (row) => String(row.defect_count ?? 0) },
       { key: "defect_severity", label: "Severity", sortable: true, render: (row) => String(row.defect_severity ?? "none") },
       {

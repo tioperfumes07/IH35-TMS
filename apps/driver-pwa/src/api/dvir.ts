@@ -1,6 +1,6 @@
 import type { DvirInspectionItem, DvirSubmission } from "@ih35/shared-types";
 import { FMCSA_DVIR_ITEMS } from "@ih35/shared-types";
-import { apiRequest } from "./client";
+import { ApiError, apiRequest } from "./client";
 export type { DvirStatus, DvirInspectionItemKey, DvirInspectionItem, DvirSubmission } from "@ih35/shared-types";
 export { FMCSA_DVIR_ITEMS } from "@ih35/shared-types";
 
@@ -18,4 +18,13 @@ export async function submitDvir(payload: DvirSubmission): Promise<{ success: bo
     method: "POST",
     body: payload,
   });
+}
+
+export async function getLatestDvir(loadId: string, type: "pre_trip" | "post_trip"): Promise<(DvirSubmission & { id: string }) | null> {
+  try {
+    return await apiRequest<DvirSubmission & { id: string }>(`/api/v1/driver/dvir/${encodeURIComponent(loadId)}?type=${type}`);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }

@@ -7,6 +7,9 @@ import { requireDriverSession } from "./auth.js";
 const loadParamsSchema = z.object({
   loadId: z.string().uuid(),
 });
+const latestQuerySchema = z.object({
+  type: z.enum(["pre_trip", "post_trip"]).default("pre_trip"),
+});
 
 function sendValidationError(reply: FastifyReply, error: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: error.flatten() });
@@ -26,6 +29,7 @@ export async function registerDriverDvirRoutes(app: FastifyInstance) {
       if (result.error === "forbidden") return reply.code(403).send({ error: "forbidden" });
       if (result.error === "load_not_found") return reply.code(404).send({ error: "load_not_found" });
       if (result.error === "duplicate_request") return reply.code(409).send({ error: "duplicate_request" });
+      if (result.error === "correction_source_not_found") return reply.code(404).send({ error: "correction_source_not_found" });
       return reply.code(400).send({ error: result.error });
     }
     return result;
@@ -35,6 +39,8 @@ export async function registerDriverDvirRoutes(app: FastifyInstance) {
     if (!(await requireDriverSession(req, reply))) return;
     const params = loadParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return sendValidationError(reply, params.error);
+    const query = latestQuerySchema.safeParse(req.query ?? {});
+    if (!query.success) return sendValidationError(reply, query.error);
     const driver = req.driver;
     if (!driver) return;
 
@@ -45,11 +51,11 @@ export async function registerDriverDvirRoutes(app: FastifyInstance) {
           FROM safety.dvir_submissions
           WHERE load_id = $1
             AND driver_id = $2
-            AND type = 'pre_trip'
+            AND type = $3
           ORDER BY submitted_at DESC
           LIMIT 1
         `,
-        [params.data.loadId, driver.id]
+        [params.data.loadId, driver.id, query.data.type]
       );
       return res.rows[0] ?? null;
     });

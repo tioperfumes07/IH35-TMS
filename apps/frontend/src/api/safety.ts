@@ -246,7 +246,7 @@ export function getSafetyDvirSubmissions(
 }
 
 export function getSafetyDvirDetail(id: string, companyId: string) {
-  return apiRequest<{ submission: Record<string, unknown>; defects: Array<Record<string, unknown>> }>(
+  return apiRequest<{ submission: Record<string, unknown>; defects: Array<Record<string, unknown>>; corrected_submission: Record<string, unknown> | null; corrections: Array<Record<string, unknown>> }>(
     `/api/v1/safety/dvir/${encodeURIComponent(id)}?${q(companyId)}`
   );
 }

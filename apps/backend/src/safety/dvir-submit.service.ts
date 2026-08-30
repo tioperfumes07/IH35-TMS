@@ -20,6 +20,7 @@ export const submitDvirBodySchema = z.object({
   out_of_service: z.boolean(),
   items: z.array(dvirItemSchema).min(1),
   client_request_id: z.string().trim().min(1).max(128).optional(),
+  corrects_dvir_id: z.string().uuid().optional(),
 });
 
 export type SubmitDvirBody = z.infer<typeof submitDvirBodySchema>;
@@ -34,7 +35,7 @@ export type SubmitDvirDriverContext = {
 
 export type SubmitDvirResult =
   | { success: true; oos_flag: boolean; dvir_submission_id: string; follow_up_wo_id: string | null }
-  | { error: "load_not_found" | "forbidden" | "load_missing_unit" | "unit_not_found" | "dvir_insert_failed" | "duplicate_request" };
+  | { error: "load_not_found" | "forbidden" | "load_missing_unit" | "unit_not_found" | "dvir_insert_failed" | "duplicate_request" | "correction_source_not_found" };
 
 export async function submitDriverDvir(
   client: DbClient,
@@ -113,6 +114,23 @@ export async function submitDriverDvir(
     : { rows: [] as Array<{ id: string }> };
   const trailerId = trailerRes.rows[0]?.id ?? null;
 
+  if (body.corrects_dvir_id) {
+    const correctionSource = await client.query<{ id: string }>(
+      `
+        SELECT original.id
+          FROM safety.dvir_submissions original
+         WHERE original.id = $1::uuid
+           AND original.operating_company_id = $2::uuid
+           AND original.driver_id = $3::uuid
+           AND original.load_id = $4::uuid
+           AND original.unit_id = $5::uuid
+         LIMIT 1
+      `,
+      [body.corrects_dvir_id, load.operating_company_id, driver.id, load.id, unit.id]
+    );
+    if (!correctionSource.rows[0]?.id) return { error: "correction_source_not_found" };
+  }
+
   const defectItems = body.items.filter((item) => item.status !== "pass");
   const hasMajor = defectItems.some((item) => item.status === "major");
   const hasAnyDefect = defectItems.length > 0;
@@ -134,9 +152,10 @@ export async function submitDriverDvir(
         submitted_at,
         has_major_defect,
         has_any_defect,
-        client_request_id
+        client_request_id,
+        corrects_dvir_id
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,true,$10,$11,$12,$13,$14)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,true,$10,$11,$12,$13,$14,$15)
       RETURNING id
     `,
     [
@@ -154,6 +173,7 @@ export async function submitDriverDvir(
       hasMajor,
       hasAnyDefect,
       body.client_request_id ?? null,
+      body.corrects_dvir_id ?? null,
     ]
   );
   const submissionId = dvirRes.rows[0]?.id;
