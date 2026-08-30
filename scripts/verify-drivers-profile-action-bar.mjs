@@ -9,6 +9,9 @@ import process from "node:process";
 const ROOT = process.cwd();
 const paths = {
   actionBar: path.join(ROOT, "apps/frontend/src/components/driver-profile/ActionBar.tsx"),
+  vehicleActionBar: path.join(ROOT, "apps/frontend/src/components/vehicle-profile/ActionBar.tsx"),
+  trailerActionBar: path.join(ROOT, "apps/frontend/src/components/trailer-profile/ActionBar.tsx"),
+  hoverNavCss: path.join(ROOT, "apps/frontend/src/components/forms/shared/HoverDropdownNav.css"),
   sendModal: path.join(ROOT, "apps/frontend/src/components/drivers/SendMessageModal.tsx"),
   suspendModal: path.join(ROOT, "apps/frontend/src/components/drivers/SuspendConfirmModal.tsx"),
   terminateModal: path.join(ROOT, "apps/frontend/src/components/drivers/TerminateConfirmModal.tsx"),
@@ -30,6 +33,9 @@ function fail(msg) {
 
 function main() {
   const actionBar = read(paths.actionBar);
+  const vehicleActionBar = read(paths.vehicleActionBar);
+  const trailerActionBar = read(paths.trailerActionBar);
+  const hoverNavCss = read(paths.hoverNavCss);
   const sendModal = read(paths.sendModal);
   const suspendModal = read(paths.suspendModal);
   const terminateModal = read(paths.terminateModal);
@@ -45,6 +51,18 @@ function main() {
   if (!actionBar.includes('navigate(`/drivers/${driverId}`)')) failures.push("Edit must navigate to driver detail");
   if (!actionBar.includes("dp-action-send-message")) failures.push("Send Message button must be wired");
   if (!actionBar.includes("dp-export-pdf")) failures.push("Export PDF link must remain present");
+  if (!actionBar.includes("resolveApiUrl(") || !actionBar.includes("/api/v1/mdata/drivers/")) {
+    failures.push("WIRE-01: Export PDF must use resolveApiUrl so split-host SPA does not download index.html");
+  }
+  if (!vehicleActionBar.includes("resolveApiUrl(") || !vehicleActionBar.includes("/api/v1/mdata/units/")) {
+    failures.push("WIRE-01: vehicle Export PDF must use resolveApiUrl");
+  }
+  if (!trailerActionBar.includes("resolveApiUrl(") || !trailerActionBar.includes("/api/v1/mdata/equipment/")) {
+    failures.push("WIRE-01: trailer Export PDF must use resolveApiUrl");
+  }
+  if (!/overflow-x:\s*auto/.test(hoverNavCss) || !/min-width:\s*max-content/.test(hoverNavCss)) {
+    failures.push("UI-01: HoverDropdownNav menubar must overflow-x auto + min-width max-content (dispatch 13-tab clip)");
+  }
 
   if (!sendModal.includes("sendDriverProfileMessage")) failures.push("SendMessageModal must call sendDriverProfileMessage");
   if (!suspendModal.includes("suspendDriver(input.driverId, input.reason)")) failures.push("Suspend must call atomic suspendDriver endpoint with captured driver/reason scope");
@@ -72,21 +90,16 @@ function main() {
       [suspendModal, "suspendDriver(input.driverId, input.reason)", "suspendDriver(driverId, reason)"],
       [suspendModal, "generation: requestGenerationRef.current", "generation: 0"],
       [actionBar, "<SuspendConfirmModal", "<MissingSuspendConfirmModal"],
+      [actionBar, "resolveApiUrl(", "relativePdfHref("],
       [profilePage, "onActionComplete={refreshDriver}", "onActionComplete={() => undefined}"],
+      [hoverNavCss, "overflow-x: auto", "overflow-x: visible"],
     ];
     for (const [source, needle, replacement] of mutations) {
       const broken = source.replace(needle, replacement);
       if (broken === source) fail(`SELFTEST mutation source missing: ${needle}`);
-      const caught = needle === "suspendDriver(input.driverId, input.reason)"
-        ? !broken.includes("suspendDriver(input.driverId, input.reason)")
-        : needle === "generation: requestGenerationRef.current"
-          ? !broken.includes("generation: requestGenerationRef.current")
-          : needle === "<SuspendConfirmModal"
-            ? !broken.includes("<SuspendConfirmModal")
-            : !broken.includes("onActionComplete={refreshDriver}");
-      if (!caught) fail(`SELFTEST planted defect escaped: ${needle}`);
+      if (broken.includes(needle)) fail(`SELFTEST planted defect escaped: ${needle}`);
     }
-    console.log("[verify-drivers-profile-action-bar] SELFTEST PASS — 4 mutations detected");
+    console.log("[verify-drivers-profile-action-bar] SELFTEST PASS — 6 mutations detected");
     return;
   }
 
