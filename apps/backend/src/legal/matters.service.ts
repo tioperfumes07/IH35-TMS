@@ -397,6 +397,41 @@ export async function listMatters(
     const { _severity_rank: _r, _total_count: _t, ...rest } = row as Record<string, unknown>;
     return rest;
   });
+  // LEGAL-HEARING-DEADLINES-INVISIBLE-ON-MATTER-AND-LIST: m.next_hearing_date /
+  // m.statute_of_limitations_at are standalone scalar columns addMatterDeadlineRow never writes,
+  // so a matter with a real, active legal.matter_deadlines row of the matching type still shows
+  // "—" on this list. Fall back to the earliest OPEN (completed_at IS NULL) deadline of the
+  // matching type — never overwrites an explicit scalar value, only fills a null one.
+  const matterIds = rows.map((r) => (r as Record<string, unknown>).id as string).filter(Boolean);
+  if (matterIds.length > 0) {
+    const dRes = await client.query(
+      `
+        SELECT DISTINCT ON (matter_id, deadline_type) matter_id, deadline_type, deadline_at
+        FROM legal.matter_deadlines
+        WHERE matter_id = ANY($1::uuid[])
+          AND deadline_type IN ('hearing', 'statute_of_limitations')
+          AND completed_at IS NULL
+        ORDER BY matter_id, deadline_type, deadline_at ASC
+      `,
+      [matterIds]
+    );
+    const earliestByMatter = new Map<string, { hearing?: unknown; statute_of_limitations?: unknown }>();
+    for (const d of dRes.rows) {
+      const key = String(d.matter_id);
+      const entry = earliestByMatter.get(key) ?? {};
+      entry[d.deadline_type as "hearing" | "statute_of_limitations"] = d.deadline_at;
+      earliestByMatter.set(key, entry);
+    }
+    for (const row of rows) {
+      const r = row as Record<string, unknown>;
+      const derived = earliestByMatter.get(String(r.id));
+      if (!derived) continue;
+      if (r.next_hearing_date == null && derived.hearing != null) r.next_hearing_date = derived.hearing;
+      if (r.statute_of_limitations_at == null && derived.statute_of_limitations != null) {
+        r.statute_of_limitations_at = derived.statute_of_limitations;
+      }
+    }
+  }
   return { rows, total, limit, offset };
 }
 
@@ -486,6 +521,21 @@ export async function getMatter(
     `,
     [args.matterId]
   );
+  // LEGAL-HEARING-DEADLINES-INVISIBLE-ON-MATTER-AND-LIST: same derivation as listMatters — fall
+  // back to the earliest OPEN deadline of the matching type when the scalar column was never
+  // written by addMatterDeadlineRow. `deadlines.rows` is already ordered by deadline_at ASC, so
+  // .find() naturally returns the earliest match.
+  const m = matter as Record<string, unknown>;
+  if (m.next_hearing_date == null) {
+    const earliestHearing = deadlines.rows.find((d) => d.deadline_type === "hearing" && d.completed_at == null);
+    if (earliestHearing) m.next_hearing_date = earliestHearing.deadline_at;
+  }
+  if (m.statute_of_limitations_at == null) {
+    const earliestSol = deadlines.rows.find(
+      (d) => d.deadline_type === "statute_of_limitations" && d.completed_at == null
+    );
+    if (earliestSol) m.statute_of_limitations_at = earliestSol.deadline_at;
+  }
   return { matter, events: events.rows, documents, deadlines: deadlines.rows };
 }
 
