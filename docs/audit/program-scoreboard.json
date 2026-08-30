@@ -1,13 +1,13 @@
 {
-  "healthzSha": "d41124e",
-  "generated_at": "2026-08-30T16:37:39.000Z",
+  "healthzSha": "5071217",
+  "generated_at": "2026-08-30T17:05:15.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T11:37:39-05:00",
-    "sourceSha": "be7bc47e2b",
-    "deployedSha": "d41124e",
+    "generatedAt": "2026-08-30T12:05:15-05:00",
+    "sourceSha": "3dbd177cdc",
+    "deployedSha": "5071217",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
-    "failOpen": 252,
+    "failOpen": 177,
     "defects": 28
   },
   "modules": [
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18242,
-      "title": "FINDING: GO-INSTRUMENT-PLANNER-INBOX",
+      "number": 18259,
+      "title": "FINDING: GO-CASCADE-FALSE-POSITIVE-GREP",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18242",
-      "sha": "5c14163eaf",
-      "committedAtIso": "2026-08-30T11:58:52-05:00"
+      "mergedAtCt": "08/30/2026, 12:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18259",
+      "sha": "ebdc36066b",
+      "committedAtIso": "2026-08-30T12:49:09-05:00"
     },
     {
-      "number": 18241,
-      "title": "FINDING: N/A -- closure note, lists.required.json sub-label shuffle whole-file sweep complete (174 fields, 5 PRs, all live-verified)",
+      "number": 18258,
+      "title": "FINDING: GR1-NONMONEY-REGISTRY-GLOBAL-CENSUS-COUPLING",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:57 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18241",
-      "sha": "1b1301cb75",
-      "committedAtIso": "2026-08-30T11:57:34-05:00"
+      "mergedAtCt": "08/30/2026, 12:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18258",
+      "sha": "5071217b7d",
+      "committedAtIso": "2026-08-30T12:43:40-05:00"
     },
     {
-      "number": 18240,
-      "title": "FINDING: lists.required.json sub-label shuffle -- final 2 leaves fixed (customers.customer_quality_event_reasons, names_master.brokers)",
+      "number": 18257,
+      "title": "FINDING: DISPATCH-PLANNER-GRID-CANONICAL-GUARD-MISSING",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18240",
-      "sha": "3b6a1b3aca",
-      "committedAtIso": "2026-08-30T11:55:57-05:00"
+      "mergedAtCt": "08/30/2026, 12:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18257",
+      "sha": "47d09e044b",
+      "committedAtIso": "2026-08-30T12:38:40-05:00"
     },
     {
-      "number": 18239,
-      "title": "FINDING: DOCS-F10122 DWELL-01-D3 slice 3 scope correction — no void mechanism exists to hook into",
+      "number": 18256,
+      "title": "FINDING: CLAIM-RESERVE 10118 verify-planner-grid-canonical",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18239",
-      "sha": "e62d976e8e",
-      "committedAtIso": "2026-08-30T11:53:52-05:00"
+      "mergedAtCt": "08/30/2026, 12:26 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18256",
+      "sha": "95f1770cd0",
+      "committedAtIso": "2026-08-30T12:26:20-05:00"
     },
     {
-      "number": 18238,
-      "title": "FINDING: FLEET-PROOF-F7534 FLEET-S02 had prose-only verification.",
+      "number": 18255,
+      "title": "FINDING: MAINT-PROOF-F7540 MAINT-S01 had prose-only verification.",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18238",
-      "sha": "4e6e652880",
-      "committedAtIso": "2026-08-30T11:53:34-05:00"
+      "mergedAtCt": "08/30/2026, 12:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18255",
+      "sha": "467beddb95",
+      "committedAtIso": "2026-08-30T12:21:36-05:00"
     },
     {
-      "number": 18237,
-      "title": "FINDING: lists.required.json sub-label shuffle -- accounting group fixed (40 fields, all 21 leaves live-verified) -- completes the whole-file fix",
+      "number": 18254,
+      "title": "FINDING: FLEET-PROOF-F7539 FLEET-S07 had prose-only verification.",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18237",
-      "sha": "7134aa13ca",
-      "committedAtIso": "2026-08-30T11:53:25-05:00"
+      "mergedAtCt": "08/30/2026, 12:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18254",
+      "sha": "0e64636114",
+      "committedAtIso": "2026-08-30T12:18:15-05:00"
     },
     {
-      "number": 18236,
-      "title": "FINDING: DOCS-F10121 board correction + OUTBOX report for DWELL-01-D3 slice 2",
+      "number": 18253,
+      "title": "FINDING: FLEET-PROOF-F7538 FLEET-S06 had prose-only verification.",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:51 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18236",
-      "sha": "4adcd5d804",
-      "committedAtIso": "2026-08-30T11:51:20-05:00"
+      "mergedAtCt": "08/30/2026, 12:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18253",
+      "sha": "a672e498c5",
+      "committedAtIso": "2026-08-30T12:14:32-05:00"
     },
     {
-      "number": 18235,
-      "title": "FINDING: lists.required.json sub-label shuffle -- maintenance group fixed (40 fields, all 21 leaves live-verified)",
+      "number": 18252,
+      "title": "FINDING: LEGAL-HEARING-DEADLINES-INVISIBLE-ON-MATTER-AND-LIST",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18235",
-      "sha": "5dc1ff12ef",
-      "committedAtIso": "2026-08-30T11:49:30-05:00"
+      "mergedAtCt": "08/30/2026, 12:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18252",
+      "sha": "c00ee7d33e",
+      "committedAtIso": "2026-08-30T12:13:25-05:00"
     },
     {
-      "number": 18234,
-      "title": "FINDING: ACCT-F10119 DWELL-01-D3-SLICE-2 detention pay reaches the settlement NET formula and a balanced JE leg",
+      "number": 18251,
+      "title": "FINDING: DOCS-F10124 board closure + OUTBOX report — proof-engine connected, cross-verified against owner's own figures",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:49 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18234",
-      "sha": "24de3efb27",
-      "committedAtIso": "2026-08-30T11:49:22-05:00"
+      "mergedAtCt": "08/30/2026, 12:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18251",
+      "sha": "e6c4571c4c",
+      "committedAtIso": "2026-08-30T12:11:15-05:00"
     },
     {
-      "number": 18233,
-      "title": "FINDING: FLEET-PROOF-F7533 FLEET-S01 had prose-only verification.",
+      "number": 18250,
+      "title": "FINDING: N/A -- confirms driver-escrow count parity holds live on d41124e, closes prior REMAINING note",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:46 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18233",
-      "sha": "5c257132a0",
-      "committedAtIso": "2026-08-30T11:46:04-05:00"
+      "mergedAtCt": "08/30/2026, 12:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18250",
+      "sha": "4b96c66c41",
+      "committedAtIso": "2026-08-30T12:09:30-05:00"
     }
   ]
 }
