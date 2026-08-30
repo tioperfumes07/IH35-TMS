@@ -216,10 +216,20 @@ export function CreditMemosPage() {
     [],
   );
 
+  // CREDIT-MEMOS-FILTER-BADGE-FALSE-NOT-VISIBLE: this used to derive the filter-badge name ONLY from
+  // creditMemosQuery's data -- which is ALREADY filtered to this same customer_id. Any customer with
+  // zero credit memos (the overwhelmingly common case) made .find() return undefined, so a perfectly
+  // valid, visible customer rendered as "Customer — not visible" -- a label entity-label.ts reserves
+  // for a real RLS/deactivation signal (a row entity-scoped joins can't resolve). customerOptions
+  // (from listAllCustomers, unfiltered by credit-memo activity) is the complete roster for this
+  // company, so check it first; only fall back to the credit-memos row if the id is somehow absent
+  // from the roster too (that IS a genuine not-visible signal).
   const filterCustomerName = useMemo(() => {
     if (!customerFilter) return null;
+    const fromRoster = customerOptions.find((c) => c.value === customerFilter)?.label ?? null;
+    if (fromRoster) return fromRoster;
     return (creditMemosQuery.data?.credit_memos ?? []).find((c) => c.customer_id === customerFilter)?.customer_name ?? null;
-  }, [creditMemosQuery.data?.credit_memos, customerFilter]);
+  }, [customerOptions, creditMemosQuery.data?.credit_memos, customerFilter]);
 
   const filterBar = (
     <div className="flex flex-wrap items-end gap-3" data-credit-memos-filter-toolbar="collapsed">
