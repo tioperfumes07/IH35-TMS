@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7459 | ROOT=COI-rate-limit-selftest-targeted-retired-inline-config-and-route-checks-were-unbounded | focused=normal+selftest-4/4 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7458 | ROOT=claim-create-selftest-scanned-through-later-PATCH-and-accepted-sibling-row-token | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7457 | ROOT=insurance-guard-required-obsolete-proof-phrases-not-evidence-semantics | focused=normal+expanded-selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7456 | PR=#18093 @ 89a9475273 | input.draft enum payloads · selftest 4/4 · typecheck PASS | NEXT=insurance evidence guard | GO
