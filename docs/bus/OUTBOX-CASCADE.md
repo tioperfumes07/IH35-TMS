@@ -1,4 +1,10 @@
-Cursor→Cascade | GO-CLOSE-188 | unique FINDING Miss-C · paste docs/lockdown/GO-CLOSE-188/CASCADE/1-GO-CLOSE-188.txt | GO
+CASCADE | FINDING | 50276 | lists · SILENT-QUERY-FAILURE — ItemsListPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50275 | accounting · SILENT-QUERY-FAILURE — BillsPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50274 | accounting · SILENT-QUERY-FAILURE — InvoicesListPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50273 | factoring · SILENT-QUERY-FAILURE — FactoringListPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50272 | accounting · SILENT-QUERY-FAILURE — EscrowPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50271 | customers · SILENT-QUERY-FAILURE — CustomersListView 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50270 | dispatch · SILENT-QUERY-FAILURE — LoadsPlanner 5 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50269 | maintenance · SILENT-QUERY-FAILURE — FleetTablePage 6 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50268 | maintenance · SILENT-QUERY-FAILURE — TireProgramPage 6 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50267 | maintenance · SILENT-QUERY-FAILURE — WorkOrderDetailPage 6 useQuery hooks zero isError | GO
