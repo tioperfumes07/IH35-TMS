@@ -9,6 +9,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  selftestPlannerGridCanonical,
+  verifyPlannerGridCanonical,
+} from "./verify-planner-grid-canonical.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -33,6 +37,7 @@ if (!subnav.includes("/dispatch/planner?panel=templates")) {
 if (process.argv.includes("--selftest")) {
   const ok = /get\(["']panel["']\)\s*===\s*["']templates["']/.test('searchParams.get("panel") === "templates"');
   if (!ok) { console.error("verify:planner-load-templates --selftest FAIL"); process.exit(1); }
+  selftestPlannerGridCanonical();
   console.log("verify:planner-load-templates --selftest PASS");
   process.exit(0);
 }
@@ -42,4 +47,5 @@ if (failures.length > 0) {
   for (const f of failures) console.error("  ✗ " + f);
   process.exit(1);
 }
+if (!verifyPlannerGridCanonical()) process.exit(1);
 console.log("verify:planner-load-templates PASS (Load Templates deep-link wired to PlannerCalendarPage)");
