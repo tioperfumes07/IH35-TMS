@@ -31,7 +31,9 @@ vi.mock("../../../../audit/crud-audit.js", () => ({
 
 describe("buildPermitExpiryAlert", () => {
   it("maps permit rows to severity using cert-monitor thresholds", () => {
-    const reference = new Date("2026-06-01T00:00:00.000Z");
+    // Noon UTC is June 1 in the canonical America/Chicago business timezone.
+    // Midnight UTC is still May 31 Central and correctly produces a ten-day delta.
+    const reference = new Date("2026-06-01T12:00:00.000Z");
     const critical = buildPermitExpiryAlert(
       {
         uuid: PERMIT,
