@@ -200,6 +200,15 @@ export function projectStatusLeakedToOperator(line, filePath) {
   return PROJECT_STATUS_IN_COPY.test(line);
 }
 
+export function serviceLocationUsesHumanLabel(source) {
+  return (
+    /function\s+serviceLocationLabel\s*\(/.test(source) &&
+    /SERVICE_LOCATION_LABEL\[normalized\]\s*\?\?\s*humanizeEnumLabel\(normalized\)/.test(source) &&
+    /\{serviceLocationLabel\(row\.service_location\)\}/.test(source) &&
+    !/\{row\.service_location\s*\|\|\s*["']unspecified["']\}/.test(source)
+  );
+}
+
 function isExcluded(filePath) {
   const normalized = filePath.replace(/\\/g, "/");
   if (normalized === selfPath.replace(/\\/g, "/")) return true;
@@ -293,6 +302,16 @@ if (process.argv.includes("--selftest")) {
     console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — owner-gated reintroduction mutation escaped");
     process.exit(1);
   }
+  const serviceLocationChecks = [
+    serviceLocationUsesHumanLabel(
+      'function serviceLocationLabel(value) { const normalized=value.trim(); return SERVICE_LOCATION_LABEL[normalized] ?? humanizeEnumLabel(normalized); } return <Link>{serviceLocationLabel(row.service_location)}</Link>',
+    ),
+    !serviceLocationUsesHumanLabel('return <Link>{row.service_location || "unspecified"}</Link>'),
+  ];
+  if (serviceLocationChecks.some((ok) => !ok)) {
+    console.error("[verify-no-internal-language-in-prod-ui] SELFTEST FAILED — raw service-location enum mutation escaped");
+    process.exit(1);
+  }
   console.log("[verify-no-internal-language-in-prod-ui] SELFTEST PASS — schema names, project-status, and owner-gated-copy mutations rejected; exact protected baseline honored");
   process.exit(0);
 }
@@ -302,6 +321,17 @@ const files = walk(targetRoot);
 for (const file of files) {
   const content = fs.readFileSync(file, "utf8");
   const relativeFile = path.relative(repoRoot, file).replace(/\\/g, "/");
+  if (
+    relativeFile === "apps/frontend/src/pages/maintenance/ServiceLocationPage.tsx" &&
+    !serviceLocationUsesHumanLabel(content)
+  ) {
+    violations.push({
+      file: relativeFile,
+      line: 1,
+      term: "raw service-location enum shown to the operator",
+      text: "Service-location persisted keys must be humanized while drill URLs retain the raw filter value",
+    });
+  }
   for (const leak of visibleSchemaNames(content, relativeFile)) {
     violations.push({
       file: relativeFile,
