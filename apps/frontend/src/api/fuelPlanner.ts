@@ -32,9 +32,11 @@ export type FuelActiveRoute = {
   unit_display_id: string;
   total_distance_miles: number | null;
   recommended_total_fuel_gallons: number | null;
-  recommended_total_cost: number;
-  station_avg_baseline_cost: number;
-  savings_estimate: number;
+  /** FUEL-MONEY-F7387B: views.fuel_planner_active_routes declares this nullable; the frontend
+   *  type previously lied about it being required, so every summary formula coerced null to 0. */
+  recommended_total_cost: number | null;
+  station_avg_baseline_cost: number | null;
+  savings_estimate: number | null;
   savings_percent: number;
   current_fuel_gallons: number | null;
   fuel_capacity_gallons: number | null;

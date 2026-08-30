@@ -28,6 +28,12 @@ function scan(source) {
     ["trip summary does not fabricate route zero", summary.includes("route?.total_distance_miles != null") && !summary.includes("total_distance_miles ?? 0")],
     ["trip summary does not fabricate gallons zero", summary.includes("route?.recommended_total_fuel_gallons != null") && !summary.includes('label="Gallons needed">{route ?')],
     ["route diagram requires authoritative route length", diagram.includes("if (totalMiles == null || totalMiles <= 0)") && diagram.includes("Route distance is unavailable") && !diagram.includes("Number(totalMiles || 1)")],
+    // FUEL-MONEY-F7387B — economics (cost/savings), the sibling of the logistics checks above.
+    ["economics contract remains nullable", api.includes("recommended_total_cost: number | null") && api.includes("station_avg_baseline_cost: number | null") && api.includes("savings_estimate: number | null")],
+    ["trip summary does not fabricate cost zero", summary.includes("route.recommended_total_cost != null") && !summary.includes("recommended_total_cost ?? 0")],
+    ["trip summary does not fabricate baseline zero", summary.includes("route.station_avg_baseline_cost != null") && !summary.includes("station_avg_baseline_cost ?? 0")],
+    ["trip summary does not fabricate savings zero", summary.includes("route.savings_estimate != null") && !summary.includes("savings_estimate ?? 0")],
+    ["trip summary averages require a real positive gallons denominator", summary.includes("Number(route.recommended_total_fuel_gallons) > 0") && !summary.includes("Math.max(Number(route.recommended_total_fuel_gallons ?? 1), 1)")],
   ];
 }
 
@@ -49,6 +55,11 @@ if (process.argv.includes("--selftest")) {
     ["summary-route-zero", { ...source, summary: source.summary.replace("route?.total_distance_miles != null", "route") + "\n// total_distance_miles ?? 0" }],
     ["summary-gallons-zero", { ...source, summary: source.summary.replace("route?.recommended_total_fuel_gallons != null", "route") + '\n// label="Gallons needed">{route ?' }],
     ["diagram-fake-denominator", { ...source, diagram: source.diagram.replace("if (totalMiles == null || totalMiles <= 0)", "if (false)") + "\n// Number(totalMiles || 1)" }],
+    ["economics-contract-required", { ...source, api: source.api.replace("recommended_total_cost: number | null", "recommended_total_cost: number") }],
+    ["summary-cost-zero", { ...source, summary: source.summary.replace("route.recommended_total_cost != null", "route") + "\n// recommended_total_cost ?? 0" }],
+    ["summary-baseline-zero", { ...source, summary: source.summary.replace("route.station_avg_baseline_cost != null", "route") + "\n// station_avg_baseline_cost ?? 0" }],
+    ["summary-savings-zero", { ...source, summary: source.summary.replace("route.savings_estimate != null", "route") + "\n// savings_estimate ?? 0" }],
+    ["summary-fake-gallons-denominator", { ...source, summary: source.summary.replace(/Number\(route\.recommended_total_fuel_gallons\) > 0/g, "true") + "\n// Math.max(Number(route.recommended_total_fuel_gallons ?? 1), 1)" }],
   ];
   for (const [label, mutated] of mutations) {
     if (scan(mutated).every(([, ok]) => ok)) {
