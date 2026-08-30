@@ -50,10 +50,25 @@ const postTripBodySchema = z.object({
   evidence_uuids: z.array(z.string().uuid()).min(1),
 });
 
+const photoComparisonFindingSchema = z.object({
+  location: z.string().min(1),
+  severity: z.string().min(1),
+  description: z.string().min(1),
+  confidence: z.number().finite().min(0).max(1),
+});
+
+const anglePairFindingSchema = z.object({
+  angle_label: z.string().min(1),
+  pre_evidence_uuid: z.string().uuid(),
+  post_evidence_uuid: z.string().uuid(),
+  has_new_damage: z.boolean(),
+  findings: z.array(photoComparisonFindingSchema),
+});
+
 const manualOverrideBodySchema = z.object({
   operating_company_id: z.string().uuid(),
   diff_summary: z.string().min(1).max(4000),
-  diff_findings: z.unknown().optional(),
+  diff_findings: z.array(anglePairFindingSchema).optional(),
 });
 
 const evidenceUploadQuerySchema = companyQuerySchema.extend({

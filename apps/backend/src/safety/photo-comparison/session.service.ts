@@ -23,6 +23,21 @@ export type DiffStatus =
   | "review_required"
   | "manual_override";
 
+export type PhotoComparisonFinding = {
+  location: string;
+  severity: string;
+  description: string;
+  confidence: number;
+};
+
+export type AnglePairFinding = {
+  angle_label: string;
+  pre_evidence_uuid: string;
+  post_evidence_uuid: string;
+  has_new_damage: boolean;
+  findings: PhotoComparisonFinding[];
+};
+
 export type PhotoEvidenceDetail = {
   id: string;
   r2_object_key: string;
@@ -44,7 +59,7 @@ export type PhotoComparisonSession = {
   post_trip_session_at: string | null;
   post_trip_evidence_uuids: string[] | null;
   diff_status: DiffStatus;
-  diff_findings: unknown;
+  diff_findings: AnglePairFinding[] | null;
   diff_summary: string | null;
   diff_completed_at: string | null;
   auto_damage_report_uuid: string | null;
@@ -59,6 +74,50 @@ export type PhotoComparisonSession = {
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
 };
+
+function isPhotoComparisonFinding(value: unknown): value is PhotoComparisonFinding {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const finding = value as Record<string, unknown>;
+  return (
+    typeof finding.location === "string" &&
+    typeof finding.severity === "string" &&
+    typeof finding.description === "string" &&
+    typeof finding.confidence === "number" &&
+    Number.isFinite(finding.confidence)
+  );
+}
+
+function isAnglePairFinding(value: unknown): value is AnglePairFinding {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const finding = value as Record<string, unknown>;
+  return (
+    typeof finding.angle_label === "string" &&
+    typeof finding.pre_evidence_uuid === "string" &&
+    typeof finding.post_evidence_uuid === "string" &&
+    typeof finding.has_new_damage === "boolean" &&
+    Array.isArray(finding.findings) &&
+    finding.findings.every(isPhotoComparisonFinding)
+  );
+}
+
+export function normalizeSessionDiffFindings(
+  status: DiffStatus,
+  value: unknown
+): AnglePairFinding[] | null {
+  if (value == null) return null;
+  if (Array.isArray(value) && value.every(isAnglePairFinding)) return value;
+  // Pending/analyzing sessions have no verdict yet. An older TEST writer stored
+  // an empty JSON object for some rows; that object is not comparison evidence.
+  if ((status === "pending" || status === "analyzing") && typeof value === "object") return null;
+  throw new Error("photo_comparison_diff_findings_invalid");
+}
+
+function normalizeSessionRow(row: PhotoComparisonSession): PhotoComparisonSession {
+  return {
+    ...row,
+    diff_findings: normalizeSessionDiffFindings(row.diff_status, row.diff_findings),
+  };
+}
 
 const SESSION_COLUMNS = `
   uuid::text,
@@ -416,7 +475,7 @@ export async function submitPostTripPhotos(
   );
   const row = updated.rows[0];
   if (!row) throw new Error("session_not_found_or_post_already_submitted");
-  return row;
+  return normalizeSessionRow(row);
 }
 
 export async function getSession(
@@ -447,7 +506,7 @@ export async function getSession(
     operatingCompanyId,
     session.post_trip_evidence_uuids ?? []
   );
-  return session;
+  return normalizeSessionRow(session);
 }
 
 export async function listSessions(
@@ -508,7 +567,7 @@ export async function listSessions(
     `,
     pageValues
   );
-  return { sessions: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
+  return { sessions: res.rows.map(normalizeSessionRow), totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function applyManualOverride(
@@ -518,7 +577,7 @@ export async function applyManualOverride(
     operatingCompanyId: string;
     userUuid: string;
     diffSummary: string;
-    diffFindings?: unknown;
+    diffFindings?: AnglePairFinding[];
   }
 ): Promise<PhotoComparisonSession | null> {
   const res = await client.query<PhotoComparisonSession>(
@@ -534,7 +593,7 @@ export async function applyManualOverride(
     `,
     [input.sessionUuid, input.operatingCompanyId, input.diffSummary, JSON.stringify(input.diffFindings ?? null)]
   );
-  return res.rows[0] ?? null;
+  return res.rows[0] ? normalizeSessionRow(res.rows[0]) : null;
 }
 
 export async function updateSessionDiffResult(

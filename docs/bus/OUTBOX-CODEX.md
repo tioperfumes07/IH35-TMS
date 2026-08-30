@@ -1,3 +1,4 @@
+CODEX | WORKING | SAF-F7528-PHOTO-COMPARISON-DIFF-FINDINGS-NONARRAY-DETAIL-CRASH | live session=482337d4 detail crashed flatMap | ROOT=arbitrary-json-writer+unknown-reader+array-assuming-UI | focused=guard+selftest8/8+Vitest6/6+frontend/backend-tsc | Live=UNVERIFIED-after-deploy | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | GR1-CUSTOMER-NOTIFY-PICKER-WRITER-MATCHER-STALE | normal PASS · selftest 16/16 | exact dispatch settings.notify + customers detail.profile metadata | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING | GR1-MONEY-GUARDS-STALE-AFTER-CANONICAL-REFRACTORS | routed=CC-1 | banking escrow slice · settlement route-options matcher+selftest · Wave-C direct-JE matcher | product canonical paths still present | GO
 CODEX | WORKING | PLANNER-GRID-CANONICAL-GUARD | GO-INSTRUMENT-PLANNER | A1-A3+A5-A7 source plants · A4 data-load-id hook · 5 route bindings · adopted by locked planner guard | LIVE-A4=count===1 remains Chrome/CC-2 | NEXT=focused+FAST-MERGE | GO
