@@ -38,7 +38,7 @@ export function CustomsTimePill({ operatingCompanyId, crossingPoint, direction }
   }
 
   const avg = query.data?.data?.avg_minutes;
-  if (!avg) return null;
+  if (avg == null) return null;
 
   const color =
     avg < 45
