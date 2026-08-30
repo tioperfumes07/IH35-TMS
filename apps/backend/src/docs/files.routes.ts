@@ -51,6 +51,8 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "hos_violation",
   "dot_inspection",
   "fuel_transaction",
+  "expense",
+  "bill",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -72,6 +74,8 @@ const entityTypeSchema = z.enum([
   "hos_violation",
   "dot_inspection",
   "fuel_transaction",
+  "expense",
+  "bill",
 ]);
 
 function optionalQueryString() {
@@ -289,6 +293,20 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "fuel_transaction") {
     const res = await client.query("SELECT id FROM fuel.fuel_transactions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "expense") {
+    const res = await client.query(
+      "SELECT id FROM accounting.expenses WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "bill") {
+    const res = await client.query(
+      "SELECT id FROM accounting.bills WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
     return res.rows.length > 0;
   }
   return false;
