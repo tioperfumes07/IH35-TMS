@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · DOWNLOADS=`~/Downloads/IH35-COMPLETE-2026-08-30/CC-1/0-GO-WAKE-ALL-NOW.txt` · secret SET · NOW=DEFECT-A then recon unique · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · IDLE=you have no ACK · secret SET do not wait Jorge · NOW=DEFECT-A cash debit USMCA then recon unique · wrappers DONE · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-NOW | PROD_READONLY_DATABASE_URL **IS SET** (Cursor 2026-08-30 18:34Z, direct host, ih35_ci_readonly) — do **not** wait on Jorge · NOW=DEFECT-A cash debit USMCA + recon unique · wrappers DONE · skip #15546 | GO
 

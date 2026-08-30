@@ -1,0 +1,8 @@
+GO-WAKE-ALL — CC-3  (live healthz 485c52d)
+THIS IS NOW. git pull. ACK in OUTBOX-CC-3.md.
+
+Do NOT start DRIVER-F7334 schema (lane-barred). NOW=next chrome-only unique leftover FAIL (500 / dead click / silent no-op).
+No isError mass-wire. No planners. Hearing list already shipped — do not rebuild.
+Never trigger_deploy. Skip #15546. Never recertify U14.
+
+ACK: CC-3 | ACK | GO-WAKE-ALL | SHA=485c52d | NOW=chrome-only-unique-leftover | GO

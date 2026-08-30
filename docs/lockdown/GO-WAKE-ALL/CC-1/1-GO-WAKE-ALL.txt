@@ -1,0 +1,12 @@
+GO-WAKE-ALL — CC-1  (live healthz 485c52d)
+THIS IS NOW. git pull. ACK in OUTBOX-CC-1.md.
+
+NOW=DEFECT-A USMCA invoice payment must debit cash. Then reconciliation_sessions unique per account+period (you own schema; no cancel route). Wrappers/R7 DONE — do not redo.
+PROD_READONLY_DATABASE_URL is already set on GitHub. Do not wait on Jorge.
+Never PROOF_REPLAY_FAIL_ON_FAIL globally. Never trigger_deploy. Skip #15546 #16895. Never recertify U14. USMCA only.
+
+ACK: CC-1 | ACK | GO-WAKE-ALL | SHA=485c52d | NOW=DEFECT-A-then-recon-unique | GO
+
+Repo: docs/lockdown/GO-WAKE-ALL-2026-08-30.md
+FEED: docs/bus/FEED/NOW-CC-1.md
+INBOX: docs/bus/INBOX-CC-1.md TOP
