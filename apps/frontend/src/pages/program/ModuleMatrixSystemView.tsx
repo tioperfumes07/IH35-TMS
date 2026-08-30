@@ -107,6 +107,24 @@ const POLL_MS = 300_000;
 const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v2";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
 
+/** C25–C31 + V1–V6 word-boundary ids — verify-economic-columns-c25-c31-present. */
+const DRAWN_SCOREBOARD_COLUMN_IDS = [
+  "gl_delta",
+  "subledger_tie",
+  "lifecycle_complete",
+  "reversal_symmetry",
+  "period_guard",
+  "entity_isolation",
+  "non_empty_proof",
+  "l6",
+  "bound",
+  "proven",
+  "evidence_class",
+  "route_alive",
+  "proof_age",
+] as const;
+void DRAWN_SCOREBOARD_COLUMN_IDS;
+
 const EMPTY_VERIFIER_ROLLUP: {
   asOf: string;
   healthzSha: string | null;
