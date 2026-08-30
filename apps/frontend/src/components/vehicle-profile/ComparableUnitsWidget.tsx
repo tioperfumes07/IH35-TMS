@@ -58,7 +58,7 @@ export function ComparableUnitsWidget({
           id="fleet-unit-comparison-detail"
           role="region"
           aria-label={`Fleet comparison for unit ${unitNumber}`}
-          className="mt-2 overflow-hidden rounded-sm border border-gray-200"
+          className="mt-2 overflow-hidden"
         >
           {/* MOBILE-RESPONSIVE-AUDIT: overflow-x-auto lets this table scroll horizontally on a
               narrow viewport instead of clipping under the parent's overflow-hidden (border-radius

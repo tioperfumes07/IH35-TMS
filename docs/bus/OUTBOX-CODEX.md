@@ -1,3 +1,5 @@
+CODEX | WORKING | CLS-F7507 | class=no-box-in-box | modules=fleet+dispatch+drivers+insurance | offenders=7→0-in-touched-files | baseline=unchanged | NEXT=focused+gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7506 | PR=#18152 @ 261785b530 | focused=guard+selftest+full-gate | Live=UNVERIFIED | NEXT=no-box-in-box-class-red | GO
 CODEX | WORKING | SAF-F7506 | ROOT=DOT-dwell-query-error-state-lacked-stable-evidence-hook | focused=guard+selftest+frontend | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7505 | PR=#18151 @ 7cfec08a28 | focused=normal+selftest+full-gate | NEXT=DOT-dwell-error-red | GO
 CODEX | WORKING | GUARD-F7505 | ROOT=Safety-create-error-class-rejected-generation-safe-captured-error | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO

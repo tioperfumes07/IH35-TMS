@@ -41,7 +41,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
     <div className="rounded-sm border border-slate-200 bg-[#FEF3C7] px-3 py-2 text-[11px] text-slate-700">
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+        <div className="space-y-1 p-2">
           <div className="text-[10px] font-semibold text-slate-700">Anticipated chargeback</div>
           <input
             type="number"
@@ -57,7 +57,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
-        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+        <div className="space-y-1 p-2">
           <div className="text-[10px] font-semibold text-slate-700">Detention expected</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("detention_expected_y_n")} />
@@ -86,7 +86,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                 }}
               />
               {detentionReasonsQuery.isError ? (
-                <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-[11px] text-red-700" role="alert">
+                <div className="bg-red-50 p-2 text-[11px] text-red-700" role="alert">
                   <div>Couldn't load detention reasons.</div>
                   <button
                     type="button"
@@ -122,7 +122,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
             className="h-8 w-full rounded-sm border border-gray-300 px-2 text-sm"
           />
         </div>
-        <div className="space-y-1 rounded-sm border border-slate-200 bg-white/70 p-2">
+        <div className="space-y-1 p-2">
           <div className="text-[10px] font-semibold text-slate-700">Late delivery risk</div>
           <label className="flex items-center gap-2">
             <input type="checkbox" {...register("late_delivery_risk_y_n")} />
