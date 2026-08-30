@@ -67,7 +67,7 @@ export function check(sources) {
     if (!/Couldn't load at-risk queue/.test(test)) {
       failures.push(`${FILES.test}: must assert ListErrorState title on failure`);
     }
-    if (!/No at-risk loads right now\./.test(test)) {
+    if (!/No at-risk or late loads right now\./.test(test)) {
       failures.push(`${FILES.test}: must prove emptyText is absent on error / present after retry`);
     }
     if (!/Retry/.test(test)) {
@@ -120,8 +120,9 @@ if (process.argv.includes("--selftest")) {
   `;
   const goodTest = `
     expect(await screen.findByText("Couldn't load at-risk queue")).toBeTruthy();
-    expect(screen.queryByText("No at-risk loads right now.")).toBeNull();
+    expect(screen.queryByText("No at-risk or late loads right now.")).toBeNull();
     await user.click(screen.getByRole("button", { name: /Retry/i }));
+    expect(await screen.findByText("No at-risk or late loads right now.")).toBeTruthy();
     expect(link.getAttribute("href")).toBe("/dispatch/loads/load-1");
     expect(customerLink.getAttribute("href")).toBe("/customers/customer-1");
     expect(driverLink.getAttribute("href")).toBe("/drivers/driver-1");
