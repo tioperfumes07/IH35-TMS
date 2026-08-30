@@ -6,6 +6,7 @@ import { cleanup } from "@testing-library/react";
 import type { ReactNode } from "react";
 import * as clientApi from "../../api/client";
 import { FuelCardOverageKpiCard, FuelFraudAlertsKpiCard } from "./FuelHome";
+import { FuelKpiRow } from "./components/FuelKpiRow";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -76,5 +77,22 @@ describe("FuelCardOverageKpiCard", () => {
     renderCard(<FuelCardOverageKpiCard />);
     await waitFor(() => expect(screen.getByText("0")).toBeInTheDocument());
     expect(screen.getByText(/Pending review · BANK-F10/i)).toBeInTheDocument();
+  });
+});
+
+describe("FuelKpiRow Loves sync honesty", () => {
+  afterEach(cleanup);
+
+  it("does not claim Never while either authoritative feed is unresolved", () => {
+    renderCard(<FuelKpiRow dashboard={undefined} lovesSyncStatus={undefined} />);
+    expect(screen.queryByText("Never")).not.toBeInTheDocument();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+  });
+
+  it("claims Never only after both feeds answer without a timestamp", () => {
+    renderCard(
+      <FuelKpiRow dashboard={{} as never} lovesSyncStatus={{ status: "ok", last_synced_at: null } as never} />,
+    );
+    expect(screen.getByText("Never")).toBeInTheDocument();
   });
 });
