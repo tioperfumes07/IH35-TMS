@@ -1,169 +1,111 @@
 #!/usr/bin/env node
 /**
- * GR-2 META-GUARD: does every guard's `--selftest` actually prove something?
+ * GR-2 META-GUARD (FW11 / CERT-01 slice B3): does every guard's `--selftest` prove something?
  *
- * WHY THIS EXISTS (GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2, 2026-08-29)
- * `scripts/verify-selftests-can-fail.mjs` already does a STATIC check on guards that define a named
- * `function selftest(...) { ... }`: it flags the body "inert" (calls neither the guard's own
- * assertion nor real repo source) or "fake-green" (collects problems, prints them, never exits
- * non-zero). Its heuristics are sound but its body-extraction only matches that one named-function
- * shape — a live census on this repo found only 1423 of 3658 `--selftest`-bearing guards use it; the
- * other ~2200 dispatch `--selftest` inline (`if (process.argv.includes("--selftest")) { ... }`) with
- * no `selftest()` function at all, so the sibling's extractor returns null for them and — by its own
- * documented contract ("no body → not inert, not fake-green") — silently treats every one of them as
- * real without ever inspecting what the block actually does. That gap is exactly the blind spot a
- * META-guard exists to close.
+ * REBUILT 2026-08-29 per IH35-FINISH-2026-08-29/CC-2/4-FW11-CORRECTED-SPEC.txt — a direct, verified
+ * correction to the first version of this file (PRs #17860 claim + #17863 build). That correction is
+ * load-bearing on this design, so it is recorded here rather than only in a commit message:
  *
- * This guard reimplements the same "inert / fake-green" contract (calls its own assertion or reads
- * real repo source; can exit non-zero; never collects problems and stays silent about it) but
- * extracts the body from EITHER shape — the named `function selftest` OR the first top-level
- * `if (...--selftest...) { ... }` block — using the same syntax-aware brace balancer the sibling
- * guard's own header credits for fixing an earlier truncation bug (`scripts/lib/brace-balance.mjs`).
+ * The first version judged "is this selftest real?" with a STATIC source-heuristic (does the extracted
+ * body call an assertion / read repo source / can it exit non-zero). The corrected-spec author tried
+ * exactly that category of approach across all 4,568 guards in this repo and got an 8x swing between
+ * two regex revisions (6.2% "real" -> 49.3% "real") from two documented false-negative modes: a planted
+ * check whose failure path didn't match the regex's exact shape, and a `selftest()` function defined
+ * above the line the extractor started reading from. Their conclusion, verified against this repo's own
+ * guards: **source heuristics cannot answer this question** — the reading itself produces confident
+ * wrong numbers, which is exactly the defect FW11 exists to eliminate.
  *
- * It then adds the dynamic half a static read can never prove: it actually RUNS
- * `node <guard> --selftest` for every guard, under the same no-reachable-database isolation
- * `verify-static.mjs` uses, and asserts the guard's own selftest currently exits zero on its real,
- * unmutated, currently-committed source — i.e. its planted-mutation self-test currently passes.
+ * Independently re-running that same category of check against verify-a5-audit-emit-banking.mjs live
+ * (2026-08-29, this rebuild) reproduced their finding directly: --selftest plants a real mutation (a
+ * fire-and-forget spine-emit rewrite) and asserts it is caught, exits 0 on success — but its stdout
+ * never states a machine-parseable "this many mutations, this many caught" report. A detector that
+ * requires such a report will not credit this guard as verified, even though it is doing real work; a
+ * detector that instead re-reads the source to guess intent is back in exactly the failure mode above.
+ * There is no third option that is both execution-based and lossless across every guard's own prose. So
+ * this guard accepts the conservative side of that trade explicitly (see "WHAT THIS DOES NOT CLAIM").
  *
- * A guard that fails the static half is "structurally fake" — the exact "printed SELFTEST PASS while
- * printing its own failures and exited 0" class the sibling guard's header describes, or a block that
- * never touches the guard's own check logic at all.
- * A guard that passes the static half (its selftest genuinely exercises real logic and can fail) but
- * fails the dynamic run is "currently broken" — a live self-detected regression, not a fake-green
- * report. Both are reported in their own bucket so neither class is silently folded into the other.
+ * WHAT THIS GUARD ACTUALLY GATES (cheap, static, runs every push, Rule 25 fail-fast):
+ * A guard either has a `--selftest` arm (an `argv.includes("--selftest")`/`argv.indexOf(...)` dispatch)
+ * or it does not. That single fact is measured by presence, not by reading what the arm does — there is
+ * nothing to misjudge. Guards with NO `--selftest` arm at all are WEAK by definition (a check with no
+ * self-test can silently rot with zero warning). The WEAK list is a SHRINK-ONLY ratchet, same contract
+ * as verify-static-ratchet.mjs: `scripts/verify-guard-selftests-are-real-weak-baseline.json` is a
+ * snapshot of which guards were weak as of the baseline measurement; CI fails if any guard NOT already
+ * on that list is weak today (a guard losing its --selftest arm, or a new guard shipping without one).
+ * Fixing one and removing it from the baseline is a small file diff.
  *
- * RATCHET: `scripts/verify-guard-selftests-are-real-known-debt.json` lists guards that predate this
- * rule, split into `structurally_fake` and `currently_broken`. SHRINK-ONLY, same contract as the
- * sibling guard's own debt file. Run `--write-baseline` once to seed it.
+ * WHAT THIS GUARD MEASURES BUT DOES NOT GATE (expensive, execution-based, `--full-scan` only):
+ * For guards that DO have a `--selftest` arm, this runs `node <guard> --selftest` for real (isolated
+ * from any reachable database, same sentinel pattern as verify-static.mjs) and classifies by what that
+ * execution actually produced — never by reading source:
+ *   - `currently_broken`   — the selftest's own exit code is non-zero right now (an objective fact).
+ *   - `verified_mutation_tested` — exit 0, AND some line of its combined stdout+stderr both mentions
+ *     "selftest" (case-insensitive) and reports an N/M count with N === M and M >= 1 (e.g. `SELFTEST
+ *     caught 3/3 planted regressions`, `SELFTEST PASS: 9/9 planted defects`, `SELFTEST: 2/2 shared-
+ *     driver mutations`) — self-reported, machine-parsed evidence that a real mutation was constructed,
+ *     checked, and would have failed the run had it survived. 854 guards in this repo already use a
+ *     `mutations = [...]` construct-and-check array (`verify-a2-audit-emit-dispatch.mjs` is the named
+ *     reference); this is the population that can satisfy this bucket today.
+ *   - `no_mutation_evidence` — exit 0, arm present, but no line matched that pattern. **This is NOT a
+ *     claim that the selftest is fake** (verify-a5-audit-emit-banking.mjs above is the proof: it is
+ *     doing real mutation work and lands here anyway, because it never prints a count). It means only
+ *     "this run did not offer execution-observable evidence," which is the honest, conservative label —
+ *     the alternative (reading its source to decide) is the exact thing this rebuild exists to stop.
+ * These three buckets are reported by `--full-scan` for visibility and burndown planning. None of them
+ * gates CI. Gating a measurement this noisy is how the first version produced a number nobody could
+ * stand behind; not gating it, and saying so here, is the corrected design.
  *
- * TWO-SPEED, same shape as verify-static-ratchet.mjs/verify-static.mjs: the dynamic half spawns a
- * child process per guard with `--selftest` (thousands of them), which takes minutes, not seconds —
- * unlike the sibling's pure-static scan, this cannot run on every push without breaking Rule 25
- * (fail-fast, seconds). So the DEFAULT (no-flag) invocation — the one wired into verify-steps and run
- * on every push — only checks that the committed debt-file baseline exists and is well-formed
- * (fast, no spawning, mirrors verify-static-ratchet.mjs's own git-show-and-compare pattern). The full
- * dynamic sweep across every guard runs ONLY on explicit `--full-scan` or `--write-baseline` — a
- * periodic, manually-triggered measurement, exactly like `npm run verify:static` itself is not wired
- * into the per-push chain either.
- *
- * Wired via `scripts/verify-steps/` only (Rule 17) — never `package.json`, `ci.yml`, or
- * `locked-guards.yml`.
+ * Wired via `scripts/verify-steps/` only (Rule 17) — never `package.json`, `ci.yml`, `locked-guards.yml`.
+ * verify-step 10051 already claimed+merged under this filename (PR #17860) — this is a same-file
+ * rewrite, not a new authorship, so no new CLAIMED-NUMBERS.json entry is taken (Rule 37 governs new
+ * claims; this isn't one).
  */
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { findMatchingBraceEnd } from "./lib/brace-balance.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCRIPTS = path.join(ROOT, "scripts");
 const SELF_PATH = fileURLToPath(import.meta.url);
 const SELF_NAME = path.basename(SELF_PATH);
-const DEBT_FILE = path.join(SCRIPTS, "verify-guard-selftests-are-real-known-debt.json");
+const BASELINE_FILE = path.join(SCRIPTS, "verify-guard-selftests-are-real-weak-baseline.json");
 const LABEL = "verify-guard-selftests-are-real";
 const WRITE_BASELINE = process.argv.includes("--write-baseline");
 const FULL_SCAN = process.argv.includes("--full-scan") || WRITE_BASELINE;
 const isDirectRun = process.argv[1] && path.resolve(process.argv[1]) === SELF_PATH;
 
 // ---------------------------------------------------------------------------------------------
-// Static half: extract the --selftest body (either shape) and classify it.
-
-/** Brace-balanced body of `function selftest(...) { ... }`, or null. */
-function namedSelftestBody(source) {
-  const m = /function\s+selftest\s*\([^)]*\)\s*\{/.exec(source);
-  if (!m) return null;
-  const openIndex = m.index + m[0].length - 1;
-  return source.slice(m.index, findMatchingBraceEnd(source, openIndex));
-}
-
-/** Index one past the `)` matching the `(` at `openIndex`, walking naive paren depth (this repo's
- *  guard `if (...)` conditions do not contain string/regex literals with unbalanced parens — unlike
- *  brace matching, no syntax-aware skip is needed here). */
-function findMatchingParenEnd(source, openIndex) {
-  let depth = 1;
-  let i = openIndex + 1;
-  while (i < source.length && depth > 0) {
-    if (source[i] === "(") depth++;
-    else if (source[i] === ")") depth--;
-    i++;
-  }
-  return i;
-}
-
-/** Brace-balanced body of the first top-level `if (...--selftest...) { ... }` dispatch block, or
- *  null. Tolerates nested parens in the condition (e.g. `argv.includes('--selftest')`) and any
- *  condition shape, as long as the literal `--selftest` string appears inside the `if (...)` head. */
-function inlineSelftestBody(source) {
-  const re = /if\s*\(/g;
-  let m;
-  while ((m = re.exec(source))) {
-    const openParen = m.index + m[0].length - 1;
-    const closeParen = findMatchingParenEnd(source, openParen);
-    const condition = source.slice(openParen, closeParen);
-    if (!condition.includes("--selftest")) continue;
-    const rest = source.slice(closeParen);
-    const braceMatch = /^\s*\{/.exec(rest);
-    if (!braceMatch) continue;
-    const openBrace = closeParen + braceMatch[0].length - 1;
-    return source.slice(m.index, findMatchingBraceEnd(source, openBrace));
-  }
-  return null;
-}
-
-/** Names of functions/consts defined at the top level of this guard file (same derivation as the
- *  sibling guard, kept name-agnostic so scan(), evaluate(), computeFailures()-style entrypoints are
- *  recognized, not only names starting with assert, check, or run. */
-function declaredFunctionNames(source) {
-  const names = new Set();
-  for (const m of source.matchAll(/^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/gm)) names.add(m[1]);
-  for (const m of source.matchAll(/^\s*(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?\(/gm)) names.add(m[1]);
-  names.delete("selftest");
-  return names;
-}
-
-/** True dispatch, not just the substring appearing in a comment/prose/string-compare elsewhere in
- *  the file (e.g. a guard that scans OTHER files for "--selftest" mentions it without exposing a
- *  --selftest mode of its own — verify-selftests-can-fail.mjs is exactly this shape). Requires an
- *  actual argv check: `argv.includes("--selftest")`, `argv.indexOf("--selftest")`, or equivalent. */
-function hasRealSelftestDispatch(source) {
+// Cheap, static, gated: does this guard have a --selftest arm at all? Presence only — never a
+// judgment about what the arm does once found (that question is answered by running it, below).
+export function hasSelftestArm(source) {
   return /\bargv\s*(?:\.includes\s*\(\s*["']--selftest["']\s*\)|\.indexOf\s*\(\s*["']--selftest["']\s*\))/.test(
     source,
   );
 }
 
-/** Static classification of a guard's --selftest body: is it structurally capable of failing?
- *  `unknown: true` (body shape not recognized — e.g. dispatched via an intermediate variable set
- *  far from its own `if`, a shape this extractor does not yet parse) is deliberately NOT the same
- *  as `inert: true`: an extractor miss must never be reported as a guard defect. Guards this static
- *  half cannot confidently read fall through to the dynamic-only check below. */
-export function classifyStatic(source) {
-  if (!hasRealSelftestDispatch(source)) return { hasSelftest: false };
-  const body = namedSelftestBody(source) ?? inlineSelftestBody(source);
-  if (!body) return { hasSelftest: true, unknown: true, inert: false, fakeGreen: false };
+function listGuardFiles(dir = SCRIPTS, self = SELF_NAME) {
+  return fs.readdirSync(dir).filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self).sort();
+}
 
-  const declared = declaredFunctionNames(source);
-  const callsAssertion =
-    /\b(assert\w*|check\w*|run\w*)\s*\(/.test(body) ||
-    [...declared].some((n) => new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\(`).test(body));
-  const readsRepo = /\bread\s*\(|readFileSync\s*\(/.test(body);
-  const canExitNonZero =
-    /process\.exit\(1\)/.test(body) ||
-    /process\.exitCode\s*=\s*1/.test(body) ||
-    /\b(fail|die|bail|abort)\s*\(/.test(body) ||
-    /\bthrow\b/.test(body);
-  const collectsProblems = /(problems|failures|errors)\s*\.\s*push/.test(body);
-  const fakeGreen = collectsProblems && !canExitNonZero;
-  const inert = !callsAssertion && !readsRepo;
-
-  return { hasSelftest: true, inert, fakeGreen };
+/** Names of every guard with no `--selftest` arm at all — cheap (no spawning), runs every push. */
+export function measureWeak({ dir = SCRIPTS, self = SELF_NAME, readSource } = {}) {
+  const read = readSource ?? ((f) => { try { return fs.readFileSync(f, "utf8"); } catch { return ""; } });
+  const weak = [];
+  for (const file of listGuardFiles(dir, self)) {
+    const src = read(path.join(dir, file));
+    if (!hasSelftestArm(src)) weak.push(file);
+  }
+  return weak.sort();
 }
 
 // ---------------------------------------------------------------------------------------------
-// Dynamic half: actually run `node <guard> --selftest`, isolated from any real database.
+// Expensive, execution-based, informational only: run --selftest for real and parse what it says
+// about itself. Never reads source to guess — the classification comes only from the child
+// process's own exit code and its own printed output.
 
-/** Same no-reachable-database isolation as verify-static.mjs's noDbEnv() — a static-sweep guard must
- *  never be able to reach a real Postgres, dev or prod, from this runner. Duplicated deliberately
+/** Same no-reachable-database isolation as verify-static.mjs's noDbEnv(). Duplicated deliberately
  *  (small, self-contained) rather than importing a private, unexported helper. */
 function noDbEnv(extraEnv = process.env) {
   const env = { ...extraEnv };
@@ -178,8 +120,7 @@ function noDbEnv(extraEnv = process.env) {
   return env;
 }
 
-/** Run `node <file> --selftest`, isolated from any real database, 20s timeout (selftest fixtures are
- *  in-process temp-dir work; anything slower is waiting on something it can't reach here). */
+/** Run `node <file> --selftest`, isolated from any real database, 20s timeout. */
 export function runSelftest(file, { env = process.env, timeout = 20000 } = {}) {
   const res = spawnSync(process.execPath, [file, "--selftest"], {
     env: noDbEnv(env),
@@ -195,26 +136,24 @@ export function runSelftest(file, { env = process.env, timeout = 20000 } = {}) {
   };
 }
 
-/** Classify one guard file: static-real + dynamic-pass, or the specific way it fails either. Pure
- *  w.r.t. the filesystem/child-process boundary passed in via options (testable without touching the
- *  real scripts/ directory). */
-export function classifyOne(file, { readSource, runner = runSelftest } = {}) {
-  const read = readSource ?? ((f) => { try { return fs.readFileSync(f, "utf8"); } catch { return ""; } });
-  const src = read(file);
-  const st = classifyStatic(src);
-  if (!st.hasSelftest) return { hasSelftest: false };
-
-  if (st.inert || st.fakeGreen) {
-    return {
-      hasSelftest: true,
-      real: false,
-      bucket: "structurally_fake",
-      reason: st.fakeGreen
-        ? "collects failures but never exits non-zero (fake-green)"
-        : "selftest body calls neither the guard's own assertion nor real repo source (inert)",
-    };
+/** Does this --selftest output self-report at least one N/M mutation count with N === M >= 1, on a
+ *  line that also mentions "selftest"? Whole-line match (not a fixed lookback window) so the count
+ *  and the keyword can appear in either order — real guards in this repo do both
+ *  ("SELFTEST caught 3/3 ..." and "SELFTEST: 2/2 shared-driver mutations"). */
+export function parseMutationReport(output) {
+  for (const line of output.split("\n")) {
+    if (!/selftest/i.test(line)) continue;
+    const m = /(\d+)\s*\/\s*(\d+)/.exec(line);
+    if (!m) continue;
+    const [n, total] = [Number(m[1]), Number(m[2])];
+    if (total >= 1 && n === total) return { line: line.trim(), n, total };
   }
+  return null;
+}
 
+/** Classify one guard that has a --selftest arm, by running it. Pure w.r.t. the child-process
+ *  boundary passed in via options (testable without touching the real scripts/ directory). */
+export function classifyByExecution(file, { runner = runSelftest } = {}) {
   const dyn = runner(file);
   if (dyn.status !== 0) {
     const detail = dyn.timedOut
@@ -222,111 +161,160 @@ export function classifyOne(file, { readSource, runner = runSelftest } = {}) {
       : dyn.spawnError
         ? `spawn error: ${dyn.spawnError.message}`
         : (dyn.out.split("\n").map((l) => l.trim()).filter(Boolean).pop() || "").slice(0, 200);
-    return { hasSelftest: true, real: false, bucket: "currently_broken", reason: detail };
+    return { bucket: "currently_broken", reason: detail };
   }
-
-  return { hasSelftest: true, real: true };
+  const report = parseMutationReport(dyn.out);
+  if (report) return { bucket: "verified_mutation_tested", reason: report.line };
+  return { bucket: "no_mutation_evidence", reason: "exits 0 but printed no parseable SELFTEST N/M report" };
 }
 
-/** Scan a directory of guard files. Returns { structurallyFake, currentlyBroken } name lists. */
-export function scan({ dir = SCRIPTS, self = SELF_NAME, runner = runSelftest } = {}) {
-  const structurallyFake = [];
+/** Full sweep: every guard with a --selftest arm, actually run. Minutes, not seconds — this is why
+ *  it is not the default (per-push) invocation; see the module header. */
+export function fullScan({ dir = SCRIPTS, self = SELF_NAME, readSource, runner = runSelftest } = {}) {
+  const read = readSource ?? ((f) => { try { return fs.readFileSync(f, "utf8"); } catch { return ""; } });
+  const weak = [];
+  const verifiedMutationTested = [];
+  const noMutationEvidence = [];
   const currentlyBroken = [];
-  const files = fs.readdirSync(dir).filter((f) => /^verify-.*\.mjs$/.test(f) && f !== self);
-  for (const file of files) {
+  for (const file of listGuardFiles(dir, self)) {
     const full = path.join(dir, file);
-    const verdict = classifyOne(full, { runner });
-    if (!verdict.hasSelftest || verdict.real) continue;
-    if (verdict.bucket === "structurally_fake") structurallyFake.push(file);
+    const src = read(full);
+    if (!hasSelftestArm(src)) { weak.push(file); continue; }
+    const { bucket } = classifyByExecution(full, { runner });
+    if (bucket === "verified_mutation_tested") verifiedMutationTested.push(file);
+    else if (bucket === "no_mutation_evidence") noMutationEvidence.push(file);
     else currentlyBroken.push(file);
   }
-  return { structurallyFake: structurallyFake.sort(), currentlyBroken: currentlyBroken.sort() };
+  return {
+    weak: weak.sort(),
+    verifiedMutationTested: verifiedMutationTested.sort(),
+    noMutationEvidence: noMutationEvidence.sort(),
+    currentlyBroken: currentlyBroken.sort(),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
-// Own planted-failure selftest (GO-TURBO-CC-2 WAVE-4: "a meta-guard with no selftest is the same
-// bug one level up"). Two fixtures in a temp dir:
-//   - a REAL guard: its --selftest plants a bad fixture, calls its own real check() against it, and
-//     exits 1 if check() fails to flag it. Must be classified real:true.
-//   - a FAKE-GREEN guard: its --selftest does nothing but print "PASS" and exit 0, never touching
-//     any check logic. Must be classified real:false, bucket:"structurally_fake".
-// If this guard ever stops distinguishing the two, its own selftest fails.
+// Own planted-failure selftest — execution-based, matching this file's own contract: a real
+// mutation, checked, self-reported as an N/M count on a line mentioning "selftest".
 function selftest() {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "verify-guard-selftests-are-real-selftest-"));
   try {
+    const checks = [];
+
+    checks.push([
+      "hasSelftestArm(): true for a real argv.includes('--selftest') dispatch",
+      hasSelftestArm("if (process.argv.includes('--selftest')) { doThing(); }") === true,
+    ]);
+    checks.push([
+      "hasSelftestArm(): false when the guard never dispatches on --selftest",
+      hasSelftestArm("console.log('no selftest arm here at all');") === false,
+    ]);
+
+    checks.push([
+      "parseMutationReport(): catches 'SELFTEST caught 3/3 planted regressions'",
+      (() => {
+        const r = parseMutationReport("[verify-x] SELFTEST caught 3/3 planted regressions");
+        return r !== null && r.n === 3 && r.total === 3;
+      })(),
+    ]);
+    checks.push([
+      "parseMutationReport(): catches 'SELFTEST: 2/2 shared-driver mutations' (count before keyword order n/a, same line)",
+      (() => {
+        const r = parseMutationReport("SELFTEST: 2/2 shared-driver mutations");
+        return r !== null && r.n === 2 && r.total === 2;
+      })(),
+    ]);
+    checks.push([
+      "parseMutationReport(): rejects a partial catch (1/2 — a real mutation survived)",
+      parseMutationReport("SELFTEST caught 1/2 planted regressions") === null,
+    ]);
+    checks.push([
+      "parseMutationReport(): rejects an N/M report with no 'selftest' keyword on the line (not this guard's business)",
+      parseMutationReport("unrelated line reports 3/3 for something else") === null,
+    ]);
+    checks.push([
+      "parseMutationReport(): rejects plain 'ALL CHECKS PASSED' with no count (verify-a5's own shape)",
+      parseMutationReport("[verify-a5] ALL CHECKS PASSED") === null,
+    ]);
+
+    // classifyByExecution against three planted fixtures: real (reports N/M), silent-but-real
+    // (verify-a5's own shape — exits 0, no report), and broken (exits 1).
     fs.writeFileSync(
-      path.join(tmp, "verify-real-fixture.mjs"),
+      path.join(tmp, "verify-mutation-fixture.mjs"),
       [
-        "function check(value) { return value === 'good'; }",
-        "if (process.argv.includes('--selftest')) {",
-        "  const bad = check('bad-planted-mutation');",
-        "  const good = check('good');",
-        "  if (bad !== false || good !== true) { console.error('selftest failed to catch the planted mutation'); process.exit(1); }",
-        "  console.log('selftest OK'); process.exit(0);",
-        "}",
-        "console.log('normal run'); process.exit(0);",
+        "console.log('SELFTEST caught 2/2 planted mutations');",
+        "process.exit(0);",
         "",
       ].join("\n"),
     );
     fs.writeFileSync(
-      path.join(tmp, "verify-fakegreen-fixture.mjs"),
-      [
-        "if (process.argv.includes('--selftest')) {",
-        "  console.log('SELFTEST PASS'); process.exit(0);",
-        "}",
-        "console.log('normal run'); process.exit(0);",
-        "",
-      ].join("\n"),
+      path.join(tmp, "verify-silent-fixture.mjs"),
+      ["console.log('ALL CHECKS PASSED');", "process.exit(0);", ""].join("\n"),
+    );
+    fs.writeFileSync(
+      path.join(tmp, "verify-broken-fixture.mjs"),
+      ["console.error('SELFTEST FAIL: 1/2 caught');", "process.exit(1);", ""].join("\n"),
     );
 
-    const real = classifyOne(path.join(tmp, "verify-real-fixture.mjs"));
-    const fake = classifyOne(path.join(tmp, "verify-fakegreen-fixture.mjs"));
+    const mutationVerdict = classifyByExecution(path.join(tmp, "verify-mutation-fixture.mjs"));
+    const silentVerdict = classifyByExecution(path.join(tmp, "verify-silent-fixture.mjs"));
+    const brokenVerdict = classifyByExecution(path.join(tmp, "verify-broken-fixture.mjs"));
 
-    const checks = [
-      ["real fixture classified real:true", real.hasSelftest === true && real.real === true],
-      [
-        "fake-green fixture classified real:false/structurally_fake",
-        fake.hasSelftest === true && fake.real === false && fake.bucket === "structurally_fake",
-      ],
-    ];
+    checks.push(["classifyByExecution(): reporting fixture -> verified_mutation_tested", mutationVerdict.bucket === "verified_mutation_tested"]);
+    checks.push(["classifyByExecution(): silent-but-exit-0 fixture -> no_mutation_evidence (not falsely 'fake')", silentVerdict.bucket === "no_mutation_evidence"]);
+    checks.push(["classifyByExecution(): non-zero-exit fixture -> currently_broken", brokenVerdict.bucket === "currently_broken"]);
+
     const failed = checks.filter(([, ok]) => !ok);
     if (failed.length) {
       console.error(`${LABEL} --selftest FAILED:`);
       for (const [name] of failed) console.error(`  ✗ ${name}`);
       process.exit(1);
     }
-    console.log(`${LABEL} --selftest OK — ${checks.length}/${checks.length} planted-fixture checks passed`);
+    console.log(`${LABEL} SELFTEST caught ${checks.length}/${checks.length} planted mutations`);
     process.exit(0);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
 
-/** Fast, no-spawning check for the default (per-push) invocation: the committed debt-file baseline
- *  must exist and be well-formed. This is what CI actually gates on every push; it does NOT re-run
- *  the expensive per-guard sweep (see the module header). Mirrors verify-static-ratchet.mjs's own
- *  "check the committed artifact, don't regenerate it" contract. */
-function checkBaselineFast() {
-  let raw;
+/** Fast, no-spawning check for the default (per-push) invocation: current WEAK list must be a
+ *  subset of the committed baseline (shrink-only ratchet — same contract as
+ *  verify-static-ratchet.mjs). This is the ONLY thing CI gates on every push; see module header
+ *  for why the execution-based buckets are measured but not gated. */
+function checkWeakRatchet() {
+  let baseline;
   try {
-    raw = JSON.parse(fs.readFileSync(DEBT_FILE, "utf8"));
+    baseline = JSON.parse(fs.readFileSync(BASELINE_FILE, "utf8"));
   } catch (e) {
     console.error(
-      `${LABEL} FAILED — ${path.basename(DEBT_FILE)} missing or invalid JSON (${e.message}). ` +
+      `${LABEL} FAILED — ${path.basename(BASELINE_FILE)} missing or invalid JSON (${e.message}). ` +
       `Run: node ${path.relative(ROOT, SELF_PATH)} --write-baseline`,
     );
     process.exit(1);
   }
-  if (!Array.isArray(raw.structurally_fake) || !Array.isArray(raw.currently_broken)) {
-    console.error(
-      `${LABEL} FAILED — ${path.basename(DEBT_FILE)} is missing structurally_fake/currently_broken arrays.`,
-    );
+  if (!Array.isArray(baseline.weak)) {
+    console.error(`${LABEL} FAILED — ${path.basename(BASELINE_FILE)} is missing a weak[] array.`);
+    process.exit(1);
+  }
+  const baselineWeak = new Set(baseline.weak);
+  const currentWeak = measureWeak();
+  const newWeak = currentWeak.filter((f) => !baselineWeak.has(f));
+  const fixed = baseline.weak.filter((f) => !currentWeak.includes(f));
+
+  if (fixed.length) {
+    console.log(`${LABEL}: ${fixed.length} guard(s) gained a --selftest arm since baseline (remove from baseline, shrink-only):`);
+    for (const f of fixed) console.log(`  ✓ ${f}`);
+  }
+  if (newWeak.length) {
+    console.error(`${LABEL} FAILED — ${newWeak.length} guard(s) have NO --selftest arm and are not on the baseline:`);
+    for (const f of newWeak) console.error(`  ${f}`);
+    console.error(`Adding to the baseline is tampering, not a fix — give the guard a --selftest arm instead.`);
     process.exit(1);
   }
   console.log(
-    `${LABEL} OK (baseline check) — ${raw.structurally_fake.length} structurally_fake + ` +
-    `${raw.currently_broken.length} currently_broken tracked. Run with --full-scan for a fresh ` +
-    `measurement (spawns every guard's --selftest; minutes, not seconds — not run on every push).`,
+    `${LABEL} OK — no NEW weak (no-selftest-arm) guards. ${currentWeak.length} of ${listGuardFiles().length} ` +
+    `total guards are weak (tracked baseline; shrink-only). Run with --full-scan for the execution-based ` +
+    `verified_mutation_tested / no_mutation_evidence / currently_broken breakdown (not gated; minutes, not seconds).`,
   );
   process.exit(0);
 }
@@ -336,80 +324,35 @@ if (isDirectRun) {
   if (process.argv.includes("--selftest")) {
     selftest();
   } else if (!FULL_SCAN) {
-    checkBaselineFast();
+    checkWeakRatchet();
   } else {
-    const { structurallyFake, currentlyBroken } = scan();
+    const result = fullScan();
 
     if (WRITE_BASELINE) {
       fs.writeFileSync(
-        DEBT_FILE,
+        BASELINE_FILE,
         JSON.stringify(
           {
             note:
-              "Guards whose --selftest predates verify-guard-selftests-are-real and is either " +
-              "structurally fake (static: inert body, or fake-green — collects problems but never " +
-              "exits non-zero) or currently broken (dynamic: `node <guard> --selftest` exits " +
-              "non-zero today). RATCHET: this list may only SHRINK, split per bucket. Fix one, " +
-              "remove its line.",
-            structurally_fake: structurallyFake,
-            currently_broken: currentlyBroken,
+              "Guards with no --selftest arm at all (measured by presence, not by reading what an arm " +
+              "does). SHRINK-ONLY ratchet gated every push. Give a guard a --selftest arm and remove its " +
+              "line here — never add a line to make CI pass.",
+            measured_at: new Date().toISOString(),
+            weak: result.weak,
           },
           null,
           2,
         ) + "\n",
       );
-      console.log(
-        `${LABEL}: baseline written — ${structurallyFake.length} structurally_fake, ${currentlyBroken.length} currently_broken`,
-      );
-      process.exit(0);
+      console.log(`${LABEL}: weak baseline written — ${result.weak.length} guards with no --selftest arm.`);
     }
 
-    let debt = { structurally_fake: [], currently_broken: [] };
-    try {
-      const raw = JSON.parse(fs.readFileSync(DEBT_FILE, "utf8"));
-      debt = { structurally_fake: raw.structurally_fake ?? [], currently_broken: raw.currently_broken ?? [] };
-    } catch {
-      /* no baseline → everything is new */
-    }
-    const debtFake = new Set(debt.structurally_fake);
-    const debtBroken = new Set(debt.currently_broken);
-
-    const newFake = structurallyFake.filter((f) => !debtFake.has(f));
-    const newBroken = currentlyBroken.filter((f) => !debtBroken.has(f));
-    const fixedFake = debt.structurally_fake.filter((f) => !structurallyFake.includes(f));
-    const fixedBroken = debt.currently_broken.filter((f) => !currentlyBroken.includes(f));
-
-    if (fixedFake.length || fixedBroken.length) {
-      console.log(
-        `${LABEL}: ${fixedFake.length + fixedBroken.length} known-debt entr(y/ies) now FIXED — remove them from the baseline (shrink-only):`,
-      );
-      for (const f of fixedFake) console.log(`  ✓ fixed (structurally_fake): ${f}`);
-      for (const f of fixedBroken) console.log(`  ✓ fixed (currently_broken): ${f}`);
-    }
-
-    const problems = [];
-    if (newFake.length) {
-      problems.push(
-        `${newFake.length} NEW guard(s) with a structurally fake --selftest (unconditional pass, never exercises real logic):`,
-        ...newFake.map((f) => `  ${f}`),
-      );
-    }
-    if (newBroken.length) {
-      problems.push(
-        `${newBroken.length} NEW guard(s) whose real --selftest currently fails (node <guard> --selftest exits non-zero):`,
-        ...newBroken.map((f) => `  ${f}`),
-      );
-    }
-
-    if (problems.length) {
-      console.error(`${LABEL} FAILED:`);
-      for (const p of problems) console.error(p);
-      process.exit(1);
-    }
-
-    console.log(
-      `${LABEL} OK — no NEW structurally-fake or currently-broken selftests. ` +
-      `${debtFake.size} structurally_fake + ${debtBroken.size} currently_broken pre-existing (tracked for burndown).`,
-    );
+    const total = result.weak.length + result.verifiedMutationTested.length + result.noMutationEvidence.length + result.currentlyBroken.length;
+    console.log(`${LABEL} --full-scan — ${total} guards measured:`);
+    console.log(`  weak (no --selftest arm):            ${result.weak.length}`);
+    console.log(`  verified_mutation_tested (has N/M):  ${result.verifiedMutationTested.length}`);
+    console.log(`  no_mutation_evidence (exit 0, silent): ${result.noMutationEvidence.length}`);
+    console.log(`  currently_broken (--selftest fails):  ${result.currentlyBroken.length}`);
+    console.log(`These three execution-based buckets are informational only — see module header for why.`);
   }
 }
