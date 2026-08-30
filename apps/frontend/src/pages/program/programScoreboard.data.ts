@@ -29,12 +29,12 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "48e08e5",
+  "healthzSha": "9c61c63",
   "generated_at": "2026-08-30T05:49:21.000Z",
   "meta": {
     "generatedAt": "2026-08-30T00:49:21-05:00",
-    "sourceSha": "295320d25",
-    "deployedSha": "48e08e5",
+    "sourceSha": "295320d259",
+    "deployedSha": "9c61c63",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2308,
     "failOpen": 177,
@@ -627,7 +627,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "safety",
-      "build": "37/38",
+      "build": "38/38",
       "cells": [
         "AUDIT",
         "FAIL",
