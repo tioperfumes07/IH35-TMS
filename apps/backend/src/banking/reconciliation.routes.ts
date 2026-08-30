@@ -63,6 +63,11 @@ const completeBodySchema = z.object({
   reason: z.string().trim().max(500).optional(),
 });
 
+const voidBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  reason: z.string().trim().min(1).max(500),
+});
+
 const csvUploadBodySchema = z.object({
   bank_account_id: z.string().uuid(),
 });
@@ -291,6 +296,37 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
     );
     if (!usable) return reply.code(404).send({ error: "bank_account_not_found" });
 
+    // GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD — nothing here checked for an existing session on
+    // this exact account+period before inserting a new one, so a double-click (or a retried request)
+    // silently created duplicate 'open' rows for the same real-world statement. Route-level check for
+    // a clear 409 with the existing session id; the DB-level backstop is the partial unique index
+    // ux_reconciliation_sessions_one_per_account_period (WHERE status <> 'voided') added alongside
+    // the void mechanism this same finding shipped.
+    const existing = await withCompanyScope(user.uuid, accountContext.operating_company_id, (client) =>
+      client.query<{ id: string; status: string }>(
+        `
+          SELECT id, status
+          FROM banking.reconciliation_sessions
+          WHERE bank_account_id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND period_start = $3::date
+            AND period_end = $4::date
+            AND status <> 'voided'
+          LIMIT 1
+        `,
+        [body.data.bank_account_id, accountContext.operating_company_id, body.data.period_start, body.data.period_end]
+      )
+    );
+    const existingSession = existing.rows[0];
+    if (existingSession) {
+      return reply.code(409).send({
+        error: "session_already_exists",
+        message: `A ${existingSession.status} reconciliation session already exists for this account and period. Void it first (POST /:sessionId/void) to start a new one.`,
+        session_id: existingSession.id,
+        status: existingSession.status,
+      });
+    }
+
     const created = await withCompanyScope(user.uuid, accountContext.operating_company_id, async (client) => {
       const priorRes = await client.query<{ statement_balance_cents: string | number | null }>(
         `
@@ -404,6 +440,79 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
       )
     );
     return { session_id: created };
+  });
+
+  // GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD — the only prior way to get rid of a mistaken session
+  // was 'complete' (force_complete included) or letting it sit open forever; neither is honest for
+  // "this was a duplicate/mistake, not a real reconciliation." Void-not-delete, same pattern as every
+  // other money-adjacent table: a 'reconciled' session can NEVER be voided (that is a closed period,
+  // BANK-DOM-02's own immutability law — reopen it first if it is genuinely wrong), only 'open' /
+  // 'disputed' / 'finalized' / 'reopened' sessions are eligible.
+  app.post("/api/v1/banking/reconciliation/:sessionId/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!OWNER_ADMIN_ROLES.has(user.role as ReconciliationRole)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator only" });
+    }
+
+    const params = sessionParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = voidBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const session = await loadSession(user.uuid, params.data.sessionId, body.data.operating_company_id);
+    if (!session) return reply.code(404).send({ error: "session_not_found" });
+    if (session.status === "voided") {
+      return reply.code(409).send({ error: "already_voided" });
+    }
+    if (session.status === "reconciled") {
+      return reply.code(422).send({
+        error: "reconciled_session_locked",
+        message: "A reconciled session is a closed period and cannot be voided — reopen it first if it is genuinely wrong.",
+      });
+    }
+
+    const voided = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      const res = await client.query<{ id: string }>(
+        `
+          UPDATE banking.reconciliation_sessions
+          SET status = 'voided',
+              voided_at = now(),
+              voided_by_user_id = $3::uuid,
+              void_reason = $4,
+              updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND status <> 'voided'
+            AND status <> 'reconciled'
+          RETURNING id
+        `,
+        [params.data.sessionId, body.data.operating_company_id, user.uuid, body.data.reason]
+      );
+      const voidedId = res.rows[0]?.id;
+      if (!voidedId) return null;
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.reconciliation.voided",
+        {
+          resource_type: "banking.reconciliation_sessions",
+          resource_id: voidedId,
+          operating_company_id: body.data.operating_company_id,
+          bank_account_id: session.bank_account_id,
+          period_start: session.period_start,
+          period_end: session.period_end,
+          prior_status: session.status,
+          reason: body.data.reason,
+        },
+        "warning",
+        "GO-ACCT-01-RECON-VOID"
+      );
+      return voidedId;
+    });
+
+    if (!voided) return reply.code(409).send({ error: "void_race_lost" });
+    return { session_id: voided, status: "voided" };
   });
 
   app.get("/api/v1/banking/reconciliation/:sessionId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
