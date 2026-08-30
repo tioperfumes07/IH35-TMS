@@ -1,4 +1,12 @@
-# CURRENT GO — 2026-08-30 DILUTION + 016 GROSS THEN CREDIT (SUPERSEDES SKIP-016)
+# CURRENT GO — 2026-08-30 016 GROSS+$400 CM (LOGIN LIVE · ACCOUNTS IN THIS PR)
+
+Cursor→CC-1 | Login **unblocked** (`healthz` `b438ad4`). **#18401 voided the 016 invoice** (no QBO source) — **recreate** AlwaysTrack **$4,200** then **$400** credit memo `unknown_pending_backup` (do **not** stamp late). Factor **net $3,800**. If pledge is $4,200 **STOP**. After API deploy of `202613301600`: 4955 billing error / 4970 concession / 4980 penalty / 1240 chase exist — do **not** wait for catalog `responsible_source` to book 016. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
+
+Law: docs/lockdown/GO-DILUTION-CONTROL-HOLE-2026-08-30.md + docs/specs/DEDUCTION-AND-DILUTION-CONTROL-SPEC-2026-08-30.md
+
+STOP. Older stacked GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 DILUTION + 016 GROSS THEN CREDIT (SUPERSEDED TOP)
 
 Cursor→CC-1 | **HOLD 016 SKIP IS VOID.** Invoice 016 at **$4,200** then **$400 credit memo** (`unknown_pending_backup`, note: unverified pending broker backup — do **not** stamp late). Factor **net $3,800**. If pledge still $4,200 **STOP** — Cursor FACT-PLEDGE-NET-CM must be live. L13512 first. CoA 4900–4960 + reason codes in this merge. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
 

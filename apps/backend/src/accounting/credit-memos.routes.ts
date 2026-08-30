@@ -27,6 +27,13 @@ const CREDIT_MEMO_REASONS = [
   "detention_denied",
   "factoring_dilution",
   "unknown_pending_backup",
+  "billing_error_ours",
+  "penalty_assessed",
+  "agreed_concession",
+  "quick_pay_discount",
+  "unauthorized_deduction",
+  "unearned_discount",
+  "rate_underpaid",
   "other",
 ] as const;
 
