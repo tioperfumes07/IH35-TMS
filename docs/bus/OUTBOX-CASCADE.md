@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50220 | system · SILENT-NO-OP — CarrierSwitcher "Make default" no try/catch, setDefaultMutation no onError | GO
 CASCADE | FINDING | 50219 | safety · SILENT-NO-OP — SafetyLayout prefsMutation no onError, void mutateAsync unhandled rejection | GO
 CASCADE | FINDING | 50218 | lists · STALE-DATA-AFTER-MUTATION — ListsHubPage forceSyncMutation only toasts, does not invalidate qboHealthQuery or activityQuery | GO
 CASCADE | FINDING | 50215-50216 | customers+vendors · DOUBLE-SUBMIT — batch action buttons missing disabled={isPending} guard | GO
