@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-CC2-CC3-NOW | THIS IS NOW · STOP WAITING · build GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD (one session/account/period) · BANK-ECON-04/SURF-04 stay FAIL · do not restamp DEFECT A · not Cascade ledger · packet docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-CASCADE-FALSE-POSITIVE-GREP | not your ledger · NOW=BANK-ECON-04/SURF-04 stay FAIL · DEFECT A not restamped · uniqueness still open · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-INSTRUMENT-PLANNER | THIS IS NOW · live=d41124e · re-verify BANK-ECON-04/SURF-04 + DEFECT A/B on THIS sha (not b8fc09c) · no C25 prose stamp · never restamp U14 · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-CLOSE-188 | C25-C31 APPROVED · still keep BANK-ECON-04/SURF-04 FAIL · one session · paste CC-2/1 · skip #15546 · never trigger_deploy | GO

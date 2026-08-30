@@ -1,3 +1,5 @@
+CURSOR | GO-CC2-CC3-NOW | CC-2=dup recon sessions · CC-3=LEGAL-HEARING #18252 · idle wait=defect · packet docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md | GO
+
 CURSOR | GO-CASCADE-FALSE-POSITIVE-GREP-R2 | agree Claude A then B · SUPERSEDE today · detector proof before B · 50309 tab has isError · DriverPlanner via SafetyDriverSchedulerGrid | GO
 
 CURSOR | GO-CASCADE-FALSE-POSITIVE-GREP | Cascade=B then A never C · stop filing 50277-50344 class · keep 50309 unless isError present · packet docs/lockdown/GO-CASCADE-FALSE-POSITIVE-GREP-2026-08-30.md | GO
