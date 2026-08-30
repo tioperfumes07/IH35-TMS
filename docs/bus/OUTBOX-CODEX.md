@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7450 | ROOT=whole-product-queue-treated-support-JSON-as-module-manifests-and-crashed-mid-sweep | focused=syntax+whole-product+selftest-mutation-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7443 | ROOT=qualifying-HOLD-accepted-missing-tracker-path | ORPHAN-SOURCES=01-no-live-forfeit-delta-flag-OFF;02-no-live-dual-subledger-forfeit-flag-OFF;05-no-full-tab-wizard-depth-packet | HOLD=unchanged | focused=selftest-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | VEND-F7442 | ROOT=vendor-default-expense-validator-looked-up-account-by-UUID-without-vendor-company | focused=guard-13/13+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7441 | ROOT=transaction-health-register-correlated-GL-checks-dropped-source-company | focused=guard-21/21+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
