@@ -3,7 +3,8 @@
  * GUARD: module completion is N of M checklist items — not PR volume.
  *
  * docs/module-completion/<module>.json is the machine source of truth.
- * - complete:true is ILLEGAL while any item is not PASS or qualifying HOLD
+ * - complete:true is ILLEGAL while any item is not a qualifying HOLD or PASS with prod_verified:true
+ *   (universal — not an allowlist of modules; PASS-only self-reports never count toward N)
  * - complete:true is ILLEGAL while any open|draining wave card in
  *   docs/audit/wave-queue.json lists the module (cross-cutting class still open)
  * - complete:false is REQUIRED (legal) when N===M BUT pinning open wave cards list the module
@@ -84,43 +85,21 @@ export function qualifiesHold(item) {
   );
 }
 
-/** Urgent-6 launch modules — PASS without prod_verified does not count toward N or complete:true. */
-export const URGENT_6_COMPLETION_IDS = new Set([
-  "accounting",
-  "banking",
-  "settlements",
-  "factoring",
-  "dispatch",
-  "vendors",
-]);
-
-/**
- * OWNER-REOPENED MODULES (GO-T07-SAFETY, owner 2026-08-29) — a SEPARATE, narrower set from
- * URGENT_6_COMPLETION_IDS (which names exactly the 6 launch-critical modules and must stay exactly
- * those 6 for the many other places in the repo that read "urgent-6" as a fixed cohort). This set
- * is for a module the owner has independently found fake-green (complete:true on status:PASS
- * self-reports with far fewer items actually prod_verified) and re-opened to the same
- * prod_verified-required binding standard the urgent-6 already use, without touching that list's
- * membership or count. safety.json was 2/38 prod_verified while complete:true (docs/module-
- * completion/safety.json note, GO-CC-1.txt packet /Users/jorgemunoz/Downloads/IH35-GO-NOW-2026-08-29/).
- */
-// GO-T07-FOUR (owner 2026-08-29, external packet CC-3/YOUR-JOB-CC-3.txt): the same fake-green
-// class as safety above, independently found across four more modules -- complete:true resting on
-// status:PASS self-reports while most items were never independently prod_verified:
-//   driver-hub 3/7, cash-flow 1/3, fleet 6/7 bound; users was ALREADY corrected to complete:false
-// mid-session by CC-2 (see docs/module-completion/users.json note) but is added here too so it
-// cannot silently regress back to fake-complete if a future PASS item lands without a stamp.
-export const OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS = new Set(["safety", "driver-hub", "cash-flow", "fleet", "users"]);
-
-export function itemCountsTowardN(item, moduleId) {
+export function itemCountsTowardN(item, _moduleId) {
   if (qualifiesHold(item)) return true;
   if (item.status !== "PASS") return false;
-  if (
-    (URGENT_6_COMPLETION_IDS.has(moduleId) || OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS.has(moduleId)) &&
-    item.prod_verified !== true
-  )
-    return false;
+  // prod_verified gates N for EVERY module. An allowlist means the protection only exists
+  // where someone remembered to add a name.
+  if (item.prod_verified !== true) return false;
   return true;
+}
+
+/** Human scoreboard status: unbound PASS is UNVERIFIED, never a fake PASS count. */
+export function displayCompletionStatus(item, moduleId) {
+  if (qualifiesHold(item)) return "HOLD";
+  if (itemCountsTowardN(item, moduleId)) return "PASS";
+  if (item.status === "PASS") return "UNVERIFIED";
+  return item.status;
 }
 
 export function scoreManifest(data) {
@@ -261,10 +240,10 @@ export function assertManifestShape(file, data, opts = {}) {
       `${file}: complete:true ILLEGAL — open wave card(s) list this module: ${openWaves.join(", ")} (set complete:false until classes drain)`
     );
   }
-  // All items PASS/HOLD: complete:true required UNLESS cross-cutting open waves list the module.
+  // All items bound (PASS+prod_verified or qualifying HOLD): complete:true required UNLESS open waves.
   if (data.complete === false && N === M && M > 0 && openWaves.length === 0) {
     problems.push(
-      `${file}: all items PASS/HOLD but complete:false — set complete:true or fix item statuses`
+      `${file}: all items bound (prod_verified or qualifying HOLD) but complete:false — set complete:true or unbind items`
     );
   }
   return problems;
@@ -312,13 +291,18 @@ export function renderMarkdown(data, score) {
     `|---|---:|`,
   ];
   const counts = { PASS: 0, HOLD: 0, OPEN: 0, FAIL: 0, UNVERIFIED: 0 };
-  for (const it of data.items) counts[it.status] = (counts[it.status] || 0) + 1;
+  const moduleId = typeof data.module === "string" ? data.module : "";
+  for (const it of data.items) {
+    const st = displayCompletionStatus(it, moduleId);
+    counts[st] = (counts[st] || 0) + 1;
+  }
   for (const [k, v] of Object.entries(counts)) lines.push(`| ${k} | ${v} |`);
   lines.push(...renderRankedFailRegistry(data));
   lines.push("", "| ID | Status | Title | Evidence | PR |", "|---|---|---|---|---|");
   for (const it of data.items) {
+    const st = displayCompletionStatus(it, moduleId);
     lines.push(
-      `| \`${it.id}\` | **${it.status}** | ${it.title} | ${String(it.evidence || "").replace(/\|/g, "/")} | ${it.pr || "—"} |`
+      `| \`${it.id}\` | **${st}** | ${it.title} | ${String(it.evidence || "").replace(/\|/g, "/")} | ${it.pr || "—"} |`
     );
   }
   lines.push("", `Desktop audit: ${data.desktop_audit || "—"}`, "");
@@ -505,7 +489,7 @@ if (isMain && SELFTEST) {
   }
   // C) all-PASS + complete:false + NO open wave → still must set complete:true
   const staleIncomplete = assertManifestShape("banking.json", allPassFalse, { openWaveIds: [] });
-  if (!staleIncomplete.some((x) => x.includes("set complete:true"))) {
+  if (!staleIncomplete.some((x) => x.includes("set complete:true") || x.includes("all items bound"))) {
     failures.push("all-PASS+no-wave+complete:false not forced to complete:true");
   }
   // D) all-PASS + complete:true + NO open wave → legal
@@ -556,6 +540,35 @@ if (isMain && SELFTEST) {
     failures.push("Urgent-6 PASS without prod_verified still allowed complete:true");
   }
 
+  const unboundPass = {
+    module: "reports",
+    complete: false,
+    items: [
+      { ...passItem("RPT-S01"), prod_verified: false },
+      { ...passItem("RPT-VERIFY-01"), prod_verified: false },
+    ],
+  };
+  const unboundScore = scoreManifest(unboundPass);
+  if (unboundScore.progress !== "0 of 2") {
+    failures.push(`unbound PASS must score 0 of M, got ${unboundScore.progress}`);
+  }
+  const unboundShape = assertManifestShape("reports.json", unboundPass, { openWaveIds: [] });
+  if (unboundShape.some((x) => /set complete:true/.test(x))) {
+    failures.push("unbound PASS must not instruct set complete:true");
+  }
+  const unboundMd = renderMarkdown(unboundPass, unboundScore);
+  if (!unboundMd.includes("PROGRESS: 0 of 2") || !unboundMd.includes("| UNVERIFIED | 2 |")) {
+    failures.push("unbound PASS md must show 0 of 2 and UNVERIFIED 2, not fake PASS 2");
+  }
+  const unboundComplete = assertManifestShape(
+    "reports.json",
+    { ...unboundPass, complete: true },
+    { openWaveIds: [] }
+  );
+  if (!unboundComplete.some((x) => x.includes("complete:true ILLEGAL"))) {
+    failures.push("unbound PASS + complete:true must be illegal on every module");
+  }
+
   const emptyP = assertLiveVerifiedStamps({
     stamps: collectLiveVerifiedStamps([{ file: "x.json", data: { items: [passItem("Z1")] } }]),
     healthzSha: "deadbeef",
@@ -576,7 +589,7 @@ if (isMain && SELFTEST) {
     healthzSha: head,
     gitRoot: ROOT,
   });
-  if (!staleP.some((x) => x.includes("not a git commit") || x.includes("not an ancestor"))) {
+  if (!staleP.some((x) => x.includes("not a git commit") || x.includes("not an ancestor") || x.includes("CANNOT DETERMINE"))) {
     failures.push("L6 stale/non-commit stamp not caught");
   }
 

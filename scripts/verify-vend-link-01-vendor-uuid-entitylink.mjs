@@ -71,8 +71,8 @@ export function collectProblems(overrides = {}) {
     //
     // ACCT-GUARD-F7300-class fix (2026-08-29): this check used to require complete:true
     // whenever no open wave listed vendors, based purely on item.status. It never learned
-    // about URGENT_6_COMPLETION_IDS (verify-module-completion.mjs) — vendors is one of the six
-    // launch modules where a PASS item only counts toward N if it is ALSO prod_verified. With
+    // about universal prod_verified on N (verify-module-completion.mjs). A PASS item only
+    // counts toward N if it is ALSO prod_verified. With
     // CLS-ORPHAN-SURFACE drained (2026-08-09) but zero of the 7 vendors items prod_verified yet,
     // this guard was demanding complete:true on a manifest whose HONEST scored N is 0, not 7 —
     // which would have been a false green and would have failed
@@ -93,12 +93,12 @@ export function collectProblems(overrides = {}) {
     } else if (N === M) {
       if (manifest.complete !== true) {
         problems.push(
-          `${MANIFEST}: complete must be true when VEND-LINK-01 closes the module, every item scores toward N (prod_verified for URGENT_6 modules), and no shared-class waves list vendors`
+          `${MANIFEST}: complete must be true when VEND-LINK-01 closes the module, every item scores toward N (prod_verified), and no shared-class waves list vendors`
         );
       }
     } else if (manifest.complete === true) {
       problems.push(
-        `${MANIFEST}: complete:true is a false green — scored ${N} of ${M} (URGENT_6 modules need prod_verified, not just status:PASS); honest complete:false is correct until GUARD stamps the remaining items`
+        `${MANIFEST}: complete:true is a false green — scored ${N} of ${M} (prod_verified required, not just status:PASS); honest complete:false is correct until GUARD stamps the remaining items`
       );
     }
     // NOTE: this used to also assert pass_count === total_count unconditionally. That assumed
@@ -189,8 +189,8 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     failures.push(`honest complete:false under open wave wrongly flagged: ${honestHold.join(" | ")}`);
   }
 
-  // ACCT-GUARD-F7300-class regression coverage: vendors is a URGENT_6_COMPLETION_IDS module, so a
-  // PASS item only scores toward N if it is ALSO prod_verified. complete:true must be a false
+  // ACCT-GUARD-F7300-class regression coverage: a PASS item only scores toward N if it is ALSO
+  // prod_verified. complete:true must be a false
   // green when items are PASS-but-unverified, and legal once every item is genuinely prod_verified.
   const urgent6FalseGreen = collectProblems({
     manifest: JSON.stringify({
@@ -204,7 +204,7 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
     runSibling: false,
   });
   if (!urgent6FalseGreen.some((p) => /false green/.test(p))) {
-    failures.push("complete:true with no waves but zero prod_verified (URGENT_6 module) not caught");
+    failures.push("complete:true with no waves but zero prod_verified not caught");
   }
 
   const urgent6HonestComplete = collectProblems({
