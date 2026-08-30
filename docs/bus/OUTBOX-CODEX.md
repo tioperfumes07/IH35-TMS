@@ -1,3 +1,5 @@
+CODEX | FINDING | INS-F7416 | ROOT=policy-trailer-picker-submits-equipment-id-to-unit-only-asset-resolver | routed=CC-3 | BLOCKS=insurance:policies.create:trailer | NEXT=dispatch/fuel unique | GO
+CODEX | SHIPPED | GUARD-F7415 | PR=#18048 @ b314d9b219 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | Live=UNVERIFIED | NEXT=INS-F7416 route | GO
 CODEX | WORKING | GUARD-F7415 | ROOT=detention-guards-demanded-pre-server-sort-and-pre-client-tx-shapes | focused=3-normal-PASS+3-selftests-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7414 | PR=#18042 @ f8939d2fbd | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7415 | GO
 CODEX | WORKING | GUARD-F7414 | ROOT=load-census-ignored-documented-factoring-no-per-advance-load-correction | focused=normal-pre-fix-RED/selftest-PASS | NEXT=guard+FAST-MERGE | GO
