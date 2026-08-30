@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** PolicyCreateModal — covered units server search (not silent listUnits 500). Claim 2156. */
+/** PolicyCreateModal — covered units use the shared server-search EntityPicker. Claim 2156. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,11 +15,8 @@ export function collectProblems(root = ROOT) {
   const src = readRel(root, FILE);
   if (!src) return [`missing ${FILE}`];
   const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (/limit:\s*500/.test(code)) problems.push(`${FILE}: must not silent listUnits(limit:500)`);
-  if (!/unitSearch/.test(code) || !/search:\s*unitSearch/.test(code)) {
-    problems.push(`${FILE}: listUnits must pass search: unitSearch`);
-  }
-  if (!/unitSearch\]/.test(code)) problems.push(`${FILE}: unitsQuery key must include unitSearch`);
+  if (/listAllUnits|include:\s*["']trailers["']/.test(code)) problems.push(`${FILE}: must not fork the shared unit roster or include trailers`);
+  if (!/<EntityPicker[\s\S]{0,180}kind=["']unit["'][\s\S]{0,260}operatingCompanyId=\{operatingCompanyId\}/.test(code)) problems.push(`${FILE}: must use the company-scoped unit EntityPicker`);
   if (!/policy-create-unit-search/.test(src)) problems.push(`${FILE}: must expose unit search input`);
   return problems;
 }
@@ -30,7 +27,7 @@ if (process.argv.includes("--selftest")) {
   try {
     const dir = path.join(stubRoot, "apps/frontend/src/components/insurance");
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "PolicyCreateModal.tsx"), `listUnits({ limit: 500 })\nqueryKey: ["units"]\n`);
+    fs.writeFileSync(path.join(dir, "PolicyCreateModal.tsx"), `listAllUnits({ include: "trailers", limit: 500 })\n<input data-testid="policy-create-unit-search" />\n`);
     if (!collectProblems(stubRoot).length) { console.error("plant miss"); process.exit(1); }
   } finally { fs.rmSync(stubRoot, { recursive: true, force: true }); }
   console.log(LABEL, "SELFTEST OK");

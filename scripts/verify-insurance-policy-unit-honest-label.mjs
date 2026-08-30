@@ -12,29 +12,29 @@ const files = {
 function failures(candidate = files) {
   const found = [];
   for (const [key, source] of Object.entries(candidate)) {
-    if (!source.includes('entityLabel(unit.unit_number, unit.id, "Unit")')) found.push(`${key} lacks exact Unit identity fallback`);
-    if (source.includes('entityLabel(unit.unit_number, unit.id, "Record")')) found.push(`${key} still exposes generic Record identity copy`);
-    if (!/listAllUnits\(\{[\s\S]{0,300}?operating_company_id:\s*operatingCompanyId[\s\S]{0,300}?include:\s*"trailers"/.test(source)) found.push(`${key} unit roster is not exhaustively company scoped with trailers`);
+    if (!/<EntityPicker[\s\S]{0,180}kind="unit"[\s\S]{0,260}operatingCompanyId=\{operatingCompanyId\}/.test(source)) found.push(`${key} lacks canonical company-scoped Unit picker`);
+    if (!/selectedUnits\.map\(\(unit\)[\s\S]{0,500}\{unit\.label\} ×/.test(source)) found.push(`${key} lacks resolved Unit label chips`);
+    if (/include:\s*"trailers"/.test(source)) found.push(`${key} still advertises equipment trailers to policy_unit`);
   }
-  if (!candidate.modal.includes("unitIds: selectedUnitIds")) found.push("modal no longer submits selected canonical unit IDs");
-  if (!candidate.wizard.includes("unit_ids: selectedUnitIds")) found.push("wizard no longer submits selected canonical unit IDs");
-  if (!candidate.modal.includes("toggleUnit(unit.id)")) found.push("modal unit selection no longer uses canonical unit ID");
-  if (!candidate.wizard.includes("prev.includes(unit.id)") || !candidate.wizard.includes("[...prev, unit.id]")) found.push("wizard unit selection no longer uses canonical unit ID");
+  if (!candidate.modal.includes("unitIds: selectedUnits.map((unit) => unit.value)")) found.push("modal no longer submits selected canonical unit IDs");
+  if (!candidate.wizard.includes("unit_ids: selectedUnits.map((unit) => unit.value)")) found.push("wizard no longer submits selected canonical unit IDs");
+  if (!candidate.modal.includes("unit.value === unitId")) found.push("modal unit selection no longer deduplicates canonical unit ID");
+  if (!candidate.wizard.includes("unit.value === unitId")) found.push("wizard unit selection no longer deduplicates canonical unit ID");
   return found;
 }
 
 if (process.argv.includes("--selftest") || process.argv.includes("--self-test")) {
   const mutations = [
-    ["modal", 'entityLabel(unit.unit_number, unit.id, "Unit")', 'entityLabel(unit.unit_number, unit.id, "Record")', "modal noun"],
-    ["wizard", 'entityLabel(unit.unit_number, unit.id, "Unit")', 'entityLabel(unit.unit_number, unit.id, "Record")', "wizard noun"],
-    ["modal", "listAllUnits({\n        operating_company_id: operatingCompanyId", "listAllUnits({\n        operating_company_id: ''", "modal company scope"],
-    ["wizard", "listAllUnits({\n        operating_company_id: operatingCompanyId", "listAllUnits({\n        operating_company_id: ''", "wizard company scope"],
-    ["modal", 'include: "trailers"', 'include: undefined', "modal trailer coverage"],
-    ["wizard", 'include: "trailers"', 'include: undefined', "wizard trailer coverage"],
-    ["modal", "unitIds: selectedUnitIds", "unitIds: []", "modal unit FK payload"],
-    ["wizard", "unit_ids: selectedUnitIds", "unit_ids: []", "wizard unit FK payload"],
-    ["modal", "toggleUnit(unit.id)", "toggleUnit(unit.unit_number)", "modal canonical selection"],
-    ["wizard", "[...prev, unit.id]", "[...prev, unit.unit_number]", "wizard canonical selection"],
+    ["modal", 'kind="unit"', 'kind="trailer"', "modal canonical picker"],
+    ["wizard", 'kind="unit"', 'kind="trailer"', "wizard canonical picker"],
+    ["modal", 'kind="unit"\n            operatingCompanyId={operatingCompanyId}', 'kind="unit"\n            operatingCompanyId={""}', "modal company scope"],
+    ["wizard", 'kind="unit"\n              operatingCompanyId={operatingCompanyId}', 'kind="unit"\n              operatingCompanyId={""}', "wizard company scope"],
+    ["modal", "{unit.label} ×", "Unit ×", "modal resolved label"],
+    ["wizard", "{unit.label} ×", "Unit ×", "wizard resolved label"],
+    ["modal", "unitIds: selectedUnits.map((unit) => unit.value)", "unitIds: []", "modal unit FK payload"],
+    ["wizard", "unit_ids: selectedUnits.map((unit) => unit.value)", "unit_ids: []", "wizard unit FK payload"],
+    ["modal", "unit.value === unitId", "unit.label === unitId", "modal canonical selection"],
+    ["wizard", "unit.value === unitId", "unit.label === unitId", "wizard canonical selection"],
   ];
   const escaped = [];
   for (const [key, needle, replacement, name] of mutations) {

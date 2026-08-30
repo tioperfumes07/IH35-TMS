@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7495 | ROOT=seven-insurance-policy-unit-guards-froze-retired-listAllUnits+checkbox+local-error-shapes | focused=7-normal+7-selftests | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | INS-F7494 | PR=#18140 @ b9c69cc37c | focused=picker-guard+selftest+entity-link-ratchet+full-gate | Live=UNVERIFIED | NEXT=verify-static-first-stable-red | GO
 CODEX | WORKING | INS-F7494 | ROOT=policy-covered-unit-pickers-included-equipment-trailers-that-policy_unit-resolver-cannot-accept | focused=guard+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7493 | PR=#18137 @ 15cb9f4574 | focused=normal+selftest14/14+full-gate | NEXT=verify-entity-picker-trailer-kind-sweep | GO
 CODEX | WORKING | GUARD-F7493 | ROOT=Dispatch-KPI-guard-demanded-retired-atRiskQ+lateQ-after-canonical-atRiskLateQ-consolidation | NEXT=normal+selftest+FAST-MERGE | GO

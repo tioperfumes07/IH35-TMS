@@ -4,7 +4,8 @@
  *
  * Insurance policy create wizard Step 4 bill-schedule preview must use shared
  * ParityTable grammar (sort/resize/gear), not a hand-rolled <table>. Coverage-type
- * and units catalog query outages must surface ListErrorState (never false-empty).
+ * outages must surface ListErrorState (never false-empty). Unit roster errors are owned by the
+ * shared EntityPicker engine rather than duplicated inside this wizard.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -44,8 +45,11 @@ function assertMigrated(src) {
   if (!src.includes('tableTestId="policy-create-bill-schedule"')) {
     errors.push(`${PAGE}: must set tableTestId="policy-create-bill-schedule"`);
   }
-  if (!src.includes("Couldn't load coverage types") || !src.includes("Couldn't load units")) {
-    errors.push(`${PAGE}: must keep ListErrorState titles for coverage types + units outages`);
+  if (!src.includes("Couldn't load coverage types")) {
+    errors.push(`${PAGE}: must keep ListErrorState title for coverage type outages`);
+  }
+  if (!/<EntityPicker[\s\S]{0,180}kind="unit"/.test(src)) {
+    errors.push(`${PAGE}: covered units must use the shared EntityPicker error/search engine`);
   }
   if (!src.includes("Bill schedule —")) {
     errors.push(`${PAGE}: must keep Bill schedule heading`);
@@ -58,7 +62,7 @@ function selftest() {
     import { ListErrorState } from "../ListErrorState";
     import { ParityTable, type ParityColumn } from "../parity/ParityTable";
     <ListErrorState title="Couldn't load coverage types" status={0} onRetry={() => {}} />
-    <ListErrorState title="Couldn't load units" status={0} onRetry={() => {}} />
+    <EntityPicker kind="unit" operatingCompanyId={id} value={null} onChange={() => {}} />
     <p>Bill schedule — {n} monthly bills</p>
     <ParityTable
       storageKey="insurance-policy-create-bill-schedule"
@@ -105,7 +109,7 @@ function main() {
     process.exit(1);
   }
   console.log(
-    `OK ${LABEL}: ${PAGE} uses ParityTable + ListErrorState; Bill #/Amount/Per vehicle / mo preserved.`,
+    `OK ${LABEL}: ${PAGE} uses ParityTable + coverage ListErrorState + shared unit EntityPicker; Bill #/Amount/Per vehicle / mo preserved.`,
   );
 }
 
