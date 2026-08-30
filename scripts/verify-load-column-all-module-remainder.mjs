@@ -77,7 +77,9 @@ export function verify(source) {
   need("bookLoad", "onCreated(createdId ? { id: createdId, label: createdLabel } : undefined);", "dispatch creator must trigger canonical reload after success");
   if (!required(dispatch, "planning.reserve").includes("reverse_link")) failures.push("dispatch planning.reserve must retain exact reverse_link Required");
   need("manifest", 'path="/dispatch/book-load"', "Reserve a Load route must remain mounted");
-  need("dispatchPage", 'searchParams.get("book_load") !== "1"', "Reserve a Load deep link must open the canonical creator");
+  need("dispatchPage", 'const onBookPath = location.pathname.replace(/\\/$/, "") === "/dispatch/book-load";', "Reserve a Load canonical path must be recognized");
+  need("dispatchPage", 'const q = searchParams.get("book_load") === "1";', "Reserve a Load legacy query bookmark must remain supported");
+  need("dispatchPage", "if (!onBookPath && !q) return;", "Reserve a Load path or legacy query must open the canonical creator");
   need("dispatchPage", "void loadsQuery.refetch();", "Reserve a Load parent must reload canonical mdata.loads after create");
   need("bookLoad", 'data-testid="book-load-edit-header-load-link"', "reloaded/edit load must expose its canonical reverse drill");
   if (!source.self.split("\n").includes(RESERVE_HEADER)) failures.push("planning.reserve exact Built annotation drifted");
@@ -100,12 +102,14 @@ if (failures.length) { console.error(`verify-load-column-all-module-remainder FA
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ["listsMatrix", '"leaves_touched":98'], ["catalogPage", "selectedCompanyId"], ["catalogFactory", "operating_company_id"],
+    ["listsMatrix", '"leaves_touched": 98'], ["catalogPage", "selectedCompanyId"], ["catalogFactory", "operating_company_id"],
     ["customersMatrix", '"id": "md.transaction_list"'], ["customerPage", "r.source_load_id ? ("], ["customerPage", 'kind="load"'], ["customerPage", "name={r.source_load_number}"],
     ["legalMatrix", '"id": "matters.create"'], ["dispatchMatrix", '"id": "dispatch.modal.load_create"'],
     ["bookLoad", "const payload = await createDispatchLoad({"], ["bookLoad", "operating_company_id: operatingCompanyId"],
     ["dispatchMatrix", '"id": "planning.reserve"'], ["manifest", 'path="/dispatch/book-load"'],
-    ["dispatchPage", 'searchParams.get("book_load") !== "1"'], ["dispatchPage", "void loadsQuery.refetch();"],
+    ["dispatchPage", 'const onBookPath = location.pathname.replace(/\\/$/, "") === "/dispatch/book-load";'],
+    ["dispatchPage", 'const q = searchParams.get("book_load") === "1";'],
+    ["dispatchPage", "if (!onBookPath && !q) return;"], ["dispatchPage", "void loadsQuery.refetch();"],
     ["bookLoad", 'data-testid="book-load-edit-header-load-link"'], ["self", '"leaves":["planning.reserve"]'],
     ["dispatchApi", '"/api/v1/dispatch/loads", { method: "POST", body: payload }'], ["dispatchRoute", 'app.post("/api/v1/dispatch/loads"'],
     ["dispatchRoute", "withCompanyScope(authUser.uuid, body.data.operating_company_id"], ["bookLoadService", "INSERT INTO mdata.loads"],
