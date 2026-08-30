@@ -7,5 +7,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-bank-split-vendor-prefills-default-expense-account.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-bank-split-vendor-prefills-default-expense-account.mjs"]);
+    ctx.run("node", ["scripts/verify-vendor-default-expense-account-type-enforced.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-vendor-default-expense-account-type-enforced.mjs"]);
   },
 };

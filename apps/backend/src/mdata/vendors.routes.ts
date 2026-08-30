@@ -219,11 +219,15 @@ type DefaultExpenseAccountCheckResult = { ok: true } | { ok: false; accountType:
 
 async function checkDefaultExpenseAccountIsExpenseType(
   client: { query: (sql: string, params?: unknown[]) => Promise<{ rows: Array<{ account_type: string | null }> }> },
-  accountId: string
+  accountId: string,
+  operatingCompanyId: string
 ): Promise<DefaultExpenseAccountCheckResult> {
   const res = await client.query(
-    `SELECT account_type FROM catalogs.accounts WHERE id = $1`,
-    [accountId]
+    `SELECT account_type
+     FROM catalogs.accounts
+     WHERE id = $1
+       AND operating_company_id = $2::uuid`,
+    [accountId, operatingCompanyId]
   );
   const accountType = res.rows[0]?.account_type ?? null;
   if (accountType === "Expense") return { ok: true };
@@ -504,7 +508,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
     if (b.default_expense_account_id) {
       const check = await withCurrentUser(authUser.uuid, async (client) =>
-        checkDefaultExpenseAccountIsExpenseType(client, b.default_expense_account_id as string)
+        checkDefaultExpenseAccountIsExpenseType(
+          client,
+          b.default_expense_account_id as string,
+          createOperatingCompanyId
+        )
       );
       if (!check.ok) return sendDefaultExpenseAccountNotExpenseRejected(reply, check.accountType);
     }
@@ -698,17 +706,23 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
     const b = parsedBody.data;
 
+    const needsScopedVendor = Boolean(
+      ("name" in b && b.name) ||
+      ("default_expense_account_id" in b && b.default_expense_account_id)
+    );
+    const patchScopedCompanyId = needsScopedVendor
+      ? await resolveVendorRowOperatingCompanyId(authUser.uuid, parsedParams.data.id)
+      : null;
+    if (needsScopedVendor && !patchScopedCompanyId) {
+      return reply.code(404).send({ error: "mdata_vendor_not_found" });
+    }
+
     // G6-2: a rename must not collide with an existing live vendor in the same entity.
     if ("name" in b && b.name) {
       if (IS_PROD_ENV && isTestVendorFixtureName(b.name)) {
         return sendTestVendorFixtureRejected(reply);
       }
-      const patchScopedCompanyId = await resolveVendorRowOperatingCompanyId(
-        authUser.uuid,
-        parsedParams.data.id
-      );
-      if (!patchScopedCompanyId) return reply.code(404).send({ error: "mdata_vendor_not_found" });
-      if (await vendorNameConflictExists(authUser.uuid, patchScopedCompanyId, b.name, parsedParams.data.id)) {
+      if (await vendorNameConflictExists(authUser.uuid, patchScopedCompanyId as string, b.name, parsedParams.data.id)) {
         return reply.code(409).send({
           error: "mdata_vendor_name_conflict",
           message: "Vendor with this name already exists",
@@ -718,7 +732,11 @@ export async function registerVendorRoutes(app: FastifyInstance) {
     }
     if ("default_expense_account_id" in b && b.default_expense_account_id) {
       const check = await withCurrentUser(authUser.uuid, async (client) =>
-        checkDefaultExpenseAccountIsExpenseType(client, b.default_expense_account_id as string)
+        checkDefaultExpenseAccountIsExpenseType(
+          client,
+          b.default_expense_account_id as string,
+          patchScopedCompanyId as string
+        )
       );
       if (!check.ok) return sendDefaultExpenseAccountNotExpenseRejected(reply, check.accountType);
     }
