@@ -30,11 +30,17 @@ function findUnlimited(src, file) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = `app.post("/x", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {});`;
-  const bad = `app.post("/x", async (req, reply) => {});`;
+  const good = `app.get("/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {});
+app.post("/x", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {});`;
+  const bad = `app.get("/status", async (req, reply) => {});
+app.post("/x", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {});`;
   if (findUnlimited(good, "g").length !== 0) { console.error("SELFTEST FAIL: good flagged", findUnlimited(good, "g")); process.exit(1); }
   if (findUnlimited(bad, "b").length === 0) { console.error("SELFTEST FAIL: bad passed"); process.exit(1); }
-  console.log("verify-relay-routes-rate-limited selftest OK");
+  if (!findUnlimited(bad, "b").some((error) => error.includes('/status') && error.includes('(GET)'))) {
+    console.error("SELFTEST FAIL: unbounded status poll was not identified exactly");
+    process.exit(1);
+  }
+  console.log("verify-relay-routes-rate-limited selftest OK — unbounded GET status poll rejected");
   process.exit(0);
 }
 

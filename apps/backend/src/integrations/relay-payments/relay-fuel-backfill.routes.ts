@@ -15,7 +15,7 @@ import { resolveOperatingCompanyId } from "../../auth/operating-company-scope.js
 import { runRelayFuelBackfill } from "./relay-fuel-ingest.cron.js";
 
 export async function registerRelayFuelBackfillRoute(app: FastifyInstance) {
-  app.get("/api/integrations/relay/fuel/backfill/status", async (req, reply) => {
+  app.get("/api/integrations/relay/fuel/backfill/status", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return reply;
     const query = req.query as { operating_company_id?: string } | undefined;
     const requestedCompanyId = query?.operating_company_id?.trim();
