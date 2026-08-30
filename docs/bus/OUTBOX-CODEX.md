@@ -1,3 +1,4 @@
+CODEX | WORKING | VEND-F7442 | ROOT=vendor-default-expense-validator-looked-up-account-by-UUID-without-vendor-company | focused=guard-13/13+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7441 | ROOT=transaction-health-register-correlated-GL-checks-dropped-source-company | focused=guard-21/21+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7440 | ROOT=transaction-health-evidence-dropped-row-company-before-GL-and-link-reads | focused=guard-35/35+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7439 | VERTICAL=accounting reverse detail route mounts | ROOT=guard-demanded-forbidden-duplicate-explicit-registrars | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
