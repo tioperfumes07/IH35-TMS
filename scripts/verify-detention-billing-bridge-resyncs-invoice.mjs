@@ -19,9 +19,9 @@ export function run(root = process.cwd()) {
   const failures = [];
   const src = fs.readFileSync(`${root}/apps/backend/src/dispatch/detention.service.ts`, "utf8");
 
-  const fnMatch = src.match(/export async function bridgeDetentionToBilling\s*\([\s\S]*?\n\}/);
+  const fnMatch = src.match(/export async function bridgeDetentionToBillingInClientTx\s*\([\s\S]*?\n\}/);
   if (!fnMatch) {
-    failures.push("bridgeDetentionToBilling function not found in detention.service.ts");
+    failures.push("bridgeDetentionToBillingInClientTx function not found in detention.service.ts");
     return failures;
   }
   const fnBody = fnMatch[0];
@@ -34,7 +34,7 @@ export function run(root = process.cwd()) {
   // The rate_total_cents UPDATE must RETURNING the new value, and the resync call must use it —
   // not a stale pre-update value, and not a hardcoded/recomputed amount that could drift from what
   // was actually committed.
-  if (!/UPDATE\s+mdata\.loads[\s\S]{0,300}?RETURNING\s+rate_total_cents/i.test(fnBody)) {
+  if (!/UPDATE\s+mdata\.loads[\s\S]{0,900}?RETURNING\s+rate_total_cents/i.test(fnBody)) {
     failures.push("the rate_total_cents UPDATE must RETURNING rate_total_cents so the fresh value can be used");
   }
   if (!/resyncProformaInvoiceFromLoadRate\([\s\S]{0,300}?newRateTotalCents:\s*Number\(/.test(fnBody)) {
@@ -58,7 +58,7 @@ if (process.argv.includes("--selftest")) {
   const good = `
 import { resyncProformaInvoiceFromLoadRate } from "../accounting/resync-proforma-from-load-rate.js";
 
-export async function bridgeDetentionToBilling(userId, operatingCompanyId, eventId) {
+export async function bridgeDetentionToBillingInClientTx(client, userId, operatingCompanyId, eventId) {
   return withCompany(userId, operatingCompanyId, async (client) => {
     const loadUpdate = await client.query(
       \`UPDATE mdata.loads

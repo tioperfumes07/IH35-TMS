@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7415 | ROOT=detention-guards-demanded-pre-server-sort-and-pre-client-tx-shapes | focused=3-normal-PASS+3-selftests-PASS | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7414 | PR=#18042 @ f8939d2fbd | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7415 | GO
 CODEX | WORKING | GUARD-F7414 | ROOT=load-census-ignored-documented-factoring-no-per-advance-load-correction | focused=normal-pre-fix-RED/selftest-PASS | NEXT=guard+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7413 | PR=#18040 @ 751d7a54b3 | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7414 | GO
 CODEX | WORKING | GUARD-F7413 | ROOT=load-remainder-guard-demanded-retired-book-load-query-expression | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO

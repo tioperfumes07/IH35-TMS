@@ -44,7 +44,8 @@ function failures(service, page) {
   ]) {
     if (!page.includes(`kind="${kind}"`) || !page.includes(testProp)) found.push(`${kind} EntityLink missing on the board page`);
   }
-  if (!page.includes("getDetentionBoard(companyId)")) found.push("board page must consume getDetentionBoard");
+  if (!/getDetentionBoard\(companyId,\s*\{\s*\.\.\.range,\s*\.\.\.sort\s*\}\)/.test(page))
+    found.push("board page must consume getDetentionBoard with the canonical server range/sort contract");
   if (!page.includes('label: "Detention status"') || !page.includes("operationalStateLabel(event.operational_state)")) found.push("operational detention column missing");
   if (!page.includes('label: "Customer balance"') || !page.includes("billingStateLabel(event.billing_state)")) found.push("customer receivable column missing");
   if (!page.includes('label: "Estimated / unbilled"')) found.push("amount column does not distinguish estimate from unbilled balance");
@@ -60,7 +61,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    [service.replace("ORDER BY de.status ASC, de.started_at ASC", "ORDER BY de.status ASC, de.started_at ASC\n        LIMIT 200"), page],
+    [service.replace("ORDER BY ${orderBy}, de.id ASC", "ORDER BY ${orderBy}, de.id ASC\n        LIMIT 200"), page],
     [service.replaceAll("WHERE de.operating_company_id = $1::uuid", "WHERE true"), page],
     [service.replace("count: events.length", "count: events.slice(0, 200).length"), page],
     [service.replace('active_count: events.filter((e) => e.status === "accruing").length', "active_count: 0"), page],

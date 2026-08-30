@@ -80,7 +80,9 @@ export function checkDetentionBoardCompleteRange(src) {
   if (!reader) offenders.push(`${SERVICE_FILE}: listDetentionBoard reader is missing`);
   if (!/WHERE de\.operating_company_id = \$1::uuid/.test(reader)) offenders.push(`${SERVICE_FILE}: detention board lost exact company scope`);
   if (!/de\.status IN \('accruing', 'closed'\)/.test(reader)) offenders.push(`${SERVICE_FILE}: detention board lost its operational status boundary`);
-  if (!/ORDER BY de\.status ASC, de\.started_at ASC/.test(reader)) offenders.push(`${SERVICE_FILE}: detention board lost deterministic operational ordering`);
+  if (!/const orderBy = dispatchAlertOrderBy\(filters,/.test(reader) || !/ORDER BY \$\{orderBy\}, de\.id ASC/.test(reader)) {
+    offenders.push(`${SERVICE_FILE}: detention board lost validated deterministic server ordering`);
+  }
   if (/\bLIMIT\s+\d+/i.test(reader)) offenders.push(`${SERVICE_FILE}: detention board silently caps the canonical operational queue`);
   return offenders;
 }
@@ -195,11 +197,16 @@ if (process.argv.includes("--selftest")) {
     "const actionPending = closeM.isPending",
   );
   const cappedService = fixedService.replace(
-    "ORDER BY de.status ASC, de.started_at ASC",
-    "ORDER BY de.status ASC, de.started_at ASC LIMIT 200",
+    "ORDER BY ${orderBy}, de.id ASC",
+    "ORDER BY ${orderBy}, de.id ASC LIMIT 200",
+  );
+  const unorderedService = fixedService.replace(
+    "ORDER BY ${orderBy}, de.id ASC",
+    "ORDER BY de.started_at ASC",
   );
   const capFails = checkDetentionBoardCompleteRange(cappedService).some((item) => item.includes("silently caps"));
   const completePasses = checkDetentionBoardCompleteRange(fixedService).length === 0;
+  const orderingMutationFails = checkDetentionBoardCompleteRange(unorderedService).some((item) => item.includes("deterministic server ordering"));
   const rejectMutationsFail = [
     fixedApprovalService.replace("operating_company_id = $2::uuid FOR UPDATE", "operating_company_id = $2::uuid"),
     fixedApprovalService.replace("WHERE id = $1 AND operating_company_id = $4::uuid AND status = 'pending_review'", "WHERE id = $1 AND operating_company_id = $4::uuid"),
@@ -225,7 +232,7 @@ if (process.argv.includes("--selftest")) {
     (mutant) => checkDetentionBoardMutationErrors(mutant).length > 0,
   );
 
-  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && closeMutationsFail && closePasses && syncMutationsFail && syncPasses && rejectMutationsFail && rejectPasses) {
+  if (buggyOffenders.length >= 6 && fixedOffenders.length === 0 && lifecycleMutationsFail && capFails && completePasses && orderingMutationFails && closeMutationsFail && closePasses && syncMutationsFail && syncPasses && rejectMutationsFail && rejectPasses) {
     console.log("verify-detention-board-mutation-errors-surfaced selftest OK (mutation errors + complete operational range)");
     process.exit(0);
   }
@@ -235,6 +242,7 @@ if (process.argv.includes("--selftest")) {
     lifecycleMutationsFail,
     capFails,
     completePasses,
+    orderingMutationFails,
     closeMutationsFail,
     closePasses,
     syncMutationsFail,
