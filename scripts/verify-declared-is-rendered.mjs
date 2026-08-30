@@ -102,18 +102,47 @@ export function analyse({ contracts, waivers, read }) {
       continue;
     }
 
-    const { missing, present } = analyseContract({ ids, renderersText: texts.join("\n") });
-    stats.ids += ids.length;
-    stats.rendered += present.length;
-
-    for (const id of missing) {
-      const key = `${c.id}:${id}`;
-      if (waived.has(key)) { stats.waived++; warnings.push(`${key} declared but not rendered — waived debt`); }
-      else { stats.unrendered++; stillMissing.push(key);
-        problems.push(`${key} is declared in ${c.spec} but NO renderer references it. ${c.why || ""}`.trim()); }
+    const { missing, present } = c.eachRenderer
+      ? { missing: [], present: [] }
+      : analyseContract({ ids, renderersText: texts.join("\n") });
+    if (c.eachRenderer) {
+      for (let i = 0; i < texts.length; i++) {
+        const one = analyseContract({ ids, renderersText: texts[i] });
+        stats.ids += ids.length;
+        stats.rendered += one.present.length;
+        for (const id of one.missing) {
+          const key = `${c.id}:${id}:${c.renderers[i]}`;
+          if (waived.has(`${c.id}:${id}`)) { stats.waived++; warnings.push(`${key} waived`); }
+          else { stats.unrendered++; stillMissing.push(key);
+            problems.push(`${key} eachRenderer — declared but this view does not reference it.`); }
+        }
+      }
+    } else {
+      stats.ids += ids.length;
+      stats.rendered += present.length;
+      for (const id of missing) {
+        const key = `${c.id}:${id}`;
+        if (waived.has(key)) { stats.waived++; warnings.push(`${key} declared but not rendered — waived debt`); }
+        else { stats.unrendered++; stillMissing.push(key);
+          problems.push(`${key} is declared in ${c.spec} but NO renderer references it. ${c.why || ""}`.trim()); }
+      }
     }
   }
   return { problems, warnings, stats, stillMissing };
+}
+
+export function assertTokensInEveryFile({ files, tokens, read }) {
+  const problems = [];
+  for (const token of tokens) {
+    const missing = files.filter((f) => {
+      const t = read(f, true);
+      return !t || !t.includes(token);
+    });
+    if (missing.length) {
+      problems.push(`token ${token} must appear in every listed view; missing: ${missing.join(", ")}`);
+    }
+  }
+  return problems;
 }
 
 function readRepo(rel, raw = false) {
@@ -169,6 +198,44 @@ function selftest() {
       read: (p, raw) => (raw ? "nothing" : { columns: [{ id: "gl_delta" }] }) });
     eq(r.problems.length, 0, "expected 0"); eq(r.warnings.length, 1, "expected 1 warning");
   });
+  t("eachRenderer fails when only one of two files has the id", () => {
+    const r = analyse({
+      contracts: [{ id: "c", spec: "s.json", idPath: "columns[].id", renderers: ["a.tsx", "b.tsx"], eachRenderer: true, why: "" }],
+      waivers: [],
+      read: (p, raw) => {
+        if (!raw) return { columns: [{ id: "fw1_place" }] };
+        if (p === "a.tsx") return "FULLY_WIRED and fw1_place";
+        return "FULLY_WIRED only";
+      },
+    });
+    if (!r.problems.some((p) => p.includes("eachRenderer") && p.includes("b.tsx"))) {
+      throw new Error("expected eachRenderer miss on b.tsx: " + r.problems.join("; "));
+    }
+  });
+  t("assertTokensInEveryFile fails when one view omits the token", () => {
+    const p = assertTokensInEveryFile({
+      files: ["a.tsx", "b.tsx"],
+      tokens: ["FULLY_WIRED_SYSTEM_COLS"],
+      read: (f) => (f === "a.tsx" ? "FULLY_WIRED_SYSTEM_COLS" : "nope"),
+    });
+    if (!p.length) throw new Error("expected fail");
+  });
+  t("assertTokensInEveryFile fails when both omit", () => {
+    const p = assertTokensInEveryFile({
+      files: ["a.tsx", "b.tsx"],
+      tokens: ["mergeSharedScoreboardColumns"],
+      read: () => "x",
+    });
+    if (!p.length) throw new Error("expected fail both");
+  });
+  t("assertTokensInEveryFile passes when both contain the token", () => {
+    const p = assertTokensInEveryFile({
+      files: ["a.tsx", "b.tsx"],
+      tokens: ["FULLY_WIRED_SYSTEM_COLS"],
+      read: () => "export const FULLY_WIRED_SYSTEM_COLS = []",
+    });
+    eq(p.length, 0, "expected 0");
+  });
 
   const bad = T.filter((x) => !x[1]);
   for (const [n, ok, e] of T) console.log(`  ${ok ? "PASS" : "FAIL"}  ${n}${e ? " — " + e : ""}`);
@@ -206,6 +273,16 @@ function main() {
   } catch { prev = null; }
 
   const { problems, warnings, stats } = analyse({ contracts: cfg.contracts, waivers: cfg.waivers || [], read: readRepo });
+  problems.push(
+    ...assertTokensInEveryFile({
+      files: [
+        "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx",
+        "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx",
+      ],
+      tokens: ["FULLY_WIRED_SYSTEM_COLS", "mergeSharedScoreboardColumns"],
+      read: readRepo,
+    }),
+  );
 
   if (Array.isArray(prev)) {
     const p = new Set(prev);

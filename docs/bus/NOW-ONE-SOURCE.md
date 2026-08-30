@@ -1,3 +1,5 @@
+**2026-08-29T20:20Z GO-MATRIX-02 THIS IS NOW.** One column contract both boards. Packet docs/lockdown/GO-MATRIX-02-FW1-12-BOTH-BOARDS-2026-08-29.md
+
 **2026-08-29T20:15Z GO-MAINT-01 + GO-WONUM-01 + GO-MATRIX-PROOF THIS IS NOW.** P0 false DOT O/O = CC-1. WO format stays; D2 lock V5 first set. Matrix proof strip for L6/Clicked/Guard. Never recertify U14. Skip #15546.
 
 **2026-08-29T20:05Z GO-TONIGHT-U6-SCEN THIS IS NOW.** Close Urgent 6 honest N-of-M + CC-2 stamps. U14 = leftover unique FINDING only — **never recertify.** SCEN testers: CC-3 create, CC-1 hops 4/6 + hop.assign + JE codes, CC-2 close on query+codes. Packet `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.

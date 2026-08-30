@@ -22,8 +22,7 @@ import {
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
   FULLY_WIRED_SYSTEM_COLS,
-  SHARED_SCOREBOARD_COLUMNS,
-  RENDERED_SCOREBOARD_COLUMN_IDS,
+  mergeSharedScoreboardColumns,
 } from "./moduleMatrixCatalog";
 import { REQUIRED_BY_MODULE } from "./moduleMatrixRequiredMaps";
 import {
@@ -108,52 +107,13 @@ const POLL_MS = 300_000;
 const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v2";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
 
-const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
-
-/** Drawn column ids (C25–C31 + V1–V6) — must appear as identifiers in this file. */
-const DRAWN_SCOREBOARD_COLUMN_IDS = [
-  "gl_delta",
-  "subledger_tie",
-  "lifecycle_complete",
-  "reversal_symmetry",
-  "period_guard",
-  "entity_isolation",
-  "non_empty_proof",
-  "l6",
-  "bound",
-  "proven",
-  "evidence_class",
-  "route_alive",
-  "proof_age",
-] as const;
-
 const EMPTY_VERIFIER_ROLLUP: {
   asOf: string;
   healthzSha: string | null;
   modules: Record<string, VerifierModuleRollup>;
 } = { asOf: "", healthzSha: null, modules: {} };
 
-const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
-
-function mergeColumns(api: SystemColumn[]): SystemColumn[] {
-  const byId = new Map<string, SystemColumn>();
-  for (const c of api) byId.set(c.id, c);
-  for (const c of SHARED_SCOREBOARD_COLUMNS) {
-    if (!byId.has(c.id)) byId.set(c.id, { id: c.id, label: c.label, group: c.group });
-  }
-  for (const id of RENDERED_SCOREBOARD_COLUMN_IDS) {
-    if (!byId.has(id) && DRAWN_SCOREBOARD_COLUMN_IDS.includes(id as (typeof DRAWN_SCOREBOARD_COLUMN_IDS)[number])) {
-      const shared = SHARED_SCOREBOARD_COLUMNS.find((c) => c.id === id);
-      if (shared) byId.set(id, { id: shared.id, label: shared.label, group: shared.group });
-    }
-  }
-  return [...byId.values()].sort((a, b) => {
-    const ga = GROUP_ORDER.indexOf(a.group);
-    const gb = GROUP_ORDER.indexOf(b.group);
-    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
-    return a.id.localeCompare(b.id);
-  });
-}
+export const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
 
 const HEX = { red: "#dc2626", slate: "#334155", muted: "#94a3b8", warn: "#b45309" } as const;
 
@@ -255,7 +215,7 @@ function verifierTitle(columnId: string, row: VerifierModuleRollup, moduleId: st
   return moduleId;
 }
 
-function VerifierProofCell({
+export function VerifierProofCell({
   moduleId,
   columnId,
   testId,
@@ -348,7 +308,7 @@ class SystemMatrixHttpError extends Error {
   }
 }
 
-async function fetchSystemMatrix(): Promise<SystemPayload> {
+export async function fetchSystemMatrix(): Promise<SystemPayload> {
   // MATRIX-INFINITE-PENDING-FEED: a hung /api fetch (no client-side timeout) left this query's
   // promise permanently unsettled — React Query's retry/error handling only runs on a REJECTED
   // promise, so a stalled connection never surfaced the "unavailable" state; the rollup just sat
@@ -464,7 +424,7 @@ export function buildSystemMatrixRequiredFallback(): SystemPayload {
     });
   }
 
-  const columns = mergeColumns([...colMeta.values()]);
+  const columns = mergeSharedScoreboardColumns([...colMeta.values()]);
   const columnAbl: Record<string, AblPct> = {};
   for (const c of columns) {
     columnAbl[c.id] = { requiredCells: sysCol.get(c.id) ?? 0, auditedPct: 0, builtPct: 0, livePct: 0 };
@@ -573,7 +533,7 @@ export function ModuleMatrixSystemView() {
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
 
-  const columns = mergeColumns(data?.columns ?? []);
+  const columns = mergeSharedScoreboardColumns(data?.columns ?? []);
   const groupSpans = useMemo(() => {
     const spans: Array<{ group: string; span: number }> = [];
     for (const c of columns) {
