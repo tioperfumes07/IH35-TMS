@@ -109,13 +109,23 @@ export function findMissingProbeSources(src) {
     if (!sql[1].includes(table)) missing.push(`hop.pod_bol probe SQL never reads ${table}`);
   }
   if (/FROM\s+docs\.file_links\b/i.test(sql[1])) {
-    if (!/JOIN\s+catalogs\.file_categories\s+\w+\s+ON\s+\w+\.id\s*=\s*f\.category_id/i.test(sql[1])) {
+    const genericCategoryJoin = /JOIN\s+catalogs\.file_categories\s+fc\s+ON\s+fc\.id\s*=\s*f\.category_id/i.test(sql[1]);
+    const splitCategoryJoins =
+      /JOIN\s+catalogs\.file_categories\s+pod_fc\s+ON\s+pod_fc\.id\s*=\s*pod_f\.category_id/i.test(sql[1]) &&
+      /JOIN\s+catalogs\.file_categories\s+bol_fc\s+ON\s+bol_fc\.id\s*=\s*bol_f\.category_id/i.test(sql[1]);
+    if (!genericCategoryJoin && !splitCategoryJoins) {
       missing.push("docs-library evidence does not resolve the canonical file category");
     }
-    if (!/\bfc\.code\s+IN\s*\(\s*['\"]pod['\"]\s*,\s*['\"]bol['\"]\s*\)/i.test(sql[1])) {
+    const genericCategoryFilter = /\bfc\.code\s+IN\s*\(\s*['\"]pod['\"]\s*,\s*['\"]bol['\"]\s*\)/i.test(sql[1]);
+    const splitCategoryFilters =
+      /\bpod_fc\.code\s*=\s*['\"]pod['\"]/i.test(sql[1]) && /\bbol_fc\.code\s*=\s*['\"]bol['\"]/i.test(sql[1]);
+    if (!genericCategoryFilter && !splitCategoryFilters) {
       missing.push("docs-library evidence counts non-POD/BOL categories");
     }
-    if (!/\bf\.deleted_at\s+IS\s+NULL/i.test(sql[1])) {
+    const genericDeletedFilter = /\bf\.deleted_at\s+IS\s+NULL/i.test(sql[1]);
+    const splitDeletedFilters =
+      /\bpod_f\.deleted_at\s+IS\s+NULL/i.test(sql[1]) && /\bbol_f\.deleted_at\s+IS\s+NULL/i.test(sql[1]);
+    if (!genericDeletedFilter && !splitDeletedFilters) {
       missing.push("docs-library evidence counts deleted files");
     }
   }
@@ -182,6 +192,22 @@ if (process.argv.includes("--selftest")) {
           "  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents UNION ALL SELECT fl.id FROM docs.file_links fl JOIN docs.files f ON f.id=fl.file_id JOIN catalogs.file_categories fc ON fc.id = f.category_id JOIN mdata.loads l ON l.id=fl.entity_id WHERE f.deleted_at IS NULL AND fc.code IN ('pod', 'bol')` },\n  },"
         ),
       0,
+    ],
+    [
+      "separate canonical POD and BOL document arms are accepted",
+      () =>
+        findMissingProbeSources(
+          "  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents UNION ALL SELECT pod_fl.id FROM docs.file_links pod_fl JOIN docs.files pod_f ON pod_f.id=pod_fl.file_id AND pod_f.deleted_at IS NULL JOIN catalogs.file_categories pod_fc ON pod_fc.id = pod_f.category_id AND pod_fc.code = 'pod' UNION ALL SELECT bol_fl.id FROM docs.file_links bol_fl JOIN docs.files bol_f ON bol_f.id=bol_fl.file_id AND bol_f.deleted_at IS NULL JOIN catalogs.file_categories bol_fc ON bol_fc.id = bol_f.category_id AND bol_fc.code = 'bol'` },\n  },"
+        ),
+      0,
+    ],
+    [
+      "separate arms missing BOL category resolution are rejected",
+      () =>
+        findMissingProbeSources(
+          "  {\n    key: \"hop.pod_bol\",\n    probe: { sql: `FROM dispatch.pod_documents UNION ALL FROM dispatch.bol_documents UNION ALL SELECT pod_fl.id FROM docs.file_links pod_fl JOIN docs.files pod_f ON pod_f.id=pod_fl.file_id AND pod_f.deleted_at IS NULL JOIN catalogs.file_categories pod_fc ON pod_fc.id = pod_f.category_id AND pod_fc.code = 'pod' UNION ALL SELECT bol_fl.id FROM docs.file_links bol_fl JOIN docs.files bol_f ON bol_f.id=bol_fl.file_id AND bol_f.deleted_at IS NULL` },\n  },"
+        ),
+      2,
     ],
     [
       // The regression this guard shipped with and had to be mutated out of: naming the tables in
