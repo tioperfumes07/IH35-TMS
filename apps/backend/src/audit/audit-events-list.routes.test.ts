@@ -177,6 +177,59 @@ describe("audit events list routes (BULK-6)", () => {
     });
   });
 
+  // VEND-AUDIT-HISTORY-TAB-FALSE-EMPTY-NULL-COMPANY-PAYLOAD
+  describe("base company predicate vs. NULL-company events for entity_type+entity_id callers", () => {
+    const VENDOR_ID = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+
+    it("stays strict (no widening) when only entity_type is given, no entity_id", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_type: "vendor",
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("(e.payload->>'operating_company_id')::uuid = $1::uuid");
+      expect(built.sql).not.toContain("(e.payload->>'operating_company_id') IS NULL)");
+    });
+
+    it("stays strict (no widening) when only entity_id is given, no entity_type", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_id: VENDOR_ID,
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain("(e.payload->>'operating_company_id')::uuid = $1::uuid");
+      expect(built.sql).not.toContain("(e.payload->>'operating_company_id') IS NULL)");
+    });
+
+    it("widens to admit NULL-company rows when both entity_type AND entity_id are given — the live repro shape (vendor Audit History tab)", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_type: "vendor",
+        entity_id: VENDOR_ID,
+        limit: 50,
+        offset: 0,
+      });
+      expect(built.sql).toContain(
+        "((e.payload->>'operating_company_id')::uuid = $1::uuid OR (e.payload->>'operating_company_id') IS NULL)"
+      );
+    });
+
+    it("the entity_type/entity_id filters (pushed separately) still re-narrow the widened rows to the exact entity", () => {
+      const built = buildAuditEventsListQuery({
+        operating_company_id: COMPANY,
+        entity_type: "vendor",
+        entity_id: VENDOR_ID,
+        limit: 50,
+        offset: 0,
+      });
+      // The widening only removes the company predicate's false exclusion; the entity_id equality
+      // filter elsewhere in the WHERE clause is untouched and still requires an exact match.
+      expect(built.sql).toContain("e.payload->>'entity_id' = $");
+    });
+  });
+
   it("returns audit events for company scope", async () => {
     const res = await app.inject({
       method: "GET",

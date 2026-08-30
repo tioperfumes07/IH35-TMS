@@ -208,20 +208,26 @@ export function buildAuditEventsListQuery(input: ListAuditEventsInput): { sql: s
     filters.push(`e.created_at <= $${values.length}::timestamptz`);
   }
 
-  // AUDIT-ACTOR-FILTER-NULL-COMPANY-EVENTS-INVISIBLE — some events are genuinely company-agnostic
-  // (login, password reset — written before/outside company selection, so
-  // payload->>'operating_company_id' IS NULL). Unconditional `= $1::uuid` never matches NULL, so a
-  // user whose ENTIRE audit trail is company-agnostic events showed a permanent,
-  // indistinguishable-from-honest "no events" on their own Activity tab — live-reproduced on
-  // mcastillo@tioperfumes.com (2 real audit_events rows, both NULL-company; endpoint returned
-  // total_count: 0 even with the correct exact-uuid actor already wired). Widen ONLY when
-  // actorExactUuidParamIndex is set — i.e. the caller already narrowed the query to one specific,
-  // known-by-uuid actor (today: only UserActivityTab.tsx, via /users/:id) — so an absent or
-  // free-text/ILIKE actor search never gains visibility into another company's NULL-company rows.
+  // VEND-AUDIT-HISTORY-TAB-FALSE-EMPTY-NULL-COMPANY-PAYLOAD — same shape as the actor-uuid widening
+  // above, for EntityAuditHistoryTab (vendor/customer/driver/equipment/unit/work_order/load). Those
+  // callers pass entity_type+entity_id, never actor, so actorExactUuidParamIndex is always
+  // undefined for them and the base filter's unconditional `= $1::uuid` silently excluded every
+  // row whose CRUD writer never stamped payload.operating_company_id (confirmed: mdata.vendors'
+  // appendCrudAudit call sites don't) — live-reproduced on a real vendor with a real, just-created
+  // audit.audit_events row that the vendor's own Audit History tab showed as "No audit events
+  // found for this record." Widen ONLY when the caller supplied BOTH entity_type AND entity_id —
+  // i.e. already narrowed to one specific, known entity (mirroring the actor-uuid exactness
+  // requirement) — so a query with no entity filter (or only one of the two) never gains
+  // visibility into another company's NULL-company rows. The entity_type/entity_id filters pushed
+  // above already re-narrow these rows to the exact record; this only removes the company
+  // predicate's own false exclusion of them.
+  const entityExactMatchPresent = Boolean(input.entity_type && input.entity_id);
   filters.unshift(
     actorExactUuidParamIndex
       ? `((e.payload->>'operating_company_id')::uuid = $1::uuid OR ((e.payload->>'operating_company_id') IS NULL AND e.actor_user_uuid::text = $${actorExactUuidParamIndex}))`
-      : `(e.payload->>'operating_company_id')::uuid = $1::uuid`
+      : entityExactMatchPresent
+        ? `((e.payload->>'operating_company_id')::uuid = $1::uuid OR (e.payload->>'operating_company_id') IS NULL)`
+        : `(e.payload->>'operating_company_id')::uuid = $1::uuid`
   );
 
   values.push(normalizeLimit(input.limit));
