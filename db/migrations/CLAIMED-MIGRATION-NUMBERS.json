@@ -451,6 +451,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-30",
       "purpose": "fleet_lease_08_lease_contract_rate_per_unit_basis"
+    },
+    "202613301100": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-30",
+      "purpose": "fact_assign_05_correction_opco_backfill_and_not_null"
     }
   }
 }
