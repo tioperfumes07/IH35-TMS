@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7492 | ROOT=ReferenceSelect-census-classified-whole-file-so-RoundTrips-Sort-became-customer-picker | NEXT=normal+selftest+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7491 | PR=#18129 @ 453ffef54c | focused=guard+selftest+component2/2+frontend-tsc+full-gate | NEXT=verify-non-accounting-referenceselect-coverage | GO
 CODEX | WORKING | GUARD-F7491 | ROOT=Border-Credentials-category-query-guarded-data-but-not-categories-before-upload-find | NEXT=focused+selftest+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7490 | PR=#18128 @ 9c61c638a8 | focused=normal+selftest-6/6+full-gate | NEXT=verify-no-partial-optional-chain | GO
 CODEX | WORKING | GUARD-F7467 | ROOT=permit-create-limiter-selftest-mutated-earlier-list-GET-instead-of-governed-POST | focused=normal+selftest-7/7 | NEXT=gate+FAST-MERGE | GO

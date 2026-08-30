@@ -1,8 +1,3 @@
 {
-  "fingerprints": [
-    "apps/frontend/src/pages/dispatch/DispatchBoard.tsx::bare-entity-select",
-    "apps/frontend/src/pages/dispatch/NotifyPreferencesPage.tsx::bare-entity-select",
-    "apps/frontend/src/pages/factoring/FactorAdmin.tsx::bare-entity-select",
-    "apps/frontend/src/pages/operations/GeofencesPage.tsx::bare-entity-select"
-  ]
+  "fingerprints": []
 }
