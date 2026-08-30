@@ -1,11 +1,11 @@
-import { AlertTriangle, FileText, Fuel, Navigation, Settings, Truck } from "lucide-react";
+import { AlertTriangle, Bell, FileText, Fuel, Navigation, Settings, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { signOut } from "../api/identity";
 import { getMyLoadsToday } from "../api/loads";
-import { getPwaHosClocks, getRecentFuelTransactions } from "../api/pwa-live";
+import { getDriverNotifications, getPwaHosClocks, getRecentFuelTransactions, markDriverNotificationRead } from "../api/pwa-live";
 import { confirmMyTransfer, listMyPendingTransfers, rejectMyTransfer } from "../api/transfers";
 import { useAuth } from "../auth/useAuth";
 import { ErrorBoundary } from "../components/ErrorBoundary";
@@ -65,6 +65,11 @@ export function HomePage() {
   const hosQuery = useQuery({ queryKey: ["pwa", "home", "hos-clocks"], queryFn: getPwaHosClocks });
   const loadsQuery = useQuery({ queryKey: ["pwa", "home", "loads"], queryFn: getMyLoadsToday });
   const fuelQuery = useQuery({ queryKey: ["pwa", "home", "fuel"], queryFn: getRecentFuelTransactions });
+  const notificationsQuery = useQuery({ queryKey: ["pwa", "home", "notifications"], queryFn: getDriverNotifications });
+  const markNotificationRead = useMutation({
+    mutationFn: markDriverNotificationRead,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["pwa", "home", "notifications"] }),
+  });
   const pendingTransfersQuery = useQuery({
     queryKey: ["driver-pwa", "pending-transfers"],
     queryFn: listMyPendingTransfers,
@@ -173,6 +178,32 @@ export function HomePage() {
             </div>
           </PwaCard>
         ) : null}
+
+        <PwaCard title={t("home.notifications")} subtitle={t("home.notifications_subtitle")}>
+          {notificationsQuery.isLoading ? <p className="text-sm text-pwa-text-secondary">{t("common.loading")}</p> : null}
+          {notificationsQuery.isError ? <p className="text-sm text-hos-violation">{t("home.notifications_error")}</p> : null}
+          {!notificationsQuery.isLoading && !notificationsQuery.isError && notificationsQuery.data?.length === 0 ? (
+            <p className="text-sm text-pwa-text-secondary">{t("home.notifications_empty")}</p>
+          ) : null}
+          <div className="space-y-2">
+            {notificationsQuery.data?.map((notification) => (
+              <button
+                key={notification.id}
+                type="button"
+                disabled={notification.read_at !== null || markNotificationRead.isPending}
+                onClick={() => markNotificationRead.mutate(notification.id)}
+                className={`flex w-full gap-3 rounded-lg border p-3 text-left ${notification.read_at ? "border-pwa-border bg-pwa-bg" : "border-pwa-accent bg-pwa-accent/10"}`}
+              >
+                <Bell className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>
+                  <span className="block font-medium">{notification.title}</span>
+                  <span className="block text-xs text-pwa-text-secondary">{notification.message}</span>
+                  <span className="mt-1 block text-[11px] text-pwa-text-secondary">{formatDateTime(notification.created_at)}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </PwaCard>
 
         {/* ARCHIVE-not-DELETE: Phase 1 placeholder HOS card replaced by live clocks (A24-11). Sunset: 2026-09-01 */}
         <PwaCard title={t("home.hos_overview")} subtitle={t("home.hos_subtitle_live")}>

@@ -26,6 +26,14 @@ describe("Driver PWA live data parity (A24-11)", () => {
     expect(pwaLiveApi).toContain("/api/v1/driver-pwa/recent-fuel-transactions");
   });
 
+  it("Home renders the canonical notification inbox and persists read state", () => {
+    expect(homePage).toContain("getDriverNotifications");
+    expect(homePage).toContain("markDriverNotificationRead");
+    expect(homePage).toContain("notificationsQuery.isError");
+    expect(pwaLiveApi).toContain('"/api/v1/driver-pwa/notifications"');
+    expect(pwaLiveApi).toContain('method: "PATCH"');
+  });
+
   it("archives Phase 1 placeholder home cards", () => {
     expect(homePage).toContain("ARCHIVE-not-DELETE");
     expect(homePage).not.toContain("Houston, TX → Atlanta, GA");

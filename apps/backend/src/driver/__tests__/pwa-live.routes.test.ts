@@ -23,6 +23,14 @@ describe("driver PWA live data routes (A24-11)", () => {
     expect(routesSrc).toContain("mdata.equipment");
   });
 
+  it("exposes company-and-driver-scoped notification read lifecycle", () => {
+    expect(routesSrc).toContain('"/api/v1/driver-pwa/notifications"');
+    expect(routesSrc).toContain('"/api/v1/driver-pwa/notifications/:id/read"');
+    expect(routesSrc).toContain("operating_company_id = $1::uuid AND driver_id = $2::uuid");
+    expect(routesSrc).toContain("SET read_at = COALESCE(read_at, now())");
+    expect(routesSrc).toContain("id = $1::uuid AND operating_company_id = $2::uuid AND driver_id = $3::uuid");
+  });
+
   it("registers routes in driver index", () => {
     expect(driverIndex).toContain("registerDriverPwaLiveRoutes");
   });
