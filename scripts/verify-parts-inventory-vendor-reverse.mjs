@@ -14,7 +14,7 @@ const paths = {
 const sources = Object.fromEntries(Object.entries(paths).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 
 const checks = [
-  ["table", /recordPartsPurchase\(companyId, \{[\s\S]{0,180}part_description: form\.part_description[\s\S]{0,180}vendor_id: form\.vendor_id \|\| undefined/, "purchase submit binds selected company and vendor FK"],
+  ["table", /mutationFn: \(input: \{ companyId: string; generation: number; draft: PurchaseForm \}\) =>[\s\S]{0,80}recordPartsPurchase\(input\.companyId, \{[\s\S]{0,180}part_description: input\.draft\.part_description[\s\S]{0,180}vendor_id: input\.draft\.vendor_id \|\| undefined/, "purchase submit binds the immutable selected-company snapshot and vendor FK"],
   ["table", /<EntityPicker[\s\S]{0,120}kind="vendor"[\s\S]{0,120}operatingCompanyId=\{companyId\}[\s\S]{0,120}value=\{form\.vendor_id \|\| null\}[\s\S]{0,160}onChange=\{\(next\) => setForm\(\(v\) => \(\{ \.\.\.v, vendor_id: next \?\? "" \}\)\)\}[\s\S]{0,180}allowCreate/, "purchase picker reads company and writes the canonical vendor id with Add-new"],
   ["table", /row\.vendor_id \? \([\s\S]{0,160}<EntityLink kind="vendor" id=\{row\.vendor_id\} label=\{entityLabel\(row\.vendor_name, row\.vendor_id, "Vendor"\)\}/, "inventory row drills its exact vendor id with a human label"],
   ["routes", /const querySchema = z\.object\(\{[\s\S]{0,100}operating_company_id: z\.string\(\)\.uuid\(\)[\s\S]{0,100}vendor_id: z\.string\(\)\.uuid\(\)\.optional\(\)/, "reverse GET validates company and vendor UUIDs"],
@@ -27,7 +27,8 @@ const checks = [
   ["reverse", /rows\.map\(\(row\) => \([\s\S]{0,180}<div key=\{row\.id\}[\s\S]{0,180}<EntityLinkOrTombstone kind="parts_inventory" id=\{row\.id\} name=\{row\.part_description\} noun="Part"/, "each returned inventory row drills by canonical id with its part description"],
   ["reverse", /query\.isError[\s\S]{0,220}query\.refetch\(\)[\s\S]{0,260}No parts inventory purchases from this vendor/, "vendor reverse exposes retryable error and honest empty states"],
   ["vendor", /<VendorPartsInventoryReverseSection operatingCompanyId=\{companyId\} vendorId=\{vendor\.id\}/, "vendor profile mounts inventory reverse with company and exact vendor id"],
-  ["home", /const partInventoryId = searchParams\.get\("part_inventory_id"\)[\s\S]{0,18000}<PartsInventoryTable[\s\S]{0,500}companyId=\{companyId\}[\s\S]{0,500}highlightedRowId=\{partInventoryId\}/, "inventory reverse route feeds the exact row id into the mounted table"],
+  ["home", /const partInventoryId = searchParams\.get\("part_inventory_id"\)\?\.trim\(\) \?\? ""/, "inventory reverse route extracts and trims the canonical row id"],
+  ["home", /<PartsInventoryTable[\s\S]{0,500}companyId=\{companyId\}[\s\S]{0,500}highlightedRowId=\{partInventoryId\}/, "inventory reverse route feeds its exact row id into the mounted table"],
   ["table", /rowClassName=\{\(row\) => highlightedRowId && row\.id === highlightedRowId/, "inventory table highlights only the exact reverse-linked row"],
 ];
 

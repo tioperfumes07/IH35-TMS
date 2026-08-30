@@ -2488,3 +2488,4 @@ CODEX | WORKING | MNT-F7426 | ROOT=maintenance-unit-scope-composed-outside-execu
 CODEX | SHIPPED | FLT-F7425 | PR=#18061 @ 5d6cc897e1 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=MNT-F7426 | GO
 CODEX | WORKING | GUARD-F7427 | ROOT=entity-scope-parser-ignored-symmetric-RHS-equality | focused=parser-selftest+intransit-12-selftests+backend-tsc | census=25→24 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | MNT-F7426 | PR=#18062 @ 6cbfb41047 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=GUARD-F7427 | GO
+Codex | WORKING | GUARD-F7432 | parts_inventory vendor reverse immutable submit + exact trimmed row guard | NEXT=focused+selftest→FAST-MERGE
