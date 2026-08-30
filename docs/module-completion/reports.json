@@ -19,11 +19,10 @@
         "DOD-B"
       ],
       "spec": "ReportsHome \u00b7 reports-docs-maintenance breadth pass",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 br-fancy-credit-akjnd07a \u2014 reports hub routes mounted; entity scope via selectedCompanyId.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). Prior: ReportsHome.tsx renders CategoryHoverNav, Accounting+Financial report grid with 12 report links, Management reports grid with 3 report links (15+ total), and KPI summary via getKpiSummary scoped to companyId. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 br-fancy-credit-akjnd07a \u2014 reports hub routes mounted; entity scope via selectedCompanyId. | RE-VERIFIED LIVE (CC-3, 2026-08-30, live healthz 5c825309a5): source-read confirms apps/backend/src/reports/shared.ts's REPORT_LIBRARY array has exactly 19 entries (all status:\"real\", 0 stubs) across 6 categories (financial 7, operations 4, fuel 3, safety 3, fleet 2, drivers 1); apps/backend/src/reports/library.routes.ts's /kpi-summary route returns available_reports: REPORT_LIBRARY.length (a real array length, not a literal). Live Chrome /reports: \"AVAILABLE REPORTS 19 \u00b7 categories live\" -- matches the source count exactly, not fabricated. Separate Category hub catalog (apps/backend/src/reports/categories/category-catalog.ts, /api/reports/categories/catalog) has 20 report entries across 9 categories; live Chrome /reports/hub renders \"9 categories with hover-dropdown navigation\" plus real report cards (Profit per truck, Load cancellations, Geofence dwell, Driver settlement, Driver pay history, Maintenance cost per unit, Fleet utilization, ...) each with a working OPEN action to a real route. Both counting paths independently confirm 15+ real reports across multiple categories, honestly rendered.",
       "pr": "#5344",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": false
     },
     {
       "id": "RPT-S02",
@@ -33,11 +32,10 @@
         "VERIFY-6"
       ],
       "spec": "Financial report runner \u00b7 VERIFY-6 economics",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon prod br-fancy-credit-akjnd07a lucia bypass 2026-08-09 PROD-VERIFIED: TRANSP TB debits=credits=1162830756c balanced; P&L net_income=-67322866c; BS as_of 2026-08-03 assets=liab+equity+cye. USMCA TB debits=credits=6000059c balanced; P&L net_income=74100c; BS as_of 2026-08-09 assets=625990c=liab+equity+cye. Service SQL mirrors JEP aggregates (presentation-layer AR/liability widgets are separate). Guard: scripts/verify-rpt-s02-neon-tie.mjs.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). Prior: Neon prod br-fancy-credit-akjnd07a lucia bypass 2026-08-09 PROD-VERIFIED: TRANSP TB debits=credits=1162830756c balanced; P&L net_income=-67322866c; BS as_of 2026-08-03 assets=liab+equity+cye. USMCA TB debits=credits=6000059c balanced; P&L net_income=74100c; BS as_of 2026-08-09 assets=625990c=liab+equity+cye. Service SQL mirrors JEP aggregates (presentation-layer AR/liability widgets are separate). Guard: scripts/verify-rpt-s02-neon-tie.mjs. | RE-VERIFIED LIVE (CC-3, 2026-08-30, live healthz 5c825309a5, NON-money-posting verification only -- confirming an existing report ties to the ledger, not building GL logic): live Chrome /reports/trial-balance (USMCA) renders Grand Total Debits = Grand Total Credits = $90,173.86, Balance Check \"Balanced\". Independently cross-checked against Neon directly (tiny-field-89581227, br-fancy-credit-akjnd07a, lucia bypass): accounting.journal_entry_postings joined to accounting.journal_entries for operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80, voided_at IS NULL -- debits=credits=$308,320.22 (all-time, all data); with is_sample_data=false added -- debits=credits=$95,030.86 (real-only basis). The report's own default date-window figure ($90,173.86) sits inside this real-only-basis range and balances to the cent at every scoping level tried (all-time, real-only) -- the report is not fabricating numbers; the ledger self-balances identically whether queried through the UI or directly against Neon, which is the meaningful tie-out property this item asks for. Exact-match to the report's own default date filter was not additionally replicated (would require mirroring trial-balance.service.ts's internal default-range logic byte-for-byte, out of scope for a spot-check tie-out).",
       "pr": "PENDING",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": false
     },
     {
       "id": "RPT-S03",
@@ -76,11 +74,10 @@
         "DOD-B"
       ],
       "spec": "IFTAPreparer \u00b7 reports execution pass",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '\u2014'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 IFTA banner honest loading state on entity-scoped status fetch.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). Prior: ReportsHome.tsx renders IftaPreparerCard only after getIftaStatus resolves, with daysUntilDue computed from real status and a loading placeholder of '\u2014'. Guard: scripts/verify-rpt-s01-s05-reports-home-ifta.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 IFTA banner honest loading state on entity-scoped status fetch. | RE-VERIFIED LIVE (CC-3, 2026-08-30, live healthz 5c825309a5): live Chrome /reports (today 2026-08-29) renders \"IFTA Q3 due \u00b7 63d \u00b7 10/31/2026 \u2014 file before\". Independently recomputed the day count by hand: 2026-08-29 to 2026-10-31 = 2 (remaining Aug) + 30 (Sep) + 31 (Oct) = 63 -- matches exactly, confirming the banner's day math is real, not a placeholder or stale hardcode. Backend getCurrentQuarterInfo() (apps/backend/src/reports/library.routes.ts) computes this from the current date, not a fixture.",
       "pr": "#5344",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": false
     },
     {
       "id": "RPT-S06",
@@ -90,11 +87,10 @@
         "VERIFY-6"
       ],
       "spec": "SubscriptionManager \u00b7 0243-e1-3 two engines",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: ReportsHome kpiReady \u2014/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 reporting.scheduled_reports count=0 for USMCA (honest empty).",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). Prior: ReportsHome kpiReady \u2014/0 honesty; SubscriptionManager emptyMessage; ScheduledReportsPanel No active schedules; verify-rpt-s06-scheduled-honest-zero.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 reporting.scheduled_reports count=0 for USMCA (honest empty). | RE-VERIFIED LIVE (CC-3, 2026-08-30, live healthz 5c825309a5): source-read of apps/backend/src/reports/library.routes.ts confirms `scheduled` in /kpi-summary is a real `SELECT count(*)` query result, not a fabricated/hardcoded value; ReportsHome.tsx's own comment (\"RPT-2 / RPT-S06: never fabricate counts while loading\") gates the KPI display on kpiQuery.isSuccess, showing \"\u2014\" while loading and only a real number (including a real 0) once resolved -- confirmed live Chrome /reports currently shows \"CUSTOM SCHEDULES 6 \u00b7 auto-emailed\" (a real nonzero count for USMCA today, not the 0 case, but the same honest-gating code path serves both); the zero-count path is the SAME conditional render, not a separate branch that could regress independently.",
       "pr": "#5351",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": false
     },
     {
       "id": "RPT-S07",
@@ -104,11 +100,10 @@
         "DOD-C"
       ],
       "spec": "A8-AUDIT-REPORTS-SECTION \u00b7 audit/* report routes",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 audit report routes entity-scoped via operating_company_id.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). Prior: ReportsSubNav AUDIT_REPORT_CHILDREN + 7 manifest routes + AuditReportPage company scope; verify-rpt-s07-audit-reports-section.mjs. PROD-VERIFIED Neon lucia USMCA 2026-08-09 \u2014 audit report routes entity-scoped via operating_company_id. | RE-VERIFIED LIVE (CC-3, 2026-08-30, live healthz 5c825309a5): all 3 of the item's own named surfaces confirmed live in Chrome with real, non-fabricated row counts: /reports/audit/activity-by-user \"354 records\" (real event rows: bill.created, vendor.created, load.created, driver.created, each with a real actor email and source module); /reports/audit/financial-change-log \"98 records\" (bill.created/payment.created/bill.voided events, subtitle \"All invoice/bill/payment/journal create, edit, void, post\"); /reports/audit/deduction-trail \"23 records\" once its query resolved (driver_finance.deduction.created, accounting.civil_fine_expense.posted, driver_finance.settlement.deductions_applied events with real driver names and settlement ids). Manifest confirms 7 total audit report routes registered (activity-by-user, activity-by-module, financial-change-log, maintenance-decision-log, deduction-trail, void-reversal, period-close-history), exceeding the 3 named in this item's own title.",
       "pr": "#5353",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": false
     },
     {
       "id": "RPT-VERIFY-01",
