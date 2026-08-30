@@ -29,7 +29,7 @@ const CHECKS = [
   ["apps/frontend/src/pages/fuel/FuelTransactionsTable.tsx", /kind="unit" id=\{row\.unit_id\}/],
   ["apps/frontend/src/pages/fuel/components/CreateFuelTransactionModal.tsx", /unit_id: unitId \|\| undefined/],
   // driver-hub: tab.scheduler, hop.safety_scheduler
-  ["apps/frontend/src/pages/home/DriverHubPage.tsx", /\{tab === "scheduler" && <DriverSchedulerGridPage \/>\}/],
+  ["apps/frontend/src/pages/home/DriverHubPage.tsx", /\{tab === "scheduler" && <DriverSchedulerGridPage(?:\s+key="scheduler")?\s*\/>\}/],
   ["apps/frontend/src/pages/home/DriverHubPage.tsx", /\{ label: "Safety Scheduler", to: "\/safety\/driver-scheduler" \}/],
   ["apps/frontend/src/pages/safety/driver-scheduler/DriverSchedulerGridPage.tsx", /const unitId = useSearchParams\(\)\[0\]\.get\("unit_id"\) \?\? undefined;/],
   // inventory: assignments.trail, assignments.unit_link
