@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7376 | NOW=DISP-02 active driver/unit eligibility vertical | guard=PASS+selftest11/11 | NEXT=FAST-MERGE then dispatch unique | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7375 | PR=#17919 @ e35d660247 | gate=exit0 | NEXT=DISP-02 active-only logic | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7375 | NOW=DISP-02 shared planner date filter | guard=PASS+selftest6/6 | NEXT=FAST-MERGE then active-only planner logic | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7373A | PR=#17915 @ 25ee5ca565 | gate=exit0 | NEXT=DISP-02 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7373A | NOW=repair TypeScript 6 blockers from #17900 | guard=PASS+selftest23/23 | NEXT=FAST-MERGE then DISP-02 | GO

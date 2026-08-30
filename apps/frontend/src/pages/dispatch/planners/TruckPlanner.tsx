@@ -16,6 +16,7 @@ type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 // on which mdata.units.status values mean "in the shop", so any future addition there needs the
 // identical addition here (enforced by verify-truck-planner-oos-signal-parity.mjs).
 const IN_SHOP_UNIT_STATUSES = new Set(["InMaintenance", "OutOfService", "Damaged"]);
+const PLANNER_UNIT_STATUSES = new Set(["InService", "InMaintenance", "OutOfService"]);
 
 function truckStatusClass(status: TruckStatus): string {
   if (status === "assigned") return "bg-slate-100 text-slate-700";
@@ -98,6 +99,7 @@ export function TruckPlanner() {
       const unitId = String(unit.id ?? "");
       const unitNumber = String(unit.unit_number ?? unitId);
       if (!unitId) continue;
+      if (!PLANNER_UNIT_STATUSES.has(String(unit.status ?? ""))) continue;
       // DISP-F6436: this used to check only 2 of the 4 OOS signals the sibling FleetOosStrip.tsx
       // (Dispatch Overview/Kanban "FLEET OOS / IN SHOP" strip) already checks against the same
       // listUnits() row shape -- is_oos and the raw status enum were missing. Live-confirmed: all
