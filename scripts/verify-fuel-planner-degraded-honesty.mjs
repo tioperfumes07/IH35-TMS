@@ -1,15 +1,46 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 
-const page = fs.readFileSync("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx", "utf8");
-const checks = [
-  ["planner aggregates API errors", /plannerError = dashboardQuery\.error \?\? activeRoutesQuery\.error \?\? settingsQuery\.error \?\? detailQuery\.error/.test(page)],
-  ["degraded branch precedes planner data", /dashboardQuery\.isError \|\| activeRoutesQuery\.isError \|\| settingsQuery\.isError \|\| detailQuery\.isError \? \([\s\S]*?<ListErrorBanner/.test(page)],
-  ["server failure is surfaced", /userFacingApiError\(plannerError/.test(page)],
-  ["unavailable is not zero", page.includes("Planner values are unavailable — they are not zero.")],
-  ["retry refetches planner sources", /dashboardQuery\.refetch\(\)[\s\S]*activeRoutesQuery\.refetch\(\)[\s\S]*settingsQuery\.refetch\(\)/.test(page)],
-];
+const files = {
+  page: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
+  table: "apps/frontend/src/pages/fuel/components/StopReasoningTable.tsx",
+  diagram: "apps/frontend/src/pages/fuel/components/RouteDiagramSvg.tsx",
+};
+
+function scan(source) {
+  const { page, table, diagram } = source;
+  return [
+    ["planner aggregates API errors", /plannerError = dashboardQuery\.error \?\? activeRoutesQuery\.error \?\? settingsQuery\.error \?\? detailQuery\.error/.test(page)],
+    ["degraded branch precedes planner data", /dashboardQuery\.isError \|\| activeRoutesQuery\.isError \|\| settingsQuery\.isError \|\| detailQuery\.isError \? \([\s\S]*?<ListErrorBanner/.test(page)],
+    ["server failure is surfaced", /userFacingApiError\(plannerError/.test(page)],
+    ["unavailable is not zero", page.includes("Planner values are unavailable — they are not zero.")],
+    ["retry refetches planner sources", /dashboardQuery\.refetch\(\)[\s\S]*activeRoutesQuery\.refetch\(\)[\s\S]*settingsQuery\.refetch\(\)/.test(page)],
+    ["stop table does not fabricate mile zero", table.includes('stop.mile_marker == null ? "—"') && !table.includes("stop.mile_marker ?? 0")],
+    ["stop table does not fabricate gallons zero", table.includes('gallons == null ? "—"') && !table.includes("row.gallons ?? 0")],
+    ["diagram refuses to plot unknown mileage at origin", diagram.includes("if (stop.mile_marker == null) return []") && diagram.includes("need route-mile data before they can be plotted") && !diagram.includes("stop.mile_marker ?? 0")],
+    ["diagram labels unknown gallons honestly", diagram.includes('(stop.gallons_added ?? stop.gallons) == null ? "—"')],
+  ];
+}
+
+const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
+const checks = scan(source);
 const failed = checks.filter(([, ok]) => !ok);
 for (const [name, ok] of checks) console.log(`${ok ? "PASS" : "FAIL"} ${name}`);
 if (failed.length) process.exit(1);
+
+if (process.argv.includes("--selftest")) {
+  const mutations = [
+    ["mile-zero", { ...source, table: source.table.replace('stop.mile_marker == null ? "—" : Number(stop.mile_marker)', "Number(stop.mile_marker ?? 0)") }],
+    ["gallons-zero", { ...source, table: source.table.replace('gallons == null ? "—" : Number(gallons)', "Number(gallons ?? 0)") }],
+    ["plot-at-origin", { ...source, diagram: source.diagram.replace("if (stop.mile_marker == null) return [];", "") }],
+    ["diagram-gallons-zero", { ...source, diagram: source.diagram.replace('(stop.gallons_added ?? stop.gallons) == null ? "—"', 'stop.gallons_added ?? stop.gallons ?? 0') }],
+  ];
+  for (const [label, mutated] of mutations) {
+    if (scan(mutated).every(([, ok]) => ok)) {
+      console.error(`verify-fuel-planner-degraded-honesty selftest FAIL — ${label} escaped`);
+      process.exit(1);
+    }
+  }
+  console.log(`verify-fuel-planner-degraded-honesty selftest PASS (${mutations.length}/${mutations.length})`);
+}
 console.log(`verify-fuel-planner-degraded-honesty: ${checks.length}/${checks.length} PASS`);
