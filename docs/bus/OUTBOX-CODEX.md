@@ -1,5 +1,7 @@
 CODEX | WORKING | SYS-F7421 | ROOT=transaction-health-evidence-imported-contracts-back-through-owning-service | focused=no-circular normal+selftest+13-vitest+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7420 | PR=#18056 @ b09d7c160c | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product=unchanged | NEXT=SYS-F7421 | GO
+CODEX | WORKING | DSP-F7422 | ROOT=driver-self-issue-lookup-derived-load-company-without-driver-company-authorization | focused=load-linkage+selftest+backend-tsc | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | SYS-F7421 | PR=#18057 @ 0af69cf609 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | Live=UNVERIFIED | NEXT=DSP-F7422 | GO
 CODEX | WORKING | GUARD-F7420 | VERTICAL=maintenance+dispatch+finance test-provider evidence | ROOT=three-test-files-died-before-assertions | focused=guard+selftest+Vitest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7419 | ROOT=PageHeader-ratchet-recognized-wrap-only-not-contained-safe-layout | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7419 | PR=#18055 @ c9fd591874 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product=unchanged | NEXT=GUARD-F7420 | GO

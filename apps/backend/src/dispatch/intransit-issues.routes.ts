@@ -85,6 +85,17 @@ export async function registerIntransitIssuesRoutes(app: FastifyInstance) {
            AND d.id IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id)
            AND d.deactivated_at IS NULL
            AND d.archived_at IS NULL
+           AND (
+             l.operating_company_id = d.operating_company_id
+             OR EXISTS (
+               SELECT 1
+               FROM mdata.driver_company_authorizations issue_driver_dca
+               WHERE issue_driver_dca.driver_id = d.id
+                 AND issue_driver_dca.company_id = l.operating_company_id
+                 AND issue_driver_dca.is_authorized = true
+                 AND issue_driver_dca.deactivated_at IS NULL
+             )
+           )
           WHERE l.id = $2::uuid
             AND l.soft_deleted_at IS NULL
           LIMIT 1
