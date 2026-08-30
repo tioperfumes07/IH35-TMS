@@ -88,9 +88,14 @@ export function VendorsPage() {
   // BANK-SORT-ROLLOUT-CRM — name sort persists in ?sort=name&dir= via shared useUrlSort
   // (same contract as accounting VendorsListView / #2609). Default (no params) = A→Z.
   const { sortKey, sortDirection, onSortChange: onUrlSortChange } = useUrlSort();
-  const sortByName: "name_asc" | "name_desc" =
-    sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
-  const setSortByName = (value: "name_asc" | "name_desc") => {
+  // CUST-01 C4: balance sort added alongside name -- default (no params, or unrecognized key)
+  // stays name A->Z, matching the pre-existing contract.
+  const sortByName: "name_asc" | "name_desc" | "balance_asc" | "balance_desc" =
+    sortKey === "balance" ? (sortDirection === "asc" ? "balance_asc" : "balance_desc")
+    : sortKey === "name" && sortDirection === "desc" ? "name_desc" : "name_asc";
+  const setSortByName = (value: "name_asc" | "name_desc" | "balance_asc" | "balance_desc") => {
+    if (value === "balance_asc") { onUrlSortChange("balance", "asc"); return; }
+    if (value === "balance_desc") { onUrlSortChange("balance", "desc"); return; }
     onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
   const [searchParams, setSearchParams] = useSearchParams();
