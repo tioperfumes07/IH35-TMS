@@ -2071,12 +2071,6 @@
       "migration": "202606080930_block14_mexico_ops.sql"
     },
     {
-      "object": "mdata.drivers.last_samsara_login_at",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606192100_drivers_last_samsara_login.sql"
-    },
-    {
       "object": "mdata.drivers.referral_source",
       "kind": "COLUMN",
       "verdict": "none",

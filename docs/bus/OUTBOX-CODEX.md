@@ -1,4 +1,5 @@
-CODEX | WORKING | DRIVER-F7519 | ROOT=last_samsara_login_at-migration-had-zero-writers-and-zero-profile-reader | focused=guard+selftest14/14+Vitest2/2+backend-tsc | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | WORKING | DRIVER-F7519B | ROOT=merged-lifecycle-made-dead-schema-baseline-stale | exact-entry=removed+zero-new-debt | NEXT=gate+FAST-MERGE-then-next-real-field | GO
+CODEX | SHIPPED | DRIVER-F7519 | PR=#18165 @ c65ff07115 | focused=guard+selftest14/14+Vitest2/2+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=remove-stale-debt-credit | GO
 CODEX | SHIPPED | DQF-F7518 | PR=#18164 @ 564f299318 | focused=guard+selftest26/26+Vitest+backend/frontend-tsc+dead-schema4→0+full-gate | Live=UNVERIFIED | NEXT=Samsara-login-lifecycle | GO
 CODEX | SHIPPED | PWA-F7517 | PR=#18163 @ 1bde974686 | focused=Vitest13/13+backend/PWA-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=DQF-metadata | GO
 CODEX | SHIPPED | NOTIFY-F7516 | PR=#18162 @ 686ea26348 | focused=Vitest3/3+backend-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=PWA-read_at | GO
