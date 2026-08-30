@@ -109,8 +109,13 @@ describe("bulkEnrollActiveDrivers", () => {
     expect(result.enrolledCount).toBe(0);
 
     const sql = (client.query as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]?.[0] as string;
-    // Guards the idempotency + active-human-driver contract in the SQL itself.
-    expect(sql).toContain("NOT EXISTS");
+    // Guards the concurrency-safe idempotency + active-human-driver contract in the SQL itself.
+    // SAFETY-F6767 replaced the race-prone NOT EXISTS read with a partial unique index;
+    // the writer must target that exact active-row constraint and make conflicts no-ops.
+    expect(sql).toContain(
+      "ON CONFLICT (operating_company_id, driver_uuid) WHERE is_active = true"
+    );
+    expect(sql).toContain("DO NOTHING");
     expect(sql).toContain("d.status = 'Active'");
     expect(sql).toContain("d.archived_at IS NULL");
   });

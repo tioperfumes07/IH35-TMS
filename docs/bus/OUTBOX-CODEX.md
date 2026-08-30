@@ -2536,3 +2536,4 @@ CODEX | WORKING | GUARD-F7471 | ROOT=DOT-dwell-api-offset-selftest-mutated-earli
 CODEX | WORKING | GUARD-F7472 | ROOT=update-load-DQF-selftest-searched-source-call-suffix-inside-human-error-message | focused=normal+selftest-gate-removal-red | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7473 | ROOT=BOL-api-origin-selftest-deliberately-returned-product-failure-instead-of-proving-mutation-caught | focused=normal+selftest-resolver-removal-red | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7474 | ROOT=DOT-inspection-reverse-reset-guard-expected-impossible-comma-syntax-instead-of-useEffect | focused=normal+selftest-9/9 | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | SAF-F7475 | ROOT=random-pool-test-required-retired-racy-NOT-EXISTS-after-partial-unique-index | SAFETY=SAF-B16-fixed-awaiting-GUARD;ORPH01-no-live-forfeit-delta-flag-OFF;ORPH02-no-live-dual-subledger-forfeit-flag-OFF;ORPH05-no-full-tab-wizard-depth-packet | NEXT=focused+gate+FAST-MERGE | GO
