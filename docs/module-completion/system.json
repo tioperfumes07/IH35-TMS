@@ -1,7 +1,7 @@
 {
   "module": "system",
   "title": "System (Owner)",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-29T16:40:00Z",
   "live_sha": "e16ebd0",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/program-system-help-2026-08-01.md",
@@ -76,11 +76,12 @@
         "DOD-B"
       ],
       "spec": "Architecture docs \u00b7 QBO pull-only law",
-      "status": "UNVERIFIED",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false \u00b7 QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0.",
+      "status": "PASS",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: SystemModulePage.tsx calls getQboSyncHealth, surfaces a QBO write-back row, labels it 'OFF (by design)', and includes explanatory pull-only / no write-back text; guard verify-sys-s05-qbo-sync-writeback-off.mjs selftests. | PROD-VERIFIED 2026-08-10 Neon lucia: lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false \u00b7 QBO_JE_PUSH_ENABLED default_enabled=false (parallel-books pull-only law); node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): node scripts/verify-sys-s05-qbo-sync-writeback-off.mjs exit 0; --selftest PASS (1 planted failure detected). Independently re-read Neon this same pass (tiny-field-89581227, lucia bypass, je_control=2214 nonzero control): lib.feature_flags QBO_ENTITY_PUSH_ENABLED default_enabled=false, QBO_JE_PUSH_ENABLED default_enabled=false -- both flags confirmed still off today, not from the 2026-08-10 citation alone. Binding.",
       "pr": "#5341",
-      "prod_verified": false,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T01:35:00.000Z",
+      "live_verified_sha": "0dd70bf"
     },
     {
       "id": "SYS-VERIFY-01",
@@ -151,8 +152,8 @@
       "live_verified_sha": "4e5db76"
     }
   ],
-  "pass_count": 8,
+  "pass_count": 9,
   "total_count": 9,
-  "progress": "8 of 9",
+  "progress": "9 of 9",
   "note": "2026-08-10 SYS-CERTIFIED-NEON: SYS-S01..S05 prod_verified:true (Neon lucia + prod healthz/API). complete:false \u2014 SYS-VERIFY-01 stays OPEN (Cascade live click-through VERIFY-1..8). healthz=e16ebd0 at prove; main tip 203758833. | 2026-08-10 Cursor CLOSED SYS-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory). REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
 }
