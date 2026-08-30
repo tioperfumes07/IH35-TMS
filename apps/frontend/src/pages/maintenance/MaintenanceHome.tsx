@@ -56,6 +56,7 @@ import { PreFlightDvirQueue } from "./pre-flight/PreFlightDvirQueue";
 import { TireWearDashboard } from "./tires/TireWearDashboard";
 import { WorkOrderDetailModal } from "../../components/maintenance/WorkOrderDetailModal";
 import { WorkOrdersTable } from "./components/WorkOrdersTable";
+import { formatTriageLocation, triageDescription } from "./triage-location";
 import { partNeedsReorder } from "./parts-low-stock";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -755,8 +756,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
                 load_id: prefillFromIssue.load_id ?? "",
                 roadside_breakdown_load_id: prefillFromIssue.load_id ?? "",
                 roadside_callout_at: prefillFromIssue.reported_at,
-                roadside_location: `GPS: ${prefillFromIssue.gps_lat ?? "unknown"}, ${prefillFromIssue.gps_lng ?? "unknown"} ${prefillFromIssue.gps_label ?? ""}`.trim(),
-                description: `${prefillFromIssue.issue_description}\nGPS: ${prefillFromIssue.gps_lat ?? ""},${prefillFromIssue.gps_lng ?? ""} ${prefillFromIssue.gps_label ?? ""}`.trim(),
+                roadside_location: formatTriageLocation(prefillFromIssue),
+                description: triageDescription(prefillFromIssue),
                 repair_location: "mobile_roadside",
                 bucket: "roadside",
                 class_hint: "Prefilled from triage issue",

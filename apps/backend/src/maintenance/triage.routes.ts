@@ -18,6 +18,20 @@ const convertToDamageBodySchema = z.object({
   additional_notes: z.string().trim().max(1000).optional(),
 });
 
+export function formatTriageLocation(issue: { gps_lat?: unknown; gps_lng?: unknown; gps_label?: unknown }): string {
+  const label = String(issue.gps_label ?? "").trim();
+  if (issue.gps_lat != null && issue.gps_lng != null) {
+    return `GPS: ${issue.gps_lat}, ${issue.gps_lng}${label ? ` · ${label}` : ""}`;
+  }
+  return label ? `Location: ${label}` : "";
+}
+
+function triageDescription(issue: Record<string, unknown>, additionalNotes?: string): string {
+  return [String(issue.issue_description ?? "").trim(), additionalNotes?.trim(), formatTriageLocation(issue)]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function authed(req: FastifyRequest, reply: FastifyReply) {
   if (!requireAuth(req, reply)) return null;
   return req.user;
@@ -120,7 +134,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
               issue.unit_id,
               issue.driver_id,
               issue.load_id,
-              `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
+              triageDescription(issue, body.data.additional_notes),
               display?.display_id ?? null,
               Number(display?.sequence ?? 0) || null,
               params.data.issue_id,
@@ -131,7 +145,7 @@ export async function registerMaintenanceTriageRoutes(app: FastifyInstance) {
               issue.unit_id,
               issue.driver_id,
               issue.load_id,
-              `${issue.issue_description ?? ""}\n${body.data.additional_notes ?? ""}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""} ${issue.gps_label ?? ""}`.trim(),
+              triageDescription(issue, body.data.additional_notes),
               display?.display_id ?? null,
               Number(display?.sequence ?? 0) || null,
             ]

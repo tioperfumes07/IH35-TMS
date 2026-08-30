@@ -87,6 +87,7 @@ export async function registerSafetyIncidentFullReportRoutes(app: FastifyInstanc
         assigned_trailer_id: string | null;
         assigned_primary_driver_id: string | null;
         assigned_secondary_driver_id: string | null;
+        load_number: string | null;
       }>(
         `
           SELECT
@@ -95,7 +96,8 @@ export async function registerSafetyIncidentFullReportRoutes(app: FastifyInstanc
             assigned_unit_id,
             ${trailerColumn ? `${trailerColumn} AS assigned_trailer_id` : "NULL::uuid AS assigned_trailer_id"},
             assigned_primary_driver_id,
-            assigned_secondary_driver_id
+            assigned_secondary_driver_id,
+            load_number
           FROM mdata.loads
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
@@ -143,6 +145,7 @@ export async function registerSafetyIncidentFullReportRoutes(app: FastifyInstanc
         severity: body.data.severity,
         description: body.data.description,
         occurred_at: body.data.occurred_at,
+        source_reference: `${body.data.type.replace(/_/g, " ")} · ${load.load_number ?? "Load"} · ${body.data.occurred_at.slice(0, 10)}`,
       });
 
       return {

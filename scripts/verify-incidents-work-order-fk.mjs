@@ -30,6 +30,10 @@ const ROUTES = "apps/backend/src/safety/incidents.routes.ts";
 const TAB = "apps/frontend/src/pages/maintenance/components/MaintenanceDamageRegisterTab.tsx";
 const HANDLER = "apps/backend/src/outbox/handlers/safety-incident-stakeholder-notification.handler.ts";
 const REGISTRY = "apps/backend/src/outbox/handlers/registry.ts";
+const FULL_REPORT = "apps/backend/src/safety/incidents/full-report.routes.ts";
+const TRIAGE = "apps/backend/src/maintenance/triage.routes.ts";
+const MAINT_HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
+const TRIAGE_MODAL = "apps/frontend/src/pages/maintenance/components/TriageModal.tsx";
 
 function readRel(root, rel, overrides) {
   if (overrides && Object.prototype.hasOwnProperty.call(overrides, rel)) return overrides[rel];
@@ -112,6 +116,27 @@ export function collectProblems(root = ROOT, overrides = null) {
     if (!/work_order_id: string \| null/.test(tab)) problems.push(`${TAB}: row type must carry work_order_id`);
   }
 
+  const fullReport = readRel(root, FULL_REPORT, overrides) ?? "";
+  if (!/\n\s*source_reference:\s*`\$\{body\.data\.type[\s\S]{0,180}?load\.load_number[\s\S]{0,120}?occurred_at/.test(fullReport)) {
+    problems.push(`${FULL_REPORT}: workflow must receive a human type/load/date source reference`);
+  }
+  if (/Draft from incident \$\{input\.incident_id\}/.test(trigger ?? "") || !/Draft from \$\{input\.source_reference\}/.test(trigger ?? "")) {
+    problems.push(`${TRIGGER}: generated WO title must use the human source reference, never a raw incident UUID`);
+  }
+  const triage = readRel(root, TRIAGE, overrides) ?? "";
+  if (!/function formatTriageLocation/.test(triage) || !/triageDescription\(issue, body\.data\.additional_notes\)/.test(triage)) {
+    problems.push(`${TRIAGE}: canonical WO write must omit empty GPS punctuation`);
+  }
+  if (/GPS: \$\{issue\.gps_lat \?\? ""\},\$\{issue\.gps_lng \?\? ""\}/.test(triage)) {
+    problems.push(`${TRIAGE}: raw GPS comma writer remains`);
+  }
+  const home = readRel(root, MAINT_HOME, overrides) ?? "";
+  const modal = readRel(root, TRIAGE_MODAL, overrides) ?? "";
+  if (!home.includes("roadside_location: formatTriageLocation(prefillFromIssue)") || !home.includes("description: triageDescription(prefillFromIssue)")) {
+    problems.push(`${MAINT_HOME}: Create WO prefill must reuse honest triage location formatting`);
+  }
+  if (!modal.includes("formatTriageLocation(issue)")) problems.push(`${TRIAGE_MODAL}: null coordinates must not render GPS dashes/comma`);
+
   return problems;
 }
 
@@ -140,6 +165,10 @@ function selftest() {
   const tabReal = readRel(ROOT, TAB);
   const handlerReal = readRel(ROOT, HANDLER);
   const registryReal = readRel(ROOT, REGISTRY);
+  const fullReportReal = readRel(ROOT, FULL_REPORT);
+  const triageReal = readRel(ROOT, TRIAGE);
+  const homeReal = readRel(ROOT, MAINT_HOME);
+  const modalReal = readRel(ROOT, TRIAGE_MODAL);
 
   const plant = (label, overrides, expectFragment) => {
     const problems = collectProblems(ROOT, overrides);
@@ -213,8 +242,13 @@ function selftest() {
     },
     'must render a real "Linked WO"'
   );
+  plant("human source reference removed", { [FULL_REPORT]: fullReportReal.replace("source_reference:", "removed_source_reference:") }, "human type/load/date");
+  plant("raw UUID title restored", { [TRIGGER]: triggerReal.replace("`Draft from ${input.source_reference}`", "`Draft from incident ${input.incident_id}`") }, "raw incident UUID");
+  plant("backend GPS formatter bypassed", { [TRIAGE]: triageReal.replace(/triageDescription\(issue, body\.data\.additional_notes\)/g, '`${issue.issue_description}\nGPS: ${issue.gps_lat ?? ""},${issue.gps_lng ?? ""}`') }, "canonical WO write");
+  plant("frontend GPS formatter bypassed", { [MAINT_HOME]: homeReal.replace("roadside_location: formatTriageLocation(prefillFromIssue)", 'roadside_location: `GPS: ${prefillFromIssue.gps_lat ?? ""},${prefillFromIssue.gps_lng ?? ""}`') }, "Create WO prefill");
+  plant("triage modal formatter removed", { [TRIAGE_MODAL]: modalReal.replace(/formatTriageLocation\(issue\)/g, '`${issue.gps_lat ?? "-"}, ${issue.gps_lng ?? "-"}`') }, "null coordinates");
 
-  console.log(`${LABEL} SELFTEST PASS — 11 planted regressions all caught`);
+  console.log(`${LABEL} SELFTEST PASS — 16 planted regressions all caught`);
 }
 
 const isMain = path.resolve(process.argv[1] ?? "") === path.resolve(new URL(import.meta.url).pathname);

@@ -2,6 +2,7 @@ import type { InTransitIssue } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { formatTriageLocation } from "../triage-location";
 
 type Props = {
   open: boolean;
@@ -21,7 +22,7 @@ export function TriageModal({ open, issue, onClose, onConvertToWo, onConvertToDa
             <div><span className="font-semibold">Driver:</span> <EntityLinkOrTombstone kind="driver" id={issue.driver_id} name={issue.driver_full_name} noun="Driver" /></div>
             <div><span className="font-semibold">Category:</span> {issue.issue_category}</div>
             <div><span className="font-semibold">Description:</span> {issue.issue_description}</div>
-            <div><span className="font-semibold">GPS:</span> {issue.gps_lat ?? "-"}, {issue.gps_lng ?? "-"} {issue.gps_label ?? ""}</div>
+            {formatTriageLocation(issue) ? <div>{formatTriageLocation(issue)}</div> : null}
           </div>
           <div className="flex gap-2">
             <Button type="button" onClick={() => onConvertToWo(issue)}>Convert to Work Order</Button>
