@@ -15,6 +15,8 @@ function verify(text) {
   assert.doesNotMatch(text, /requireDatabaseDirectUrl/);
   assert.doesNotMatch(text, /buildLuciaConnString/);
   assert.match(text, /function buildLuciaPool[\s\S]*buildPgPoolConfig\(requireDatabaseUrl\(\)/);
+  assert.match(text, /wrapLuciaPoolQueryInBypassTxn/);
+  assert.match(text, /AUTH-LUCIA-SESSION-RLS/);
 }
 
 verify(source);
