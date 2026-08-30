@@ -397,7 +397,16 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
 
       const invoiceTotalCents = invoiceRes.rows.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.total_cents ?? 0), 0);
       const advanceAmount = Math.round((invoiceTotalCents * Number(body.data.advance_rate_pct)) / 100);
-      const reserveAmount = Math.max(0, invoiceTotalCents - advanceAmount);
+      // FACT-RESERVE-01 (GO-FARO-02 REV B) — reserve was computed as "whatever the advance didn't
+      // cover" (invoiceTotal - advance), which folds the ENTIRE holdback into reserve_amount_cents and
+      // leaves factor_fee_cents permanently 0 (it was never even in the INSERT column list below).
+      // Balanced (invoice total still reconciles) but wrong: the factoring fee expense never posts,
+      // and reserve_amount_cents is overstated by the fee. Both must be computed independently from
+      // their own caller-supplied percentages, per the packet's own prescribed formula — this does NOT
+      // change advance_amount_cents (still advance_rate_pct of the invoice total, the cash actually
+      // funded), only how the remaining holdback is classified between reserve and fee.
+      const reserveAmount = Math.round((invoiceTotalCents * Number(body.data.reserve_pct)) / 100);
+      const feeAmount = Math.round((invoiceTotalCents * Number(body.data.factor_fee_pct ?? 0)) / 100);
       const displayId = await nextFactoringDisplayId(client, query.data.operating_company_id, new Date());
 
       const insertRes = await client.query(
@@ -414,11 +423,12 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             reserve_pct,
             reserve_amount_cents,
             factor_fee_pct,
+            factor_fee_cents,
             notes,
             memo,
             created_by_user_id
           )
-          VALUES ($1,$2,$3,'submitted',$4,$5,$6,$7,$8,$9,$10,$11,$11,$12)
+          VALUES ($1,$2,$3,'submitted',$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,$13)
           RETURNING id
         `,
         [
@@ -432,6 +442,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
           body.data.reserve_pct,
           reserveAmount,
           body.data.factor_fee_pct ?? 0,
+          feeAmount,
           body.data.notes ?? null,
           user.uuid,
         ]
