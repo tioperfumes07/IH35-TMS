@@ -31,7 +31,7 @@ const composed = ["verify-wave-a-load-column.mjs", "verify-book-load-stamps-link
 export function auditLoadColumn(sources, leaves) {
   const failures = [];
   const p10 = leaves.filter((leaf) => P10.has(leaf.module));
-  if (p10.length < 97) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
+  if (p10.length < 94) failures.push(`priority-10 load inventory unexpectedly shrank to ${p10.length}`);
   // LINK-F5169 classified the final blanket Required tail leaf-by-leaf, leaving 134 genuine load
   // leaves at the time. Floor lowered to 131 (2026-08-20, CC-3) to match #9817
   // FLEET-UNIT-TRIP-COST-LOAD-REVERSE-INFLATION, a legitimate, documented honesty correction that
@@ -40,11 +40,17 @@ export function auditLoadColumn(sources, leaves) {
   // didn't have). #13510 then removed the same false load/reverse inflation from
   // `unit.edit.quick_availability`: it patches unit availability/default-driver attributes and owns
   // no load picker, payload FK, or reverse relationship. Re-verified against the current
-  // required.json files, not board prose: 130 total / 97 P10 / 18 modules, all three floors now
-  // hold exactly at the honest count. This floor may
+  // required.json files, not board prose: 130 total / 97 P10 / 18 modules. #14506 then removed
+  // the false per-advance load Required from factoring accounting.list/submit/detail: one advance
+  // batches many invoices and correctly reaches loads through each invoice.source_load_id; the
+  // advance header has no load_id. Current honest floor is 127 total / 94 P10 / 18 modules.
+  // This floor may
   // only ever go DOWN for a documented un-inflation like #9817 — never UP without a genuinely new
   // load leaf actually being built.
-  if (leaves.length < 130) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  if (leaves.length < 127) failures.push(`all-module load inventory unexpectedly shrank to ${leaves.length}`);
+  for (const id of ["accounting.list", "accounting.submit", "accounting.detail"]) {
+    if (leaves.some((leaf) => leaf.module === "factoring" && leaf.id === id)) failures.push(`factoring:${id} must not invent a per-advance load FK`);
+  }
   if (new Set(leaves.map((leaf) => leaf.module)).size < 18) failures.push("load module inventory unexpectedly shrank");
   failures.push(...auditConnectivity(sources.routes, leaves, 0));
   for (const [file, pattern] of contracts) if (!pattern.test(sources.files[file] || "")) failures.push(`${file}: canonical load FK/link contract missing`);
@@ -57,6 +63,7 @@ if (process.argv.includes("--selftest")) {
   if (!auditLoadColumn(sources, leaves.filter((leaf) => leaf !== plantedP10Leaf)).some((failure) => failure.includes("priority-10"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — P10 mutation escaped"); process.exit(1); }
   const plantedAllModuleLeaf = leaves.find((leaf) => !P10.has(leaf.module));
   if (!plantedAllModuleLeaf || !auditLoadColumn(sources, leaves.filter((leaf) => leaf !== plantedAllModuleLeaf)).some((failure) => failure.includes("all-module load inventory"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — all-module inventory mutation escaped"); process.exit(1); }
+  if (!auditLoadColumn(sources, [...leaves, { module: "factoring", id: "accounting.detail", route: "/accounting/factoring/:id" }]).some((failure) => failure.includes("must not invent"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — factoring false-applicability mutation escaped"); process.exit(1); }
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"] = mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"].replaceAll('kind="load"', 'kind="unit"');
   if (!auditLoadColumn(mutated, leaves).some((failure) => failure.includes("DispatcherActiveLoadsPanel"))) { console.error("verify-wave-a-load-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
