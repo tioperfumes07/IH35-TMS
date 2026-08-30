@@ -78,6 +78,7 @@ export type PayRunCloseErrorCode =
   | "PAYMENT_METHOD_NO_GL_ACCOUNT"
   | "DRIVER_PAY_ACCOUNT_MISSING"
   | "REIMBURSEMENT_EXPENSE_ACCOUNT_MISSING"
+  | "DETENTION_PAY_EXPENSE_ACCOUNT_MISSING"
   | "DEDUCTION_RECOVERY_ACCOUNT_MISSING"
   | "ADVANCE_CLEARING_ACCOUNT_MISSING"
   | "CHARGEBACK_RECOVERY_ACCOUNT_MISSING"
@@ -110,6 +111,8 @@ type SettlementRow = {
 export type PayRunNetBreakdown = {
   gross_cents: number;
   reimbursements_cents: number;
+  /** DWELL-01-D3 slice 2 — SUM of active 'detention_pay' settlement lines (cents). */
+  detention_pay_cents: number;
   deductions_cents: number;
   chargebacks_cents: number;
   advance_recoveries_cents: number;
@@ -248,6 +251,29 @@ async function loadReimbursementsCents(client: DbClient, operatingCompanyId: str
       WHERE sl.settlement_id = $2::uuid
         AND ds.operating_company_id = $1::uuid
         AND sl.line_type = 'reimbursement'
+        AND sl.is_active = true
+    `,
+    [operatingCompanyId, settlementId]
+  );
+  return dollarsToCents(res.rows[0]?.total ?? 0);
+}
+
+/**
+ * DWELL-01-D3 slice 2 — SUM of active 'detention_pay' settlement lines (cents, positive magnitude).
+ * Mirrors loadReimbursementsCents exactly: detention_pay_posting.service.ts's postDetentionPayForEvent
+ * (slice 1, shipped) already writes these lines with driver_visible=true/approval_status='pending',
+ * but nothing read them into the NET formula or a settlement's JE until this function existed — a
+ * posted line was real and driver-visible/disputable, but silently never reached actual disbursed cash.
+ */
+async function loadDetentionPayCents(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<number> {
+  const res = await client.query<{ total: string | null }>(
+    `
+      SELECT COALESCE(SUM(ABS(sl.amount)), 0)::text AS total
+      FROM driver_finance.settlement_lines sl
+      JOIN driver_finance.driver_settlements ds ON ds.id = sl.settlement_id
+      WHERE sl.settlement_id = $2::uuid
+        AND ds.operating_company_id = $1::uuid
+        AND sl.line_type = 'detention_pay'
         AND sl.is_active = true
     `,
     [operatingCompanyId, settlementId]
@@ -410,6 +436,7 @@ export async function closeSettlementPayRun(
     // ── Compute each net term from a single authoritative source (no double counting). ────────────────
     const grossCents = dollarsToCents(settlement.gross_pay);
     const reimbursementsCents = await loadReimbursementsCents(client, opco, settlementId);
+    const detentionPayCents = await loadDetentionPayCents(client, opco, settlementId);
     const deductionsByRole = await loadOtherDeductionsByRole(client, opco, settlementId);
     const deductionsCents = Array.from(deductionsByRole.values()).reduce((s, v) => s + v, 0);
     const chargebacksCents = await loadChargebacksCents(client, opco, settlementId);
@@ -429,7 +456,8 @@ export async function closeSettlementPayRun(
 
     const netCents =
       grossCents +
-      reimbursementsCents -
+      reimbursementsCents +
+      detentionPayCents -
       deductionsCents -
       escrowContributionCents -
       advanceRecoveriesCents -
@@ -438,6 +466,7 @@ export async function closeSettlementPayRun(
     const breakdown: PayRunNetBreakdown = {
       gross_cents: grossCents,
       reimbursements_cents: reimbursementsCents,
+      detention_pay_cents: detentionPayCents,
       deductions_cents: deductionsCents,
       chargebacks_cents: chargebacksCents,
       advance_recoveries_cents: advanceRecoveriesCents,
@@ -542,6 +571,20 @@ export async function closeSettlementPayRun(
         );
       }
       legs.push({ account_id: reimbAcct, debit_or_credit: "debit", amount_cents: reimbursementsCents, description: `${label} — driver reimbursement` });
+    }
+
+    if (detentionPayCents > 0) {
+      // DWELL-01-D3 slice 2 — Dr detention_pay_expense, mirroring reimbursement_expense's shape exactly
+      // (a single debit leg; the JE balances overall against the final net-cash credit leg below, not
+      // against a paired credit here). Lifts net pay by the same amount, matching the NET formula term.
+      const detentionAcct = await resolvePayRunRoleAccount(client, opco, "detention_pay_expense");
+      if (!detentionAcct) {
+        throw new SettlementPayRunError(
+          "DETENTION_PAY_EXPENSE_ACCOUNT_MISSING",
+          "No active 'detention_pay_expense' CoA role designation for settlement detention pay"
+        );
+      }
+      legs.push({ account_id: detentionAcct, debit_or_credit: "debit", amount_cents: detentionPayCents, description: `${label} — driver detention pay` });
     }
 
     for (const [roleKey, cents] of deductionsByRole) {
