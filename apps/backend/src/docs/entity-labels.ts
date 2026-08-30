@@ -51,6 +51,11 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // had no document column at all.
   dot_inspection: { table: "safety.dot_inspections", labelSelect: "NULLIF(TRIM(COALESCE(d.outcome, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   fuel_transaction: { table: "fuel.fuel_transactions", labelSelect: "NULLIF(TRIM(COALESCE(d.transaction_reference, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  // DOC-01 D2 slice 5 (owner 2026-08-29): both already have a working upload path through a
+  // different mechanism (migration 202613290500 note); this is the additive many-document
+  // capability. Voided rows excluded, matching invoice/dot_inspection above.
+  expense: { table: "accounting.expenses", labelSelect: "NULLIF(TRIM(COALESCE(d.expense_number, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
+  bill: { table: "accounting.bills", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */
