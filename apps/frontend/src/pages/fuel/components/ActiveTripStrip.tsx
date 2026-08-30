@@ -39,7 +39,7 @@ export function ActiveTripStrip({ route }: Props) {
           "—"
         )}
       </Cell>
-      <Cell label="Route">{route ? `${Number(route.total_distance_miles ?? 0).toFixed(0)} practical mi` : "—"}</Cell>
+      <Cell label="Route">{route?.total_distance_miles != null ? `${Number(route.total_distance_miles).toFixed(0)} practical mi` : "—"}</Cell>
       <Cell label="Tank now">{route?.current_fuel_gallons != null ? `${Number(route.current_fuel_gallons).toFixed(1)} gal` : "—"}</Cell>
       <Cell label="MPG">{route?.current_mpg != null ? Number(route.current_mpg).toFixed(1) : "—"}</Cell>
       <Cell label="HOS left / Driving shift">{route ? `Updated ${new Date(route.computed_at).toLocaleTimeString()}` : "—"}</Cell>

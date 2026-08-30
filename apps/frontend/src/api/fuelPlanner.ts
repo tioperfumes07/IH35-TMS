@@ -30,7 +30,7 @@ export type FuelActiveRoute = {
   driver_full_name: string;
   driver_display_id: string;
   unit_display_id: string;
-  total_distance_miles: number;
+  total_distance_miles: number | null;
   recommended_total_fuel_gallons: number;
   recommended_total_cost: number;
   station_avg_baseline_cost: number;
