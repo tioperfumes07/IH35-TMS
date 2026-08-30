@@ -9,6 +9,11 @@
  * go live on Render, then runs:
  *   node scripts/proof-engine/replay-all.mjs --live-sha "$SHA" --write
  *
+ * Shadow vs enforcement: PROOF_REPLAY_FAIL_ON_FAIL=1 is the ONLY switch that
+ * can fail the process. Default unset → exit 0 even when fail>0. Pull it per
+ * module when that module's disagreement list is empty — never globally.
+ * Law: docs/lockdown/PROOF-ENGINE-SHADOW-LEVER-2026-08-30.md
+ *
  * Writes docs/module-completion/PROOF-ENGINE-REPLAY.json (derived artifact).
  * Does NOT mutate module-completion/*.json item.status fields (shadow mode).
  *
@@ -136,7 +141,14 @@ async function main() {
     scanned: items.length,
     pass,
     fail,
+    disagreement_count: fail,
     other: unverified,
+    enforcement: {
+      env: "PROOF_REPLAY_FAIL_ON_FAIL",
+      armed: process.env.PROOF_REPLAY_FAIL_ON_FAIL === "1",
+      rule: "per module when that module's disagreement list is empty; never globally",
+      law: "docs/lockdown/PROOF-ENGINE-SHADOW-LEVER-2026-08-30.md",
+    },
     items,
   };
 
