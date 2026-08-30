@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-FINISH-TONIGHT | NOW=P0 dot_oos FIRST · then mtd_repair + WONUM D1 + SCEN money + #17916 JE role · never restamp U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-1 | GO-CERT-01 | NOW=MAINT P0/P1 still · later B2 API FW 1/2/4/5/10 + B7 JE · never stamp vendors complete · skip #15546 · never trigger_deploy | GO
 Cursor→CC-1 | GO-MAINT-01+WONUM-01 | P0 dot_oos false 14 NOW · P1 mtd_repair_cost · D1 no UUID in WO · D2 lock V5 first set (owner this chat) · D3 fix Rule 03 to mdata.units.unit_number · packets docs/lockdown/GO-MAINT-01-LIVE-WALK-2026-08-29.md + GO-WONUM-01-RULE03-2026-08-29.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-1 | GO-TONIGHT-U6-SCEN | NOW=SCEN hops 4/6 + hop.assign + remaining accounting/settlements/factoring UNVERIFIED · U14=unique leftover NEVER recertify · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 · never trigger_deploy | GO

@@ -10,6 +10,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { formatPlannerDayLabel } from "./plannerDayLabel";
 import { BookLoadModalV4 } from "../components/BookLoadModalV4";
 
 /**
@@ -173,11 +174,12 @@ export function UnifiedTimelinePlanner() {
         <table className="min-w-max border-collapse text-[10px]">
           <thead>
             <tr>
-              <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Driver / Unit</th>
-              <th className="border-b border-r bg-gray-50 px-1 py-1 text-left">Status</th>
+              <th className="sticky left-0 z-10 border-b border-r border-slate-300 bg-gray-50 px-2 py-1 text-left">Driver / Unit</th>
+              <th className="border-b border-r border-slate-300 bg-gray-50 px-1 py-1 text-left">Book</th>
+              <th className="border-b border-r border-slate-300 bg-gray-50 px-1 py-1 text-left">Status</th>
               {days.map((d) => (
-                <th key={d} className="border-b border-gray-100 px-0.5 py-1 text-center font-normal text-gray-500">
-                  {d.slice(5)}
+                <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
+                  {formatPlannerDayLabel(d)}
                 </th>
               ))}
             </tr>
@@ -186,7 +188,7 @@ export function UnifiedTimelinePlanner() {
             {drivers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={2 + days.length}
+                  colSpan={3 + days.length}
                   data-testid="dispatch-timeline-honest-empty"
                   className="px-3 py-4 text-center text-sm text-gray-500"
                 >
@@ -208,7 +210,7 @@ export function UnifiedTimelinePlanner() {
                   if (load) {
                     const span = loadSpan(load, days, dayIdx);
                     cells.push(
-                      <td key={`${driver.id}-${day}`} colSpan={span} className="border-l border-gray-50 bg-slate-100 px-1 py-0.5 text-center">
+                      <td key={`${driver.id}-${day}`} colSpan={span} className="border-l border-slate-300 bg-slate-100 px-1 py-0.5 text-center">
                         <EntityLink
                           kind="load"
                           id={load.id}
@@ -225,7 +227,7 @@ export function UnifiedTimelinePlanner() {
                     cells.push(
                       <td
                         key={`${driver.id}-${day}`}
-                        className={`border-l border-gray-50 px-0 py-0 text-center ${leaveType ? "bg-[#fdf3e7]" : "bg-white"}`}
+                        className={`border-l border-slate-300 px-0 py-0 text-center ${leaveType ? "bg-slate-100" : "bg-white"}`}
                         title={leaveType ?? ""}
                       >
                         {leaveType ? <span className="text-[9px] text-[#854F0B]">{leaveType.slice(0, 3)}</span> : null}
@@ -236,21 +238,23 @@ export function UnifiedTimelinePlanner() {
                 }
                 return (
                   <tr key={driver.id} className="border-t border-gray-100">
-                    <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
+                    <td className="sticky left-0 z-10 border-r border-slate-300 bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
                       <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
                       <span className="ml-1 text-[10px] text-gray-500"><EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" /></span>
+                    </td>
+                    <td className="border-r border-slate-300 px-1 py-0.5 text-center">
                       {status === "Available" ? (
                         <button
                           type="button"
                           data-testid={`timeline-book-${driver.id}`}
                           onClick={() => openBookForUnit(driver.unit_id)}
-                          className="ml-2 rounded-sm bg-[#1F2A44] px-1.5 py-0.5 text-[9px] font-semibold text-white"
+                          className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
                         >
                           + Book
                         </button>
                       ) : null}
                     </td>
-                    <td className="border-r px-1 py-0.5"><StatusPill status={status} /></td>
+                    <td className="border-r border-slate-300 px-1 py-0.5"><StatusPill status={status} /></td>
                     {cells}
                   </tr>
                 );

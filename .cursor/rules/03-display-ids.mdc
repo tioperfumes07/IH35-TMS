@@ -42,7 +42,7 @@ All display IDs are server-generated only. The frontend never composes a display
 
 ### V5 selection rule
 
-- For ES/AC/ET/RT/RS: last 5 chars of `external_vendor_invoice_number` (preferred) OR `external_vendor_wo_number` (if invoice not yet entered). **Lock V5 once set to a non-`PEND0` value** (owner 2026-08-29 GO-WONUM-01). Later invoice corrections stay in their columns; they do not rewrite the WO display id.
+- For ES/AC/ET/RT/RS: last 5 chars of `external_vendor_invoice_number` (preferred) OR `external_vendor_wo_number` (if invoice not yet entered). **Lock V5 once set to a non-`PEND0` value.** Provenance 2026-08-29: owner authorized following the coder recommendation (general authorization, not a named pick of branch a vs b). Later invoice corrections stay in their columns; they do not rewrite the WO display id.
 - For IS/IT with parts: last 5 chars of FIRST `parts_invoice_links.vendor_invoice_number` for the WO (FIFO order by `created_at`). Same lock: first non-`PEND0` wins.
 - For IS/IT with `labor_only_no_parts = true`: literal string `LABOR`
 - If vendor reference shorter than 5 chars: zero-pad on left (e.g., invoice "42" → "00042")

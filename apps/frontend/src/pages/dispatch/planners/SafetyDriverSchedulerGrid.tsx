@@ -10,6 +10,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { userFacingApiError } from "../../../lib/api-error-message";
 import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
+import { formatPlannerDayLabel } from "./plannerDayLabel";
 
 function leaveCellClass(leaveType: string | undefined): string {
   if (leaveType === "vacation") return "bg-slate-100";
@@ -65,8 +66,8 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
               <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Driver</th>
               <th className="border-b border-r bg-gray-50 px-1 py-1">Unit</th>
               {days.map((d) => (
-                <th key={d} className="border-b border-gray-100 px-0.5 py-1 text-center font-normal text-gray-500">
-                  {d.slice(5)}
+                <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
+                  {formatPlannerDayLabel(d)}
                 </th>
               ))}
             </tr>
@@ -97,7 +98,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
                     const lt = cellByDriverDay.get(`${driverId}|${d}`);
                     const label = lt ? String(lt).slice(0, 3) : "";
                     return (
-                      <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${leaveCellClass(lt)}`} title={lt ?? ""}>
+                      <td key={d} className={`border-l border-slate-300 px-0 py-0 text-center ${leaveCellClass(lt)}`} title={lt ?? ""}>
                         <span className="text-[9px] text-gray-700">{label}</span>
                       </td>
                     );

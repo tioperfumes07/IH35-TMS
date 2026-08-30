@@ -8,6 +8,7 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
+import { formatPlannerDayLabel } from "./plannerDayLabel";
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
@@ -172,8 +173,8 @@ export function TruckPlanner() {
                 <th className="sticky left-0 z-10 border-b border-r bg-gray-50 px-2 py-1 text-left">Unit</th>
                 <th className="border-b border-r bg-gray-50 px-1 py-1">Driver</th>
                 {days.map((d) => (
-                  <th key={d} className="border-b border-gray-100 px-0.5 py-1 text-center font-normal text-gray-500">
-                    {d.slice(5)}
+                  <th key={d} className="border-b border-l border-slate-300 px-0.5 py-1 text-center font-normal text-gray-500">
+                    {formatPlannerDayLabel(d)}
                   </th>
                 ))}
               </tr>
@@ -198,7 +199,7 @@ export function TruckPlanner() {
                   </td>
                   <td className="border-r px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" /></td>
                   {days.map((d) => (
-                    <td key={d} className={`border-l border-gray-50 px-0 py-0 text-center ${truckStatusClass(row.status)}`} title={row.status}>
+                    <td key={d} className={`border-l border-slate-300 px-0 py-0 text-center ${truckStatusClass(row.status)}`} title={row.status}>
                       <span className="text-[9px]">{truckStatusLabel(row.status)}</span>
                     </td>
                   ))}

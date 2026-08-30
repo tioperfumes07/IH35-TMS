@@ -4,7 +4,16 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
-import { loadSpanEndMs, loadSpanStartMs, orderedLegsForUnit, resolvedTripType, type TripKind } from "./roundTripsLegs";
+import { formatPlannerDayLabel } from "./planners/plannerDayLabel";
+import {
+  loadSpanEndMs,
+  loadSpanStartMs,
+  orderedLegsForUnit,
+  resolvedTripType,
+  RT_PAIRING_ACTIVE_STATUSES,
+  type TripKind,
+} from "./roundTripsLegs";
+const ACTIVE_LOAD = new Set<string>(RT_PAIRING_ACTIVE_STATUSES);
 
 const NB = "#1f2a44";
 const SB = "#475569";
@@ -40,6 +49,8 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
     const map = new Map<string, DispatchLoadRow[]>();
     for (const load of loads) {
       if (!load.assigned_unit_id) continue;
+      // Same active pairing set as Round Trips board — do not paint cancelled/closed rows as units.
+      if (!ACTIVE_LOAD.has(load.status)) continue;
       map.set(load.assigned_unit_id, [...(map.get(load.assigned_unit_id) ?? []), load]);
     }
     return [...map.entries()].sort((a, b) =>
@@ -58,10 +69,10 @@ export function RoundTripsTimeline({ loads, rangeFrom, rangeTo, onLoadClick }: P
           className="sticky top-0 z-10 grid border-b border-gray-200 bg-slate-50 text-[10px] font-semibold uppercase tracking-wide text-slate-600"
           style={{ gridTemplateColumns: `7rem repeat(${days.length}, minmax(2.5rem, 1fr))` }}
         >
-          <div className="px-2 py-1">Unit</div>
+          <div className="border-r border-slate-300 px-2 py-1">Unit</div>
           {days.map((d) => (
-            <div key={d} className="border-l border-gray-100 px-0.5 py-1 text-center">
-              {d.slice(5)}
+            <div key={d} className="border-l border-slate-300 px-0.5 py-1 text-center">
+              {formatPlannerDayLabel(d)}
             </div>
           ))}
         </div>
