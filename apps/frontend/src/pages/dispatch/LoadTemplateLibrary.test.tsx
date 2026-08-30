@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { listLoadTemplates } from "../../api/dispatch";
 import "../../design/design-tokens.css";
@@ -24,7 +25,9 @@ describe("LoadTemplatePicker (P5-T21)", () => {
     const onSelect = vi.fn();
     render(
       <QueryClientProvider client={qc}>
-        <LoadTemplatePicker operatingCompanyId="00000000-0000-4000-8000-000000000001" onSelectTemplate={onSelect} />
+        <MemoryRouter>
+          <LoadTemplatePicker operatingCompanyId="00000000-0000-4000-8000-000000000001" onSelectTemplate={onSelect} />
+        </MemoryRouter>
       </QueryClientProvider>
     );
     await waitFor(() => expect(listLoadTemplates).toHaveBeenCalled());

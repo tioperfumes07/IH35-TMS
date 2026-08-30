@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { FinanceScenariosPage } from "../FinanceScenariosPage";
+import { ToastProvider } from "../../../components/Toast";
 
 /**
  * FIN-S06: /finance/scenarios renders and, since it has no data model or backend endpoint, must
@@ -18,7 +20,14 @@ vi.mock("../../../hooks/useFeatureFlag", () => ({
 }));
 
 function wrap(ui: React.ReactElement) {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <ToastProvider>
+        <MemoryRouter>{ui}</MemoryRouter>
+      </ToastProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe("FinanceScenariosPage (FIN-S06)", () => {
@@ -29,6 +38,6 @@ describe("FinanceScenariosPage (FIN-S06)", () => {
 
   it("honestly states the feature is not available instead of describing a working feature", () => {
     wrap(<FinanceScenariosPage />);
-    expect(screen.getByTestId("finance-scenarios-not-available").textContent).toMatch(/not available yet/i);
+    expect(screen.getByTestId("finance-scenarios-not-available").textContent).toMatch(/not yet enabled/i);
   });
 });
