@@ -1,6 +1,7 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
+import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 
 const DEFAULT_LATE_GRACE_MINUTES = 30;
 
@@ -32,10 +33,14 @@ export function isLateArrivalByEta(input: {
   return predictedMs > deadlineMs;
 }
 
-export async function listLateArrivalLoads(userId: string, operatingCompanyId: string) {
+export async function listLateArrivalLoads(userId: string, operatingCompanyId: string, filters: DispatchAlertQuery) {
   const graceMinutes = lateArrivalGraceMinutes();
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
+    const orderBy = dispatchAlertOrderBy(filters, {
+      event_at: "sp.scheduled_arrival_at", load_number: "l.load_number", customer_name: "customer_name",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status",
+    });
     const res = await client.query(
       `
         SELECT
@@ -84,6 +89,8 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
           LIMIT 1
         ) sp ON true
         WHERE l.operating_company_id = $1::uuid
+          AND ($3::date IS NULL OR sp.scheduled_arrival_at >= $3::date)
+          AND ($4::date IS NULL OR sp.scheduled_arrival_at < $4::date + interval '1 day')
           AND l.soft_deleted_at IS NULL
           AND EXISTS (
             SELECT 1
@@ -102,9 +109,9 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
             )
             OR sp.scheduled_arrival_at + ($2::int * interval '1 minute') < now()
           )
-        ORDER BY sp.scheduled_arrival_at ASC, l.created_at DESC
+        ORDER BY ${orderBy}, l.created_at DESC
       `,
-      [operatingCompanyId, graceMinutes]
+      [operatingCompanyId, graceMinutes, filters.from ?? null, filters.to ?? null]
     );
     return {
       count: res.rows.length,
