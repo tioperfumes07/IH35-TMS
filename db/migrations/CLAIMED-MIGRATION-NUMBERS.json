@@ -1,12 +1,12 @@
 {
   "_band": {
-    "claude": "HH 00–11 (morning)",
-    "cursor": "HH 12–23 (afternoon)",
+    "claude": "HH 00\u201311 (morning)",
+    "cursor": "HH 12\u201323 (afternoon)",
     "locked": "2026-08-10",
     "note": "Mirrors scripts/verify-steps/CLAIMED-NUMBERS.json for migration timestamps. Claim-before-author required."
   },
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
-  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
+  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
     "202613291200": {
       "claimed_by": "claude",
@@ -421,6 +421,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-22",
       "purpose": "audit_trigger_abandonment_chargebacks_settlement_disputes"
+    },
+    "202613300000": {
+      "claimed_by": "claude",
+      "claimed_at": "2026-08-30",
+      "purpose": "saf_f7527a_fuel_mpg_anomaly_source_table_fix_disable_rule_archive_false_alerts"
     }
   }
 }
