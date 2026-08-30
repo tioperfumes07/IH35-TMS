@@ -20,6 +20,7 @@ import { Combobox } from "../Combobox";
 import { ListErrorState } from "../ListErrorState";
 import { Modal } from "../Modal";
 import { ParityDrawer } from "../parity/ParityDrawer";
+import { EntityPicker } from "../parity/EntityPicker";
 import { ConfirmModal } from "../shared/ConfirmModal";
 import { SelectCombobox } from "../shared/SelectCombobox";
 import { StatusBadge } from "../StatusBadge";
@@ -115,6 +116,8 @@ const createDriverSchema = z.object({
   emergency_contact_phone_alternate: z.string().trim().optional(),
   emergency_contact_address: z.string().trim().optional(),
   emergency_contact_notes: z.string().trim().optional(),
+  referred_by_driver_id: z.string().uuid().optional().or(z.literal("")),
+  referral_source: z.string().trim().max(160).optional(),
   status: z.enum(["Probation", "Active", "Inactive", "Terminated", "OnLeave"]).default("Probation"),
 });
 
@@ -154,6 +157,8 @@ const DRIVER_CREATE_FORM_INITIAL: Record<string, string> = {
   emergency_contact_phone_alternate: "",
   emergency_contact_address: "",
   emergency_contact_notes: "",
+  referred_by_driver_id: "",
+  referral_source: "",
   status: "Probation",
 };
 
@@ -599,6 +604,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
           ? properPersonOrPlaceName(parsed.emergency_contact_address)
           : undefined,
         emergency_contact_notes: parsed.emergency_contact_notes || undefined,
+        referred_by_driver_id: parsed.referred_by_driver_id || undefined,
+        referral_source: parsed.referral_source || undefined,
         status: parsed.status,
         override_returning_warning: returningDetection?.returning_driver ? overrideReturningWarning : undefined,
         is_rehire: shouldLinkRehire ? true : undefined,
@@ -875,6 +882,30 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               error={driverFieldErrors.pay_basis}
             />
             <FieldError id="pay_basis" message={driverFieldErrors.pay_basis} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Referred by driver</label>
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={form.operating_company_id}
+              value={form.referred_by_driver_id || null}
+              onChange={(value) => setForm((current) => ({ ...current, referred_by_driver_id: value ?? "" }))}
+              allowCreate={false}
+              enabled={Boolean(form.operating_company_id)}
+              placeholder="Select referring driver"
+              dataField="referred_by_driver_id"
+              dataTestId="driver-create-referrer"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="referral_source" className="text-xs font-semibold text-gray-600">Referral source</label>
+            <input
+              id="referral_source"
+              value={form.referral_source}
+              onChange={(event) => setForm((current) => ({ ...current, referral_source: event.target.value }))}
+              className="rounded-sm border h-9 px-2 text-[13px]"
+              placeholder="Driver referral, recruiting event, website…"
+            />
           </div>
 
           </>

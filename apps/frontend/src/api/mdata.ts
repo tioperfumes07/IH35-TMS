@@ -400,6 +400,20 @@ export function updateDriver(id: string, body: UpdateDriverInput) {
   return apiRequest<Driver>(`/api/v1/mdata/drivers/${id}`, { method: "PATCH", body });
 }
 
+export type DriverReferralRow = {
+  id: string;
+  driver_name: string | null;
+  referral_source: string | null;
+  hire_date: string | null;
+  referral_reward_paid_at: string | null;
+  referral_reward_settlement_id: string | null;
+};
+
+export function listDriverReferrals(id: string, operatingCompanyId: string) {
+  const qs = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<{ referrals: DriverReferralRow[] }>(`/api/v1/mdata/drivers/${encodeURIComponent(id)}/referrals?${qs.toString()}`);
+}
+
 export function sendDriverProfileMessage(
   driverId: string,
   operatingCompanyId: string,

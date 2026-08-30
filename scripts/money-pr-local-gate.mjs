@@ -113,6 +113,7 @@ const STEPS = [
   ["verify-dqf-catalog-retention-wiring", "scripts/verify-dqf-catalog-retention-wiring.mjs"],
   ["verify-driver-samsara-login-lifecycle", "scripts/verify-driver-samsara-login-lifecycle.mjs"],
   ["verify-driver-b1-visa-lifecycle", "scripts/verify-driver-b1-visa-lifecycle.mjs"],
+  ["verify-driver-referral-forward-reverse-lifecycle", "scripts/verify-driver-referral-forward-reverse-lifecycle.mjs"],
   ["verify-dvir-correction-lifecycle", "scripts/verify-dvir-correction-lifecycle.mjs"],
   ["verify-vehicle-driver-overlap-lifecycle", "scripts/verify-vehicle-driver-overlap-lifecycle.mjs"],
   ["verify-road-service-driver-reverse", "scripts/verify-road-service-driver-reverse.mjs"],

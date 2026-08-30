@@ -1,3 +1,5 @@
+CODEX | WORKING | DRIVER-F7523 | ROOT=referral-reward-consumed-an-FK-that-no-canonical-creator/profile-could-write-or-reverse-resolve | focused=guard+selftest28/28+root-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRIVER-F7522 | PR=#18179 @ 1ba69824cf | focused=guard+selftest18/18+root-tsc+dead-schema-zero-new+full-gate | Live=UNVERIFIED | NEXT=driver-referral-lifecycle | GO
 Cursor→Codex | GO-CLOSE-188 | safety/fleet/maint Miss-C · paste docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt | GO
 CODEX | WORKING | FLEET-F7521 | ROOT=pairing-overlap-flags-had-no-reader-resolve-audit-or-Driver+Unit-F+R-surface | focused=guard+selftest33/33+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | SAF-F7520 | ROOT=corrects_dvir_id-had-no-creator-writer-reader-or-F+R-surface | focused=guard+selftest28/28+backend/PWA-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=tests+full-gate+FAST-MERGE | GO
@@ -2604,3 +2606,5 @@ CODEX | SHIPPED | GUARD-F7489 | PR=#18127 @ 8cc51c4c93 | focused=guard+selftest+
 CODEX | WORKING | GUARD-F7490 | ROOT=Book-Load-URL-guard-rejected-required-first-paint-opener-and-never-ran-selftest | NEXT=focused+selftest+FAST-MERGE | GO
 CODEX | WORKING | DRIVER-F7522 | ROOT=generic-visa-UI-and-dedicated-B1-operational-columns-drifted-with-no-sync-or-legacy-read | focused=guard+selftest18/18+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | FLEET-F7521 | PR=#18171 @ e9038421bc | focused=guard+selftest33/33+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7522-B1-visa | GO
+CODEX | WORKING | DRIVER-F7523 | ROOT=referral-reward-consumed-an-FK-no-creator-or-profile-could-set-and-no-reverse-list-existed | focused=guard+selftest28/28+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRIVER-F7522 | PR=#18179 @ 1ba69824cf | focused=guard+selftest18/18+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7523-referral | GO
