@@ -11,11 +11,17 @@ const pagePath = "apps/frontend/src/pages/safety/driver-scheduler/DriverSchedule
 function verify(service, route, api, page) {
   const errors = [];
   const need = (source, pattern, message) => { if (!pattern.test(source)) errors.push(message); };
-  need(service, /COUNT\(\*\)::text AS total_count[\s\S]*r\.operating_company_id = \$1::uuid[\s\S]*r\.status = 'pending_review'[\s\S]*r\.voided_at IS NULL/, "service needs an exact scoped pending count");
-  need(service, /ORDER BY r\.start_date ASC, r\.created_at ASC[\s\S]*LIMIT \$2[\s\S]*OFFSET \$3/, "service needs bound deterministic paging");
-  if (/listPendingLeaveRequests[\s\S]*LIMIT 500/.test(service)) errors.push("silent 500 cap must stay removed");
-  need(route, /requests\/pending[\s\S]*limit: z\.coerce\.number\(\).*max\(300\)\.default\(50\)[\s\S]*offset: z\.coerce\.number\(\).*default\(0\)/, "pending route must validate range inputs");
-  need(route, /total_count: result\.totalCount/, "pending route must return exact total");
+  const serviceStart = service.indexOf("export async function listPendingLeaveRequests(");
+  const serviceEnd = service.indexOf("export async function listAllLeaveRequests(", serviceStart);
+  const pendingService = serviceStart < 0 || serviceEnd < 0 ? "" : service.slice(serviceStart, serviceEnd);
+  const routeStart = route.indexOf('"/api/v1/safety/scheduler/requests/pending"');
+  const routeEnd = route.indexOf('app.get("/api/v1/safety/scheduler/requests/:id"', routeStart);
+  const pendingRoute = routeStart < 0 || routeEnd < 0 ? "" : route.slice(routeStart, routeEnd);
+  need(pendingService, /COUNT\(\*\)::text AS total_count[\s\S]*r\.operating_company_id = \$1::uuid[\s\S]*r\.status = 'pending_review'[\s\S]*r\.voided_at IS NULL/, "service needs an exact scoped pending count");
+  need(pendingService, /ORDER BY r\.start_date ASC, r\.created_at ASC[\s\S]*LIMIT \$2[\s\S]*OFFSET \$3/, "service needs bound deterministic paging");
+  if (/LIMIT 500/.test(pendingService)) errors.push("silent 500 cap must stay removed");
+  need(pendingRoute, /limit: z\.coerce\.number\(\).*max\(300\)\.default\(50\)[\s\S]*offset: z\.coerce\.number\(\).*default\(0\)/, "pending route must validate range inputs");
+  need(pendingRoute, /total_count: result\.totalCount/, "pending route must return exact total");
   need(api, /listPending\(operatingCompanyId: string, limit = 50, offset = 0\)/, "client must expose range inputs");
   need(page, /queryKey: \["driver-scheduler", "pending", operatingCompanyId, page\]/, "query identity must include the page");
   need(page, /pageSize=\{PAGE_SIZE\}[\s\S]*hidePager/, "local ParityTable pager must be disabled");

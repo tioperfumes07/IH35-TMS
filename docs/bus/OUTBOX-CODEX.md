@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7466 | ROOT=pending-leave-paging-selftest-was-masked-by-sibling-service-and-route-evidence | focused=normal+selftest-7/7 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7465 | ROOT=driver-training-create-audit-response-selftests-were-masked-by-PATCH-and-archive-siblings | focused=normal+selftest-12/12 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7464 | ROOT=PM-scope-reset-selftest-removal-was-masked-by-active-KPI-reset-plus-detached-dependency-list | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7463 | ROOT=arriving-soon-offset-selftest-removal-was-masked-by-recent_offset-and-sibling-API-signatures | focused=normal+selftest-6/6 | NEXT=gate+FAST-MERGE | GO
