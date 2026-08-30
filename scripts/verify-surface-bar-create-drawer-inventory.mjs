@@ -40,6 +40,9 @@ const ALLOWED_NESTED = new Set([
 const FILE_OWNED_BY_LEAF = {
   "components/accounting/JournalEntryTypePicker.tsx": "catalog.accounting.journal_entry_types.create",
   "components/driver-finance/PaymentMethodPicker.tsx": "catalog.accounting.payment_methods.create",
+  // Notification-rule create is an inline drawer owned by the Overview panel leaf,
+  // not a standalone Compliance route/leaf.
+  "pages/compliance/ComplianceDashboardPage.tsx": "overview.notification_rules",
   // Border-crossing wizard steps are not top-level leaves — owned by the page shell leaf.
   "components/border-crossing/WizardStep1.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep2.tsx": "dispatch.wizard.border_crossing_wizard_page",
