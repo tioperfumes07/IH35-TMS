@@ -2053,24 +2053,6 @@
       "migration": "202606251500_lumper_billing_config.sql"
     },
     {
-      "object": "mdata.drivers.b1_visa_expires_date",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606080930_block14_mexico_ops.sql"
-    },
-    {
-      "object": "mdata.drivers.b1_visa_number",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606080930_block14_mexico_ops.sql"
-    },
-    {
-      "object": "mdata.drivers.has_b1_visa",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202606080930_block14_mexico_ops.sql"
-    },
-    {
       "object": "mdata.drivers.referral_source",
       "kind": "COLUMN",
       "verdict": "none",

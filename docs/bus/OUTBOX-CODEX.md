@@ -2601,3 +2601,5 @@ CODEX | SHIPPED | SURFACE-F7488 | PR=#18126 @ fda8207a75 | Built=safety:home:{co
 CODEX | WORKING | GUARD-F7489 | ROOT=At-Risk-settled-empty-proof-retained-retired-at-risk-only-copy-and-API-mock | NEXT=focused+selftest+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7489 | PR=#18127 @ 8cc51c4c93 | focused=guard+selftest+Vitest3/3+frontend-tsc | NEXT=verify-modal-close-retracts-url | GO
 CODEX | WORKING | GUARD-F7490 | ROOT=Book-Load-URL-guard-rejected-required-first-paint-opener-and-never-ran-selftest | NEXT=focused+selftest+FAST-MERGE | GO
+CODEX | WORKING | DRIVER-F7522 | ROOT=generic-visa-UI-and-dedicated-B1-operational-columns-drifted-with-no-sync-or-legacy-read | focused=guard+selftest18/18+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | FLEET-F7521 | PR=#18171 @ e9038421bc | focused=guard+selftest33/33+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7522-B1-visa | GO
