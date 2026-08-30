@@ -61,14 +61,6 @@ function summarizePayload(eventClass: string, payload: unknown): string {
 export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): { sql: string; values: unknown[] } {
   const values: unknown[] = [input.operating_company_id, input.driver_id];
   const filters = [
-    `(d.operating_company_id = $1::uuid OR EXISTS (
-      SELECT 1 FROM mdata.driver_company_authorizations driver_audit_dca
-      WHERE driver_audit_dca.driver_id = d.id
-        AND driver_audit_dca.company_id = $1::uuid
-        AND driver_audit_dca.is_authorized = true
-        AND driver_audit_dca.deactivated_at IS NULL
-    ))`,
-    `d.id = $2::uuid`,
     `(
       (COALESCE(e.payload->>'entity_type', '') = 'driver' AND e.payload->>'entity_id' = $2::text)
       OR (e.payload->>'resource_id' = $2::text)
@@ -127,7 +119,19 @@ export function buildDriverAuditEventsQuery(input: ListDriverAuditEventsInput): 
         e.source AS source,
         count(*) OVER()::int AS total_count
       FROM audit.audit_events e
-      INNER JOIN mdata.drivers d ON d.id = $2::uuid AND d.archived_at IS NULL
+      INNER JOIN mdata.drivers d
+        ON d.id = $2::uuid
+       AND d.archived_at IS NULL
+       AND (
+         d.operating_company_id = $1::uuid
+         OR EXISTS (
+           SELECT 1 FROM mdata.driver_company_authorizations driver_audit_dca
+           WHERE driver_audit_dca.driver_id = d.id
+             AND driver_audit_dca.company_id = $1::uuid
+             AND driver_audit_dca.is_authorized = true
+             AND driver_audit_dca.deactivated_at IS NULL
+         )
+       )
       LEFT JOIN identity.users u ON u.id = e.actor_user_uuid
       WHERE ${filters.join(" AND ")}
       ORDER BY e.created_at DESC, e.uuid DESC
