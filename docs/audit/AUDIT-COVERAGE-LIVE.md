@@ -74,11 +74,11 @@ amount+date (or stronger) matches > 0 with the discriminator applied, **or** (2)
 | Modules with a confirmed live defect (non-superseded FAIL) | **28 / 30** | 2026-08-30 |
 | Cells covered (any active row · module×layer) per entity | TRANSP **149 / 150** · TRK **147 / 150** · USMCA **150 / 150** | 2026-08-30 |
 | Cells PASS (active PASS, no active FAIL · module×layer) per entity | TRANSP **78 / 150** · TRK **10 / 150** · USMCA **45 / 150** | 2026-08-30 |
-| Rows in this file | **2315** | 2026-08-30 |
-| Rows `FAIL` + `OPEN` | **184** | 2026-08-30 |
+| Rows in this file | **2323** | 2026-08-30 |
+| Rows `FAIL` + `OPEN` | **192** | 2026-08-30 |
 | Rows `Owner-gate? = YES` (blocked on a decision) | **13** | 2026-08-30 |
 | Rows `VERIFIED` by GUARD | **156** | 2026-08-30 |
-| Verdict tally (all rows) | FAIL=408 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-30 |
+| Verdict tally (all rows) | FAIL=416 · PASS=223 · N/A=260 · UNVERIFIED=19 · SUPERSEDED=15 · OTHER=1390 | 2026-08-30 |
 
 Deployed SHA at establishment: `45f7c28047` (== `origin/main`, `/api/v1/healthz/shallow` → `45f7c28`).
 
@@ -2405,3 +2405,11 @@ One-command progress: `node scripts/audit-coverage-scoreboard.mjs` (regenerate: 
 | 50274 | accounting · SILENT-QUERY-FAILURE — InvoicesListPage 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/accounting/InvoicesListPage.tsx` | NO | 2026-08-30 | CASCADE |
 | 50275 | accounting · SILENT-QUERY-FAILURE — BillsPage 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/accounting/BillsPage.tsx` | NO | 2026-08-30 | CASCADE |
 | 50276 | lists · SILENT-QUERY-FAILURE — ItemsListPage 5 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 5 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50277 | factoring · SILENT-QUERY-FAILURE — FactorAdmin 6 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 6 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/factoring/FactorAdmin.tsx` | NO | 2026-08-30 | CASCADE |
+| 50278 | factoring · SILENT-QUERY-FAILURE — BatchDetail 3 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 3 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/factoring/BatchDetail.tsx` | NO | 2026-08-30 | CASCADE |
+| 50279 | factoring · SILENT-QUERY-FAILURE — SubmissionQueue 3 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 3 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/factoring/SubmissionQueue.tsx` | NO | 2026-08-30 | CASCADE |
+| 50280 | factoring · SILENT-QUERY-FAILURE — BatchWizard 2 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 2 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/factoring/BatchWizard.tsx` | NO | 2026-08-30 | CASCADE |
+| 50281 | factoring · SILENT-QUERY-FAILURE — SubmissionWorkqueue 2 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 2 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/factoring/SubmissionWorkqueue.tsx` | NO | 2026-08-30 | CASCADE |
+| 50282 | legal · SILENT-QUERY-FAILURE — LegalContractInstancesPage 4 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 4 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/legal/contracts/LegalContractInstancesPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50283 | legal · SILENT-QUERY-FAILURE — LegalLandingPage 3 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 3 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/legal/LegalLandingPage.tsx` | NO | 2026-08-30 | CASCADE |
+| 50284 | legal · SILENT-QUERY-FAILURE — LegalMatterDetailPage 3 useQuery hooks zero isError | B | USMCA | FAIL — SILENT QUERY FAILURE (product) | **Context:** 3 useQuery hooks, zero isError rendering. **FIX:** add isError rendering. | OPEN | `apps/frontend/src/pages/legal/matters/LegalMatterDetailPage.tsx` | NO | 2026-08-30 | CASCADE |

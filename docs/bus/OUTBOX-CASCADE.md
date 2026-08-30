@@ -1,3 +1,11 @@
+CASCADE | FINDING | 50284 | legal · SILENT-QUERY-FAILURE — LegalMatterDetailPage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50283 | legal · SILENT-QUERY-FAILURE — LegalLandingPage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50282 | legal · SILENT-QUERY-FAILURE — LegalContractInstancesPage 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50281 | factoring · SILENT-QUERY-FAILURE — SubmissionWorkqueue 2 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50280 | factoring · SILENT-QUERY-FAILURE — BatchWizard 2 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50279 | factoring · SILENT-QUERY-FAILURE — SubmissionQueue 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50278 | factoring · SILENT-QUERY-FAILURE — BatchDetail 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50277 | factoring · SILENT-QUERY-FAILURE — FactorAdmin 6 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50276 | lists · SILENT-QUERY-FAILURE — ItemsListPage 5 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50275 | accounting · SILENT-QUERY-FAILURE — BillsPage 5 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50274 | accounting · SILENT-QUERY-FAILURE — InvoicesListPage 5 useQuery hooks zero isError | GO
