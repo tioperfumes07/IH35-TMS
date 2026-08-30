@@ -52,6 +52,12 @@ function auditRound(src) {
   if (!/orderedLegsForUnit/.test(src) || !/data-rt-sequence/.test(src)) {
     failures.push(`${ROUND}: must order legs NB then TR then SB via orderedLegsForUnit + data-rt-sequence`);
   }
+  if (!/pairOutboundReturn/.test(src) || !/RT_PAIRING_ACTIVE_STATUSES/.test(src)) {
+    failures.push(`${ROUND}: outbound/return must come from pairOutboundReturn + RT_PAIRING_ACTIVE_STATUSES (same statuses as trip-pairing board)`);
+  }
+  if (/outbound = sorted\[0\]/.test(src)) {
+    failures.push(`${ROUND}: must not treat newest created_at as outbound`);
+  }
   if (!/RT_KANBAN_CARD_CLASS/.test(src)) {
     failures.push(`${ROUND}: trip cards must use Kanban card class constant`);
   }
@@ -68,6 +74,9 @@ function auditTimeline(src, legsSrc) {
   }
   if (!/\[\.\.\.nb, \.\.\.tr, \.\.\.sb\]/.test(legsSrc)) {
     failures.push(`${LEGS}: orderedLegsForUnit must concatenate NB then TR then SB`);
+  }
+  if (!/pairOutboundReturn/.test(legsSrc) || !/assigned_not_dispatched/.test(legsSrc)) {
+    failures.push(`${LEGS}: pairOutboundReturn + assigned_not_dispatched must match trip-pairing ACTIVE_LOAD_STATUSES`);
   }
   if (!/rounded border border-gray-200 bg-white p-3/.test(legsSrc)) {
     failures.push(`${LEGS}: RT_KANBAN_CARD_CLASS must match Kanban card padding p-3`);
@@ -157,8 +166,9 @@ if (process.argv.includes("--selftest")) {
   }
   const brokenRound = round.replace(/round-trip-unit-link/g, "x");
   const mutations = [
-    [round.replaceAll("RT_KANBAN_CARD_CLASS", "X"), qual, api, route, timeline, legs],
     [round.replaceAll("orderedLegsForUnit", "xLegs"), qual, api, route, timeline, legs],
+    [round.replaceAll("pairOutboundReturn", "xPair"), qual, api, route, timeline, legs],
+    [round, qual, api, route, timeline, legs.replaceAll("pairOutboundReturn", "xPair")],
     [round, qual, api, route, timeline.replace(/--dwl/g, "--dw"), legs],
     [brokenRound, qual, api, route, timeline, legs],
     [round.replace("name={load.customer_name}", "name={load.customer_id}"), qual, api, route, timeline, legs],
