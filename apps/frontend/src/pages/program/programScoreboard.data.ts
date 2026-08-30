@@ -30,14 +30,14 @@ export interface ProgramScoreboard {
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
   "healthzSha": "48e08e5",
-  "generated_at": "2026-08-30T05:21:02.000Z",
+  "generated_at": "2026-08-30T05:33:12.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T00:21:02-05:00",
-    "sourceSha": "9d0bab482",
+    "generatedAt": "2026-08-30T00:33:12-05:00",
+    "sourceSha": "1d3dd0981",
     "deployedSha": "48e08e5",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2281,
-    "failOpen": 150,
+    "ledgerRows": 2291,
+    "failOpen": 160,
     "defects": 28
   },
   "modules": [
@@ -471,7 +471,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "37/37",
       "cells": [
         "AUDIT",
-        "AUDIT",
+        "FAIL",
         "UNV",
         "FIX",
         "AUDIT",
@@ -503,7 +503,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "AUDIT",
+          "FAIL",
           "FIX",
           "FIX",
           "AUDIT",
@@ -1369,7 +1369,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "users",
-      "build": "5/6",
+      "build": "6/6",
       "cells": [
         "AUDIT",
         "FAIL",
