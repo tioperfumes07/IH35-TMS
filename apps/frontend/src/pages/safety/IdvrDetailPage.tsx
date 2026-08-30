@@ -34,6 +34,8 @@ export function IdvrDetailPage() {
 
   const submission = detailQ.data?.submission;
   const defects = (detailQ.data?.defects ?? []) as DefectRow[];
+  const correctedSubmission = detailQ.data?.corrected_submission;
+  const corrections = detailQ.data?.corrections ?? [];
 
   const defectColumns: Array<ParityColumn<DefectRow>> = [
     { key: "component", label: "Component", render: (row) => String(row.component ?? row.area ?? "—") },
@@ -136,6 +138,31 @@ export function IdvrDetailPage() {
           </dd>
         </div>
       </dl>
+
+      {correctedSubmission ? (
+        <div className="text-xs text-slate-700" data-testid="idvr-corrects-link">
+          Corrects DVIR{" "}
+          <EntityLink
+            kind="dvir"
+            id={correctedSubmission.id as string | undefined}
+            label={String(correctedSubmission.submitted_at ?? "Earlier submission")}
+          />
+        </div>
+      ) : null}
+
+      {corrections.length > 0 ? (
+        <section className="space-y-2" data-testid="idvr-corrections-history">
+          <h2 className="text-sm font-semibold text-slate-800">Corrections</h2>
+          {corrections.map((correction) => (
+            <EntityLink
+              key={String(correction.id)}
+              kind="dvir"
+              id={correction.id as string | undefined}
+              label={String(correction.submitted_at ?? "Correction")}
+            />
+          ))}
+        </section>
+      ) : null}
 
       <ParityTable<DefectRow>
         columns={defectColumns}

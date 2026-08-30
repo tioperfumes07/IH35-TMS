@@ -125,6 +125,9 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
             ds.driver_id,
             ds.unit_id,
             ds.load_id,
+            ds.corrects_dvir_id,
+            corrected.submitted_at AS corrects_submitted_at,
+            COALESCE(corrections.correction_count, 0)::int AS correction_count,
             TRIM(CONCAT(d.first_name, ' ', d.last_name)) AS driver_name,
             u.unit_number,
             COALESCE(dc.defect_count, 0)::int AS defect_count,
@@ -152,6 +155,14 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
                                  AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = ds.operating_company_id
           LEFT JOIN maintenance.work_orders wo ON wo.id = ds.follow_up_wo_id
                                                AND wo.operating_company_id = ds.operating_company_id
+          LEFT JOIN safety.dvir_submissions corrected ON corrected.id = ds.corrects_dvir_id
+                                                     AND corrected.operating_company_id = ds.operating_company_id
+          LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS correction_count
+              FROM safety.dvir_submissions correction
+             WHERE correction.corrects_dvir_id = ds.id
+               AND correction.operating_company_id = ds.operating_company_id
+          ) corrections ON true
           LEFT JOIN LATERAL (
             SELECT COUNT(*)::int AS defect_count
             FROM safety.dvir_defects dd
@@ -216,7 +227,30 @@ export async function registerSafetyDvirRoutes(app: FastifyInstance) {
         `,
         [params.data.id]
       );
-      return { submission, defects: defectsRes.rows };
+      const correctionsRes = await client.query(
+        `
+          SELECT correction.id, correction.submitted_at, correction.type,
+                 correction.has_major_defect, correction.has_any_defect
+            FROM safety.dvir_submissions correction
+           WHERE correction.corrects_dvir_id = $1::uuid
+             AND correction.operating_company_id = $2::uuid
+           ORDER BY correction.submitted_at ASC, correction.id ASC
+        `,
+        [params.data.id, query.data.operating_company_id]
+      );
+      const correctedRes = submission.corrects_dvir_id
+        ? await client.query(
+            `
+              SELECT original.id, original.submitted_at, original.type
+                FROM safety.dvir_submissions original
+               WHERE original.id = $1::uuid
+                 AND original.operating_company_id = $2::uuid
+               LIMIT 1
+            `,
+            [submission.corrects_dvir_id, query.data.operating_company_id]
+          )
+        : { rows: [] };
+      return { submission, defects: defectsRes.rows, corrected_submission: correctedRes.rows[0] ?? null, corrections: correctionsRes.rows };
     });
 
     if (!payload) return reply.code(404).send({ error: "dvir_not_found" });

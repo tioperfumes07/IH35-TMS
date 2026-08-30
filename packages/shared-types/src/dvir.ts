@@ -36,6 +36,7 @@ export type DvirSubmission = {
   signature_data_url: string;
   out_of_service: boolean;
   items: DvirInspectionItem[];
+  corrects_dvir_id?: string;
 };
 
 export const FMCSA_DVIR_ITEMS: DvirInspectionItemKey[] = [

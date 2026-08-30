@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { createEmptyInspectionItems, submitDvir } from "../api/dvir";
+import { useQuery } from "@tanstack/react-query";
+import { createEmptyInspectionItems, getLatestDvir, submitDvir } from "../api/dvir";
 import { DvirItemRow, MAX_DVIR_DEFECT_PHOTOS } from "../components/DvirItemRow";
 import { SignaturePad } from "../components/SignaturePad";
 import { UploadDocumentModal } from "../components/UploadDocumentModal";
@@ -24,6 +25,13 @@ export function DvirPage() {
   const [oosBlocked, setOosBlocked] = useState(false);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [activePhotoItem, setActivePhotoItem] = useState(0);
+  const [correctsDvirId, setCorrectsDvirId] = useState<string | null>(null);
+  const dvirType = isPostTrip ? "post_trip" : "pre_trip";
+  const latestQuery = useQuery({
+    queryKey: ["driver-dvir-latest", loadId, dvirType],
+    queryFn: () => getLatestDvir(loadId, dvirType),
+    enabled: Boolean(loadId),
+  });
 
   const hasMajor = items.some((item) => item.status === "major");
   const majorItemsValid = items
@@ -45,6 +53,7 @@ export function DvirPage() {
         signature_data_url: signature,
         out_of_service: hasMajor,
         items,
+        corrects_dvir_id: correctsDvirId ?? undefined,
       };
       await submitDvir(payload);
       if (hasMajor) {
@@ -61,6 +70,24 @@ export function DvirPage() {
     <div className="min-h-screen bg-pwa-bg px-4 py-3 text-pwa-text-primary" data-testid={isPostTrip ? "dvir-post-page" : "dvir-pre-page"}>
       <div className="mx-auto flex w-full max-w-md flex-col gap-3 pb-28">
         <PwaCard title={isPostTrip ? t("dvir.title_post") : t("dvir.title_pre")} subtitle={`Load ${loadId}`}>
+          {latestQuery.data ? (
+            <button
+              type="button"
+              className="mb-3 min-h-11 w-full rounded-sm border border-pwa-border px-3 text-left text-xs font-semibold text-pwa-text-secondary"
+              data-testid="dvir-correct-latest"
+              onClick={() => {
+                const prior = latestQuery.data;
+                setCorrectsDvirId(prior.id);
+                setUnit(prior.unit);
+                setTrailer(prior.trailer);
+                setOdometer(String(prior.odometer));
+                setLocation(prior.location);
+                setItems(prior.items);
+              }}
+            >
+              {correctsDvirId ? "Correcting latest DVIR" : "Correct latest DVIR"}
+            </button>
+          ) : null}
           <div className="grid gap-2">
             <input value={unit} onChange={(event) => setUnit(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.unit")} />
             <input value={trailer} onChange={(event) => setTrailer(event.target.value)} className="h-10 rounded-sm border border-pwa-border bg-[#101522] px-2 text-sm" placeholder={t("dvir.trailer")} />

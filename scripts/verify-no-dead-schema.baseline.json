@@ -2816,12 +2816,6 @@
       "migration": "0257_safety_drug_pool.sql"
     },
     {
-      "object": "safety.dvir_submissions.corrects_dvir_id",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "0344_safety_dvir.sql"
-    },
-    {
       "object": "safety.dvir_submissions.geo_lat",
       "kind": "COLUMN",
       "verdict": "weak",

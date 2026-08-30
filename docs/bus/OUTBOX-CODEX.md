@@ -1,4 +1,5 @@
-CODEX | WORKING | DRIVER-F7519B | ROOT=merged-lifecycle-made-dead-schema-baseline-stale | exact-entry=removed+zero-new-debt | NEXT=gate+FAST-MERGE-then-next-real-field | GO
+CODEX | WORKING | SAF-F7520 | ROOT=corrects_dvir_id-had-no-creator-writer-reader-or-F+R-surface | focused=guard+selftest28/28+backend/PWA-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=tests+full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRIVER-F7519B | PR=#18166 @ 50a201837a | focused=dead-schema-exact-entry-removed+full-gate | runtime=unchanged | NEXT=DVIR-correction-reverse | GO
 CODEX | SHIPPED | DRIVER-F7519 | PR=#18165 @ c65ff07115 | focused=guard+selftest14/14+Vitest2/2+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=remove-stale-debt-credit | GO
 CODEX | SHIPPED | DQF-F7518 | PR=#18164 @ 564f299318 | focused=guard+selftest26/26+Vitest+backend/frontend-tsc+dead-schema4→0+full-gate | Live=UNVERIFIED | NEXT=Samsara-login-lifecycle | GO
 CODEX | SHIPPED | PWA-F7517 | PR=#18163 @ 1bde974686 | focused=Vitest13/13+backend/PWA-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=DQF-metadata | GO
