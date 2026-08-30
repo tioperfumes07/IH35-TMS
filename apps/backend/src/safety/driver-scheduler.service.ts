@@ -1029,6 +1029,7 @@ export async function getFleetSchedule(
           )
         )
         AND d.deactivated_at IS NULL
+        AND d.status = 'Active'::mdata.driver_status
         -- DRIVERHUB-2: never list non-genuine drivers on the Scheduler. Exclude onboarding sample
         -- rows (is_sample_data) plus DEMO/DUMMY/TEST seed-marker name rows. Read-only filter — the
         -- rows stay in mdata.drivers (void-not-delete), just hidden from the live schedule grid.
@@ -1084,6 +1085,7 @@ export async function getFleetSchedule(
       FROM mdata.units u
       WHERE u.deactivated_at IS NULL
         AND u.assigned_driver_id IS NULL
+        AND u.status = 'InService'::mdata.unit_status
         -- Entity scope (USMCA cross-entity leak fix): mdata.units has no operating_company_id and
         -- its RLS is identity/role-scoped, so scope the vacant-unit picker by the owner/leased pair.
         AND (u.owner_company_id = $1 OR u.currently_leased_to_company_id = $1)

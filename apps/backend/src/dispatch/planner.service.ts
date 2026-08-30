@@ -132,6 +132,8 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         -- (d.operating_company_id = $1::uuid); the unit attaches through the entity-scoped driver's assignment.
         LEFT JOIN mdata.units u ON u.assigned_driver_id = d.id
                                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+                                AND u.deactivated_at IS NULL
+                                AND u.status IN ('InService', 'OutOfService', 'InMaintenance')
         WHERE (
           d.operating_company_id = $1::uuid
           OR EXISTS (
@@ -145,6 +147,7 @@ export async function getPlannerWeek(userId: string, operatingCompanyId: string,
         )
           AND d.deactivated_at IS NULL
           AND d.archived_at IS NULL
+          AND d.status = 'Active'::mdata.driver_status
         ORDER BY d.last_name NULLS LAST, d.first_name NULLS LAST
       `,
       [operatingCompanyId]
