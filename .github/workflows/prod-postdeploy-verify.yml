@@ -72,6 +72,35 @@ jobs:
           echo "Check the Render service for a failed/stuck deploy (preDeployCommand runs db:migrate first, so a failing pre-deploy blocks every later deploy silently)."
           exit 1
 
+      - name: Setup Node (proof replay)
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Replay proofs at the live SHA
+        id: proof_replay
+        continue-on-error: true
+        env:
+          # READ-ONLY prod role only. Never a writable Neon credential in CI.
+          DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          SHORT=$(printf '%s' "$SHA" | cut -c1-7)
+          node scripts/proof-engine/replay-all.mjs --live-sha="$SHORT" --write
+          echo "Proof replay wrote docs/module-completion/PROOF-ENGINE-REPLAY.json for ${SHORT}"
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::warning::PROD_READONLY_DATABASE_URL unset — sql proofs cannot connect; artifact records that honestly."
+          fi
+
+      - name: Upload proof-replay artifact
+        if: always() && steps.proof_replay.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: proof-engine-replay-${{ github.sha }}
+          path: docs/module-completion/PROOF-ENGINE-REPLAY.json
+          if-no-files-found: warn
+
       - name: Smoke PRODUCTION
         id: smoke
         continue-on-error: true

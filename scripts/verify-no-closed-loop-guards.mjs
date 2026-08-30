@@ -34,6 +34,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = process.env.IH35_REPO || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -128,6 +129,24 @@ function loadVerifiers() {
   return out;
 }
 
+const BASELINE_PATH = path.join(ROOT, "docs/specs/CLOSED-LOOP-BASELINE.json");
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) {
+    throw new Error(`MISSING ${BASELINE_PATH} — freeze today's undeclared closed loops before enabling CI`);
+  }
+  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
+
+/** Baseline may only shrink vs origin/main (or be identical). New paths in the baseline file are forbidden. */
+export function assertBaselineOnlyShrinks(baseline, mainBaseline) {
+  if (!mainBaseline?.paths) return [];
+  const mainSet = new Set(mainBaseline.paths);
+  return (baseline.paths || []).filter((p) => !mainSet.has(p)).map(
+    (p) => `CLOSED-LOOP-BASELINE.json grew: added ${p} — baseline may only SHRINK`,
+  );
+}
+
 function run() {
   const files = loadVerifiers();
   const { failures, rows } = check(files);
@@ -141,13 +160,48 @@ function run() {
                 `${rows.filter((r) => r.unknown).length} unknown (no literal path — reported, not failed)`);
     return;
   }
-  if (failures.length) {
-    console.error(`FAIL: ${LABEL} — ${failures.length} undeclared single-source verifier(s)`);
-    for (const f of failures.slice(0, 40)) console.error(`  - ${f}`);
-    if (failures.length > 40) console.error(`  ... and ${failures.length - 40} more`);
+
+  // Frozen baseline: the 29 may remain until retired. Any NEW undeclared closed loop FAILS.
+  // The baseline file itself may only shrink (checked vs origin/main when available).
+  const baseline = loadBaseline();
+  const baselineSet = new Set(baseline.paths || []);
+  const undeclared = rows.filter((r) => r.specOnly && !r.declared).map((r) => r.name);
+  const novel = undeclared.filter((n) => !baselineSet.has(n));
+  const out = [];
+  if (novel.length) {
+    for (const n of novel) {
+      out.push(
+        `${n}: NEW undeclared closed loop (not in CLOSED-LOOP-BASELINE.json). ` +
+          `The 30th may never be born. Fix with @ratchet or a second input.`,
+      );
+    }
+  }
+  if ((baseline.count ?? 0) !== (baseline.paths || []).length) {
+    out.push(
+      `CLOSED-LOOP-BASELINE.json count=${baseline.count} but paths.length=${(baseline.paths || []).length}`,
+    );
+  }
+
+  // Shrink-only vs origin/main (best-effort; missing file on main = first land)
+  try {
+    const raw = execFileSync("git", ["show", "origin/main:docs/specs/CLOSED-LOOP-BASELINE.json"], {
+      encoding: "utf8",
+      cwd: ROOT,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    out.push(...assertBaselineOnlyShrinks(baseline, JSON.parse(raw)));
+  } catch {
+    /* first land or no origin/main — skip shrink check */
+  }
+
+  if (out.length) {
+    console.error(`FAIL: ${LABEL} — ${out.length} closed-loop ratchet violation(s)`);
+    for (const f of out.slice(0, 40)) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`PASS: ${LABEL} — ${files.length} verifiers, every single-source one declares @ratchet`);
+  console.log(
+    `PASS: ${LABEL} — ${files.length} verifiers; undeclared closed loops ${undeclared.length} ⊆ baseline ${baselineSet.size} (may only shrink)`,
+  );
 }
 
 function selftest() {
@@ -201,4 +255,8 @@ function selftest() {
   process.exit(fail === 0 ? 0 : 1);
 }
 
-process.argv.includes("--selftest") ? selftest() : run();
+const isMain =
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  process.argv.includes("--selftest") ? selftest() : run();
+}
