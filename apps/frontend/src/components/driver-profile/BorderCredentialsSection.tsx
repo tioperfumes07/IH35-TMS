@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { updateDriver } from "../../api/mdata";
+import { confirmUpload, listFileCategories, requestUploadUrlFromFile } from "../../api/docs";
 import { Button } from "../Button";
 import { Modal } from "../Modal";
 import { DatePicker } from "../forms/DatePicker";
@@ -17,6 +19,14 @@ function fmt(value: unknown) {
   const s = String(value ?? "").trim();
   return s ? s : "—";
 }
+
+type CredentialKey = "fast_card" | "visa" | "passport" | "mexican_federal_license";
+const CREDENTIAL_LABELS: Record<CredentialKey, string> = {
+  fast_card: "FAST card",
+  visa: "B1 visa",
+  passport: "Passport",
+  mexican_federal_license: "Mexican license",
+};
 
 type BorderFormState = {
   fastCardNumber: string;
@@ -72,9 +82,29 @@ export function BorderCredentialsSection({
   const [form, setForm] = useState<BorderFormState>(() => borderToFormState(border));
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  // DOC-01 remainder (GO-1405, owner packet IH35-FINISH-2026-08-29/CC-1): "MX license, visa,
+  // passport, FAST" had no upload surface. Each credential files under entity_type="driver" (the
+  // driver already has a document list elsewhere — no new entity type needed) with its own real
+  // catalogs.file_categories code; fast_card was the one missing category (seeded alongside this).
+  const [credentialFiles, setCredentialFiles] = useState<Record<CredentialKey, File | null>>({
+    fast_card: null,
+    visa: null,
+    passport: null,
+    mexican_federal_license: null,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ["docs", "file-categories", "driver"],
+    queryFn: () => listFileCategories("driver"),
+    enabled: editOpen,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    if (!editOpen) setForm(borderToFormState(border));
+    if (!editOpen) {
+      setForm(borderToFormState(border));
+      setCredentialFiles({ fast_card: null, visa: null, passport: null, mexican_federal_license: null });
+    }
   }, [border, editOpen]);
 
   const fast = border.fast_card as Record<string, unknown> | undefined;
@@ -94,11 +124,36 @@ export function BorderCredentialsSection({
 
   const canEdit = Boolean(driverId && onSaved);
 
+  // Uploads one credential document (if the operator selected one), tagged under entity_type
+  // "driver" with the matching real catalog category. Refuses to silently drop a selected file:
+  // an upload failure aborts the whole save, same rule FineCreateModal/CreateFuelTransactionModal
+  // use — a credential the operator believes was attached must never silently not exist.
+  const uploadCredentialFile = async (key: CredentialKey, file: File | null): Promise<void> => {
+    if (!file || !driverId) return;
+    const category = categoriesQuery.data?.categories.find((c) => c.code === key);
+    const { file_id, presigned_url } = await requestUploadUrlFromFile(file, {
+      category_id: category?.id,
+      entity_links: [{ entity_type: "driver", entity_id: driverId }],
+    });
+    const put = await fetch(presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "application/octet-stream" },
+      body: file,
+    });
+    if (!put.ok) {
+      throw new Error(`${CREDENTIAL_LABELS[key]} upload failed (${put.status}). Border credentials were not saved.`);
+    }
+    await confirmUpload(file_id);
+  };
+
   const save = async () => {
     if (!driverId || !onSaved) return;
     setError("");
     setPending(true);
     try {
+      for (const key of Object.keys(credentialFiles) as CredentialKey[]) {
+        await uploadCredentialFile(key, credentialFiles[key]);
+      }
       await updateDriver(driverId, borderFormStateToUpdatePayload(form));
       await onSaved();
       setEditOpen(false);
@@ -203,6 +258,28 @@ export function BorderCredentialsSection({
               data-testid="border-creds-mx-expiration"
             />
           </FieldGroup>
+
+          {/* DOC-01 remainder (GO-1405): the 4 credential documents the owner packet named. */}
+          <div className="rounded-sm border border-gray-200 p-3">
+            <div className="mb-2 text-xs font-semibold uppercase text-gray-500">Documents</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(Object.keys(CREDENTIAL_LABELS) as CredentialKey[]).map((key) => (
+                <FieldGroup key={key} label={CREDENTIAL_LABELS[key]}>
+                  <input
+                    type="file"
+                    data-testid={`border-creds-doc-${key.replace(/_/g, "-")}`}
+                    className="w-full rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+                    onChange={(e) =>
+                      setCredentialFiles((prev) => ({ ...prev, [key]: e.target.files?.[0] ?? null }))
+                    }
+                  />
+                  {credentialFiles[key] ? (
+                    <span className="mt-1 block text-[11px] text-slate-500">{credentialFiles[key]!.name}</span>
+                  ) : null}
+                </FieldGroup>
+              ))}
+            </div>
+          </div>
 
           {error ? <p className="text-xs text-red-700">{error}</p> : null}
 

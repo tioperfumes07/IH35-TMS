@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFuelTransaction, type FuelType } from "../../../api/fuelPlanner";
 import { suggestExpenseLoad } from "../../../api/maintenance";
+import { confirmUpload, requestUploadUrlFromFile } from "../../../api/docs";
 import { Button } from "../../../components/Button";
 import { Modal } from "../../../components/Modal";
 import { DatePicker } from "../../../components/forms/DatePicker";
@@ -48,6 +49,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
   const [locationCity, setLocationCity] = useState("");
   const [locationState, setLocationState] = useState("");
   const [notes, setNotes] = useState("");
+  const [sourceDocFile, setSourceDocFile] = useState<File | null>(null);
   const [suggestionPinned, setSuggestionPinned] = useState(false);
   const [attemptClose, setAttemptClose] = useState<() => void>(() => () => {});
   const lifecycleGenerationRef = useRef(0);
@@ -67,6 +69,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setLocationCity("");
     setLocationState("");
     setNotes("");
+    setSourceDocFile(null);
     setSuggestionPinned(false);
   }, []);
 
@@ -94,7 +97,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     || fuelType !== "diesel"
     || Boolean(gallons.trim() || pricePerGallon.trim())
     || totalCost != null
-    || Boolean(locationCity.trim() || locationState.trim() || notes.trim());
+    || Boolean(locationCity.trim() || locationState.trim() || notes.trim() || sourceDocFile);
 
   const suggestionQuery = useQuery({
     queryKey: ["fuel-office-create", "suggest-load", operatingCompanyId, driverId, unitId, trailerId, transactionDate],
@@ -121,6 +124,32 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     setSuggestionPinned(true);
   }, [loadId, suggestionPinned, suggestionQuery.data]);
 
+  // DOC-01 remainder (GO-1405, owner packet IH35-FINISH-2026-08-29/CC-1): mirrors
+  // FineCreateModal.tsx's uploadSourceDoc — upload the receipt/BOL FIRST (fuel.fuel_transactions
+  // has no draft state to attach to afterward), then pass the resulting file_id as source_doc_id
+  // on create. Optional to attach; when one IS attached the transaction refuses to be created if
+  // the upload fails, matching the fine-citation rule (a payable with a silently-missing document
+  // is worse than one the operator knows to re-attach).
+  const uploadSourceDoc = async (): Promise<string | null> => {
+    if (!sourceDocFile) return null;
+    const { file_id, presigned_url } = await requestUploadUrlFromFile(sourceDocFile, {
+      operating_company_id: operatingCompanyId || undefined,
+      entity_links: [
+        ...(driverId ? [{ entity_type: "driver" as const, entity_id: driverId }] : []),
+        ...(unitId ? [{ entity_type: "unit" as const, entity_id: unitId }] : []),
+        ...(loadId ? [{ entity_type: "load" as const, entity_id: loadId }] : []),
+      ],
+    });
+    const put = await fetch(presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": sourceDocFile.type || "application/octet-stream" },
+      body: sourceDocFile,
+    });
+    if (!put.ok) throw new Error(`Receipt upload failed (${put.status}). The fuel purchase was not created.`);
+    await confirmUpload(file_id);
+    return file_id;
+  };
+
   const submit = async () => {
     if (totalCost == null || !(totalCost > 0)) {
       pushToast("Total cost is required", "error");
@@ -135,6 +164,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
     try {
       const gallonsNum = gallons.trim() ? Number(gallons) : undefined;
       const ppgNum = pricePerGallon.trim() ? Number(pricePerGallon) : undefined;
+      const sourceDocId = await uploadSourceDoc();
       await createFuelTransaction(operatingCompanyId, {
         transaction_at: transactionDate,
         driver_id: driverId || null,
@@ -150,6 +180,7 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
         notes: notes.trim() || undefined,
         load_id: loadId || null,
         load_exemption_reason: loadId ? undefined : loadExemptionReason.trim(),
+        source_doc_id: sourceDocId,
       });
       if (lifecycleGenerationRef.current !== submissionGeneration) return;
       pushToast("Fuel purchase recorded", "success");
@@ -349,6 +380,25 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             onChange={(e) => setNotes(e.target.value)}
           />
         </label>
+
+        {/* DOC-01 remainder (GO-1405): receipt/BOL image, optional. */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-gray-700" htmlFor="fuel-source-doc">
+            Receipt / BOL document
+          </label>
+          <input
+            id="fuel-source-doc"
+            type="file"
+            data-testid="fuel-create-source-doc-input"
+            className="rounded-sm border border-gray-300 px-2 py-1 text-[13px]"
+            onChange={(event) => setSourceDocFile(event.target.files?.[0] ?? null)}
+          />
+          {sourceDocFile ? (
+            <span className="text-[11px] text-slate-500" data-testid="fuel-create-source-doc-name">
+              {sourceDocFile.name} — filed under the driver, unit and load selected above.
+            </span>
+          ) : null}
+        </div>
 
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={attemptClose} disabled={saving}>
