@@ -16,6 +16,10 @@ function verify(training, background, driverProfileTraining) {
   const singleTraining = training.slice(training.indexOf('app.post("/api/v1/safety/training-records"'), training.indexOf('app.post("/api/v1/safety/training-records/batch"'));
   const batchTraining = training.slice(training.indexOf('app.post("/api/v1/safety/training-records/batch"'));
   const backgroundCreate = background.slice(background.indexOf('app.post("/api/v1/safety/background-checks"'));
+  const driverProfileCreate = driverProfileTraining.slice(
+    driverProfileTraining.indexOf('app.post("/api/v1/mdata/drivers/:id/training"'),
+    driverProfileTraining.indexOf('app.patch("/api/v1/mdata/drivers/:id/training/:training_id"'),
+  );
   requireMatch(singleTraining, /d\.archived_at IS NULL[\s\S]*?training_create_driver_dca/, "single training create must reject archived drivers");
   requireMatch(batchTraining, /d\.archived_at IS NULL[\s\S]*?training_batch_dca/, "batch training create must reject archived drivers");
   requireMatch(backgroundCreate, /d\.archived_at IS NULL[\s\S]*?background_check_create_driver_dca/, "background-check create must reject archived drivers");
@@ -25,9 +29,9 @@ function verify(training, background, driverProfileTraining) {
   requireMatch(training, /resource_id: trainingRecord\.id/, "single training audit must use proven identity");
   requireMatch(training, /resource_id: row\.id[\s\S]*?driver_id: row\.driver_id/, "batch training audits must use proven identities");
   requireMatch(background, /resource_id: backgroundCheck\.id/, "background-check audit must use proven identity");
-  requireMatch(driverProfileTraining, /if \(!trainingRecord\?\.id\) throw new Error\("driver_profile_training_record_insert_failed"\)/, "driver-profile training create must require inserted identity");
-  requireMatch(driverProfileTraining, /resource_id: trainingRecord\.id/, "driver-profile training audit must use proven identity");
-  requireMatch(driverProfileTraining, /return trainingRecord;/, "driver-profile training response must use proven identity");
+  requireMatch(driverProfileCreate, /if \(!trainingRecord\?\.id\) throw new Error\("driver_profile_training_record_insert_failed"\)/, "driver-profile training create must require inserted identity");
+  requireMatch(driverProfileCreate, /resource_id: trainingRecord\.id/, "driver-profile training audit must use proven identity");
+  requireMatch(driverProfileCreate, /return trainingRecord;/, "driver-profile training response must use proven identity");
   return failures;
 }
 
