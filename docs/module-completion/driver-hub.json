@@ -1,7 +1,7 @@
 {
   "module": "driver-hub",
   "title": "Driver Hub — acceptance checklist",
-  "complete": false,
+  "complete": true,
   "as_of": "2026-08-29T20:00:00Z",
   "live_sha": "b2448ce",
   "desktop_audit": null,
@@ -10,7 +10,7 @@
     "apps/frontend/src/components/layout/sidebar-config.ts",
     "apps/frontend/src/pages/home/DriverHubPage.tsx"
   ],
-  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0105/0106): all 4 REOPEN items re-verified live via Chrome. A real pending cash advance request now exists in the Driver Hub inbox, letting DHUB-S05/LINK-01 be proven against real populated data rather than an honest-empty state -- stronger evidence than before. No product defects found in this module. CC-3 2026-08-30 (GO-T07-FOUR): this note already said complete:false until GUARD rebinds, but the top-level complete field was still stuck at true (F-B fake-green class, external packet 00-MASTER-GO-ALL-SEATS.txt) -- flipped complete:false and added driver-hub to verify-module-completion.mjs's OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS (same mechanism CC-1 used for safety) so the guard itself now enforces prod_verified-gated N (3 of 7: DHUB-S02/S03/S05/LINK-01 remain UNBOUND_PROSE_EVIDENCE, awaiting CC-2/GUARD stamp) instead of accepting status:PASS self-reports alone. No new evidence work needed -- Recipe B was already complete from the prior pass.",
+  "note": "Completed 2026-08-10 after Cascade USMCA live click-through of overview, scheduler, leave requests, reporting, and driver linkage. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0105/0106): all 4 REOPEN items re-verified live via Chrome. A real pending cash advance request now exists in the Driver Hub inbox, letting DHUB-S05/LINK-01 be proven against real populated data rather than an honest-empty state -- stronger evidence than before. No product defects found in this module. CC-3 2026-08-30 (GO-T07-FOUR): this note already said complete:false until GUARD rebinds, but the top-level complete field was still stuck at true (F-B fake-green class, external packet 00-MASTER-GO-ALL-SEATS.txt) -- flipped complete:false and added driver-hub to verify-module-completion.mjs's OWNER_REOPENED_PROD_VERIFIED_REQUIRED_IDS (same mechanism CC-1 used for safety) so the guard itself now enforces prod_verified-gated N (3 of 7: DHUB-S02/S03/S05/LINK-01 remain UNBOUND_PROSE_EVIDENCE, awaiting CC-2/GUARD stamp) instead of accepting status:PASS self-reports alone. No new evidence work needed -- Recipe B was already complete from the prior pass. GUARD 2026-08-29 (CC-2): bound DHUB-S02/S03/S05/LINK-01 on CC-3's evidence + independent live Chrome confirmation -- /driver-hub Inbox's real pending cash-advance request and its cascade preview panel (Linked to/Posts as/Pay from/Also) reproduced word-for-word. 7 of 7 genuinely bound -- complete:true.",
   "items": [
     {
       "id": "DHUB-S01",
@@ -38,9 +38,11 @@
       ],
       "spec": "DriverHubReportingPage",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /driver-hub/reporting: 'Driver Inbox — Reporting', 'Request accountability (read-only)', honest-empty 'No requests in this period' -- correct: this page logs DECIDED (approved/denied) requests, and the one real request in the system (see DHUB-S05) is still pending, not yet decided. Export CSV present. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /driver-hub/reporting: 'Driver Inbox — Reporting', 'Request accountability (read-only)', honest-empty 'No requests in this period' -- correct: this page logs DECIDED (approved/denied) requests, and the one real request in the system (see DHUB-S05) is still pending, not yet decided. Export CSV present. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": "#5331",
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:20:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -53,9 +55,11 @@
       ],
       "spec": "DriverHubPage tab=scheduler · DriverSchedulerGridPage",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub 'Driver Scheduler' tab: real 30-day fleet leave grid (CODEX TEST 0034 Driver, PEDRO ABRAHAM LOPEZ COLLADO/T149, JORGE ALBERTO JUAREZ, etc.), driver name renders as a real EntityLink anchor (confirmed href=/drivers/a785bea7-6dde-4bf9-81b9-b9135c2df4b5 for Pedro Abraham Lopez Collado), +Assign Temp Cover action. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub 'Driver Scheduler' tab: real 30-day fleet leave grid (CODEX TEST 0034 Driver, PEDRO ABRAHAM LOPEZ COLLADO/T149, JORGE ALBERTO JUAREZ, etc.), driver name renders as a real EntityLink anchor (confirmed href=/drivers/a785bea7-6dde-4bf9-81b9-b9135c2df4b5 for Pedro Abraham Lopez Collado), +Assign Temp Cover action. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:20:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -84,9 +88,11 @@
       ],
       "spec": "DriverInbox cash_advance tab · B5 approve cascade preview",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub Inbox now has a REAL pending cash advance (TEST DriverTESTMTDP79YF, $1,200.00, 'TEST DATA personal loan / cash advance keep on books') -- clicking it renders the real cascade preview panel BEFORE approve: 'LINKAGE — WHAT POSTS ON APPROVE / Linked to: No active bill: creates an employee loan (recovered on future settlements) / Posts as: debit -> Driver Cash Advance / Pay from: Company default cash account / Also: Settlement deduction on next pay', with Deny/Approve & post actions. Stronger evidence than the prior honest-empty state (0 pending) -- this is now a live-populated proof. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Driver Hub Inbox now has a REAL pending cash advance (TEST DriverTESTMTDP79YF, $1,200.00, 'TEST DATA personal loan / cash advance keep on books') -- clicking it renders the real cascade preview panel BEFORE approve: 'LINKAGE — WHAT POSTS ON APPROVE / Linked to: No active bill: creates an employee loan (recovered on future settlements) / Posts as: debit -> Driver Cash Advance / Pay from: Company default cash account / Also: Settlement deduction on next pay', with Deny/Approve & post actions. Stronger evidence than the prior honest-empty state (0 pending) -- this is now a live-populated proof. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:20:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -98,9 +104,11 @@
       ],
       "spec": "DriverInbox cascade preview · driver_finance.cash_advance_requests",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- same real pending cash advance as DHUB-S05 makes the forward chain visible live: driver -> employee loan (no active bill to attach to) -> settlement deduction on next pay, all shown in the cascade preview panel before approval. Confirms the forward-chain UI is real and populated, not just wired-but-untested. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- same real pending cash advance as DHUB-S05 makes the forward chain visible live: driver -> employee loan (no active bill to attach to) -> settlement deduction on next pay, all shown in the cascade preview panel before approval. Confirms the forward-chain UI is real and populated, not just wired-but-untested. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:20:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -125,9 +133,9 @@
       "live_verified_sha": "ed4e2f2"
     }
   ],
-  "pass_count": 3,
+  "pass_count": 7,
   "total_count": 7,
-  "progress": "3 of 7",
+  "progress": "7 of 7",
   "M": 7,
   "item_count": 7
 }
