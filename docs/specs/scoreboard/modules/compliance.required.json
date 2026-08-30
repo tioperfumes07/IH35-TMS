@@ -211,6 +211,9 @@
       "tab": "Overview",
       "sub": "Notification rules panel",
       "route_hint": "/compliance?tab=overview",
+      "owned_surface_paths": [
+        "pages/compliance/ComplianceDashboardPage.tsx"
+      ],
       "required": [
         "connectivity"
       ]
