@@ -1,13 +1,13 @@
 {
   "healthzSha": "b8fc09c",
-  "generated_at": "2026-08-30T16:15:10.000Z",
+  "generated_at": "2026-08-30T16:27:56.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T11:15:10-05:00",
-    "sourceSha": "dbafe8340",
+    "generatedAt": "2026-08-30T11:27:56-05:00",
+    "sourceSha": "a3e8734c2c",
     "deployedSha": "b8fc09c",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2347,
-    "failOpen": 216,
+    "ledgerRows": 2356,
+    "failOpen": 225,
     "defects": 28
   },
   "modules": [
@@ -2123,12 +2123,75 @@
   },
   "recentActivity": [
     {
+      "number": 18223,
+      "title": "FINDING: ACCT-F10117 GO-CLOSE-188 owner G1 -- customers/vendors named TEST/DEMO/SAMPLE never got is_sample_data set on write",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18223",
+      "sha": "cf4cd785ee",
+      "committedAtIso": "2026-08-30T11:26:15-05:00"
+    },
+    {
+      "number": 18222,
+      "title": "FINDING: SAF-F7527A -- fuel MPG anomaly detector fabricated driver subjects; code fix + guard shipped, migration routed to CC-1/Cursor (chrome-only lane band)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18222",
+      "sha": "70ddeab6de",
+      "committedAtIso": "2026-08-30T11:25:43-05:00"
+    },
+    {
+      "number": 18221,
+      "title": "FINDING: ACCT-F10118 claim migration 202613291110 renumber for G1 (replaces the band-mistaken 202613291200)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:23 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18221",
+      "sha": "bf8707bf5a",
+      "committedAtIso": "2026-08-30T11:23:00-05:00"
+    },
+    {
+      "number": 18220,
+      "title": "FINDING: FLEET-F7530 wire Avg Age roster drill",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18220",
+      "sha": "96bd5c1853",
+      "committedAtIso": "2026-08-30T11:21:37-05:00"
+    },
+    {
+      "number": 18219,
+      "title": "FINDING: PROOF-ENGINE-SHADOW-LEVER-AND-SUMMARY",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18219",
+      "sha": "2d92483975",
+      "committedAtIso": "2026-08-30T11:18:25-05:00"
+    },
+    {
+      "number": 18218,
+      "title": "FINDING: N/A -- claim migration 202613300000 for SAF-F7527A fuel MPG anomaly fix",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18218",
+      "sha": "3821676a3d",
+      "committedAtIso": "2026-08-30T11:17:17-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:17 AM CT",
+      "url": "",
+      "sha": "73993571fd",
+      "committedAtIso": "2026-08-30T16:17:02Z"
+    },
+    {
       "number": 18217,
       "title": "FINDING: ACCT-F10116 claim migration 202613291200 + verify-step 10117 for GO-CLOSE-188 owner G1",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:15 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18217",
-      "sha": "4a5a3a296",
+      "sha": "4a5a3a2962",
       "committedAtIso": "2026-08-30T11:15:33-05:00"
     },
     {
@@ -2137,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:15 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18216",
-      "sha": "dbafe8340",
+      "sha": "dbafe83409",
       "committedAtIso": "2026-08-30T11:15:10-05:00"
     },
     {
@@ -2146,71 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:14 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18215",
-      "sha": "e0c40e12c",
+      "sha": "e0c40e12c7",
       "committedAtIso": "2026-08-30T11:14:50-05:00"
-    },
-    {
-      "number": 18214,
-      "title": "FINDING: payment_methods picker_law confirmed genuinely Built; session picker_law survey wrapped honestly (6 clean, 1 mismatch, 2 ambiguous, 4 unlocated)",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:11 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18214",
-      "sha": "5cd52195f",
-      "committedAtIso": "2026-08-30T11:11:39-05:00"
-    },
-    {
-      "number": 18213,
-      "title": "FINDING: ECON-PROOF-ENGINE-RLS-DISCONNECTED report — sql-runner live connectivity check per GO-CLOSE-188",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18213",
-      "sha": "9de8d6808",
-      "committedAtIso": "2026-08-30T11:09:41-05:00"
-    },
-    {
-      "number": 18212,
-      "title": "FINDING: detail_types + dispatch_flag_colors picker_law confirmed Built; parts_catalog table mismatch found; 2 ambiguous, 6 still unlocated",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:09 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18212",
-      "sha": "65334f9d7",
-      "committedAtIso": "2026-08-30T11:09:02-05:00"
-    },
-    {
-      "number": 18210,
-      "title": "FINDING: MAINT-F7528 remove duplicate R&M KPI strips",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:06 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18210",
-      "sha": "97d1f0a4f",
-      "committedAtIso": "2026-08-30T11:06:31-05:00"
-    },
-    {
-      "number": 18211,
-      "title": "FINDING: N/A -- CC-2 OUTBOX: GO-HIGHBAR instruments verified real, DEFECT A/B shipped not yet live",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:05 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18211",
-      "sha": "b0160a047",
-      "committedAtIso": "2026-08-30T11:05:45-05:00"
-    },
-    {
-      "number": 18209,
-      "title": "FINDING: 3 non-driver lists picker_law leaves (safety complaint_types/dot_violation_types/cargo_claim_reasons) confirmed genuinely Built",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:04 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18209",
-      "sha": "e004d52c2",
-      "committedAtIso": "2026-08-30T11:04:47-05:00"
-    },
-    {
-      "number": 18208,
-      "title": "FINDING: DRV-MONEY-F7449-AUTO-DEDUCTION-POLICY-READ-FAILS-AS-HONEST-EMPTY",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:00 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18208",
-      "sha": "5b5b7759b",
-      "committedAtIso": "2026-08-30T11:00:16-05:00"
     }
   ]
 }

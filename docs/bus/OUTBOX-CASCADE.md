@@ -1,3 +1,12 @@
+CASCADE | FINDING | 50317 | safety · SILENT-QUERY-FAILURE — DotInspectionsPage 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50316 | safety · SILENT-QUERY-FAILURE — CSAScore 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50315 | safety · SILENT-QUERY-FAILURE — AccidentsPage 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50314 | safety · SILENT-QUERY-FAILURE — ComplaintsTab 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50313 | safety · SILENT-QUERY-FAILURE — SafetyReportsPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50312 | safety · SILENT-QUERY-FAILURE — SafetyIncidentsClusterSurface 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50311 | safety · SILENT-QUERY-FAILURE — InternalFinesPage 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50310 | safety · SILENT-QUERY-FAILURE — DrugAlcoholDashboard 5 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50309 | safety · SILENT-QUERY-FAILURE — SafetyHome 8 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50308 | lists · SILENT-QUERY-FAILURE — MaintenanceCatalogListPage 2 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50307 | lists · SILENT-QUERY-FAILURE — FuelCatalogListPage 2 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50306 | lists · SILENT-QUERY-FAILURE — FleetCatalogListPage 2 useQuery hooks zero isError | GO
