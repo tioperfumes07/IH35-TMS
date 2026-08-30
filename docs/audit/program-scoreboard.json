@@ -1,13 +1,13 @@
 {
   "healthzSha": "b8fc09c",
-  "generated_at": "2026-08-30T16:29:28.000Z",
+  "generated_at": "2026-08-30T16:36:31.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T11:29:28-05:00",
-    "sourceSha": "d94c71b0b",
+    "generatedAt": "2026-08-30T11:36:31-05:00",
+    "sourceSha": "6d3dbca044",
     "deployedSha": "b8fc09c",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2356,
-    "failOpen": 225,
+    "ledgerRows": 2371,
+    "failOpen": 240,
     "defects": 28
   },
   "modules": [
@@ -2123,12 +2123,48 @@
   },
   "recentActivity": [
     {
+      "number": 18228,
+      "title": "FINDING: DOCS-F10120 OUTBOX report for FUEL-MONEY-F7418 closure",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:33 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18228",
+      "sha": "0faaa96ba9",
+      "committedAtIso": "2026-08-30T11:33:45-05:00"
+    },
+    {
+      "number": 18224,
+      "title": "FINDING: MAINT-F7531 humanize service location labels",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18224",
+      "sha": "bb22d6c929",
+      "committedAtIso": "2026-08-30T11:32:18-05:00"
+    },
+    {
+      "number": 18227,
+      "title": "FINDING: FUEL-MONEY-F7418-CREATE-LOAD-SUGGESTION-FAILURE-IS-SILENT",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18227",
+      "sha": "4ecd6147a9",
+      "committedAtIso": "2026-08-30T11:31:49-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:30 AM CT",
+      "url": "",
+      "sha": "6aa579d377",
+      "committedAtIso": "2026-08-30T16:30:58Z"
+    },
+    {
       "number": 18225,
       "title": "FINDING: 50309-50317 — GO-CLOSE-188 Miss-C safety 9 zero isError rendering",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:29 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18225",
-      "sha": "d94c71b0b",
+      "sha": "d94c71b0b4",
       "committedAtIso": "2026-08-30T11:29:28-05:00"
     },
     {
@@ -2137,7 +2173,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:28 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18226",
-      "sha": "e7005d6cf",
+      "sha": "e7005d6cfb",
       "committedAtIso": "2026-08-30T11:28:10-05:00"
     },
     {
@@ -2146,7 +2182,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:26 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18223",
-      "sha": "cf4cd785e",
+      "sha": "cf4cd785ee",
       "committedAtIso": "2026-08-30T11:26:15-05:00"
     },
     {
@@ -2155,7 +2191,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:25 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18222",
-      "sha": "70ddeab6d",
+      "sha": "70ddeab6de",
       "committedAtIso": "2026-08-30T11:25:43-05:00"
     },
     {
@@ -2164,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:23 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18221",
-      "sha": "bf8707bf5",
+      "sha": "bf8707bf5a",
       "committedAtIso": "2026-08-30T11:23:00-05:00"
     },
     {
@@ -2173,44 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:21 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18220",
-      "sha": "96bd5c185",
+      "sha": "96bd5c1853",
       "committedAtIso": "2026-08-30T11:21:37-05:00"
-    },
-    {
-      "number": 18219,
-      "title": "FINDING: PROOF-ENGINE-SHADOW-LEVER-AND-SUMMARY",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18219",
-      "sha": "2d9248397",
-      "committedAtIso": "2026-08-30T11:18:25-05:00"
-    },
-    {
-      "number": 18218,
-      "title": "FINDING: N/A -- claim migration 202613300000 for SAF-F7527A fuel MPG anomaly fix",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:17 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18218",
-      "sha": "3821676a3",
-      "committedAtIso": "2026-08-30T11:17:17-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:17 AM CT",
-      "url": "",
-      "sha": "73993571f",
-      "committedAtIso": "2026-08-30T16:17:02Z"
-    },
-    {
-      "number": 18217,
-      "title": "FINDING: ACCT-F10116 claim migration 202613291200 + verify-step 10117 for GO-CLOSE-188 owner G1",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18217",
-      "sha": "4a5a3a296",
-      "committedAtIso": "2026-08-30T11:15:33-05:00"
     }
   ]
 }
