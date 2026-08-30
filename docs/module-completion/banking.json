@@ -30,16 +30,16 @@
     },
     {
       "id": "BANK-ECON-02",
-      "title": "matched_journal_entry_id density meaningful (not \u22480%)",
+      "title": "matched_journal_entry_id density meaningful (not ≈0%)",
       "layers": [
         "DOD-C",
         "DOD-D",
         "VERIFY-4",
         "VERIFY-6"
       ],
-      "spec": "Match/Categorize \u2192 JE",
+      "spec": "Match/Categorize → JE",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5/10830). Poster path (#3424): categorize-bulk\u2192maybePostBankCategorizationToGl with BANK_FEED_GL_POSTING_ENABLED ON. Meaningful density floor N>=50 (verify-bankfeed-je-match / 1507 + verify-step 1480). Companion ACCT-LINK-06 PASS. Remaining feed still ops backlog for apply-historical after mount deploys \u2014 density already meaningful for ECON-02. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): matched_journal_entry_id density = 36/391 (9.2%) \u2014 meaningfully nonzero, not \u22480%. Live UI /banking/transactions confirms BANK_FEED_GL_POSTING_ENABLED is ON for this entity and categorizing posts a real TMS JE. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bankfeed-je-match.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: matched_journal_entry_id=203/11638 company-wide (well above the N>=50 meaningful-density floor, same ratio, no regression). Binding on this GUARD packet.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: matched_je=170/10830 (was 5/10830). Poster path (#3424): categorize-bulk→maybePostBankCategorizationToGl with BANK_FEED_GL_POSTING_ENABLED ON. Meaningful density floor N>=50 (verify-bankfeed-je-match / 1507 + verify-step 1480). Companion ACCT-LINK-06 PASS. Remaining feed still ops backlog for apply-historical after mount deploys — density already meaningful for ECON-02. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): matched_journal_entry_id density = 36/391 (9.2%) — meaningfully nonzero, not ≈0%. Live UI /banking/transactions confirms BANK_FEED_GL_POSTING_ENABLED is ON for this entity and categorizing posts a real TMS JE. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bankfeed-je-match.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: matched_journal_entry_id=203/11638 company-wide (well above the N>=50 meaningful-density floor, same ratio, no regression). Binding on this GUARD packet.",
       "pr": "#3424 #PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -52,9 +52,9 @@
         "DOD-D",
         "VERIFY-6"
       ],
-      "spec": "Transfers \u00b7 #3134 Option 1 owner",
+      "spec": "Transfers · #3134 Option 1 owner",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 Neon lucia: transfers=2 (was 0). Smoked POST /api/v1/banking/transfers bank_to_bank $1.00 TRANSP 6103\u21926129; ids eb0f5d2e / c178b77e. Browser /banking/transfers lists both rows (+ Record Transfer + View/Revoke). markBankFeedLineAsTransfer / createTransfer path (#3445). TRANSFER_GL_POSTING_ENABLED left OFF (TMS JE link honesty banner still correct). verify-step 1481. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): banking.transfers=2 (was 0 in original claim). Live UI /banking/transfers lists both rows with real TMS JE links, View/Revoke actions, one flagged 'counterparty \u00b7 TRANSP' (the BANK-DOM-05 intercompany pair). Rows > 0 branch holds. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-econ-03-transfer-path-wired.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: banking.transfers=6 (grown from 2/4), rows>0 branch continues to hold. Binding on this GUARD packet.",
+      "evidence": "LIVE 2026-07-30 Neon lucia: transfers=2 (was 0). Smoked POST /api/v1/banking/transfers bank_to_bank $1.00 TRANSP 6103→6129; ids eb0f5d2e / c178b77e. Browser /banking/transfers lists both rows (+ Record Transfer + View/Revoke). markBankFeedLineAsTransfer / createTransfer path (#3445). TRANSFER_GL_POSTING_ENABLED left OFF (TMS JE link honesty banner still correct). verify-step 1481. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): banking.transfers=2 (was 0 in original claim). Live UI /banking/transfers lists both rows with real TMS JE links, View/Revoke actions, one flagged 'counterparty · TRANSP' (the BANK-DOM-05 intercompany pair). Rows > 0 branch holds. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-econ-03-transfer-path-wired.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: banking.transfers=6 (grown from 2/4), rows>0 branch continues to hold. Binding on this GUARD packet.",
       "pr": "#3445 #PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -69,7 +69,7 @@
       ],
       "spec": "Reconciliation",
       "status": "FAIL",
-      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep. | RE-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA) \u2014 DOES NOT CURRENTLY HOLD: reconciliation_sessions=3 (>0, satisfies existence) but ZERO have reached zero-diff closure \u2014 all 3 show large nonzero variance_cents (26179039 / 26497388 / 25374556, i.e. ~$250K+) and none has finalized_at set. Source-verified the computation query IS correctly scoped (bank_account_id + operating_company_id + transaction_date BETWEEN period_start/period_end, apps/backend/src/banking/reconciliation.routes.ts:495-501 and :1041-1050) \u2014 not a scoping bug. Root cause is operational, not code: no bank_transactions rows for this account/period have reconciliation_cleared=true or a matched_* link yet, so the entire month's volume computes as uncleared deposits-in-transit/outstanding-checks and can never net to zero until an operator actually works the reconciliation line-by-line. Honest FAIL, not flipped to true \u2014 the stale 2026-07-30 evidence below describes a DIFFERENT entity (TRANSP, accounts 6103/6129) and does not establish USMCA. Old prior-session TRANSP evidence retained below for history. RE-CONFIRMED LIVE (CC-2, 2026-08-29, SHA b2448ce): unchanged from CC-3's 8/28 finding. Neon lucia direct read, all reconciliation_sessions by entity: TRANSP c14f499e still status=reconciled/variance_cents=0 (real, ordinary zero-diff closure, unchanged). USMCA has 3 sessions: 2 open with large real variance (~$250-265K), 1 marked reconciled but ONLY via the owner force_complete override path (variance_cents=26179039, notes=\"force_complete_reason: TEST DATA recon Accept hop BANK-F03... owner voids after launch\", reconciled_by=Owner) \u2014 verified this is the intentional, correctly-authorized accountable-override mechanism (apps/backend/src/banking/reconciliation.routes.ts:1062-1074, force_complete requires Owner role + reason), not a bug, but it is an override, not an ordinary zero-diff closure, so it does not satisfy this item's own bar. Not flipping prod_verified \u2014 CC-3's Honest FAIL stands, still accurate today. | STATUS CORRECTED (CC-2, 2026-08-30, live healthz 48e08e5): status field was left PASS while this item's own evidence has said 'Honest FAIL, not flipped to true' since 2026-08-28/29 -- the same status/evidence-contradiction shape as DRV-S04/ACCT-R-04 (this session's GO-LAST-26 packets), just not yet caught because this id was never added to verify-module-completion.mjs's HONESTY_RATCHET_IDS allowlist. Flipped status PASS -> FAIL to match the evidence that already existed. Not GUARD's fix: reconciling USMCA's real ~$250K variance line-by-line is accounting-operations work (matching real bank lines to real transactions), not a config bind or a live-verification check -- out of verify-live-never-build scope. Left prod_verified false (already was).",
+      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep. | RE-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA) — DOES NOT CURRENTLY HOLD: reconciliation_sessions=3 (>0, satisfies existence) but ZERO have reached zero-diff closure — all 3 show large nonzero variance_cents (26179039 / 26497388 / 25374556, i.e. ~$250K+) and none has finalized_at set. Source-verified the computation query IS correctly scoped (bank_account_id + operating_company_id + transaction_date BETWEEN period_start/period_end, apps/backend/src/banking/reconciliation.routes.ts:495-501 and :1041-1050) — not a scoping bug. Root cause is operational, not code: no bank_transactions rows for this account/period have reconciliation_cleared=true or a matched_* link yet, so the entire month's volume computes as uncleared deposits-in-transit/outstanding-checks and can never net to zero until an operator actually works the reconciliation line-by-line. Honest FAIL, not flipped to true — the stale 2026-07-30 evidence below describes a DIFFERENT entity (TRANSP, accounts 6103/6129) and does not establish USMCA. Old prior-session TRANSP evidence retained below for history. RE-CONFIRMED LIVE (CC-2, 2026-08-29, SHA b2448ce): unchanged from CC-3's 8/28 finding. Neon lucia direct read, all reconciliation_sessions by entity: TRANSP c14f499e still status=reconciled/variance_cents=0 (real, ordinary zero-diff closure, unchanged). USMCA has 3 sessions: 2 open with large real variance (~$250-265K), 1 marked reconciled but ONLY via the owner force_complete override path (variance_cents=26179039, notes=\"force_complete_reason: TEST DATA recon Accept hop BANK-F03... owner voids after launch\", reconciled_by=Owner) — verified this is the intentional, correctly-authorized accountable-override mechanism (apps/backend/src/banking/reconciliation.routes.ts:1062-1074, force_complete requires Owner role + reason), not a bug, but it is an override, not an ordinary zero-diff closure, so it does not satisfy this item's own bar. Not flipping prod_verified — CC-3's Honest FAIL stands, still accurate today. | STATUS CORRECTED (CC-2, 2026-08-30, live healthz 48e08e5): status field was left PASS while this item's own evidence has said 'Honest FAIL, not flipped to true' since 2026-08-28/29 -- the same status/evidence-contradiction shape as DRV-S04/ACCT-R-04 (this session's GO-LAST-26 packets), just not yet caught because this id was never added to verify-module-completion.mjs's HONESTY_RATCHET_IDS allowlist. Flipped status PASS -> FAIL to match the evidence that already existed. Not GUARD's fix: reconciling USMCA's real ~$250K variance line-by-line is accounting-operations work (matching real bank lines to real transactions), not a config bind or a live-verification check -- out of verify-live-never-build scope. Left prod_verified false (already was).",
       "pr": "#3454 #PENDING-ACCT-CLOSE",
       "live_proof": "2026-07-30 sessions=2 reconciled=1 session c14f499e",
       "prod_verified": false
@@ -83,7 +83,7 @@
       ],
       "spec": "Cash GL setup",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. Keep-guard: scripts/verify-bank-account-cashbind.mjs + verify-step 1442 (active-only; never deletes deactivated). | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): 2/2 active bank_accounts (deactivated_at IS NULL) have ledger_account_id set. Live UI /banking/cash-gl-setup confirms: 'All 2 active bank account(s) have a Cash GL mapping for this company' with both real mappings shown (Relay Fuel Wallet \u2192 Relay Fuel Wallet; USMCA FREIGHT \u2192 Bank of America - Operating (USMCA)). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-account-cashbind.mjs exit 0 (also fixed this module's own stale pass_count metadata, 12->19, matching the actual status=PASS item count -- unrelated staleness, not a claim about this item). Neon lucia (bypass_rls) direct read this turn: banking.bank_accounts company-wide live(deactivated_at IS NULL)=9, live+bound(ledger_account_id IS NOT NULL)=8. HONEST CAVEAT: the 1 unbound account is 'TEST DATA Amex TESTMTDP79YF' (USMCA), created 2026-08-29T01:24Z -- AFTER CC-3's 08-28 evidence, so not something CC-3's citation could have caught, and a TEST fixture per owner law (never bulk-void test data), not a broken binding mechanism -- every real operating account remains correctly bound. Binding on the real-account coverage; the TEST account's missing binding is a minor, named, non-blocking gap, not hidden. | OWNER REOPEN (GO-TRUST-02, 2026-08-29): owner directive explicitly names BANK-ECON-05 for REOPEN rather than a caveat-bind -- the item's own title is a literal ALL claim (\"All live bank_accounts ... bound to ledger_account_id\"), and 8/9 does not satisfy ALL regardless of the unbound account being TEST data. Reversing the prior bind-with-caveat decision per this explicit correction. Real gap remains: banking.bank_accounts id=9564ca46-a68f-4abc-84e5-178ac38e8d19 ('TEST DATA Amex TESTMTDP79YF', USMCA, created 2026-08-29T01:24Z) has ledger_account_id=NULL. Not fixed by GUARD -- either bind the missing ledger_account_id on that row or void/deactivate the fixture; whichever the owning lane picks, re-verify ALL live accounts are bound before re-stamping this item. | RESOLVED (CC-2, 2026-08-30, live healthz 48e08e5): bound the missing ledger_account_id via the real application write path (live Chrome, USMCA context, /banking/cash-gl-setup) -- selected the existing 'Bank of America - Operating (USMCA)' Cash GL account for banking.bank_accounts id=9564ca46-a68f-4abc-84e5-178ac38e8d19 (TEST DATA Amex TESTMTDP79YF), same account already used by the real USMCA FREIGHT row (test fixture kept per owner law, not voided). Live UI now reads 'All 3 active bank account(s) have a Cash GL mapping for this company.' Independently confirmed via fresh Neon read (company_control=3): all 9 live (deactivated_at IS NULL) banking.bank_accounts rows company-wide now have a non-null ledger_account_id, 9/9, zero unbound -- the item's own 'ALL live bank_accounts' bar is now genuinely satisfied, not scoped around. Stamped live_verified_sha=48e08e5 (current live healthz/shallow, confirmed git ancestor of HEAD).",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: Neon lucia 2026-07-25: of 16 bank_accounts, 9 deactivated (unbound OK); 7 live (deactivated_at IS NULL) all have ledger_account_id (7/7). Prior 8/16 FAIL counted deactivated duplicates. Keep-guard: scripts/verify-bank-account-cashbind.mjs + verify-step 1442 (active-only; never deletes deactivated). | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): 2/2 active bank_accounts (deactivated_at IS NULL) have ledger_account_id set. Live UI /banking/cash-gl-setup confirms: 'All 2 active bank account(s) have a Cash GL mapping for this company' with both real mappings shown (Relay Fuel Wallet → Relay Fuel Wallet; USMCA FREIGHT → Bank of America - Operating (USMCA)). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-account-cashbind.mjs exit 0 (also fixed this module's own stale pass_count metadata, 12->19, matching the actual status=PASS item count -- unrelated staleness, not a claim about this item). Neon lucia (bypass_rls) direct read this turn: banking.bank_accounts company-wide live(deactivated_at IS NULL)=9, live+bound(ledger_account_id IS NOT NULL)=8. HONEST CAVEAT: the 1 unbound account is 'TEST DATA Amex TESTMTDP79YF' (USMCA), created 2026-08-29T01:24Z -- AFTER CC-3's 08-28 evidence, so not something CC-3's citation could have caught, and a TEST fixture per owner law (never bulk-void test data), not a broken binding mechanism -- every real operating account remains correctly bound. Binding on the real-account coverage; the TEST account's missing binding is a minor, named, non-blocking gap, not hidden. | OWNER REOPEN (GO-TRUST-02, 2026-08-29): owner directive explicitly names BANK-ECON-05 for REOPEN rather than a caveat-bind -- the item's own title is a literal ALL claim (\"All live bank_accounts ... bound to ledger_account_id\"), and 8/9 does not satisfy ALL regardless of the unbound account being TEST data. Reversing the prior bind-with-caveat decision per this explicit correction. Real gap remains: banking.bank_accounts id=9564ca46-a68f-4abc-84e5-178ac38e8d19 ('TEST DATA Amex TESTMTDP79YF', USMCA, created 2026-08-29T01:24Z) has ledger_account_id=NULL. Not fixed by GUARD -- either bind the missing ledger_account_id on that row or void/deactivate the fixture; whichever the owning lane picks, re-verify ALL live accounts are bound before re-stamping this item. | RESOLVED (CC-2, 2026-08-30, live healthz 48e08e5): bound the missing ledger_account_id via the real application write path (live Chrome, USMCA context, /banking/cash-gl-setup) -- selected the existing 'Bank of America - Operating (USMCA)' Cash GL account for banking.bank_accounts id=9564ca46-a68f-4abc-84e5-178ac38e8d19 (TEST DATA Amex TESTMTDP79YF), same account already used by the real USMCA FREIGHT row (test fixture kept per owner law, not voided). Live UI now reads 'All 3 active bank account(s) have a Cash GL mapping for this company.' Independently confirmed via fresh Neon read (company_control=3): all 9 live (deactivated_at IS NULL) banking.bank_accounts rows company-wide now have a non-null ledger_account_id, 9/9, zero unbound -- the item's own 'ALL live bank_accounts' bar is now genuinely satisfied, not scoped around. Stamped live_verified_sha=48e08e5 (current live healthz/shallow, confirmed git ancestor of HEAD).",
       "pr": null,
       "prod_verified": true,
       "unverified_reason": "OWNER_REOPEN_GO-TRUST-02_2026-08-29_1_OF_9_ACCOUNTS_UNBOUND",
@@ -92,7 +92,7 @@
     },
     {
       "id": "BANK-SURF-01",
-      "title": "Banking Home + account detail \u2014 DoD A\u2013E",
+      "title": "Banking Home + account detail — DoD A–E",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -102,7 +102,7 @@
       ],
       "spec": "Architectural Banking tabs",
       "status": "PASS",
-      "evidence": "LIVE browser 2026-07-30 TRANSP: /banking Home \u2014 tiles (Platinum/6103/6129/6137/Relay), Factoring\u00b7Escrow never-delete cards, + Record Transfer, View Transfers, Uncategorized 5676 KPI, Plaid sync status, Cash GL setup, Email Queue. Account detail via account buttons. Structural guards 1465/1439. USMCA switcher available. VERIFY 1\u20138 click-through closed for Home+detail chrome. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking Home renders live \u2014 Plaid sync status, account tiles (USMCA FREIGHT/Relay Fuel Wallet/Factoring Reserve/Driver Escrow Pool/Cash Advance Pool), Bank Accounts table, Factoring \u00b7 Virtual Bank card, Driver Escrow Visualizer, Plaid Connections panel. Account detail confirmed via drill-in. Full click-through this GO-0023 pass, no console errors.",
+      "evidence": "LIVE browser 2026-07-30 TRANSP: /banking Home — tiles (Platinum/6103/6129/6137/Relay), Factoring·Escrow never-delete cards, + Record Transfer, View Transfers, Uncategorized 5676 KPI, Plaid sync status, Cash GL setup, Email Queue. Account detail via account buttons. Structural guards 1465/1439. USMCA switcher available. VERIFY 1–8 click-through closed for Home+detail chrome. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking Home renders live — Plaid sync status, account tiles (USMCA FREIGHT/Relay Fuel Wallet/Factoring Reserve/Driver Escrow Pool/Cash Advance Pool), Bank Accounts table, Factoring · Virtual Bank card, Driver Escrow Visualizer, Plaid Connections panel. Account detail confirmed via drill-in. Full click-through this GO-0023 pass, no console errors.",
       "pr": "#PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -110,7 +110,7 @@
     },
     {
       "id": "BANK-SURF-02",
-      "title": "Categorize / Match \u2014 VERIFY-1..8 + JE when flag ON",
+      "title": "Categorize / Match — VERIFY-1..8 + JE when flag ON",
       "layers": [
         "VERIFY-1",
         "VERIFY-2",
@@ -120,7 +120,7 @@
       ],
       "spec": "QBO banking parity",
       "status": "PASS",
-      "evidence": "LIVE browser 2026-07-30 /banking/transactions?type=uncategorized TRANSP: For review \u00b7 Match/Categorize chrome; honesty banners present. Neon lucia matched_je=170/10830 (BANK-ECON-02 PASS). #3424 categorize-bulk\u2192GL. verify-step 1480/1507. Flag BANK_FEED_GL_POSTING_ENABLED ON per-entity. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/transactions renders \u2014 For review \u00b7 192, Categorized \u00b7 126, Excluded \u00b7 0; banner confirms 'Categorizing DOES post a journal entry \u2014 BANK_FEED_GL_POSTING_ENABLED is ON for this company'; CATEGORIZE action buttons live on uncategorized rows. Neon: matched_je=36/391 (BANK-ECON-02). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed via BANK-ECON-02's companion guard (verify-bankfeed-je-match.mjs exit 0). Binding on the same GUARD packet.",
+      "evidence": "LIVE browser 2026-07-30 /banking/transactions?type=uncategorized TRANSP: For review · Match/Categorize chrome; honesty banners present. Neon lucia matched_je=170/10830 (BANK-ECON-02 PASS). #3424 categorize-bulk→GL. verify-step 1480/1507. Flag BANK_FEED_GL_POSTING_ENABLED ON per-entity. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/transactions renders — For review · 192, Categorized · 126, Excluded · 0; banner confirms 'Categorizing DOES post a journal entry — BANK_FEED_GL_POSTING_ENABLED is ON for this company'; CATEGORIZE action buttons live on uncategorized rows. Neon: matched_je=36/391 (BANK-ECON-02). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed via BANK-ECON-02's companion guard (verify-bankfeed-je-match.mjs exit 0). Binding on the same GUARD packet.",
       "pr": "#3424 #PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -128,7 +128,7 @@
     },
     {
       "id": "BANK-SURF-03",
-      "title": "Transfers UI + poster path \u2014 live economics",
+      "title": "Transfers UI + poster path — live economics",
       "layers": [
         "DOD-D",
         "VERIFY-3",
@@ -136,7 +136,7 @@
       ],
       "spec": "Transfers tab",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30 browser /banking/transfers TRANSP: lists transfers=2 (6103\u21926129 $1.00), + Record Transfer, View/Revoke. Neon lucia transfers=2. Empty honesty banner not shown when rows exist (code retained for empty). TRANSFER_GL_POSTING_ENABLED OFF \u2014 TMS JE column honesty correct. #3445 createTransfer. Companion BANK-ECON-03. verify-step 1481. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/transfers lists transfers=2 matching Neon exactly \u2014 Cash Deposit $1,200.00 (real TMS JE linked) and Bank To Bank $1.00 intercompany TRANSP\u2192USMCA (TMS JE linked, 'counterparty \u00b7 TRANSP' shown, matches BANK-DOM-05's live intercompany group). + Record Transfer / View / Revoke all present. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed via BANK-ECON-03's companion guard (verify-bank-econ-03-transfer-path-wired.mjs exit 0); Neon transfers=6 (grown). Binding on the same GUARD packet.",
+      "evidence": "LIVE 2026-07-30 browser /banking/transfers TRANSP: lists transfers=2 (6103→6129 $1.00), + Record Transfer, View/Revoke. Neon lucia transfers=2. Empty honesty banner not shown when rows exist (code retained for empty). TRANSFER_GL_POSTING_ENABLED OFF — TMS JE column honesty correct. #3445 createTransfer. Companion BANK-ECON-03. verify-step 1481. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/transfers lists transfers=2 matching Neon exactly — Cash Deposit $1,200.00 (real TMS JE linked) and Bank To Bank $1.00 intercompany TRANSP→USMCA (TMS JE linked, 'counterparty · TRANSP' shown, matches BANK-DOM-05's live intercompany group). + Record Transfer / View / Revoke all present. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed via BANK-ECON-03's companion guard (verify-bank-econ-03-transfer-path-wired.mjs exit 0); Neon transfers=6 (grown). Binding on the same GUARD packet.",
       "pr": "#3445 #PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -144,7 +144,7 @@
     },
     {
       "id": "BANK-SURF-04",
-      "title": "Reconciliation workspace \u2014 live session + zero-diff",
+      "title": "Reconciliation workspace — live session + zero-diff",
       "layers": [
         "DOD-D",
         "VERIFY-6",
@@ -152,22 +152,22 @@
       ],
       "spec": "Recon",
       "status": "FAIL",
-      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep. | RE-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome + Neon, SHA 4e5db76, USMCA) \u2014 SAME HONEST FAIL AS BANK-ECON-04: /banking/reconciliation workspace itself renders correctly live (account picker, Beginning/Ending balance, CSV worklist upload, progress tracker \u2014 the UI surface is real and functional), but none of USMCA's 3 live reconciliation_sessions has reached zero-diff closure (see BANK-ECON-04 for the full live variance detail and root cause \u2014 operator workflow not yet exercised to completion, not a code scoping bug). Not flipping to true on UI-renders-alone; the item's own bar requires zero-diff, which does not hold today. RE-CONFIRMED LIVE (CC-2, 2026-08-29, SHA b2448ce): unchanged \u2014 see BANK-ECON-04's re-confirmation for full detail (TRANSP zero-diff still real, USMCA's only \"reconciled\" session is a correctly-authorized owner force_complete override on labeled TEST data, not an ordinary closure). Not flipping prod_verified. | STATUS CORRECTED (CC-2, 2026-08-30, live healthz 48e08e5): status field was left PASS while this item's own evidence has said 'Honest FAIL, not flipped to true' since 2026-08-28/29 -- the same status/evidence-contradiction shape as DRV-S04/ACCT-R-04 (this session's GO-LAST-26 packets), just not yet caught because this id was never added to verify-module-completion.mjs's HONESTY_RATCHET_IDS allowlist. Flipped status PASS -> FAIL to match the evidence that already existed. Not GUARD's fix: reconciling USMCA's real ~$250K variance line-by-line is accounting-operations work (matching real bank lines to real transactions), not a config bind or a live-verification check -- out of verify-live-never-build scope. Left prod_verified false (already was).",
+      "evidence": "LIVE 2026-07-30 Neon lucia: reconciliation_sessions=2 (reconciled=1 open=1). Smoked POST /reconciliation/start on 6103+6129; zero-diff complete on 6129 session c14f499e (Jan 2026, variance=0). #3454 MERGED + mig 202608030000 Neon-applied. Browser workspace GET 200. verify-step 1485 / honesty-keep. | RE-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome + Neon, SHA 4e5db76, USMCA) — SAME HONEST FAIL AS BANK-ECON-04: /banking/reconciliation workspace itself renders correctly live (account picker, Beginning/Ending balance, CSV worklist upload, progress tracker — the UI surface is real and functional), but none of USMCA's 3 live reconciliation_sessions has reached zero-diff closure (see BANK-ECON-04 for the full live variance detail and root cause — operator workflow not yet exercised to completion, not a code scoping bug). Not flipping to true on UI-renders-alone; the item's own bar requires zero-diff, which does not hold today. RE-CONFIRMED LIVE (CC-2, 2026-08-29, SHA b2448ce): unchanged — see BANK-ECON-04's re-confirmation for full detail (TRANSP zero-diff still real, USMCA's only \"reconciled\" session is a correctly-authorized owner force_complete override on labeled TEST data, not an ordinary closure). Not flipping prod_verified. | STATUS CORRECTED (CC-2, 2026-08-30, live healthz 48e08e5): status field was left PASS while this item's own evidence has said 'Honest FAIL, not flipped to true' since 2026-08-28/29 -- the same status/evidence-contradiction shape as DRV-S04/ACCT-R-04 (this session's GO-LAST-26 packets), just not yet caught because this id was never added to verify-module-completion.mjs's HONESTY_RATCHET_IDS allowlist. Flipped status PASS -> FAIL to match the evidence that already existed. Not GUARD's fix: reconciling USMCA's real ~$250K variance line-by-line is accounting-operations work (matching real bank lines to real transactions), not a config bind or a live-verification check -- out of verify-live-never-build scope. Left prod_verified false (already was).",
       "pr": "#3454 #PENDING-ACCT-CLOSE",
       "live_proof": "2026-07-30 sessions=2 reconciled=1 session c14f499e",
       "prod_verified": false
     },
     {
       "id": "BANK-SURF-05",
-      "title": "Factoring / Escrow / Relay / Plaid / Statement Import \u2014 active path + honest empty",
+      "title": "Factoring / Escrow / Relay / Plaid / Statement Import — active path + honest empty",
       "layers": [
         "DOD-A",
         "DOD-E",
         "VERIFY-7"
       ],
-      "spec": "Banking entry tabs \u00b7 never-delete",
+      "spec": "Banking entry tabs · never-delete",
       "status": "PASS",
-      "evidence": "LIVE browser 2026-07-30 TRANSP tabs all render: /banking/factoring (Faro thin entry + honest empty advances), /banking/driver-escrow, /banking/relay, /banking/plaid-connections, /banking/statement-import. Never-delete Factoring/Escrow cards on Home. Structural 1466/1440/1802. Honesty banners refuse fake healthy zeros. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/factoring, /banking/driver-escrow, /banking/relay, /banking/plaid-connections, /banking/statement-import all render live with real data or honest empty states. Plaid Connections panel additionally FIXED this GO-0022/23 arc (PR #17211) to stop showing the non-Plaid Relay Fuel Wallet as a fake broken connection \u2014 now correctly excluded from that surface. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): structural guards for the constituent surfaces (factoring/escrow/relay/plaid/statement-import) re-run clean this session (factoring guards PASS earlier this turn; no new regression reported on any of the 5 tabs). Binding on CC-3's dated 08-28 live click-through + this session's unrelated corroborating guard passes.",
+      "evidence": "LIVE browser 2026-07-30 TRANSP tabs all render: /banking/factoring (Faro thin entry + honest empty advances), /banking/driver-escrow, /banking/relay, /banking/plaid-connections, /banking/statement-import. Never-delete Factoring/Escrow cards on Home. Structural 1466/1440/1802. Honesty banners refuse fake healthy zeros. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/factoring, /banking/driver-escrow, /banking/relay, /banking/plaid-connections, /banking/statement-import all render live with real data or honest empty states. Plaid Connections panel additionally FIXED this GO-0022/23 arc (PR #17211) to stop showing the non-Plaid Relay Fuel Wallet as a fake broken connection — now correctly excluded from that surface. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): structural guards for the constituent surfaces (factoring/escrow/relay/plaid/statement-import) re-run clean this session (factoring guards PASS earlier this turn; no new regression reported on any of the 5 tabs). Binding on CC-3's dated 08-28 live click-through + this session's unrelated corroborating guard passes.",
       "pr": "#PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -175,7 +175,7 @@
     },
     {
       "id": "BANK-SURF-06",
-      "title": "Categorization rules \u2014 DoD A\u2013E + VERIFY 1\u20138",
+      "title": "Categorization rules — DoD A–E + VERIFY 1–8",
       "layers": [
         "DOD-A",
         "DOD-B",
@@ -187,9 +187,9 @@
         "VERIFY-3",
         "VERIFY-7"
       ],
-      "spec": "Rules tab \u00b7 M grew via BANK-MODULE-DOD sweep",
+      "spec": "Rules tab · M grew via BANK-MODULE-DOD sweep",
       "status": "PASS",
-      "evidence": "LIVE browser 2026-07-30 /banking/categorization-rules: Auto-Categorize Rules page \u2014 Add Rule, pattern/priority/COA editor, Save Rule, Apply to Historical. Neon lucia banking.transaction_categories=17 TRANSP. API mount of categorization-rules on live awaits #3834 deploy (was orphan HELD; mounted in this PR). Companion BANK-F08. verify-step 1682. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/categorization-rules DoD A\u2013E confirmed live this pass (see BANK-F08). Deep wizard fully functional, no mount gaps remaining. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-f08-categorization-rules-automatch.mjs exit 0 (companion guard, same surface). Binding on this GUARD packet.",
+      "evidence": "LIVE browser 2026-07-30 /banking/categorization-rules: Auto-Categorize Rules page — Add Rule, pattern/priority/COA editor, Save Rule, Apply to Historical. Neon lucia banking.transaction_categories=17 TRANSP. API mount of categorization-rules on live awaits #3834 deploy (was orphan HELD; mounted in this PR). Companion BANK-F08. verify-step 1682. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/categorization-rules DoD A–E confirmed live this pass (see BANK-F08). Deep wizard fully functional, no mount gaps remaining. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-f08-categorization-rules-automatch.mjs exit 0 (companion guard, same surface). Binding on this GUARD packet.",
       "pr": "#PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -197,14 +197,14 @@
     },
     {
       "id": "BANK-LINK-01",
-      "title": "Bank txn \u2194 Bill/Payment/Transfer EntityLink both-way with Neon FKs",
+      "title": "Bank txn ↔ Bill/Payment/Transfer EntityLink both-way with Neon FKs",
       "layers": [
         "DOD-C",
         "VERIFY-4"
       ],
-      "spec": "Law \u00a79 banking",
+      "spec": "Law §9 banking",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE Neon lucia 2026-07-30: counterparty FK density categorization_vendor_id OR categorization_customer_id = 2 (>0). Transfer\u2194bank reverse links via matched_transfer_id on mark-as-transfer path (#3445). EntityLink + migration 202608050000. Structural guards 1482/1441/1810. Density sparse but both-way path proven; not zero. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): bank_transactions with at least one of matched_bill_id/matched_payment_id/matched_transfer_id = 3; matched_invoice_id = 1. Both-way EntityLink drill confirmed live this session on the factoring \u2192 invoice reverse path (FAC-2026-00001 \u2192 INV-2026-00038) and the Banking Transactions 'Match/Categorize' column. Density sparse but nonzero and structurally proven, consistent with the original evidence. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-link-01-counterparty-fk.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: counterparty FK density (categorization_vendor_id OR categorization_customer_id) = 28 (grown from the cited 2). Binding on this GUARD packet.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE Neon lucia 2026-07-30: counterparty FK density categorization_vendor_id OR categorization_customer_id = 2 (>0). Transfer↔bank reverse links via matched_transfer_id on mark-as-transfer path (#3445). EntityLink + migration 202608050000. Structural guards 1482/1441/1810. Density sparse but both-way path proven; not zero. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76, USMCA): bank_transactions with at least one of matched_bill_id/matched_payment_id/matched_transfer_id = 3; matched_invoice_id = 1. Both-way EntityLink drill confirmed live this session on the factoring → invoice reverse path (FAC-2026-00001 → INV-2026-00038) and the Banking Transactions 'Match/Categorize' column. Density sparse but nonzero and structurally proven, consistent with the original evidence. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-link-01-counterparty-fk.mjs exit 0. Neon lucia (bypass_rls) direct read this turn: counterparty FK density (categorization_vendor_id OR categorization_customer_id) = 28 (grown from the cited 2). Binding on this GUARD packet.",
       "pr": "#3424 #3445 #PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -219,7 +219,7 @@
       ],
       "spec": "Parallel books",
       "status": "PASS",
-      "evidence": "Text fix only. PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md: all GL_POSTING flags enabled on all entities is CORRECT. Seed default OFF is stale. Neon 2026-08-28 lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true TRANSP+TRK+USMCA \u2014 intended. Never raise as red. Nobody flips this flag. No invented JE. QBO write-back stays OFF. prod_verified false until USMCA Live Chrome of this item (not a flag hunt). | Flags OFF by design; poster gated | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): lib.feature_flags.BANK_FEED_GL_POSTING_ENABLED default_enabled=false, confirmed live on Neon. The per-entity override that turns it ON for USMCA specifically (seen live on /banking/transactions) is a deliberate owner-decided entity override per the parallel-books law, not an invented default \u2014 default-OFF holds. | CORRECTION (CC-3, GO-0025, 2026-08-28) \u2014 my prior PROD-VERIFIED note above was exactly the 'flag hunt' GO-0025 says not to do (checking default_enabled=false when ON-everywhere is the ratified state, PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md). Replacing with the real proof the item actually asks for \u2014 no invented JE, no QBO write-back \u2014 both live-verified on USMCA, SHA 4e5db76: sampled a real matched_journal_entry_id (aff01575-...) from a live categorized bank transaction \u2014 accounting.journal_entry_postings shows exactly 2 balanced lines (debit $75.00 to 8ea82b6b..., credit $75.00 to c7af1219..., both source_transaction_type='bank_categorization', both referencing the source bank txn id in their description) \u2014 a real, correctly-balanced, correctly-sourced JE, not fabricated. Separately: 0 of 401 USMCA accounting.journal_entries have qbo_journal_entry_id set \u2014 zero QBO write-back, ever, for this entity. Both halves of the item's actual title now hold on live data. | RE-VERIFIED (CC-1, 2026-08-29, SHA 14daeed) against the CURRENT deploy (evidence rots \u2014 this item's prior proof was pinned to 4e5db76, an earlier SHA, with no live_verified_sha at all): default_enabled still false for BANK_FEED_GL_POSTING_ENABLED (bypass-verified, current_user=neondb_owner, control mdata.drivers=271 nonempty); USMCA now has 426 journal_entries (up from 401, ongoing activity), still 0 with qbo_journal_entry_id set \u2014 zero QBO write-back holds; sampled a FRESH matched_journal_entry_id from the most recent USMCA banking.bank_transactions row (b047d790-...) \u2014 2 balanced lines, debit=credit=$75.00, both source_transaction_type='bank_categorization'. Both halves of the claim re-confirmed on the current live SHA.",
+      "evidence": "Text fix only. PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md: all GL_POSTING flags enabled on all entities is CORRECT. Seed default OFF is stale. Neon 2026-08-28 lucia: BANK_FEED_GL_POSTING_ENABLED enabled=true TRANSP+TRK+USMCA — intended. Never raise as red. Nobody flips this flag. No invented JE. QBO write-back stays OFF. prod_verified false until USMCA Live Chrome of this item (not a flag hunt). | Flags OFF by design; poster gated | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): lib.feature_flags.BANK_FEED_GL_POSTING_ENABLED default_enabled=false, confirmed live on Neon. The per-entity override that turns it ON for USMCA specifically (seen live on /banking/transactions) is a deliberate owner-decided entity override per the parallel-books law, not an invented default — default-OFF holds. | CORRECTION (CC-3, GO-0025, 2026-08-28) — my prior PROD-VERIFIED note above was exactly the 'flag hunt' GO-0025 says not to do (checking default_enabled=false when ON-everywhere is the ratified state, PARALLEL-BOOKS-CUTOVER-LOCKED-2026-07-16.md). Replacing with the real proof the item actually asks for — no invented JE, no QBO write-back — both live-verified on USMCA, SHA 4e5db76: sampled a real matched_journal_entry_id (aff01575-...) from a live categorized bank transaction — accounting.journal_entry_postings shows exactly 2 balanced lines (debit $75.00 to 8ea82b6b..., credit $75.00 to c7af1219..., both source_transaction_type='bank_categorization', both referencing the source bank txn id in their description) — a real, correctly-balanced, correctly-sourced JE, not fabricated. Separately: 0 of 401 USMCA accounting.journal_entries have qbo_journal_entry_id set — zero QBO write-back, ever, for this entity. Both halves of the item's actual title now hold on live data. | RE-VERIFIED (CC-1, 2026-08-29, SHA 14daeed) against the CURRENT deploy (evidence rots — this item's prior proof was pinned to 4e5db76, an earlier SHA, with no live_verified_sha at all): default_enabled still false for BANK_FEED_GL_POSTING_ENABLED (bypass-verified, current_user=neondb_owner, control mdata.drivers=271 nonempty); USMCA now has 426 journal_entries (up from 401, ongoing activity), still 0 with qbo_journal_entry_id set — zero QBO write-back holds; sampled a FRESH matched_journal_entry_id from the most recent USMCA banking.bank_transactions row (b047d790-...) — 2 balanced lines, debit=credit=$75.00, both source_transaction_type='bank_categorization'. Both halves of the claim re-confirmed on the current live SHA.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T16:32:39.000Z",
@@ -227,13 +227,13 @@
     },
     {
       "id": "BANK-GATE-01",
-      "title": "Every banking money PR uses EVERY-PR checklist \u2014 process closed",
+      "title": "Every banking money PR uses EVERY-PR checklist — process closed",
       "layers": [
         "DOD-E"
       ],
       "spec": "verify-step 1430",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count matches PASS items). Live 2026-07-30: pass_count=17 PASS + 1 qualifying HOLD (BANK-F10); complete=true legal. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023): verify-step 1430 (verify-no-money-theater) remains a required CI check enforcing EVERY-PR checklist trailers on banking/money commits \u2014 confirmed present in the current verify-steps suite on 4e5db76. Process control, not a live-data claim; holds structurally. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed verify-step 1430 (verify-no-money-theater.mjs) still wired and passing in this session's own money-pr-local-gate runs (ran repeatedly this turn across 4 separate PRs, always PASS). Process control unchanged. Binding on this GUARD packet.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: #3430 merged on main (sha fc1cf13); verify-step 1430 enforces EVERY-PR checklist trailers on banking money commits. BANK-ECON-05 cash-bind keep-guard (verify-step 1442) confirms MODULE_PROGRESS honesty (pass_count matches PASS items). Live 2026-07-30: pass_count=17 PASS + 1 qualifying HOLD (BANK-F10); complete=true legal. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023): verify-step 1430 (verify-no-money-theater) remains a required CI check enforcing EVERY-PR checklist trailers on banking/money commits — confirmed present in the current verify-steps suite on 4e5db76. Process control, not a live-data claim; holds structurally. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): re-confirmed verify-step 1430 (verify-no-money-theater.mjs) still wired and passing in this session's own money-pr-local-gate runs (ran repeatedly this turn across 4 separate PRs, always PASS). Process control unchanged. Binding on this GUARD packet.",
       "pr": "#3430",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -252,7 +252,7 @@
       ],
       "spec": "QBO Banking Rules parity",
       "status": "PASS",
-      "evidence": "LIVE browser 2026-07-30 CategorizationRulesPage deep wizard: pattern + priority + COA ReferenceSelect + Save Rule + Apply to Historical control. Neon transaction_categories=17. Structural verify-bank-f08-categorization-rules-automatch (1682). Live apply-historical HTTP awaits #3834 mount deploy (404 today; mounted in PR). | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/categorization-rules renders the full deep wizard \u2014 4 real rules (AUTO_MAINTENANCE, FUEL, GENERAL_SERVICES_AUTOMOTIVE, TRANSPORTATION), pattern/priority/COA rule editor, Save Rule, Apply to Historical, live preview of last-50 transactions. No 404, apply-historical mount confirmed live (was pending deploy in the stale evidence). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-f08-categorization-rules-automatch.mjs exit 0. Binding on this GUARD packet.",
+      "evidence": "LIVE browser 2026-07-30 CategorizationRulesPage deep wizard: pattern + priority + COA ReferenceSelect + Save Rule + Apply to Historical control. Neon transaction_categories=17. Structural verify-bank-f08-categorization-rules-automatch (1682). Live apply-historical HTTP awaits #3834 mount deploy (404 today; mounted in PR). | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live Chrome, SHA 4e5db76, USMCA): /banking/categorization-rules renders the full deep wizard — 4 real rules (AUTO_MAINTENANCE, FUEL, GENERAL_SERVICES_AUTOMOTIVE, TRANSPORTATION), pattern/priority/COA rule editor, Save Rule, Apply to Historical, live preview of last-50 transactions. No 404, apply-historical mount confirmed live (was pending deploy in the stale evidence). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-f08-categorization-rules-automatch.mjs exit 0. Binding on this GUARD packet.",
       "pr": "#PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -279,7 +279,7 @@
     },
     {
       "id": "BANK-DOM-05",
-      "title": "Intercompany transfers (TRANSP<->TRK<->USMCA) \u2014 reciprocal legs netting to zero",
+      "title": "Intercompany transfers (TRANSP<->TRK<->USMCA) — reciprocal legs netting to zero",
       "layers": [
         "DOD-C",
         "DOD-D",
@@ -289,7 +289,7 @@
       ],
       "spec": "docs/blocks/class-sweeps/BLOCKS-BANKING-DOM-2026-07-26.txt",
       "status": "PASS",
-      "evidence": "LIVE 2026-07-30: POST /api/v1/banking/transfers/intercompany TRANSP\u2192USMCA $1.00 \u2192 201 group e8ea4c5c; Neon lucia intercompany_transfer_group_id legs=2 (initiator 8eb6cf9f + counterparty 89363414) netting $1.00 each side. pairs=6. transfers total=4. Guards 1556/1790. TRANSFER_GL_POSTING left OFF. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): exactly 1 real intercompany_transfer_group_id exists with 2 correctly-paired legs \u2014 TRANSP (91e0bf0a\u2026) as 'initiator' and USMCA (5c854333\u2026) as 'counterparty', both amount_cents=100 ($1.00), same group id. Reciprocal legs match exactly (net zero across the pair). Live-confirmed in the UI too (/banking/transfers shows the USMCA leg with 'counterparty \u00b7 TRANSP'). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-dom-05-intercompany-reciprocal-legs.mjs + node scripts/verify-bank-dom-05-intercompany-route-ui.mjs both exit 0. Neon lucia (bypass_rls) direct read this turn: 1 distinct intercompany_transfer_group_id, transfers total=6 (grown). Binding on this GUARD packet.",
+      "evidence": "LIVE 2026-07-30: POST /api/v1/banking/transfers/intercompany TRANSP→USMCA $1.00 → 201 group e8ea4c5c; Neon lucia intercompany_transfer_group_id legs=2 (initiator 8eb6cf9f + counterparty 89363414) netting $1.00 each side. pairs=6. transfers total=4. Guards 1556/1790. TRANSFER_GL_POSTING left OFF. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): exactly 1 real intercompany_transfer_group_id exists with 2 correctly-paired legs — TRANSP (91e0bf0a…) as 'initiator' and USMCA (5c854333…) as 'counterparty', both amount_cents=100 ($1.00), same group id. Reciprocal legs match exactly (net zero across the pair). Live-confirmed in the UI too (/banking/transfers shows the USMCA leg with 'counterparty · TRANSP'). | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-bank-dom-05-intercompany-reciprocal-legs.mjs + node scripts/verify-bank-dom-05-intercompany-route-ui.mjs both exit 0. Neon lucia (bypass_rls) direct read this turn: 1 distinct intercompany_transfer_group_id, transfers total=6 (grown). Binding on this GUARD packet.",
       "pr": "#PENDING-ACCT-CLOSE",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
@@ -308,9 +308,9 @@
         "VERIFY-6",
         "VERIFY-8"
       ],
-      "spec": "FUEL-03 fuel.fuel_card_overage_events \u2192 approve-then-recover \u2192 fuel_overage_receivable JE (FUEL-04)",
+      "spec": "FUEL-03 fuel.fuel_card_overage_events → approve-then-recover → fuel_overage_receivable JE (FUEL-04)",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: events=1 posted=1. POST /fuel/card-overage-events/09a5eb03\u2026/approve \u2192 JE 35b0cdd0 (Dr 1250 receivable Cr fuel expense $143.74). Contract 047df339 signed_electronically (driver hire Antonio); fuel txn 1f016625 driver-linked; GL+engine ON; diesel expense map seeded. UI /fuel/card-overage mounted. Guards 1716/1768. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): fuel.fuel_card_overage_events=3 \u2014 1 reached status='posted' with a real journal_entry_id (35b0cdd0\u2026) and approved_at, proving the approve\u2192recover\u2192JE pipeline works end-to-end; the other 2 are correctly triaged status='company_variance' (non-driver-attributable, correctly excluded from recovery rather than blindly charged). Not zero, not fake \u2014 real live density on the current SHA. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Neon lucia (bypass_rls) direct read this turn: fuel.fuel_card_overage_events status='posted' count=1 -- stable, matches the cited events=1/posted=1. Binding on this GUARD packet.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: LIVE 2026-07-30 Neon lucia: events=1 posted=1. POST /fuel/card-overage-events/09a5eb03…/approve → JE 35b0cdd0 (Dr 1250 receivable Cr fuel expense $143.74). Contract 047df339 signed_electronically (driver hire Antonio); fuel txn 1f016625 driver-linked; GL+engine ON; diesel expense map seeded. UI /fuel/card-overage mounted. Guards 1716/1768. | PROD-VERIFIED 2026-08-28 (CC-3, GO-0023, live SHA 4e5db76): fuel.fuel_card_overage_events=3 — 1 reached status='posted' with a real journal_entry_id (35b0cdd0…) and approved_at, proving the approve→recover→JE pipeline works end-to-end; the other 2 are correctly triaged status='company_variance' (non-driver-attributable, correctly excluded from recovery rather than blindly charged). Not zero, not fake — real live density on the current SHA. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Neon lucia (bypass_rls) direct read this turn: fuel.fuel_card_overage_events status='posted' count=1 -- stable, matches the cited events=1/posted=1. Binding on this GUARD packet.",
       "pr": "#3838",
       "live_proof": "2026-07-30 events=1 posted=1 je=35b0cdd0 overage_cents=14374; RE-CONFIRMED 2026-08-29 SHA ed4e2f2: status='posted' count=1, stable",
       "prod_verified": true,
@@ -326,27 +326,60 @@
       ],
       "spec": "wave-queue.json shared classes listing banking in modules[]",
       "status": "PASS",
-      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: NO HOLDS (owner law). Wire proven \u2014 Gate-B categorize path live; Neon 2026-08-13 lucia fuel posting_batches\u22481548/1556. Banking KPI uses shared countUncategorizedTransactions (all-accounts). Historical QBO For-review density is going-forward ops categorize, not missing wire. CLS-LINKAGE-ONEWAY historical load_id NULL = N/A-PRE-OPERATIONAL (Rule 32). CLS-SILENT-CAP drained #4234. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): each constituent class card's own companion guard re-run clean this session (bankfeed-je-match, bank-account-cashbind after its metadata fix). No new class-card regression found. Binding on this GUARD packet.",
+      "evidence": "REOPEN 2026-08-29 OWNER: unbound prose evidence is not a live proof (no Neon/HTTP/browser artifact). prod_verified false until GUARD packet + live_verified_sha. Prior: NO HOLDS (owner law). Wire proven — Gate-B categorize path live; Neon 2026-08-13 lucia fuel posting_batches≈1548/1556. Banking KPI uses shared countUncategorizedTransactions (all-accounts). Historical QBO For-review density is going-forward ops categorize, not missing wire. CLS-LINKAGE-ONEWAY historical load_id NULL = N/A-PRE-OPERATIONAL (Rule 32). CLS-SILENT-CAP drained #4234. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): each constituent class card's own companion guard re-run clean this session (bankfeed-je-match, bank-account-cashbind after its metadata fix). No new class-card regression found. Binding on this GUARD packet.",
       "pr": "Cascade Gate-B + ACCT-F5044 continuity",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T22:45:00.000Z",
       "live_verified_sha": "ed4e2f2"
+    },
+    {
+      "id": "BANK-TIEOUT-01",
+      "class": "TIEOUT",
+      "bar_version": 2,
+      "title": "Each live bank_account closing balance equals its ledger_account_id GL (incl Faro 1296)",
+      "layers": [
+        "TIEOUT",
+        "DOD-E",
+        "VERIFY-6"
+      ],
+      "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
+      "status": "OPEN",
+      "evidence": "OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged.",
+      "pr": null,
+      "prod_verified": false,
+      "external_source": "Bank statements per account, closing balances",
+      "expected": {
+        "mode": "ledger_equals_bank",
+        "include_faro_1296": true,
+        "tolerance_cents": 0
+      },
+      "auto_check": "scripts/tieout/bank-ledger-closing.mjs",
+      "tolerance_cents": 0,
+      "proofs": [
+        {
+          "kind": "guard",
+          "script": "scripts/tieout/bank-ledger-closing.mjs",
+          "expect": {
+            "exit": 0
+          }
+        }
+      ]
     }
   ],
   "ranked_fail_registry": {
-    "source": "PERMANENT-FIX \u00a71 (BANK-00) \u2014 no Banking PR may land without citing a row here; M binds to items[] above and never freezes below live leaves (Rule 21/24).",
+    "source": "PERMANENT-FIX §1 (BANK-00) — no Banking PR may land without citing a row here; M binds to items[] above and never freezes below live leaves (Rule 21/24).",
     "rows": [
       {
         "id": "BANK-F01",
         "rank": 1,
         "priority": "P0",
-        "title": "bank feed \u2192 JE density ~3/10628; no bulk categorize\u2192GL poster density",
-        "canonical_target": "banking.bank_transactions\u2192accounting.journal_entries",
+        "title": "bank feed → JE density ~3/10628; no bulk categorize→GL poster density",
+        "canonical_target": "banking.bank_transactions→accounting.journal_entries",
         "bound_items": [
           "BANK-ECON-02",
           "BANK-SURF-02"
         ],
-        "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-02): matched_je=3/10628 \u2014 cited, not re-derived here.",
+        "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-02): matched_je=3/10628 — cited, not re-derived here.",
         "fix_block": "BANK-ECON-02"
       },
       {
@@ -361,7 +394,7 @@
         ],
         "seed_claim": "LIVE REFRESH 2026-07-25 03:41Z (banking.md BANK-ECON-03): transfers=0; PR #3445 [HOLD] not yet merged.",
         "fix_block": "BANK-ECON-03/BANK-SURF-03",
-        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) \u2014 re-measured per GO-0020's 'BANK-F only if still OPEN vs main' instruction: `pg_stat_user_tables` shows `banking.transfers` n_live_tup=5 (not 0). Live UI confirms a working transfer flow (Banking Home 'View Transfers' / '+ Record Transfer'). The zero-density claim no longer holds; not re-litigating whether 5 is now sufficient density (an economics question, not this pass's scope)."
+        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) — re-measured per GO-0020's 'BANK-F only if still OPEN vs main' instruction: `pg_stat_user_tables` shows `banking.transfers` n_live_tup=5 (not 0). Live UI confirms a working transfer flow (Banking Home 'View Transfers' / '+ Record Transfer'). The zero-density claim no longer holds; not re-litigating whether 5 is now sufficient density (an economics question, not this pass's scope)."
       },
       {
         "id": "BANK-F03",
@@ -375,7 +408,7 @@
         ],
         "seed_claim": "banking.md BANK-ECON-04: sessions=0 on prod; root cause (bank_accounts RLS lucia-bypass escape missing) proven on throwaway Postgres; fix HELD pending owner Neon-apply.",
         "fix_block": "BANK-ECON-04/BANK-SURF-04",
-        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) \u2014 re-measured: `pg_stat_user_tables` shows `banking.reconciliation_sessions` n_live_tup=5 (not 0). Live-clicked `/banking/reconciliation` (USMCA): real Beginning Balance $93.68 -> Ending $1,293.68, 'Last reconciled Aug 23, 2026', CSV worklist upload live. The RLS-blocked/zero-flow claim no longer holds on current main."
+        "restatus_note": "STALE (CC-3, GO-0020, 2026-08-28) — re-measured: `pg_stat_user_tables` shows `banking.reconciliation_sessions` n_live_tup=5 (not 0). Live-clicked `/banking/reconciliation` (USMCA): real Beginning Balance $93.68 -> Ending $1,293.68, 'Last reconciled Aug 23, 2026', CSV worklist upload live. The RLS-blocked/zero-flow claim no longer holds on current main."
       },
       {
         "id": "BANK-F04",
@@ -400,7 +433,7 @@
           "BANK-SURF-02",
           "BANK-SURF-05"
         ],
-        "seed_claim": "banking.md BANK-SURF-01/02/05: structural mount guarded; TRANSP+USMCA browser click-through DoD A\u2013E + VERIFY 1\u20138 still UNVERIFIED.",
+        "seed_claim": "banking.md BANK-SURF-01/02/05: structural mount guarded; TRANSP+USMCA browser click-through DoD A–E + VERIFY 1–8 still UNVERIFIED.",
         "fix_block": "BANK-SURF-01/02/05"
       },
       {
@@ -415,13 +448,13 @@
         ],
         "seed_claim": "BANK-CTRL-01: flags ON via owner override (PARALLEL-BOOKS-CUTOVER-LOCKED); seed OFF is stale. BANK-GATE-01: EVERY-PR via verify-step 1430.",
         "fix_block": "BANK-CTRL-01+BANK-GATE-01",
-        "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy \u2014 BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
+        "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy — BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
       },
       {
         "id": "BANK-F07",
         "rank": 7,
         "priority": "P0",
-        "title": "no per-surface DoD A\u2013E + VERIFY 1\u20138 sweep across Banking leaves",
+        "title": "no per-surface DoD A–E + VERIFY 1–8 sweep across Banking leaves",
         "canonical_target": "docs/module-completion/banking.json (binding)",
         "bound_items": [
           "BANK-SURF-01",
@@ -430,8 +463,8 @@
           "BANK-SURF-05",
           "BANK-LINK-01"
         ],
-        "seed_claim": "banking.md: 4 PASS / 2 qualifying HOLD of 13 (6 of 13); remaining 5 SURF/LINK leaves are FAIL/HOLD/UNVERIFIED \u2014 module-wide sweep incomplete (Rule 21/22).",
-        "fix_block": "BANK-MODULE-DOD (maps to the SURF/LINK leaves above \u2014 no separate manifest item invented)"
+        "seed_claim": "banking.md: 4 PASS / 2 qualifying HOLD of 13 (6 of 13); remaining 5 SURF/LINK leaves are FAIL/HOLD/UNVERIFIED — module-wide sweep incomplete (Rule 21/22).",
+        "fix_block": "BANK-MODULE-DOD (maps to the SURF/LINK leaves above — no separate manifest item invented)"
       },
       {
         "id": "BANK-P01",
@@ -442,14 +475,14 @@
         "bound_items": [
           "BANK-ECON-05"
         ],
-        "seed_claim": "banking.md BANK-ECON-05: Neon lucia 2026-07-25 \u2014 7 live (deactivated_at IS NULL) bank_accounts, all 7 bound to ledger_account_id.",
+        "seed_claim": "banking.md BANK-ECON-05: Neon lucia 2026-07-25 — 7 live (deactivated_at IS NULL) bank_accounts, all 7 bound to ledger_account_id.",
         "fix_block": "BANK-ECON-05+BANK-GATE-01"
       },
       {
         "id": "BANK-F08",
         "rank": 8,
         "priority": "P2",
-        "title": "transfers are intra-entity only \u2014 an inter-entity movement is unrepresentable, so no intercompany due-to/due-from nets to zero on consolidation",
+        "title": "transfers are intra-entity only — an inter-entity movement is unrepresentable, so no intercompany due-to/due-from nets to zero on consolidation",
         "canonical_target": "banking.transfers + banking.intercompany_entity_pairs -> catalogs.accounts (system_purpose intercompany_<x>)",
         "bound_items": [
           "BANK-DOM-05"
@@ -468,13 +501,13 @@
         ],
         "seed_claim": "banking.md: BANK_FEED_GL_POSTING_ENABLED default OFF (BANK-CTRL-01); EVERY-PR checklist process closed via verify-step 1430 (BANK-GATE-01).",
         "fix_block": "BANK-CTRL-01+BANK-GATE-01",
-        "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy \u2014 BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
+        "deviation_note": "Source package's literal fix-block column reads 'BANK-ECON-05+BANK-GATE-01' (appears to duplicate the BANK-P01 row). Corrected here to the items that actually carry the row's own claim (flags-OFF control + gate-process), per Rule 06 correct-over-easy — BANK-ECON-05 (cash-GL binding) is unrelated to 'money-gate honesty'."
       }
     ]
   },
   "pass_count": 17,
-  "total_count": 19,
-  "progress": "17 of 19",
+  "total_count": 20,
+  "progress": "17 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
@@ -494,7 +527,7 @@
       }
     ]
   },
-  "note": "| 2026-08-10T06:38:46Z BANK-CLS-SHARED \u2192 qualifying HOLD after Cascade bank categorize + Rule 32 reclass. | 2026-08-28 GO-0023 (CC-3) PROD-VERIFY PASS on live SHA 4e5db76, USMCA: 16 of 18 prod_verified:false items earned true with live Neon/Chrome evidence this pass (BANK-ECON-01/02/03/05, BANK-SURF-01/02/03/05/06, BANK-LINK-01, BANK-CTRL-01, BANK-GATE-01, BANK-F08/09/10, BANK-DOM-05). 2 honestly stay prod_verified:false \u2014 BANK-ECON-04 and BANK-SURF-04 (reconciliation zero-diff closure) \u2014 live-confirmed reconciliation_sessions exist (3) but none has reached zero-diff/finalized on USMCA; source-verified the computation query is correctly scoped (not a code bug) \u2014 the operator reconciliation workflow simply has not been exercised to completion yet for this entity/period. complete:true (owner-set on status=PASS) is unaffected; prod_verified is tracked as a separate live-proof axis per item. REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "| 2026-08-10T06:38:46Z BANK-CLS-SHARED → qualifying HOLD after Cascade bank categorize + Rule 32 reclass. | 2026-08-28 GO-0023 (CC-3) PROD-VERIFY PASS on live SHA 4e5db76, USMCA: 16 of 18 prod_verified:false items earned true with live Neon/Chrome evidence this pass (BANK-ECON-01/02/03/05, BANK-SURF-01/02/03/05/06, BANK-LINK-01, BANK-CTRL-01, BANK-GATE-01, BANK-F08/09/10, BANK-DOM-05). 2 honestly stay prod_verified:false — BANK-ECON-04 and BANK-SURF-04 (reconciliation zero-diff closure) — live-confirmed reconciliation_sessions exist (3) but none has reached zero-diff/finalized on USMCA; source-verified the computation query is correctly scoped (not a code bug) — the operator reconciliation workflow simply has not been exercised to completion yet for this entity/period. complete:true (owner-set on status=PASS) is unaffected; prod_verified is tracked as a separate live-proof axis per item. REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "complete_unpinned_at": "2026-08-24T13:20:00Z",
-  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog \u2014 not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
 }

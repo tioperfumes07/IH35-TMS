@@ -42,6 +42,67 @@ const WRITE_MD = process.argv.includes("--write-md");
 
 const REQUIRED_ITEM_KEYS = ["id", "title", "layers", "spec", "status", "evidence"];
 const STATUSES = new Set(["PASS", "HOLD", "OPEN", "FAIL", "UNVERIFIED"]);
+/** Urgent-6: complete:true is illegal without a passing TIEOUT (CURSOR.txt 2026-08-30). */
+export const TIEOUT_REQUIRED_MODULES = new Set([
+  "accounting",
+  "banking",
+  "settlements",
+  "factoring",
+  "dispatch",
+  "vendors",
+]);
+
+export function isTieoutItem(item) {
+  return item?.class === "TIEOUT";
+}
+
+export function assertTieoutItemFields(file, it) {
+  const problems = [];
+  if (!isTieoutItem(it)) return problems;
+  for (const k of ["external_source", "expected", "auto_check"]) {
+    if (it[k] === undefined || it[k] === null || it[k] === "") {
+      problems.push(`${file}: TIEOUT ${it.id} missing ${k}`);
+    }
+  }
+  if (typeof it.expected !== "object" || it.expected === null || Array.isArray(it.expected)) {
+    problems.push(`${file}: TIEOUT ${it.id} expected must be a cents object`);
+  }
+  if (typeof it.auto_check !== "string" || !it.auto_check.startsWith("scripts/")) {
+    problems.push(`${file}: TIEOUT ${it.id} auto_check must be a scripts/ executable path`);
+  } else {
+    const abs = path.resolve(ROOT, it.auto_check);
+    if (!abs.startsWith(`${ROOT}${path.sep}`) || !fs.existsSync(abs)) {
+      problems.push(`${file}: TIEOUT ${it.id} auto_check missing on disk: ${it.auto_check}`);
+    }
+  }
+  const tol = it.tolerance_cents;
+  if (tol === undefined || tol === null || typeof tol !== "number" || !Number.isInteger(tol) || tol < 0) {
+    problems.push(`${file}: TIEOUT ${it.id} tolerance_cents must be a non-negative integer (default 0)`);
+  } else if (tol !== 0 && (!it.owner_tolerance_note || String(it.owner_tolerance_note).trim().length < 8)) {
+    problems.push(`${file}: TIEOUT ${it.id} non-zero tolerance_cents requires owner_tolerance_note`);
+  }
+  if (it.bar_version !== 2) {
+    problems.push(`${file}: TIEOUT ${it.id} must set bar_version: 2`);
+  }
+  return problems;
+}
+
+export function assertTieoutCompleteGate(file, data) {
+  const problems = [];
+  const mod = data.module;
+  if (!TIEOUT_REQUIRED_MODULES.has(mod)) return problems;
+  if (data.complete !== true) return problems;
+  const items = Array.isArray(data.items) ? data.items : [];
+  const passing = items.filter(
+    (it) => isTieoutItem(it) && it.status === "PASS" && it.prod_verified === true
+  );
+  if (passing.length === 0) {
+    problems.push(
+      `${file}: complete:true ILLEGAL — Urgent-6 module ${mod} has no TIEOUT item at PASS+prod_verified (bar-2)`
+    );
+  }
+  return problems;
+}
 const HONESTY_RATCHET_IDS = new Set([
   "DISP-S19", "DISP-S26", "DISP-S34", "DISP-S35", "DISP-S36",
   "ACCT-SURF-02", "ACCT-SURF-04", "ACCT-R-04",
@@ -220,6 +281,7 @@ export function assertManifestShape(file, data, opts = {}) {
         );
       }
     }
+    problems.push(...assertTieoutItemFields(file, it));
     if (
       HONESTY_RATCHET_IDS.has(it.id) &&
       it.status === "PASS" &&
@@ -255,6 +317,7 @@ export function assertManifestShape(file, data, opts = {}) {
       `${file}: all items bound (prod_verified or qualifying HOLD) but complete:false — set complete:true or unbind items`
     );
   }
+  problems.push(...assertTieoutCompleteGate(file, data));
   return problems;
 }
 
@@ -426,6 +489,21 @@ if (isMain && SELFTEST) {
     evidence: "e",
     prod_verified: true,
   });
+  const passTieout = (id = "BANK-TIEOUT-01") => ({
+    id,
+    class: "TIEOUT",
+    bar_version: 2,
+    title: "t",
+    layers: ["TIEOUT"],
+    spec: "s",
+    status: "PASS",
+    evidence: "e",
+    prod_verified: true,
+    external_source: "test statement",
+    expected: { face_cents: 1 },
+    auto_check: "scripts/tieout/bank-ledger-closing.mjs",
+    tolerance_cents: 0,
+  });
   const bad = {
     module: "accounting",
     complete: true,
@@ -499,7 +577,7 @@ if (isMain && SELFTEST) {
   const allPassFalse = {
     module: "banking",
     complete: false,
-    items: [passItem("B1"), passItem("B2")],
+    items: [passItem("B1"), passItem("B2"), passTieout()],
   };
   const honestyOk = assertManifestShape("banking.json", allPassFalse, {
     openWaveIds: ["CLS-PLANT-BANK"],
@@ -524,6 +602,23 @@ if (isMain && SELFTEST) {
   const cleanComplete = assertManifestShape("banking.json", allPassTrue, { openWaveIds: [] });
   if (cleanComplete.length) {
     failures.push(`all-PASS+no-wave+complete:true should be clean, got: ${cleanComplete.join("; ")}`);
+  }
+
+  const noTieoutComplete = assertManifestShape(
+    "factoring.json",
+    { module: "factoring", complete: true, items: [passItem("FACT-S01")] },
+    { openWaveIds: [] }
+  );
+  if (!noTieoutComplete.some((x) => x.includes("no TIEOUT"))) {
+    failures.push("bar-2 complete without TIEOUT not caught");
+  }
+  const badTol = assertTieoutItemFields("x.json", {
+    ...passTieout(),
+    tolerance_cents: 5,
+    owner_tolerance_note: "",
+  });
+  if (!badTol.some((x) => x.includes("owner_tolerance_note"))) {
+    failures.push("non-zero TIEOUT tolerance without owner note not caught");
   }
 
   const planted404 = path.join(ROOT, "scripts", ".http-404-selftest.json");
@@ -560,6 +655,7 @@ if (isMain && SELFTEST) {
       items: [
         { ...passItem("BANK-ECON-01"), prod_verified: false },
         passItem("BANK-CLS-SHARED"),
+        passTieout(),
       ],
     },
     { openWaveIds: [] }

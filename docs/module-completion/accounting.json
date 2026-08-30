@@ -718,11 +718,38 @@
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29",
       "live_verified_at": "2026-08-30T11:51:31.000Z",
       "live_verified_sha": "9c61c63"
+    },
+    {
+      "id": "ACCT-TIEOUT-01",
+      "class": "TIEOUT",
+      "bar_version": 2,
+      "title": "Trial balance ties out (debits=credits AND read-only QBO comparative)",
+      "layers": ["TIEOUT", "DOD-E", "VERIFY-6"],
+      "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
+      "status": "OPEN",
+      "evidence": "OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged.",
+      "pr": null,
+      "prod_verified": false,
+      "external_source": "TMS trial balance vs QBO comparative (read-only; no TMS to QBO write-back)",
+      "expected": {
+        "debits_equal_credits": true,
+        "qbo_comparative": "read_only",
+        "tolerance_cents": 0
+      },
+      "auto_check": "scripts/tieout/accounting-trial-balance.mjs",
+      "tolerance_cents": 0,
+      "proofs": [
+        {
+          "kind": "guard",
+          "script": "scripts/tieout/accounting-trial-balance.mjs",
+          "expect": { "exit": 0 }
+        }
+      ]
     }
   ],
-  "pass_count": 39,
-  "total_count": 39,
-  "progress": "39 of 39",
+  "pass_count": 38,
+  "total_count": 40,
+  "progress": "38 of 40",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 5,

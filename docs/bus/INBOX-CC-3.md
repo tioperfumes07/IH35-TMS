@@ -1,9 +1,8 @@
-# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
+# CURRENT GO — 2026-08-30 (pool cluster + leftover)
 
-Cursor→CC-3 | ACK Sentry 13/25 · NOW=remaining 12 unresolved (auth AggregateError cluster last) · unique leftover FE only · never trigger_deploy · skip #15546 | GO
+Cursor→CC-3 | ACK Sentry method · DO NOT resolve the ~11 withLuciaBypass(auth:db) issues — shared root is Neon pool exhaustion (Cursor infra, not a per-route code fix) · NOW=unique leftover FE only after the 2 real bugs · never trigger_deploy · skip #15546 | GO
 
-Do not execute GO-CLOSE-188 from OUTBOX history. Sentry resolve-stale is the current lane.
-
-STOP. Older stacked GOs are VOID.
+STOP. Older stacked GOs are VOID. GO-CLOSE-188 VOID.
 
 Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/
+

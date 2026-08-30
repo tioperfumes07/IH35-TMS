@@ -56,6 +56,25 @@ function loadManifestItems() {
   return out;
 }
 
+function loadTieoutGuardProofs() {
+  const out = [];
+  for (const f of fs.readdirSync(DIR).filter((n) => n.endsWith(".json") && !SKIP.has(n))) {
+    const data = JSON.parse(fs.readFileSync(path.join(DIR, f), "utf8"));
+    for (const it of data.items || []) {
+      if (it.class !== "TIEOUT" || !it.auto_check) continue;
+      out.push({
+        file: f,
+        module: data.module,
+        item: {
+          id: it.id,
+          proofs: [{ kind: "guard", script: it.auto_check, expect: { exit: 0 } }],
+        },
+      });
+    }
+  }
+  return out;
+}
+
 function loadEconItems() {
   return Object.entries(ECON_PROOFS).flatMap(([column, e]) => {
     const proofs = [e.proof];
@@ -101,7 +120,7 @@ async function main() {
     }),
   };
 
-  const rows = [...loadManifestItems(), ...loadEconItems(), ...PLANNER_DOM_ITEMS];
+  const rows = [...loadManifestItems(), ...loadEconItems(), ...loadTieoutGuardProofs(), ...PLANNER_DOM_ITEMS];
   const items = [];
   let fail = 0;
   let pass = 0;
