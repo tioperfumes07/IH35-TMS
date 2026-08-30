@@ -2616,3 +2616,5 @@ CODEX | WORKING | DRIVER-F7523 | ROOT=referral-reward-consumed-an-FK-no-creator-
 CODEX | SHIPPED | DRIVER-F7522 | PR=#18179 @ 1ba69824cf | focused=guard+selftest18/18+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=DRIVER-F7523-referral | GO
 CODEX | WORKING | SAF-F7527 | GO-CLOSE-188=safety-14 | LIVE_PRE=b8fc09c company violation forward driver drill lands canonical /drivers/:id but Safety File omits alert/violation reverse | NEXT=guard+gate+FAST-MERGE | GO
 CODEX | SHIPPED | SAF-F7526 | PR=#18196 @ 3d8e9226cd | focused=guard+selftest8/8+Vitest1/1+root-tsc+full-gate | Live=UNVERIFIED | NEXT=company_violation reverse | GO
+CODEX | WORKING | MAINT-F7528 | GO-CLOSE-188=maintenance-11 | LIVE_PRE=b8fc09c R&M renders Open WOs twice + PM Due/PM Due Soon duplicates | NEXT=guard+gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7527 | PR=#18207 @ 07cc4ba5e1 | focused=guard+selftest31/31+root-tsc+full-gate | Live=UNVERIFIED | NEXT=maintenance-P3 | GO
