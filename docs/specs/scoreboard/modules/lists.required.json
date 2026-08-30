@@ -490,7 +490,7 @@
     {
       "id": "catalog.dispatch.load_trailer_equipment.list",
       "tab": "Dispatch",
-      "sub": "Dispatch Flag Colors",
+      "sub": "Load Trailer Equipment",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "qbo_chrome",
@@ -500,7 +500,7 @@
     {
       "id": "catalog.dispatch.load_trailer_equipment.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create \u2014 Load Trailer Equipment",
       "route_hint": "/lists/dispatch/load-trailer-equipment",
       "required": [
         "qbo_chrome",
@@ -510,7 +510,7 @@
     {
       "id": "catalog.dispatch.load_types.list",
       "tab": "Dispatch",
-      "sub": "Dispatch Flag Colors",
+      "sub": "Load Types",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "qbo_chrome",
@@ -520,7 +520,7 @@
     {
       "id": "catalog.dispatch.load_types.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create \u2014 Load Types",
       "route_hint": "/lists/dispatch/load-types",
       "required": [
         "qbo_chrome",
@@ -530,7 +530,7 @@
     {
       "id": "catalog.dispatch.detention_reasons.list",
       "tab": "Dispatch",
-      "sub": "Dispatch Flag Colors",
+      "sub": "Detention Reasons",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "qbo_chrome",
@@ -540,7 +540,7 @@
     {
       "id": "catalog.dispatch.detention_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatch Flag Colors",
+      "sub": "+ Create \u2014 Detention Reasons",
       "route_hint": "/lists/dispatch/detention-reasons",
       "required": [
         "qbo_chrome",
@@ -550,7 +550,7 @@
     {
       "id": "catalog.dispatch.pickup_time_types.list",
       "tab": "Dispatch",
-      "sub": "Load Trailer Equipment",
+      "sub": "Pickup Time Types",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "qbo_chrome",
@@ -560,7 +560,7 @@
     {
       "id": "catalog.dispatch.pickup_time_types.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Trailer Equipment",
+      "sub": "+ Create \u2014 Pickup Time Types",
       "route_hint": "/lists/dispatch/pickup-time-types",
       "required": [
         "qbo_chrome",
@@ -570,7 +570,7 @@
     {
       "id": "catalog.dispatch.additional_charges.list",
       "tab": "Dispatch",
-      "sub": "Load Types",
+      "sub": "Additional Charges",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "qbo_chrome",
@@ -580,7 +580,7 @@
     {
       "id": "catalog.dispatch.additional_charges.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Types",
+      "sub": "+ Create \u2014 Additional Charges",
       "route_hint": "/lists/dispatch/additional-charges",
       "required": [
         "qbo_chrome",
@@ -590,7 +590,7 @@
     {
       "id": "catalog.dispatch.load_cancellation_reasons.list",
       "tab": "Dispatch",
-      "sub": "Detention Reasons",
+      "sub": "Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "qbo_chrome",
@@ -600,7 +600,7 @@
     {
       "id": "catalog.dispatch.load_cancellation_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Detention Reasons",
+      "sub": "+ Create \u2014 Load Cancellation Reasons",
       "route_hint": "/lists/dispatch/load-cancellation-reasons",
       "required": [
         "qbo_chrome",
@@ -610,7 +610,7 @@
     {
       "id": "catalog.dispatch.dispatcher_error_reasons.list",
       "tab": "Dispatch",
-      "sub": "Load Cancellation Reasons",
+      "sub": "Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "qbo_chrome",
@@ -620,7 +620,7 @@
     {
       "id": "catalog.dispatch.dispatcher_error_reasons.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Load Cancellation Reasons",
+      "sub": "+ Create \u2014 Dispatcher Error Reasons",
       "route_hint": "/lists/dispatch/dispatcher-error-reasons",
       "required": [
         "qbo_chrome",
@@ -630,7 +630,7 @@
     {
       "id": "catalog.dispatch.lumper_providers.list",
       "tab": "Dispatch",
-      "sub": "Dispatcher Error Reasons",
+      "sub": "Lumper Providers",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "qbo_chrome",
@@ -640,7 +640,7 @@
     {
       "id": "catalog.dispatch.lumper_providers.create",
       "tab": "Dispatch",
-      "sub": "+ Create \u2014 Dispatcher Error Reasons",
+      "sub": "+ Create \u2014 Lumper Providers",
       "route_hint": "/lists/dispatch/lumper-providers",
       "required": [
         "qbo_chrome",
@@ -1387,7 +1387,7 @@
     {
       "id": "catalog.fuel.fuel_stations.list",
       "tab": "Fuel",
-      "sub": "DEF Stations",
+      "sub": "Fuel Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
         "qbo_chrome",
@@ -1397,7 +1397,7 @@
     {
       "id": "catalog.fuel.fuel_stations.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create \u2014 Fuel Stations",
       "route_hint": "/lists/fuel/fuel-stations",
       "required": [
         "qbo_chrome",
@@ -1407,7 +1407,7 @@
     {
       "id": "catalog.fuel.relay_accounts.list",
       "tab": "Fuel",
-      "sub": "DEF Stations",
+      "sub": "Relay Accounts",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
         "qbo_chrome",
@@ -1417,7 +1417,7 @@
     {
       "id": "catalog.fuel.relay_accounts.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create \u2014 Relay Accounts",
       "route_hint": "/lists/fuel/relay-accounts",
       "required": [
         "qbo_chrome",
@@ -1427,7 +1427,7 @@
     {
       "id": "catalog.fuel.toll_providers.list",
       "tab": "Fuel",
-      "sub": "DEF Stations",
+      "sub": "Toll Providers",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
         "qbo_chrome",
@@ -1437,7 +1437,7 @@
     {
       "id": "catalog.fuel.toll_providers.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 DEF Stations",
+      "sub": "+ Create \u2014 Toll Providers",
       "route_hint": "/lists/fuel/toll-providers",
       "required": [
         "qbo_chrome",
@@ -1447,7 +1447,7 @@
     {
       "id": "catalog.fuel.card_types.list",
       "tab": "Fuel",
-      "sub": "Fuel Stations",
+      "sub": "Fuel Card Types",
       "route_hint": "/lists/fuel/card-types",
       "required": [
         "qbo_chrome",
@@ -1457,7 +1457,7 @@
     {
       "id": "catalog.fuel.card_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Stations",
+      "sub": "+ Create \u2014 Fuel Card Types",
       "route_hint": "/lists/fuel/card-types",
       "required": [
         "qbo_chrome",
@@ -1467,7 +1467,7 @@
     {
       "id": "catalog.fuel.exception_types.list",
       "tab": "Fuel",
-      "sub": "Relay Accounts",
+      "sub": "Fuel Exception Types",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
         "qbo_chrome",
@@ -1477,7 +1477,7 @@
     {
       "id": "catalog.fuel.exception_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Relay Accounts",
+      "sub": "+ Create \u2014 Fuel Exception Types",
       "route_hint": "/lists/fuel/exception-types",
       "required": [
         "qbo_chrome",
@@ -1487,7 +1487,7 @@
     {
       "id": "catalog.fuel.station_brands.list",
       "tab": "Fuel",
-      "sub": "Toll Providers",
+      "sub": "Fuel Station Brands",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
         "qbo_chrome",
@@ -1497,7 +1497,7 @@
     {
       "id": "catalog.fuel.station_brands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Toll Providers",
+      "sub": "+ Create \u2014 Fuel Station Brands",
       "route_hint": "/lists/fuel/station-brands",
       "required": [
         "qbo_chrome",
@@ -1507,7 +1507,7 @@
     {
       "id": "catalog.fuel.stop_reason_codes.list",
       "tab": "Fuel",
-      "sub": "Fuel Card Types",
+      "sub": "Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
         "qbo_chrome",
@@ -1517,7 +1517,7 @@
     {
       "id": "catalog.fuel.stop_reason_codes.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Card Types",
+      "sub": "+ Create \u2014 Fuel Stop Reason Codes",
       "route_hint": "/lists/fuel/stop-reason-codes",
       "required": [
         "qbo_chrome",
@@ -1527,7 +1527,7 @@
     {
       "id": "catalog.fuel.mpg_bands.list",
       "tab": "Fuel",
-      "sub": "Fuel Exception Types",
+      "sub": "MPG Bands",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
         "qbo_chrome",
@@ -1537,7 +1537,7 @@
     {
       "id": "catalog.fuel.mpg_bands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Exception Types",
+      "sub": "+ Create \u2014 MPG Bands",
       "route_hint": "/lists/fuel/mpg-bands",
       "required": [
         "qbo_chrome",
@@ -1547,7 +1547,7 @@
     {
       "id": "catalog.fuel.expensive_states.list",
       "tab": "Fuel",
-      "sub": "Fuel Station Brands",
+      "sub": "Expensive States",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
         "qbo_chrome",
@@ -1557,7 +1557,7 @@
     {
       "id": "catalog.fuel.expensive_states.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Station Brands",
+      "sub": "+ Create \u2014 Expensive States",
       "route_hint": "/lists/fuel/expensive-states",
       "required": [
         "qbo_chrome",
@@ -1567,7 +1567,7 @@
     {
       "id": "catalog.fuel.tax_jurisdictions.list",
       "tab": "Fuel",
-      "sub": "Fuel Stop Reason Codes",
+      "sub": "Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
         "qbo_chrome",
@@ -1577,7 +1577,7 @@
     {
       "id": "catalog.fuel.tax_jurisdictions.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Stop Reason Codes",
+      "sub": "+ Create \u2014 Fuel Tax Jurisdictions",
       "route_hint": "/lists/fuel/tax-jurisdictions",
       "required": [
         "qbo_chrome",
@@ -1587,7 +1587,7 @@
     {
       "id": "catalog.fuel.brands.list",
       "tab": "Fuel",
-      "sub": "MPG Bands",
+      "sub": "Fuel Brands",
       "route_hint": "/lists/fuel/brands",
       "required": [
         "qbo_chrome",
@@ -1597,7 +1597,7 @@
     {
       "id": "catalog.fuel.brands.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 MPG Bands",
+      "sub": "+ Create \u2014 Fuel Brands",
       "route_hint": "/lists/fuel/brands",
       "required": [
         "qbo_chrome",
@@ -1607,7 +1607,7 @@
     {
       "id": "catalog.fuel.station_states.list",
       "tab": "Fuel",
-      "sub": "Expensive States",
+      "sub": "Fuel Station States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
         "qbo_chrome",
@@ -1617,7 +1617,7 @@
     {
       "id": "catalog.fuel.station_states.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Expensive States",
+      "sub": "+ Create \u2014 Fuel Station States",
       "route_hint": "/lists/fuel/station-states",
       "required": [
         "qbo_chrome",
@@ -1627,7 +1627,7 @@
     {
       "id": "catalog.fuel.pump_types.list",
       "tab": "Fuel",
-      "sub": "Fuel Tax Jurisdictions",
+      "sub": "Fuel Pump Types",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
         "qbo_chrome",
@@ -1637,7 +1637,7 @@
     {
       "id": "catalog.fuel.pump_types.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Tax Jurisdictions",
+      "sub": "+ Create \u2014 Fuel Pump Types",
       "route_hint": "/lists/fuel/pump-types",
       "required": [
         "qbo_chrome",
@@ -1647,7 +1647,7 @@
     {
       "id": "catalog.fuel.grades.list",
       "tab": "Fuel",
-      "sub": "Fuel Brands",
+      "sub": "Fuel Grades",
       "route_hint": "/lists/fuel/grades",
       "required": [
         "qbo_chrome",
@@ -1657,7 +1657,7 @@
     {
       "id": "catalog.fuel.grades.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Brands",
+      "sub": "+ Create \u2014 Fuel Grades",
       "route_hint": "/lists/fuel/grades",
       "required": [
         "qbo_chrome",
@@ -1667,7 +1667,7 @@
     {
       "id": "catalog.fuel.dispatch_routes.list",
       "tab": "Fuel",
-      "sub": "Fuel Station States",
+      "sub": "Fuel Dispatch Routes",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
         "qbo_chrome",
@@ -1677,7 +1677,7 @@
     {
       "id": "catalog.fuel.dispatch_routes.create",
       "tab": "Fuel",
-      "sub": "+ Create \u2014 Fuel Station States",
+      "sub": "+ Create \u2014 Fuel Dispatch Routes",
       "route_hint": "/lists/fuel/dispatch-routes",
       "required": [
         "qbo_chrome",
@@ -1707,7 +1707,7 @@
     {
       "id": "catalog.fleet.trailer_statuses.list",
       "tab": "Fleet",
-      "sub": "Tractor Statuses",
+      "sub": "Trailer Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
         "qbo_chrome",
@@ -1717,7 +1717,7 @@
     {
       "id": "catalog.fleet.trailer_statuses.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create \u2014 Trailer Statuses",
       "route_hint": "/lists/fleet/trailer-statuses",
       "required": [
         "qbo_chrome",
@@ -1727,7 +1727,7 @@
     {
       "id": "catalog.fleet.condition_codes.list",
       "tab": "Fleet",
-      "sub": "Tractor Statuses",
+      "sub": "Condition Codes",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
         "qbo_chrome",
@@ -1737,7 +1737,7 @@
     {
       "id": "catalog.fleet.condition_codes.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create \u2014 Condition Codes",
       "route_hint": "/lists/fleet/condition-codes",
       "required": [
         "qbo_chrome",
@@ -1747,7 +1747,7 @@
     {
       "id": "catalog.fleet.equipment_types.list",
       "tab": "Fleet",
-      "sub": "Tractor Statuses",
+      "sub": "Equipment Types",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
         "qbo_chrome",
@@ -1757,7 +1757,7 @@
     {
       "id": "catalog.fleet.equipment_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tractor Statuses",
+      "sub": "+ Create \u2014 Equipment Types",
       "route_hint": "/lists/fleet/equipment-types",
       "required": [
         "qbo_chrome",
@@ -1767,7 +1767,7 @@
     {
       "id": "catalog.fleet.tire_positions.list",
       "tab": "Fleet",
-      "sub": "Trailer Statuses",
+      "sub": "Tire Positions",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
         "qbo_chrome",
@@ -1777,7 +1777,7 @@
     {
       "id": "catalog.fleet.tire_positions.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Trailer Statuses",
+      "sub": "+ Create \u2014 Tire Positions",
       "route_hint": "/lists/fleet/tire-positions",
       "required": [
         "qbo_chrome",
@@ -1787,7 +1787,7 @@
     {
       "id": "catalog.fleet.ownership_types.list",
       "tab": "Fleet",
-      "sub": "Condition Codes",
+      "sub": "Ownership Types",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
         "qbo_chrome",
@@ -1797,7 +1797,7 @@
     {
       "id": "catalog.fleet.ownership_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Condition Codes",
+      "sub": "+ Create \u2014 Ownership Types",
       "route_hint": "/lists/fleet/ownership-types",
       "required": [
         "qbo_chrome",
@@ -1807,7 +1807,7 @@
     {
       "id": "catalog.fleet.trailer_types.list",
       "tab": "Fleet",
-      "sub": "Equipment Types",
+      "sub": "Trailer Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
         "qbo_chrome",
@@ -1817,7 +1817,7 @@
     {
       "id": "catalog.fleet.trailer_types.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Equipment Types",
+      "sub": "+ Create \u2014 Trailer Types",
       "route_hint": "/lists/fleet/trailer-types",
       "required": [
         "qbo_chrome",
@@ -1827,7 +1827,7 @@
     {
       "id": "catalog.fleet.lease_terms.list",
       "tab": "Fleet",
-      "sub": "Tire Positions",
+      "sub": "Lease Terms",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
         "qbo_chrome",
@@ -1837,7 +1837,7 @@
     {
       "id": "catalog.fleet.lease_terms.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Tire Positions",
+      "sub": "+ Create \u2014 Lease Terms",
       "route_hint": "/lists/fleet/lease-terms",
       "required": [
         "qbo_chrome",
@@ -1847,7 +1847,7 @@
     {
       "id": "catalog.fleet.asset_statuses.list",
       "tab": "Fleet",
-      "sub": "Ownership Types",
+      "sub": "Asset Statuses",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
         "qbo_chrome",
@@ -1857,7 +1857,7 @@
     {
       "id": "catalog.fleet.asset_statuses.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Ownership Types",
+      "sub": "+ Create \u2014 Asset Statuses",
       "route_hint": "/lists/fleet/asset-statuses",
       "required": [
         "qbo_chrome",
@@ -1867,7 +1867,7 @@
     {
       "id": "catalog.fleet.asset_locations.list",
       "tab": "Fleet",
-      "sub": "Trailer Types",
+      "sub": "Asset Locations",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
         "qbo_chrome",
@@ -1877,7 +1877,7 @@
     {
       "id": "catalog.fleet.asset_locations.create",
       "tab": "Fleet",
-      "sub": "+ Create \u2014 Trailer Types",
+      "sub": "+ Create \u2014 Asset Locations",
       "route_hint": "/lists/fleet/asset-locations",
       "required": [
         "qbo_chrome",
