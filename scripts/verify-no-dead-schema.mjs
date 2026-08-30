@@ -39,6 +39,8 @@
  * STATIC: parses db/migrations/*.sql. It proves SCHEMA REACHABILITY IN CODE only — it cannot prove
  * rows are populated, that the poster runs, or that reverse drill-through exists in the UI. Those
  * are live-data audits (§0: prod wins). Never cite this guard as proof the books are wired.
+ * Operational decision columns (for example suppression reason/provenance) must be named by their
+ * table reader; merely using the table as an EXISTS predicate does not satisfy those columns.
  *
  * RESIDUAL LIMIT, stated honestly: context resolution is FILE-scope, not statement-scope. A dead
  * column whose name is also used for a DIFFERENT table in the same file (a dead
@@ -340,6 +342,14 @@ function selftest() {
   // WHOLE-TOKEN LOCK: employment_status must NOT be satisfied by employment_statuses.
   const plural = [{ path: "x", text: "reference.employment_statuses", tokens: new Set(["employmentstatuses", "reference"]) }];
   if (referenceKind("employment_status", plural, plural) !== "none") failures.push("substring match resurrected: plural token satisfied a singular column");
+  const suppressionReader = [{
+    path: "appsbackendsrcnotificationsemailservicets",
+    text: "SELECT reason, auto_suppressed FROM notifications.suppression_rules",
+    tokens: new Set(["select", "reason", "autosuppressed", "from", "notifications", "suppressionrules"]),
+  }];
+  const suppressionContext = filesTouchingTable(suppressionReader, "notifications.suppression_rules");
+  if (referenceKind("reason", suppressionReader, suppressionContext) !== "strong") failures.push("suppression reason reader not recognized");
+  if (referenceKind("auto_suppressed", suppressionReader, suppressionContext) !== "strong") failures.push("suppression provenance reader not recognized");
 
   if (failures.length) {
     console.error("verify-no-dead-schema SELFTEST FAILED:");

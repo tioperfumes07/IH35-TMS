@@ -41,8 +41,16 @@ async function appendEmailAudit(
   }
 }
 
-async function isSuppressed(recipientUserUuid: string | null | undefined, eventClass: string): Promise<boolean> {
-  if (!recipientUserUuid) return false;
+export type EmailSuppressionMatch = {
+  reason: string;
+  auto_suppressed: boolean;
+};
+
+export async function findActiveSuppression(
+  recipientUserUuid: string | null | undefined,
+  eventClass: string,
+): Promise<EmailSuppressionMatch | null> {
+  if (!recipientUserUuid) return null;
   // LV-EMAIL-SUPPRESSION-FAILS-OPEN: never fail-OPEN. Missing table / query error must throw
   // (fail-loud) so sendEmail does not silently mail opted-out / bouncing recipients.
   return await withLuciaBypass(async (client) => {
@@ -55,19 +63,19 @@ async function isSuppressed(recipientUserUuid: string | null | undefined, eventC
       );
     }
 
-    const suppressed = await client.query<{ exists: boolean }>(
+    const suppressed = await client.query<EmailSuppressionMatch>(
       `
-          SELECT EXISTS (
-            SELECT 1
-            FROM notifications.suppression_rules
-            WHERE user_uuid = $1::uuid
-              AND event_class = $2
-              AND now() BETWEEN effective_from AND effective_to
-          ) AS exists
+          SELECT reason, auto_suppressed
+          FROM notifications.suppression_rules
+          WHERE user_uuid = $1::uuid
+            AND event_class = $2
+            AND now() BETWEEN effective_from AND effective_to
+          ORDER BY effective_from DESC, created_at DESC
+          LIMIT 1
         `,
       [recipientUserUuid, eventClass]
     );
-    return Boolean(suppressed.rows[0]?.exists);
+    return suppressed.rows[0] ?? null;
   });
 }
 
@@ -115,9 +123,9 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string }
     throw new Error(`E_EMAIL_SEND_FAILED: ${err}`);
   }
 
-  let suppressed = false;
+  let suppression: EmailSuppressionMatch | null = null;
   try {
-    suppressed = await isSuppressed(params.recipientUserUuid, params.eventClass);
+    suppression = await findActiveSuppression(params.recipientUserUuid, params.eventClass);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     await appendEmailAudit(
@@ -134,7 +142,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string }
     throw err instanceof Error ? err : new Error(message);
   }
 
-  if (suppressed) {
+  if (suppression) {
     await appendEmailAudit(
       "email.failed",
       {
@@ -143,6 +151,8 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string }
         subject: params.subject,
         to_count: Array.isArray(params.to) ? params.to.length : 1,
         error: "suppressed_by_rule",
+        suppression_reason: suppression.reason,
+        auto_suppressed: suppression.auto_suppressed,
       },
       params.actorUserId ?? null
     );
