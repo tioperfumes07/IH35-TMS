@@ -1,4 +1,5 @@
-CODEX | WORKING | GUARD-F7456 | ROOT=Safety-Events-guard-expected-local-draft-after-scope-snapshotted-input | focused=normal+selftest-4/4+frontend-typecheck | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7457 | ROOT=insurance-guard-required-obsolete-proof-phrases-not-evidence-semantics | focused=normal+expanded-selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7456 | PR=#18093 @ 89a9475273 | input.draft enum payloads · selftest 4/4 · typecheck PASS | NEXT=insurance evidence guard | GO
 CODEX | SHIPPED | GUARD-F7455 | PR=#18092 @ 29b13d9f08 | 4 htmlFor/id pairs + no nesting · selftest 2/2 · typecheck PASS | NEXT=Safety Events red guard | GO
 CODEX | SHIPPED | GUARD-F7454 | PR=#18091 @ fecddba207 | severity+page-key+offset+pager · selftest 3/3 · typecheck PASS | NEXT=DatePicker red guard | GO
 CODEX | SHIPPED | GUARD-F7453 | PR=#18090 @ 7efaebc26c | exact-3 POST rate limits · selftest 9/9 · typecheck PASS | NEXT=anomaly red guard | GO

@@ -86,8 +86,9 @@ function audit(sources) {
   const completionJson = JSON.parse(completion);
   for (const id of ["INS-T01", "INS-T03"]) {
     const item = completionJson.items.find((entry) => entry.id === id);
-    if (!item?.prod_verified || !/USMCA LIVE PASS/.test(item.evidence) || !/zero raw/.test(item.evidence)) {
-      failures.push(`${id} must retain exact post-deploy USMCA Live evidence with zero raw-code proof`);
+    const evidence = String(item?.evidence ?? "");
+    if (!item?.prod_verified || !item?.live_verified_sha || !/PASS/.test(evidence) || !/Auto Liability/.test(evidence) || /auto_liability/.test(evidence)) {
+      failures.push(`${id} must retain bound Live evidence with human labels and no raw storage code`);
     }
   }
   if (!/FIXED DEPLOYED \(Codex Live 2026-08-16\):\*\* `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`/.test(board)) {
@@ -111,6 +112,8 @@ if (process.argv.includes("--selftest")) {
     ["raw vendor reverse label", { ...real, vendor: real.vendor.replace("insuranceTypeLabel(policy.coverage_type, policy.coverage_type_name)", "policy.coverage_type") }],
     ["missing shared humanizer", { ...real, helper: real.helper.replace('split("_")', 'split(" ")') }],
     ["lost exact Live verification", { ...real, completion: real.completion.replace('"id": "INS-T01"', '"id": "INS-T01-REGRESSED"') }],
+    ["lost bound Live SHA", { ...real, completion: real.completion.replace('"live_verified_sha": "ed4e2f2"', '"live_verified_sha": ""') }],
+    ["raw code returned to evidence", { ...real, completion: real.completion.replace("Auto Liability", "auto_liability") }],
     ["reopened split-deploy blocker", { ...real, board: real.board.replace("FIXED DEPLOYED (Codex Live 2026-08-16):** `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`", "OPEN HANDOFF (Codex Live 2026-08-16):** `LV-INSURANCE-LEGACY-FRONTEND-BUNDLE-BEHIND-BACKEND`") }],
   ];
   const missed = mutations.filter(([, sources]) => audit(sources).length === 0).map(([name]) => name);
