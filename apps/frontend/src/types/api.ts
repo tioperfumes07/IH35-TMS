@@ -53,7 +53,12 @@ export type IdentityWorkflowRequest = {
 };
 
 export type DriverStatus = "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
-export type CdlClass = "A" | "B" | "C";
+// DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG follow-up: the CDL Class
+// picker was widened to the live reference.license_classes catalog (arbitrary codes, e.g.
+// AM/BM/CM/CDL-A/CDL-B/CDL-C, not just A/B/C) and the backend's cdlClassSchema is already plain
+// free text (z.string().trim().min(1).max(20)) -- this literal union was left stale, tripping
+// tsc on every catalog-sourced value. cdl_class is plain text end to end; keep this type matching.
+export type CdlClass = string;
 export type MilesBasis = "short_miles" | "practical_miles";
 export type PreferredLanguage = "en" | "es";
 export type CustomerType = "broker" | "direct_shipper";

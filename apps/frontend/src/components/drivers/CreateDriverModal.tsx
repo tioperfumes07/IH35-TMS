@@ -671,7 +671,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       setNewLicenseClassCode("");
       setNewLicenseClassLabel("");
     } catch (err) {
-      pushToast(userFacingApiError(err), "error");
+      pushToast(userFacingApiError(err, "Could not save license class"), "error");
     } finally {
       setSavingLicenseClass(false);
     }
