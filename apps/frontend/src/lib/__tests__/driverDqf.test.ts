@@ -2,17 +2,32 @@ import { describe, expect, it } from "vitest";
 import type { DriverQualificationFileItem } from "../../api/safety";
 import { summarizeDriverDqf } from "../driverDqf";
 
-function item(overrides: Partial<DriverQualificationFileItem>): DriverQualificationFileItem {
-  return {
-    id: "1",
-    driver_id: "d1",
-    item_name: "MVR",
-    status: "present",
-    effective_date: null,
-    expiry_date: null,
-    notes: null,
-    ...overrides,
-  };
+const DQF_ITEM_DEFAULTS: DriverQualificationFileItem = {
+  id: "1",
+  driver_id: "d1",
+  item_name: "MVR",
+  required_document_type_id: null,
+  required_document_type_code: null,
+  required_document_type_label: "MVR",
+  required_document_type_authority: null,
+  status: "present",
+  effective_date: null,
+  expiry_date: null,
+  executed_at: null,
+  removable_after: null,
+  retain_until: null,
+  notes: null,
+};
+
+function item(overrides: Partial<DriverQualificationFileItem> = {}): DriverQualificationFileItem {
+  const next: DriverQualificationFileItem = { ...DQF_ITEM_DEFAULTS };
+  for (const key of Object.keys(overrides) as (keyof DriverQualificationFileItem)[]) {
+    const value = overrides[key];
+    if (value !== undefined) {
+      (next[key] as DriverQualificationFileItem[typeof key]) = value;
+    }
+  }
+  return next;
 }
 
 describe("summarizeDriverDqf", () => {
