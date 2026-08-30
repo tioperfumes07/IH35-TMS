@@ -1,3 +1,4 @@
+CODEX | WORKING | PLANNER-GRID-CANONICAL-GUARD | GO-INSTRUMENT-PLANNER | A1-A3+A5-A7 source plants · A4 data-load-id hook · 5 route bindings · adopted by locked planner guard | LIVE-A4=count===1 remains Chrome/CC-2 | NEXT=focused+FAST-MERGE | GO
 CODEX | WORKING | MAINT-PROOF-F7540 | GO-CLOSE-188=maint-11 | MAINT-S01 home app+scoped-kpi-api+tab/read-recovery guards @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7539 | GO-CLOSE-188=fleet-13 | FLEET-S07 exact T149 detail app+scoped-api+unit-detail guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO
 CODEX | WORKING | FLEET-PROOF-F7538 | GO-CLOSE-188=fleet-13 | FLEET-S06 exact T149 app+scoped-api+unit-profile guard @ d41124e | no-verdict/no-matrix-paint | NEXT=replay+FAST-MERGE | GO

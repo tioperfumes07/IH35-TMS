@@ -1,0 +1,99 @@
+{
+  "finding": "DISPATCH-PLANNER-GRID-CANONICAL-GUARD-MISSING",
+  "canonical_grid": {
+    "tsx": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+    "css": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.css"
+  },
+  "source_contracts": [
+    {
+      "id": "A1_DAY_GRADIENT",
+      "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+      "required_tokens": [
+        "repeating-linear-gradient(to right, var(--rule-day) 0 1px, transparent 1px var(--day))"
+      ]
+    },
+    {
+      "id": "A2_FIXED_52PX_DAY",
+      "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+      "required_tokens": [
+        "export const PLANNER_DAY_PX = 52",
+        "[\"--day\"]: `${dayPx}px`"
+      ]
+    },
+    {
+      "id": "A3_FIXED_34PX_ROW",
+      "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+      "required_tokens": [
+        "export const PLANNER_ROW_PX = 34",
+        "[\"--rowh\"]: `${PLANNER_ROW_PX}px`"
+      ]
+    },
+    {
+      "id": "A4_LOAD_ID_EVIDENCE_HOOK",
+      "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+      "required_tokens": [
+        "className={cls}",
+        "data-load-id={bar.loadId ?? bar.id}"
+      ]
+    },
+    {
+      "id": "A6_LABELLED_DWELL",
+      "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
+      "required_tokens": [
+        "className=\"pg-dwell\"",
+        "title={w.label}",
+        "<i>{w.label}</i>",
+        "Hatched = dwell, always labelled"
+      ]
+    },
+    {
+      "id": "A7_OOS_SEPARATED_NOT_STICKY",
+      "file": "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
+      "required_tokens": [
+        "className=\"mt-3\" data-testid=\"planner-oos-group\"",
+        "frozenLabel=\"Out of service\""
+      ],
+      "forbidden_tokens": [
+        "className=\"sticky mt-3\" data-testid=\"planner-oos-group\"",
+        "className=\"mt-3 sticky\" data-testid=\"planner-oos-group\""
+      ]
+    }
+  ],
+  "route_contracts": [
+    {
+      "route": "/dispatch?view=units",
+      "entry_file": "apps/frontend/src/pages/Dispatch.tsx",
+      "entry_tokens": ["view === \"units\"", "<RoundTrips"],
+      "renderer_file": "apps/frontend/src/pages/dispatch/RoundTripsTimeline.tsx",
+      "renderer_tokens": ["\n  PlannerGrid,\n", "<PlannerGrid"]
+    },
+    {
+      "route": "/dispatch/planners/timeline",
+      "entry_file": "apps/frontend/src/routes/manifest.tsx",
+      "entry_tokens": ["path=\"/dispatch/planners/timeline\"", "<UnifiedTimelinePlanner />"],
+      "renderer_file": "apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx",
+      "renderer_tokens": ["import { dwellsFromDayMap, PlannerGrid, type PlannerGridRow } from \"./PlannerGrid\";", "<PlannerGrid"]
+    },
+    {
+      "route": "/dispatch/planners/driver",
+      "entry_file": "apps/frontend/src/pages/dispatch/planners/DriverPlanner.tsx",
+      "entry_tokens": ["<SafetyDriverSchedulerGrid"],
+      "renderer_file": "apps/frontend/src/pages/dispatch/planners/SafetyDriverSchedulerGrid.tsx",
+      "renderer_tokens": ["import { dwellsFromDayMap, PlannerGrid } from \"./PlannerGrid\";", "<PlannerGrid"]
+    },
+    {
+      "route": "/dispatch/planners/truck",
+      "entry_file": "apps/frontend/src/routes/manifest.tsx",
+      "entry_tokens": ["path=\"/dispatch/planners/truck\"", "<TruckPlanner />"],
+      "renderer_file": "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+      "renderer_tokens": ["import { PlannerGrid } from \"./PlannerGrid\";", "<PlannerGrid"]
+    },
+    {
+      "route": "/dispatch/planners/loads",
+      "entry_file": "apps/frontend/src/routes/manifest.tsx",
+      "entry_tokens": ["path=\"/dispatch/planners/loads\"", "<LoadsPlanner />"],
+      "renderer_file": "apps/frontend/src/pages/dispatch/planners/LoadsPlanner.tsx",
+      "renderer_tokens": ["import { PlannerGrid } from \"./PlannerGrid\";", "<PlannerGrid"]
+    }
+  ]
+}
