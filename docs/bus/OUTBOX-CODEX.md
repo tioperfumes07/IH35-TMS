@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7408 | ROOT=border-load-guard-demanded-pre-refactor-form-envelope | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7407 | PR=#18020 @ e701d2ed73 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | Live=UNVERIFIED | NEXT=GUARD-F7408 | GO
 CODEX | WORKING | GUARD-F7407 | ROOT=guard-demanded-removed-driver-join-instead-of-canonical-historical-resolver | focused=PASS+selftest-23/23 | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DSP-F7365 | PR=#18007 @ 17330027c5 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | Live=UNVERIFIED | NEXT=GUARD-F7407 | GO
 CODEX | WORKING | DSP-F7365 | ROOT=selftest-mutated-sibling-HOS-component | focused=normal-PASS/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO

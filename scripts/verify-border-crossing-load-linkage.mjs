@@ -20,7 +20,7 @@ const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [ke
 function audit(s) {
   const failures = [];
   if (!/<EntityPicker[\s\S]{0,160}kind="load"/.test(s.wizard)) failures.push("wizard canonical load picker missing");
-  if (!/load_id:\s*form\.loadId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward load FK");
+  if (!/load_id:\s*input\.form\.loadId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward load FK from the mounted mutation envelope");
   if (!/FROM mdata\.loads[\s\S]{0,220}operating_company_id = \$2::uuid[\s\S]{0,100}soft_deleted_at IS NULL/.test(s.writer)) failures.push("writer active tenant load validation missing");
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id, driver_id, load_id/.test(s.writer)) failures.push("writer load persistence missing");
   if (!/load_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.load_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact load history filter missing");
@@ -35,7 +35,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "wizard", /(<EntityPicker[\s\S]{0,160})kind="load"/, '$1kind="unit"'],
-    ["payload", "submit", /load_id:\s*form\.loadId \|\| undefined/, "load_id: undefined"],
+    ["payload", "submit", /load_id:\s*input\.form\.loadId \|\| undefined/, "load_id: undefined"],
     ["scope", "writer", /(FROM mdata\.loads[\s\S]{0,220})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["active", "writer", /(FROM mdata\.loads[\s\S]{0,260})soft_deleted_at IS NULL/, "$1TRUE"],
     ["filter", "historyRoute", /filters\.push\(`ubc\.load_id = \$\$\{values\.length\}::uuid`\)/, "filters.push(`TRUE`)"],
