@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7443 | ROOT=qualifying-HOLD-accepted-missing-tracker-path | ORPHAN-SOURCES=01-no-live-forfeit-delta-flag-OFF;02-no-live-dual-subledger-forfeit-flag-OFF;05-no-full-tab-wizard-depth-packet | HOLD=unchanged | focused=selftest-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | VEND-F7442 | ROOT=vendor-default-expense-validator-looked-up-account-by-UUID-without-vendor-company | focused=guard-13/13+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7441 | ROOT=transaction-health-register-correlated-GL-checks-dropped-source-company | focused=guard-21/21+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7440 | ROOT=transaction-health-evidence-dropped-row-company-before-GL-and-link-reads | focused=guard-35/35+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO

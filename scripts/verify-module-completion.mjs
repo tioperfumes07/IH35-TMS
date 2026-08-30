@@ -211,6 +211,15 @@ export function assertManifestShape(file, data, opts = {}) {
         `${file}: item ${it.id} status HOLD but missing owner_hold+tracker+future_block (non-qualifying HOLD)`
       );
     }
+    if (qualifiesHold(it)) {
+      const trackerPath = path.resolve(ROOT, it.tracker);
+      const trackerInsideRepo = trackerPath.startsWith(`${ROOT}${path.sep}`);
+      if (!trackerInsideRepo || !fs.existsSync(trackerPath) || !fs.statSync(trackerPath).isFile()) {
+        problems.push(
+          `${file}: item ${it.id} qualifying HOLD cites missing tracker ${it.tracker}`
+        );
+      }
+    }
     if (
       HONESTY_RATCHET_IDS.has(it.id) &&
       it.status === "PASS" &&
@@ -441,6 +450,25 @@ if (isMain && SELFTEST) {
   }, { openWaveIds: [] });
   if (!plantedEvidenceContradiction.some((x) => x.includes("cannot be PASS"))) {
     failures.push("PASS-vs-UNVERIFIED evidence contradiction not caught");
+  }
+
+  const plantedMissingHoldTracker = assertManifestShape("safety.json", {
+    module: "safety",
+    complete: true,
+    items: [{
+      id: "SAF-HOLD-PLANT",
+      title: "t",
+      layers: ["DOD-A"],
+      spec: "s",
+      status: "HOLD",
+      evidence: "e",
+      owner_hold: true,
+      tracker: "docs/trackers/THIS-FILE-MUST-NOT-EXIST.md",
+      future_block: "SAF-HOLD-PLANT-FUTURE",
+    }],
+  }, { openWaveIds: [] });
+  if (!plantedMissingHoldTracker.some((x) => x.includes("qualifying HOLD cites missing tracker"))) {
+    failures.push("missing qualifying-HOLD tracker not caught");
   }
 
   const good = {
