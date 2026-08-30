@@ -122,7 +122,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
   const [selectedUnits, setSelectedUnits] = useState<EntityPickerOption[]>([]);
-  const [unitPickerValue, setUnitPickerValue] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState | "covered_units", string>>>({});
   const [formError, setFormError] = useState<string>("");
   const [serverError, setServerError] = useState<string>("");
@@ -137,7 +136,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
     if (!open) return;
     setForm(INITIAL_FORM);
     setSelectedUnits([]);
-    setUnitPickerValue(null);
     setFieldErrors({});
     setFormError("");
     setServerError("");
@@ -198,7 +196,6 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
   const addCoveredUnit = (unitId: string | null, option?: EntityPickerOption | null) => {
     if (!unitId || !option) return;
     setSelectedUnits((current) => current.some((unit) => unit.value === unitId) ? current : [...current, option]);
-    setUnitPickerValue(null);
     setFieldErrors((current) => ({ ...current, covered_units: undefined }));
   };
 
@@ -499,7 +496,7 @@ export function PolicyCreateModal({ open, operatingCompanyId, onClose, onCreated
           <EntityPicker
             kind="unit"
             operatingCompanyId={operatingCompanyId}
-            value={unitPickerValue}
+            value={null}
             onChange={addCoveredUnit}
             enabled={open}
             nestedInDrawer
