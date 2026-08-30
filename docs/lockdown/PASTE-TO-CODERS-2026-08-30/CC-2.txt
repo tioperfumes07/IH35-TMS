@@ -1,0 +1,106 @@
+===============================================================================
+CC-2 WORK ORDER — 2026-08-30 (SUPERSEDES EVERY EARLIER PACKET)
+THREE TASKS.
+===============================================================================
+DISCRIMINATOR — every Neon read must use run_sql_transaction with
+  ["SET LOCAL app.bypass_rls = 'lucia'", "<your query>"]
+and must return count(*) accounting.journal_entries >= 2218.
+Hard Rule 5: only you write prod_verified. Never force-stamp.
+
+STANDING LESSON FROM THIS SESSION — read before you verify anything:
+Three seats (you, Claude, Cursor) all declared the settlement poster "never exercised"
+because all three queried driver_finance.driver_settlements header columns. The real GL
+trace lives in driver_settlement_gl_runs / driver_settlement_gl_bills, and there it was
+fully populated the whole time. A NULL header column is NOT proof a subsystem never ran.
+Query the subledger before declaring anything unexercised.
+
+-------------------------------------------------------------------------------
+TASK 1 — FARO 007 GATE. THE FIX IS DEPLOYED. RUN THIS NOW.
+-------------------------------------------------------------------------------
+FACT-RESERVE-01 (#18318) is merged AND deployed. API is live on 8f86683.
+Confirm healthz shows 8f86683 or later, then run the gate through the app.
+
+  inv 007  ITS Logistics LLC   face $350.00
+     MUST produce  reserve $5.25   fee $5.25   cash $339.50
+
+  inv 008  FLS Transport Inc.  face $525.00
+     MUST produce  cash $509.24   NOT $509.25
+     (Faro rounds reserve and fee to the cent separately, then subtracts.)
+
+  FULL SCHEDULE  face 9507500
+     MUST produce  reserve 142613   fee 142613   wire 12000   cash 9210274
+
+Verified against all 33 real Faro invoices: 0 mismatches. If your numbers differ, the code
+is wrong, not the file. data/FARO-33-INVOICES-TO-CREATE.csv is your answer key -
+the escrow_reserve_usd / discount_fee_usd / net_advance_usd columns are the grading target.
+
+*** EXPECTED FAILURE MODES — REPORT, DO NOT WORK AROUND ***
+  reserve $28.00 and fee $0.00 on the $350 invoice
+     -> the modal sent its ungoverned defaults (reservePct "8" / factorFeePct "0").
+        That is CC-1 task 1, still open. Report it; do not hand-enter percentages to
+        make the number come out right - that hides the defect.
+  cash $334.25 on the $350 invoice
+     -> someone changed advance_rate to 0.985. STOP AND ESCALATE.
+  reserve $10.50
+     -> the fix did not reach the running code. Check healthz SHA first.
+
+Only after all three targets pass on their own may you stamp prod_verified.
+
+-------------------------------------------------------------------------------
+TASK 2 — USER-VERIFY-01. REOPENED. Your stated blocker does not exist.
+-------------------------------------------------------------------------------
+You reported: "no way to test as a non-Owner role; no impersonation mechanism exists."
+The second half is true. The first half is false, and impersonation is not needed.
+
+LIVE identity.users — ACTIVE accounts that ALSO have a usable password_hash:
+    Owner          4
+    Dispatcher     2     <- use one of these
+    Manager        2
+    Accountant     1
+    Administrator  1
+    Safety         0
+Password authentication is live (4 of 8 Owner accounts use it, not Google SSO).
+
+You classified a CREDENTIAL gap as a CAPABILITY gap and stopped. Those are different:
+one is a two-minute unblock, the other is a build.
+
+ACTION: get the Dispatcher credential from the owner. Sign in as that active Dispatcher in
+a separate browser profile. Open /users. Attempt Change-Role. Capture the rejection.
+Read-only UI walk. No financial write. No owner authorization required.
+Then close prod_verified honestly.
+
+-------------------------------------------------------------------------------
+TASK 3 — SETL-TRACE-06 VERIFY. After CC-1 builds the subject.
+-------------------------------------------------------------------------------
+Owner directive: one settlement traced end to end so every link is visible.
+
+DO NOT STAMP until all 16 link points resolve, BOTH directIONS. No partial credit.
+Capture every UUID as evidence.
+
+   1  mdata.loads (load_id + load_number, delivered, not sample)
+   2  mdata.drivers (active, USMCA)
+   3  mdata.units / equipment on the load
+   4  driver_settlements.first_load_id + last_load_id, is_sample_data FALSE
+   5  settlement_lines: load_id NOT NULL, posting_account_id NOT NULL,
+                        approval_status = 'approved'
+   6  driver_settlement_deductions.applied_to_settlement_id populated
+   7  a reimbursement line (reimbursements_total > 0)
+   8  driver_settlement_gl_runs.driver_vendor_id -> mdata.vendors
+                        (CANONICAL - never mdata.qbo_vendors)
+   9  driver_settlement_gl_bills.driver_bill_id
+  10  .accounting_bill_id -> accounting.bills
+  11  .bill_journal_entry_id -> accounting.journal_entries, debits = credits > 0
+  12  .cash_bill_payment_id
+  13  .cash_journal_entry_id
+  14  .deduction_bill_payment_id + gl_runs.deduction_journal_entry_id   <- NEVER FIRED
+  15  driver_settlements.accounting_bill_id AND .accounting_bill_payment_id populated
+      <- the broken write-back CC-1 fixes in their task 6A. If still NULL, NOT done.
+  16  paid_via_bank_txn_id + payment_state + a settlement_payment_events row
+
+ALSO ASSERT: gross - deductions = cash on BOTH gl_runs AND gl_bills.
+
+LEAVE IT POSTED. Do not auto-reverse. This is the certification specimen. Reversal is a
+separate owner call after the trace is captured. The reversal path is proven and available
+(reverseJournalEntryNoFlip, settlement-dispute.service.ts:145).
+
+One subject only. Do not bulk-run the other 16.
