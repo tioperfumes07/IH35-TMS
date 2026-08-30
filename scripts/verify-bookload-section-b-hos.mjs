@@ -12,6 +12,10 @@ if (!/import\s*\{\s*DriverHosClocksBlock\s*\}\s*from\s*"[^"]*hos\/DriverHosClock
 if (!/<DriverHosClocksBlock\s+driverId=\{primaryDriverId\}/.test(sec)) fail("section B must render DriverHosClocksBlock bound to the selected primary driver");
 if (!/assignment_mode|assignmentMode === "team"/.test(sec) || !/secondaryDriverId/.test(sec)) fail("team mode must also show the team driver HOS");
 const blk = readFileSync(join(root, "apps/frontend/src/components/dispatch/hos/DriverHosClocks.tsx"), "utf8");
+const blockStart = blk.indexOf("export function DriverHosClocksBlock(");
+const blockEnd = blk.indexOf("export function DriverHosClockValue(", blockStart);
+if (blockStart < 0 || blockEnd < 0) fail("must locate the mounted DriverHosClocksBlock boundary");
+const mountedBlock = blk.slice(blockStart, blockEnd);
 if (!/getDriverHosStatus/.test(blk)) fail("HOS block must read from the in-app HOS store (getDriverHosStatus, #1109)");
 if (!/No HOS data/.test(blk)) fail('HOS block must show "No HOS data" when the store has no events (never fabricate)');
 const checks = [
@@ -19,13 +23,13 @@ const checks = [
   ["selected-driver uncertified clocks must be labeled as in-app fallback", /driverId && q\.data[\s\S]*?In-app fallback/],
   ["selected-driver fallback disclosure must say the certified snapshot is unavailable", /Certified ELD snapshot unavailable; showing in-app HOS fallback/],
 ];
-for (const [message, pattern] of checks) if (!pattern.test(blk)) fail(message);
+for (const [message, pattern] of checks) if (!pattern.test(mountedBlock)) fail(message);
 
 if (selftest) {
   const mutations = [
-    blk.replace("if (q.isError)", "if (false)"),
-    blk.replace("In-app fallback", "Certified ELD"),
-    blk.replace("Certified ELD snapshot unavailable; showing in-app HOS fallback.", "Clocks loaded."),
+    mountedBlock.replace("if (q.isError)", "if (false)"),
+    mountedBlock.replace("In-app fallback", "Certified ELD"),
+    mountedBlock.replace("Certified ELD snapshot unavailable; showing in-app HOS fallback.", "Clocks loaded."),
   ];
   for (let index = 0; index < mutations.length; index += 1) {
     if (checks.every(([, pattern]) => pattern.test(mutations[index]))) fail(`mutation ${index + 1} survived`);
