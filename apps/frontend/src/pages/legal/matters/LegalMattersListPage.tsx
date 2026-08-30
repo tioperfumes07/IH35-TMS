@@ -156,14 +156,19 @@ export function LegalMattersListPage() {
         label: "SOL / hearing",
         sortable: true,
         render: (row) => {
-          const sol = daysUntil(row.statute_of_limitations_at);
+          // LEGAL-HEARING-LIST-COLUMN-STILL-READS-SOL-ONLY-AFTER-FIX: this column's own label
+          // promises BOTH SOL and hearing dates, but only ever read statute_of_limitations_at --
+          // next_hearing_date (now backend-derived from legal.matter_deadlines when the scalar
+          // column is null, see matters.service.ts) never reached this column at all. SOL takes
+          // display priority when both are set (matches the column's existing single-value shape
+          // and the more legally urgent of the two).
+          const displayDate = row.statute_of_limitations_at ?? row.next_hearing_date;
+          const sol = daysUntil(displayDate);
           const urgent = sol !== null && sol >= 0 && sol < 14;
           return urgent ? (
             <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs text-slate-700">SOL {sol}d</span>
           ) : (
-            <span className="text-xs text-gray-600">
-              {row.statute_of_limitations_at ? formatDateUS(row.statute_of_limitations_at) : "—"}
-            </span>
+            <span className="text-xs text-gray-600">{displayDate ? formatDateUS(displayDate) : "—"}</span>
           );
         },
       },
