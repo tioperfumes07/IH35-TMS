@@ -8,6 +8,7 @@ import { Modal } from "../../../components/Modal";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
 import { EntityPicker } from "../../../components/parity/EntityPicker";
+import { ListErrorState } from "../../../components/ListErrorState";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
 import { companyToday } from "../../../lib/businessDate";
@@ -266,6 +267,20 @@ export function CreateFuelTransactionModal({ open, operatingCompanyId, onClose, 
             </div>
           </label>
         </div>
+
+        {/* FUEL-MONEY-F7418 — suggestExpenseLoad rejecting was previously silent: the effect that
+            auto-fills loadId from a suggestion simply never ran, indistinguishable from "no matching
+            load found," and the operator could still submit via the G18 exemption unaware auto-
+            linkage was never evaluated. Non-blocking, exact Retry — never disables manual load pick
+            or the exemption field (mirrors CreateWorkOrderModal.tsx's own suggestionQuery.isError). */}
+        {suggestionQuery.isError ? (
+          <ListErrorState
+            title="Couldn't suggest a load for this fuel purchase"
+            status={0}
+            message={userFacingApiError(suggestionQuery.error, "Load suggestion failed")}
+            onRetry={() => void suggestionQuery.refetch()}
+          />
+        ) : null}
 
         <label className="block font-semibold text-gray-700">
           Trip / Load
