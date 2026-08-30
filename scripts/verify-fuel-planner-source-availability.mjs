@@ -45,6 +45,15 @@ function inspect({ registry, files }) {
   const detailBlock = backend.match(
     /app\.get\("\/api\/v1\/fuel\/planner\/recommendations\/:id"[\s\S]*?(?=\n  app\.post\("\/api\/v1\/fuel\/planner\/recommendations\/:id\/send-to-driver")/
   )?.[0] ?? "";
+  const dashboardBlock = backend.match(
+    /app\.get\("\/api\/v1\/fuel\/planner\/dashboard"[\s\S]*?(?=\n  app\.get\("\/api\/v1\/fuel\/planner\/active-routes")/
+  )?.[0] ?? "";
+  const complianceBlock = backend.match(
+    /app\.get\("\/api\/v1\/fuel\/planner\/compliance\/summary"[\s\S]*?(?=\n  app\.get\("\/api\/v1\/fuel\/planner\/savings\/summary")/
+  )?.[0] ?? "";
+  const savingsBlock = backend.match(
+    /app\.get\("\/api\/v1\/fuel\/planner\/savings\/summary"[\s\S]*?(?=\n  app\.get\("\/api\/v1\/fuel\/planner\/settings")/
+  )?.[0] ?? "";
   if (!detailBlock) errors.push("planner detail route missing");
   for (const token of [
     'hasRelation(client, "fuel.route_recommendations")',
@@ -54,6 +63,29 @@ function inspect({ registry, files }) {
     'reply.code(503).send({ error: "fuel_planner_source_unavailable" })',
   ]) {
     if (!detailBlock.includes(token)) errors.push(`planner detail route missing ${token}`);
+  }
+  for (const [name, block, tokens] of [
+    ["dashboard", dashboardBlock, [
+      'hasRelation(client, "views.fuel_planner_active_routes")',
+      'hasRelation(client, "views.fuel_compliance_summary")',
+      "const activeRes = plannerSourceAvailable ? await client.query",
+      "const savingsRes = plannerSourceAvailable ? await client.query",
+      "const mpgRes = plannerSourceAvailable ? await client.query",
+      "const complianceRes = complianceSourceAvailable ? await client.query",
+    ]],
+    ["compliance", complianceBlock, [
+      'hasRelation(client, "views.fuel_compliance_summary")',
+      "if (!sourceAvailable)",
+      "fleet_pct_followed: null",
+    ]],
+    ["savings", savingsBlock, [
+      'hasRelation(client, "views.fuel_savings_summary")',
+      "if (!sourceAvailable)",
+      "fleet_savings_ytd: null",
+    ]],
+  ]) {
+    if (!block) errors.push(`${name} route missing`);
+    for (const token of tokens) if (!block.includes(token)) errors.push(`${name} route missing ${token}`);
   }
   const forbidden = [
     [ui, "fleet_pct_followed ?? 0"],
@@ -75,7 +107,7 @@ function selftest() {
     ["empty registry", { registry: { ...good.registry, contracts: [] }, files: good.files }],
     ["route source check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replaceAll('hasRelation(client, "fuel.route_recommendations")', "false") } }],
     ["send source unavailable sentinel", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('return { unavailable: true as const };', 'return null;') } }],
-    ["send source unavailable response", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('fuel_planner_source_unavailable', 'fuel_recommendation_not_found') } }],
+    ["send source unavailable response", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('reply.code(503).send({ error: "fuel_planner_source_unavailable" })', 'reply.code(404).send({ error: "fuel_recommendation_not_found" })') } }],
     ["detail route source table", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace(
       '!(await hasRelation(client, "fuel.route_recommendations")) ||\n        !(await hasRelation(client, "views.fuel_planner_active_routes"))',
       'false ||\n        !(await hasRelation(client, "views.fuel_planner_active_routes"))'
@@ -89,7 +121,11 @@ function selftest() {
       'if (false)'
     ) } }],
     ["relay source check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replaceAll('hasRelation(client, "fuel.relay_matches")', "false") } }],
-    ["backend null honesty", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("active_plans: plannerSourceAvailable ? Number(activeRes.rows[0]?.count ?? 0) : null", "active_plans: Number(activeRes.rows[0]?.count ?? 0)") } }],
+    ["dashboard planner view check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('hasRelation(client, "views.fuel_planner_active_routes")', "true") } }],
+    ["compliance view check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replaceAll('hasRelation(client, "views.fuel_compliance_summary")', "true") } }],
+    ["savings view check", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace('hasRelation(client, "views.fuel_savings_summary")', "true") } }],
+    ["dashboard query gate", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("const activeRes = plannerSourceAvailable ? await client.query", "const activeRes = true ? await client.query") } }],
+    ["backend null honesty", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("active_plans: plannerSourceAvailable ? Number(activeRes?.rows[0]?.count ?? 0) : null", "active_plans: Number(activeRes?.rows[0]?.count ?? 0)") } }],
     ["active route false zero", { registry: good.registry, files: { ...good.files, [planner]: good.files[planner].replace("return { routes: [], total_count: null, source_available: false }", "return { routes: [], total_count: 0, source_available: false }") } }],
     ["compliance UI availability", { registry: good.registry, files: { ...good.files, [ui]: good.files[ui].replaceAll("sourceAvailable={Boolean(complianceQuery.data?.source_available)}", "sourceAvailable={true}") } }],
     ["savings false zero", { registry: good.registry, files: { ...good.files, [ui]: good.files[ui].replaceAll("fleetSavings={savingsQuery.data?.fleet_savings_ytd ?? null}", "fleetSavings={Number(savingsQuery.data?.fleet_savings_ytd ?? 0)}") } }]

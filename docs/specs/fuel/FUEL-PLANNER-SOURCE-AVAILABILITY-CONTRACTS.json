@@ -27,10 +27,12 @@
       "backend_file": "apps/backend/src/fuel/planner.routes.ts",
       "backend_tokens": [
         "hasRelation(client, \"fuel.relay_matches\")",
+        "hasRelation(client, \"views.fuel_compliance_summary\")",
+        "hasRelation(client, \"views.fuel_savings_summary\")",
         "compliance_source_available: complianceSourceAvailable",
-        "fleet_pct_followed: sourceAvailable ?",
-        "fleet_savings_ytd: sourceAvailable ?",
-        "fleet_lost_savings_ytd: sourceAvailable ?"
+        "fleet_pct_followed: null",
+        "fleet_savings_ytd: null",
+        "fleet_lost_savings_ytd: null"
       ],
       "api_file": "apps/frontend/src/api/fuelPlanner.ts",
       "api_tokens": ["compliance_source_available: boolean", "fleet_pct_followed: number | null", "fleet_savings_ytd: number | null"],
