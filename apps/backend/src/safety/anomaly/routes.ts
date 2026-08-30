@@ -101,7 +101,54 @@ export async function registerAnomalyDetectionRoutes(app: FastifyInstance) {
       );
       vals.push(q.data.limit, q.data.offset);
       const res = await client.query(
-        `SELECT * FROM safety.anomaly_alerts WHERE ${filters.join(" AND ")} ORDER BY detected_at DESC LIMIT $${vals.length - 1}::int OFFSET $${vals.length}::int`,
+        `SELECT
+           a.*,
+           r.rule_name,
+           CASE a.subject_kind
+             WHEN 'driver' THEN mdata.resolve_driver_label_same_company(a.subject_uuid, a.operating_company_id)
+             WHEN 'unit' THEN (
+               SELECT u.unit_number
+               FROM mdata.units u
+               WHERE u.id = a.subject_uuid
+                 AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = a.operating_company_id
+               LIMIT 1
+             )
+             WHEN 'load' THEN (
+               SELECT l.load_number
+               FROM mdata.loads l
+               WHERE l.id = a.subject_uuid
+                 AND l.operating_company_id = a.operating_company_id
+               LIMIT 1
+             )
+             WHEN 'geofence' THEN (
+               SELECT g.label
+               FROM geo.geofences g
+               WHERE g.id = COALESCE(
+                   a.subject_uuid,
+                   CASE WHEN a.evidence->>'geofence_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                     THEN (a.evidence->>'geofence_id')::uuid END
+                 )
+                 AND g.operating_company_id = a.operating_company_id
+               LIMIT 1
+             )
+             ELSE NULL
+           END AS subject_label,
+           CASE
+             WHEN a.subject_kind = 'geofence'
+               THEN COALESCE(
+                 a.subject_uuid,
+                 CASE WHEN a.evidence->>'geofence_id' ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                   THEN (a.evidence->>'geofence_id')::uuid END
+               )
+             ELSE a.subject_uuid
+           END AS resolved_subject_uuid
+         FROM safety.anomaly_alerts a
+         JOIN safety.anomaly_alert_rules r
+           ON r.uuid = a.rule_uuid
+          AND r.operating_company_id = a.operating_company_id
+         WHERE ${filters.map((filter) => `a.${filter}`).join(" AND ")}
+         ORDER BY a.detected_at DESC
+         LIMIT $${vals.length - 1}::int OFFSET $${vals.length}::int`,
         vals
       );
       return { rows: res.rows, total_count: Number(countRes.rows[0]?.total_count ?? 0) };

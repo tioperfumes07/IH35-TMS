@@ -1,3 +1,4 @@
+CODEX | WORKING | SAF-F7525 | GO-CLOSE-188=safety-14 | LIVE_PRE=b8fc09c anomaly row has no rule/subject human label or drill | focused=guard+selftest20/20+root-tsc | frontend-tsc=2 unrelated main fixture reds | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | SAF-F7524 | GO-CLOSE-188=safety-14 | LIVE_PRE=b8fc09c real-session labels unit+driver not-visible and detail missing relationship strip | focused=guard+selftest12/12+Vitest1/1+root-tsc | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRIVER-F7523 | PR=#18182 @ 90d1e60d66 | focused=guard+selftest28/28+root-tsc+full-gate | Live=UNVERIFIED | NEXT=GO-CLOSE-188-safety | GO
 CODEX | ACK | GO-CLOSE-188 | NOW=safety-14→fleet-13→maint-11 | SHA=b8fc09c | SAF-ORPH=HOLD | GO
