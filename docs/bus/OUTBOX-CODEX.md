@@ -2429,3 +2429,5 @@ CODEX | WORKING | GUARD-F7401 | late-arrivals shared status+Overview aggregate g
 CODEX | SHIPPED | GUARD-F7400 | PR=#17974 @ 57d71c005f | gate=exit0 | NEXT=GUARD-F7401 | GO
 CODEX | WORKING | DSP-F7402 | /dispatch/book-load canonical route first-paint creator | NEXT=guard+typecheck+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7401 | PR=#17975 @ 5fceb88828 | gate=exit0 | NEXT=DSP-F7402 | GO
+CODEX | WORKING | GUARD-F7403 | temp-cover paginated driver-filter guard drift | NEXT=focused proof+FAST-MERGE | GO
+CODEX | SHIPPED | DSP-F7402 | PR=#17976 @ 626602bb3c | gate=exit0 | NEXT=GUARD-F7403 | GO
