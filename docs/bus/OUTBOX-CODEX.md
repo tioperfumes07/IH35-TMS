@@ -2491,3 +2491,5 @@ CODEX | SHIPPED | MNT-F7426 | PR=#18062 @ 6cbfb41047 | gate=exit0 | push=no-veri
 Codex | WORKING | GUARD-F7432 | parts_inventory vendor reverse immutable submit + exact trimmed row guard | NEXT=focused+selftest→FAST-MERGE
 Codex | SHIPPED | GUARD-F7432 | PR=#18068 @ 60d5f31069 | NEXT=GUARD-F7433 existing-FK task activity scope
 Codex | WORKING | GUARD-F7433 | task activity URL→company-scoped reverse guard | NEXT=gate→FAST-MERGE
+Codex | SHIPPED | GUARD-F7433 | PR=#18069 @ 33669088b7 | NEXT=GUARD-F7434 master-detail canonical invoice client
+Codex | WORKING | GUARD-F7434 | customers transaction exact company/customer scope guard | NEXT=focused+selftest

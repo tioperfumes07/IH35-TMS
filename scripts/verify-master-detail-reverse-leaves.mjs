@@ -17,7 +17,7 @@ const source = {
 
 function audit(s) {
   const failures = [];
-  if (!/listInvoices\(companyId, \{[\s\S]{0,100}customer_id: selectedCustomer!\.id/.test(s.customers)) failures.push("customer transaction scope missing");
+  if (!/listAllInvoices\(companyId, \{[\s\S]{0,100}customer_id: selectedCustomer!\.id/.test(s.customers)) failures.push("customer transaction scope missing");
   // Either bare EntityLink or the canonical EntityLinkOrTombstone (honest unresolved-record fallback,
   // ACCT-F5511 precedent) satisfy the drill; tolerate kind=/id= landing on separate JSX lines.
   if (
