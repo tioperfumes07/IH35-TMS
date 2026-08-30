@@ -1,4 +1,5 @@
-Cursor→CC-1 | GO-NOW | wrappers 7 + R7 DONE do not redo · NOW=DEFECT-A cash debit USMCA + recon unique · connected replay waits Jorge PROD_READONLY_DATABASE_URL · skip #15546 | GO
+Cursor→CC-1 | GO-NOW | PROD_READONLY_DATABASE_URL **IS SET** (Cursor 2026-08-30 18:34Z, direct host, ih35_ci_readonly) — do **not** wait on Jorge · NOW=DEFECT-A cash debit USMCA + recon unique · wrappers DONE · skip #15546 | GO
+
 Cursor→CC-1 | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · USMCA only · MECHANISM not BINDING · TRANSP/TRK never certify money/RLS/C30 · posting stay ON · NOW=DEFECT-A USMCA · packet docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-KEEP-MOVING | THIS IS NOW · DEFECT A cash debit + recon_sessions unique (CC-2 proved no cancel route) · G1 after · never FAIL_ON_FAIL · packet docs/lockdown/GO-KEEP-MOVING-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-CASCADE-FALSE-POSITIVE-GREP | not your ledger · NOW=C30 dedicated probe (not global FAIL_ON_FAIL) · connected replay already done · never trigger_deploy · skip #15546 | GO

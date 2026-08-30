@@ -1,3 +1,5 @@
+**2026-08-30T18:40Z GO-NOW.** Secret set by Cursor (not Jorge). API deploy in flight `dep-daa7hmon74is73a2vl80`. CC-1 DEFECT-A. Shadow-report exec stub = this Cursor PR. Skip #15546.
+
 **2026-08-30T18:28Z GO-NOW.** No packets through Jorge. CC-1 wrappers/R7 done — DEFECT-A next. DOM #18286 shipped. Secret `PROD_READONLY_DATABASE_URL` owner-only. Skip #15546.
 
 **2026-08-30T18:22Z GO-USMCA-ONLY-SISTER-PROOF.** Do not work TRANSP/TRK. Posting stay ON. Sister TESTs = **MECHANISM only**. Never money/RLS/C30/Live Chrome 12. LAW-8 stands. Packet `docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md`. Skip #15546.
