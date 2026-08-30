@@ -1,3 +1,7 @@
+CASCADE | FINDING | 50235 | vendors · SILENT-QUERY-FAILURE — VendorDetail 13+ useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50234 | drivers · SILENT-QUERY-FAILURE — DriverDetail 13+ useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50233 | customers · SILENT-QUERY-FAILURE — CustomerDetail 16+ useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50232 | drivers · SILENT-NO-OP — SettlementDisputeList "Start review" void reviewDispute no .catch, reviewMutation no onError | GO
 CASCADE | FINDING | 50231 | home · SILENT-QUERY-FAILURE — DefaultHome 16 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50230 | home · SILENT-QUERY-FAILURE — OwnerHome 16 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50229 | reports · SILENT-QUERY-FAILURE — ReportsHome kpiQuery + frequentQuery + iftaQuery no isError rendering | GO
