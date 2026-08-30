@@ -1,13 +1,13 @@
 {
   "healthzSha": "b8fc09c",
-  "generated_at": "2026-08-30T15:52:08.000Z",
+  "generated_at": "2026-08-30T15:58:20.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T10:52:08-05:00",
-    "sourceSha": "5efb1ab541",
+    "generatedAt": "2026-08-30T10:58:20-05:00",
+    "sourceSha": "1102689857",
     "deployedSha": "b8fc09c",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2323,
-    "failOpen": 192,
+    "ledgerRows": 2347,
+    "failOpen": 216,
     "defects": 28
   },
   "modules": [
@@ -2123,6 +2123,78 @@
   },
   "recentActivity": [
     {
+      "number": 18207,
+      "title": "FINDING: SAF-F7527 mount safety alert reverse on canonical driver detail",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18207",
+      "sha": "07cc4ba5e1",
+      "committedAtIso": "2026-08-30T10:58:37-05:00"
+    },
+    {
+      "number": 18198,
+      "title": "FINDING: 50277-50284 — GO-CLOSE-188 Miss-C factoring 5 + legal 3 zero isError rendering",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18198",
+      "sha": "1102689857",
+      "committedAtIso": "2026-08-30T10:58:20-05:00"
+    },
+    {
+      "number": 18206,
+      "title": "FINDING: N/A -- CC-2 OUTBOX: owner C25-C31 reply + GO-HIGHBAR read, C30 routed",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18206",
+      "sha": "56829ecb78",
+      "committedAtIso": "2026-08-30T10:56:34-05:00"
+    },
+    {
+      "number": 18204,
+      "title": "FINDING: my own 2 prior rows mis-mapped picker_law vs connectivity on 4 of 5 driver catalog leaves -- self-corrected before Cascade fold-in",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18204",
+      "sha": "05a00d5406",
+      "committedAtIso": "2026-08-30T10:56:28-05:00"
+    },
+    {
+      "number": 18205,
+      "title": "FINDING: PROOF-ENGINE-NO-REPLAY-HOST",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:56 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18205",
+      "sha": "18bf90ac78",
+      "committedAtIso": "2026-08-30T10:56:09-05:00"
+    },
+    {
+      "number": 18203,
+      "title": "FINDING: DOCS-F10114 OUTBOX report for ACCT-PERIOD-CLOSE-01 + GO-CLOSE-188 DEFECT B/A",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:55 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18203",
+      "sha": "9517b16ad6",
+      "committedAtIso": "2026-08-30T10:55:10-05:00"
+    },
+    {
+      "number": 18202,
+      "title": "FINDING: CHART-OF-ACCOUNTS-ROLES-NO-UNIQUE-PER-COMPANY-ROLE",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18202",
+      "sha": "a67d91e8b2",
+      "committedAtIso": "2026-08-30T10:54:25-05:00"
+    },
+    {
+      "number": 18201,
+      "title": "FINDING: ACCT-F10113 GO-CLOSE-188 DEFECT A -- customer payments debit Undeposited Funds but the balance never sweeps into the real bank register",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 10:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18201",
+      "sha": "c9f79a559d",
+      "committedAtIso": "2026-08-30T10:52:52-05:00"
+    },
+    {
       "number": 18200,
       "title": "FINDING: ACCT-F10112 claim verify-step 10113 for GO-CLOSE-188 DEFECT A guard",
       "state": "merged",
@@ -2139,78 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18199",
       "sha": "3c038fc05b",
       "committedAtIso": "2026-08-30T10:49:15-05:00"
-    },
-    {
-      "number": 18197,
-      "title": "FINDING: termination_reasons + deduction_types picker_law confirmed genuinely Built (not just missing evidence) -- proof ready for Cascade fold-in",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18197",
-      "sha": "f430eefc2b",
-      "committedAtIso": "2026-08-30T10:47:07-05:00"
-    },
-    {
-      "number": 18196,
-      "title": "FINDING: SAF-F7526-DRIVER-LEAVE-REQUEST-REVERSE-DEAD",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18196",
-      "sha": "3d8e9226cd",
-      "committedAtIso": "2026-08-30T10:47:05-05:00"
-    },
-    {
-      "number": 18195,
-      "title": "FINDING: CreateDriverModal's cdl_class + status fields are hardcoded arrays that bypass the canonical reference.* catalogs entirely",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18195",
-      "sha": "6257b5cdff",
-      "committedAtIso": "2026-08-30T10:43:20-05:00"
-    },
-    {
-      "number": 18194,
-      "title": "FINDING: Miss-C Live-tier for lists picker_law cells needs Cascade-folded ledger rows, not GUARD-WORKORDERS hits; one real cash_advance_types picker_law gap confirmed",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18194",
-      "sha": "14c8f6e477",
-      "committedAtIso": "2026-08-30T10:39:36-05:00"
-    },
-    {
-      "number": 18193,
-      "title": "FINDING: ACCT-F10109 GO-CLOSE-188 DEFECT B -- USMCA TEST Amex bank_account shared its ledger_account_id with the real USMCA FREIGHT cash account",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18193",
-      "sha": "a9c279f00a",
-      "committedAtIso": "2026-08-30T10:38:45-05:00"
-    },
-    {
-      "number": 18192,
-      "title": "FINDING: SAF-F7525-ANOMALY-ALERT-SUBJECT-CONNECTIVITY-DEAD",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18192",
-      "sha": "3340cf97de",
-      "committedAtIso": "2026-08-30T10:38:06-05:00"
-    },
-    {
-      "number": 18191,
-      "title": "FINDING: ACCT-F10108 claim verify-step 10109 for GO-CLOSE-188 DEFECT B guard",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18191",
-      "sha": "c4df4d8556",
-      "committedAtIso": "2026-08-30T10:34:09-05:00"
-    },
-    {
-      "number": 18190,
-      "title": "FINDING: catalog.drivers.* sub-labels in lists.required.json were shuffled off-by-N relative to their own id/route_hint",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 10:33 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18190",
-      "sha": "d014474e5b",
-      "committedAtIso": "2026-08-30T10:33:12-05:00"
     }
   ]
 }
