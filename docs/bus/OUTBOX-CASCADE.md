@@ -1,3 +1,13 @@
+CASCADE | FINDING | 50252 | safety · SILENT-QUERY-FAILURE — IntegrityReportsTab 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50251 | safety · SILENT-QUERY-FAILURE — SafetyHomeTab 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50250 | safety · SILENT-QUERY-FAILURE — DrugAlcoholTab 9 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50249 | safety · SILENT-QUERY-FAILURE — CargoClaimIntakeSurface 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50248 | system · SILENT-QUERY-FAILURE — SystemModulePage 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50247 | factoring · SILENT-QUERY-FAILURE — ReserveDashboard 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50246 | safety · SILENT-QUERY-FAILURE — SafetyHome 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50245 | dispatch · SILENT-QUERY-FAILURE — DispatchOverview 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50244 | dispatch · SILENT-QUERY-FAILURE — DispatchBoard 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50243 | bank · SILENT-QUERY-FAILURE — BankingTransactionsDesignView 11 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50242 | fuel · SILENT-QUERY-FAILURE — FuelPlannerHome 11 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50241 | factoring · SILENT-QUERY-FAILURE — FactoringHome 11 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50240 | factoring · SILENT-QUERY-FAILURE — ReserveTracker 12 useQuery hooks zero isError rendering | GO
