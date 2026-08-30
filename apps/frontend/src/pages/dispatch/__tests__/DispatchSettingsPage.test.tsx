@@ -10,7 +10,7 @@ import {
   dispatchLocalSettingsKey,
 } from "../DispatchSettingsPage";
 import * as dispatchApi from "../../../api/dispatch";
-import { readDispatchBoardDefaultSort } from "../../../lib/dispatch-local-settings";
+import { readDispatchAlertTier, readDispatchBoardDefaultSort } from "../../../lib/dispatch-local-settings";
 
 vi.mock("../../../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
@@ -109,6 +109,19 @@ describe("DispatchSettingsPage (B21-D11)", () => {
 
     window.localStorage.setItem(key, JSON.stringify({ default_sort: "not-a-column:sideways" }));
     expect(readDispatchBoardDefaultSort(companyId)).toEqual({ key: "created_at", direction: "desc" });
+  });
+
+  it("applies company alert thresholds to ETA variance without leaking another company", () => {
+    const companyId = "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071";
+    window.localStorage.setItem(
+      dispatchLocalSettingsKey(companyId),
+      JSON.stringify({ alert_yellow_minutes: 10, alert_red_minutes: 30 })
+    );
+    expect(readDispatchAlertTier(companyId, 9)).toBeNull();
+    expect(readDispatchAlertTier(companyId, 10)).toBe("amber");
+    expect(readDispatchAlertTier(companyId, 30)).toBe("red");
+    expect(readDispatchAlertTier("another-company", 10)).toBe("amber");
+    expect(readDispatchAlertTier(companyId, null)).toBeNull();
   });
 
   // DISP-S34: getDispatchPreferences failing silently fell back to the "home" default with no

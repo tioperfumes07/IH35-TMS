@@ -15,6 +15,7 @@ import type { UnitsWithoutLoad } from "../../api/dispatch";
 import type { DataTableErrorState } from "../../lib/tableError";
 import { classifyProfit, formatProfitCents, getLoadProfitability, profitBadgeClassName } from "../../lib/loadProfit";
 import { entityLabel } from "../../lib/entity-label";
+import { readDispatchAlertTier } from "../../lib/dispatch-local-settings";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../ListErrorState";
@@ -216,6 +217,9 @@ function driverNameLabel(load: DispatchLoadRow): string {
 }
 
 function onTimeChipClass(load: DispatchLoadRow): string {
+  const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
+  if (configuredTier === "red") return "bg-red-100 text-red-800";
+  if (configuredTier === "amber") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "green") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "amber") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "red") return "bg-red-100 text-red-800";
@@ -226,6 +230,9 @@ function onTimeChipClass(load: DispatchLoadRow): string {
 }
 
 function onTimeChipLabel(load: DispatchLoadRow): string {
+  const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
+  if (configuredTier === "red") return "Late";
+  if (configuredTier === "amber") return "At risk";
   if (load.on_time_prediction === "green") return "On time";
   if (load.on_time_prediction === "amber") return "At risk";
   if (load.on_time_prediction === "red") return "Late";

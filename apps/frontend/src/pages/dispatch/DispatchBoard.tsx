@@ -5,7 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
-import { readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
+import { readDispatchAlertTier, readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
@@ -307,6 +307,9 @@ function statusVariant(status: DispatchLoadRow["status"]) {
 }
 
 function riskTierClass(load: DispatchLoadRow) {
+  const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
+  if (configuredTier === "red") return "bg-red-100 text-red-800";
+  if (configuredTier === "amber") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "green") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "amber") return "bg-slate-100 text-slate-700";
   if (load.on_time_prediction === "red") return "bg-red-100 text-red-800";
@@ -317,6 +320,9 @@ function riskTierClass(load: DispatchLoadRow) {
 }
 
 function riskTierLabel(load: DispatchLoadRow) {
+  const configuredTier = readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes);
+  if (configuredTier === "red") return "Late";
+  if (configuredTier === "amber") return "At risk";
   if (load.on_time_prediction === "green") return "On time";
   if (load.on_time_prediction === "amber") return "At risk";
   if (load.on_time_prediction === "red") return "Late";
@@ -329,6 +335,7 @@ function riskTierLabel(load: DispatchLoadRow) {
 
 function isAtRiskOfLate(load: DispatchLoadRow) {
   return (
+    readDispatchAlertTier(load.operating_company_id, load.progress_eta_delta_minutes) !== null ||
     load.on_time_prediction === "amber" ||
     load.on_time_prediction === "red" ||
     load.progress_status === "behind" ||

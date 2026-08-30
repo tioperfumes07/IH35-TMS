@@ -54,3 +54,18 @@ export function readDispatchBoardDefaultSort(operatingCompanyId: string): { key:
     direction: storedDirection === "asc" ? "asc" : "desc",
   };
 }
+
+export type DispatchAlertTier = "amber" | "red" | null;
+
+export function readDispatchAlertTier(
+  operatingCompanyId: string,
+  etaDeltaMinutes: number | null | undefined
+): DispatchAlertTier {
+  if (!operatingCompanyId || etaDeltaMinutes == null || !Number.isFinite(etaDeltaMinutes)) return null;
+  const settings = readDispatchLocalSettings(operatingCompanyId);
+  const yellowMinutes = Math.max(0, Number(settings.alert_yellow_minutes) || 0);
+  const redMinutes = Math.max(yellowMinutes, Number(settings.alert_red_minutes) || 0);
+  if (etaDeltaMinutes >= redMinutes) return "red";
+  if (etaDeltaMinutes >= yellowMinutes) return "amber";
+  return null;
+}
