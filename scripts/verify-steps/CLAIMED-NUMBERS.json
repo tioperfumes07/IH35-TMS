@@ -4857,6 +4857,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-dot-oos-fmcsa-inspection-reconcile (GO-1405 P0)"
   },
+  "10081": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-maintenance-kpis-view-not-dead-stub (GO-1405 P1 mtd_repair_cost)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
