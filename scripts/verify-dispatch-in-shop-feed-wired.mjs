@@ -49,6 +49,9 @@ if (/const awaitingTruckCount\s*=\s*unassignedUnits\.length/.test(board)) {
 if (!board.includes("inShopUnitsQuery.isError")) {
   fail("DispatchBoard must branch on inShopUnitsQuery.isError for failed in-shop feed loads");
 }
+if (!/const inShopUnits = inShopUnitsQuery\.isError \? \[\] : \(inShopUnitsQuery\.data \?\? \[\]\)/.test(board)) {
+  fail("failed in-shop feed must suppress stale rows and section counts");
+}
 if (!board.includes("Couldn't load in-shop units")) {
   fail("in-shop feed failure must render an explicit error surface, not an empty placeholder");
 }
@@ -60,11 +63,15 @@ if (selftest) {
   const mutations = [
     board.replace('!(section.key === "in_shop" && inShopUnitsQuery.isError) &&', "true &&"),
     board.replace('!(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ?', "true ?"),
+    board.replace("inShopUnitsQuery.isError ? [] :", "false ? [] :"),
   ];
-  if (mutations.some((source) => placeholderSuppressesFailedFeeds(source))) {
+  if (mutations.slice(0, 2).some((source) => placeholderSuppressesFailedFeeds(source))) {
     fail("selftest mutation escaped failed-feed empty-state exclusion");
   }
-  console.log("PASS verify-dispatch-in-shop-feed-wired SELFTEST — 2/2 failed-feed empty-state mutations red");
+  if (/const inShopUnits = inShopUnitsQuery\.isError \? \[\] :/.test(mutations[2])) {
+    fail("selftest stale-row mutation escaped");
+  }
+  console.log("PASS verify-dispatch-in-shop-feed-wired SELFTEST — 3/3 failed-feed mutations red");
   process.exit(0);
 }
 
