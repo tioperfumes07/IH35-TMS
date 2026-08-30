@@ -1,3 +1,5 @@
+CODEX | WORKING | SAF-F7531 | ROOT=Safety-Events-list+KPI+detail+notes-reads-painted-empty-dash-or-stale-without-recovery | focused=guard+selftest6/6 | frontend-tsc=2-unrelated-current-main-driver-errors | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7530 | PR=#18337 @ e39ceea73d | focused=guard+selftest5/5+full-gate-twice | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=SAF-F7531 | GO
 CODEX | WORKING | SAF-F7530 | ROOT=Cargo-Claim-primary-list-failed-loud-but-5-secondary-reads-painted-empty-or-absent | focused=guard+selftest5/5+frontend-tsc | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | SAF-F7529 | PR=#18329 @ db0a8d8d55 | focused=guard+selftest3/3+frontend-tsc-pre-rebase+full-gate | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=SAF-F7530 | GO
 CODEX | WORKING | SAF-F7529 | ROOT=three-Safety-V64-void-mutations-rejected-with-modal-open-but-no-visible-error | GUARD=3-independent-plants | NEXT=focused+gate+FAST-MERGE | GO
