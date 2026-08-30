@@ -1,10 +1,10 @@
 {
-  "healthzSha": "5c82530",
-  "generated_at": "2026-08-30T03:38:53.000Z",
+  "healthzSha": "626602b",
+  "generated_at": "2026-08-30T04:20:26.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T22:38:53-05:00",
-    "sourceSha": "0279cad7df",
-    "deployedSha": "5c82530",
+    "generatedAt": "2026-08-29T23:20:26-05:00",
+    "sourceSha": "d822b77d4",
+    "deployedSha": "626602b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2268,
     "failOpen": 137,
@@ -173,7 +173,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "25/39",
+      "build": "39/39",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -915,7 +915,7 @@
     {
       "tier": "3",
       "module": "inventory",
-      "build": "3/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1021,7 +1021,7 @@
     {
       "tier": "3",
       "module": "finance",
-      "build": "2/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1074,7 +1074,7 @@
     {
       "tier": "3",
       "module": "reports",
-      "build": "2/8",
+      "build": "7/8",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17966,
-      "title": "STATUS: CC-3 ACK alive/working -- dispatch split needs correcting in writing, not assuming",
+      "number": 17992,
+      "title": "FINDING: 50208-50229 — stale-data + silent-failure audit (22 findings)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:33 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17966",
-      "sha": "8ef03c1a03",
-      "committedAtIso": "2026-08-29T22:33:16-05:00"
+      "mergedAtCt": "08/29/2026, 11:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17992",
+      "sha": "d822b77d4",
+      "committedAtIso": "2026-08-29T23:20:26-05:00"
     },
     {
-      "number": 17965,
-      "title": "FINDING: GUARD-F7396 fleet leased-scope blind spot",
+      "number": 17991,
+      "title": "FINDING: GUARD-F7405 accept typed HOS submission envelopes",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17965",
-      "sha": "d248d026e5",
-      "committedAtIso": "2026-08-29T22:32:50-05:00"
+      "mergedAtCt": "08/29/2026, 11:19 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17991",
+      "sha": "c4dbd1cc3",
+      "committedAtIso": "2026-08-29T23:19:36-05:00"
     },
     {
-      "number": 17964,
-      "title": "STATUS: §9 report -- all 3 GO-FINISH-TONIGHT fixes LIVE-verified (#17937/#17947/#17960)",
+      "number": 17990,
+      "title": "FINDING: N/A -- claim migration timestamp 202613290700 for border-credentials FAST card file category seed (GO-1405 DOC-01 remainder)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:32 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17964",
-      "sha": "9f6dd629a4",
-      "committedAtIso": "2026-08-29T22:32:01-05:00"
+      "mergedAtCt": "08/29/2026, 11:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17990",
+      "sha": "f816f97ab",
+      "committedAtIso": "2026-08-29T23:17:57-05:00"
     },
     {
-      "number": 17963,
-      "title": "STATUS: §9 report -- driver-DQF-KPI LIVE-verified (#17947) + reports hover-clip fix shipped (#17960)",
+      "number": 17989,
+      "title": "FINDING: DSP-F7362-D1-LOAD-STOP-SOURCE-WRITERS-NOT-ON-MAIN",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17963",
-      "sha": "8b6add2e9e",
-      "committedAtIso": "2026-08-29T22:31:01-05:00"
+      "mergedAtCt": "08/29/2026, 11:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17989",
+      "sha": "f4cd172e6",
+      "committedAtIso": "2026-08-29T23:12:52-05:00"
     },
     {
-      "number": 17962,
-      "title": "FINDING: GO-1405 P0 dot_oos is a fleet-status mirror, not an FMCSA out-of-service condition",
+      "number": 17987,
+      "title": "FINDING: N/A -- CC-1 OUTBOX: ACCT-LINK-01 fix + 20-item Recipe B batch report",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:29 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17962",
-      "sha": "53f7ac8ed7",
-      "committedAtIso": "2026-08-29T22:29:46-05:00"
+      "mergedAtCt": "08/29/2026, 11:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17987",
+      "sha": "c451e928f",
+      "committedAtIso": "2026-08-29T23:10:14-05:00"
     },
     {
-      "number": 17961,
-      "title": "FINDING: GUARD-F7395 driver inventory floor stale",
+      "number": 17986,
+      "title": "FINDING: ACCT-F10086 journal_entry_type_id never wired into 8 of 9 live JE posters (GO-1405 ACCT-LINK-01)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17961",
-      "sha": "97cfb60714",
-      "committedAtIso": "2026-08-29T22:28:10-05:00"
+      "mergedAtCt": "08/29/2026, 11:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17986",
+      "sha": "b5b06aca8",
+      "committedAtIso": "2026-08-29T23:08:40-05:00"
     },
     {
-      "number": 17960,
-      "title": "FINDING: CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR -- Reports category hover-to-run-report was silently non-functional",
+      "number": 17985,
+      "title": "FINDING: N/A -- §9 status report: DRV-S04 reopen filed + Recipe B closeout (IH35-FINISH-2026-08-29/CC-3 items done)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17960",
-      "sha": "af11b4fe6d",
-      "committedAtIso": "2026-08-29T22:28:03-05:00"
+      "mergedAtCt": "08/29/2026, 11:07 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17985",
+      "sha": "97f08623f",
+      "committedAtIso": "2026-08-29T23:07:40-05:00"
     },
     {
-      "number": 17959,
-      "title": "FINDING: N/A -- claim verify-step 10077 for dot_oos FMCSA-inspection reconciliation guard (GO-1405 P0)",
+      "number": 17984,
+      "title": "FINDING: DRV-F7317-R2-BROWSERROUTER-TRANSITION-RETAINS-STALE-ROUTE-DOM",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17959",
-      "sha": "0ec0d5340f",
-      "committedAtIso": "2026-08-29T22:26:18-05:00"
+      "mergedAtCt": "08/29/2026, 11:06 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17984",
+      "sha": "a0c058870",
+      "committedAtIso": "2026-08-29T23:06:31-05:00"
     },
     {
-      "number": 17958,
-      "title": "FINDING: DOCS-F7393 frontend file-entity contract drift",
+      "number": 17983,
+      "title": "FINDING: N/A -- Recipe B live-verification of 5 reports + 4 inventory items (RPT-S01/S02/S05/S06/S07, INV-CAT-01/PICK-01/LINK-01/VERIFY-01)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17958",
-      "sha": "4235eaa33c",
-      "committedAtIso": "2026-08-29T22:25:12-05:00"
+      "mergedAtCt": "08/29/2026, 11:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17983",
+      "sha": "7e3ebec9a",
+      "committedAtIso": "2026-08-29T23:04:52-05:00"
     },
     {
-      "number": 17957,
-      "title": "FINDING: CERT-01-B1-STALE",
+      "number": 17982,
+      "title": "FINDING: CERT-01-B4-FW6",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 10:24 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17957",
-      "sha": "c33b38b426",
-      "committedAtIso": "2026-08-29T22:24:00-05:00"
+      "mergedAtCt": "08/29/2026, 11:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17982",
+      "sha": "0e5df4ede",
+      "committedAtIso": "2026-08-29T23:03:12-05:00"
     }
   ]
 }

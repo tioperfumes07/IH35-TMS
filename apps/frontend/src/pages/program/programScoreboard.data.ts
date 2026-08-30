@@ -29,12 +29,12 @@ export interface ProgramScoreboard {
 }
 
 export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
-  "healthzSha": "5c82530",
-  "generated_at": "2026-08-30T03:38:53.000Z",
+  "healthzSha": "626602b",
+  "generated_at": "2026-08-30T04:20:26.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T22:38:53-05:00",
-    "sourceSha": "0279cad7df",
-    "deployedSha": "5c82530",
+    "generatedAt": "2026-08-29T23:20:26-05:00",
+    "sourceSha": "d822b77d4",
+    "deployedSha": "626602b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2268,
     "failOpen": 137,
@@ -203,7 +203,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "accounting",
-      "build": "25/39",
+      "build": "39/39",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -945,7 +945,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "inventory",
-      "build": "3/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -1051,7 +1051,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "finance",
-      "build": "2/9",
+      "build": "9/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1104,7 +1104,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "reports",
-      "build": "2/8",
+      "build": "7/8",
       "cells": [
         "AUDIT",
         "FAIL",
