@@ -340,7 +340,7 @@ export function ComplianceDashboardPage() {
       </>
       )}
 
-      <Modal open={ruleCreateOpen} onClose={() => setRuleCreateOpen(false)} title="Create notification rule">
+      <Modal variant="drawer" open={ruleCreateOpen} onClose={() => setRuleCreateOpen(false)} title="Create notification rule">
         <form
           className="space-y-3"
           onSubmit={(event) => {
