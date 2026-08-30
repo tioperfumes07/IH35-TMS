@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7502 | ROOT=unit-aggregate-void-guard-froze-pre-status-filter-clause-adjacency | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7501 | PR=#18147 @ 1bf98457c9 | focused=normal+selftest+full-gate | NEXT=aggregate-shape-route-red | GO
 CODEX | WORKING | GUARD-F7501 | ROOT=session-autoload-guard-required-obsolete-gitignore-literals | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7500 | PR=#18146 @ bc7cf732ca | class=load+trailer+unit-registry | exact=9+12+30 | NEXT=session-law-autoload-red | GO
 CODEX | WORKING | GUARD-F7500 | class=column-registry | columns=load+trailer+unit | exact=9+12+30 | focused=3-normal+3-selftests | NEXT=gate+FAST-MERGE | GO
