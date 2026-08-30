@@ -1,3 +1,4 @@
+CODEX | WORKING | SYS-F7440 | ROOT=transaction-health-evidence-dropped-row-company-before-GL-and-link-reads | focused=guard-35/35+backend-tsc | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7439 | VERTICAL=accounting reverse detail route mounts | ROOT=guard-demanded-forbidden-duplicate-explicit-registrars | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7438 | VERTICAL=dispatch planner range+write integrity | ROOT=guards-froze-start-anchor-and-nullable-customer-lock | focused=2-normal+2-selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7437 | VERTICAL=safety eld_audit.list connectivity | ROOT=guard-froze-pre-authorization-company-join-shape | focused=normal+selftest-7/7-PASS | NEXT=gate+FAST-MERGE | GO

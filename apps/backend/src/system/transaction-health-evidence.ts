@@ -125,7 +125,8 @@ const GL_LINE_SELECT = `
 async function loadSourceTypeGl(
   client: TxHealthClient,
   types: TxHealthDocType[],
-  ids: string[]
+  ids: string[],
+  companyIds: string[]
 ): Promise<Map<string, GlRaw[]>> {
   const out = new Map<string, GlRaw[]>();
   if (ids.length === 0) return out;
@@ -133,12 +134,13 @@ async function loadSourceTypeGl(
     `
       SELECT p.source_transaction_id AS doc_id, ${GL_LINE_SELECT}
       FROM accounting.journal_entry_postings p
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.source_transaction_type = ANY($1::text[])
         AND p.source_transaction_id = ANY($2::text[])
+        AND p.operating_company_id = ANY($3::uuid[])
       ORDER BY p.line_sequence
     `,
-    [types, ids]
+    [types, ids, companyIds]
   );
   for (const row of res.rows) {
     const list = out.get(row.doc_id) ?? [];
@@ -148,18 +150,19 @@ async function loadSourceTypeGl(
   return out;
 }
 
-async function loadJeGl(client: TxHealthClient, ids: string[]): Promise<Map<string, GlRaw[]>> {
+async function loadJeGl(client: TxHealthClient, ids: string[], companyIds: string[]): Promise<Map<string, GlRaw[]>> {
   const out = new Map<string, GlRaw[]>();
   if (ids.length === 0) return out;
   const res = await client.query<GlRaw & { doc_id: string }>(
     `
       SELECT p.journal_entry_uuid::text AS doc_id, ${GL_LINE_SELECT}
       FROM accounting.journal_entry_postings p
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE p.journal_entry_uuid = ANY($1::uuid[])
+        AND p.operating_company_id = ANY($2::uuid[])
       ORDER BY p.line_sequence
     `,
-    [ids]
+    [ids, companyIds]
   );
   for (const row of res.rows) {
     const list = out.get(row.doc_id) ?? [];
@@ -169,19 +172,20 @@ async function loadJeGl(client: TxHealthClient, ids: string[]): Promise<Map<stri
   return out;
 }
 
-async function loadExpenseGl(client: TxHealthClient, ids: string[]): Promise<Map<string, GlRaw[]>> {
+async function loadExpenseGl(client: TxHealthClient, ids: string[], companyIds: string[]): Promise<Map<string, GlRaw[]>> {
   const out = new Map<string, GlRaw[]>();
   if (ids.length === 0) return out;
   const res = await client.query<GlRaw & { doc_id: string }>(
     `
       SELECT e.id::text AS doc_id, ${GL_LINE_SELECT}
       FROM accounting.expenses e
-      JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = e.journal_entry_id
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+      JOIN accounting.journal_entry_postings p ON p.journal_entry_uuid = e.journal_entry_id AND p.operating_company_id = e.operating_company_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE e.id = ANY($1::uuid[])
+        AND e.operating_company_id = ANY($2::uuid[])
       ORDER BY p.line_sequence
     `,
-    [ids]
+    [ids, companyIds]
   );
   for (const row of res.rows) {
     const list = out.get(row.doc_id) ?? [];
@@ -191,7 +195,7 @@ async function loadExpenseGl(client: TxHealthClient, ids: string[]): Promise<Map
   return out;
 }
 
-async function loadSettlementGl(client: TxHealthClient, ids: string[]): Promise<Map<string, GlRaw[]>> {
+async function loadSettlementGl(client: TxHealthClient, ids: string[], companyIds: string[]): Promise<Map<string, GlRaw[]>> {
   const out = new Map<string, GlRaw[]>();
   if (ids.length === 0) return out;
   const res = await client.query<GlRaw & { doc_id: string }>(
@@ -200,11 +204,13 @@ async function loadSettlementGl(client: TxHealthClient, ids: string[]): Promise<
       FROM driver_finance.driver_settlements s
       JOIN accounting.journal_entry_postings p
         ON p.source_transaction_type = 'bill' AND p.source_transaction_id = s.accounting_bill_id::text
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+       AND p.operating_company_id = s.operating_company_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE s.id = ANY($1::uuid[])
+        AND s.operating_company_id = ANY($2::uuid[])
       ORDER BY p.line_sequence
     `,
-    [ids]
+    [ids, companyIds]
   );
   for (const row of res.rows) {
     const list = out.get(row.doc_id) ?? [];
@@ -214,7 +220,7 @@ async function loadSettlementGl(client: TxHealthClient, ids: string[]): Promise<
   return out;
 }
 
-async function loadFactoringGl(client: TxHealthClient, ids: string[]): Promise<Map<string, GlRaw[]>> {
+async function loadFactoringGl(client: TxHealthClient, ids: string[], companyIds: string[]): Promise<Map<string, GlRaw[]>> {
   const out = new Map<string, GlRaw[]>();
   if (ids.length === 0) return out;
   const res = await client.query<GlRaw & { doc_id: string }>(
@@ -223,14 +229,16 @@ async function loadFactoringGl(client: TxHealthClient, ids: string[]): Promise<M
       FROM factoring.batch fb
       JOIN accounting.invoices fi
         ON fi.id = ANY (fb.invoice_ids) AND fi.operating_company_id = fb.operating_company_id
-      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id
+      JOIN accounting.factoring_advances fa ON fa.id = fi.factoring_advance_id AND fa.operating_company_id = fi.operating_company_id
       JOIN accounting.journal_entry_postings p
         ON p.source_transaction_type = 'factoring_advance' AND p.source_transaction_id = fa.id::text
-      LEFT JOIN catalogs.accounts a ON a.id = p.account_id
+       AND p.operating_company_id = fa.operating_company_id
+      LEFT JOIN catalogs.accounts a ON a.id = p.account_id AND a.operating_company_id = p.operating_company_id
       WHERE fb.id = ANY($1::uuid[])
+        AND fb.operating_company_id = ANY($2::uuid[])
       ORDER BY p.line_sequence
     `,
-    [ids]
+    [ids, companyIds]
   );
   for (const row of res.rows) {
     const list = out.get(row.doc_id) ?? [];
@@ -248,16 +256,17 @@ function byId<T extends { doc_id: string }>(rows: T[]): Map<string, T> {
 
 export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHealthRow[]): Promise<TxHealthRow[]> {
   if (rows.length === 0) return rows;
+  const companyIds = [...new Set(rows.map((row) => row.operating_company_id))];
 
   const sourceTypes: TxHealthDocType[] = ["invoice", "bill", "bill_payment", "customer_payment"];
   const sourceIds = rows.filter((r) => sourceTypes.includes(r.doc_type)).map((r) => r.id);
 
   const [sourceGl, jeGl, expenseGl, settlementGl, factoringGl] = await Promise.all([
-    loadSourceTypeGl(client, sourceTypes, sourceIds),
-    loadJeGl(client, idsOf(rows, "journal_entry")),
-    loadExpenseGl(client, idsOf(rows, "expense")),
-    loadSettlementGl(client, idsOf(rows, "settlement")),
-    loadFactoringGl(client, idsOf(rows, "factoring_batch")),
+    loadSourceTypeGl(client, sourceTypes, sourceIds, companyIds),
+    loadJeGl(client, idsOf(rows, "journal_entry"), companyIds),
+    loadExpenseGl(client, idsOf(rows, "expense"), companyIds),
+    loadSettlementGl(client, idsOf(rows, "settlement"), companyIds),
+    loadFactoringGl(client, idsOf(rows, "factoring_batch"), companyIds),
   ]);
 
   const glByDoc = new Map<string, GlRaw[]>();
@@ -284,10 +293,11 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
           `
             SELECT i.id::text AS doc_id, i.customer_id::text AS customer_id, c.customer_name
             FROM accounting.invoices i
-            LEFT JOIN mdata.customers c ON c.id = i.customer_id
+            LEFT JOIN mdata.customers c ON c.id = i.customer_id AND c.operating_company_id = i.operating_company_id
             WHERE i.id = ANY($1::uuid[])
+              AND i.operating_company_id = ANY($2::uuid[])
           `,
-          [invoiceIds]
+          [invoiceIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     billIds.length
@@ -299,9 +309,11 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
             FROM accounting.bills b
             LEFT JOIN mdata.vendors v
               ON v.id::text = COALESCE(b.mdata_vendor_id::text, b.vendor_uuid::text)
+             AND v.operating_company_id = b.operating_company_id
             WHERE b.id = ANY($1::uuid[])
+              AND b.operating_company_id = ANY($2::uuid[])
           `,
-          [billIds]
+          [billIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     billPaymentIds.length
@@ -310,10 +322,11 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
             SELECT bp.id::text AS doc_id, bp.bill_id::text AS bill_id,
                    COALESCE(b.display_id, b.id::text) AS bill_label
             FROM accounting.bill_payments bp
-            LEFT JOIN accounting.bills b ON b.id = bp.bill_id
+            LEFT JOIN accounting.bills b ON b.id = bp.bill_id AND b.operating_company_id = bp.operating_company_id
             WHERE bp.id = ANY($1::uuid[])
+              AND bp.operating_company_id = ANY($2::uuid[])
           `,
-          [billPaymentIds]
+          [billPaymentIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     paymentIds.length
@@ -321,10 +334,11 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
           `
             SELECT py.id::text AS doc_id, py.customer_id::text AS customer_id, c.customer_name
             FROM accounting.payments py
-            LEFT JOIN mdata.customers c ON c.id = py.customer_id
+            LEFT JOIN mdata.customers c ON c.id = py.customer_id AND c.operating_company_id = py.operating_company_id
             WHERE py.id = ANY($1::uuid[])
+              AND py.operating_company_id = ANY($2::uuid[])
           `,
-          [paymentIds]
+          [paymentIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     expenseIds.length
@@ -346,12 +360,25 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
                    e.load_id::text AS load_id,
                    l.load_number
             FROM accounting.expenses e
-            LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid
-            LEFT JOIN mdata.drivers d ON d.id = e.driver_uuid
-            LEFT JOIN mdata.loads l ON l.id = e.load_id
+            LEFT JOIN mdata.vendors v ON v.id = e.vendor_uuid AND v.operating_company_id = e.operating_company_id
+            LEFT JOIN mdata.drivers d
+              ON d.id = e.driver_uuid
+             AND (
+               d.operating_company_id = e.operating_company_id
+               OR EXISTS (
+                 SELECT 1
+                 FROM mdata.driver_company_authorizations txh_expense_dca
+                 WHERE txh_expense_dca.driver_id = d.id
+                   AND txh_expense_dca.company_id = e.operating_company_id
+                   AND txh_expense_dca.is_authorized = true
+                   AND txh_expense_dca.deactivated_at IS NULL
+               )
+             )
+            LEFT JOIN mdata.loads l ON l.id = e.load_id AND l.operating_company_id = e.operating_company_id
             WHERE e.id = ANY($1::uuid[])
+              AND e.operating_company_id = ANY($2::uuid[])
           `,
-          [expenseIds]
+          [expenseIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     factoringIds.length
@@ -359,10 +386,11 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
           `
             SELECT fb.id::text AS doc_id, fb.factor_id::text AS vendor_id, v.vendor_name
             FROM factoring.batch fb
-            LEFT JOIN mdata.vendors v ON v.id = fb.factor_id
+            LEFT JOIN mdata.vendors v ON v.id = fb.factor_id AND v.operating_company_id = fb.operating_company_id
             WHERE fb.id = ANY($1::uuid[])
+              AND fb.operating_company_id = ANY($2::uuid[])
           `,
-          [factoringIds]
+          [factoringIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
     settlementIds.length
@@ -380,11 +408,24 @@ export async function enrichTxHealthEvidence(client: TxHealthClient, rows: TxHea
                    s.accounting_bill_id::text AS bill_id,
                    COALESCE(b.display_id, b.id::text) AS bill_label
             FROM driver_finance.driver_settlements s
-            LEFT JOIN mdata.drivers d ON d.id = s.driver_id
-            LEFT JOIN accounting.bills b ON b.id = s.accounting_bill_id
+            LEFT JOIN mdata.drivers d
+              ON d.id = s.driver_id
+             AND (
+               d.operating_company_id = s.operating_company_id
+               OR EXISTS (
+                 SELECT 1
+                 FROM mdata.driver_company_authorizations txh_settlement_dca
+                 WHERE txh_settlement_dca.driver_id = d.id
+                   AND txh_settlement_dca.company_id = s.operating_company_id
+                   AND txh_settlement_dca.is_authorized = true
+                   AND txh_settlement_dca.deactivated_at IS NULL
+               )
+             )
+            LEFT JOIN accounting.bills b ON b.id = s.accounting_bill_id AND b.operating_company_id = s.operating_company_id
             WHERE s.id = ANY($1::uuid[])
+              AND s.operating_company_id = ANY($2::uuid[])
           `,
-          [settlementIds]
+          [settlementIds, companyIds]
         )
       : Promise.resolve({ rows: [] }),
   ]);
