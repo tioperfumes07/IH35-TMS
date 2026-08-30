@@ -108,7 +108,7 @@ function LayoverSummaryCard({ driverId, companyId }: { driverId: string; company
         />
       </div>
       {isError ? (
-        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+        <div className="bg-red-50 p-2 text-xs text-red-700">
           Failed to load driver layovers.
           <button type="button" className="ml-2 underline" onClick={() => void refetch()}>Retry</button>
         </div>

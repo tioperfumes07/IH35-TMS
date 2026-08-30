@@ -311,7 +311,7 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
           </p>
           {graphQuery.isLoading ? <p>Loading reverse links…</p> : null}
           {graphQuery.isError ? (
-            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+            <div className="bg-red-50 p-2 text-sm text-red-700">
               Failed to load claim graph.
             </div>
           ) : null}
