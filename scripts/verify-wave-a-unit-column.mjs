@@ -13,7 +13,8 @@ const checks = [
   ["unit-driver history drill", "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", /<EntityLink(?:OrTombstone)?[\s\S]{0,40}?kind="unit"[\s\S]{0,80}?id=\{row\.unit_id\}/],
   ["border crossing unit FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /unit_id:\s*input\.form\.unitId/],
   ["road-service unit FK", "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id:\s*unitId/],
-  ["insurance policy unit FKs", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnitIds/],
+  ["insurance policy unit picker", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /<EntityPicker[\s\S]{0,220}?kind="unit"/],
+  ["insurance policy unit FKs", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnits\.map\(\(unit\)\s*=>\s*unit\.value\)/],
   ["safety event unit FK", "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", /subject_unit_id:\s*input\.draft\.subject_unit_id\.trim\(\)\s*\|\|\s*undefined/],
 ];
 const files = [...new Set(checks.map(([, file]) => file))];

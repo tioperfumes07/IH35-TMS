@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7499 | column=unit | Built=unchanged | scope=P10-51→ALL-185/20-modules | focused=exact9/9+all-module-selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7498 | PR=#18144 @ e877eeca73 | focused=normal+selftest7/7+full-gate | NEXT=unit-column-wave-red | GO
 CODEX | WORKING | GUARD-F7498 | ROOT=policy-unit-search-guard-froze-retired-wizard-local-query-after-shared-EntityPicker-adoption | focused=normal+selftest7/7+sibling-guards | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | INS-F7497 | PR=#18143 @ 9cfe45732b | focused=roundtrip+selftest28/28+insurance-guards+Vitest6/6 | NEXT=verify-policy-create-unit-server-search | GO
 CODEX | WORKING | INS-F7497 | ROOT=policy-unit-picker-retained-transient-state-that-never-reached-submit | focused=roundtrip+selftest+3-insurance-guards | NEXT=gate+FAST-MERGE | GO

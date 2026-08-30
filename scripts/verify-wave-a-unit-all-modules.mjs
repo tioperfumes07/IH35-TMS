@@ -26,7 +26,7 @@ const contracts = [
   ["apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /<EntityLink kind="unit" id=\{r\.unit_id\}/],
   ["apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", /<EntityLink kind="unit" id=\{row\.unit_id\}/],
   ["apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id:\s*unitId/],
-  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnitIds/],
+  ["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnits\.map\(\(unit\)\s*=>\s*unit\.value\)/],
 ];
 const composed = ["verify-wave-a-unit-column.mjs", "verify-bookload-equipment-entitypicker-search.mjs", "verify-assign-truck-unit-entity-picker.mjs", "verify-task-link-contract.mjs", "verify-docs-file-link-entity-contract.mjs", "verify-legal-reverse-drill-fleet-insurance.mjs"];
 export function auditUnitColumn(sources, leaves) {
@@ -46,7 +46,10 @@ if (process.argv.includes("--selftest")) {
   const mutated = structuredClone(sources);
   mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"] = mutated.files["apps/frontend/src/components/home/DispatcherActiveLoadsPanel.tsx"].replace('kind="unit"', 'kind="driver"');
   if (!auditUnitColumn(mutated, leaves).some((failure) => failure.includes("DispatcherActiveLoadsPanel"))) { console.error("verify-wave-a-unit-all-modules SELFTEST FAIL — all-module mutation escaped"); process.exit(1); }
-  console.log("verify-wave-a-unit-all-modules SELFTEST PASS — P10 and all-module mutations detected"); process.exit(0);
+  const policyMutated = structuredClone(sources);
+  policyMutated.files["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx"] = policyMutated.files["apps/frontend/src/components/insurance/PolicyCreateWizard.tsx"].replace("unit_ids: selectedUnits.map((unit) => unit.value)", "unit_ids: []");
+  if (!auditUnitColumn(policyMutated, leaves).some((failure) => failure.includes("PolicyCreateWizard"))) { console.error("verify-wave-a-unit-all-modules SELFTEST FAIL — insurance unit payload mutation escaped"); process.exit(1); }
+  console.log("verify-wave-a-unit-all-modules SELFTEST PASS — P10, all-module, and insurance payload mutations detected"); process.exit(0);
 }
 const failures = auditUnitColumn(sources, leaves);
 for (const guard of composed) { if (!fs.existsSync(path.join(ROOT, "scripts", guard))) continue; const result = spawnSync(process.execPath, [path.join(ROOT, "scripts", guard)], { encoding: "utf8" }); if (result.status !== 0) failures.push(`${guard}: composed guard failed\n${result.stdout}${result.stderr}`); }
