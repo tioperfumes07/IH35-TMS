@@ -27,8 +27,9 @@ function failures(s = files) { const found = [
   ["queue preserves profile target", s.queue.includes('searchParams.get("driver_id")') && s.queue.includes('searchParams.get("unit_id")') && s.queue.includes("driver_id: effectiveDriverId") && s.queue.includes("unit_id: effectiveUnitId")],
   ["queue EntityPicker filters", s.queue.includes('dataTestId="fuel-card-overage-filter-driver"') && s.queue.includes('dataTestId="fuel-card-overage-filter-unit"') && s.queue.includes("allowCreate={false}")],
   ["optional filters omit undefined UUID query values", s.queue.includes("for (const [key, value] of Object.entries(filters))") && s.queue.includes("if (value) params.set(key, value)") && !s.queue.includes("...filters,")],
-  ["reverse list cap is disclosed", s.reverse.includes("const visibleEvents = events.slice(0, 5)") && s.reverse.includes("const totalCount = query.data?.total_count ?? events.length") && s.reverse.includes("totalCount > visibleEvents.length") && s.reverse.includes("Showing {visibleEvents.length} of {totalCount}. Open queue to view all.")],
+  ["reverse list cap is disclosed", s.reverse.includes("const visibleEvents = events.slice(0, 5)") && s.reverse.includes("const totalCount = query.isError ? 0 : (query.data?.total_count ?? events.length)") && s.reverse.includes("totalCount > visibleEvents.length") && s.reverse.includes("Showing {visibleEvents.length} of {totalCount}. Open queue to view all.")],
   ["reverse GET failure has exact retry", s.reverse.includes("Couldn't load fuel card overages") && s.reverse.includes("onRetry={() => void query.refetch()}")],
+  ["reverse failure suppresses stale cached rows and count", s.reverse.includes("const events = query.isError ? [] : (query.data?.events ?? [])") && s.reverse.includes("const totalCount = query.isError ? 0 : (query.data?.total_count ?? events.length)")],
 ].filter(([, ok]) => !ok).map(([name]) => name);
   let matrix;
   try { matrix = JSON.parse(s.matrix); } catch (error) { found.push(`Fuel matrix parse: ${error.message}`); }
@@ -52,6 +53,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, reverse: files.reverse.replace("totalCount > visibleEvents.length", "false") }).includes("reverse list cap is disclosed"),
     failures({ ...files, reverse: files.reverse.replace("onRetry={() => void query.refetch()}", "onRetry={undefined}") }).includes("reverse GET failure has exact retry"),
     failures({ ...files, reverse: files.reverse.replace("Couldn't load fuel card overages", "Fuel card overages unavailable") }).includes("reverse GET failure has exact retry"),
+    failures({ ...files, reverse: files.reverse.replace("query.isError ? []", "false ? []") }).includes("reverse failure suppresses stale cached rows and count"),
     failures({ ...files, matrix: mutateCardLeaf(files.matrix, '"id": "card_overage"', '"id": "card_overage.broken"') }).includes("card_overage must require reverse_link"),
     failures({ ...files, matrix: mutateCardLeaf(files.matrix, '"reverse_link"', '"reverse_link_broken"') }).includes("card_overage must require reverse_link"),
     failures({ ...files, matrix: mutateCardLeaf(files.matrix, '"route_hint": "/fuel/card-overage"', '"route_hint": "/broken"') }).includes("card_overage must name mounted route /fuel/card-overage"),
@@ -59,7 +61,7 @@ if (process.argv.includes("--selftest")) {
     failures({ ...files, feed: JSON.stringify({ entries: [{ guard: "scripts/verify-fuel-card-overage-profile-reverse.mjs" }] }) }).includes("manual feed duplicates exact ownership"),
   ];
   if (checks.some((ok) => !ok)) { console.error(`verify-fuel-card-overage-profile-reverse selftest FAIL — mutations ${checks.map((ok, i) => ok ? null : i + 1).filter(Boolean).join(", ")} stayed green`); process.exit(1); }
-  console.log("verify-fuel-card-overage-profile-reverse selftest PASS — 15/15 runtime/evidence mutations red"); process.exit(0);
+  console.log("verify-fuel-card-overage-profile-reverse selftest PASS — 16/16 runtime/evidence mutations red"); process.exit(0);
 }
 const missing = failures();
 if (missing.length) { console.error(`verify-fuel-card-overage-profile-reverse FAIL — ${missing.join(", ")}`); process.exit(1); }

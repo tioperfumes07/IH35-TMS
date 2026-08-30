@@ -54,7 +54,10 @@ export function FuelTransactionsReverseSection({
     queryFn: () => getFuelTransactions(operatingCompanyId, { ...filter }),
     enabled: Boolean(operatingCompanyId) && Boolean(filterValue),
   });
-  const rows = fuelQ.data?.transactions ?? [];
+  // React Query intentionally retains the last successful payload during a
+  // failed refetch. Never render that stale payload beside the failure state:
+  // operators must not mistake cached linkage for a current successful read.
+  const rows = fuelQ.isError ? [] : (fuelQ.data?.transactions ?? []);
 
   return (
     <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>

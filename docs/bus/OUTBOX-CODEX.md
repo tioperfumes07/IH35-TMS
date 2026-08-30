@@ -2504,3 +2504,4 @@ Codex | SHIPPED | GUARD-F7434 | PR=#18070 @ 1e8cc734d3 | NEXT=GUARD-F7435 POD/BO
 Codex | WORKING | GUARD-F7435 | hop.pod_bol canonical three-store connectivity guard | NEXT=gate→FAST-MERGE
 Codex | SHIPPED | GUARD-F7435 | PR=#18071 @ 397df4a71a | NEXT=GUARD-F7436 vendor roster canonical client
 Codex | WORKING | GUARD-F7436 | vendor roster exact company scope via listAllVendors | NEXT=focused+selftest
+CODEX | WORKING | FUEL-F7444 | vertical=fuel reverse-link error honesty | focused=2 guards normal+selftest+frontend-tsc exit0 | NEXT=preflight→FAST-MERGE | GO

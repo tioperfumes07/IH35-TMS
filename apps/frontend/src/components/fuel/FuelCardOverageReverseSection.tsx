@@ -14,9 +14,12 @@ export function FuelCardOverageReverseSection({ operatingCompanyId, filter }: Pr
     queryFn: () => listOverageEvents(operatingCompanyId, "all", filter),
     enabled: Boolean(operatingCompanyId),
   });
-  const events = query.data?.events ?? [];
+  // A failed refetch can retain the last successful React Query payload.
+  // Suppress it while the exact failure/retry state is active so reverse
+  // linkage never presents stale overage evidence as current.
+  const events = query.isError ? [] : (query.data?.events ?? []);
   const visibleEvents = events.slice(0, 5);
-  const totalCount = query.data?.total_count ?? events.length;
+  const totalCount = query.isError ? 0 : (query.data?.total_count ?? events.length);
 
   return (
     <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="fuel-card-overage-reverse">
