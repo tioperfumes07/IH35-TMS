@@ -22,7 +22,7 @@ function wrap(ui: ReactNode) {
 
 describe("AtRiskQueuePage", () => {
   beforeEach(() => {
-    vi.spyOn(dispatchApi, "listAtRiskDispatchLoads").mockResolvedValue({
+    vi.spyOn(dispatchApi, "listAtRiskOrLateDispatchLoads").mockResolvedValue({
       loads: [
         {
           id: "load-1",
@@ -38,8 +38,14 @@ describe("AtRiskQueuePage", () => {
           next_stop_scheduled_at: "2026-07-20T18:00:00.000Z",
           delivery_city: "Houston",
           delivery_state: "TX",
+          is_at_risk: true,
+          is_late: false,
         },
       ],
+      count: 1,
+      at_risk_count: 1,
+      late_count: 0,
+      grace_minutes: 30,
     });
   });
 
@@ -53,7 +59,7 @@ describe("AtRiskQueuePage", () => {
   });
 
   it("renders unavailable related identities as non-interactive tombstones", async () => {
-    vi.spyOn(dispatchApi, "listAtRiskDispatchLoads").mockResolvedValue({
+    vi.spyOn(dispatchApi, "listAtRiskOrLateDispatchLoads").mockResolvedValue({
       loads: [
         {
           id: "load-orphan",
@@ -69,8 +75,14 @@ describe("AtRiskQueuePage", () => {
           next_stop_scheduled_at: null,
           delivery_city: null,
           delivery_state: null,
+          is_at_risk: false,
+          is_late: true,
         },
       ],
+      count: 1,
+      at_risk_count: 0,
+      late_count: 1,
+      grace_minutes: 30,
     });
 
     wrap(<AtRiskQueuePage />);
@@ -84,18 +96,18 @@ describe("AtRiskQueuePage", () => {
   it("surfaces query failures via ListErrorState (not false-empty)", async () => {
     const user = userEvent.setup();
     const listSpy = vi
-      .spyOn(dispatchApi, "listAtRiskDispatchLoads")
+      .spyOn(dispatchApi, "listAtRiskOrLateDispatchLoads")
       .mockRejectedValueOnce(new Error("network down"))
-      .mockResolvedValueOnce({ loads: [] });
+      .mockResolvedValueOnce({ loads: [], count: 0, at_risk_count: 0, late_count: 0, grace_minutes: 30 });
 
     wrap(<AtRiskQueuePage />);
     expect(await screen.findByText("Couldn't load at-risk queue")).toBeTruthy();
     expect(screen.getByText(/network down/)).toBeTruthy();
-    expect(screen.queryByText("No at-risk loads right now.")).toBeNull();
+    expect(screen.queryByText("No at-risk or late loads right now.")).toBeNull();
 
     const callsBeforeRetry = listSpy.mock.calls.length;
     await user.click(screen.getByRole("button", { name: /Retry/i }));
-    expect(await screen.findByText("No at-risk loads right now.")).toBeTruthy();
+    expect(await screen.findByText("No at-risk or late loads right now.")).toBeTruthy();
     expect(listSpy.mock.calls.length).toBeGreaterThan(callsBeforeRetry);
   });
 });
