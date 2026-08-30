@@ -230,6 +230,12 @@ export async function getFactorForCustomer(
         AND a.customer_id = $2::uuid
         AND a.effective_from <= $3::date
         AND (a.effective_to IS NULL OR a.effective_to > $3::date)
+        -- FACT-RESOLVER-03 — a voided assignment or a deactivated/inactive factor still resolved
+        -- and still priced money: this WHERE clause checked tenant/customer/dates only, never the
+        -- assignment's own voided_at, the factor's own voided_at, or the factor's active flag.
+        AND a.voided_at IS NULL
+        AND f.voided_at IS NULL
+        AND f.active IS TRUE
       ORDER BY a.effective_from DESC, a.created_at DESC
       LIMIT 1
     `,
