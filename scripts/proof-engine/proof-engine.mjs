@@ -47,12 +47,23 @@ export async function replay(proof, ctx) {
     ({ ok, observed, err: err || null, kind: proof.kind, ms: Date.now() - t0 });
   try {
     if (proof.kind === "http") {
-      const r = await ctx.fetch(ctx.base + proof.path, { method: proof.method || "GET" });
-      if (proof.expect.status !== undefined && r.status !== proof.expect.status)
+      const url = proof.url || `${ctx.base || ""}${proof.path || ""}`;
+      const r = await ctx.fetch(url, { method: proof.method || "GET" });
+      const expect = proof.expect || {};
+      // CERT-01 B5/B6: 404/0 = unmounted FAIL; 200/301/302/401/403 = mounted.
+      if (expect.mount === true) {
+        const n = Number(r.status);
+        if (!Number.isFinite(n) || n === 0 || n === 404)
+          return done(false, `HTTP ${r.status}`);
+        return done(true, `HTTP ${r.status}`);
+      }
+      if (Array.isArray(expect.statusIn) && !expect.statusIn.includes(r.status))
         return done(false, `HTTP ${r.status}`);
-      if (proof.expect.json_path) {
-        const v = jpath(await r.json(), proof.expect.json_path);
-        return done(cmp(v, proof.expect.op, proof.expect.value), v);
+      if (expect.status !== undefined && r.status !== expect.status)
+        return done(false, `HTTP ${r.status}`);
+      if (expect.json_path) {
+        const v = jpath(await r.json(), expect.json_path);
+        return done(cmp(v, expect.op, expect.value), v);
       }
       return done(true, `HTTP ${r.status}`);
     }
