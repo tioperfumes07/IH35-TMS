@@ -78,6 +78,12 @@ function failures(sources) {
     if (!/computeModuleMatrixRequiredOnly/.test(wrapper)) {
       out.push("module-matrix.service: cold miss must return computeModuleMatrixRequiredOnly — never await the ledger projection");
     }
+    if (!/kickMatrixComputeOffThread\(\);\s*\n\s*return computeModuleMatrixRequiredOnly/.test(wrapper)) {
+      out.push("module-matrix.service: cold miss must kick the worker before returning Required-seed (otherwise module last-good never writes)");
+    }
+    if (!/function siblingModuleLastGoodKey\(/.test(svc)) {
+      out.push("module-matrix.service: readModuleLastGood must fall back neon_live ↔ committed_stale — worker persists unauth key, SPA reads neon_live");
+    }
   }
 
   // MATRIX-HANDOFF-02: fire-and-forget raced readModuleLastGood → HTTP stayed REQUIRED-SEED.
@@ -153,6 +159,20 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       name: "system last-good persist is fire-and-forget again",
       file: SVC,
       mutate: (text) => text.replace("await persistSystemLastGood(payload);", "void persistSystemLastGood(payload);"),
+    },
+    {
+      name: "neon_live last-good does not fall back to worker committed_stale key",
+      file: SVC,
+      mutate: (text) => text.replace("function siblingModuleLastGoodKey", "function siblingModuleLastGoodKeyREMOVED"),
+    },
+    {
+      name: "cold miss returns seed without kicking worker",
+      file: SVC,
+      mutate: (text) =>
+        text.replace(
+          "  kickMatrixComputeOffThread();\n  return computeModuleMatrixRequiredOnly(moduleId);\n",
+          "  return computeModuleMatrixRequiredOnly(moduleId);\n",
+        ),
     },
     {
       name: "route drops userUuid on scope=module",

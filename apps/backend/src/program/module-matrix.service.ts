@@ -1341,22 +1341,53 @@ function moduleLastGoodPath(cacheKey: string): string {
   return path.join(MODULE_LAST_GOOD_DIR, `ih35-module-matrix-last-${cacheKey}.json`);
 }
 
-async function readModuleLastGood(cacheKey: string): Promise<ModuleMatrixPayload | null> {
+function parseModuleLastGoodRaw(raw: string): ModuleMatrixPayload | null {
   try {
-    const raw = await readFile(moduleLastGoodPath(cacheKey), "utf8");
     const parsed = JSON.parse(raw) as ModuleMatrixPayload;
     if (parsed && Array.isArray(parsed.leaves) && Array.isArray(parsed.columns)) {
       return parsed;
     }
   } catch {
-    /* corrupt/missing last-good is not a 503 */
+    /* corrupt last-good is not a 503 */
   }
   return null;
 }
 
+function siblingModuleLastGoodKey(cacheKey: string): string | null {
+  const colon = cacheKey.lastIndexOf(":");
+  if (colon <= 0) return null;
+  const moduleId = cacheKey.slice(0, colon);
+  const scope = cacheKey.slice(colon + 1);
+  if (scope === "neon_live") return `${moduleId}:committed_stale`;
+  if (scope === "committed_stale") return `${moduleId}:neon_live`;
+  return null;
+}
+
+async function readModuleLastGood(cacheKey: string): Promise<ModuleMatrixPayload | null> {
+  const tryKey = async (key: string): Promise<ModuleMatrixPayload | null> => {
+    try {
+      const raw = await readFile(moduleLastGoodPath(key), "utf8");
+      return parseModuleLastGoodRaw(raw);
+    } catch {
+      return null;
+    }
+  };
+  // MATRIX-HANDOFF-02b: worker runs computeSystemModuleMatrix() with no userUuid, so it
+  // persists `${module}:committed_stale`. Authed SPA GETs use neon_live — same race as
+  // void persist, different key. Fall back to the sibling file (system last-good is unscoped).
+  const primary = await tryKey(cacheKey);
+  if (primary) return primary;
+  const sibling = siblingModuleLastGoodKey(cacheKey);
+  if (!sibling) return null;
+  return tryKey(sibling);
+}
+
 async function persistModuleLastGood(cacheKey: string, payload: ModuleMatrixPayload): Promise<void> {
+  const keys = new Set<string>([cacheKey]);
+  const sibling = siblingModuleLastGoodKey(cacheKey);
+  if (sibling) keys.add(sibling);
   try {
-    await writeFile(moduleLastGoodPath(cacheKey), JSON.stringify(payload));
+    await Promise.all([...keys].map((key) => writeFile(moduleLastGoodPath(key), JSON.stringify(payload))));
   } catch {
     /* Render ephemeral FS — in-memory cache still holds */
   }
@@ -1483,6 +1514,7 @@ export async function buildModuleMatrix(moduleId: string, userUuid?: string): Pr
     return lastGood;
   }
 
+  kickMatrixComputeOffThread();
   return computeModuleMatrixRequiredOnly(moduleId);
 }
 
