@@ -61,6 +61,7 @@ import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlerts
 import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 import { FuelCardOverageReverseSection } from "../../components/fuel/FuelCardOverageReverseSection";
 import { CashForecastReverseSection } from "../../components/cash-flow/CashForecastReverseSection";
+import { UnitDriverHistoryStrip } from "../units/UnitDriverHistoryStrip";
 
 export type UnitProfileAggregate = {
   unit: Record<string, unknown>;
@@ -341,6 +342,7 @@ export function VehicleProfilePage() {
               currentDriver={profile.current_driver}
               onQuickAssign={() => setQuickAssignOpen(true)}
             />
+            <UnitDriverHistoryStrip operatingCompanyId={companyId} unitId={id} />
           </div>
           <div data-testid="vp-section-4-load">
             <CurrentLoadSection currentLoad={profile.current_load} unitId={id} unitNumber={unitNumber} />

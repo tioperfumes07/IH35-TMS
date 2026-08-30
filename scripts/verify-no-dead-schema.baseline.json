@@ -3008,18 +3008,6 @@
       "migration": "202606111055_w1b_tasks_module.sql"
     },
     {
-      "object": "telematics.vehicle_driver_pairing_overlap_flags.detected_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606080217_vehicle_driver_pairing_audit.sql"
-    },
-    {
-      "object": "telematics.vehicle_driver_pairing_overlap_flags.resolved_at",
-      "kind": "COLUMN",
-      "verdict": "weak",
-      "migration": "202606080217_vehicle_driver_pairing_audit.sql"
-    },
-    {
       "object": "usmca_ops.activation_audit.checklist_snapshot",
       "kind": "COLUMN",
       "verdict": "none",
