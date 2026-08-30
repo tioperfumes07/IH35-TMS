@@ -2415,3 +2415,5 @@ Codex | WORKING | DOCS-F7393 | frontend FileEntityType=backend validated runtime
 Codex | SHIPPED | DSP-F7392 | PR=#17953 @ 43f39a66a3 | gate=exit0 | NEXT=DOCS-F7393 | GO
 Codex | WORKING | GUARD-F7395 | driver inventory=140 P10 / 210 all / 23 modules | planted leaf removal now rejected | NEXT=FAST-MERGE then next census failure | GO
 Codex | SHIPPED | DOCS-F7393 | PR=#17958 @ 4235eaa33c | gate=exit0 | NEXT=GUARD-F7395 | GO
+Codex | WORKING | GUARD-F7396 | fleet owner-or-lessee shared SQL fragment now guarded | selftest=planted owner-only mutation | NEXT=FAST-MERGE then next domain census red | GO
+Codex | SHIPPED | GUARD-F7395 | PR=#17961 @ 97cfb60714 | gate=exit0 | NEXT=GUARD-F7396 | GO
