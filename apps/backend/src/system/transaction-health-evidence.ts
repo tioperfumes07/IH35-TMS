@@ -11,7 +11,7 @@ import type {
   TxHealthLinkGroup,
   TxHealthLinkState,
   TxHealthRow,
-} from "./transaction-health.service.js";
+} from "./transaction-health.types.js";
 
 /** Document types that must never carry journal_entry_postings. Empty by design today. */
 const TYPES_WITHOUT_GL = new Set<TxHealthDocType>();
