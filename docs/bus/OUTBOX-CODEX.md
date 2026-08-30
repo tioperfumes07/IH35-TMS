@@ -2478,3 +2478,5 @@ CODEX | WORKING | GUARD-F7403 | temp-cover paginated driver-filter guard drift |
 CODEX | SHIPPED | DSP-F7402 | PR=#17976 @ 626602bb3c | gate=exit0 | NEXT=GUARD-F7403 | GO
 CODEX | WORKING | GUARD-F7404 | human-label guard accepts canonical tombstone resolver | NEXT=focused proof+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7403 | PR=#17978 @ 6bfdd74b19 | gate=exit0 | NEXT=GUARD-F7404 | GO
+CODEX | WORKING | FLT-F7425 | ROOT=unit-aggregate-telemetry-bare-id-ownership-rereads-after-authorization | focused=snapshot+selftest+backend-tsc | census=27→26 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRV-F7424 | PR=#18060 @ aeddb5cf16 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=FLT-F7425 | GO

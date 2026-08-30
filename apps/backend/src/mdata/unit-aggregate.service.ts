@@ -231,6 +231,11 @@ export async function buildUnitAggregate(
   );
   const unit = unitRes.rows[0];
   if (!unit) return null;
+  const unitCompanyScope = [
+    operatingCompanyId,
+    unit.owner_company_id ?? null,
+    unit.currently_leased_to_company_id ?? null,
+  ];
 
   const platesRes = await client.query(
     `
@@ -255,15 +260,11 @@ export async function buildUnitAggregate(
             AND sv.samsara_vehicle_id = BTRIM($3::text)
           )
         )
-        AND sv.operating_company_id IN (
-          $2::uuid,
-          (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
-          (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
-        )
+        AND sv.operating_company_id IN ($2::uuid, $4::uuid, $5::uuid)
       ORDER BY sv.last_seen_at DESC NULLS LAST
       LIMIT 1
     `,
-    [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null]
+    [unitId, operatingCompanyId, unit.samsara_vehicle_id ?? null, ...unitCompanyScope.slice(1)]
   );
   const samsaraRow = samsaraRes.rows[0];
 
@@ -272,15 +273,11 @@ export async function buildUnitAggregate(
       SELECT odometer_mi
       FROM telematics.vehicle_locations
       WHERE unit_id = $1::uuid
-        AND operating_company_id IN (
-          $2::uuid,
-          (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
-          (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
-        )
+        AND operating_company_id IN ($2::uuid, $3::uuid, $4::uuid)
       ORDER BY captured_at DESC NULLS LAST
       LIMIT 1
     `,
-    [unitId, operatingCompanyId]
+    [unitId, ...unitCompanyScope]
   );
   const locParsed = parseSamsaraVehiclePayload(locPayloadRes.rows[0] ?? null);
   const inventoryParsed = parseSamsaraVehiclePayload(samsaraRow?.raw_payload ?? null);
@@ -307,11 +304,7 @@ export async function buildUnitAggregate(
           'telematics_latest'::text AS source
         FROM telematics.vehicle_latest_position
         WHERE unit_id = $1::uuid
-          AND operating_company_id IN (
-            $2::uuid,
-            (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
-            (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
-          )
+          AND operating_company_id IN ($2::uuid, $3::uuid, $4::uuid)
         UNION ALL
         SELECT
           lat,
@@ -326,17 +319,13 @@ export async function buildUnitAggregate(
           'samsara_positions'::text AS source
         FROM integrations.samsara_vehicle_positions
         WHERE unit_uuid = $1::uuid
-          AND operating_company_id IN (
-            $2::uuid,
-            (SELECT u.owner_company_id FROM mdata.units u WHERE u.id = $1::uuid),
-            (SELECT u.currently_leased_to_company_id FROM mdata.units u WHERE u.id = $1::uuid)
-          )
+          AND operating_company_id IN ($2::uuid, $3::uuid, $4::uuid)
       ) positions
       WHERE lat IS NOT NULL AND lng IS NOT NULL
       ORDER BY captured_at DESC NULLS LAST
       LIMIT 1
     `,
-    [unitId, operatingCompanyId]
+    [unitId, ...unitCompanyScope]
   );
   const posRow = posRes.rows[0] ?? null;
   const latest_position = posRow
