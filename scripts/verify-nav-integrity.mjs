@@ -34,6 +34,22 @@ function extractQuotedPaths(source, keys) {
 }
 
 /**
+ * Same as extractQuotedPaths, but skips any single-line tab object literal carrying
+ * `navHidden: true` — that flag means the tab is deliberately excluded from being rendered as a
+ * clickable NavLink (its route is a parameterized prefix with no bare-path entry point; see
+ * SafetyTab.navHidden in SAFETY_TABS_CONFIG.ts). Its route is real for path-matching purposes but
+ * asserting it as a standalone reachable subnav destination would be asserting a bug.
+ */
+function extractQuotedPathsSkippingNavHidden(source, keys) {
+  const out = [];
+  for (const line of source.split("\n")) {
+    if (/navHidden:\s*true/.test(line)) continue;
+    out.push(...extractQuotedPaths(line, keys));
+  }
+  return out;
+}
+
+/**
  * JSX-attribute form: `to="/program/x"` / `href="/program/x"`.
  * extractQuotedPaths above only matches the object form (`href: "/program/x"`), which is why a
  * module whose nav is rendered as <Link to="..."> tabs — like the Program tab row — looked like it
@@ -198,7 +214,7 @@ const subnavPaths = new Set([
   ...extractQuotedPaths(read("apps/frontend/src/pages/maintenance/MaintenanceHome.tsx"), ["path"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/lists/ListsSubNav.tsx"), ["href"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/reports/ReportsSubNav.tsx"), ["href"]),
-  ...extractQuotedPaths(read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"), ["route"]),
+  ...extractQuotedPathsSkippingNavHidden(read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"), ["route"]),
   ...extractQuotedPaths(read("apps/frontend/src/components/layout/sidebar-config.ts"), ["to"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/program/ProgramBoardPage.tsx"), ["href"]),
   // PROG-NAV-01: LegacyAuditScoreboardPage keeps archive tab links (tracker/modules/…).

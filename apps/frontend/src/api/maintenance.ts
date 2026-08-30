@@ -421,6 +421,9 @@ export type MaintKpiSummary = {
     cost_per_truck: MaintKpiSparkPoint[];
     pm_compliance: MaintKpiSparkPoint[];
   };
+  /** True only when maintenance.work_orders itself is not yet present (fresh/unmigrated DB) --
+   * the zeroed fields above are placeholders, not a real zero-downtime/100%-compliant fleet. */
+  work_orders_unavailable?: boolean;
 };
 
 export type MaintKpiDrilldownKind = "downtime" | "mtbf" | "cpm" | "cost_per_truck";

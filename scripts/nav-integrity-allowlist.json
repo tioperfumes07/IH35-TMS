@@ -621,6 +621,18 @@
     {
       "path": "/settings/company",
       "reason": "LV-SETTINGS-COMPANY-REDIRECT (manifest.tsx) — pure legacy-URL redirect to /system, not a real page; the subnav lives on the real destination /system, not on the redirect stub itself"
+    },
+    {
+      "path": "/api/*",
+      "reason": "ApiDocumentPassthrough catch-all for API-served document links (manifest.tsx:4558) — not a page, never a nav target"
+    },
+    {
+      "path": "/driver-finance",
+      "reason": "Bare parent redirects (PreserveSearchNavigate) to the real destination /driver-finance/settlements, which sidebar-config.ts already links to directly; the redirect stub itself is not a nav target"
+    },
+    {
+      "path": "/finance/cash-flow",
+      "reason": "Legacy-URL redirect (Navigate replace) to the canonical /cash-flow, which sidebar-config.ts already links to directly; the redirect stub itself is not a nav target"
     }
   ]
 }

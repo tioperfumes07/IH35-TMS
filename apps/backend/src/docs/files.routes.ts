@@ -168,15 +168,15 @@ async function ensureLinkEntityExists(
   operatingCompanyId: string
 ) {
   if (entityType === "driver") {
-    const res = await client.query("SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query("SELECT id FROM mdata.drivers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "customer") {
-    const res = await client.query("SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query("SELECT id FROM mdata.customers WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "vendor") {
-    const res = await client.query("SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2 LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query("SELECT id FROM mdata.vendors WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "unit") {
@@ -195,19 +195,19 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "load") {
     // §4: loads live in mdata.loads with soft-delete via soft_deleted_at.
-    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2 AND soft_deleted_at IS NULL LIMIT 1", [entityId, operatingCompanyId]);
+    const res = await client.query("SELECT id FROM mdata.loads WHERE id = $1 AND operating_company_id = $2::uuid AND soft_deleted_at IS NULL LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   if (entityType === "invoice") {
     const res = await client.query(
-      "SELECT id FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2 AND voided_at IS NULL LIMIT 1",
+      "SELECT id FROM accounting.invoices WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
       [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;
   }
   if (entityType === "settlement") {
     const res = await client.query(
-      "SELECT id FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2 LIMIT 1",
+      "SELECT id FROM driver_finance.driver_settlements WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1",
       [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;

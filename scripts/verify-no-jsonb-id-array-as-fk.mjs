@@ -129,6 +129,13 @@ export const CODE_REFERENCE_EXCEPTIONS = [
     reason:
       "The PATCH handler (:256-269) still writes the three retired jsonb columns and never touches the join tables, so an operator's edit silently no-ops against a read path that uses the junctions. Tracked in the C2 lane; SAF-DOM-02 deliberately does not reach across lanes to edit this file. DELETE THIS ENTRY in the SAF-B28 fix PR — the guard FAILS on a stale exception, which is how the cleanup gets forced.",
   },
+  {
+    file: "apps/frontend/src/pages/safety/components/CompanyViolationCreateModal.tsx",
+    columns: ["related_drivers", "related_units"],
+    block: "SAF-DOM-02",
+    reason:
+      "found stale 2026-08-29: verified this file only NAMES the strings as CREATE-mutation payload keys (related_drivers: [id] / related_units: [id]), and the CREATE route (company-violations.routes.ts:346-417, same lane) never writes them to the retired jsonb -- it consumes body.data.related_drivers/related_units solely to INSERT rows into the real join tables (company_violation_drivers/company_violation_units). No jsonb column is touched by this file, directly or indirectly; the guard's name-based classifier cannot distinguish a same-named payload field from an actual column write, so this is a documented false positive, not an unfixed writer.",
+  },
 ];
 const CODE_EXCEPTION_CEILING = 3;
 
