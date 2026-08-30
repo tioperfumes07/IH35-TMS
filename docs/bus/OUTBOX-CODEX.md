@@ -2425,3 +2425,5 @@ Codex | WORKING | GUARD-F7399 | Dispatch overview at-risk/late query rename re-a
 Codex | SHIPPED | GUARD-F7398 | PR=#17970 @ 293a43adb8 | gate=exit0 | NEXT=GUARD-F7399 | GO
 CODEX | WORKING | GUARD-F7400 | border-crossing driver payload snapshot guard drift | canonical driver FK remains forwarded | NEXT=focused proof+FAST-MERGE then next dispatch red | GO
 CODEX | SHIPPED | GUARD-F7399 | PR=#17971 @ fa9384be35 | gate=exit0 | NEXT=GUARD-F7400 | GO
+CODEX | WORKING | GUARD-F7401 | late-arrivals shared status+Overview aggregate guard drift | NEXT=focused proof+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7400 | PR=#17974 @ 57d71c005f | gate=exit0 | NEXT=GUARD-F7401 | GO
