@@ -131,6 +131,10 @@ export async function registerDriverArrivalPromptsRoutes(app: FastifyInstance) {
           `
           UPDATE mdata.load_stops s
           SET
+            actual_arrival_source = CASE
+              WHEN actual_arrival_at IS NULL THEN 'driver_app'
+              ELSE actual_arrival_source
+            END,
             actual_arrival_at = COALESCE(actual_arrival_at, $2::timestamptz),
             status = CASE WHEN status::text = 'pending' THEN 'arrived'::mdata.stop_status_enum ELSE status END
           FROM mdata.loads l

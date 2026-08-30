@@ -16,8 +16,8 @@ function authed(req: FastifyRequest, reply: FastifyReply) {
 }
 
 function sourceLabel(raw: string | null): "geofence" | "driver_pwa" | "dispatcher_manual" {
-  if (raw === "samsara_gps") return "geofence";
-  if (raw === "driver_pwa") return "driver_pwa";
+  if (raw === "samsara_gps" || raw === "eld_geofence") return "geofence";
+  if (raw === "driver_pwa" || raw === "driver_app") return "driver_pwa";
   return "dispatcher_manual";
 }
 
@@ -56,6 +56,8 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
         state: string | null;
         actual_arrival_at: string | null;
         actual_departure_at: string | null;
+        actual_arrival_source: string | null;
+        actual_departure_source: string | null;
         scheduled_arrival_at: string | null;
         status: string;
       }>(
@@ -67,6 +69,8 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
            ls.state,
            ls.actual_arrival_at::text,
            ls.actual_departure_at::text,
+           ls.actual_arrival_source,
+           ls.actual_departure_source,
            ls.scheduled_arrival_at::text,
            ls.status::text
          FROM mdata.load_stops ls
@@ -168,7 +172,9 @@ export async function registerLoadGeofenceTimelineRoutes(app: FastifyInstance) {
           detention_minutes: detentionMinutes,
           detention_status: (det?.detention_status ?? null) as "accruing" | "closed" | "billed" | null,
           is_layover: dwellMinutes !== null && dwellMinutes > LAYOVER_THRESHOLD_MINUTES,
-          source: sourceLabel(geo?.geo_source ?? null),
+          source: sourceLabel(
+            geo?.geo_source ?? stop.actual_arrival_source ?? stop.actual_departure_source ?? null
+          ),
           stop_status: stop.status,
         };
       });

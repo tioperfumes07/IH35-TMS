@@ -141,6 +141,47 @@ export async function processGeofenceDetectionsForGpsPoint(
         input.source ?? "samsara_gps",
       ]
     );
+    // D-1 — a bound load-stop geofence is first-class arrival/departure evidence. Persist the
+    // observation on the canonical stop in the same transaction as the immutable geofence event.
+    // Never overwrite driver/manual evidence and never backfill: only a newly inserted live event
+    // can win the compare-and-set below. The label is minted by bindLoadToGeofences.
+    const source = input.source === "manual" ? "manual" : "eld_geofence";
+    await client.query(
+      transition === "entered"
+        ? `
+            UPDATE mdata.load_stops ls
+               SET actual_arrival_at = $4::timestamptz,
+                   actual_arrival_source = $5,
+                   updated_at = now()
+              FROM geo.geofences g, mdata.loads l
+             WHERE g.id = $1::uuid
+               AND g.operating_company_id = $2::uuid
+               AND g.label = 'load-' || l.id::text || '-stop-' || ls.sequence_number::text
+               AND l.id = ls.load_id
+               AND l.operating_company_id = $2::uuid
+               AND l.assigned_unit_id = $3::uuid
+               AND l.soft_deleted_at IS NULL
+               AND ls.soft_deleted_at IS NULL
+               AND ls.actual_arrival_at IS NULL
+          `
+        : `
+            UPDATE mdata.load_stops ls
+               SET actual_departure_at = $4::timestamptz,
+                   actual_departure_source = $5,
+                   updated_at = now()
+              FROM geo.geofences g, mdata.loads l
+             WHERE g.id = $1::uuid
+               AND g.operating_company_id = $2::uuid
+               AND g.label = 'load-' || l.id::text || '-stop-' || ls.sequence_number::text
+               AND l.id = ls.load_id
+               AND l.operating_company_id = $2::uuid
+               AND l.assigned_unit_id = $3::uuid
+               AND l.soft_deleted_at IS NULL
+               AND ls.soft_deleted_at IS NULL
+               AND ls.actual_departure_at IS NULL
+          `,
+      [row.geofence_id, input.operating_company_id, input.unit_id, input.occurred_at, source]
+    );
     await processDotDwellForGeofenceEvent(client, {
       operating_company_id: input.operating_company_id,
       geofence_id: row.geofence_id,
