@@ -2,9 +2,10 @@ import { createContext, useContext, type ReactNode } from "react";
 import { DEFAULT_PLANNER_RANGE_DAYS, usePlannerRangeState, type PlannerRange, type PlannerRangeDays } from "./planner-range";
 
 type PlannerRangeContextValue = {
-  windowDays: PlannerRangeDays;
+  windowDays: PlannerRangeDays | null;
   setWindowDays: (days: PlannerRangeDays) => void;
   range: PlannerRange;
+  setRange: (range: PlannerRange) => void;
   days: string[];
 };
 

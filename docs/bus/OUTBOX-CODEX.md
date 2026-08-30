@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7375 | NOW=DISP-02 shared planner date filter | guard=PASS+selftest6/6 | NEXT=FAST-MERGE then active-only planner logic | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7373A | PR=#17915 @ 25ee5ca565 | gate=exit0 | NEXT=DISP-02 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7373A | NOW=repair TypeScript 6 blockers from #17900 | guard=PASS+selftest23/23 | NEXT=FAST-MERGE then DISP-02 | GO
 CODEX | SHIPPED | GO-MAINT-01 | FINDING=MAINT-F7374 | PR=#17906 @ 78829270ec | gate=exit0 | NEXT=GO-CERT-01 dispatch leftover | GO
 CODEX | SHIPPED | GO-APP-DEFECT-01 | FINDING=DSP-F7373 | PR=#17900 @ 1b06cf8517 | gate=exit0 | NEXT=DISP-02 | GO

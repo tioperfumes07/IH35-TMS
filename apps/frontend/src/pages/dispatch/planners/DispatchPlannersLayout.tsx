@@ -1,11 +1,11 @@
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState } from "../../../components/planner/UniversalFilterBar";
-import { companyToday } from "../../../lib/businessDate";
+import { usePlannerRange } from "./PlannerRangeContext";
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -15,13 +15,36 @@ const TABS = [
   { label: "Loads Planner", to: "/dispatch/planners/loads" },
 ] as const;
 
-export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
-  const today = companyToday();
+function PlannerControls() {
+  const { range, setRange } = usePlannerRange();
   const [filters, setFilters] = useState<FilterState>({
-    period: "this_week",
-    from: today,
-    to: today,
+    period: "custom",
+    from: range.start,
+    to: range.end,
   });
+
+  useEffect(() => {
+    setFilters((current) =>
+      current.from === range.start && current.to === range.end
+        ? current
+        : { ...current, period: "custom", from: range.start, to: range.end }
+    );
+  }, [range.end, range.start]);
+
+  const applyFilters = (next: FilterState) => {
+    setFilters(next);
+    setRange({ start: next.from, end: next.to });
+  };
+
+  return (
+    <>
+      <UniversalFilterBar value={filters} onChange={applyFilters} defaultPeriod="custom" />
+      <PlannerRangeToolbar />
+    </>
+  );
+}
+
+export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
 
   return (
     <PlannerRangeProvider>
@@ -40,8 +63,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <UniversalFilterBar value={filters} onChange={setFilters} defaultPeriod="this_week" />
-        <PlannerRangeToolbar />
+        <PlannerControls />
         {children}
       </div>
     </PlannerRangeProvider>
