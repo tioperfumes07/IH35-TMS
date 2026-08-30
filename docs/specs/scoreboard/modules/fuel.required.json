@@ -146,6 +146,9 @@
       "tab": "Planner",
       "sub": "Fuel planner",
       "route_hint": "/fuel/planner",
+      "owned_surface_paths": [
+        "pages/fuel/FuelPlannerHome.tsx"
+      ],
       "required": [
         "driver",
         "unit",

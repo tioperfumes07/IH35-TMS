@@ -2538,3 +2538,4 @@ CODEX | WORKING | GUARD-F7473 | ROOT=BOL-api-origin-selftest-deliberately-return
 CODEX | WORKING | GUARD-F7474 | ROOT=DOT-inspection-reverse-reset-guard-expected-impossible-comma-syntax-instead-of-useEffect | focused=normal+selftest-9/9 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SAF-F7475 | ROOT=random-pool-test-required-retired-racy-NOT-EXISTS-after-partial-unique-index | SAFETY=SAF-B16-fixed-awaiting-GUARD;ORPH01-no-live-forfeit-delta-flag-OFF;ORPH02-no-live-dual-subledger-forfeit-flag-OFF;ORPH05-no-full-tab-wizard-depth-packet | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | WORKING | FLEET-F7476 | ROOT=permit-expiry-test-called-midnight-UTC-June1-while-company-business-date-was-May31 | focused=permit+cert-suites+business-date-guard | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | SURFACE-F7487 | PR=#18125 @ c642886d1c | Built=fuel:fraud_alerts:{connectivity,qbo_chrome} | NEXT=Combobox vertical census | GO

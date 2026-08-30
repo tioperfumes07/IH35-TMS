@@ -216,6 +216,9 @@
       "tab": "Settlement Close",
       "sub": "Close arrival",
       "route_hint": "/driver-finance/settlement-close",
+      "owned_surface_paths": [
+        "pages/driver-finance/SettlementCloseArrivalPage.tsx"
+      ],
       "required": [
         "driver",
         "load",

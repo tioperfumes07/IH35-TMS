@@ -188,6 +188,9 @@
       "tab": "Policies",
       "sub": "Policies list",
       "route_hint": "/safety/insurance/policies",
+      "owned_surface_paths": [
+        "pages/insurance/PoliciesList.tsx"
+      ],
       "required": [
         "connectivity",
         "reverse_link",

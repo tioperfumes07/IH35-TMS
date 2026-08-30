@@ -190,6 +190,9 @@
       "tab": "Work Orders",
       "sub": "Operational console roster",
       "route_hint": "/maintenance/work-orders",
+      "owned_surface_paths": [
+        "pages/work-orders/WorkOrdersConsoleDetailPage.tsx"
+      ],
       "required": [
         "vendor",
         "unit",
@@ -672,7 +675,8 @@
       "surface_kind": "modal",
       "surface_path": "components/maintenance/WorkOrderDetailModal.tsx",
       "owned_surface_paths": [
-        "components/maintenance/LaborTracker.tsx"
+        "components/maintenance/LaborTracker.tsx",
+        "pages/maintenance/WorkOrderDetailPage.tsx"
       ],
       "required": [
         "connectivity",
@@ -726,6 +730,10 @@
       "route_hint": "surface://pages/maintenance/components/CreateWorkOrderModal.tsx",
       "surface_kind": "modal",
       "surface_path": "pages/maintenance/components/CreateWorkOrderModal.tsx",
+      "owned_surface_paths": [
+        "pages/maintenance/components/CreateWOSectionIdentification.tsx",
+        "pages/maintenance/components/CreateWOSectionPaymentTiming.tsx"
+      ],
       "required": [
         "connectivity",
         "picker_law",
