@@ -1,3 +1,10 @@
+CASCADE | FINDING | 50242 | fuel · SILENT-QUERY-FAILURE — FuelPlannerHome 11 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50241 | factoring · SILENT-QUERY-FAILURE — FactoringHome 11 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50240 | factoring · SILENT-QUERY-FAILURE — ReserveTracker 12 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50239 | bank · SILENT-QUERY-FAILURE — BankingHome 12 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50238 | drivers · SILENT-QUERY-FAILURE — Drivers list page 12 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50237 | customers · SILENT-QUERY-FAILURE — Customers list page 12 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50236 | maintenance · SILENT-QUERY-FAILURE — MaintenanceHome 14 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50235 | vendors · SILENT-QUERY-FAILURE — VendorDetail 13+ useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50234 | drivers · SILENT-QUERY-FAILURE — DriverDetail 13+ useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50233 | customers · SILENT-QUERY-FAILURE — CustomerDetail 16+ useQuery hooks zero isError rendering | GO
