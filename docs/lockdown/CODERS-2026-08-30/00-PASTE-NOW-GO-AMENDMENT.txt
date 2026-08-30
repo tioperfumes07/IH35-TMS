@@ -1,0 +1,117 @@
+================================================================================
+GO AMENDMENT — PASTE TO CURSOR, CC-1 AND CC-2 NOW, BEFORE THEY CREATE ROWS
+Amends: docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md (PR #18386)
+Reason: "Then the Faro 33" would create two invoices that have no source
+        document and six that already exist twice in QuickBooks.
+================================================================================
+
+THE GO IS CORRECT EXCEPT FOR THREE CARVE-OUTS. Everything else stands:
+create in the product, date order, USMCA only, 13512 first as the 12-step
+specimen, is_sample_data false, a blocking screen IS the finding, keep going.
+
+--------------------------------------------------------------------------------
+CARVE-OUT 1 — CREATE 32 OF THE FARO 33, NOT 33. HOLD 016.
+--------------------------------------------------------------------------------
+Faro invoice 016, MPH Carrier Services, $3,800, PO MPHC261334, purchased
+08/18, wired $3,676.
+
+THERE IS NO QUICKBOOKS INVOICE 016. The QBO series jumps 015 -> 017.
+AlwaysTrack load 13524 exists (MPH, 08/18, W.O. "pending") at gross rate $4,200.
+
+$4,200 hauled. $3,800 factored. $0 invoiced. The receivable is pledged to Faro
+with nothing on the books behind it. ASC 860 secured borrowing — already locked
+in this repo and enforced by verify-factoring-treatment.mjs — requires the
+receivable to exist on-book to be pledged.
+
+CC-1: SKIP 016. Do not create it. Do not invent a face for it.
+      Log it as OPEN-OWNER-DECISION and continue to 017.
+CC-2: 016 is a P0 finding, not a CC-1 miss. Grade it as such.
+
+OWNER DECISION REQUIRED: is the MPH 08/18 load $4,200 or $3,800?
+No seat posts 016 until Jorge rules.
+
+--------------------------------------------------------------------------------
+CARVE-OUT 2 — ONE LOAD, ONE INVOICE. DO NOT REPLICATE THE QBO DUPLICATES.
+--------------------------------------------------------------------------------
+Six loads carry TWO open QuickBooks invoices each. Create ONE invoice per load,
+using the 3-digit document. Do NOT also create the AlwaysTrack-numbered one.
+
+   load 13526  create doc 019  — do NOT also create doc 13526  ($3,500)
+   load 13528  create doc 017  — do NOT also create doc 13528  ($3,100)
+   load 13529  create doc 018  — do NOT also create doc 13529  ($3,900)
+   load 13532  create doc 020  — do NOT also create doc 13532  ($1,000)
+   load 13534  create doc 022  — do NOT also create doc 13534  ($3,100)
+   load 13535  create doc 023  — do NOT also create doc 13535  ($4,900)
+
+Also doc number 006 was used three times in QuickBooks on 08/13:
+   006  BV Logistics  $2,600  line "Load Number - 006"      <- CREATE THIS ONE
+   006  BV Logistics  $2,600  line "Load Number - 20495"    <- do NOT create
+   006  Magna         $2,700  line "Load Number - 005..."   <- do NOT create,
+                                                               it duplicates 005
+
+QuickBooks A/R is overstated by $24,800.00. That is cleaned up IN QUICKBOOKS by
+the owner/Martin, WORM style — credit memo or void, reverse never erase.
+NO TMS -> QBO WRITE-BACK. The TMS must not import the error.
+
+CURSOR: author guard `one-load-one-open-invoice` — fails when one
+revenue-recognized load maps to more than one open A/R document across doc
+series. It would have caught all six on 08/24. It does not exist today, which
+is why factoring can score "10 of 10 complete=true" over this. Needs owner
+approval before merge (no design changes without approval).
+
+--------------------------------------------------------------------------------
+CARVE-OUT 3 — DO NOT QUERY mdata.qbo_ar_invoices FOR THIS WORK
+--------------------------------------------------------------------------------
+   last mirrored 2026-08-14T17:04:28.643Z     max txn_date 2026-08-14
+   max 3-digit doc_number 013                 rows 12,087
+   (prod br-fancy-credit-akjnd07a, SET LOCAL app.bypass_rls = 'lucia')
+
+The mirror is 16 days stale and stops at doc 013. LIVE QuickBooks runs to 036.
+Any seat that reads the mirror will conclude 014-036 do not exist and will be
+wrong. That is exactly how the match law came to say "016/019/028/036 go back
+to AlwaysTrack" — an accurate read of a stale mirror.
+
+DEFECT QBO-MIRROR-STALE-16D (P1, Cursor owns): no seat may cite
+mdata.qbo_ar_invoices as authority for an ABSENCE until last_seen_at is inside
+24 hours. Absence in the mirror is not absence in QuickBooks.
+
+--------------------------------------------------------------------------------
+LINKAGE — USE THE CROSSWALK, NOT NAME OR AMOUNT MATCHING
+--------------------------------------------------------------------------------
+   CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv   (36 rows)
+
+QuickBooks writes the AlwaysTrack load number inside the invoice line text from
+doc 014 onward — e.g. doc 019 reads "LOAD NUMBER - 019 - 13526". 21 links are
+proven this way, zero inferred. Column link_basis is the evidence grade.
+link_basis = NONE is NOT A FACT and must not be posted.
+
+Disputed items now CLOSED and documentary:
+   019 J Rayl      -> AT 13526   (Faro PO 251839 vs AT W.O. 1663443 — refs
+                                  differ, link still proven, do not re-derive)
+   028 Hawkeye     -> AT 13544   (AT W.O. is BLANK — link still proven)
+   036 Hummingbird -> AT 13556   (NOT July 13438/13439/13459/13466;
+                                  do not treat 488 as 0488)
+   033 MPH         -> AT 13548
+   007 ITS         -> NO AT LOAD, AND THAT IS CORRECT. Outage window.
+                      Grade off QBO 007: ITS Logistics LLC, 08/13, $250,
+                      no PO, open. Faro says $350 / PO 68747. The $100 and the
+                      missing PO ARE the finding. Stop pulling Load History.
+
+NEVER compare a Faro face or QBO amount to the AlwaysTrack "Total" column.
+"Total" is net of the QP factoring discount. Use "Charges" (gross rate).
+All 21 links tie exactly on Charges.
+
+--------------------------------------------------------------------------------
+LEFTOVERS THAT MUST GET A NAME (the GO already requires this — here they are)
+--------------------------------------------------------------------------------
+   QBO 009  FLS Transportation       $525   08/13  unfactored, open  -> P2
+   QBO 010  Supply Chain Management $4,000  08/13  unfactored, open  -> P2
+   QBO 026  IM Specialized          $3,120  08/25  unfactored BUT CLOSED:
+            paid direct, BoA credit 08/26 $3,032.60,
+            "ORIG: IM SPECIALIZED LOGISTICS ... USMCA INVOICE 026"
+
+009 and 010 are the exceptions to the owner rule "every customer factors."
+They go to Jorge, not into a guess.
+
+Unexplained items remaining after this reconciliation: ZERO.
+================================================================================

@@ -1,0 +1,492 @@
+================================================================================
+CC-1 — REV D (2026-08-30). READ THIS BLOCK FIRST. IT REPLACES REV A / B / C.
+================================================================================
+
+STOP: do not use CC-1-FARO-DEBTOR-NAME-MATCH.csv or any REV A/B/C match logic
+for the USMCA Faro invoices. Amount+customer matching is withdrawn. The links
+are now documentary.
+
+NEW SINGLE SOURCE FOR THIS WORK:
+    CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv     (36 rows)
+
+Columns that matter: link_basis and defects. Every row is named. Nothing is
+"leftover-unexplained."
+
+--------------------------------------------------------------------------------
+WHY THIS CHANGED — TWO FACTS FROM THE OWNER, BOTH CONFIRMED
+--------------------------------------------------------------------------------
+1. Transportation QuickBooks was RENAMED to USMCA. The TMS was not ready in
+   time and Transportation stopped operating. Confirmed live: QBO company_info
+   returns "USMCA Freight Solutions, Inc." One file. It IS the USMCA books.
+   The TMS mirror still keys those rows to opco TRANSP — that is clone keying,
+   not a living Transportation operation. Do not "fix" the keying.
+
+2. AlwaysTrack was SUSPENDED for non-payment for several days starting about
+   08/10. Loads for those days were never entered in AT. They were billed
+   directly in QuickBooks as a 3-digit series 001, 002, 003... with line text
+   "Load Number - 00X" and the Work Order custom field blank.
+   NO AT LOAD FOR 001-013 IS EXPECTED. It is not missing freight.
+
+--------------------------------------------------------------------------------
+DO NOT TRUST mdata.qbo_ar_invoices FOR THIS WORK
+--------------------------------------------------------------------------------
+    last mirrored 2026-08-14T17:04:28.643Z   (16 days stale)
+    max txn_date  2026-08-14
+    max 3-digit doc_number  013
+
+The mirror stops at 013. LIVE QBO runs to 036. If you query the mirror you will
+conclude 014-036 do not exist and you will be wrong. Absence in the mirror is
+NOT absence in QuickBooks. Defect ID: QBO-MIRROR-STALE-16D (P1, Cursor owns).
+Everything below came from the LIVE QBO API, not the mirror.
+
+--------------------------------------------------------------------------------
+THE MATCHING RULE — MEMORIZE THIS ORDER
+--------------------------------------------------------------------------------
+ 1b. QBO 3-digit invoice LINE TEXT names the AT load  -> that IS the link.
+     Example: doc 019 line reads "LOAD NUMBER - 019 - 13526" -> AT load 13526.
+     Documentary. Do NOT re-derive from PO, customer, or dollars.
+     21 of the links are proven this way. Zero inferred.
+
+ 1.  AT-numbered invoices: Faro <-> AT load on PO / W.O.
+
+ 2.  Outage window (001-013, and 026): no AT load exists.
+     Faro <-> QBO doc number on the same file. Expected.
+
+ 3.  Everything else gets a name: factored / unfactored / direct-pay / open.
+
+ NEVER compare Faro face or QBO amount to the AT "Total" column. AT "Total"
+ is net of the QP factoring discount. Use the AT "Charges" column (gross rate).
+ I made this error earlier and it produced ~15 false mismatches. All 21 links
+ tie exactly on Charges.
+
+--------------------------------------------------------------------------------
+LINKS NOW PROVEN — THESE WERE THE DISPUTED ONES, THEY ARE CLOSED
+--------------------------------------------------------------------------------
+  Faro 019  J Rayl       $3,500  -> AT 13526  (QBO line: "LOAD NUMBER - 019 - 13526")
+            Faro PO 251839, AT W.O. 1663443 — refs differ, link is still proven.
+  Faro 028  Hawkeye        $600  -> AT 13544  (QBO line: "Load Number - 028 -  13544")
+            AT W.O. is BLANK. Link is still proven. Do not hunt for a W.O.
+  Faro 036  Hummingbird  $4,000  -> AT 13556  (QBO line: "Load Number - 036 - 13556")
+            NOT July 13438/13439/13459/13466. Do not treat 488 as 0488 to match.
+  Faro 033  MPH          $2,300  -> AT 13548  (QBO line: "Load Number - 033 - 13548")
+
+  Faro 007  ITS            $350  -> NO AT LOAD, AND THAT IS CORRECT.
+            Outage window. Source doc is QBO 007, ITS Logistics LLC, 08/13,
+            $250, no PO. Stop searching AlwaysTrack for it. Stop pulling more
+            Load History exports.
+
+--------------------------------------------------------------------------------
+CC-1 TASKS — REV D
+--------------------------------------------------------------------------------
+D-1  Ingest CC-1-FARO-QBO-AT-CROSSWALK.csv as the linkage evidence for the
+     USMCA Faro August set. Record link_basis on every row you create. A row
+     whose link_basis is QBO-LINE-PROVEN is a FACT. A row with basis NONE is
+     NOT a fact and must not be posted.
+
+D-2  Do NOT create, post, or link anything for Faro 016 (MPH). It is P0 and
+     awaiting owner ruling. See below. Leave it out of the replay.
+
+D-3  Do NOT create the six double-billed AT-numbered QBO invoices
+     (13526, 13528, 13529, 13532, 13534, 13535) as separate TMS invoices.
+     They are QuickBooks duplicates of docs 019/017/018/020/022/023.
+     One load, one invoice. If your replay would produce two, STOP and report.
+
+D-4  Human-sequence replay: start at L13512 as previously assigned, but the
+     August USMCA set now follows the crosswalk, not name-matching.
+
+D-5  The 5 copy defects from the prior packet still stand and still come first:
+       - 7 rulings unapplied
+       - 4 debtors missing
+       - 1,124 assignments with NULL operating_company_id
+       - 116 unassigned
+       - 2 mojibake rows
+
+--------------------------------------------------------------------------------
+FOUR OPEN ITEMS. THAT IS ALL THAT IS LEFT.
+--------------------------------------------------------------------------------
+P0  Faro 016 MPH $3,800 — FACTORED WITH NO QBO INVOICE.
+    Faro purchased 08/18, PO MPHC261334, wired $3,676.
+    QBO series skips 015 -> 017. No invoice 016 was ever issued.
+    AT load 13524 MPH exists: 08/18, W.O. "pending", gross rate $4,200.
+    So $4,200 was hauled, $3,800 was factored, $0 was invoiced, and the
+    receivable is pledged to Faro with nothing on the books behind it.
+    ASC 860 secured borrowing (locked in this repo) requires the receivable
+    to exist on-book to be pledged.
+    >>> OWNER DECISION REQUIRED on the $400 gap. Post nothing until he rules.
+
+P1  QBO 007 ITS $250 vs Faro 007 $350. $100 short, PO 68747 not on the QBO doc.
+    Grade off QBO 007. No AT load — correct and expected.
+
+P2  QBO 009  FLS Transportation      $525  08/13  on books, never factored, open.
+P2  QBO 010  SUPPLY CHAIN MANAGEMENT $4,000 08/13  on books, never factored, open.
+    Owner rule: "EVERY CUSTOMER MUST GO THROUGH FACTORING. IF ONE DOES NOT,
+    I WILL UPDATE THAT ONE." These are the two to bring him.
+    QBO 026 IM Specialized $3,120 is the third unfactored one but it is
+    ALREADY EXPLAINED: paid direct, BoA credit 08/26 $3,032.60,
+    "ORIG: IM SPECIALIZED LOGISTICS ... USMCA INVOICE 026". Closed.
+
+--------------------------------------------------------------------------------
+SEPARATE P0 FOR THE RECORD — NOT CC-1's TO FIX, CC-1's TO NOT PROPAGATE
+--------------------------------------------------------------------------------
+Six loads carry two open QBO invoices each. Duplicated open A/R $19,500.
+Doc number 006 was used three times on 08/13 (BV $2,600 twice, Magna $2,700
+misnumbered as 006 when it is a duplicate of 005). Further $5,300.
+TOTAL A/R OVERSTATEMENT: $24,800.00.
+This is corrected in QuickBooks by the owner/Martin, WORM style (credit memo
+or void — reverse, never erase). NO TMS -> QBO WRITE-BACK. CC-1 must simply
+not replicate the duplicates into the TMS.
+
+================================================================================
+===============================================================================
+CC-1 — COMPLETE WORK ORDER. 2026-08-30. THIS FILE SUPERSEDES EVERY EARLIER ONE.
+THREE PARTS:  A) open corrections   B) Faro + August split   C) the human replay
+===============================================================================
+
+
+###############  PART A — OPEN CORRECTIONS  ###############
+
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+Your OUTBOX reports TASK 4 as shipped with "44 duplicate-name groups deduped (owner's 7
+rulings applied)". I re-queried prod AFTER your #18353 merge. That claim is not true in the
+database. Four items below are still open. Two of your own counts also do not match prod.
+
+I am not disputing that you did the work. The re-run after the RLS GUC scoping bug was
+good engineering and you caught it yourself. What follows is what prod says NOW.
+
+-------------------------------------------------------------------------------
+COUNT MISMATCH — your report vs prod (re-read before you reconcile)
+-------------------------------------------------------------------------------
+  you reported 1,209 customers   prod shows 1,240
+  you reported   475 vendors     prod shows   626
+Reconcile or correct the OUTBOX. A number in an OUTBOX that prod does not agree with is
+how a board goes false.
+
+-------------------------------------------------------------------------------
+DEFECT 1 — THE OWNER'S 7 RULINGS WERE NOT APPLIED. 3 OF 7 FAILED.
+-------------------------------------------------------------------------------
+Live in mdata.customers for USMCA right now:
+  WATCO   BOTH rows present:
+            "Watco Supply Chain Services"
+            "Watco Supply Chain Services LLC DBA Watco Logistics"
+          OWNER RULED (b): keep ONLY the "LLC DBA Watco Logistics" row.
+  NCC     BOTH rows present:
+            "NCC Logistics"
+            "NCC Logistics MÃ©xico"
+          OWNER RULED (a): keep ONLY "NCC Logistics". Mexico is a different entity.
+  SIMPLE  FOUR rows present:
+            "Simple Logistics"          "Simple Logistics LLC"
+            "Simple logstics solutions" "Simplex logistics"   (+ "Silo Simple Logistics")
+          OWNER RULED (b): keep ONLY "Simple Logistics LLC".
+  CORRECT and no action: "Sajacks Freight" (typo twin correctly excluded),
+  "CTS EXPRESS LLC" (correctly kept).
+
+FIX: apply the owner's rulings. WORM - deactivate/void the losing rows, do not DELETE.
+If a losing row already has references, void it and point the reference at the survivor;
+report any you cannot repoint rather than force it.
+
+-------------------------------------------------------------------------------
+DEFECT 2 — NONE OF THE 4 "CREATE_NEW" FARO DEBTORS EXIST. 0 OF 4.
+-------------------------------------------------------------------------------
+Required by CC-1-FARO-DEBTOR-NAME-MATCH.csv (action = CREATE_NEW). Verified absent:
+    DARDINI LLC                       MISSING  (only "DLS Dardini Logistics Services",
+                                                which is a DIFFERENT entity - do not use it)
+    FLS Transport Inc.                MISSING  (only "FLS TRANSPORTATION SERVICES LIMITED",
+                                                a DIFFERENT legal entity - do not use it)
+    J RAYL TRANSPORT INC              MISSING
+    S E Mares Forwarding Service LLC  MISSING
+
+*** THE TRAP IS LIVE. *** USMCA now contains BOTH "Semares Forwarding Services" AND
+"SEMARES, INC." while the actual Faro debtor "S E Mares Forwarding Service LLC" does not
+exist. That debtor carries TWO invoices worth $9,800.00 on the August schedule. DO NOT
+MAP EITHER SEMARES ROW TO IT. Create it fresh, is_sample_data FALSE.
+
+Without all four, TASK 6 cannot load the 33 invoices and the factoring tie-out cannot pass.
+
+-------------------------------------------------------------------------------
+DEFECT 3 — ALL 1,124 FACTOR ASSIGNMENTS HAVE operating_company_id = NULL.
+-------------------------------------------------------------------------------
+  factoring.customer_factor_assignment: 1,124 rows total, 1,124 with operating_company_id
+  NULL. tenant_id is correct; the company column is empty on EVERY row.
+
+This is the exact hazard your own repo documents at batch.service.ts LV-TXN-016:
+  "prod RLS on this table gates WITH CHECK on operating_company_id, and the column is
+   NULLABLE, so omitting it leaves NULL, the check yields NULL, and the write aborts 42501."
+These rows exist, so they were written past that gate. They are unscoped.
+
+FIX: backfill operating_company_id on all 1,124 (same value as tenant_id for this table -
+tenant_id REFERENCES org.companies(id)), and set it on every future write in
+assignCustomerToFactor. Then add a NOT NULL constraint or a guard so it cannot recur.
+
+-------------------------------------------------------------------------------
+DEFECT 4 — 116 USMCA CUSTOMERS HAVE NO ASSIGNMENT. OWNER RULE VIOLATED.
+-------------------------------------------------------------------------------
+  1,240 USMCA customers · 1,124 assignments · 116 with none.
+OWNER RULE, VERBATIM: "EVERY CUSTOMER MUST GO THROUGH FACTORING. IF ONE DOES NOT, I WILL
+UPDATE THAT ONE." Every customer means every customer. If your background run is still
+going, say so and report the final tally. If it finished, the 116 are a gap - close them.
+Note the count must be re-checked AFTER defect 1 (dedupe will change the denominator).
+
+-------------------------------------------------------------------------------
+DEFECT 5 — 2 ROWS HAVE CORRUPTED CHARACTER ENCODING.
+-------------------------------------------------------------------------------
+  "NCC Logistics MÃ©xico"      should be "NCC Logistics México"
+  "LogÃ­stica Comercial RGG"   should be "Logística Comercial RGG"
+UTF-8 was double-encoded somewhere in the copy path. The NCC row is being deleted anyway
+per defect 1; fix "Logística Comercial RGG". Then check the 626 copied VENDOR rows for the
+same corruption - I only checked customers.
+
+-------------------------------------------------------------------------------
+WHAT YOU GOT RIGHT — VERIFIED, NOT ASSUMED
+-------------------------------------------------------------------------------
+  * qbo_customer_id leak: ZERO. This was the single instruction most likely to corrupt
+    both companies' books and you honored it exactly.
+  * FAC-2026-00001 status = 'voided', original row untouched. Correct WORM.
+  * You caught your own partial-copy RLS bug, deleted the partial rows, and re-ran
+    atomically with a rollback-on-mismatch guard. That is the right instinct.
+
+-------------------------------------------------------------------------------
+ORDER OF WORK
+-------------------------------------------------------------------------------
+  1. Defect 2 (create the 4 debtors) - TASK 6 is blocked without them
+  2. Defect 1 (apply the owner's 7 rulings, WORM-void the losers)
+  3. Defect 3 (backfill operating_company_id + prevent recurrence)
+  4. Defect 4 (re-run assign-all over the deduped set, report final tally)
+  5. Defect 5 (encoding, customers + vendors)
+  6. THEN TASK 6 (33 invoices + tie-out)
+Do not start TASK 7 until 1-5 are closed. TASK 8's remaining items stay parked per owner.
+
+STANDING: re-read prod before writing an OUTBOX claim. Three seats have now reported state
+that prod did not agree with today - this is the fourth. The discriminator exists for this.
+
+
+###############  PART B — FARO + AUGUST ENTITY SPLIT  ###############
+
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+DATA-BUILD order. Do it AFTER your open corrections.
+
+-------------------------------------------------------------------------------
+WHAT CHANGED FROM REV A — TWO OF MY OWN ERRORS, BOTH CORRECTED
+-------------------------------------------------------------------------------
+1. REV A matched loads to the USMCA Faro schedule on (customer name + amount). That was
+   too loose and produced FALSE POSITIVES. Example: load 13503 S E Mares $4,900 PO SMX14551
+   is on TRANSPORTATION's Faro schedule, but the fuzzy match also tied it to USMCA Faro #023
+   (S E Mares, $4,900, PO SEM66495) - a different load with the same customer and amount.
+   S E Mares runs many $4,900 loads; amount is not a key.
+   REV B MATCHES ON PO / W.O. REFERENCE. That is the real join key. Zero collisions now.
+2. REV A said "the northbound/southbound rule does not hold." That conclusion still stands,
+   but it was reached on the bad join, so treat REV B as the evidence for it.
+
+-------------------------------------------------------------------------------
+THE CORRECT PICTURE — 60 REAL AUGUST LOADS, JOINED ON PO
+-------------------------------------------------------------------------------
+   USMCA Faro purchased      29 loads    $86,825.00   (33 invoices, $95,075.00 face)
+   TRANSPORTATION Faro       13 loads    $49,310.00   (26 invoices, $98,488.00 face)
+   NEITHER factor            18 loads    $43,925.00
+Entity is decided by WHICH FACTOR BOUGHT THE INVOICE. Both schedules are third-party
+documents. Do not infer entity from trip direction - the owner's remembered
+"northbound = Transportation, southbound = USMCA" rule is not what the data shows.
+
+   13 of 22 settlements contain loads owned by MORE THAN ONE side:
+       revenue      USMCA  36,325.00   TRANSP  37,950.00   UNFACTORED  16,225.00
+       driver pay   USMCA   7,874.03   TRANSP   5,897.45   UNFACTORED   3,157.95
+
+-------------------------------------------------------------------------------
+THE 10 UNFACTORED-BUT-SETTLED LOADS — THE OWNER'S "PAID DIRECT" QUESTION
+-------------------------------------------------------------------------------
+The owner believed 1 or 2 loads were paid direct rather than to Faro. Settled loads with
+revenue that appear on NEITHER Faro schedule: TEN, $28,425.00.
+   L13498 5769 Value Logistics    LAREDO->PLAINFIELD IN        3,800.00
+   L13501 5766 PAYPA TRANSPORT    Laredo->BAYTOWN TX           1,500.00
+   L13507 5772 TWIN CITIES        MARION KY->DRAKESVILLE IA    1,200.00
+   L13509 5770 ES Logistics       CRESSONA PA->Laredo          4,400.00
+   L13515 5776 FLS Transportation SEAGOVILLE->LAREDO             525.00
+   L13524 5778 MPH CARRIER        Storm Lake IA->Laredo        4,200.00
+   L13526 5779 JRAYL TRANSPORT    Uhrichsville OH->MESQUITE    3,500.00
+   L13527 5779 EGRO TRANSPORT     Laredo->TALLMADGE OH         3,000.00
+   L13540 5782 IM Specialized     CLINTON NC->Laredo           3,120.00
+   L13555 5787 2EMS TRANSPORTATION LAREDO->Fountain CO         3,180.00
+Separately: 7 late-August loads have NO settlement yet ($15,500.00) - most likely simply
+not factored yet, not direct-pay. And L13525 Refrigerx settled at $0.00 revenue - that is a
+triangulation / repositioning leg, per the owner's own note that Maryland Heights->Waco is
+triangulation. Treat $0 legs as repositioning, not as revenue loads.
+=> OWNER MUST RULE on the 10. Each needs an entity AND a collection path. DO NOT GUESS.
+   Note L13555 is billed TO 2EMS TRANSPORTATION - the same party Trucking leases 14 units
+   to. Confirm whether that is freight revenue or a lease-related billing before posting.
+
+-------------------------------------------------------------------------------
+INTERCOMPANY — VERIFIED TO THE CENT ACROSS THREE INDEPENDENT SOURCES
+-------------------------------------------------------------------------------
+USMCA moved money into TRANSPORTATION's Faro reserve account in August:
+   08/13/2026  Magna Transport Solutions   "USMCA Internal Transfer IH35"   1,800.00
+   08/14/2026  CTS Xpress                  "Transfer to IH35 neg res"         688.00
+   08/14/2026  Sethmar Transportation      "Transfer to IH35 neg res"       4,753.00
+                                                                    TOTAL   7,241.00
+   TRANSPORTATION reserve ledger inflow  = 7,241.00  (1,800.00 + 5,441.00)
+   TRANSPORTATION Faro statement header  = 7,241.00  ("Payments from You")
+   ALL THREE AGREE EXACTLY.
+   (A 4th USMCA line, Watco 1,649.00 on 08/12, appears as BOTH a deposit and a payment -
+    a reversal pair, net zero. Do not count it. I did on my first pass and it produced a
+    false $3,298.00 mismatch.)
+
+THE CCG PAYMENT — from TRANSPORTATION's Faro reserve, not USMCA's:
+   08/03/2026  Rsv Deposit "CCG Pmt 08/03/2026"                +22,000.00
+   08/03/2026  Wire Fee                                            -10.00
+   08/03/2026  Client Payable "CCG Pmt August 08/03/2026"      -45,512.57
+   That is the confirmed-plan figure exactly. It left Transportation, funded partly by the
+   $22,000 deposit and partly by running the reserve negative (-23,540.56 after).
+
+*** THE $8,890 — RESOLVED. IT IS REAL BUT IT IS A GROSS FIGURE. ***
+It is the sum of the four "Faro Internal Transfer" PAYMENT lines on USMCA's remittance file:
+    08/12 Watco inv 004  1,649.00 | 08/13 Magna inv 005  1,800.00
+    08/14 CTS   inv 012    688.00 | 08/14 Sethmar inv 013 4,753.00   = 8,890.00
+The Watco 1,649.00 is booked BOTH WAYS the same day - a 1,649.00 deposit AND a 1,649.00
+payment, same date, same reference "Internal Transfer to IH35 Reserves 08/12/26". Net ZERO.
+(Watco 004's real advance that day was 1,639.00 wired to USMCA Tank; the 1,649.00 pair is
+the same money before the $10 wire fee, in and straight back out.)
+Cash that actually moved: 1,800 + 688 + 4,753 = 7,241.00 - confirmed twice on the
+Transportation side (reserve ledger inflow, and the statement's "Payments from You").
+I searched Transportation's whole reserve ledger for 1,649.00 and for any 08/12 USMCA line:
+ZERO matches. It never arrived there.
+=> The bill is $7,241.00 unless the owner rules otherwise. DO NOT build against 8,890.00.
+   Do not "fix" the Watco pair either - it is Faro's own ledger, not ours.
+
+-------------------------------------------------------------------------------
+FILES
+-------------------------------------------------------------------------------
+  AUG-LOADS-BY-FACTOR.csv             60 loads: settlement, driver, customer, W.O., route,
+                                      FACTOR_OWNER, both Faro invoice refs, revenue, pay
+  AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv the 13 mixed settlements, per-side totals
+  AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv  195 line items tagged via Load #
+  TRANSP-FARO-PURCHASED.csv / TRANSP-FARO-AGING.csv  Transportation's Faro schedules
+  Plus the 9 AlwaysTrack exports as clean CSVs.
+
+-------------------------------------------------------------------------------
+BUILD
+-------------------------------------------------------------------------------
+1. Load the USMCA-side loads (29) into mdata.loads for USMCA. is_sample_data FALSE. Carry
+   the AlwaysTrack Load# and the Faro invoice ref so this is re-runnable and auditable.
+2. Build USMCA settlements from USMCA loads only, using each load's OWN expenses and
+   deductions (they all carry Load #, so this is a regroup, not an allocation).
+3. TRANSPORTATION AND UNFACTORED: BUILD NOTHING. Produce a report. TRANSP/TRK stay frozen.
+4. Settlements span months - a settlement closing in August may contain July loads. Filter
+   by LOAD, never by settlement date. 46 expense/deduction rows point at loads outside the
+   August set; report them, do not silently drop them.
+5. Reconcile and report: USMCA loads built ($86,825.00 revenue) vs the USMCA Faro face
+   ($95,075.00). Name the $8,250.00 difference - which Faro invoices have no August load
+   behind them. Do not force a match.
+
+
+###############  PART C — THE HUMAN-SEQUENCE REPLAY  ###############
+
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+-------------------------------------------------------------------------------
+THE OWNER'S INSTRUCTION, AND WHY IT IS THE RIGHT TEST
+-------------------------------------------------------------------------------
+"upload all invoices, settlements, factoring purchases one by one in the app by the
+coders, as if they were human creating and following the transactions, making sure that
+everything is recording as it should be. this should show us for these 6 modules at least
+if they are truly done."
+
+That is a better test than any checklist, and it replaces guesswork with a business
+process. A module is done when a person can carry a real transaction through it and the
+money lands correctly at every step. Anything that cannot be done in the UI, or that
+records the wrong number, is the answer.
+
+RULES THAT MAKE THIS A TEST INSTEAD OF A DATA LOAD:
+ 1. GO THROUGH THE APP. No bulk SQL insert. No seed script. If a step cannot be done in
+    the UI, THAT IS THE FINDING - write it down and keep going.
+ 2. ONE AT A TIME, IN DATE ORDER. Real sequence, real dependencies.
+ 3. DO NOT FIX FORWARD SILENTLY. If a screen forces a wrong value, record what it forced
+    and what the right value was. Do not hand-correct in the database afterwards - that
+    erases the evidence the owner is paying for.
+ 4. RECORD EVERY BLOCKER with: screen, field, what you expected, what happened.
+ 5. USMCA ONLY. TRANSP and TRK stay frozen. Their loads are a report, not a build.
+
+-------------------------------------------------------------------------------
+START WITH ONE FULL SPECIMEN — L13512. IT EXERCISES ALL SIX MODULES.
+-------------------------------------------------------------------------------
+Do this ONE completely before touching the other 28. If it breaks, stop and report.
+
+  load        13512, settlement 5772, driver PEDRO ABRAHAM LOPEZ COLLADO, truck T152
+  customer    Watco Supply Chain Services LLC DBA Watco Logistics   (owner-ruled name)
+  route       MARYLAND HEIGHTS, MO -> WACO, TX   (triangulation leg, per the owner)
+  pickup      2026-08-10   delivery 2026-08-12   invoice date 2026-08-17
+  W.O.        2239480      miles 721.4 loaded / 232.8 empty
+  revenue     1,700.00     QuickPay fee 25.50   ->  invoice total 1,674.50
+  driver      pay 422.46 | addl pay 50.00 | reimb expense 67.22 | deduction 25.00
+  fuel        1,066.44 on the load
+  factoring   USMCA Faro invoice 004, PO 2239480, purchased 08/12/2026
+              face 1,700.00 - reserve 25.50 - discount 25.50 = purchase price 1,649.00
+              - wire fee 10.00 = proceeds 1,639.00 wired to "USMCA Tank" 08/12/2026
+
+  THE 12 STEPS, IN ORDER, EACH IN THE UI:
+   1  customer exists and is the owner-ruled row (not the bare "Watco Supply Chain
+      Services") ............................................ CUSTOMERS
+   2  create the load with the real route, dates, miles, W.O. .. DISPATCH
+   3  assign driver + unit T152 ............................... DISPATCH / FLEET
+   4  mark delivered, attach POD ............................... DISPATCH
+   5  create the invoice - 1,700.00 face, QuickPay 25.50 ....... ACCOUNTING (AR)
+      ASSERT: an invoice JE posted. AR debit = 1,700.00.
+   6  submit to factoring, factor = Faro ....................... FACTORING
+      ASSERT: reserve 25.50 and fee 25.50 computed INDEPENDENTLY (not 3% / not 0)
+   7  fund the advance .......................................... FACTORING -> GL
+      ASSERT under secured borrowing: Dr cash 1,639.00 + Dr reserve 25.50
+      + Dr fee 25.50 + Dr wire fee 10.00 / Cr Factoring Advance 1,700.00.
+      A/R IS NOT TOUCHED. If A/R moves here, STOP - that is the sale-model defect.
+   8  proceeds land in "Faro Factoring - USMCA" (GL 1296) ....... BANKING
+      ASSERT: not 1090 Undeposited Funds.
+   9  wire Faro -> BoA USMCA FREIGHT as a bank-to-bank TRANSFER . BANKING
+      ASSERT: a transfer, not a deposit from nowhere.
+  10  match the bank line ....................................... BANKING (recon)
+  11  build settlement 5772's USMCA portion: earnings 422.46, addl pay 50.00,
+      reimb expense 67.22, deduction 25.00 ...................... SETTLEMENTS
+      ASSERT: every line carries load_id AND posting_account_id, and every line
+      reaches approval_status='approved' (that gate has NEVER been achieved - expect
+      it to break, fix root cause, do not bypass).
+  12  close the pay run ......................................... SETTLEMENTS -> GL
+      ASSERT all of: driver_settlement_gl_runs + gl_bills populated; bill JE balances;
+      cash JE balances; the DEDUCTION leg fires (deduction_journal_entry_id and
+      deduction_bill_payment_id have NEVER been non-null system-wide); AND
+      driver_settlements.accounting_bill_id / accounting_bill_payment_id are written
+      by the LIVE poster (your header write-back fix).
+
+  NOTE ON 5772: it is a MIXED settlement - 4 loads, two of them USMCA (13512, 13513)
+  and two Transportation (13502, 13507). Build ONLY the USMCA portion. That is the whole
+  point of the split. Do not rebuild the driver's full AlwaysTrack settlement.
+
+-------------------------------------------------------------------------------
+THEN THE REST — 29 USMCA LOADS, 33 FARO INVOICES, IN DATE ORDER
+-------------------------------------------------------------------------------
+Source of truth files, all in this folder:
+  CC-1-AUG-LOADS-BY-FACTOR.csv        which of the 60 loads belongs to which factor
+  CC-1-USMCA-FARO-33-INVOICES.csv     the 33 Faro purchases with exact reserve/fee/net
+  CC-1-AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv   the 13 settlements that straddle entities
+  CC-1-AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv 195 line items, each tagged by Load #
+  CC-1-LOAD-HISTORY.csv / DRIVER-*.csv / INVOICES.csv   the raw AlwaysTrack exports
+
+Order: by invoice date. Settlements span months - a settlement closing in August can
+contain July loads, so filter by LOAD, never by settlement date.
+
+-------------------------------------------------------------------------------
+THE SCORECARD — WHAT THIS PROVES, PER MODULE
+-------------------------------------------------------------------------------
+For each of the six, report DONE / NOT DONE with the step number that failed:
+  ACCOUNTING   invoice JE posts, AR correct, TB balances
+  BANKING      proceeds land in 1296, Faro->bank is a transfer, the line matches
+  FACTORING    reserve and fee computed independently; secured borrowing, A/R untouched
+  SETTLEMENTS  lines approve, deduction leg fires, header back-link written
+  DISPATCH     load -> driver -> unit -> POD -> invoice, no orphans
+  VENDORS      driver-vendor link resolves to mdata.vendors (never mdata.qbo_vendors)
+
+FINAL TIE-OUTS, tolerance 0:
+  USMCA loads built            -> $86,825.00 revenue
+  USMCA Faro face              -> $95,075.00 (name the $8,250.00 that has no August load)
+  reserve 142613 / fee 142613 / wire 12000 / cash 9210274
+  GL identity: 2150 (95,075.00) - 1230 (6,426.13) = 88,648.87 = Faro statement NFE
+
+A module is NOT done because the screens exist. It is done when a real transaction goes
+through it and the number is right. Report failures as findings, not as work to hide.

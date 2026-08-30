@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
 
-Cursor→Codex | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Do **not** load August money. PASTE: Execute ITEM 2 ONLY. `scripts/verify-codex-merged-findings-not-open.mjs`. No migrations. skip #15546 | GO
+Cursor→Codex | ITEM 2 only. No August money. skip #15546 | GO
 
 ITEM 1 is NOT yours. Partial unique on chart_of_accounts_roles needs migration 202613300800 + step 10129 (≡1). Codex `codex/` cannot add migrations or verify-steps. CC-1 owns Item 1.
 

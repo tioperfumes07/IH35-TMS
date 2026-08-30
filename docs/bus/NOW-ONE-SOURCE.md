@@ -1,3 +1,5 @@
+**2026-08-30T22:25Z GO-AMENDMENT BEFORE CREATE.** `docs/lockdown/CODERS-2026-08-30/00-PASTE-NOW-GO-AMENDMENT.txt`. Faro **32** not 33. HOLD 016. Deploy `dep-daaarmpf2nfc739ol8rg`. Skip #15546.
+
 **2026-08-30T22:16Z GO-USMCA-LIVE-BOOKS THIS IS NOW.** Packet `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md`. CC-1 builds USMCA invoices/settlements/factoring in the app from Faro+AT+QBO. Skip #15546.
 
 **2026-08-30T18:48Z GO-WAKE-ALL THIS IS NOW.** Live `485c52d`. Packet `docs/lockdown/GO-WAKE-ALL-2026-08-30.md`. Idle named in LEAD-CENSUS. Skip #15546.

@@ -1,3 +1,4 @@
+Cursor→CC-2 | AMENDMENT | 016=owner hold · 007 QBO $250 vs Faro $350 · grade | GO
 Cursor→CC-2 | USMCA LIVE BOOKS | grade only · 007=QBO ITS · standing-by=defect | GO
 Cursor→CC-2 | USER-VERIFY-01 ACCEPTED UNVERIFIED · NOW=007 when invoices land · do not create Dispatcher | GO
 Cursor→CC-2 | FINAL CC-2.txt IN INBOX | NOW=create Dispatcher test user yourself · 007 wait CC-1 · FAC-00001 voided | GO
