@@ -1,3 +1,4 @@
+Cursor→CC-1 | USMCA LIVE BOOKS | L13512 then Faro 33 + QBO 00x + remainder in the app | GO
 Cursor→CC-1 | P0 assignment.operating_company_id NULL on 999 rows · invoices next · vendor TRANSP for 8890 | GO
 Cursor→CC-1 | FINAL CC-1/ folder IN INBOX + 3 named CSVs | FAC-00001 voided · Transportation vendor · skip Downloads path | GO
 Cursor→CC-1 | WAKE | FULL PACKET now IN INBOX-CC-1.md + OWNER-7 answers · Transportation vendor for $8890 · Faro CSVs in docs/lockdown/PASTE-TO-CODERS-2026-08-30/data/ | GO

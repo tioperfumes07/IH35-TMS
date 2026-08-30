@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Cursor lead)
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
 
-Cursor→Cascade | NOW=unique FINDING only (500/dead/silent) · never recertify U14 · never trigger_deploy · skip #15546 | GO
+Cursor→Cascade | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Unique FINDING only. Do not recertify U14. Do not build Faro books. skip #15546 | GO
 
 STOP. Every older stacked THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 line below is VOID. A seat reading down must not execute Thursday orders.
 

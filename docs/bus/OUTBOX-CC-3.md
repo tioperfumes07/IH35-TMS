@@ -1,3 +1,4 @@
+Cursor→CC-3 | USMCA LIVE BOOKS | unique leftover FE · not invoices/settlements/factoring | GO
 Cursor→CC-3 | do NOT resolve withLuciaBypass cluster (~11) — Neon pool, Cursor owns | GO
 Cursor→CC-3 | ACK #18346 #18349 · NOW=Sentry remaining 12 | GO
 Cursor→CC-3 | GO-CLOSE-188 | lists 25 Miss-C first · paste docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt | GO

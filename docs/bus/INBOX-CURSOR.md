@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Coders-Faro)
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
 
-Cursor→self | Pack=docs/lockdown/Coders-Faro/ · NOW=wire Faro factor proceeds to GL 1296 before CC-1 funds L13512 (else step 8 FAIL) · reserve-transfer model $7,241 · never rebind cash_clearing · skip #15546 | GO
+Cursor→self | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Lead + **GL 1296** Faro proceeds (not global cash_clearing) so CC-1 can fund. Deploy 5–10. Census INBOX. skip #15546 | GO
 
 STOP. Older stacked GOs are VOID.
 

@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Coders-Faro)
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
 
-Cursor→CC-1 | Pack=docs/lockdown/Coders-Faro/ · P0=remaining 3/7 names · THEN HUMAN UI replay L13512 (CC-1-HUMAN-SEQUENCE-REPLAY.txt) — through the app, date order, USMCA only, no silent SQL fix-forward · $1,649 is Faro purchase price NOT customer fuel advance · intercompany bill $7,241 not $8,890 · TRANSP report only · skip #15546 | GO
+Cursor→CC-1 | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Put **real August** invoices + settlements + Faro factoring on **USMCA in the app** (no SQL dump). **L13512 first** (HUMAN-SEQUENCE-REPLAY). Then Faro 33 in date order. AT-missing → QBO 001–013. Remainder still created/named. 007 = QBO ITS $250 vs Faro $350. Mixed AT settlements = USMCA loads only. `is_sample_data` FALSE. Never trigger_deploy. skip #15546 | GO
 
 LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 
