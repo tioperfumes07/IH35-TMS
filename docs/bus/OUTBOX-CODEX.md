@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7390 | NOW=null gallons honesty API→history/CSV/reverse | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7389 | PR=#17939 @ 83d0520abe | gate=exit0 | NEXT=FUEL-F7390 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7389 | NOW=default-sort settings→board connectivity | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7388 | PR=#17934 @ 8da60f589b | gate=exit0 | NEXT=DSP-F7389 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7388 | NOW=company-scoped dispatch local settings | NEXT=guard+FAST-MERGE then dispatch/fuel unique | GO
