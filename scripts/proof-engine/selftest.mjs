@@ -93,6 +93,16 @@ await t("http mount: 404 is FAIL, 401 is PASS (CERT B6)", async () => {
   if (bad.ok) throw new Error("404 was accepted as mounted");
 });
 
+await t("unverified dom result is UNVERIFIED never PASS", () => {
+  const r = deriveStatus(
+    { id: "X", proofs: [{ kind: "dom" }], proven_at_sha: "84188fa" },
+    [{ ok: false, unverified: true, kind: "dom", err: "no session" }],
+    "84188fa",
+  );
+  eq(r.status, "UNVERIFIED", "status");
+  eq(r.prod_verified, false, "pv");
+});
+
 await t("RPT-VERIFY-01 shape: sibling PASS is not a proof kind", () => {
   const r = deriveStatus(
     {

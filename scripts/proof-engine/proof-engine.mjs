@@ -85,8 +85,11 @@ export async function replay(proof, ctx) {
         return done(false, null, "sql proof supplied but ctx.runSql is not wired");
       return await ctx.runSql(proof);
     }
-    if (proof.kind === "dom")
-      return done(false, null, `${proof.kind} runner not wired in this prototype`);
+    if (proof.kind === "dom") {
+      if (typeof ctx.runDom !== "function")
+        return done(false, null, "dom proof supplied but ctx.runDom is not wired");
+      return await ctx.runDom(proof);
+    }
     return done(false, null, `unknown kind "${proof.kind}"`);
   } catch (e) { return done(false, null, String(e.message || e).slice(0, 120)); }
 }
@@ -100,12 +103,18 @@ export function deriveStatus(item, results, liveSha) {
     return { status: "UNVERIFIED", prod_verified: false,
              why: "no executable proof — prose evidence cannot produce PASS" };
 
-  // 2. Any proof failed -> FAIL. Visible, not hidden behind a stale PASS.
-  const bad = results.filter(r => !r.ok);
+  // 2. Hard fails (not unverified-gaps) -> FAIL.
+  const bad = results.filter((r) => r.ok === false && !r.unverified);
   if (bad.length)
     return { status: "FAIL", prod_verified: false,
              why: `${bad.length}/${results.length} proof(s) failed: ` +
                   bad.map(b => `${b.kind}(${b.err || b.observed})`).join(", ") };
+
+  // 2b. Auth/session gap (D3 option b): UNVERIFIED, never PASS.
+  const gap = results.filter((r) => r.unverified);
+  if (gap.length)
+    return { status: "UNVERIFIED", prod_verified: false,
+             why: `${gap.length}/${results.length} proof(s) UNVERIFIED (no session / not connected) — never PASS` };
 
   // 3. Passed, but not at the SHA that is live right now -> STALE, never PASS.
   if (!item.proven_at_sha || !liveSha || item.proven_at_sha !== liveSha)

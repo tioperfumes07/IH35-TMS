@@ -192,6 +192,7 @@ export function PlannerGrid({
                 <div
                   className="pg-track"
                   data-testid="planner-grid-track"
+                  data-contract="planner-grid-track"
                   style={{
                     width: trackW,
                     backgroundImage:

@@ -9,7 +9,9 @@
       "id": "A1_DAY_GRADIENT",
       "file": "apps/frontend/src/pages/dispatch/planners/PlannerGrid.tsx",
       "required_tokens": [
-        "repeating-linear-gradient(to right, var(--rule-day) 0 1px, transparent 1px var(--day))"
+        "repeating-linear-gradient(to right, var(--rule-day) 0 1px, transparent 1px var(--day))",
+        "data-testid=\"planner-grid-track\"",
+        "data-testid=\"planner-time-axis\""
       ]
     },
     {

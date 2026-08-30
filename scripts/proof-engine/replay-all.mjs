@@ -25,7 +25,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { deriveStatus, replay } from "./proof-engine.mjs";
 import { makeSqlRunner } from "./sql-runner.mjs";
+import { makeDomRunner } from "./dom-runner.mjs";
 import { ECON_PROOFS } from "./econ-proofs.mjs";
+import { PLANNER_DOM_ITEMS } from "./planner-dom-proofs.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const OUT = path.join(ROOT, "docs/module-completion/PROOF-ENGINE-REPLAY.json");
@@ -98,9 +100,13 @@ async function main() {
       repoRoot: ROOT,
       connectionString: process.env.DATABASE_URL,
     }),
+    runDom: makeDomRunner({
+      fetch: (u, o) => fetch(u, o),
+      session: process.env.IH35_DOM_SESSION || null,
+    }),
   };
 
-  const rows = [...loadManifestItems(), ...loadEconItems()];
+  const rows = [...loadManifestItems(), ...loadEconItems(), ...PLANNER_DOM_ITEMS];
   const items = [];
   let fail = 0;
   let pass = 0;
