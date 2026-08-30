@@ -4,6 +4,8 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser } from "../auth/db.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
+import { EXCLUDE_PSEUDO_DRIVERS_SQL } from "../mdata/driver-pseudo-user.js";
+import { EXCLUDE_ARCHIVED_DRIVERS_SQL } from "../mdata/test-seed-archive.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -139,6 +141,83 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
 
     if (!items) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return { items };
+  });
+
+  // DRIVER-DQF-KPI-PAGE-1-SILENT-TRUNCATION: the Drivers "Profiles" surface (DriversListPage.tsx)
+  // computed its Compliant/Needs Attention/Non-Compliant/No DQF Items KPI cards by classifying only
+  // the CURRENTLY LOADED PAGE of drivers (pageSize=25), while its "DRIVERS" card showed the real
+  // fleet total (e.g. 159) -- so a fleet of any size beyond one page silently showed a compliance
+  // dashboard for ~16% of drivers labeled as if it covered the whole roster, with no indication any
+  // driver was excluded. This is a single aggregate query so the KPI totals cover every scoped
+  // driver, not just one page -- classification mirrors apps/frontend/src/lib/driverDqf.ts's
+  // summarizeDriverDqf() exactly (non_compliant: any expired item or any past-due expiry date;
+  // attention: any missing item or any expiry due within 30 days; compliant: has items, none of the
+  // above; empty: zero DQF items on file).
+  app.get("/api/v1/safety/driver-qualification/summary", RL_READ, async (req, reply) => {
+    const user = authUser(req, reply);
+    if (!user) return;
+    const company = companyQuerySchema.safeParse(req.query ?? {});
+    if (!company.success) return reply.code(400).send({ error: "validation_error", details: company.error.flatten() });
+
+    const summary = await withCompanyScope(user.uuid, company.data.operating_company_id, async (client) => {
+      const res = await client.query<{
+        total_count: string;
+        empty_count: string;
+        non_compliant_count: string;
+        attention_count: string;
+        compliant_count: string;
+      }>(
+        `
+          WITH scoped_drivers AS (
+            SELECT d.id
+            FROM mdata.drivers d
+            WHERE (d.operating_company_id = $1::uuid OR EXISTS (
+                    SELECT 1 FROM mdata.driver_company_authorizations dca
+                     WHERE dca.driver_id = d.id
+                       AND dca.company_id = $1::uuid
+                       AND dca.is_authorized = true
+                       AND dca.deactivated_at IS NULL
+                  ))
+              AND ${EXCLUDE_ARCHIVED_DRIVERS_SQL}
+              AND ${EXCLUDE_PSEUDO_DRIVERS_SQL}
+              AND d.is_sample_data IS NOT TRUE
+          ),
+          per_driver AS (
+            SELECT
+              sd.id,
+              count(f.id) AS item_count,
+              bool_or(f.status = 'expired') AS has_expired,
+              bool_or(f.status = 'missing') AS has_missing,
+              bool_or(f.expiry_date IS NOT NULL AND f.expiry_date < CURRENT_DATE) AS has_red_expiry,
+              bool_or(f.expiry_date IS NOT NULL AND f.expiry_date >= CURRENT_DATE AND f.expiry_date <= CURRENT_DATE + INTERVAL '30 days') AS has_amber_expiry
+            FROM scoped_drivers sd
+            LEFT JOIN safety.driver_qualification_files f
+              ON f.driver_id = sd.id
+             AND f.operating_company_id = $1::uuid
+             AND f.voided_at IS NULL
+            GROUP BY sd.id
+          )
+          SELECT
+            count(*)::text AS total_count,
+            count(*) FILTER (WHERE item_count = 0)::text AS empty_count,
+            count(*) FILTER (WHERE item_count > 0 AND (has_expired OR has_red_expiry))::text AS non_compliant_count,
+            count(*) FILTER (WHERE item_count > 0 AND NOT (has_expired OR has_red_expiry) AND (has_missing OR has_amber_expiry))::text AS attention_count,
+            count(*) FILTER (WHERE item_count > 0 AND NOT (has_expired OR has_red_expiry) AND NOT (has_missing OR has_amber_expiry))::text AS compliant_count
+          FROM per_driver
+        `,
+        [company.data.operating_company_id]
+      );
+      const row = res.rows[0];
+      return {
+        total: Number(row?.total_count ?? 0),
+        compliant: Number(row?.compliant_count ?? 0),
+        attention: Number(row?.attention_count ?? 0),
+        non_compliant: Number(row?.non_compliant_count ?? 0),
+        empty: Number(row?.empty_count ?? 0),
+      };
+    });
+
+    return summary;
   });
 
   app.post("/api/v1/safety/driver-qualification/items", RL_WRITE, async (req, reply) => {
