@@ -38,6 +38,8 @@ const COMPLETE_HISTORY_PATTERNS = [
   /listOwnerOverrideLog\(companyId,\s*\{\s*limit:\s*pageSize,\s*offset\s*\}\)/,
   /const total = logQ\.data\?\.total \?\? 0/,
   /data-testid="owner-override-log-server-pager"/,
+  /logQ\.isLoading[\s\S]{0,80}"Loading overrides…"/,
+  /logQ\.isError[\s\S]{0,80}"Override history unavailable"/,
   /offset \+ pageSize >= total/,
   /hidePager/,
 ];
@@ -98,7 +100,7 @@ if (process.argv.includes("--selftest")) {
         listOwnerOverrideLog(companyId, { limit: pageSize, offset });
         const query = { queryKey: ["dispatch", "owner-override-log", companyId, offset] };
         const total = logQ.data?.total ?? 0;
-        return <><ParityTable hidePager /><div data-testid="owner-override-log-server-pager">{offset + pageSize >= total}</div></>;
+        return <><ParityTable hidePager /><div data-testid="owner-override-log-server-pager">{logQ.isLoading ? "Loading overrides…" : logQ.isError ? "Override history unavailable" : offset + pageSize >= total}</div></>;
       }`,
     backendSrc: realBackend,
   };
@@ -114,12 +116,14 @@ if (process.argv.includes("--selftest")) {
   const rateLimitFails = checkOwnerOverrideLogWired(unbounded).some((item) => item.includes("lacks the canonical rate limit"));
   const silentlyCapped = { ...fixed, pageSrc: fixed.pageSrc.replace(', offset]', ']') };
   const capFails = checkOwnerOverrideLogWired(silentlyCapped).some((item) => item.includes("not server-paged"));
+  const falseEmptyPager = { ...fixed, pageSrc: fixed.pageSrc.replace('logQ.isLoading ? "Loading overrides…" : logQ.isError ? "Override history unavailable" : ', "") };
+  const falseEmptyFails = checkOwnerOverrideLogWired(falseEmptyPager).some((item) => item.includes("not server-paged"));
 
-  if (buggyFails && fixedPasses && swallowFails && rateLimitFails && capFails) {
-    console.log("verify:owner-override-log-route-wired selftest OK (route + query-swallow + silent-cap mutations caught)");
+  if (buggyFails && fixedPasses && swallowFails && rateLimitFails && capFails && falseEmptyFails) {
+    console.log("verify:owner-override-log-route-wired selftest OK (route + query-swallow + silent-cap + false-empty pager mutations caught)");
     process.exit(0);
   }
-  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses, swallowFails, rateLimitFails, capFails });
+  console.error("verify:owner-override-log-route-wired selftest FAILED", { buggyFails, fixedPasses, swallowFails, rateLimitFails, capFails, falseEmptyFails });
   process.exit(1);
 }
 
