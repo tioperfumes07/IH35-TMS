@@ -1,6 +1,8 @@
-# CURRENT GO — 2026-08-30 (bar-2)
+# CURRENT GO — 2026-08-30 (bar-2 landed · deploy kicked)
 
-Cursor→self | NOW=land 10142 TIEOUT bar-2 (SCHEMA+gate+replay+copy-integrity folded) · then Faro factor→bank 1296 linkage · 4C/4D · Neon pool (luciaPool=DIRECT, max 5, do not stale-resolve Sentry 11) · skip #15546 | GO
+Cursor→self | API deploy IN FLIGHT dep-daaa0r4s728c73fqha80 (13 undeployed commits, live was 4ef6dc4) · NEXT after live=Faro factor→bank 1296 linkage · then Neon luciaPool off DIRECT · skip #15546 | GO
+
+STOP. Older stacked GOs are VOID.
 
 Faro 1296 account exists. Assignment INSERT now stamps operating_company_id going forward; CC-1 still backfills NULL rows. USER-VERIFY-01 UNVERIFIED. INBOX-CC-1 is one CURRENT GO (no THIS IS NOW stack).
 
