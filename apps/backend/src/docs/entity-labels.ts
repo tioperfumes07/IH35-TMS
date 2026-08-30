@@ -32,6 +32,11 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   load: { table: "mdata.loads", labelSelect: "NULLIF(TRIM(d.load_number), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   settlement: { table: "driver_finance.driver_settlements", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   invoice: { table: "accounting.invoices", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  // DOC-01 D2 (owner 2026-08-29): safety.medical_cards / safety.background_checks previously had
+  // no document column at all (migration 202613290000). Both tables carry operating_company_id
+  // directly (no cross-company authorization bridge needed, unlike driver above).
+  medical_card: { table: "safety.medical_cards", labelSelect: "NULLIF(TRIM(COALESCE(d.card_number, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  background_check: { table: "safety.background_checks", labelSelect: "NULLIF(TRIM(COALESCE(d.check_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */
