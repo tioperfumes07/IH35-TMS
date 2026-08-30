@@ -7,6 +7,7 @@ import { withCircuitBreaker } from "../../../lib/circuit-breaker/index.js";
 import { samsaraFetch } from "../samsara-client.js";
 import { withSavepoint } from "../../../auth/db.js";
 import { getDriverForVehicleAtTime } from "../../../telematics/vehicle-driver-lookup.service.js";
+import { recordSamsaraDriverLogin } from "../samsara-driver-login.service.js";
 
 const SAMSARA_API_BASE = "https://api.samsara.com";
 export const OVERLAP_STOP_THRESHOLD_RATIO = 0.05;
@@ -288,6 +289,9 @@ async function upsertSamsaraAssignment(
   assignment: SamsaraVehicleAssignment,
   local: { unit_id: string; driver_id: string | null }
 ): Promise<"inserted" | "updated" | "skipped"> {
+  if (local.driver_id) {
+    await recordSamsaraDriverLogin(client, operatingCompanyId, local.driver_id, assignment.started_at);
+  }
   const existing = await client.query<{ id: string; ended_at: string | null }>(
     `
       SELECT id::text, ended_at::text

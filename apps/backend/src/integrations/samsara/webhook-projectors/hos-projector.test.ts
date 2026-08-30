@@ -48,5 +48,13 @@ describe("HOS webhook projector", () => {
       null,
       null,
     ]);
+    expect(query).toHaveBeenCalledWith(expect.stringContaining("UPDATE mdata.drivers d"), [
+      "11111111-1111-1111-1111-111111111111",
+      "driver-local",
+      "2026-08-23T12:00:00.000Z",
+    ]);
+    const loginSql = queries.find((sql) => sql.includes("SET last_samsara_login_at")) ?? "";
+    expect(loginSql).toContain("samsara_login_dca.company_id = $1::uuid");
+    expect(loginSql).toContain("d.last_samsara_login_at < $3::timestamptz");
   });
 });

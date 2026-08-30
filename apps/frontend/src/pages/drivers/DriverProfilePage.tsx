@@ -166,6 +166,21 @@ function fetchDriverProfile(driverId: string, operatingCompanyId: string) {
   );
 }
 
+function formatSamsaraLogin(value: unknown): string {
+  if (typeof value !== "string" || !value) return "Never observed";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unavailable";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZoneName: "short",
+  }).format(date);
+}
+
 type DriverProfilePageProps = {
   driverId?: string;
   onBack?: () => void;
@@ -358,6 +373,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               ?.driver_employment_status_label ?? null
           }
         />
+        <p className="mt-1 text-xs text-slate-600" data-testid="driver-last-samsara-login">
+          Last Samsara login: {formatSamsaraLogin(profileDriver.last_samsara_login_at)}
+        </p>
       </div>
       <div data-testid="dp-section-2-license">
         <LicenseSection license={aggregate.license} />

@@ -1,4 +1,5 @@
 import type { DbClient, ProjectionResult, SamsaraWebhookEvent } from "../webhook-projection.types.js";
+import { recordSamsaraDriverLogin } from "../samsara-driver-login.service.js";
 
 type DutyStatus =
   | "off_duty"
@@ -221,6 +222,8 @@ export async function projectHosEvent(client: DbClient, event: SamsaraWebhookEve
     `,
     [event.operating_company_id, localDriverId, localUnitId, dutyStatus, startedAt, endedAt, odometerMi, location]
   );
+
+  await recordSamsaraDriverLogin(client, event.operating_company_id, localDriverId, startedAt);
 
   return { success: true };
 }
