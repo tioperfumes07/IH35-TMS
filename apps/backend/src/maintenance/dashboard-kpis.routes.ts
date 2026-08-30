@@ -140,31 +140,62 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
 
         let totalUnits = 0;
         let activeUnits = 0;
-        let dotOos = 0;
+        const fleetUnitsWhereSql = `
+          (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
+            AND deactivated_at IS NULL
+            AND ${excludeDemoPhantomSql("unit_number")}
+            AND ${excludeSampleDataSql()}
+        `;
         if (await relationExists(client, "mdata.units")) {
-          const hasIsOos = await columnExists(client, "mdata", "units", "is_oos");
           const fleetRes = await client.query<{
             total_units: number;
             active_units: number;
-            dot_oos: number;
           }>(
             `
               SELECT
                 COUNT(*)::int AS total_units,
-                COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units,
-                COUNT(*) FILTER (WHERE ${hasIsOos ? "COALESCE(is_oos, false)" : "false"})::int AS dot_oos
+                COUNT(*) FILTER (WHERE status = 'InService')::int AS active_units
               FROM mdata.units
-              WHERE (owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)
-                AND deactivated_at IS NULL
-                AND ${excludeDemoPhantomSql("unit_number")}
-                AND ${excludeSampleDataSql()}
+              WHERE ${fleetUnitsWhereSql}
             `,
             [companyId]
           );
           const fleet = fleetRes.rows[0];
           totalUnits = Number(fleet?.total_units ?? 0);
           activeUnits = Number(fleet?.active_units ?? 0);
-          dotOos = Number(fleet?.dot_oos ?? 0);
+        }
+
+        // GO-1405 P0 (owner packet IH35-FINISH-2026-08-29/CC-1): dot_oos previously mirrored
+        // mdata.units.is_oos, which is itself just a copy of status='OutOfService' (a fleet
+        // dispatch/operational flag) -- confirmed live 1:1 correlated with status, zero mixed
+        // cases, across TRK and USMCA. That is not an FMCSA 49 CFR 396 out-of-service condition,
+        // which is DECLARED AT INSPECTION. The only table that can genuinely represent it is
+        // safety.dot_inspections. Definition: a unit is dot_oos if the outcome of its most recent
+        // non-voided inspection is 'OOS'. "Most recent" = latest inspection_date, then latest
+        // created_at; on an exact tie on both (seen live in fixture data: two inspections with
+        // identical inspection_date AND created_at, one PASS + one OOS), resolve toward OOS --
+        // an ambiguous simultaneous record must never silently clear an out-of-service flag.
+        // out_of_service is unified to the SAME number: the owner packet's defect was three
+        // counts of one concept in one payload (dot_oos / out_of_service / severe_oos), and
+        // severe_oos is a genuinely distinct concept (open severe-repair estimates) left as-is.
+        let dotOos = 0;
+        if (totalUnits > 0 && (await relationExists(client, "safety.dot_inspections"))) {
+          const oosRes = await client.query<{ dot_oos: number }>(
+            `
+              SELECT COUNT(*) FILTER (WHERE outcome = 'OOS')::int AS dot_oos
+              FROM (
+                SELECT DISTINCT ON (di.unit_id) di.outcome
+                FROM safety.dot_inspections di
+                WHERE di.voided_at IS NULL
+                  AND di.unit_id IN (
+                    SELECT id FROM mdata.units WHERE ${fleetUnitsWhereSql}
+                  )
+                ORDER BY di.unit_id, di.inspection_date DESC, di.created_at DESC, (di.outcome = 'OOS') DESC
+              ) latest_outcome_per_unit
+            `,
+            [companyId]
+          );
+          dotOos = Number(oosRes.rows[0]?.dot_oos ?? 0);
         }
 
         const criticalWorkOrderKpis = await getCriticalWorkOrderKpis(client, companyId);
@@ -259,7 +290,7 @@ export async function registerMaintenanceDashboardKpisRoutes(app: FastifyInstanc
           open_wos: criticalWorkOrderKpis.open_wos,
           in_shop: Number(base.in_shop ?? 0),
           past_due_pm: pastDueCount,
-          out_of_service: 0,
+          out_of_service: dotOos,
           open_damage: 0,
           avg_wo_age_days: Number(base.avg_wo_age_days ?? 0),
           mtd_repair_cost: Number(base.mtd_repair_cost ?? 0),
