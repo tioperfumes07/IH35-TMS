@@ -5,6 +5,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { companyToday } from "../../lib/businessDate";
+import { readDispatchBoardDefaultSort } from "../../lib/dispatch-local-settings";
 
 // Record-cell link: the Customer cell links to the customer's detail page. stopPropagation so it does NOT
 // also trigger the row's onRowClick (which opens the load drawer). Falls back to plain text when no id.
@@ -292,6 +293,7 @@ function dispatchSortValue(load: BoardLoad, key: string): string | number | null
     case "wo": return load.customer_wo_number ?? null;
     case "linehaul": return load.rate_total_cents ?? null;
     case "status": return load.status ?? null;
+    case "created_at": return load.created_at ?? null;
     default: return null;
   }
 }
@@ -485,8 +487,10 @@ export function DispatchBoard({
   // survives a refresh or a shared/bookmarked board link (same contract as ?board= board-mode above).
   // Uses the shared useUrlSort hook (BANK-SORT-ROLLOUT-ACCT); TableHeaderCell wants sortKey as
   // string|null (useUrlSort returns "" when unset), so coerce below.
-  const { sortKey: rawDispatchSortKey, sortDirection: dispatchSortDir, toggleSort: toggleDispatchSort } = useUrlSort();
-  const dispatchSortKey = rawDispatchSortKey || null;
+  const { sortKey: rawDispatchSortKey, sortDirection: urlDispatchSortDir, toggleSort: toggleDispatchSort } = useUrlSort();
+  const defaultDispatchSort = useMemo(() => readDispatchBoardDefaultSort(companyId), [companyId]);
+  const dispatchSortKey = rawDispatchSortKey || defaultDispatchSort.key;
+  const dispatchSortDir = rawDispatchSortKey ? urlDispatchSortDir : defaultDispatchSort.direction;
 
   const sortedLoads = useMemo(() => {
     const base = sortUnassignedFirst(effectiveLoads);
