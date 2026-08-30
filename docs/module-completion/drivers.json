@@ -195,9 +195,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/messages wired to pages/drivers/MessagesInboxPage.tsx; getDriverMessagesInbox/getDriverMessageThread require operatingCompanyId; conversation list links to driver profile; SendMessageModal present. MessagesInboxPage.test.tsx passes (4/4).",
+      "evidence": "Route /drivers/messages wired to pages/drivers/MessagesInboxPage.tsx; getDriverMessagesInbox/getDriverMessageThread require operatingCompanyId; conversation list links to driver profile; SendMessageModal present. MessagesInboxPage.test.tsx passes (4/4). | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/messages renders 'Driver Messages' (Office inbox, threaded conversations per driver), honest-empty 'No driver conversations yet.' / 'Select a driver conversation' -- real, live, entity-scoped structure, no dead end. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S13",
@@ -209,9 +211,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/onboarding/:session_id wired to pages/drivers/OnboardingWizardPage.tsx with entity-scoped companyId and driverId params; step components wired. OnboardingWizardPage.test.tsx passes (4/4).",
+      "evidence": "Route /drivers/onboarding/:session_id wired to pages/drivers/OnboardingWizardPage.tsx with entity-scoped companyId and driverId params; step components wired. OnboardingWizardPage.test.tsx passes (4/4). | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/onboarding/:session_id renders a real 'Driver Onboarding Wizard' for a real completed session (safety.onboarding_sessions id 7ed3f7eb-e2b7-4d24-a821-0748cba9b4ae, driver 'TEST CODEX ONBOARD 20260824', USMCA), full 7-step wizard (Identity/CDL Upload/Medical Card/DQF Docs/Signatures/I-9/Vehicle Assignment), admin-override completion reason shown honestly. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S14",
@@ -223,9 +227,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/pay-rate-templates renders a DataPanel directing to Lists > Driver > Pay rate templates (canonical catalog path) and does not leave an unscoped dead page.",
+      "evidence": "Route /drivers/pay-rate-templates renders a DataPanel directing to Lists > Driver > Pay rate templates (canonical catalog path) and does not leave an unscoped dead page. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/pay-rate-templates renders breadcrumb 'Lists & Catalogs / Driver / Pay Rate Templates', honest-empty (0 rows), +Create wired -- no dead end. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S15",
@@ -237,9 +243,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/permits renders the Permit / Document Expirations panel inside pages/Drivers.tsx using selectedCompanyId-scoped permitExpirationRows; each row links to the driver via EntityLink; honest empty state.",
+      "evidence": "Route /drivers/permits renders the Permit / Document Expirations panel inside pages/Drivers.tsx using selectedCompanyId-scoped permitExpirationRows; each row links to the driver via EntityLink; honest empty state. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/permits renders 'Permit / Document Expirations' with a real live row (Jorge Pablo Guadalupe Munoz Gonzalez, Passport expiration, 15d). Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S16",
@@ -251,9 +259,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/pre-settlements renders PreSettlementsPanel with settlementsReadyRows from selectedCompanyId-scoped query; links to driver profile.",
+      "evidence": "Route /drivers/pre-settlements renders PreSettlementsPanel with settlementsReadyRows from selectedCompanyId-scoped query; links to driver profile. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/pre-settlements renders a real live row (Rafael Rogelio Rivero Reynoso, 08/10/2026-08/16/2026, load L-20260810-0003, $297.60) with a real total-payout footer. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S17",
@@ -265,9 +275,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/profiles renders pages/drivers/DriversListPage.tsx (Driver qualification profiles) with company-scoped listDrivers, ParityTable, profile drill-through, and CSV export. Tests pass.",
+      "evidence": "Route /drivers/profiles renders pages/drivers/DriversListPage.tsx (Driver qualification profiles) with company-scoped listDrivers, ParityTable, profile drill-through, and CSV export. Tests pass. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/profiles renders 'Driver qualification profiles' with 159 real company-scoped drivers, DQF status chips, checklist stats, CSV export. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S18",
@@ -279,9 +291,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/retention wired to pages/drivers/RetentionDashboard.tsx; backend listRetentionScores now LEFT JOINs mdata.drivers to project driver_name; frontend passes the name to AtRiskDriverCard via EntityLink. verify-driver-retention.mjs OK; scorer.test.ts passes.",
+      "evidence": "Route /drivers/retention wired to pages/drivers/RetentionDashboard.tsx; backend listRetentionScores now LEFT JOINs mdata.drivers to project driver_name; frontend passes the name to AtRiskDriverCard via EntityLink. verify-driver-retention.mjs OK; scorer.test.ts passes. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/retention renders 'Driver Retention Risk' (GAP-71 predictive model), honest-empty 'No at-risk drivers... No current retention scores are in the at-risk or critical tiers for this operating company.' Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S19",
@@ -293,9 +307,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/settlements renders a canonical-redirect hint linking to /driver-finance/settlements; settlement detail loadIds contract fixed and verify-driver-settlements-domain-linkage.mjs PASS.",
+      "evidence": "Route /drivers/settlements renders a canonical-redirect hint linking to /driver-finance/settlements; settlement detail loadIds contract fixed and verify-driver-settlements-domain-linkage.mjs PASS. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/settlements canonical-redirects to /driver-finance/settlements, which renders real live open driver bills (4 rows, real driver names + load numbers, e.g. Pedro Abraham Lopez Collado L-20260816-0168 $230.40). Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     },
     {
       "id": "DRV-S20",
@@ -307,9 +323,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "Route /drivers/team-splits renders TeamSplitConfigPanel inside pages/Drivers.tsx via extended subtabs; uses company-scoped useTeamSplits and DriverPickerWithCreate; create config wired.",
+      "evidence": "Route /drivers/team-splits renders TeamSplitConfigPanel inside pages/Drivers.tsx via extended subtabs; uses company-scoped useTeamSplits and DriverPickerWithCreate; create config wired. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/team-splits renders 'Team split configs' with a real DriverPickerWithCreate-style filter and a live 'Create config' action. Binding on this independent live confirmation.",
       "pr": null,
-      "prod_verified": false
+            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_sha": "5c82530",
+"prod_verified": true
     }
   ],
   "M": 20,
