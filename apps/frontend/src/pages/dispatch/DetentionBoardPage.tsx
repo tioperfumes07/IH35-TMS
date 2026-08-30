@@ -33,6 +33,15 @@ function formatElapsed(startedAt: string, nowMs: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
+function operationalStateLabel(state: DetentionBoardEvent["operational_state"]): string {
+  return state === "active" ? "Accruing" : "Stopped";
+}
+
+function billingStateLabel(state: DetentionBoardEvent["billing_state"]): string {
+  if (state === "billed") return "Billed";
+  return state === "unbilled_receivable" ? "Unbilled receivable" : "Estimated, not yet owed";
+}
+
 // Per-row action buttons — kept as its own component (not a plain column render) so the
 // close/bridge/notify mutations' hooks are scoped to a stable per-row instance, same as the
 // original EventRow.
@@ -202,12 +211,23 @@ export function DetentionBoardPage() {
     },
     {
       key: "live_accrued_amount_cents",
-      label: "Accrual",
+      label: "Estimated / unbilled",
       sortable: true,
       cellClass: "tabular-nums font-medium",
       render: (event) => formatMoney(Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0)),
     },
-    { key: "status", label: "Status", sortable: true, render: (event) => <StatusBadge status={String(event.status)} /> },
+    {
+      key: "operational_state",
+      label: "Detention status",
+      sortable: true,
+      render: (event) => <StatusBadge status={operationalStateLabel(event.operational_state)} />,
+    },
+    {
+      key: "billing_state",
+      label: "Customer balance",
+      sortable: true,
+      render: (event) => <StatusBadge status={billingStateLabel(event.billing_state)} />,
+    },
     {
       key: "actions",
       label: "Actions",
@@ -220,7 +240,7 @@ export function DetentionBoardPage() {
     <div data-testid="dispatch-detention-board-page" className="mx-auto max-w-7xl space-y-4">
       <PageHeader
         title="Detention board"
-        subtitle="Live accrual from stop arrivals · billing bridge via accessorial editor path"
+        subtitle="Operational detention and stopped, unbilled customer receivables · independent of load status"
         actions={
           <>
             <button
@@ -239,7 +259,7 @@ export function DetentionBoardPage() {
       />
 
       <p className="text-xs text-slate-600">
-        Free time excluded · rate from load or customer · customer notify after{" "}
+        Active rows are estimates, not customer balances · stopped rows remain visible as unbilled receivables · customer notify after{" "}
         {boardQ.data?.notify_threshold_minutes ?? 60} billable minutes.
       </p>
 
