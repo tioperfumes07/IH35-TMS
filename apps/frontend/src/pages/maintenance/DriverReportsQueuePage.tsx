@@ -11,6 +11,7 @@ import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 
 const LINK = "text-slate-700 hover:underline";
 
@@ -135,7 +136,12 @@ export function DriverReportsQueuePage({
   // entity; Load shown as text since there is no confirmed dispatch load-detail route to link safely).
   const columns: Array<ParityColumn<DriverReportRow>> = [
     { key: "reported_at", label: "Reported", sortable: true, render: (row) => reportedAt(row.reported_at) },
-    { key: "report_type", label: "Type", sortable: true },
+    {
+      key: "report_type",
+      label: "Type",
+      sortable: true,
+      render: (row) => humanizeEnumLabel(row.report_type),
+    },
     {
       key: "driver_name",
       label: "Driver",
@@ -166,7 +172,12 @@ export function DriverReportsQueuePage({
         </div>
       ),
     },
-    { key: "status", label: "Status", sortable: true },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (row) => humanizeEnumLabel(row.status),
+    },
   ];
 
   const rowActions = (row: DriverReportRow) => (
