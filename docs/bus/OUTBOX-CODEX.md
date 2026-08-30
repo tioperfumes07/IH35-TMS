@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7431 | VERTICAL=maintenance severe-alert range+unit+WO reverse | ROOT=guard-froze-capped-list-before-all-row-exposure-contract | focused=normal+selftest-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7430 | VERTICAL=dispatch+vendors broker FK | ROOT=guard-still-read-direct-form-after-submit-snapshot-envelope | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | WORKING | ES1-F7429 | ROOT=customer-contacts-registry-still-deferred-after-parent-RLS-landed | focused=scope-proof | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7428 | ROOT=guard-required-obsolete-entityLabel-spelling-after-canonical-visibleDocumentLabel-migration | focused=normal+selftest-PASS | NEXT=gate+FAST-MERGE | GO
