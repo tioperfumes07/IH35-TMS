@@ -1,4 +1,5 @@
-CODEX | WORKING | GUARD-F7453 | ROOT=write-rate-limit-census-counted-matching-GET-routes | focused=normal+selftest-9/9+backend-typecheck | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7454 | ROOT=anomaly-guard-froze-unpaged-query-key-after-server-pagination | focused=normal+selftest-3/3+frontend-typecheck | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7453 | PR=#18090 @ 7efaebc26c | exact-3 POST rate limits · selftest 9/9 · typecheck PASS | NEXT=anomaly red guard | GO
 CODEX | SHIPPED | GUARD-F7452 | PR=#18089 @ 98cb57760d | mounted-resolver+prefix-boundary+longest-route · selftest 3/3 · Vitest 10/10 | NEXT=next red Safety guard | GO
 CODEX | SHIPPED | GUARD-F7451 | PR=#18088 @ 73d3090b77 | driver-registry=35/35 exact CI membership · global-census-decoupled · selftest PASS | NEXT=GO-LAST-26 SAF orphan source audit | GO
 CODEX | SHIPPED | GUARD-F7450 | PR=#18086 @ 5bb585fceb | queue=whole-product-no-traceback+selftest-mutation-PASS | NEXT=SAF-B16 evidence routed CC-2 on live 48e08e5 | GO
