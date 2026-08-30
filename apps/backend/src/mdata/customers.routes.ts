@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit, buildPatchChanges } from "../audit/crud-audit.js";
 import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
+import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
 import { resolveOperatingCompanyId } from "../auth/operating-company-scope.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import {
@@ -764,8 +765,11 @@ export async function registerCustomerRoutes(app: FastifyInstance) {
         addOptional("preferred_payment_method", b.preferred_payment_method);
         addOptional("preferred_delivery_method", b.preferred_delivery_method ?? "email");
         addOptional("preferred_language", b.preferred_language ?? "en");
-        // ACCT-F220 — omitted stays NULL/default false; only an explicit true tags it.
-        addOptional("is_sample_data", b.is_sample_data);
+        // G1 (2026-08-30) — an explicit value from the caller always wins (unchanged ACCT-F220
+        // behavior); when omitted, auto-derive from the name a human actually typed instead of
+        // silently defaulting to false. This is the actual write-path fix: "TEST-CUSTOMER-1" no
+        // longer requires the caller to separately know to pass is_sample_data:true.
+        addOptional("is_sample_data", b.is_sample_data ?? (looksLikeSampleDataName(normalizedName) || undefined));
         addOptional("tax_exempt", b.tax_exempt ?? false);
         addOptional("tax_exempt_reason", b.tax_exempt_reason);
         addOptional("default_income_account_id", b.default_income_account_id);
