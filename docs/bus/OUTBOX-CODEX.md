@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7412 | ROOT=wave-a-unit-guard-demanded-pre-envelope-border-unit-fk | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7411 | PR=#18034 @ b95b324336 | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7412 | GO
 CODEX | WORKING | GUARD-F7411 | ROOT=unit-column-guard-rejected-keyed-driver-hub-scheduler-mount | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7410 | PR=#18031 @ 0428c7434b | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7411 | GO
 CODEX | WORKING | GUARD-F7410 | ROOT=unit-sibling-still-demanded-two-field-temp-cover-filter | focused=normal-pre-fix-RED/selftest-10 | NEXT=guard+FAST-MERGE | GO
