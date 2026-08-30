@@ -59,6 +59,11 @@ function auditSubjectProjection(alias: string) {
       -- emitter, simply never added to this shared resolver.
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'banking.reconciliation_sessions' THEN 'reconciliation_session'
       WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'banking.bank_transactions' THEN 'bank_transaction'
+      -- CUSTVEND-VENDOR-CREDIT-PAYMENT-METHOD-SUBJECT-LOST: live-observed on
+      -- /reports/audit/void-reversal, same never-wired-into-the-shared-resolver shape as every
+      -- other task-branch entry above.
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'accounting.vendor_credits' THEN 'vendor_credit'
+      WHEN ${alias}.subject_type = 'task' AND ${alias}.source_table = 'mdata.vendor_payment_methods' THEN 'vendor_payment_method'
       ELSE ${alias}.subject_type
     END AS subject_kind,
     CASE
@@ -112,6 +117,8 @@ function auditSubjectProjection(alias: string) {
         WHEN 'driver_finance.cash_advance_requests' THEN NULLIF(TRIM(audit_cash_advance_request.display_id), '')
         WHEN 'banking.reconciliation_sessions' THEN NULLIF(TRIM('Reconciliation ' || to_char(audit_recon_session.period_start, 'YYYY-MM-DD') || '–' || to_char(audit_recon_session.period_end, 'YYYY-MM-DD')), '')
         WHEN 'banking.bank_transactions' THEN NULLIF(TRIM(COALESCE(audit_bank_txn.description, audit_bank_txn.merchant_name)), '')
+        WHEN 'accounting.vendor_credits' THEN NULLIF(TRIM(audit_vendor_credit.display_id), '')
+        WHEN 'mdata.vendor_payment_methods' THEN NULLIF(TRIM(COALESCE(audit_vendor_payment_method.bank_name, CASE audit_vendor_payment_method.method_type WHEN 'ach' THEN 'ACH' ELSE INITCAP(audit_vendor_payment_method.method_type) END) || COALESCE(' ••' || audit_vendor_payment_method.account_mask, '')), '')
         ELSE NULL
       END
       ELSE NULL
@@ -245,7 +252,17 @@ function auditSubjectJoins(alias: string) {
       ON ${alias}.subject_type = 'task'
      AND ${alias}.source_table = 'banking.bank_transactions'
      AND audit_bank_txn.id = ${alias}.source_reference_id
-     AND audit_bank_txn.operating_company_id = ${alias}.operating_company_id`;
+     AND audit_bank_txn.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN accounting.vendor_credits audit_vendor_credit
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'accounting.vendor_credits'
+     AND audit_vendor_credit.id = ${alias}.source_reference_id
+     AND audit_vendor_credit.operating_company_id = ${alias}.operating_company_id
+    LEFT JOIN mdata.vendor_payment_methods audit_vendor_payment_method
+      ON ${alias}.subject_type = 'task'
+     AND ${alias}.source_table = 'mdata.vendor_payment_methods'
+     AND audit_vendor_payment_method.id = ${alias}.source_reference_id
+     AND audit_vendor_payment_method.operating_company_id = ${alias}.operating_company_id`;
 }
 
 export async function registerAuditReportRoutes(app: FastifyInstance) {
@@ -553,6 +570,13 @@ export async function registerAuditReportRoutes(app: FastifyInstance) {
                  WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'catalogs.void_cancel_reasons' THEN 'task'
                  WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.customer_quality_events' THEN 'task'
                  WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'driver_finance.driver_settlements' THEN 'task'
+                 -- CUSTVEND-VENDOR-CREDIT-PAYMENT-METHOD-SUBJECT-LOST: live-observed on
+                 -- /reports/audit/void-reversal -- accounting.vendor_credits.voided /
+                 -- mdata.vendor_payment_methods.voided emit real resource_type payload values that
+                 -- simply weren't in this normalization list yet, same root cause as the other
+                 -- raw-path entries above.
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'accounting.vendor_credits' THEN 'task'
+                 WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.vendor_payment_methods' THEN 'task'
                  WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') = 'mdata.customers' THEN 'customer'
                  WHEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type') IS NOT NULL
                    THEN COALESCE(ae.payload->>'resource_type', ae.payload->>'reversed_entity_type', ae.payload->>'entity_type')
