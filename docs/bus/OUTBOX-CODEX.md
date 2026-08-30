@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7379 | NOW=border zero-minute wait honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7378 | PR=#17923 @ 2f5831fab6 | gate=exit0 | NEXT=DSP-F7379 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7378 | NOW=planner conditional-view 500 vertical | guard=PASS+selftest16/16 · TS=exit0 | NEXT=FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7377 | PR=#17922 @ b1eaadb8d8 | gate=exit0 | NEXT=FUEL-F7378 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7377 | NOW=fuel missing-source honesty vertical | tests=17/17 · TS=exit0 · guard=fuel-clean/banking-routed | NEXT=FAST-MERGE then next unique fuel/dispatch | GO
