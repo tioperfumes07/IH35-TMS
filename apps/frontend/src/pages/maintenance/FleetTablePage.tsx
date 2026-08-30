@@ -9,7 +9,6 @@ import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../c
 import { downloadFleetLocationHosXlsx, getFleetLocationHos } from "../../api/reports";
 import { useListState } from "../../components/list-state";
 import { ListErrorState } from "../../components/ListErrorState";
-import { NOT_AVAILABLE_YET } from "../../lib/prodEmptyStateCopy";
 
 type Props = {
   operatingCompanyId: string;
@@ -376,8 +375,14 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         <KpiCard
           label="Avg Age"
           value={kpis.avg_age_years == null ? "-" : `${Number(kpis.avg_age_years).toFixed(1)} y`}
-          disabled
-          disabledReason={NOT_AVAILABLE_YET}
+          active={searchParams.get("sort") === "year" && searchParams.get("dir") === "asc"}
+          onClick={() =>
+            patchParams((params) => {
+              // Oldest model year first is the record-level drill behind the aggregate age.
+              params.set("sort", "year");
+              params.set("dir", "asc");
+            })
+          }
         />
       </div>
 

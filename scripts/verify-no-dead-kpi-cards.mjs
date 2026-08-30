@@ -623,6 +623,16 @@ export function contractErrors(src, options = {}) {
         "RMStatStrip already owns Open WOs and PM Due there",
     );
   }
+  const fleetTable = src.files[`${SRC}/pages/maintenance/FleetTablePage.tsx`];
+  if (
+    fleetTable &&
+    (!/<KpiCard[\s\S]*?label="Avg Age"[\s\S]*?onClick=\{\(\) =>[\s\S]*?params\.set\("sort", "year"\)[\s\S]*?params\.set\("dir", "asc"\)/.test(fleetTable) ||
+      /label="Avg Age"[\s\S]{0,240}\bdisabled\b/.test(fleetTable))
+  ) {
+    errors.push(
+      "DEAD-CARD: Fleet Avg Age must drill to the oldest-model-year-first roster; a computed value cannot be disabled as 'Not available yet'",
+    );
+  }
   return errors;
 }
 
@@ -729,6 +739,15 @@ const withPrimitive = (base, next) => ({ ...base, primitive: next });
 
 function selftestMutations(good) {
   return [
+    [
+      "fleet Avg Age regresses to a disabled populated card",
+      withFile(
+        good,
+        `${SRC}/pages/maintenance/FleetTablePage.tsx`,
+        '<KpiCard label="Avg Age" value="6.3 y" disabled disabledReason="Not available yet" />',
+      ),
+      /DEAD-CARD: Fleet Avg Age/,
+    ],
     [
       "maintenance R&M renders both global and board-specific KPI strips",
       withFile(
