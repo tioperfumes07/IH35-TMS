@@ -1,3 +1,5 @@
+**2026-08-30T18:08Z GO-KEEP-MOVING.** SPA #18270 **live**. API deploy `dep-daa731ss728c73fj1400`. Packet `docs/lockdown/GO-KEEP-MOVING-2026-08-30.md`. Skip #15546.
+
 **2026-08-30T17:52Z GO-CC2-CC3-NOW.** CC-2 STOP WAITING: dup recon sessions unique. CC-3 STOP WAITING: LEGAL-HEARING list+overview. Packet `docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md`. Cascade still A-SUPERSEDE. Skip #15546.
 
 **2026-08-30T17:50Z GO-CASCADE-FALSE-POSITIVE-GREP R2 THIS IS NOW.** Claude verified 8/8 false positives. **A then B. Never C.** SUPERSEDE 50277–50344 today. Root cause = `grep_search` **directory-scope**, not GNU `|`. B blocked until detector planted (file yes / file no / directory both). 50309 not a proven FAIL (`SafetyHomeTab` has isError). Packet `docs/lockdown/GO-CASCADE-FALSE-POSITIVE-GREP-2026-08-30.md`. Skip #15546.
