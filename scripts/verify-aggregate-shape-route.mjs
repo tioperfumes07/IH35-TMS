@@ -37,7 +37,7 @@ function unitMaintenanceVoidFailures(unitSource) {
   const failures = [];
   if (!/FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\)/.test(unitSource)) failures.push("unit aggregate open-work-order counts exclude voided rows");
   if (!/COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL\s+AND w\.status IN \('complete', 'completed'\)/.test(unitSource)) failures.push("unit aggregate last-service read excludes voided rows");
-  if (!/w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL\s+ORDER BY COALESCE\(w\.updated_at, w\.opened_at\)/.test(unitSource)) failures.push("unit aggregate recent-work-order reverse list excludes voided rows");
+  if (!/w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid\s+AND w\.voided_at IS NULL[\s\S]{0,180}ORDER BY COALESCE\(w\.updated_at, w\.opened_at\)/.test(unitSource)) failures.push("unit aggregate recent-work-order reverse list excludes voided rows");
   return failures;
 }
 
@@ -152,7 +152,7 @@ if (process.argv.includes("--selftest")) {
     lastServiceVendorFailures(aggregate, maintenanceSnapshot.replace('kind="vendor"', 'kind="vendor_removed"')),
     unitMaintenanceVoidFailures(aggregate.replace(/(FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status NOT IN \('complete', 'completed', 'cancelled'\))/, "$1$2")),
     unitMaintenanceVoidFailures(aggregate.replace(/(COALESCE\(w\.external_vendor_id, w\.vendor_id\)::text AS vendor_id[\s\S]{0,500}WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+AND w\.status IN \('complete', 'completed'\))/, "$1$2")),
-    unitMaintenanceVoidFailures(aggregate.replace(/(w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL(\s+ORDER BY COALESCE\(w\.updated_at, w\.opened_at\))/, "$1$2")),
+    unitMaintenanceVoidFailures(aggregate.replace(/(w\.description[\s\S]{0,180}FROM maintenance\.work_orders w\s+WHERE w\.unit_id = \$1::uuid\s+AND w\.operating_company_id = \$2::uuid)\s+AND w\.voided_at IS NULL/, "$1")),
     currentLoadCustomerFailures(aggregate.replace("mdata.get_customer_same_company(l.customer_id, l.operating_company_id)", "mdata.customers")),
     vehicleLocationSchemaFailures(
       aggregate
