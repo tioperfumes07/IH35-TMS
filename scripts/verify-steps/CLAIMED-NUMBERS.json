@@ -4872,6 +4872,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-je-type-id-wired-into-all-posters (ACCT-LINK-01 regression fix, GO-1405)"
   },
+  "10097": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cert01-fw-server-assertions (CERT-01 B2+B7, GO-1405)"
+  },
   "10093": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
