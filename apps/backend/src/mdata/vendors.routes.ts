@@ -575,6 +575,12 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         await appendCrudAudit(client, authUser.uuid, "mdata.vendors.created", {
           resource_id: row.id,
           resource_type: "mdata.vendors",
+          // VEND-AUDIT-HISTORY false-empty (GO-CERT-01): the events-list route scopes every query
+          // by (payload->>'operating_company_id')::uuid = $1 (audit.audit_events has no such
+          // column, only the JSONB payload) -- this call never carried the key, so every vendor
+          // audit event failed the company filter and the Vendor Audit History tab always
+          // rendered "No audit events found", indistinguishable from a genuinely clean history.
+          operating_company_id: String(row.operating_company_id),
           id: row.id,
           name: row.name,
           vendor_code: row.vendor_code,
@@ -800,6 +806,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
         await appendCrudAudit(client, authUser.uuid, "mdata.vendors.updated", {
           resource_id: updatedRow.id,
           resource_type: "mdata.vendors",
+          // VEND-AUDIT-HISTORY false-empty (GO-CERT-01) -- see the .created call site above.
+          operating_company_id: String(updatedRow.operating_company_id),
           changes,
         });
         await enqueueTmsVendorPushRequested(client, {
@@ -881,6 +889,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, authUser.uuid, "mdata.vendors.deactivated", {
         resource_id: oldRow.id,
         resource_type: "mdata.vendors",
+        // VEND-AUDIT-HISTORY false-empty (GO-CERT-01) -- see the .created call site above.
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
         was_already_deactivated: wasAlreadyDeactivated,
       });
       await enqueueTmsVendorPushRequested(client, {
@@ -948,6 +958,8 @@ export async function registerVendorRoutes(app: FastifyInstance) {
       await appendCrudAudit(client, authUser.uuid, "mdata.vendors.reactivated", {
         resource_id: oldRow.id,
         resource_type: "mdata.vendors",
+        // VEND-AUDIT-HISTORY false-empty (GO-CERT-01) -- see the .created call site above.
+        operating_company_id: String(oldRow.operating_company_id ?? ""),
         was_already_active: wasActive,
       });
       await enqueueTmsVendorPushRequested(client, {
