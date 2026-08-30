@@ -1,5 +1,7 @@
 CODEX | WORKING | SYS-F7421 | ROOT=transaction-health-evidence-imported-contracts-back-through-owning-service | focused=no-circular normal+selftest+13-vitest+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7420 | PR=#18056 @ b09d7c160c | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product=unchanged | NEXT=SYS-F7421 | GO
+CODEX | WORKING | DRV-F7424 | ROOT=driver-audit-company-invariant-hidden-in-dynamic-WHERE-not-bound-to-JOIN | focused=shared-reverse+selftest+range+selftest+backend-tsc | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | DSP-F7423 | PR=#18059 @ 85b68dc5cc | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=DRV-F7424 | GO
 CODEX | WORKING | DSP-F7423 | ROOT=late-arrival-sample-filter-looked-up-canonical-load-by-id-without-company | focused=sample-exclusion+selftest+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | DSP-F7422 | PR=#18058 @ 56078c7407 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=DSP-F7423 | GO
 CODEX | WORKING | DSP-F7422 | ROOT=driver-self-issue-lookup-derived-load-company-without-driver-company-authorization | focused=load-linkage+selftest+backend-tsc | NEXT=gate+FAST-MERGE | GO
