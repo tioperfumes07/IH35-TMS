@@ -1,3 +1,15 @@
+CASCADE | FINDING | 50344 | dispatch · SILENT-QUERY-FAILURE — OcrQueuePage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50343 | dispatch · SILENT-QUERY-FAILURE — LoadTemplateLibrary 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50342 | dispatch · SILENT-QUERY-FAILURE — InTransitIssuesPage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50341 | dispatch · SILENT-QUERY-FAILURE — DispatchSettingsPage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50340 | dispatch · SILENT-QUERY-FAILURE — DetentionBoardPage 3 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50339 | dispatch · SILENT-QUERY-FAILURE — TruckPlanner 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50338 | dispatch · SILENT-QUERY-FAILURE — NotifyPreferencesPage 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50337 | dispatch · SILENT-QUERY-FAILURE — MultiStopEditor 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50336 | dispatch · SILENT-QUERY-FAILURE — FactoringQueuePage 4 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50335 | dispatch · SILENT-QUERY-FAILURE — BookLoadModalV4 7 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50334 | dispatch · SILENT-QUERY-FAILURE — DispatchOverview 8 useQuery hooks zero isError | GO
+CASCADE | FINDING | 50333 | dispatch · SILENT-QUERY-FAILURE — DispatchBoard 8 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50332 | drivers · SILENT-QUERY-FAILURE — ApplicantsPipelinePage 4 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50331 | drivers · SILENT-QUERY-FAILURE — DriversListPage 5 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50330 | customers · SILENT-QUERY-FAILURE — PortalUsersTab 3 useQuery hooks zero isError | GO
