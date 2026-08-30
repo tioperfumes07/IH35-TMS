@@ -137,8 +137,8 @@ requireMatch(
 );
 requireMatch(
   "apps/backend/src/settlements/auto-deductions/policy.routes.ts",
-  /LEFT JOIN mdata\.drivers/,
-  "policy list must JOIN mdata.drivers entity-scoped for the name (FAIL-DD1)"
+  /mdata\.resolve_driver_label_same_company\(\s*p\.driver_id\s*,\s*p\.operating_company_id\s*\)\s+AS\s+driver_name/,
+  "policy list must resolve driver_name through the same-company historical-label resolver (FAIL-DD1)"
 );
 requireMatch(
   "apps/frontend/src/pages/drivers/AutoDeductionPolicies.tsx",
