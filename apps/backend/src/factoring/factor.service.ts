@@ -712,7 +712,16 @@ export async function assignCustomerToFactor(
         factor_id,
         effective_from,
         effective_to,
-        created_at
+        created_at,
+        -- FACT-ASSIGN-05 correction (2026-08-30) -- operating_company_id is nullable and this
+        -- INSERT never set it, so every row this function ever wrote left it NULL. The table's
+        -- own factoring_customer_factor_assignment_opco_scope RLS policy gates on this exact
+        -- column (the same hazard class documented at batch.service.ts LV-TXN-016); a second,
+        -- newer tenant_id-keyed policy happened to also cover writes so this never surfaced as a
+        -- write failure, but every row was left unscoped by its own intended column. tenant_id IS
+        -- the operating_company_id for this table (tenant_id references org.companies(id)) --
+        -- same value, not a new lookup.
+        operating_company_id
       )
       VALUES (
         $1::uuid,
@@ -720,7 +729,8 @@ export async function assignCustomerToFactor(
         $3::uuid,
         $4::date,
         NULL,
-        now()
+        now(),
+        $1::uuid
       )
       RETURNING
         id::text,

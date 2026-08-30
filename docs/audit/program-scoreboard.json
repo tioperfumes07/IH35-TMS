@@ -1,10 +1,10 @@
 {
-  "healthzSha": "5071217",
-  "generated_at": "2026-08-30T17:05:15.000Z",
+  "healthzSha": "4ef6dc4",
+  "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T12:05:15-05:00",
-    "sourceSha": "3dbd177cdc",
-    "deployedSha": "5071217",
+    "generatedAt": "2026-08-30T13:02:57-05:00",
+    "sourceSha": "6f90e979f1",
+    "deployedSha": "4ef6dc4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18259,
-      "title": "FINDING: GO-CASCADE-FALSE-POSITIVE-GREP",
+      "number": 18360,
+      "title": "FINDING: N/A -- OUTBOX status for PR #18358 (Sentry-telemetry hunt batch 2 complete)",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:49 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18259",
-      "sha": "ebdc36066b",
-      "committedAtIso": "2026-08-30T12:49:09-05:00"
+      "mergedAtCt": "08/30/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18360",
+      "sha": "096cd2d02f",
+      "committedAtIso": "2026-08-30T16:01:51-05:00"
     },
     {
-      "number": 18258,
-      "title": "FINDING: GR1-NONMONEY-REGISTRY-GLOBAL-CENSUS-COUPLING",
+      "number": 18359,
+      "title": "chore: claim migration 202613301100 for FACT-ASSIGN-05 correction opco backfill",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18258",
-      "sha": "5071217b7d",
-      "committedAtIso": "2026-08-30T12:43:40-05:00"
+      "mergedAtCt": "08/30/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18359",
+      "sha": "040b1b2423",
+      "committedAtIso": "2026-08-30T16:01:43-05:00"
     },
     {
-      "number": 18257,
-      "title": "FINDING: DISPATCH-PLANNER-GRID-CANONICAL-GUARD-MISSING",
+      "number": 18358,
+      "title": "FINDING: ACCT-F10144 BANK-RECON-ALREADY-MATCHED-500 -- bank_transaction_already_matched now returns 409, matching this file's own conflict-status convention (found via Sentry production telemetry)",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18257",
-      "sha": "47d09e044b",
-      "committedAtIso": "2026-08-30T12:38:40-05:00"
+      "mergedAtCt": "08/30/2026, 04:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18358",
+      "sha": "9cfdf6207f",
+      "committedAtIso": "2026-08-30T16:01:02-05:00"
     },
     {
-      "number": 18256,
-      "title": "FINDING: CLAIM-RESERVE 10118 verify-planner-grid-canonical",
+      "number": 18357,
+      "title": "FINDING: BUS-INBOX-REFRESH-CC2-BOUNDARY",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18256",
-      "sha": "95f1770cd0",
-      "committedAtIso": "2026-08-30T12:26:20-05:00"
+      "mergedAtCt": "08/30/2026, 03:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18357",
+      "sha": "9e2c2cee05",
+      "committedAtIso": "2026-08-30T15:56:38-05:00"
     },
     {
-      "number": 18255,
-      "title": "FINDING: MAINT-PROOF-F7540 MAINT-S01 had prose-only verification.",
+      "number": 18356,
+      "title": "FINDING: N/A -- status: CC-1's FARO prerequisites landed, TASK 1/3 stay correctly BLOCKED pending CC-1's TASK 6/7",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18255",
-      "sha": "467beddb95",
-      "committedAtIso": "2026-08-30T12:21:36-05:00"
+      "mergedAtCt": "08/30/2026, 03:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18356",
+      "sha": "d6998f8813",
+      "committedAtIso": "2026-08-30T15:54:30-05:00"
     },
     {
-      "number": 18254,
-      "title": "FINDING: FLEET-PROOF-F7539 FLEET-S07 had prose-only verification.",
+      "number": 18355,
+      "title": "FINDING: N/A -- board close + OUTBOX report for CC-1-FINAL-WORK-ORDER tasks 1-5+8partial",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18254",
-      "sha": "0e64636114",
-      "committedAtIso": "2026-08-30T12:18:15-05:00"
+      "mergedAtCt": "08/30/2026, 03:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18355",
+      "sha": "4ef6dc4ce7",
+      "committedAtIso": "2026-08-30T15:52:26-05:00"
     },
     {
-      "number": 18253,
-      "title": "FINDING: FLEET-PROOF-F7538 FLEET-S06 had prose-only verification.",
+      "number": 18354,
+      "title": "FINDING: CLAIM-RESERVE-10142",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:14 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18253",
-      "sha": "a672e498c5",
-      "committedAtIso": "2026-08-30T12:14:32-05:00"
+      "mergedAtCt": "08/30/2026, 03:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18354",
+      "sha": "f115b353f3",
+      "committedAtIso": "2026-08-30T15:52:10-05:00"
     },
     {
-      "number": 18252,
-      "title": "FINDING: LEGAL-HEARING-DEADLINES-INVISIBLE-ON-MATTER-AND-LIST",
+      "number": 18353,
+      "title": "FINDING: ACCT-F10143 CC-1-FINAL-WORK-ORDER tasks 4/5/8 -- TRANSP->USMCA data copy, Faro assignment keystone, fleet/lease schema + counterparty corrections",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18252",
-      "sha": "c00ee7d33e",
-      "committedAtIso": "2026-08-30T12:13:25-05:00"
+      "mergedAtCt": "08/30/2026, 03:49 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18353",
+      "sha": "1fff6e64fc",
+      "committedAtIso": "2026-08-30T15:49:57-05:00"
     },
     {
-      "number": 18251,
-      "title": "FINDING: DOCS-F10124 board closure + OUTBOX report — proof-engine connected, cross-verified against owner's own figures",
+      "number": 18352,
+      "title": "Cursor- docs(bus): BUS-PASTE-FULL-INBOX — named FINAL pack + truncated INBOX",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:11 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18251",
-      "sha": "e6c4571c4c",
-      "committedAtIso": "2026-08-30T12:11:15-05:00"
+      "mergedAtCt": "08/30/2026, 03:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18352",
+      "sha": "2c4fc43ae4",
+      "committedAtIso": "2026-08-30T15:48:54-05:00"
     },
     {
-      "number": 18250,
-      "title": "FINDING: N/A -- confirms driver-escrow count parity holds live on d41124e, closes prior REMAINING note",
+      "number": 18351,
+      "title": "FINDING: N/A -- decline TASK 2's self-create-Dispatcher-account approach, TASK 1 re-confirmed BLOCKED",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 12:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18250",
-      "sha": "4b96c66c41",
-      "committedAtIso": "2026-08-30T12:09:30-05:00"
+      "mergedAtCt": "08/30/2026, 03:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18351",
+      "sha": "82ec82c4bc",
+      "committedAtIso": "2026-08-30T15:47:37-05:00"
     }
   ]
 }
