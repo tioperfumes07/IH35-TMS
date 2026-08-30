@@ -1,4 +1,5 @@
-CODEX | WORKING | GUARD-F7454 | ROOT=anomaly-guard-froze-unpaged-query-key-after-server-pagination | focused=normal+selftest-3/3+frontend-typecheck | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7455 | ROOT=DatePicker-guard-rejected-accessible-sibling-label-htmlFor-contract | focused=normal+selftest-2/2+frontend-typecheck | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7454 | PR=#18091 @ fecddba207 | severity+page-key+offset+pager · selftest 3/3 · typecheck PASS | NEXT=DatePicker red guard | GO
 CODEX | SHIPPED | GUARD-F7453 | PR=#18090 @ 7efaebc26c | exact-3 POST rate limits · selftest 9/9 · typecheck PASS | NEXT=anomaly red guard | GO
 CODEX | SHIPPED | GUARD-F7452 | PR=#18089 @ 98cb57760d | mounted-resolver+prefix-boundary+longest-route · selftest 3/3 · Vitest 10/10 | NEXT=next red Safety guard | GO
 CODEX | SHIPPED | GUARD-F7451 | PR=#18088 @ 73d3090b77 | driver-registry=35/35 exact CI membership · global-census-decoupled · selftest PASS | NEXT=GO-LAST-26 SAF orphan source audit | GO
