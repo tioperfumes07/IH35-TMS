@@ -1,0 +1,110 @@
+===============================================================================
+CC-2 WORK ORDER — 2026-08-30. THREE TASKS. TASK 1 WAITS FOR CC-1.
+===============================================================================
+DISCRIMINATOR — every Neon read must use run_sql_transaction with
+  ["SET LOCAL app.bypass_rls = 'lucia'", "<your query>"]
+and must return count(*) accounting.journal_entries >= 2218.
+Hard Rule 5: only you write prod_verified. Never force-stamp.
+
+STANDING LESSON FROM THIS SESSION — read before you verify anything:
+Three seats (you, Claude, Cursor) all declared the settlement poster "never exercised"
+because all three queried driver_finance.driver_settlements header columns. The GL trace
+lives in driver_settlement_gl_runs / driver_settlement_gl_bills, and there it was fully
+populated the whole time. A NULL header column is NOT proof a subsystem never ran.
+Query the subledger before declaring anything unexercised.
+
+-------------------------------------------------------------------------------
+TASK 1 — FARO 007 GATE. Run only AFTER CC-1 task 1 merges and deploys.
+-------------------------------------------------------------------------------
+Prove the factoring reserve/fee fix on real money, through the app.
+
+  inv 007  ITS Logistics LLC   face $350.00
+     MUST produce  reserve $5.25   fee $5.25   cash $339.50
+     If you get $334.25 -> someone changed advance_rate to 0.985. STOP. Escalate.
+     If you get reserve $10.50 -> the fix did not land. STOP.
+
+  inv 008  FLS Transport Inc.  face $525.00
+     MUST produce  cash $509.24   NOT $509.25
+     Faro rounds reserve and fee to the cent separately, then subtracts.
+
+  FULL SCHEDULE  face 9507500
+     MUST produce  reserve 142613   fee 142613   wire 12000   cash 9210274
+
+Verified against all 33 real Faro invoices: 0 mismatches. If your numbers differ,
+the code is wrong, not the target.
+
+Only after all three pass may you stamp prod_verified.
+
+-------------------------------------------------------------------------------
+TASK 2 — USER-VERIFY-01. REOPENED. Your stated blocker does not exist.
+-------------------------------------------------------------------------------
+You reported: "no way to test as a non-Owner role; no impersonation mechanism exists."
+The second half is true. The first half is false, and impersonation is not needed.
+
+LIVE identity.users — ACTIVE accounts that also have a usable password_hash:
+    Owner          4
+    Dispatcher     2     <-- use one of these
+    Manager        2
+    Accountant     1
+    Administrator  1
+    Safety         0
+Password authentication is live (4 of 8 Owner accounts use it, not Google SSO).
+
+You classified a CREDENTIAL gap as a CAPABILITY gap and stopped. Those are different:
+one is a two-minute unblock, the other is a build.
+
+ACTION: get the Dispatcher credential from the owner/board. Sign in as that active
+Dispatcher in a separate browser profile. Open /users. Attempt Change-Role. Capture the
+rejection. Read-only UI walk, no financial write, no owner authorization required.
+Then close prod_verified honestly.
+
+-------------------------------------------------------------------------------
+TASK 3 — SETL-TRACE-01. Full settlement, completely traced. OWNER-DIRECTED.
+-------------------------------------------------------------------------------
+The owner wants ONE settlement traced end to end so every link is visible.
+
+WHY NO EXISTING SETTLEMENT WORKS:
+  USMCA settlements                                        17
+  with gross_pay > 0 AND is_sample_data = FALSE             1  (already posted + reversed)
+  settlement lines ever approval_status = 'approved'        0 of 7   <-- gate never exercised
+  settlement lines carrying posting_account_id              0 of 7
+  deductions ever applied to a settlement                   0  (2 exist, both pending)
+  deduction JE / deduction bill payment ever posted         NEVER
+  USMCA loads at status 'delivered'                         1
+The one 'approved' settlement has gross_pay $0.00 - a zero-dollar bill fails
+createJournalEntry's debits===credits>0 assertion. It proves nothing.
+=> The subject must be BUILT by CC-1, not selected.
+
+REQUIRED SHAPE: gross > 0, deductions > 0, net > 0, and NET MUST NOT EQUAL GROSS.
+A zero-deduction settlement only re-proves what S-2026-0002 already proved.
+
+VERIFY ALL 16 LINK POINTS, BOTH DIRECTIONS. NO PARTIAL CREDIT. Capture every UUID.
+   1  mdata.loads (load_id + load_number, delivered, not sample)
+   2  mdata.drivers (active, USMCA)
+   3  mdata.units / equipment on the load
+   4  driver_settlements.first_load_id + last_load_id, is_sample_data FALSE
+   5  settlement_lines: load_id NOT NULL, posting_account_id NOT NULL,
+                        approval_status = 'approved'
+   6  driver_settlement_deductions.applied_to_settlement_id populated
+   7  a reimbursement line (reimbursements_total > 0)
+   8  driver_settlement_gl_runs.driver_vendor_id -> mdata.vendors
+                        (CANONICAL - never mdata.qbo_vendors)
+   9  driver_settlement_gl_bills.driver_bill_id
+  10  .accounting_bill_id -> accounting.bills
+  11  .bill_journal_entry_id -> accounting.journal_entries, debits = credits > 0
+  12  .cash_bill_payment_id
+  13  .cash_journal_entry_id
+  14  .deduction_bill_payment_id + gl_runs.deduction_journal_entry_id  <-- NEVER FIRED
+  15  driver_settlements.accounting_bill_id AND .accounting_bill_payment_id populated
+                        <-- the broken write-back CC-1 fixes in their task 5.
+                            If still NULL, the task is NOT done.
+  16  paid_via_bank_txn_id + payment_state + a settlement_payment_events row
+
+ALSO ASSERT: gross - deductions = cash on BOTH gl_runs AND gl_bills.
+
+LEAVE IT POSTED. Do not auto-reverse. This is the certification specimen. Reversal is a
+separate owner call after the trace is captured. Reversal path is proven and available
+(reverseJournalEntryNoFlip, used at settlement-dispute.service.ts:145).
+
+One subject only. Do not bulk-run the other 16. The driver is a real person owed real
+money - the amount must be correct BEFORE posting, not corrected after.
