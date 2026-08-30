@@ -1,3 +1,5 @@
+**2026-08-30T14:50Z GO-ACCT-01 THIS IS NOW.** Packet `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`. CC-1 DEFECT B then A. CC-2 keep BANK-ECON-04/SURF-04 FAIL + one rec session per account/period. Cursor period close NEXT SESSION not now. Owner+Martin: QBO −$7.9M assets / RTS virtual / Unauthorized Expenses AR — not coder. No TMS→QBO write-back. Skip #15546.
+
 **2026-08-30T05:05Z GO-LAST-26-v2 THIS IS NOW.** Packet `docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md`. DEFECT-1 withdrawn. V1 packet deleted. Skip #15546.
 
 **2026-08-29T21:45Z GO-FINISH-TONIGHT THIS IS NOW.** Deploy `dep-da9pjs2jnfac73ehstqg`. U14 exclusive stamps ≠ Fully-Wired complete — leftover unique only, never restamp. CC-1 `dot_oos` P0. Cascade push #17837. Cursor RT/planner Aug-16. Packet `docs/lockdown/GO-FINISH-TONIGHT-2026-08-29.md`. Skip #15546.

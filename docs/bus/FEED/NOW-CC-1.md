@@ -1,9 +1,10 @@
-# NOW — CC-1 (GO-TONIGHT-U6-SCEN)
+# NOW — CC-1 (GO-ACCT-01)
 
-**ACK:** `CC-1 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | GO-ACCT-01 | NOW=DEFECT-B-unique-ledger-then-DEFECT-A-cash-debit | SHA=<healthz> | GO`
 
-1. SCEN-01 hops **4, 6** + **hop.assign** + JE account codes (`scenario-registry.ts` `je:`).
-2. Remaining accounting (14 unbound) / settlements UNVERIFIED / factoring UNVERIFIED → Recipe B packets for CC-2.
-3. DOC-01 schema after first money hop. Never plaintext ACH. Never `trigger_deploy`. Skip #15546.
+1. DEFECT B first: TEST Amex vs USMCA FREIGHT share `ledger_account_id c7af1219-…`. Own GL cash or deactivate fixture. UNIQUE active bank accounts per company + guard.
+2. DEFECT A: customer payments never debit cash. Walk one invoice → payment → GL. Reuse poster.
+3. Do not touch QBO. No TMS→QBO write-back. Never `trigger_deploy`. Skip #15546.
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+Packet: `docs/lockdown/GO-ACCT-01/CC-1/4-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt`
+Canonical: `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`
