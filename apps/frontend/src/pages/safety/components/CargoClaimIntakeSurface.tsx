@@ -606,6 +606,36 @@ export function CargoClaimIntakeSurface({
               Cancel
             </button>
           </div>
+          {suggestionQuery.isError ? (
+            <div data-testid={`${pageTestId}-suggest-load-error`}>
+              <ListErrorState
+                title="Couldn't check for a related load"
+                status={0}
+                message={userFacingApiError(suggestionQuery.error, "The automatic load suggestion is unavailable. You can still select a load manually.")}
+                onRetry={() => void suggestionQuery.refetch()}
+              />
+            </div>
+          ) : null}
+          {customersQuery.isError ? (
+            <div data-testid={`${pageTestId}-customers-error`}>
+              <ListErrorState
+                title="Couldn't load customers"
+                status={0}
+                message={userFacingApiError(customersQuery.error, "The claimant picker is unavailable.")}
+                onRetry={() => void customersQuery.refetch()}
+              />
+            </div>
+          ) : null}
+          {reasonsQuery.isError ? (
+            <div data-testid={`${pageTestId}-reasons-error`}>
+              <ListErrorState
+                title="Couldn't load claim reasons"
+                status={0}
+                message={userFacingApiError(reasonsQuery.error, "The claim-reason picker is unavailable.")}
+                onRetry={() => void reasonsQuery.refetch()}
+              />
+            </div>
+          ) : null}
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <div className="block">
               <label className={labelSpan} htmlFor={`${pageTestId}-create-loss-date`}>Date of loss *</label>
@@ -901,6 +931,17 @@ export function CargoClaimIntakeSurface({
       />
       )}
 
+      {loadsQuery.isError ? (
+        <div data-testid={`${pageTestId}-load-labels-error`}>
+          <ListErrorState
+            title="Couldn't load related load labels"
+            status={0}
+            message={userFacingApiError(loadsQuery.error, "Cargo claims remain available, but load names may be unavailable.")}
+            onRetry={() => void loadsQuery.refetch()}
+          />
+        </div>
+      ) : null}
+
       {selectedId ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3" data-testid={`${pageTestId}-detail`}>
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -938,6 +979,17 @@ export function CargoClaimIntakeSurface({
               </button>
             </div>
           </div>
+
+          {detailQuery.isError ? (
+            <div data-testid={`${pageTestId}-detail-error`}>
+              <ListErrorState
+                title="Couldn't load cargo claim details"
+                status={0}
+                message={userFacingApiError(detailQuery.error, "The selected cargo claim is unavailable.")}
+                onRetry={() => void detailQuery.refetch()}
+              />
+            </div>
+          ) : null}
 
           {editMode ? (
             <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">

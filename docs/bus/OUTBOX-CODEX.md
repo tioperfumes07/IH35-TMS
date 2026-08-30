@@ -1,3 +1,5 @@
+CODEX | WORKING | SAF-F7530 | ROOT=Cargo-Claim-primary-list-failed-loud-but-5-secondary-reads-painted-empty-or-absent | focused=guard+selftest5/5+frontend-tsc | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7529 | PR=#18329 @ db0a8d8d55 | focused=guard+selftest3/3+frontend-tsc-pre-rebase+full-gate | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=SAF-F7530 | GO
 CODEX | WORKING | SAF-F7529 | ROOT=three-Safety-V64-void-mutations-rejected-with-modal-open-but-no-visible-error | GUARD=3-independent-plants | NEXT=focused+gate+FAST-MERGE | GO
 CODEX | SHIPPED | SAF-F7528 | PR=#18324 @ 662272fa91 | focused=guard+selftest8/8+Vitest6/6+backend-build+frontend-tsc+full-gate | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=SAF-F7529 | GO
 CODEX | WORKING | SAF-F7528-PHOTO-COMPARISON-DIFF-FINDINGS-NONARRAY-DETAIL-CRASH | live session=482337d4 detail crashed flatMap | ROOT=arbitrary-json-writer+unknown-reader+array-assuming-UI | focused=guard+selftest8/8+Vitest6/6+frontend/backend-tsc | Live=UNVERIFIED-after-deploy | NEXT=full-gate+FAST-MERGE | GO
