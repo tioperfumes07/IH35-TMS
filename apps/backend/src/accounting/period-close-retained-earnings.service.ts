@@ -2,6 +2,11 @@ import type { PoolClient } from "pg";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this retained-earnings sweep JE
+// insert never populated journal_entry_type_id -- one of several direct posters contributing to
+// the live 46/2214 (2%) density gap. Leaf module, no accounting-service imports. ADJUSTING is the
+// closest catalog code semantically (a period-end closing adjustment, not a source-document post).
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "./journal-entry-type-resolver.js";
 
 function isDec31(isoDate: string) {
   return isoDate.slice(0, 10).endsWith("-12-31");
@@ -180,8 +185,37 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
   const tc = lines.filter((l) => l.debit_or_credit === "credit").reduce((s, l) => s + l.amount_cents, 0);
   if (td !== tc) throw new Error("retained_earnings_close_unbalanced");
 
-  const jeIns = await client.query<{ id: string }>(
-    `
+  const closeMemo = `Fiscal year-end close FY${params.fiscal_year}`;
+  const closeTypeColPresent = await hasJournalEntryTypeColumn(client);
+  const closeTypeId = closeTypeColPresent
+    ? await resolveJournalEntryTypeId(client, { journal_entry_type_code: "ADJUSTING", source: "auto", memo: closeMemo })
+    : null;
+  const jeIns = closeTypeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        journal_entry_type_id,
+        created_by_user_id,
+        qbo_sync_pending,
+        created_at,
+        updated_at,
+        -- ACCT-F353 stage 2 — a year-end retained-earnings sweep is an AGGREGATE across every P&L
+        -- account for the fiscal year, not derived from one taggable source document; explicit
+        -- false, matching ACCT-F212's policy (posting-engine.service.ts).
+        is_sample_data
+      )
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, now(), now(), false)
+      RETURNING id::text
+    `,
+        [params.operating_company_id, params.period_end.slice(0, 10), closeMemo, closeTypeId, params.closer_user_id]
+      )
+    : await client.query<{ id: string }>(
+        `
       INSERT INTO accounting.journal_entries (
         operating_company_id,
         entry_date,
@@ -192,21 +226,13 @@ export async function insertRetainedEarningsClosingJournalIfNeeded(
         qbo_sync_pending,
         created_at,
         updated_at,
-        -- ACCT-F353 stage 2 — a year-end retained-earnings sweep is an AGGREGATE across every P&L
-        -- account for the fiscal year, not derived from one taggable source document; explicit
-        -- false, matching ACCT-F212's policy (posting-engine.service.ts).
         is_sample_data
       )
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
       RETURNING id::text
     `,
-    [
-      params.operating_company_id,
-      params.period_end.slice(0, 10),
-      `Fiscal year-end close FY${params.fiscal_year}`,
-      params.closer_user_id,
-    ]
-  );
+        [params.operating_company_id, params.period_end.slice(0, 10), closeMemo, params.closer_user_id]
+      );
   const jeId = jeIns.rows[0]?.id;
   if (!jeId) throw new Error("closing_journal_insert_failed");
 

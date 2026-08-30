@@ -8,6 +8,10 @@ import {
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this variance-JE insert never
+// populated journal_entry_type_id -- one of several direct posters contributing to the live
+// 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
 
 export type LedgerEntryKind = "payment" | "bill_payment" | "transfer" | "je" | "bill" | "expense";
 export type MatchState = "auto_matched" | "user_matched" | "rejected";
@@ -709,8 +713,44 @@ async function postDifferenceJournalEntry(
   // specific "this JE came from bank reconciliation" fact is not lost: it's carried in memo
   // (bank-recon:<bank_transaction_id>) and the posting descriptions below, exactly like every
   // other 'auto' JE conveys its specific origin via memo, not source.
-  const journalEntry = await client.query<{ id: string }>(
-    `
+  const bankReconMemo = `bank-recon:${input.bank_transaction_id}`;
+  const typeColPresent = await hasJournalEntryTypeColumn(client);
+  const typeId = typeColPresent
+    ? await resolveJournalEntryTypeId(client, { source: "auto", memo: bankReconMemo })
+    : null;
+  const journalEntry = typeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        source,
+        journal_entry_type_id,
+        created_by_user_id,
+        created_at,
+        updated_at,
+        -- ACCT-F353 stage 2 — banking.bank_transactions carries no is_sample_data (bank feeds aren't
+        -- taggable); explicit false, matching ACCT-F212's policy (posting-engine.service.ts).
+        is_sample_data
+      )
+      VALUES (
+        $1::uuid,
+        $2::date,
+        $3,
+        'auto',
+        $4::uuid,
+        $5::uuid,
+        now(),
+        now(),
+        false
+      )
+      RETURNING id::text
+    `,
+        [input.operating_company_id, input.transaction_date, bankReconMemo, typeId, input.actor_user_uuid]
+      )
+    : await client.query<{ id: string }>(
+        `
       INSERT INTO accounting.journal_entries (
         operating_company_id,
         entry_date,
@@ -719,8 +759,6 @@ async function postDifferenceJournalEntry(
         created_by_user_id,
         created_at,
         updated_at,
-        -- ACCT-F353 stage 2 — banking.bank_transactions carries no is_sample_data (bank feeds aren't
-        -- taggable); explicit false, matching ACCT-F212's policy (posting-engine.service.ts).
         is_sample_data
       )
       VALUES (
@@ -735,8 +773,8 @@ async function postDifferenceJournalEntry(
       )
       RETURNING id::text
     `,
-    [input.operating_company_id, input.transaction_date, `bank-recon:${input.bank_transaction_id}`, input.actor_user_uuid]
-  );
+        [input.operating_company_id, input.transaction_date, bankReconMemo, input.actor_user_uuid]
+      );
   const journalEntryId = journalEntry.rows[0]?.id;
   if (!journalEntryId) throw new Error("failed_to_create_reconciliation_journal_entry");
 

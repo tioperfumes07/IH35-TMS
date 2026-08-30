@@ -44,6 +44,10 @@ import {
   type BalancedLine,
 } from "./amortization-posting.math.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this shared header insert never
+// populated journal_entry_type_id -- one of several direct posters contributing to the live
+// 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -131,15 +135,29 @@ export async function insertJournalEntryHeader(
   memo: string,
   actorUserId: string
 ): Promise<string> {
-  const res = await client.query<{ id: string }>(
-    `
+  const typeColPresent = await hasJournalEntryTypeColumn(client);
+  const typeId = typeColPresent
+    ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
+    : null;
+  const res = typeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries
+        (operating_company_id, entry_date, memo, status, source, journal_entry_type_id, created_by_user_id, qbo_sync_pending, created_at, updated_at, is_sample_data)
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, now(), now(), false)
+      RETURNING id::text
+    `,
+        [operatingCompanyId, entryDate, memo, typeId, actorUserId]
+      )
+    : await client.query<{ id: string }>(
+        `
       INSERT INTO accounting.journal_entries
         (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending, created_at, updated_at, is_sample_data)
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
       RETURNING id::text
     `,
-    [operatingCompanyId, entryDate, memo, actorUserId]
-  );
+        [operatingCompanyId, entryDate, memo, actorUserId]
+      );
   const id = res.rows[0]?.id;
   if (!id) throw new Error("amortization_journal_entry_insert_failed");
   return id;

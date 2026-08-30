@@ -15,6 +15,11 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "./accounting-spine-emit.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this void-reversal insert never
+// populated journal_entry_type_id -- one of several direct posters contributing to the live
+// 46/2214 (2%) density gap. Leaf module (no accounting-service imports) to avoid a cycle with
+// journal-entries.service.ts, which already imports FROM this file.
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "./journal-entry-type-resolver.js";
 
 export const VOID_FLAG_KEY = "VOID_ENFORCEMENT_ENABLED";
 
@@ -335,16 +340,45 @@ export async function postVoidReversal(
   const reversalLines = flipPostingsForReversal(originalLines);
   assertBalanced(reversalLines);
 
-  const header = await client.query<{ id: string }>(
-    `
+  // ACCT-LINK-01 regression fix: a reversal of a typed source (bill/invoice/etc.) inherits the same
+  // catalog code -- more useful for reporting than a blanket GENERAL, same "never a guess dressed up
+  // as a specific type" rule journal-entry-type-resolver.ts already applies elsewhere.
+  const VOID_ENTITY_TYPE_TO_JE_TYPE_CODE: Partial<Record<VoidableEntityType, string>> = {
+    invoice: "SALES_INVOICE",
+    bill: "BILL",
+    bill_payment: "BILL_PAYMENT",
+    customer_payment: "PAYMENT_RECEIPT",
+  };
+  const typeColPresent = await hasJournalEntryTypeColumn(client);
+  const typeId = typeColPresent
+    ? await resolveJournalEntryTypeId(client, {
+        journal_entry_type_code: VOID_ENTITY_TYPE_TO_JE_TYPE_CODE[params.entityType],
+        source: "auto",
+        memo: params.memo,
+      })
+    : null;
+
+  const header = typeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries
+        (operating_company_id, entry_date, memo, status, source, journal_entry_type_id, created_by_user_id, qbo_sync_pending,
+         is_sample_data)
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, $6)
+      RETURNING id::text
+    `,
+        [params.operatingCompanyId, reversalDate, params.memo, typeId, actor.userId, originalIsSample]
+      )
+    : await client.query<{ id: string }>(
+        `
       INSERT INTO accounting.journal_entries
         (operating_company_id, entry_date, memo, status, source, created_by_user_id, qbo_sync_pending,
          is_sample_data)
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5)
       RETURNING id::text
     `,
-    [params.operatingCompanyId, reversalDate, params.memo, actor.userId, originalIsSample]
-  );
+        [params.operatingCompanyId, reversalDate, params.memo, actor.userId, originalIsSample]
+      );
   const reversalJeId = header.rows[0]!.id;
 
   let seq = 1;
