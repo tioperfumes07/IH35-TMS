@@ -1,4 +1,9 @@
-# NOW — Cursor (GO-LAST-26-v2)
+# NOW — Cursor (GO-ACCT-01)
 
-SUPERSEDES v1. DEFECT-1 withdrawn. VEND-CERT-01 OPEN. Proof engine shadow only. Packet `docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md`. Skip #15546.
+**ACK:** `CURSOR | ACK | GO-ACCT-01 | NOW=dispatch-not-period-close | SHA=<healthz> | GO`
 
+Lead dispatch. Period close/reopen is **NEXT SESSION**, not this one. No TMS→QBO write-back. Deploy 5–10. Skip #15546. Never restamp U14.
+
+Packet: `docs/lockdown/GO-ACCT-01/CURSOR/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt`
+Canonical: `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`
+Owner+Martin: `docs/lockdown/GO-ACCT-01/ACCOUNTING/0-OWNER-AND-MARTIN-READ-THIS.txt`

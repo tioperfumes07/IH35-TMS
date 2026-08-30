@@ -1,0 +1,16 @@
+GO-ACCT-01 · CC-2 · band ≡3 · 2026-08-30
+Canonical: docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md
+Skip #15546. Never restamp U14. Never trigger_deploy.
+
+Keep BANK-ECON-04 / BANK-SURF-04 as honest FAIL — you were right to refuse. Keep refusing
+until adjusted book is credible (DEFECT A+B are CC-1).
+
+Then: one-session-per-account-per-period constraint. Three sessions exist for USMCA August 2026
+on the same bank account. QuickBooks permits one reconciliation per account per period.
+Add the constraint and close the duplicates.
+
+Leave force_complete (Owner role + reason). TEST session note: void after launch. Do not un-void.
+
+Do not stamp vendors complete. Do not stamp BANK-ECON-04 / BANK-SURF-04 green.
+
+ACK: CC-2 | ACK | GO-ACCT-01 | NOW=keep-FAIL-then-one-session-per-account-period | SHA=<healthz> | GO

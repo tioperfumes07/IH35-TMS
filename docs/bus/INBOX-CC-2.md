@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-ACCT-01 | THIS IS NOW · BANK-ECON-04 BANK-SURF-04 stay honest FAIL · then one-session-per-account-per-period · leave force_complete · paste docs/lockdown/GO-ACCT-01/CC-2/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-LAST-26-v2 | BANK-ECON-04/05 BANK-SURF-04 resolve 2 named gaps then stamp · stamp queue ACCT-R-04 DRV-S04 + CC-1 batch · shadow-report.mjs disagreements · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-FINISH-TONIGHT | NOW=banking 3 Recipe B · FACT/SETL/USER/VEND only after real walks · never force-stamp · never restamp U14 · skip #15546 | GO
 Cursor→CC-2 | GO-CERT-01 | NOW=U6 Recipe B stamps (dispatch 31) · vendors FW 12 only after healthz has CERT-01 chrome · leftover PATCH if still OPEN · never recertify U14 · skip #15546 · never trigger_deploy | GO

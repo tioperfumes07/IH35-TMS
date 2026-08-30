@@ -1,0 +1,22 @@
+GO-ACCT-01 · CC-1 · band ≡1 · 2026-08-30
+Canonical: docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md
+Skip #15546. Never restamp U14. Never trigger_deploy. No TMS→QBO write-back.
+
+Two real software defects, in this order:
+
+1) DEFECT B FIRST (blocking).
+ledger_account_id c7af1219-f6a6-4169-a2d8-8f556fb0c2f3 is shared by
+"TEST DATA Amex TESTMTDP79YF" and "USMCA FREIGHT" — same GL cash account, two bank accounts.
+Give TEST Amex its own GL cash account, or deactivate the fixture.
+Then UNIQUE among active bank accounts per company on ledger_account_id + guard.
+The old guard demanded non-null. That was the trap. Non-null was never the bar.
+
+2) DEFECT A.
+Cash GL has $177,411.20 credits against $13,503.70 debits across 259 postings.
+53 invoices exist; customer payments never debit cash.
+That is why adjusted book is −$126,389.10 and why no session can ever reach zero.
+Walk one real invoice: create → payment → GL. Reuse the existing poster. No new GL math.
+
+Do not touch the QuickBooks side. RTS virtual −$8.27M and Unauthorized Expenses AR are OWNER+Martin.
+
+ACK: CC-1 | ACK | GO-ACCT-01 | NOW=DEFECT-B-unique-ledger-then-DEFECT-A-cash-debit | SHA=<healthz> | GO

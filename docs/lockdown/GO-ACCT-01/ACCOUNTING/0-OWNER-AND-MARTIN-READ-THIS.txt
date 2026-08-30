@@ -1,0 +1,21 @@
+GO-ACCT-01 · OWNER + MARTIN · 2026-08-30
+Not a coder task. Canonical: docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md
+
+QuickBooks (USMCA Freight Solutions, Inc., accrual, as of 2026-08-31):
+  Total Assets           −$7,945,173.68
+  RTS FINANCIAL-VIRTUAL ACCT   −$8,270,020.28   (98% of the negative asset total)
+  Unauthorized Expenses Ignacio Muñoz    $336,751.38  (AR sub-account)
+  Unauthorized Expenses Anarely Alcazar   $70,253.48  (AR sub-account)
+  together $407,004.86 in AR under two named-person "Unauthorized Expenses" sub-accounts.
+
+The factoring virtual account is being credited and never cleared against the AR it funds.
+Classification and treatment are Martin's / a qualified accountant's. This is not CPA advice.
+There is no CPA on the software project. Figures are quoted from live QBO and prod Postgres.
+
+Coders will not "fix" the QBO balance sheet. Software defects (shared GL, missing cash debits,
+absent period-close enforcement, duplicate rec sessions) are CC-1 / CC-2 / Cursor as named in GO-ACCT-01.
+
+RECOMMENDATION (already standing law; restated):
+Do not connect the TMS to WRITE into QuickBooks. It currently only reads.
+Pushing TMS entries into a ledger showing negative total assets would blend our numbers
+into that problem and make both far harder to unwind later.

@@ -1,7 +1,8 @@
-# NOW — CC-2 (GO-TONIGHT-U6-SCEN)
+# NOW — CC-2 (GO-ACCT-01)
 
-**ACK:** `CC-2 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-ACCT-01 | NOW=keep-FAIL-then-one-session-per-account-period | SHA=<healthz> | GO`
 
-Stamp U6 Recipe B: banking 3 unbound PASS; dispatch packets as Cursor/Codex land Live Chrome. Scenario done = linkage query **and** JE codes — never screenshot. Never recertify U14. Skip #15546. Never `trigger_deploy`.
+`BANK-ECON-04` and `BANK-SURF-04` stay **honest FAIL**. Then one reconciliation session per account per period (USMCA Aug 2026 has three). Leave `force_complete`. Never `trigger_deploy`. Skip #15546.
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+Packet: `docs/lockdown/GO-ACCT-01/CC-2/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt`
+Canonical: `docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md`

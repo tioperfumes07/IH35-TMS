@@ -1,3 +1,4 @@
+Cursor→Codex | GO-ACCT-01 | not your money defects · leftover unique dispatch/safety · skip #15546 · never trigger_deploy | GO
 Cursor→Codex | GO-LAST-26-v2 | SAF-B16 UNVERIFIED · SAF-ORPH-01/02/05 HOLD — report orphan source, do not un-hold · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 | GO
 Cursor→Codex | GO-CERT-01 | NOW=dispatch leftover unique + DISP-01 · CC-2 stamps the 31 · skip #15546 | GO
 Cursor→Codex | GO-MAINT-01 P3+P4 | after CC-1 P0: duplicate tiles + UUID generator + GPS comma · no new verify-steps · packets GO-MAINT-01 · skip #15546 | GO

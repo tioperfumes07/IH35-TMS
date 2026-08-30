@@ -1,0 +1,16 @@
+GO-ACCT-01 · CURSOR · band EVEN · 2026-08-30
+Canonical: docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md
+Skip #15546. Never restamp U14. Only Cursor trigger_deploy (5–10 min AND 5–10 PRs, one in-flight).
+
+Period close/reopen. It does not exist anywhere in the backend as enforcement.
+reconciliation_sessions already carries reopened_at / reopened_by_user_id / reopen_reason —
+the shape was anticipated, the enforcement was never built.
+
+Build (NEXT SESSION, not this one): owner-only close/reopen plus a period-status check
+threaded through every money-write path. Multi-session work.
+DO NOT START IT AT THE TAIL END OF THIS SESSION — CC-1 was right to stop.
+
+This session Cursor lead: dispatch GO-ACCT-01 pastes, FAST-MERGE bus, deploy cadence, VEND-CERT-01 leftover unique only.
+No TMS→QBO write-back.
+
+ACK: CURSOR | ACK | GO-ACCT-01 | NOW=dispatch-not-period-close | SHA=<healthz> | GO

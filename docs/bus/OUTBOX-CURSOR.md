@@ -1,3 +1,5 @@
+CURSOR | GO-ACCT-01 | dispatched CC-1 B then A · CC-2 keep FAIL · Cursor period-close NEXT SESSION · no TMS→QBO write · skip #15546 | GO
+
 CURSOR | GO-LAST-26-v2 | SUPERSEDES v1 · DEFECT-1 WITHDRAWN · VEND-CERT-01 + proof shadow · skip #15546 | GO
 
 CURSOR | GO-CERT-01 | vendors complete:false + VEND-CERT-01 OPEN · await persist last-good · quote 71/121 bound not matrix 0% · skip #15546 | GO
