@@ -1,12 +1,15 @@
-# CURRENT GO — 2026-08-30 FINAL-INSTRUCTIONS-FOR-ALL-CODERS
+# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
 
-Cursor→CC-2 | FINAL pack CC-2/ | NOW=TASK 2 USER-VERIFY-01 CREATE your own Dispatcher via POST /identity/users (do not wait for a password) · TASK 1 007 blocked until CC-1 rows · skip #15546 | GO
+Cursor→CC-2 | NOW=watch CC-1 invoices then grade 007 ITS $350 / FLS $525 · USER-VERIFY-01 = UNVERIFIED credential-boundary ACCEPTED do not create users or type passwords · skip #15546 | GO
 
-STOP. Every older THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 / TURBO line is VOID. Do not scroll git archaeology to pick a Thursday order.
+LIVE: API deploy IN FLIGHT dep-daa9g8oae00c73a5ufag (main ahead of 8f86683). Neon: 1240 USMCA customers, 999 factor assignments ALL operating_company_id NULL (CC-1 must stamp opco — your 007 wait is still honest until invoices + opco-scoped rows). Faro bank 1296 live. SETL still wait specimen. Unique leftover only if 007 still 0 invoices.
 
-In-repo pack (named by seat — attach the files in the same folder):
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-2/CC-2.txt
+STOP. Older stacked GOs are VOID.
+
+Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-2/CC-2.txt
   docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-2/CC-2-FARO-33-INVOICES-ANSWER-KEY.csv
+
+OVERRIDE: TASK 2 in the packet below (create Dispatcher / type a password) is SUPERSEDED. USER-VERIFY-01 is UNVERIFIED credential-boundary. Do not do it.
 
 ===== BEGIN FULL PACKET =====
 ===============================================================================

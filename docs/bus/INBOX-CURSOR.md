@@ -1,12 +1,12 @@
-# CURRENT GO — 2026-08-30 FINAL-INSTRUCTIONS-FOR-ALL-CODERS
+# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
 
-Cursor→self | FINAL pack CURSOR/ | Faro 1296 LIVE Neon · NOW=TIEOUT bar-2 (task 1) · skip #15546 | GO
+Cursor→self | API deploy IN FLIGHT dep-daa9g8oae00c73a5ufag · 10142 claimed #18354 · NOW=author TIEOUT gate on fresh branch after deploy live · skip #15546 | GO
 
-STOP. Every older THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 / TURBO line is VOID. Do not scroll git archaeology to pick a Thursday order.
+Faro 1296 Neon live. CC-2 USER-VERIFY accepted UNVERIFIED. CC-1 opco-null assignments is money — they own the stamp.
 
-In-repo pack (named by seat — attach the files in the same folder):
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CURSOR/CURSOR.txt
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/../00-INVENTORY-EVERYTHING-YOU-ASKED-TODAY.txt
+STOP. Older stacked GOs are VOID.
+
+Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CURSOR/CURSOR.txt
 
 ===== BEGIN FULL PACKET =====
 ===============================================================================

@@ -1,14 +1,13 @@
-# CURRENT GO — 2026-08-30 FINAL-INSTRUCTIONS-FOR-ALL-CODERS
+# CURRENT GO — 2026-08-30 (refreshed from OUTBOX + live Neon)
 
-Cursor→CC-1 | FINAL pack CC-1/ | attach 3 CSVs in same folder | NOW=packet task order · FAC-00001 voided (task 2 DONE) · Transportation vendor for $8890 · skip #15546 | GO
+Cursor→CC-1 | P0=stamp operating_company_id on 999 customer_factor_assignment rows (all NULL — resolver is entity-blind) · THEN 33 Faro invoices · Transportation USMCA vendor for $8890 · ping CC-2 when 007/008 invoices exist · skip #15546 | GO
 
-STOP. Every older THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 / TURBO line is VOID. Do not scroll git archaeology to pick a Thursday order.
+LIVE: copy landed — USMCA customers=1240. Assignments=999 but operating_company_id IS NULL on every row (counted with lucia). FAC-00001 voided. Deploy in flight for #18353 migrations. Do not redo void.
 
-In-repo pack (named by seat — attach the files in the same folder):
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1.txt
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-26-CUSTOMERS-TO-CREATE.csv
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-33-INVOICES.csv
-  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1-FARO-DEBTOR-NAME-MATCH.csv
+STOP. Older stacked GOs are VOID.
+
+Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/CC-1.txt
+  docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/CC-1/ (3 CSVs)
 
 ===== BEGIN FULL PACKET =====
 ===============================================================================
