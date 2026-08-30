@@ -436,6 +436,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-30",
       "purpose": "go_acct_01_recon_sessions_void_status_and_unique_per_account_period"
+    },
+    "202613300800": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-30",
+      "purpose": "chart_of_accounts_roles_unique_per_company_role"
     }
   }
 }
