@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchPlannerWeek, type PlannerLoadEvent } from "../../../api/dispatch";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -7,30 +7,14 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { addDaysIso } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
-import { plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
+import { PlannerAxisHead } from "./PlannerAxisHead";
+import { PlannerGrid } from "./PlannerGrid";
+
+void PlannerAxisHead;
 
 function toDayKey(iso: string | null | undefined): string | null {
   if (!iso) return null;
   return iso.slice(0, 10);
-}
-
-function loadSpanDays(load: PlannerLoadEvent, days: string[]): { startIdx: number; span: number } | null {
-  const startDay = toDayKey(load.start_at);
-  const endDay = toDayKey(load.end_at) ?? startDay;
-  if (!startDay) return null;
-
-  let startIdx = -1;
-  let endIdx = -1;
-  for (let i = 0; i < days.length; i++) {
-    const d = days[i];
-    if (d >= startDay && d <= (endDay ?? startDay)) {
-      if (startIdx < 0) startIdx = i;
-      endIdx = i;
-    }
-  }
-  if (startIdx < 0) return null;
-  return { startIdx, span: endIdx - startIdx + 1 };
 }
 
 async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string, rangeEnd: string): Promise<PlannerLoadEvent[]> {
@@ -89,82 +73,45 @@ export function LoadsPlanner() {
       ) : null}
 
       {!loadsQuery.isLoading && !loadsQuery.isError ? (
-          <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-max border-collapse text-[10px]">
-            <PlannerAxisHead
-              days={days}
-              frozenColSpan={2}
-              frozenDayCells={
+        <PlannerGrid
+          days={days}
+          frozenLabel="Load"
+          frozenPx={260}
+          rows={rows.map((load) => {
+            const start = toDayKey(load.start_at) ?? days[0];
+            const end = toDayKey(load.end_at) ?? start;
+            const lane = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ") || "—";
+            return {
+              id: load.id,
+              name: (
                 <>
-                  <th className={plannerFrozenThClass(true)}>Load</th>
-                  <th className={plannerFrozenThClass()}>Lane</th>
+                  <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />
+                  <span className="text-[10px] font-medium text-gray-600">{lane}</span>
+                  <span className="text-[9px]">
+                    <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
+                  </span>
                 </>
-              }
-            />
-            <tbody>
-              {rows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={2 + days.length}
-                    data-testid="dispatch-loads-planner-honest-empty"
-                    className="px-3 py-4 text-center text-sm text-gray-500"
-                  >
-                    No loads with a start_at in this range for this company. Book or schedule loads under Dispatch —
-                    bars appear here once planner week feed returns load events.
-                  </td>
-                </tr>
-              ) : (
-                rows.map((load) => {
-                  const span = loadSpanDays(load, days);
-                  const lane = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ") || "—";
-                  let dayIdx = 0;
-                  const cells: ReactNode[] = [];
-
-                  while (dayIdx < days.length) {
-                    if (span && dayIdx === span.startIdx) {
-                      cells.push(
-                        <td
-                          key={`${load.id}-${days[dayIdx]}`}
-                          colSpan={span.span}
-                          className={`${plannerDayBodyClass(days[dayIdx], todayYmdAmericaChicago(), "bg-slate-100")} px-1`}
-                        >
-                          <EntityLinkOrTombstone
-                            kind="load"
-                            id={load.id}
-                            name={load.load_number}
-                            noun="Load"
-                            className="w-full truncate text-[9px] font-medium text-slate-700 hover:underline"
-                            data-testid={`loads-planner-bar-${load.load_number}`}
-                          />
-                        </td>
-                      );
-                      dayIdx += span.span;
-                    } else {
-                      cells.push(
-                        <td
-                          key={`${load.id}-${days[dayIdx]}`}
-                          className={plannerDayBodyClass(days[dayIdx], todayYmdAmericaChicago())}
-                        />
-                      );
-                      dayIdx += 1;
-                    }
-                  }
-
-                  return (
-                    <tr key={load.id} className="h-[34px] border-t border-gray-100">
-                      <td className="sticky left-0 z-10 border-r bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
-                        <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />
-                        <span className="block text-[9px]"><EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" /></span>
-                      </td>
-                      <td className="border-r px-1 py-0.5 text-gray-600">{lane}</td>
-                      {cells}
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+              ),
+              bars: [
+                {
+                  id: `${load.id}-bar`,
+                  label: load.load_number || load.id,
+                  startYmd: start,
+                  endYmd: end,
+                  kind: "nb" as const,
+                  testId: `loads-planner-bar-${load.load_number}`,
+                  loadId: load.id,
+                },
+              ],
+            };
+          })}
+          empty={
+            <span data-testid="dispatch-loads-planner-honest-empty">
+              No loads with a start_at in this range for this company. Book or schedule loads under Dispatch — bars
+              appear here once planner week feed returns load events.
+            </span>
+          }
+        />
       ) : null}
     </div>
   );

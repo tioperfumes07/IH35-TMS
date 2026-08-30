@@ -8,8 +8,10 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { usePlannerRange } from "./PlannerRangeContext";
-import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
-import { plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
+import { PlannerAxisHead } from "./PlannerAxisHead";
+import { PlannerGrid } from "./PlannerGrid";
+
+void PlannerAxisHead;
 
 type TruckStatus = "assigned" | "available" | "reserved-hold" | "in-shop";
 
@@ -167,47 +169,64 @@ export function TruckPlanner() {
       ) : null}
 
       {!isLoading && !isError ? (
-          <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
-          <table className="min-w-max border-collapse text-[10px]">
-            <PlannerAxisHead
-              days={days}
-              frozenColSpan={2}
-              frozenDayCells={
+        <PlannerGrid
+          days={days}
+          frozenLabel="Unit"
+          frozenPx={240}
+          rows={truckRows
+            .filter((row) => row.status !== "in-shop")
+            .map((row) => ({
+              id: row.unitId,
+              idle: row.status === "available",
+              name: (
                 <>
-                  <th className={plannerFrozenThClass(true)}>Unit</th>
-                  <th className={plannerFrozenThClass()}>Driver</th>
+                  <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
+                  <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                    {truckStatusLabel(row.status)}
+                  </span>
+                  <span className="text-[10px] font-medium text-gray-600">
+                    <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                  </span>
                 </>
-              }
-            />
-            <tbody>
-              {truckRows.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={2 + days.length}
-                    data-testid="dispatch-truck-planner-honest-empty"
-                    className="px-3 py-4 text-center text-sm text-gray-500"
-                  >
-                    No units for this company in the planner range. Units leased/owned under Fleet appear here once
-                    listUnits / scheduler grid return rows for the active entity.
-                  </td>
-                </tr>
-              ) : (
-              truckRows.map((row) => (
-                <tr key={row.unitId} className="h-[34px] border-t border-gray-100">
-                  <td className="sticky left-0 z-10 border-r-2 border-slate-400 bg-white px-2 py-0.5 text-xs font-medium text-gray-900">
+              ),
+              bars: [],
+            }))}
+          empty={
+            truckRows.length === 0 ? (
+            <span data-testid="dispatch-truck-planner-honest-empty">
+              No units for this company in the planner range. Units leased/owned under Fleet appear here once listUnits
+              / scheduler grid return rows for the active entity.
+            </span>
+            ) : null
+          }
+        />
+      ) : null}
+      {!isLoading && !isError && truckRows.some((row) => row.status === "in-shop") ? (
+        <div className="mt-3">
+          <PlannerGrid
+            days={days}
+            frozenLabel="In shop"
+            frozenPx={240}
+            rows={truckRows
+              .filter((row) => row.status === "in-shop")
+              .map((row) => ({
+                id: `shop-${row.unitId}`,
+                idle: true,
+                name: (
+                  <>
                     <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
-                  </td>
-                  <td className="border-r-2 border-slate-400 px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" /></td>
-                  {days.map((d) => (
-                    <td key={d} className={plannerDayBodyClass(d, todayYmdAmericaChicago(), truckStatusClass(row.status))} title={row.status}>
-                      <span className="text-[9px]">{truckStatusLabel(row.status)}</span>
-                    </td>
-                  ))}
-                </tr>
-              ))
-              )}
-            </tbody>
-          </table>
+                    <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                      {truckStatusLabel(row.status)}
+                    </span>
+                    <span className="text-[10px] font-medium text-gray-600">
+                      <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                    </span>
+                  </>
+                ),
+                bars: [],
+              }))}
+            empty={null}
+          />
         </div>
       ) : null}
     </div>

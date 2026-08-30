@@ -10,16 +10,10 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { userFacingApiError } from "../../../lib/api-error-message";
 import type { PlannerRange } from "./planner-range";
 import { listPlannerDays } from "./planner-range";
-import { PlannerAxisHead, plannerFrozenThClass } from "./PlannerAxisHead";
-import { plannerDayBodyClass, todayYmdAmericaChicago } from "./plannerTimeAxis";
+import { PlannerAxisHead } from "./PlannerAxisHead";
+import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
 
-function leaveCellClass(leaveType: string | undefined): string {
-  if (leaveType === "vacation") return "bg-slate-100";
-  if (leaveType === "sick") return "bg-slate-100";
-  if (leaveType === "personal") return "bg-orange-100";
-  if (leaveType === "wfh") return "bg-slate-100";
-  return "bg-white";
-}
+void PlannerAxisHead;
 
 type SafetyDriverSchedulerGridProps = {
   operatingCompanyId: string;
@@ -60,55 +54,36 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
 
   return (
     <div data-testid={testId} className="space-y-2">
-        <div className="max-w-[calc(100vw-48px)] overflow-x-auto rounded-sm border border-gray-200 bg-white">
-        <table className="min-w-max border-collapse text-[10px]">
-          <PlannerAxisHead
-            days={days}
-            frozenColSpan={2}
-            frozenDayCells={
+      <PlannerGrid
+        days={days}
+        frozenLabel="Driver"
+        frozenPx={240}
+        rows={drivers.map((dr) => {
+          const driverId = String(dr.driver_id);
+          const name = String(dr.driver_name ?? "");
+          const unitId = dr.unit_id ? String(dr.unit_id) : null;
+          const unit = dr.unit_number ? String(dr.unit_number) : null;
+          return {
+            id: driverId,
+            name: (
               <>
-                <th className={plannerFrozenThClass(true)}>Driver</th>
-                <th className={plannerFrozenThClass()}>Unit</th>
+                <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />
+                <span className="text-[10px] font-medium text-gray-600">
+                  <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" />
+                </span>
               </>
-            }
-          />
-          <tbody>
-            {drivers.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={2 + days.length}
-                  data-testid="dispatch-driver-planner-honest-empty"
-                  className="px-3 py-4 text-center text-sm text-gray-500"
-                >
-                  No drivers in this company for the selected range. Add drivers under Drivers / Lists — leave cells
-                  appear here once scheduler leave rows exist for those drivers.
-                </td>
-              </tr>
-            ) : null}
-            {drivers.map((dr) => {
-              const driverId = String(dr.driver_id);
-              const name = String(dr.driver_name ?? "");
-              const unitId = dr.unit_id ? String(dr.unit_id) : null;
-              const unit = dr.unit_number ? String(dr.unit_number) : null;
-              return (
-                <tr key={driverId} className="h-[34px] border-t border-gray-100">
-                  <td className="sticky left-0 z-10 border-r-2 border-slate-400 bg-white px-2 py-0.5 text-xs font-medium text-gray-900"><EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" /></td>
-                  <td className="border-r-2 border-slate-400 px-1 py-0.5 text-gray-600"><EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" /></td>
-                  {days.map((d) => {
-                    const lt = cellByDriverDay.get(`${driverId}|${d}`);
-                    const label = lt ? String(lt).slice(0, 3) : "";
-                    return (
-                      <td key={d} className={plannerDayBodyClass(d, todayYmdAmericaChicago(), leaveCellClass(lt))} title={lt ?? ""}>
-                        <span className="text-[9px] text-gray-700">{label}</span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+            ),
+            bars: [],
+            dwells: dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`),
+          };
+        })}
+        empty={
+          <span data-testid="dispatch-driver-planner-honest-empty">
+            No drivers in this company for the selected range. Add drivers under Drivers / Lists — leave cells appear
+            here once scheduler leave rows exist for those drivers.
+          </span>
+        }
+      />
 
       {query.data.pending_requests?.length ? (
         <div className="rounded-sm border border-slate-200 bg-slate-100 p-2 text-xs text-slate-700">

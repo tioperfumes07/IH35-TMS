@@ -14,11 +14,19 @@ export function plannerWeekdayShort(isoYmd: string): string {
   return d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }).slice(0, 2);
 }
 
-export function isPlannerWeekend(isoYmd: string): boolean {
+export function plannerUtcDow(isoYmd: string): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoYmd.trim());
-  if (!m) return false;
-  const dow = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12)).getUTCDay();
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12)).getUTCDay();
+}
+
+export function isPlannerWeekend(isoYmd: string): boolean {
+  const dow = plannerUtcDow(isoYmd);
   return dow === 0 || dow === 6;
+}
+
+export function isPlannerMonday(isoYmd: string): boolean {
+  return plannerUtcDow(isoYmd) === 1;
 }
 
 export function isPlannerMonthStart(isoYmd: string): boolean {
