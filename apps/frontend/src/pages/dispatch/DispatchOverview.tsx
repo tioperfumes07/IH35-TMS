@@ -318,6 +318,12 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         />
       </div>
 
+      {dashboardQ.isError ? (
+        <div data-testid="dispatch-overview-dashboard-error">
+          {PanelError("Couldn't load the Dispatch overview totals.", () => void dashboardQ.refetch())}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         <div id="units-needing-return" data-testid="dispatch-units-needing-return-panel">
           <DataPanel title="Units needing return" accentColor={colors.dispatch.strong}>
