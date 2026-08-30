@@ -54,6 +54,8 @@ const FILE_OWNED_BY_LEAF = {
   "pages/factoring/FactoringHome.tsx": "home.summary",
   "pages/lists/accounting/CoaBatchActions.tsx": "coa",
   "pages/maintenance/components/PartsInventoryTable.tsx": "parts.roster",
+  "components/maintenance/LaborTracker.tsx": "maintenance.modal.work_order_detail",
+  "pages/compliance/ComplianceDashboardPage.tsx": "overview.notification_rules",
   "pages/maintenance/components/SevereRepairOosTab.tsx": "severe_repairs.convert_to_wo",
   "pages/maintenance/inspections/InspectionsPage.tsx": "inspections.create",
   "pages/reports/FuelReconciliationPage.tsx": "report.fuel_reconciliation",

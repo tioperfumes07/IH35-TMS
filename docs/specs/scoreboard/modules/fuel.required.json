@@ -212,6 +212,18 @@
       ]
     },
     {
+      "id": "fraud_alerts",
+      "tab": "Fraud alerts",
+      "sub": "Fuel fraud lifecycle queue",
+      "route_hint": "/fuel/fraud-alerts",
+      "surface_kind": "list",
+      "surface_path": "pages/fuel/fraud-alerts/FraudAlertsList.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "fuel.modal.import_fuel_transactions",
       "tab": "Modals",
       "sub": "Modal: Import Fuel Transactions",

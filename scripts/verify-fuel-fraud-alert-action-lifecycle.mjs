@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @matrix-built {"modules":["fuel"],"cols":["connectivity","qbo_chrome"],"leaves":["home"],"task":"CLASS-F6534-FUEL-FRAUD-ALERT-ACTION-LIFECYCLE","vertical":"class-sweep"}
+ * @matrix-built {"modules":["fuel"],"cols":["connectivity","qbo_chrome"],"leaves":["fraud_alerts"],"task":"CLASS-F6534-FUEL-FRAUD-ALERT-ACTION-LIFECYCLE","vertical":"class-sweep"}
  * Fraud-alert actions use company-snapshotted requests and the dismiss reason
  * lives in canonical product modal chrome, never a native prompt.
  */
