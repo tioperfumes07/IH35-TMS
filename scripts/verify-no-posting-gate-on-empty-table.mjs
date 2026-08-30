@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input DATABASE_URL — queries every declared launch-owed table under verified bypass. */
 /**
  * verify-no-posting-gate-on-empty-table.mjs — EMPTY-POSTING-GATE-CLASS guard (CC-2)
  *

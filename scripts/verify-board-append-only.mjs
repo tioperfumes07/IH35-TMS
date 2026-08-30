@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input origin/main — compares the working board with the committed base board. */
 /**
  * GUARD: the findings board is APPEND-ONLY, and a completion claim must cite its evidence.
  *

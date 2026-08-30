@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — posting-contract declaration integrity only; live reversal remains separate. */
 /** @matrix-built {"modules":["accounting","banking","cash-flow","customers","dispatch","drivers","factoring","finance","fleet","insurance","legal","lists","maintenance","safety","settlements","vendors"],"cols":["reversal_symmetry"],"leaves":["economics.invariants"],"task":"ECON-C28-INV-11-WRAPPER"} */
 /**
  * H5 — reversal_symmetry producer is registry-driven (same POSTING-CONTRACTS as H1).

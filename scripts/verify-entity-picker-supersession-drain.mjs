@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — presence-only retirement-ledger ratchet; never product or Live proof. */
 import fs from "node:fs"; import path from "node:path"; import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const doc=path.join(ROOT,"docs/audit/EP-GUARD-SUPERSESSION-DRAIN.md");

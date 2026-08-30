@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — scoreboard liability-declaration honesty only; never product or Live proof. */
 /**
  * lists.required.json must NOT claim money column `liability` on catalog type CRUD leaves.
  * Those surfaces write catalogs.* enum/type rows only — never driver_finance.driver_liabilities

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input apps/frontend/src/config/help-links.ts — link targets are independent of guide anchors. */
 // OWNER-ADMIN-QUICKSTART-HELP-ANCHOR-MISS — guard
 //
 // apps/frontend/src/config/help-links.ts points 9 rules at fragments of
@@ -24,21 +25,18 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const DOC_FILE = "docs/user-guides/owner-admin-quickstart.md";
+const HELP_LINKS_FILE = "apps/frontend/src/config/help-links.ts";
 
-const REQUIRED_ANCHORS = [
-  "governance-first-mindset",
-  "banking",
-  "qbo-sync",
-  "quickbooks-online-qbo-sync-posture",
-  "scheduled-reports",
-  "user-administration-roles",
-  "launch-readiness",
-  "settlements",
-];
+function requiredAnchorsFromProduct(source) {
+  return [...source.matchAll(/docRel:\s*["']docs\/user-guides\/owner-admin-quickstart\.md#([^"']+)["']/g)]
+    .map((match) => match[1])
+    .filter((anchor) => anchor !== "owner-home")
+    .sort();
+}
 
-export function check(text) {
+export function check(text, requiredAnchors) {
   const failures = [];
-  for (const anchor of REQUIRED_ANCHORS) {
+  for (const anchor of requiredAnchors) {
     if (!text.includes(`<a id="${anchor}"></a>`)) {
       failures.push(`${DOC_FILE} missing <a id="${anchor}"></a> (a help-links.ts rule points at #${anchor})`);
     }
@@ -48,23 +46,31 @@ export function check(text) {
 
 function run() {
   const text = fs.readFileSync(path.join(root, DOC_FILE), "utf8");
-  const failures = check(text);
+  const helpLinks = fs.readFileSync(path.join(root, HELP_LINKS_FILE), "utf8");
+  const requiredAnchors = requiredAnchorsFromProduct(helpLinks);
+  if (!requiredAnchors.length) {
+    console.error("FAIL: owner-admin-quickstart-help-anchors — product source declares no supported anchors");
+    process.exit(1);
+  }
+  const failures = check(text, requiredAnchors);
   if (failures.length > 0) {
     console.error("FAIL: owner-admin-quickstart-help-anchors");
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`PASS: owner-admin-quickstart.md carries all ${REQUIRED_ANCHORS.length} required help-link anchors`);
+  console.log(`PASS: owner-admin-quickstart.md carries all ${requiredAnchors.length} product-declared help-link anchors`);
 }
 
 function selftest() {
   const text = fs.readFileSync(path.join(root, DOC_FILE), "utf8");
+  const helpLinks = fs.readFileSync(path.join(root, HELP_LINKS_FILE), "utf8");
+  const requiredAnchors = requiredAnchorsFromProduct(helpLinks);
   const offender = text.replace('<a id="user-administration-roles"></a>\n\n', "");
   if (offender === text) {
     console.error("FAIL(selftest): offender mutation did not change the file — pattern out of sync");
     process.exit(1);
   }
-  const failures = check(offender);
+  const failures = check(offender, requiredAnchors);
   if (failures.length === 0) {
     console.error("FAIL(selftest): planted offender (user-administration-roles anchor removed) was NOT caught");
     process.exit(1);

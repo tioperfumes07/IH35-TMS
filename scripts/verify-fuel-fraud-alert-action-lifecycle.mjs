@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+/** @independent-input apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx */
+/** @independent-input apps/backend/src/integrations/fuel/fraud-detector/routes.ts */
 /**
  * @matrix-built {"modules":["fuel"],"cols":["connectivity","qbo_chrome"],"leaves":["fraud_alerts"],"task":"CLASS-F6534-FUEL-FRAUD-ALERT-ACTION-LIFECYCLE","vertical":"class-sweep"}
  * Fraud-alert actions use company-snapshotted requests and the dismiss reason

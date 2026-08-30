@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input apps/frontend/src — compares each contract-selected component's rendered fields. */
 /**
  * verify:wizard-section-equality — EXACT field-set equality per wizard section (GUARD empty-diff upgrade,
  * 2026-06-23). The presence-only parity guard passed while §C rendered 18 fields when the design has 11 —

@@ -71,12 +71,15 @@ function countsAsMultiple(inputs) {
 export function classify(name, src) {
   const inputs = inputsOf(src);
   const declared = /@ratchet\b/.test(src);
+  // Dynamic product, git, and database inputs cannot be recovered safely by a literal-path regex.
+  // Make those inputs explicit and review their real read/query in the closed-loop audit.
+  const independentInputs = [...src.matchAll(/@independent-input\s+([^\s*]+)/g)].map((m) => m[1]);
   const dirInput = countsAsMultiple(inputs);
   const specOnly =
-    inputs.length === 1 && !dirInput &&
+    independentInputs.length === 0 && inputs.length === 1 && !dirInput &&
     /^docs\//.test(inputs[0]) && /\.(json|md)$/.test(inputs[0]);
   const unknown = inputs.length === 0;
-  return { name, inputs, declared, specOnly, unknown };
+  return { name, inputs: [...inputs, ...independentInputs], declared, specOnly, unknown };
 }
 
 export function check(files) {
@@ -239,6 +242,9 @@ function selftest() {
   // 4c. A single SPEC read IS a closed loop.
   t("reading only a docs/ spec and asserting on it IS a closed loop",
     check([{ name: "verify-y.mjs", src: 'path.join(ROOT,"docs/specs/scoreboard/columns.shared.json")' }]).failures.length === 1);
+
+  t("a declared dynamic product input opens an otherwise hidden source read",
+    check([{ name: "verify-z.mjs", src: '/** @independent-input apps/x.ts */\nconst spec="docs/x.json"; read(spec); read(productPath);' }]).failures.length === 0);
 
   // 5. A ratchet cited as a Live guard is rejected.
   const f5 = checkRatchetNotCitedAsLive(new Set(["verify-econ"]), [

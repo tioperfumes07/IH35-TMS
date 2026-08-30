@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — validates the audit ledger declaration's parse/number integrity; never Live proof. */
 /**
  * MATRIX-01 FIX-2 — ledger parse is PR-blocking (verify-step 10044).
  * Rule 17: do not wire via ci.yml / package.json.

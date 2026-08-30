@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input docs/module-completion/accounting.json — map entries must bind real manifest ids. */
 /**
  * GUARD: ACCT-F10 — thin HOLD PRs #3423–#3429 must map to real accounting.json items;
  * credited_for_n requires neon_economics_applied + applied proof (MERGED≠APPLIED).

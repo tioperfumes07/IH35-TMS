@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — preserves a scoreboard Required-column decision; never product or Live proof. */
 /**
  * DISP-REQUIRED-SCENARIO-MAINT-INFLATION — scenario.maintenance = Maint WO process col.
  * Book Load / OCR / reserve / in-transit must not claim it without a WO create path.

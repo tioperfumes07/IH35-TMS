@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input origin/main — shrink-only comparison with the committed failing-name set. */
 /**
  * GR-1 — verify-static failing-guard NAMES, shrink-only (verify-step 10042).
  * A count baseline is illegal: one guard can be "fixed" while another rots in.

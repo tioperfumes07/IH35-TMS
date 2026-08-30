@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input .block-ready/ — checks block artifacts against the separate language law. */
 /**
  * GUARD: no affirmative DEFER / PATCH instructions in ACTIVE work orders.
  *

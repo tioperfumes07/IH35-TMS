@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — frozen historical fixture versus embedded owner acceptance; never current Live proof. */
 /**
  * OB-01 — the clone-as-is fixture (docs/fixtures/ob01/transp-2026-03-31.json) actually re-sums to the
  * owner's acceptance totals.

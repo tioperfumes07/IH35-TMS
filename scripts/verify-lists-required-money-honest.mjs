@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — scoreboard money-declaration honesty only; never product or Live proof. */
 /**
  * LISTS-REQUIRED-MONEY-INFLATION — catalog.* type CRUD must NOT claim money columns
  * expense / ap_bill / gl_je (same class as liability honesty #6161).

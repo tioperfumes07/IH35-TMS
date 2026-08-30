@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — recorded measurements versus recorded budgets; never current Live proof. */
 /**
  * CLOSURE-18 CI guard — fail PR if performance measurements regress >10% vs budgets.
  */
