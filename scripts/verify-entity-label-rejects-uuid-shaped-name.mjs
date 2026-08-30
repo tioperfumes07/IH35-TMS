@@ -265,7 +265,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/AllocationsPage.tsx",
     bad: /billLabel=\{row\.bill_number\s*\?\?\s*row\.bill_id\}/,
-    good: /entityLabel\(\s*row\.bill_number\s*,\s*row\.bill_id\s*,\s*"Bill"\s*\)/,
+    good: /visibleDocumentLabel\(\s*row\.bill_number\s*,\s*row\.bill_id\s*,\s*"Bill"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/DisputeQueuePage.tsx",
@@ -1664,12 +1664,12 @@ const SIBLINGS = [
     bad: /\(\{bill\.bill_number\}\)/,
     // "Driver bill" (not "Bill") is the correct noun here — driver_finance.driver_bills is a
     // distinct table from accounting.bills; either honest noun satisfies the invariant.
-    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
+    good: /visibleDocumentLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
   },
   {
     rel: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx",
     bad: /\{bill\.bill_number\}/,
-    good: /entityLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
+    good: /visibleDocumentLabel\(\s*bill\.bill_number\s*,\s*bill\.id\s*,\s*"(?:Bill|Driver bill)"\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/accounting/PaymentsListPage.tsx",
@@ -1749,7 +1749,7 @@ const SIBLINGS = [
   {
     rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
     bad: /label: row\.reference_number \|\| row\.check_number \|\| row\.memo \|\| "Bill payment"/,
-    good: /entityLabel\(\s*row\.reference_number \|\| row\.check_number \|\| row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*\)/,
+    good: /entityLabel\(\s*row\.vendor_name \|\| row\.bill_number \|\| row\.reference_number \|\| row\.check_number \|\| row\.memo\s*,\s*row\.id\s*,\s*"Payment"\s*,?\s*\)/,
   },
   {
     rel: "apps/frontend/src/pages/VendorDetail.tsx",
@@ -2030,6 +2030,45 @@ ORDER BY w.opened_at DESC NULLS LAST`;
     )
   ) {
     failures.push("selftest: sibling bad pattern NOT detected");
+  }
+  const canonicalDocumentCases = [
+    {
+      rel: "apps/frontend/src/pages/accounting/AllocationsPage.tsx",
+      selector: (entry) => entry.good.source.includes("visibleDocumentLabel") && entry.good.source.includes("row\\.bill_number"),
+      good: 'visibleDocumentLabel(row.bill_number, row.bill_id, "Bill")',
+      bad: "billLabel={row.bill_number ?? row.bill_id}",
+    },
+    {
+      rel: "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx",
+      selector: (entry) => entry.good.source.includes("visibleDocumentLabel") && entry.good.source.includes("bill\\.bill_number"),
+      good: 'visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")',
+      bad: "({bill.bill_number})",
+    },
+    {
+      rel: "apps/frontend/src/components/dispatch/LoadDetailDriverPayTab.tsx",
+      selector: (entry) => entry.good.source.includes("visibleDocumentLabel") && entry.good.source.includes("bill\\.bill_number"),
+      good: 'visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")',
+      bad: "{bill.bill_number}",
+    },
+    {
+      rel: "apps/frontend/src/pages/accounting/AccountingHubPage.tsx",
+      selector: (entry) => entry.good.source.includes("vendor_name") && entry.good.source.includes("bill_number"),
+      good: 'entityLabel(row.vendor_name || row.bill_number || row.reference_number || row.check_number || row.memo, row.id, "Payment",)',
+      bad: 'label: row.reference_number || row.check_number || row.memo || "Bill payment"',
+    },
+  ];
+  for (const fixture of canonicalDocumentCases) {
+    const entry = SIBLINGS.find((candidate) => candidate.rel === fixture.rel && fixture.selector(candidate));
+    if (!entry) {
+      failures.push(`selftest: canonical document sibling missing for ${fixture.rel}`);
+      continue;
+    }
+    if (auditSibling(entry.rel, fixture.good, entry.bad, entry.good).length) {
+      failures.push(`selftest: canonical document helper fixture flagged for ${fixture.rel}`);
+    }
+    if (!auditSibling(entry.rel, fixture.bad, entry.bad, entry.good).some((p) => p.includes("name||id"))) {
+      failures.push(`selftest: raw document fallback NOT detected for ${fixture.rel}`);
+    }
   }
   const dispatchDriverSibling = SIBLINGS.find(
     (entry) => entry.rel.endsWith("DispatchList.tsx") && entry.good.source.includes("assigned_primary_driver_name")

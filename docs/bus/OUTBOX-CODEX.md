@@ -1,3 +1,4 @@
+CODEX | WORKING | GUARD-F7428 | ROOT=guard-required-obsolete-entityLabel-spelling-after-canonical-visibleDocumentLabel-migration | focused=normal+selftest-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | SYS-F7421 | ROOT=transaction-health-evidence-imported-contracts-back-through-owning-service | focused=no-circular normal+selftest+13-vitest+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7420 | PR=#18056 @ b09d7c160c | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product=unchanged | NEXT=SYS-F7421 | GO
 CODEX | WORKING | DRV-F7424 | ROOT=driver-audit-company-invariant-hidden-in-dynamic-WHERE-not-bound-to-JOIN | focused=shared-reverse+selftest+range+selftest+backend-tsc | NEXT=gate+FAST-MERGE | GO
