@@ -1,3 +1,5 @@
+CODEX | WORKING | SAF-F7506 | ROOT=DOT-dwell-query-error-state-lacked-stable-evidence-hook | focused=guard+selftest+frontend | Live=UNVERIFIED | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7505 | PR=#18151 @ 7cfec08a28 | focused=normal+selftest+full-gate | NEXT=DOT-dwell-error-red | GO
 CODEX | WORKING | GUARD-F7505 | ROOT=Safety-create-error-class-rejected-generation-safe-captured-error | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7504 | PR=#18150 @ 66f4161dbb | focused=normal+selftest10/10+full-gate | NEXT=Safety-create-error-class-red | GO
 CODEX | WORKING | GUARD-F7504 | ROOT=DTC-range-guard-froze-retired-client-sliced-visibleRows | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
