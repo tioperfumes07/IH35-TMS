@@ -13,10 +13,10 @@ import type { PoolClient } from "pg";
 import {
   SCENARIO_REGISTRY,
   ALL_SOURCES,
-  probeHolds,
   type ScenarioDefinition,
 } from "./scenario-registry.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
+import { runScenarioProbe } from "./scenario-probe.service.js";
 
 export type ScenarioStage = "spec" | "built" | "merged" | "proof" | "passed" | "complete";
 export type ScenarioState = "go" | "fix" | "done";
@@ -158,11 +158,7 @@ export async function livePassedPredicate(
     };
   }
 
-  if (!def.probe) return null;
-
-  const res = await client.query<{ n: string }>(def.probe.sql, [entity]);
-  const n = Number(res.rows[0]?.n ?? 0);
-  return { ok: probeHolds(n), evidence: def.probe.describe(n) };
+  return runScenarioProbe(client, def, entity);
 }
 
 /** Merged = the primitive this hop needs actually exists on prod right now. */
