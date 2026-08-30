@@ -116,7 +116,15 @@ export function audit(entries) {
     .map((e) => `${e.file}: broad leafRe=${JSON.stringify(e.leafRe)} Built claim for col(s) ${e.cols.join(",")}${e.task ? ` (${e.task})` : ""}`);
 }
 
-if (process.argv.includes("--selftest")) {
+function isCliMain() {
+  try {
+    return path.resolve(process.argv[1] || "") === fileURLToPath(import.meta.url);
+  } catch {
+    return false;
+  }
+}
+
+if (isCliMain() && process.argv.includes("--selftest")) {
   const broadOneCol = audit([{ file: "fixture", cols: ["driver"], leafRe: ".*" }]);
   if (broadOneCol.length !== 1) {
     console.error(`${LABEL} SELFTEST FAIL — broad leafRe=.* on a non-reverse_link column escaped`);
@@ -313,22 +321,24 @@ export function splitNewVsLegacy(currentEntries, mainEntries) {
   return { newFailures, legacyFailures };
 }
 
-const { newFailures, legacyFailures } = splitNewVsLegacy(scanEntries(), originMainEntries());
+if (isCliMain() && !process.argv.includes("--selftest") && !process.argv.includes("--self-test")) {
+  const { newFailures, legacyFailures } = splitNewVsLegacy(scanEntries(), originMainEntries());
 
-if (newFailures.length) {
-  console.error(
-    `${LABEL} FAIL — ${newFailures.length} NEW/CHANGED broad (leafRe=.*-equivalent) Built claim(s) on this branch:\n- ${newFailures.join("\n- ")}`,
+  if (newFailures.length) {
+    console.error(
+      `${LABEL} FAIL — ${newFailures.length} NEW/CHANGED broad (leafRe=.*-equivalent) Built claim(s) on this branch:\n- ${newFailures.join("\n- ")}`,
+    );
+    process.exit(1);
+  }
+  if (legacyFailures.length > LEGACY_BROAD_BASELINE) {
+    console.error(
+      `${LABEL} FAIL — legacy broad-claim count grew to ${legacyFailures.length} (baseline ${LEGACY_BROAD_BASELINE}). ` +
+        `Lower it by narrowing a real claim to its leaf-specific leafRe, never by raising this ceiling.\n- ${legacyFailures.join("\n- ")}`,
+    );
+    process.exit(1);
+  }
+  console.log(
+    `${LABEL} PASS — no new broad claims; ${legacyFailures.length}/${LEGACY_BROAD_BASELINE} legacy broad claims remain ` +
+      `(real backlog for the vertical-column sweep, not counted as Built by the live scoreboard since matrix-built-auto.ts isLeafSpecific()).`,
   );
-  process.exit(1);
 }
-if (legacyFailures.length > LEGACY_BROAD_BASELINE) {
-  console.error(
-    `${LABEL} FAIL — legacy broad-claim count grew to ${legacyFailures.length} (baseline ${LEGACY_BROAD_BASELINE}). ` +
-      `Lower it by narrowing a real claim to its leaf-specific leafRe, never by raising this ceiling.\n- ${legacyFailures.join("\n- ")}`,
-  );
-  process.exit(1);
-}
-console.log(
-  `${LABEL} PASS — no new broad claims; ${legacyFailures.length}/${LEGACY_BROAD_BASELINE} legacy broad claims remain ` +
-    `(real backlog for the vertical-column sweep, not counted as Built by the live scoreboard since matrix-built-auto.ts isLeafSpecific()).`,
-);
