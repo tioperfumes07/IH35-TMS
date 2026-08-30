@@ -50,39 +50,48 @@ async function withCompanyScope<T>(
 
 async function listSchedules(client: Queryable, operatingCompanyId: string, assetId?: string) {
   const values: unknown[] = [operatingCompanyId];
-  const filters = ["s.tenant_id = $1::uuid"];
+  const filters = ["s.operating_company_id = $1::uuid", "s.is_active = true"];
   if (assetId) {
     values.push(assetId);
-    filters.push(`s.asset_id = $${values.length}::uuid`);
+    filters.push(`s.unit_id = $${values.length}::uuid`);
   }
   const result = await client.query<PmScheduleRow>(
     `
       SELECT
         s.id::text,
-        s.asset_id::text,
-        a.unit_code,
-        s.pm_type,
-        s.interval_miles::int,
-        s.interval_days::int,
-        s.last_done_miles::int,
-        s.last_done_date::text,
-        s.next_due_miles::int,
-        s.next_due_date::text,
-        a.samsara_unit_id,
+        s.unit_id::text AS asset_id,
+        u.unit_number AS unit_code,
+        CASE
+          WHEN LOWER(s.label) LIKE '%oil%' THEN 'oil'
+          WHEN LOWER(s.label) LIKE '%tire%' OR LOWER(s.label) LIKE '%tyre%' THEN 'tires'
+          WHEN LOWER(s.label) LIKE '%dot%' THEN 'dot_inspection'
+          WHEN LOWER(s.label) LIKE '%brake%' THEN 'brake'
+          ELSE LOWER(REPLACE(BTRIM(s.label), ' ', '_'))
+        END AS pm_type,
+        CASE WHEN s.interval_kind = 'miles' THEN s.interval_value END::int AS interval_miles,
+        CASE WHEN s.interval_kind = 'days' THEN s.interval_value END::int AS interval_days,
+        s.last_service_odometer::int AS last_done_miles,
+        NULL::text AS last_done_date,
+        s.next_due_odometer::int AS next_due_miles,
+        NULL::text AS next_due_date,
+        u.samsara_vehicle_id,
         sv.raw_payload AS samsara_raw_payload,
         vlp.odometer_mi::float8 AS live_odometer_mi
-      FROM maint.pm_schedule s
-      JOIN mdata.assets a ON a.id = s.asset_id AND a.tenant_id = s.tenant_id
+      FROM maintenance.pm_schedules s
+      JOIN mdata.units u
+        ON u.id = s.unit_id
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id
+       AND u.deactivated_at IS NULL
       LEFT JOIN integrations.samsara_vehicles sv
-        ON sv.operating_company_id = s.tenant_id
-       AND sv.samsara_vehicle_id = a.samsara_unit_id
+        ON sv.operating_company_id = s.operating_company_id
+       AND sv.samsara_vehicle_id = u.samsara_vehicle_id
       -- Live odometer from the Samsara stats-poll ingest (#1289): the webhook raw_payload is empty
       -- because we POLL, not webhook, so the current odometer must come from telematics.vehicle_latest_position.
       LEFT JOIN telematics.vehicle_latest_position vlp
-        ON vlp.operating_company_id = s.tenant_id
-       AND vlp.samsara_vehicle_id = a.samsara_unit_id
+        ON vlp.operating_company_id = s.operating_company_id
+       AND vlp.unit_id = s.unit_id
       WHERE ${filters.join(" AND ")}
-      ORDER BY COALESCE(s.next_due_date, DATE '9999-12-31') ASC, COALESCE(s.next_due_miles, 2147483647) ASC
+      ORDER BY COALESCE(s.next_due_odometer, 2147483647) ASC, s.created_at DESC
     `,
     values
   );
@@ -130,7 +139,9 @@ function mapDueRow(row: PmScheduleRow) {
 // a same-shape repoint. No frontend caller ever hit POST/PATCH on this legacy `/api/v1/maint/pm/schedules`
 // path (apps/frontend/src/api/maintenance.ts only calls the GET `listMaintPmDue`); these were dead write
 // endpoints. Root-cause fix: retire the writes (410 Gone, canonical location named) — the GET read
-// endpoints below are unaffected and keep serving `maint.pm_schedule` (a KNOWN_LEGACY read, not a write).
+// endpoints below now read the same canonical table. Keeping a legacy read here made the R&M KPI count
+// `maintenance.pm_alerts` while PM Countdown read an empty retired table, so one screen simultaneously
+// reported "PM Due: 1" and "No active schedule".
 const GONE_BODY = {
   error: "gone",
   message:

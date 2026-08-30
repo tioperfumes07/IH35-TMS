@@ -26,6 +26,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify:pm-countdown-requests-not-due";
 const HOME = "apps/frontend/src/pages/maintenance/MaintenanceHome.tsx";
 const API = "apps/frontend/src/api/maintenance.ts";
+const ROUTE = "apps/backend/src/maint/pm.routes.ts";
 
 /** The countdown's own fetch must ask for not-due rows. */
 export function countdownRequestsNotDue(homeSource) {
@@ -37,7 +38,11 @@ export function apiForwardsFlag(apiSource) {
   return /includeNotDue/.test(apiSource) && /set\(\s*["']include_not_due["']/.test(apiSource);
 }
 
-export function analyse(homeSource, apiSource) {
+export function routeReadsCanonicalSchedule(routeSource) {
+  return /FROM\s+maintenance\.pm_schedules\s+s/.test(routeSource) && !/FROM\s+maint\.pm_schedule\s+s/.test(routeSource);
+}
+
+export function analyse(homeSource, apiSource, routeSource) {
   const problems = [];
   if (!countdownRequestsNotDue(homeSource)) {
     problems.push(
@@ -52,20 +57,29 @@ export function analyse(homeSource, apiSource) {
         `option is accepted and silently dropped — the worst kind, because the call site looks correct.`
     );
   }
+  if (!routeReadsCanonicalSchedule(routeSource)) {
+    problems.push(
+      `${ROUTE}: PM Countdown must read canonical maintenance.pm_schedules, the same table written by ` +
+        `the PM Schedule UI and referenced by maintenance.pm_alerts. Reading retired maint.pm_schedule ` +
+        `creates a split-brain dashboard.`
+    );
+  }
   return problems;
 }
 
 export function run() {
   let home = "";
   let api = "";
+  let route = "";
   try {
     home = readFileSync(path.join(ROOT, HOME), "utf8");
     api = readFileSync(path.join(ROOT, API), "utf8");
+    route = readFileSync(path.join(ROOT, ROUTE), "utf8");
   } catch (err) {
     // FAIL CLOSED: a moved file must not read as success.
     return { ok: false, message: `${LABEL} FAILED:\n  - cannot read source (${err.message})` };
   }
-  const problems = analyse(home, api);
+  const problems = analyse(home, api, route);
   if (problems.length) return { ok: false, message: `${LABEL} FAILED:\n  - ${problems.join("\n  - ")}` };
   return { ok: true, message: `${LABEL} OK — PM Countdown requests not-due schedules and the client forwards the flag` };
 }
@@ -83,17 +97,22 @@ function selftest() {
   const FALSE_HOME = "queryFn: () => listMaintPmDue(companyId, { includeNotDue: false }),";
   const GOOD_API = 'export function listMaintPmDue(id, opts = {}) { if (opts.includeNotDue) q.set("include_not_due", "true"); }';
   const DROPS_API = "export function listMaintPmDue(id, opts = {}) { /* includeNotDue accepted and ignored */ }";
+  const GOOD_ROUTE = "SELECT * FROM maintenance.pm_schedules s WHERE s.operating_company_id = $1";
+  const LEGACY_ROUTE = "SELECT * FROM maint.pm_schedule s WHERE s.tenant_id = $1";
 
-  t("bare call is caught", analyse(BARE_HOME, GOOD_API).length === 1);
-  t("includeNotDue:false is caught", analyse(FALSE_HOME, GOOD_API).length === 1);
-  t("client that drops the flag is caught", analyse(GOOD_HOME, DROPS_API).length === 1);
-  t("both broken reports both", analyse(BARE_HOME, DROPS_API).length === 2);
-  t("correct wiring passes", analyse(GOOD_HOME, GOOD_API).length === 0);
+  t("bare call is caught", analyse(BARE_HOME, GOOD_API, GOOD_ROUTE).length === 1);
+  t("includeNotDue:false is caught", analyse(FALSE_HOME, GOOD_API, GOOD_ROUTE).length === 1);
+  t("client that drops the flag is caught", analyse(GOOD_HOME, DROPS_API, GOOD_ROUTE).length === 1);
+  t("legacy route is caught", analyse(GOOD_HOME, GOOD_API, LEGACY_ROUTE).length === 1);
+  t("all three broken report all", analyse(BARE_HOME, DROPS_API, LEGACY_ROUTE).length === 3);
+  t("correct wiring passes", analyse(GOOD_HOME, GOOD_API, GOOD_ROUTE).length === 0);
   // Mutation arms — each detector must be able to return the opposite answer.
   t("mutation: countdownRequestsNotDue true on good", countdownRequestsNotDue(GOOD_HOME) === true);
   t("mutation: countdownRequestsNotDue false on bare", countdownRequestsNotDue(BARE_HOME) === false);
   t("mutation: apiForwardsFlag true on good", apiForwardsFlag(GOOD_API) === true);
   t("mutation: apiForwardsFlag false on dropping client", apiForwardsFlag(DROPS_API) === false);
+  t("mutation: canonical route passes", routeReadsCanonicalSchedule(GOOD_ROUTE) === true);
+  t("mutation: legacy route fails", routeReadsCanonicalSchedule(LEGACY_ROUTE) === false);
   return bad;
 }
 
@@ -101,7 +120,7 @@ const INVOKED_DIRECTLY = process.argv[1] && process.argv[1].endsWith("verify-pm-
 if (INVOKED_DIRECTLY) {
   if (process.argv.includes("--selftest")) {
     const bad = selftest();
-    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 9 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
+    console.log(bad === 0 ? `${LABEL} SELFTEST PASS — 12 cases` : `${LABEL} SELFTEST FAILED (${bad})`);
     process.exit(bad === 0 ? 0 : 1);
   }
   const res = run();
