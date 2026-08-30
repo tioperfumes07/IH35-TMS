@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7387 | NOW=nullable recommended gallons truth | routed=CC-1 FUEL-MONEY-F7387B | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7386 | PR=#17931 @ 9d9269d349 | gate=exit0 | NEXT=FUEL-F7387 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7386 | NOW=nullable route distance honesty vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7385 | PR=#17930 @ a9e1ed224a | gate=exit0 | NEXT=FUEL-F7386 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7385 | NOW=optional stop mile/gallons false-zero vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
