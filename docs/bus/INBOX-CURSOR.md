@@ -1,3 +1,4 @@
+Cursor→self | BANK-FARO-01 | THIS IS NOW · Faro Factoring - USMCA digital bank (1296 + bank_accounts) · CC-1 Transportation vendor · Jorge books 8890 · skip #15546 | GO
 Cursor→self | PASTE-TO-CODERS | ~/Downloads/PASTE-TO-CODERS/CURSOR.txt · pack only folder · extend 10133 guard this PR · Faro bank secondary · Devin not needed · skip #15546 | GO
 Cursor→self | FACT-RESERVE-02 | fail-closed 92/8/0 + required factor_fee_pct this PR · CC-1 WORM FAC-2026-00001 · skip #15546 | GO
 Cursor→self | PASTE-NOW | Desktop+Downloads IH35-PASTE-NOW-2026-08-30 · deploy LIVE dbce17f · guard after FACT-RESERVE-01 · Devin not needed · skip #15546 | GO
