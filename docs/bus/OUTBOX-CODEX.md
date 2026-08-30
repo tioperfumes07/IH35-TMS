@@ -2541,3 +2541,5 @@ CODEX | WORKING | FLEET-F7476 | ROOT=permit-expiry-test-called-midnight-UTC-June
 CODEX | SHIPPED | SURFACE-F7487 | PR=#18125 @ c642886d1c | Built=fuel:fraud_alerts:{connectivity,qbo_chrome} | NEXT=Combobox vertical census | GO
 CODEX | SHIPPED | SURFACE-F7488 | PR=#18126 @ fda8207a75 | Built=safety:home:{connectivity,qbo_chrome} | hosts=74/74 exact-owned | NEXT=filter/gear vertical census | GO
 CODEX | WORKING | GUARD-F7489 | ROOT=At-Risk-settled-empty-proof-retained-retired-at-risk-only-copy-and-API-mock | NEXT=focused+selftest+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7489 | PR=#18127 @ 8cc51c4c93 | focused=guard+selftest+Vitest3/3+frontend-tsc | NEXT=verify-modal-close-retracts-url | GO
+CODEX | WORKING | GUARD-F7490 | ROOT=Book-Load-URL-guard-rejected-required-first-paint-opener-and-never-ran-selftest | NEXT=focused+selftest+FAST-MERGE | GO
