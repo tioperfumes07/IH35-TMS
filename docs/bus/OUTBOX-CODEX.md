@@ -2652,3 +2652,4 @@ CODEX | WORKING | MAINT-F7531 | GO-CLOSE-188=maint-11 | LIVE_PRE=b8fc09c Service
 CODEX | SHIPPED | FLEET-F7530 | PR=#18220 @ 96bd5c1853 | focused=guard+selftest31/31+frontend-tsc+full-gate | Live=UNVERIFIED | NEXT=maintenance-location-truth | GO
 CODEX | WORKING | GR1-NONMONEY-REGISTRY-GLOBAL-CENSUS-COUPLING | connectivity+residual+reverse exact ownership · unrelated guard growth no longer false-red | NEXT=focused+FAST-MERGE | GO
 CODEX | WORKING | GR1-ARRIVING-SOON-WO-REVERSE-SCOPE-PLANT-MASKED | require both data+count WO joins company-scoped · existing WO drill plant retained | NEXT=focused+FAST-MERGE | GO
+CODEX | WORKING | ACCT-COA-ROLE-UNIQUE-PERMANENCE | HONEST=latent-risk-not-live-money-defect | live=JE2219+active-distinct-duplicates0+active-row-duplicates0+partial-index-present | reserved=migration-202613300800+verify-10129-from-PR18314-no-reclaim | NEXT=focused+gate+merge+ledger-verify | GO

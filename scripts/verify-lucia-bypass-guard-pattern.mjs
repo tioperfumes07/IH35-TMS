@@ -40,6 +40,7 @@ const GUARD_HINTS = [
   "withCompanyScope(",
   "resolveOperatingCompanyId(",
   "user_company_access",
+  "org.user_accessible_company_ids()",
 ];
 
 const DRIVER_MESSAGES_SERVICE = path.join(SRC_DIR, "drivers/messages.service.ts");

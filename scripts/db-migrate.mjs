@@ -260,10 +260,14 @@ async function insertLedgerRow(client, file, checksum, durationMs) {
 
 async function applyMigration(client, file, sql, checksum) {
   const start = Date.now();
+  const noTransaction = /^\s*--\s*IH35_MIGRATION_NO_TRANSACTION\b/m.test(sql);
   const hasExplicitTx = /\bBEGIN\b/i.test(sql) && /\bCOMMIT\b/i.test(sql);
   await client.query(`SET search_path = ${SEARCH_PATH};`);
 
-  if (hasExplicitTx) {
+  // PostgreSQL forbids CREATE INDEX CONCURRENTLY inside a transaction block. A migration carrying
+  // this explicit marker is one atomic DDL statement and is ledgered only after that statement
+  // succeeds. Never infer this from SQL keywords/comments: the author must opt in visibly.
+  if (noTransaction || hasExplicitTx) {
     await client.query(sql);
     await insertLedgerRow(client, file, checksum, Date.now() - start);
     return;
