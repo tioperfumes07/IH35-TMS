@@ -5,7 +5,8 @@
 import fs from "node:fs";
 
 const sources = {
-  fleet: fs.readFileSync("apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", "utf8"),
+  fleetHistory: fs.readFileSync("apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", "utf8").split("type UnitDriverHistoryStripProps")[0],
+  fleetOverlaps: fs.readFileSync("apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", "utf8").split("const overlapColumns")[1] ?? "",
   compliance: fs.readFileSync("apps/frontend/src/pages/compliance/HosTrackerSection.tsx", "utf8"),
   eld: fs.readFileSync("apps/frontend/src/pages/eld/tabs/LiveDutyTab.tsx", "utf8"),
   reports: fs.readFileSync("apps/frontend/src/pages/reports/CustomerProfitabilityPage.tsx", "utf8"),
@@ -26,7 +27,8 @@ const mutateLeaf = (source, id, mutate) => {
 };
 
 const checks = [
-  ["fleet", /kind="driver" id=\{row\.driver_id\}/, "unit assignment history drills to its driver"],
+  ["fleetHistory", /kind="driver" id=\{row\.driver_id\}/, "unit assignment history drills to its driver"],
+  ["fleetOverlaps", /kind="driver" id=\{row\.driver_id\}/, "unit assignment overlaps drill to their driver"],
   ["compliance", /kind="driver" id=\{selectedDriver\.driver_id\}/, "HOS detail drawer drills to its driver"],
   ["eld", /kind="driver" id=\{row\.driver_id\}/, "ELD live-duty roster drills to its driver"],
   ["reports", /kind="customer" id=\{r\.customer_id\}/, "customer profitability drills to its customer"],
