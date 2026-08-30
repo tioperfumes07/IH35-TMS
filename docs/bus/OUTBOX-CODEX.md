@@ -2505,3 +2505,8 @@ Codex | WORKING | GUARD-F7435 | hop.pod_bol canonical three-store connectivity g
 Codex | SHIPPED | GUARD-F7435 | PR=#18071 @ 397df4a71a | NEXT=GUARD-F7436 vendor roster canonical client
 Codex | WORKING | GUARD-F7436 | vendor roster exact company scope via listAllVendors | NEXT=focused+selftest
 CODEX | WORKING | FUEL-F7444 | vertical=fuel reverse-link error honesty | focused=2 guards normal+selftest+frontend-tsc exit0 | NEXT=preflight→FAST-MERGE | GO
+CODEX | SHIPPED | FUEL-F7444 | PR=#18080 @ 70f39c53b6 | NEXT=DSP-F7445 | GO
+CODEX | SHIPPED | DSP-F7445 | PR=#18081 @ 0221c21352 | NEXT=DSP-F7446 | GO
+CODEX | SHIPPED | DSP-F7446 | PR=#18082 @ eed140f438 | NEXT=DSP-F7447 | GO
+CODEX | SHIPPED | DSP-F7447 | PR=#18083 @ 41ef46fe92 | NEXT=DSP-F7448 | GO
+CODEX | SHIPPED | DSP-F7448 | PR=#18084 @ 01d7521507 | NEXT=DRV-MONEY-F7449 routed CC-1 + continue Drivers/Fleet unique | GO
