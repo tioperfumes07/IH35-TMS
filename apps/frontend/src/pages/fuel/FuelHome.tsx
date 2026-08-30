@@ -28,6 +28,7 @@ export function FuelFraudAlertsKpiCard() {
     refetchInterval: 60_000,
   });
 
+  const summaryLoaded = summaryQuery.data !== undefined;
   const openCritical = summaryQuery.data?.open_critical ?? 0;
   const tone = openCritical > 0 ? "border-red-300 bg-red-50" : "border-gray-200 bg-white";
 
@@ -43,10 +44,14 @@ export function FuelFraudAlertsKpiCard() {
       <div className={`text-lg font-semibold ${openCritical > 0 ? "text-red-700" : "text-gray-900"}`}>
         {/* GO-0027-HOME-F: a failed fetch must never render as "0 Open Fraud Alerts" -- matches
             the sibling FuelCardOverageKpiCard's own isError ? "—" : value contract. */}
-        {summaryQuery.isError ? "—" : openCritical}
+        {summaryQuery.isError ? "—" : summaryLoaded ? openCritical : "…"}
       </div>
       <div className="text-[10px] text-gray-600">
-        {summaryQuery.isError ? "Unable to load" : `${summaryQuery.data?.open_total ?? 0} total open`} · CAP-11 fraud monitor
+        {summaryQuery.isError
+          ? "Unable to load"
+          : summaryLoaded
+            ? `${summaryQuery.data.open_total} total open`
+            : "Loading…"} · CAP-11 fraud monitor
       </div>
     </Link>
   );
@@ -79,6 +84,7 @@ export function FuelCardOverageKpiCard() {
     retry: false,
   });
 
+  const pendingLoaded = pendingQuery.data !== undefined;
   const pending = pendingQuery.data?.total_count ?? 0;
   // §7 palette — non-financial UI: slate only (no amber/emerald status classes).
   const tone = pending > 0 ? "border-slate-300 bg-slate-100" : "border-gray-200 bg-white";
@@ -91,10 +97,10 @@ export function FuelCardOverageKpiCard() {
     >
       <div className="text-[10px] uppercase text-gray-500">Card overage queue</div>
       <div className={`text-lg font-semibold ${pending > 0 ? "text-slate-800" : "text-gray-900"}`}>
-        {pendingQuery.isError ? "—" : pending}
+        {pendingQuery.isError ? "—" : pendingLoaded ? pending : "…"}
       </div>
       <div className="text-[10px] text-gray-600">
-        Pending review · BANK-F10 approve-then-recover
+        {pendingQuery.isError ? "Unable to load" : pendingLoaded ? "Pending review" : "Loading…"} · BANK-F10 approve-then-recover
       </div>
     </Link>
   );

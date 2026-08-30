@@ -72,6 +72,13 @@ const fuelHome = read("apps/frontend/src/pages/fuel/FuelHome.tsx");
 contains("apps/frontend/src/pages/fuel/FuelHome.tsx", fuelHome, [
   { pattern: /Open Fraud Alerts/, label: "Open Fraud Alerts KPI card" },
 ]);
+function fuelHomeHonestyFailures(source) {
+  const found = [];
+  if (!/summaryLoaded = summaryQuery\.data !== undefined/.test(source)) found.push("fraud summary does not distinguish unresolved from true zero");
+  if (!/summaryLoaded \? openCritical : "…"/.test(source)) found.push("fraud KPI loading state can paint zero");
+  return found;
+}
+for (const message of fuelHomeHonestyFailures(fuelHome)) fail(`apps/frontend/src/pages/fuel/FuelHome.tsx: ${message}`);
 
 const fraudAlertsPage = read("apps/frontend/src/pages/fuel/fraud-alerts/FraudAlertsList.tsx");
 function fraudMutationErrorFailures(source) {
@@ -113,13 +120,23 @@ if (process.argv.includes("--selftest")) {
     "Could not dismiss the alert",
   ];
   for (const fallback of fallbacks) {
-    const mutant = fraudAlertsPage.replace(new RegExp(`\\n\\s*onError:[^\\n]*${fallback}[^\\n]*`), "");
+    const mutant = fraudAlertsPage.replace(fallback, "Request failed");
     if (mutant === fraudAlertsPage || fraudMutationErrorFailures(mutant).length === 0) {
       console.error(`verify-cap-11-fuel-fraud selftest failed to reject missing handler: ${fallback}`);
       process.exit(1);
     }
   }
-  console.log("verify-cap-11-fuel-fraud selftest PASS — 3 independent rejected-PATCH handlers mutation-proven");
+  const homeMutants = [
+    fuelHome.replace("summaryLoaded = summaryQuery.data !== undefined", "summaryLoaded = true"),
+    fuelHome.replace('summaryLoaded ? openCritical : "…"', "openCritical"),
+  ];
+  for (const mutant of homeMutants) {
+    if (mutant === fuelHome || fuelHomeHonestyFailures(mutant).length === 0) {
+      console.error("verify-cap-11-fuel-fraud selftest failed to reject false-zero loading state");
+      process.exit(1);
+    }
+  }
+  console.log("verify-cap-11-fuel-fraud selftest PASS — 3 rejected-PATCH + 2 false-zero mutations proven");
   process.exit(0);
 }
 read("apps/frontend/src/components/fuel/FuelFraudBadge.tsx");
