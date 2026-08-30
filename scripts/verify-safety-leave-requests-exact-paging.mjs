@@ -36,7 +36,7 @@ if (process.argv.includes("--selftest")) {
   const mutations = [
     [sources[0].replace("COUNT(*)::text AS total_count", "COUNT(*) AS removed_total"), sources[1], sources[2], sources[3]],
     [sources[0].replace("LIMIT $2", "LIMIT 500"), sources[1], sources[2], sources[3]],
-    [sources[0], sources[1].replace("total_count: result.totalCount", "total_count: result.requests.length"), sources[2], sources[3]],
+    [sources[0], sources[1].replace("      total_count: result.totalCount,\n      limit:", "      total_count: result.requests.length,\n      limit:"), sources[2], sources[3]],
     [sources[0], sources[1], sources[2], sources[3].replace(", page]", "]")],
     [sources[0], sources[1], sources[2], sources[3].replace("hidePager", "")],
     [sources[0], sources[1], sources[2], sources[3].replace(" of {totalCount}", "")],
