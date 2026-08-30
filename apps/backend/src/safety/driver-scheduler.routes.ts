@@ -18,6 +18,7 @@ import {
   getLeaveRequestDetail,
   getMySchedule,
   listAllLeaveRequests,
+  listDriverLeaveRequests,
   listLeaveBalances,
   listMyLeaveRequests,
   listPendingLeaveRequests,
@@ -261,12 +262,22 @@ export async function registerDriverSchedulerRoutes(app: FastifyInstance) {
     const user = currentAuthUser(req, reply);
     if (!user) return;
     if (!isSchedulerOfficeRole(String(user.role ?? ""))) return reply.code(403).send({ error: "forbidden" });
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
+    const parsed = companyQuerySchema.extend({
+      driver_id: z.string().uuid().optional(),
+      limit: z.coerce.number().int().min(1).max(100).default(25),
+      offset: z.coerce.number().int().min(0).default(0),
+    }).safeParse(req.query ?? {});
     if (!parsed.success) return sendValidationError(reply, parsed.error);
-    const rows = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
-      listAllLeaveRequests(client, parsed.data.operating_company_id)
+    if (parsed.data.driver_id) {
+      const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+        listDriverLeaveRequests(client, parsed.data.operating_company_id, parsed.data.driver_id!, parsed.data.limit, parsed.data.offset)
+      );
+      return { requests: result.requests, total_count: result.totalCount, limit: parsed.data.limit, offset: parsed.data.offset };
+    }
+    const result = await withCompanyScope(user.uuid, parsed.data.operating_company_id, (client) =>
+      listAllLeaveRequests(client, parsed.data.operating_company_id, parsed.data.limit, parsed.data.offset)
     );
-    return { requests: rows };
+    return { requests: result.requests, total_count: result.totalCount, limit: parsed.data.limit, offset: parsed.data.offset };
     },
   );
 

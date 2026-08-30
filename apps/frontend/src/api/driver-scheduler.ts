@@ -57,6 +57,16 @@ export const driverSchedulerOfficeApi = {
     );
   },
 
+  listDriverRequests(operatingCompanyId: string, driverId: string, limit = 25, offset = 0) {
+    return apiRequest<{ requests: Record<string, unknown>[]; total_count: number; limit: number; offset: number }>(
+      withCompanyQuery("/api/v1/safety/scheduler/requests", operatingCompanyId, {
+        driver_id: driverId,
+        limit: String(limit),
+        offset: String(offset),
+      }),
+    );
+  },
+
   getRequestDetail(operatingCompanyId: string, id: string) {
     return apiRequest<{
       request: Record<string, unknown>;
