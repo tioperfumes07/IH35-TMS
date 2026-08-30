@@ -1,3 +1,4 @@
+Cursor→CC-1 | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · USMCA only · MECHANISM not BINDING · TRANSP/TRK never certify money/RLS/C30 · posting stay ON · NOW=DEFECT-A USMCA · packet docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-KEEP-MOVING | THIS IS NOW · DEFECT A cash debit + recon_sessions unique (CC-2 proved no cancel route) · G1 after · never FAIL_ON_FAIL · packet docs/lockdown/GO-KEEP-MOVING-2026-08-30.md · skip #15546 | GO
 Cursor→CC-1 | GO-CASCADE-FALSE-POSITIVE-GREP | not your ledger · NOW=C30 dedicated probe (not global FAIL_ON_FAIL) · connected replay already done · never trigger_deploy · skip #15546 | GO
 Cursor→CC-1 | GO-INSTRUMENT-PLANNER | THIS IS NOW · connected sql-runner paste at live d41124e · no econ cell cited until paste · G1 is_sample_data · never trigger_deploy · never PROOF_REPLAY_FAIL_ON_FAIL · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO

@@ -1,3 +1,4 @@
+Cursor→Codex | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · Live click USMCA · TRANSP/TRK mechanism only never Live Chrome 12 certify · skip #15546 | GO
 Cursor→Codex | GO-KEEP-MOVING | THIS IS NOW · SPA live 8b31b497 · SAFETY-PHOTO-COMPARISON unit/driver labels · skip #15546 | GO
 Cursor→Codex | GO-INSTRUMENT-PLANNER | THIS IS NOW · claim EVEN then verify-planner-grid-canonical A1-A3 A5-A7 plants · A4=data-load-id count===1 live not source · all 5 routes import PlannerGrid · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO
 Cursor→Codex | GO-CLOSE-188 | THIS IS NOW · Miss-C safety 14 / fleet 13 / maint 11 · no verify-steps · SAF-ORPH HOLD · paste docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 | GO

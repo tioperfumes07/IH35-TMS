@@ -7,6 +7,7 @@
 ## 1. USMCA first — then launch — then clean
 
 1. **Only USMCA is operating.** Entity UUID `5c854333-6ea5-4faa-af31-67cb272fef80`. App `https://app.ih35dispatch.com`.
+   **Owner 2026-08-30 (exact):** Do not work TRANSP or TRK. Leave posting overrides ON. Sister-entity TESTs prove **MECHANISM only** (routes, chrome, pickers, guards, lifecycle, reversal). **Never** money, RLS, entity isolation, subledger, GL delta, period lock, or Live Chrome 12. Those are USMCA-only. LAW-8 / C30 stand. New hops = USMCA.
 2. **Launch** = Fully-Wired items **1–12** on USMCA (`docs/lockdown/FULLY-WIRED-COMPLETE-BAR-2026-08-13.md`). McLeod ops + QBO-*chrome*/books trust + NetSuite controls. QBO-looking chrome ≠ QBO sync.
 3. **After launch:** void labeled TEST transactions (reversal / WORM, by UUID, never DELETE money rows) and **clean the software**. Until then, TESTs are how the product is proven.
 
