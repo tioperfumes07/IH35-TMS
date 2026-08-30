@@ -111,8 +111,40 @@ export function getPool(): pg.Pool {
 export function getLuciaPool(): pg.Pool {
   if (!luciaPoolInstance) {
     luciaPoolInstance = buildLuciaPool();
+    wrapLuciaPoolQueryInBypassTxn(luciaPoolInstance);
   }
   return luciaPoolInstance;
+}
+
+/**
+ * AUTH-LUCIA-SESSION-RLS — identity.sessions WITH CHECK is is_lucia_bypass() only.
+ * luciaPool used to set app.bypass_rls via DIRECT startup `options=` (pgbouncer rejects that).
+ * Moving luciaPool onto pooled DATABASE_URL without wrapping Pool.query left login INSERTs
+ * as ih35_app with bypass unset → 42501 / HTTP 500 on sessions.
+ * withLuciaBypass already SET LOCAL; Lucia's adapter uses pool.query, not that wrapper.
+ */
+function wrapLuciaPoolQueryInBypassTxn(p: pg.Pool): void {
+  p.query = ((textOrConfig: unknown, valuesOrCb?: unknown, maybeCb?: unknown) => {
+    let values = valuesOrCb;
+    let cb = maybeCb;
+    if (typeof valuesOrCb === "function") {
+      cb = valuesOrCb;
+      values = undefined;
+    }
+    const exec = () =>
+      withLuciaBypass((client) => {
+        if (values === undefined) return (client.query as (q: unknown) => Promise<unknown>)(textOrConfig);
+        return (client.query as (q: unknown, v: unknown) => Promise<unknown>)(textOrConfig, values);
+      });
+    if (typeof cb === "function") {
+      void exec().then(
+        (res) => (cb as (err: Error | null, res?: unknown) => void)(null, res),
+        (err: Error) => (cb as (err: Error | null) => void)(err)
+      );
+      return undefined as never;
+    }
+    return exec();
+  }) as typeof p.query;
 }
 
 export const pool: pg.Pool = createLazyPool(getPool);
