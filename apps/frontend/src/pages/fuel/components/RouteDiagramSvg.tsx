@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { RecommendedStop } from "../../../api/fuelPlanner";
 
 type Props = {
-  totalMiles: number;
+  totalMiles: number | null;
   stops: RecommendedStop[];
   expensiveStates: string[];
 };
@@ -29,13 +29,13 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
           ...stop,
           pointId: stop.id || `stop-${idx}`,
           mile,
-          x: toX(mile, Number(totalMiles || 1)),
+          x: totalMiles != null && totalMiles > 0 ? toX(mile, totalMiles) : null,
         }];
       }),
     [stops, totalMiles]
   );
 
-  const avoidZones = stopPoints.filter((stop) => expensiveStates.includes(String(stop.station_state ?? stop.state ?? "").toUpperCase()));
+  const avoidZones = stopPoints.filter((stop) => stop.x != null && expensiveStates.includes(String(stop.station_state ?? stop.state ?? "").toUpperCase()));
 
   // FUEL-1: with no stops the bare baseline reads as a broken chart. Show an explicit empty-state.
   if (stopPoints.length === 0) {
@@ -48,6 +48,14 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
     );
   }
 
+  if (totalMiles == null || totalMiles <= 0) {
+    return (
+      <div className="flex min-h-[120px] items-center justify-center rounded-sm border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+        Route distance is unavailable — recommended stops cannot be positioned yet.
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
       <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full">
@@ -55,7 +63,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
 
         {avoidZones.map((zone) => (
           <g key={`zone-${zone.pointId}`}>
-            <rect x={zone.x - 35} y={LINE_Y - 30} width={70} height={60} fill="rgba(239,68,68,0.08)" stroke="#DC2626" strokeDasharray="4 4" />
+            <rect x={zone.x! - 35} y={LINE_Y - 30} width={70} height={60} fill="rgba(239,68,68,0.08)" stroke="#DC2626" strokeDasharray="4 4" />
             <text x={zone.x} y={LINE_Y - 36} textAnchor="middle" className="fill-red-700 text-[10px]">{String(zone.station_state ?? zone.state ?? "")}</text>
           </g>
         ))}
@@ -74,7 +82,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
               onMouseLeave={() => setHoveredId(null)}
             >
               <circle
-                cx={stop.x}
+                cx={stop.x!}
                 cy={LINE_Y}
                 r={radius}
                 fill={fill}
@@ -82,22 +90,22 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
                 strokeWidth={skipped ? 2 : 0}
                 strokeDasharray={skipped ? "3 2" : undefined}
               />
-              <text x={stop.x} y={LINE_Y - 14} textAnchor="middle" className={`text-[10px] ${skipped ? "line-through fill-red-700" : "fill-gray-700"}`}>
+              <text x={stop.x!} y={LINE_Y - 14} textAnchor="middle" className={`text-[10px] ${skipped ? "line-through fill-red-700" : "fill-gray-700"}`}>
                 ${Number(stop.price_per_gallon ?? 0).toFixed(2)}
               </text>
-              <text x={stop.x} y={LINE_Y + 24} textAnchor="middle" className="fill-gray-700 text-[10px]">
+              <text x={stop.x!} y={LINE_Y + 24} textAnchor="middle" className="fill-gray-700 text-[10px]">
                 {String(stop.station_name ?? `Stop ${idx + 1}`).slice(0, 16)}
               </text>
-              <text x={stop.x} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-[9px]">
+              <text x={stop.x!} y={LINE_Y + 36} textAnchor="middle" className="fill-gray-500 text-[9px]">
                 {String(stop.station_state ?? stop.state ?? "")} · mi {stop.mile.toFixed(0)} · {(stop.gallons_added ?? stop.gallons) == null ? "—" : Number(stop.gallons_added ?? stop.gallons).toFixed(0)} gal
               </text>
               {strategic ? (
-                <text x={stop.x} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-[10px]">
+                <text x={stop.x!} y={LINE_Y - 26} textAnchor="middle" className="fill-amber-700 text-[10px]">
                   ⚡ STRATEGIC
                 </text>
               ) : null}
               {String(stop.hos_note ?? "").toLowerCase().includes("30") ? (
-                <line x1={stop.x} y1={LINE_Y + 44} x2={stop.x} y2={LINE_Y + 54} stroke="#1f2a44" strokeWidth={2} />
+                <line x1={stop.x!} y1={LINE_Y + 44} x2={stop.x!} y2={LINE_Y + 54} stroke="#1f2a44" strokeWidth={2} />
               ) : null}
             </g>
           );

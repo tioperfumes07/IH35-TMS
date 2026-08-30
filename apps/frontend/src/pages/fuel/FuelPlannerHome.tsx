@@ -609,7 +609,7 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
           <section className="space-y-2">
             <h3 className="text-sm font-semibold text-gray-900">HOS-aware route diagram</h3>
             <RouteDiagramSvg
-              totalMiles={Number(detail?.total_distance_miles ?? 0)}
+              totalMiles={detail?.total_distance_miles ?? null}
               stops={stops}
               expensiveStates={expensiveStates}
             />

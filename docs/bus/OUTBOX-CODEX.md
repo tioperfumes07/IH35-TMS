@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7386 | NOW=nullable route distance honesty vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7385 | PR=#17930 @ a9e1ed224a | gate=exit0 | NEXT=FUEL-F7386 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7385 | NOW=optional stop mile/gallons false-zero vertical | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=DSP-F7384 | PR=#17929 @ e8f0fa37f5 | gate=exit0 | NEXT=FUEL-F7385 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7384 | NOW=owner-override pager false-empty honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
