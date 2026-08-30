@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-30 GO-WAKE-ALL
+# LEAD CENSUS — 2026-08-30 Cursor lead
 
-**Lead:** CURSOR · **NOW:** wake idle seats on live **`485c52d`**. Packet `docs/lockdown/GO-WAKE-ALL-2026-08-30.md`. Never recertify U14.
+**Lead:** CURSOR · **LIVE:** healthz `6489163` · **NOW:** luciaPool off DIRECT this PR; seats execute CURRENT GO on their INBOX TOP. Never recertify U14. Skip #15546.
 
 | Seat | Idle? | Evidence |
 |------|-------|----------|
-| CC-1 | **IDLE** | No self-ACK of GO-NOW / GO-KEEP / GO-WAKE-ALL. Last OUTBOX is old BANK-CTRL / Sentry. Secret is SET — waiting on Jorge is stale. |
-| CC-2 | **STALE SHA** | ACK GO-KEEP @ `5071217` and GO-USMCA @ `455a32f` (hearing pending). Live is **`485c52d`**. Must re-click hearing list this SHA. |
-| CC-3 | **PARTIAL** | ACK GO-KEEP @ `455a32f` then parked DRIVER-F7334 on migration bar. Must pick chrome-only leftover, not schema. |
-| Codex | **STALE NOW** | WORKING GR1-customer-notify / planner — not photo-comparison live click. No ACK GO-WAKE-ALL. |
-| Cascade | **WRONG QUEUE** | OUTBOX still filing 50344…50315 isError class. Ordered to STOP and SUPERSEDE. No ACK GO-CASCADE-A-MERGED. |
-| Devin-A | VOID | not a seat |
-| Cursor | lead | #18293 merged; API live `485c52d`; census this turn |
+| CC-1 | instruct | P0 name rulings 3/7 then Faro 33 then cash→1296 (not cash_clearing) |
+| CC-2 | instruct | Grade 007 ITS $350 then FLS. USER-VERIFY UNVERIFIED |
+| CC-3 | instruct | Unique leftover FE. Do not close pool Sentry cluster until this lucia PR is live |
+| Codex | instruct | Unique leftover FE. Never money |
+| Cascade | instruct | Unique FINDING only |
+| Devin / Devin-A | VOID | not seats |
+| Cursor | lead | Deploy live; pool fix this PR |
 
-ACK: `SEAT | ACK | GO-WAKE-ALL | SHA=485c52d | NOW=<one line> | GO`
+ACK: `SEAT | ACK | CURSOR-LEAD | SHA=6489163 | NOW=<inbox TOP> | GO`

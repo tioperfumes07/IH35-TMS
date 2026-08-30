@@ -21,6 +21,6 @@ describe("auth db lazy env guard", () => {
   it("fails closed when a pool is requested without database env", async () => {
     const mod = await import("../../auth/db.js");
     expect(() => mod.getPool()).toThrow("DATABASE_URL is required");
-    expect(() => mod.getLuciaPool()).toThrow("DATABASE_DIRECT_URL is required");
+    expect(() => mod.getLuciaPool()).toThrow("DATABASE_URL is required");
   });
 });

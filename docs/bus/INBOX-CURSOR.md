@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (bar-2 landed · deploy kicked)
+# CURRENT GO — 2026-08-30 (lead: pool + instruct)
 
-Cursor→self | API deploy IN FLIGHT dep-daaa0r4s728c73fqha80 (13 undeployed commits, live was 4ef6dc4) · NEXT after live=Faro factor→bank 1296 linkage · then Neon luciaPool off DIRECT · skip #15546 | GO
+Cursor→self | LIVE healthz 6489163 · NOW=luciaPool off DIRECT (this PR) then instruct CC-1 Faro cash→1296 (do NOT rebind cash_clearing) · skip #15546 | GO
 
 STOP. Older stacked GOs are VOID.
 
