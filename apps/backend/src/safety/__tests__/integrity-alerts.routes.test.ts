@@ -78,6 +78,9 @@ describe("safety integrity alerts routes (A23-12)", () => {
   it("GET /api/v1/safety/integrity-alerts lists inbox (canonical path)", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
       if (sql.includes("SET LOCAL")) return { rows: [], rowCount: 0 };
+      if (sql.includes("COUNT(*)::text AS total_count")) {
+        return { rows: [{ total_count: "1" }], rowCount: 1 };
+      }
       return { rows: [{ id: ALERT_ID, alert_category: "driver_mpg_anomaly" }], rowCount: 1 };
     });
     const res = await app.inject({
@@ -87,6 +90,7 @@ describe("safety integrity alerts routes (A23-12)", () => {
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({
       integrity_alerts: [{ id: ALERT_ID, alert_category: "driver_mpg_anomaly" }],
+      total_count: 1,
     });
   });
 
