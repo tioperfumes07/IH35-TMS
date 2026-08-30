@@ -232,10 +232,28 @@
       "status": "PASS",
       "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 — Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": "#5301",
-            "live_verified_at": "2026-08-30T01:20:00.000Z",
+      "live_verified_at": "2026-08-30T01:20:00.000Z",
       "live_verified_sha": "0dd70bf",
-"prod_verified": true,
-      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
+      "prod_verified": true,
+      "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29",
+      "proven_at_sha": "d41124e",
+      "proofs": [
+        {
+          "kind": "http",
+          "url": "https://app.ih35dispatch.com/fleet/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9/detail",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "http",
+          "url": "https://api.ih35dispatch.com/api/v1/mdata/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "guard",
+          "script": "scripts/verify-fleet-unit-profile-edit-detail.mjs",
+          "expect": { "exit": 0 }
+        }
+      ]
     }
   ],
   "M": 7,
