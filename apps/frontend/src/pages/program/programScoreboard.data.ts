@@ -37,8 +37,8 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     "deployedSha": "4ef6dc4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
-    "failOpen": 177,
-    "defects": 28
+    "failOpen": 138,
+    "defects": 27
   },
   "modules": [
     {
@@ -47,7 +47,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "17/20",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "FAIL",
@@ -79,7 +79,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "AUDIT",
           "NA",
           "FAIL",
@@ -471,7 +471,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "37/38",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "UNV",
         "FIX",
         "AUDIT",
@@ -503,7 +503,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "FIX",
           "FIX",
           "AUDIT",
@@ -1001,7 +1001,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
       "build": "10/11",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "UNV",
         "NA",
         "AUDIT",
@@ -1033,7 +1033,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "AUDIT",
           "NA",
           "AUDIT",

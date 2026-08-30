@@ -53,7 +53,7 @@ export type IdentityWorkflowRequest = {
 };
 
 export type DriverStatus = "Active" | "Probation" | "Inactive" | "Terminated" | "OnLeave";
-export type CdlClass = "A" | "B" | "C";
+export type CdlClass = string;
 export type MilesBasis = "short_miles" | "practical_miles";
 export type PreferredLanguage = "en" | "es";
 export type CustomerType = "broker" | "direct_shipper";

@@ -7,8 +7,8 @@
     "deployedSha": "4ef6dc4",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
-    "failOpen": 177,
-    "defects": 28
+    "failOpen": 138,
+    "defects": 27
   },
   "modules": [
     {
@@ -17,7 +17,7 @@
       "build": "17/20",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "AUDIT",
         "AUDIT",
         "FAIL",
@@ -49,7 +49,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "AUDIT",
           "NA",
           "FAIL",
@@ -441,7 +441,7 @@
       "build": "37/38",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "UNV",
         "FIX",
         "AUDIT",
@@ -473,7 +473,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "FIX",
           "FIX",
           "AUDIT",
@@ -971,7 +971,7 @@
       "build": "10/11",
       "cells": [
         "AUDIT",
-        "FAIL",
+        "AUDIT",
         "UNV",
         "NA",
         "AUDIT",
@@ -1003,7 +1003,7 @@
         ],
         "USMCA": [
           "AUDIT",
-          "FAIL",
+          "AUDIT",
           "AUDIT",
           "NA",
           "AUDIT",
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 18368,
+      "title": "FINDING: USER-VERIFY-01-NON-OWNER-ROLE-MATRIX-GAP -- closed via mutation-verified runtime tests, no credentials touched",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 04:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18368",
+      "sha": "75d0eacdc9",
+      "committedAtIso": "2026-08-30T16:20:48-05:00"
+    },
+    {
       "number": 18367,
       "title": "FINDING: N/A -- Sentry triage: rate-limit ignored (expected), QBO OAuth + email domain confirmed external, left untouched",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18358",
       "sha": "9cfdf6207f",
       "committedAtIso": "2026-08-30T16:01:02-05:00"
-    },
-    {
-      "number": 18357,
-      "title": "FINDING: BUS-INBOX-REFRESH-CC2-BOUNDARY",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 03:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18357",
-      "sha": "9e2c2cee05",
-      "committedAtIso": "2026-08-30T15:56:38-05:00"
     }
   ]
 }
