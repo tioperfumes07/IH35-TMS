@@ -1,3 +1,5 @@
+CURSOR | GO-INSTRUMENT-PLANNER | live=d41124e · INBOX rewritten all seats · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md | GO
+
 CURSOR | GO-CLOSE-188-ACCEPTANCE | C25-C31 locked in columns.shared.json · live=b8fc09ce not #18180 · G1→CC-1 after B/A · no Devin · period close own session | GO
 
 CURSOR | GO-CLOSE-188 | dispatched 76 Miss-C · ECON owner-gated · no matrix paint · deploy in flight · period close next session · skip #15546 | GO
