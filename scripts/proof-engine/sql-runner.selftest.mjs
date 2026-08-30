@@ -55,6 +55,44 @@ catch { t("R1 zero discriminator is rejected", true); }
 try { assertSqlProofShape({ ...GOOD, rls_sensitive: true, allow_bypass_rls: true }); t("R5 bypass_rls in an isolation proof is rejected", false, "accepted"); }
 catch { t("R5 bypass_rls in an isolation proof is rejected", true); }
 
+// --- R5, resolved-behaviour half (packet 10, 2026-08-30): rls:"bypass" on an rls_sensitive
+// proof is rejected even though the SQL TEXT never mentions bypass_rls at all — this is the
+// hole a text-only R5 check cannot see, closed by inspecting the RESOLVED rls mode instead.
+try { assertSqlProofShape({ ...GOOD, rls_sensitive: true, rls: "bypass" }); t("R5-resolved rls:\"bypass\" on an rls_sensitive proof is rejected", false, "accepted"); }
+catch { t("R5-resolved rls:\"bypass\" on an rls_sensitive proof is rejected", true); }
+// An rls_sensitive proof that OMITS rls entirely must still be accepted — it resolves to the
+// safe default ("enforced"), never rejected for the omission itself.
+try { assertSqlProofShape({ ...GOOD, rls_sensitive: true }); t("rls_sensitive proof with no rls field (defaults enforced) is accepted", true); }
+catch (e) { t("rls_sensitive proof with no rls field (defaults enforced) is accepted", false, e.message); }
+// An invalid rls value is rejected outright — no silent coercion to a mode nobody chose.
+try { assertSqlProofShape({ ...GOOD, rls: "sometimes" }); t("an unrecognized rls value is rejected", false, "accepted"); }
+catch { t("an unrecognized rls value is rejected", true); }
+
+// --- rls is actually THREADED to the query executor, not just validated at load. A proof with
+// no rls field must reach the executor as "enforced" (never silently bypass); rls:"bypass" must
+// reach it as "bypass" — this is what makes defaultPgQuery's SET LOCAL app.bypass_rls decision
+// correct instead of a no-op.
+{
+  const seen = [];
+  let n = 0;
+  const capture = makeSqlRunner({
+    repoRoot: REPO,
+    query: async (_sql, opts) => { seen.push(opts?.rls); return ++n === 1 ? [{ je_control: 2214 }] : [{ ar_difference: 0, ap_difference: 0 }]; },
+  });
+  await capture(GOOD); // no rls field on GOOD
+  t("no rls field threads through as \"enforced\" (probe + main query)", seen.length === 2 && seen.every((v) => v === "enforced"), JSON.stringify(seen));
+}
+{
+  const seen = [];
+  let n = 0;
+  const capture = makeSqlRunner({
+    repoRoot: REPO,
+    query: async (_sql, opts) => { seen.push(opts?.rls); return ++n === 1 ? [{ je_control: 2214 }] : [{ ar_difference: 0, ap_difference: 0 }]; },
+  });
+  await capture({ ...GOOD, rls: "bypass" });
+  t("rls:\"bypass\" threads through to both the probe and the main query", seen.length === 2 && seen.every((v) => v === "bypass"), JSON.stringify(seen));
+}
+
 // --- THE BIG ONE. R2: an RLS-empty read must never satisfy "difference == 0".
 {
   const r = await runner([])(GOOD);

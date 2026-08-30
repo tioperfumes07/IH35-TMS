@@ -41,7 +41,13 @@
  *   R5 bypass_rls IS FORBIDDEN IN AN ENTITY-ISOLATION PROOF.
  *      C30 asserts a TRANSP user cannot see a USMCA row. Bypassing RLS to check RLS is the
  *      purest closed loop available. Any proof tagged rls_sensitive that mentions bypass_rls
- *      is rejected at load.
+ *      is rejected at load. Since 2026-08-30 (packet 10-RLS-WILL-BREAK-THE-FIRST-RUN.txt), R5
+ *      also inspects the RESOLVED runner behaviour, not just the SQL text: a proof declares
+ *      `rls: "bypass" | "enforced"` (default "enforced" — a proof with no field can never
+ *      silently defeat RLS), and rls_sensitive:true + rls:"bypass" together is rejected at
+ *      load even though the SQL text itself never mentions bypass_rls. Without this, a global
+ *      connection-level bypass would slip straight past the old text-only R5 check — the exact
+ *      hole the packet found the day this shipped, in the same file, the same hour.
  *
  *   R6 THE OBSERVED VALUE IS ALWAYS RECORDED, PASS OR FAIL.
  *      A verdict without the number it saw cannot be audited later. Every result carries the
@@ -166,6 +172,16 @@ export function assertSqlProofShape(proof) {
   if (proof.rls_sensitive === true && proof.allow_bypass_rls === true)
     throw new Error(`SQL PROOF REJECTED ${id}: bypass_rls may never be used to prove entity isolation (R5).`);
 
+  // R5, resolved-behaviour half (packet 10, 2026-08-30). `rls` is per-proof, fail-closed: a
+  // proof that omits the field resolves to "enforced", so forgetting it can never silently
+  // defeat RLS. rls_sensitive:true + rls:"bypass" is the exact hole the packet found — reject
+  // it at LOAD, before the runner ever gets a chance to set the connection-level GUC.
+  const rls = proof.rls ?? "enforced";
+  if (rls !== "bypass" && rls !== "enforced")
+    throw new Error(`SQL PROOF REJECTED ${id}: rls must be "bypass" or "enforced" (got ${JSON.stringify(proof.rls)}).`);
+  if (proof.rls_sensitive === true && rls === "bypass")
+    throw new Error(`SQL PROOF REJECTED ${id}: bypass_rls may never be used to prove entity isolation (R5) — resolved rls:"bypass" on an rls_sensitive proof.`);
+
   return true;
 }
 
@@ -197,6 +213,9 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
 
     try {
       assertSqlProofShape(proof);
+      // Fail-closed default, mirrored from assertSqlProofShape: a proof with no rls field
+      // never bypasses RLS.
+      const rlsMode = proof.rls ?? "enforced";
 
       const abs = path.join(repoRoot, proof.file);
       const src = fs.readFileSync(abs, "utf8");
@@ -215,7 +234,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         const probeBody = resolvePsqlVars(src, extractBlock(src, proof.probe_query_id, proof.probe_sub_id));
         if (WRITE_TOKENS.test(probeBody))
           return done(false, null, `read-only violation in probe block (R4)`);
-        const probeRows = await exec(probeBody, { readOnly: true });
+        const probeRows = await exec(probeBody, { readOnly: true, rls: rlsMode });
         if (probeRows.length === 0)
           return done(false, "probe returned 0 rows",
             `the discriminator probe itself came back empty — the connection cannot see the data (R1-b)`);
@@ -229,7 +248,7 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
         }
       }
 
-      const rows = await exec(body, { readOnly: true });
+      const rows = await exec(body, { readOnly: true, rls: rlsMode });
 
       // R2 — empty is never a silent pass.
       const expectRows = proof.expect_rows;
@@ -277,8 +296,13 @@ export function makeSqlRunner({ repoRoot, query, connectionString }) {
 }
 
 /* ---------- R4 layer 2 — the transaction itself is read-only ---------- */
+// PER-PROOF rls (packet 10, 2026-08-30): bypass_rls is set ONLY when the caller resolved
+// rls:"bypass" for THIS proof, never at the connection/module level. C30 (rls_sensitive:true)
+// always resolves to "enforced" (assertSqlProofShape rejects any other combination at load),
+// so its query runs under real RLS with no company context — it CANNOT see chart_of_accounts_
+// roles and will correctly fail, not silently pass on an empty result (R2 still applies).
 function defaultPgQuery(connectionString) {
-  return async function (sql) {
+  return async function (sql, opts = {}) {
     const { default: pg } = await import("pg");
     const client = new pg.Client({ connectionString });
     await client.connect();
@@ -286,6 +310,7 @@ function defaultPgQuery(connectionString) {
       await client.query("BEGIN");
       await client.query("SET TRANSACTION READ ONLY");
       await client.query("SET LOCAL statement_timeout = '30s'");
+      if (opts.rls === "bypass") await client.query("SET LOCAL app.bypass_rls = 'lucia'");
       const res = await client.query(sql);
       await client.query("ROLLBACK");
       return res.rows;
