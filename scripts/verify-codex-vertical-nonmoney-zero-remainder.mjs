@@ -16,7 +16,27 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const MATRIX_DIR = path.join(ROOT, "docs/specs/scoreboard/modules");
 const WORKORDERS = path.join(ROOT, "docs/audit/GUARD-WORKORDERS.md");
 const SELFTEST = process.argv.includes("--selftest");
-const EXCLUDED_COLUMNS = new Set(["ap_bill", "expense", "gl_je", "inventory", "invoice", "bank", "liability", "picker_law", "qbo_chrome"]);
+const EXCLUDED_COLUMNS = new Set([
+  "ap_bill",
+  "expense",
+  "gl_je",
+  "inventory",
+  "invoice",
+  "bank",
+  "liability",
+  "picker_law",
+  "qbo_chrome",
+  // C25-C31 are Required matrix columns, but they are the CC-1 money/posting lane rather than
+  // Codex relationship wiring. Keep them visible to the dedicated economic-column guards without
+  // making this non-money census falsely claim every economics.invariants leaf.
+  "gl_delta",
+  "subledger_tie",
+  "lifecycle_complete",
+  "reversal_symmetry",
+  "period_guard",
+  "entity_isolation",
+  "non_empty_proof",
+]);
 const TAG_RE = /@matrix-built\s+(\{[^\n]*\})/g;
 const SHORTHAND_RE = /@matrix-built\s+modules=([^\s]+)(?:\s+cols=([^\s]+))?(?:\s+leafRe=([^\s]+))?/g;
 const CSV_RE = /@matrix-built\s+(?!modules=|\{)([a-z][a-z0-9_-]*(?:,[a-z][a-z0-9_-]*)+)(?=\s|\*|\/|$)/gi;
@@ -232,7 +252,18 @@ if (SELFTEST) {
     console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — shorthand leafRe parser drifted");
     process.exit(1);
   }
-  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, reopened claim, stale protection, JSON leaves, and leafRe caught");
+  const ownershipSpecs = [{
+    module: "safety",
+    columns: [{ id: "gl_delta" }, { id: "work_order" }],
+    leaves: [{ id: "selftest.economics_boundary", required: ["gl_delta", "work_order"] }],
+  }];
+  const ownershipGaps = collectGaps(ownershipSpecs, []);
+  if (ownershipGaps.includes("gl_delta\tsafety:selftest.economics_boundary") ||
+      !ownershipGaps.includes("work_order\tsafety:selftest.economics_boundary")) {
+    console.error("verify-codex-vertical-nonmoney-zero-remainder SELFTEST FAIL — money/non-money ownership boundary drifted");
+    process.exit(1);
+  }
+  console.log("verify-codex-vertical-nonmoney-zero-remainder SELFTEST PASS — new leaf, removed evidence, reopened claim, stale protection, JSON leaves, leafRe, and money ownership boundary caught");
   process.exit(0);
 }
 

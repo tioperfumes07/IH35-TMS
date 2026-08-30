@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["drivers"],"cols":["disputes","connectivity"],"leaves":["drivers.disputes.in_review.resolution_action"],"task":"DRV-MONEY-F7314-IN-REVIEW-DISPUTES-HAVE-NO-RESOLUTION-ACTION","vertical":"column-wave"} */
+/** @matrix-built {"modules":["drivers"],"cols":["disputes","connectivity","settlement"],"leaves":["drivers.disputes.in_review.resolution_action","drivers.modal.settlement_dispute_resolve"],"task":"DRV-MONEY-F7314-IN-REVIEW-DISPUTES-HAVE-NO-RESOLUTION-ACTION","vertical":"column-wave"} */
 /**
  * DRV-MONEY-F7314-IN-REVIEW-DISPUTES-HAVE-NO-RESOLUTION-ACTION (CC-1, 2026-08-29):
  * /drivers/disputes (SettlementDisputeList.tsx) rendered an Actions cell only for status:'submitted'
@@ -63,6 +63,9 @@ export function audit(src) {
   }
   if (!/amountValid = !needsAmount \|\| \(amountCents != null && amountCents > 0\)/.test(modal)) {
     failures.push(`${FILES.modal}: the resolution amount must be validated as a positive integer before the submit button enables`);
+  }
+  if (!/await onResolve\(\{[\s\S]{0,100}id: dispute\.id,/.test(modal)) {
+    failures.push(`${FILES.modal}: the resolve mutation must carry the exact settlement dispute id from the active row`);
   }
 
   return failures;
@@ -146,7 +149,21 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS — 3 mutations detected`);
+  // Mutation 4: detach the resolve request from the active dispute row.
+  const droppedExactDisputeId = {
+    ...good,
+    modal: good.modal.replace(`id: dispute.id,`, `id: "wrong-dispute",`),
+  };
+  if (droppedExactDisputeId.modal === good.modal) {
+    console.error(`${LABEL} SELFTEST FAIL — exact-dispute-id pattern did not match source, re-anchor`);
+    process.exit(1);
+  }
+  if (audit(droppedExactDisputeId).length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — detached settlement dispute id escaped`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — 4 mutations detected`);
   process.exit(0);
 }
 

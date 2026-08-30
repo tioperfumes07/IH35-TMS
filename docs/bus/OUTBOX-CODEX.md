@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7512 | ROOT=nonmoney-census-omitted-C25-C31-from-money-exclusions-and-falsely-claimed-112-CC1-cells | PRODUCT=unchanged | NEXT=normal+selftest+FAST-MERGE | GO
+CODEX | SHIPPED | SYSTEM-F7511 | PR=#18157 @ 91489cd1c8 | focused=flag-guard+selftest+Vitest4/4+backend-tsc+full-gate | NEXT=GO-LAST-26-safety-reconcile | GO
 CODEX | WORKING | SYSTEM-F7511 | ROOT=parts-receive-scenario-read-feature-flag-overrides-raw-and-could-disagree-with-canonical-poster-gate | focused=flag-guard+selftest+Vitest+backend-tsc | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7510 | PR=#18156 @ 2b579a7752 | exact=14 | focused=normal+selftest+full-gate | NEXT=per-entity-flag-raw-read-red | GO
 CODEX | WORKING | GUARD-F7510 | ROOT=picker-chrome-registry-coupled-exact-owned-membership-to-obsolete-global-orphan-threshold | exact=14 | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
