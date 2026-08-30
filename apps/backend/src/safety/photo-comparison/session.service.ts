@@ -48,6 +48,9 @@ export type PhotoComparisonSession = {
   diff_summary: string | null;
   diff_completed_at: string | null;
   auto_damage_report_uuid: string | null;
+  driver_name?: string | null;
+  unit_number?: string | null;
+  load_number?: string | null;
   created_at: string;
   pre_trip_photos?: PhotoEvidenceDetail[];
   post_trip_photos?: PhotoEvidenceDetail[];
@@ -73,6 +76,24 @@ const SESSION_COLUMNS = `
   diff_completed_at::text,
   auto_damage_report_uuid::text,
   created_at::text
+`;
+
+const SESSION_HUMAN_LABEL_COLUMNS = `
+  mdata.resolve_driver_label_same_company(s.driver_uuid, s.operating_company_id) AS driver_name,
+  (
+    SELECT NULLIF(TRIM(u.unit_number), '')
+    FROM mdata.units u
+    WHERE u.id = s.unit_uuid
+      AND (u.owner_company_id = s.operating_company_id OR u.currently_leased_to_company_id = s.operating_company_id)
+    LIMIT 1
+  ) AS unit_number,
+  (
+    SELECT NULLIF(TRIM(l.load_number), '')
+    FROM mdata.loads l
+    WHERE l.id = s.load_uuid
+      AND l.operating_company_id = s.operating_company_id
+    LIMIT 1
+  ) AS load_number
 `;
 
 function angleFromMetadata(metadata: Record<string, unknown>): string | null {
@@ -405,10 +426,10 @@ export async function getSession(
 ): Promise<PhotoComparisonSession | null> {
   const res = await client.query<PhotoComparisonSession>(
     `
-      SELECT ${SESSION_COLUMNS}
-      FROM safety.photo_comparison_sessions
-      WHERE uuid = $1::uuid
-        AND operating_company_id = $2::uuid
+      SELECT ${SESSION_COLUMNS}, ${SESSION_HUMAN_LABEL_COLUMNS}
+      FROM safety.photo_comparison_sessions s
+      WHERE s.uuid = $1::uuid
+        AND s.operating_company_id = $2::uuid
       LIMIT 1
     `,
     [sessionUuid, operatingCompanyId]
@@ -478,10 +499,10 @@ export async function listSessions(
   const pageValues = [...values, filters.limit, filters.offset];
   const res = await client.query<PhotoComparisonSession>(
     `
-      SELECT ${SESSION_COLUMNS}
-      FROM safety.photo_comparison_sessions
+      SELECT ${SESSION_COLUMNS}, ${SESSION_HUMAN_LABEL_COLUMNS}
+      FROM safety.photo_comparison_sessions s
       WHERE ${clauses.join(" AND ")}
-      ORDER BY created_at DESC
+      ORDER BY s.created_at DESC
       LIMIT $${pageValues.length - 1}
       OFFSET $${pageValues.length}
     `,

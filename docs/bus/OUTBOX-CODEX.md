@@ -1,3 +1,6 @@
+CODEX | WORKING | SAF-F7524 | GO-CLOSE-188=safety-14 | LIVE_PRE=b8fc09c real-session labels unit+driver not-visible and detail missing relationship strip | focused=guard+selftest12/12+Vitest1/1+root-tsc | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DRIVER-F7523 | PR=#18182 @ 90d1e60d66 | focused=guard+selftest28/28+root-tsc+full-gate | Live=UNVERIFIED | NEXT=GO-CLOSE-188-safety | GO
+CODEX | ACK | GO-CLOSE-188 | NOW=safety-14→fleet-13→maint-11 | SHA=b8fc09c | SAF-ORPH=HOLD | GO
 CODEX | WORKING | DRIVER-F7523 | ROOT=referral-reward-consumed-an-FK-that-no-canonical-creator/profile-could-write-or-reverse-resolve | focused=guard+selftest28/28+root-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRIVER-F7522 | PR=#18179 @ 1ba69824cf | focused=guard+selftest18/18+root-tsc+dead-schema-zero-new+full-gate | Live=UNVERIFIED | NEXT=driver-referral-lifecycle | GO
 Cursor→Codex | GO-CLOSE-188 | safety/fleet/maint Miss-C · paste docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt | GO
