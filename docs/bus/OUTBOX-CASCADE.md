@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50223 | reports · SILENT-NO-OP — IFTAPreparer createMutation no onError, no isError, void mutateAsync no .catch | GO
 CASCADE | FINDING | 50222 | safety · SILENT-NO-OP — 3 safety tabs voidMutation no onError/no isError, await mutateAsync no try/catch | GO
 CASCADE | FINDING | 50221 | accounting · SILENT-NO-OP — ExpenseDetailPage + ExpensesListPage voidMutation no onError, await mutateAsync no try/catch on financial void | GO
 CASCADE | FINDING | 50220 | system · SILENT-NO-OP — CarrierSwitcher "Make default" no try/catch, setDefaultMutation no onError | GO
