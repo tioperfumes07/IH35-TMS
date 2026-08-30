@@ -64,6 +64,9 @@ function collectProblemsFromSources(sources) {
     if (!home.includes('to="/fuel/card-overage"') || !home.includes("FuelCardOverageKpiCard")) {
       problems.push(`${FILES.home} must link Fuel Home KPI to /fuel/card-overage`);
     }
+    if (!home.includes("pendingLoaded = pendingQuery.data !== undefined") || !home.includes('pendingLoaded ? pending : "…"')) {
+      problems.push(`${FILES.home} must distinguish unresolved overage count from a true zero`);
+    }
   }
 
   if (manifest) {
@@ -133,6 +136,15 @@ function selftest() {
       sources: {
         [FILES.page]: realPage,
         [FILES.home]: realHome.replaceAll('to="/fuel/card-overage"', 'to="/fuel/x"'),
+        [FILES.manifest]: realManifest,
+        [FILES.bankingJson]: realBanking,
+      },
+    },
+    {
+      name: "loading state paints a false zero",
+      sources: {
+        [FILES.page]: realPage,
+        [FILES.home]: realHome.replace('pendingLoaded ? pending : "…"', "pending"),
         [FILES.manifest]: realManifest,
         [FILES.bankingJson]: realBanking,
       },

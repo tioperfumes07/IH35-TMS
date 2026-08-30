@@ -3,8 +3,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
+import type { ReactNode } from "react";
 import * as clientApi from "../../api/client";
-import { FuelFraudAlertsKpiCard } from "./FuelHome";
+import { FuelCardOverageKpiCard, FuelFraudAlertsKpiCard } from "./FuelHome";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -17,12 +18,12 @@ vi.mock("../../contexts/CompanyContext", () => ({
   }),
 }));
 
-function renderCard() {
+function renderCard(card: ReactNode = <FuelFraudAlertsKpiCard />) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter>
-        <FuelFraudAlertsKpiCard />
+        {card}
       </MemoryRouter>
     </QueryClientProvider>
   );
@@ -41,11 +42,39 @@ describe("FuelFraudAlertsKpiCard", () => {
     expect(screen.getByText("5 total open · CAP-11 fraud monitor")).toBeInTheDocument();
   });
 
+  it("does not paint a clean zero while the summary is still loading", () => {
+    vi.spyOn(clientApi, "apiRequest").mockReturnValue(new Promise(() => undefined));
+    renderCard();
+    expect(screen.getByText("…")).toBeInTheDocument();
+    expect(screen.getByText(/Loading… · CAP-11/i)).toBeInTheDocument();
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+  });
+
   it("shows — (never 0) and an honest message when the fetch fails", async () => {
     vi.spyOn(clientApi, "apiRequest").mockRejectedValue(new Error("network"));
     renderCard();
     await waitFor(() => expect(screen.getByText("—")).toBeInTheDocument());
     expect(screen.queryByText("0")).not.toBeInTheDocument();
     expect(screen.getByText(/unable to load/i)).toBeInTheDocument();
+  });
+});
+
+describe("FuelCardOverageKpiCard", () => {
+  afterEach(cleanup);
+  beforeEach(() => vi.restoreAllMocks());
+
+  it("does not paint a clean zero while the pending queue is still loading", () => {
+    vi.spyOn(clientApi, "apiRequest").mockReturnValue(new Promise(() => undefined));
+    renderCard(<FuelCardOverageKpiCard />);
+    expect(screen.getByText("…")).toBeInTheDocument();
+    expect(screen.getByText(/Loading… · BANK-F10/i)).toBeInTheDocument();
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+  });
+
+  it("renders a true zero only after the queue response succeeds", async () => {
+    vi.spyOn(clientApi, "apiRequest").mockResolvedValue({ events: [], total_count: 0 });
+    renderCard(<FuelCardOverageKpiCard />);
+    await waitFor(() => expect(screen.getByText("0")).toBeInTheDocument());
+    expect(screen.getByText(/Pending review · BANK-F10/i)).toBeInTheDocument();
   });
 });
