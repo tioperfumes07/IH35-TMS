@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7491 | ROOT=Border-Credentials-category-query-guarded-data-but-not-categories-before-upload-find | NEXT=focused+selftest+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7490 | PR=#18128 @ 9c61c638a8 | focused=normal+selftest-6/6+full-gate | NEXT=verify-no-partial-optional-chain | GO
 CODEX | WORKING | GUARD-F7467 | ROOT=permit-create-limiter-selftest-mutated-earlier-list-GET-instead-of-governed-POST | focused=normal+selftest-7/7 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7466 | ROOT=pending-leave-paging-selftest-was-masked-by-sibling-service-and-route-evidence | focused=normal+selftest-7/7 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7465 | ROOT=driver-training-create-audit-response-selftests-were-masked-by-PATCH-and-archive-siblings | focused=normal+selftest-12/12 | NEXT=gate+FAST-MERGE | GO
