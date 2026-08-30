@@ -17,8 +17,13 @@ const TARGETS = [
 
 function assertSrc(src, file) {
   const errors = [];
-  if (!src.includes("createMutation.isError")) {
-    errors.push(`${file}: missing createMutation.isError surface`);
+  const directMutationError = src.includes("createMutation.isError");
+  const generationSafeCapturedError =
+    /onError:\s*\(error,\s*input\)\s*=>/.test(src) &&
+    /setCreateError\(error\)/.test(src) &&
+    /\{createError\s*\?/.test(src);
+  if (!directMutationError && !generationSafeCapturedError) {
+    errors.push(`${file}: missing visible mutation-error lifecycle`);
   }
   if (!src.includes("userFacingApiError")) {
     errors.push(`${file}: missing userFacingApiError`);
@@ -31,13 +36,27 @@ function assertSrc(src, file) {
 
 function selftest() {
   const bad = `onClick={() => createMutation.mutate()}\n{createMutation.isPending ? "Saving" : "Save"}`;
-  const good = `import { userFacingApiError } from "../../lib/api-error-message";
+  const directGood = `import { userFacingApiError } from "../../lib/api-error-message";
 {createMutation.isError ? <p data-testid="permit-create-error">{userFacingApiError(createMutation.error, "fail")}</p> : null}`;
-  if (assertSrc(bad, "bad").length === 0 || assertSrc(good, "good").length > 0) {
-    console.error(`${LABEL} SELFTEST FAIL`, { bad: assertSrc(bad, "bad"), good: assertSrc(good, "good") });
+  const capturedGood = `import { userFacingApiError } from "../../lib/api-error-message";
+onError: (error, input) => { if (input.generation === current) setCreateError(error); }
+{createError ? <p data-testid="internal-fine-create-error">{userFacingApiError(createError, "fail")}</p> : null}`;
+  const capturedMissingRender = capturedGood.replace("{createError ?", "{false ?");
+  if (
+    assertSrc(bad, "bad").length === 0 ||
+    assertSrc(directGood, "directGood").length > 0 ||
+    assertSrc(capturedGood, "capturedGood").length > 0 ||
+    assertSrc(capturedMissingRender, "capturedMissingRender").length === 0
+  ) {
+    console.error(`${LABEL} SELFTEST FAIL`, {
+      bad: assertSrc(bad, "bad"),
+      directGood: assertSrc(directGood, "directGood"),
+      capturedGood: assertSrc(capturedGood, "capturedGood"),
+      capturedMissingRender: assertSrc(capturedMissingRender, "capturedMissingRender"),
+    });
     process.exit(1);
   }
-  console.log(`${LABEL} selftest PASS`);
+  console.log(`${LABEL} selftest PASS — direct and generation-safe captured errors accepted; missing render rejected`);
 }
 
 if (process.argv.includes("--selftest")) {
