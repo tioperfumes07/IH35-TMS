@@ -74,7 +74,14 @@ export function normalizeDriverListStatusInput(value: unknown): unknown {
   return canonical ?? value;
 }
 const listStatusSchema = z.preprocess(normalizeDriverListStatusInput, driverStatusSchema);
-const cdlClassSchema = z.enum(["A", "B", "C"]);
+// DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG: was z.enum(["A","B","C"]),
+// rejecting the other 6 real reference.license_classes codes (AM/BM/CM/CDL-A/CDL-B/CDL-C) with a
+// validation 400 even after the frontend picker was widened to the live catalog. cdl_class is plain
+// text on mdata.drivers (not DB-enum-constrained); mdata.sync_driver_reference_fks_row's own trigger
+// already does a case-insensitive lookup against reference.license_classes.code and silently leaves
+// license_class_id NULL on no match -- so a bounded free-text schema here doesn't need to duplicate
+// the catalog's code list to stay correct.
+const cdlClassSchema = z.string().trim().min(1).max(20);
 const milesBasisSchema = z.enum(["short_miles", "practical_miles"]);
 const preferredLanguageSchema = z.enum(["en", "es"]);
 const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);

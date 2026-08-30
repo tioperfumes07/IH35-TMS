@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
+import { licenseClassesCatalogClient } from "../../api/lists-drivers-catalogs";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { confirmUpload, listFileCategories, requestUploadUrlFromFile, uploadFileToR2 } from "../../api/docs";
 import {
@@ -42,7 +43,16 @@ const statusOptions = ["All", "Probation", "Active", "Inactive", "Terminated", "
 const statusFieldComboboxOptions = statusOptions
   .filter((value) => value !== "All")
   .map((value) => ({ value, label: value }));
-const cdlClassComboboxOptions = ["A", "B", "C"].map((value) => ({ value, label: value }));
+// DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG: cdl_class used to be fed by a
+// hardcoded ["A","B","C"] array bypassing the real, 9-row reference.license_classes catalog entirely
+// (6 of 9 seeded codes -- AM/BM/CM/CDL-A/CDL-B/CDL-C -- were unreachable at driver-create time). See
+// licenseClassesQuery / cdlClassComboboxOptions below, where the picker now reads the live catalog.
+// cdl_class is plain text on mdata.drivers (not DB-enum-constrained) and
+// mdata.sync_driver_reference_fks_row's trigger already resolves any matching
+// reference.license_classes.code into license_class_id on insert/update -- so widening this picker
+// needs no migration and no backend write-path change, only widening the two hardcoded
+// z.enum(["A","B","C"]) validators (this file's own form schema + drivers.routes.ts's cdlClassSchema)
+// to a bounded free-text field.
 const payBasisComboboxOptions = [
   { value: "short_miles", label: "Short Miles" },
   { value: "practical_miles", label: "Practical Miles" },
@@ -80,7 +90,11 @@ const createDriverSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")),
   cdl_number: z.string().trim().optional(),
   cdl_state: z.string().trim().optional(),
-  cdl_class: z.enum(["A", "B", "C"]).optional(),
+  // DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG: was z.enum(["A","B","C"]),
+  // rejecting the other 6 real reference.license_classes codes (AM/BM/CM/CDL-A/CDL-B/CDL-C). cdl_class
+  // is plain text on mdata.drivers -- bounded free text, matching cdl_number/cdl_state's own schema
+  // style in this same file, not re-hardcoding a second copy of the catalog's code list here.
+  cdl_class: z.string().trim().min(1).max(20).optional(),
   cdl_expires_at: z.string().optional(),
   hire_date: z.string().optional(),
   // LV-DRIVER-DOB-SILENTLY-DROPPED — column exists on mdata.drivers; create must expose + submit it.
@@ -626,6 +640,43 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     },
   });
 
+  // DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG: read the live, canonical
+  // reference.license_classes catalog (same table/query key shape as /lists/drivers/license-classes)
+  // instead of the removed hardcoded ["A","B","C"] array.
+  const licenseClassesQuery = useQuery({
+    queryKey: ["catalogs", "driver-license-classes"],
+    queryFn: () => licenseClassesCatalogClient.list({}).then((result) => result.rows.filter((row) => !row.archived_at)),
+    enabled: open,
+  });
+  const cdlClassComboboxOptions = useMemo(
+    () => (licenseClassesQuery.data ?? []).map((row) => ({ value: row.code, label: row.label })),
+    [licenseClassesQuery.data]
+  );
+  const [licenseClassCreateOpen, setLicenseClassCreateOpen] = useState(false);
+  const [newLicenseClassCode, setNewLicenseClassCode] = useState("");
+  const [newLicenseClassLabel, setNewLicenseClassLabel] = useState("");
+  const [savingLicenseClass, setSavingLicenseClass] = useState(false);
+  const saveNewLicenseClass = useCallback(async () => {
+    if (!newLicenseClassCode.trim() || !newLicenseClassLabel.trim()) return;
+    setSavingLicenseClass(true);
+    try {
+      const created = await licenseClassesCatalogClient.create({
+        code: newLicenseClassCode.trim(),
+        label: newLicenseClassLabel.trim(),
+      });
+      await queryClient.invalidateQueries({ queryKey: ["catalogs", "driver-license-classes"] });
+      clearDriverFieldError("cdl_class");
+      setForm((current) => ({ ...current, cdl_class: created.code }));
+      setLicenseClassCreateOpen(false);
+      setNewLicenseClassCode("");
+      setNewLicenseClassLabel("");
+    } catch (err) {
+      pushToast(userFacingApiError(err), "error");
+    } finally {
+      setSavingLicenseClass(false);
+    }
+  }, [newLicenseClassCode, newLicenseClassLabel, queryClient, pushToast, clearDriverFieldError]);
+
   const runDriverCreateSave = useCallback(
     (mode: "default" | "add_another") => {
       if (pendingDocCategoriesUnavailable) {
@@ -846,6 +897,10 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               }}
               placeholder="Select CDL class"
               error={driverFieldErrors.cdl_class}
+              allowAddNew={{
+                label: "+ Add new license class",
+                onAdd: () => setLicenseClassCreateOpen(true),
+              }}
             />
             <FieldError id="cdl_class" message={driverFieldErrors.cdl_class} />
           </div>
@@ -1443,6 +1498,50 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
     </div>
   );
 
+  // DRIVER-CREATE-MODAL-CDL-CLASS-AND-STATUS-HARDCODED-BYPASS-CATALOG: mini-create panel for the
+  // license-class Combobox's "+ Add new" affordance, mirroring the QB-STD-1/2 pattern already used
+  // elsewhere (e.g. CreateAdvanceModal.tsx's cash-advance-type inline-create).
+  const licenseClassCreateContent = (
+    <div className="space-y-3">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="new_license_class_code" className="text-xs font-semibold text-gray-600">Code *</label>
+        <input
+          id="new_license_class_code"
+          value={newLicenseClassCode}
+          onChange={(event) => setNewLicenseClassCode(event.target.value)}
+          className="rounded-sm border h-9 px-2 text-[13px]"
+          placeholder="e.g. AM"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="new_license_class_label" className="text-xs font-semibold text-gray-600">Name *</label>
+        <input
+          id="new_license_class_label"
+          value={newLicenseClassLabel}
+          onChange={(event) => setNewLicenseClassLabel(event.target.value)}
+          className="rounded-sm border h-9 px-2 text-[13px]"
+          placeholder="e.g. Class AM — Motorcycle"
+        />
+      </div>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="secondary"
+          type="button"
+          onClick={() => setLicenseClassCreateOpen(false)}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          disabled={savingLicenseClass || !newLicenseClassCode.trim() || !newLicenseClassLabel.trim()}
+          onClick={saveNewLicenseClass}
+        >
+          {savingLicenseClass ? "Saving…" : "Save license class"}
+        </Button>
+      </div>
+    </div>
+  );
+
   // CHROME-11: nested call sites (shell="drawer") stack THIS SAME creator as a right ParityDrawer —
   // never a centered Modal on top of an already-open money drawer (e.g. Bill create).
   if (shell === "drawer") {
@@ -1469,6 +1568,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         >
           {driverCreateSummary}
         </ParityDrawer>
+        <ParityDrawer
+          open={licenseClassCreateOpen}
+          onClose={() => setLicenseClassCreateOpen(false)}
+          title="Add license class"
+        >
+          {licenseClassCreateContent}
+        </ParityDrawer>
       </>
     );
   }
@@ -1494,6 +1600,13 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
         title="Driver created successfully"
       >
         {driverCreateSummary}
+      </Modal>
+      <Modal
+        open={licenseClassCreateOpen}
+        onClose={() => setLicenseClassCreateOpen(false)}
+        title="Add license class"
+      >
+        {licenseClassCreateContent}
       </Modal>
     </>
   );
