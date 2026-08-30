@@ -2,6 +2,10 @@ import { withLuciaBypass } from "../../auth/db.js";
 import { resolveAccountForCategory } from "../expense-category-map/resolver.service.js";
 import { resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 import { resolvePostingTemplateId } from "../posting-engine.service.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this fuel-event JE insert never
+// populated journal_entry_type_id -- one of several direct posters contributing to the live
+// 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
 
 // ACCT-LINK-05: fuel_event is a hardcoded source_transaction_type literal outside the shared
 // PostingSourceType union (fuel posting has its own poster, not the generic posting-engine). Stamp the
@@ -362,8 +366,35 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
 
     const label = `Fuel event ${input.fuel_event_id}`;
     const memo = input.memo?.trim() || `${label} (${fuelKind}) posting`;
-    const journalInsert = await client.query<{ id: string }>(
-      `
+    const fuelTypeColPresent = await hasJournalEntryTypeColumn(client);
+    const fuelTypeId = fuelTypeColPresent
+      ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
+      : null;
+    const journalInsert = fuelTypeColPresent
+      ? await client.query<{ id: string }>(
+          `
+        INSERT INTO accounting.journal_entries (
+          operating_company_id,
+          entry_date,
+          memo,
+          status,
+          source,
+          journal_entry_type_id,
+          created_by_user_id,
+          qbo_sync_pending,
+          created_at,
+          updated_at,
+          -- ACCT-F353 stage 2 — fuel.fuel_transactions/fuel_events carry no is_sample_data; explicit
+          -- false, matching ACCT-F212's policy (posting-engine.service.ts) rather than guessing.
+          is_sample_data
+        )
+        VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, now(), now(), false)
+        RETURNING id::text
+      `,
+          [input.operating_company_id, postingDate, memo, fuelTypeId, input.actor_user_id]
+        )
+      : await client.query<{ id: string }>(
+          `
         INSERT INTO accounting.journal_entries (
           operating_company_id,
           entry_date,
@@ -374,15 +405,13 @@ export async function postFuelExpenseFromEvent(input: FuelPostingInput): Promise
           qbo_sync_pending,
           created_at,
           updated_at,
-          -- ACCT-F353 stage 2 — fuel.fuel_transactions/fuel_events carry no is_sample_data; explicit
-          -- false, matching ACCT-F212's policy (posting-engine.service.ts) rather than guessing.
           is_sample_data
         )
         VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, now(), now(), false)
         RETURNING id::text
       `,
-      [input.operating_company_id, postingDate, memo, input.actor_user_id]
-    );
+          [input.operating_company_id, postingDate, memo, input.actor_user_id]
+        );
     const journalEntryId = journalInsert.rows[0]?.id;
     if (!journalEntryId) throw new Error("fuel_journal_entry_create_failed");
 

@@ -9,6 +9,11 @@ import {
   InvoiceLoadSourceRequiredError as SharedInvoiceLoadSourceError,
 } from "./invoice-linkage-guards.js";
 import { resolveReversalDate, todayIso } from "./void.service.js";
+// ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this canonical poster's own
+// createJournalEntryHeader() never populated journal_entry_type_id -- confirmed the dominant
+// contributor to live density staying at 46/2214 (2%) despite journal-entries.service.ts's
+// "never leave NULL" comment, since manual/API-created JEs are a small minority of total volume.
+import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "./journal-entry-type-resolver.js";
 // ACCT-F59 second arm — single source of truth for "this load is delivered"; see
 // loadReachedDeliveryEvidence below for why this is imported rather than re-listed.
 // SYS-F5509 — imported from the small leaf module the predicate lives in, not the full latch module
@@ -718,16 +723,58 @@ export async function readSourceIsSampleData(
   return res.rows[0]?.is_sample_data === true;
 }
 
+// ACCT-LINK-01 regression fix: maps this poster's own source-type vocabulary to the subset of
+// catalogs.journal_entry_types.code that has an exact, unambiguous match. Anything not listed here
+// falls through to resolveJournalEntryTypeId's own memo-heuristic → GENERAL fallback -- the same
+// safe behavior the manual/API path already had, never a guess dressed up as a specific type.
+const POSTING_SOURCE_TYPE_TO_JE_TYPE_CODE: Partial<Record<PostingSourceType, string>> = {
+  invoice: "SALES_INVOICE",
+  bill: "BILL",
+  customer_payment: "PAYMENT_RECEIPT",
+  bill_payment: "BILL_PAYMENT",
+  transfer: "TRANSFER",
+};
+
 async function createJournalEntryHeader(
   client: DbClient,
   operatingCompanyId: string,
   entryDate: string,
   memo: string,
   createdByUserId: string,
-  isSampleData: boolean
+  isSampleData: boolean,
+  sourceType?: PostingSourceType
 ) {
-  const created = await client.query<{ id: string }>(
-    `
+  const typeColPresent = await hasJournalEntryTypeColumn(client);
+  const typeId = typeColPresent
+    ? await resolveJournalEntryTypeId(client, {
+        journal_entry_type_code: sourceType ? POSTING_SOURCE_TYPE_TO_JE_TYPE_CODE[sourceType] : undefined,
+        source: "auto",
+        memo,
+      })
+    : null;
+  const created = typeColPresent
+    ? await client.query<{ id: string }>(
+        `
+      INSERT INTO accounting.journal_entries (
+        operating_company_id,
+        entry_date,
+        memo,
+        status,
+        source,
+        journal_entry_type_id,
+        created_by_user_id,
+        qbo_sync_pending,
+        is_sample_data,
+        created_at,
+        updated_at
+      )
+      VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, $5::uuid, true, $6, now(), now())
+      RETURNING id::text
+    `,
+        [operatingCompanyId, entryDate, memo, typeId, createdByUserId, isSampleData]
+      )
+    : await client.query<{ id: string }>(
+        `
       INSERT INTO accounting.journal_entries (
         operating_company_id,
         entry_date,
@@ -743,8 +790,8 @@ async function createJournalEntryHeader(
       VALUES ($1::uuid, $2::date, $3, 'posted', 'auto', $4::uuid, true, $5, now(), now())
       RETURNING id::text
     `,
-    [operatingCompanyId, entryDate, memo, createdByUserId, isSampleData]
-  );
+        [operatingCompanyId, entryDate, memo, createdByUserId, isSampleData]
+      );
   const journalEntryId = created.rows[0]?.id;
   if (!journalEntryId) throw new Error("posting_journal_entry_create_failed");
   return journalEntryId;
@@ -2423,7 +2470,8 @@ async function executePostingOnClient(client: DbClient, ctx: PostingExecCtx): Pr
     draft.postingDate,
     draft.memo,
     actor.userId,
-    sourceIsSample
+    sourceIsSample,
+    sourceType
   );
 
   const postingIds = await insertPostingLines({
@@ -2689,7 +2737,8 @@ async function executeSourceReversalOnClient(
     reversalDate,
     `Reversal of ${original.journal_entry_id}`,
     actor.userId,
-    reversalSourceIsSample
+    reversalSourceIsSample,
+    sourceType
   );
 
   const reversalPostingIds: string[] = [];
