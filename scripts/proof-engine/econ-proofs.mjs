@@ -40,6 +40,10 @@ export const ECON_PROOFS = {
       discriminator: DISCRIMINATOR,
       expect_rows: 0, probe_query_id: PROBE_QUERY_ID,
       expect: [],
+      // packet 10 (2026-08-30): entity-wide ledger total, not an isolation proof -- bypass is
+      // correct here (and mandatory, or RLS with no company context reads blind and every
+      // column fails on R1-b for the wrong reason). Never used on C30 (see entity_isolation).
+      rls: "bypass",
       note: "INV-4 lists sent/partial/paid TMS invoices with NO invoice-sourced GL posting. Zero rows is the only pass.",
     },
   },
@@ -50,6 +54,7 @@ export const ECON_PROOFS = {
       kind: "sql", name: "C26 subledger ties to control account",
       file: INVARIANTS_FILE, query_id: "INV-3",
       discriminator: DISCRIMINATOR, probe_query_id: PROBE_QUERY_ID,
+      rls: "bypass",
       expect: [
         { column: "ar_difference", op: "==", value: 0 },
         { column: "ap_difference", op: "==", value: 0 },
@@ -65,6 +70,7 @@ export const ECON_PROOFS = {
       discriminator: DISCRIMINATOR,
       expect_rows: 0, probe_query_id: PROBE_QUERY_ID,
       expect: [],
+      rls: "bypass",
       note: "INV-6 returns only accounts with a non-zero balance. Zero rows is the only pass.",
     },
   },
@@ -75,6 +81,7 @@ export const ECON_PROOFS = {
       kind: "sql", name: "C28 reversal symmetry",
       file: INVARIANTS_FILE, query_id: "INV-11",
       discriminator: DISCRIMINATOR, probe_query_id: PROBE_QUERY_ID,
+      rls: "bypass",
       expect: [{ column: "je_voided_in_place_must_be_0", op: "==", value: 0 }],
     },
   },
@@ -85,6 +92,7 @@ export const ECON_PROOFS = {
       kind: "sql", name: "C29 future-dated entries",
       file: INVARIANTS_FILE, query_id: "INV-9",
       discriminator: DISCRIMINATOR, probe_query_id: PROBE_QUERY_ID,
+      rls: "bypass",
       expect: [{ column: "future_dated", op: "==", value: 0 }],
     },
     // C29 has TWO halves. INV-9 is the date horizon. INV-8 is the lock itself, and it cannot
@@ -93,6 +101,7 @@ export const ECON_PROOFS = {
       kind: "sql", name: "C29 at least one period closed with a lock date",
       file: INVARIANTS_FILE, query_id: "INV-8",
       discriminator: DISCRIMINATOR, probe_query_id: PROBE_QUERY_ID,
+      rls: "bypass",
       expect: [{ column: "with_lock_date", op: ">", value: 0 }],
     },
   },
@@ -106,6 +115,13 @@ export const ECON_PROOFS = {
       expect_rows: 0, probe_query_id: PROBE_QUERY_ID,
       expect: [],
       rls_sensitive: true,
+      // packet 10 (2026-08-30) — explicit, not relying on the fail-closed default, because this
+      // is THE line that must never read "bypass": bypassing RLS to prove RLS is the purest
+      // closed loop the whole R5 rule exists to forbid. With no company context set, this
+      // means C30 CANNOT currently pass (INV-0's shared probe reads blind under real RLS) —
+      // that is honest, not a bug. A dedicated C30 probe that proves visibility under enforced
+      // RLS WITH a company context is the next, separate piece of work (not this fix).
+      rls: "enforced",
       note: "Order-dependent role resolution is the defect. Zero duplicate groups is the only pass.",
     },
   },
@@ -116,6 +132,7 @@ export const ECON_PROOFS = {
       kind: "sql", name: "C31 no sample data inside the trial balance",
       file: INVARIANTS_FILE, query_id: "INV-7",
       discriminator: DISCRIMINATOR, probe_query_id: PROBE_QUERY_ID,
+      rls: "bypass",
       expect: [{ column: "sample_jes", op: "==", value: 0 }],
     },
   },
