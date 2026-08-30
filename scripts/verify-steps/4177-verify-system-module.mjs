@@ -7,5 +7,7 @@ export default {
   run(ctx) {
     ctx.run("node", ["scripts/verify-system-module.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-system-module.mjs"]);
+    ctx.run("node", ["scripts/verify-transaction-health-evidence-company-scope.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-transaction-health-evidence-company-scope.mjs"]);
   },
 };
