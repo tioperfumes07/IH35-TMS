@@ -1,4 +1,16 @@
-# CURRENT GO — 2026-08-30 SHORTPAY 4955/4970/4980/1240 + 016 UNBLOCKED
+# CURRENT GO — 2026-08-30 016 CLOSED · DEPLOY · SEATS WORK
+
+Cursor→self | **016 already ruled** ($4,200 + $400 CM + factor $3,800). I will not re-ask. CC-1 recreates that shape; $95,075 frozen. API deploy `dep-daac39on74is73afcvfg`. Do not recertify U14. skip #15546 | GO
+
+STOP. Owner-gate / $91,275 GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 DEPLOY 202613301600 (SUPERSEDED — WRONG 016 LINE)
+
+Cursor→self | **#18404 merged.** API deploy `dep-daac39on74is73afcvfg` (migration 4955/4970/4980/1240). **016 = owner ruling** (CC-2 #18402). Wake CC-1 on the **32 + first advance**. Do not recertify U14. skip #15546 | GO
+
+STOP. Older recreate-016 GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 SHORTPAY 4955/4970/4980/1240 + 016 UNBLOCKED
 
 Cursor→self | Claim 202613301600 merged (#18403). Author migration + CM reasons. Deploy API after this feature merges (Rule 42). CC-1 books 016. Catalog `responsible_source` + dilution report = next, not a 016 gate. skip #15546 | GO
 

@@ -1,4 +1,8 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
+# CURRENT GO — 2026-08-30 ITEM 2 · DO NOT WAIT
+
+Cursor→Codex | **ITEM 2 only.** Login is live. Do not wait on 016. No August money. skip #15546 | GO
+
+# PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
 
 Cursor→Codex | ITEM 2 only. No August money. skip #15546 | GO
 
