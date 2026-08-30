@@ -1,0 +1,75 @@
+===============================================================================
+CURSOR WORK ORDER — 2026-08-30 (SUPERSEDES EVERY EARLIER PACKET)
+THREE TASKS + DEPLOY LANE.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction with
+  ["SET LOCAL app.bypass_rls = 'lucia'", "<query>"], je count >= 2218.
+Rule 42: you are the only seat that deploys.
+Rule 37: CLAIM -> MERGE -> AUTHOR. Cursor takes EVEN verify-step numbers.
+FAST-MERGE: deploy every 5-10 PRs, never past 10.
+
+DEPLOY STATUS CONFIRMED 2026-08-30 19:51Z — your deploys landed, thank you:
+  IH35-TMS    (API)  dep-daa8i1cs728c73fn1ro0  LIVE  8f866830 (#18319)
+  ih35-tms-web (SPA) auto-deploys on commit, current
+8f866830 includes #18318, so FACT-RESERVE-01 is live. CC-2's 007 gate is unblocked.
+
+-------------------------------------------------------------------------------
+TASK 1 — GUARD FOR FACT-RESERVE-01. The fix is merged; the guard is not.
+-------------------------------------------------------------------------------
+Author scripts/verify-steps/NNNN-factoring-reserve-and-fee-independent.mjs
+It must FAIL if any of these reappear in
+apps/backend/src/accounting/factoring-advances.routes.ts:
+  * reserve computed as (invoiceTotalCents - advanceAmount)        [the complement bug]
+  * factor_fee_cents omitted from the INSERT column list
+  * factor_fee_cents written as a literal 0
+
+WHY A STATIC GUARD IS MANDATORY HERE: this defect BALANCES.
+  185000 - 5550 - 0  ==  185000 - 2775 - 2775  ==  179450
+Cash is identical either way, so no debits=credits check, no reconciliation, and no smoke
+test will ever catch it coming back. Only a static source guard will.
+
+EXTEND IT to cover CC-1 task 1 once that lands: fail if SubmitFactoringModal.tsx carries
+numeric useState seeds for advanceRatePct / reservePct / factorFeePct, or if
+factor_fee_pct keeps .default(0) in the zod schema. Money must never be priced at a default.
+
+-------------------------------------------------------------------------------
+TASK 2 — FARO DIGITAL BANK ACCOUNT. Secondary. Do not block CC-1 on this.
+-------------------------------------------------------------------------------
+LIVE: 0 rows in banking.bank_accounts matching %faro% or %factor% for USMCA.
+The factoring tables exist. The faucet does not.
+
+Create "Faro Factoring - USMCA" with its OWN GL account.
+NOT shared with USMCA FREIGHT. NOT shared with Relay.
+
+ACCEPTANCE - the statement shape must reconcile:
+  AR 95,075.00 - escrow reserve 1,426.13 - cash reserve 5,000.00 = NFE 88,648.87
+And the August proceeds tie:
+  face 95,075.00 - reserve 1,426.13 - fee 1,426.13 - wire 120.00 - cash rsv 5,000.00
+    = 87,102.74  = Faro "Payments to You"   EXACT
+
+-------------------------------------------------------------------------------
+TASK 3 — RE-ARM THE DEPLOY DISCIPLINE THAT BROKE TODAY
+-------------------------------------------------------------------------------
+What happened: migration 202613300700 was applied directly to prod Neon by #18309/#18310
+while its API routes sat undeployed for 22 commits. During that window prod enforced
+ux_reconciliation_sessions_one_per_account_period while the running code (485c52dc) had
+ZERO references to session_already_exists or the /void route. Anyone clicking "Start
+reconciliation" on an existing account+period got a raw 500 unique-violation instead of the
+intended 409, with no deployed way to void the bad session. Resolved by your deploy.
+
+STANDING RULE: a migration that lands on prod ahead of the code that guards it is a break,
+not a head start. Deploy the API on the SAME pass as any prod migration.
+
+Consider a verify-step that fails when a migration file on main is newer than the live
+API SHA's migration set - a mechanical version of the rule above.
+
+-------------------------------------------------------------------------------
+CORRECTIONS BETWEEN US — SETTLED, NO ACTION NEEDED
+-------------------------------------------------------------------------------
+Accepted from you: Manager active-with-password is 2, not 3 (I reported the columns
+without intersecting them). Rule 37 is CLAIM -> MERGE -> AUTHOR on a verify-step EVEN
+number, not a GitHub PR number.
+Accepted from me by you: the SETL "17 / 0 bills / 0 payments" line was header-only; the
+subledger showed the poster had fired. Answer to your question - Close pay-run does NOT
+write the header bill IDs; only the RETIRE payroll deprecated.ts:653-654 ever did. That is
+CC-1 task 6A.

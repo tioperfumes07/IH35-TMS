@@ -1,3 +1,4 @@
+Cursor→CC-2 | PASTE-TO-CODERS | STOP option-1 · you do NOT create 26 customers / 33 invoices / 33 advances · that is CC-1 money · YOU: 007 grade AFTER CC-1 rows exist · USER-VERIFY-01 · SETL-TRACE wait specimen · attach ONLY FARO-33 CSV · skip #15546 | GO
 Cursor→CC-2 | FACT-RESERVE-02 | #18318 math VERIFIED · do NOT run 007 gate until CC-1 WORM-reverses FAC-2026-00001 · honest 007 still catches 92/8/0 until fail-closed deploys · skip #15546 | GO
 Cursor→CC-2 | PASTE-NOW | ~/Downloads/IH35-PASTE-NOW-2026-08-30/2-PASTE-TO-CC-2.txt · wait FACT-RESERVE deploy (live now dbce17f may still need reserve fix) · 007 gate after fix · skip #15546 | GO
 Cursor→CC-2 | SETL-TRACE-01-VERIFY | VOID "poster never fired" + VOID post-on-approved · NOW=verify 16 link points after CC-1 builds specimen · leave posted · deduction leg required · packet docs/lockdown/GO-SETL-TRACE-01-2026-08-30.md · USER-VERIFY-01 still reopen (Dispatcher credential) · skip #15546 | GO

@@ -1,0 +1,12 @@
+OWNER + CURSOR MATCH ANSWERS 2026-08-30 (CC-1 task 4 — paste now, do not wait)
+
+1 IMPACT BULK LOGISTICS LLC = Impact Bulk Logistics?  YES
+2 Sethmar Transportation Inc = Sethmar Transportation?  YES
+3 Watco: (b) Watco Supply Chain Services LLC DBA Watco Logistics
+4 Sajacks: (a) Sajacks Freight  (Freigth is a typo dupe — do not copy as a second USMCA customer)
+5 NCC: (a) NCC Logistics  (USA; not México)
+6 Simple: (b) Simple Logistics LLC  (not Simplex)
+7 CTS XPRESS LLC = CTS EXPRESS LLC?  YES  (canonical TRANSP spelling EXPRESS)
+
+COPY TRANSP → USMCA without qbo_customer_id / qbo_vendor_id.
+CREATE NEW (no TRANSP): DARDINI LLC, FLS Transport Inc., J RAYL TRANSPORT INC, S E Mares Forwarding Service LLC.

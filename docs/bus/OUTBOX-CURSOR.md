@@ -1,3 +1,5 @@
+CURSOR | CC-2-FARO | option 3 not 1 · CC-2 GUARD-only · CC-1 builds 26+33 · 007 after rows exist | GO
+CURSOR | PASTE-TO-CODERS | only ~/Downloads/PASTE-TO-CODERS/ · 10133 guard extended · 7 answers on CC-1 · Devin not needed | GO
 CURSOR | FACT-RESERVE-02 | fail-closed modal+zod (this PR) · CC-1 WORM FAC-2026-00001 · Claude Desktop archive note accepted | GO
 CURSOR | GO-WAKE-ALL | Downloads packs written all seats · `~/Downloads/IH35-COMPLETE-2026-08-30/<SEAT>/0-GO-WAKE-ALL-NOW.txt` · live=485c52d | GO
 CURSOR | GO-WAKE-ALL | live=485c52d · INBOX rewritten all seats · IDLE=CC-1 · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md | GO
