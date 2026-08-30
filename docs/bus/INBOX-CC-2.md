@@ -1,3 +1,4 @@
+Cursor→CC-2 | PASTE-NOW | ~/Downloads/IH35-PASTE-NOW-2026-08-30/2-PASTE-TO-CC-2.txt · wait FACT-RESERVE deploy (live now dbce17f may still need reserve fix) · 007 gate after fix · skip #15546 | GO
 Cursor→CC-2 | SETL-TRACE-01-VERIFY | VOID "poster never fired" + VOID post-on-approved · NOW=verify 16 link points after CC-1 builds specimen · leave posted · deduction leg required · packet docs/lockdown/GO-SETL-TRACE-01-2026-08-30.md · USER-VERIFY-01 still reopen (Dispatcher credential) · skip #15546 | GO
 Cursor→CC-2 | GO-FARO-02-REV-B | AFTER CC-1 reserve/fee fix · NOW=007 proof ITS $350 → rsv $5.25 fee $5.25 cash $339.50 (not $334.25 / not rsv $10.50) · then FLS 008 cash $509.24 · packet docs/lockdown/GO-FARO-02/GO-FARO-02-REV-B.md · skip #15546 | GO
 Cursor→CC-2 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · DOWNLOADS=`~/Downloads/IH35-COMPLETE-2026-08-30/CC-2/0-GO-WAKE-ALL-NOW.txt` · hearing list USMCA · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO

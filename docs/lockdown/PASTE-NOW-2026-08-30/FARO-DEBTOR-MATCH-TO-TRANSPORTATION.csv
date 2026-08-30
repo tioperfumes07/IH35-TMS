@@ -1,0 +1,27 @@
+faro_debtor,transportation_match,action,owner_decision_needed
+BV LOGISTICS INC,BV Logistics Inc,COPY_FROM_TRANSP,no
+CORE LOGISTICS BROKERAGE,CORE LOGISTICS BROKERAGE,COPY_FROM_TRANSP,no
+"DEL-CAN LOGISTICS, LLC.",Del-Can Logistics LLC,COPY_FROM_TRANSP,no
+HUMMINGBIRD LOGISTIX LLC,"Hummingbird Logistix, LLC.",COPY_FROM_TRANSP,no
+Hawkeye Transportation Services,Hawkeye Transportation Services,COPY_FROM_TRANSP,no
+"ITS LOGISTICS, LLC",ITS Logistics LLC,COPY_FROM_TRANSP,no
+Jericho Freight LLC,Jericho freight LLC,COPY_FROM_TRANSP,no
+John J Jerue Truck Broker Inc.,"John J. Jerue Truck Broker, Inc",COPY_FROM_TRANSP,no
+MPH CARRIER SERVICES INC,"MPH CARRIER SERVICES, INC",COPY_FROM_TRANSP,no
+Magna Transport Solutions LLC,Magna Transport Solutions LLC,COPY_FROM_TRANSP,no
+OSTT LOGISTICS LLC,OSTT LOGISTICS LLC,COPY_FROM_TRANSP,no
+PFL LOGISTICS LLC,PFL Logistics LLC,COPY_FROM_TRANSP,no
+Prodigee Logistics LLC,PRODIGEE LOGISTICS LLC,COPY_FROM_TRANSP,no
+R2X LLC,R2X LLC,COPY_FROM_TRANSP,no
+REHMANN TRANSPORTATION CORP.,Rehmann Transportation Corp.,COPY_FROM_TRANSP,no
+IMPACT BULK LOGISTICS LLC,Impact Bulk Logistics,PROBABLE_SAME_CONFIRM,YES
+Sethmar Transportation Inc,Sethmar Transportation,PROBABLE_SAME_CONFIRM,YES
+"Watco Supply Chain Services, LLC",Watco Supply Chain Services  ||  Watco Supply Chain Services LLC DBA Watco Logistics,AMBIGUOUS_TWO_CANDIDATES,YES
+SAJACKS FREIGHT INC,Sajacks Freight  ||  Sajacks Freigth (typo dupe in TRANSP),AMBIGUOUS_TWO_CANDIDATES,YES
+NCC LOGISTICS USA INC,NCC Logistics  ||  NCC Logistics Mexico,AMBIGUOUS_TWO_CANDIDATES,YES
+Simple Logistics Solutions,Simple Logistics  ||  Simple Logistics LLC  ||  Simplex logistics,AMBIGUOUS_THREE_CANDIDATES,YES
+CTS XPRESS LLC,CTS EXPRESS LLC (X vs E - same company or different?),AMBIGUOUS_SPELLING,YES
+DARDINI LLC,none (DLS Dardini Logistics Services is a DIFFERENT entity),CREATE_NEW,no
+FLS Transport Inc.,none (FLS TRANSPORTATION SERVICES LIMITED is a different legal entity),CREATE_NEW,no
+J RAYL TRANSPORT INC,none,CREATE_NEW,no
+S E Mares Forwarding Service LLC,none (do NOT merge with USMCA test row 'Semares Forwarding Services'),CREATE_NEW,no
