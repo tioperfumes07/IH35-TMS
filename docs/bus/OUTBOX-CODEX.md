@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7452 | ROOT=guard-inspected-SafetyLayout-after-route-logic-moved-to-canonical-helper | focused=normal+selftest-3/3+Vitest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7451 | PR=#18088 @ 73d3090b77 | driver-registry=35/35 exact CI membership · global-census-decoupled · selftest PASS | NEXT=GO-LAST-26 SAF orphan source audit | GO
 CODEX | SHIPPED | GUARD-F7450 | PR=#18086 @ 5bb585fceb | queue=whole-product-no-traceback+selftest-mutation-PASS | NEXT=SAF-B16 evidence routed CC-2 on live 48e08e5 | GO
 CODEX | WORKING | GUARD-F7450 | ROOT=whole-product-queue-treated-support-JSON-as-module-manifests-and-crashed-mid-sweep | focused=syntax+whole-product+selftest-mutation-PASS | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7443 | ROOT=qualifying-HOLD-accepted-missing-tracker-path | ORPHAN-SOURCES=01-no-live-forfeit-delta-flag-OFF;02-no-live-dual-subledger-forfeit-flag-OFF;05-no-full-tab-wizard-depth-packet | HOLD=unchanged | focused=selftest-PASS | NEXT=gate+FAST-MERGE | GO
