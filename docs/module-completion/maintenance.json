@@ -25,7 +25,30 @@
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
-      "live_verified_sha": "da39aab"
+      "live_verified_sha": "da39aab",
+      "proven_at_sha": "d41124e",
+      "proofs": [
+        {
+          "kind": "http",
+          "url": "https://app.ih35dispatch.com/maintenance",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "http",
+          "url": "https://api.ih35dispatch.com/api/v1/maintenance/dashboard/kpis?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
+          "expect": { "mount": true }
+        },
+        {
+          "kind": "guard",
+          "script": "scripts/verify-maintenance-tab-coverage.mjs",
+          "expect": { "exit": 0 }
+        },
+        {
+          "kind": "guard",
+          "script": "scripts/verify-maintenance-home-read-recovery.mjs",
+          "expect": { "exit": 0 }
+        }
+      ]
     },
     {
       "id": "MAINT-S02",
