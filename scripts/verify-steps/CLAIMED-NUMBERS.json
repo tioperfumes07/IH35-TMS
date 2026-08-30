@@ -4872,6 +4872,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-je-type-id-wired-into-all-posters (ACCT-LINK-01 regression fix, GO-1405)"
   },
+  "10093": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-wonum-d1-refuse-missing-unit-number (GO-1405 WONUM D1)"
+  },
   "10089": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
