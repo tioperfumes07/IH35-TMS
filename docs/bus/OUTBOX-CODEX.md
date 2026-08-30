@@ -2622,3 +2622,5 @@ CODEX | WORKING | MAINT-F7529 | GO-CLOSE-188=maint-11 | LIVE_PRE=b8fc09c PM Due=
 CODEX | SHIPPED | MAINT-F7528 | PR=#18210 @ 97d1f0a4f7 | focused=guard+selftest30/30+root-tsc+full-gate | Live=UNVERIFIED | NEXT=maintenance-PM-truth | GO
 CODEX | WORKING | FLEET-F7530 | GO-CLOSE-188=fleet-13 | LIVE_PRE=b8fc09c Avg Age=6.3y but aria/title=Not available yet and card disabled | ROOT=real-age-metric-had-no-record-drill | focused=guard+selftest31/31+frontend-tsc | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | MAINT-F7529 | PR=#18215 @ e0c40e12c7 | focused=guard+selftest12/12+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=fleet-KPI-drill | GO
+CODEX | WORKING | MAINT-F7531 | GO-CLOSE-188=maint-11 | LIVE_PRE=b8fc09c Service Location rendered raw in_house/external_shop | ROOT=persisted-filter-key-used-as-operator-label | focused=copy-guard+selftest+frontend-tsc | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | FLEET-F7530 | PR=#18220 @ 96bd5c1853 | focused=guard+selftest31/31+frontend-tsc+full-gate | Live=UNVERIFIED | NEXT=maintenance-location-truth | GO

@@ -5,6 +5,7 @@ import { apiRequest } from "../../api/client";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
 
 type Props = {
   operatingCompanyId: string;
@@ -21,6 +22,19 @@ const BUCKET_LABEL: Record<string, string> = {
   external: "External",
   roadside: "Roadside",
 };
+
+const SERVICE_LOCATION_LABEL: Record<string, string> = {
+  in_house: "In-house shop",
+  external_shop: "External shop",
+  external_tires: "External tire shop",
+  roadside: "Roadside",
+};
+
+function serviceLocationLabel(value: string) {
+  const normalized = value.trim();
+  if (!normalized || normalized === "unspecified") return "Unspecified";
+  return SERVICE_LOCATION_LABEL[normalized] ?? humanizeEnumLabel(normalized);
+}
 
 export function ServiceLocationPage({ operatingCompanyId }: Props) {
   const kpisQuery = useQuery({
@@ -60,7 +74,7 @@ export function ServiceLocationPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) => (
         <Link to={drillTo(row)} className="text-slate-700 hover:underline">
-          {row.service_location || "unspecified"}
+          {serviceLocationLabel(row.service_location)}
         </Link>
       ),
     },
