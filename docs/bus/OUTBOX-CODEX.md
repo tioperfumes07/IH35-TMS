@@ -2431,3 +2431,5 @@ CODEX | WORKING | DSP-F7402 | /dispatch/book-load canonical route first-paint cr
 CODEX | SHIPPED | GUARD-F7401 | PR=#17975 @ 5fceb88828 | gate=exit0 | NEXT=DSP-F7402 | GO
 CODEX | WORKING | GUARD-F7403 | temp-cover paginated driver-filter guard drift | NEXT=focused proof+FAST-MERGE | GO
 CODEX | SHIPPED | DSP-F7402 | PR=#17976 @ 626602bb3c | gate=exit0 | NEXT=GUARD-F7403 | GO
+CODEX | WORKING | GUARD-F7404 | human-label guard accepts canonical tombstone resolver | NEXT=focused proof+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7403 | PR=#17978 @ 6bfdd74b19 | gate=exit0 | NEXT=GUARD-F7404 | GO

@@ -22,7 +22,7 @@ function assertAll(srcs) {
   const problems = [];
   for (const [file, src] of Object.entries(srcs)) {
     if (/\.slice\(0,\s*8\)/.test(src)) problems.push(`${file}: still UUID-slices`);
-    if (!/entityLabel\(/.test(src)) problems.push(`${file}: missing entityLabel`);
+    if (!/entityLabel\(|<EntityLinkOrTombstone\b/.test(src)) problems.push(`${file}: missing canonical human-label resolver`);
   }
   return problems;
 }
@@ -38,6 +38,11 @@ if (SELFTEST) {
   );
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect not caught`);
+    process.exit(1);
+  }
+  const assignmentPlanted = { ...srcs, [FILES[2]]: "const label = assignment.unit_id;" };
+  if (!assertAll(assignmentPlanted).length) {
+    console.error(`${LABEL} SELFTEST FAILED: planted assignment resolver removal not caught`);
     process.exit(1);
   }
   const live = assertAll(srcs);
