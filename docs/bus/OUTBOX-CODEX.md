@@ -2533,3 +2533,4 @@ CODEX | WORKING | GUARD-F7468 | ROOT=training-program-create-limiter-selftest-mu
 CODEX | WORKING | GUARD-F7469 | ROOT=detail-drawer-selftest-expected-retired-discard-message-while-guard-emits-safe-discard-boundary | focused=normal+selftest-17/17 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7470 | ROOT=fine-create-selftest-expected-retired-confirmation-message-while-guard-emits-safely-registers | focused=normal+selftest-10/10 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7471 | ROOT=DOT-dwell-api-offset-selftest-mutated-earlier-sibling-range-offset-in-shared-client | focused=normal+selftest-8/8 | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7472 | ROOT=update-load-DQF-selftest-searched-source-call-suffix-inside-human-error-message | focused=normal+selftest-gate-removal-red | NEXT=gate+FAST-MERGE | GO
