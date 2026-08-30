@@ -1,75 +1,209 @@
 ===============================================================================
-CURSOR WORK ORDER — 2026-08-30 (SUPERSEDES EVERY EARLIER PACKET)
-THREE TASKS + DEPLOY LANE.
+CURSOR — WORK ORDER 2026-08-30 FINAL. SUPERSEDES EVERY EARLIER PACKET.
+YOU OWN THE PERMANENT BAR CHANGE. THIS IS THE MOST IMPORTANT WORK IN THE QUEUE.
 ===============================================================================
-DISCRIMINATOR: run_sql_transaction with
-  ["SET LOCAL app.bypass_rls = 'lucia'", "<query>"], je count >= 2218.
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
 Rule 42: you are the only seat that deploys.
 Rule 37: CLAIM -> MERGE -> AUTHOR. Cursor takes EVEN verify-step numbers.
-FAST-MERGE: deploy every 5-10 PRs, never past 10.
-
-DEPLOY STATUS CONFIRMED 2026-08-30 19:51Z — your deploys landed, thank you:
-  IH35-TMS    (API)  dep-daa8i1cs728c73fn1ro0  LIVE  8f866830 (#18319)
-  ih35-tms-web (SPA) auto-deploys on commit, current
-8f866830 includes #18318, so FACT-RESERVE-01 is live. CC-2's 007 gate is unblocked.
+FAST-MERGE: deploy every 5-10 PRs, never past 10. Deploy the API on the SAME pass as any
+prod migration - that rule exists because 202613300700 broke reconciliation for 22 commits.
 
 -------------------------------------------------------------------------------
-TASK 1 — GUARD FOR FACT-RESERVE-01. The fix is merged; the guard is not.
+WHY THIS ORDER EXISTS — READ IT, IT CHANGES WHAT "DONE" MEANS
 -------------------------------------------------------------------------------
-Author scripts/verify-steps/NNNN-factoring-reserve-and-fee-independent.mjs
-It must FAIL if any of these reappear in
-apps/backend/src/accounting/factoring-advances.routes.ts:
-  * reserve computed as (invoiceTotalCents - advanceAmount)        [the complement bug]
-  * factor_fee_cents omitted from the INSERT column list
-  * factor_fee_cents written as a literal 0
+node scripts/verify-module-completion.mjs reports:
+    factoring PROGRESS 10 of 10 complete=true    <- every item prod_verified
+While simultaneously, live and verified:
+  * accounting.factoring_advances FAC-2026-00001 carried reserve at 3.00% when reserve_pct
+    said 1.50%, and factor_fee_cents = 0 against factor_fee_pct = 1.50
+  * factoring.customer_factor_assignment = 0 rows, so no factor resolves for any customer
+  * SubmitFactoringModal still falls back to reserve 8% / fee 0%
+  * no Faro bank account exists in banking.bank_accounts
 
-WHY A STATIC GUARD IS MANDATORY HERE: this defect BALANCES.
-  185000 - 5550 - 0  ==  185000 - 2775 - 2775  ==  179450
-Cash is identical either way, so no debits=credits check, no reconciliation, and no smoke
-test will ever catch it coming back. Only a static source guard will.
+Read factoring.json's ten items. Every one tests WIRING, READS, or DISPLAY:
+  KPI row matches / panel reads columns / modal reads rates / routes resolve canonical /
+  queue wired / wizard drill-through / dashboard "economics honest" / banner excludes
+  self-pairs / cents-100 display / VERIFY-1..8 click-through
+NOT ONE asserts that a computed number equals a correct number.
 
-EXTEND IT to cover CC-1 task 1 once that lands: fail if SubmitFactoringModal.tsx carries
-numeric useState seeds for advanceRatePct / reservePct / factorFeePct, or if
-factor_fee_pct keeps .default(0) in the zod schema. Money must never be priced at a default.
+FACT-S04 is the proof: "reserve dashboard economics honest" PASS + prod_verified, while the
+reserve it displayed was double and the fee was zero. The dashboard faithfully displayed a
+wrong number and that passed as honest economics.
 
--------------------------------------------------------------------------------
-TASK 2 — FARO DIGITAL BANK ACCOUNT. Secondary. Do not block CC-1 on this.
--------------------------------------------------------------------------------
-LIVE: 0 rows in banking.bank_accounts matching %faro% or %factor% for USMCA.
-The factoring tables exist. The faucet does not.
+Same class everywhere:
+  ACCT-ECON-01..05  measure "density > 0". Density, not correctness.
+  BANK-ECON-05      "all live bank accounts bound to Cash GL" passes BECAUSE the Faro
+                    account does not exist. A binding check cannot catch a missing account.
+  SETL-ECON-01      "settlements density > 0" - never asks if a settlement produced a
+                    correct bill.
+  SETL-LINK-01      "deduction rails honor catalog metadata" PASS while the deduction leg
+                    has NEVER fired (deduction_journal_entry_id NULL system-wide).
 
-Create "Faro Factoring - USMCA" with its OWN GL account.
-NOT shared with USMCA FREIGHT. NOT shared with Relay.
+ROOT CAUSE: the completion bar has no item class that compares a number the system computed
+to a number on a document received from outside the system. Wiring is necessary. It is not
+sufficient. Treating it as sufficient is what produced a 10-of-10 module with a live
+balanced-but-wrong GL defect.
 
-ACCEPTANCE - the statement shape must reconcile:
-  AR 95,075.00 - escrow reserve 1,426.13 - cash reserve 5,000.00 = NFE 88,648.87
-And the August proceeds tie:
-  face 95,075.00 - reserve 1,426.13 - fee 1,426.13 - wire 120.00 - cash rsv 5,000.00
-    = 87,102.74  = Faro "Payments to You"   EXACT
-
--------------------------------------------------------------------------------
-TASK 3 — RE-ARM THE DEPLOY DISCIPLINE THAT BROKE TODAY
--------------------------------------------------------------------------------
-What happened: migration 202613300700 was applied directly to prod Neon by #18309/#18310
-while its API routes sat undeployed for 22 commits. During that window prod enforced
-ux_reconciliation_sessions_one_per_account_period while the running code (485c52dc) had
-ZERO references to session_already_exists or the /void route. Anyone clicking "Start
-reconciliation" on an existing account+period got a raw 500 unique-violation instead of the
-intended 409, with no deployed way to void the bad session. Resolved by your deploy.
-
-STANDING RULE: a migration that lands on prod ahead of the code that guards it is a break,
-not a head start. Deploy the API on the SAME pass as any prod migration.
-
-Consider a verify-step that fails when a migration file on main is newer than the live
-API SHA's migration set - a mechanical version of the rule above.
+OWNER RULING 2026-08-30: add that class. A module is NOT done until it ties out.
 
 -------------------------------------------------------------------------------
-CORRECTIONS BETWEEN US — SETTLED, NO ACTION NEEDED
+TASK 1 — TIEOUT ITEM CLASS. STRUCTURAL. THIS IS THE PERMANENT FIX.
 -------------------------------------------------------------------------------
-Accepted from you: Manager active-with-password is 2, not 3 (I reported the columns
-without intersecting them). Rule 37 is CLAIM -> MERGE -> AUTHOR on a verify-step EVEN
-number, not a GitHub PR number.
-Accepted from me by you: the SETL "17 / 0 bills / 0 payments" line was header-only; the
-subledger showed the poster had fired. Answer to your question - Close pay-run does NOT
-write the header bill IDs; only the RETIRE payroll deprecated.ts:653-654 ever did. That is
-CC-1 task 6A.
+A one-time audit is not permanent. A re-executing gate is. Build the gate.
+
+1A. SCHEMA — docs/module-completion/SCHEMA.md gains a new required item class "TIEOUT".
+    A TIEOUT item MUST carry:
+      external_source   human-readable name of the OUTSIDE document it reconciles to
+                        (e.g. "Faro Capital statement, period 2026-08-10..2026-08-28")
+      expected          the exact values from that document, in cents, hardcoded
+      auto_check        an executable that computes the same values FROM THE SYSTEM and
+                        compares. Not a description. An executable.
+      tolerance_cents   0 by default. A non-zero tolerance requires an owner-approved note
+                        naming why. Never a silent tolerance.
+
+1B. GATE — scripts/verify-module-completion.mjs must FAIL complete=true for any module that
+    does not have at least one TIEOUT item at PASS with prod_verified true.
+    This is the whole point. Wiring items stay; they can no longer carry a module alone.
+
+1C. RE-EXECUTION — wire every TIEOUT auto_check into the proof engine
+    (scripts/proof-engine/, sql-runner.mjs) so it RE-RUNS on the existing post-deploy replay
+    (prod-postdeploy-verify.yml). A tie-out that ran once is an audit. A tie-out that runs
+    every deploy is a control. Build the control.
+    R1 discriminator, R2 empty-is-never-PASS, R6 observed-value-always-recorded already
+    exist in sql-runner - reuse them, do not reinvent.
+
+1D. GUARD — claim an EVEN verify-step and author
+    NNNN-module-completion-requires-tieout.mjs
+    It must FAIL if: SCHEMA.md loses the TIEOUT class, verify-module-completion.mjs stops
+    enforcing 1B, any module json sets complete=true with no passing TIEOUT, or any TIEOUT
+    carries a non-zero tolerance_cents without the owner note.
+    --selftest must plant each of those four mutations and catch each independently.
+
+1E. WORM APPLIES TO THE SCOREBOARD. OWNER RULING — REVERSE, NEVER ERASE.
+    DO NOT flip existing PASS / prod_verified stamps to false. DO NOT delete or rewrite any
+    existing item. Every stamp already earned is a TRUE statement about what was tested, on
+    the SHA it was tested against, and it stays exactly as written. That is history and
+    history is not editable.
+
+    Instead, VERSION THE BAR:
+      * every existing item gains  bar_version: 1  (wiring/density/surface class)
+      * every new TIEOUT item is   bar_version: 2  (external tie-out class)
+      * the module's `complete` is RECOMPUTED under bar 2 and will read false until its
+        TIEOUT passes. That is a supersede, not a retraction.
+      * SCHEMA.md must state plainly: a bar-1 PASS was never wrong, it was never sufficient.
+
+    The board must be able to show both: what was verified under bar 1 (with its SHA and
+    date), and whether the module ties out under bar 2. A reader who sees complete=false
+    must be able to see the bar-1 history that is still valid underneath it.
+
+    Do NOT soften the bar-2 gate to keep the board green. And do NOT erase bar-1 work to
+    make the change look cleaner. Both are dishonest in opposite directions.
+
+-------------------------------------------------------------------------------
+TASK 2 — THE SIX TIEOUT ITEMS. Author the items; the seats below prove them.
+-------------------------------------------------------------------------------
+FACTORING — external_source: Faro Capital statement 2026-08-10..2026-08-28
+  expected (cents):  face 9507500  reserve 142613  fee 142613  wire 12000  cash 9210274
+                     AR 9507500  escrow 142613  cash_reserve 500000  NFE 8864887
+  identity that must fall out of the GL, not be typed:
+     2150 Factoring Advance 95,075.00 - 1230 Factoring Reserves 6,426.13 = 88,648.87 = NFE
+  source data: data/FARO-33-INVOICES-TO-CREATE.csv (33 rows, verified 0 mismatches)
+
+BANKING — external_source: bank statements per account, closing balances
+  expected:每 live bank_account closing balance == its ledger_account_id GL balance,
+  tolerance 0. Includes the Faro digital account from task 3.
+
+SETTLEMENTS — external_source: the owner's real settlement PDF
+  (Downloads/Driver_Settlement_5753.pdf + Company_Settlement_5753.pdf; the repo already
+  carries docs SETTLEMENT-ACCEPTANCE-REFERENCE-from-real-5753-2026-08-04.md)
+  expected: gross, each deduction, reimbursements, net - each to the cent from that PDF.
+
+ACCOUNTING — external_source: trial balance
+  expected: debits == credits AND the TB ties to the QBO comparative. Read-only vs QBO.
+  NO TMS->QBO write-back, ever.
+
+VENDORS — external_source: AP aging
+  expected: sum of open bills == AP control account balance, tolerance 0.
+
+DISPATCH — external_source: delivered-load revenue
+  expected: every delivered load maps to invoiced revenue; zero orphans both directions.
+
+-------------------------------------------------------------------------------
+TASK 3 — FARO DIGITAL ACCOUNT, FULLY LINKED. Owner escalated. Do this alongside task 1.
+-------------------------------------------------------------------------------
+WHY URGENT: accounting.chart_of_accounts_roles binds cash_clearing to 1090 Undeposited
+Funds for USMCA. Every factoring advance lands in Undeposited Funds with nothing to clear
+against - the exact DEFECT-A pattern (ACCT-F10128) already fixed once today for customer
+payments. Faro proceeds recreate it until this account exists.
+
+Your GL is otherwise READY. Already bound for USMCA:
+  ar_assigned_to_factor        1210 A/R - Assigned to Faro
+  factoring_advance_liability  2150 Factoring Advance
+  factor_reserve_held/default  1230 Factoring Reserves
+  factor_fee_expense           6400 Factoring Fees
+  factor_wire_fee              6300 Bank Service Charges & Wire Fees
+  factoring_recoursed_ar       1220 Factoring Recoursed Invoices
+
+CREATE in banking.bank_accounts, operating_company_id 5c854333-6ea5-4faa-af31-67cb272fef80:
+  account_name       "Faro Factoring - USMCA"
+  account_type       depository
+  account_class      depository
+  plaid_item_id      NULL  - not a bank. Follow the existing "Relay Fuel Wallet" precedent,
+                     already modeled exactly this way: depository, no Plaid, GL-linked.
+  is_active          true
+  is_dip             DO NOT GUESS. USMCA is not a debtor. Leave false unless the owner says.
+  currency_code      USD
+  ledger_account_id  its OWN new GL account. NOT 1090. NOT shared with USMCA FREIGHT.
+                     NOT shared with Relay Fuel Wallet.
+
+LINKAGE - all five, this is what "completely linked" means:
+  1. factoring.factor 40b3690b-f1d4-44b4-90cf-c1cfd4f79c33 -> this account. Advance
+     proceeds land HERE, not in Undeposited Funds.
+  2. accounting.factoring_advances proceeds post to this account's GL.
+  3. accounting.factoring_reserve_movements (factoring_advance_id, movement_type,
+     amount_cents, journal_entry_id) -> reserve HELD/RELEASED visible on this account.
+  4. Wires Faro -> BoA "USMCA FREIGHT" are a BANK-TO-BANK TRANSFER between two accounts in
+     Banking. Not a deposit from nowhere.
+  5. Bill payments drawn on reserves must be payable FROM this account, reducing 1230.
+     The owner is booking one ($8,890 equipment lease, out of reserves). Build the
+     capability. Do NOT post his transaction.
+
+ACCEPTANCE: the factoring TIEOUT in task 2 passes with this account in place.
+
+-------------------------------------------------------------------------------
+TASK 4 — DEFECT GUARDS. Permanence for the specific bugs found today.
+-------------------------------------------------------------------------------
+Claim EVEN numbers, merge the claim, then author. One guard per defect:
+
+4A. NNNN-factoring-reserve-and-fee-independent.mjs
+    FAIL if apps/backend/src/accounting/factoring-advances.routes.ts computes reserve as
+    (invoiceTotalCents - advanceAmount), or omits factor_fee_cents from the INSERT, or
+    writes it as a literal 0.
+    MANDATORY because this defect BALANCES: 185000-5550-0 == 185000-2775-2775 == 179450.
+    Identical cash. No debits=credits check, no reconciliation, no smoke test will ever
+    catch it returning. Only a static source guard will.
+
+4B. NNNN-money-never-priced-at-a-default.mjs
+    FAIL if SubmitFactoringModal.tsx carries numeric useState seeds for advanceRatePct /
+    reservePct / factorFeePct, or if factor_fee_pct keeps .default(0) in the zod schema, or
+    if any factoring/settlement pricing path has a `?? <number>` fallback rate.
+    Money is never priced at a default. If no factor resolves, FAIL CLOSED.
+
+4C. NNNN-settlement-header-writeback.mjs
+    FAIL if the live poster (accounting/settlement-posting/
+    settlement-bill-payment-posting.service.ts) can post without writing
+    driver_finance.driver_settlements.accounting_bill_id and .accounting_bill_payment_id.
+    ALSO FAIL if payroll/driver-settlement.service.deprecated.ts is reintroduced as a
+    writer of those columns - payroll.* is RETIRE under the linkage law.
+    This defect made THREE seats (CC-2, Claude, Cursor) declare a working poster dead.
+
+4D. NNNN-unit-disposition-not-overloaded.mjs
+    FAIL if a repossession or lessor-return is recorded using Sold / Transferred / Damaged.
+    See CC-1 task 8 - unit_status has no value for either event today.
+
+-------------------------------------------------------------------------------
+TASK 5 — DEPLOY LANE (standing)
+-------------------------------------------------------------------------------
+Confirmed live 2026-08-30 19:51Z: API dep-daa8i1cs728c73fn1ro0 LIVE 8f866830 (#18319),
+which includes #18318, so FACT-RESERVE-01 is deployed and CC-2's 007 gate is unblocked.
+Keep the API within 10 commits of main. Deploy on the same pass as any prod migration.
