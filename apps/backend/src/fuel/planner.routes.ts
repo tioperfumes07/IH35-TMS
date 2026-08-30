@@ -102,16 +102,20 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const payload = await withCompanyScope(authUser.uuid, companyId, async (client) => {
-      const plannerSourceAvailable = await hasRelation(client, "fuel.route_recommendations");
-      const complianceSourceAvailable = await hasRelation(client, "fuel.relay_matches");
-      const activeRes = await client.query<{ count: number }>(
+      const plannerSourceAvailable =
+        (await hasRelation(client, "fuel.route_recommendations")) &&
+        (await hasRelation(client, "views.fuel_planner_active_routes"));
+      const complianceSourceAvailable =
+        (await hasRelation(client, "fuel.relay_matches")) &&
+        (await hasRelation(client, "views.fuel_compliance_summary"));
+      const activeRes = plannerSourceAvailable ? await client.query<{ count: number }>(
         `
           SELECT count(*)::int AS count
           FROM views.fuel_planner_active_routes
           WHERE operating_company_id = $1::uuid
         `,
         [companyId]
-      );
+      ) : null;
       const spendRes = await client.query<{ spend: number; avg_price: number }>(
         `
           SELECT
@@ -125,30 +129,30 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       );
       // FUEL-PLANNER-DASHBOARD-SPEND-QUERY-FAILS-AS-ZERO: a failed spend query must not become
       // authoritative $0 / $0. Genuine empty month is COALESCE(sum)=0 from a successful query.
-      const savingsRes = await client.query<{ savings: number }>(
+      const savingsRes = plannerSourceAvailable ? await client.query<{ savings: number }>(
         `
           SELECT COALESCE(sum(savings_estimate), 0)::numeric AS savings
           FROM views.fuel_planner_active_routes
           WHERE operating_company_id = $1::uuid
         `,
         [companyId]
-      );
-      const complianceRes = await client.query<{ pct: number }>(
+      ) : null;
+      const complianceRes = complianceSourceAvailable ? await client.query<{ pct: number }>(
         `
           SELECT COALESCE(round(avg(pct_followed), 1), 0)::numeric AS pct
           FROM views.fuel_compliance_summary
           WHERE operating_company_id = $1::uuid
         `,
         [companyId]
-      );
-      const mpgRes = await client.query<{ mpg: number }>(
+      ) : null;
+      const mpgRes = plannerSourceAvailable ? await client.query<{ mpg: number }>(
         `
           SELECT COALESCE(avg(current_mpg), 0)::numeric AS mpg
           FROM views.fuel_planner_active_routes
           WHERE operating_company_id = $1::uuid
         `,
         [companyId]
-      );
+      ) : null;
       // LIAB-F9927-SILENT-CATCH-SWEEP (fuel leg): fuel.loves_prices_daily is foundational (confirmed
       // live, relation-present) — unlike fuel.recommended_stops/views.fuel_planner_active_routes
       // above, which genuinely ARE conditional and correctly gate on hasRelation() first, this table
@@ -167,12 +171,12 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
       return {
         planner_source_available: plannerSourceAvailable,
         compliance_source_available: complianceSourceAvailable,
-        active_plans: plannerSourceAvailable ? Number(activeRes.rows[0]?.count ?? 0) : null,
+        active_plans: plannerSourceAvailable ? Number(activeRes?.rows[0]?.count ?? 0) : null,
         mtd_spend: Number(spendRes.rows[0]?.spend ?? 0),
         avg_price_per_gallon: Number(spendRes.rows[0]?.avg_price ?? 0),
-        mtd_savings: plannerSourceAvailable ? Number(savingsRes.rows[0]?.savings ?? 0) : null,
-        compliance_pct: complianceSourceAvailable ? Number(complianceRes.rows[0]?.pct ?? 0) : null,
-        fleet_mpg: plannerSourceAvailable ? Number(mpgRes.rows[0]?.mpg ?? 0) : null,
+        mtd_savings: plannerSourceAvailable ? Number(savingsRes?.rows[0]?.savings ?? 0) : null,
+        compliance_pct: complianceSourceAvailable ? Number(complianceRes?.rows[0]?.pct ?? 0) : null,
+        fleet_mpg: plannerSourceAvailable ? Number(mpgRes?.rows[0]?.mpg ?? 0) : null,
         loves_sync_at: lovesSyncRes.rows[0]?.synced_at ?? null,
       };
     });
@@ -360,7 +364,17 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const driverId = query.data.driver_id ?? null;
 
     const summary = await withCompanyScope(authUser.uuid, companyId, async (client) => {
-      const sourceAvailable = await hasRelation(client, "fuel.relay_matches");
+      const sourceAvailable =
+        (await hasRelation(client, "fuel.relay_matches")) &&
+        (await hasRelation(client, "views.fuel_compliance_summary"));
+      if (!sourceAvailable) {
+        return {
+          source_available: false,
+          fleet_pct_followed: null,
+          fleet_total_recommendations: null,
+          per_driver: [],
+        };
+      }
       const fleetRes = await client.query<{ pct: number; total_recs: number }>(
         `
           SELECT
@@ -389,9 +403,9 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         [companyId, driverId]
       );
       return {
-        source_available: sourceAvailable,
-        fleet_pct_followed: sourceAvailable ? Number(fleetRes.rows[0]?.pct ?? 0) : null,
-        fleet_total_recommendations: sourceAvailable ? Number(fleetRes.rows[0]?.total_recs ?? 0) : null,
+        source_available: true,
+        fleet_pct_followed: Number(fleetRes.rows[0]?.pct ?? 0),
+        fleet_total_recommendations: Number(fleetRes.rows[0]?.total_recs ?? 0),
         per_driver: perDriverRes.rows,
       };
     });
@@ -406,7 +420,17 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
     const companyId = query.data.operating_company_id;
 
     const summary = await withCompanyScope(authUser.uuid, companyId, async (client) => {
-      const sourceAvailable = await hasRelation(client, "fuel.relay_matches");
+      const sourceAvailable =
+        (await hasRelation(client, "fuel.relay_matches")) &&
+        (await hasRelation(client, "views.fuel_savings_summary"));
+      if (!sourceAvailable) {
+        return {
+          source_available: false,
+          fleet_savings_ytd: null,
+          fleet_lost_savings_ytd: null,
+          top_driver: null,
+        };
+      }
       const fleetRes = await client.query<{ savings_ytd: number; lost_savings_ytd: number }>(
         `
           SELECT
@@ -433,10 +457,10 @@ export async function registerFuelPlannerRoutes(app: FastifyInstance) {
         [companyId]
       );
       return {
-        source_available: sourceAvailable,
-        fleet_savings_ytd: sourceAvailable ? Number(fleetRes.rows[0]?.savings_ytd ?? 0) : null,
-        fleet_lost_savings_ytd: sourceAvailable ? Number(fleetRes.rows[0]?.lost_savings_ytd ?? 0) : null,
-        top_driver: sourceAvailable ? topRes.rows[0] ?? null : null,
+        source_available: true,
+        fleet_savings_ytd: Number(fleetRes.rows[0]?.savings_ytd ?? 0),
+        fleet_lost_savings_ytd: Number(fleetRes.rows[0]?.lost_savings_ytd ?? 0),
+        top_driver: topRes.rows[0] ?? null,
       };
     });
     return summary;
