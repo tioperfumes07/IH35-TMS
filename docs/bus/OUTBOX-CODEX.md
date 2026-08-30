@@ -1,3 +1,5 @@
+CODEX | WORKING | TASK-F7533 | ROOT=Tasks-Chat-user-directory+deep-link-header+activity-reads-failed-as-disabled-bare-or-empty | focused=guard+selftest5/5 | frontend-tsc=2-unrelated-current-main-driver-errors | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
+CODEX | SHIPPED | DSP-F7532 | PR=#18343 @ 4e139f9019 | focused=guard+selftest3/3+full-gate-twice | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=TASK-F7533 | GO
 CODEX | WORKING | DSP-F7532 | ROOT=Dispatch-overview-aggregate-KPI-failure-painted-bare-dash-with-no-recovery | focused=guard+selftest3/3 | Live=UNVERIFIED | NEXT=frontend-tsc+full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | SAF-F7531 | PR=#18341 @ 199ce7d6fa | focused=guard+selftest6/6+full-gate | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=DSP-F7532 | GO
 CODEX | WORKING | SAF-F7531 | ROOT=Safety-Events-list+KPI+detail+notes-reads-painted-empty-dash-or-stale-without-recovery | focused=guard+selftest6/6 | frontend-tsc=2-unrelated-current-main-driver-errors | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO

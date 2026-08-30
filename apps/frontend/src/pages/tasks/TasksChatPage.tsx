@@ -269,6 +269,11 @@ export function TasksChatPage() {
                       />
                     </div>
                   ) : null}
+                  {taskByIdQuery.isError ? (
+                    <div className="mt-2" data-testid="tasks-chat-deep-link-task-error">
+                      <ListErrorBanner onRetry={() => void taskByIdQuery.refetch()} />
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Comment thread */}
@@ -299,6 +304,11 @@ export function TasksChatPage() {
 
                 {/* Composer */}
                 <div className="relative border-t border-slate-200 p-3">
+                  {usersQuery.isError ? (
+                    <div className="mb-2" data-testid="tasks-chat-users-error">
+                      <ListErrorBanner onRetry={() => void usersQuery.refetch()} />
+                    </div>
+                  ) : null}
                   {commentError ? <p role="alert" className="mb-2 text-xs text-red-700">{commentError}</p> : null}
                   <textarea
                     ref={textareaRef}
@@ -360,6 +370,10 @@ export function TasksChatPage() {
                 <div className="max-h-[260px] overflow-y-auto p-4">
                   {activityQuery.isLoading ? (
                     <div className="text-xs text-slate-500">Loading activity…</div>
+                  ) : activityQuery.isError ? (
+                    <div data-testid="tasks-chat-activity-error">
+                      <ListErrorBanner onRetry={() => void activityQuery.refetch()} />
+                    </div>
                   ) : (activityQuery.data?.activity?.length ?? 0) === 0 ? (
                     <div className="text-xs text-slate-500">No activity yet.</div>
                   ) : (
