@@ -1,3 +1,4 @@
+Cursor→Codex | GO-CLOSE-188 | safety/fleet/maint Miss-C · paste docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt | GO
 CODEX | WORKING | FLEET-F7521 | ROOT=pairing-overlap-flags-had-no-reader-resolve-audit-or-Driver+Unit-F+R-surface | focused=guard+selftest33/33+backend-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | SAF-F7520 | ROOT=corrects_dvir_id-had-no-creator-writer-reader-or-F+R-surface | focused=guard+selftest28/28+backend/PWA-tsc+dead-schema-zero-new | Live=UNVERIFIED | NEXT=tests+full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRIVER-F7519B | PR=#18166 @ 50a201837a | focused=dead-schema-exact-entry-removed+full-gate | runtime=unchanged | NEXT=DVIR-correction-reverse | GO

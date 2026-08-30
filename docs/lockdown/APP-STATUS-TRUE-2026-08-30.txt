@@ -1,0 +1,190 @@
+APP STATUS — EVERY MODULE, EVERY BUCKET
+Read live 2026-08-30 14:53 UTC. Nothing below is from memory.
+
+SOURCES (all four, so you can see where they disagree)
+  A. node scripts/verify-module-completion.mjs on origin/main 3c18536  (the merge gate)
+  B. node scripts/proof-engine/shadow-report.mjs --all                  (the machine)
+  C. https://app.ih35dispatch.com/program/matrix  live board, your login (what you see)
+  D. Render: live deploy = 15a190d, finished 12:05 UTC
+
+===============================================================================
+1. THE ONE NUMBER THAT MATTERS FIRST
+===============================================================================
+The gate says              368 of 379 items = 97.1%   24 of 30 modules complete
+The machine says             0 of 379 items are provable
+
+  proof engine, scope=all-manifest-items, live_sha 15a190d
+  scanned 379 · disagreements 379
+    378  UNVERIFIED — "no executable proof; prose evidence cannot produce PASS"
+      1  STALE      — VEND-CERT-01, proven at unknown, live is 15a190d
+
+  Items carrying an executable proof: 1 of 379. That one is VEND-CERT-01.
+
+The 97.1% is a record of what people typed. The proof engine is the instrument
+that re-derives a verdict from something a machine can run. Right now it can
+independently confirm none of it. That is not an accusation that the work is
+fake — most of it is real. It means the work was recorded in prose, and prose
+cannot be re-checked after the code moves. That gap is the whole reason a
+number has never felt trustworthy.
+
+===============================================================================
+2. THE GATE — module by module (source A, origin/main 3c18536)
+===============================================================================
+COMPLETE (24)
+  cash-flow 3/3     compliance 9/9    customers 10/10   dispatch 37/37
+  docs 7/7          driver-hub 7/7    drivers 20/20     eld 5/5
+  finance 9/9       fleet 7/7         form_425 5/5      fuel 9/9
+  help 5/5          home 1/1          insurance 6/6     inventory 7/7
+  legal 12/12       lists 23/23       maintenance 39/39 program 7/7
+  reports 8/8       safety 38/38      system 9/9        tasks 5/5
+
+NOT COMPLETE (6)
+  accounting  38/39     banking     17/19     factoring   9/10
+  settlements  8/9      users        5/6      vendors     7/8
+
+  Gate exit = FAIL. One blocking reason, unchanged:
+    accounting ACCT-R-04 cannot be PASS while its evidence is explicitly UNVERIFIED
+
+THE 11 OPEN ITEMS
+  accounting   ACCT-R-04       PASS  no-pv   G4 deploy smoke / test-owner excluded
+  banking      BANK-ECON-04    FAIL  no-pv   zero-diff reconciliation closure
+  banking      BANK-SURF-04    FAIL  no-pv   Reconciliation workspace live session
+  factoring    FACT-VERIFY-01  PASS  no-pv   VERIFY 1-8 click-through TRANSP+USMCA
+  safety       SAF-B08         HOLD  pv      Escrow KPI + signed-clause source of truth
+  safety       SAF-ORPH-01     HOLD  no-pv   Escrow forfeiture moves balance correctly
+  safety       SAF-ORPH-02     HOLD  no-pv   Escrow forfeiture writes driver subledger
+  safety       SAF-ORPH-05     HOLD  no-pv   Every Safety tab passes DoD click-through
+  settlements  SETL-VERIFY-01  PASS  no-pv   VERIFY 1-8 click-through TRANSP+USMCA
+  users        USER-VERIFY-01  PASS  no-pv   VERIFY 1-8 TRANSP+USMCA
+  vendors      VEND-CERT-01    OPEN  no-pv   Fully-Wired 7-12 on current healthz
+
+  Safety still shows 38/38 complete=true while carrying 4 HOLD items. HOLD counts
+  toward N by design (qualifiesHold). That is deliberate, not a leak - but it is
+  why safety reads "done" and does not feel done.
+
+===============================================================================
+3. THE BUCKETS — what the four boxes in every cell mean
+===============================================================================
+Every matrix cell draws four boxes, left to right:
+
+     BOX 1  REQUIRED   this cell is declared in <module>.required.json
+     BOX 2  AUDITED    someone checked it   (shows a dot when audited but not built)
+     BOX 3  BUILT      a wire-sprint guard ships for it
+     BOX 4  LIVE       proven on the running deploy
+
+  source: apps/frontend/src/pages/program/moduleMatrixBoxes.tsx:110-113
+
+  So the pattern you are seeing everywhere -  V O X X  - reads exactly:
+     required yes / audited yes / BUILT NO / LIVE NO.
+
+  The rollup is strict on purpose: a module box only goes green at 100%.
+  Accounting at 98% draws a red BUILT box. That is the board being honest,
+  not the board being broken.
+
+===============================================================================
+4. GUARD AND CLICKED - why they are yellow and red on EVERY module
+===============================================================================
+Live read of /program/matrix, all 16 board modules, columns 11 GUARD and 12 CLICKED:
+
+  accounting V O X X    banking    V O X X    settlements V O X X
+  factoring  V O X X    dispatch   V O X X    vendors     V O X X
+  customers  V O X X    drivers    V O X X    fleet       V O X X
+  lists      V O X X    cash-flow  V O X X    finance     V O X X
+  insurance  V O X X    legal      V O X X    maintenance V O X X
+  safety     V O X X
+
+  16 of 16. Not a few. All of them, identically.
+
+  FW 1-11 %   LIVE 12 %   MISS C
+    accounting   98        98        7
+    dispatch     98        98        7
+    lists        99        94       32
+    fleet        97        92       20
+    customers    96        94       10
+    vendors      95        95        7
+    banking      93        93        7
+    settlements  93        93        7
+    factoring    93        87       12
+    drivers      93        92        9
+
+===============================================================================
+5. THE CLOSABLE INVENTORY - 188 cells, and I can tell you exactly what they are
+===============================================================================
+MISS C totals, read live:
+  lists 32 · safety 21 · fleet 20 · maintenance 18 · factoring 12
+  customers 10 · legal 10 · drivers 9 · accounting 7 · banking 7
+  settlements 7 · dispatch 7 · vendors 7 · cash-flow 7 · finance 7 · insurance 7
+  ------------------------------------------------------------------
+  TOTAL 188
+
+Of those 188:
+  112 are the ECONOMICS group  - 16 modules x 7 columns C25-C31, at 0%
+   76 are everything else      - lists 25, safety 14, fleet 13, maintenance 11,
+                                 factoring 5, customers 3, legal 3, drivers 2
+
+Accounting's ECON group read live:
+  ECON C25-C31 | required 7 | AUDITED 0% | PROBE 0% | BUILT 0% | LIVE 0% | CERT 0%
+  Every other accounting group reads BUILT 100% / WIRE 0%. Economics reads zero
+  across every single axis. It has never been started.
+
+===============================================================================
+6. THE ROOT CAUSE OF THE 112 - AND IT IS NOT A CODER'S FAULT
+===============================================================================
+I opened docs/specs/scoreboard/columns.shared.json to find what C25-C31 require.
+This is the ENTIRE definition of C29:
+
+    { "id": "period_guard", "group": "economics", "label": "C29 Period" }
+
+  id. group. label. That is all there is. Same for the other six.
+
+  gl_delta            "C25 GL D"
+  subledger_tie       "C26 Subledger"
+  lifecycle_complete  "C27 Lifecycle"
+  reversal_symmetry   "C28 Reversal"
+  period_guard        "C29 Period"
+  entity_isolation    "C30 Entity"
+  non_empty_proof     "C31 Living doc"
+
+  There is no acceptance criterion, no pass condition, no proof shape - nothing
+  a person or a machine could satisfy. Seven columns were added to the board
+  with a name and nothing behind them.
+
+  That is why ECON is 0% on all 16 modules and has never moved. Nobody guessed,
+  and nobody should have. A column with no definition cannot be closed, and any
+  coder who marked one green would have been inventing the standard.
+
+  It also explains 112 of your 188 red cells with a single sentence.
+
+  And C29 Period cannot be closed by anyone at all right now: there is no period
+  close in the backend. I confirmed that separately for the accounting packet.
+  16 of the 112 are blocked on a control that does not exist yet.
+
+===============================================================================
+7. TWO MORE LIVE FINDINGS
+===============================================================================
+DEPLOY DRIFT - live is 30 commits behind main.
+  live 15a190d (12:05 UTC) ... origin/main 3c18536 (14:49 UTC) = 30 commits.
+  FAST-MERGE law says deploy every 5-10 PRs and never past 10. We are at 30.
+  Every "live proof" a coder writes right now is against code from 2h50m ago.
+  Only Cursor may deploy (Rule 42).
+
+STALE SCOREBOARD ARTIFACT.
+  docs/audit/program-scoreboard.json carries healthzSha 9c61c63 and reports
+  accounting 39/39, factoring 10/10, settlements 9/9, users 6/6 - while the
+  gate on the same commit reports 38/39, 9/10, 8/9, 5/6. The scoreboard's
+  build column does not apply the evidence rule the gate applies. Two files
+  in the same repo give two different answers to the same question.
+
+===============================================================================
+8. WHAT IS ACTUALLY TRUE, IN ONE PARAGRAPH
+===============================================================================
+The app runs. healthz is green on all nine checks including postgres, migrations,
+redis, R2, QBO OAuth and background jobs. 24 of 30 modules pass the merge gate.
+The board renders every column group correctly now - LINK, MONEY, CHROME, WIRE,
+PROC, ECON C25-C31, PROOF V1-V6 and Fully-Wired 1-12 are all present on both the
+All-modules view and each module board. What is NOT true is any claim that a
+module is finished: BUILT and LIVE are red on Guard and Clicked for all 16 board
+modules, 188 certification cells are open, 112 of them sit behind seven columns
+that were never defined, and the proof engine can independently confirm 0 of 379
+items. The honest headline is: the software works, and almost none of it is
+proven to work.

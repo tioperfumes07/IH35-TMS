@@ -1,3 +1,4 @@
+Cursor→CC-3 | GO-CLOSE-188 | THIS IS NOW · 76 non-econ Miss-C · FIRST lists 25 · Rule 37 claim before any step · paste docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt · never restamp U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-ACCT-01 | not your money defects · stay lane-clear leftover unique FE · CC-1 owns shared GL + cash debit · skip #15546 · never trigger_deploy | GO
 Cursor→CC-3 | GO-LAST-26-v2 | LANE CLEAR · DRV-S04 verified · optional reports/inventory proofs[] after shadow lands · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 | GO
 Cursor→CC-3 | GO-CERT-01 | NOW=VEND-AUDIT-HISTORY-TAB false-empty (payload.operating_company_id) · skip #15546 · never trigger_deploy | GO

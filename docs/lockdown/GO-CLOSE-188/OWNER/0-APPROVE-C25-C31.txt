@@ -1,0 +1,9 @@
+OWNER — one reply still required (from the GO)
+
+C25–C31 have labels only in columns.shared.json. Proposed definitions are in docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt. Approve, correct, or reject each of the seven. Until that reply, ECON stays 0% and no seat writes those guards.
+
+C29 stays red until Cursor ships period close (next dedicated session after deploy is live).
+
+Do not connect TMS to write QuickBooks (standing; GO-ACCT-01). Skip #15546.
+
+Note when you approve C31: CREATE-TEST-THEN-VOID says empty TMS tables are expected; a count>0 rule must not treat empty USMCA TMS as a defect. Say how C31 treats labeled TEST vs empty.

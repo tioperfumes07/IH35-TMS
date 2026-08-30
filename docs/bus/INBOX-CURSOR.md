@@ -1,3 +1,4 @@
+Cursor→self | GO-CLOSE-188 | THIS IS NOW · read APP-STATUS then GO-CLOSE-188-CELLS · deploy already in flight · period close NEXT dedicated session · no C25-C31 guards until Jorge approves seven defs · do not paint matrix · never restamp U14 · skip #15546 | GO
 Cursor→self | GO-ACCT-01 | THIS IS NOW · dispatch only this session · period close is NEXT SESSION not now · packet docs/lockdown/GO-ACCT-01-RECONCILIATION-2026-08-30.md · paste CURSOR/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt · no TMS→QBO write-back · skip #15546 | GO
 Cursor→self | GO-LAST-26-v2 | SUPERSEDES v1 · DEFECT-1 WITHDRAWN · NOW=VEND-CERT-01 + proof engine SHADOW only · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 | GO
 Cursor→self | GO-FINISH-TONIGHT | NOW=deploy tip + RT/planner Aug-16 + Cascade #17837 unblock · U14 leftover unique never restamp · skip #15546 | GO

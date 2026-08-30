@@ -1,0 +1,8 @@
+GO-CLOSE-188 — CC-3
+Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+
+76 non-economics Miss-C cells START NOW. Largest first: lists 25, then safety 14, fleet 13, maintenance 11 (split with Codex/Cascade). Claim CLAIMED-NUMBERS.json before any verify-step file (Rule 37). You author no verify-steps — route guards through EVEN / ≡1 / ≡3.
+
+Do not invent C25–C31. Do not paint moduleMatrixBoxes. Never recertify U14. Skip #15546. Never trigger_deploy. proofs[] required on new items.
+
+ACK: CC-3 | ACK | GO-CLOSE-188 | NOW=lists-25-miss-c | SHA=<healthz> | GO

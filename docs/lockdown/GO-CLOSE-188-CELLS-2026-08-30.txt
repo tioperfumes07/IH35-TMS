@@ -1,0 +1,156 @@
+GO-CLOSE-188 — CLOSING GUARD, CLICKED, FWD, LINK, MONEY, PROC, ECON C25-C31
+2026-08-30 · read live off /program/matrix and origin/main 3c18536
+
+READ 1-APP-STATUS-TRUE-2026-08-30.txt FIRST. This is the work order for it.
+
+===============================================================================
+STOP - ONE THING BLOCKS 112 OF THE 188 CELLS AND IT NEEDS THE OWNER, NOT A CODER
+===============================================================================
+The seven ECON columns exist on the board with a label and NOTHING ELSE:
+
+  { "id": "period_guard", "group": "economics", "label": "C29 Period" }
+
+  docs/specs/scoreboard/columns.shared.json - that is the complete record for
+  C29, and C25, C26, C27, C28, C30 and C31 are identical in shape.
+
+No coder can close a column that has no acceptance criterion, and none of them
+should try. That is not a coder failing - it is a spec that was never written.
+
+Below is a PROPOSED definition for each, grounded in how NetSuite and QuickBooks
+actually enforce these controls (sources at the bottom). JORGE MUST APPROVE OR
+CORRECT EACH ONE before any seat writes a guard against it. Nothing here is
+final and nothing here has been written into the repo.
+
+  C25 GL D  (gl_delta)
+    Every money-moving action on this leaf produces a balanced journal entry
+    whose debits equal credits, and the GL delta equals the amount shown on the
+    surface. Proof: create through the UI, read accounting.journal_entry_postings,
+    assert sum(debit) = sum(credit) and delta = displayed amount.
+
+  C26 SUB  (subledger_tie)
+    The module's own subledger total ties to its GL control account for a stated
+    period. AR subledger = AR control; driver escrow subledger = escrow liability;
+    AP subledger = AP control. Proof: a query returning subledger sum minus GL
+    control sum, asserting zero. This is the classic GL-to-subledger tie.
+
+  C27 LIFE  (lifecycle_complete)
+    Every status the record can hold is reachable AND every terminal status
+    posts or reverses correctly - no status that strands money. Proof: a table
+    of statuses with the GL effect of each transition, all exercised.
+
+  C28 REV  (reversal_symmetry)
+    Voiding or reversing a posted transaction writes an equal and opposite
+    entry - it never deletes or edits the original. Debits and credits swap;
+    the original stays readable. Proof: post, reverse, assert two entries exist
+    and net to zero. QuickBooks works this way and so must we.
+
+  C29 PER  (period_guard)
+    No transaction may post into a closed accounting period. Reopening is an
+    owner-only action that is recorded. NetSuite states a closed period
+    "prevents posting to the general ledger for any dates included in the
+    period, by anyone," with system notes retaining an audit trail.
+    *** THIS IS UNBUILDABLE TODAY - THERE IS NO PERIOD CLOSE IN THE BACKEND. ***
+    16 of the 112 cells are C29. They stay red until Cursor ships period close.
+
+  C30 ENT  (entity_isolation)
+    A user scoped to TRANSP can never read or write a USMCA row, at the database
+    layer, not the UI layer. Proof: same query with each company context, RLS on,
+    asserting zero cross-entity rows.
+
+  C31 LIVE (non_empty_proof)
+    The surface renders real rows from prod on the current deploy - not an empty
+    state, not a fixture. Proof: authenticated live read on the live healthz SHA
+    returning count > 0.
+
+  OWNER ACTION: approve, correct, or reject each of the seven. One reply.
+  Until that reply lands, ECON stays 0% and that is the correct, honest state.
+
+===============================================================================
+THE 76 CELLS THAT ARE NOT BLOCKED - THESE CAN START NOW
+===============================================================================
+  lists 25 · safety 14 · fleet 13 · maintenance 11 · factoring 5
+  customers 3 · legal 3 · drivers 2
+
+These are Miss-C cells outside the economics group. They have definitions
+already. They are the work that does not need a decision first.
+
+===============================================================================
+WHY GUARD AND CLICKED ARE RED ON ALL 16 MODULES
+===============================================================================
+The four boxes are REQUIRED · AUDITED · BUILT · LIVE
+(apps/frontend/src/pages/program/moduleMatrixBoxes.tsx:110-113).
+
+  V O X X  =  required yes / audited yes / BUILT no / LIVE no
+
+The rollup only goes green at 100%. Accounting is at 98% on FW 1-11 and 98% on
+LIVE 12, so both boxes draw red. THE BOARD IS CORRECT. Do not "fix" the colour.
+The only way those boxes turn green is to take each module to 100% - which
+means closing its Miss C count, which means the list above.
+
+Nobody is to touch moduleMatrixBoxes.tsx, the rollup thresholds, or any cell
+colour logic. Changing the paint to make the board look finished is the exact
+failure this project exists to avoid.
+
+===============================================================================
+ASSIGNMENTS
+===============================================================================
+CURSOR - band EVEN
+  1. DEPLOY. Live is 15a190d; origin/main is 3c18536; that is 30 commits behind.
+     FAST-MERGE law is 5-10, never past 10. Every live proof any seat writes
+     right now is against code from nearly three hours ago. Deploy first,
+     before anything else in this packet. Rule 42 - only you may.
+  2. PERIOD CLOSE. Owner-only close/reopen plus a period-status check on EVERY
+     money-write path. banking.reconciliation_sessions already carries
+     reopened_at, reopened_by_user_id and reopen_reason - the shape was
+     anticipated, the enforcement was never built. This unblocks 16 C29 cells
+     and it is the control that makes every reconciliation durable.
+     Multi-session. Do not start it at the end of a session.
+  3. Do NOT write C25-C31 guards until Jorge approves the definitions above.
+
+CC-1 - band =1
+  Already holds the two accounting defects from GO-ACCT-01 (shared GL cash
+  account; missing cash debits). Finish those first - C25 and C26 are
+  unprovable on accounting while cash has 177,411.20 in credits against
+  13,503.70 in debits. Those two defects ARE the accounting economics blocker.
+
+CC-2 - band =3
+  BANK-ECON-04 and BANK-SURF-04 stay honest FAIL. Add the one-session-per-
+  account-per-period constraint. Do not stamp prod_verified on anything whose
+  proof is prose - see the proof-engine section below.
+
+CC-3 / CODEX / CASCADE
+  Take the 76 non-economics Miss-C cells, largest first: lists 25, safety 14,
+  fleet 13, maintenance 11. Claim in CLAIMED-NUMBERS.json before writing
+  (Rule 37). You author no verify-steps - route guard work through a band seat.
+
+===============================================================================
+THE STANDING RULE THAT MAKES THIS THE LAST TIME
+===============================================================================
+The proof engine is merged and its selftest passes 8 of 8. It scans 379 items
+and finds 1 with an executable proof. Every new item from here forward carries
+proofs[] with a real kind - http, sql, dom, guard or mutation - and a
+proven_at_sha. An item with prose evidence and no proofs[] derives UNVERIFIED
+and must not be typed PASS.
+
+  node scripts/proof-engine/selftest.mjs        must stay 8/8
+  node scripts/proof-engine/shadow-report.mjs --all   disagreements must fall
+
+That number - 379 disagreements - is the honest measure of this project. Every
+cell you close with a real proof drops it by one. That is the metric that has
+been missing, and it is now running.
+
+===============================================================================
+SOURCES FOR THE PROPOSED DEFINITIONS
+===============================================================================
+  NetSuite Accounting Period Close - lock A/P, lock A/R, lock payroll, lock all,
+  GL audit numbering with gapless verification, and a Closed status that
+  prevents GL posting for any date in the period, by anyone; system notes keep
+  the audit trail.
+  https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_N1452509.html
+
+  QuickBooks close-the-books / period lock and reversing-entry behaviour.
+  https://quickbooks.intuit.com/learn-support/en-us/reports-and-accounting/how-to-lock-closed-periods/00/193572
+  https://quickbooks.intuit.com/learn-support/en-us/reports-and-accounting/reversing-journal-entries/00/1484883
+
+  GL-to-subledger reconciliation as a standing control.
+  https://www.leapfin.com/blog/general-ledger-to-subledger-reconciliation

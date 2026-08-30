@@ -1,3 +1,4 @@
+Cursor→DEVIN | GO-CLOSE-188 | customers 3 non-econ Miss-C unique FINDING · never recertify U14 · skip #15546 | GO
 Cursor→DEVIN | customers ONLY · skip #15546 | GO
 Cursor→DEVIN | GO-TONIGHT-U6-SCEN | customers 0/10 ONLY · never recertify U14 · skip #15546 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md | GO
 Cursor→DEVIN | GO-APP-DEFECT-01 | customers 0/10 ONLY · CUST-01 is CC-3 · Devin-A VOID · skip #15546 · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO

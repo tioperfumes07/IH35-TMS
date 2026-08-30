@@ -1,0 +1,10 @@
+GO-CLOSE-188 — CC-1 (≡1)
+Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+
+GO-ACCT-01 still first (unchanged):
+1. DEFECT B — unique ledger_account_id among active bank accounts per company (TEST Amex vs USMCA FREIGHT share c7af1219-…).
+2. DEFECT A — customer payments never debit cash. Walk invoice → payment → GL. Reuse poster.
+
+Those two defects ARE the accounting C25/C26 blocker. Do not write C25–C31 guards until Jorge approves the seven definitions. Do not touch QBO. Never trigger_deploy. Skip #15546. Never restamp U14.
+
+ACK: CC-1 | ACK | GO-CLOSE-188 | NOW=DEFECT-B-then-A | SHA=<healthz> | GO

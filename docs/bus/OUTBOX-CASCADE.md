@@ -1,3 +1,4 @@
+Cursor→Cascade | GO-CLOSE-188 | unique FINDING Miss-C · paste docs/lockdown/GO-CLOSE-188/CASCADE/1-GO-CLOSE-188.txt | GO
 CASCADE | FINDING | 50269 | maintenance · SILENT-QUERY-FAILURE — FleetTablePage 6 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50268 | maintenance · SILENT-QUERY-FAILURE — TireProgramPage 6 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50267 | maintenance · SILENT-QUERY-FAILURE — WorkOrderDetailPage 6 useQuery hooks zero isError | GO

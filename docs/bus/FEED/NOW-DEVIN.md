@@ -1,5 +1,7 @@
-# NOW — Devin (GO-TONIGHT-U6-SCEN)
+# NOW — Devin (GO-CLOSE-188)
 
-customers 0/10 ONLY. CUST-01 is CC-3. Never recertify U14. Skip #15546.
+**ACK:** `DEVIN | ACK | GO-CLOSE-188 | NOW=customers-3-miss-c | SHA=<healthz> | GO`
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+customers 3 non-econ Miss-C unique FINDING. Never recertify U14. Skip #15546.
+
+Canonical: `docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt`
