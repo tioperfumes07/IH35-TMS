@@ -13,7 +13,7 @@ export function LoadInTransitIssuesReverseSection({ operatingCompanyId, loadId, 
     queryFn: () => listDispatchIntransitIssues(operatingCompanyId, { load_id: loadId }),
     enabled: Boolean(operatingCompanyId && loadId),
   });
-  const rows = query.data?.issues ?? [];
+  const rows = query.isError ? [] : (query.data?.issues ?? []);
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid={testId}>
