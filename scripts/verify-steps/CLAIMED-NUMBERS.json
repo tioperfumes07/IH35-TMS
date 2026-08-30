@@ -4882,6 +4882,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
   },
+  "10105": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-period-close-01-ensureopenperiod-wired (ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT)"
+  },
   "10101": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
