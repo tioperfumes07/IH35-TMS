@@ -1,0 +1,104 @@
+===============================================================================
+CODEX — WORK ORDER. 2026-08-30. TWO ITEMS. BOTH ARE PERMANENCE WORK.
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+Rule 37: CLAIM -> MERGE -> AUTHOR. Never claim+author in the same PR.
+
+THE STANDARD FOR EVERY ITEM BELOW — "PERMANENT" HAS A DEFINITION:
+A fix is permanent only if the defect becomes IMPOSSIBLE or MECHANICALLY DETECTED.
+  Best:  a DB constraint - the bad state cannot be written at all
+  Next:  a static guard that FAILS the build when the pattern returns
+  Weak:  a test that only passes today
+  Not a fix: a corrected row with nothing preventing the next one
+Prefer the constraint. Both items below are chosen because they admit a real one.
+
+-------------------------------------------------------------------------------
+ITEM 1 — chart_of_accounts_roles HAS NO UNIQUENESS. THE FIX IS SMALLER THAN
+         THE BOARD ROW SAYS, AND I WANT YOU TO KNOW THAT BEFORE YOU START.
+-------------------------------------------------------------------------------
+HONEST SCOPING FIRST. I checked this three ways before writing it up, and the first
+two reads were misleading:
+
+  READ 1 (wrong):  14 (operating_company_id, role) groups have more than one row, and
+                   several point at DIFFERENT accounts - e.g. USMCA damage_recovery ->
+                   3 accounts; TRK driver_payroll_clearing -> "Driver Net-Pay Clearing"
+                   AND "Driver Cash Advance"; TRANSP ap_control -> 2000 AND QBO-47.
+                   That reads like a live wrong-account P0.
+  READ 2 (the correction): the live resolver filters `AND r.is_active = true`
+                   (see reconciliation/ledger-integrity-detectors.service.ts:54-66).
+  READ 3 (the truth): filtered on is_active = true,
+                   roles bound to >1 DISTINCT account:  ZERO
+                   roles with >1 active row at all:     ZERO
+                   Resolution is deterministic today. NO money is currently posting to a
+                   wrong account through this table. The 14 groups are inactive history.
+
+SO THIS IS NOT A P0. It is a MISSING GUARD against a defect that has not happened yet.
+Do not write it up as a live money defect - that would be a false finding, and this program
+has had four of those today already.
+
+WHAT IS ACTUALLY WRONG: nothing PREVENTS a second active binding from being inserted
+tomorrow. The day that happens, resolveRoleAccount picks arbitrarily and money posts to
+whichever row the planner returns first. The table that maps ap_control, ar_control,
+cash_dip, factor_reserve_held and driver_payroll_clearing to real GL accounts has no
+uniqueness guarantee at all.
+
+THE FIX — and the shape matters:
+  CREATE UNIQUE INDEX CONCURRENTLY ... ON accounting.chart_of_accounts_roles
+    (operating_company_id, role) WHERE is_active;
+  * PARTIAL, on `WHERE is_active`. I verified this succeeds TODAY with zero data cleanup.
+  * A FULL unique index on (operating_company_id, role) would FAIL on the 14 inactive
+    groups. Do not attempt it, and do not "clean up" those rows to make one fit - they are
+    history, WORM applies, and the partial index is the correct shape anyway.
+  * Idempotent (IF NOT EXISTS), and a DO $$ guard if the table might be absent.
+
+NUMBERS ARE ALREADY CLAIMED - DO NOT RE-CLAIM:
+  migration timestamp 202613300800 and verify-step 10129 were reserved by PR #18314
+  (claim-only, per the two-PR discipline). The migration itself was never authored.
+  Use those reserved numbers. Confirm they are still on origin/main before you write.
+
+GUARD (verify-step 10129): must FAIL if the partial unique index is absent from the
+migration set, or if any code path inserts into chart_of_accounts_roles without going
+through a path that respects it. --selftest must plant both mutations and catch each.
+
+REPORT BACK: state plainly in your evidence block that this was a latent-risk fix, not a
+live-defect fix, and cite the is_active-filtered zero counts. An honest "this was smaller
+than the board said" is worth more than an inflated close.
+
+-------------------------------------------------------------------------------
+ITEM 2 — 29 GUARDS THAT CANNOT FAIL. INCLUDING ONE OF YOUR OWN.
+-------------------------------------------------------------------------------
+docs/specs/CLOSED-LOOP-BASELINE.json lists 29 verify scripts frozen as UNDECLARED CLOSED
+LOOPS - guards whose assertion is derived from the same source it is checking, so they pass
+by construction. A guard that cannot fail is worse than no guard: it produces a green cell
+that a human then trusts.
+
+One of the 29 is  scripts/verify-codex-merged-findings-not-open.mjs  - your own.
+
+Others include verify-board-append-only.mjs, verify-block-lifecycle.mjs,
+verify-derived-artifact-freshness.mjs, verify-audit-coverage-ledger-integrity.mjs.
+
+WORK:
+  1. For each of the 29, determine whether it is genuinely closed-loop (asserts a fact it
+     itself computed) or whether the baseline over-flagged it. Cite the specific line where
+     the loop closes, or state why it does not.
+  2. For the genuinely closed ones, re-anchor the assertion to an INDEPENDENT source -
+     prod state, a committed expected-value file, or an external document. If a guard's
+     only possible reference is itself, say so and propose deleting it rather than leaving
+     a green cell that means nothing.
+  3. Update CLOSED-LOOP-BASELINE.json as you go. The count must only ever go DOWN, and
+     every decrement needs the evidence for why that one is now open-loop.
+  4. Start with your own. It is the honest place to start and it sets the tone.
+
+WHY THIS MATTERS TODAY: the whole program just learned that
+`factoring 10 of 10 complete=true` was true while the module carried a live wrong-money
+defect - because every one of those ten items tested wiring, not arithmetic. A closed-loop
+guard is the same disease one level down: a check that structurally cannot report failure.
+Cursor is fixing the completion bar (bar-2 TIEOUT). You fix the guards underneath it.
+
+-------------------------------------------------------------------------------
+LANE — WHAT IS NOT YOURS RIGHT NOW
+-------------------------------------------------------------------------------
+Do NOT touch: factoring / customer copy / Faro invoices (CC-1, mid-flight with open
+corrections), settlement specimen (CC-1 then CC-2), Sentry sweep (CC-3), flag-reliability
+audit (Cascade), bar-2 TIEOUT + Faro bank linkage + Neon pool exhaustion (Cursor).
+If you finish both items, report and ask - do not self-assign into another seat's lane.

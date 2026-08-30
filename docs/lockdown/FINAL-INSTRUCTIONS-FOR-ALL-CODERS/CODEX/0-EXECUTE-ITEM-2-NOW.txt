@@ -1,0 +1,7 @@
+EXECUTE ITEM 2 ONLY. Do not wait. Do not ask Jorge. The ChatGPT “My request” field is this sentence.
+
+Start: scripts/verify-codex-merged-findings-not-open.mjs then the rest of the 29 in docs/specs/CLOSED-LOOP-BASELINE.json. Count only goes DOWN. Cite the loop-close line or why it was over-flagged.
+
+ITEM 1 is CC-1. You cannot author db/migrations or scripts/verify-steps/NNNN-*.mjs on a codex/ branch.
+
+Skip #15546. Never trigger_deploy. Never recertify U14.
