@@ -44,7 +44,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "0",
       "module": "banking",
-      "build": "17/19",
+      "build": "17/20",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -203,7 +203,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "accounting",
-      "build": "39/39",
+      "build": "39/40",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -256,7 +256,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "vendors",
-      "build": "7/8",
+      "build": "7/9",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -362,7 +362,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "1",
       "module": "settlements",
-      "build": "9/9",
+      "build": "9/10",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -468,7 +468,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "2",
       "module": "dispatch",
-      "build": "37/37",
+      "build": "37/38",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -998,7 +998,7 @@ export const PROGRAM_SCOREBOARD: ProgramScoreboard = {
     {
       "tier": "3",
       "module": "factoring",
-      "build": "10/10",
+      "build": "10/11",
       "cells": [
         "AUDIT",
         "FAIL",
