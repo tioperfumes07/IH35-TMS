@@ -37,7 +37,13 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
-        <BrowserRouter>
+        {/*
+          React Router 7 defaults BrowserRouter history updates to startTransition.
+          A pending route render can therefore retain the previous committed screen even
+          after pushState changes the URL. Route navigation is an immediate product action;
+          commit the location synchronously so the keyed route Suspense boundary can mount.
+        */}
+        <BrowserRouter useTransitions={false}>
           <ErrorBoundary>
             <App />
           </ErrorBoundary>
