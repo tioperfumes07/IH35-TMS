@@ -88,6 +88,15 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       if (message === "variance_account_id_required") {
         return reply.code(400).send({ error: message });
       }
+      // BANK-RECON-ALREADY-MATCHED-500: bank_transaction_already_matched is a deliberate idempotency
+      // guard (match.service.ts) firing when the same bank line is accepted twice (e.g. a double-click
+      // or a stale worklist row) -- an expected conflict state, not a system failure. It fell through
+      // to the generic `throw error` below and surfaced as a raw 500 instead of the 409 this file's
+      // own close-period handler already uses for the equivalent "already in that state" case
+      // (period_not_100pct_reconciled).
+      if (message === "bank_transaction_already_matched") {
+        return reply.code(409).send({ error: message });
+      }
       throw error;
     }
   });
@@ -130,6 +139,15 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       const message = String((error as Error).message ?? "");
       if (message === "variance_account_id_required") {
         return reply.code(400).send({ error: message });
+      }
+      // BANK-RECON-ALREADY-MATCHED-500: bank_transaction_already_matched is a deliberate idempotency
+      // guard (match.service.ts) firing when the same bank line is accepted twice (e.g. a double-click
+      // or a stale worklist row) -- an expected conflict state, not a system failure. It fell through
+      // to the generic `throw error` below and surfaced as a raw 500 instead of the 409 this file's
+      // own close-period handler already uses for the equivalent "already in that state" case
+      // (period_not_100pct_reconciled).
+      if (message === "bank_transaction_already_matched") {
+        return reply.code(409).send({ error: message });
       }
       throw error;
     }
