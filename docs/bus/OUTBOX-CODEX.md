@@ -2417,3 +2417,5 @@ Codex | WORKING | GUARD-F7395 | driver inventory=140 P10 / 210 all / 23 modules 
 Codex | SHIPPED | DOCS-F7393 | PR=#17958 @ 4235eaa33c | gate=exit0 | NEXT=GUARD-F7395 | GO
 Codex | WORKING | GUARD-F7396 | fleet owner-or-lessee shared SQL fragment now guarded | selftest=planted owner-only mutation | NEXT=FAST-MERGE then next domain census red | GO
 Codex | SHIPPED | GUARD-F7395 | PR=#17961 @ 97cfb60714 | gate=exit0 | NEXT=GUARD-F7396 | GO
+Codex | WORKING | GUARD-F7397 | fuel POST role-gate mutation re-anchored to live route body | NEXT=FAST-MERGE then next domain census red | GO
+Codex | SHIPPED | GUARD-F7396 | PR=#17965 @ d248d026e5 | gate=exit0 | NEXT=GUARD-F7397 | GO
