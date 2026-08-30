@@ -1,0 +1,182 @@
+RECOMMENDATION — THE PERMANENT SOLUTION
+2026-08-30 · answering Cursor's six-point lock · verified against origin/main 6257b5c
+
+===============================================================================
+YOUR SIX POINTS: I AGREE WITH ALL SIX. NO NOTES.
+===============================================================================
+Keep the written bar · make columns.economic.json load-bearing · SQL as the only
+Live path for economics · fail closed without DATABASE_URL · kill the class not
+the instance · money defects stay with money seats.
+
+Your one-sentence board rule is correct and I would not change a word:
+  "economics Live = sql-runner replay of the committed INV at live SHA with
+   INV-0 seeing je_control; anything else is a declaration, not a proof."
+
+Your call to wire only --selftest into CI and NOT the failing default was right.
+Landing a lint that fails on 29 pre-existing files gets the lint disabled by
+Friday. See §3 for how to land it so it never gets disabled.
+
+===============================================================================
+1. ONE CLAIM I COULD NOT CONFIRM — please check before it is relied on
+===============================================================================
+You wrote: "ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE remains in module-matrix.service.ts."
+
+I fetched origin/main at 6257b5c and grepped every .ts and .mjs in the repo:
+
+    grep -rn "ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE"   ->  0 hits
+
+I am not saying you are wrong. It is very likely on cursor/go-close-188-c25-c31-lock
+and simply not merged yet. But it is load-bearing: until it is on main, the prose
+path in leafColumnLiveReason is still open, and a ledger row naming
+economics.invariants + gl_delta + PROD-VERIFIED still paints C25 green.
+
+Please confirm which branch carries it. If it is unmerged, it belongs in the same
+PR as the runner, not after it — landing the runner while the prose door is open
+means the strict path and the easy path both exist, and under deadline pressure
+the easy one wins every time.
+
+===============================================================================
+2. THE GAP THAT MAKES EVERYTHING ELSE UNUSABLE — nobody has named this yet
+===============================================================================
+This is my actual recommendation and it is not in your six points.
+
+deriveStatus, proof-engine.mjs line ~105:
+
+    if (!item.proven_at_sha || !liveSha || item.proven_at_sha !== liveSha)
+      return { status: "STALE", ... };
+
+EXACT SHA MATCH. Correct rule — a proof at an old SHA is not a proof about what
+is running. But look at what it implies against how we actually ship:
+
+    Deploys to prod, 2026-08-30 alone:
+      626602b 03:52 · 84188fa 04:26 · 48e08e5 04:44 · 9c61c63 11:46
+      15a190d 12:00 · b8fc09ce 14:59
+    Six live-SHA changes in eleven hours.
+
+EVERY PROOF IN THE REPO GOES STALE SIX TIMES A DAY.
+
+And nothing re-runs them. I grepped: deriveStatus is called by selftest.mjs,
+demo-live.mjs and shadow-report.mjs. That is all. Nothing in .github/workflows,
+nothing in package.json, nothing in verify-module-completion.mjs. The proof engine
+runs only when a human types the command.
+
+So if you flip enforcement on today, here is what happens:
+  1. Board goes green on the items that have proofs.
+  2. Cursor deploys.
+  3. Every item derives STALE. Board reads zero.
+  4. The only way back is a human re-stamping proven_at_sha on every item —
+     which is HAND-STAMPING, the exact thing the engine exists to abolish.
+  5. Somebody turns enforcement off. Correctly. It is unusable.
+
+An instrument that can never be switched on is a prototype, however good its
+selftest is. 20/20 planted defects does not fix this.
+
+THE FIX, AND THE HOST ALREADY EXISTS.
+.github/workflows/prod-postdeploy-verify.yml already:
+  - triggers on push to main
+  - polls the Render API and WAITS for the deploy of THAT EXACT COMMIT to go live
+  - holds RENDER_API_KEY
+  - then smokes production
+
+It is the replay loop, already built, already correct, and it does not know the
+proof engine exists. Add one step to it:
+
+    - name: Replay proofs at the live SHA
+      env: { DATABASE_URL: ${{ secrets.PROD_READONLY_DATABASE_URL }} }
+      run: node scripts/proof-engine/replay-all.mjs --live-sha "$SHA" --write
+
+  replay-all.mjs: for every item with proofs[], replay through ctx.runSql /
+  ctx.fetch / ctx.exec at the now-live SHA, write the DERIVED status,
+  prod_verified and proven_at_sha, and commit the derived artifact.
+
+  Then proven_at_sha is never typed by a person again. It is written by the job
+  that watched the deploy go live. STALE stops being a daily catastrophe and
+  becomes what it should be: the state of an item whose proof genuinely failed
+  to re-run.
+
+  The DATABASE_URL must be a READ-ONLY prod role. The runner enforces read-only
+  twice (parse + SET TRANSACTION READ ONLY), but CI should not hold a writable
+  prod credential regardless.
+
+WITHOUT THIS STEP, DO NOT FLIP ENFORCEMENT. With it, enforcement is safe and the
+shadow-mode disagreement count becomes a number that falls on its own as items
+gain proofs — which is the metric that has been missing for forty days.
+
+===============================================================================
+3. HOW TO LAND THE CLOSED-LOOP DETECTOR SO IT SURVIVES — baseline freeze
+===============================================================================
+You are right not to fail CI on 29 pre-existing files. Do not leave it at
+--selftest either, or it detects nothing that anyone acts on.
+
+Land it as a RATCHET WITH A FROZEN BASELINE:
+
+  1. Commit docs/specs/CLOSED-LOOP-BASELINE.json listing today's 29 by path.
+  2. CI runs the default. It FAILS on any spec-only verifier NOT in the baseline.
+     The 30th closed loop can never be born.
+  3. The baseline may only SHRINK. A guard asserts the count never rises, and
+     that no entry is added. Removing one is a one-line PR.
+  4. Each of the 29 is then retired on its own: @ratchet if it is honestly a
+     declaration ratchet, or a second input if it claims behaviour.
+
+Two of them cannot honestly take @ratchet, because their names assert facts they
+never check. These are not ratchets, they are mislabelled:
+    verify-baseline-columns-exist-in-db.mjs   name says DB. Input is a JSON file.
+                                              It never opens a database.
+    verify-no-posting-gate-on-empty-table.mjs asserts about empty tables. Spec only.
+Both need a real second input or a rename. Renaming is honest; leaving the name
+is not.
+
+Keep the detector narrow exactly as it is. 3,500 source-read guards are not
+closed loops and must never be accused of it.
+
+===============================================================================
+4. THE FOURTH GUARD NOBODY HAS BUILT — the meta-ratchet
+===============================================================================
+We now have three instruments and each was found broken AFTER it shipped:
+    the C25-C31 existence ratchet   printed OK while 28 modules showed nothing
+    the matrix Live path            certifies a ledger column from prose
+    the proof engine                sql kind returned "not wired in this prototype"
+
+Same failure every time: THE INSTRUMENT SHIPPED WITHOUT ANYTHING PROVING IT COULD
+FAIL. So the last permanent piece is a guard over the guards:
+
+  scripts/verify-guard-can-fail.mjs
+  For every script cited as an auto_check or as a kind:"guard" proof, assert:
+    (a) it has a --selftest, and
+    (b) that selftest PLANTS a defect and demands rejection, and
+    (c) it is not a stub — no code path returns a not-implemented sentinel while
+        the script still exits 0.
+  Its own selftest plants a stub returning "not wired in this prototype" and
+  demands rejection. That single planted string would have caught the sql runner
+  gap on the day it merged, three weeks before I found it.
+
+That is the honest closing of the loop: an instrument may not be cited until
+something has proven it is capable of failing.
+
+===============================================================================
+5. THE ORDER I RECOMMEND
+===============================================================================
+  1  Confirm where ECONOMICS_LIVE_FORBIDS_LEDGER_PROSE lives. If unmerged, land it
+     in the SAME PR as the runner. Strict path and easy path must not coexist.
+  2  Land the runner + econ-proofs + INV-0 (done on disk — push it).
+  3  CC-1 runs the runner once against read-only prod. Paste raw output. Until
+     that paste exists, no econ cell is cited. Nothing above changes this.
+  4  Add the replay step to prod-postdeploy-verify.yml. This is the piece that
+     turns a correct instrument into a working one.
+  5  Closed-loop baseline freeze at 29.
+  6  verify-guard-can-fail.mjs.
+  7  Only then discuss flipping shadow mode off, and flip it per module, starting
+     with the module whose disagreement list is empty. Never all at once.
+
+===============================================================================
+6. WHAT I WOULD TELL AN AUDITOR TODAY
+===============================================================================
+The economics columns are honestly red. Six of seven fail on real prod numbers
+and the seventh passes. The instrument that says so is proven correct against
+twenty planted defects and is NOT yet proven connected to production. No cell is
+being cited as green. The board still carries a prose path we are closing this
+week, and until it is closed we know the exact sentence that could paint a false
+green and nobody has written it.
+
+That is a defensible position. It is not a finished one, and I would not describe
+it as finished.
