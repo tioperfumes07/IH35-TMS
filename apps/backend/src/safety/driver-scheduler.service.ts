@@ -686,7 +686,13 @@ export async function listPendingLeaveRequests(
   return { requests: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
-export async function listAllLeaveRequests(client: QueryableClient, operatingCompanyId: string, limit = 200) {
+export async function listAllLeaveRequests(client: QueryableClient, operatingCompanyId: string, limit = 200, offset = 0) {
+  const countRes = await client.query(
+    `SELECT COUNT(*)::int AS total_count
+     FROM safety.driver_leave_requests
+     WHERE operating_company_id = $1::uuid`,
+    [operatingCompanyId],
+  );
   const res = await client.query(
     `
       SELECT r.*,
@@ -703,10 +709,39 @@ export async function listAllLeaveRequests(client: QueryableClient, operatingCom
       WHERE r.operating_company_id = $1::uuid
       ORDER BY r.created_at DESC
       LIMIT $2
+      OFFSET $3
     `,
-    [operatingCompanyId, limit]
+    [operatingCompanyId, limit, offset]
   );
-  return res.rows;
+  return { requests: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
+}
+
+export async function listDriverLeaveRequests(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  driverId: string,
+  limit: number,
+  offset: number,
+) {
+  const scope = [operatingCompanyId, driverId];
+  const countRes = await client.query(
+    `SELECT COUNT(*)::int AS total_count
+     FROM safety.driver_leave_requests r
+     WHERE r.operating_company_id = $1::uuid
+       AND r.driver_id = $2::uuid`,
+    scope,
+  );
+  const res = await client.query(
+    `SELECT r.*,
+            mdata.resolve_driver_label_same_company(r.driver_id, r.operating_company_id) AS driver_name
+     FROM safety.driver_leave_requests r
+     WHERE r.operating_company_id = $1::uuid
+       AND r.driver_id = $2::uuid
+     ORDER BY r.created_at DESC, r.id DESC
+     LIMIT $3::int OFFSET $4::int`,
+    [...scope, limit, offset],
+  );
+  return { requests: res.rows, totalCount: Number(countRes.rows[0]?.total_count ?? 0) };
 }
 
 export async function getLeaveRequestDetail(client: QueryableClient, operatingCompanyId: string, requestId: string) {
