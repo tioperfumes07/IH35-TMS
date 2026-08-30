@@ -553,17 +553,6 @@ export function CustomersPage() {
     enabled: Boolean(companyId),
   });
   const inactiveCustomersRoster = inactiveCustomersQuery.data?.customers ?? [];
-  // ACCT-F5792 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
-  // total is that tab's own authoritative server COUNT, just picked per listStatus instead of always
-  // reading the active-only query's total. Before this fix, the Inactive tab (13 real rows, confirmed
-  // live) showed "1-12 of 12" underneath because the pager always read customersQuery's active-only
-  // total (12) regardless of which roster was actually being displayed.
-  const customersServerTotal =
-    listStatus === "inactive"
-      ? inactiveCustomersQuery.data?.total ?? 0
-      : listStatus === "all"
-        ? (customersQuery.data?.total ?? 0) + (inactiveCustomersQuery.data?.total ?? 0)
-        : customersQuery.data?.total ?? 0;
   // Full roster (active + inactive) for the list/table view and tab counts ONLY — every other
   // consumer of customersRoster (parentCustomerOptions) stays active-only on purpose.
   const fullCustomersRoster = useMemo(
@@ -642,6 +631,29 @@ export function CustomersPage() {
     }),
     [fullCustomersRoster]
   );
+
+  // ACCT-F5792 — PAGER-SERVERTOTAL-01 still holds (never derive from .length): each tab's pager
+  // total is that tab's own authoritative server COUNT, just picked per listStatus instead of always
+  // reading the active-only query's total. Before this fix, the Inactive tab (13 real rows, confirmed
+  // live) showed "1-12 of 12" underneath because the pager always read customersQuery's active-only
+  // total (12) regardless of which roster was actually being displayed.
+  // CUSTOMERS-QUALITY-SEGMENT-PAGER-TOTAL-STUCK-ON-ALL: `listStatus` only distinguishes
+  // active/inactive/all — it collapses to "all" for the Preferred/Watch/Factored tabs too (see
+  // `listStatus` above), so those 3 tabs' pager fell into the "all" branch (customersQuery.total +
+  // inactiveCustomersQuery.total = 31) even though `visibleCustomers` is filtered down to that
+  // segment's real count by `qualitySegment` (a separate piece of state). Live-confirmed:
+  // "Preferred (1)" showed exactly 1 row with a pager reading "1-31 of 31". No server-side COUNT
+  // exists per quality segment, so fall back to the same clientside `customerTabCounts` value the
+  // tab's own label already uses — never a fresh divergent count, mirroring Vendors.tsx's identical
+  // `categoryFilter` fallback for its `by-category` tab.
+  const customersServerTotal =
+    qualitySegment !== "all"
+      ? customerTabCounts[qualitySegment]
+      : listStatus === "inactive"
+        ? inactiveCustomersQuery.data?.total ?? 0
+        : listStatus === "all"
+          ? (customersQuery.data?.total ?? 0) + (inactiveCustomersQuery.data?.total ?? 0)
+          : customersQuery.data?.total ?? 0;
 
   const customersSorted = useMemo(() => {
     const q = search.trim().toLowerCase();
