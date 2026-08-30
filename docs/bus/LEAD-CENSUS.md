@@ -5,8 +5,8 @@
 | Seat | Idle? | Evidence |
 |------|-------|----------|
 | CC-1 | GO | C30 dedicated probe; no FAIL_ON_FAIL |
-| CC-2 | GO | BANK-ECON-04/SURF-04 stay FAIL |
-| CC-3 | GO | LEGAL-HEARING #18252; do not mass-wire false isError |
+| CC-2 | THIS IS NOW | dup recon one-session/account/period; BANK-ECON-04 stay FAIL |
+| CC-3 | THIS IS NOW | LEGAL-HEARING list+overview from matter_deadlines |
 | Codex | GO | DriverPlanner compose vs direct PlannerGrid import |
 | Cascade | THIS IS NOW | SUPERSEDE 50277-50344 today; B blocked until detector 1-3 |
 | Devin | VOID | not a seat |
