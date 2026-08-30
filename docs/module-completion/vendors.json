@@ -1,16 +1,16 @@
 {
   "module": "vendors",
   "title": "Vendors",
-  "complete": true,
-  "as_of": "2026-08-09T00:59:06.244Z",
-  "live_sha": "b93b482",
+  "complete": false,
+  "as_of": "2026-08-30T01:20:00.000Z",
+  "live_sha": "pending-cert-01",
   "desktop_audit": "~/Desktop/IH35-CURSOR-AUDIT/AUDITOR-RUN-2026-07-31/modules/factoring-deep-2026-08-01.md",
   "spec_sources": [
     "docs/specs/DEFINITION-OF-DONE.md",
     "docs/specs/IH35_ARCHITECTURAL_DESIGN.md",
     "apps/frontend/src/routes/manifest.tsx"
   ],
-  "note": "GUARD 2026-08-29 (CC-2, module-completion legality sweep): all 7 items (VEND-S01..S05, VEND-LINK-01, VEND-VERIFY-01) are status:PASS and prod_verified:true. complete:false was a stale flag with no corresponding open item or wave card -- verify-module-completion.mjs flags this as illegal (all-PASS + complete:false with no open wave). Corrected to complete:true; no new evidence generated, no items touched. Also fixed stale pass_count/progress metadata (was 0 of 7, actual is 7 of 7 -- cosmetic field, not guard-gating, but misleading).",
+  "note": "CERT-01 2026-08-29 OWNER: complete:true was illegal vs Fully-Wired 1–12 + zero leftover OPEN. Seven item stamps remain PASS/prod_verified (CC-2 ancestor-valid). VEND-CERT-01 OPEN until FW 7–8/12 on CURRENT healthz. Prior: GUARD 2026-08-29 all 7 items PASS+prod_verified; complete:true was a legality flip not a Live Chrome module certify.",
   "items": [
     {
       "id": "VEND-S01",
@@ -121,9 +121,25 @@
       "prod_verified": true,
       "live_verified_at": "2026-08-29T20:15:00.000Z",
       "live_verified_sha": "b2448ce"
+    },
+    {
+      "id": "VEND-CERT-01",
+      "title": "Fully-Wired 7–12 on current healthz (URL tabs, responsive master-detail, leftover audit PATCH closed)",
+      "layers": [
+        "DOD-A",
+        "VERIFY-1",
+        "VERIFY-7",
+        "VERIFY-8"
+      ],
+      "spec": "FULLY-WIRED-COMPLETE-BAR items 7–12 + 00-CODER-START-HERE CERTIFIED COMPLETE",
+      "status": "OPEN",
+      "evidence": "OPEN 2026-08-29 CERT-01: item stamps VEND-S01..VERIFY-01 are not module certify. Master-detail must stack (Customers pattern). Tabs URL-addressable. FW 12 only after 1–11 Built on then-current healthz. Do not set complete:true until this item PASS + prod_verified by CC-2.",
+      "pr": null,
+      "prod_verified": false,
+      "unverified_reason": "CERT-01_MODULE_BAR_NOT_ITEM_STAMPS"
     }
   ],
   "pass_count": 7,
-  "total_count": 7,
-  "progress": "7 of 7"
+  "total_count": 8,
+  "progress": "7 of 8"
 }

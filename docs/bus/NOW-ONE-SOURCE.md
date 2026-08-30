@@ -1,3 +1,5 @@
+**2026-08-29T20:35Z GO-CERT-01 THIS IS NOW.** Quote module-completion bound counts, not matrix 0%. Vendors `complete:false` + VEND-CERT-01 OPEN. Matrix persist await. Packet `docs/lockdown/GO-CERT-01-TRULY-CERTIFIED-2026-08-29.md`. Never recertify U14. Skip #15546.
+
 **2026-08-29T20:20Z GO-MATRIX-02 THIS IS NOW.** One column contract both boards. Packet docs/lockdown/GO-MATRIX-02-FW1-12-BOTH-BOARDS-2026-08-29.md
 
 **2026-08-29T20:15Z GO-MAINT-01 + GO-WONUM-01 + GO-MATRIX-PROOF THIS IS NOW.** P0 false DOT O/O = CC-1. WO format stays; D2 lock V5 first set. Matrix proof strip for L6/Clicked/Guard. Never recertify U14. Skip #15546.

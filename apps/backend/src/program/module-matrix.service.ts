@@ -2238,8 +2238,10 @@ export async function computeSystemModuleMatrix(userUuid?: string, seedOnly = fa
   }
 
   systemCache = { atMs: now, probeScope, payload };
-  // Fire-and-forget: never delay the response for the last-good disk write.
-  void persistSystemLastGood(payload);
+  // MATRIX-HANDOFF-01: the worker posts {ok:true} only after this function returns.
+  // A fire-and-forget write raced the parent readSystemLastGood() → HTTP stayed REQUIRED-SEED
+  // while logs said last-good ready. Await so last-good is on disk before the worker message.
+  await persistSystemLastGood(payload);
   return payload;
 }
 
