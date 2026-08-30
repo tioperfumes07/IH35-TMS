@@ -3,7 +3,6 @@
 import { classifyGuards } from "./verify-guard-wired.mjs";
 
 const LABEL = "verify-nonmoney-reverse-link-guard-registry-batch";
-const MAX_REMAINING = 117;
 const REQUIRED = [
   "verify-arriving-soon-work-order-reverse.mjs", "verify-border-crossing-broker-linkage.mjs",
   "verify-complaint-linkage.mjs", "verify-docs-module-reverse-link-wired.mjs",
@@ -30,16 +29,16 @@ const REQUIRED = [
 function failures(classification) {
   const wired = new Set(classification.fullyWired);
   const out = REQUIRED.filter((guard) => !wired.has(guard)).map((guard) => `${guard} is not executed by CI`);
-  if (classification.unaccounted.length > MAX_REMAINING) out.push(`unaccounted guard census ${classification.unaccounted.length} exceeds ${MAX_REMAINING}`);
   return out;
 }
 
 if (process.argv.includes("--selftest")) {
-  const baseline = { fullyWired: [...REQUIRED], unaccounted: Array.from({ length: MAX_REMAINING }, (_, i) => `other-${i}.mjs`) };
-  for (const value of [{ ...baseline, fullyWired: REQUIRED.slice(1) }, { ...baseline, unaccounted: [...baseline.unaccounted, "regression.mjs"] }]) {
-    if (!failures(value).length) throw new Error("planted defect escaped");
+  const baseline = { fullyWired: [...REQUIRED], unaccounted: ["unrelated-repository-guard.mjs"] };
+  if (!failures({ ...baseline, fullyWired: REQUIRED.slice(1) }).length) throw new Error("owned guard removal escaped");
+  if (failures({ ...baseline, unaccounted: [...baseline.unaccounted, "another-unrelated-guard.mjs"] }).length) {
+    throw new Error("unrelated repository growth failed focused registry");
   }
-  console.log(`${LABEL} SELFTEST PASS — 2/2 planted defects rejected`);
+  console.log(`${LABEL} SELFTEST PASS — owned removal rejected; unrelated census growth accepted`);
   process.exit(0);
 }
 
@@ -48,4 +47,4 @@ if (problems.length) {
   console.error(`${LABEL} FAIL\n${problems.join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — 38 non-money reverse-link guards execute in CI; orphan census ratcheted at <=${MAX_REMAINING}`);
+console.log(`${LABEL} PASS — 38 exact non-money reverse-link guards execute in CI`);

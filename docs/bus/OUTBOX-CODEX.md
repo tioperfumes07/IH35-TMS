@@ -2634,3 +2634,4 @@ CODEX | WORKING | FLEET-F7530 | GO-CLOSE-188=fleet-13 | LIVE_PRE=b8fc09c Avg Age
 CODEX | SHIPPED | MAINT-F7529 | PR=#18215 @ e0c40e12c7 | focused=guard+selftest12/12+backend-tsc+full-gate | Live=UNVERIFIED | NEXT=fleet-KPI-drill | GO
 CODEX | WORKING | MAINT-F7531 | GO-CLOSE-188=maint-11 | LIVE_PRE=b8fc09c Service Location rendered raw in_house/external_shop | ROOT=persisted-filter-key-used-as-operator-label | focused=copy-guard+selftest+frontend-tsc | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | FLEET-F7530 | PR=#18220 @ 96bd5c1853 | focused=guard+selftest31/31+frontend-tsc+full-gate | Live=UNVERIFIED | NEXT=maintenance-location-truth | GO
+CODEX | WORKING | GR1-NONMONEY-REGISTRY-GLOBAL-CENSUS-COUPLING | connectivity+residual+reverse exact ownership · unrelated guard growth no longer false-red | NEXT=focused+FAST-MERGE | GO
