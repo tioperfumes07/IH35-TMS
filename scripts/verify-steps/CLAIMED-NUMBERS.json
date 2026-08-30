@@ -4887,6 +4887,11 @@
     "claimed_by": "cc-1",
     "purpose": "verify-g1-sample-data-name-detection (GO-CLOSE-188 owner G1)"
   },
+  "10118": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "codex",
+    "purpose": "verify-planner-grid-canonical (GO-INSTRUMENT-PLANNER A1-A7)"
+  },
   "10113": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-1",
