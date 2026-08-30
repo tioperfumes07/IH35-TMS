@@ -228,88 +228,105 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
     const licensePlate = typeof raw.licensePlate === "string" ? raw.licensePlate : null;
     const licenseState = typeof raw.state === "string" ? raw.state : null;
 
-    const existing = await client.query(
-      `
-        SELECT id FROM mdata.equipment
-        WHERE samsara_vehicle_id = $2
-          AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
-        LIMIT 1
-      `,
-      [operatingCompanyId, v.id]
-    );
-
-    if (existing.rows[0]) {
-      const equipId = String(existing.rows[0].id);
-      await client.query(
+    // SAMSARA-EQUIPMENT-VIN-COLLISION-500: this lookup used to match ONLY by samsara_vehicle_id, the
+    // exact same gap already fixed on the mdata.units block below (SAMSARA-UNITS-VIN-COLLISION-500) --
+    // a unit that already existed in mdata.equipment with the SAME VIN (no samsara_vehicle_id link
+    // yet) was invisible to it, so the code fell through to INSERT and collided on equipment_vin_key.
+    // Live-confirmed still firing every cron tick after the mdata.units fix shipped (this block was
+    // explicitly flagged, not fixed, in that PR pending Sentry evidence -- now confirmed). Mirrors the
+    // exact same already-proven pattern: match by samsara_vehicle_id OR vin, write samsara_vehicle_id
+    // on the VIN-matched UPDATE (linking, not just reading), and SAVEPOINT-isolate the row.
+    await client.query("SAVEPOINT equipment_row");
+    try {
+      const existing = await client.query(
         `
-          UPDATE mdata.equipment
-          SET vin = COALESCE($1, vin),
-              make = COALESCE($2, make),
-              model = COALESCE($3, model),
-              year = COALESCE($4::int, year),
-              license_plate = COALESCE($5, license_plate),
-              license_state = COALESCE($6, license_state),
-              updated_at = now()
-          WHERE id = $7::uuid
+          SELECT id FROM mdata.equipment
+          WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))
+            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+          LIMIT 1
         `,
-        [
-          vinRaw,
-          make,
-          model,
-          Number.isFinite(year as number) ? year : null,
-          licensePlate,
-          licenseState,
-          equipId,
-        ]
+        [operatingCompanyId, v.id, vinRaw]
       );
-      updated += 1;
-    } else {
-      const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
-      const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
-      const equipmentNumber = `SAM-${suffix}`;
-      await client.query(
-        `
-          INSERT INTO mdata.equipment (
-            equipment_number,
-            vin,
-            equipment_type,
+
+      if (existing.rows[0]) {
+        const equipId = String(existing.rows[0].id);
+        await client.query(
+          `
+            UPDATE mdata.equipment
+            SET vin = COALESCE($1, vin),
+                make = COALESCE($2, make),
+                model = COALESCE($3, model),
+                year = COALESCE($4::int, year),
+                license_plate = COALESCE($5, license_plate),
+                license_state = COALESCE($6, license_state),
+                samsara_vehicle_id = $7,
+                updated_at = now()
+            WHERE id = $8::uuid
+          `,
+          [
+            vinRaw,
             make,
             model,
-            year,
-            license_plate,
-            license_state,
-            owner_company_id,
-            currently_leased_to_company_id,
-            samsara_vehicle_id,
-            status
-          ) VALUES (
-            $1,
-            $2,
-            'DryVan',
-            $3,
-            $4,
-            $5,
-            $6,
-            $7,
-            $8::uuid,
-            $8::uuid,
-            $9,
-            'InService'
-          )
-        `,
-        [
-          equipmentNumber,
-          vinRaw,
-          make,
-          model,
-          Number.isFinite(year as number) ? year : null,
-          licensePlate,
-          licenseState,
-          operatingCompanyId,
-          v.id,
-        ]
-      );
-      added += 1;
+            Number.isFinite(year as number) ? year : null,
+            licensePlate,
+            licenseState,
+            v.id,
+            equipId,
+          ]
+        );
+        updated += 1;
+      } else {
+        const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
+        const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
+        const equipmentNumber = `SAM-${suffix}`;
+        await client.query(
+          `
+            INSERT INTO mdata.equipment (
+              equipment_number,
+              vin,
+              equipment_type,
+              make,
+              model,
+              year,
+              license_plate,
+              license_state,
+              owner_company_id,
+              currently_leased_to_company_id,
+              samsara_vehicle_id,
+              status
+            ) VALUES (
+              $1,
+              $2,
+              'DryVan',
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              $8::uuid,
+              $8::uuid,
+              $9,
+              'InService'
+            )
+          `,
+          [
+            equipmentNumber,
+            vinRaw,
+            make,
+            model,
+            Number.isFinite(year as number) ? year : null,
+            licensePlate,
+            licenseState,
+            operatingCompanyId,
+            v.id,
+          ]
+        );
+        added += 1;
+      }
+      await client.query("RELEASE SAVEPOINT equipment_row");
+    } catch (e) {
+      await client.query("ROLLBACK TO SAVEPOINT equipment_row").catch(() => {});
+      errors.push(`equipment_upsert_failed:${v.id}:${String((e as Error)?.message ?? e)}`);
     }
 
     // Keep /fleet/units views in sync when units support samsara_vehicle_id.
