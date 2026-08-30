@@ -64,7 +64,7 @@ export function RouteDiagramSvg({ totalMiles, stops, expensiveStates }: Props) {
         {avoidZones.map((zone) => (
           <g key={`zone-${zone.pointId}`}>
             <rect x={zone.x! - 35} y={LINE_Y - 30} width={70} height={60} fill="rgba(239,68,68,0.08)" stroke="#DC2626" strokeDasharray="4 4" />
-            <text x={zone.x} y={LINE_Y - 36} textAnchor="middle" className="fill-red-700 text-[10px]">{String(zone.station_state ?? zone.state ?? "")}</text>
+            <text x={zone.x!} y={LINE_Y - 36} textAnchor="middle" className="fill-red-700 text-[10px]">{String(zone.station_state ?? zone.state ?? "")}</text>
           </g>
         ))}
 

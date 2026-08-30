@@ -11,7 +11,6 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import {
-  DEFAULT_DISPATCH_LOCAL_SETTINGS,
   readDispatchLocalSettings,
   writeDispatchLocalSettings,
   type DispatchLocalSettings,
