@@ -49,6 +49,8 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "company_violation",
   "drug_test",
   "hos_violation",
+  "dot_inspection",
+  "fuel_transaction",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -68,6 +70,8 @@ const entityTypeSchema = z.enum([
   "company_violation",
   "drug_test",
   "hos_violation",
+  "dot_inspection",
+  "fuel_transaction",
 ]);
 
 function optionalQueryString() {
@@ -272,6 +276,19 @@ async function ensureLinkEntityExists(
   }
   if (entityType === "hos_violation") {
     const res = await client.query("SELECT id FROM safety.hos_violations WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "dot_inspection") {
+    // Matches the 'invoice' branch's own voided-row exclusion above: a retracted inspection
+    // record must not accept a new document link.
+    const res = await client.query(
+      "SELECT id FROM safety.dot_inspections WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "fuel_transaction") {
+    const res = await client.query("SELECT id FROM fuel.fuel_transactions WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
     return res.rows.length > 0;
   }
   return false;

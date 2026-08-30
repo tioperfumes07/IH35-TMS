@@ -46,6 +46,11 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // had no document column at all (migration 202613290300).
   drug_test: { table: "safety.drug_test", labelSelect: "NULLIF(TRIM(COALESCE(d.test_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
   hos_violation: { table: "safety.hos_violations", labelSelect: "NULLIF(TRIM(COALESCE(d.violation_type, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  // DOC-01 D2/D3 slice 4 (owner 2026-08-29): safety.dot_inspections already had an unconstrained
+  // pdf_evidence_id shortcut (migration 202613290400 adds the missing FK); fuel.fuel_transactions
+  // had no document column at all.
+  dot_inspection: { table: "safety.dot_inspections", labelSelect: "NULLIF(TRIM(COALESCE(d.outcome, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
+  fuel_transaction: { table: "fuel.fuel_transactions", labelSelect: "NULLIF(TRIM(COALESCE(d.transaction_reference, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */
