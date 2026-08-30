@@ -35,10 +35,15 @@ describe("medical-card driver linkage", () => {
     const response = await app.inject({ method: "GET", url: `/api/v1/safety/medical-cards?operating_company_id=${COMPANY}&driver_id=${DRIVER}` });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({ cards: [{ driver_id: DRIVER, driver_name: "Alicia Vance" }] });
-    const listCall = mockQuery.mock.calls.find(([sql]) => String(sql).includes("FROM safety.medical_cards mc"));
+    const listCall = mockQuery.mock.calls.find(([sql]) =>
+      String(sql).includes("SELECT mc.*") && String(sql).includes("FROM safety.medical_cards mc")
+    );
     expect(String(listCall?.[0])).toMatch(/d\.operating_company_id = mc\.operating_company_id/);
+    expect(String(listCall?.[0])).toMatch(/label_dca\.company_id = mc\.operating_company_id/);
+    expect(String(listCall?.[0])).toMatch(/label_dca\.is_authorized = true/);
+    expect(String(listCall?.[0])).toMatch(/label_dca\.deactivated_at IS NULL/);
     expect(String(listCall?.[0])).toMatch(/mc\.driver_id = \$2::uuid/);
-    expect(listCall?.[1]).toEqual([COMPANY, DRIVER]);
+    expect(listCall?.[1]).toEqual([COMPANY, DRIVER, 50, 0]);
   });
 
   it("validates driver company ownership before inserting and audits the FK", async () => {
