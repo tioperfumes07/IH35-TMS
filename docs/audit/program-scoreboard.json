@@ -1,10 +1,10 @@
 {
-  "healthzSha": "20f3601",
+  "healthzSha": "1d4bd5e",
   "generated_at": "2026-08-29T22:47:25.000Z",
   "meta": {
     "generatedAt": "2026-08-29T17:47:25-05:00",
     "sourceSha": "59cac5aa7c",
-    "deployedSha": "20f3601",
+    "deployedSha": "1d4bd5e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2252,
     "failOpen": 121,
@@ -226,7 +226,7 @@
     {
       "tier": "1",
       "module": "vendors",
-      "build": "7/7",
+      "build": "7/8",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -597,7 +597,7 @@
     {
       "tier": "2",
       "module": "safety",
-      "build": "38/38",
+      "build": "37/38",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -1498,7 +1498,7 @@
     {
       "tier": "3",
       "module": "docs",
-      "build": "5/7",
+      "build": "7/7",
       "cells": [
         "AUDIT",
         "AUDIT",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 17829,
-      "title": "FINDING: OPS-F-DRIFT-5-QBO-ENV-SKIP-STALE",
+      "number": 17907,
+      "title": "FINDING: DOC-F10064 (DOC-01 D2 slice 2) -- fine + company_violation document linkage",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17829",
-      "sha": "2401e15ef9",
-      "committedAtIso": "2026-08-29T18:09:42-05:00"
-    },
-    {
-      "number": 17828,
-      "title": "ChatGpt-Codex-1-chore(dispatch): claim D1 source migration",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17828",
-      "sha": "83e8a3c8cb",
-      "committedAtIso": "2026-08-29T18:08:00-05:00"
-    },
-    {
-      "number": 17827,
-      "title": "FINDING: N/A -- OUTBOX status: Wave 1 batch 7/N (#17825) + scoreboard regen (#17824)",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17827",
-      "sha": "a14b694e86",
-      "committedAtIso": "2026-08-29T18:04:31-05:00"
+      "mergedAtCt": "08/29/2026, 08:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17907",
+      "sha": "240cc3665e",
+      "committedAtIso": "2026-08-29T20:37:05-05:00"
     },
     {
       "number": 0,
-      "title": "ChatGpt-Codex-1-fix(program): refresh derived scoreboard",
+      "title": "ChatGpt-Codex-1- fix(maintenance): MAINT-F7374 human incident and GPS references",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:04 PM CT",
+      "mergedAtCt": "08/29/2026, 08:36 PM CT",
       "url": "",
-      "sha": "656318e498",
-      "committedAtIso": "2026-08-29T18:04:09-05:00"
+      "sha": "78829270ec",
+      "committedAtIso": "2026-08-29T20:36:26-05:00"
     },
     {
-      "number": 17825,
-      "title": "FINDING: VERIFY-STATIC-SELFTEST-STALE-97 (batch 7/N) -- RE-ANCHOR 5 guards, 1 falsely accused a real security check",
+      "number": 17905,
+      "title": "FINDING: N/A -- CC-2 OUTBOX: Recipe-B sweep, 5 modules now genuinely complete",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17825",
-      "sha": "dee0ac6351",
-      "committedAtIso": "2026-08-29T18:03:24-05:00"
+      "mergedAtCt": "08/29/2026, 08:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17905",
+      "sha": "1d4bd5eea1",
+      "committedAtIso": "2026-08-29T20:33:49-05:00"
     },
     {
-      "number": 17824,
-      "title": "FINDING: N/A -- regenerate stale docs/audit/program-scoreboard.json (115 commits behind, blocked all pushes)",
+      "number": 17904,
+      "title": "FINDING: N/A -- claim verify-step 10061 for DOC-01 fine/company_violation linkage guard",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 06:02 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17824",
-      "sha": "49610b41a4",
-      "committedAtIso": "2026-08-29T18:02:19-05:00"
+      "mergedAtCt": "08/29/2026, 08:33 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17904",
+      "sha": "1e3752dfde",
+      "committedAtIso": "2026-08-29T20:33:36-05:00"
+    },
+    {
+      "number": 17903,
+      "title": "FINDING: N/A -- bind dispatch module: 6/37 -> 37/37 genuine",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 08:31 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17903",
+      "sha": "71902e2857",
+      "committedAtIso": "2026-08-29T20:31:56-05:00"
+    },
+    {
+      "number": 17902,
+      "title": "FINDING: N/A -- claim migration 202613290200 for DOC-01 fine + company_violation file_links widen",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 08:30 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17902",
+      "sha": "18e2a8aae7",
+      "committedAtIso": "2026-08-29T20:30:17-05:00"
+    },
+    {
+      "number": 17901,
+      "title": "FINDING: CERT-01-MATRIX-HANDOFF",
+      "state": "merged",
+      "mergedAtCt": "08/29/2026, 08:29 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17901",
+      "sha": "97629b1f79",
+      "committedAtIso": "2026-08-29T20:29:52-05:00"
     },
     {
       "number": 0,
-      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7361 repair idempotency mutation",
+      "title": "ChatGpt-Codex-1- fix(dispatch): DSP-F7373 server alert range and sort",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:57 PM CT",
+      "mergedAtCt": "08/29/2026, 08:27 PM CT",
       "url": "",
-      "sha": "47c0188599",
-      "committedAtIso": "2026-08-29T17:57:44-05:00"
+      "sha": "1b06cf8517",
+      "committedAtIso": "2026-08-29T20:27:30-05:00"
     },
     {
-      "number": 17821,
-      "title": "FINDING: N/A -- D-3 detention-pay build spec + GO-PENDING-01 ACK/report",
+      "number": 17899,
+      "title": "FINDING: N/A -- DOC-01 self-fix board + outbox report",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17821",
-      "sha": "c7ab63d578",
-      "committedAtIso": "2026-08-29T17:56:51-05:00"
+      "mergedAtCt": "08/29/2026, 08:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17899",
+      "sha": "adea9b48b4",
+      "committedAtIso": "2026-08-29T20:25:18-05:00"
     },
     {
-      "number": 17820,
-      "title": "FINDING: GO-DWELL-01-D3-DETENTION-PAY-LINE-TYPE",
+      "number": 17898,
+      "title": "FINDING: DOC-F10063 -- medical_card/background_check link-creation silently rejected (ensureLinkEntityExists gap)",
       "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:55 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17820",
-      "sha": "66369bbe85",
-      "committedAtIso": "2026-08-29T17:55:11-05:00"
-    },
-    {
-      "number": 0,
-      "title": "ChatGpt-Codex-1-fix(fuel): FUEL-F7360 repair lifecycle selftest",
-      "state": "merged",
-      "mergedAtCt": "08/29/2026, 05:55 PM CT",
-      "url": "",
-      "sha": "9410922678",
-      "committedAtIso": "2026-08-29T17:55:06-05:00"
+      "mergedAtCt": "08/29/2026, 08:23 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/17898",
+      "sha": "eb1abf2e3f",
+      "committedAtIso": "2026-08-29T20:23:41-05:00"
     }
   ]
 }
