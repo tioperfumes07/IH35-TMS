@@ -9,6 +9,7 @@ const files = {
   service: "apps/backend/src/dispatch/arch-tabs.service.ts",
   reverse: "apps/frontend/src/components/dispatch/DriverInTransitIssuesReverseSection.tsx",
   profile: "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
+  writer: "apps/backend/src/dispatch/intransit-issues.routes.ts",
 };
 const source = Object.fromEntries(Object.entries(files).map(([key, file]) => [key, fs.readFileSync(file, "utf8")]));
 function audit(s) {
@@ -21,6 +22,7 @@ function audit(s) {
   if (!/listDispatchIntransitIssues\(operatingCompanyId, \{ driver_id: driverId \}\)/.test(s.reverse) || !/query\.isError/.test(s.reverse) || !/No in-transit issues linked to this driver/.test(s.reverse)) failures.push("honest driver reverse section missing");
   if (!/kind="load"/.test(s.reverse) || !/kind="unit"/.test(s.reverse)) failures.push("reverse rows must drill to load and unit");
   if (!/DriverInTransitIssuesReverseSection[\s\S]{0,140}driverId=\{id\}/.test(s.profile)) failures.push("driver profile reverse mount missing");
+  if (!/JOIN mdata\.drivers d[\s\S]{0,360}(?:d\.operating_company_id = l\.operating_company_id|l\.operating_company_id = d\.operating_company_id)[\s\S]{0,320}driver_company_authorizations issue_driver_dca[\s\S]{0,220}issue_driver_dca\.company_id = l\.operating_company_id/.test(s.writer)) failures.push("driver self-issue lookup must bind home or actively authorized company to the assigned load");
   return failures;
 }
 if (process.argv.includes("--selftest")) {
@@ -35,6 +37,8 @@ if (process.argv.includes("--selftest")) {
     ["load-drill", "reverse", /kind="load"/, 'kind="driver"'],
     ["unit-drill", "reverse", /kind="unit"/, 'kind="driver"'],
     ["mount", "profile", /DriverInTransitIssuesReverseSection/g, "MissingIssueReverse"],
+    ["writer-company", "writer", /l\.operating_company_id = d\.operating_company_id/, "TRUE"],
+    ["writer-shared-company", "writer", /issue_driver_dca\.company_id = l\.operating_company_id/, "issue_driver_dca.company_id = d.operating_company_id"],
   ];
   for (const [name, key, pattern, replacement] of mutations) {
     const changed = { ...source, [key]: source[key].replace(pattern, replacement) };

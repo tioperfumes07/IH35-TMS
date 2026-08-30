@@ -158,8 +158,12 @@ function refIsScoped(block, alias, columns) {
     // `col\s*(?:=|...)` never matched, false-flagging genuinely scoped JOINs.
     const cast = "(?:::[a-zA-Z_][a-zA-Z0-9_]*)?";
     const direct = new RegExp(`${q}${cast}\\s*(?:=|<>|!=|\\bIN\\b|\\bIS\\b)`, "i");
+    // Equality/inequality is symmetric. `row.operating_company_id = d.operating_company_id` scopes
+    // `d` just as strongly as the opposite spelling; requiring the governed alias on the left turns
+    // correct relationship joins into false offenders and encourages duplicate predicates.
+    const reverse = new RegExp(`(?:=|<>|!=)\\s*${q}${cast}\\b`, "i");
     const inCoalesce = new RegExp(`COALESCE\\s*\\([^)]*${q}\\b[^)]*\\)${cast}\\s*(?:=|\\bIN\\b)`, "i");
-    return direct.test(block) || inCoalesce.test(block);
+    return direct.test(block) || reverse.test(block) || inCoalesce.test(block);
   });
 }
 
@@ -260,7 +264,7 @@ function auditTree() {
   return problems;
 }
 
-function selftest() {
+function selftest({ skipTree = false } = {}) {
   const failures = [];
 
   // The exact legal.matters shape that shipped.
@@ -317,6 +321,11 @@ function selftest() {
   if (auditSql(castScoped).length !== 0)
     failures.push(`case11 FAIL — a cast-scoped JOIN (::text = ::text) was flagged: ${auditSql(castScoped).join(" | ")}`);
 
+  const rhsScoped =
+    'const q = `SELECT * FROM mdata.loads l JOIN mdata.drivers d ON d.id = l.assigned_primary_driver_id AND l.operating_company_id = d.operating_company_id WHERE l.operating_company_id = $1`;';
+  if (auditSql(rhsScoped).length !== 0)
+    failures.push(`case11b FAIL — a right-hand-side scope equality was flagged: ${auditSql(rhsScoped).join(" | ")}`);
+
   // A cast must not become a blanket escape hatch — an unscoped JOIN with an unrelated cast
   // elsewhere in the block must still be caught.
   const castUnscoped =
@@ -324,8 +333,10 @@ function selftest() {
   if (auditSql(castUnscoped).length === 0)
     failures.push("case12 FAIL — an unscoped JOIN with an unrelated cast nearby escaped detection");
 
-  const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case8 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  if (!skipTree) {
+    const tree = auditTree();
+    if (tree.length !== 0) failures.push(`case8 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);
+  }
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);
@@ -335,6 +346,7 @@ function selftest() {
 }
 
 function main() {
+  if (process.argv.includes("--parser-selftest")) return selftest({ skipTree: true });
   if (process.argv.includes("--selftest")) return selftest();
   if (process.argv.includes("--write-baseline")) {
     const { keys, scanned } = collect();
