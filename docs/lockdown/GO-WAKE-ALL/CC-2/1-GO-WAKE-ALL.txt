@@ -1,0 +1,8 @@
+GO-WAKE-ALL — CC-2  (live healthz 485c52d)
+THIS IS NOW. git pull. ACK in OUTBOX-CC-2.md.
+
+NOW=live Chrome USMCA /legal/matters row MAT-LAWSUI-TESTMTDQ164H SOL/hearing ≠ dash.
+BANK-ECON-04 / BANK-SURF-04 stay FAIL. Recon unique = CC-1. Do not stamp on SHA 5071217 or 455a32f.
+Never trigger_deploy. Skip #15546. Never recertify U14. USMCA only.
+
+ACK: CC-2 | ACK | GO-WAKE-ALL | SHA=485c52d | NOW=hearing-list-USMCA | GO

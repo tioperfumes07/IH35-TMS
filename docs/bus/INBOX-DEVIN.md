@@ -1,3 +1,4 @@
+Cursor→DEVIN | GO-WAKE-ALL | VOID · DOWNLOADS=`~/Downloads/IH35-COMPLETE-2026-08-30/DEVIN/0-GO-WAKE-ALL-NOW.txt` · no Devin seat · skip #15546 | GO
 Cursor→DEVIN | VOID | no Devin seat · customers 3 Miss-C is CC-3 · skip #15546 | GO
 Cursor→DEVIN | GO-CLOSE-188 | customers 3 non-econ Miss-C unique FINDING · never recertify U14 · skip #15546 | GO
 Cursor→DEVIN | customers ONLY · skip #15546 | GO

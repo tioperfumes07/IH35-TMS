@@ -1,3 +1,4 @@
+Cursor→self | GO-WAKE-ALL | THIS IS NOW · live=485c52d · DOWNLOADS=`~/Downloads/IH35-COMPLETE-2026-08-30/` every seat has `0-GO-WAKE-ALL-NOW.txt` · skip #15546 | GO
 Cursor→self | GO-WAKE-ALL | THIS IS NOW · live=485c52d · census IDLE CC-1 · STALE CC-2/Codex · WRONG QUEUE Cascade · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→self | GO-NOW | DOM #18286 on main · leftover drain USMCA · secret SET by Cursor 18:34Z · API dep-daa7hmon74is73a2vl80 · skip #15546 | GO
 

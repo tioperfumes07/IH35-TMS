@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · DOWNLOADS=`~/Downloads/IH35-COMPLETE-2026-08-30/CC-2/0-GO-WAKE-ALL-NOW.txt` · hearing list USMCA · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · re-click USMCA /legal/matters MAT-LAWSUI-TESTMTDQ164H hearing ≠ dash · BANK-ECON-04 stay FAIL · recon unique=CC-1 · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-NOW | API deploy kicked `dep-daa7hmon74is73a2vl80` to main `485c52dc` · after live: hearing list cell USMCA · BANK-ECON-04 stay FAIL · recon unique = CC-1 · skip #15546 | GO
 
