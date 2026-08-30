@@ -13,6 +13,7 @@ import {
   resolveFreeTimeMinutes,
   shouldNotifyCustomerAtThreshold,
 } from "./detention.lib.js";
+import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 
 async function withCompany<T>(userId: string, operatingCompanyId: string, fn: (client: PoolClient) => Promise<T>) {
   return withCurrentUser(userId, async (client) => {
@@ -173,9 +174,17 @@ export async function listDetentionEventsForLoad(userId: string, operatingCompan
   });
 }
 
-export async function listDetentionBoard(userId: string, operatingCompanyId: string) {
+export async function listDetentionBoard(
+  userId: string,
+  operatingCompanyId: string,
+  filters: DispatchAlertQuery,
+) {
   await syncDetentionEventsFromStopArrivals(userId, operatingCompanyId);
   return withCompany(userId, operatingCompanyId, async (client) => {
+    const orderBy = dispatchAlertOrderBy(filters, {
+      event_at: "de.started_at", load_number: "l.load_number", customer_name: "customer_name",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "de.status",
+    });
     const res = await client.query(
       `
         SELECT
@@ -221,10 +230,12 @@ export async function listDetentionBoard(userId: string, operatingCompanyId: str
         LEFT JOIN mdata.units u ON u.id = de.unit_id
                                AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = de.operating_company_id
         WHERE de.operating_company_id = $1::uuid
+          AND ($2::date IS NULL OR de.started_at >= $2::date)
+          AND ($3::date IS NULL OR de.started_at < $3::date + interval '1 day')
           AND de.status IN ('accruing', 'closed')
-        ORDER BY de.status ASC, de.started_at ASC
+        ORDER BY ${orderBy}, de.id ASC
       `,
-      [operatingCompanyId]
+      [operatingCompanyId, filters.from ?? null, filters.to ?? null]
     );
     const nowMs = Date.now();
     const events = res.rows.map((row) => {

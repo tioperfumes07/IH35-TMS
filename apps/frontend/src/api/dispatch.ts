@@ -841,9 +841,22 @@ export type AtRiskLoadRow = {
   delivery_state: string | null;
 };
 
-export function listAtRiskDispatchLoads(operatingCompanyId: string) {
+export type DispatchAlertQuery = {
+  from?: string;
+  to?: string;
+  sort?: "event_at" | "load_number" | "customer_name" | "driver_name" | "unit_number" | "status";
+  direction?: "asc" | "desc";
+};
+
+function dispatchAlertParams(operatingCompanyId: string, query: DispatchAlertQuery = {}) {
+  const params = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  for (const [key, value] of Object.entries(query)) if (value) params.set(key, value);
+  return params.toString();
+}
+
+export function listAtRiskDispatchLoads(operatingCompanyId: string, query: DispatchAlertQuery = {}) {
   return apiRequest<{ loads: AtRiskLoadRow[] }>(
-    `/api/v1/dispatch/at-risk-loads?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/dispatch/at-risk-loads?${dispatchAlertParams(operatingCompanyId, query)}`
   );
 }
 
@@ -864,9 +877,9 @@ export type LateArrivalLoadRow = {
   next_stop_type: string | null;
 };
 
-export function listLateArrivalDispatchLoads(operatingCompanyId: string) {
+export function listLateArrivalDispatchLoads(operatingCompanyId: string, query: DispatchAlertQuery = {}) {
   return apiRequest<{ count: number; grace_minutes: number; loads: LateArrivalLoadRow[] }>(
-    `/api/v1/dispatch/alerts/late-arrivals?operating_company_id=${encodeURIComponent(operatingCompanyId)}`
+    `/api/v1/dispatch/alerts/late-arrivals?${dispatchAlertParams(operatingCompanyId, query)}`
   );
 }
 
@@ -875,14 +888,23 @@ export type DispatchAlertLoadRow = AtRiskLoadRow & {
   is_late: boolean;
 };
 
+function compareDispatchAlertRows(a: DispatchAlertLoadRow, b: DispatchAlertLoadRow, query: DispatchAlertQuery): number {
+  const key = query.sort ?? "event_at";
+  const field = key === "event_at" ? "next_stop_scheduled_at" : key;
+  const left = String(a[field as keyof DispatchAlertLoadRow] ?? "");
+  const right = String(b[field as keyof DispatchAlertLoadRow] ?? "");
+  const compared = left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" });
+  return (query.direction ?? "asc") === "desc" ? -compared : compared;
+}
+
 /**
  * Exact load set behind the combined At-risk / late KPI and drill surface.
  * A load may satisfy both signals; its canonical load id is counted once.
  */
-export async function listAtRiskOrLateDispatchLoads(operatingCompanyId: string) {
+export async function listAtRiskOrLateDispatchLoads(operatingCompanyId: string, query: DispatchAlertQuery = {}) {
   const [atRisk, late] = await Promise.all([
-    listAtRiskDispatchLoads(operatingCompanyId),
-    listLateArrivalDispatchLoads(operatingCompanyId),
+    listAtRiskDispatchLoads(operatingCompanyId, query),
+    listLateArrivalDispatchLoads(operatingCompanyId, query),
   ]);
   const loadsById = new Map<string, DispatchAlertLoadRow>();
 
@@ -902,8 +924,9 @@ export async function listAtRiskOrLateDispatchLoads(operatingCompanyId: string) 
     });
   }
 
+  const loads = [...loadsById.values()].sort((a, b) => compareDispatchAlertRows(a, b, query));
   return {
-    loads: [...loadsById.values()],
+    loads,
     count: loadsById.size,
     at_risk_count: atRisk.loads.length,
     late_count: late.loads.length,
@@ -1096,13 +1119,13 @@ export type DetentionBoardEvent = {
   customer_notified_at: string | null;
 };
 
-export function getDetentionBoard(operatingCompanyId: string) {
+export function getDetentionBoard(operatingCompanyId: string, query: DispatchAlertQuery = {}) {
   return apiRequest<{
     count: number;
     active_count: number;
     notify_threshold_minutes: number;
     events: DetentionBoardEvent[];
-  }>(`/api/v1/dispatch/detention/board?operating_company_id=${encodeURIComponent(operatingCompanyId)}`);
+  }>(`/api/v1/dispatch/detention/board?${dispatchAlertParams(operatingCompanyId, query)}`);
 }
 
 // DISP-F6470 — LINK-F5171 reverse-link: load-scoped detention history, any status (unlike the

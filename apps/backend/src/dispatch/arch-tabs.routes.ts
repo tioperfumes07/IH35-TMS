@@ -8,6 +8,7 @@ import {
   listIntransitIssues,
   resolveIntransitIssue,
 } from "./arch-tabs.service.js";
+import { dispatchAlertDateRangeIsValid, dispatchAlertQueryFields } from "./dispatch-alert-query.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
@@ -17,11 +18,10 @@ const companyQuerySchema = z.object({
   issue_driver_id: z.string().uuid().optional(),
   issue_unit_id: z.string().uuid().optional(),
   driver_id: z.string().uuid().optional(),
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   reason: z.string().trim().max(120).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  ...dispatchAlertQueryFields,
 });
 
 const createIssueBodySchema = z.object({
@@ -52,7 +52,8 @@ export async function registerDispatchArchTabsRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
-    return listAtRiskLoads(user.uuid, query.data.operating_company_id);
+    if (!dispatchAlertDateRangeIsValid(query.data)) return reply.code(400).send({ error: "invalid_date_range" });
+    return listAtRiskLoads(user.uuid, query.data.operating_company_id, query.data);
   });
 
   app.get("/api/v1/dispatch/intransit-issues", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

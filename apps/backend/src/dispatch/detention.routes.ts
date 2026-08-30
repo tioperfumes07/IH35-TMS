@@ -9,9 +9,11 @@ import {
   notifyCustomerDetentionThreshold,
   syncDetentionEventsFromStopArrivals,
 } from "./detention.service.js";
+import { dispatchAlertDateRangeIsValid, dispatchAlertQueryFields } from "./dispatch-alert-query.js";
 
 const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
+  ...dispatchAlertQueryFields,
 });
 
 const loadEventsQuerySchema = z.object({
@@ -41,7 +43,8 @@ export async function registerDispatchDetentionRoutes(app: FastifyInstance) {
     if (!user) return;
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return reply.code(400).send({ error: "validation_error", details: query.error.flatten() });
-    return listDetentionBoard(user.uuid, query.data.operating_company_id);
+    if (!dispatchAlertDateRangeIsValid(query.data)) return reply.code(400).send({ error: "invalid_date_range" });
+    return listDetentionBoard(user.uuid, query.data.operating_company_id, query.data);
   });
 
   // DISP-F6470 — LINK-F5171 reverse-link: a load's own detail view can ask "what detention

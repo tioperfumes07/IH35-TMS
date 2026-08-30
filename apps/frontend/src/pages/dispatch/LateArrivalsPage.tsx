@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { listLateArrivalDispatchLoads } from "../../api/dispatch";
+import { listLateArrivalDispatchLoads, type DispatchAlertQuery } from "../../api/dispatch";
+import { useState } from "react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -8,6 +9,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { StatusBadge } from "../../components/StatusBadge";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
@@ -20,10 +22,12 @@ function etaLabel(prediction: Record<string, unknown> | null | undefined): strin
 export function LateArrivalsPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
+  const [sort, setSort] = useState<Required<Pick<DispatchAlertQuery, "sort" | "direction">>>({ sort: "event_at", direction: "asc" });
 
   const lateQ = useQuery({
-    queryKey: ["dispatch", "late-arrivals", companyId],
-    queryFn: () => listLateArrivalDispatchLoads(companyId),
+    queryKey: ["dispatch", "late-arrivals", companyId, range, sort],
+    queryFn: () => listLateArrivalDispatchLoads(companyId, { ...range, ...sort }),
     enabled: Boolean(companyId),
   });
 
@@ -139,6 +143,8 @@ export function LateArrivalsPage() {
         }
       />
 
+      <DispatchAlertServerControls value={range} onApply={setRange} />
+
       {lateQ.isError ? (
         <ListErrorBanner
           message="Failed to load late arrivals."
@@ -155,6 +161,11 @@ export function LateArrivalsPage() {
           emptyText="No late arrivals right now."
           storageKey="dispatch-late-arrivals"
           exportFilename="late-arrivals"
+          suppressToolbarRange
+          sortKey={sort.sort === "event_at" ? "next_stop_scheduled_at" : sort.sort}
+          sortDirection={sort.direction}
+          sortMode="external"
+          onSortChange={(key, direction) => setSort({ sort: key === "next_stop_scheduled_at" ? "event_at" : key as DispatchAlertQuery["sort"], direction })}
         />
       ) : null}
     </div>

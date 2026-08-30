@@ -1,10 +1,15 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
 import { withCurrentUser } from "../auth/db.js";
 import { DISPATCH_ALERT_ACTIVE_STATUSES_SQL } from "./dispatch-alert-statuses.js";
+import { dispatchAlertOrderBy, type DispatchAlertQuery } from "./dispatch-alert-query.js";
 
-export async function listAtRiskLoads(userId: string, operatingCompanyId: string) {
+export async function listAtRiskLoads(userId: string, operatingCompanyId: string, filters: DispatchAlertQuery) {
   return withCurrentUser(userId, async (client) => {
     await setScopedCompanyContext(client, userId, operatingCompanyId);
+    const orderBy = dispatchAlertOrderBy(filters, {
+      event_at: "sp.scheduled_arrival_at", load_number: "l.load_number", customer_name: "customer_name",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status",
+    });
     const res = await client.query(
       `
         SELECT
@@ -60,6 +65,8 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
           LIMIT 1
         ) sp ON true
         WHERE l.operating_company_id = $1::uuid
+          AND ($2::date IS NULL OR sp.scheduled_arrival_at >= $2::date)
+          AND ($3::date IS NULL OR sp.scheduled_arrival_at < $3::date + interval '1 day')
           AND l.soft_deleted_at IS NULL
           AND l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})
           AND (
@@ -71,9 +78,9 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
             )
             OR (sp.scheduled_arrival_at IS NOT NULL AND sp.scheduled_arrival_at <= now())
           )
-        ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC
+        ORDER BY ${orderBy}, l.created_at DESC
       `,
-      [operatingCompanyId]
+      [operatingCompanyId, filters.from ?? null, filters.to ?? null]
     );
     return { loads: res.rows };
   });

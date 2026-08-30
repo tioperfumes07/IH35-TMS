@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** @matrix-built {"modules":["dispatch","customers","drivers","fleet"],"cols":["load","customer","driver","unit","connectivity","reverse_link","qbo_chrome"],"leaves":["queues.at_risk","overview.at_risk"],"task":"DSP-F6933-AT-RISK-SILENT-100-QUEUE","vertical":"class-sweep"} */
+/** @matrix-built {"modules":["dispatch","customers","drivers","fleet"],"cols":["load","customer","driver","unit","connectivity","reverse_link","qbo_chrome"],"leaves":["queues.at_risk","queues.late","queues.detention","overview.at_risk"],"task":"DSP-F7373-DISPATCH-ALERT-SERVER-RANGE-SORT","vertical":"class-sweep"} */
 import fs from "node:fs";
 import path from "node:path";
 
@@ -11,12 +11,19 @@ const api = fs.readFileSync(path.join(root, "apps/frontend/src/api/dispatch.ts")
 const page = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx"), "utf8");
 const overview = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/DispatchOverview.tsx"), "utf8");
 const subnav = fs.readFileSync(path.join(root, "apps/frontend/src/components/dispatch/DispatchSubnav.tsx"), "utf8");
+const atRiskRoute = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/arch-tabs.routes.ts"), "utf8");
+const lateRoute = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/alerts.routes.ts"), "utf8");
+const detentionRoute = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/detention.routes.ts"), "utf8");
+const detentionService = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/detention.service.ts"), "utf8");
+const latePage = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/LateArrivalsPage.tsx"), "utf8");
+const detentionPage = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/DetentionBoardPage.tsx"), "utf8");
+const serverControls = fs.readFileSync(path.join(root, "apps/frontend/src/components/dispatch/DispatchAlertServerControls.tsx"), "utf8");
 
 function subject(source) {
   return source.slice(source.indexOf("export async function listAtRiskLoads"), source.indexOf("export async function listIntransitIssues"));
 }
 
-function failures(serviceSource, lateServiceSource, statusesSource, apiSource, pageSource, overviewSource, subnavSource) {
+function failures(serviceSource, lateServiceSource, statusesSource, apiSource, pageSource, overviewSource, subnavSource, routeSources = [atRiskRoute, lateRoute, detentionRoute], detentionServiceSource = detentionService, latePageSource = latePage, detentionPageSource = detentionPage, controlsSource = serverControls) {
   const found = [];
   const query = subject(serviceSource);
   if (!query.includes("views.dispatch_load_with_driver_status l")) found.push("canonical dispatch source missing");
@@ -38,15 +45,35 @@ function failures(serviceSource, lateServiceSource, statusesSource, apiSource, p
   }
   if (!apiSource.includes("const loadsById = new Map<string, DispatchAlertLoadRow>()") || !apiSource.includes("loadsById.set(load.id")) found.push("canonical-id alert union missing");
   if (!apiSource.includes("count: loadsById.size")) found.push("deduplicated alert count missing");
-  if (!pageSource.includes("listAtRiskOrLateDispatchLoads(companyId)")) found.push("drill page does not consume exact combined set");
+  if (!apiSource.includes("compareDispatchAlertRows(a, b, query)")) found.push("combined alert union loses requested global order");
+  if (!pageSource.includes("listAtRiskOrLateDispatchLoads(companyId,")) found.push("drill page does not consume exact combined set");
   if (!overviewSource.includes("listAtRiskOrLateDispatchLoads(operatingCompanyId)")) found.push("overview combined consumer missing");
   if (!overviewSource.includes("atRiskLateQ.data?.count")) found.push("overview KPI does not use deduplicated count");
   if (!subnavSource.includes("listAtRiskOrLateDispatchLoads(operatingCompanyId)")) found.push("subnav combined consumer missing");
+  for (const [label, route] of [["at-risk", routeSources[0]], ["late", routeSources[1]], ["detention", routeSources[2]]]) {
+    if (!route.includes("...dispatchAlertQueryFields")) found.push(`${label} route lacks shared range/sort validation`);
+    if (!route.includes("dispatchAlertDateRangeIsValid(query.data)")) found.push(`${label} route accepts inverted date range`);
+    if (!route.includes("query.data)")) found.push(`${label} route drops validated server query`);
+  }
+  for (const [label, source, timeColumn] of [["at-risk", serviceSource, "sp.scheduled_arrival_at"], ["late", lateServiceSource, "sp.scheduled_arrival_at"], ["detention", detentionServiceSource, "de.started_at"]]) {
+    if (!source.includes("dispatchAlertOrderBy(filters")) found.push(`${label} lacks whitelisted server sort`);
+    if (!source.includes(`${timeColumn} >=`)) found.push(`${label} lacks server from bound`);
+    if (!source.includes(`${timeColumn} <`)) found.push(`${label} lacks inclusive server to bound`);
+  }
+  if (!apiSource.includes("function dispatchAlertParams") || !apiSource.includes("URLSearchParams")) found.push("frontend API drops server query parameters");
+  for (const [label, source] of [["at-risk", pageSource], ["late", latePageSource], ["detention", detentionPageSource]]) {
+    if (!source.includes("DispatchAlertServerControls")) found.push(`${label} has no applied server range controls`);
+    if (!source.includes("suppressToolbarRange")) found.push(`${label} still exposes competing client-only range`);
+    if (!source.includes('sortMode="external"')) found.push(`${label} still sorts only the loaded client rows`);
+  }
+  for (const token of ["Apply", "Cancel", "Reset", "From must be on or before To."]) {
+    if (!controlsSource.includes(token)) found.push(`server range controls missing ${token}`);
+  }
   return found;
 }
 
 if (process.argv.includes("--selftest")) {
-  const capped = service.replace("ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC", "ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC\n        LIMIT 100");
+  const capped = service.replace("ORDER BY ${orderBy}, l.created_at DESC", "ORDER BY ${orderBy}, l.created_at DESC\n        LIMIT 100");
   const mutations = [
     [capped, lateService, statuses, api, page, overview, subnav],
     [service.replace("l.operating_company_id = $1::uuid", "true"), lateService, statuses, api, page, overview, subnav],
@@ -60,9 +87,17 @@ if (process.argv.includes("--selftest")) {
     [service, lateService, statuses.replace('"at_pickup",', ""), api, page, overview, subnav],
     [service, lateService.replace("l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})", "l.status = 'in_transit'"), statuses, api, page, overview, subnav],
     [service, lateService, statuses, api.replace("count: loadsById.size", "count: atRisk.loads.length + late.loads.length"), page, overview, subnav],
-    [service, lateService, statuses, api, page.replace("listAtRiskOrLateDispatchLoads(companyId)", "listAtRiskDispatchLoads(companyId)"), overview, subnav],
+    [service, lateService, statuses, api.replace("compareDispatchAlertRows(a, b, query)", "0"), page, overview, subnav],
+    [service, lateService, statuses, api, page.replace("listAtRiskOrLateDispatchLoads(companyId,", "listAtRiskDispatchLoads(companyId,"), overview, subnav],
     [service, lateService, statuses, api, page, overview.replace("atRiskLateQ.data?.count", "atRiskCount + lateCount"), subnav],
   ];
+  mutations.push(
+    [service.replace("dispatchAlertOrderBy(filters", "removedOrderBy(filters"), lateService, statuses, api, page, overview, subnav],
+    [service, lateService.replace("sp.scheduled_arrival_at >=", "sp.scheduled_arrival_at ="), statuses, api, page, overview, subnav],
+    [service, lateService, statuses, api, page.replace("suppressToolbarRange", "removedToolbarRange"), overview, subnav],
+    [service, lateService, statuses, api.replace("function dispatchAlertParams", "function removedAlertParams"), page, overview, subnav],
+    [service, lateService, statuses, api, page, overview, subnav, [atRiskRoute.replace("...dispatchAlertQueryFields", ""), lateRoute, detentionRoute]],
+  );
   const missed = mutations.filter((parts) => failures(...parts).length === 0);
   if (missed.length) {
     console.error(`FAIL: selftest missed ${missed.length} at-risk regressions`);

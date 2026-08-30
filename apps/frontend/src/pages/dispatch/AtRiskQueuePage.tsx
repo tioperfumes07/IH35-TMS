@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -8,6 +8,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
+import type { DispatchAlertQuery } from "../../api/dispatch";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
@@ -20,10 +22,12 @@ function etaLabel(prediction: Record<string, unknown> | null | undefined): strin
 export function AtRiskQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
+  const [sort, setSort] = useState<Required<Pick<DispatchAlertQuery, "sort" | "direction">>>({ sort: "event_at", direction: "asc" });
 
   const loadsQ = useQuery({
-    queryKey: ["dispatch", "at-risk-or-late-loads", companyId],
-    queryFn: () => listAtRiskOrLateDispatchLoads(companyId),
+    queryKey: ["dispatch", "at-risk-or-late-loads", companyId, range, sort],
+    queryFn: () => listAtRiskOrLateDispatchLoads(companyId, { ...range, ...sort }),
     enabled: Boolean(companyId),
   });
 
@@ -102,6 +106,8 @@ export function AtRiskQueuePage() {
         }
       />
 
+      <DispatchAlertServerControls value={range} onApply={setRange} />
+
       {loadsQ.isError ? (
         <ListErrorState
           title="Couldn't load at-risk queue"
@@ -118,6 +124,11 @@ export function AtRiskQueuePage() {
           emptyText="No at-risk or late loads right now."
           storageKey="dispatch-at-risk-late-queue"
           exportFilename="at-risk-late-queue"
+          suppressToolbarRange
+          sortKey={sort.sort === "event_at" ? "next_stop_scheduled_at" : sort.sort}
+          sortDirection={sort.direction}
+          sortMode="external"
+          onSortChange={(key, direction) => setSort({ sort: key === "next_stop_scheduled_at" ? "event_at" : key as DispatchAlertQuery["sort"], direction })}
         />
       )}
     </div>
