@@ -14,6 +14,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { Modal } from "../../components/Modal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { ListErrorState } from "../../components/ListErrorState";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -181,14 +182,18 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
     setRecoveryRail(allowed.includes(preferred) ? preferred : "ask");
   }, [selectedRecoveryMeta]);
 
+  // DRV-MONEY-F7449 — React Query RETAINS the last-successful `data` across a failed refetch, so a
+  // subsequent read error was previously indistinguishable from "genuinely no active policies" AND
+  // left stale actionable Pause/Cancel/Resume rows rendered against data the read layer no longer
+  // vouches for. Suppress rows (not just the empty-state text) whenever the read errored.
   const grouped = useMemo(() => {
-    const rows = policiesQuery.data?.rows ?? [];
+    const rows = policiesQuery.isError ? [] : (policiesQuery.data?.rows ?? []);
     return {
       active: rows.filter((row) => row.status === "active"),
       paused: rows.filter((row) => row.status === "paused"),
       completed: rows.filter((row) => row.status === "completed"),
     };
-  }, [policiesQuery.data?.rows]);
+  }, [policiesQuery.isError, policiesQuery.data?.rows]);
 
   function renderPolicyRow(row: (typeof grouped.active)[number]) {
     const owed = Number(row.total_owed_cents ?? 0);
@@ -247,21 +252,32 @@ export function AutoDeductionPolicies({ operatingCompanyId, driverId: lockedDriv
         </Button>
       </div>
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Active</h3>
-        {grouped.active.map(renderPolicyRow)}
-        {grouped.active.length === 0 ? <p className="text-xs text-gray-500">No active auto-deduction policies.</p> : null}
-      </section>
+      {policiesQuery.isError ? (
+        <ListErrorState
+          title="Couldn't load auto-deduction policies"
+          status={0}
+          message={(policiesQuery.error as Error)?.message}
+          onRetry={() => void policiesQuery.refetch()}
+        />
+      ) : (
+        <>
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Active</h3>
+            {grouped.active.map(renderPolicyRow)}
+            {grouped.active.length === 0 ? <p className="text-xs text-gray-500">No active auto-deduction policies.</p> : null}
+          </section>
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Paused</h3>
-        {grouped.paused.map(renderPolicyRow)}
-      </section>
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Paused</h3>
+            {grouped.paused.map(renderPolicyRow)}
+          </section>
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Completed</h3>
-        {grouped.completed.map(renderPolicyRow)}
-      </section>
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-600">Completed</h3>
+            {grouped.completed.map(renderPolicyRow)}
+          </section>
+        </>
+      )}
 
       <Modal variant="drawer" open={createOpen} onClose={() => setCreateOpen(false)} title="Create auto-deduction policy">
         <form
