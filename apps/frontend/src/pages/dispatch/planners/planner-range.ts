@@ -36,8 +36,22 @@ export function listPlannerDays(range: PlannerRange): string[] {
 }
 
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
-  const [windowDays, setWindowDays] = useState<PlannerRangeDays>(initialDays);
-  const range = useMemo(() => buildPlannerRange(windowDays), [windowDays]);
+  const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));
+  const rangeLength = useMemo(() => {
+    const start = Date.parse(`${range.start}T00:00:00Z`);
+    const end = Date.parse(`${range.end}T00:00:00Z`);
+    return Math.round((end - start) / 86_400_000) + 1;
+  }, [range.end, range.start]);
+  const windowDays = PLANNER_RANGE_OPTIONS.includes(rangeLength as PlannerRangeDays)
+    ? (rangeLength as PlannerRangeDays)
+    : null;
+  const setWindowDays = (days: PlannerRangeDays) => {
+    setRangeState(buildPlannerRange(days, range.start));
+  };
+  const setRange = (next: PlannerRange) => {
+    if (next.start > next.end) return;
+    setRangeState(next);
+  };
   const days = useMemo(() => listPlannerDays(range), [range.start, range.end]);
-  return { windowDays, setWindowDays, range, days };
+  return { windowDays, setWindowDays, setRange, range, days };
 }
