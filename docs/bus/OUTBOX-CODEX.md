@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7505 | ROOT=Safety-create-error-class-rejected-generation-safe-captured-error | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7504 | PR=#18150 @ 66f4161dbb | focused=normal+selftest10/10+full-gate | NEXT=Safety-create-error-class-red | GO
 CODEX | WORKING | GUARD-F7504 | ROOT=DTC-range-guard-froze-retired-client-sliced-visibleRows | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7503 | PR=#18149 @ ec6296c6a3 | focused=normal+selftest23/23+full-gate | NEXT=DTC-range-red | GO
 CODEX | WORKING | GUARD-F7503 | ROOT=COMP01-random-pool-guard-required-retired-duplicate-enrollment-reader | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
