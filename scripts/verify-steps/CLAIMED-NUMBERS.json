@@ -6911,7 +6911,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1336,
+  "total_claimed": 1337,
   "10125": [
     "10125-verify-recon-sessions-void-and-unique-period.mjs"
   ],
@@ -6920,5 +6920,8 @@
   ],
   "10133": [
     "10133-verify-factoring-advance-reserve-fee-independent.mjs"
+  ],
+  "10137": [
+    "10137-verify-factoring-submit-rates-fail-closed.mjs"
   ]
 }
