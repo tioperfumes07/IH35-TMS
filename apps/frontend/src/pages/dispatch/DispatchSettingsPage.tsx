@@ -13,6 +13,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export const DISPATCH_LOCAL_SETTINGS_KEY = "ih35.dispatch.local_settings";
 
+export function dispatchLocalSettingsKey(operatingCompanyId: string) {
+  return `${DISPATCH_LOCAL_SETTINGS_KEY}.${operatingCompanyId}`;
+}
+
 export type DispatchLocalSettings = {
   default_sort: string;
   alert_yellow_minutes: number;
@@ -40,10 +44,11 @@ const SORT_OPTIONS = [
   { value: "rate_total_cents:desc", label: "Rate (high→low)" },
 ] as const;
 
-function readDispatchLocalSettings(): DispatchLocalSettings {
+function readDispatchLocalSettings(operatingCompanyId: string): DispatchLocalSettings {
   if (typeof window === "undefined") return DEFAULT_DISPATCH_LOCAL_SETTINGS;
+  if (!operatingCompanyId) return DEFAULT_DISPATCH_LOCAL_SETTINGS;
   try {
-    const raw = window.localStorage.getItem(DISPATCH_LOCAL_SETTINGS_KEY);
+    const raw = window.localStorage.getItem(dispatchLocalSettingsKey(operatingCompanyId));
     if (!raw) return DEFAULT_DISPATCH_LOCAL_SETTINGS;
     const parsed = JSON.parse(raw) as Partial<DispatchLocalSettings>;
     return { ...DEFAULT_DISPATCH_LOCAL_SETTINGS, ...parsed };
@@ -52,9 +57,9 @@ function readDispatchLocalSettings(): DispatchLocalSettings {
   }
 }
 
-function writeDispatchLocalSettings(partial: Partial<DispatchLocalSettings>) {
-  const next = { ...readDispatchLocalSettings(), ...partial };
-  window.localStorage.setItem(DISPATCH_LOCAL_SETTINGS_KEY, JSON.stringify(next));
+function writeDispatchLocalSettings(operatingCompanyId: string, partial: Partial<DispatchLocalSettings>) {
+  const next = { ...readDispatchLocalSettings(operatingCompanyId), ...partial };
+  window.localStorage.setItem(dispatchLocalSettingsKey(operatingCompanyId), JSON.stringify(next));
   return next;
 }
 
@@ -89,7 +94,7 @@ export function DispatchSettingsPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
-  const [localSettings, setLocalSettings] = useState<DispatchLocalSettings>(() => readDispatchLocalSettings());
+  const [localSettings, setLocalSettings] = useState<DispatchLocalSettings>(() => readDispatchLocalSettings(selectedCompanyId ?? ""));
 
   const prefsQuery = useQuery({
     queryKey: ["dispatch-preferences"],
@@ -108,11 +113,12 @@ export function DispatchSettingsPage() {
   const defaultView = prefsQuery.data?.dispatch_default_view ?? "home";
 
   useEffect(() => {
-    setLocalSettings(readDispatchLocalSettings());
-  }, []);
+    setLocalSettings(readDispatchLocalSettings(selectedCompanyId ?? ""));
+  }, [selectedCompanyId]);
 
   function patchLocal(partial: Partial<DispatchLocalSettings>) {
-    const next = writeDispatchLocalSettings(partial);
+    if (!selectedCompanyId) return;
+    const next = writeDispatchLocalSettings(selectedCompanyId, partial);
     setLocalSettings(next);
     pushToast("Dispatcher defaults updated.");
   }

@@ -44,6 +44,16 @@ export function checkSettingsWritePersistence(routes) {
   return failures;
 }
 
+export function checkSettingsCompanyScope(page, pageTest) {
+  const failures = [];
+  if (!page.includes("dispatchLocalSettingsKey(operatingCompanyId)")) failures.push("local setting reads must use the selected company key");
+  if (!page.includes("dispatchLocalSettingsKey(operatingCompanyId), JSON.stringify(next)")) failures.push("local setting writes must use the selected company key");
+  if (!page.includes("[selectedCompanyId]")) failures.push("company changes must reload the local setting snapshot");
+  if (!page.includes("writeDispatchLocalSettings(selectedCompanyId, partial)")) failures.push("patches must bind the current company id");
+  if (!pageTest.includes("does not load a legacy global setting into the selected company")) failures.push("tests must prove global settings cannot leak into a company");
+  return failures;
+}
+
 function main() {
   const page = read(paths.page);
   const pageTest = read(paths.pageTest);
@@ -62,6 +72,7 @@ function main() {
   if (!page.includes("dispatch-settings-alert-thresholds")) failures.push("DispatchSettingsPage must expose alert thresholds section");
   failures.push(...checkSettingsReadBeforeWrite(page));
   failures.push(...checkSettingsWritePersistence(routes));
+  failures.push(...checkSettingsCompanyScope(page, pageTest));
   if ((pageTest.match(/\bit\(/g) ?? []).length < 3) failures.push("DispatchSettingsPage tests must cover at least 3 cases");
 
   if (!dispatchApi.includes("getDispatchPreferences")) failures.push("dispatch API must export getDispatchPreferences");
@@ -97,7 +108,13 @@ if (process.argv.includes("--selftest")) {
   const brokenRoutes = routes.replace('code: "E_DISPATCH_PREFERENCE_WRITE_FAILED"', 'code: "REMOVED"');
   const plantedWrite = checkSettingsWritePersistence(brokenRoutes);
   const currentWrite = checkSettingsWritePersistence(routes);
-  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0) {
+  const brokenScope = fixed
+    .replaceAll("dispatchLocalSettingsKey(operatingCompanyId)", "DISPATCH_LOCAL_SETTINGS_KEY")
+    .replace("[selectedCompanyId]", "[]")
+    .replace("writeDispatchLocalSettings(selectedCompanyId, partial)", "writeDispatchLocalSettings(partial)");
+  const plantedScope = checkSettingsCompanyScope(brokenScope, read(paths.pageTest));
+  const currentScope = checkSettingsCompanyScope(fixed, read(paths.pageTest));
+  if (planted.length >= 3 && current.length === 0 && plantedWrite.length === 1 && currentWrite.length === 0 && plantedScope.length >= 4 && currentScope.length === 0) {
     console.log("verify:dispatch-settings-tab selftest PASS — planted blind-write regression rejected");
     process.exit(0);
   }
