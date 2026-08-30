@@ -2423,3 +2423,5 @@ Codex | WORKING | GUARD-F7398 | load reassignment selected-driver label selftest
 Codex | SHIPPED | GUARD-F7397 | PR=#17968 @ 32e167b288 | gate=exit0 | NEXT=GUARD-F7398 | GO
 Codex | WORKING | GUARD-F7399 | Dispatch overview at-risk/late query rename re-anchored | five panel error paths retained | NEXT=FAST-MERGE then next domain census red | GO
 Codex | SHIPPED | GUARD-F7398 | PR=#17970 @ 293a43adb8 | gate=exit0 | NEXT=GUARD-F7399 | GO
+CODEX | WORKING | GUARD-F7400 | border-crossing driver payload snapshot guard drift | canonical driver FK remains forwarded | NEXT=focused proof+FAST-MERGE then next dispatch red | GO
+CODEX | SHIPPED | GUARD-F7399 | PR=#17971 @ fa9384be35 | gate=exit0 | NEXT=GUARD-F7400 | GO

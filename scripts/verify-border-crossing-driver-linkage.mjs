@@ -29,7 +29,7 @@ function audit(s) {
     `${alias}\\.deactivated_at IS NULL`
   );
   if (!/<EntityPicker[\s\S]{0,160}kind="driver"/.test(s.wizard)) failures.push("wizard canonical driver picker missing");
-  if (!/driver_id:\s*form\.driverId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward driver FK");
+  if (!/driver_id:\s*input\.form\.driverId \|\| undefined/.test(s.submit)) failures.push("wizard submit must forward the snapshotted driver FK");
   if (!/FROM mdata\.drivers[\s\S]{0,220}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL[\s\S]{0,100}archived_at IS NULL/.test(s.writer)) failures.push("writer active tenant driver validation missing");
   if (!/INSERT INTO mdata\.unit_border_crossings[\s\S]{0,180}operating_company_id, unit_id, driver_id/.test(s.writer)) failures.push("writer driver persistence missing");
   if (!/driver_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.historyRoute) || !/filters\.push\(`ubc\.driver_id = \$\$\{values\.length\}::uuid`\)/.test(s.historyRoute)) failures.push("exact driver history filter missing");
@@ -44,7 +44,7 @@ function audit(s) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     ["picker", "wizard", /(<EntityPicker[\s\S]{0,160})kind="driver"/, '$1kind="unit"'],
-    ["payload", "submit", /driver_id:\s*form\.driverId \|\| undefined/, "driver_id: undefined"],
+    ["payload", "submit", /driver_id:\s*input\.form\.driverId \|\| undefined/, "driver_id: undefined"],
     ["scope", "writer", /(FROM mdata\.drivers[\s\S]{0,220})operating_company_id = \$2::uuid/, "$1TRUE"],
     ["active", "writer", /(FROM mdata\.drivers[\s\S]{0,260})deactivated_at IS NULL/, "$1TRUE"],
     ["archived", "writer", /(FROM mdata\.drivers[\s\S]{0,300})archived_at IS NULL/, "$1TRUE"],
