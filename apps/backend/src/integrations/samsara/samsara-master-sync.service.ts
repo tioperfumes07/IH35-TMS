@@ -314,74 +314,91 @@ export async function syncSamsaraVehiclesMaster(client: PgClient, operatingCompa
 
     // Keep /fleet/units views in sync when units support samsara_vehicle_id.
     if (hasUnitsVehicleId) {
-      const existingUnit = await client.query(
-        `
-          SELECT id FROM mdata.units
-          WHERE samsara_vehicle_id = $2
-            AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
-          LIMIT 1
-        `,
-        [operatingCompanyId, v.id]
-      );
+      // SAMSARA-UNITS-VIN-COLLISION-500: this lookup used to match ONLY by samsara_vehicle_id, so a
+      // unit that already existed with the SAME VIN (created manually, or synced under a different
+      // samsara_vehicle_id / before this column existed) was invisible to it -- the code fell to the
+      // INSERT branch and collided on units_vin_key, throwing an unhandled rejection that (per this
+      // function having no per-row isolation, unlike syncSamsaraTrailersMaster's proven SAVEPOINT
+      // pattern below) could abort the rest of this sync run. Mirror the trailer sync's own
+      // already-proven fix exactly: match by samsara_vehicle_id OR vin (VIN match upgrades/links the
+      // existing row in place instead of colliding), and SAVEPOINT-isolate the row so any residual
+      // collision only fails that one vehicle, not the whole batch.
+      await client.query("SAVEPOINT unit_row");
+      try {
+        const existingUnit = await client.query(
+          `
+            SELECT id FROM mdata.units
+            WHERE (samsara_vehicle_id = $2 OR ($3::text IS NOT NULL AND vin = $3))
+              AND COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
+            LIMIT 1
+          `,
+          [operatingCompanyId, v.id, vinRaw]
+        );
 
-      if (existingUnit.rows[0]) {
-        const unitId = String(existingUnit.rows[0].id);
-        const odoClause = hasUnitsOdometerMi
-          ? `, odometer_mi = (SELECT odometer_mi FROM telematics.vehicle_latest_position WHERE unit_id = $7::uuid AND operating_company_id = $8::uuid LIMIT 1)`
-          : "";
-        await client.query(
-          `
-            UPDATE mdata.units
-            SET vin = COALESCE($1, vin),
-                make = COALESCE($2, make),
-                model = COALESCE($3, model),
-                year = COALESCE($4::int, year),
-                license_plate = COALESCE($5, license_plate),
-                license_state = COALESCE($6, license_state),
-                updated_at = now()
-                ${odoClause}
-            WHERE id = $7::uuid
-          `,
-          hasUnitsOdometerMi
-            ? [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, unitId, operatingCompanyId]
-            : [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, unitId]
-        );
-      } else {
-        const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
-        const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
-        const unitNumber = `SAM-${suffix}`;
-        const insertOdoCol = hasUnitsOdometerMi ? `,\n              odometer_mi` : "";
-        const insertOdoVal = hasUnitsOdometerMi ? `,\n              NULL` : "";
-        await client.query(
-          `
-            INSERT INTO mdata.units (
-              unit_number,
-              vin,
-              make,
-              model,
-              year,
-              license_plate,
-              license_state,
-              owner_company_id,
-              currently_leased_to_company_id,
-              samsara_vehicle_id,
-              status${insertOdoCol}
-            ) VALUES (
-              $1,
-              $2,
-              $3,
-              $4,
-              $5,
-              $6,
-              $7,
-              $8::uuid,
-              $8::uuid,
-              $9,
-              'InService'${insertOdoVal}
-            )
-          `,
-          [unitNumber, vinRaw ?? `SAMVIN-${suffix}`, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, operatingCompanyId, v.id]
-        );
+        if (existingUnit.rows[0]) {
+          const unitId = String(existingUnit.rows[0].id);
+          const odoClause = hasUnitsOdometerMi
+            ? `, odometer_mi = (SELECT odometer_mi FROM telematics.vehicle_latest_position WHERE unit_id = $8::uuid AND operating_company_id = $9::uuid LIMIT 1)`
+            : "";
+          await client.query(
+            `
+              UPDATE mdata.units
+              SET vin = COALESCE($1, vin),
+                  make = COALESCE($2, make),
+                  model = COALESCE($3, model),
+                  year = COALESCE($4::int, year),
+                  license_plate = COALESCE($5, license_plate),
+                  license_state = COALESCE($6, license_state),
+                  samsara_vehicle_id = $7,
+                  updated_at = now()
+                  ${odoClause}
+              WHERE id = $8::uuid
+            `,
+            hasUnitsOdometerMi
+              ? [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, v.id, unitId, operatingCompanyId]
+              : [vinRaw, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, v.id, unitId]
+          );
+        } else {
+          const numRes = await client.query(`SELECT gen_random_uuid() AS g`);
+          const suffix = String(numRes.rows[0]?.g ?? v.id).replace(/-/g, "").slice(0, 8);
+          const unitNumber = `SAM-${suffix}`;
+          const insertOdoCol = hasUnitsOdometerMi ? `,\n              odometer_mi` : "";
+          const insertOdoVal = hasUnitsOdometerMi ? `,\n              NULL` : "";
+          await client.query(
+            `
+              INSERT INTO mdata.units (
+                unit_number,
+                vin,
+                make,
+                model,
+                year,
+                license_plate,
+                license_state,
+                owner_company_id,
+                currently_leased_to_company_id,
+                samsara_vehicle_id,
+                status${insertOdoCol}
+              ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8::uuid,
+                $8::uuid,
+                $9,
+                'InService'${insertOdoVal}
+              )
+            `,
+            [unitNumber, vinRaw ?? `SAMVIN-${suffix}`, make, model, Number.isFinite(year as number) ? year : null, licensePlate, licenseState, operatingCompanyId, v.id]
+          );
+        }
+        await client.query("RELEASE SAVEPOINT unit_row");
+      } catch (e) {
+        await client.query("ROLLBACK TO SAVEPOINT unit_row").catch(() => {});
+        errors.push(`unit_upsert_failed:${v.id}:${String((e as Error)?.message ?? e)}`);
       }
     }
   }
