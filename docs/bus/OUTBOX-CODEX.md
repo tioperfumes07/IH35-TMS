@@ -2661,3 +2661,4 @@ CODEX | WORKING | GUARD-F7535 | ROOT=hidden-reverse-selftest-filewide-driver-mat
 CODEX | WORKING | GUARD-F7536 | ROOT=DQF-error-guard-retained-retired-itemName-reset-after-catalog-lifecycle | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7537 | ROOT=fault-rule-creator-limiter-plant-masked-by-identical-GET-limiter | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7538 | ROOT=maintenance-parts-generation-plant-masked-by-sibling-query-error-effect | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7539 | ROOT=work-order-close-read-plant-masked-by-identical-sibling-writer | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
