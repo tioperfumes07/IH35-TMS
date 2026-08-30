@@ -670,7 +670,7 @@
     {
       "id": "catalog.drivers.cash_advance_types.list",
       "tab": "Drivers",
-      "sub": "Termination Reasons",
+      "sub": "Cash Advance Types",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
         "picker_law",
@@ -681,7 +681,7 @@
     {
       "id": "catalog.drivers.cash_advance_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create \u2014 Cash Advance Types",
       "route_hint": "/lists/driver/cash-advance-types",
       "required": [
         "picker_law",
@@ -692,7 +692,7 @@
     {
       "id": "catalog.drivers.endorsements.list",
       "tab": "Drivers",
-      "sub": "Termination Reasons",
+      "sub": "CDL Endorsements",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
         "qbo_chrome",
@@ -702,7 +702,7 @@
     {
       "id": "catalog.drivers.endorsements.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create \u2014 CDL Endorsements",
       "route_hint": "/lists/drivers/endorsements",
       "required": [
         "qbo_chrome",
@@ -712,7 +712,7 @@
     {
       "id": "catalog.drivers.restrictions.list",
       "tab": "Drivers",
-      "sub": "Termination Reasons",
+      "sub": "CDL Restrictions",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
         "qbo_chrome",
@@ -722,7 +722,7 @@
     {
       "id": "catalog.drivers.restrictions.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create \u2014 CDL Restrictions",
       "route_hint": "/lists/drivers/restrictions",
       "required": [
         "qbo_chrome",
@@ -732,7 +732,7 @@
     {
       "id": "catalog.drivers.employment_status.list",
       "tab": "Drivers",
-      "sub": "Cash Advance Types",
+      "sub": "Employment Status",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
         "qbo_chrome",
@@ -742,7 +742,7 @@
     {
       "id": "catalog.drivers.employment_status.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Cash Advance Types",
+      "sub": "+ Create \u2014 Employment Status",
       "route_hint": "/lists/drivers/employment-status",
       "required": [
         "qbo_chrome",
@@ -752,7 +752,7 @@
     {
       "id": "catalog.drivers.leave_types.list",
       "tab": "Drivers",
-      "sub": "CDL Endorsements",
+      "sub": "Leave Types",
       "route_hint": "/lists/driver/leave-types",
       "required": [
         "picker_law",
@@ -763,7 +763,7 @@
     {
       "id": "catalog.drivers.leave_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 CDL Endorsements",
+      "sub": "+ Create \u2014 Leave Types",
       "route_hint": "/lists/driver/leave-types",
       "required": [
         "picker_law",
@@ -774,7 +774,7 @@
     {
       "id": "catalog.drivers.medical_card_status.list",
       "tab": "Drivers",
-      "sub": "CDL Restrictions",
+      "sub": "Medical Card Status",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
         "qbo_chrome",
@@ -784,7 +784,7 @@
     {
       "id": "catalog.drivers.medical_card_status.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 CDL Restrictions",
+      "sub": "+ Create \u2014 Medical Card Status",
       "route_hint": "/lists/drivers/medical-card-status",
       "required": [
         "qbo_chrome",
@@ -794,7 +794,7 @@
     {
       "id": "catalog.drivers.pay_rate_templates.list",
       "tab": "Drivers",
-      "sub": "Employment Statuses",
+      "sub": "Pay Rate Templates",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
         "qbo_chrome",
@@ -804,7 +804,7 @@
     {
       "id": "catalog.drivers.pay_rate_templates.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Employment Statuses",
+      "sub": "+ Create \u2014 Pay Rate Templates",
       "route_hint": "/lists/driver/pay-rate-templates",
       "required": [
         "qbo_chrome",
@@ -814,7 +814,7 @@
     {
       "id": "catalog.drivers.deduction_types.list",
       "tab": "Drivers",
-      "sub": "Leave Types",
+      "sub": "Driver Deduction Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
         "qbo_chrome",
@@ -824,7 +824,7 @@
     {
       "id": "catalog.drivers.deduction_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Leave Types",
+      "sub": "+ Create \u2014 Driver Deduction Types",
       "route_hint": "/lists/driver/deduction-types",
       "required": [
         "qbo_chrome",
@@ -834,7 +834,7 @@
     {
       "id": "catalog.drivers.pay_types.list",
       "tab": "Drivers",
-      "sub": "Medical Card Statuses",
+      "sub": "Driver Pay Types",
       "route_hint": "/lists/driver/pay-types",
       "required": [
         "qbo_chrome",
@@ -844,7 +844,7 @@
     {
       "id": "catalog.drivers.pay_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Medical Card Statuses",
+      "sub": "+ Create \u2014 Driver Pay Types",
       "route_hint": "/lists/driver/pay-types",
       "required": [
         "qbo_chrome",
@@ -854,7 +854,7 @@
     {
       "id": "catalog.drivers.escrow_types.list",
       "tab": "Drivers",
-      "sub": "Pay Rate Templates",
+      "sub": "Escrow Types",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
         "qbo_chrome",
@@ -864,7 +864,7 @@
     {
       "id": "catalog.drivers.escrow_types.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Pay Rate Templates",
+      "sub": "+ Create \u2014 Escrow Types",
       "route_hint": "/lists/driver/escrow-types",
       "required": [
         "qbo_chrome",
@@ -874,7 +874,7 @@
     {
       "id": "catalog.drivers.license_classes.list",
       "tab": "Drivers",
-      "sub": "Driver Deduction Types",
+      "sub": "License Classes",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
         "qbo_chrome",
@@ -884,7 +884,7 @@
     {
       "id": "catalog.drivers.license_classes.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Driver Deduction Types",
+      "sub": "+ Create \u2014 License Classes",
       "route_hint": "/lists/drivers/license-classes",
       "required": [
         "qbo_chrome",
@@ -894,7 +894,7 @@
     {
       "id": "catalog.drivers.driver_load_statuses.list",
       "tab": "Drivers",
-      "sub": "Medical Card Status",
+      "sub": "Driver Load Statuses",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
         "qbo_chrome",
@@ -904,7 +904,7 @@
     {
       "id": "catalog.drivers.driver_load_statuses.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Medical Card Status",
+      "sub": "+ Create \u2014 Driver Load Statuses",
       "route_hint": "/lists/drivers/driver-load-statuses",
       "required": [
         "qbo_chrome",
@@ -914,7 +914,7 @@
     {
       "id": "catalog.drivers.teams.list",
       "tab": "Drivers",
-      "sub": "Termination Reasons",
+      "sub": "Driver Teams",
       "route_hint": "/lists/driver/teams",
       "required": [
         "driver",
@@ -927,7 +927,7 @@
     {
       "id": "catalog.drivers.teams.create",
       "tab": "Drivers",
-      "sub": "+ Create \u2014 Termination Reasons",
+      "sub": "+ Create \u2014 Driver Teams",
       "route_hint": "/lists/driver/teams",
       "required": [
         "driver",
