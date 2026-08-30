@@ -2053,12 +2053,6 @@
       "migration": "202606251500_lumper_billing_config.sql"
     },
     {
-      "object": "mdata.drivers.referral_source",
-      "kind": "COLUMN",
-      "verdict": "none",
-      "migration": "202607080000_settlement_contract_terms.sql"
-    },
-    {
       "object": "mdata.entity_reclassification_log.spine_event_id",
       "kind": "COLUMN",
       "verdict": "weak",

@@ -251,6 +251,8 @@ const createDriverBodySchema = z.object({
   emergency_contact_phone_alternate: z.string().trim().max(40).optional(),
   emergency_contact_address: z.string().trim().max(300).optional(),
   emergency_contact_notes: z.string().trim().max(2000).optional(),
+  referred_by_driver_id: z.string().uuid().optional(),
+  referral_source: z.string().trim().max(160).optional(),
   preferred_language: preferredLanguageSchema.optional(),
   // DRIVER-DEFAULT-PARITY (owner ruling 2026-08-02): a newly created driver defaults to Probation,
   // NOT Active. A brand-new driver must not be instantly dispatchable — the dispatch picker requires
@@ -323,6 +325,8 @@ const updateDriverBodySchema = z
     emergency_contact_phone_alternate: z.string().trim().max(40).nullable().optional(),
     emergency_contact_address: z.string().trim().max(300).nullable().optional(),
     emergency_contact_notes: z.string().trim().max(2000).nullable().optional(),
+    referred_by_driver_id: z.string().uuid().nullable().optional(),
+    referral_source: z.string().trim().max(160).nullable().optional(),
     preferred_language: preferredLanguageSchema.optional(),
     status: driverStatusSchema.optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
@@ -820,6 +824,19 @@ export async function createDriverCanonical(
         resolvedOperatingCompanyId = transpRes.rows[0]?.id ?? null;
       }
 
+      if (b.referred_by_driver_id) {
+        const referrer = await client.query<{ id: string }>(
+          `SELECT id::text
+             FROM mdata.drivers
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND deactivated_at IS NULL
+            LIMIT 1`,
+          [b.referred_by_driver_id, resolvedOperatingCompanyId]
+        );
+        if (!referrer.rows[0]) return { error: "referring_driver_not_found" as const };
+      }
+
       const res = await client.query(
         `
             INSERT INTO mdata.drivers (
@@ -897,6 +914,18 @@ export async function createDriverCanonical(
       );
       const row = res.rows[0];
       await syncCanonicalB1VisaColumns(client, String(row.id), String(resolvedOperatingCompanyId));
+      if (b.referred_by_driver_id || b.referral_source) {
+        await client.query(
+          `UPDATE mdata.drivers
+              SET referred_by_driver_id = $3::uuid,
+                  referral_source = $4
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid`,
+          [row.id, resolvedOperatingCompanyId, b.referred_by_driver_id ?? null, b.referral_source ?? null]
+        );
+        row.referred_by_driver_id = b.referred_by_driver_id ?? null;
+        row.referral_source = b.referral_source ?? null;
+      }
 
       // DRIVER-SUBACCOUNT-AUTO-PROVISION: create BOTH per-driver sub-accounts together on hire —
       //   ASSET     "Driver Cash Advance- <Name>"   under "Driver Cash Advance" (QBO-149)
@@ -1324,6 +1353,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             CASE WHEN has_b1_visa THEN COALESCE(visa_expires_at, b1_visa_expires_date) ELSE visa_expires_at END AS visa_expires_at,
             has_b1_visa, b1_visa_number, b1_visa_expires_date,
             passport_number, passport_expires_at, ine_number, curp,
+            referred_by_driver_id, referral_source, referral_reward_paid_at, referral_reward_settlement_id,
+            (SELECT NULLIF(trim(concat_ws(' ', referrer.first_name, referrer.last_name)), '')
+               FROM mdata.drivers referrer
+              WHERE referrer.id = mdata.drivers.referred_by_driver_id
+                AND referrer.operating_company_id = $2::uuid) AS referred_by_driver_name,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -1461,6 +1495,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             CASE WHEN has_b1_visa THEN COALESCE(visa_expires_at, b1_visa_expires_date) ELSE visa_expires_at END AS visa_expires_at,
             has_b1_visa, b1_visa_number, b1_visa_expires_date,
             passport_number, passport_expires_at, ine_number, curp,
+            referred_by_driver_id, referral_source, referral_reward_paid_at, referral_reward_settlement_id,
+            (SELECT NULLIF(trim(concat_ws(' ', referrer.first_name, referrer.last_name)), '')
+               FROM mdata.drivers referrer
+              WHERE referrer.id = mdata.drivers.referred_by_driver_id
+                AND referrer.operating_company_id = $2::uuid) AS referred_by_driver_name,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -1522,6 +1561,39 @@ export async function registerDriverRoutes(app: FastifyInstance) {
 
     if (!row) return reply.code(404).send({ error: "mdata_driver_not_found" });
     return row;
+  });
+
+  app.get("/api/v1/mdata/drivers/:id/referrals", { config: { rateLimit: { max: 120, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    const parsedParams = idParamSchema.safeParse(req.params ?? {});
+    if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+    const parsedQuery = driverByIdQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+
+    const rows = await withCurrentUser(authUser.uuid, async (client) => {
+      const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
+      if (!companyId) return null;
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
+      const parent = await client.query<{ id: string }>(
+        `SELECT id::text FROM mdata.drivers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
+        [parsedParams.data.id, companyId]
+      );
+      if (!parent.rows[0]) return null;
+      const result = await client.query(
+        `SELECT id::text, NULLIF(trim(concat_ws(' ', first_name, last_name)), '') AS driver_name,
+                referral_source, hire_date::text, referral_reward_paid_at::text,
+                referral_reward_settlement_id::text
+           FROM mdata.drivers
+          WHERE operating_company_id = $1::uuid
+            AND referred_by_driver_id = $2::uuid
+          ORDER BY hire_date DESC NULLS LAST, created_at DESC, id DESC`,
+        [companyId, parsedParams.data.id]
+      );
+      return result.rows;
+    });
+    if (!rows) return reply.code(404).send({ error: "mdata_driver_not_found" });
+    return { referrals: rows };
   });
 
   /**
@@ -2070,6 +2142,8 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("emergency_contact_phone_alternate" in b) add("emergency_contact_phone_alternate", b.emergency_contact_phone_alternate ?? null);
     if ("emergency_contact_address" in b) add("emergency_contact_address", b.emergency_contact_address ?? null);
     if ("emergency_contact_notes" in b) add("emergency_contact_notes", b.emergency_contact_notes ?? null);
+    if ("referred_by_driver_id" in b) add("referred_by_driver_id", b.referred_by_driver_id ?? null);
+    if ("referral_source" in b) add("referral_source", b.referral_source ?? null);
     if ("status" in b) add("status", b.status);
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
@@ -2138,6 +2212,20 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         );
         const oldRow = oldRes.rows[0] ?? null;
         if (!oldRow) return null;
+
+        if (b.referred_by_driver_id) {
+          if (b.referred_by_driver_id === parsedParams.data.id) return { error: "driver_cannot_refer_self" as const };
+          const referrer = await client.query<{ id: string }>(
+            `SELECT id::text
+               FROM mdata.drivers
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND deactivated_at IS NULL
+              LIMIT 1`,
+            [b.referred_by_driver_id, oldRow.operating_company_id]
+          );
+          if (!referrer.rows[0]) return { error: "referring_driver_not_found" as const };
+        }
 
         const res = await client.query(
           `

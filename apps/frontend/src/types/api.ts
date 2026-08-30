@@ -114,6 +114,11 @@ export type Driver = {
   emergency_contact_phone_alternate: string | null;
   emergency_contact_address: string | null;
   emergency_contact_notes: string | null;
+  referred_by_driver_id: string | null;
+  referred_by_driver_name?: string | null;
+  referral_source: string | null;
+  referral_reward_paid_at: string | null;
+  referral_reward_settlement_id: string | null;
   preferred_language: PreferredLanguage;
   qbo_vendor_id: string | null;
   /** Canonical local vendor resolved company-safely through mdata.vendors.qbo_vendor_id. */
@@ -180,6 +185,8 @@ export type CreateDriverInput = {
   emergency_contact_phone_alternate?: string;
   emergency_contact_address?: string;
   emergency_contact_notes?: string;
+  referred_by_driver_id?: string;
+  referral_source?: string;
   preferred_language?: PreferredLanguage;
   status?: DriverStatus;
   notes?: string;
@@ -239,6 +246,8 @@ export type UpdateDriverInput = Partial<
     | "emergency_contact_phone_alternate"
     | "emergency_contact_address"
     | "emergency_contact_notes"
+    | "referred_by_driver_id"
+    | "referral_source"
     | "preferred_language"
     | "status"
     | "notes"

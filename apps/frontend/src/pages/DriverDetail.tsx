@@ -30,6 +30,7 @@ import {
   resendDriverInvite,
   getDriverQualificationRateHistory,
   listDriverCompanyAuthorizations,
+  listDriverReferrals,
   listDriverQualifications,
   listQboVendorLinkageHistory,
   reactivateQualification,
@@ -43,6 +44,7 @@ import { legalMattersApi } from "../api/legal-matters";
 import { InsuranceClaimsReverseSection } from "../components/insurance/InsuranceClaimsReverseSection";
 import { DriverSafetyReverseSection } from "../components/safety/DriverSafetyReverseSection";
 import { DriverWorkOrdersReverseSection } from "../components/maintenance/DriverWorkOrdersReverseSection";
+import { EntityPicker } from "../components/parity/EntityPicker";
 import { DriverReportsReverseSection } from "../components/maintenance/DriverReportsReverseSection";
 import { DriverTempCoverReverseSection } from "../components/safety/DriverTempCoverReverseSection";
 import { DriverEquipmentTransfersReverseSection } from "../components/dispatch/DriverEquipmentTransfersReverseSection";
@@ -386,6 +388,11 @@ export function DriverDetailPage() {
     queryFn: () => legalMattersApi.list(String(driver?.operating_company_id ?? ""), { related_driver_id: id }),
     enabled: activeTab === "Legal Matters" && Boolean(driver?.operating_company_id) && Boolean(id),
   });
+  const referralsQuery = useQuery({
+    queryKey: ["driver-referrals", driver?.operating_company_id, id],
+    queryFn: () => listDriverReferrals(id, String(driver?.operating_company_id ?? "")),
+    enabled: Boolean(driver?.operating_company_id) && Boolean(id),
+  });
 
   // FAIL-D5: never replace the whole hydrated form with a partial `form` patch.
   // First DatePicker/input onChange used to set form={cdl_expires_at:…} only; the old
@@ -429,6 +436,8 @@ export function DriverDetailPage() {
       emergency_contact_phone_alternate: driver.emergency_contact_phone_alternate ?? "",
       emergency_contact_address: driver.emergency_contact_address ?? "",
       emergency_contact_notes: driver.emergency_contact_notes ?? "",
+      referred_by_driver_id: driver.referred_by_driver_id ?? "",
+      referral_source: driver.referral_source ?? "",
       preferred_language: driver.preferred_language ?? "en",
       // `status` is optional on the API row (`status?: string`), so this was the ONE field here without a
       // fallback — it could seed the form with `undefined`. That is the same shape as the bug FAIL-D5 was
@@ -480,6 +489,8 @@ export function DriverDetailPage() {
         emergency_contact_phone_alternate: hydratedForm.emergency_contact_phone_alternate || null,
         emergency_contact_address: hydratedForm.emergency_contact_address || null,
         emergency_contact_notes: hydratedForm.emergency_contact_notes || null,
+        referred_by_driver_id: hydratedForm.referred_by_driver_id || null,
+        referral_source: hydratedForm.referral_source || null,
         preferred_language: (hydratedForm.preferred_language as "en" | "es") || "en",
       }),
     onSuccess: (updated) => {
@@ -1183,6 +1194,58 @@ export function DriverDetailPage() {
                   allowClear
                 />
               </div>
+            </div>
+          </div>
+
+          <div className="col-span-full rounded-md border border-gray-200 p-3" data-testid="driver-referral-lifecycle">
+            <div className="mb-2 text-xs font-semibold text-gray-600">Driver referrals</div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-gray-600">Referred by</label>
+                {editMode ? (
+                  <EntityPicker
+                    kind="driver"
+                    operatingCompanyId={driver.operating_company_id}
+                    value={hydratedForm.referred_by_driver_id || null}
+                    selectedOption={driver.referred_by_driver_id ? { value: driver.referred_by_driver_id, label: driver.referred_by_driver_name || "Referring driver" } : null}
+                    onChange={(value) => setForm((current) => ({ ...current, referred_by_driver_id: value ?? "" }))}
+                    allowCreate={false}
+                    placeholder="Select referring driver"
+                    dataTestId="driver-profile-referrer"
+                  />
+                ) : driver.referred_by_driver_id ? (
+                  <EntityLinkOrTombstone kind="driver" id={driver.referred_by_driver_id} name={driver.referred_by_driver_name} noun="Driver" />
+                ) : <span className="text-sm text-gray-500">Not recorded</span>}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label htmlFor="referral_source" className="text-xs font-semibold text-gray-600">Referral source</label>
+                <input
+                  id="referral_source"
+                  value={hydratedForm.referral_source ?? ""}
+                  disabled={!editMode}
+                  onChange={(event) => setForm((current) => ({ ...current, referral_source: event.target.value }))}
+                  className={`${FORM_INPUT_CLASS} disabled:bg-gray-100`}
+                />
+              </div>
+            </div>
+            <div className="mt-3 border-t border-gray-200 pt-3">
+              <div className="mb-2 text-xs font-semibold text-gray-600">Drivers referred by this driver</div>
+              {referralsQuery.isError ? (
+                <button type="button" className="text-sm text-red-700 underline" onClick={() => void referralsQuery.refetch()}>Couldn't load referrals — Retry</button>
+              ) : referralsQuery.isLoading ? (
+                <p className="text-sm text-gray-500">Loading referrals…</p>
+              ) : (referralsQuery.data?.referrals.length ?? 0) === 0 ? (
+                <p className="text-sm text-gray-500">No referred drivers.</p>
+              ) : (
+                <div className="space-y-2">
+                  {referralsQuery.data?.referrals.map((referral) => (
+                    <div key={referral.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <EntityLinkOrTombstone kind="driver" id={referral.id} name={referral.driver_name} noun="Driver" />
+                      <span className="text-gray-500">{referral.referral_source || "Source not recorded"}{referral.referral_reward_paid_at ? " · Reward paid" : " · Reward pending"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
