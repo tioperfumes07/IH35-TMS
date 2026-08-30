@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7498 | ROOT=policy-unit-search-guard-froze-retired-wizard-local-query-after-shared-EntityPicker-adoption | focused=normal+selftest7/7+sibling-guards | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | INS-F7497 | PR=#18143 @ 9cfe45732b | focused=roundtrip+selftest28/28+insurance-guards+Vitest6/6 | NEXT=verify-policy-create-unit-server-search | GO
 CODEX | WORKING | INS-F7497 | ROOT=policy-unit-picker-retained-transient-state-that-never-reached-submit | focused=roundtrip+selftest+3-insurance-guards | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7496 | PR=#18142 @ d369c65eaf | focused=guard+selftest+Vitest3/3+full-gate | NEXT=verify-form-field-roundtrip | GO
 CODEX | WORKING | GUARD-F7496 | ROOT=at-risk-error-proof-guard-required-retired-at-risk-only-empty-copy | NEXT=normal+selftest+focused+FAST-MERGE | GO
