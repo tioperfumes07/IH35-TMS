@@ -2370,3 +2370,5 @@ CODEX | WORKING | GO-TRUST-02 | FINDING=FLEET-F7351 | NOW=fleet-expense-reverse-
 CODEX | WORKING | GO-MODAL-01 | FINDING=MAINT-F7352 | NOW=arriving-convert-canonical-unit-scope-guard | NEXT=unique dispatch/drivers/fleet | GO
 CODEX | WORKING | GO-BUILD-01 | FINDING=LST-F7366 | blocker=main frontend TS2304 useEffect missing import | NOW=atomic unblock | NEXT=resume DSP-F7365 | GO
 CODEX | WORKING | GO-APP-DEFECT-01 | FINDING=DSP-F7373 | NOW=DISP-01 A4 server range+sort across at-risk/late/detention | guard=PASS+selftest20/20 | NEXT=FAST-MERGE then reread INBOX | GO
+CODEX | WORKING | GO-MAINT-01 | FINDING=MAINT-F7374 | NOW=P4 human incident→WO reference + honest GPS | guard=PASS+selftest16/16 | NEXT=FAST-MERGE then P3 eligibility recheck | GO
+CODEX | SHIPPED | GO-APP-DEFECT-01 | FINDING=DSP-F7373 | PR=#17900 @ 1b06cf8517 | gate=exit0 | NEXT=GO-MAINT-01 P4 | GO

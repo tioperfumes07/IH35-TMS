@@ -19,6 +19,7 @@ export type IncidentAutoWorkflowInput = {
   severity: IncidentSeverity;
   description: string;
   occurred_at: string;
+  source_reference: string;
 };
 
 export type IncidentAutoWorkflowResult = {
@@ -130,7 +131,7 @@ async function spawnMaintenanceDraftWorkOrder(client: DbClient, input: IncidentA
   if (originCol) add(originCol, "incident_full_report");
 
   const titleCol = pick(columns, ["wo_title"]);
-  if (titleCol) add(titleCol, `Draft from incident ${input.incident_id}`);
+  if (titleCol) add(titleCol, `Draft from ${input.source_reference}`);
 
   const bucketCol = pick(columns, ["bucket"]);
   if (bucketCol) add(bucketCol, "roadside");
