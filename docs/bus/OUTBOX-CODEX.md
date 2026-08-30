@@ -2658,3 +2658,4 @@ CODEX | WORKING | ACCT-COA-ROLE-UNIQUE-PERMANENCE | HONEST=latent-risk-not-live-
 CODEX | WORKING | GUARD-CLOSED-LOOP-BASELINE-29 | own-guard=reanchored-to-independent-expected-file | classified=12-ratchets+15-overflags+2-reanchors | baseline=29→0 | detector=selftest9/9+normal0 | available-selftests=23/23 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED+LIVE | ACCT-COA-ROLE-UNIQUE-PERMANENCE | PR=#18382 @ 33442f1396 | migration=202613300800 canonical+mirror-ledgered | live=JE2219+active-distinct-duplicates0+active-row-duplicates0+exact-index-present | HONEST=latent-risk-not-live-money-defect | GO
 CODEX | WORKING | GUARD-F7535 | ROOT=hidden-reverse-selftest-filewide-driver-matcher-masked-history-plant-with-overlap-link | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7536 | ROOT=DQF-error-guard-retained-retired-itemName-reset-after-catalog-lifecycle | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO

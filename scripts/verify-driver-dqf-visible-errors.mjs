@@ -18,7 +18,7 @@ function audit(text) {
   need(/createDriverQualificationItem\(input\.companyId,[\s\S]*?driver_id: input\.driverId/.test(text), "create must use its submitted company/driver snapshot");
   need(/patchDriverQualificationItem\(input\.id, input\.companyId/.test(text), "status update must use its submitted company snapshot");
   need((text.match(/queryKey: \["safety", "driver-dqf", input\.companyId, input\.driverId\]/g) ?? []).length === 2, "both successes must refresh only the submitted scope");
-  need(/\[companyId, driverId\]/.test(text) && /setItemName\(""\)[\s\S]*?setMutationError\(null\)/.test(text), "company/driver transitions must reset draft and error state");
+  need(/useEffect\(\(\) => \{[\s\S]*?scopeGenerationRef\.current \+= 1;[\s\S]*?setDocumentTypeId\(null\);[\s\S]*?setEffectiveDate\(""\);[\s\S]*?setExpiryDate\(""\);[\s\S]*?setExecutedAt\(""\);[\s\S]*?setRemovableAfter\(""\);[\s\S]*?setRetainUntil\(""\);[\s\S]*?setMutationError\(null\);[\s\S]*?\}, \[companyId, driverId\]\);/.test(text), "company/driver transitions must reset the complete draft and error state");
   return failures;
 }
 
@@ -38,7 +38,8 @@ if (process.argv.includes("--selftest")) {
     source.replaceAll("input.generation !== scopeGenerationRef.current", "false"),
     source.replaceAll("input.companyId", "companyId"),
     source.replaceAll('queryKey: ["safety", "driver-dqf", input.companyId, input.driverId]', 'queryKey: ["safety", "driver-dqf"]'),
-    source.replace("[companyId, driverId]", "[]"),
+    source.replace("}, [companyId, driverId]);", "}, []);"),
+    source.replace("setMutationError(null);\n  }, [companyId, driverId]);", "  }, [companyId, driverId]);"),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (mutation === source || audit(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);
