@@ -1,9 +1,9 @@
 {
   "healthzSha": "b8fc09c",
-  "generated_at": "2026-08-30T16:27:56.000Z",
+  "generated_at": "2026-08-30T16:29:28.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T11:27:56-05:00",
-    "sourceSha": "a3e8734c2c",
+    "generatedAt": "2026-08-30T11:29:28-05:00",
+    "sourceSha": "d94c71b0b",
     "deployedSha": "b8fc09c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2356,
@@ -2123,12 +2123,30 @@
   },
   "recentActivity": [
     {
+      "number": 18225,
+      "title": "FINDING: 50309-50317 — GO-CLOSE-188 Miss-C safety 9 zero isError rendering",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18225",
+      "sha": "d94c71b0b",
+      "committedAtIso": "2026-08-30T11:29:28-05:00"
+    },
+    {
+      "number": 18226,
+      "title": "FINDING: DOCS-F10119 OUTBOX report for GO-CLOSE-188 G1 + full sequence closure",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 11:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18226",
+      "sha": "e7005d6cf",
+      "committedAtIso": "2026-08-30T11:28:10-05:00"
+    },
+    {
       "number": 18223,
       "title": "FINDING: ACCT-F10117 GO-CLOSE-188 owner G1 -- customers/vendors named TEST/DEMO/SAMPLE never got is_sample_data set on write",
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:26 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18223",
-      "sha": "cf4cd785ee",
+      "sha": "cf4cd785e",
       "committedAtIso": "2026-08-30T11:26:15-05:00"
     },
     {
@@ -2137,7 +2155,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:25 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18222",
-      "sha": "70ddeab6de",
+      "sha": "70ddeab6d",
       "committedAtIso": "2026-08-30T11:25:43-05:00"
     },
     {
@@ -2146,7 +2164,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:23 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18221",
-      "sha": "bf8707bf5a",
+      "sha": "bf8707bf5",
       "committedAtIso": "2026-08-30T11:23:00-05:00"
     },
     {
@@ -2155,7 +2173,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:21 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18220",
-      "sha": "96bd5c1853",
+      "sha": "96bd5c185",
       "committedAtIso": "2026-08-30T11:21:37-05:00"
     },
     {
@@ -2164,7 +2182,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:18 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18219",
-      "sha": "2d92483975",
+      "sha": "2d9248397",
       "committedAtIso": "2026-08-30T11:18:25-05:00"
     },
     {
@@ -2173,7 +2191,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:17 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18218",
-      "sha": "3821676a3d",
+      "sha": "3821676a3",
       "committedAtIso": "2026-08-30T11:17:17-05:00"
     },
     {
@@ -2182,7 +2200,7 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:17 AM CT",
       "url": "",
-      "sha": "73993571fd",
+      "sha": "73993571f",
       "committedAtIso": "2026-08-30T16:17:02Z"
     },
     {
@@ -2191,26 +2209,8 @@
       "state": "merged",
       "mergedAtCt": "08/30/2026, 11:15 AM CT",
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18217",
-      "sha": "4a5a3a2962",
+      "sha": "4a5a3a296",
       "committedAtIso": "2026-08-30T11:15:33-05:00"
-    },
-    {
-      "number": 18216,
-      "title": "FINDING: 50285-50308 — GO-CLOSE-188 Miss-C lists 25 zero isError rendering",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18216",
-      "sha": "dbafe83409",
-      "committedAtIso": "2026-08-30T11:15:10-05:00"
-    },
-    {
-      "number": 18215,
-      "title": "FINDING: MAINT-F7529 canonicalize PM countdown schedule read",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 11:14 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18215",
-      "sha": "e0c40e12c7",
-      "committedAtIso": "2026-08-30T11:14:50-05:00"
     }
   ]
 }
