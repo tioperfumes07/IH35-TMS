@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-LAST-26-v2 | BANK-ECON-04/05 BANK-SURF-04 resolve 2 named gaps then stamp · stamp queue ACCT-R-04 DRV-S04 + CC-1 batch · shadow-report.mjs disagreements · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-FINISH-TONIGHT | NOW=banking 3 Recipe B · FACT/SETL/USER/VEND only after real walks · never force-stamp · never restamp U14 · skip #15546 | GO
 Cursor→CC-2 | GO-CERT-01 | NOW=U6 Recipe B stamps (dispatch 31) · vendors FW 12 only after healthz has CERT-01 chrome · leftover PATCH if still OPEN · never recertify U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-MATRIX-PROOF | stamp U6 Recipe B so V1 L6 MOVES on the proof strip · never recertify U14 · packet docs/lockdown/GO-MATRIX-PROOF-2026-08-29.md · skip #15546 · never trigger_deploy | GO

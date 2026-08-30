@@ -1,5 +1,4 @@
-# NOW — Cursor (GO-TONIGHT-U6-SCEN)
+# NOW — Cursor (GO-LAST-26-v2)
 
-Dispatch U6 Live Chrome packets so CC-2 can stamp (37 PASS / 6 prod_verified). Deploy 5–10 min and 5–10 PRs, one in-flight. U14 leftover unique only. PAY-01 BLOCKED.
+SUPERSEDES v1. DEFECT-1 withdrawn. VEND-CERT-01 OPEN. Proof engine shadow only. Packet `docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md`. Skip #15546.
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
