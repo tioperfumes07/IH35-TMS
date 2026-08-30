@@ -1,3 +1,4 @@
+CASCADE | FINDING | 50221 | accounting · SILENT-NO-OP — ExpenseDetailPage + ExpensesListPage voidMutation no onError, await mutateAsync no try/catch on financial void | GO
 CASCADE | FINDING | 50220 | system · SILENT-NO-OP — CarrierSwitcher "Make default" no try/catch, setDefaultMutation no onError | GO
 CASCADE | FINDING | 50219 | safety · SILENT-NO-OP — SafetyLayout prefsMutation no onError, void mutateAsync unhandled rejection | GO
 CASCADE | FINDING | 50218 | lists · STALE-DATA-AFTER-MUTATION — ListsHubPage forceSyncMutation only toasts, does not invalidate qboHealthQuery or activityQuery | GO
