@@ -11,6 +11,21 @@ function messageFromApiPayload(status: number, data: unknown): string {
       const v = o[key];
       if (typeof v === "string" && v.trim()) return v.trim().slice(0, 500);
     }
+    // APIERROR-MESSAGE-GETTER-DROPS-FIELDERRORS: a zod validation_error response shapes as
+    // {error:"validation_error", details:{fieldErrors:{...}}} with no top-level message/detail —
+    // without this, the bare "validation_error" code below is all a caller ever sees. Only fires
+    // when none of the more-specific keys above matched, so it never changes an already-decent
+    // message.
+    const details = o.details;
+    if (details && typeof details === "object") {
+      const fieldErrors = (details as Record<string, unknown>).fieldErrors;
+      if (fieldErrors && typeof fieldErrors === "object") {
+        for (const v of Object.values(fieldErrors as Record<string, unknown>)) {
+          const first = Array.isArray(v) ? v[0] : v;
+          if (typeof first === "string" && first.trim()) return first.trim().slice(0, 500);
+        }
+      }
+    }
     const err = o.error;
     if (typeof err === "string" && err.trim()) {
       // CU-09: never leave a bare E_* code as ApiError.message (toasts use err.message widely).
