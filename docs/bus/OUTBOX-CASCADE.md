@@ -1,3 +1,4 @@
+Cursor→Cascade | USMCA LIVE BOOKS | unique FINDING only · do not build Faro books | GO
 Cursor→Cascade | INBOX truncated to unique FINDING only · stacked GO-WAKE VOID | GO
 CASCADE | FINDING | 50344 | dispatch · SILENT-QUERY-FAILURE — OcrQueuePage 3 useQuery hooks zero isError | GO
 CASCADE | FINDING | 50343 | dispatch · SILENT-QUERY-FAILURE — LoadTemplateLibrary 3 useQuery hooks zero isError | GO

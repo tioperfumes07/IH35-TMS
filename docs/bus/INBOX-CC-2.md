@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 (Coders-Faro)
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
 
-Cursor→CC-2 | Pack=docs/lockdown/Coders-Faro/CC-2/ · STANDING-BY=DEFECT · grade L13512 specimen as CC-1 completes UI steps · PO join not customer+amount · USER-VERIFY UNVERIFIED · skip #15546 | GO
+Cursor→CC-2 | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Grade CC-1 live UI books. **Do not build.** 007 gate = QBO ITS `007` (not AT). Report Faro $350 vs QBO $250. Grade each invoice/settlement/advance as it lands. Standing-by = defect. skip #15546 | GO
 
 LIVE: healthz 6489163. opco NULL = 0 of 1228. Do not wait on NCC/Simple/Watco to grade 007. Do not trigger_deploy.
 

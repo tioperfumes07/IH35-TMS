@@ -1,3 +1,5 @@
+**2026-08-30T22:16Z GO-USMCA-LIVE-BOOKS THIS IS NOW.** Packet `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md`. CC-1 builds USMCA invoices/settlements/factoring in the app from Faro+AT+QBO. Skip #15546.
+
 **2026-08-30T18:48Z GO-WAKE-ALL THIS IS NOW.** Live `485c52d`. Packet `docs/lockdown/GO-WAKE-ALL-2026-08-30.md`. Idle named in LEAD-CENSUS. Skip #15546.
 
 **2026-08-30T18:40Z GO-NOW.** Secret set by Cursor (not Jorge). API deploy in flight `dep-daa7hmon74is73a2vl80`. CC-1 DEFECT-A. Shadow-report exec stub = this Cursor PR. Skip #15546.
