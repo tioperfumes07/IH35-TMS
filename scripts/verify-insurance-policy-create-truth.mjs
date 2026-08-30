@@ -5,7 +5,11 @@ const FILE = "apps/backend/src/insurance/policy.routes.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
 function failures(candidate) {
-  const route = candidate.slice(candidate.indexOf('/api/v1/insurance/policies"'));
+  const routeStart = candidate.indexOf('app.post(\n    "/api/v1/insurance/policies"');
+  const nextRoute = routeStart < 0
+    ? -1
+    : candidate.indexOf('app.patch("/api/v1/insurance/policies/:id"', routeStart);
+  const route = routeStart < 0 || nextRoute < 0 ? "" : candidate.slice(routeStart, nextRoute);
   const checks = [
     ["creator limiter", /insurance\/policies"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/],
     ["company vendor", /FROM mdata\.vendors[\s\S]{0,180}operating_company_id = \$2::uuid[\s\S]{0,100}deactivated_at IS NULL/],
@@ -26,7 +30,7 @@ if (problems.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ['{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', ""],
+    ['"/api/v1/insurance/policies",\n    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', '"/api/v1/insurance/policies",\n    { config: {} },'],
     ['if (!policy?.id) throw new Error("insurance_policy_insert_failed");', ""],
     ['"insurance.policy.created"', '"insurance.policy.missing"'],
     ['resource_type: "insurance.policy"', 'resource_type: "insurance.missing"'],
