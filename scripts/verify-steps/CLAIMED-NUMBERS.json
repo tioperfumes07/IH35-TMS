@@ -6911,7 +6911,7 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1338,
+  "total_claimed": 1339,
   "10125": [
     "10125-verify-recon-sessions-void-and-unique-period.mjs"
   ],
@@ -6926,5 +6926,8 @@
   ],
   "10141": [
     "10141-verify-factor-resolver-excludes-voided-inactive.mjs"
+  ],
+  "10142": [
+    "10142-verify-module-completion-requires-tieout.mjs"
   ]
 }
