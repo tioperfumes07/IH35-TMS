@@ -23,6 +23,7 @@ const HANDLERS_DIR = "apps/backend/src/outbox/handlers";
 const RLS_SCHEMAS = ["mdata.", "accounting.", "driver_finance.", "banking.", "payroll.", "maintenance.", "safety.", "fuel.", "catalogs."];
 const QUERY_RE = /\b(from|into|update|join)\s+([a-z_][a-z0-9_]*)\./gi;
 const SETUP_RE = /set_config\s*\(\s*['"](app\.bypass_rls|app\.current_user_id|app\.user_id)['"]/;
+const DRIVER_PROFILE_HANDLER = "driver-profile-message-delivery.handler.ts";
 
 function hasRlsQuery(source) {
   for (const m of source.matchAll(QUERY_RE)) {
@@ -70,6 +71,15 @@ export function assertHandler(source, filename) {
       `${filename}: delivers an RLS-protected query but does not establish app.bypass_rls, app.current_user_id, or app.user_id before the first query`
     );
   }
+
+  if (filename === DRIVER_PROFILE_HANDLER) {
+    if (!/set_config\s*\(\s*['"]app\.bypass_rls['"]\s*,\s*['"]lucia['"]\s*,\s*true\s*\)/.test(beforeFirstQuery)) {
+      errors.push(`${filename}: must establish canonical lucia worker bypass before the delivery receipt update`);
+    }
+    if (!/UPDATE\s+mdata\.driver_profile_messages[\s\S]*?WHERE\s+id\s*=\s*\$1::uuid[\s\S]*?operating_company_id\s*=\s*\$2::uuid[\s\S]*?driver_id\s*=\s*\$4::uuid/i.test(body)) {
+      errors.push(`${filename}: delivery receipt update must retain exact message, company, and driver predicates`);
+    }
+  }
   return errors;
 }
 
@@ -115,9 +125,22 @@ export class NoQueryHandler implements OutboxEventHandler {
     { n: "only company id before query → 1", src: bad, min: 1 },
     { n: "no RLS query → 0", src: noQuery, want: 0 },
   ];
+  const driverProfile = `
+export class DriverProfileMessageDeliveryHandler {
+  async deliver(payload, ctx) {
+    await ctx.client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
+    await ctx.client.query("UPDATE mdata.driver_profile_messages SET provider_message_id = $3 WHERE id = $1::uuid AND operating_company_id = $2::uuid AND driver_id = $4::uuid", [payload.id, payload.company_id, payload.provider_id, payload.driver_id]);
+  }
+}
+`;
+  cases.push(
+    { n: "driver-profile exact worker receipt → 0", src: driverProfile, file: DRIVER_PROFILE_HANDLER, want: 0 },
+    { n: "driver-profile missing canonical bypass → 1+", src: driverProfile.replace("SELECT set_config('app.bypass_rls', 'lucia', true)", "SELECT set_config('app.operating_company_id', $1, true)"), file: DRIVER_PROFILE_HANDLER, min: 1 },
+    { n: "driver-profile missing driver predicate → 1+", src: driverProfile.replace(" AND driver_id = $4::uuid", ""), file: DRIVER_PROFILE_HANDLER, min: 1 },
+  );
   let failed = 0;
   for (const c of cases) {
-    const n = assertHandler(c.src, "test.ts").length;
+    const n = assertHandler(c.src, c.file ?? "test.ts").length;
     const ok = c.want !== undefined ? n === c.want : n >= c.min;
     if (!ok) failed++;
     console.log(`${ok ? "ok  " : "FAIL"}  ${c.n}  (errors=${n})`);

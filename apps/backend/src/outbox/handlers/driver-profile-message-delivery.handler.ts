@@ -42,6 +42,10 @@ export class DriverProfileMessageDeliveryHandler implements OutboxEventHandler {
       throw new Error("driver_profile_message_delivery_invalid_channel");
     }
 
+    // Outbox workers have no authenticated user session. mdata.driver_profile_messages is FORCE-RLS,
+    // so company scope alone cannot authorize this delivery receipt write. Establish the canonical
+    // worker bypass first, while retaining exact company/message/driver predicates on the UPDATE.
+    await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
     const updated = await ctx.client.query<{ id: string }>(
       `UPDATE mdata.driver_profile_messages
