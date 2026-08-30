@@ -48,6 +48,9 @@ import { companyBusinessDate } from "../../lib/company-business-date.js";
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
 import { hasJournalEntryTypeColumn, resolveJournalEntryTypeId } from "../journal-entry-type-resolver.js";
+// ACCT-PERIOD-CLOSE-01: this shared header insert (used by every poster in this spine, plus the
+// Finance-Hub loan payment poster) had no closed-period check at all.
+import { ensureOpenPeriod } from "../posting-engine.service.js";
 
 export type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -135,6 +138,7 @@ export async function insertJournalEntryHeader(
   memo: string,
   actorUserId: string
 ): Promise<string> {
+  await ensureOpenPeriod(client, operatingCompanyId, entryDate);
   const typeColPresent = await hasJournalEntryTypeColumn(client);
   const typeId = typeColPresent
     ? await resolveJournalEntryTypeId(client, { source: "auto", memo })
