@@ -168,6 +168,29 @@ LINKAGE - all five, this is what "completely linked" means:
      The owner is booking one ($8,890 equipment lease, out of reserves). Build the
      capability. Do NOT post his transaction.
 
+FEE DATA — CONFIRMED FROM THREE INDEPENDENT SOURCES THAT AGREE. DO NOT RE-DERIVE.
+  1. scripts/ops/fact-04-faro-owner-seed-2026-07-27.sql, owner-seeded from the EXECUTED
+     Faro agreement (eff 2024-12-02): revolving facility $1,000,000;
+     "Purchase Price = Net - Fee - Reserve; Proceeds = Purchase Price - wire fees";
+     secured borrowing, A/R on-book as pledged collateral; reconcile-only vs QBO.
+  2. factoring.factor (USMCA) 40b3690b-...: advance 0.9700, fee 0.0150, reserve 0.0150,
+     recourse 95 days, fee_application_mode 'replace'.
+  3. The August Faro statement: reserve/face = 1.500000%, fee/face = 1.500000%,
+     proceeds(pre-wire)/face = 97.000000%. Ties to the cent across all 33 invoices.
+  NOTE: the executed FARO FACTORING AGREEMENT.pdf is NOT on the owner's Desktop - only an
+  orphaned "~$RO FACTORING AGREEMENT.pdf" lock file. The three sources above are sufficient
+  and agree; do not block on locating the PDF, but tell the owner if you need the original.
+
+CPA ANSWERS.docx (owner's own answers) confirms the account structure already bound:
+  Factoring Reserves = ASSET, short-term. Factoring Advance = LIABILITY. Factoring Fees =
+  expense. Chargebacks = Factoring Recoursed. And explicitly: "driver escrow has nothing to
+  do with faro" - do NOT conflate driver escrow (a liability) with the Faro escrow reserve
+  (an asset). They are different accounts and must never net against each other.
+
+MUST SUPPORT: the owner is entering a bill payment that CREDITS this account
+  (Dr Accounts Payable / Cr "Faro Factoring - USMCA") and then MATCHING it in Banking
+  against this account's register. Build for that. Do not post his transaction.
+
 ACCEPTANCE: the factoring TIEOUT in task 2 passes with this account in place.
 
 -------------------------------------------------------------------------------
@@ -202,7 +225,26 @@ Claim EVEN numbers, merge the claim, then author. One guard per defect:
     See CC-1 task 8 - unit_status has no value for either event today.
 
 -------------------------------------------------------------------------------
-TASK 5 — DEPLOY LANE (standing)
+TASK 5 — INBOX HYGIENE. A SEAT CAN ACT ON A THURSDAY ORDER TODAY.
+-------------------------------------------------------------------------------
+docs/bus/INBOX-CC-1.md currently stacks ~24 entries, most marked "THIS IS NOW":
+GO-WAKE-ALL, GO-CLOSE-188, GO-ACCT-01, GO-FINISH-TONIGHT, GO-MAINT-01, GO-CERT-01,
+GO-TONIGHT-U6-SCEN, GO-APP-DEFECT-01 ... going back days. Only the TOP line is current.
+A seat that reads down instead of stopping at the top gets contradictory orders from three
+different days. That is a live routing hazard, not a tidiness issue.
+
+FIX: either truncate each INBOX to the current GO, or mark every superseded line
+SUPERSEDED with the date and the line that replaced it. Then add it to INBOX-SYNC-LAW.md
+so it stays true.
+
+ALSO: your INBOX lines route a POINTER, not the content. The current CC-1 top line points
+at ~/Downloads/PASTE-TO-CODERS/CC-1.txt and compresses the rest to a headline - and that
+headline already drifted ("create 4 new + 26 debtors"; the file says 22 copy + 4 create).
+That is fine as a pointer. It is not a substitute for the file. The owner is pasting each
+file into its own seat directly; keep routing on top of that, do not replace it.
+
+-------------------------------------------------------------------------------
+TASK 6 — DEPLOY LANE (standing)
 -------------------------------------------------------------------------------
 Confirmed live 2026-08-30 19:51Z: API dep-daa8i1cs728c73fn1ro0 LIVE 8f866830 (#18319),
 which includes #18318, so FACT-RESERVE-01 is deployed and CC-2's 007 gate is unblocked.

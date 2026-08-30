@@ -1,0 +1,215 @@
+================================================================================
+INVENTORY — EVERYTHING JORGE INSTRUCTED, 2026-08-30, AND WHERE IT STANDS
+Built by Claude. Discriminator at time of writing: accounting.journal_entries = 2219.
+"DONE" here means VERIFIED, not merged-and-assumed.
+================================================================================
+
+HOW TO READ THIS
+  [DONE]     finished and verified
+  [SPEC'D]   fully specified and handed to a seat; not yet built
+  [WAITING]  blocked on you personally
+  [OPEN]     still unresolved, named owner below
+
+================================================================================
+SECTION 1 — WHAT YOU ASKED FOR, IN ORDER
+================================================================================
+
+ 1. Accounting / reconciliation packet .......................... [DONE]
+ 2. Full status sweep of every module and bucket ................ [DONE]
+ 3. Close the matrix guard columns C25-C31 (yellow/red) ......... [DONE]
+      Root cause found: columns.economic.json existed but was never merged into
+      columns.shared.json, and 6 of 7 auto_check scripts were never written.
+ 4. "What is the permanent solution?" for C25-C31 ............... [DONE]
+      Built sql-runner.mjs (7 rules), econ-proofs.mjs, wired the dom+sql proof
+      runners that were unwired stubs. Selftest grew 20 -> 34.
+ 5. "Are the definitions the same bar?" ......................... [DONE]
+      Answer was no: written / enforced / executable were three different bars.
+ 6. "I need the highest bar always, least failures possible" .... [DONE - and it
+      became the TIE-OUT bar in Section 4 below]
+ 7. Fix the dispatch planners around the Round Trips view ....... [DONE]
+      Verified live 5 of 5 planners on .pg-track. I had wrongly reported
+      DriverPlanner as broken; Cursor challenged; I re-verified and withdrew.
+ 8. "Check drift, check Render, builds are failing" ............. [DONE]
+      Found the SPA build had been failing 20+ consecutive deploys since ~15:08Z.
+      Root cause PR #18179 added 7 required Driver fields without updating
+      DRIVER_DEFAULTS in factories.ts. Fixed #18270 + frontend tsc added to CI.
+ 9. Write per-coder instructions + what is truly missing ........ [DONE]
+10. "Certify the Urgent 6 with REAL invoices, real money" ....... [SPEC'D]
+      Became the tie-out bar. See Section 4.
+11. "ASSIGN ALL CUSTOMERS TO FARO RIGHT NOW" .................... [SPEC'D]
+      Could not run: customer_factor_assignment = 0 rows AND none of your 26 Faro
+      debtors existed in USMCA. Now CC-1 task 5.
+12. RULE: "EVERY CUSTOMER MUST GO THROUGH FACTORING" ............ [LOCKED]
+      In CC-1 task 5. Schema already agrees (factoring_eligible NOT NULL
+      DEFAULT true); 22 of 31 were false only because test seeds flipped them.
+13. Copy customers + vendors from Transportation ................ [SPEC'D]
+      KEY FINDING: does NOT need QuickBooks. Already in your TMS -
+      TRANSP 1,257 customers / 951 vendors. CC-1 task 4.
+14. Clean the desktop/downloads folders ........................ [DONE]
+      217 IH35 files archived to _IH35-ARCHIVE-2026-08-30. Nothing deleted.
+      Personal files (photos, INE, medical, backup codes, perfume) untouched.
+15. "One single file for each coder, do not confuse me" ......... [DONE]
+16. "Do a FULL settlement, completely traceable" ................ [SPEC'D]
+      CC-1 task 7 builds it, CC-2 task 3 verifies 16 link points.
+17. Faro digital account in Banking, fully linked, reserves ..... [SPEC'D]
+      Cursor task 3. Your GL roles are already bound - only the account is missing.
+18. "Drive the Urgent 6 to done, completely traceable" .......... [SPEC'D]
+      See Section 4 - this required changing what "done" means.
+19. "Make these the final and permanent fixes" .................. [DONE]
+      Every fix paired with a guard + a re-executing gate. Section 4.
+20. "Tell me who to paste each file to" ......................... [DONE]
+21. $8,890 = bill payment for an equipment LEASE ................ [LOCKED]
+22. Vendor on that bill = IH 35 Transportation .................. [LOCKED]
+      You ruled it twice. A Cursor packet overrode it to Trucking; that override
+      is marked VOID in CC-1.txt. Vendor choice is an owner decision, not a fact.
+23. Create Trucking AND Transportation as USMCA vendors ......... [SPEC'D] CC-1 8C
+24. Create the bill and the bill payment ........................ [WAITING ON YOU]
+      Nobody else posts them. Legs are in Section 5.
+25. "Leave complete=true as history" (WORM on the scoreboard) ... [APPLIED]
+      You were right and I had it wrong. Nothing gets retracted; bar versioning
+      instead. In CURSOR.txt task 1E.
+26. The 7 Faro debtor name answers ............................. [DONE]
+      Y / Y / (b) Watco DBA / (a) Sajacks Freight / (a) NCC Logistics /
+      (b) Simple Logistics LLC / Y. Baked into CC-1.txt and the CSV verbatim.
+27. Repos + returns: 2 Mitsubishi, 1 Auxilior, 3 Auxilior returns [SPEC'D]
+      CC-1 task 8A. BLOCKED ON YOUR DATA - see Section 6.
+28. Trucking leased 14 units to 2EMS ........................... [SPEC'D] CC-1 8C
+29. "I need legal current" ..................................... [OPEN - see 4B]
+30. "Do not deviate, focus on the Urgent 6" .................... [APPLIED]
+
+================================================================================
+SECTION 2 — DEFECTS FOUND AND FIXED TODAY
+================================================================================
+ * SPA build broken 20+ deploys (factories.ts missing 7 Driver fields) ... FIXED
+ * C25-C31 economics columns never merged into the scoreboard ............ FIXED
+ * sql + dom proof runners were unwired stubs ........................... FIXED
+ * Proof replay never re-ran after deploy (prod-postdeploy-verify) ...... FIXED
+ * FACTORING RESERVE/FEE — reserve computed as (total - advance) = 3%
+   instead of reserve_pct = 1.5%, and factor_fee_cents never written ..... FIXED
+   (#18318, verified line-by-line, deployed on API 8f866830)
+   This BALANCED, so no debits=credits check could ever catch it.
+ * API was 22 commits behind main; migration 202613300700 live on prod
+   while its routes were undeployed -> raw 500s on reconciliation ........ FIXED
+   (Cursor deployed; standing rule added: deploy API with any prod migration)
+
+================================================================================
+SECTION 3 — STILL BROKEN, ASSIGNED, NOT YET FIXED
+================================================================================
+ CC-1
+   * Reserve/fee defaults ungoverned: modal still sends 8% / 0% when no
+     factor resolves. $7,606 instead of $1,426 on the August schedule .... task 1
+   * FAC-2026-00001 still wrong on the books, not yet reversed .......... task 2
+   * getFactorForCustomer ignores voided_at / active .................... task 3
+   * customer_factor_assignment = 0 rows systemwide ..................... task 5
+   * Settlement header write-back broken; only the RETIRE payroll path
+     ever wrote it. Made THREE seats declare a working poster dead ...... task 7A
+   * Deduction leg has NEVER fired, systemwide .......................... task 7B
+   * settlement_lines approval_status 'approved' never once achieved .... task 7B
+   * unit_status has no Repossessed / ReturnedToLessor value ........... task 8A
+   * Legal contracts do NOT reach accounting.lease_contract (empty) .... task 8B
+   * No intercompany Due-to/Due-from accounts exist in ANY company ..... task C2b
+   * 61 duplicate-name groups in TRANSP customers; is_duplicate flag lies task 4
+   * TRANSP has TWO duplicate "Faro Factoring" vendor rows ............. task C2d
+ CURSOR
+   * No Faro bank account exists; factoring cash lands in 1090
+     Undeposited Funds (the DEFECT-A pattern) .......................... task 3
+   * Completion bar has no arithmetic class (see Section 4) ............ task 1
+   * INBOX-CC-1 stacks ~24 "THIS IS NOW" lines from different days ..... task 5
+ CC-2
+   * 007 / 008 / full-schedule Faro gate not yet run ................... task 1
+   * USER-VERIFY-01 reopened (blocker was a credential, not a capability) task 2
+   * 16-point settlement trace not yet possible ........................ task 3
+
+================================================================================
+SECTION 4 — THE BIG ONE: YOUR SCOREBOARD WAS LYING
+================================================================================
+4A. verify-module-completion reports  factoring 10 of 10 complete=true, every
+    item prod_verified - while factoring carried a LIVE balanced-but-wrong GL
+    defect, zero customer-factor assignments, and no bank account.
+
+    All ten items test WIRING, READS, or DISPLAY. Not one tests whether a NUMBER
+    IS RIGHT. FACT-S04 "reserve dashboard economics honest" was PASS while the
+    reserve shown was DOUBLE and the fee was ZERO.
+    Same class everywhere: ACCT-ECON-01..05 measure "density > 0";
+    BANK-ECON-05 passes BECAUSE the Faro account does not exist;
+    SETL-LINK-01 passes while the deduction leg has never fired.
+
+    FIX (Cursor task 1): a new TIEOUT item class. A module is not done until a
+    number the system computed equals a number on a document from OUTSIDE it.
+    Enforced in verify-module-completion, re-executed every deploy through the
+    proof engine, and guarded so it cannot be softened.
+    WORM: existing stamps stay as bar_version 1. Nothing is retracted.
+
+4B. The six tie-outs:
+    factoring   -> Faro statement: 9507500 face -> rsv 142613 fee 142613
+                   wire 12000 cash 9210274; GL identity 2150 - 1230 = 88,648.87
+    banking     -> bank statement closing balance == GL cash, per account
+    settlements -> your real settlement PDF (5753), to the cent
+    accounting  -> trial balance ties, and ties to the QBO comparative
+    vendors     -> AP aging == AP control account
+    dispatch    -> delivered loads == invoiced revenue, zero orphans
+
+================================================================================
+SECTION 5 — WHAT ONLY YOU CAN DO (nobody else posts these)
+================================================================================
+ A. The $8,890 equipment lease bill + payment. Both accounts already exist:
+      BILL     Dr QBO-228-USMCA "Leased Trucks from IH35 TRUCKING"   8,890.00
+               Cr 2000 Accounts Payable (A/P)                        8,890.00
+               Vendor: IH 35 Transportation LLC
+      PAYMENT  Dr 2000 Accounts Payable                              8,890.00
+               Cr "Faro Factoring - USMCA"                           8,890.00
+    BLOCKED until CC-1 creates the Transportation vendor AND Cursor creates the
+    Faro account. Paying before the Faro account exists puts the credit into
+    Undeposited Funds again.
+ B. The CCG plan payment: $45,512.57/month. NOT the old $68,067 workbook figure.
+ C. The lease terms - per unit, per month. Do not let anyone hardcode 8890.
+ D. Authorize the settlement specimen to stay POSTED (not auto-reversed).
+
+================================================================================
+SECTION 6 — WHAT I AM WAITING ON FROM YOU
+================================================================================
+ 1. Repos/returns data: which UNIT numbers, which dates, which lender for the
+    2 Mitsubishi repos, the 1 Auxilior repo, and the 3 Auxilior returns.
+    They sit 'InService' today and are misstated.
+ 2. The 2EMS unit list (which 14 units) - you have the executed contract.
+ 3. A2 decision: intercompany accounts - dedicated pairs, or AP tagged? Your
+    questionnaire recommended dedicated but it is still marked [OPEN].
+    (Does NOT block the $8,890 bill - that posts through AP either way.)
+ 4. A Dispatcher login for CC-2 (USER-VERIFY-01). I do not handle passwords.
+ 5. Whether to rename QBO-228-USMCA "Leased Trucks from IH35 TRUCKING" now that
+    the ruled lessor is Transportation. Posts correctly either way.
+
+================================================================================
+SECTION 7 — THINGS I GOT WRONG TODAY, AND WHO CAUGHT THEM
+================================================================================
+Recorded so you can judge the quality of what I tell you.
+ 1. Asserted C25-C31 had no definitions without searching the repo. They existed.
+    YOU caught it.
+ 2. Proposed a C25 definition weaker than the real one (would have re-introduced
+    the exact defect C25 exists to catch). Caught on review.
+ 3. Called an RTS/Unauthorized-Expenses question "a CPA question" - there is no
+    CPA; you decide. Self-corrected.
+ 4. Said no period close existed. accounting.periods already had it.
+ 5. Built a rule to inspect SQL text, then wrote a connection layer that could
+    bypass it. Self-caught, fixed with fail-closed per-proof rls.
+ 6. Reported DriverPlanner as having no PlannerGrid. CURSOR caught it; it is
+    five of five.
+ 7. Mis-attributed the QBO negative balance sheet to USMCA. It is TRANSP/TRK.
+ 8. Misread CLOSED-LOOP-BASELINE.json (wrong key), reported 0 instead of 29.
+ 9. Asked you to rule on ASC 860 when it was ALREADY locked as secured borrowing
+    in your own repo and enforced by a guard. Wasted your attention.
+10. Said the factoring batch defaults (0.95/0.025) were the GL defect. Wrong path
+    - factoring.batch is not the posting path. Withdrew.
+11. Claimed "$6,426 of unrecorded assets" and "wire fees do not exist". Both
+    false - the poster handles them. Withdrew.
+12. Repeated CC-2's claim that the settlement poster never fired, without
+    checking the subledger. It HAD fired. I amplified an error instead of
+    catching it. Then CURSOR repeated it too - three seats, same trap.
+13. Told you to post the 'approved' settlement as the trace subject. Its gross is
+    $0.00; it would have failed the debits=credits>0 assertion. Withdrew.
+14. Said the missing intercompany accounts BLOCK the $8,890 bill. They do not.
+    CURSOR was right that the bill credits AP. Verified in the posting engine.
+15. Wrote Manager "3 active with password" without intersecting the columns.
+    It is 2. CURSOR caught it.
+16. Stated Rule 37 as "claim your PR number". It is CLAIM -> MERGE -> AUTHOR on a
+    verify-step EVEN number. CURSOR caught it.
