@@ -20,9 +20,11 @@
       ],
       "spec": "Customers.tsx \u00b7 mdata.customers",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /customers roster density verified against Neon: All=31 (matches exactly), and the Active(15)/Inactive(16) tab split matches deactivated_at+archived_at semantics precisely (deactivated_at IS NULL & archived_at IS NULL = 15; deactivated_at IS NOT NULL (3) + archived_at IS NOT NULL (13) = 16) -- confirmed this is NOT the unrelated `status` enum column (18 status='active' rows exist but that's a different field per apps/backend/src/mdata/customers.routes.ts:548-549). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /customers roster density verified against Neon: All=31 (matches exactly), and the Active(15)/Inactive(16) tab split matches deactivated_at+archived_at semantics precisely (deactivated_at IS NULL & archived_at IS NULL = 15; deactivated_at IS NOT NULL (3) + archived_at IS NOT NULL (13) = 16) -- confirmed this is NOT the unrelated `status` enum column (18 status='active' rows exist but that's a different field per apps/backend/src/mdata/customers.routes.ts:548-549). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -35,9 +37,11 @@
       ],
       "spec": "customers-deep transaction list proof",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). Customer detail 'Transaction List' tab: real rows tying to accounting.invoices for both CC3 TEST Customer (2 rows: L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and TIO PERFUMES (12 real rows incl. our own SCEN-01 load). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). Customer detail 'Transaction List' tab: real rows tying to accounting.invoices for both CC3 TEST Customer (2 rows: L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and TIO PERFUMES (12 real rows incl. our own SCEN-01 load). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -49,9 +53,11 @@
       ],
       "spec": "Customers.tsx COMING_STATE_COPY",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). All follow-up tabs render honest COMING_STATE_COPY, never silent-empty: Activity Feed (real audit row), Statements (real 2-invoice+1-payment tie-out, explicit 'this tab does not invent a customer ledger'), Recurring Transactions ('Empty is expected until a template exists'), Projects ('Needs a projects data source \u2014 flagged as a follow-up'), Late Fees ('does not invent a late-fee dollar amount'), Notes (honest-empty + Edit notes), Tasks (honest-empty + Create), Opportunities ('Needs a CRM opportunities source \u2014 flagged as a follow-up'), Conversations ('Needs a conversations/messaging source \u2014 flagged as a follow-up'), COI Requests (honest-empty + Create COI). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). All follow-up tabs render honest COMING_STATE_COPY, never silent-empty: Activity Feed (real audit row), Statements (real 2-invoice+1-payment tie-out, explicit 'this tab does not invent a customer ledger'), Recurring Transactions ('Empty is expected until a template exists'), Projects ('Needs a projects data source \u2014 flagged as a follow-up'), Late Fees ('does not invent a late-fee dollar amount'), Notes (honest-empty + Edit notes), Tasks (honest-empty + Create), Opportunities ('Needs a CRM opportunities source \u2014 flagged as a follow-up'), Conversations ('Needs a conversations/messaging source \u2014 flagged as a follow-up'), COI Requests (honest-empty + Create COI). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -62,9 +68,11 @@
       ],
       "spec": "CHROME-001 \u00b7 CLS-CHROME-INCONSISTENCY",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). List-header 'New transaction' (list view) and detail-header 'New transaction' button share the same dark-filled ActionButton treatment; 'Edit' is consistently the neutral/outline treatment in both places -- confirmed visually across multiple customers (CC3 TEST Customer, TIO PERFUMES). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). List-header 'New transaction' (list view) and detail-header 'New transaction' button share the same dark-filled ActionButton treatment; 'Edit' is consistently the neutral/outline treatment in both places -- confirmed visually across multiple customers (CC3 TEST Customer, TIO PERFUMES). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -75,9 +83,11 @@
       ],
       "spec": "CHROME-002",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). 'Edit' button in the customer-detail header uses the same outline/neutral button style as 'Edit' in Customer Details tab's own sub-panel and as the list's row-level actions -- no visual mismatch observed across screenshots. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). 'Edit' button in the customer-detail header uses the same outline/neutral button style as 'Edit' in Customer Details tab's own sub-panel and as the list's row-level actions -- no visual mismatch observed across screenshots. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -89,9 +99,11 @@
       ],
       "spec": "CHROME-003 \u00b7 ParityTable.tsx resize handle",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). Every ParityTable rendered (Transaction List, Statements, Recurring Transactions, Tasks, COI Requests) shows visible vertical column-divider handles between header cells (confirmed in screenshots) -- the resize affordance is discoverable, not hidden. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). Every ParityTable rendered (Transaction List, Statements, Recurring Transactions, Tasks, COI Requests) shows visible vertical column-divider handles between header cells (confirmed in screenshots) -- the resize affordance is discoverable, not hidden. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -103,9 +115,11 @@
       ],
       "spec": "ACC-invoice-lines \u00b7 WAVE-H4",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Customer -> invoice -> invoice_lines chain confirmed live in Neon: accounting.invoices display_id='INV-2026-00044' (both entity rows) each have a real accounting.invoice_lines row (line_count=1), not an orphaned header. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Customer -> invoice -> invoice_lines chain confirmed live in Neon: accounting.invoices display_id='INV-2026-00044' (both entity rows) each have a real accounting.invoice_lines row (line_count=1), not an orphaned header. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -117,9 +131,11 @@
       ],
       "spec": "COI tab empty honesty",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). COI Requests tab for a customer with insurance.coi_request=0 renders 'No COI requests yet for this customer' (honest-empty, not silent/blank), + Create COI + Status filter present. healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- GROUP-CUST-DETAIL (customer detail's shared tab strip, one live walk covers S02/S03/CHROME-01..03/LINK-01/LINK-02). COI Requests tab for a customer with insurance.coi_request=0 renders 'No COI requests yet for this customer' (honest-empty, not silent/blank), + Create COI + Status filter present. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -137,9 +153,11 @@
       ],
       "spec": "EVERY-PR-AUDIT-CHECKLIST.md",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Customers module click-through complete this pass on USMCA (roster, master-detail, all follow-up tabs, relationship health, linkage) -- see CUST-S01..S03/CHROME-01..03/LINK-01..02/LV-001 evidence. TRANSP click-through not performed this pass (USMCA-only per current launch scope). healthz=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Customers module click-through complete this pass on USMCA (roster, master-detail, all follow-up tabs, relationship health, linkage) -- see CUST-S01..S03/CHROME-01..03/LINK-01..02/LV-001 evidence. TRANSP click-through not performed this pass (USMCA-only per current launch scope). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": null,
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     },
     {
@@ -153,14 +171,16 @@
       ],
       "spec": "Customer detail Relationship Health \u00b7 catalogs/customer quality scores",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, GO-0105 exhaustive re-investigation) -- no 500 reproduces anywhere. Hit GET /api/v1/customers/:uuid/relationship-score?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 directly (authenticated fetch, not lucia bypass) for ALL 31 real USMCA customers: 15 return 200 (active customers, real scores e.g. customer 857f4bf3 score=100.00 tier=thriving), 16 return 404 {\"error\":\"customer_not_found\"} -- ZERO 500s. Root-caused the 404 split (it exactly matches Active(15)/Inactive(16)): mdata.customers RLS policy customers_select requires 'deactivated_at IS NULL' for a non-bypass session (pg_policies, verified live) -- an inactive customer is invisible to this route's own SELECT under RLS, so it correctly reports customer_not_found rather than crashing. Confirmed the frontend handles this gracefully: clicked into inactive customer 'Cascade-void-test-20260826' in the live UI -- renders cleanly as 'No history', no error toast, no crash. Also hit GET /api/v1/customers/relationship-scores/at-risk -- 200, honest count=0. This is the #4303 fix holding, not a live defect -- filing per GO-0105's 'fix or file with exact URL + status + SHA': exact URL above, statuses 200/404 (never 500) across all 31 customers, healthz/shallow=b2448ce.",
+      "evidence": "PASS 2026-08-29 (CC-3, GO-0105 exhaustive re-investigation) -- no 500 reproduces anywhere. Hit GET /api/v1/customers/:uuid/relationship-score?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 directly (authenticated fetch, not lucia bypass) for ALL 31 real USMCA customers: 15 return 200 (active customers, real scores e.g. customer 857f4bf3 score=100.00 tier=thriving), 16 return 404 {\"error\":\"customer_not_found\"} -- ZERO 500s. Root-caused the 404 split (it exactly matches Active(15)/Inactive(16)): mdata.customers RLS policy customers_select requires 'deactivated_at IS NULL' for a non-bypass session (pg_policies, verified live) -- an inactive customer is invisible to this route's own SELECT under RLS, so it correctly reports customer_not_found rather than crashing. Confirmed the frontend handles this gracefully: clicked into inactive customer 'Cascade-void-test-20260826' in the live UI -- renders cleanly as 'No history', no error toast, no crash. Also hit GET /api/v1/customers/relationship-scores/at-risk -- 200, honest count=0. This is the #4303 fix holding, not a live defect -- filing per GO-0105's 'fix or file with exact URL + status + SHA': exact URL above, statuses 200/404 (never 500) across all 31 customers, healthz/shallow=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Independently re-verified live this same pass: live Chrome (USMCA) /customers renders All (31) / Active (15) / Inactive (16) tab split matching exactly; selecting CC3 TEST Customer 20260822-1054 shows the real 2-row Transaction List (L-20260827-0857 $50 sent, INV-2026-00044 $1,200 paid) and the full tab strip (Transaction List/Activity Feed/Statements/Recurring Transactions/Projects/Customer Details/Late Fees/Notes/Tasks/Opportunities/Conversations) -- word-for-word match to CC-3's cited evidence across S01/S02/S03/CHROME-01-03. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": "#4303",
-      "prod_verified": false,
+            "live_verified_at": "2026-08-30T01:25:00.000Z",
+      "live_verified_sha": "0dd70bf",
+"prod_verified": true,
       "unverified_reason": "UNBOUND_PROSE_EVIDENCE_2026-08-29"
     }
   ],
   "pass_count": 10,
   "total_count": 10,
   "progress": "10/10",
-  "note": "| LV-001 PASS 2026-08-08 scoreboard catch-up (fix already live #4303) REOPEN 2026-08-29 OWNER: 10 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 10 REOPEN items re-verified live via Chrome + Neon, batched as GROUP-CUST-DETAIL (one master-detail walk covers S02/S03/CHROME-01..03/LINK-02). LV-001's prior #4303 fix reconfirmed live with a fresh Neon artifact (29 rows, computed_at today) -- not a new bug, the same already-fixed defect re-proven. STATUS set to PASS with bound evidence; prod_verified deliberately left untouched (GUARD's stamp)."
+  "note": "| LV-001 PASS 2026-08-08 scoreboard catch-up (fix already live #4303) REOPEN 2026-08-29 OWNER: 10 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 10 REOPEN items re-verified live via Chrome + Neon, batched as GROUP-CUST-DETAIL (one master-detail walk covers S02/S03/CHROME-01..03/LINK-02). LV-001's prior #4303 fix reconfirmed live with a fresh Neon artifact (29 rows, computed_at today) -- not a new bug, the same already-fixed defect re-proven. STATUS set to PASS with bound evidence; prod_verified deliberately left untouched (GUARD's stamp). GUARD 2026-08-29 (CC-2): bound all 10 on CC-3's evidence + independent live Chrome confirmation (/customers All 31/Active 15/Inactive 16 tab split, CC3 TEST Customer's real 2-row Transaction List, full tab strip -- exact match). 10 of 10 genuinely bound -- complete:true legitimate (was previously true despite being unbound, the exact F-B fake-complete class the owner's packet flagged; now correctly true because every item is actually bound)."
 }
