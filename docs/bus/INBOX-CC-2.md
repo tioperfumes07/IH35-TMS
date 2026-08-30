@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-CERT-01 | NOW=U6 Recipe B stamps (dispatch 31) · vendors FW 12 only after healthz has CERT-01 chrome · leftover PATCH if still OPEN · never recertify U14 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-MATRIX-PROOF | stamp U6 Recipe B so V1 L6 MOVES on the proof strip · never recertify U14 · packet docs/lockdown/GO-MATRIX-PROOF-2026-08-29.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-TONIGHT-U6-SCEN | NOW=stamp U6 Recipe B (banking 3 unbound + dispatch packets as they land) · scenario close only linkage+JE codes · never recertify U14 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-APP-DEFECT-01 | YOU stamp Recipe B only · T-07 remaining safety batches · F-A baseline remeasure if still yours · skip #15546 · never trigger_deploy · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO

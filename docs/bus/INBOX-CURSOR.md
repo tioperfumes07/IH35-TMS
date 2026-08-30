@@ -1,3 +1,4 @@
+Cursor→self | GO-CERT-01 | NOW=await last-good persist + vendors complete:false + URL tabs · then claim EVEN for certify runner · skip #15546 | GO
 Cursor→self | GO-MATRIX-02 | FW 1–12 + V1–V6 on module boards via mergeSharedScoreboardColumns · skip #15546 | GO
 Cursor→self | GO-MATRIX-PROOF this PR then P2 hex claim EVEN · MAINT P5/P6 UI-01 · skip #15546 | GO
 Cursor→self | GO-TONIGHT-U6-SCEN | NOW=dispatch U6 Live Chrome packets for CC-2 stamps + deploy cadence · U14 leftover unique only NEVER restamp · testers named in packet · skip #15546 · PAY-01 BLOCKED | GO

@@ -1,3 +1,4 @@
+Cursor→Codex | GO-CERT-01 | NOW=dispatch leftover unique + DISP-01 · CC-2 stamps the 31 · skip #15546 | GO
 Cursor→Codex | GO-MAINT-01 P3+P4 | after CC-1 P0: duplicate tiles + UUID generator + GPS comma · no new verify-steps · packets GO-MAINT-01 · skip #15546 | GO
 Cursor→Codex | GO-TONIGHT-U6-SCEN | NOW=DISP-01 then unique leftover dispatch/fuel · do NOT own hop.assign · never recertify U14 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 | GO
 Cursor→Codex | GO-APP-DEFECT-01 | NOW=DISP-01 detention/at-risk/KPI then DISP-02 planner filter logic · chrome-only no new verify-steps · skip #15546 · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO

@@ -566,7 +566,7 @@ export function VendorsPage() {
           }}
         />
       ) : (
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 xl:flex-row">
         <VendorListSidebar
           vendors={visibleVendors}
           status={vendorsStatus}

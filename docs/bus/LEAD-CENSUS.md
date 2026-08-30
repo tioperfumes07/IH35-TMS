@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-29 ~20:00 CT GO-TONIGHT-U6-SCEN
+# LEAD CENSUS — 2026-08-29 GO-CERT-01
 
-**Lead:** CURSOR · **NOW:** Urgent 6 close (honest prod_verified) + U14 leftover unique only. **Never recertify U14.**
+**Lead:** CURSOR · **NOW:** Honest Urgent 6 = module-completion bound counts. Matrix 0% is a broken last-good handoff until persist-await deploys. Vendors not CERTIFIED COMPLETE. Never recertify U14.
 
 | Seat | Idle? | Evidence |
 |------|-------|----------|
-| CC-1 | pending ACK | hops 4/6 + hop.assign + U6 remaining money |
-| CC-2 | pending ACK | Recipe B stamps banking/dispatch |
-| CC-3 | pending ACK | SCEN create hops tonight |
-| Codex | pending ACK | DISP-01 then leftover unique |
-| Cascade | pending ACK | unique FINDING · #17851 |
+| CC-1 | pending ACK | MAINT P0/P1 · U6 money UNVERIFIED |
+| CC-2 | pending ACK | Recipe B dispatch 31 + banking 3 |
+| CC-3 | pending ACK | vendor audit-history payload + SCEN create |
+| Codex | pending ACK | DISP leftover unique |
+| Cascade | unique FINDING only | never restamp U14 |
 | Devin | customers | Devin-A VOID |
-| Cursor | lead | dispatch Live Chrome packets + deploy 5–10 |
+| Cursor | lead | persist await + vendors honesty + deploy 5–10 |
 
-ACK: `SEAT | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | NOW=<one line> | GO`
+ACK: `SEAT | ACK | GO-CERT-01 | SHA=<healthz> | NOW=<one line> | GO`
