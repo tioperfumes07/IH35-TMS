@@ -55,15 +55,14 @@ const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
 
 if (SELFTEST) {
   const src = read();
-
-  const planted = src.replace(
-    'app.post("/api/v1/fuel/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {\n    const authUser = currentAuthUser(req, reply);\n    if (!authUser) return;\n    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;\n',
-    'app.post("/api/v1/fuel/transactions", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {\n    const authUser = currentAuthUser(req, reply);\n    if (!authUser) return;\n',
-  );
-  if (planted === src) {
+  const routeStart = src.indexOf(ROUTES[0][0]);
+  const gate = '    if (!requireFuelWriteRole(reply, String(authUser.role ?? ""))) return;\n';
+  const gateStart = src.indexOf(gate, routeStart);
+  if (routeStart === -1 || gateStart === -1 || gateStart > routeStart + 300) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: mutation target not found (guard text drifted from real code)`);
     process.exit(1);
   }
+  const planted = src.slice(0, gateStart) + src.slice(gateStart + gate.length);
   if (!assertAll(planted).length) {
     console.error(`${LABEL} SELFTEST FAILED: planted defect (POST create role gate dropped, PATCH left intact) not caught`);
     process.exit(1);
