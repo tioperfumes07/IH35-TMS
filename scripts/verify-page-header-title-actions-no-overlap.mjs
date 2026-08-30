@@ -26,10 +26,14 @@ import process from "node:process";
 const repoRoot = process.cwd();
 const HEADER_FILE = "apps/frontend/src/components/layout/PageHeader.tsx";
 
-// The title-group div must be flex-1 (grow into free space when there's room) but must NOT carry
-// min-w-0 (which permits it to shrink below its own h1's content width and let the sibling actions
-// block render on top of the overflowing title text instead of wrapping below it).
+// Two safe layouts have shipped:
+//   1. natural-width title group, which makes flex-wrap move actions below; or
+//   2. a shrinkable title group whose overflow is clipped, paired with an elevated/non-shrinking
+//      actions group. ACCT-F6409 deliberately adopted (2) to contain very long title/subtitle rows.
+// The original defect is min-w-0 WITHOUT that containment pair.
 const TITLE_GROUP_RE = /<div className="flex\s+flex-1 items-end gap-2">/;
+const CONTAINED_TITLE_GROUP_RE = /<div className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">/;
+const CONTAINED_ACTIONS_RE = /<div className="relative z-50 w-full shrink-0 sm:w-auto">\{actions\}<\/div>/;
 const REGRESSION_RE = /<div className="flex min-w-0 flex-1 items-end gap-2">/;
 
 export function checkPageHeaderNoOverlap(src) {
@@ -40,9 +44,11 @@ export function checkPageHeaderNoOverlap(src) {
     );
     return offenders;
   }
-  if (!TITLE_GROUP_RE.test(src)) {
+  const wrapsNaturally = TITLE_GROUP_RE.test(src);
+  const containsOverflow = CONTAINED_TITLE_GROUP_RE.test(src) && CONTAINED_ACTIONS_RE.test(src);
+  if (!wrapsNaturally && !containsOverflow) {
     offenders.push(
-      `${HEADER_FILE}: title-group div marker not found (has it moved or been renamed?) — cannot confirm min-w-0 stays removed.`,
+      `${HEADER_FILE}: neither safe header layout is complete — require natural title wrapping or the overflow-hidden title + z-50 shrink-0 actions containment pair.`,
     );
   }
   return offenders;
@@ -75,14 +81,35 @@ if (process.argv.includes("--selftest")) {
       </div>
   `;
 
+  const contained = `
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-end gap-2 overflow-hidden">
+          <button aria-label="Back" />
+          <h1>{title}</h1>
+        </div>
+        <div className="relative z-50 w-full shrink-0 sm:w-auto">{actions}</div>
+      </div>
+  `;
+  const containedWithoutClip = contained.replace(" overflow-hidden", "");
+  const containedWithoutActionBoundary = contained.replace("relative z-50 w-full shrink-0 sm:w-auto", "w-full sm:w-auto");
+
   const buggyFails = checkPageHeaderNoOverlap(buggy).length > 0;
   const fixedPasses = checkPageHeaderNoOverlap(fixed).length === 0;
+  const containedPasses = checkPageHeaderNoOverlap(contained).length === 0;
+  const clipRemovalFails = checkPageHeaderNoOverlap(containedWithoutClip).length > 0;
+  const actionBoundaryRemovalFails = checkPageHeaderNoOverlap(containedWithoutActionBoundary).length > 0;
 
-  if (buggyFails && fixedPasses) {
-    console.log("verify:page-header-title-actions-no-overlap selftest OK");
+  if (buggyFails && fixedPasses && containedPasses && clipRemovalFails && actionBoundaryRemovalFails) {
+    console.log("verify:page-header-title-actions-no-overlap selftest OK — 5/5 layout states distinguished");
     process.exit(0);
   }
-  console.error("verify:page-header-title-actions-no-overlap selftest FAILED", { buggyFails, fixedPasses });
+  console.error("verify:page-header-title-actions-no-overlap selftest FAILED", {
+    buggyFails,
+    fixedPasses,
+    containedPasses,
+    clipRemovalFails,
+    actionBoundaryRemovalFails,
+  });
   process.exit(1);
 }
 
@@ -95,6 +122,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   }
   console.log(
-    "verify:page-header-title-actions-no-overlap OK — shared PageHeader title-group cannot shrink below its own title, so the actions block wraps below instead of overlapping it",
+    "verify:page-header-title-actions-no-overlap OK — shared PageHeader wraps naturally or contains title overflow behind non-shrinking actions",
   );
 }

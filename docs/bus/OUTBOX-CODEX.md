@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7419 | ROOT=PageHeader-ratchet-recognized-wrap-only-not-contained-safe-layout | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-B16 | PR=#18054 @ e90bd94a19 | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | prod_verified=false | HOLD=SAF-ORPH-01/02/05 unchanged | NEXT=GUARD-F7419 | GO
 CODEX | WORKING | SAF-B16 | ROOT=asset-safety-guard-froze-pre-pagination-call-shape | focused=normal-PASS+selftest-30/30 | ORPHAN-SOURCES=SAF-ORPH-01 flag-OFF/no-live-forfeit; SAF-ORPH-02 flag-OFF/no-live-dual-subledger-forfeit; SAF-ORPH-05 Layer-A-mounted-but-full-tab-wizard-depth-not-executed | HOLD=unchanged | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING | FUEL-MONEY-F7418 | ROOT=fuel-create-suggest-load-query-failure-is-silent | routed=CC-1 | NEXT=dispatch/fuel unique | GO
 CODEX | SHIPPED | GUARD-F7417 | PR=#18051 @ 7e54b2630a | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product/evidence=unchanged | NEXT=FUEL-MONEY-F7418 route | GO
