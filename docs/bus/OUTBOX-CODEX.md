@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7504 | ROOT=DTC-range-guard-froze-retired-client-sliced-visibleRows | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7503 | PR=#18149 @ ec6296c6a3 | focused=normal+selftest23/23+full-gate | NEXT=DTC-range-red | GO
 CODEX | WORKING | GUARD-F7503 | ROOT=COMP01-random-pool-guard-required-retired-duplicate-enrollment-reader | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7502 | PR=#18148 @ 5c4cc76a15 | focused=normal+selftest12/12+full-gate | NEXT=COMP01-random-pool-red | GO
 CODEX | WORKING | GUARD-F7502 | ROOT=unit-aggregate-void-guard-froze-pre-status-filter-clause-adjacency | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
