@@ -82,7 +82,7 @@ const CHECKS = [
   {
     name: "cargo_claims.create: CargoClaimIntakeSurface (real target of the CargoClaimsPage config wrapper) real createLabel -> ParityTable",
     file: "apps/frontend/src/pages/safety/components/CargoClaimIntakeSurface.tsx",
-    pattern: /\{createLabel\}[\s\S]{0,10200}<ParityTable/,
+    pattern: /(?=[\s\S]*\{createLabel\}\s*<\/Button>)(?=[\s\S]*<ParityTable\b)/,
   },
   {
     name: "internal_fines.create: InternalFinesPage real inline MoneyInput + DatePicker fine fields",
