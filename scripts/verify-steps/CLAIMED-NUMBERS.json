@@ -4882,6 +4882,11 @@
     "claimed_by": "cc-2",
     "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
   },
+  "10113": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-defect-a-deposit-sweep-wired (GO-CLOSE-188 CC-1 DEFECT A)"
+  },
   "10109": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-1",
