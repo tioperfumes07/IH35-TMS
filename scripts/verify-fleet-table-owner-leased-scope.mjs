@@ -27,21 +27,11 @@ function fail(message) {
 function scopeFailures(sources) {
   const failures = [];
   for (const [file, src] of Object.entries(sources)) {
-    // dashboard-kpis composes the unit predicate through this shared fragment. Auditing only
-    // literal FROM...WHERE blocks misses regressions inside the interpolation entirely.
-    if (file.endsWith("dashboard-kpis.routes.ts")) {
-      const sharedScope = src.match(/const fleetUnitsWhereSql = `([\s\S]*?)`;/)?.[1] ?? "";
-      const hasSharedOwner = /\bowner_company_id\s*=\s*\$1/.test(sharedScope);
-      const hasSharedLeased = /\bcurrently_leased_to_company_id\s*=\s*\$1/.test(sharedScope);
-      if (!hasSharedOwner || !hasSharedLeased) {
-        failures.push(`${file}: fleetUnitsWhereSql must scope units by owner OR current lessee`);
-      }
-    }
     for (const m of src.matchAll(/FROM\s+mdata\.units\s*u?[\s\S]{0,400}?(?=\n\s*\)|\n\s*`,)/gi)) {
       const block = m[0];
       const hasOwner = /\bowner_company_id\s*=\s*\$1/.test(block);
       const hasLeased = /\bcurrently_leased_to_company_id\s*=\s*\$1/.test(block);
-      if (hasOwner && !hasLeased) failures.push(`${file}: owner-only mdata.units scope: ${block.slice(0, 220)}`);
+      if (!hasOwner || !hasLeased) failures.push(`${file}: mdata.units read must scope owner OR current lessee: ${block.slice(0, 220)}`);
     }
   }
   return failures;
@@ -55,7 +45,7 @@ const sources = Object.fromEntries(TARGETS.map((file) => {
 
 if (process.argv.includes("--selftest")) {
   const file = TARGETS[1];
-  const mutated = sources[file].replace(
+  const mutated = sources[file].replaceAll(
     "(owner_company_id = $1::uuid OR currently_leased_to_company_id = $1::uuid)",
     "owner_company_id = $1::uuid"
   );
