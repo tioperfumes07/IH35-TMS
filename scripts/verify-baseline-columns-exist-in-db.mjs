@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input DATABASE_URL — compares the declaration to an independently queried database schema. */
 /**
  * META-GUARD — every column in the schema-drift baseline must EXIST in a real database.
  *

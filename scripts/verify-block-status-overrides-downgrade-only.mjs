@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input origin/main — compares changed overrides with their committed predecessors. */
 // ============================================================================
 // verify-block-status-overrides-downgrade-only.mjs — STATIC CI GUARD
 // ----------------------------------------------------------------------------

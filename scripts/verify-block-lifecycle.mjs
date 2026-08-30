@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input .block-ready/ — scans block artifacts independently of the override declaration. */
 // DOC-17 (owner directive 2026-07-11) — lifecycle enforcement: a block is DONE only when it is
 // built→wired→linked→merged→DEPLOYED→LIVE-VERIFIED→registry-marked→tracker-reflects. Merged/CI-green ≠ done.
 //

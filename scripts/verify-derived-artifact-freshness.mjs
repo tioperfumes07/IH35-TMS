@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input live:/healthz/version — binds artifacts to deployed ancestry and artifact files. */
 /**
  * GUARD: A STORED ANSWER MUST DECLARE WHEN IT WAS TRUE — AND STILL BE TRUE NOW.
  *

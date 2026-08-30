@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input scripts/ — scans executable guard tags as well as the declaration feed. */
 import fs from "node:fs";
 import path from "node:path";
 

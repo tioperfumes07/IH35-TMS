@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input DATABASE_URL — rechecks manifest claims against scoped Neon source counts. */
 /**
  * USMCA-PV-STACK — RPT-S01..S07 prod_verified ratchet (reports module).
  *

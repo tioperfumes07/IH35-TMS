@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — canonical-law wording presence only; never runtime entity-separation proof. */
 // Guard (standing-orders rule #10): the TRK/TRANSP/USMCA entity-independence LAW must survive every agent
 // handoff. Asserts docs/specs/MULTI-ENTITY-SEPARATION.md retains the locked invariants — the three entities
 // + ids, share-nothing, no-commingling, per-entity RLS scoped to accessible companies (no cross-entity),

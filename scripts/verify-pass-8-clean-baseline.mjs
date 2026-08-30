@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — frozen pre-prod smoke declaration only; never current Live proof. */
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";

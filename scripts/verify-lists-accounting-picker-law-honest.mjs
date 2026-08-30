@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @ratchet — preserves an audited Required-column decision; never picker product or Live proof. */
 /**
  * CATALOG-ACCOUNTING-CREATE-PICKER-LAW-OVERCLAIM — picker_law Required-column honesty
  * correction, accounting catalog-create remainder (3 batches — this closes the class).

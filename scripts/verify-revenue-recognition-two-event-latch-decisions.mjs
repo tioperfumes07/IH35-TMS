@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @independent-input .claude/skills/ih35-accounting-decisions/SKILL.md — cross-checks two decision surfaces. */
 /**
  * Delivery revenue recognition — two-event latch (LOCKED — OWNER, 2026-07-19).
  * Governance/docs guard only.
