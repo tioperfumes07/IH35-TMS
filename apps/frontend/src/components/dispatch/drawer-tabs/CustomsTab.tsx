@@ -30,7 +30,7 @@ export function CustomsTab({ loadId, operatingCompanyId }: Props) {
     },
     enabled: Boolean(loadId && operatingCompanyId),
   });
-  const rows = query.data?.crossings ?? [];
+  const rows = query.isError ? [] : (query.data?.crossings ?? []);
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="load-detail-border-crossings">
       <h3 className="text-sm font-semibold text-slate-900">Customs &amp; border crossings{rows.length ? ` (${rows.length})` : ""}</h3>
