@@ -189,7 +189,7 @@ export type FuelTransactionListItem = {
   id: string;
   transaction_date: string;
   driver_name: string;
-  gallons: number;
+  gallons: number | null;
   amount_cents: number;
   station: string;
   // Drill-through ids returned by the backend (Law of the Land — total connectivity).

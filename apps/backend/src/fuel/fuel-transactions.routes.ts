@@ -235,7 +235,10 @@ export async function registerFuelTransactionsRoutes(app: FastifyInstance) {
           // FuelTransactionRow shape:
           transaction_date: row.transaction_at,
           driver_name: (row.driver_name as string | null) ?? "Unassigned",
-          gallons: row.gallons === null ? 0 : Number(row.gallons),
+          // gallons is nullable in the canonical table: imported/manual rows can carry a real
+          // total cost before volume is known. Preserve that distinction for every mounted
+          // history/reverse/export consumer instead of manufacturing a measured zero.
+          gallons: row.gallons === null ? null : Number(row.gallons),
           amount_cents: Math.round(Number(row.total_cost ?? 0) * 100),
           station:
             (row.vendor_name as string | null) ??

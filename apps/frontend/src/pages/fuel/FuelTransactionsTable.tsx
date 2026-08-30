@@ -10,7 +10,7 @@ export type FuelTransactionRow = {
   id: string;
   transaction_date: string;
   driver_name: string;
-  gallons: number;
+  gallons: number | null;
   amount_cents: number;
   station: string;
   // FINAL-WEEKEND-FULL-WIRING-2026-08-12 rank 6 (CC-2) — the backend (getFuelTransactions) already
@@ -49,7 +49,7 @@ function exportFuelTransactionsCsv(rows: FuelTransactionRow[]): void {
         row.transaction_date,
         row.driver_name,
         row.station,
-        (row.gallons || 0).toFixed(2),
+        row.gallons == null ? "" : row.gallons.toFixed(2),
         ((row.amount_cents || 0) / 100).toFixed(2),
       ]
         .map((v) => csvEscape(String(v)))
@@ -164,7 +164,7 @@ export function FuelTransactionsTable({ rows }: Props) {
             ),
         },
         { key: "station", label: "Station", sortable: true },
-        { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons.toFixed(2) },
+        { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : row.gallons.toFixed(2) },
         { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
       ]}
     />

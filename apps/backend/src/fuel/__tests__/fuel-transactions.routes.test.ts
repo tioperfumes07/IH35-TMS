@@ -36,7 +36,8 @@ describe("fuel/fuel-transactions.routes (A10)", () => {
   it("matches the frontend FuelTransactionRow shape (transaction_date/driver_name/gallons/amount_cents/station)", () => {
     expect(routes).toContain("transaction_date: row.transaction_at");
     expect(routes).toContain('driver_name: (row.driver_name as string | null) ?? "Unassigned"');
-    expect(routes).toContain("gallons: row.gallons === null ? 0 : Number(row.gallons)");
+    expect(routes).toContain("gallons: row.gallons === null ? null : Number(row.gallons)");
+    expect(routes).not.toContain("gallons: row.gallons === null ? 0 : Number(row.gallons)");
     // total_cost is stored as decimal DOLLARS (numeric), never cents — convert explicitly.
     expect(routes).toContain("amount_cents: Math.round(Number(row.total_cost ?? 0) * 100)");
   });

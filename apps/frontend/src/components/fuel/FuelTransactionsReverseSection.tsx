@@ -88,7 +88,7 @@ export function FuelTransactionsReverseSection({
             <li key={row.id} className="text-sm text-slate-700" data-testid={`fuel-transaction-${row.id}`}>
               <span className="font-medium text-slate-900">{row.station || "Fuel stop"}</span>
               <span className="ml-2 text-xs text-gray-500">
-                {formatDateUS(row.transaction_date)} · {row.gallons.toLocaleString()} gal · {formatMoneyCents(row.amount_cents, "USD")}
+                {formatDateUS(row.transaction_date)} · {row.gallons == null ? "Gallons unavailable" : `${row.gallons.toLocaleString()} gal`} · {formatMoneyCents(row.amount_cents, "USD")}
                 {filterKey !== "driver_id" && row.driver_id ? (
                   <>
                     {" · "}
