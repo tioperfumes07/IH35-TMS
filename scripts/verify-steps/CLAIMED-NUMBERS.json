@@ -1,4 +1,9 @@
 {
+  "10057": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dqf01-required-document-types-and-file-fks"
+  },
   "10053": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
