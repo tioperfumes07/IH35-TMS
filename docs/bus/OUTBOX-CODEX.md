@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7410 | ROOT=unit-sibling-still-demanded-two-field-temp-cover-filter | focused=normal-pre-fix-RED/selftest-10 | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7409 | PR=#18026 @ 2021a87822 | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7410 | GO
 CODEX | WORKING | GUARD-F7409 | ROOT=wave-a-load-guard-retained-same-obsolete-border-envelope | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7408 | PR=#18023 @ cdd73abe0a | gate=exit0 | Live=UNVERIFIED | NEXT=GUARD-F7409 | GO
 CODEX | WORKING | GUARD-F7408 | ROOT=border-load-guard-demanded-pre-refactor-form-envelope | focused=normal/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
