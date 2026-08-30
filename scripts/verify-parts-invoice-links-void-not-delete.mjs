@@ -54,7 +54,13 @@ export function checkVoidNotDelete(routesSrc, costValidationSrc) {
     problems.push(`${ROUTES}: expected 2 active-read call sites (list + unit-history) to filter pil.voided_at IS NULL, found ${activeReadFilterCount}`);
   }
 
-  if (!/FROM maintenance\.parts_invoice_links\s*\n\s*WHERE work_order_id = \$1::uuid\s*\n\s*AND voided_at IS NULL/.test(costValidationSrc)) {
+  const partsCostQuery = costValidationSrc.match(
+    /FROM maintenance\.parts_invoice_links\b[\s\S]{0,500}?WHERE work_order_id = \$1::uuid[\s\S]{0,500}?(?=\n\s*`,|$)/
+  )?.[0];
+  if (!partsCostQuery || !/AND operating_company_id = \$2::uuid/.test(partsCostQuery)) {
+    problems.push(`${COST_VALIDATION}: cost rollup no longer scopes parts_invoice_links to operating_company_id`);
+  }
+  if (!partsCostQuery || !/AND voided_at IS NULL/.test(partsCostQuery)) {
     problems.push(`${COST_VALIDATION}: cost rollup no longer excludes voided_at rows — a voided part would still count toward WO cost`);
   }
 
@@ -95,6 +101,7 @@ function selftest() {
       COALESCE(SUM(vendor_invoice_amount::numeric * GREATEST(qty_used, 1)), 0)::numeric AS total
     FROM maintenance.parts_invoice_links
     WHERE work_order_id = $1::uuid
+      AND operating_company_id = $2::uuid
       AND voided_at IS NULL
   `;
   const goodProblems = checkVoidNotDelete(goodRoutes, goodCostValidation);
@@ -111,6 +118,7 @@ function selftest() {
     { routes: goodRoutes.replace("AND voided_at IS NULL\n        RETURNING id, work_order_id, parts_inventory_id, qty_used", "RETURNING id, work_order_id, parts_inventory_id, qty_used"), cost: goodCostValidation },
     { routes: goodRoutes.replace("on_hand_qty = COALESCE(on_hand_qty, 0) + $2", "on_hand_qty = on_hand_qty"), cost: goodCostValidation },
     { routes: goodRoutes.replace(/AND pil\.voided_at IS NULL\n/g, ""), cost: goodCostValidation },
+    { routes: goodRoutes, cost: goodCostValidation.replace("AND operating_company_id = $2::uuid\n", "") },
     { routes: goodRoutes, cost: goodCostValidation.replace("AND voided_at IS NULL\n", "") },
   ];
   for (const [i, mutated] of mutations.entries()) {
