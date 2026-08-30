@@ -4842,6 +4842,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-ct-timezone-rendering"
   },
+  "10052": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
