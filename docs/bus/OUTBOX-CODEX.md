@@ -1,3 +1,5 @@
+CODEX | WORKING | DSP-F7365 | ROOT=selftest-mutated-sibling-HOS-component | focused=normal-PASS/selftest-pre-fix-RED | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | DRV-F7406 | PR=#17994 @ 84188fabd2 | gate=exit0 | Live=UNVERIFIED | NEXT=DSP-F7365 | GO
 CODEX | WORKING | DRV-F7406 | ROOT=C9-parser-shipped-without-mounted-contract-marker | focused=running | NEXT=guard+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7405 | PR=#17991 @ c4dbd1cc3d | gate=exit0 | Live=UNVERIFIED | NEXT=DRV-F7406 | GO
 CODEX | WORKING | GUARD-F7405 | ROOT=HOS-guard-rejected-typed-submission-envelopes | focused=PASS+selftest | NEXT=full-gate+FAST-MERGE | GO
