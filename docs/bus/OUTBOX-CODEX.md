@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7500 | class=column-registry | columns=load+trailer+unit | exact=9+12+30 | focused=3-normal+3-selftests | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7499 | PR=#18145 @ f2c8b0da5a | column=unit | scope=P10-51→ALL-185/20-modules | NEXT=registry-class-sweep | GO
 CODEX | WORKING | GUARD-F7499 | column=unit | Built=unchanged | scope=P10-51→ALL-185/20-modules | focused=exact9/9+all-module-selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7498 | PR=#18144 @ e877eeca73 | focused=normal+selftest7/7+full-gate | NEXT=unit-column-wave-red | GO
 CODEX | WORKING | GUARD-F7498 | ROOT=policy-unit-search-guard-froze-retired-wizard-local-query-after-shared-EntityPicker-adoption | focused=normal+selftest7/7+sibling-guards | NEXT=gate+FAST-MERGE | GO
