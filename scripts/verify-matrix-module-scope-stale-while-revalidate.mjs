@@ -80,8 +80,19 @@ function failures(sources) {
     }
   }
 
-  if (!/void persistModuleLastGood\(cacheKey, payload\)/.test(svc)) {
-    out.push("module-matrix.service: computeModuleMatrixUncached must persist its result to disk (fire-and-forget) so a future cold start has a fallback");
+  // MATRIX-HANDOFF-02: fire-and-forget raced readModuleLastGood → HTTP stayed REQUIRED-SEED.
+  // SYSTEM already awaits persistSystemLastGood. MODULE must await persistModuleLastGood.
+  if (/void persistModuleLastGood\(cacheKey, payload\)/.test(svc)) {
+    out.push("module-matrix.service: persistModuleLastGood must be awaited — void races the parent last-good read and module boards stay 0%");
+  }
+  if (!/await persistModuleLastGood\(cacheKey, payload\)/.test(svc)) {
+    out.push("module-matrix.service: computeModuleMatrixUncached must await persistModuleLastGood so last-good is on disk before the worker posts ok");
+  }
+  if (!/await persistSystemLastGood\(payload\)/.test(svc)) {
+    out.push("module-matrix.service: computeSystemModuleMatrix must await persistSystemLastGood (MATRIX-HANDOFF-01)");
+  }
+  if (/void persistSystemLastGood/.test(svc)) {
+    out.push("module-matrix.service: persistSystemLastGood must not be fire-and-forget");
   }
   if (!/moduleMatrixInflight\.clear\(\)/.test(svc)) {
     out.push("module-matrix.service: clearModuleMatrixCache must also clear moduleMatrixInflight (test isolation)");
@@ -131,7 +142,17 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     {
       name: "fresh computation never persisted to disk",
       file: SVC,
-      mutate: (text) => text.replace("void persistModuleLastGood(cacheKey, payload);\n  ", ""),
+      mutate: (text) => text.replace("await persistModuleLastGood(cacheKey, payload);\n", ""),
+    },
+    {
+      name: "module last-good persist is fire-and-forget again",
+      file: SVC,
+      mutate: (text) => text.replace("await persistModuleLastGood(cacheKey, payload);", "void persistModuleLastGood(cacheKey, payload);"),
+    },
+    {
+      name: "system last-good persist is fire-and-forget again",
+      file: SVC,
+      mutate: (text) => text.replace("await persistSystemLastGood(payload);", "void persistSystemLastGood(payload);"),
     },
     {
       name: "route drops userUuid on scope=module",
