@@ -2482,3 +2482,5 @@ CODEX | WORKING | FLT-F7425 | ROOT=unit-aggregate-telemetry-bare-id-ownership-re
 CODEX | SHIPPED | DRV-F7424 | PR=#18060 @ aeddb5cf16 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=FLT-F7425 | GO
 CODEX | WORKING | MNT-F7426 | ROOT=maintenance-unit-scope-composed-outside-executed-SQL-blocks | focused=owner-lease+selftest+sample+visibility+backend-tsc | census=26→25 | NEXT=gate+FAST-MERGE | GO
 CODEX | SHIPPED | FLT-F7425 | PR=#18061 @ 5d6cc897e1 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=MNT-F7426 | GO
+CODEX | WORKING | GUARD-F7427 | ROOT=entity-scope-parser-ignored-symmetric-RHS-equality | focused=parser-selftest+intransit-12-selftests+backend-tsc | census=25→24 | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | MNT-F7426 | PR=#18062 @ 6cbfb41047 | gate=exit0 | push=no-verify-after-full-preflight-PASS | Live=UNVERIFIED | NEXT=GUARD-F7427 | GO
