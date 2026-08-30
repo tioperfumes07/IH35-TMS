@@ -130,9 +130,16 @@ export type DriverQualificationFileItem = {
   id: string;
   driver_id: string;
   item_name: string;
+  required_document_type_id: string | null;
+  required_document_type_code: string | null;
+  required_document_type_label: string;
+  required_document_type_authority: string | null;
   status: "present" | "missing" | "expired";
   effective_date: string | null;
   expiry_date: string | null;
+  executed_at: string | null;
+  removable_after: string | null;
+  retain_until: string | null;
   notes: string | null;
   expiry_pill?: "unknown" | "red" | "amber" | "green";
 };
@@ -161,10 +168,13 @@ export function createDriverQualificationItem(
   companyId: string,
   body: {
     driver_id: string;
-    item_name: string;
+    required_document_type_id: string;
     status?: "present" | "missing" | "expired";
     effective_date?: string;
     expiry_date?: string;
+    executed_at?: string;
+    removable_after?: string;
+    retain_until?: string;
     notes?: string;
   }
 ) {
@@ -181,6 +191,10 @@ export function patchDriverQualificationItem(
     status?: "present" | "missing" | "expired";
     effective_date?: string | null;
     expiry_date?: string | null;
+    required_document_type_id?: string;
+    executed_at?: string | null;
+    removable_after?: string | null;
+    retain_until?: string | null;
     notes?: string | null;
     voided_reason?: string;
   }

@@ -10,6 +10,9 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
 import { dqfExpiryPillClass, dqfItemStatusClass } from "../../../lib/driverDqf";
 import { formatDateUS } from "../../../lib/formatDate";
+import { Combobox } from "../../../components/Combobox";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { listRequiredDocumentTypes } from "../../../api/requiredDocuments";
 
 type Props = {
   companyId: string;
@@ -21,13 +24,23 @@ type Props = {
 
 export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "all", onClearFocus }: Props) {
   const queryClient = useQueryClient();
-  const [itemName, setItemName] = useState("");
+  const [documentTypeId, setDocumentTypeId] = useState<string | null>(null);
+  const [effectiveDate, setEffectiveDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [executedAt, setExecutedAt] = useState("");
+  const [removableAfter, setRemovableAfter] = useState("");
+  const [retainUntil, setRetainUntil] = useState("");
   const [mutationError, setMutationError] = useState<string | null>(null);
   const scopeGenerationRef = useRef(0);
 
   useEffect(() => {
     scopeGenerationRef.current += 1;
-    setItemName("");
+    setDocumentTypeId(null);
+    setEffectiveDate("");
+    setExpiryDate("");
+    setExecutedAt("");
+    setRemovableAfter("");
+    setRetainUntil("");
     setMutationError(null);
   }, [companyId, driverId]);
 
@@ -36,18 +49,36 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
     enabled: Boolean(companyId && driverId),
     queryFn: () => listDriverQualificationItems(driverId, companyId).then((result) => result.items),
   });
+  const documentTypesQ = useQuery({
+    queryKey: ["compliance", "required-document-types", companyId, "driver"],
+    enabled: Boolean(companyId),
+    queryFn: () => listRequiredDocumentTypes(companyId, "driver"),
+  });
 
   const createMutation = useMutation({
-    mutationFn: (input: { companyId: string; driverId: string; itemName: string; generation: number }) =>
+    mutationFn: (input: {
+      companyId: string; driverId: string; documentTypeId: string; effectiveDate: string;
+      expiryDate: string; executedAt: string; removableAfter: string; retainUntil: string; generation: number;
+    }) =>
       createDriverQualificationItem(input.companyId, {
         driver_id: input.driverId,
-        item_name: input.itemName,
+        required_document_type_id: input.documentTypeId,
         status: "present",
+        effective_date: input.effectiveDate || undefined,
+        expiry_date: input.expiryDate || undefined,
+        executed_at: input.executedAt || undefined,
+        removable_after: input.removableAfter || undefined,
+        retain_until: input.retainUntil || undefined,
       }),
     onMutate: () => setMutationError(null),
     onSuccess: async (_data, input) => {
       if (input.generation !== scopeGenerationRef.current) return;
-      setItemName("");
+      setDocumentTypeId(null);
+      setEffectiveDate("");
+      setExpiryDate("");
+      setExecutedAt("");
+      setRemovableAfter("");
+      setRetainUntil("");
       await queryClient.invalidateQueries({ queryKey: ["safety", "driver-dqf", input.companyId, input.driverId] });
     },
     onError: (error, input) => {
@@ -99,28 +130,43 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
           className="flex flex-wrap items-end gap-2"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!itemName.trim()) return;
+            if (!documentTypeId) return;
             createMutation.mutate({
               companyId,
               driverId,
-              itemName: itemName.trim(),
+              documentTypeId,
+              effectiveDate,
+              expiryDate,
+              executedAt,
+              removableAfter,
+              retainUntil,
               generation: scopeGenerationRef.current,
             });
           }}
         >
-          <label className="block text-xs text-slate-600">
-            Add checklist item
-            <input
-              className="mt-1 block min-w-[260px] rounded-sm border border-gray-300 px-2 py-1 text-sm"
-              value={itemName}
-              onChange={(event) => setItemName(event.target.value)}
-              placeholder="e.g. MVR, Med Card, Road Test"
+          <div className="min-w-[280px] text-xs text-slate-600">
+            <label htmlFor="dqf-required-document-type">Required document type</label>
+            <Combobox
+              id="dqf-required-document-type"
+              className="mt-1"
+              options={(documentTypesQ.data ?? []).map((type) => ({ value: type.id, label: type.label, sublabel: type.authority ?? undefined }))}
+              value={documentTypeId}
+              onChange={setDocumentTypeId}
+              loading={documentTypesQ.isLoading}
+              error={documentTypesQ.isError ? "Could not load required document types" : undefined}
+              clearCommittedOnEdit
+              placeholder="Select required document type"
             />
-          </label>
+          </div>
+          <label className="block text-xs text-slate-600">Effective<DatePicker className="mt-1 w-36" value={effectiveDate} onChange={setEffectiveDate} /></label>
+          <label className="block text-xs text-slate-600">Expiry<DatePicker className="mt-1 w-36" value={expiryDate} onChange={setExpiryDate} /></label>
+          <label className="block text-xs text-slate-600">Executed<DatePicker className="mt-1 w-36" value={executedAt} onChange={setExecutedAt} /></label>
+          <label className="block text-xs text-slate-600">Removable after<DatePicker className="mt-1 w-36" value={removableAfter} onChange={setRemovableAfter} /></label>
+          <label className="block text-xs text-slate-600">Retain until<DatePicker className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
           <button
             type="submit"
             className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-            disabled={createMutation.isPending || !itemName.trim()}
+            disabled={createMutation.isPending || !documentTypeId || documentTypesQ.isError}
           >
             + Create checklist item
           </button>
@@ -150,10 +196,16 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
           emptyText={focus === "all" ? (editable ? "No DQF items yet. Create the first checklist row above." : "No DQF items yet.") : `No ${focus === "expiry_alerts" ? "expiry alert" : focus} DQF items.`}
           columns={[
             {
-              key: "item_name",
+              key: "required_document_type_label",
               label: "Item",
               sortable: true,
               cellClass: "font-medium text-slate-800",
+            },
+            {
+              key: "required_document_type_authority",
+              label: "Authority",
+              cellClass: "text-slate-600",
+              render: (item) => item.required_document_type_authority || "—",
             },
             {
               key: "status",
@@ -187,6 +239,9 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
                 </span>
               ),
             },
+            { key: "executed_at", label: "Executed", sortable: true, render: (item) => formatDateUS(item.executed_at) || "—" },
+            { key: "removable_after", label: "Removable after", sortable: true, render: (item) => formatDateUS(item.removable_after) || "—" },
+            { key: "retain_until", label: "Retain until", sortable: true, render: (item) => formatDateUS(item.retain_until) || "—" },
             ...(editable
               ? [
                   {

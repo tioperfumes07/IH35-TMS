@@ -24,10 +24,13 @@ const itemParamsSchema = z.object({
 
 const createDqItemSchema = z.object({
   driver_id: z.string().uuid(),
-  item_name: z.string().trim().min(1),
+  required_document_type_id: z.string().uuid(),
   status: z.enum(["present", "missing", "expired"]).default("present"),
   effective_date: z.string().optional(),
   expiry_date: z.string().optional(),
+  executed_at: z.string().min(1).optional(),
+  removable_after: z.string().optional(),
+  retain_until: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -35,6 +38,10 @@ const patchDqItemSchema = z.object({
   status: z.enum(["present", "missing", "expired"]).optional(),
   effective_date: z.string().nullable().optional(),
   expiry_date: z.string().nullable().optional(),
+  required_document_type_id: z.string().uuid().optional(),
+  executed_at: z.string().min(1).nullable().optional(),
+  removable_after: z.string().nullable().optional(),
+  retain_until: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
   voided_reason: z.string().trim().min(1).optional(),
 });
@@ -103,27 +110,38 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
       const res = await client.query(
         `
           SELECT
-            id,
-            operating_company_id,
-            driver_id,
-            item_name,
-            status,
-            effective_date,
-            expiry_date,
-            notes,
-            voided_at,
-            voided_reason,
-            created_at,
-            updated_at,
+            f.id,
+            f.operating_company_id,
+            f.driver_id,
+            f.item_name,
+            f.required_document_type_id,
+            rdt.code AS required_document_type_code,
+            COALESCE(rdt.label, f.item_name) AS required_document_type_label,
+            rdt.authority AS required_document_type_authority,
+            f.status,
+            f.effective_date,
+            f.expiry_date,
+            f.executed_at,
+            f.removable_after,
+            f.retain_until,
+            f.notes,
+            f.voided_at,
+            f.voided_reason,
+            f.created_at,
+            f.updated_at,
             CASE
-              WHEN expiry_date IS NULL THEN NULL
-              ELSE (expiry_date - CURRENT_DATE)
+              WHEN f.expiry_date IS NULL THEN NULL
+              ELSE (f.expiry_date - CURRENT_DATE)
             END AS days_to_expiry
-          FROM safety.driver_qualification_files
-          WHERE operating_company_id = $1::uuid
-            AND driver_id = $2
-            AND voided_at IS NULL
-          ORDER BY item_name ASC
+          FROM safety.driver_qualification_files f
+          LEFT JOIN compliance.required_document_types rdt
+            ON rdt.id = f.required_document_type_id
+           AND rdt.operating_company_id = f.operating_company_id
+           AND rdt.entity_kind = 'driver'
+          WHERE f.operating_company_id = $1::uuid
+            AND f.driver_id = $2
+            AND f.voided_at IS NULL
+          ORDER BY COALESCE(rdt.sort_order, 9999), COALESCE(rdt.label, f.item_name) ASC
         `,
         [company.data.operating_company_id, params.data.driver_id]
       );
@@ -245,27 +263,47 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         [body.data.driver_id, company.data.operating_company_id]
       );
       if (!driver.rows[0]) return null;
+      const catalogRes = await client.query<{ id: string; label: string }>(
+        `SELECT id::text, label
+           FROM compliance.required_document_types
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND entity_kind = 'driver'
+            AND is_active = true
+          LIMIT 1`,
+        [body.data.required_document_type_id, company.data.operating_company_id]
+      );
+      const documentType = catalogRes.rows[0];
+      if (!documentType) return null;
       const insertRes = await client.query<Record<string, unknown>>(
         `
           INSERT INTO safety.driver_qualification_files (
             operating_company_id,
             driver_id,
             item_name,
+            required_document_type_id,
             status,
             effective_date,
             expiry_date,
+            executed_at,
+            removable_after,
+            retain_until,
             notes
           )
-          VALUES ($1, $2, $3, $4, $5::date, $6::date, $7)
+          VALUES ($1, $2, $3, $4::uuid, $5, $6::date, $7::date, $8::timestamptz, $9::date, $10::date, $11)
           RETURNING *
         `,
         [
           company.data.operating_company_id,
           body.data.driver_id,
-          body.data.item_name,
+          documentType.label,
+          documentType.id,
           body.data.status,
           body.data.effective_date ?? null,
           body.data.expiry_date ?? null,
+          body.data.executed_at ?? null,
+          body.data.removable_after ?? null,
+          body.data.retain_until ?? null,
           body.data.notes ?? null,
         ]
       );
@@ -319,6 +357,22 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
       const existing = existingRes.rows[0];
       if (!existing) return null;
 
+      let documentType: { id: string; label: string } | null = null;
+      if (body.data.required_document_type_id) {
+        const catalogRes = await client.query<{ id: string; label: string }>(
+          `SELECT id::text, label
+             FROM compliance.required_document_types
+            WHERE id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND entity_kind = 'driver'
+              AND is_active = true
+            LIMIT 1`,
+          [body.data.required_document_type_id, company.data.operating_company_id]
+        );
+        documentType = catalogRes.rows[0] ?? null;
+        if (!documentType) return null;
+      }
+
       if (body.data.voided_reason) {
         const voidRes = await client.query(
           `
@@ -355,9 +409,14 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
         `
           UPDATE safety.driver_qualification_files
           SET status = COALESCE($3, status),
-              effective_date = COALESCE($4::date, effective_date),
-              expiry_date = COALESCE($5::date, expiry_date),
-              notes = COALESCE($6, notes),
+              effective_date = CASE WHEN $4::boolean THEN $5::date ELSE effective_date END,
+              expiry_date = CASE WHEN $6::boolean THEN $7::date ELSE expiry_date END,
+              required_document_type_id = COALESCE($8::uuid, required_document_type_id),
+              item_name = COALESCE($9, item_name),
+              executed_at = CASE WHEN $10::boolean THEN $11::timestamptz ELSE executed_at END,
+              removable_after = CASE WHEN $12::boolean THEN $13::date ELSE removable_after END,
+              retain_until = CASE WHEN $14::boolean THEN $15::date ELSE retain_until END,
+              notes = CASE WHEN $16::boolean THEN $17 ELSE notes END,
               updated_at = now()
           WHERE id = $1
             AND operating_company_id = $2::uuid
@@ -368,8 +427,19 @@ export async function registerSafetyDriverQualificationRoutes(app: FastifyInstan
           params.data.id,
           company.data.operating_company_id,
           body.data.status ?? null,
+          Object.hasOwn(body.data, "effective_date"),
           body.data.effective_date ?? null,
+          Object.hasOwn(body.data, "expiry_date"),
           body.data.expiry_date ?? null,
+          documentType?.id ?? null,
+          documentType?.label ?? null,
+          Object.hasOwn(body.data, "executed_at"),
+          body.data.executed_at ?? null,
+          Object.hasOwn(body.data, "removable_after"),
+          body.data.removable_after ?? null,
+          Object.hasOwn(body.data, "retain_until"),
+          body.data.retain_until ?? null,
+          Object.hasOwn(body.data, "notes"),
           body.data.notes ?? null,
         ]
       );

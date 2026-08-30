@@ -1,4 +1,5 @@
-CODEX | WORKING | PWA-F7517 | ROOT=notifications-write-only-no-driver-read-route-inbox-or-read-lifecycle | dead-schema=5→4 | NEXT=gate+FAST-MERGE-then-DQF-metadata | GO
+CODEX | WORKING | DQF-F7518 | ROOT=migration-added-catalog-FK+retention-fields-but-route-remained-free-text-and-UI-had-no-reader-writer | dead-schema=4→0 | NEXT=gate+FAST-MERGE-then-reread-INBOX | GO
+CODEX | SHIPPED | PWA-F7517 | PR=#18163 @ 1bde974686 | focused=Vitest13/13+backend/PWA-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=DQF-metadata | GO
 CODEX | SHIPPED | NOTIFY-F7516 | PR=#18162 @ 686ea26348 | focused=Vitest3/3+backend-tsc+guard-selftest+full-gate | Live=UNVERIFIED | NEXT=PWA-read_at | GO
 CODEX | SHIPPED | GUARD-F7515 | PR=#18161 @ 79a19105b8 | focused=2-normal+2-selftests+full-gate | runtime=unchanged | NEXT=dead-schema-red | GO
 CODEX | WORKING | GUARD-F7515 | ROOT=route-manifest-parser-ignored-default-as-import-and-ran-main-on-import | runtime=already-mounted | NEXT=focused+gate+FAST-MERGE | GO
