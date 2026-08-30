@@ -3,6 +3,7 @@ import { createAnthropicClient } from "./anthropic-client.js";
 import { startChain } from "../damage-continuity/continuity.service.js";
 import {
   getSession,
+  type AnglePairFinding,
   type PhotoEvidenceDetail,
   updateSessionDiffResult,
   type DiffStatus,
@@ -12,19 +13,6 @@ export const HIGH_CONFIDENCE_THRESHOLD = 0.8;
 
 type DbClient = {
   query: <R = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: R[] }>;
-};
-
-export type AnglePairFinding = {
-  angle_label: string;
-  pre_evidence_uuid: string;
-  post_evidence_uuid: string;
-  has_new_damage: boolean;
-  findings: Array<{
-    location: string;
-    severity: string;
-    description: string;
-    confidence: number;
-  }>;
 };
 
 export type AggregatedDiffResult = {

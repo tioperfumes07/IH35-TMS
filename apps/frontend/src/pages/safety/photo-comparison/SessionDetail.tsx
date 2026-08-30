@@ -29,7 +29,7 @@ type Session = {
   uuid: string;
   diff_status: string;
   diff_summary: string | null;
-  diff_findings: AngleFinding[] | null;
+  diff_findings: unknown;
   auto_damage_report_uuid: string | null;
   load_uuid: string | null;
   load_number: string | null;
@@ -52,6 +52,30 @@ async function fetchSession(sessionUuid: string, operatingCompanyId: string) {
   );
 }
 
+function isAngleFinding(value: unknown): value is AngleFinding {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const finding = value as Record<string, unknown>;
+  return (
+    typeof finding.angle_label === "string" &&
+    typeof finding.has_new_damage === "boolean" &&
+    Array.isArray(finding.findings)
+  );
+}
+
+export function readAngleFindings(session: Session | undefined): {
+  findings: AngleFinding[];
+  invalid: boolean;
+} {
+  if (!session || session.diff_findings == null) return { findings: [], invalid: false };
+  if (Array.isArray(session.diff_findings) && session.diff_findings.every(isAngleFinding)) {
+    return { findings: session.diff_findings, invalid: false };
+  }
+  if (session.diff_status === "pending" || session.diff_status === "analyzing") {
+    return { findings: [], invalid: false };
+  }
+  return { findings: [], invalid: true };
+}
+
 export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
   const [selectedAngle, setSelectedAngle] = useState<string>("front");
   const [accepted, setAccepted] = useState<Set<number>>(new Set());
@@ -64,7 +88,8 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
   });
 
   const session = query.data?.session;
-  const angleFindings = session?.diff_findings ?? [];
+  const angleFindingsResult = readAngleFindings(session);
+  const angleFindings = angleFindingsResult.findings;
   const selectedPair = useMemo(() => {
     const pre = session?.pre_trip_photos?.find((p) => p.angle_label === selectedAngle);
     const post = session?.post_trip_photos?.find((p) => p.angle_label === selectedAngle);
@@ -149,6 +174,14 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
 
       <div>
         <h3 className="mb-2 text-sm font-semibold text-slate-800">AI findings</h3>
+        {angleFindingsResult.invalid ? (
+          <ListErrorState
+            title="Photo comparison evidence has an invalid format"
+            status={422}
+            message="The saved comparison evidence could not be read safely. Retry after the evidence is corrected."
+            onRetry={() => void query.refetch()}
+          />
+        ) : null}
         <DiffFindingsList
           findings={flatFindings}
           readOnly={session?.diff_status === "manual_override"}
