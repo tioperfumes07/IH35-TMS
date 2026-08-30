@@ -139,7 +139,6 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
   const [step1, setStep1] = useState<Step1>(INITIAL_STEP1);
   const [step1Errors, setStep1Errors] = useState<Partial<Record<keyof Step1, string>>>({});
   const [selectedUnits, setSelectedUnits] = useState<EntityPickerOption[]>([]);
-  const [unitPickerValue, setUnitPickerValue] = useState<string | null>(null);
   const [step3, setStep3] = useState<Step3>(INITIAL_STEP3);
   const [step3Errors, setStep3Errors] = useState<Partial<Record<keyof Step3, string>>>({});
   const [serverError, setServerError] = useState("");
@@ -170,7 +169,6 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
     setStep1(INITIAL_STEP1);
     setStep1Errors({});
     setSelectedUnits([]);
-    setUnitPickerValue(null);
     setStep3(INITIAL_STEP3);
     setStep3Errors({});
     setServerError("");
@@ -450,11 +448,10 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
             <EntityPicker
               kind="unit"
               operatingCompanyId={operatingCompanyId}
-              value={unitPickerValue}
+              value={null}
               onChange={(unitId, option) => {
                 if (!unitId || !option) return;
                 setSelectedUnits((current) => current.some((unit) => unit.value === unitId) ? current : [...current, option]);
-                setUnitPickerValue(null);
               }}
               enabled={open}
               nestedInDrawer
