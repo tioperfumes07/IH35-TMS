@@ -1143,6 +1143,9 @@ export function DriverDetailPage() {
 
           <div className="col-span-full rounded-md border border-gray-200 p-3">
             <div className="mb-2 text-xs font-semibold text-gray-600">Visa & Passport</div>
+            <p className="mb-3 text-xs text-gray-600" data-testid="driver-b1-visa-status">
+              B-1 operating credential: {driver.has_b1_visa ? "On file" : "Not on file"}
+            </p>
             <div className="grid gap-3 md:grid-cols-2">
               {[
                 ["visa_number", "Visa Number", "text"],
