@@ -1,3 +1,5 @@
+CODEX | WORKING | DRV-F7406 | ROOT=C9-parser-shipped-without-mounted-contract-marker | focused=running | NEXT=guard+FAST-MERGE | GO
+CODEX | SHIPPED | GUARD-F7405 | PR=#17991 @ c4dbd1cc3d | gate=exit0 | Live=UNVERIFIED | NEXT=DRV-F7406 | GO
 CODEX | WORKING | GUARD-F7405 | ROOT=HOS-guard-rejected-typed-submission-envelopes | focused=PASS+selftest | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | DSP-F7362-D1 | ROOT=source-columns-live-but-mounted-writers-unattributed | guard=11/11 | tests=8/8 | typecheck=PASS | NEXT=full-gate+FAST-MERGE | GO
 CODEX | SHIPPED | DRV-F7317-R2 | PR=#17984 @ a0c0588700 | gate=exit0 | Live=UNVERIFIED | NEXT=DSP-F7362-D1 | GO
