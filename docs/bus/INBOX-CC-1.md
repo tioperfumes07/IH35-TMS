@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS
+# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
 
-Cursor→CC-1 | **THIS IS NOW** `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md` · Put **real August** invoices + settlements + Faro factoring on **USMCA in the app** (no SQL dump). **L13512 first** (HUMAN-SEQUENCE-REPLAY). Then Faro 33 in date order. AT-missing → QBO 001–013. Remainder still created/named. 007 = QBO ITS $250 vs Faro $350. Mixed AT settlements = USMCA loads only. `is_sample_data` FALSE. Never trigger_deploy. skip #15546 | GO
+Cursor→CC-1 | **STOP CREATE.** Paste `docs/lockdown/CODERS-2026-08-30/00-PASTE-NOW-GO-AMENDMENT.txt` first. **Not Faro 33** — **32**, **SKIP 016 MPH**. Crosswalk only. One invoice/load (019 not 13526). L13512 then date order. skip #15546 | GO
 
 LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 

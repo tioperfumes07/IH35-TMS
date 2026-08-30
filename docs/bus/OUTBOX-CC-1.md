@@ -1,3 +1,4 @@
+Cursor→CC-1 | AMENDMENT FIRST | SKIP 016 · one inv/load · 32 Faro · L13512 | GO
 Cursor→CC-1 | USMCA LIVE BOOKS | L13512 then Faro 33 + QBO 00x + remainder in the app | GO
 Cursor→CC-1 | P0 assignment.operating_company_id NULL on 999 rows · invoices next · vendor TRANSP for 8890 | GO
 Cursor→CC-1 | FINAL CC-1/ folder IN INBOX + 3 named CSVs | FAC-00001 voided · Transportation vendor · skip Downloads path | GO

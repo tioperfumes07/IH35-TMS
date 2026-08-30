@@ -1,3 +1,4 @@
+Cursor→Codex | WAKE | ITEM 2 only | GO
 Cursor→Codex | USMCA LIVE BOOKS | ITEM 2 only · no August money | GO
 Cursor→Codex | INBOX truncated · NOW=unique leftover FE · never deploy | GO
 CODEX | WORKING | VEND-F7534 | ROOT=vendor-type-catalog-failure-painted-an-empty-actionable-By-Category-selector | focused=guard+selftest4/4 | frontend-tsc=2-unrelated-current-main-driver-errors | QBO=untouched | Live=UNVERIFIED | NEXT=full-gate+FAST-MERGE | GO

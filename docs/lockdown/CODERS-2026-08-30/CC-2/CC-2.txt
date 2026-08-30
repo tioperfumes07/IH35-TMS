@@ -1,0 +1,304 @@
+================================================================================
+CC-2 — REV D (2026-08-30). READ FIRST. CHANGES WHAT YOU GRADE 007 AGAINST.
+================================================================================
+
+TWO OWNER FACTS, BOTH CONFIRMED LIVE:
+  1. Transportation QuickBooks was RENAMED to USMCA. QBO company_info returns
+     "USMCA Freight Solutions, Inc." One file. It IS the USMCA books.
+     TMS mirror keys those rows to opco TRANSP = clone keying. Do not "fix" it.
+  2. AlwaysTrack was suspended for non-payment starting about 08/10. Those days
+     were billed straight into QuickBooks as 3-digit docs 001-013 with blank
+     Work Order. No AT load for 001-013 is EXPECTED, not a gap.
+
+DO NOT GRADE OFF mdata.qbo_ar_invoices. It last mirrored 2026-08-14T17:04:28Z
+and stops at doc 013. Live QBO runs to 036. Defect QBO-MIRROR-STALE-16D (P1).
+Absence in the mirror is not absence in QuickBooks.
+
+--------------------------------------------------------------------------------
+007 — GRADE OFF THIS, NOT AN ALWAYSTRACK LOAD
+--------------------------------------------------------------------------------
+  Source document: QBO invoice 007, 2026-08-13, ITS Logistics LLC, $250.00,
+                   line "Load Number - 007", no PO, open balance $250.00.
+  Faro says:       invoice 007, ITS LOGISTICS LLC, PO 68747, face $350.00,
+                   net advance $339.50, wired 08/13.
+  Finding:         $100.00 face difference; PO 68747 does not appear on the
+                   QBO document. No AT load exists and none should.
+  Grade the reconciliation defect. Do not open another Load History pull.
+
+--------------------------------------------------------------------------------
+NEW EVIDENCE FILE FOR THE 16-POINT SETTLEMENT TRACE
+--------------------------------------------------------------------------------
+  CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv  — 36 rows, Faro <-> QBO <-> AT load,
+  every row carries link_basis and a defect code. 21 of the AT-load links are
+  QBO-LINE-PROVEN (the QBO invoice line text literally names the load number,
+  e.g. doc 019 line "LOAD NUMBER - 019 - 13526"). Zero inferred links.
+  Use link_basis as your evidence grade. Basis NONE = not a fact = do not pass.
+
+--------------------------------------------------------------------------------
+ADD THESE TO THE DEFECT REGISTER BEFORE THE 007/008 GATE
+--------------------------------------------------------------------------------
+P0  DOUBLE-BILLED-IN-QBO — six loads, two open invoices each:
+      13526 (docs 019 + 13526)  $3,500     13532 (docs 020 + 13532)  $1,000
+      13528 (docs 017 + 13528)  $3,100     13534 (docs 022 + 13534)  $3,100
+      13529 (docs 018 + 13529)  $3,900     13535 (docs 023 + 13535)  $4,900
+      duplicated open A/R $19,500.00
+P1  QBO-DUPLICATE-DOCNUMBER — doc 006 used 3x on 08/13:
+      BV Logistics $2,600 (line "Load Number - 006")
+      BV Logistics $2,600 (line "Load Number - 20495") — same load, PO as load#
+      Magna        $2,700 (line "Load Number - 005 - Lina Haul") — dup of 005
+      further duplicated A/R $5,300.00
+    TOTAL A/R OVERSTATEMENT $24,800.00
+P0  FACTORED-BUT-NO-QBO-INVOICE — Faro 016 MPH $3,800, PO MPHC261334,
+    purchased 08/18, wired $3,676. QBO skips 015 -> 017. Receivable pledged
+    to Faro with no book invoice. ASC 860 secured borrowing requires the
+    receivable to exist on-book. AT load 13524 exists at gross rate $4,200,
+    W.O. "pending". $400 gap. OWNER DECISION PENDING — do not post.
+P1  FACE-MISMATCH — 007 ITS, Faro $350 vs QBO $250.
+P2  ON-BOOKS-NOT-FACTORED — QBO 009 FLS $525; QBO 010 Supply Chain Mgmt $4,000.
+    (QBO 026 IM Specialized $3,120 is also unfactored but is CLOSED: direct-pay,
+     BoA 08/26 credit $3,032.60 "ORIG: IM SPECIALIZED LOGISTICS ... USMCA
+     INVOICE 026".)
+
+The QBO duplicates are corrected IN QUICKBOOKS by the owner/Martin, WORM style
+(credit memo or void — reverse, never erase). NO TMS -> QBO WRITE-BACK.
+CC-2's job is to prove the TMS DETECTS the condition, not to write to QBO.
+
+--------------------------------------------------------------------------------
+GUARD CC-2 SHOULD DEMAND (Cursor authors, owner approves)
+--------------------------------------------------------------------------------
+  guard: one-load-one-open-invoice
+  Fails when a single revenue-recognized load maps to more than one open A/R
+  document. Would have caught all six on 08/24. Does not exist today.
+  Until it exists, "factoring 10 of 10 complete=true" remains a scoreboard lie.
+
+Prior CC-2 assignments (007/008 gate after CC-1 rows exist, USER-VERIFY-01 via
+the buildApp("Dispatcher") test harness, 16-point settlement trace) all stand.
+Hard Rule 5 unchanged: only CC-2 writes prod_verified.
+
+================================================================================
+===============================================================================
+CC-2 — COMPLETE WORK ORDER. 2026-08-30. SUPERSEDES EVERY EARLIER FILE.
+TWO PARTS:  A) corrections + the lane answer   B) Faro verification
+===============================================================================
+
+
+###############  PART A — CORRECTIONS  ###############
+
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+-------------------------------------------------------------------------------
+TASK 2 — USER-VERIFY-01. MY INSTRUCTION WAS WRONG. WITHDRAWN.
+-------------------------------------------------------------------------------
+I told you to create your own Dispatcher account and sign in as it. You declined, correctly,
+on the grounds that creating an account and entering a password to authenticate are two
+separately prohibited actions, and that removing the owner from the loop does not make
+either one permitted.
+
+That is right. Reframing an ask does not change what the ask is. I should not have sent it,
+and I am not going to send it again in another shape. Your escalation-pattern note is
+well taken and should stay in your memory.
+
+THE ACTUAL PATH — no account, no password, no login, and it is BETTER evidence:
+The test harness you need already exists and is already used for exactly this.
+  apps/backend/src/identity/users.routes.test.ts uses buildApp("<Role>") and app.inject()
+  to exercise real routes under a real role-bearing session. Live examples on origin/main:
+      buildApp("Dispatcher") -> GET /api/v1/identity/users            expects 403
+      buildApp("Driver")     -> GET /api/v1/identity/users            expects 403
+      buildApp("Dispatcher") -> GET /api/v1/identity/users/assignable expects 200
+      buildApp("Administrator") -> GET /api/v1/identity/users         expects 200
+
+So the Change-Role gate can be proven the same way. Write runtime tests against
+  PATCH /api/v1/identity/users/:id      (apps/backend/src/identity/users.routes.ts:555)
+which is where the role change lives, and where the escalation guard sits at ~:596-624:
+  (1) only an Owner may grant the Owner role or re-role an existing Owner
+  (2) no one may change their OWN role
+  (3) never demote the last active Owner
+
+MINIMUM CASES TO ASSERT:
+  a. buildApp("Dispatcher") attempting any role change            -> 403
+  b. buildApp("Administrator") attempting to grant role=Owner     -> denied (only an Owner may)
+  c. buildApp("Administrator") attempting to change their OWN role-> denied
+  d. demoting the last active Owner                               -> denied
+  e. buildApp("Owner") performing a legitimate role change        -> succeeds (proves the
+     gate is a gate, not a wall - a test that only ever expects failure proves nothing)
+
+WHY THIS IS STRONGER THAN THE MANUAL WALK I ASKED FOR:
+  * it exercises the runtime gate, not a source-text regex (the existing
+    users-directory-role-gate.guard.test.ts is static pattern-matching - it asserts the
+    gate CODE EXISTS, not that it BEHAVES)
+  * it covers 5 cases a human click-through would never sit through
+  * it runs in CI forever, so the gate cannot silently regress
+  * no credential is created, held, transmitted, or typed by anyone
+
+-------------------------------------------------------------------------------
+YOUR LANE QUESTION: "SHOULD GUARD AUTHOR TEST CODE?" — ANSWER: YES. HERE IS WHY.
+-------------------------------------------------------------------------------
+You asked whether writing these tests violates your build=0 posture. It is a fair question
+and you were right to ask rather than assume. The answer is yes, write them, and the
+distinction is not about risk level - it is about WHAT the code is.
+
+  Writing the ROLE GATE                = building the control      -> not yours
+  Writing a TEST that exercises it     = the audit procedure       -> yours
+
+An auditor never writes the client's controls. An auditor always writes their own test
+procedures. The gate already exists at users.routes.ts:596-624, authored by someone else.
+A test you write against it is verification, not construction. Option 1 is correct.
+
+*** BUT THE REAL RISK IS NOT THE LANE. IT IS TAUTOLOGY. ***
+If you write the test by reading the implementation and asserting what it currently does,
+you have proven nothing - the test will pass even if the behavior is wrong, because you
+copied the behavior into the assertion. That is the failure mode that actually matters here.
+
+SO: write each case from the DOCUMENTED RULE, not from the code. The rules are stated in the
+source comment at ~:596-598 and they are spec, not implementation:
+  (1) only an Owner may grant the Owner role or re-role an existing Owner
+  (2) no one may change their OWN role
+  (3) never demote the last active Owner
+Write the assertion the rule demands. If the code disagrees with the rule, the test SHOULD
+fail - and that failure is a finding, not a bug in your test. Do not adjust the test to
+match the code. That is the same discipline as never hand-entering a percentage to make a
+factoring total match.
+
+Case (e) - Owner performs a legitimate role change and it SUCCEEDS - is mandatory for the
+same reason. A suite that only ever expects 403 would pass against a route that rejects
+everything, including the operations it is supposed to allow.
+
+Then stamp prod_verified with these tests as the evidence, and say in the evidence block
+that the manual non-Owner walk was replaced by runtime role-session tests, why, and that the
+assertions were written from the documented rules rather than from the implementation.
+
+-------------------------------------------------------------------------------
+TASK 1 — STILL BLOCKED, AND THE DATA IS NOT READY. DO NOT GRADE YET.
+-------------------------------------------------------------------------------
+Your read was right: CC-1's build is in flight. But the copy that landed has real defects
+and I have sent CC-1 a correction order. DO NOT grade 007/008/full-schedule against the
+current customer set - you would be grading invoices built on duplicates and missing rows.
+
+Verified in prod after CC-1's #18353 merge:
+  * the owner's 7 name rulings: 3 of 7 NOT applied (Watco, NCC, and Simple all still carry
+    the rows the owner ruled out; Simple carries four)
+  * all 4 CREATE_NEW Faro debtors MISSING: DARDINI LLC, FLS Transport Inc.,
+    J RAYL TRANSPORT INC, S E Mares Forwarding Service LLC
+    - S E Mares carries 2 invoices worth $9,800.00. It does not exist.
+  * factoring.customer_factor_assignment: 1,124 rows, ALL with operating_company_id NULL
+  * 116 USMCA customers have no assignment at all
+  * 2 rows with corrupted UTF-8
+
+WAIT FOR: all 4 debtors created, the 7 rulings applied, assignments backfilled and complete.
+THEN grade. Your answer key is CC-2-FARO-33-INVOICES-ANSWER-KEY.csv:
+  inv 007 face 35000 -> reserve 525  fee 525  cash 33950
+  inv 008 face 52500 -> reserve 788  fee 788  cash 50924   (NOT 50925)
+  full     face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+If your numbers differ from that file, the CODE is wrong, not the file. Report; never
+hand-enter a percentage to make a total match.
+
+-------------------------------------------------------------------------------
+TASKS 3, 4, 5 — unchanged. Standing by is the correct posture.
+-------------------------------------------------------------------------------
+No SETL specimen from CC-1 yet. No bar-2 TIEOUT gate from Cursor yet. Reporting "nothing
+to act on, here is the live state I checked" is a real deliverable, not idleness - it is
+what caught CC-1's build mid-flight. Keep doing exactly that.
+
+STANDING NOTE, AND IT APPLIES TO ME TOO: today CC-2, Claude and Cursor all reported the
+settlement poster as never-fired because all three read the driver_settlements header
+instead of the gl_runs/gl_bills subledger. Then an OUTBOX claimed a dedupe that prod
+disagreed with. Query the thing itself. A summary is not the system.
+
+
+###############  PART B — FARO VERIFICATION  ###############
+
+===============================================================================
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+
+LANE, OWNER-RULED: YOU DO NOT BUILD THE FARO BOOKS. CC-1 creates customers, assignments,
+invoices, advances and the August loads. YOU GRADE what they built. If the rows do not
+exist yet, say so and wait - that is the correct answer, not a reason to build them.
+
+-------------------------------------------------------------------------------
+TASK 1 — THE 007 / 008 / FULL-SCHEDULE GATE. Run when CC-1's rows exist.
+-------------------------------------------------------------------------------
+FACT-RESERVE-01 (#18318) is merged and live (API 8f866830). Confirm healthz >= 8f86683.
+
+  inv 007  ITS Logistics LLC   face $350.00 -> reserve $5.25  fee $5.25  cash $339.50
+  inv 008  FLS Transport Inc.  face $525.00 -> cash $509.24   NOT $509.25
+  FULL     face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+
+Your answer key is CC-2-FARO-33-ANSWER-KEY.csv. Verified against all 33 real invoices:
+0 mismatches. If your numbers differ, the CODE is wrong, not the file.
+
+*** EXPECTED FAILURE MODES - REPORT, DO NOT WORK AROUND ***
+  reserve $28.00 / fee $0.00 on the $350 -> ungoverned modal defaults reached the payload.
+     Cursor shipped the fail-closed fix (#18323); if you still see this, the deploy did not
+     reach the running code or a caller bypasses the modal. REPORT IT. Never hand-enter a
+     percentage to make a total tie.
+  cash $334.25 -> someone set advance_rate to 0.985. STOP AND ESCALATE.
+  reserve $10.50 -> the fix did not reach the running code. Check healthz SHA first.
+
+-------------------------------------------------------------------------------
+TASK 2 — DO NOT GRADE AGAINST A DIRTY CUSTOMER SET. CHECK THIS FIRST.
+-------------------------------------------------------------------------------
+CC-1's TRANSP->USMCA copy landed with open defects. Before grading anything, verify these
+are closed, because invoices built on duplicates or missing debtors will grade green and
+be wrong:
+  a. the owner's 7 name rulings applied - Watco keeps ONLY the "LLC DBA Watco Logistics"
+     row; NCC keeps ONLY "NCC Logistics" (not Mexico); Simple keeps ONLY
+     "Simple Logistics LLC"; "Sajacks Freigth" (typo) must NOT exist
+  b. all 4 CREATE_NEW debtors exist: DARDINI LLC, FLS Transport Inc.,
+     J RAYL TRANSPORT INC, S E Mares Forwarding Service LLC
+     - S E Mares carries 2 invoices worth $9,800.00 and did not exist at last check
+     - do NOT accept "Semares Forwarding Services" or "SEMARES, INC." as that debtor
+  c. factoring.customer_factor_assignment rows have operating_company_id NOT NULL
+     (1,124 rows were all NULL at last check)
+  d. every USMCA customer has an assignment (116 had none at last check)
+Report the counts you observe. Do not fix them - that is CC-1's lane.
+
+-------------------------------------------------------------------------------
+TASK 3 — THE AUGUST ENTITY SPLIT. VERIFY THE JOIN, NOT JUST THE TOTALS.
+-------------------------------------------------------------------------------
+CC-1 is loading 60 real August loads split by which factor bought the invoice.
+CC-2-AUG-LOADS-BY-FACTOR.csv is the expected assignment.
+
+  USMCA Faro bought      29 loads   $86,825.00
+  TRANSPORTATION Faro    13 loads   $49,310.00
+  NEITHER                18 loads   $43,925.00
+
+*** THE JOIN KEY IS PO / W.O. REFERENCE. NOT customer+amount. ***
+My first pass joined on customer+amount and produced FALSE POSITIVES: load 13503
+(S E Mares, $4,900, PO SMX14551 - on TRANSPORTATION's schedule) matched USMCA Faro #023
+(S E Mares, $4,900, PO SEM66495). Different loads, same customer, same amount. S E Mares
+runs many $4,900 loads. If CC-1's build used amount matching anywhere, it will have the
+same false positives - CHECK THE JOIN, not just whether the totals look plausible.
+
+ASSERT:
+  * every loaded August load carries its AlwaysTrack Load# and its Faro invoice ref
+  * zero loads assigned to BOTH factors
+  * TRANSPORTATION-side and UNFACTORED loads were NOT posted - report only. TRANSP/TRK
+    are frozen. If anything posted to TRANSP, that is a P0 - escalate immediately.
+  * expenses/deductions/addl-pay were regrouped BY LOAD #, not allocated pro-rata. Every
+    one of those rows carries a Load #, so any averaging is a defect.
+  * settlements span months. A settlement closing in August may contain July loads.
+    Filtering by settlement date instead of by load is a defect - check which they used.
+
+-------------------------------------------------------------------------------
+TASK 4 — THE TIE-OUT. This is what makes factoring actually done.
+-------------------------------------------------------------------------------
+Cursor is building the bar-2 TIEOUT gate. You prove the factoring one. Tolerance 0.
+  external source: Faro Capital statement 2026-08-10..2026-08-28
+  face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+  and FROM THE GL, not typed:
+      2150 Factoring Advance    95,075.00
+    - 1230 Factoring Reserves    6,426.13   (escrow 1,426.13 + cash reserve 5,000.00)
+    =                           88,648.87   = Faro statement NFE
+RULES: record the observed value pass or fail. An empty result is never a pass. If it
+fails, report the difference and its cause - never adjust the expected value to match the
+system. The statement is the truth; the system is what is on trial.
+
+-------------------------------------------------------------------------------
+STANDING LESSON — IT COST FOUR SEATS TODAY, ME INCLUDED
+-------------------------------------------------------------------------------
+A NULL header column is not proof a subsystem never ran. You, Claude and Cursor all called
+the settlement poster never-fired because all three read driver_settlements headers instead
+of the gl_runs/gl_bills subledger - it had fully posted and been reversed. Then an OUTBOX
+reported a dedupe prod does not show. Then I joined on the wrong key and produced 5 false
+matches. Query the thing itself. A summary is not the system, and neither is a total.

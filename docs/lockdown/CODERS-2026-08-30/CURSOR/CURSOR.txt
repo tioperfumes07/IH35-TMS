@@ -1,0 +1,344 @@
+================================================================================
+CURSOR — REV D CORRECTION (2026-08-30, supersedes REV A/B/C matching)
+CORRECT THE LAW BEFORE CC-1/CC-2 EXECUTE AGAINST IT
+================================================================================
+
+LAW FILE TO AMEND:
+  docs/lockdown/QBO-TRANSP-FILE-IS-USMCA-BOOKS-MATCH-LAW-2026-08-30.md
+
+WHAT IS RIGHT IN YOUR LAW (keep, unchanged):
+  - QBO "Transportation" file IS the USMCA books. Locked. Confirmed: live QBO
+    company_info returns "USMCA Freight Solutions, Inc." — the file is already
+    renamed. TRANSP opco keying in the TMS mirror is clone keying, not a living
+    Transportation operation.
+  - Match order 1 (Faro <-> AT load on PO/W.O., never customer+dollars). Correct.
+  - 007 ITS: stop looking in AlwaysTrack. Correct. Source is QBO 007.
+  - No TMS->QBO write-back. No qbo_customer_id copied onto USMCA TMS rows.
+    No second USMCA realm. All still binding.
+
+WHAT IS WRONG IN YOUR LAW (must be amended before CC-1/CC-2 run):
+
+  Your law says: "016 / 019 / 028 / 036 are after that 3-digit QBO window —
+  they go back to AlwaysTrack. August QBO stops the 3-digit series at 013 on
+  08/14."
+
+  That is false. The 3-digit series does NOT stop at 013. It runs 001 -> 036
+  through 2026-08-28.
+
+  ROOT CAUSE — AND IT IS NOT YOUR READ. It is a broken pipeline:
+
+    mdata.qbo_ar_invoices  last mirrored  2026-08-14T17:04:28.643Z
+                           last_seen_at   2026-08-14T17:04:28.643Z
+                           max txn_date   2026-08-14
+                           max 3-digit doc_number  013
+                           rows 12,087
+
+    Verified on prod br-fancy-credit-akjnd07a with
+    SET LOCAL app.bypass_rls = 'lucia'.
+
+  The mirror is 16 DAYS STALE. You read it accurately. It is the mirror that
+  is lying. Docs 014-036 exist in live QBO and have never been mirrored.
+
+  >>> NEW P1 DEFECT: QBO-MIRROR-STALE-16D. The A/R mirror has not synced since
+  >>> 08/14 and reconciliation law is being written off it. No seat may cite
+  >>> mdata.qbo_ar_invoices as authority for an absence until the sync is fixed
+  >>> and last_seen_at is inside 24h. Absence-in-mirror != absence-in-QBO.
+
+  Source of truth used for this correction: LIVE QBO API (Intuit MCP,
+  qbo_sales_get_invoices, 2026-07-01..2026-08-31, 148 invoices). Not the mirror.
+
+--------------------------------------------------------------------------------
+THE MATCH PROBLEM IS OVER. QBO STATES THE LINK IN PLAIN TEXT.
+--------------------------------------------------------------------------------
+
+From doc 014 onward, the QBO invoice LINE DESCRIPTION carries the AlwaysTrack
+load number explicitly. No inference. No amount-matching. Documentary:
+
+    019  "LOAD NUMBER - 019 - 13526"     J Rayl        -> AT load 13526
+    028  "Load Number - 028 -  13544"    Hawkeye       -> AT load 13544
+    036  "Load Number - 036 - 13556"     Hummingbird   -> AT load 13556
+    033  "Load Number - 033 - 13548"     MPH           -> AT load 13548
+    ... 014,015,017,018,020,021,022,023,024,025,027,029,030,031,032,034,035 same
+
+You were right to reject my REV C amount+customer matching. It is now withdrawn
+and replaced by this. Every one of the 21 load-bearing links is QBO-LINE-PROVEN.
+All 21 AT loads were confirmed present in Load History with matching customer
+and matching gross rate (the AT "Charges" column, NOT "Total" — "Total" is net
+of the QP factoring discount and must never be compared to a QBO face).
+
+Add match order rule 1b to the law, ahead of everything else:
+
+  1b. If a QBO 3-digit invoice line names an AT load number, THAT is the link.
+      It is documentary evidence written by the biller. Do not re-derive it
+      from PO, customer, or amount.
+
+--------------------------------------------------------------------------------
+MATCH ORDER — CORRECTED, FULL
+--------------------------------------------------------------------------------
+  1b. QBO 3-digit invoice line names the AT load  -> link is proven. Use it.
+  1.  Faro purchased <-> AT load on PO / W.O.     -> for AT-numbered invoices.
+  2.  AT outage window 001-013 (08/10-08/14, AT suspended for non-payment):
+      no AT load exists. Faro <-> QBO doc number, same file. Expected, not a gap.
+  3.  Everything else gets a name: factored / unfactored / direct-pay / open.
+      Nothing is left unexplained.
+
+  NOTE on scope of rule 2: the outage explains 001-013 AND 026. Doc 026
+  (IM Specialized $3,120, 08/25) also carries no AT load. It is the direct-pay:
+  BoA credit 08/26 $3,032.60, "ORIG: IM SPECIALIZED LOGISTICS ... USMCA
+  INVOICE 026". Unfactored + paid direct. Closed, named, not a gap.
+
+--------------------------------------------------------------------------------
+NEW P0 FINDING YOU DO NOT HAVE YET — SIX LOADS BILLED TWICE IN QBO
+--------------------------------------------------------------------------------
+Six loads carry TWO open QBO invoices each: one in the 3-digit series and one
+under the AlwaysTrack load number. Both open. Both full face. A/R overstated.
+
+  load 13526  J Rayl        doc 019 08/19 $3,500 open  +  doc 13526 08/24 $3,500 open
+  load 13528  Sajacks       doc 017 08/19 $3,100 open  +  doc 13528 08/24 $3,100 open
+  load 13529  DLS Dardini   doc 018 08/19 $3,900 open  +  doc 13529 08/24 $3,900 open
+  load 13532  Del-Can       doc 020 08/21 $1,000 open  +  doc 13532 08/24 $1,000 open
+  load 13534  Del-Can       doc 022 08/21 $3,100 open  +  doc 13534 08/24 $3,100 open
+  load 13535  S E Mares     doc 023 08/21 $4,900 open  +  doc 13535 08/24 $4,900 open
+                                                   duplicated open A/R  $19,500.00
+
+Plus duplicate DOC NUMBER 006 used three times on 08/13:
+  006  BV Logistics   $2,600  line "Load Number - 006"
+  006  BV Logistics   $2,600  line "Load Number - 20495"   <- same load, PO as load#
+  006  Magna          $2,700  line "Load Number - 005 - Lina Haul"  <- dup of 005
+                                          further duplicated A/R  $5,300.00
+
+  TOTAL A/R OVERSTATEMENT FROM DUPLICATE BILLING:  $24,800.00
+
+This is a QuickBooks-side data defect, not a TMS defect. NO TMS->QBO WRITE-BACK.
+The owner or Martin corrects it in QBO by credit memo / void, WORM style
+(reverse, never erase). Do NOT let any seat "fix" this by writing to QBO.
+What the TMS must do is DETECT it: one revenue-recognized load must not carry
+two open customer invoices. That is a guard, and it does not exist today.
+
+  >>> RECOMMENDED NEW GUARD (Cursor to author, needs owner approval):
+  >>> guard: one-load-one-open-invoice. Fails when a load maps to >1 open A/R
+  >>> document across QBO doc series. Would have caught all six on 08/24.
+
+--------------------------------------------------------------------------------
+REMAINING OPEN ITEMS AFTER THIS RECONCILIATION (down from "many" to FOUR)
+--------------------------------------------------------------------------------
+P0  Faro 016  MPH $3,800, PO MPHC261334, purchased 08/18, wired $3,676.
+    NO QBO INVOICE 016 EXISTS. The series skips 015 -> 017.
+    A/R was pledged to Faro with no book invoice behind it. Under ASC 860
+    secured borrowing (already locked in this repo) the receivable must exist
+    on-book to be pledged. Today it does not.
+    AT load 13524 MPH exists: 08/18, W.O. "pending", gross rate $4,200.
+    So: $4,200 hauled, $3,800 factored, $0 invoiced. OWNER DECISION REQUIRED
+    on the $400. Do not post anything until he rules.
+
+P1  QBO 007 ITS Logistics $250 vs Faro 007 $350, PO 68747 absent from QBO.
+    $100 difference. Outage-window invoice, no AT load — expected, per rule 2.
+    The $100 and the missing PO are the finding. Grade off QBO 007.
+
+P2  QBO 009 FLS $525 (08/13) — on books, never factored, still open.
+P2  QBO 010 SUPPLY CHAIN MANAGEMENT $4,000 (08/13) — on books, never factored,
+    still open.
+    Owner rule is "EVERY CUSTOMER MUST GO THROUGH FACTORING. IF ONE DOES NOT,
+    I WILL UPDATE THAT ONE." These are the two exceptions to bring him.
+    (026 IM Specialized is the third, already explained as direct-pay.)
+
+--------------------------------------------------------------------------------
+RECONCILIATION RESULT
+--------------------------------------------------------------------------------
+  Faro USMCA invoices                      33   total face  $95,075.00
+  QBO 3-digit invoices (distinct numbers)  35   total face $104,120.00
+  Faro <-> QBO exact number+face match     31
+  Faro with no QBO invoice                  1   (016)
+  QBO with no Faro purchase                 3   (009, 010, 026)
+  Face mismatch                             1   (007, +$100)
+  QBO duplicate doc number                  1   (006 x3)
+  AT-load links proven from QBO line text  21   (zero inferred)
+  Unexplained                               0
+
+FILE: CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv  — 36 rows, every row carries
+link_basis and a defect code. This replaces REV A, REV B and REV C entirely.
+Delete REV C from your working set; it used amount+customer matching and you
+were correct to reject it.
+
+================================================================================
+===============================================================================
+CURSOR — COMPLETE WORK ORDER. 2026-08-30. SUPERSEDES EVERY EARLIER FILE.
+TWO PARTS:  A) corrections + tie-out bar + infra   B) Faro lane
+===============================================================================
+
+
+###############  PART A — CORRECTIONS, TIEOUT BAR, INFRA  ###############
+
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+Rule 42: you deploy. Rule 37: CLAIM -> MERGE -> AUTHOR, EVEN numbers.
+
+-------------------------------------------------------------------------------
+VERIFIED — YOUR WORK LANDED AND IT IS CORRECT. INDEPENDENTLY CONFIRMED.
+-------------------------------------------------------------------------------
+  FARO DIGITAL ACCOUNT (#18348) — REAL, and built to spec:
+    banking.bank_accounts "Faro Factoring - USMCA" · depository · active · no Plaid
+    ledger_account_id -> catalogs.accounts 1296 "Faro Factoring - USMCA"
+    Its OWN GL account. Not 1090 Undeposited Funds. Not shared with USMCA FREIGHT (1000).
+    Not shared with Relay Fuel Wallet (1295). is_dip false. Balance 0. Correct.
+  FAIL-CLOSED INPUTS (#18323) — REAL:
+    SubmitFactoringModal.tsx:38-40 now useState("") on advanceRatePct / reservePct /
+    factorFeePct. The 92 / 8 / 0 seeds are gone.
+    factoring-advances.routes.ts:47 factor_fee_pct is now REQUIRED -
+    .optional().default(0) removed. Money can no longer be priced at a default.
+This unblocked the owner's $8,890 payment leg. Good work.
+
+-------------------------------------------------------------------------------
+STILL YOURS, IN THIS ORDER
+-------------------------------------------------------------------------------
+1. TIEOUT BAR (bar-2). Highest value item in the whole queue. Unchanged from CURSOR.txt
+   task 1: SCHEMA class, verify-module-completion gate, proof-engine re-execution,
+   guard, and WORM versioning (bar_version 1 stamps stay, nothing retracted).
+2. FARO FACTOR -> BANK LINKAGE. The account exists; the wiring does not. Factoring
+   proceeds must land in 1296, not 1090. Reserve movements
+   (accounting.factoring_reserve_movements) must be visible on that account. Wires
+   Faro -> BoA USMCA FREIGHT must be a bank-to-bank TRANSFER, not a deposit from nowhere.
+3. GUARDS 4C (settlement header write-back) and 4D (unit disposition not overloaded).
+   4A/4B are numbered 10133/10137 - confirm they are wired, not just claimed.
+4. INBOX HYGIENE. INBOX-CC-1.md still stacks ~24 "THIS IS NOW" lines from different days.
+   Truncate to the current GO or mark superseded lines. A seat reading down acts on
+   Thursday's orders.
+
+-------------------------------------------------------------------------------
+INFRA — CC-3 FOUND A PRODUCTION STABILITY ISSUE THAT IS NOT A CODE BUG. IT IS YOURS.
+-------------------------------------------------------------------------------
+CC-3 read two representative issues in full from an ~11-issue withLuciaBypass(auth:db)
+Sentry cluster and identified ONE shared root cause: POSTGRES CONNECTION-POOL EXHAUSTION
+UNDER LOAD. Not a per-route defect. They correctly declined to "fix" it in code - guessing
+a mechanical fix at a pool problem would have produced 11 fake resolutions.
+
+That leaves a real, unowned production stability issue. It is infra/Neon tuning, which is
+your lane, not a coder seat's:
+  * check Neon compute size, pool mode (transaction vs session) and max connections against
+    actual concurrency
+  * check whether withLuciaBypass acquires and holds a connection longer than it needs to,
+    and whether any path leaks one on the error branch
+  * check pooled vs direct endpoint usage - a direct-endpoint call in a hot path burns a
+    real connection where a pooled one would not
+  * ~11 Sentry issues collapse to one fix; treat it as one item, not eleven
+
+Do not let anyone mark those 11 resolved until the pool behavior is actually changed and
+the cluster stops recurring. A stale-but-resolved infra issue is a false green of exactly
+the kind bar-2 exists to prevent.
+
+-------------------------------------------------------------------------------
+NEW GUARD TO ADD — THE DEFECT CLASS THAT BIT US TODAY
+-------------------------------------------------------------------------------
+Claim an EVEN step and author NNNN-intercompany-copy-integrity.mjs (or fold into the
+bar-2 tie-out work). It must FAIL when a cross-company master-data copy leaves:
+  * any qbo_customer_id / qbo_vendor_id populated on the destination company's copied rows
+  * any factoring.customer_factor_assignment row with operating_company_id NULL
+  * normalized-name duplicate groups in the destination that do not exist in an approved
+    survivor list
+Reason: CC-1's copy landed with 1,124 assignment rows at operating_company_id NULL, 116
+customers unassigned, 3 of the owner's 7 dedupe rulings unapplied, and 2 UTF-8 corrupted
+rows - while the OUTBOX reported the dedupe as done. The QBO-ID half was honored perfectly.
+The difference between those two outcomes is that one had a rule someone could check and
+the other did not. Make it checkable.
+
+-------------------------------------------------------------------------------
+FLAG RELIABILITY — FEED THIS INTO THE TIEOUT DESIGN
+-------------------------------------------------------------------------------
+Three columns proved unreliable today, all the same shape:
+  mdata.customers.is_duplicate           reads 0 while 61 dupe groups exist
+  mdata.units.is_sample_data             reads FALSE on CODEX-TEST-0033, TEST-CODEX-956214,
+                                         USMCA-001 - two of them InService and counted as
+                                         real leased fleet
+  driver_settlements.accounting_bill_id  reads NULL on a settlement that fully posted
+A flag added, never maintained, then trusted. Every count built on it is silently wrong and
+nothing fails.
+
+CONSEQUENCE FOR BAR-2: a TIEOUT auto_check must never filter on an unverified flag to decide
+what is "real". If a tie-out excludes rows on is_sample_data, the tie-out inherits that
+flag's lie. Either tie out against ALL rows, or make the flag itself a checked precondition
+of the tie-out. Write that constraint into SCHEMA.md.
+
+Cascade has the systemic sweep (CASCADE-CORRECTION-2026-08-30.txt); route their proposed
+guard numbers when they come back.
+
+-------------------------------------------------------------------------------
+STANDING — WHY THE TIEOUT BAR MATTERS, RESTATED WITH TODAY'S EVIDENCE
+-------------------------------------------------------------------------------
+Today, four separate times, a seat reported state that prod did not agree with:
+CC-2, Claude and Cursor all called the settlement poster never-fired (header vs subledger);
+CC-1's OUTBOX reported a dedupe prod does not show; CC-1's own counts (1,209 / 475) do not
+match prod (1,240 / 626).
+None of those are laziness. They are all the same structural gap: nothing forces a claim to
+be checked against the system. That is precisely what bar-2 fixes, and it is why it
+outranks every other item on your list.
+
+
+###############  PART B — FARO LANE  ###############
+
+DISCRIMINATOR: run_sql_transaction ["SET LOCAL app.bypass_rls='lucia'", "<q>"], je >= 2219.
+Rule 42: you deploy. Rule 37: CLAIM -> MERGE -> AUTHOR, EVEN numbers.
+
+-------------------------------------------------------------------------------
+VERIFIED — YOUR FARO WORK LANDED AND IS CORRECT. INDEPENDENTLY CONFIRMED.
+-------------------------------------------------------------------------------
+  FARO DIGITAL ACCOUNT (#18348): banking.bank_accounts "Faro Factoring - USMCA",
+    depository, active, no Plaid, ledger_account_id -> catalogs.accounts 1296
+    "Faro Factoring - USMCA". Its OWN GL account. Not 1090. Not shared with
+    USMCA FREIGHT (1000) or Relay Fuel Wallet (1295). is_dip false. Correct.
+  FAIL-CLOSED INPUTS (#18323): SubmitFactoringModal.tsx:38-40 now useState("") on all
+    three rates; factoring-advances.routes.ts:47 factor_fee_pct is REQUIRED
+    (.optional().default(0) removed). Money can no longer be priced at a default.
+
+-------------------------------------------------------------------------------
+STILL YOURS, IN THIS ORDER
+-------------------------------------------------------------------------------
+1. TIEOUT BAR (bar-2). Highest value item in the program. SCHEMA class, the
+   verify-module-completion gate, proof-engine re-execution so it runs every deploy, the
+   guard, and WORM versioning (bar_version 1 stamps stay; nothing retracted).
+   The factoring TIEOUT target: face 9507500 -> reserve 142613 fee 142613 wire 12000
+   cash 9210274; and from the GL, 2150 (95,075.00) - 1230 (6,426.13) = 88,648.87 = NFE.
+
+2. FARO FACTOR -> BANK LINKAGE. The account exists; the wiring does not.
+   * factoring.factor 40b3690b-... -> the 1296 account: proceeds land THERE, not in 1090
+   * accounting.factoring_reserve_movements visible on that account
+   * Faro -> BoA "USMCA FREIGHT" wires are a BANK-TO-BANK TRANSFER, not a deposit from
+     nowhere
+   * bill payments drawn on reserves must be payable FROM that account, reducing 1230
+
+3. RESERVE-TRANSFER MODELLING — NEW, FROM THE AUGUST DATA.
+   Faro's own ledgers contain INTERNAL TRANSFERS BETWEEN CLIENT RESERVE ACCOUNTS. In
+   August, USMCA moved 7,241.00 into IH 35 Transportation's Faro reserve
+   (1,800.00 on 08/13; 688.00 + 4,753.00 on 08/14), confirmed on both sides and on
+   Transportation's statement header ("Payments from You" 7,241.00).
+   The system has NO concept of this today. It is not a customer payment, not a wire out
+   to a bank, and not a fee - it is a transfer between two entities' reserve balances at
+   the same factor. Model it explicitly or it will be miscategorised the moment real Faro
+   data loads.
+   ALSO: Faro books some lines BOTH WAYS same-day (a 1,649.00 deposit and a 1,649.00
+   payment on Watco inv 004, net zero). Any importer that sums one column will overstate.
+   Sum NET, and carry both legs. This exact trap produced a false $3,298.00 mismatch on my
+   first pass and is the whole reason the owner's $8,890.00 differs from the real 7,241.00.
+
+4. GUARDS 4C (settlement header write-back) and 4D (unit disposition not overloaded).
+   4A/4B are numbered 10133/10137 - confirm wired, not just claimed.
+
+5. INBOX HYGIENE. INBOX-CC-1.md still stacks ~24 "THIS IS NOW" lines from different days.
+   Truncate to the current GO or mark superseded. A seat reading down acts on Thursday.
+
+-------------------------------------------------------------------------------
+FLAG RELIABILITY — FEED THIS INTO THE TIEOUT DESIGN
+-------------------------------------------------------------------------------
+Three columns proved unreliable today: mdata.customers.is_duplicate (0 while 61 dupe groups
+exist), mdata.units.is_sample_data (FALSE on obvious CODEX-TEST rows counted as real fleet),
+driver_settlements.accounting_bill_id (NULL on a settlement that fully posted).
+CONSEQUENCE FOR BAR-2: a TIEOUT auto_check must never filter on an unverified flag to decide
+what is "real" - it would inherit that flag's lie. Either tie out against ALL rows, or make
+the flag a checked precondition of the tie-out. Write that into SCHEMA.md.
+
+-------------------------------------------------------------------------------
+STANDING — WHY BAR-2 OUTRANKS EVERYTHING ELSE ON YOUR LIST
+-------------------------------------------------------------------------------
+factoring scored 10 of 10 complete=true, every item prod_verified, while carrying a live
+balanced-but-wrong GL defect. FACT-S04 "reserve dashboard economics honest" was PASS while
+the reserve shown was DOUBLE and the fee was ZERO. All ten items test wiring, reads or
+display. None tests whether a number is right. Nothing in the current bar forces a claim to
+be checked against reality - that is what bar-2 fixes.
