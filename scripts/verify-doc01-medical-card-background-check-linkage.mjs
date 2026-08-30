@@ -47,9 +47,14 @@ function analyze(routes, labels, migration) {
     }
   }
 
+  // Scoped to just the two declaration arrays, not the whole file -- the literal type string also
+  // appears inside ensureLinkEntityExists()'s `if (entityType === "...")` branches below, which
+  // would make a naive whole-file substring search pass even with the allowlist entry removed.
+  const arraysSection = routes.slice(0, routes.indexOf("const fileLinkInputSchema"));
   for (const type of ["medical_card", "background_check"]) {
-    if (!new RegExp(`"${type}"`).test(routes)) {
-      failures.push(`${routesPath}: '${type}' missing from SUPPORTED_LINK_ENTITY_TYPES/entityTypeSchema`);
+    const count = (arraysSection.match(new RegExp(`"${type}"`, "g")) ?? []).length;
+    if (count < 2) {
+      failures.push(`${routesPath}: '${type}' missing from SUPPORTED_LINK_ENTITY_TYPES and/or entityTypeSchema (found ${count}/2 occurrences before idParamSchema)`);
     }
   }
 
@@ -58,6 +63,19 @@ function analyze(routes, labels, migration) {
   }
   if (!/background_check: \{ table: "safety\.background_checks"/.test(labels)) {
     failures.push(`${labelsPath}: ENTITY_LABEL_SQL missing a real background_check entry`);
+  }
+
+  // SAF-F10063 (owner 2026-08-29): medical_card/background_check originally shipped in the
+  // allowlist + entityTypeSchema + ENTITY_LABEL_SQL WITHOUT a branch in ensureLinkEntityExists()
+  // -- the function the link-creation route actually calls to verify the target row exists. That
+  // gap made both types silently unusable (every real link attempt would fall through to the
+  // function's final `return false`) despite every other check in this guard passing. Assert the
+  // reachable branch exists, not just that the type is declared somewhere.
+  if (!/if \(entityType === "medical_card"\) \{\s*\n\s*const res = await client\.query\("SELECT id FROM safety\.medical_cards/.test(routes)) {
+    failures.push(`${routesPath}: ensureLinkEntityExists() has no reachable branch for 'medical_card' -- link creation would silently fail`);
+  }
+  if (!/if \(entityType === "background_check"\) \{\s*\n\s*const res = await client\.query\("SELECT id FROM safety\.background_checks/.test(routes)) {
+    failures.push(`${routesPath}: ensureLinkEntityExists() has no reachable branch for 'background_check' -- link creation would silently fail`);
   }
 
   return failures;
@@ -91,6 +109,24 @@ function selftest() {
       name: "migration FK line removed",
       apply: () => (migration ?? "").replace(/FOREIGN KEY \(source_doc_id\) REFERENCES docs\.files\(id\) ON DELETE SET NULL/g, ""),
       run: (m) => analyze(routesSrc, labelsSrc, m),
+    },
+    {
+      name: "ensureLinkEntityExists branch removed (medical_card)",
+      apply: () =>
+        routesSrc.replace(
+          `  if (entityType === "medical_card") {\n    const res = await client.query("SELECT id FROM safety.medical_cards WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);\n    return res.rows.length > 0;\n  }\n`,
+          ""
+        ),
+      run: (m) => analyze(m, labelsSrc, migration),
+    },
+    {
+      name: "ensureLinkEntityExists branch removed (background_check)",
+      apply: () =>
+        routesSrc.replace(
+          `  if (entityType === "background_check") {\n    const res = await client.query("SELECT id FROM safety.background_checks WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);\n    return res.rows.length > 0;\n  }\n`,
+          ""
+        ),
+      run: (m) => analyze(m, labelsSrc, migration),
     },
   ];
 
