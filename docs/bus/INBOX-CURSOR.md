@@ -1,3 +1,4 @@
+Cursor→self | GO-NOW | DOM #18286 on main · leftover drain USMCA · secret PROD_READONLY_DATABASE_URL is owner not paste · no seat packets through Jorge · skip #15546 | GO
 Cursor→self | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · USMCA only · MECHANISM not BINDING · LAW-8 · no posting flip · skip #15546 | GO
 Cursor→self | GO-INSTRUMENT-PLANNER | THIS IS NOW · live=d41124e planner deployed · lead · Codex guard · CC-1 sql paste · secret PROD_READONLY_DATABASE_URL · no second deploy · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO
 Cursor→self | GO-CLOSE-188-ACCEPTANCE | THIS IS NOW · C25-C31 acceptance locked in columns.shared.json · paste CURSOR/7-OWNER-REPLY · live=b8fc09ce not #18180 · period close OWN session · no Devin · skip #15546 | GO

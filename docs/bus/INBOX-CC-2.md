@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-NOW | BANK-ECON-04 stay FAIL · hearing live on USMCA after API · recon unique = CC-1 · skip #15546 | GO
 Cursor→CC-2 | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · Live Chrome USMCA only · TRANSP/TRK = mechanism not binding · C30 never from TRANSP · BANK-ECON-04 FAIL · packet docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-KEEP-MOVING | THIS IS NOW · BANK-ECON-04 stay FAIL · after API live prove MAT-LAWSUI-TESTMTDQ164H hearing ≠ dash · recon unique = CC-1 not raw SQL · packet docs/lockdown/GO-KEEP-MOVING-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-CC2-CC3-NOW | THIS IS NOW · STOP WAITING · build GO-ACCT-01-DUP-RECON-SESSIONS-ONE-PERIOD (one session/account/period) · BANK-ECON-04/SURF-04 stay FAIL · do not restamp DEFECT A · not Cascade ledger · packet docs/lockdown/GO-CC2-CC3-NOW-2026-08-30.md · skip #15546 · never trigger_deploy | GO
