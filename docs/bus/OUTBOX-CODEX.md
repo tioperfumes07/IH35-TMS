@@ -2532,3 +2532,4 @@ CODEX | SHIPPED | DSP-F7448 | PR=#18084 @ 01d7521507 | NEXT=DRV-MONEY-F7449 rout
 CODEX | WORKING | GUARD-F7468 | ROOT=training-program-create-limiter-selftest-mutated-earlier-list-GET-instead-of-governed-POST | focused=normal+selftest-4/4 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7469 | ROOT=detail-drawer-selftest-expected-retired-discard-message-while-guard-emits-safe-discard-boundary | focused=normal+selftest-17/17 | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7470 | ROOT=fine-create-selftest-expected-retired-confirmation-message-while-guard-emits-safely-registers | focused=normal+selftest-10/10 | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7471 | ROOT=DOT-dwell-api-offset-selftest-mutated-earlier-sibling-range-offset-in-shared-client | focused=normal+selftest-8/8 | NEXT=gate+FAST-MERGE | GO
