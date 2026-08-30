@@ -63,6 +63,9 @@ function makeClient(driverExists: boolean, log: QueryLog) {
       if (normalized.includes("UPDATE mdata.loads")) {
         return { rows: [{ id: LOAD }] };
       }
+      if (normalized.includes("INSERT INTO dispatch.load_assignment_history")) {
+        return { rows: [{ id: "33333333-3333-4333-8333-333333333333" }] };
+      }
       if (normalized.includes("SELECT id FROM identity.users")) {
         return { rows: [{ id: USER }] };
       }
@@ -77,10 +80,24 @@ describe("manualReassignLoad driver-existence guard", () => {
     assertDriverQualifiedForLoadMock.mockResolvedValue(null);
   });
 
+  function useTransactionWrapper(client: ReturnType<typeof makeClient>) {
+    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => {
+      await client.query("BEGIN");
+      try {
+        const result = await fn(client);
+        await client.query("COMMIT");
+        return result;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      }
+    });
+  }
+
   it("throws E_DRIVER_NOT_FOUND for a fake driver and never reaches UPDATE", async () => {
     const log: QueryLog = [];
     const client = makeClient(false, log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    useTransactionWrapper(client);
 
     const { manualReassignLoad } = await import("../dispatch-refinements.service.js");
     await expect(
@@ -100,7 +117,7 @@ describe("manualReassignLoad driver-existence guard", () => {
   it("proceeds when the driver exists and is qualified", async () => {
     const log: QueryLog = [];
     const client = makeClient(true, log);
-    withCurrentUserMock.mockImplementation(async (_uid: string, fn: (c: typeof client) => Promise<unknown>) => fn(client));
+    useTransactionWrapper(client);
 
     const { manualReassignLoad } = await import("../dispatch-refinements.service.js");
     const result = await manualReassignLoad(USER, {
