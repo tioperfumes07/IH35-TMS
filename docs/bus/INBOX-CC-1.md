@@ -1,6 +1,6 @@
 # CURRENT GO — 2026-08-30 (Cursor lead)
 
-Cursor→CC-1 | P0=3 of 7 name rulings (NCC / Simple / Watco) · THEN remaining Faro 33 invoices · THEN bind Faro factor funding cash debit to USMCA GL 1296 / bank Faro Factoring (do NOT globally rebind cash_clearing) · Transportation vendor for $8890 owner books personally · skip #15546 | GO
+Cursor→CC-1 | P0=3 of 7 name rulings (NCC / Simple / Watco) · THEN remaining Faro 33 invoices · THEN bind Faro funding cash to USMCA 1296 (not global cash_clearing) · THEN ITEM 1 CoA: partial UNIQUE (operating_company_id, role) WHERE is_active on chart_of_accounts_roles — migration 202613300800 + verify-step 10129 already claimed on main, do not reclaim, latent not live P0, do not delete inactive history · skip #15546 | GO
 
 LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 
