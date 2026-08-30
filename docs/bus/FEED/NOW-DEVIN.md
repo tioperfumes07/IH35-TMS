@@ -1,7 +1,5 @@
-# NOW — DEVIN (GO-MODAL-01)
+# NOW — Devin (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `DEVIN | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
+customers 0/10 ONLY. CUST-01 is CC-3. Never recertify U14. Skip #15546.
 
-Customers only.
-
-Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

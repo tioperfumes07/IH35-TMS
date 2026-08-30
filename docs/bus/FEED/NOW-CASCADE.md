@@ -1,7 +1,5 @@
-# NOW — CASCADE (GO-PENDING-01)
+# NOW — Cascade (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CASCADE | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
+Unique FINDING only. T-08 inventory #17851. Never recertify U14. Never treat screenshot as scenario-done. Skip #15546.
 
-TURBO waves CLOSED. Unique FINDING only. GR-1 seeded. Skip #15546. Do not recertify U14.
-
-Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

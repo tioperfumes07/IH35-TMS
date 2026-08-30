@@ -14,6 +14,7 @@ import {
   GroupRollupTable,
   MatrixBoxTracker,
   MatrixCell4,
+  AblFromPct,
   emptyWhyTitle,
   pctClass,
   type GroupRollup,
@@ -30,13 +31,16 @@ import {
   type RequiredLeaf,
   type RequiredMap,
 } from "./moduleMatrixRequiredMaps";
-import { ModuleMatrixSystemView } from "./ModuleMatrixSystemView";
+import { ModuleMatrixSystemView, fetchSystemMatrix, VerifierProofCell, VerifierRollupContext } from "./ModuleMatrixSystemView";
 import {
   MATRIX_MODULES_SIDEBAR_ORDER,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
   matrixModuleLabel,
   parseMatrixModule,
+  mergeSharedScoreboardColumns,
+  FULLY_WIRED_SYSTEM_COLS,
+  MODULE_MATRIX_TRAIL_SUM_COLS,
   type MatrixModuleId,
 } from "./moduleMatrixCatalog";
 
@@ -58,7 +62,15 @@ type LiveMatrix = {
   entity_default?: string;
   leaves: Array<{ id: string; cells: Record<string, LiveCell> }>;
   groupRollups?: GroupRollup[];
-  metrics?: TierMetrics;
+  metrics?: TierMetrics & {
+    closedCells?: number;
+    clickedCells?: number;
+    modalLeafCount?: number;
+    frozenOps?: number;
+    opsClicked?: number;
+    missOpsClicked?: number;
+  };
+  fwAbl?: Record<string, { requiredCells: number; auditedPct: number; builtPct: number; livePct: number }>;
   meta?: {
     honesty?: string;
     tipSha?: string;
@@ -314,11 +326,11 @@ function sectionForLeaf(moduleId: MatrixModuleId, leaf: RequiredLeaf): string {
 function buildRows(
   moduleId: MatrixModuleId,
   map: RequiredMap,
+  cols: Array<{ id: string; label: string; group: string }>,
   liveByLeaf: Map<string, Record<string, LiveCell>> | null,
 ): Row[] {
   const rows: Row[] = [];
   let lastSection = "";
-  // Hard fail closed: required maps must expose array leaves (never for-of a plain object).
   const requiredLeaves = Array.isArray(map?.leaves) ? map.leaves : [];
   for (const leaf of requiredLeaves) {
     const section = sectionForLeaf(moduleId, leaf);
@@ -327,7 +339,7 @@ function buildRows(
       lastSection = section;
     }
     const req = new Set(leaf.required);
-    const cells = map.columns.map((c) => cellBoxes(leaf.id, c.id, req, liveByLeaf));
+    const cells = cols.map((c) => cellBoxes(leaf.id, c.id, req, liveByLeaf));
     const indent: 1 | 2 =
       leaf.id.startsWith("wo.source.") || leaf.id.endsWith(".create") ? 2 : 1;
     rows.push({
@@ -429,7 +441,7 @@ export function ModuleMatrixPreviewPage() {
   ) as MatrixModuleId;
   const activeModuleId = showSystem ? null : moduleId;
   const requiredMap = REQUIRED_BY_MODULE[moduleId];
-  const cols = requiredMap.columns;
+  const cols = mergeSharedScoreboardColumns(requiredMap.columns);
 
   // Query key MUST stay distinct from ModuleMatrixSystemView's scope=system rollup key.
   // Colliding on ["program","module-matrix","system"] lets the rollup payload (no leaf array)
@@ -465,6 +477,19 @@ export function ModuleMatrixPreviewPage() {
     enabled: !showSystem,
   });
 
+  const { data: systemFeed } = useQuery({
+    queryKey: ["program", "module-matrix", "scope", "system"],
+    queryFn: fetchSystemMatrix,
+    enabled: !showSystem,
+    staleTime: 300_000,
+    refetchInterval: MATRIX_POLL_MS,
+    refetchIntervalInBackground: false,
+    retry: 1,
+  });
+  const verifierRollup = systemFeed?.verifierRollup ?? { asOf: "", healthzSha: null, modules: {} };
+  const sysRow = systemFeed?.modules?.find((m) => m.module === moduleId);
+  const emptyAbl = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
+
   const liveOk = Boolean(
     live && live.sample === false && Array.isArray(live.leaves),
   );
@@ -480,8 +505,8 @@ export function ModuleMatrixPreviewPage() {
   }, [live, liveOk]);
 
   const rows = useMemo(
-    () => buildRows(moduleId, requiredMap, liveByLeaf),
-    [moduleId, requiredMap, liveByLeaf],
+    () => buildRows(moduleId, requiredMap, cols, liveByLeaf),
+    [moduleId, requiredMap, cols, liveByLeaf],
   );
   const metrics = boardMetrics(requiredMap, rows, liveOk ? live! : null);
 
@@ -564,9 +589,9 @@ export function ModuleMatrixPreviewPage() {
       <header className="hd">
         <h1 className="t">Program — Module matrix scoreboards</h1>
         <div className="s">
-          One shell · 29 module boards + system rollup. <b>All modules</b> uses the same columns and
-          4-box ✓/●/✕ cells — priority 10 first, then the rest. Columns include linkage, money,{" "}
-          <b>pickers / QBO chrome</b>, and <b>connectivity / reverse link</b>.
+          One shell · 29 module boards + system rollup. Both boards read{" "}
+          <code>mergeSharedScoreboardColumns</code> plus <code>FULLY_WIRED_SYSTEM_COLS</code> — Fully-Wired 1–12
+          and V1–V6 are on All modules <b>and</b> each module board. Left rail differs on purpose (Module vs Tab).
         </div>
         <div className="synced">
           Active board:{" "}
@@ -701,9 +726,10 @@ export function ModuleMatrixPreviewPage() {
         </span>
       </div>
 
+      <VerifierRollupContext.Provider value={verifierRollup}>
       <div className="scroll">
         <div className="overflow-x-auto">
-        <table>
+        <table data-testid="module-matrix-module-table">
           <thead>
             <tr>
               <th className="leaf" rowSpan={2}>
@@ -723,6 +749,14 @@ export function ModuleMatrixPreviewPage() {
               <th className="sum-col" rowSpan={2}>
                 Queue
               </th>
+              {MODULE_MATRIX_TRAIL_SUM_COLS.map((t) => (
+                <th key={t.id} className="sum-col" rowSpan={2} title={t.label}>
+                  {t.label}
+                </th>
+              ))}
+              <th className="grp" colSpan={FULLY_WIRED_SYSTEM_COLS.length} title="fully_wired">
+                {matrixGroupHeaderLabel("fully_wired")}
+              </th>
             </tr>
             <tr>
               {cols.map((c) => (
@@ -730,14 +764,21 @@ export function ModuleMatrixPreviewPage() {
                   {matrixColumnHeaderLabel(c.id, c.label)}
                 </th>
               ))}
+              {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+                <th key={fw.id} className="col" title={fw.label}>
+                  {fw.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((row, i) => {
+              const extraSpan =
+                1 + cols.length + 3 + MODULE_MATRIX_TRAIL_SUM_COLS.length + FULLY_WIRED_SYSTEM_COLS.length;
               if (row.kind === "section") {
                 return (
                   <tr key={`s-${row.label}-${i}`} className="section">
-                    <td colSpan={1 + cols.length + 3}>{row.label}</td>
+                    <td colSpan={extraSpan}>{row.label}</td>
                   </tr>
                 );
               }
@@ -749,14 +790,59 @@ export function ModuleMatrixPreviewPage() {
                     {row.leaf.sub ? <span className="sub">{row.leaf.sub}</span> : null}
                     <span className={`pct ${pctClass(row.pct)}`}>{row.pct}%</span>
                   </td>
-                  {row.cells.map((st, ci) => (
-                    <td key={cols[ci].id} className="gc">
-                      <MatrixCell4 {...st} title={emptyWhyTitle(st)} />
-                    </td>
-                  ))}
+                  {row.cells.map((st, ci) => {
+                    const c = cols[ci];
+                    return (
+                      <td key={c.id} className="gc">
+                        {c.group === "verifier" ? (
+                          <VerifierProofCell
+                            moduleId={moduleId}
+                            columnId={c.id}
+                            testId={`mod-${moduleId}-${c.id}`}
+                          />
+                        ) : (
+                          <MatrixCell4 {...st} title={emptyWhyTitle(st)} />
+                        )}
+                      </td>
+                    );
+                  })}
                   <td className="sum-val amb">{leafCounts.built}</td>
                   <td className="sum-val good">{leafCounts.live}</td>
                   <td className="sum-val big">{leafCounts.queue}</td>
+                  {MODULE_MATRIX_TRAIL_SUM_COLS.map((t) => (
+                    <td key={t.id} className={t.id === "ready" ? "gc" : "sum-val"}>
+                      {t.id === "ready" ? (
+                        <AblFromPct
+                          abl={sysRow?.readyAbl ?? emptyAbl}
+                          liveOk={Boolean(sysRow)}
+                          testId={`mod-${moduleId}-ready`}
+                        />
+                      ) : t.id === "named" ? (
+                        live?.metrics?.closedCells ?? sysRow?.closedCells ?? "—"
+                      ) : t.id === "leaves" ? (
+                        live?.metrics?.leafCount ?? metrics.leafCount
+                      ) : t.id === "modals" ? (
+                        live?.metrics?.modalLeafCount ?? "—"
+                      ) : t.id === "clicked" ? (
+                        live?.metrics?.clickedCells ?? sysRow?.clickedCells ?? "—"
+                      ) : t.id === "frozen" ? (
+                        sysRow?.frozenOps ?? "—"
+                      ) : t.id === "ops_click" ? (
+                        sysRow?.opsClicked ?? "—"
+                      ) : (
+                        sysRow?.missOpsClicked ?? "—"
+                      )}
+                    </td>
+                  ))}
+                  {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+                    <td key={fw.id} className="gc">
+                      <AblFromPct
+                        abl={sysRow?.fwAbl?.[fw.id] ?? live?.fwAbl?.[fw.id] ?? emptyAbl}
+                        liveOk={Boolean(sysRow) || liveOk}
+                        testId={`mod-${moduleId}-${fw.id}`}
+                      />
+                    </td>
+                  ))}
                 </tr>
               );
             })}
@@ -768,7 +854,11 @@ export function ModuleMatrixPreviewPage() {
               </td>
               {cols.map((c) => (
                 <td key={c.id} className="gc">
-                  —
+                  {c.group === "verifier" ? (
+                    <VerifierProofCell moduleId={moduleId} columnId={c.id} testId={`mod-total-${c.id}`} />
+                  ) : (
+                    "—"
+                  )}
                 </td>
               ))}
               <td className="sum-val amb">
@@ -780,11 +870,26 @@ export function ModuleMatrixPreviewPage() {
               <td className="sum-val big">
                 <b>{metrics.buildQueue}</b>
               </td>
+              {MODULE_MATRIX_TRAIL_SUM_COLS.map((t) => (
+                <td key={t.id} className="sum-val">
+                  {t.id === "clicked" ? (live?.metrics?.clickedCells ?? "—") : t.id === "leaves" ? metrics.leafCount : "—"}
+                </td>
+              ))}
+              {FULLY_WIRED_SYSTEM_COLS.map((fw) => (
+                <td key={fw.id} className="gc">
+                  <AblFromPct
+                    abl={sysRow?.fwAbl?.[fw.id] ?? emptyAbl}
+                    liveOk={Boolean(sysRow)}
+                    testId={`mod-total-${fw.id}`}
+                  />
+                </td>
+              ))}
             </tr>
           </tfoot>
         </table>
         </div>
       </div>
+      </VerifierRollupContext.Provider>
 
       <div className="note">
         <b>4-box law + Option A ribbon (2026-08-11):</b> Ribbon tiers are mutually exclusive (sum = Required).
@@ -958,7 +1063,13 @@ const CSS = `
 .ih35mm .system-table{min-width:1280px}
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
 .ih35mm .system-table .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}
-.ih35mm .system-column-board{min-width:1600px}
+.ih35mm .system-column-board{min-width:2200px}
+.ih35mm .system-table .pin-clicked{
+  position:sticky;right:0;z-index:2;background:var(--card);box-shadow:-6px 0 10px rgba(15,23,42,.12)
+}
+.ih35mm .proof-strip-table{width:100%;border-collapse:collapse;min-width:720px}
+.ih35mm .proof-strip-table th,.ih35mm .proof-strip-table td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px}
+.ih35mm .proof-strip-table th{background:var(--accent-bg);font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
 .ih35mm .system-table .board-link{font-size:10px;font-weight:600;margin-left:4px}
 .ih35mm tr.system-total td{background:var(--accent-bg);font-weight:700}
 .ih35mm tr.dim-row td{opacity:.55}

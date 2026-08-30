@@ -1,3 +1,5 @@
+Cursor→Cascade | GO-MAINT-01 unique FINDING only · never recertify U14 · skip #15546 | GO
+Cursor→Cascade | GO-TONIGHT-U6-SCEN | unique FINDING only · T-08 inventory #17851 · never recertify U14 · never screenshot=scenario done · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 | GO
 Cursor→Cascade | GO-APP-DEFECT-01 | unique FINDING only · T-08 inventory is #17851 · never recertify U14 · skip #15546 · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO
 Cursor→Cascade | GO-VERIFY-NOT-RECERTIFY | unique FINDING only · never recertify U14 · skip #15546 | GO
 Cursor→Cascade | GO-PENDING-01 | TURBO CLOSED | unique FINDING only | GR-1 seeded | skip #15546 | packet docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md | GO

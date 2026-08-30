@@ -182,6 +182,59 @@ export function matrixGroupHeaderLabel(groupId: string): string {
   return MATRIX_GROUP_SHORT[groupId] ?? groupId;
 }
 
+/** Same group order as All modules — unsorted required.json splits LINK/MONEY across the header. */
+export const MATRIX_GROUP_ORDER = [
+  "linkage",
+  "money",
+  "chrome",
+  "wiring",
+  "process",
+  "economics",
+  "verifier",
+  "fully_wired",
+  "other",
+] as const;
+
+export type MatrixBoardColumn = { id: string; label: string; group: string };
+
+/**
+ * One column contract: required-map columns ∪ columns.shared.json, sorted by MATRIX_GROUP_ORDER.
+ * Call from All modules AND each module board so a shared column cannot exist on only one view.
+ */
+export function mergeSharedScoreboardColumns(api: MatrixBoardColumn[]): MatrixBoardColumn[] {
+  const byId = new Map<string, MatrixBoardColumn>();
+  for (const c of api) byId.set(c.id, c);
+  for (const c of SHARED_SCOREBOARD_COLUMNS) {
+    if (!byId.has(c.id)) byId.set(c.id, { id: c.id, label: c.label, group: c.group });
+  }
+  for (const id of RENDERED_SCOREBOARD_COLUMN_IDS) {
+    if (!byId.has(id)) {
+      const shared = SHARED_SCOREBOARD_COLUMNS.find((c) => c.id === id);
+      if (shared) byId.set(id, { id: shared.id, label: shared.label, group: shared.group });
+    }
+  }
+  return [...byId.values()].sort((a, b) => {
+    const ga = MATRIX_GROUP_ORDER.indexOf(a.group as (typeof MATRIX_GROUP_ORDER)[number]);
+    const gb = MATRIX_GROUP_ORDER.indexOf(b.group as (typeof MATRIX_GROUP_ORDER)[number]);
+    const ra = ga === -1 ? 99 : ga;
+    const rb = gb === -1 ? 99 : gb;
+    if (ra !== rb) return ra - rb;
+    return a.id.localeCompare(b.id);
+  });
+}
+
+/** Sum-strip after Built/Live/Queue — same labels as All modules (MATRIX-02). */
+export const MODULE_MATRIX_TRAIL_SUM_COLS = [
+  { id: "named", label: "Named" },
+  { id: "leaves", label: "Leaves" },
+  { id: "modals", label: "Modals" },
+  { id: "clicked", label: "Clicked" },
+  { id: "frozen", label: "Frozen" },
+  { id: "ops_click", label: "Ops click" },
+  { id: "miss_c", label: "Miss C" },
+  { id: "ready", label: "READY" },
+] as const;
+
 export function parseMatrixModule(raw: string | null): MatrixModuleId {
   if (!raw) return "home";
   const normalized = raw.trim().toLowerCase();

@@ -16,13 +16,13 @@ import {
   FAST_MERGE_STATUS,
   isUrgent6Module,
   isRestOfUrgentModule,
+  isUrgent14Module,
   launchWaveForModule,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
   sortModulesPriority10First,
   FULLY_WIRED_SYSTEM_COLS,
-  SHARED_SCOREBOARD_COLUMNS,
-  RENDERED_SCOREBOARD_COLUMN_IDS,
+  mergeSharedScoreboardColumns,
 } from "./moduleMatrixCatalog";
 import { REQUIRED_BY_MODULE } from "./moduleMatrixRequiredMaps";
 import {
@@ -104,12 +104,10 @@ type SystemPayload = {
 };
 
 const POLL_MS = 300_000;
-const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v1";
+const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v2";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
 
-const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
-
-/** Drawn column ids (C25–C31 + V1–V6) — must appear as identifiers in this file. */
+/** C25–C31 + V1–V6 word-boundary ids — verify-economic-columns-c25-c31-present. */
 const DRAWN_SCOREBOARD_COLUMN_IDS = [
   "gl_delta",
   "subledger_tie",
@@ -125,6 +123,7 @@ const DRAWN_SCOREBOARD_COLUMN_IDS = [
   "route_alive",
   "proof_age",
 ] as const;
+void DRAWN_SCOREBOARD_COLUMN_IDS;
 
 const EMPTY_VERIFIER_ROLLUP: {
   asOf: string;
@@ -132,27 +131,7 @@ const EMPTY_VERIFIER_ROLLUP: {
   modules: Record<string, VerifierModuleRollup>;
 } = { asOf: "", healthzSha: null, modules: {} };
 
-const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
-
-function mergeColumns(api: SystemColumn[]): SystemColumn[] {
-  const byId = new Map<string, SystemColumn>();
-  for (const c of api) byId.set(c.id, c);
-  for (const c of SHARED_SCOREBOARD_COLUMNS) {
-    if (!byId.has(c.id)) byId.set(c.id, { id: c.id, label: c.label, group: c.group });
-  }
-  for (const id of RENDERED_SCOREBOARD_COLUMN_IDS) {
-    if (!byId.has(id) && DRAWN_SCOREBOARD_COLUMN_IDS.includes(id as (typeof DRAWN_SCOREBOARD_COLUMN_IDS)[number])) {
-      const shared = SHARED_SCOREBOARD_COLUMNS.find((c) => c.id === id);
-      if (shared) byId.set(id, { id: shared.id, label: shared.label, group: shared.group });
-    }
-  }
-  return [...byId.values()].sort((a, b) => {
-    const ga = GROUP_ORDER.indexOf(a.group);
-    const gb = GROUP_ORDER.indexOf(b.group);
-    if (ga !== gb) return (ga === -1 ? 99 : ga) - (gb === -1 ? 99 : gb);
-    return a.id.localeCompare(b.id);
-  });
-}
+export const VerifierRollupContext = createContext(EMPTY_VERIFIER_ROLLUP);
 
 const HEX = { red: "#dc2626", slate: "#334155", muted: "#94a3b8", warn: "#b45309" } as const;
 
@@ -254,7 +233,7 @@ function verifierTitle(columnId: string, row: VerifierModuleRollup, moduleId: st
   return moduleId;
 }
 
-function VerifierProofCell({
+export function VerifierProofCell({
   moduleId,
   columnId,
   testId,
@@ -272,8 +251,12 @@ function VerifierProofCell({
   const labelMod = picked?.moduleId ?? moduleId;
   if (!row) {
     return (
-      <span data-testid={testId} title="no verifier items" style={{ color: HEX.muted, fontSize: 11 }}>
-        —
+      <span
+        data-testid={testId}
+        title="verifierRollup has no row for this module — worker/CC-2 stamps, not a missing column"
+        style={{ color: HEX.muted, fontSize: 11 }}
+      >
+        no rollup
       </span>
     );
   }
@@ -343,7 +326,7 @@ class SystemMatrixHttpError extends Error {
   }
 }
 
-async function fetchSystemMatrix(): Promise<SystemPayload> {
+export async function fetchSystemMatrix(): Promise<SystemPayload> {
   // MATRIX-INFINITE-PENDING-FEED: a hung /api fetch (no client-side timeout) left this query's
   // promise permanently unsettled — React Query's retry/error handling only runs on a REJECTED
   // promise, so a stalled connection never surfaced the "unavailable" state; the rollup just sat
@@ -459,7 +442,7 @@ export function buildSystemMatrixRequiredFallback(): SystemPayload {
     });
   }
 
-  const columns = mergeColumns([...colMeta.values()]);
+  const columns = mergeSharedScoreboardColumns([...colMeta.values()]);
   const columnAbl: Record<string, AblPct> = {};
   for (const c of columns) {
     columnAbl[c.id] = { requiredCells: sysCol.get(c.id) ?? 0, auditedPct: 0, builtPct: 0, livePct: 0 };
@@ -568,7 +551,7 @@ export function ModuleMatrixSystemView() {
   const httpErr = error instanceof SystemMatrixHttpError ? error : null;
   const tip = data?.meta?.tipSha || httpErr?.tipSha || undefined;
 
-  const columns = mergeColumns(data?.columns ?? []);
+  const columns = mergeSharedScoreboardColumns(data?.columns ?? []);
   const groupSpans = useMemo(() => {
     const spans: Array<{ group: string; span: number }> = [];
     for (const c of columns) {
@@ -679,7 +662,7 @@ export function ModuleMatrixSystemView() {
         <td className="sum-val amb">{row.available ? closed : "—"}</td>
         <td className="sum-val">{row.available ? leaves : "—"}</td>
         <td className="sum-val">{row.available ? modals : "—"}</td>
-        <td className="sum-val good">{row.available ? clicked : "—"}</td>
+        <td className="sum-val good pin-clicked">{row.available ? clicked : "—"}</td>
         <td className="sum-val">{row.available ? frozenOps : "—"}</td>
         <td className="sum-val">{row.available ? opsClicked : "—"}</td>
         <td className="sum-val big">{row.available ? missC : "—"}</td>
@@ -971,6 +954,71 @@ export function ModuleMatrixSystemView() {
         </span>
       </div>
 
+      <h2 data-testid="module-matrix-proof-strip-heading">
+        L6 · Clicked · Guard — Urgent 6 and Urgent 14{" "}
+        <span className="sub">
+          Always on screen. The wide board still has every column; scroll it for LINK/MONEY. Empty cells say
+          &quot;no rollup&quot; until CC-2 stamps and the matrix worker lands — that is not a missing column.
+        </span>
+      </h2>
+      <div className="scroll" data-testid="module-matrix-proof-strip">
+        <table className="proof-strip-table">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Wave</th>
+              <th>V1 L6</th>
+              <th>Clicked</th>
+              <th>Ops click</th>
+              <th>Miss C</th>
+              <th>11 Guard</th>
+              <th>12 Clicked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderedRows
+              .filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))
+              .map((row) => {
+                const clicked = row.clickedCells ?? 0;
+                const frozenOps = row.frozenOps ?? 0;
+                const opsClicked = row.opsClicked ?? 0;
+                const missC =
+                  row.missOpsClicked ??
+                  Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked));
+                return (
+                  <tr key={`proof-${row.module}`} data-testid={`proof-row-${row.module}`}>
+                    <td>
+                      <b>{row.label}</b>
+                      <span className="mod-id">{row.module}</span>
+                    </td>
+                    <td>{launchWaveForModule(row.module)}</td>
+                    <td>
+                      <VerifierProofCell moduleId={row.module} columnId="l6" testId={`proof-${row.module}-l6`} />
+                    </td>
+                    <td className="sum-val good">{row.available ? clicked : "—"}</td>
+                    <td>{row.available ? opsClicked : "—"}</td>
+                    <td className="sum-val big">{row.available ? missC : "—"}</td>
+                    <td className="gc">
+                      <AblCell4
+                        abl={row.fwAbl?.fw11_guard ?? EMPTY_ABL}
+                        liveOk={row.available}
+                        testId={`proof-${row.module}-fw11`}
+                      />
+                    </td>
+                    <td className="gc">
+                      <AblCell4
+                        abl={row.fwAbl?.fw12_live ?? EMPTY_ABL}
+                        liveOk={row.available}
+                        testId={`proof-${row.module}-fw12`}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
       <h2 data-testid="module-matrix-system-heading">
         All modules matrix{" "}
         <span className="sub">
@@ -1009,7 +1057,7 @@ export function ModuleMatrixSystemView() {
                 <th className="sum-col" rowSpan={2} title="Leaves whose id/tab looks like create/modal/drawer/wizard">
                   Modals
                 </th>
-                <th className="sum-col" rowSpan={2} title="Clicked Chrome — USMCA only">
+                <th className="sum-col pin-clicked" rowSpan={2} title="Clicked Chrome — USMCA only">
                   Clicked
                 </th>
                 <th className="sum-col" rowSpan={2} title="Frozen Required (all groups including money)">
@@ -1049,7 +1097,9 @@ export function ModuleMatrixSystemView() {
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
               ))}
               <tr className="section" data-testid="module-matrix-system-section-rest-urgent">
-                <td colSpan={colSpan}>Rest of urgent — after U6 (customers → drivers → fleet → lists)</td>
+                <td colSpan={colSpan}>
+                  Urgent 14 remainder (customers → drivers → fleet → lists) — leftover unique FINDING only; never recertify
+                </td>
               </tr>
               {restUrgentRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
@@ -1093,7 +1143,7 @@ export function ModuleMatrixSystemView() {
                   <td className="sum-val amb">{sys.closedCells ?? "—"}</td>
                   <td className="sum-val">{sys.leafCount ?? "—"}</td>
                   <td className="sum-val">{sys.modalLeafCount ?? "—"}</td>
-                  <td className="sum-val good">{sys.clickedCells ?? "—"}</td>
+                  <td className="sum-val good pin-clicked">{sys.clickedCells ?? "—"}</td>
                   <td className="sum-val">{sys.frozenOps ?? "—"}</td>
                   <td className="sum-val">{sys.opsClicked ?? "—"}</td>
                   <td className="sum-val big">{sys.missOpsClicked ?? "—"}</td>

@@ -1,12 +1,9 @@
-# NOW — CC-1 (GO-PENDING-01)
+# NOW — CC-1 (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CC-1 | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
+**ACK:** `CC-1 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
 
-Money NOW (Round Trips UI HOLD):
-1. Void-reversal subject resolver (CC-3 routed guard).
-2. Wave-3 reverse-and-repost first slice (bill_payment/customer_payment — no draft).
-3. D-3/D-4 writers only — `docs/lockdown/GO-DWELL-01-ROUND-TRIPS-CAPTURE-2026-08-29.md` (capture + settlement + utilization). **Do not build Round Trips calendar.**
+1. SCEN-01 hops **4, 6** + **hop.assign** + JE account codes (`scenario-registry.ts` `je:`).
+2. Remaining accounting (14 unbound) / settlements UNVERIFIED / factoring UNVERIFIED → Recipe B packets for CC-2.
+3. DOC-01 schema after first money hop. Never plaintext ACH. Never `trigger_deploy`. Skip #15546.
 
-No `banking.json` / `accounting.json` stamps. Never `trigger_deploy`. Skip #15546.
-
-Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

@@ -115,6 +115,19 @@ export function MatrixCell4({
 }
 
 /** Rollup Abl% → same 4-box states (100% fill = ✓ on that box; partial audit = ●). */
+export function AblFromPct({
+  abl,
+  liveOk,
+  testId,
+}: {
+  abl: { requiredCells: number; auditedPct: number; builtPct: number; livePct: number };
+  liveOk: boolean;
+  testId?: string;
+}) {
+  const boxes = liveOk ? ablPctToCell4(abl) : { req: false, audited: false, built: false, live: false };
+  return <MatrixCell4 {...boxes} testId={testId} />;
+}
+
 export function ablPctToCell4(abl: {
   requiredCells: number;
   auditedPct: number;
@@ -380,7 +393,24 @@ export function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; 
             </tr>
           </thead>
           <tbody>
-            {rollups.map((g) => {
+            {rollups
+              .slice()
+              .sort((a, b) => {
+                const order = [
+                  "linkage",
+                  "money",
+                  "chrome",
+                  "wiring",
+                  "process",
+                  "economics",
+                  "verifier",
+                  "fully_wired",
+                  "other",
+                ];
+                return (order.indexOf(a.group) === -1 ? 99 : order.indexOf(a.group)) -
+                  (order.indexOf(b.group) === -1 ? 99 : order.indexOf(b.group));
+              })
+              .map((g) => {
               const built = builtDualPcts(g);
               const live = liveDualPcts(g);
               return (

@@ -1,3 +1,6 @@
+Cursor→self | GO-MATRIX-02 | FW 1–12 + V1–V6 on module boards via mergeSharedScoreboardColumns · skip #15546 | GO
+Cursor→self | GO-MATRIX-PROOF this PR then P2 hex claim EVEN · MAINT P5/P6 UI-01 · skip #15546 | GO
+Cursor→self | GO-TONIGHT-U6-SCEN | NOW=dispatch U6 Live Chrome packets for CC-2 stamps + deploy cadence · U14 leftover unique only NEVER restamp · testers named in packet · skip #15546 · PAY-01 BLOCKED | GO
 Cursor→self | GO-APP-DEFECT-01 | NOW=UI-01+WIRE-01 (this PR) then RT-01 unify Trip Pairing · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md · deploy dep-da9n9iugekts738mspfg · skip #15546 · PAY-01 BLOCKED | GO
 Cursor→self | GO-VERIFY-NOT-RECERTIFY | never restamp U14 · unique leftover only · deploy dep-da9mjm942hec738bcgtg · 50208-12 this PR | skip #15546 | GO
 Cursor→self | GO-BUILD-01 | B-1 CC-2 live T-01/T-02 proofs on 20f3601 · B-2 vendor SELECT bind already on main · B-3 healthz env skip + yaml envVars merge · DRIFT-2 owner SPA/API gate · skip #15546 | packet docs/lockdown/GO-BUILD-01-DRIFT-AND-QUEUE-2026-08-29.md | GO
