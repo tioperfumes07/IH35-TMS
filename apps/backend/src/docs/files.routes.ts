@@ -23,6 +23,11 @@ const DEFAULT_DOWNLOAD_EXPIRES_SECONDS = 300;
 // rendered empty. mdata.loads is a non-financial master-data table; adding it here is safe.
 // LV-FILE-LINK-ENTITY-TYPE-3WAY-MISMATCH: `invoice` and `settlement` are also listed in the
 // zod enum and the FE FileEntityType union; they map to real tables and must be supported.
+// DOC-01 D2 (owner 2026-08-29): `medical_card` + `background_check` added -- safety.medical_cards
+// and safety.background_checks previously had NO document column at all (migration
+// 202613290000), so the DOT medical card / background-check upload buttons had nowhere to save
+// to. Each type has a real target table + FK path (Rule 14): docs.file_links.entity_type CHECK
+// widened in the same migration; entity-labels.ts's ENTITY_LABEL_SQL map extended below.
 const SUPPORTED_LINK_ENTITY_TYPES = [
   "driver",
   "customer",
@@ -32,11 +37,24 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "load",
   "invoice",
   "settlement",
+  "medical_card",
+  "background_check",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
 const linkParamSchema = z.object({ file_id: z.string().uuid(), link_id: z.string().uuid() });
-const entityTypeSchema = z.enum(["driver", "customer", "vendor", "unit", "equipment", "load", "settlement", "invoice"]);
+const entityTypeSchema = z.enum([
+  "driver",
+  "customer",
+  "vendor",
+  "unit",
+  "equipment",
+  "load",
+  "settlement",
+  "invoice",
+  "medical_card",
+  "background_check",
+]);
 
 function optionalQueryString() {
   return z.preprocess((value) => {
