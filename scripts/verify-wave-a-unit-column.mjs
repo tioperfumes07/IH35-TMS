@@ -11,7 +11,7 @@ const checks = [
   ["profit-per-truck unit drill", "apps/frontend/src/pages/reports/ProfitPerTruckPage.tsx", /<EntityLink kind="unit" id=\{r\.unit_id\}/],
   ["fleet HOS unit drill", "apps/frontend/src/pages/compliance/FleetHosBoardSection.tsx", /<EntityLink kind="unit" id=\{row\.unit_id\}/],
   ["unit-driver history drill", "apps/frontend/src/pages/units/UnitDriverHistoryStrip.tsx", /<EntityLink(?:OrTombstone)?[\s\S]{0,40}?kind="unit"[\s\S]{0,80}?id=\{row\.unit_id\}/],
-  ["border crossing unit FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /unit_id:\s*form\.unitId/],
+  ["border crossing unit FK", "apps/frontend/src/pages/dispatch/BorderCrossingWizardPage.tsx", /unit_id:\s*input\.form\.unitId/],
   ["road-service unit FK", "apps/frontend/src/pages/maintenance/RoadServiceTicketModal.tsx", /unit_id:\s*unitId/],
   ["insurance policy unit FKs", "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx", /unit_ids:\s*selectedUnitIds/],
   ["safety event unit FK", "apps/frontend/src/pages/safety/SafetyEventsPage.tsx", /subject_unit_id:\s*input\.draft\.subject_unit_id\.trim\(\)\s*\|\|\s*undefined/],
