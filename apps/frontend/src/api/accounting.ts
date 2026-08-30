@@ -1290,6 +1290,7 @@ export function listFactoringCandidateInvoices(operatingCompanyId: string) {
       customer_name: string;
       issue_date: string;
       total_cents: number;
+      pledge_cents: number;
       factoring_status: string;
       customer_recourse_type: string;
       factoring_eligible: boolean;

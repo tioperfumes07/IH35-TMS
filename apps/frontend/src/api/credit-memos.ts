@@ -3,7 +3,19 @@ import { apiRequest } from "./client";
 // ACCT-F5606 — AR mirror of api/vendor-credits.ts's proven AP shape.
 
 export type CreditMemoStatus = "draft" | "issued" | "applied" | "voided";
-export type CreditMemoReason = "damage" | "shortage" | "rate_dispute" | "duplicate_billing" | "detention_dispute" | "other";
+export type CreditMemoReason =
+  | "damage"
+  | "shortage"
+  | "rate_dispute"
+  | "duplicate_billing"
+  | "detention_dispute"
+  | "late_delivery"
+  | "missing_paperwork"
+  | "lumper_receipt_missing"
+  | "detention_denied"
+  | "factoring_dilution"
+  | "unknown_pending_backup"
+  | "other";
 
 export const CREDIT_MEMO_REASONS: Array<{ value: CreditMemoReason; label: string }> = [
   { value: "damage", label: "Damage" },
@@ -11,6 +23,12 @@ export const CREDIT_MEMO_REASONS: Array<{ value: CreditMemoReason; label: string
   { value: "rate_dispute", label: "Rate dispute" },
   { value: "duplicate_billing", label: "Duplicate billing" },
   { value: "detention_dispute", label: "Detention dispute" },
+  { value: "late_delivery", label: "Late delivery (broker backup required)" },
+  { value: "missing_paperwork", label: "Missing paperwork / POD / BOL" },
+  { value: "lumper_receipt_missing", label: "Missing lumper receipt" },
+  { value: "detention_denied", label: "Detention / layover denied" },
+  { value: "factoring_dilution", label: "Factoring dilution / reserve take" },
+  { value: "unknown_pending_backup", label: "Unknown / backup not received" },
   { value: "other", label: "Other" },
 ];
 

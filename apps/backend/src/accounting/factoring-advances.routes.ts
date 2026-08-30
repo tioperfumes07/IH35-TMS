@@ -48,6 +48,30 @@ const createBodySchema = z.object({
   notes: z.string().trim().max(5000).optional(),
 });
 
+/** FACT-PLEDGE-NET-CM — same net as ar-aging (payments + applied non-void credit memos), live not as-of. */
+const INVOICE_PLEDGE_CENTS_SQL = `
+GREATEST(
+  COALESCE(i.total_cents, 0)
+    - COALESCE((
+        SELECT SUM(COALESCE(pa.amount_cents, 0))
+        FROM accounting.payment_applications pa
+        JOIN accounting.payments p
+          ON p.id = pa.payment_id
+         AND p.operating_company_id = i.operating_company_id
+        WHERE pa.invoice_id = i.id
+          AND pa.operating_company_id = i.operating_company_id
+          AND p.voided_at IS NULL
+          AND pa.unapplied_at IS NULL
+      ), 0)
+    - COALESCE((
+        SELECT SUM(cma.applied_cents)
+        FROM accounting.credit_memo_applications cma
+        WHERE cma.invoice_id = i.id
+          AND cma.operating_company_id = i.operating_company_id
+          AND cma.voided_at IS NULL
+      ), 0)
+, 0)`;
+
 const advanceBodySchema = z.object({
   advanced_at: z.string().datetime().optional(),
   notes: z.string().trim().max(5000).optional(),
@@ -302,6 +326,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             c.customer_name,
             i.issue_date,
             i.total_cents,
+            (${INVOICE_PLEDGE_CENTS_SQL})::bigint AS pledge_cents,
             COALESCE(i.factoring_status, 'not_factored') AS factoring_status,
             COALESCE(c.factoring_recourse_type, 'recourse') AS customer_recourse_type,
             c.factoring_eligible
@@ -325,6 +350,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
       rows: rows.map((row: Record<string, unknown>) => ({
         ...row,
         total_cents: Number(row.total_cents ?? 0),
+        pledge_cents: Number(row.pledge_cents ?? row.total_cents ?? 0),
       })),
     };
   });
@@ -377,6 +403,7 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
             i.id,
             i.customer_id,
             i.total_cents,
+            (${INVOICE_PLEDGE_CENTS_SQL})::bigint AS pledge_cents,
             i.status,
             COALESCE(i.factoring_status, 'not_factored') AS factoring_status,
             c.factoring_eligible
@@ -393,9 +420,14 @@ export async function registerFactoringAdvancesRoutes(app: FastifyInstance) {
         if (String(row.status) !== "sent") return { code: 409 as const, error: "invoice_not_sent" };
         if (String(row.factoring_status) !== "not_factored") return { code: 409 as const, error: "invoice_already_factored" };
         if (!row.factoring_eligible) return { code: 409 as const, error: "customer_not_factoring_eligible" };
+        if (Number(row.pledge_cents ?? 0) <= 0) return { code: 409 as const, error: "invoice_zero_open" };
       }
 
-      const invoiceTotalCents = invoiceRes.rows.reduce((sum: number, row: Record<string, unknown>) => sum + Number(row.total_cents ?? 0), 0);
+      // FACT-PLEDGE-NET-CM: Faro face / reserve / fee base = open AR, not invoice header total.
+      const invoiceTotalCents = invoiceRes.rows.reduce(
+        (sum: number, row: Record<string, unknown>) => sum + Number(row.pledge_cents ?? 0),
+        0
+      );
       const advanceAmount = Math.round((invoiceTotalCents * Number(body.data.advance_rate_pct)) / 100);
       // FACT-RESERVE-01 (GO-FARO-02 REV B) — reserve was computed as "whatever the advance didn't
       // cover" (invoiceTotal - advance), which folds the ENTIRE holdback into reserve_amount_cents and

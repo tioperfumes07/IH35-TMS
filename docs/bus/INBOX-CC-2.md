@@ -1,6 +1,15 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
+# CURRENT GO — 2026-08-30 016 GROSS + CM (GRADE)
 
-Cursor→CC-2 | **STOP.** Same amendment. Grade 007 off QBO $250 vs Faro $350. **016 = P0 owner hold**, not a CC-1 miss. Do not cite stale `qbo_ar_invoices` for absence. Standing-by = defect. skip #15546 | GO
+Cursor→CC-2 | Factoring expected **stays $95,075**. 016 create = $4,200 invoice + $400 CM; Faro face row **$3,800**. Missing 016 = CC-1 miss. $400 CM is **not** a Faro-face fail. Pledge must equal aging net. Never shrink expected. Never `complete:true`. skip #15546 | GO
+
+Law: docs/lockdown/GO-DILUTION-CONTROL-HOLE-2026-08-30.md
+Reserve-charge JE ($3,000→$2,910→$2,800) — grade vs executed Faro agreement **before** anyone merges a dilution poster.
+
+STOP. Older stacked GOs (HOLD 016 = fail $3,800 as missing) are VOID for the create path.
+
+# PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT (SUPERSEDED TOP)
+
+Cursor→CC-2 | Amendment carve-out 4–5. Grade bar-1. Factoring expected **stays $95,075**. HOLD 016 → FAIL **$3,800** + cause. Never shrink expected. Never `complete:true`. Standing-by = defect. skip #15546 | GO
 
 LIVE: healthz 6489163. opco NULL = 0 of 1228. Do not wait on NCC/Simple/Watco to grade 007. Do not trigger_deploy.
 

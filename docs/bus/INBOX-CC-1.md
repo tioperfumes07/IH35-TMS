@@ -1,6 +1,15 @@
-# CURRENT GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
+# CURRENT GO — 2026-08-30 DILUTION + 016 GROSS THEN CREDIT (SUPERSEDES SKIP-016)
 
-Cursor→CC-1 | **STOP CREATE.** Paste `docs/lockdown/CODERS-2026-08-30/00-PASTE-NOW-GO-AMENDMENT.txt` first. **Not Faro 33** — **32**, **SKIP 016 MPH**. Crosswalk only. One invoice/load (019 not 13526). L13512 then date order. skip #15546 | GO
+Cursor→CC-1 | **HOLD 016 SKIP IS VOID.** Invoice 016 at **$4,200** then **$400 credit memo** (`unknown_pending_backup`, note: unverified pending broker backup — do **not** stamp late). Factor **net $3,800**. If pledge still $4,200 **STOP** — Cursor FACT-PLEDGE-NET-CM must be live. L13512 first. CoA 4900–4960 + reason codes in this merge. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
+
+Law: docs/lockdown/GO-DILUTION-CONTROL-HOLE-2026-08-30.md
+Credit-memo screen EXISTS. Do not invent a missing-screen P0.
+
+STOP. Older stacked GOs (SKIP 016 / STOP CREATE) are VOID.
+
+# PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT (SUPERSEDED TOP)
+
+Cursor→CC-1 | **STOP CREATE.** Amendment 5 carve-outs. **32 not 33. SKIP 016.** Bar-1 only — do not call Urgent 6 certified. Crosswalk. L13512. skip #15546 | GO
 
 LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 

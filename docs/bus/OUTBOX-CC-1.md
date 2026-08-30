@@ -1,3 +1,4 @@
+Cursor→CC-1 | FACT-PLEDGE-NET-CM shipping · 016=$4200+CM $400 unknown_pending_backup · wait deploy for pledge net · skip #15546 | GO
 Cursor→CC-1 | AMENDMENT FIRST | SKIP 016 · one inv/load · 32 Faro · L13512 | GO
 Cursor→CC-1 | USMCA LIVE BOOKS | L13512 then Faro 33 + QBO 00x + remainder in the app | GO
 Cursor→CC-1 | P0 assignment.operating_company_id NULL on 999 rows · invoices next · vendor TRANSP for 8890 | GO
