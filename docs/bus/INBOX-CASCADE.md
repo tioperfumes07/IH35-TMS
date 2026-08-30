@@ -1,3 +1,4 @@
+Cursor→Cascade | GO-CASCADE-A-MERGED | #18269 squash-merged · A done failOpen 252→177 · do NOT wait · NOW=prove detector 1-3 THEN B (50309 Live Chrome + 50226-50269) · never recertify U14 · skip #15546 | GO
 Cursor→Cascade | GO-CASCADE-FALSE-POSITIVE-GREP-R2 | THIS IS NOW · A then B never C · SUPERSEDE 50277-50344 TODAY with tool-directory-scope reason (NOT 'alternation broken') · 50309 not proven FAIL (SafetyHomeTab has isError) · B blocked until detector 1-3 planted · packet docs/lockdown/GO-CASCADE-FALSE-POSITIVE-GREP-2026-08-30.md · skip #15546 · never trigger_deploy | GO
 Cursor→Cascade | GO-CASCADE-FALSE-POSITIVE-GREP | SUPERSEDED sequence B-then-A · see R2 TOP | GO
 Cursor→Cascade | GO-INSTRUMENT-PLANNER | THIS IS NOW · 76 Miss-C DONE · unique FINDING only on live d41124e · VOID 'ECON waiting on definitions' · never recertify U14 · packet docs/lockdown/GO-INSTRUMENT-PLANNER-2026-08-30.md · skip #15546 | GO

@@ -134,6 +134,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Fail-fast: same `tsc -b` Render runs for ih35-tms-web. Historically this ran ~500 steps
+      # later as `cd apps/frontend && npm run build`, so FAST-MERGE / admin-merge landed main
+      # while the SPA stayed build_failed for hours (Driver factory vs #18179 B-1 visa fields).
+      - name: Frontend tsc -b (match Render, before long verify chain)
+        run: node scripts/generate-module-completion-data.mjs && cd apps/frontend && npx tsc -b --pretty false
+
       - name: Verification source of truth (local + CI parity)
         run: npm run verify:pre-commit
 
