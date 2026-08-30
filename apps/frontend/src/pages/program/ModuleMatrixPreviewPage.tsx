@@ -958,7 +958,13 @@ const CSS = `
 .ih35mm .system-table{min-width:1280px}
 .ih35mm .system-table .sticky-col{position:sticky;left:0;background:var(--card);z-index:1;min-width:140px}
 .ih35mm .system-table .mod-id{display:block;font-size:10px;color:var(--slate-lt);font-weight:400}
-.ih35mm .system-column-board{min-width:1600px}
+.ih35mm .system-column-board{min-width:2200px}
+.ih35mm .system-table .pin-clicked{
+  position:sticky;right:0;z-index:2;background:var(--card);box-shadow:-6px 0 10px rgba(15,23,42,.12)
+}
+.ih35mm .proof-strip-table{width:100%;border-collapse:collapse;min-width:720px}
+.ih35mm .proof-strip-table th,.ih35mm .proof-strip-table td{padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px}
+.ih35mm .proof-strip-table th{background:var(--accent-bg);font-size:10px;text-transform:uppercase;letter-spacing:.25px;color:var(--slate-lt)}
 .ih35mm .system-table .board-link{font-size:10px;font-weight:600;margin-left:4px}
 .ih35mm tr.system-total td{background:var(--accent-bg);font-weight:700}
 .ih35mm tr.dim-row td{opacity:.55}

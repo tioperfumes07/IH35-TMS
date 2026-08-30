@@ -1,3 +1,5 @@
+Cursor→Codex | GO-MAINT-01 P3+P4 | after CC-1 P0: duplicate tiles + UUID generator + GPS comma · no new verify-steps · packets GO-MAINT-01 · skip #15546 | GO
+Cursor→Codex | GO-TONIGHT-U6-SCEN | NOW=DISP-01 then unique leftover dispatch/fuel · do NOT own hop.assign · never recertify U14 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 | GO
 Cursor→Codex | GO-APP-DEFECT-01 | NOW=DISP-01 detention/at-risk/KPI then DISP-02 planner filter logic · chrome-only no new verify-steps · skip #15546 · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO
 Cursor→Codex | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · D-1 + leftover unique dispatch/drivers/fleet/fuel · skip #15546 | GO
 Cursor→Codex | GO-BUILD-01 | B-5 97 selftests dispatch/drivers/fleet/fuel slice · GR-2 after CC-3 claims EVEN · skip #15546 | GO

@@ -16,6 +16,7 @@ import {
   FAST_MERGE_STATUS,
   isUrgent6Module,
   isRestOfUrgentModule,
+  isUrgent14Module,
   launchWaveForModule,
   matrixColumnHeaderLabel,
   matrixGroupHeaderLabel,
@@ -104,7 +105,7 @@ type SystemPayload = {
 };
 
 const POLL_MS = 300_000;
-const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v1";
+const CLIENT_LAST_GOOD_KEY = "ih35-system-matrix-last-v2";
 const EMPTY_ABL: AblPct = { requiredCells: 0, auditedPct: 0, builtPct: 0, livePct: 0 };
 
 const GROUP_ORDER = ["linkage", "money", "chrome", "wiring", "process", "economics", "verifier", "other"];
@@ -272,8 +273,12 @@ function VerifierProofCell({
   const labelMod = picked?.moduleId ?? moduleId;
   if (!row) {
     return (
-      <span data-testid={testId} title="no verifier items" style={{ color: HEX.muted, fontSize: 11 }}>
-        —
+      <span
+        data-testid={testId}
+        title="verifierRollup has no row for this module — worker/CC-2 stamps, not a missing column"
+        style={{ color: HEX.muted, fontSize: 11 }}
+      >
+        no rollup
       </span>
     );
   }
@@ -679,7 +684,7 @@ export function ModuleMatrixSystemView() {
         <td className="sum-val amb">{row.available ? closed : "—"}</td>
         <td className="sum-val">{row.available ? leaves : "—"}</td>
         <td className="sum-val">{row.available ? modals : "—"}</td>
-        <td className="sum-val good">{row.available ? clicked : "—"}</td>
+        <td className="sum-val good pin-clicked">{row.available ? clicked : "—"}</td>
         <td className="sum-val">{row.available ? frozenOps : "—"}</td>
         <td className="sum-val">{row.available ? opsClicked : "—"}</td>
         <td className="sum-val big">{row.available ? missC : "—"}</td>
@@ -971,6 +976,71 @@ export function ModuleMatrixSystemView() {
         </span>
       </div>
 
+      <h2 data-testid="module-matrix-proof-strip-heading">
+        L6 · Clicked · Guard — Urgent 6 and Urgent 14{" "}
+        <span className="sub">
+          Always on screen. The wide board still has every column; scroll it for LINK/MONEY. Empty cells say
+          &quot;no rollup&quot; until CC-2 stamps and the matrix worker lands — that is not a missing column.
+        </span>
+      </h2>
+      <div className="scroll" data-testid="module-matrix-proof-strip">
+        <table className="proof-strip-table">
+          <thead>
+            <tr>
+              <th>Module</th>
+              <th>Wave</th>
+              <th>V1 L6</th>
+              <th>Clicked</th>
+              <th>Ops click</th>
+              <th>Miss C</th>
+              <th>11 Guard</th>
+              <th>12 Clicked</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderedRows
+              .filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))
+              .map((row) => {
+                const clicked = row.clickedCells ?? 0;
+                const frozenOps = row.frozenOps ?? 0;
+                const opsClicked = row.opsClicked ?? 0;
+                const missC =
+                  row.missOpsClicked ??
+                  Math.max(0, frozenOps - Number(row.metrics?.liveCells ?? opsClicked));
+                return (
+                  <tr key={`proof-${row.module}`} data-testid={`proof-row-${row.module}`}>
+                    <td>
+                      <b>{row.label}</b>
+                      <span className="mod-id">{row.module}</span>
+                    </td>
+                    <td>{launchWaveForModule(row.module)}</td>
+                    <td>
+                      <VerifierProofCell moduleId={row.module} columnId="l6" testId={`proof-${row.module}-l6`} />
+                    </td>
+                    <td className="sum-val good">{row.available ? clicked : "—"}</td>
+                    <td>{row.available ? opsClicked : "—"}</td>
+                    <td className="sum-val big">{row.available ? missC : "—"}</td>
+                    <td className="gc">
+                      <AblCell4
+                        abl={row.fwAbl?.fw11_guard ?? EMPTY_ABL}
+                        liveOk={row.available}
+                        testId={`proof-${row.module}-fw11`}
+                      />
+                    </td>
+                    <td className="gc">
+                      <AblCell4
+                        abl={row.fwAbl?.fw12_live ?? EMPTY_ABL}
+                        liveOk={row.available}
+                        testId={`proof-${row.module}-fw12`}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
+      </div>
+
       <h2 data-testid="module-matrix-system-heading">
         All modules matrix{" "}
         <span className="sub">
@@ -1009,7 +1079,7 @@ export function ModuleMatrixSystemView() {
                 <th className="sum-col" rowSpan={2} title="Leaves whose id/tab looks like create/modal/drawer/wizard">
                   Modals
                 </th>
-                <th className="sum-col" rowSpan={2} title="Clicked Chrome — USMCA only">
+                <th className="sum-col pin-clicked" rowSpan={2} title="Clicked Chrome — USMCA only">
                   Clicked
                 </th>
                 <th className="sum-col" rowSpan={2} title="Frozen Required (all groups including money)">
@@ -1049,7 +1119,9 @@ export function ModuleMatrixSystemView() {
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
               ))}
               <tr className="section" data-testid="module-matrix-system-section-rest-urgent">
-                <td colSpan={colSpan}>Rest of urgent — after U6 (customers → drivers → fleet → lists)</td>
+                <td colSpan={colSpan}>
+                  Urgent 14 remainder (customers → drivers → fleet → lists) — leftover unique FINDING only; never recertify
+                </td>
               </tr>
               {restUrgentRows.map((row) => (
                 <Fragment key={row.module}>{renderModuleRow(row)}</Fragment>
@@ -1093,7 +1165,7 @@ export function ModuleMatrixSystemView() {
                   <td className="sum-val amb">{sys.closedCells ?? "—"}</td>
                   <td className="sum-val">{sys.leafCount ?? "—"}</td>
                   <td className="sum-val">{sys.modalLeafCount ?? "—"}</td>
-                  <td className="sum-val good">{sys.clickedCells ?? "—"}</td>
+                  <td className="sum-val good pin-clicked">{sys.clickedCells ?? "—"}</td>
                   <td className="sum-val">{sys.frozenOps ?? "—"}</td>
                   <td className="sum-val">{sys.opsClicked ?? "—"}</td>
                   <td className="sum-val big">{sys.missOpsClicked ?? "—"}</td>

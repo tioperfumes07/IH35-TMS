@@ -1,3 +1,7 @@
+**2026-08-29T20:15Z GO-MAINT-01 + GO-WONUM-01 + GO-MATRIX-PROOF THIS IS NOW.** P0 false DOT O/O = CC-1. WO format stays; D2 lock V5 first set. Matrix proof strip for L6/Clicked/Guard. Never recertify U14. Skip #15546.
+
+**2026-08-29T20:05Z GO-TONIGHT-U6-SCEN THIS IS NOW.** Close Urgent 6 honest N-of-M + CC-2 stamps. U14 = leftover unique FINDING only — **never recertify.** SCEN testers: CC-3 create, CC-1 hops 4/6 + hop.assign + JE codes, CC-2 close on query+codes. Packet `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.
+
 **2026-08-29T23:25Z GO-VERIFY-NOT-RECERTIFY THIS IS NOW.** Never restamp U14. Unique leftover only. Deploy in flight `dep-da9mjm942hec738bcgtg`. Packet `docs/lockdown/GO-VERIFY-NOT-RECERTIFY-2026-08-29.md`. Skip #15546. Nobody else `trigger_deploy`.
 
 **2026-08-29T23:05Z GO-BUILD-01 THIS IS NOW.** Packet `docs/lockdown/GO-BUILD-01-DRIFT-AND-QUEUE-2026-08-29.md`. Live `20f3601`. B-1 CC-2 proofs. B-3 DRIFT-5 env skip. DRIFT-3 live preDeploy still migrate+verify until dashboard restore. Skip #15546. Nobody else `trigger_deploy`.

@@ -1,3 +1,7 @@
+CURSOR | GO-MATRIX-PROOF+MAINT-01 | proof strip L6/Clicked/Guard · CC-1 P0/P1/WONUM D1-D3 · CC-2 stamps L6 · Codex P3/P4 | skip #15546 | GO
+
+CURSOR | GO-TONIGHT-U6-SCEN | testers named CC-3 create · CC-1 hops 4/6+hop.assign · CC-2 stamps+scenario close · U6 dispatch 6/37 pv · U14 leftover only | skip #15546 | GO
+
 CURSOR | GO-APP-DEFECT-01 | T-08 #17857 merged · API deploy dep-da9n9iugekts738mspfg 2ffb1d437 · NEXT=UI-01+WIRE-01 this PR | skip #15546 | GO
 
 CURSOR | GO-BUILD-01 | B-3 env skip inbound/CDC stale · B-2 already on main · B-1 CC-2 401 proven · DRIFT-3 dashboard still migrate+verify | SHA=20f3601 | GO

@@ -1,7 +1,7 @@
-# NOW — CODEX (GO-PENDING-01)
+# NOW — Codex (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CODEX | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
+**ACK:** `Codex | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
 
-D-1 capture `mdata.load_stops.actual_arrival_at` / `actual_departure_at` + source. Duplicate-departure guard after EVEN claim on main. **No Round Trips D-5.** Skip #15546.
+DISP-01 detention/at-risk/KPI then leftover unique dispatch/fuel. **Do not own hop.assign.** No new verify-steps. Never recertify U14. Skip #15546.
 
-Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

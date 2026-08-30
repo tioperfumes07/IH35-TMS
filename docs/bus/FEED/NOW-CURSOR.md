@@ -1,7 +1,5 @@
-# NOW — CURSOR (GO-MODAL-01)
+# NOW — Cursor (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CURSOR | ACK | GO-MODAL-01 | SHA=<healthz> | GO`
+Dispatch U6 Live Chrome packets so CC-2 can stamp (37 PASS / 6 prod_verified). Deploy 5–10 min and 5–10 PRs, one in-flight. U14 leftover unique only. PAY-01 BLOCKED.
 
-MODAL-01 ship + deploy 5–10.
-
-Law: `docs/lockdown/MODAL-01-URL-RETRACT-ON-CLOSE-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

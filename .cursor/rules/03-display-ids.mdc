@@ -22,7 +22,7 @@ All display IDs are server-generated only. The frontend never composes a display
 
 ### Segments
 
-- `{UNIT}` — `master_data.units.display_id` (e.g., T169, T177)
+- `{UNIT}` — `mdata.units.unit_number` (e.g., T169, T177). Never `master_data`. Never UUID fallback. A unit with no `unit_number` cannot receive a work order (`E_UNIT_HAS_NO_NUMBER`).
 - `{TYPE}` — source_type code (2 chars, see source types below)
 - `{MM-DD-YYYY}` — leading zeros, 4-digit year
 - `{NNNN}` — per-unit cumulative LIFETIME sequence (4-digit zero-padded; NEVER resets)
@@ -42,8 +42,8 @@ All display IDs are server-generated only. The frontend never composes a display
 
 ### V5 selection rule
 
-- For ES/AC/ET/RT/RS: last 5 chars of `external_vendor_invoice_number` (preferred) OR `external_vendor_wo_number` (if invoice not yet entered). Use whichever is set first; lock V5 once set.
-- For IS/IT with parts: last 5 chars of FIRST `parts_invoice_links.vendor_invoice_number` for the WO (FIFO order by `created_at`)
+- For ES/AC/ET/RT/RS: last 5 chars of `external_vendor_invoice_number` (preferred) OR `external_vendor_wo_number` (if invoice not yet entered). **Lock V5 once set to a non-`PEND0` value** (owner 2026-08-29 GO-WONUM-01). Later invoice corrections stay in their columns; they do not rewrite the WO display id.
+- For IS/IT with parts: last 5 chars of FIRST `parts_invoice_links.vendor_invoice_number` for the WO (FIFO order by `created_at`). Same lock: first non-`PEND0` wins.
 - For IS/IT with `labor_only_no_parts = true`: literal string `LABOR`
 - If vendor reference shorter than 5 chars: zero-pad on left (e.g., invoice "42" → "00042")
 - For pending vendor entry: literal `PEND0`
@@ -51,12 +51,9 @@ All display IDs are server-generated only. The frontend never composes a display
 
 ### Refresh rule
 
-V5 is recomputed when:
-- WO created with vendor reference (initial)
-- Vendor invoice number changed BEFORE completion
-- First `parts_invoice_links` added to IS/IT WO (recompute V5)
+`refresh_wo_display_id` may run on create and when V5 is still `PEND0` (first vendor/parts invoice sets V5 once). **Do not recompute V5 after it is a non-`PEND0` value.** V5 is also IMMUTABLE after WO `status` is `complete`/`completed`.
 
-V5 is IMMUTABLE after WO transitions to `status='completed'`.
+Do **not** recompute V5 because the vendor invoice number was later edited.
 
 ### Sequence rule
 

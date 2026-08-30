@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-29 18:25 CT GO-VERIFY-NOT-RECERTIFY
+# LEAD CENSUS — 2026-08-29 ~20:00 CT GO-TONIGHT-U6-SCEN
 
-**Lead:** CURSOR · **NOW:** unique leftover FINDING only. **Never recertify U14.**
+**Lead:** CURSOR · **NOW:** Urgent 6 close (honest prod_verified) + U14 leftover unique only. **Never recertify U14.**
 
 | Seat | Idle? | Evidence |
 |------|-------|----------|
-| CC-1 | no ACK of this GO | OUTBOX still BANK-CTRL / next-work-item — not this GO id |
-| CC-2 | no ACK of this GO | last ACK GO-PENDING T-07 |
-| CC-3 | no ACK of this GO | OUTBOX SYS/lists L6 |
-| Codex | WORKING older GO-MODAL | OUTBOX FUEL/FLEET/DRV — keep unique leftover |
-| Cascade | FINDING 50208-12 | unique only |
+| CC-1 | pending ACK | hops 4/6 + hop.assign + U6 remaining money |
+| CC-2 | pending ACK | Recipe B stamps banking/dispatch |
+| CC-3 | pending ACK | SCEN create hops tonight |
+| Codex | pending ACK | DISP-01 then leftover unique |
+| Cascade | pending ACK | unique FINDING · #17851 |
 | Devin | customers | Devin-A VOID |
-| Cursor | lead | deploy in flight |
+| Cursor | lead | dispatch Live Chrome packets + deploy 5–10 |
 
-ACK: `SEAT | ACK | GO-VERIFY-NOT-RECERTIFY | SHA=<healthz after dep-da9mjm> | GO`
+ACK: `SEAT | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | NOW=<one line> | GO`

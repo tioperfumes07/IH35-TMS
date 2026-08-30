@@ -1,3 +1,5 @@
+**GO-TONIGHT-U6-SCEN** · U6 honest stamps · U14 leftover unique NEVER recertify · SCEN: CC-3 create / CC-1 money+codes / CC-2 close · skip #15546 · idle=defect
+
 **GO-1505** live `5ecbc67` · API `dep-da89he4s728c73b4kbug` `282777f` IN FLIGHT · SPA tsc red · idle=defect
 
 **GO-1439** live `d49fbfa` · API `dep-da895cqd0e5s73a1gtrg` `5ecbc67` IN FLIGHT · idle=defect

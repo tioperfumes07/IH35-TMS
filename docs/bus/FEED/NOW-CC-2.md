@@ -1,7 +1,7 @@
-# NOW — CC-2 (GO-PENDING-01)
+# NOW — CC-2 (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CC-2 | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
+**ACK:** `CC-2 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
 
-**T-07:** WAVE-2 fake-complete REOPEN 50108–50124 — only you bind / unstamp `complete:true`. Cascade waves CLOSED. Skip #15546.
+Stamp U6 Recipe B: banking 3 unbound PASS; dispatch packets as Cursor/Codex land Live Chrome. Scenario done = linkage query **and** JE codes — never screenshot. Never recertify U14. Skip #15546. Never `trigger_deploy`.
 
-Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

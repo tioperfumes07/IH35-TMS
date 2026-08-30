@@ -52,7 +52,7 @@ Example: WO-T169-IS-05-06-2026-0035-23914
 | Segment | Source | Notes |
 |---------|--------|-------|
 | WO- | Fixed prefix | always |
-| {UNIT} | master_data.units.display_id | e.g., T169, T177 |
+| {UNIT} | mdata.units.unit_number | e.g., T169, T177. No UUID fallback. |
 | {TYPE} | source_type column (enum) | 2-char code, see table |
 | {MM-DD-YYYY} | WO creation date | leading zeros, 4-digit year |
 | {NNNN} | per-unit cumulative LIFETIME sequence | 4-digit zero-padded; NEVER resets |

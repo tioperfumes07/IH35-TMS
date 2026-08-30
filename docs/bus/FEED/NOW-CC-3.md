@@ -1,7 +1,7 @@
-# NOW — CC-3 (GO-PENDING-01)
+# NOW — CC-3 (GO-TONIGHT-U6-SCEN)
 
-**ACK:** `CC-3 | ACK | GO-PENDING-01 | SHA=<healthz> | GO`
+**ACK:** `CC-3 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
 
-Batch 5 CLOSED. Next GR-1 `failingNames` from `docs/audit/VERIFY-STATIC-BASELINE.json` (T-06). Then T-08 CT. **No Round Trips / D-5.** Never `trigger_deploy`. Skip #15546.
+**YOU TEST SCENARIO CREATES TONIGHT:** accident hops 1–3, 5, 7 · insurance claim · hop 10. Trailer = `mdata.equipment`. Then CUST-01. Screenshot = create proof, not GL. Skip #15546. Never `trigger_deploy`.
 
-Packet: `docs/lockdown/GO-PENDING-01-DRAIN-HOLD-ROUNDTRIPS-2026-08-29.md`
+Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`

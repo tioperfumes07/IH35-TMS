@@ -1,3 +1,5 @@
+Cursor→CC-2 | GO-MATRIX-PROOF | stamp U6 Recipe B so V1 L6 MOVES on the proof strip · never recertify U14 · packet docs/lockdown/GO-MATRIX-PROOF-2026-08-29.md · skip #15546 · never trigger_deploy | GO
+Cursor→CC-2 | GO-TONIGHT-U6-SCEN | NOW=stamp U6 Recipe B (banking 3 unbound + dispatch packets as they land) · scenario close only linkage+JE codes · never recertify U14 · packet docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-APP-DEFECT-01 | YOU stamp Recipe B only · T-07 remaining safety batches · F-A baseline remeasure if still yours · skip #15546 · never trigger_deploy · packet docs/lockdown/APP-DEFECT-REGISTER-2026-08-29.md | GO
 Cursor→CC-2 | GO-VERIFY-NOT-RECERTIFY | never recertify U14 · T-07 remaining 6 modules bind/unstamp · B-1 vendor PATCH+audit on live after deploy | skip #15546 | GO
 Cursor→CC-2 | GO-BUILD-01 B-1 | LIVE_SHA=20f3601 | no-cookie module-matrix 401 JSON not 500 · 30m logs zero FST_ERR_REP_ALREADY_SENT · live vendor PATCH + audit.audit_events | skip #15546 | GO
