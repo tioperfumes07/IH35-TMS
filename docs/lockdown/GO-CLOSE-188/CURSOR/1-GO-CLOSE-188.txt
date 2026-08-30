@@ -1,0 +1,10 @@
+GO-CLOSE-188 — CURSOR (EVEN)
+Read first: docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt then docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+
+1. DEPLOY already kicked (dep-daa4aj1f2nfc739689m0 on b8fc09ce2). One in-flight. Do not second-kick. Wait live healthz version ancestor of origin/main.
+2. PERIOD CLOSE is NEXT dedicated session after this dispatch lands — not the tail of this GO. Owner-only close/reopen + gate every money write. Unblocks 16 C29 cells.
+3. Do NOT write C25–C31 guards until Jorge approves the seven proposed definitions in the GO (one reply). ECON stays 0% until then. That is honest.
+4. Do NOT touch moduleMatrixBoxes.tsx, rollup thresholds, or cell colour. Guard/Clicked V O X X is correct until Miss C = 0.
+5. Never recertify U14. Skip #15546. No TMS→QBO write-back.
+
+ACK: CURSOR | ACK | GO-CLOSE-188 | NOW=deploy-then-period-close-next-session | SHA=<healthz> | GO

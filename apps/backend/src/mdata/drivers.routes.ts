@@ -134,6 +134,24 @@ export function resolveDateOfBirth(input: {
   return supplied ?? derived;
 }
 
+const B1_VISA_TYPE_SQL = "upper(btrim(COALESCE(visa_type, ''))) IN ('B1', 'B-1')";
+
+async function syncCanonicalB1VisaColumns(
+  client: { query: (sql: string, values?: unknown[]) => Promise<unknown> },
+  driverId: string,
+  operatingCompanyId: string
+) {
+  await client.query(
+    `UPDATE mdata.drivers
+        SET has_b1_visa = ${B1_VISA_TYPE_SQL},
+            b1_visa_number = CASE WHEN ${B1_VISA_TYPE_SQL} THEN visa_number ELSE NULL END,
+            b1_visa_expires_date = CASE WHEN ${B1_VISA_TYPE_SQL} THEN visa_expires_at ELSE NULL END
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid`,
+    [driverId, operatingCompanyId]
+  );
+}
+
 /**
  * ACCT-F209 — the driver list cap made real drivers UNASSIGNABLE, not merely paginated.
  *
@@ -878,6 +896,7 @@ export async function createDriverCanonical(
         ]
       );
       const row = res.rows[0];
+      await syncCanonicalB1VisaColumns(client, String(row.id), String(resolvedOperatingCompanyId));
 
       // DRIVER-SUBACCOUNT-AUTO-PROVISION: create BOTH per-driver sub-accounts together on hire —
       //   ASSET     "Driver Cash Advance- <Name>"   under "Driver Cash Advance" (QBO-149)
@@ -1300,7 +1319,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
           SELECT
             id, operating_company_id, identity_user_id, first_name, last_name, phone, email, cdl_number, cdl_state, cdl_class,
             cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at,
-            visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+            CASE WHEN has_b1_visa THEN COALESCE(NULLIF(visa_type, ''), 'B1') ELSE visa_type END AS visa_type,
+            CASE WHEN has_b1_visa THEN COALESCE(visa_number, b1_visa_number) ELSE visa_number END AS visa_number,
+            CASE WHEN has_b1_visa THEN COALESCE(visa_expires_at, b1_visa_expires_date) ELSE visa_expires_at END AS visa_expires_at,
+            has_b1_visa, b1_visa_number, b1_visa_expires_date,
+            passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -1433,7 +1456,11 @@ export async function registerDriverRoutes(app: FastifyInstance) {
                 AND phone_login_user.deactivated_at IS NULL
             ) AS phone_login_enabled,
             cdl_expires_at, hire_date, pay_basis, termination_date, dot_medical_expires_at, hazmat_endorsement_expires_at, endorsement_h,
-            visa_type, visa_number, visa_expires_at, passport_number, passport_expires_at, ine_number, curp,
+            CASE WHEN has_b1_visa THEN COALESCE(NULLIF(visa_type, ''), 'B1') ELSE visa_type END AS visa_type,
+            CASE WHEN has_b1_visa THEN COALESCE(visa_number, b1_visa_number) ELSE visa_number END AS visa_number,
+            CASE WHEN has_b1_visa THEN COALESCE(visa_expires_at, b1_visa_expires_date) ELSE visa_expires_at END AS visa_expires_at,
+            has_b1_visa, b1_visa_number, b1_visa_expires_date,
+            passport_number, passport_expires_at, ine_number, curp,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
@@ -2137,6 +2164,23 @@ export async function registerDriverRoutes(app: FastifyInstance) {
         );
         let updatedRow = res.rows[0] ?? null;
         if (!updatedRow) return null;
+        if ("visa_type" in b || "visa_number" in b || "visa_expires_at" in b) {
+          await syncCanonicalB1VisaColumns(
+            client,
+            String(updatedRow.id),
+            String(updatedRow.operating_company_id)
+          );
+          updatedRow = {
+            ...updatedRow,
+            has_b1_visa: ["B1", "B-1"].includes(String(updatedRow.visa_type ?? "").trim().toUpperCase()),
+            b1_visa_number: ["B1", "B-1"].includes(String(updatedRow.visa_type ?? "").trim().toUpperCase())
+              ? updatedRow.visa_number ?? null
+              : null,
+            b1_visa_expires_date: ["B1", "B-1"].includes(String(updatedRow.visa_type ?? "").trim().toUpperCase())
+              ? updatedRow.visa_expires_at ?? null
+              : null,
+          };
+        }
 
         const oldStatus = String(oldRow.status ?? "");
         const newStatus = String(updatedRow.status ?? oldStatus);

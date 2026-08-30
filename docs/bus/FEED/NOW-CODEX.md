@@ -1,7 +1,7 @@
-# NOW — Codex (GO-TONIGHT-U6-SCEN)
+# NOW — Codex (GO-CLOSE-188)
 
-**ACK:** `Codex | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
+**ACK:** `CODEX | ACK | GO-CLOSE-188 | NOW=safety-fleet-maint-miss-c | SHA=<healthz> | GO`
 
-DISP-01 detention/at-risk/KPI then leftover unique dispatch/fuel. **Do not own hop.assign.** No new verify-steps. Never recertify U14. Skip #15546.
+Miss-C: safety 14, fleet 13, maintenance 11. No new verify-steps. SAF-ORPH HOLD. Never restamp U14. Skip #15546.
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+Paste: `docs/lockdown/GO-CLOSE-188/CODEX/1-GO-CLOSE-188.txt`

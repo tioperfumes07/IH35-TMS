@@ -1,7 +1,7 @@
-# NOW — CC-3 (GO-TONIGHT-U6-SCEN)
+# NOW — CC-3 (GO-CLOSE-188)
 
-**ACK:** `CC-3 | ACK | GO-TONIGHT-U6-SCEN | SHA=<healthz> | GO`
+**ACK:** `CC-3 | ACK | GO-CLOSE-188 | NOW=lists-25-miss-c | SHA=<healthz> | GO`
 
-**YOU TEST SCENARIO CREATES TONIGHT:** accident hops 1–3, 5, 7 · insurance claim · hop 10. Trailer = `mdata.equipment`. Then CUST-01. Screenshot = create proof, not GL. Skip #15546. Never `trigger_deploy`.
+76 non-econ Miss-C. First: lists 25. Claim before verify-steps (Rule 37). Never restamp U14. Skip #15546. Never `trigger_deploy`.
 
-Packet: `docs/lockdown/GO-TONIGHT-U6-SCEN-2026-08-29.md`
+Paste: `docs/lockdown/GO-CLOSE-188/CC-3/1-GO-CLOSE-188.txt`
