@@ -1,15 +1,15 @@
 {
   "module": "drivers",
-  "title": "Drivers — acceptance checklist",
-  "complete": false,
-  "as_of": "2026-07-29",
-  "live_sha": null,
+  "title": "Drivers \u2014 acceptance checklist",
+  "complete": true,
+  "as_of": "2026-08-30T04:56:54Z",
+  "live_sha": "48e08e5",
   "desktop_audit": null,
   "spec_sources": [
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21).",
   "items": [
     {
       "id": "DRV-S01",
@@ -69,9 +69,11 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/profile wired to pages/drivers/DriverProfilePage.tsx. getDriver requires operating_company_id. Profile sections complete (verify-driver-profile-sections-complete.mjs OK; verify-driver-profile-part2-sections-complete.mjs OK). Navigation, assign-truck, and dead-action guards pass. DriverProfilePage.test.tsx + assign-truck test pass. | FAIL 2026-08-29 CC-2/GUARD, live healthz 14daeed. The page itself renders real entity-scoped data correctly on direct/fresh navigation (License & endorsements, Medical card DOT, DOT medical card history, Drug & alcohol program all honestly reflect this driver's real, all-NULL mdata.drivers columns -- confirmed against Neon, matches the '—' placeholders exactly, not a rendering bug). BUT the page's own 'no dead end' requirement is violated: clicking the 'All profiles' link (and, worse, ANY other in-app navigation link -- sidebar Fleet was also tested) from this page updates the browser URL via history.pushState but the DOM never re-renders to the new route -- the OLD DriverProfilePage content stays frozen on screen indefinitely (confirmed stuck 8+ seconds, zero new network requests fired after the click, zero console errors). Reproduced 3x, including once after a hard reload (cmd+shift+r, bypassing cache) to rule out a stale-JS-chunk-across-deploy artifact from the live deploy that happened mid-session (b276443->14daeed) -- ruled out, this reproduces fresh on the CURRENT deploy. Root cause not fully isolated (not an infinite render loop -- main thread responds instantly to injected JS; not a lazy-chunk load failure -- zero network activity follows the click at all) but the defect itself is definitively confirmed and severe: once a user lands on ANY driver's Qualification Profile page, every subsequent in-app link click silently does nothing until a manual browser reload. Routed to Codex (drivers/fleet FE lane owner per standing orders) via docs/audit/GUARD-WORKORDERS.md -- not fixed here (CC-2/GUARD does not own drivers FE per current lane law). | REOPEN 2026-08-30 CC-3, live healthz 5c825309a5: the assigned fix (PR #17600 / b39edb4b56, RouteContentBoundary keyed-by-location Suspense remount) is confirmed a live ancestor of the current deploy and its own static guard passes, but the freeze reproduces IDENTICALLY on current live -- 3x fresh repro, confirmed stuck 20+ seconds (not just 8), confirmed NOT a caught render error (no ErrorBoundary/SectionErrorBoundary fallback ever renders, no /admin/client-errors POST fires), confirmed React itself is NOT globally hung (the frozen page's own 'Hide from lists' button still toggled driver.status live in the DOM -- reverted immediately, no lasting side effect on the real driver row), confirmed zero uses of useSuspenseQuery exist anywhere in the frontend (ruling out a suspended data-fetch as the mechanism), and confirmed zero new script chunk requests fire on the click (Fleet's lazy chunk is warm, ruling out DRV-F7317's own 'cold lazy chunk' theory as the actual live blocker). Full diagnostic detail + strongest remaining theory (react-router v7's Link dispatch unconditionally wraps in React.startTransition, confirmed in node_modules source, which can hold back ANY new paint -- including the Suspense fallback itself -- indefinitely if something in the transition's render never settles) filed in docs/audit/GUARD-WORKORDERS.md DRV-F7317-ROUTE-BOUNDARY-FIX-DID-NOT-RESOLVE-LIVE. Root cause not conclusively pinned (needs React DevTools Profiler / dev-build access this black-box prod session lacks) -- no guessed fix shipped to the widely-shared Shell/RouteContentBoundary/Sidebar. Status stays FAIL, routed back to Codex with materially richer diagnostics than the original filing. | CLOSED LIVE (CC-3, 2026-08-30, live healthz 84188fabd2): Codex's R2 fix (PR #17984 / a0c0588700, 'DRV-F7317-R2-BROWSERROUTER-TRANSITION-RETAINS-STALE-ROUTE-DOM' -- disables BrowserRouter's default React.startTransition wrapping at the app root, exactly the mechanism named in my prior REOPEN) is confirmed a live ancestor of the current deploy (git merge-base --is-ancestor a0c0588700 84188fabd2). Re-ran the EXACT same live repro that previously froze: hard-reloaded /drivers/435f2b96-91d7-45a9-a6b2-a293acef4857/profile, clicked 'All profiles' -- page correctly navigated to /drivers/profiles and rendered the real Drivers list (159 drivers, 82/159 active, No DQF items: 159). Repeated with a second navigation (sidebar Fleet, the other originally-frozen link) from a fresh profile load -- Fleet correctly rendered (44 units, 30 active). No freeze on either. The 'no dead end' requirement is now genuinely satisfied.",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/:id/profile wired to pages/drivers/DriverProfilePage.tsx. getDriver requires operating_company_id. Profile sections complete (verify-driver-profile-sections-complete.mjs OK; verify-driver-profile-part2-sections-complete.mjs OK). Navigation, assign-truck, and dead-action guards pass. DriverProfilePage.test.tsx + assign-truck test pass. | FAIL 2026-08-29 CC-2/GUARD, live healthz 14daeed. The page itself renders real entity-scoped data correctly on direct/fresh navigation (License & endorsements, Medical card DOT, DOT medical card history, Drug & alcohol program all honestly reflect this driver's real, all-NULL mdata.drivers columns -- confirmed against Neon, matches the '\u2014' placeholders exactly, not a rendering bug). BUT the page's own 'no dead end' requirement is violated: clicking the 'All profiles' link (and, worse, ANY other in-app navigation link -- sidebar Fleet was also tested) from this page updates the browser URL via history.pushState but the DOM never re-renders to the new route -- the OLD DriverProfilePage content stays frozen on screen indefinitely (confirmed stuck 8+ seconds, zero new network requests fired after the click, zero console errors). Reproduced 3x, including once after a hard reload (cmd+shift+r, bypassing cache) to rule out a stale-JS-chunk-across-deploy artifact from the live deploy that happened mid-session (b276443->14daeed) -- ruled out, this reproduces fresh on the CURRENT deploy. Root cause not fully isolated (not an infinite render loop -- main thread responds instantly to injected JS; not a lazy-chunk load failure -- zero network activity follows the click at all) but the defect itself is definitively confirmed and severe: once a user lands on ANY driver's Qualification Profile page, every subsequent in-app link click silently does nothing until a manual browser reload. Routed to Codex (drivers/fleet FE lane owner per standing orders) via docs/audit/GUARD-WORKORDERS.md -- not fixed here (CC-2/GUARD does not own drivers FE per current lane law). | REOPEN 2026-08-30 CC-3, live healthz 5c825309a5: the assigned fix (PR #17600 / b39edb4b56, RouteContentBoundary keyed-by-location Suspense remount) is confirmed a live ancestor of the current deploy and its own static guard passes, but the freeze reproduces IDENTICALLY on current live -- 3x fresh repro, confirmed stuck 20+ seconds (not just 8), confirmed NOT a caught render error (no ErrorBoundary/SectionErrorBoundary fallback ever renders, no /admin/client-errors POST fires), confirmed React itself is NOT globally hung (the frozen page's own 'Hide from lists' button still toggled driver.status live in the DOM -- reverted immediately, no lasting side effect on the real driver row), confirmed zero uses of useSuspenseQuery exist anywhere in the frontend (ruling out a suspended data-fetch as the mechanism), and confirmed zero new script chunk requests fire on the click (Fleet's lazy chunk is warm, ruling out DRV-F7317's own 'cold lazy chunk' theory as the actual live blocker). Full diagnostic detail + strongest remaining theory (react-router v7's Link dispatch unconditionally wraps in React.startTransition, confirmed in node_modules source, which can hold back ANY new paint -- including the Suspense fallback itself -- indefinitely if something in the transition's render never settles) filed in docs/audit/GUARD-WORKORDERS.md DRV-F7317-ROUTE-BOUNDARY-FIX-DID-NOT-RESOLVE-LIVE. Root cause not conclusively pinned (needs React DevTools Profiler / dev-build access this black-box prod session lacks) -- no guessed fix shipped to the widely-shared Shell/RouteContentBoundary/Sidebar. Status stays FAIL, routed back to Codex with materially richer diagnostics than the original filing. | CLOSED LIVE (CC-3, 2026-08-30, live healthz 84188fabd2): Codex's R2 fix (PR #17984 / a0c0588700, 'DRV-F7317-R2-BROWSERROUTER-TRANSITION-RETAINS-STALE-ROUTE-DOM' -- disables BrowserRouter's default React.startTransition wrapping at the app root, exactly the mechanism named in my prior REOPEN) is confirmed a live ancestor of the current deploy (git merge-base --is-ancestor a0c0588700 84188fabd2). Re-ran the EXACT same live repro that previously froze: hard-reloaded /drivers/435f2b96-91d7-45a9-a6b2-a293acef4857/profile, clicked 'All profiles' -- page correctly navigated to /drivers/profiles and rendered the real Drivers list (159 drivers, 82/159 active, No DQF items: 159). Repeated with a second navigation (sidebar Fleet, the other originally-frozen link) from a fresh profile load -- Fleet correctly rendered (44 units, 30 active). No freeze on either. The 'no dead end' requirement is now genuinely satisfied. | BOUND (CC-2, 2026-08-30, live healthz 48e08e5): independently re-ran CC-3's exact repro live, not on trust. Navigated /drivers/435f2b96-91d7-45a9-a6b2-a293acef4857/profile, clicked 'All profiles' (find+ref click, not raw coordinates) -- correctly navigated to /drivers/profiles and rendered the real roster (159 drivers, 82/159 active, matches cited figures exactly). Reloaded the same profile fresh and clicked sidebar Fleet -- correctly navigated to /fleet and rendered real data (Total Fleet 44, Active 30, matches cited figures exactly). Zero freeze either time. Also independently corrected a factual error in IH35-FINISH-2026-08-29/GO-LAST-26-ALL-SEATS.txt's DEFECT-1, which claimed 'no live-proof layer was ever appended' for this item -- checked the file at the packet's own cited SHA (8438a5c5e) and the CLOSED LIVE layer was already present there; the packet's claim does not match the record it cites. This item was a genuine unbound Recipe-B closure (same shape as reports/inventory/finance this session), not a live status contradiction requiring a FAIL restore. Current live healthz/shallow version=48e08e5 (confirmed git ancestor of local HEAD).",
       "pr": null,
-      "prod_verified": false
+      "prod_verified": true,
+      "live_verified_at": "2026-08-30T04:56:54.000Z",
+      "live_verified_sha": "48e08e5"
     },
     {
       "id": "DRV-S05",
@@ -83,7 +85,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/alerts wired to pages/alerts/DocumentAlertsPage.tsx. getDocumentAlertsInbox / getDocumentAlertRules take operatingCompanyId and are gated by selectedCompanyId. Inbox links to /drivers/:driver_id/profile or /safety/permits; rules editor persists thresholds. DocumentAlertsPage.test.tsx passes (4/4). | PROD-VERIFIED 2026-08-29 CC-2/GUARD, live healthz 14daeed. Neon proof first (BEGIN; SET LOCAL app.bypass_rls='lucia'; SELECT; COMMIT, discriminator current_user=ih35_app, control org.companies count=3): safety.document_alert_events WHERE operating_company_id=USMCA AND event_status='open' = exactly 1 row (id=90f0a1f9-f84a-4118-a08c-dbe37365656a, document_type='TEST DATA keep', days_until_expiry=1, detected_at=2026-08-29 02:01:48 UTC). Live Chrome at /drivers/alerts (Owner session): Inbox (1) tab shows the exact same alert -- 'TEST DATA keep · CDL expiration · 1d · detected 8/28/2026, 9:01:48 PM' (9:01:48 PM CT = 02:01:48 UTC next day, exact match), correctly labeled TEST DATA per KEEP-TEST law, with a real Acknowledge button and 1-1 of 1 pagination. Rules tab (client-side tab switch, no route change) renders real per-document-type threshold configs (CDL expiration/DOT medical card/DQF checklist item/Driver uploaded document/Hazmat endorsement/Operating permit/Training certificate, each with real '90, 60, 30, 7'-style day thresholds, not fabricated placeholders). Back link correctly returns to /drivers roster (no dead end) -- this page is NOT DriverProfilePage.tsx, unaffected by the DRV-S04 navigation defect filed separately.",
+      "evidence": "NOT YET VERIFIED. Surface enumerated from the route manifest on 2026-07-29. To reach PASS this route must be opened in the running app and shown to render real entity-scoped data (TRANSP and USMCA), every rendered field present in the submit payload where it writes, and forward/reverse linkage proven. No claim is made here beyond the route existing. | Route /drivers/alerts wired to pages/alerts/DocumentAlertsPage.tsx. getDocumentAlertsInbox / getDocumentAlertRules take operatingCompanyId and are gated by selectedCompanyId. Inbox links to /drivers/:driver_id/profile or /safety/permits; rules editor persists thresholds. DocumentAlertsPage.test.tsx passes (4/4). | PROD-VERIFIED 2026-08-29 CC-2/GUARD, live healthz 14daeed. Neon proof first (BEGIN; SET LOCAL app.bypass_rls='lucia'; SELECT; COMMIT, discriminator current_user=ih35_app, control org.companies count=3): safety.document_alert_events WHERE operating_company_id=USMCA AND event_status='open' = exactly 1 row (id=90f0a1f9-f84a-4118-a08c-dbe37365656a, document_type='TEST DATA keep', days_until_expiry=1, detected_at=2026-08-29 02:01:48 UTC). Live Chrome at /drivers/alerts (Owner session): Inbox (1) tab shows the exact same alert -- 'TEST DATA keep \u00b7 CDL expiration \u00b7 1d \u00b7 detected 8/28/2026, 9:01:48 PM' (9:01:48 PM CT = 02:01:48 UTC next day, exact match), correctly labeled TEST DATA per KEEP-TEST law, with a real Acknowledge button and 1-1 of 1 pagination. Rules tab (client-side tab switch, no route change) renders real per-document-type threshold configs (CDL expiration/DOT medical card/DQF checklist item/Driver uploaded document/Hazmat endorsement/Operating permit/Training certificate, each with real '90, 60, 30, 7'-style day thresholds, not fabricated placeholders). Back link correctly returns to /drivers roster (no dead end) -- this page is NOT DriverProfilePage.tsx, unaffected by the DRV-S04 navigation defect filed separately.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T16:33:09.000Z",
@@ -197,9 +199,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/messages wired to pages/drivers/MessagesInboxPage.tsx; getDriverMessagesInbox/getDriverMessageThread require operatingCompanyId; conversation list links to driver profile; SendMessageModal present. MessagesInboxPage.test.tsx passes (4/4). | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/messages renders 'Driver Messages' (Office inbox, threaded conversations per driver), honest-empty 'No driver conversations yet.' / 'Select a driver conversation' -- real, live, entity-scoped structure, no dead end. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S13",
@@ -213,9 +215,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/onboarding/:session_id wired to pages/drivers/OnboardingWizardPage.tsx with entity-scoped companyId and driverId params; step components wired. OnboardingWizardPage.test.tsx passes (4/4). | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/onboarding/:session_id renders a real 'Driver Onboarding Wizard' for a real completed session (safety.onboarding_sessions id 7ed3f7eb-e2b7-4d24-a821-0748cba9b4ae, driver 'TEST CODEX ONBOARD 20260824', USMCA), full 7-step wizard (Identity/CDL Upload/Medical Card/DQF Docs/Signatures/I-9/Vehicle Assignment), admin-override completion reason shown honestly. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S14",
@@ -229,9 +231,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/pay-rate-templates renders a DataPanel directing to Lists > Driver > Pay rate templates (canonical catalog path) and does not leave an unscoped dead page. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/pay-rate-templates renders breadcrumb 'Lists & Catalogs / Driver / Pay Rate Templates', honest-empty (0 rows), +Create wired -- no dead end. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S15",
@@ -245,9 +247,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/permits renders the Permit / Document Expirations panel inside pages/Drivers.tsx using selectedCompanyId-scoped permitExpirationRows; each row links to the driver via EntityLink; honest empty state. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/permits renders 'Permit / Document Expirations' with a real live row (Jorge Pablo Guadalupe Munoz Gonzalez, Passport expiration, 15d). Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S16",
@@ -261,9 +263,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/pre-settlements renders PreSettlementsPanel with settlementsReadyRows from selectedCompanyId-scoped query; links to driver profile. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/pre-settlements renders a real live row (Rafael Rogelio Rivero Reynoso, 08/10/2026-08/16/2026, load L-20260810-0003, $297.60) with a real total-payout footer. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S17",
@@ -277,9 +279,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/profiles renders pages/drivers/DriversListPage.tsx (Driver qualification profiles) with company-scoped listDrivers, ParityTable, profile drill-through, and CSV export. Tests pass. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/profiles renders 'Driver qualification profiles' with 159 real company-scoped drivers, DQF status chips, checklist stats, CSV export. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S18",
@@ -293,9 +295,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/retention wired to pages/drivers/RetentionDashboard.tsx; backend listRetentionScores now LEFT JOINs mdata.drivers to project driver_name; frontend passes the name to AtRiskDriverCard via EntityLink. verify-driver-retention.mjs OK; scorer.test.ts passes. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/retention renders 'Driver Retention Risk' (GAP-71 predictive model), honest-empty 'No at-risk drivers... No current retention scores are in the at-risk or critical tiers for this operating company.' Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S19",
@@ -309,9 +311,9 @@
       "status": "PASS",
       "evidence": "Route /drivers/settlements renders a canonical-redirect hint linking to /driver-finance/settlements; settlement detail loadIds contract fixed and verify-driver-settlements-domain-linkage.mjs PASS. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/settlements canonical-redirects to /driver-finance/settlements, which renders real live open driver bills (4 rows, real driver names + load numbers, e.g. Pedro Abraham Lopez Collado L-20260816-0168 $230.40). Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     },
     {
       "id": "DRV-S20",
@@ -325,15 +327,15 @@
       "status": "PASS",
       "evidence": "Route /drivers/team-splits renders TeamSplitConfigPanel inside pages/Drivers.tsx via extended subtabs; uses company-scoped useTeamSplits and DriverPickerWithCreate; create config wired. | GUARD PACKET (CC-2, 2026-08-29, SHA 5c82530): this item's own evidence was old, code-trace-only prose with no live artifact -- independently walked it live this pass rather than stamping on trust: /drivers/team-splits renders 'Team split configs' with a real DriverPickerWithCreate-style filter and a live 'Create config' action. Binding on this independent live confirmation.",
       "pr": null,
-            "live_verified_at": "2026-08-30T03:20:00.000Z",
+      "live_verified_at": "2026-08-30T03:20:00.000Z",
       "live_verified_sha": "5c82530",
-"prod_verified": true
+      "prod_verified": true
     }
   ],
   "M": 20,
-  "pass_count": 19,
+  "pass_count": 20,
   "total_count": 20,
-  "progress": "19 of 20",
+  "progress": "20 of 20",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
