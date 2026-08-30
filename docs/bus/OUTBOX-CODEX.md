@@ -1,3 +1,5 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7384 | NOW=owner-override pager false-empty honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
+CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7383 | PR=#17928 @ 8e583f2742 | gate=exit0 | NEXT=DSP-F7384 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7383 | NOW=active-plan pager unresolved truth | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO
 CODEX | SHIPPED | GO-CERT-01 | FINDING=FUEL-F7382 | PR=#17927 @ 915c6bcb9e | gate=exit0 | NEXT=FUEL-F7383 | GO
 CODEX | WORKING | GO-CERT-01 | FINDING=FUEL-F7382 | NOW=Loves sync unresolved-history honesty | NEXT=guard+FAST-MERGE then unique dispatch/fuel | GO

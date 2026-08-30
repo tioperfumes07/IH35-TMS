@@ -105,13 +105,17 @@ export function OwnerOverrideLogPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600" data-testid="owner-override-log-server-pager">
         <span>
-          {total === 0 ? "0" : `${offset + 1}–${Math.min(offset + pageSize, total)}`} of {total} overrides · Page {page} of {pageCount}
+          {logQ.isLoading
+            ? "Loading overrides…"
+            : logQ.isError
+              ? "Override history unavailable"
+              : `${total === 0 ? "0" : `${offset + 1}–${Math.min(offset + pageSize, total)}`} of ${total} overrides · Page ${page} of ${pageCount}`}
         </span>
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" disabled={offset === 0 || logQ.isFetching} onClick={() => setOffset(Math.max(0, offset - pageSize))}>
+          <Button size="sm" variant="secondary" disabled={logQ.isError || offset === 0 || logQ.isFetching} onClick={() => setOffset(Math.max(0, offset - pageSize))}>
             Previous
           </Button>
-          <Button size="sm" variant="secondary" disabled={offset + pageSize >= total || logQ.isFetching} onClick={() => setOffset(offset + pageSize)}>
+          <Button size="sm" variant="secondary" disabled={logQ.isError || offset + pageSize >= total || logQ.isFetching} onClick={() => setOffset(offset + pageSize)}>
             Next
           </Button>
         </div>
