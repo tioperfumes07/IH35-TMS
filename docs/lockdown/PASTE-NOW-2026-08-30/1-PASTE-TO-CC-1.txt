@@ -1,0 +1,164 @@
+===============================================================================
+CC-1 WORK ORDER — 2026-08-30. FIVE TASKS, IN THIS ORDER. DO NOT REORDER.
+===============================================================================
+DISCRIMINATOR — every Neon read must use run_sql_transaction with
+  ["SET LOCAL app.bypass_rls = 'lucia'", "<your query>"]
+and must return count(*) accounting.journal_entries >= 2218.
+A zero-row read without that value is an RLS false-empty. Discard it and re-run.
+
+RULE 37 (CLAIM -> MERGE -> AUTHOR): claim your verify-step EVEN number and let the
+claim MERGE to origin/main BEFORE authoring scripts/verify-steps/NNNN-*.mjs.
+Never claim+author in the same PR. Only chore/claimed-regen may land both.
+WORM everywhere: reverse, never erase, never UPDATE a posted row.
+
+-------------------------------------------------------------------------------
+TASK 1 — FACT-RESERVE-01. P0. THE POSTER IS LIVE. DO THIS FIRST.
+-------------------------------------------------------------------------------
+lib.feature_flags FACTORING_GL_POSTING_ENABLED: default false, but override = TRUE
+for USMCA 5c854333-6ea5-4faa-af31-67cb272fef80 (also TRANSP and TRK). The next Faro
+batch posts a misstatement to the real ledger.
+
+EVIDENCE — accounting.factoring_advances, the only row in the system:
+  FAC-2026-00001  invoice_total 185000  advance_amount 179450
+                  reserve_pct 1.50  reserve_amount_cents 5550  (= 3.00%, contradicts itself)
+                  factor_fee_pct 1.50  factor_fee_cents 0
+
+ROOT CAUSE — apps/backend/src/accounting/factoring-advances.routes.ts:400
+  const reserveAmount = Math.max(0, invoiceTotalCents - advanceAmount);
+Reserve is derived as the complement of the advance instead of from reserve_pct.
+body.data.reserve_pct is stored at line 432 but never used in the math.
+factor_fee_cents is never computed from factor_fee_pct at all.
+
+WHY IT HIDES — poster.service.ts:914 does cash = liability - reserve - fee - ach.
+  185000 - 5550 - 0    = 179450
+  185000 - 2775 - 2775 = 179450
+Identical cash. The entry BALANCES. Debits equal credits and the books are still wrong:
+reserve asset overstated 2x, factor fee expense understated to $0.00. No debits=credits
+check will ever catch this.
+
+FIX:
+  1. reserveAmount   = Math.round(invoiceTotalCents * reserve_pct / 100)
+  2. factorFeeCents  = Math.round(invoiceTotalCents * factor_fee_pct / 100)  -- and STORE it
+  3. Derive proceeds per the EXECUTED agreement
+     (scripts/ops/fact-04-faro-owner-seed-2026-07-27.sql):
+       "Purchase Price = Net - Fee - Reserve; Proceeds = Purchase Price - wire fees"
+     Stop treating advance_rate_pct as an INPUT. Under the agreement there is NO advance
+     rate. 97% is an OUTPUT of (1 - 1.5% - 1.5%). Make advance_rate_pct derived/read-only.
+  4. WORM-reverse FAC-2026-00001. Do not UPDATE it, do not delete it.
+
+DO NOT change factoring.factor.advance_rate from 0.9700 to 0.9850. Faro's statement header
+shows 98.50 because that is (1 - reserve) BEFORE the fee. Set 0.985 while the code also
+subtracts a fee and you get $334.25 on a $350 invoice, forever. LEAVE 0.9700.
+
+PROVEN ACCEPTANCE (verified against all 33 real Faro invoices, 0 mismatches):
+  inv 007 ITS Logistics  face 35000  -> reserve 525  fee 525  cash 33950
+  inv 008 FLS Transport  face 52500  -> reserve 788  fee 788  cash 50924   (NOT 50925)
+  full schedule face 9507500 -> reserve 142613  fee 142613  wire 12000  cash 9210274
+Round each component independently. One multiplication by 0.97 does NOT reproduce Faro.
+
+-------------------------------------------------------------------------------
+TASK 2 — FACT-RESOLVER-02. Resolver ignores void and active state.
+-------------------------------------------------------------------------------
+apps/backend/src/factoring/factor.service.ts:227-234 (getFactorForCustomer) filters only
+on tenant, customer and effective dates. A VOIDED assignment or a DEACTIVATED factor still
+resolves and still prices money.
+
+FIX: add to the WHERE clause
+  AND a.voided_at IS NULL
+  AND f.voided_at IS NULL
+  AND f.active IS TRUE
+
+-------------------------------------------------------------------------------
+TASK 3 — MDATA-COPY-03. Copy customers + vendors from TRANSPORTATION to USMCA.
+-------------------------------------------------------------------------------
+OWNER RULING 2026-08-30: USMCA serves the same customers as IH 35 Transportation.
+Copy the customers AND the vendors.
+
+DO NOT GO TO QUICKBOOKS. The data is already in the TMS. Verified live:
+  IH 35 Transportation  1,257 real customers (all with qbo_customer_id, all active)
+                          951 real vendors  (918 with qbo_vendor_id, 564 active)
+  USMCA                    19 real customers, 121 real vendors
+This is an in-database copy. No QBO API, no OAuth, no write-back risk.
+
+*** CRITICAL — DO NOT COPY THE QBO IDs ***
+qbo_customer_id / qbo_vendor_id belong to TRANSPORTATION's QuickBooks company file.
+Copying them onto USMCA rows would falsely link USMCA records to TRANSP's QBO entities
+and corrupt both sides of the reconciliation. Set them NULL on every copied row.
+Set source_system / source to 'COPY_FROM_TRANSP_2026-08-30'.
+
+DATA-QUALITY GATES — a blind bulk copy drags Transportation's mess into USMCA:
+  CUSTOMERS: 1,257 real rows contain 61 NORMALIZED-NAME DUPLICATE GROUPS.
+    (The is_duplicate flag reads 0 because nobody ever set it - do not trust that flag.)
+    Example found: "Sajacks Freight" AND "Sajacks Freigth" (typo) both exist.
+    -> Produce the 61-group dedupe list. Owner picks survivors. Copy survivors only.
+  VENDORS: copy the 564 ACTIVE only (387 are deactivated - do not copy them).
+    EXCLUDE the 32 vendors with driver_id NOT NULL. Those are Transportation's drivers.
+    USMCA drivers get their own vendor rows through the driver-vendor link service.
+    Copying them creates cross-entity driver-vendor corruption.
+    3 normalized-name duplicate groups exist here too - dedupe.
+
+  Write to mdata.customers and mdata.vendors (CANONICAL).
+  NEVER write mdata.qbo_vendors (RETIRE lane).
+  is_sample_data = FALSE on every copied row.
+  factoring_eligible = TRUE on every copied customer (owner rule, task 4).
+
+FARO DEBTORS: 15 of the 26 already exist in Transportation and come across in this copy.
+4 must be created new. 7 are AMBIGUOUS and need the owner to choose.
+See data/FARO-DEBTOR-MATCH-TO-TRANSPORTATION.csv. Do not guess on the 7.
+
+TRAP: USMCA has a test row "Semares Forwarding Services". It is NOT Faro's
+"S E Mares Forwarding Service LLC". DO NOT MERGE ON NAME SIMILARITY. Create fresh.
+
+-------------------------------------------------------------------------------
+TASK 4 — FACT-ASSIGN-04. Assign EVERY USMCA customer to Faro.
+-------------------------------------------------------------------------------
+OWNER RULE, LOCKED, VERBATIM:
+  "EVERY CUSTOMER MUST GO THROUGH FACTORING. IF ONE DOES NOT, I WILL UPDATE THAT ONE."
+Assign ALL USMCA customers by default. The owner carves out exceptions individually.
+Do NOT restrict this to the Faro debtor set.
+
+LIVE STATE: factoring.customer_factor_assignment = 0 rows, ALL companies.
+WHY IT IS THE KEYSTONE: getFactorForCustomer resolves ONLY through that table. Empty means
+every batch gets factor_id = NULL, every reserve preview is null, and the
+mixed_factors_not_allowed guard is vacuous (one NULL bucket always passes).
+
+INSERT one row per USMCA customer:
+  factor_id       40b3690b-f1d4-44b4-90cf-c1cfd4f79c33   (Faro, USMCA)
+  effective_from  2026-08-10
+  effective_to    NULL
+  voided_at       NULL
+
+mdata.customers.factoring_eligible is already NOT NULL DEFAULT true - the schema already
+implements the owner rule. 22 of 31 current USMCA customers sit at FALSE only because coder
+test seeds flipped them (apps/frontend/src/test-utils/factories.ts still sets it false).
+Add a guard so seeds stop writing factoring_eligible = false.
+
+-------------------------------------------------------------------------------
+TASK 5 — SETL-HEADER-05. The settlement header back-link is broken.
+-------------------------------------------------------------------------------
+This defect made THREE separate seats misdiagnose the settlement module as dead.
+
+CONFIRMED — do not re-investigate, this is verified:
+The ONLY writer of driver_finance.driver_settlements.accounting_bill_id /
+accounting_bill_payment_id is
+  apps/backend/src/payroll/driver-settlement.service.deprecated.ts:653-654
+and payroll.* is RETIRE under the linkage law.
+The LIVE poster (apps/backend/src/accounting/settlement-posting/
+settlement-bill-payment-posting.service.ts) writes those IDs ONLY into
+driver_finance.driver_settlement_gl_bills (L647-650, L722-726) and never back to the header.
+
+PROOF the poster itself works: S-2026-0002 (Rafael Rivero Reynoso, $297.60,
+load L-20260810-0003) posted a COMPLETE chain -
+  driver_bill 31f155f3 -> accounting_bill 35b8ce38 -> bill JE b7575a45
+  -> cash payment d6f22f71 -> cash JE 8bc9947e
+run_status = 'reversed' (2026-08-21T17:46:35Z). The engine is fine. The back-link is not.
+
+FIX: the LIVE poster must write the header back-link.
+DO NOT resurrect the deprecated payroll service to do it. That would drag a RETIRE-lane
+writer into the canonical path.
+
+ALSO REPORT BACK (do not fix blind): apps/backend/src/system/transaction-health.service.ts
+lines 386-389 use (s.accounting_bill_id IS NOT NULL) as a linkage signal, with the comment
+"driver_finance.driver_settlements carries a DIRECT accounting_bill_id FK". If that is the
+live predicate, transaction health has been scoring EVERY settlement unlinked because the
+column is never written. Report the exact predicate before changing anything.

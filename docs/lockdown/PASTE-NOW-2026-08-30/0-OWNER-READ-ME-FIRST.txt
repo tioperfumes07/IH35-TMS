@@ -1,0 +1,103 @@
+===============================================================================
+JORGE — READ THIS ONE FIRST. 2026-08-30.
+===============================================================================
+
+WHAT IS IN THIS FOLDER
+  0-OWNER-READ-ME-FIRST.txt   this file
+  1-PASTE-TO-CC-1.txt         paste the whole file into CC-1
+  2-PASTE-TO-CC-2.txt         paste the whole file into CC-2
+  3-PASTE-TO-CURSOR.txt       paste the whole file into Cursor
+  data/                       three CSVs the coders will need
+
+Everything else that used to be in Downloads was moved to
+  _IH35-ARCHIVE-2026-08-30/
+Nothing was deleted. If you need an old file it is in there.
+
+-------------------------------------------------------------------------------
+WHAT CHANGED TODAY — THE BIG ONE
+-------------------------------------------------------------------------------
+You asked me to copy the customers and vendors from Transportation's QuickBooks.
+
+WE DO NOT NEED QUICKBOOKS. They are already inside your own system:
+    IH 35 Transportation   1,257 customers   951 vendors
+    USMCA                     19 customers   121 vendors
+It is a copy from one company to another inside your database. Faster, safer, fully
+auditable, and it touches QuickBooks not at all - which keeps your no-write-back rule intact.
+
+AND: 15 of your 26 Faro debtors are ALREADY in Transportation. They come across in the
+copy. Only 4 have to be created new.
+
+-------------------------------------------------------------------------------
+YOUR DECISIONS — 7 CUSTOMER NAMES. NOTHING ELSE NEEDS YOU.
+-------------------------------------------------------------------------------
+Transportation's customer list has near-duplicate names. I will not guess which is which.
+Open data/FARO-DEBTOR-MATCH-TO-TRANSPORTATION.csv, or just answer these here:
+
+  1. Faro "IMPACT BULK LOGISTICS LLC"  vs  Transportation "Impact Bulk Logistics"
+     Same company?   YES / NO
+
+  2. Faro "Sethmar Transportation Inc"  vs  Transportation "Sethmar Transportation"
+     Same company?   YES / NO
+
+  3. Faro "Watco Supply Chain Services, LLC" - Transportation has TWO:
+        (a) "Watco Supply Chain Services"
+        (b) "Watco Supply Chain Services LLC DBA Watco Logistics"
+     Which one?   A / B / BOTH ARE DIFFERENT COMPANIES
+
+  4. Faro "SAJACKS FREIGHT INC" - Transportation has TWO:
+        (a) "Sajacks Freight"
+        (b) "Sajacks Freigth"   <- this looks like a typo of (a)
+     Which one is real?   A / B / BOTH ARE REAL
+
+  5. Faro "NCC LOGISTICS USA INC" - Transportation has TWO:
+        (a) "NCC Logistics"
+        (b) "NCC Logistics Mexico"
+     Which one?   A / B
+
+  6. Faro "Simple Logistics Solutions" - Transportation has THREE:
+        (a) "Simple Logistics"
+        (b) "Simple Logistics LLC"
+        (c) "Simplex logistics"
+     Which one?   A / B / C
+
+  7. Faro "CTS XPRESS LLC"  vs  Transportation "CTS EXPRESS LLC"   (X versus E)
+     Same company?   YES / NO
+
+-------------------------------------------------------------------------------
+A WARNING YOU SHOULD KNOW ABOUT BEFORE THE COPY RUNS
+-------------------------------------------------------------------------------
+Transportation's customer list has 61 groups of duplicate names, and its vendor list has
+387 deactivated vendors plus 32 rows that are actually DRIVERS, not vendors.
+
+If we copy blind, all of that mess moves into USMCA and you inherit it forever.
+
+So the instruction to CC-1 is: copy the CLEAN rows only, produce the 61-group duplicate
+list for you to rule on, skip the deactivated vendors, and skip the driver rows.
+Slower by a day. Saves you from a permanently dirty customer list.
+
+-------------------------------------------------------------------------------
+ORDER OF OPERATIONS
+-------------------------------------------------------------------------------
+  1. Paste 1-PASTE-TO-CC-1.txt into CC-1 now. Their task 1 is the money bug. It is P0
+     because the factoring poster is LIVE on USMCA right now.
+  2. Paste 3-PASTE-TO-CURSOR.txt into Cursor. Their guard waits for CC-1 task 1 to merge.
+  3. Paste 2-PASTE-TO-CC-2.txt into CC-2. Their task 1 waits for CC-1 task 1 to deploy.
+  4. Answer the 7 questions above whenever you can. CC-1 tasks 1, 2 and 5 do not wait
+     on your answers - only task 3 does.
+  5. Give CC-2 a Dispatcher login (their task 2). I do not handle passwords.
+
+-------------------------------------------------------------------------------
+WHAT STAYS YOURS PERSONALLY - NO CODER TOUCHES THIS
+-------------------------------------------------------------------------------
+  * The USMCA -> IH 35 Trucking lease bill
+  * The CCG intercompany payment: $45,512.57 per month
+    (claim 17-1, $1,800,000.00 at 9.50% over 48 months, 61.9% of your $73,575.33
+     total monthly plan payments)
+  * The $8,890 is a BILL PAYMENT, not a bank transfer. Name the leg.
+
+-------------------------------------------------------------------------------
+DEVIN
+-------------------------------------------------------------------------------
+Not needed right now. Nothing in these three work orders requires a Devin seat.
+If CC-2's task 3 (the full settlement trace) needs a second pair of eyes on the live
+browser walk, I will tell you before you open a window for it.

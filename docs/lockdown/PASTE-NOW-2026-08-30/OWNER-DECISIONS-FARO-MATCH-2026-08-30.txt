@@ -1,0 +1,22 @@
+OWNER + CURSOR VERIFIED MATCHES 2026-08-30 (for CC-1 MDATA-COPY-03)
+
+1 IMPACT BULK LOGISTICS LLC = Impact Bulk Logistics — YES (owner). TRANSP qbo 2252.
+2 Sethmar Transportation Inc = Sethmar Transportation — YES (owner; spelling variant). TRANSP qbo 1216.
+3 Watco — use B: "Watco Supply Chain Services LLC DBA Watco Logistics" (owner). TRANSP qbo 992.
+   (Do not also copy A as the Faro match; A qbo 13 may still copy in general TRANSP→USMCA survivor list after dedupe.)
+
+CURSOR LIVE VERIFY (TRANSP mdata.customers, lucia, TRANSP=91e0bf0a…):
+4 Sajacks — TWO rows: "Sajacks Freight" qbo 2260 AND "Sajacks Freigth" qbo 1276 (clear typo).
+   RECOMMEND: survivor = Sajacks Freight (2260); treat Freigth as typo dupe — do NOT copy Freigth as separate USMCA customer.
+5 NCC — "NCC Logistics" qbo 2253 vs "NCC Logistics México" qbo 1314.
+   Faro name is "NCC LOGISTICS USA INC" → RECOMMEND A = NCC Logistics (USA), not México.
+6 Simple — Faro "Simple Logistics Solutions". TRANSP has: Simple Logistics (902), Simple Logistics LLC (1023),
+   Simple Logistics L.L.C (1356), "Simple logstics solutions" (1275 typo), Simplex logistics (2163), Silo Simple (100000021).
+   Closest Faro match: "Simple logstics solutions" qbo 1275 (same words, typo) OR "Simple Logistics LLC".
+   RECOMMEND: primary match = Simple Logistics LLC (1023) as legal LLC; flag 1275 as typo of Solutions name for owner if needed.
+   Simplex is DIFFERENT spelling — do not use for Faro Simple Logistics Solutions.
+7 CTS XPRESS LLC vs CTS EXPRESS LLC qbo 2257 — only EXPRESS exists in TRANSP. RECOMMEND YES same (X/E spelling);
+   copy EXPRESS as the survivor; create USMCA display name can keep Faro "CTS XPRESS LLC" on create-if-missing path
+   OR map to EXPRESS — prefer one canonical: CTS EXPRESS LLC (TRANSP spelling) with note Faro uses XPRESS.
+
+CREATE_NEW still (no TRANSP): DARDINI LLC, FLS Transport Inc., J RAYL TRANSPORT INC, S E Mares Forwarding Service LLC.
