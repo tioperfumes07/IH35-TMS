@@ -343,7 +343,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         })}
       </SubTabRow>
 
-      <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} />
+      {/* MAINT-F7528 — R&M owns its purpose-built RMStatStrip below. Rendering the global strip
+          here as well duplicated Open WOs and PM Due with different labels on the same surface. */}
+      {tab !== "rm_status_board" ? <MaintKpiRows kpis={kpis} isError={kpisQuery.isError} /> : null}
       {/* On the R&M Status Board these three cards move into the right sidebar (compact) below; every
           other tab keeps its existing full-width layout. */}
       {companyId && tab !== "rm_status_board" ? (

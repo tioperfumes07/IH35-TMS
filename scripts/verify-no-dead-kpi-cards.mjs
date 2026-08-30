@@ -613,6 +613,16 @@ export function contractErrors(src, options = {}) {
         `${budget}. Build the drill target — this ratchet only tightens.`
     );
   }
+  const maintenanceHome = src.files[`${SRC}/pages/maintenance/MaintenanceHome.tsx`];
+  if (
+    maintenanceHome &&
+    !maintenanceHome.includes('tab !== "rm_status_board" ? <MaintKpiRows')
+  ) {
+    errors.push(
+      "DUPLICATE-KPI: MaintenanceHome must suppress MaintKpiRows on rm_status_board; " +
+        "RMStatStrip already owns Open WOs and PM Due there",
+    );
+  }
   return errors;
 }
 
@@ -719,6 +729,15 @@ const withPrimitive = (base, next) => ({ ...base, primitive: next });
 
 function selftestMutations(good) {
   return [
+    [
+      "maintenance R&M renders both global and board-specific KPI strips",
+      withFile(
+        good,
+        `${SRC}/pages/maintenance/MaintenanceHome.tsx`,
+        '<MaintKpiRows kpis={kpis} isError={false} /><RMStatStrip kpis={kpis} />',
+      ),
+      /DUPLICATE-KPI: MaintenanceHome/,
+    ],
     [
       "a card factory call site passes no drill target",
       withFile(
