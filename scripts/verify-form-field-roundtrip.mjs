@@ -67,6 +67,10 @@
  * has to be able to check it. If the entry lands in the WRONG SHAPE (an id flattened into a memo
  * string instead of an FK) that is defect class C13 — reported there, never silenced here.
  *
+ * `C9-SUBMISSION-GATE` is narrower still: an acknowledgement is intentionally transient, but its
+ * state must gate a real submit control AND drive a rendered disabled reason. The annotation alone
+ * never excuses a field; both effects are proved from the same getter.
+ *
  * Annotations are read from the RAW source, so the reason can be an ordinary comment.
  *
  * An annotated field is counted, listed under BLOCKED, and does NOT fail the build — but the count
@@ -98,6 +102,18 @@ const LABEL = "verify-form-field-roundtrip";
  */
 export const NOT_PERSISTED = "C9-NOT-PERSISTED";
 export const CARRIED_THROUGH = "C9-CARRIED-THROUGH";
+export const SUBMISSION_GATE = "C9-SUBMISSION-GATE";
+
+function provesSubmissionGate(src, getter) {
+  const escaped = getter.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const disabledUsesState = new RegExp(`\\bdisabled\\s*=\\s*\\{[\\s\\S]{0,1200}?\\b${escaped}\\b`).test(src);
+  const reasonDecl = [...src.matchAll(/\bconst\s+([A-Za-z_$][\w$]*(?:DisabledReason|BlockReason))\s*=/g)]
+    .find((match) => new RegExp(`\\b${escaped}\\b`).test(sliceStatement(src, match.index)));
+  const reasonRendered = reasonDecl
+    ? new RegExp(`\\{\\s*${reasonDecl[1]}\\s*\\}`).test(src.slice(reasonDecl.index + reasonDecl[0].length))
+    : false;
+  return disabledUsesState && reasonRendered;
+}
 
 /**
  * Ratchet: how many rendered fields may currently be inert-and-annotated because the column /
@@ -693,6 +709,7 @@ export function findOrphanFieldState(rel, src, raw = src) {
         blocked.push(`${where}  <${owner.tag}> '${getter}' ${CARRIED_THROUGH}`);
         break;
       }
+      if (marked(SUBMISSION_GATE) && provesSubmissionGate(src, getter)) break;
       problems.push(
         `${where}  <${owner.tag} ${h.attr}> field state '${getter}' (declared L${lineOf(src, m.index)}) ` +
           `never reaches a submit payload — the operator's entry is silently discarded.`
@@ -1136,6 +1153,32 @@ export function Inv() {
     "'refCustomerId'"
   );
 
+  const submissionGate = `
+import { useState } from "react";
+import { createDriver } from "../api/drivers";
+import { Modal } from "../components/Modal";
+export function Driver() {
+  const [acknowledged, setAcknowledged] = useState(false);
+  const saveDisabledReason = !acknowledged ? "Acknowledge the policy before Save." : undefined;
+  const save = () => createDriver({ first_name: "TEST" });
+  return <Modal open onClose={close}>
+    {/* ${SUBMISSION_GATE}: transient acknowledgement gates Save and renders its disabled reason. */}
+    <input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} />
+    <button disabled={!acknowledged} onClick={save}>Save</button>
+    {saveDisabledReason ? <p>{saveDisabledReason}</p> : null}
+  </Modal>;
+}`;
+  expectClean(
+    "annotation: proven transient submission gate is not a dropped field",
+    findOrphanFieldState("submission-gate.tsx", blankComments(submissionGate), submissionGate),
+  );
+  const gateWithoutReason = submissionGate.replace("{saveDisabledReason ? <p>{saveDisabledReason}</p> : null}", "");
+  expectHit(
+    "annotation: submission gate without a rendered reason still fails",
+    findOrphanFieldState("submission-gate.tsx", blankComments(gateWithoutReason), gateWithoutReason),
+    "'acknowledged'",
+  );
+
   // --- machinery ------------------------------------------------------------------------------
   if (owningTag(blankComments(`<Foo bar={1} onChange={x} />`), 18)?.tag !== "Foo") {
     failures.push("machinery: owningTag must resolve the tag that owns an attribute");
@@ -1157,7 +1200,7 @@ export function Inv() {
     // is one refactor away from the fake-green pattern verify-selftests-can-fail exists to stop.
     process.exit(1);
   }
-  console.log(`[${LABEL}] selftest OK — 26 assertions, every detector proven capable of failing.`);
+  console.log(`[${LABEL}] selftest OK — 28 assertions, every detector proven capable of failing.`);
   return 0;
 }
 

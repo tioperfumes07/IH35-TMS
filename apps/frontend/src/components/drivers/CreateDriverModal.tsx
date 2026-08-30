@@ -1134,6 +1134,8 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
               />
             ) : null}
             <label className="flex items-start gap-2 text-sm text-slate-800">
+              {/* C9-SUBMISSION-GATE: this transient acknowledgement gates Save and its value drives
+                  the rendered saveDisabledReason; it is not represented as a stored driver fact. */}
               <input
                 type="checkbox"
                 data-testid="driver-create-drug-screen-ack"
