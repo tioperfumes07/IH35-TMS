@@ -22,6 +22,13 @@ function authUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 const companyQuery = z.object({ operating_company_id: z.string().uuid() });
+// PROPERTY-TAX-RENDITION-ID-PARAM-UNVALIDATED-500: the 4 :id routes below cast req.params without
+// validation, so a non-uuid value (a stale/bookmarked literal ":id", a bot probe, a copy-paste error)
+// reaches getRendition()/updateRendition()/addRenditionLine()'s `r.id = $N::uuid` comparisons as a
+// raw Postgres 42601 500 instead of a clean 400 -- confirmed live (Sentry IH35-TMS-PROD-46, the
+// literal string ":id" reaching the query). Matches the idParamSchema convention already used across
+// this codebase (vendor-category, vendor-credits, journal-entries, ...).
+const idParamSchema = z.object({ id: z.string().uuid() });
 const renditionListQuery = companyQuery.extend({ unit_id: z.string().uuid().optional() });
 
 const createRenditionBody = z.object({
@@ -129,7 +136,9 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!user) return;
     const q = companyQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
-    const { id } = req.params as { id: string };
+    const paramsResult = idParamSchema.safeParse(req.params);
+    if (!paramsResult.success) return reply.code(400).send({ error: "validation_error", details: paramsResult.error.flatten() });
+    const { id } = paramsResult.data;
     await assertCompanyMembership(user.uuid, q.data.operating_company_id);
     const result = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
@@ -152,7 +161,9 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
       if (!user) return;
       const q = companyQuery.safeParse(req.query ?? {});
       if (!q.success) return reply.code(400).send({ error: "validation_error", details: q.error.flatten() });
-      const { id } = req.params as { id: string };
+      const paramsResult = idParamSchema.safeParse(req.params);
+      if (!paramsResult.success) return reply.code(400).send({ error: "validation_error", details: paramsResult.error.flatten() });
+      const { id } = paramsResult.data;
       await assertCompanyMembership(user.uuid, q.data.operating_company_id);
       const payload = await withCurrentUser(user.uuid, async (client) => {
         await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [q.data.operating_company_id]);
@@ -223,7 +234,9 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = updateRenditionBody.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
-    const { id } = req.params as { id: string };
+    const paramsResult = idParamSchema.safeParse(req.params);
+    if (!paramsResult.success) return reply.code(400).send({ error: "validation_error", details: paramsResult.error.flatten() });
+    const { id } = paramsResult.data;
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const rendition = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
@@ -247,7 +260,9 @@ export async function registerPropertyTaxRoutes(app: FastifyInstance) {
     if (!user) return;
     const body = addLineBody.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "validation_error", details: body.error.flatten() });
-    const { id } = req.params as { id: string };
+    const paramsResult = idParamSchema.safeParse(req.params);
+    if (!paramsResult.success) return reply.code(400).send({ error: "validation_error", details: paramsResult.error.flatten() });
+    const { id } = paramsResult.data;
     await assertCompanyMembership(user.uuid, body.data.operating_company_id);
     const line = await withCurrentUser(user.uuid, async (client) => {
       await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [body.data.operating_company_id]);
