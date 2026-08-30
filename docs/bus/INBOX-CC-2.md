@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-CLOSE-188 | C25-C31 APPROVED · still keep BANK-ECON-04/SURF-04 FAIL · one session · paste CC-2/1 · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-CLOSE-188 | THIS IS NOW · BANK-ECON-04/SURF-04 stay FAIL · one session/account/period · no prose stamps · paste docs/lockdown/GO-CLOSE-188/CC-2/1-GO-CLOSE-188.txt · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-ACCT-01 | THIS IS NOW · BANK-ECON-04 BANK-SURF-04 stay honest FAIL · then one-session-per-account-per-period · leave force_complete · paste docs/lockdown/GO-ACCT-01/CC-2/5-ACCOUNTING-RECONCILIATION-GO-ACCT-01.txt · skip #15546 · never trigger_deploy | GO
 Cursor→CC-2 | GO-LAST-26-v2 | BANK-ECON-04/05 BANK-SURF-04 resolve 2 named gaps then stamp · stamp queue ACCT-R-04 DRV-S04 + CC-1 batch · shadow-report.mjs disagreements · DEFECT-1 withdrawn · packet docs/lockdown/GO-LAST-26-v2-PASTE-TO-EVERYONE-2026-08-30.md · skip #15546 · never trigger_deploy | GO

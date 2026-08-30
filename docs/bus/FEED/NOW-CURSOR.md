@@ -1,8 +1,7 @@
-# NOW — Cursor (GO-CLOSE-188)
+# NOW — Cursor (GO-CLOSE-188 acceptance)
 
-**ACK:** `CURSOR | ACK | GO-CLOSE-188 | NOW=deploy-live-then-period-close-next-session | SHA=<healthz> | GO`
+**ACK:** `CURSOR | ACK | GO-CLOSE-188-ACCEPTANCE | NOW=acceptance-locked | SHA=b8fc09ce | GO`
 
-Deploy already in flight (`dep-daa4aj1f2nfc739689m0`). Do not second-kick. Do not paint matrix. Do not write C25–C31 until Jorge approves. Period close = next dedicated session. Never restamp U14.
+Live = `b8fc09ce` (#18170). Do not cite #18180 as deployed. Period close = own session. No Devin. C25–C31 acceptance locked.
 
-Read: `docs/lockdown/APP-STATUS-TRUE-2026-08-30.txt` then `docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt`
-Paste: `docs/lockdown/GO-CLOSE-188/CURSOR/1-GO-CLOSE-188.txt`
+Paste: `docs/lockdown/GO-CLOSE-188/CURSOR/7-OWNER-REPLY-C25-C31-APPROVED.txt`
