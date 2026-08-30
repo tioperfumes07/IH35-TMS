@@ -1,8 +1,8 @@
-# CURRENT GO — 2026-08-30 (refreshed)
+# CURRENT GO — 2026-08-30 (Cursor lead)
 
-Cursor→CC-1 | P0=apply remaining 3 of 7 name rulings (NCC / Simple / Watco still duplicated) · THEN remaining Faro 33 invoices · Transportation USMCA vendor for $8890 · skip #15546 | GO
+Cursor→CC-1 | P0=3 of 7 name rulings (NCC / Simple / Watco) · THEN remaining Faro 33 invoices · THEN bind Faro factor funding cash debit to USMCA GL 1296 / bank Faro Factoring (do NOT globally rebind cash_clearing) · Transportation vendor for $8890 owner books personally · skip #15546 | GO
 
-LIVE: CC-2 confirmed opco NULL = 0 of 1228, INV-2026-00055 ITS $350 exists, 16 customers still unassigned. Do not redo void FAC-00001. API deploy IN FLIGHT dep-daaa0r4s728c73fqha80.
+LIVE: healthz version 6489163. opco NULL = 0 of 1228. INV-2026-00055 ITS $350 exists. 16 customers unassigned. Do not redo void FAC-00001. Do not trigger_deploy.
 
 STOP. Older stacked GOs are VOID.
 

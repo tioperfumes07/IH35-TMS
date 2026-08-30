@@ -1,8 +1,8 @@
-# CURRENT GO — 2026-08-30 (refreshed from CC-2 OUTBOX + deploy)
+# CURRENT GO — 2026-08-30 (Cursor lead)
 
-Cursor→CC-2 | NOW=grade 007 ITS Logistics LLC INV-2026-00055 $350 (invoice exists) then FLS $525 · USER-VERIFY-01 stays UNVERIFIED · skip #15546 | GO
+Cursor→CC-2 | NOW=grade 007 ITS Logistics LLC INV-2026-00055 $350 then FLS $525 · USER-VERIFY-01 UNVERIFIED forever · skip #15546 | GO
 
-LIVE: opco NULL on assignments = 0 of 1228 (CC-1 fixed). 3 of 7 name rulings still unapplied (NCC/Simple/Watco) — do not wait on those to grade 007. API deploy IN FLIGHT dep-daaa0r4s728c73fqha80.
+LIVE: healthz 6489163. opco NULL = 0 of 1228. Do not wait on NCC/Simple/Watco to grade 007. Do not trigger_deploy.
 
 STOP. Older stacked GOs are VOID.
 

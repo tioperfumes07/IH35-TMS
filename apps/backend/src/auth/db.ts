@@ -20,11 +20,12 @@ let poolInstance: pg.Pool | null = null;
 let luciaPoolInstance: pg.Pool | null = null;
 
 // Render runs two API instances and this module owns two independent pools per
-// instance. A default of 10 therefore demanded 40 Neon connections and could
-// exhaust the production endpoint (30 observed), making every authenticated
-// route hang while shallow health stayed green. Keep the aggregate default at
-// 20 and allow an explicit, bounded override for capacity changes.
-function poolMax(name: "DATABASE_POOL_MAX" | "DATABASE_DIRECT_POOL_MAX"): number {
+// instance. Both use pooled DATABASE_URL (pgbouncer). Bypass is SET LOCAL inside
+// withLuciaBypass — never a startup `options=` GUC (pgbouncer rejects it; a
+// second DIRECT pool exhausted Neon ~30 backends so auth hung while shallow
+// health stayed green). Keep the aggregate default at 20 and allow an explicit,
+// bounded override for capacity changes.
+function poolMax(name: "DATABASE_POOL_MAX"): number {
   const raw = process.env[name]?.trim();
   if (!raw) return 5;
   const parsed = Number(raw);
@@ -40,20 +41,6 @@ function requireDatabaseUrl() {
     throw new Error("DATABASE_URL is required");
   }
   return url;
-}
-
-function requireDatabaseDirectUrl() {
-  const url = process.env.DATABASE_DIRECT_URL?.trim();
-  if (!url) {
-    throw new Error("DATABASE_DIRECT_URL is required");
-  }
-  return url;
-}
-
-function buildLuciaConnString(baseUrl: string): string {
-  const url = new URL(baseUrl);
-  url.searchParams.set("options", "-c app.bypass_rls=lucia");
-  return url.toString();
 }
 
 function buildPool(): pg.Pool {
@@ -77,9 +64,13 @@ function buildPool(): pg.Pool {
 }
 
 function buildLuciaPool(): pg.Pool {
+  // Pooled DATABASE_URL (pgbouncer). Bypass is SET LOCAL in withLuciaBypass, not
+  // a startup `options=` GUC — pgbouncer transaction pooling strips/fails those,
+  // and a second DIRECT pool doubled Neon backends (2 instances × 2 pools)
+  // until auth hung while shallow health stayed green.
   const client = new Pool(
-    buildPgPoolConfig(buildLuciaConnString(requireDatabaseDirectUrl()), {
-      max: poolMax("DATABASE_DIRECT_POOL_MAX"),
+    buildPgPoolConfig(requireDatabaseUrl(), {
+      max: poolMax("DATABASE_POOL_MAX"),
       idleTimeoutMillis: 30_000,
     }),
   );

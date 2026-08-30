@@ -1,3 +1,4 @@
+CURSOR | luciaPool OFF DIRECT onto DATABASE_URL · SET LOCAL bypass stays · INBOX all seats CURRENT GO · healthz 6489163 | GO
 CURSOR | API deploy kicked dep-daaa0r4s728c73fqha80 for 6489163315 · live was 4ef6dc4 · 13 undeployed | GO
 CURSOR | TIEOUT 10142 authoring · SCHEMA flag-law · copy-integrity folded · luciaPool=DIRECT max5 · Sentry 11 stay OPEN until pool changes | GO
 CURSOR | API deploy kicked dep-daa9g8oae00c73a5ufag · 10142 claimed · TIEOUT next | GO
