@@ -22,6 +22,7 @@ const files = {
   companyDrawer: read(
     "apps/frontend/src/pages/safety/components/CompanyViolationDetailDrawer.tsx",
   ),
+  canonicalDriverDetail: read("apps/frontend/src/pages/DriverDetail.tsx"),
   profiles: [
     "apps/frontend/src/pages/drivers/DriverProfilePage.tsx",
     "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
@@ -142,6 +143,12 @@ function failures(s = files) {
       "all applicable profile consumers",
       ["driver", "unit", "vendor", "customer", "invoice"].every((kind) =>
         s.profiles.includes(`subjectKind=\"${kind}\"`),
+      ),
+    ],
+    [
+      "canonical driver detail Safety File mounts safety alert reverse",
+      s.canonicalDriverDetail.includes(
+        '<SafetyAlertsReverseSection\n                    operatingCompanyId={String(driver.operating_company_id)}\n                    subjectKind="driver"\n                    subjectId={id}',
       ),
     ],
     [
@@ -361,6 +368,13 @@ if (process.argv.includes("--selftest")) {
         'subjectKind="record"',
       ),
     }).includes("all applicable profile consumers"),
+    failures({
+      ...files,
+      canonicalDriverDetail: files.canonicalDriverDetail.replace(
+        '<SafetyAlertsReverseSection\n                    operatingCompanyId={String(driver.operating_company_id)}',
+        "<MissingSafetyAlertsReverseSection",
+      ),
+    }).includes("canonical driver detail Safety File mounts safety alert reverse"),
     failures({
       ...files,
       section: files.section.replace('kind="integrity_alert"', 'kind="unit"'),
