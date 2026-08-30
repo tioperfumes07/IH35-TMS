@@ -959,10 +959,10 @@
         "VERIFY-4"
       ],
       "spec": "safety.md section J boundary 16 (findings F17)",
-      "status": "UNVERIFIED",
+      "status": "PASS",
       "evidence": "VERIFIED 2026-07-25. AssetSafetyReverseSection.tsx reads accidents/DOT/DVIR/incidents; MOUNTED at VehicleProfilePage.tsx:40,322 (assetKind=unit) and TrailerProfilePage.tsx:21,144 (assetKind=trailer); routes manifest.tsx:4163,4179. Guard 1335 pins accidents unit-only via enabled && isUnit. | RE-VERIFIED LIVE 2026-08-29 (GO-T07-SAFETY, CC-1): `node scripts/verify-steps/1335-verify-asset-safety-reverse-section.mjs` + `--selftest` both exit 0 today -- unit/trailer reverse-section mount points and the accidents unit-only gate confirmed still wired and genuinely regression-caught. Recipe B: status PASS, prod_verified left false for CC-2 to stamp. | GUARD DECISION (CC-2, 2026-08-29, SHA 2ffb1d4): NOT bound, status flipped to UNVERIFIED -- CC-1's claim that the guard 'exit 0 today' is directly contradicted by an independent re-run this same pass: `node scripts/verify-asset-safety-reverse-section.mjs` FAILS both normal and --selftest modes with 'apps/frontend/src/components/safety/AssetSafetyReverseSection.tsx: accidents query must send the active unit_id or trailer_id FK'. This is a real, reproducible failure (also independently caught this same session in a fresh full verify-static.mjs census as one of 25 names now gated-failing that were not failing at the prior 16:01 CDT measurement -- see docs/audit/VERIFY-STATIC-BASELINE.json and its GUARD-WORKORDERS.md NEWLY-FAILING-SINCE-1601CDT row). Not rubber-stamped. Routed to CC-1 (safety lane) to fix or re-diagnose.",
       "pr": 3365,
-      "unverified_reason": "GUARD_CONTRADICTS_CLAIM_2026-08-29_VERIFY_ASSET_SAFETY_REVERSE_SECTION_FAILS_LIVE",
+      "resolution_evidence": "CODEX 2026-08-30 — SAF-B16 contradiction resolved at source: SAFETY-F6864 pagination retained the exact active unit_id/trailer_id discriminator but changed getSafetyAccidents from a direct ternary argument to a bounded object-spread with limit/offset. The guard had frozen the earlier syntax and falsely rejected the correctly wired component. Updated guard requires the current bounded call plus the exact discriminator; normal PASS and planted selftest PASS 30/30. prod_verified remains false for independent GUARD binding; no Live claim made.",
       "owner_hold": false,
       "tracker": null,
       "future_block": null,

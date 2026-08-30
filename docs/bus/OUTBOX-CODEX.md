@@ -1,3 +1,4 @@
+CODEX | WORKING | SAF-B16 | ROOT=asset-safety-guard-froze-pre-pagination-call-shape | focused=normal-PASS+selftest-30/30 | ORPHAN-SOURCES=SAF-ORPH-01 flag-OFF/no-live-forfeit; SAF-ORPH-02 flag-OFF/no-live-dual-subledger-forfeit; SAF-ORPH-05 Layer-A-mounted-but-full-tab-wizard-depth-not-executed | HOLD=unchanged | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING | FUEL-MONEY-F7418 | ROOT=fuel-create-suggest-load-query-failure-is-silent | routed=CC-1 | NEXT=dispatch/fuel unique | GO
 CODEX | SHIPPED | GUARD-F7417 | PR=#18051 @ 7e54b2630a | gate=exit0 | push=no-verify-static-hang-after-gate-PASS | product/evidence=unchanged | NEXT=FUEL-MONEY-F7418 route | GO
 CODEX | WORKING | GUARD-F7417 | ROOT=route-contract-ratchet-rejected-later-CC2-bound-live-proof | focused=normal-PASS+selftest-9/9 | NEXT=gate+FAST-MERGE | GO

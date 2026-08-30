@@ -154,7 +154,10 @@ export function assertAssetSafetyReverse(sources) {
   }
 
   // 4. Accidents scope by the active asset kind; both FKs exist on safety.accident_reports.
-  if (!/getSafetyAccidents\(operatingCompanyId, isUnit \? \{ unit_id: assetId \} : \{ trailer_id: assetId \}\)/.test(src[SECTION])) {
+  // SAFETY-F6864 added bounded pagination around the already-canonical asset filter. Accept the
+  // current object-spread call shape (and only that exact unit/trailer discriminator) so adding
+  // limit/offset cannot make a correctly wired surface fail while either FK still remains pinned.
+  if (!/getSafetyAccidents\(\s*operatingCompanyId,\s*\{[\s\S]{0,120}\.\.\.\(isUnit \? \{ unit_id: assetId \} : \{ trailer_id: assetId \}\)[\s\S]{0,180}\}\s*\)/.test(src[SECTION])) {
     problems.push(`${SECTION}: accidents query must send the active unit_id or trailer_id FK.`);
   }
   if (!/openKind=\{isUnit \? "accidents_unit" : "accidents_trailer"\}/.test(src[SECTION])) {
@@ -339,7 +342,13 @@ if (SELFTEST) {
   );
   expectCaught(
     "accidents-trailer-client-filter-removed",
-    { ...live, [SECTION]: live[SECTION].replace(/: \{ trailer_id: assetId \}/g, ": {}") },
+    {
+      ...live,
+      [SECTION]: live[SECTION].replace(
+        /\.\.\.\(isUnit \? \{ unit_id: assetId \} : \{ trailer_id: assetId \}\)/,
+        "...(isUnit ? { unit_id: assetId } : {})"
+      ),
+    },
     "active unit_id or trailer_id"
   );
   expectCaught(
