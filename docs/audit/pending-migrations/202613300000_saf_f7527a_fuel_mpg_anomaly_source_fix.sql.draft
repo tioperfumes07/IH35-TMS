@@ -1,0 +1,77 @@
+-- 202613300000_saf_f7527a_fuel_mpg_anomaly_source_fix.sql
+-- SAF-F7527A: safety.v_fuel_mpg_anomalies read safety.dot_inspections (CSA points) and labeled
+-- it as fuel MPG data; the alert engine then fabricated a "driver:<id>" subject key from the
+-- DOT-inspection row's own id when driver_id was absent. Root-fixed here:
+--   1) the view is redefined to select real columns from fuel.fuel_transactions (no more
+--      dot_inspections substitution, no more NULL::numeric placeholders for gallons/mpg it
+--      never actually had) with an honest WHERE false — true per-fill MPG needs a
+--      distance-driven figure this table does not yet capture (no odometer/mileage column on
+--      fuel.fuel_transactions), so until that data model lands this rule detects nothing rather
+--      than fabricating. The view's SHAPE is now correct for whoever builds the real detector.
+--   2) the fuel_anomaly rule is disabled (enabled=false) for all 3 companies so the engine
+--      stops evaluating it going forward — additive, reversible (an owner/coder can flip it back
+--      on once a real MPG methodology is approved), never deletes the rule row.
+--   3) the 4 existing live false-positive alerts (verified prod 2026-08-30, all
+--      resolution_status='unresolved', 3 of 4 misattributed to a REAL identifiable driver who
+--      never had a fuel anomaly, 1 with subject_driver_id NULL) are marked
+--      resolution_status='false_positive' with a resolution_action note — archived, never
+--      deleted, per WORM/void-not-delete law.
+-- Idempotent: CREATE OR REPLACE VIEW; UPDATEs are idempotent by their own WHERE clause (a second
+-- apply is a no-op once enabled=false / resolution_status='false_positive' already holds).
+-- No GL/money posting, no schema drop, no data loss.
+
+BEGIN;
+
+CREATE OR REPLACE VIEW safety.v_fuel_mpg_anomalies
+WITH (security_invoker=true) AS
+SELECT
+  ft.id AS fuel_expense_id,
+  ft.operating_company_id,
+  ft.unit_id,
+  ft.driver_id,
+  ft.transaction_at AS transaction_date,
+  ft.gallons,
+  NULL::numeric AS computed_mpg,
+  NULL::text AS anomaly_type
+FROM fuel.fuel_transactions ft
+WHERE false; -- SAF-F7527A: real per-fill MPG needs distance-driven data fuel.fuel_transactions
+             -- does not capture (no odometer/mileage column); detects nothing until a real
+             -- methodology is approved, rather than fabricating from an unrelated table.
+
+DO $$
+BEGIN
+  UPDATE safety.integrity_alert_rules
+  SET enabled = false, updated_at = now()
+  WHERE (rule_code = 'fuel_anomaly' OR source_view = 'safety.v_fuel_mpg_anomalies')
+    AND enabled = true;
+END
+$$;
+
+DO $$
+BEGIN
+  UPDATE safety.integrity_alerts
+  SET resolution_status = 'false_positive',
+      resolution_action = 'SAF-F7527A: source view read safety.dot_inspections (CSA points) '
+        || 'mislabeled as fuel MPG data; alert engine fabricated this subject from a '
+        || 'DOT-inspection row, not an actual fuel-consumption anomaly. Archived, not deleted, '
+        || 'per SAF-F7527A root fix (migration 202613300000).',
+      updated_at = now()
+  WHERE alert_category = 'driver_mpg_anomaly'
+    AND resolution_status = 'unresolved';
+END
+$$;
+
+DO $$
+BEGIN
+  UPDATE safety.integrity_alert_events
+  SET event_status = 'resolved',
+      acknowledgment_note = 'SAF-F7527A: fabricated from safety.dot_inspections, not a real '
+        || 'fuel-consumption anomaly. Archived, not deleted, per root fix (migration '
+        || '202613300000).',
+      updated_at = now()
+  WHERE detection_summary ILIKE 'Fuel MPG anomaly%'
+    AND event_status = 'open';
+END
+$$;
+
+COMMIT;

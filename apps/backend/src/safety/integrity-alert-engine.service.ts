@@ -95,15 +95,20 @@ async function evaluateRuleMatches(
       [operatingCompanyId]
     );
     if (res.rows.length < minRows) return [];
-    return res.rows.map((row) => ({
-      subject_key: `driver:${String(row.driver_id ?? row.fuel_expense_id)}`,
-      subject_driver_id: row.driver_id ? String(row.driver_id) : null,
-      subject_unit_id: row.unit_id ? String(row.unit_id) : null,
-      subject_vendor_id: null,
-      detection_summary: `Fuel MPG anomaly (${String(row.anomaly_type ?? "outlier")})`,
-      detection_metric: row,
-      source_view: rule.source_view,
-    }));
+    // SAF-F7527A: never fabricate a `driver:` subject from a non-driver id. A driver-typed
+    // alert with no real driver is not a finding — it is noise pointed at nobody. If a row
+    // somehow carries no driver_id, skip it rather than synthesize one from fuel_expense_id.
+    return res.rows
+      .filter((row) => Boolean(row.driver_id))
+      .map((row) => ({
+        subject_key: `driver:${String(row.driver_id)}`,
+        subject_driver_id: String(row.driver_id),
+        subject_unit_id: row.unit_id ? String(row.unit_id) : null,
+        subject_vendor_id: null,
+        detection_summary: `Fuel MPG anomaly (${String(row.anomaly_type ?? "outlier")})`,
+        detection_metric: row,
+        source_view: rule.source_view,
+      }));
   }
 
   if (rule.rule_code === "gps_spoof_pattern" || rule.source_view === "safety.v_driver_dwell_outliers") {
@@ -139,15 +144,19 @@ async function evaluateRuleMatches(
       `,
       [operatingCompanyId, minZ]
     );
-    return res.rows.map((row) => ({
-      subject_key: `unit:${String(row.unit_id ?? row.wo_id)}`,
-      subject_driver_id: null,
-      subject_unit_id: row.unit_id ? String(row.unit_id) : null,
-      subject_vendor_id: null,
-      detection_summary: `WO cost outlier z=${String(row.z_score ?? "—")}`,
-      detection_metric: row,
-      source_view: rule.source_view,
-    }));
+    // SAF-F7527A twin: not every work order carries a unit_id (shop-wide/facility WOs); never
+    // fabricate a `unit:` subject from wo_id when unit_id is absent — skip the row instead.
+    return res.rows
+      .filter((row) => Boolean(row.unit_id))
+      .map((row) => ({
+        subject_key: `unit:${String(row.unit_id)}`,
+        subject_driver_id: null,
+        subject_unit_id: String(row.unit_id),
+        subject_vendor_id: null,
+        detection_summary: `WO cost outlier z=${String(row.z_score ?? "—")}`,
+        detection_metric: row,
+        source_view: rule.source_view,
+      }));
   }
 
   // ── Accounting probe: unbalanced journal entries ────────────────────────────
