@@ -1,80 +1,90 @@
 #!/usr/bin/env node
-/**
- * PolicyCreateWizard — unit search is server-side (not silent listUnits limit:500 + client filter).
- * Cursor even claim: 2140.
- */
+/** Insurance policy creators must use the shared company-scoped unit server-search chain. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-policy-create-unit-server-search";
-const FILE = "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx";
+const FILES = {
+  wizard: "apps/frontend/src/components/insurance/PolicyCreateWizard.tsx",
+  modal: "apps/frontend/src/components/insurance/PolicyCreateModal.tsx",
+  picker: "apps/frontend/src/components/parity/EntityPicker.tsx",
+  registry: "apps/frontend/src/components/parity/entityPickerRegistry.ts",
+};
 
-function readRel(root, rel) {
-  const p = path.join(root, rel);
-  if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, "utf8");
+function read(root, rel, overrides) {
+  if (Object.hasOwn(overrides, rel)) return overrides[rel];
+  const file = path.join(root, rel);
+  return fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
 }
+const clean = (source) => source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
-/** @returns {string[]} */
-export function collectProblems(root = ROOT) {
+export function collectProblems(root = ROOT, overrides = {}) {
   const problems = [];
-  const src = readRel(root, FILE);
-  if (!src) {
-    problems.push(`missing ${FILE}`);
-    return problems;
+  const source = Object.fromEntries(Object.entries(FILES).map(([key, rel]) => [key, read(root, rel, overrides)]));
+  for (const [key, rel] of Object.entries(FILES)) if (!source[key]) problems.push(`missing ${rel}`);
+  if (problems.length) return problems;
+
+  for (const key of ["wizard", "modal"]) {
+    const code = clean(source[key]);
+    if (!/<EntityPicker[\s\S]{0,220}?kind=["']unit["']/.test(code)) problems.push(`${FILES[key]}: must use EntityPicker kind=unit`);
+    if (/\blistUnits\s*\(/.test(code)) problems.push(`${FILES[key]}: must not fork the shared unit roster/search`);
   }
-  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
-  if (/limit:\s*500/.test(code)) {
-    problems.push(`${FILE}: must not silent-fetch listUnits(limit:500)`);
-  }
-  if (!/unitSearchQuery/.test(code) || !/search:\s*unitSearchQuery/.test(code) && !/search:\s*unitSearchQuery\.trim/.test(code)) {
-    problems.push(`${FILE}: listUnits must pass search: unitSearchQuery`);
-  }
-  // RE-ANCHOR (found stale 2026-08-29): the queryKey array grew a trailing `activeChip` element
-  // after unitSearchQuery (`[..., unitSearchQuery, activeChip]`), so the old `unitSearchQuery]`
-  // end-of-array anchor no longer matched even though unitSearchQuery is still a real, correctly
-  // scoped key element -- just no longer last. Match unitSearchQuery as a bare identifier anywhere
-  // inside a `queryKey: [...]` array instead of anchoring on array position.
-  if (!/queryKey:\s*\[[^\]]*\bunitSearchQuery\b[^\]]*\]/.test(code)) {
-    problems.push(`${FILE}: unitsQuery key must include unitSearchQuery`);
-  }
+
+  const picker = clean(source.picker);
+  if (!/config\.serverSearch\s*\?\s*rosterSearch/.test(picker)) problems.push(`${FILES.picker}: query key must include rosterSearch`);
+  if (!/config\.serverSearch\s*\?\s*\{\s*search:\s*rosterSearch\s*\|\|\s*undefined\s*\}/.test(picker)) problems.push(`${FILES.picker}: list call must receive rosterSearch`);
+  if (!/onSearch=\{config\.serverSearch\s*\?\s*setRosterSearch\s*:\s*undefined\}/.test(picker)) problems.push(`${FILES.picker}: Combobox must drive rosterSearch`);
+
+  const registry = clean(source.registry);
+  const start = registry.indexOf("unit: {");
+  const end = registry.indexOf("load: {", start + 1);
+  const unit = start >= 0 && end > start ? registry.slice(start, end) : "";
+  if (!/serverSearch:\s*true/.test(unit)) problems.push(`${FILES.registry}: unit must enable serverSearch`);
+  if (!/listUnits\s*\([\s\S]{0,220}?search:\s*opts\?\.search\s*\|\|\s*undefined/.test(unit)) problems.push(`${FILES.registry}: unit must forward search to listUnits`);
   return problems;
 }
 
-if (process.argv.includes("--selftest")) {
-  const baseline = collectProblems();
-  if (baseline.length) {
+function selftest() {
+  const baseline = Object.fromEntries(Object.values(FILES).map((rel) => [rel, read(ROOT, rel, {})]));
+  const mutateUnit = (source, pattern, replacement) => {
+    const start = source.indexOf("unit: {");
+    const end = source.indexOf("load: {", start + 1);
+    if (start < 0 || end <= start) return source;
+    return source.slice(0, start) + source.slice(start, end).replace(pattern, replacement) + source.slice(end);
+  };
+  const mutations = [
+    [FILES.wizard, /kind="unit"/, 'kind="driver"'],
+    [FILES.modal, /kind="unit"/, 'kind="driver"'],
+    [FILES.picker, /config\.serverSearch \? rosterSearch : ""/, '""'],
+    [FILES.picker, /search: rosterSearch \|\| undefined/, "search: undefined"],
+    [FILES.picker, /onSearch=\{config\.serverSearch \? setRosterSearch : undefined\}/, "onSearch={undefined}"],
+    [FILES.registry, (source) => mutateUnit(source, /serverSearch: true/, "serverSearch: false")],
+    [FILES.registry, (source) => mutateUnit(source, /search: opts\?\.search \|\| undefined/, "search: undefined")],
+  ];
+  const failures = [];
+  if (collectProblems(ROOT, baseline).length) failures.push("current baseline is red");
+  for (const [rel, pattern, replacement] of mutations) {
+    const changed = typeof pattern === "function" ? pattern(baseline[rel]) : baseline[rel].replace(pattern, replacement);
+    if (changed === baseline[rel]) failures.push(`mutation did not change ${rel}`);
+    else if (!collectProblems(ROOT, { ...baseline, [rel]: changed }).length) failures.push(`mutation escaped: ${rel}`);
+  }
+  if (failures.length) {
     console.error(`${LABEL} SELFTEST FAIL:`);
-    for (const p of baseline) console.error("  - " + p);
+    failures.forEach((failure) => console.error(`  - ${failure}`));
     process.exit(1);
   }
-  const stubRoot = fs.mkdtempSync(path.join(ROOT, ".tmp-policy-unit-"));
-  try {
-    const dir = path.join(stubRoot, "apps/frontend/src/components/insurance");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(
-      path.join(dir, "PolicyCreateWizard.tsx"),
-      `listUnits({ operating_company_id: operatingCompanyId, limit: 500 })
-const filtered = allUnits.filter(u => u.unit_number.includes(unitSearchQuery))
-`
-    );
-    const planted = collectProblems(stubRoot);
-    if (!planted.length) {
-      console.error(`${LABEL} SELFTEST FAIL: planted stub did not FAIL`);
-      process.exit(1);
-    }
-  } finally {
-    fs.rmSync(stubRoot, { recursive: true, force: true });
-  }
-  console.log(`${LABEL} SELFTEST OK`);
-} else {
+  console.log(`${LABEL} SELFTEST PASS — ${mutations.length}/${mutations.length} independent mutations rejected`);
+}
+
+if (process.argv.includes("--selftest")) selftest();
+else {
   const problems = collectProblems();
   if (problems.length) {
     console.error(`${LABEL} FAIL:`);
-    for (const p of problems) console.error("  - " + p);
+    problems.forEach((problem) => console.error(`  - ${problem}`));
     process.exit(1);
   }
-  console.log(`${LABEL} OK — PolicyCreate unit server search`);
+  console.log(`${LABEL} PASS — both policy creators use the shared unit server-search chain`);
 }
