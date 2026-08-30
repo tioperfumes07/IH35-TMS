@@ -140,7 +140,13 @@ function statusChip(status: string): { bg: string; fg: string } {
 // ── CT date-only formatter for the Date column (registered_on has no time) ──────────────────────────
 function formatDateCt(raw: string | null): string {
   if (!raw) return "—";
-  const d = new Date(raw.length <= 10 ? `${raw}T12:00:00-05:00` : raw);
+  // Date-only calendar days are not instants. Pinning noon at a fixed UTC offset (-05:00)
+  // is wrong in CST (UTC-6) and is T-08. Render YYYY-MM-DD as calendar parts.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split("-");
+    return `${m}/${d}/${y}`;
+  }
+  const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Chicago",
@@ -263,7 +269,10 @@ export function compareRows(a: Row, b: Row, key: SortKey): number {
     case "date": {
       const toTs = (raw: string | null): number => {
         if (!raw) return -Infinity;
-        const t = Date.parse(raw.length <= 10 ? `${raw}T12:00:00-05:00` : raw);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          return Date.UTC(Number(raw.slice(0, 4)), Number(raw.slice(5, 7)) - 1, Number(raw.slice(8, 10)));
+        }
+        const t = Date.parse(raw);
         return Number.isNaN(t) ? -Infinity : t;
       };
       return toTs(a.date) - toTs(b.date);
