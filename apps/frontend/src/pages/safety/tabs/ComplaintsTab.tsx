@@ -221,6 +221,10 @@ export function ComplaintsTab() {
     patchMutation.isError &&
     patchMutation.variables?.companyId === companyId &&
     patchMutation.variables?.generation === lifecycleGenerationRef.current;
+  const voidErrorCurrent =
+    voidMutation.isError &&
+    voidMutation.variables?.companyId === companyId &&
+    voidMutation.variables?.generation === lifecycleGenerationRef.current;
 
   function buildComplaintPayload() {
     const payload: Record<string, unknown> = {
@@ -626,6 +630,11 @@ export function ComplaintsTab() {
       {patchErrorCurrent ? (
         <p className="text-xs text-red-700" data-testid="complaint-resolve-error">
           {userFacingApiError(patchMutation.error, "Could not resolve the complaint.")}
+        </p>
+      ) : null}
+      {voidErrorCurrent ? (
+        <p className="text-xs text-red-700" role="alert" data-testid="complaint-void-error">
+          {userFacingApiError(voidMutation.error, "Could not void the complaint.")}
         </p>
       ) : null}
       <VoidReasonModal

@@ -1,3 +1,5 @@
+CODEX | WORKING | SAF-F7529 | ROOT=three-Safety-V64-void-mutations-rejected-with-modal-open-but-no-visible-error | GUARD=3-independent-plants | NEXT=focused+gate+FAST-MERGE | GO
+CODEX | SHIPPED | SAF-F7528 | PR=#18324 @ 662272fa91 | focused=guard+selftest8/8+Vitest6/6+backend-build+frontend-tsc+full-gate | push=normal-hooks | Live=UNVERIFIED-no-deploy | NEXT=SAF-F7529 | GO
 CODEX | WORKING | SAF-F7528-PHOTO-COMPARISON-DIFF-FINDINGS-NONARRAY-DETAIL-CRASH | live session=482337d4 detail crashed flatMap | ROOT=arbitrary-json-writer+unknown-reader+array-assuming-UI | focused=guard+selftest8/8+Vitest6/6+frontend/backend-tsc | Live=UNVERIFIED-after-deploy | NEXT=full-gate+FAST-MERGE | GO
 CODEX | WORKING | GR1-CUSTOMER-NOTIFY-PICKER-WRITER-MATCHER-STALE | normal PASS · selftest 16/16 | exact dispatch settings.notify + customers detail.profile metadata | NEXT=gate+FAST-MERGE | GO
 CODEX | FINDING | GR1-MONEY-GUARDS-STALE-AFTER-CANONICAL-REFRACTORS | routed=CC-1 | banking escrow slice · settlement route-options matcher+selftest · Wave-C direct-JE matcher | product canonical paths still present | GO

@@ -535,6 +535,13 @@ export function DOTInspectionsTab() {
           {userFacingApiError(uploadMutation.error, "Could not upload the DOT inspection PDF.")}
         </p>
       ) : null}
+      {voidMutation.isError &&
+      voidMutation.variables?.companyId === companyId &&
+      voidMutation.variables?.generation === companyGenerationRef.current ? (
+        <p className="text-xs text-red-700" role="alert" data-testid="dot-inspection-void-error">
+          {userFacingApiError(voidMutation.error, "Could not void the DOT inspection.")}
+        </p>
+      ) : null}
       <VoidReasonModal
         open={voidTargetId !== null}
         title="Void DOT Inspection"
