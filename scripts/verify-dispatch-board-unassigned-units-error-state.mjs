@@ -48,6 +48,10 @@ const OVERVIEW_RE = /unitsWithoutLoadQ\.isLoading[\s\S]{0,180}unitsWithoutLoadQ\
 export function checkUnassignedUnitsErrorState(boardSrc, tableSrc, overviewSrc) {
   const problems = [];
 
+  if (!/const unassignedUnits = unitsWithoutLoadQuery\.isError \? \[\] : \(unitsWithoutLoadQuery\.data\?\.units \?\? \[\]\)/.test(boardSrc)) {
+    problems.push("the failed unassigned-unit feed retains stale rows and section counts");
+  }
+
   if (!SECTION_RE.test(boardSrc)) {
     problems.push(
       "the List/Table boardSections loop does not gate a ListErrorState for the 'awaiting' section on unitsWithoutLoadQuery.isError — a failed fetch renders 0 rows, identical to 'all units have loads'"
@@ -93,9 +97,9 @@ if (process.argv.includes("--selftest")) {
   `;
   const badOverview = `unitsWithoutLoadQ.isLoading ? <PanelLoading /> : unitsWithoutLoad.length === 0 ? PanelEmpty("All units currently have active loads.") : <PanelRows />`;
   const badProblems = checkUnassignedUnitsErrorState(badBoard, badTable, badOverview);
-  if (badProblems.length !== 4) {
+  if (badProblems.length !== 5) {
     failures.push(
-      `the full pre-fix defect expected 4 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
+      `the full pre-fix defect expected 5 problems, got ${badProblems.length}: ${badProblems.join("; ")}`
     );
   }
 
@@ -110,9 +114,9 @@ if (process.argv.includes("--selftest")) {
   // Partial regression: DataTable forwarding fixed, but the two DispatchBoard.tsx wiring sites
   // still missing — proves the three checks are independent.
   const partialProblems = checkUnassignedUnitsErrorState(badBoard, goodTable, goodOverview);
-  if (partialProblems.length !== 2) {
+  if (partialProblems.length !== 3) {
     failures.push(
-      `a partial fix (table forwarding present, board wiring still missing) expected 2 problems, got ${partialProblems.length}: ${partialProblems.join("; ")}`
+      `a partial fix (table forwarding present, board wiring still missing) expected 3 problems, got ${partialProblems.length}: ${partialProblems.join("; ")}`
     );
   }
 
@@ -122,8 +126,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — the real pre-fix defect caught (3/3), the real fixed files clear, a ` +
-      `partial fix (table forwarding only) caught (2/2).`
+    `${LABEL} SELFTEST OK — the real pre-fix defect caught (5/5), the real fixed files clear, a ` +
+      `partial fix (table forwarding only) caught (3/3).`
   );
   process.exit(0);
 }

@@ -433,7 +433,7 @@ export function DispatchBoard({
     enabled: Boolean(companyId),
     staleTime: 30_000,
   });
-  const unassignedUnits = unitsWithoutLoadQuery.data?.units ?? [];
+  const unassignedUnits = unitsWithoutLoadQuery.isError ? [] : (unitsWithoutLoadQuery.data?.units ?? []);
 
   const inShopUnitsQuery = useQuery({
     queryKey: ["dispatch-board", "in-shop-units", companyId],
@@ -445,7 +445,7 @@ export function DispatchBoard({
     staleTime: 60_000,
     refetchInterval: 60_000,
   });
-  const inShopUnits = inShopUnitsQuery.data ?? [];
+  const inShopUnits = inShopUnitsQuery.isError ? [] : (inShopUnitsQuery.data ?? []);
   const inShopUnitIds = useMemo(() => new Set(inShopUnits.map((unit) => unit.id)), [inShopUnits]);
 
   const triSignalsQuery = useQuery({
