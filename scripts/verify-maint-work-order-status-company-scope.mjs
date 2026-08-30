@@ -16,7 +16,7 @@ function inspect(value) {
   if (count(value, update) !== 2) failures.push("both status UPDATEs must bind company atomically");
   if (count(value, audit) !== 2) failures.push("both status-transition audits must retain company");
   if (count(value, "parsed.data.new_status,\n        companyId,") !== 2) failures.push("both status UPDATE parameter lists must bind company");
-  if (!value.includes(closedRead) || !value.includes("[params.data.id, companyId]")) failures.push("closed follow-up read must bind company");
+  if (count(value, closedRead) !== 2 || count(value, "[params.data.id, companyId]") < 2) failures.push("both closed follow-up reads must bind company");
   return failures;
 }
 
