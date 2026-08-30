@@ -1,3 +1,5 @@
+CODEX | WORKING | GUARD-F7510 | ROOT=picker-chrome-registry-coupled-exact-owned-membership-to-obsolete-global-orphan-threshold | exact=14 | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
+CODEX | SHIPPED | CLS-F7509 | PR=#18155 @ 552aa0cfc4 | modules=reports+compliance | census=73/73 | focused=selftest24/24+Vitest7/7+full-gate | NEXT=picker-chrome-registry-red | GO
 CODEX | WORKING | CLS-F7509 | class=create-surface-drawer | modules=reports+compliance | ROOT=two-create-forms-used-centered-Modal | focused=guard+selftest+components | NEXT=census-to-zero+gate+FAST-MERGE | GO
 CODEX | SHIPPED | GUARD-F7508 | PR=#18154 @ ce68839039 | focused=normal+selftest2/2+full-gate | NEXT=create-surface-drawer-red | GO
 CODEX | WORKING | GUARD-F7508 | ROOT=ParityDrawer-Escape-guard-required-direct-onClose-and-rejected-dirty-draft-safe-attemptClose | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
