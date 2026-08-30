@@ -35,11 +35,12 @@ export function assertModalCloseRetracts(sources) {
   const hook = sources?.[CREATE_HOOK] ?? readRel(CREATE_HOOK);
   const planner = sources?.[PLANNER] ?? readRel(PLANNER);
 
-  if (/useState\(\s*initialSubTab\s*===\s*"book_load"\s*\)/.test(dispatch)) {
-    problems.push(`${DISPATCH}: second opener — useState must not seed from book_load URL/sub-tab`);
+  if (!/useState\(\s*initialSubTab\s*===\s*"book_load"\s*\)/.test(dispatch)) {
+    problems.push(`${DISPATCH}: canonical /dispatch/book-load must open on first paint`);
   }
-  if (!/useState\(false\)/.test(dispatch) || !/setNewLoadOpen\(true\)/.test(dispatch)) {
-    problems.push(`${DISPATCH}: single opener must be the effect (useState(false) seed + setNewLoadOpen(true))`);
+  const bookLoadEffect = dispatch.match(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[location\.pathname, searchParams, setSearchParams\]\);/)?.[1] ?? "";
+  if (!/onBookPath[\s\S]*?searchParams\.get\("book_load"\)[\s\S]*?setNewLoadOpen\(true\)/.test(bookLoadEffect)) {
+    problems.push(`${DISPATCH}: route/query transition effect must open Book Load without a remount`);
   }
   if (!/next\.delete\("book_load"\)/.test(dispatch)) {
     problems.push(`${DISPATCH}: must delete book_load query param`);
@@ -76,7 +77,7 @@ export function assertModalCloseRetracts(sources) {
 }
 
 const FIXTURE_OK = `
-const [newLoadOpen, setNewLoadOpen] = useState(false);
+const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
 useEffect(() => {
   const onBookPath = location.pathname.replace(/\\/$/, "") === "/dispatch/book-load";
   const q = searchParams.get("book_load") === "1";
@@ -112,9 +113,14 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
       expect: /navigate off/,
     },
     {
-      name: "restore useState url-derived second opener",
-      mutate: (d) => d.replace("useState(false)", 'useState(initialSubTab === "book_load")'),
-      expect: /second opener/,
+      name: "remove canonical first-paint opener",
+      mutate: (d) => d.replace('useState(initialSubTab === "book_load")', "useState(false)"),
+      expect: /first paint/,
+    },
+    {
+      name: "remove same-mount transition opener",
+      mutate: (d) => d.replace("setNewLoadOpen(true);", "/* planted missing transition opener */"),
+      expect: /transition effect/,
     },
   ];
   const escaped = [];
@@ -142,7 +148,7 @@ if (process.argv.includes("--selftest") || process.argv.includes("--self-test"))
     process.exit(1);
   }
   void FIXTURE_OK;
-  console.log(`${LABEL} SELFTEST PASS — 5/5 planted arms fail independently`);
+  console.log(`${LABEL} SELFTEST PASS — 6/6 planted arms fail independently`);
   process.exit(0);
 }
 
