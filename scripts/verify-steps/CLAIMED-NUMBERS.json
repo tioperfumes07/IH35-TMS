@@ -6796,5 +6796,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1333
+  "total_claimed": 1333,
+  "10051": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-2",
+    "purpose": "verify-guard-selftests-are-real (GR-2 meta-guard, GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2)"
+  }
 }
