@@ -80,11 +80,11 @@ if (process.argv.includes("--selftest")) {
     failures(staleFine).includes("fine confirmation reset keyed by record/company/open"),
     failures(staleAnomaly).includes("anomaly retires and resets note and actions"),
     failures(pendingCompany).includes("company pending actions do not lock drawer dismissal"),
-    failures(rawCompanyClose).includes("company resolution and corrective drafts lack one discard boundary"),
+    failures(rawCompanyClose).includes("company resolution and corrective drafts lack one safe discard boundary"),
     failures(missingCorrectiveDirty).includes("corrective action child draft is absent from drawer dirty state"),
     failures(incompleteCorrectiveDirty).includes("corrective action form does not report date and notes dirtiness"),
     failures(pendingAnomaly).includes("anomaly pending actions do not lock drawer dismissal"),
-    failures(rawAnomalyClose).includes("anomaly note lacks one discard boundary"),
+    failures(rawAnomalyClose).includes("anomaly note lacks one safe discard boundary"),
     failures(pendingIntegrity).includes("integrity pending actions do not lock drawer dismissal"),
     failures(duplicateEscape).includes("integrity must use only ParityDrawer's canonical escape/dismiss boundary"),
   ];
