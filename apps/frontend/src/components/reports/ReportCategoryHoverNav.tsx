@@ -22,9 +22,10 @@ export function ReportCategoryHoverNav() {
   });
   const categories = catalogQuery.data?.categories ?? [];
 
+  // CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR: no overflow-x-auto -- see CategoryHoverNav.tsx
   return (
-    <div className="overflow-x-auto border-b border-slate-200 bg-white px-2 py-1" data-testid="report-category-hover-nav">
-      <div className="flex min-w-max gap-3">
+    <div className="border-b border-slate-200 bg-white px-2 py-1" data-testid="report-category-hover-nav">
+      <div className="flex flex-wrap gap-3">
         {categories.map((category) => (
           <HoverDropdown
             key={category.id}

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import { checkEntityBadgeSingleSource } from "./verify-entity-badge-single-source.mjs";
+import { findOverflowClippedHoverDropdowns } from "./verify-no-overflow-clipped-hover-dropdown.mjs";
 
 function read(path) {
   return fs.readFileSync(path, "utf8");
@@ -127,6 +128,16 @@ try {
   });
   if (entityBadgeReasons.length) {
     throw new Error(`Entity badge single-source guard failed:\n${entityBadgeReasons.map((r) => `  • ${r}`).join("\n")}`);
+  }
+
+  // CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR: see verify-no-overflow-clipped-hover-dropdown.mjs
+  const clippedHoverDropdowns = findOverflowClippedHoverDropdowns();
+  if (clippedHoverDropdowns.length) {
+    throw new Error(
+      `Overflow-clipped HoverDropdown guard failed (flyout menu silently invisible):\n${clippedHoverDropdowns
+        .map((f) => `  • ${f}`)
+        .join("\n")}`
+    );
   }
 
   console.log("✅ UI regression guards passed");

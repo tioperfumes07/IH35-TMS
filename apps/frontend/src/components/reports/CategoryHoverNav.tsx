@@ -220,9 +220,13 @@ type Props = {
 
 export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
   const navigate = useNavigate();
+  // CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR: no overflow-x-auto here -- an
+  // overflow-x:auto ancestor forces overflow-y to clip too (CSS mixed-overflow rule), which
+  // hid every HoverDropdown flyout below the fold with zero visible error. flex-wrap keeps
+  // all 10 category tabs reachable without a scroll container that clips the dropdowns.
   return (
-    <div className="overflow-x-auto border-b border-slate-200 bg-white px-2 py-1">
-      <div className="flex min-w-max gap-3">
+    <div className="border-b border-slate-200 bg-white px-2 py-1">
+      <div className="flex flex-wrap gap-3">
         {CATEGORY_LABELS.map((category) => {
           const active = category.id === activeCategory;
           return (
