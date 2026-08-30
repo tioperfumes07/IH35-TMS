@@ -230,6 +230,20 @@ async function ensureLinkEntityExists(
     );
     return res.rows.length > 0;
   }
+  // DOC-01 D2 (owner 2026-08-29) — SAF-F10063: medical_card/background_check were added to
+  // SUPPORTED_LINK_ENTITY_TYPES + entityTypeSchema + entity-labels.ts's ENTITY_LABEL_SQL in the
+  // prior commit, but this function (the actual existence check the link-creation route calls)
+  // was missed — every link attempt for either type would have silently 404'd/failed here,
+  // falling through to the `return false` below despite the entity genuinely existing. Caught
+  // re-reading the file for the next DOC-01 slice, fixed before it shipped to any real caller.
+  if (entityType === "medical_card") {
+    const res = await client.query("SELECT id FROM safety.medical_cards WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
+  if (entityType === "background_check") {
+    const res = await client.query("SELECT id FROM safety.background_checks WHERE id = $1 AND operating_company_id = $2::uuid LIMIT 1", [entityId, operatingCompanyId]);
+    return res.rows.length > 0;
+  }
   return false;
 }
 
