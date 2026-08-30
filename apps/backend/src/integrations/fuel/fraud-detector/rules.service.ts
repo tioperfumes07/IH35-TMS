@@ -32,6 +32,11 @@ export type RuleMatch = {
   evidence: Record<string, unknown>;
 };
 
+type TankCapacityResolution = {
+  gallons: number;
+  source: "route_recommendation" | "fleet_default" | "fleet_default_route_source_unavailable";
+};
+
 export type TruckLocationSnapshot = {
   lat: number;
   lng: number;
@@ -231,7 +236,7 @@ async function fetchTankCapacityGal(
   operatingCompanyId: string,
   unitId: string | null,
   loadId: string | null
-): Promise<number | null> {
+): Promise<TankCapacityResolution> {
   if (loadId) {
     const exists = await client.query<{ ok: boolean }>(
       `SELECT to_regclass('fuel.route_recommendations') IS NOT NULL AS ok`
@@ -250,12 +255,22 @@ async function fetchTankCapacityGal(
         [operatingCompanyId, loadId]
       );
       if (routeRes.rows[0]?.fuel_capacity_gallons != null) {
-        return Number(routeRes.rows[0].fuel_capacity_gallons);
+        return {
+          gallons: Number(routeRes.rows[0].fuel_capacity_gallons),
+          source: "route_recommendation",
+        };
       }
+    } else {
+      return {
+        gallons: DEFAULT_TANK_CAPACITY_GAL,
+        source: "fleet_default_route_source_unavailable",
+      };
     }
   }
-  if (!unitId) return null;
-  return DEFAULT_TANK_CAPACITY_GAL;
+  return {
+    gallons: DEFAULT_TANK_CAPACITY_GAL,
+    source: "fleet_default",
+  };
 }
 
 async function fetchDutyStatusAtTime(
@@ -383,7 +398,8 @@ export async function evaluateTransactionRules(
     unitId,
     raw.load_id ? String(raw.load_id) : null
   );
-  const overflow = evaluateTankOverflow(txn, tankCapacity);
+  const overflow = evaluateTankOverflow(txn, tankCapacity.gallons);
+  if (overflow) overflow.evidence.tank_capacity_source = tankCapacity.source;
   if (overflow) matches.push(overflow);
 
   const dutyStatus = await fetchDutyStatusAtTime(client, txn.operating_company_id, txn.driver_id, txn.transaction_at);

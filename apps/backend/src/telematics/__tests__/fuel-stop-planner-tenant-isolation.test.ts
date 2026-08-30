@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { recommendFuelStopsForRecommendation } from "../fuel-stop-planner.service.js";
+import {
+  FuelPlannerSourceUnavailableError,
+  recommendFuelStopsForRecommendation,
+} from "../fuel-stop-planner.service.js";
 
 describe("fuel stop planner tenant isolation", () => {
   it("filters route context and stop lookup by operating_company_id", async () => {
@@ -40,5 +43,19 @@ describe("fuel stop planner tenant isolation", () => {
 
     const stops = calls.find((c) => c.sql.includes("FROM mdata.load_stops s"));
     expect(stops?.params[1]).toBe("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+  });
+
+  it("fails explicitly when the route recommendation source is unavailable", async () => {
+    const client = {
+      query: vi.fn(async () => ({ rows: [{ ok: false }] })),
+    };
+
+    await expect(
+      recommendFuelStopsForRecommendation(client, {
+        operating_company_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        recommendation_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      })
+    ).rejects.toBeInstanceOf(FuelPlannerSourceUnavailableError);
+    expect(client.query).toHaveBeenCalledTimes(1);
   });
 });
