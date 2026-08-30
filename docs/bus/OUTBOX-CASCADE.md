@@ -1,3 +1,5 @@
+CASCADE | FINDING | 50231 | home · SILENT-QUERY-FAILURE — DefaultHome 16 useQuery hooks zero isError rendering | GO
+CASCADE | FINDING | 50230 | home · SILENT-QUERY-FAILURE — OwnerHome 16 useQuery hooks zero isError rendering | GO
 CASCADE | FINDING | 50229 | reports · SILENT-QUERY-FAILURE — ReportsHome kpiQuery + frequentQuery + iftaQuery no isError rendering | GO
 CASCADE | FINDING | 50228 | finance · SILENT-QUERY-FAILURE — LiabilitiesHome 3 queries no isError rendering | GO
 CASCADE | FINDING | 50227 | legal · SILENT-QUERY-FAILURE — LegalLandingPage templatesQuery + contractsQuery no isError rendering | GO
