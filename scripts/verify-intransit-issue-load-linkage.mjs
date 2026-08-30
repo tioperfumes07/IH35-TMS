@@ -23,6 +23,7 @@ function audit(s) {
   if (!/i\.operating_company_id = \$1::uuid/.test(s.service) || !/operating_company_id, load_id, driver_id, unit_id/.test(s.service)) failures.push("writer/list explicit company scope missing");
   if (!/WHERE id = \$1 AND operating_company_id = \$2::uuid AND soft_deleted_at IS NULL/.test(s.service)) failures.push("writer must validate active tenant load FK");
   if (!/FROM mdata\.loads l[\s\S]*d\.identity_user_id = \$1::uuid[\s\S]*d\.id IN \(l\.assigned_primary_driver_id, l\.assigned_secondary_driver_id\)[\s\S]*WHERE l\.id = \$2::uuid/.test(s.driverRoute)) failures.push("driver issue writer must derive company and driver from the assigned load");
+  if (!/l\.operating_company_id = d\.operating_company_id[\s\S]{0,220}FROM mdata\.driver_company_authorizations issue_driver_dca[\s\S]{0,180}issue_driver_dca\.driver_id = d\.id[\s\S]{0,140}issue_driver_dca\.company_id = l\.operating_company_id[\s\S]{0,140}issue_driver_dca\.is_authorized = true[\s\S]{0,140}issue_driver_dca\.deactivated_at IS NULL/.test(s.driverRoute)) failures.push("driver issue writer must prove the caller's driver is authorized for the load company");
   if (!/set_config\('app\.operating_company_id', \$1::text, true\)[\s\S]*assignment\.operating_company_id/.test(s.driverRoute)) failures.push("driver issue writer must set exact load-company RLS scope");
   if (!/\[\["operating_company_id"\], assignment\.operating_company_id\]/.test(s.driverRoute)) failures.push("driver issue insert must stamp explicit canonical company");
   if (!/const inserted = insertedRes\.rows\[0\];[\s\S]{0,180}if \(!inserted\)[\s\S]{0,180}error: "intransit_issue_create_failed"[\s\S]{0,180}appendCrudAudit/.test(s.driverRoute)) failures.push("driver issue writer must reject a zero-row insert before audit/outbox success");
@@ -46,6 +47,7 @@ if (process.argv.includes("--selftest")) {
     ["scope", "service", /i\.operating_company_id = \$1::uuid/g, "TRUE"],
     ["writer", "service", /operating_company_id, load_id, driver_id, unit_id/, "load_id, driver_id, unit_id"],
     ["driver-assignment", "driverRoute", /d\.id IN \(l\.assigned_primary_driver_id, l\.assigned_secondary_driver_id\)/, "d.id = l.assigned_primary_driver_id"],
+    ["driver-company-authorization", "driverRoute", /issue_driver_dca\.company_id = l\.operating_company_id/, "issue_driver_dca.company_id = d.operating_company_id"],
     ["driver-rls-scope", "driverRoute", /set_config\('app\.operating_company_id', \$1::text, true\)/, "set_config('app.unscoped', $1::text, true)"],
     ["driver-company-stamp", "driverRoute", /\[\["operating_company_id"\], assignment\.operating_company_id\]/, '[["operating_company_id"], null]'],
     ["driver-create-identity", "driverRoute", /error: "intransit_issue_create_failed"/, 'error: "removed"'],
