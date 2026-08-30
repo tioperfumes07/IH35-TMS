@@ -244,6 +244,9 @@
       "tab": "Property Tax",
       "sub": "Property tax renditions list",
       "route_hint": "/compliance/property-tax",
+      "owned_surface_paths": [
+        "pages/compliance/PropertyTaxRenditionPage.tsx"
+      ],
       "required": [
         "connectivity",
         "reverse_link"
@@ -308,6 +311,9 @@
       "tab": "Fuel hop",
       "sub": "Fuel compliance panel",
       "route_hint": "/fuel/compliance",
+      "owned_surface_paths": [
+        "pages/driver/FuelReceiptPage.tsx"
+      ],
       "required": []
     },
     {

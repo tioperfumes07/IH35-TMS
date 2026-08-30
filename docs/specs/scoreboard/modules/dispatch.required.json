@@ -211,6 +211,9 @@
       "tab": "Home",
       "sub": "Load Board \u00b7 List / Table",
       "route_hint": "/dispatch?view=list",
+      "owned_surface_paths": [
+        "components/dispatch/FilterBar.tsx"
+      ],
       "required": [
         "driver",
         "customer",
@@ -540,6 +543,9 @@
       "tab": "Documents",
       "sub": "POD Review + BOL",
       "route_hint": "/dispatch/pod-review",
+      "owned_surface_paths": [
+        "pages/Documents.tsx"
+      ],
       "required": [
         "driver",
         "load",
@@ -614,6 +620,9 @@
       "tab": "Misc",
       "sub": "Border geofence history",
       "route_hint": "/dispatch/borders/geofence-history",
+      "owned_surface_paths": [
+        "pages/operations/GeofencesPage.tsx"
+      ],
       "required": [
         "connectivity"
       ]
@@ -713,6 +722,9 @@
       "tab": "Load detail",
       "sub": "Drawer \u00b7 Documents",
       "route_hint": "/dispatch/loads/:id?tab=Documents",
+      "owned_surface_paths": [
+        "components/documents/DocumentsTab.tsx"
+      ],
       "required": [
         "load",
         "connectivity",
@@ -725,6 +737,9 @@
       "tab": "Load detail",
       "sub": "Drawer \u00b7 Factoring",
       "route_hint": "/dispatch/loads/:id?tab=Factoring",
+      "owned_surface_paths": [
+        "components/dispatch/tabs/FactoringTab.tsx"
+      ],
       "required": [
         "customer",
         "load",
@@ -985,7 +1000,9 @@
       "surface_kind": "wizard",
       "surface_path": "pages/dispatch/BorderCrossingWizardPage.tsx",
       "owned_surface_paths": [
-        "components/driver-profile/BorderCredentialsSection.tsx"
+        "components/driver-profile/BorderCredentialsSection.tsx",
+        "components/border-crossing/WizardStep2.tsx",
+        "components/border-crossing/WizardStep4.tsx"
       ],
       "required": [
         "connectivity",

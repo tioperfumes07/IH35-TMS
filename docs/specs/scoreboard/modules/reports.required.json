@@ -663,6 +663,9 @@
       "tab": "Geofence dwell",
       "sub": "Site dwell windows",
       "route_hint": "/reports/geofence-dwell",
+      "owned_surface_paths": [
+        "pages/reports/GeofenceDwellReport.tsx"
+      ],
       "required": [
         "driver",
         "unit",

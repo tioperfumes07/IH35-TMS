@@ -27,6 +27,9 @@ const ALLOWED_NESTED = new Set([
 
 /** Combobox hosts owned by an existing matrix leaf (page/section nests). */
 const FILE_OWNED_BY_LEAF = {
+  "components/drivers/DriverCommunicationsTab.tsx": "profiles.detail",
+  "components/fleet/BulkActionBar.tsx": "roster.bulk.status",
+  "components/safety/DriverSafetyCards.tsx": "driver_files.list",
   "components/accounting/JournalEntryTypePicker.tsx": "catalog.accounting.journal_entry_types.create",
   "components/border-crossing/WizardStep2.tsx": "dispatch.wizard.border_crossing_wizard_page",
   "components/border-crossing/WizardStep4.tsx": "dispatch.wizard.border_crossing_wizard_page",
@@ -42,6 +45,8 @@ const FILE_OWNED_BY_LEAF = {
   "pages/factoring/FactorAdmin.tsx": "factors.admin",
   "pages/factoring/ReserveDashboard.tsx": "reserves.dashboard",
   "pages/factoring/ReserveTracker.tsx": "home.reserve_tracker",
+  "pages/fuel/FuelPlannerHome.tsx": "planner",
+  "pages/insurance/PoliciesList.tsx": "policies.list",
   "pages/inventory/InventoryPartsStockPage.tsx": "parts.roster",
   "pages/maintenance/WorkOrderDetailPage.tsx": "maintenance.modal.work_order_detail",
   "pages/maintenance/components/CreateWOSectionIdentification.tsx": "maintenance.modal.create_work_order",
@@ -49,6 +54,13 @@ const FILE_OWNED_BY_LEAF = {
   "pages/maintenance/inspections/InspectionsPage.tsx": "inspections.create",
   "pages/operations/GeofencesPage.tsx": "misc.geofence_history",
   "pages/reports/GeofenceDwellReport.tsx": "report.geofence_dwell",
+  "pages/safety/CSAMitigationQueue.tsx": "csa_score.list",
+  "pages/safety/PositionHistoryPage.tsx": "position_history.list",
+  "pages/safety/anomaly/AnomalyDashboard.tsx": "anomaly_alerts.list",
+  "pages/safety/audit-425c/Audit425cPage.tsx": "audit_425c.list",
+  "pages/safety/expiry-tracking/ExpiryDashboard.tsx": "cert_expiry.list",
+  "pages/safety/tabs/DrugAlcoholTab.tsx": "drug_alcohol.list",
+  "pages/safety/tabs/SafetyHomeTab.tsx": "home",
   "pages/safety/components/FineLifecycleActions.tsx": "external_fines.list",
   "pages/work-orders/WorkOrdersConsoleDetailPage.tsx": "wo.console.list",
 };
@@ -72,17 +84,31 @@ function isComboboxHost(src) {
 function loadInventory() {
   const surfacePaths = new Set();
   const leafIds = new Set();
+  const leafById = new Map();
   const dir = path.join(ROOT, "docs/specs/scoreboard/modules");
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith(".required.json")) continue;
     const j = JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
     for (const leaf of j.leaves || []) {
       if (!leaf || typeof leaf !== "object") continue;
-      if (leaf.id) leafIds.add(String(leaf.id));
+      if (leaf.id) {
+        leafIds.add(String(leaf.id));
+        const id = String(leaf.id);
+        leafById.set(id, [...(leafById.get(id) || []), leaf]);
+      }
       if (leaf.surface_path) surfacePaths.add(String(leaf.surface_path).replace(/\\/g, "/"));
+      for (const owned of leaf.owned_surface_paths || []) {
+        surfacePaths.add(String(owned).replace(/\\/g, "/"));
+      }
     }
   }
-  return { surfacePaths, leafIds };
+  return { surfacePaths, leafIds, leafById };
+}
+
+function leafOwnsPath(leaf, rel) {
+  if (!leaf) return false;
+  if (String(leaf.surface_path || "").replace(/\\/g, "/") === rel) return true;
+  return (leaf.owned_surface_paths || []).some((owned) => String(owned).replace(/\\/g, "/") === rel);
 }
 
 export function collectComboboxHosts(listFiles = () => walk(FE)) {
@@ -113,6 +139,8 @@ export function audit(hosts = collectComboboxHosts(), inv = loadInventory()) {
       const owner = FILE_OWNED_BY_LEAF[rel];
       if (!inv.leafIds.has(owner)) {
         failures.push(`${rel}: FILE_OWNED_BY_LEAF → ${owner} but leaf missing from required.json`);
+      } else if (inv.leafById && !(inv.leafById.get(owner) || []).some((leaf) => leafOwnsPath(leaf, rel))) {
+        failures.push(`${rel}: FILE_OWNED_BY_LEAF → ${owner} but neither surface_path nor owned_surface_paths includes ${rel}`);
       }
       continue;
     }
@@ -131,6 +159,17 @@ if (process.argv.includes("--selftest")) {
       "catalog.accounting.journal_entry_types.create",
       "docs.pod",
       "external_fines.list",
+      "home",
+    ]),
+    leafById: new Map([
+      ["catalog.accounting.journal_entry_types.create", [{ owned_surface_paths: ["components/accounting/JournalEntryTypePicker.tsx"] }]],
+      [
+        "home",
+        [
+          { surface_path: "pages/home/HomePage.tsx" },
+          { owned_surface_paths: ["pages/safety/tabs/SafetyHomeTab.tsx"] },
+        ],
+      ],
     ]),
   };
   if (audit(["components/documents/UploadModal.tsx"], inv).length) {
@@ -139,6 +178,10 @@ if (process.argv.includes("--selftest")) {
   }
   if (audit(["components/accounting/JournalEntryTypePicker.tsx"], inv).length) {
     console.error(`${LABEL} SELFTEST FAIL — FILE_OWNED_BY_LEAF rejected`);
+    process.exit(1);
+  }
+  if (audit(["pages/safety/tabs/SafetyHomeTab.tsx"], inv).length) {
+    console.error(`${LABEL} SELFTEST FAIL — duplicate leaf id exact owner rejected`);
     process.exit(1);
   }
   if (!audit(["pages/ghost/GhostCombobox.tsx"], inv).length) {

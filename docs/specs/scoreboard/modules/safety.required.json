@@ -160,6 +160,18 @@
   ],
   "leaves": [
     {
+      "id": "home",
+      "tab": "Home",
+      "sub": "Safety home",
+      "route_hint": "/safety/home",
+      "surface_kind": "tab",
+      "surface_path": "pages/safety/tabs/SafetyHomeTab.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "economics.invariants",
       "tab": "Safety",
       "sub": "USMCA ledger invariants C25\u2013C31",
@@ -179,6 +191,9 @@
       "tab": "Driver Files",
       "sub": "Roster / DQ file",
       "route_hint": "/safety/driver-files",
+      "owned_surface_paths": [
+        "components/safety/DriverSafetyCards.tsx"
+      ],
       "required": [
         "driver",
         "connectivity",
@@ -190,6 +205,9 @@
       "tab": "Drug & Alcohol",
       "sub": "Tests & results",
       "route_hint": "/safety/drug-alcohol",
+      "owned_surface_paths": [
+        "pages/safety/tabs/DrugAlcoholTab.tsx"
+      ],
       "required": [
         "driver",
         "connectivity",
@@ -317,6 +335,9 @@
       "tab": "CSA Score",
       "sub": "CSA",
       "route_hint": "/safety/csa-score",
+      "owned_surface_paths": [
+        "pages/safety/CSAMitigationQueue.tsx"
+      ],
       "required": [
         "connectivity"
       ]
@@ -336,6 +357,9 @@
       "tab": "Cert Expiry",
       "sub": "Expiry dashboard",
       "route_hint": "/safety/cert-expiry",
+      "owned_surface_paths": [
+        "pages/safety/expiry-tracking/ExpiryDashboard.tsx"
+      ],
       "required": [
         "connectivity"
       ]
@@ -517,6 +541,9 @@
       "tab": "External Fines",
       "sub": "List",
       "route_hint": "/safety/external-fines",
+      "owned_surface_paths": [
+        "pages/safety/components/FineLifecycleActions.tsx"
+      ],
       "required": [
         "driver",
         "connectivity"
@@ -575,6 +602,9 @@
       "tab": "Anomaly Alerts",
       "sub": "Critical alert list",
       "route_hint": "/safety/anomaly-alerts",
+      "owned_surface_paths": [
+        "pages/safety/anomaly/AnomalyDashboard.tsx"
+      ],
       "required": [
         "connectivity"
       ]
@@ -615,6 +645,9 @@
       "tab": "Position History",
       "sub": "History",
       "route_hint": "/safety/position-history",
+      "owned_surface_paths": [
+        "pages/safety/PositionHistoryPage.tsx"
+      ],
       "required": [
         "unit",
         "connectivity"
@@ -625,6 +658,9 @@
       "tab": "425C Audit Trail",
       "sub": "425C",
       "route_hint": "/safety/audit-425c",
+      "owned_surface_paths": [
+        "pages/safety/audit-425c/Audit425cPage.tsx"
+      ],
       "required": [
         "connectivity"
       ]

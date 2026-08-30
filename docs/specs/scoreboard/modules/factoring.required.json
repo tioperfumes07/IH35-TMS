@@ -189,6 +189,9 @@
       "tab": "Reserve Tracker",
       "sub": "Reserve balance movements",
       "route_hint": "/factoring/reserve-tracker",
+      "owned_surface_paths": [
+        "pages/factoring/ReserveTracker.tsx"
+      ],
       "required": [
         "load",
         "connectivity"
@@ -303,6 +306,9 @@
       "tab": "Factor admin",
       "sub": "Factors + customer assignment + LOR",
       "route_hint": "/factoring/factors",
+      "owned_surface_paths": [
+        "pages/factoring/FactorAdmin.tsx"
+      ],
       "required": [
         "customer",
         "picker_law",
@@ -316,6 +322,9 @@
       "tab": "Reserves dashboard",
       "sub": "Reserve dashboard summary",
       "route_hint": "/factoring/reserves",
+      "owned_surface_paths": [
+        "pages/factoring/ReserveDashboard.tsx"
+      ],
       "required": [
         "connectivity"
       ]

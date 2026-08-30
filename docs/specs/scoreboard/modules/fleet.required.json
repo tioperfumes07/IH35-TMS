@@ -293,6 +293,9 @@
       "tab": "Roster",
       "sub": "Bulk \u00b7 Change Status",
       "route_hint": "/fleet",
+      "owned_surface_paths": [
+        "components/fleet/BulkActionBar.tsx"
+      ],
       "required": [
         "unit",
         "trailer",

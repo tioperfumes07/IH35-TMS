@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["safety"],"cols":["connectivity","qbo_chrome"],"leaves":["home"],"task":"SAFETY-F6490-HOME-ACTIVE-DRIVER-WINDOW","vertical":"class-sweep"} */
 /** SAFETY-F6490 — Safety Home activity window uses shared Combobox chrome. */
 import fs from "node:fs";
 import path from "node:path";
