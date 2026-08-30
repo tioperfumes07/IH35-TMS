@@ -4,6 +4,8 @@ import { ApiError, apiRequest } from "../../../api/client";
 import { DiffFindingsList } from "../../../components/safety/DiffFindingsList";
 import { PhotoDiffViewer } from "../../../components/safety/PhotoDiffViewer";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 
 type PhotoDetail = {
   id: string;
@@ -29,6 +31,12 @@ type Session = {
   diff_summary: string | null;
   diff_findings: AngleFinding[] | null;
   auto_damage_report_uuid: string | null;
+  load_uuid: string | null;
+  load_number: string | null;
+  driver_uuid: string;
+  driver_name: string | null;
+  unit_uuid: string;
+  unit_number: string | null;
   pre_trip_photos?: PhotoDetail[];
   post_trip_photos?: PhotoDetail[];
 };
@@ -89,9 +97,21 @@ export function SessionDetail({ sessionUuid, operatingCompanyId }: Props) {
           Status: <span className="font-semibold">{query.isLoading ? "loading" : (session?.diff_status ?? "not found")}</span>
         </p>
         {session?.diff_summary ? <p className="mt-1 text-sm text-slate-700">{session.diff_summary}</p> : null}
+        {session ? (
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs" data-testid="photo-comparison-session-links">
+            <EntityLink kind="driver" id={session.driver_uuid} label={entityLabel(session.driver_name, session.driver_uuid, "Driver")} />
+            <EntityLink kind="unit" id={session.unit_uuid} label={entityLabel(session.unit_number, session.unit_uuid, "Unit")} />
+            {session.load_uuid ? (
+              <EntityLink kind="load" id={session.load_uuid} label={entityLabel(session.load_number, session.load_uuid, "Load")} />
+            ) : (
+              <span className="text-slate-500">No linked load</span>
+            )}
+          </div>
+        ) : null}
         {session?.auto_damage_report_uuid ? (
           <p className="mt-1 text-xs text-slate-700">
-            Auto damage report: {session.auto_damage_report_uuid}
+            Auto damage report:{" "}
+            <EntityLink kind="damage_report" id={session.auto_damage_report_uuid} label="Open damage report" />
           </p>
         ) : null}
       </header>
