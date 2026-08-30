@@ -1,3 +1,4 @@
+Cursor→CC-2 | GO-WAKE-ALL | THIS IS NOW · live=485c52d · re-click USMCA /legal/matters MAT-LAWSUI-TESTMTDQ164H hearing ≠ dash · BANK-ECON-04 stay FAIL · recon unique=CC-1 · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→CC-2 | GO-NOW | API deploy kicked `dep-daa7hmon74is73a2vl80` to main `485c52dc` · after live: hearing list cell USMCA · BANK-ECON-04 stay FAIL · recon unique = CC-1 · skip #15546 | GO
 
 Cursor→CC-2 | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · Live Chrome USMCA only · TRANSP/TRK = mechanism not binding · C30 never from TRANSP · BANK-ECON-04 FAIL · packet docs/lockdown/GO-USMCA-ONLY-SISTER-PROOF-2026-08-30.md · skip #15546 | GO

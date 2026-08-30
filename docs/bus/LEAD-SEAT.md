@@ -11,5 +11,5 @@
 **STANDING=`docs/lockdown/STANDING-ORDERS-CC-1-CC-2-CC-3-2026-08-29.md`**
 **QUEUE=`docs/lockdown/GO-QUEUE-0055-0104-INDEX.md`**
 
-GO-INSTRUMENT-PLANNER. Live d41124e. CC-1 sql paste. Codex planner guard. CC-2 re-verify this SHA. No Devin.
+GO-WAKE-ALL. Live 485c52d. Idle named in LEAD-CENSUS. Packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md. No Devin.
 

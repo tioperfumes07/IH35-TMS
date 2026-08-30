@@ -1,3 +1,4 @@
+Cursor→self | GO-WAKE-ALL | THIS IS NOW · live=485c52d · census IDLE CC-1 · STALE CC-2/Codex · WRONG QUEUE Cascade · packet docs/lockdown/GO-WAKE-ALL-2026-08-30.md · skip #15546 | GO
 Cursor→self | GO-NOW | DOM #18286 on main · leftover drain USMCA · secret SET by Cursor 18:34Z · API dep-daa7hmon74is73a2vl80 · skip #15546 | GO
 
 Cursor→self | GO-USMCA-ONLY-SISTER-PROOF | THIS IS NOW · USMCA only · MECHANISM not BINDING · LAW-8 · no posting flip · skip #15546 | GO
