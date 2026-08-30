@@ -5,7 +5,11 @@ const FILE = "apps/backend/src/insurance/lawsuit.routes.ts";
 const source = fs.readFileSync(FILE, "utf8");
 
 function failures(candidate) {
-  const route = candidate.slice(candidate.indexOf('/api/v1/insurance/lawsuits"'));
+  const routeStart = candidate.indexOf('app.post(\n    "/api/v1/insurance/lawsuits"');
+  const nextRoute = routeStart < 0
+    ? -1
+    : candidate.indexOf('app.patch("/api/v1/insurance/lawsuits/:id"', routeStart);
+  const route = routeStart < 0 || nextRoute < 0 ? "" : candidate.slice(routeStart, nextRoute);
   const checks = [
     ["creator limiter", /insurance\/lawsuits"[\s\S]{0,160}rateLimit:\s*\{\s*max:\s*60,\s*timeWindow:\s*"1 minute"/],
     ["insert identity", /const lawsuit = result\.rows\[0\][\s\S]{0,100}if \(!lawsuit\?\.id\) throw new Error\("insurance_lawsuit_insert_failed"\)/],
@@ -24,7 +28,7 @@ if (problems.length) {
 
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    ['{ config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', ""],
+    ['"/api/v1/insurance/lawsuits",\n    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },', '"/api/v1/insurance/lawsuits",\n    { config: {} },'],
     ['if (!lawsuit?.id) throw new Error("insurance_lawsuit_insert_failed");', ""],
     ['"insurance.lawsuit.created"', '"insurance.lawsuit.missing"'],
     ["resource_id: lawsuit.id", 'resource_id: ""'],
