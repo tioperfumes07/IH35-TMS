@@ -16,7 +16,7 @@ import {
   getDispatchDashboard,
   getOcrIntakeQueue,
   getPodDocuments,
-  listAtRiskDispatchLoads,
+  listAtRiskOrLateDispatchLoads,
   listDispatchAssignmentHistory,
   listLateArrivalDispatchLoads,
   listLoadTemplates,
@@ -456,7 +456,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
       },
       {
         queryKey: ["dispatch-subnav", "at-risk", operatingCompanyId],
-        queryFn: () => listAtRiskDispatchLoads(operatingCompanyId),
+        queryFn: () => listAtRiskOrLateDispatchLoads(operatingCompanyId),
         enabled,
         refetchInterval: 60_000,
       },
@@ -538,7 +538,7 @@ export function DispatchSubnav({ operatingCompanyId }: Props) {
           : null,
       at_risk:
         enabled && !atRiskQ.isLoading && !atRiskQ.isError
-          ? (atRiskQ.data?.loads?.length ?? 0)
+          ? (atRiskQ.data?.count ?? 0)
           : null,
       detention:
         enabled && !detentionQ.isLoading && !detentionQ.isError

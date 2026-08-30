@@ -8,12 +8,11 @@ import { apiRequest } from "../../api/client";
 import {
   getDetentionBoard,
   getDispatchDashboard,
-  listAtRiskDispatchLoads,
+  listAtRiskOrLateDispatchLoads,
   listAllDispatchLoads,
   listDispatchLoads,
-  listLateArrivalDispatchLoads,
   listUnitsWithoutLoad,
-  type AtRiskLoadRow,
+  type DispatchAlertLoadRow,
   type DetentionBoardEvent,
   type DispatchLoad,
   type UnitsWithoutLoad,
@@ -197,16 +196,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     refetchInterval: 60_000,
   });
 
-  const atRiskQ = useQuery({
-    queryKey: ["dispatch", "overview", "at-risk", operatingCompanyId],
-    queryFn: () => listAtRiskDispatchLoads(operatingCompanyId),
-    enabled,
-    refetchInterval: 60_000,
-  });
-
-  const lateQ = useQuery({
-    queryKey: ["dispatch", "overview", "late-arrivals", operatingCompanyId],
-    queryFn: () => listLateArrivalDispatchLoads(operatingCompanyId),
+  const atRiskLateQ = useQuery({
+    queryKey: ["dispatch", "overview", "at-risk-or-late", operatingCompanyId],
+    queryFn: () => listAtRiskOrLateDispatchLoads(operatingCompanyId),
     enabled,
     refetchInterval: 60_000,
   });
@@ -272,9 +264,9 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
     [unitsWithoutLoad]
   );
 
-  const atRiskCount = atRiskQ.data?.loads?.length ?? 0;
-  const lateCount = lateQ.data?.count ?? 0;
-  const atRiskLateTotal = atRiskCount + lateCount;
+  const atRiskCount = atRiskLateQ.data?.at_risk_count ?? 0;
+  const lateCount = atRiskLateQ.data?.late_count ?? 0;
+  const atRiskLateTotal = atRiskLateQ.data?.count ?? 0;
 
   const oosLoads = useMemo(
     () => (oosLoadsQ.data?.loads ?? []).filter((load) => load.is_dispatch_blocked),
@@ -282,7 +274,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
   );
 
   const exposureLoads = exposureLoadsQ.data?.loads ?? [];
-  const atRiskLoads = atRiskQ.data?.loads ?? [];
+  const atRiskLoads = atRiskLateQ.data?.loads ?? [];
   const detentionEvents = detentionQ.data?.events ?? [];
   const borderEvents = borderQ.data?.data ?? [];
 
@@ -307,7 +299,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <KpiCard
           label="At-risk / late"
           value={
-            atRiskQ.isLoading || lateQ.isLoading || atRiskQ.isError || lateQ.isError ? "—" : atRiskLateTotal
+            atRiskLateQ.isLoading || atRiskLateQ.isError ? "—" : atRiskLateTotal
           }
           hint={atRiskLateTotal > 0 ? `${atRiskCount} at-risk · ${lateCount} late` : "none flagged"}
           to="/dispatch/at-risk"
@@ -390,15 +382,15 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
           )}
         </DataPanel>
 
-        <DataPanel title="At-Risk queue" viewAllHref="/dispatch/at-risk" accentColor={colors.crit.strong}>
-          {atRiskQ.isLoading ? (
+        <DataPanel title="At-risk / late loads" viewAllHref="/dispatch/at-risk" accentColor={colors.crit.strong}>
+          {atRiskLateQ.isLoading ? (
             <PanelLoading />
-          ) : atRiskQ.isError ? (
-            PanelError("Couldn't load at-risk loads.", () => void atRiskQ.refetch())
+          ) : atRiskLateQ.isError ? (
+            PanelError("Couldn't load at-risk or late loads.", () => void atRiskLateQ.refetch())
           ) : atRiskLoads.length === 0 ? (
-            PanelEmpty("No at-risk loads right now.")
+            PanelEmpty("No at-risk or late loads right now.")
           ) : (
-            atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: AtRiskLoadRow) => (
+            atRiskLoads.slice(0, PANEL_ROW_LIMIT).map((load: DispatchAlertLoadRow) => (
               <PanelRow
                 key={load.id}
                 unit={<EntityLinkOrTombstone kind="unit" id={load.unit_id} name={load.unit_number} noun="Unit" />}

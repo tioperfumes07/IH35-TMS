@@ -870,6 +870,47 @@ export function listLateArrivalDispatchLoads(operatingCompanyId: string) {
   );
 }
 
+export type DispatchAlertLoadRow = AtRiskLoadRow & {
+  is_at_risk: boolean;
+  is_late: boolean;
+};
+
+/**
+ * Exact load set behind the combined At-risk / late KPI and drill surface.
+ * A load may satisfy both signals; its canonical load id is counted once.
+ */
+export async function listAtRiskOrLateDispatchLoads(operatingCompanyId: string) {
+  const [atRisk, late] = await Promise.all([
+    listAtRiskDispatchLoads(operatingCompanyId),
+    listLateArrivalDispatchLoads(operatingCompanyId),
+  ]);
+  const loadsById = new Map<string, DispatchAlertLoadRow>();
+
+  for (const load of atRisk.loads) {
+    loadsById.set(load.id, { ...load, is_at_risk: true, is_late: false });
+  }
+  for (const load of late.loads) {
+    const existing = loadsById.get(load.id);
+    loadsById.set(load.id, {
+      ...(existing ?? {
+        ...load,
+        delivery_city: load.next_stop_city,
+        delivery_state: load.next_stop_state,
+        is_at_risk: false,
+      }),
+      is_late: true,
+    });
+  }
+
+  return {
+    loads: [...loadsById.values()],
+    count: loadsById.size,
+    at_risk_count: atRisk.loads.length,
+    late_count: late.loads.length,
+    grace_minutes: late.grace_minutes,
+  };
+}
+
 export type DispatchIntransitIssueRow = {
   id: string;
   load_id: string | null;

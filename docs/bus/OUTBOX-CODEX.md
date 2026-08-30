@@ -1,3 +1,4 @@
+CODEX | WORKING | GO-APP-DEFECT-01 | FINDING=DSP-F7371 | NOW=DISP-01 A2+A3 canonical alert set + deduped KPI/drill | guard=PASS+selftest14/14 | NEXT=FAST-MERGE then DISP-01 A1 | GO
 CODEX | WORKING | GO-PENDING-01 | FINDING=DSP-F7364 | NOW=geofence-timeline-uuid-parser | NEXT=FAST-MERGE | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=FUEL-F7361 | NOW=repair-idempotency-timestamp-mutation | NEXT=fuel write-role selftest | GO
 CODEX | WORKING | GO-MODAL-01 | FINDING=FUEL-F7360 | NOW=repair-create-lifecycle-selftest-label-contract | NEXT=fuel recommendation idempotency | GO

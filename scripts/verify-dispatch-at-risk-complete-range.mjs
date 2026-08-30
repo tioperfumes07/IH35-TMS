@@ -5,6 +5,9 @@ import path from "node:path";
 
 const root = process.cwd();
 const service = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/arch-tabs.service.ts"), "utf8");
+const lateService = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/late-arrivals.service.ts"), "utf8");
+const statuses = fs.readFileSync(path.join(root, "apps/backend/src/dispatch/dispatch-alert-statuses.ts"), "utf8");
+const api = fs.readFileSync(path.join(root, "apps/frontend/src/api/dispatch.ts"), "utf8");
 const page = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/AtRiskQueuePage.tsx"), "utf8");
 const overview = fs.readFileSync(path.join(root, "apps/frontend/src/pages/dispatch/DispatchOverview.tsx"), "utf8");
 const subnav = fs.readFileSync(path.join(root, "apps/frontend/src/components/dispatch/DispatchSubnav.tsx"), "utf8");
@@ -13,12 +16,16 @@ function subject(source) {
   return source.slice(source.indexOf("export async function listAtRiskLoads"), source.indexOf("export async function listIntransitIssues"));
 }
 
-function failures(serviceSource, pageSource, overviewSource, subnavSource) {
+function failures(serviceSource, lateServiceSource, statusesSource, apiSource, pageSource, overviewSource, subnavSource) {
   const found = [];
   const query = subject(serviceSource);
   if (!query.includes("views.dispatch_load_with_driver_status l")) found.push("canonical dispatch source missing");
   if (!query.includes("l.operating_company_id = $1::uuid") || !query.includes("l.soft_deleted_at IS NULL")) found.push("company/active scope missing");
-  if (!query.includes("l.status = 'in_transit'")) found.push("in-transit scope missing");
+  for (const status of ["dispatched", "at_pickup", "in_transit", "at_delivery"]) {
+    if (!statusesSource.includes(`"${status}"`)) found.push(`shared active status missing: ${status}`);
+  }
+  if (!query.includes("l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})")) found.push("at-risk does not use shared active statuses");
+  if (!lateServiceSource.includes("l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})")) found.push("late arrivals do not use shared active statuses");
   if (!/LEFT JOIN mdata\.customers c ON c\.id = l\.customer_id[\s\S]{0,100}c\.operating_company_id = l\.operating_company_id/.test(query)) found.push("customer label join can eliminate the canonical load");
   if (!/COALESCE\(c\.customer_name, mdata\.resolve_customer_label_same_company\(l\.customer_id, l\.operating_company_id\)\) AS customer_name/.test(query)) found.push("historical customer label fallback missing");
   if (!/mdata\.resolve_driver_label_same_company\(l\.assigned_primary_driver_id, l\.operating_company_id\)[\s\S]{0,80}AS driver_name/.test(query)) found.push("historical driver label fallback missing");
@@ -29,23 +36,32 @@ function failures(serviceSource, pageSource, overviewSource, subnavSource) {
   for (const [kind, field] of [["load", "load.id"], ["customer", "load.customer_id"], ["driver", "load.driver_id"], ["unit", "load.unit_id"]]) {
     if (!pageSource.includes(`kind="${kind}"`) || !pageSource.includes(field)) found.push(`${kind} EntityLink missing`);
   }
-  if (!overviewSource.includes("listAtRiskDispatchLoads(operatingCompanyId)")) found.push("overview consumer missing");
-  if (!subnavSource.includes("listAtRiskDispatchLoads(operatingCompanyId)")) found.push("subnav consumer missing");
+  if (!apiSource.includes("const loadsById = new Map<string, DispatchAlertLoadRow>()") || !apiSource.includes("loadsById.set(load.id")) found.push("canonical-id alert union missing");
+  if (!apiSource.includes("count: loadsById.size")) found.push("deduplicated alert count missing");
+  if (!pageSource.includes("listAtRiskOrLateDispatchLoads(companyId)")) found.push("drill page does not consume exact combined set");
+  if (!overviewSource.includes("listAtRiskOrLateDispatchLoads(operatingCompanyId)")) found.push("overview combined consumer missing");
+  if (!overviewSource.includes("atRiskLateQ.data?.count")) found.push("overview KPI does not use deduplicated count");
+  if (!subnavSource.includes("listAtRiskOrLateDispatchLoads(operatingCompanyId)")) found.push("subnav combined consumer missing");
   return found;
 }
 
 if (process.argv.includes("--selftest")) {
   const capped = service.replace("ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC", "ORDER BY sp.scheduled_arrival_at NULLS LAST, l.created_at DESC\n        LIMIT 100");
   const mutations = [
-    [capped, page, overview, subnav],
-    [service.replace("l.operating_company_id = $1::uuid", "true"), page, overview, subnav],
-    [service, page.replace('kind="customer"', 'kind="removed"'), overview, subnav],
-    [service, page, overview, subnav.replace("listAtRiskDispatchLoads(operatingCompanyId)", "Promise.resolve({ loads: [] })")],
-    [service.replace("AND soft_deleted_at IS NULL", "AND TRUE"), page, overview, subnav],
-    [service.replace(/AND soft_deleted_at IS NULL/g, "AND TRUE"), page, overview, subnav],
-    [service.replace("LEFT JOIN mdata.customers c", "JOIN mdata.customers c"), page, overview, subnav],
-    [service.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"), page, overview, subnav],
-    [service.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"), page, overview, subnav],
+    [capped, lateService, statuses, api, page, overview, subnav],
+    [service.replace("l.operating_company_id = $1::uuid", "true"), lateService, statuses, api, page, overview, subnav],
+    [service, lateService, statuses, api, page.replace('kind="customer"', 'kind="removed"'), overview, subnav],
+    [service, lateService, statuses, api, page, overview, subnav.replace("listAtRiskOrLateDispatchLoads(operatingCompanyId)", "Promise.resolve({ loads: [], count: 0 })")],
+    [service.replace("AND soft_deleted_at IS NULL", "AND TRUE"), lateService, statuses, api, page, overview, subnav],
+    [service.replace(/AND soft_deleted_at IS NULL/g, "AND TRUE"), lateService, statuses, api, page, overview, subnav],
+    [service.replace("LEFT JOIN mdata.customers c", "JOIN mdata.customers c"), lateService, statuses, api, page, overview, subnav],
+    [service.replace("mdata.resolve_customer_label_same_company(l.customer_id, l.operating_company_id)", "NULL"), lateService, statuses, api, page, overview, subnav],
+    [service.replace("mdata.resolve_driver_label_same_company(l.assigned_primary_driver_id, l.operating_company_id)", "NULL"), lateService, statuses, api, page, overview, subnav],
+    [service, lateService, statuses.replace('"at_pickup",', ""), api, page, overview, subnav],
+    [service, lateService.replace("l.status IN (${DISPATCH_ALERT_ACTIVE_STATUSES_SQL})", "l.status = 'in_transit'"), statuses, api, page, overview, subnav],
+    [service, lateService, statuses, api.replace("count: loadsById.size", "count: atRisk.loads.length + late.loads.length"), page, overview, subnav],
+    [service, lateService, statuses, api, page.replace("listAtRiskOrLateDispatchLoads(companyId)", "listAtRiskDispatchLoads(companyId)"), overview, subnav],
+    [service, lateService, statuses, api, page, overview.replace("atRiskLateQ.data?.count", "atRiskCount + lateCount"), subnav],
   ];
   const missed = mutations.filter((parts) => failures(...parts).length === 0);
   if (missed.length) {
@@ -56,7 +72,7 @@ if (process.argv.includes("--selftest")) {
   process.exit(0);
 }
 
-const found = failures(service, page, overview, subnav);
+const found = failures(service, lateService, statuses, api, page, overview, subnav);
 if (found.length) {
   console.error(`FAIL: ${found.join("; ")}`);
   process.exit(1);
