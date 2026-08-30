@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getDispatchOptimalDrivers, type OptimalDriverRow } from "../../api/dispatch";
+import { readDispatchLocalSettings, type DispatchLocalSettings } from "../../lib/dispatch-local-settings";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
@@ -20,6 +21,8 @@ export type OptimalDriversPanelProps = {
   };
   /** Test / storybook override */
   driversOverride?: OptimalDriverRow[];
+  /** Test / storybook override for the selected-company settings snapshot. */
+  routingSettingsOverride?: DispatchLocalSettings;
   disabled?: boolean;
 };
 
@@ -35,9 +38,11 @@ export function OptimalDriversPanel({
   onSelectedDriverLabelChange,
   preview,
   driversOverride,
+  routingSettingsOverride,
   disabled,
 }: OptimalDriversPanelProps) {
   const [manualOverride, setManualOverride] = useState(false);
+  const routingSettings = routingSettingsOverride ?? readDispatchLocalSettings(operatingCompanyId);
 
   const q = useQuery({
     queryKey: [
@@ -59,8 +64,10 @@ export function OptimalDriversPanel({
         preview_hazmat: preview?.hazmat,
         preview_trailer_type: preview?.trailer_type,
       }),
-    enabled: Boolean(loadId && operatingCompanyId && driversOverride == null),
+    enabled: Boolean(routingSettings.auto_routing_enabled && loadId && operatingCompanyId && driversOverride == null),
   });
+
+  if (!routingSettings.auto_routing_enabled) return null;
 
   const drivers = driversOverride ?? q.data?.drivers ?? [];
   const topPick = drivers.find((d) => d.rank === 1) ?? drivers[0];
@@ -100,7 +107,9 @@ export function OptimalDriversPanel({
       {!q.isError || driversOverride ? <ul className="max-h-48 space-y-1 overflow-y-auto">
         {drivers.map((d) => {
           const selected = selectedDriverId === d.driver_id;
-          const blocked = !manualOverride && !d.eligible;
+          const blockedByHos = routingSettings.auto_routing_respect_hos && !d.hos_safe;
+          const blockedByEquipment = routingSettings.auto_routing_respect_equipment && !d.eligible;
+          const blocked = !manualOverride && (blockedByHos || blockedByEquipment);
           const rowDisabled = Boolean(disabled || blocked);
           return (
             <li key={d.driver_id}>
@@ -148,7 +157,8 @@ export function OptimalDriversPanel({
                   <span className="font-mono text-[11px] text-slate-700">{fmtScore(d.total_score)} pts</span>
                 </span>
                 <span className="text-[10px] text-slate-500">{breakdownLabel(d)}</span>
-                {d.ineligible_reason ? <span className="text-[10px] text-slate-700">{d.ineligible_reason}</span> : null}
+                {blockedByHos ? <span className="text-[10px] text-slate-700">Insufficient HOS for estimated drive</span> : null}
+                {routingSettings.auto_routing_respect_equipment && d.ineligible_reason ? <span className="text-[10px] text-slate-700">{d.ineligible_reason}</span> : null}
               </div>
             </li>
           );
