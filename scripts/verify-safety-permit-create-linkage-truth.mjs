@@ -16,7 +16,7 @@ const failures = verify(source);
 if (failures.length) { console.error(`verify-safety-permit-create-linkage-truth: FAIL\n- ${failures.join("\n- ")}`); process.exit(1); }
 if (process.argv.includes("--selftest")) {
   const mutations = [
-    source.replace('max: 60, timeWindow: "1 minute"', 'max: 0, timeWindow: "1 minute"'),
+    source.replace('app.post("/api/v1/safety/permits", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }', 'app.post("/api/v1/safety/permits", { config: { rateLimit: { max: 0, timeWindow: "1 minute" } } }'),
     source.replace("AND deactivated_at IS NULL", "AND true"),
     source.replace("COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid", "true"),
     source.replace('return { kind: "unit_not_found" as const }', 'return { kind: "ok" as const, row: null }'),
