@@ -6,14 +6,20 @@ import { registerSafetyIncidentsRoutes } from "../incidents.routes.js";
 const COMPANY = "11111111-1111-4111-8111-111111111111";
 const INCIDENT_ID = "22222222-2222-4222-8222-222222222222";
 
-const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit } = vi.hoisted(() => {
+const { mockQuery, mockWithCurrentUser, mockAppendCrudAudit, mockPutObjectBytes } = vi.hoisted(() => {
   const query = vi.fn();
   const withCurrentUser = vi.fn(async (_userId: string, fn: (client: { query: typeof query }) => Promise<unknown>) =>
     fn({ query })
   );
   const appendCrudAudit = vi.fn(async () => undefined);
-  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit };
+  const putObjectBytes = vi.fn(async () => undefined);
+  return { mockQuery: query, mockWithCurrentUser: withCurrentUser, mockAppendCrudAudit: appendCrudAudit, mockPutObjectBytes: putObjectBytes };
 });
+
+vi.mock("../../storage/r2-client.js", () => ({
+  isR2Configured: () => true,
+  putObjectBytes: mockPutObjectBytes,
+}));
 
 vi.mock("../../auth/db.js", () => ({
   withCurrentUser: mockWithCurrentUser,
@@ -49,6 +55,7 @@ describe("safety incidents routes (A23-7)", () => {
     mockQuery.mockReset();
     mockQuery.mockImplementation(mockDbQuery());
     mockAppendCrudAudit.mockClear();
+    mockPutObjectBytes.mockClear();
     app = Fastify({ logger: false });
     await app.register(multipart);
     app.decorateRequest("user", null);
@@ -186,8 +193,13 @@ describe("safety incidents routes (A23-7)", () => {
       payload:
         "------test\r\nContent-Disposition: form-data; name=\"file\"; filename=\"photo.jpg\"\r\nContent-Type: image/jpeg\r\n\r\nfake\r\n------test--\r\n",
     });
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(201);
     expect(res.json()).toMatchObject({ incident_id: INCIDENT_ID, photo_key: expect.stringContaining("photo.jpg") });
+    expect(mockPutObjectBytes).toHaveBeenCalledWith(
+      expect.stringContaining(`incidents/${COMPANY}/${INCIDENT_ID}/`),
+      expect.any(Buffer),
+      "image/jpeg"
+    );
   });
 
   it("POST /api/v1/safety/incidents rejects invalid body", async () => {
