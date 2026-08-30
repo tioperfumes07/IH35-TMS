@@ -1,13 +1,13 @@
 {
   "healthzSha": "2ffb1d4",
-  "generated_at": "2026-08-30T00:27:52.000Z",
+  "generated_at": "2026-08-30T00:29:27.000Z",
   "meta": {
-    "generatedAt": "2026-08-29T19:27:52-05:00",
-    "sourceSha": "7236ba4092",
+    "generatedAt": "2026-08-29T19:29:27-05:00",
+    "sourceSha": "72210918bc",
     "deployedSha": "2ffb1d4",
     "prodReadAt": "2026-08-02 22:02 CDT",
-    "ledgerRows": 2262,
-    "failOpen": 131,
+    "ledgerRows": 2263,
+    "failOpen": 132,
     "defects": 26
   },
   "modules": [
