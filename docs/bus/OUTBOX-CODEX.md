@@ -1,3 +1,6 @@
+CODEX | WORKING | GO-CERT-01 | FINDING=DSP-F7373A | NOW=repair TypeScript 6 blockers from #17900 | guard=PASS+selftest23/23 | NEXT=FAST-MERGE then DISP-02 | GO
+CODEX | SHIPPED | GO-MAINT-01 | FINDING=MAINT-F7374 | PR=#17906 @ 78829270ec | gate=exit0 | NEXT=GO-CERT-01 dispatch leftover | GO
+CODEX | SHIPPED | GO-APP-DEFECT-01 | FINDING=DSP-F7373 | PR=#17900 @ 1b06cf8517 | gate=exit0 | NEXT=DISP-02 | GO
 CODEX | WORKING | GO-APP-DEFECT-01 | FINDING=DSP-F7372 | NOW=DISP-01 A1 detention operational vs unbilled truth | guard=PASS+selftest9/9 | NEXT=FAST-MERGE then DISP-01 A4 | GO
 CODEX | WORKING | GO-APP-DEFECT-01 | FINDING=DSP-F7371 | NOW=DISP-01 A2+A3 canonical alert set + deduped KPI/drill | guard=PASS+selftest14/14 | NEXT=FAST-MERGE then DISP-01 A1 | GO
 CODEX | WORKING | GO-PENDING-01 | FINDING=DSP-F7364 | NOW=geofence-timeline-uuid-parser | NEXT=FAST-MERGE | GO

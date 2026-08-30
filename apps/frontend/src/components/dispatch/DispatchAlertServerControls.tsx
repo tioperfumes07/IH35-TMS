@@ -36,7 +36,7 @@ export function DispatchAlertServerControls({
       </label>
       <Button type="button" size="sm" disabled={invalid} onClick={staged.apply}>Apply</Button>
       <Button type="button" size="sm" variant="secondary" onClick={staged.cancel}>Cancel</Button>
-      <Button type="button" size="sm" variant="ghost" onClick={staged.reset}>Reset</Button>
+      <Button type="button" size="sm" variant="tertiary" onClick={staged.reset}>Reset</Button>
       {invalid ? <span className="text-xs text-red-700">From must be on or before To.</span> : null}
     </div>
   );

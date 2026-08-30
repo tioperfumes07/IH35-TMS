@@ -65,10 +65,13 @@ function failures(serviceSource, lateServiceSource, statusesSource, apiSource, p
     if (!source.includes("DispatchAlertServerControls")) found.push(`${label} has no applied server range controls`);
     if (!source.includes("suppressToolbarRange")) found.push(`${label} still exposes competing client-only range`);
     if (!source.includes('sortMode="external"')) found.push(`${label} still sorts only the loaded client rows`);
+    if (!source.includes("sort.sort ??")) found.push(`${label} external sort key can become undefined`);
+    if (!source.includes('NonNullable<DispatchAlertQuery["sort"]>')) found.push(`${label} sort callback retains the optional API type`);
   }
   for (const token of ["Apply", "Cancel", "Reset", "From must be on or before To."]) {
     if (!controlsSource.includes(token)) found.push(`server range controls missing ${token}`);
   }
+  if (!controlsSource.includes('variant="tertiary" onClick={staged.reset}')) found.push("Reset uses a non-canonical Button variant");
   return found;
 }
 
@@ -97,6 +100,9 @@ if (process.argv.includes("--selftest")) {
     [service, lateService, statuses, api, page.replace("suppressToolbarRange", "removedToolbarRange"), overview, subnav],
     [service, lateService, statuses, api.replace("function dispatchAlertParams", "function removedAlertParams"), page, overview, subnav],
     [service, lateService, statuses, api, page, overview, subnav, [atRiskRoute.replace("...dispatchAlertQueryFields", ""), lateRoute, detentionRoute]],
+    [service, lateService, statuses, api, page.replace("sort.sort ??", "sort.sort ||"), overview, subnav],
+    [service, lateService, statuses, api, page.replace('NonNullable<DispatchAlertQuery["sort"]>', 'DispatchAlertQuery["sort"]'), overview, subnav],
+    [service, lateService, statuses, api, page, overview, subnav, undefined, undefined, undefined, undefined, serverControls.replace('variant="tertiary"', 'variant="ghost"')],
   );
   const missed = mutations.filter((parts) => failures(...parts).length === 0);
   if (missed.length) {
