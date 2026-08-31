@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:27 CT · IDLE DEFECT ~160m — OUTBOX NOW**
+1. Self-ACK. ONE: JE 2027 dates · factoring batch link · dual TB · P&L≠PPT · unbilled.
+2. Live **a3e3af0**. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:22 CT · IDLE DEFECT ~155m — OUTBOX NOW**
 1. Self-ACK. ONE: JE 2027 dates · factoring batch link · dual TB · P&L≠PPT · unbilled.
 2. Live **a3e3af0**. Do not mass-void TEST. Rule 19 no invent reserve.

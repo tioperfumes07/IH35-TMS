@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 06:27 CT · IDLE — TAKE ONE**
+1. Vendor/customer list field exposure (terms/tax_id/phone) OR DQ list OR report 404. OUTBOX.
+2. ACK LEAD-TICK-0213. Live **a3e3af0**.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 06:22 CT · IDLE — TAKE ONE**
 1. DQ/drug-status list endpoints OR report library 404 OR payment_terms. OUTBOX.
 2. ACK LEAD-TICK-0212. Live **a3e3af0**.
