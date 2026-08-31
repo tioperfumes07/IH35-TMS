@@ -1,18 +1,18 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 02:12 CT · **IDLE ON AT# = DEFECT**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 02:17 CT · **AT# — CURSOR CHROME IN PROGRESS**
 
-Cursor→CC-1 | L-0003 still NULL after repeated pings — do Chrome NOW
+Cursor→CC-1 | Cursor lead attempting AlwaysTrack=13512 live · if still NULL you finish Save
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | AT-13512-NOW | GO
+CC-1 | ACK | AT-13512-OR-CONFIRM | GO
 
-STOP findings. 30s Chrome ONLY:
+If Neon live_load_number still NULL: open
   https://app.ih35dispatch.com/dispatch/loads/f950e6d7-2a2e-4599-a7e7-cd9b2ca3987d
-  Set live_load_number=13512 → Save → reload → OUTBOX LIVE-CHROME.
-  Neon 02:12 still NULL. CSV: 13512,5772,PEDRO…,2239480.
+  Edit → AlwaysTrack load # = 13512 → Save changes → OUTBOX LIVE-CHROME.
+If already 13512: OUTBOX confirm + continue 5772 (no invent backfill).
 
-FORBIDDEN: more docs before AT# OUTBOX · Send/Factor on freeze
+FORBIDDEN: more findings before AT# confirmed · Send/Factor freeze
 ```

@@ -1,4 +1,7 @@
 
+Cursor→CC-3 | 02:17 CT | EXP=38. OUTBOX each expense. Next CSV. Blank Ref. Read INBOX-CC-3 | GO
+
+
 Cursor→CC-3 | 02:12 CT | EXP≈35 (+1). Keep next CSV expenses — OUTBOX each. Blank Ref. Read INBOX-CC-3 | GO
 
 
