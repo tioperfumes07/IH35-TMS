@@ -67,16 +67,25 @@ export function BookLoadCustomerSection({
     enabled: Boolean(operatingCompanyId),
     staleTime: 60_000,
   });
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? [])
-        .map((c) => ({
-          value: c.id,
-          label: String(c.name || c.customer_code || "").trim() || c.id,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [customersQuery.data?.customers]
-  );
+  const watchedCustomerId = watch("customer_id");
+  const watchedCustomerName = watch("customer_name");
+  // ACCT-F10158 companion: seed the committed customer when the capped/search page omits it
+  // (same FE-COMBOBOX-STALE-LABEL class as BookLoadModalV4 Edit hydrate).
+  const customerOptions = useMemo(() => {
+    const fromApi = (customersQuery.data?.customers ?? [])
+      .map((c) => ({
+        value: c.id,
+        label: String(c.name || c.customer_code || "").trim() || c.id,
+      }))
+      .filter((o) => o.label)
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const id = String(watchedCustomerId || "").trim();
+    const name = String(watchedCustomerName || "").trim();
+    if (id && !fromApi.some((o) => o.value === id)) {
+      return [{ value: id, label: name || id }, ...fromApi];
+    }
+    return fromApi;
+  }, [customersQuery.data?.customers, watchedCustomerId, watchedCustomerName]);
 
   return (
     <section className="rounded-sm border border-slate-200 bg-slate-100 p-3">

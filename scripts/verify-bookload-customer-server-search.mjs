@@ -66,6 +66,16 @@ export function collectProblems(root = ROOT) {
   if (!/customersQuery\.isError[\s\S]{0,180}?ListErrorBanner[\s\S]{0,180}?customersQuery\.refetch\(\)/.test(liveCode)) {
     problems.push(`${LIVE_WIZARD}: failed customer reads must disclose exact Retry instead of an empty picker`);
   }
+  // ACCT-F10158 — Edit Load hydrates customer_id via form.reset, but the capped listCustomers page
+  // often omits that row. Without seeding the committed customer into options, Combobox shows the
+  // empty placeholder and Save can fail closed / look dead. (Marker is code, not a // comment —
+  // this guard strips line comments before matching.)
+  if (!/watchedCustomerId[\s\S]{0,900}?fromApi\.some[\s\S]{0,200}?o\.value === id/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: customerOptions must seed watchedCustomerId when missing from API page`);
+  }
+  if (!/watchedCustomerId[\s\S]{0,1200}?label:\s*name \|\| id/.test(liveCode)) {
+    problems.push(`${LIVE_WIZARD}: seeded customer option must use customer_name (or id) as label`);
+  }
   return problems;
 }
 

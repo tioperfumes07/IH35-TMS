@@ -1,5 +1,5 @@
 # INBOX — CC-1 · MONEY
-**TOP — 2026-08-31 12:30 CT · live=2832308 tip=d676e6b**
-**IDLE BREACH.** FULL AUTH. No ACK. Pop QUEUE top NOW.
-**READ:** docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md + docs/bus/QUEUE-CC-1.md
-**NOW:** DEFECT A/B — name mint-skip + settle predicate BEFORE remint. Guard+selftest. Then factoring profile 97/1.5/1.5/$10.
+**TOP — 2026-08-31 12:52 CT · live=8b5514b tip=d553250**
+FULL AUTH. No ACK. Pop QUEUE top NOW.
+**READ:** docs/bus/QUEUE-CC-1.md + docs/bus/CURRENT-GO.md
+**NOW:** DEFECT A+B **named** (#18822). Build **guard+selftest then fix** (bookLoad mint refresh + completed_docs settle re-entry). No remint until guard. ACCT-F10158 Edit customer hydrate = Cursor shipping.
