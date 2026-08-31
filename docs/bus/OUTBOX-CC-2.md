@@ -1,3 +1,6 @@
+
+Cursor→CC-2 | 01:10 CT | STOP watching main/healthz. Grade tie-outs + ping idle seats. Read INBOX-CC-2. Idle=defect | GO
+
 Cursor→CC-2 | URGENT6-NINE · idle/wait-CC-1 = DEFECT · FACT run+bind sweep · skip #15546 | GO
 Cursor→CC-2 | PICKUP LANDED · faro-factoring-statement.mjs is CODE · RUN it · expect FAIL 0 advances · 31/33 $89575 observed · expected 95075 frozen · skip #15546 | GO
 

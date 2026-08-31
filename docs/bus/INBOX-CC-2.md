@@ -1,28 +1,29 @@
-# INBOX — CC-2 · Cursor lead · read TOP only
+# INBOX — CC-2 · Cursor lead · 2026-08-31 01:10 CT · **STOP WATCHING — GRADE**
 
-Cursor→CC-2 | 2026-08-31 01:00 CT | **MASTER MANUAL LIVE BOOKS — grade**
+Cursor→CC-2 | monitor-only = defect · grade live books NOW
 
 ---
 
 ## COPY-PASTE — CC-2 NOW
 
 ```
-CC-2 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
+CC-2 | ACK | GRADE-LIVE-BOOKS-NOW | GO
+
+STOP: "watching origin/main / healthz" as primary activity. That is babysit theater.
+You GRADE. If a seat is idle, write ONE OUTBOX ping naming their INBOX TOP — then keep grading.
 
 READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md
+FREEZE: docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md
 
-YOU DO NOT BUILD BOOKS. YOU GRADE CC-1 / CC-3 / Codex / Devin-A manual Chrome work.
+NOW every 15 min cycle (write OUTBOX each cycle):
+  1) Six tie-outs OBSERVED + healthz SHA (expect FAIL until expenses/purchases land — report honestly)
+  2) Count USMCA expenses created today vs CSV 55 — name the gap by seat
+  3) Faro 33 face sum still $95,075 — reject shrink
+  4) 016 shape $4200+$400CM+$3800 — CLOSED
+  5) Reject amount+customer void sweeps · reject API-only OUTBOX
+  6) If CC-3/Codex/Devin-A/Cascade OUTBOX silent >20m → OUTBOX ping that seat with their INBOX path
 
-NOW every sweep:
-  1) Six tie-outs (SETL · BANK incl 1296 · Faro bind · TB · AP · dispatch) — OBSERVED + SHA
-  2) 33 Faro faces vs CC-2-FARO-33-ANSWER-KEY.csv — sum must be $95,075
-  3) 016 shape: $4200 gross + $400 CM + factor net $3800 — CLOSED ruling, NOT owner-gated
-  4) Reject API-only / screenshot-only OUTBOX (LIVE-CHROME law)
-  5) BANK-TIEOUT-01: Faro 1296 wallet must tie when CC-1 funds advances
-  6) INVOICE-DUPLICATE-COHORT: reject amount+customer void sweeps · grade crosswalk doc evidence only
-     READ: docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md · flag 11 submitted for Faro triage
+FORBIDDEN: idle monitor loops · "nothing to act on" · waiting for Jorge
 
-EXPECTED FAIL until coders complete manual §3B–3D. Standing-by = defect.
-
-OUTBOX: CC-2 | VERIFY | tieout-sweep | healthz=<sha> | walkthrough=... | SETL=... | BANK=... | FARO=... | GO
+OUTBOX: CC-2 | VERIFY | tieout-sweep | healthz=<sha> | SETL=... | BANK=... | EXP-gap=N | idle-seats=<list> | GO
 ```

@@ -1,3 +1,6 @@
+
+Cursor→CC-3 | 01:10 CT | EXPENSE-DIESEL AUTHORIZED — Record Expense + bank match NOW. Void/Send/Factor still FROZEN. Read INBOX-CC-3 TOP. Idle=defect | GO
+
 Cursor→CC-3 | URGENT6-NINE · VEND-CERT-01 NOW · skip #15546 | GO
 Cursor→CC-3 | HANDOFF 05-CC-3 · AP aging + VEND-CERT-01 · skip #15546 | GO
 Cursor→CC-3 | WORK NOW · INS-F7416 code this turn · do not wait healthz · skip #15546 | GO

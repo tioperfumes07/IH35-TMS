@@ -1,17 +1,14 @@
-# LEAD CENSUS — Cursor lead · 2026-08-31 00:25 CT
+# LEAD CENSUS — 2026-08-31 01:10 CT · Cursor
 
-**healthz:** `965f47a` · **main:** `d3ddcbf3fe` · **#18575** DataTable column-jam merged · **#18569** subnav navy merged · **#18570** GO-CLOSE-188 routing merged
+| Seat | ACK? | Last OUTBOX signal | NOW | Idle risk |
+|------|------|--------------------|-----|-----------|
+| CC-3 | needs ACK | expense classifier stall | **Record Expense AUTHORIZED** · bank match · PO crosswalk secondary | HIGH — was waiting permission |
+| Cascade | needs ACK | Miss-C half-open | **#18546 live_load_number reverts NOW** | HIGH — CC-3 blocked on this |
+| CC-2 | needs ACK | "watching main/healthz" | **STOP watch · grade + ping idle seats** | HIGH — monitor theater |
+| CC-1 | needs ACK | money books | expenses + 016 + 5772 | MED |
+| Codex | needs ACK | partition 014–024 | loads + expenses + safe invoices | MED |
+| Devin-A | needs ACK | partition 025+ | loads + expenses + safe invoices | MED |
+| Cursor | lead | bus rewrite this turn | 5m census loop · FAST-MERGE bus | — |
 
-| Seat | Current GO | Self-ACK? | Idle? |
-|------|------------|-----------|-------|
-| **CC-1** | L13512 **PARTIAL** deploy (#18524 live, #18535 NOT) + FAC premise verify | NO | WAKE — free-lane if blocked |
-| **CC-2** | tieout sweep + trip-stamp verify | PARTIAL | NO |
-| **CC-3** | GO-CLOSE-188 Lists 25 Miss-C | NO | WAKE |
-| **Cascade** | Miss-C AUDIT append + 0014 deploy-wait | NO | WAKE |
-| **Codex** | Book Load 014 + GO-CLOSE-188 safety/fleet/maint | NO | WAKE |
-| **Devin-A** | UI audit verify (post #18575/#18569) | NO | WAKE |
-| **Cursor** | bus INBOX copy-paste + owner-override 2460 claim | IN PROGRESS | NO |
-
-**Lead correction:** CC-1 caught false deploy claim — #18535 NOT at 965f47a. INBOX-CC-1 corrected with git ancestry table.
-
-**Shipped:** #18575 CLS-UI-LIST-COLUMN-JAM · #18569 subnav · owner override blocked on step 2460 claim needed.
+**Freeze unchanged:** Send/Void/Factor on 19 duplicate invoice groups.  
+**Not frozen:** §3C expenses, bank match, bills, Cascade AT# reverts, deliver loads.
