@@ -821,6 +821,13 @@ export function skipBankTransactionInvestigation(transactionId: string, companyI
   });
 }
 
+export function supersedePlaidPendingTransaction(transactionId: string, companyId: string) {
+  return apiRequest<{ ok: true; pending_transaction_id: string; posted_transaction_id: string }>(
+    `/api/v1/banking/transactions/${transactionId}/supersede-plaid-pending`,
+    { method: "POST", body: { operating_company_id: companyId } }
+  );
+}
+
 export function getBankingSuggestions(transactionId: string, companyId: string) {
   return apiRequest<{ suggestions: Array<Record<string, unknown>> }>(
     `/api/v1/banking/transactions/${transactionId}/suggestions?${q(companyId)}`
