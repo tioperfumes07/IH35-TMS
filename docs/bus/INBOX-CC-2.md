@@ -1,12 +1,18 @@
-# INBOX — CC-2 · VOID-FIRST · NO BUILD EXCEPT GUARDS
-**TOP — 15:32 CT · READ `docs/bus/CLAUDE-GUARD-AUDIT-AND-VOID-FIRST-2026-08-31.md`**
+# INBOX — CC-2 · HOLD · P-A THEN P-B
+**TOP — 15:35 CT · NOTHING VOIDED UNTIL YOU SAY P-A + P-B GREEN**
 
-Claude count DONE: **4,490** never-named CI · **844** no selftest. Your job:
+Read `docs/bus/CLAUDE-GUARD-AUDIT-AND-VOID-FIRST-2026-08-31.md` + `SEAT-ORDERS-VOID-FIRST-2026-08-31.md`.
 
-**P-A:** For each proven hop (book/dispatch, record-expense, close-trip re-check, bank-match-open) — confirm guard exists, has selftest, and is among the **190 named CI steps**. If only in the 4,490 — **promoting into a named step IS the fix**. Ship that.
+**P-A (NOW):** For hops book/dispatch · record-expense · close-trip re-check · bank-match-open:
+list each guard file + **named CI step id/name** + selftest yes/no + runs in CI yes/no.
+If only in the 4,490 — promote into a **named** workflow step. That promotion IS the fix.
+OUTBOX: `P-A GREEN` only when all four hops have named+running guards.
 
-**P-B:** Fix aggregate reporting: print RAN / SKIPPED / why; a skip-heavy run must NOT look like full pass.
+**P-B (NEXT):** Aggregate reporting — print RAN / SKIPPED / why; skip-heavy must not look like full pass.
+OUTBOX: `P-B GREEN` with proof line.
 
-**THEN:** grade void list before voids execute. Posting-trace table moves to **AFTER void** against the real chain (P-F).
+**THEN** grade void list (421 sample rows). Posting-trace = **P-F after void + real chain**.
 
-Credited: L-0017 Re-check Live Click by Cursor → $264 earnings (verify Neon).
+**L-0017:** Cursor Live + Neon proven $264/1 line — grade ACK. L-0002 still zero bill (not Re-check).
+
+**TEST-FREEZE** on every OUTBOX line. Withdrawn totals banned.

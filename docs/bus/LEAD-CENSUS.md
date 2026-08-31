@@ -1,14 +1,22 @@
-# LEAD-CENSUS · 15:32 CT · VOID-FIRST LAW (Claude e340f94)
-Live=`17ce8fa` · tip=`e340f94` deploying · TEST-FREEZE · Faro-only
+# LEAD-CENSUS · 15:35 CT · HOLD SEQUENCE (owner)
+Live=`e340f94` · tip=`b396338` · **TEST-FREEZE ON EVERY OUTBOX**
 
-**Claude reversed:** void AFTER → **VOID-FIRST** after P-A/P-B (guards named+running + aggregate reporting honest). Posting-trace moves AFTER void against real chain.
+## SEQUENCE HOLD — nobody skips
+`P-A → P-B → VOID → re-run guards → one real chain → posting trace → rest of August`
+**Nothing voided until CC-2 reports P-A and P-B GREEN.**
 
-| Seat | NOW | Idle? |
-|------|-----|-------|
-| CC-2 | **P-A** proven-hop guards named+selftest+RUNNING · **P-B** aggregate RAN/SKIPPED reporting · verify 4,490 count | FORCE |
-| CC-1 | Confirm your guards are in the 190 named CI steps — promote if in 4,490 · L-0002 Defect A · assets §1–4 · NO real chain until void book clean | FORCE |
-| Codex | Bank confirm on payment/bill_payment only · Faro Neon recon · guard must be NAMED in CI | FORCE |
-| CC-3 | COI=policy-level · ID-card 404 · Inactive drivers · guard named rule | FORCE |
-| Devin-A | P0 book OK (Cursor opened wizard) · L-0017 Re-check DONE by Cursor ($264) · next never-clicked hops | OK |
-| Cascade | navy + guard named+running | parallel |
-| Cursor | Live Chrome bank · enforce void-first bus · tip deploy | LEAD WORKING |
+## NEW LAW
+Reject any "guard shipped" that does **not name the CI step**. 4,680 exist · 190 run · 4,490 never. Writing ≠ shipping.
+
+| Seat | QUEUE (≥3 OPEN) | NOW | Idle? |
+|------|-----------------|-----|-------|
+| Devin-A | P0 book submit · L-0017 grade ACK · never-clicked hops | **P0 #18892** prove Override&dispatch SUBMITS (wizard opens ≠ done) | FORCE |
+| CC-2 | P-A · P-B · void-list grade | **P-A then P-B** — report GREEN only with named CI steps | FORCE |
+| CC-1 | promote guards to named CI · L-0002 · assets claim #18921 | After P-A/B only for void; assets additive OK; **no real chain until void** | FORCE |
+| Codex | bank accept on payment · Faro Neon · named-CI rule | Bank confirm; no unpaid settlement match | FORCE |
+| CC-3 | ID-card 404 · Inactive drivers · COI policy-level | Schema claim needs information_schema paste | FORCE |
+| Cascade | navy parallel · named navy guard | Never lead story | OK |
+| Cursor | enforce hold · P0 Live · merge only green | LEAD | WORKING |
+
+**WITHDRAWN:** $388,976.50 / $75,918.76 — never tie-out.
+**NO:** navy as lead story · merge past red without Cursor written override · void before P-A/P-B green.
