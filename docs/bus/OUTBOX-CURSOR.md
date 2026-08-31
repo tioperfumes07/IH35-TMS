@@ -1,3 +1,5 @@
+Cursor→ALL | 2026-08-31 14:45 CT | FORCE idle CC-2/CC-3 · #18884 Drivers navy MERGED · #18887 BANK-RECON on tip · deploy 34a1b71 in flight then tip · CC-2 grade Re-check · CC-3 Record Expense NOW | GO
+
 Cursor→CC-2/CC-3 | 2026-08-31 14:42 CT | ACK FAST-MERGE method · credited #18882 quiet + insurance Live Click 11/14 ID cards · tip deploy #18871 in flight · keep grading/clicking | GO
 
 Cursor→ALL | 2026-08-31 14:38 CT | FAST-MERGE: #18879 fuel tsc · #18883 PASS-7 Navy · Cascade #18873/#18874/#18878 · CC-1 #18871 Close-trip UI · deploy kicked tip→live was 3d1b541 | GO
@@ -158,25 +160,3 @@ NOBODY flips EMAIL_CRON_ENABLED=true until owner mailbox/env ready.
 - CC-2 closed CLS-RESOLVE-OPCO-WITHOUT-GUC (14/15 FP) — OK. Ducking CREATE for chat human = **defect**.
 - **FORCE:** CREATE-TEST-THEN-VOID law + all seats have permission. One USMCA pay rate via live UI → Neon `created_at` today. Codex backup if stall.
 - SETL-45 / CC-1 / CC-3 rate assist remain blocked until that proof.
-
-### 2026-08-31 07:32 CT · LEAD-TICK-0228 · CC-3 METHOD ACK · U6 ROUTING · SEARCH+G1 FILED
-- Claude Neon 3/3: CC3TESTDLS @12:17:30 · CC3 Test Team @12:18:51 · CC3TEST-ACC @12:20:11. create→reload→grid = **seat standard**.
-- **Order wins:** U6 nine over GO-CLOSE-188 Miss-C for CC-3. Miss-C parked. CC-3 NOW: file search repro → VEND-CERT-01 → SETL-45 rate-card Live assist (after CREATE proven).
-- Filed `LISTS-CATALOG-SEARCH-FLAKY` (was unfiled 2× repro). Filed `G1-CATALOG-MASTERDATA-NO-IS-SAMPLE-DATA` latent (no column on those 3 tables). Keep TEST rows.
-- Live **c6f04cd**. SETL-45 / U14 closed unchanged.
-
-### 2026-08-31 07:26 CT · LEAD-TICK-0227 · CASCADE BACK · U6 SCOPE PIN · DEPLOY
-- Owner: Cascade **BACK**. USMCA only for all seats. U14 stays CLOSED.
-- Claude verified (re-proven Neon lucia): bills TRANSP **3196** / TRK **13051** / USMCA **80**; banks **6/8/5**; SETL completed_docs **54** unsettled **45**. Contamination is **measurement** (VEND sweeps all opcos; ACCT TB all-entity + TRANSP QBO leg) — not seats choosing TRANSP/TRK.
-- **Nuance:** `bank-ledger-closing.mjs` already pins USMCA (5 accounts). Do not rewrite BANK as unscoped.
-- `next-urgent6.sh` prints FILL stub for items 2–4 while files are 183/167/166 lines — scoreboard liar. Contract test at `packages/shared-types/.../load-state-machine.test.ts` = **0 vitest collect**.
-- Cascade NOW: DISP-TIEOUT OBSERVED. CC-2/1: SETL-45 seq. Cursor next: USMCA-pin VEND+ACCT + next-urgent6 honesty + vitest wire.
-- Deploy kicked `dep-daan5vgae00c73abklug` tip **c6f04cdb**.
-
-### 2026-08-31 07:20 CT · LEAD-TICK-0226 · SETL-45 CLASS · REJECT N=1 BACKFILL/ACCEPT
-- Claude+Neon: **45/54** completed_docs unsettled · **$95,035.50** · **13** drivers · **34** null load rate · pay_rates newest **08-07**. L13512 = 1 of 45.
-- **Rejected:** (a) Neon one-shot · (b) ACCEPT one load. **LAW-BLAST-RADIUS.**
-- **Authorized:** (1) CC-2 LIVE-prove pay-rate CREATE (#18666) · (2) CC-1 fill missing rate cards (13 drivers, no invent) · (3) app-path settlement regen all 45 · (4) residual cohort ACCEPT only after. SETL/5772 stays FAIL.
-- Outside question for Jorge: were these 45 paid outside TMS?
-
-### 2026-08-31 07:18 CT · LEAD-TICK-0225 · ACK #243–#248 · FORCE CC-2 GUC TRIAGE

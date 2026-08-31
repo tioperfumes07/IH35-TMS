@@ -22,7 +22,7 @@
 - [ ] Reports — ReportsSubNav HoverDropdownNav (~46 routes)
 - [ ] Lists — ListsSubNav HoverDropdownNav (~89 routes)
 - [ ] Safety — SafetyLayout inline tabs (~40 tabs)
-- [ ] Drivers — DriversPage inline tabs (~16 routes)
+- [x] Drivers — DriversPage NavyPageSubNav (LST-F10162)
 - [ ] Accounting — AccountingSubNavWrapper HoverDropdownNav (~68 routes)
 - [ ] Dispatch — DispatchSubnav custom (~39 routes)
 - [ ] Cash Flow — inline (1)
