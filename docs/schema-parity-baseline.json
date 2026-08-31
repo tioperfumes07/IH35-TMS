@@ -5376,6 +5376,19 @@
       "tenant_id",
       "updated_at"
     ],
+    "insurance.driver_schedule": [
+      "confirmed_by_insurer_at",
+      "created_at",
+      "driver_id",
+      "id",
+      "is_active",
+      "notes",
+      "operating_company_id",
+      "policy_id",
+      "submitted_at",
+      "updated_at",
+      "voided_at"
+    ],
     "insurance.lawsuit": [
       "attorney_email",
       "attorney_name",
@@ -5459,6 +5472,20 @@
       "status",
       "tenant_id",
       "updated_at"
+    ],
+    "insurance.schedule_confirmations": [
+      "confirmation_type",
+      "confirmed_at",
+      "confirmed_by_user_id",
+      "created_at",
+      "driver_id",
+      "id",
+      "load_id",
+      "operating_company_id",
+      "policy_id",
+      "reason",
+      "rule_id",
+      "unit_id"
     ],
     "insurance.type_catalog": [
       "active",
@@ -6881,6 +6908,7 @@
       "created_at",
       "damage_notes",
       "damage_reported_at",
+      "equipment_id",
       "id",
       "insured_value_cents",
       "make",

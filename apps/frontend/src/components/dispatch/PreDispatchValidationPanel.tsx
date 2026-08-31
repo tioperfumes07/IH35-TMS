@@ -6,6 +6,10 @@ import { apiRequest } from "../../api/client";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { ValidationPanel, type ValidationResult } from "../shared/ValidationPanel";
 
+// INS-SCHEDULE: Owner ruling 2026-08-31 — confirming the insurance schedule warning MUST log to
+// the backend (who, when, driver, load, truck). The confirm cannot be bypassed.
+const INS_SCHEDULE_RULE_ID = "INS-SCHEDULE-NOT-ON-POLICY";
+
 type Props = {
   operatingCompanyId: string;
   driverUuid?: string | null;
@@ -122,13 +126,32 @@ export function PreDispatchValidationPanel({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inputKey, retryGeneration]);
 
-  const handleAck = useCallback((ruleId: string) => {
+  const handleAck = useCallback(async (ruleId: string) => {
+    // INS-SCHEDULE: log the confirmation to the backend (append-only audit) before acknowledging.
+    if (ruleId === INS_SCHEDULE_RULE_ID && driverUuid) {
+      try {
+        await apiRequest("/api/v1/insurance/schedule-confirmations", {
+          method: "POST",
+          body: {
+            operating_company_id: operatingCompanyId,
+            driver_id: driverUuid,
+            unit_id: unitUuid ?? null,
+            confirmation_type: "warning",
+            rule_id: INS_SCHEDULE_RULE_ID,
+          },
+        });
+      } catch (err) {
+        // If the log fails, do NOT acknowledge — the confirm cannot be bypassed.
+        console.error("[INS-SCHEDULE] Failed to log confirmation:", err);
+        return;
+      }
+    }
     setAcknowledgedRules((prev) => {
       const next = new Set(prev);
       next.add(ruleId);
       return next;
     });
-  }, []);
+  }, [operatingCompanyId, driverUuid, unitUuid]);
 
   const hasBlockers = result.blockers.length > 0;
   const hasUnackedBlockers = result.blockers.some((b) => !acknowledgedRules.has(b.rule_id));
