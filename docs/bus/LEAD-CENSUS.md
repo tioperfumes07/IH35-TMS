@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:51 CT · LEAD-TICK-0218
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | FINDING machine |
+| Cursor | LEAD | seat status ACK · tip ~23 ahead |
+| CC-1 | WORKING | settlement reuse+fallback shipped; L13512 OWNER GATE |
+| CC-2 | WORKING | grading · 6 tie-outs FAIL honest |
+| CC-3 | WORKING | L-0011/L-0010 fuel done; L-0012 mismatch flagged |
+| Codex | WORKING | expenses+loads · 13521 wait docs |
+| Cascade | OOS | |
+Live **69a5a4e**. Idle named: **none** (cleared). OWNER GATE: L13512 settlement backfill · orphan-cohort 016.
+
 # LEAD-CENSUS · 2026-08-31 06:47 CT · LEAD-TICK-0217
 | Seat | Status | Note |
 |------|--------|------|

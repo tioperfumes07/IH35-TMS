@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
+1. Settlement reuse+fallback = shipped. **L13512 backfill = OWNER GATE** — do not invent UI re-transition.
+2. Next unique money FAIL (not orphan-cohort fabricate). Live **69a5a4e**. OUTBOX when shipping.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:47 CT · IDLE DEFECT ~180m — OUTBOX NOW**
 1. Self-ACK. Live **69a5a4e**. ONE: expenses amount+category · payment↔bill FK · JE list vs TB · invoice lines.
 2. G1 neg bank OK. Rule 19 no invent reserve.
