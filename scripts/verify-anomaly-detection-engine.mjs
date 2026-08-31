@@ -26,11 +26,26 @@ const CHECKS = [
   ["badge:visible-failure", "badge", /Critical anomaly alerts couldn't be loaded\. Retry\./],
   ["badge:retry", "badge", /onClick=\{\(\) => void q\.refetch\(\)\}/],
   ["badge:error-before-zero", "badge", /if \(q\.isError\)[\s\S]+const count = q\.data \?\? 0/],
-  ["required:exact-leaf", "required", /"id": "anomaly_alerts\.list"[\s\S]{0,180}"route_hint": "\/safety\/anomaly-alerts"[\s\S]{0,100}"connectivity"/],
 ];
+
+function hasExactRequiredLeaf(source) {
+  try {
+    const parsed = JSON.parse(source);
+    const leaves = Array.isArray(parsed) ? parsed : parsed.leaves;
+    return Boolean(leaves?.some((leaf) =>
+      leaf?.id === "anomaly_alerts.list" &&
+      leaf?.route_hint === "/safety/anomaly-alerts" &&
+      Array.isArray(leaf?.required) &&
+      leaf.required.includes("connectivity")
+    ));
+  } catch {
+    return false;
+  }
+}
 
 export function collectProblems(sources) {
   const failures = CHECKS.filter(([, key, pattern]) => !pattern.test(sources[key] ?? "")).map(([id]) => id);
+  if (!hasExactRequiredLeaf(sources.required ?? "")) failures.push("required:exact-leaf");
   if ((sources.rules?.match(/rule_slug/g)?.length ?? 0) < 6) failures.push("rules:need-six");
   if (!sources.block) failures.push("block:missing");
   return failures;
@@ -50,8 +65,13 @@ function selftest() {
   }
   if (!collectProblems({ ...baseline, rules: "rule_slug rule_slug" }).includes("rules:need-six")) missed.push("rules:need-six");
   if (!collectProblems({ ...baseline, block: "" }).includes("block:missing")) missed.push("block:missing");
+  const required = JSON.parse(baseline.required);
+  const leaves = Array.isArray(required) ? required : required.leaves;
+  const leaf = leaves.find((item) => item.id === "anomaly_alerts.list");
+  leaf.required = leaf.required.filter((item) => item !== "connectivity");
+  if (!collectProblems({ ...baseline, required: JSON.stringify(required) }).includes("required:exact-leaf")) missed.push("required:exact-leaf");
   if (missed.length) throw new Error(`selftest missed: ${missed.join(", ")}`);
-  console.log(`verify-anomaly-detection-engine --selftest ${CHECKS.length + 2}/${CHECKS.length + 2}`);
+  console.log(`verify-anomaly-detection-engine --selftest ${CHECKS.length + 3}/${CHECKS.length + 3}`);
 }
 
 if (process.argv.includes("--selftest")) selftest();
