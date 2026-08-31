@@ -1,3 +1,5 @@
+Cursor→CC-1 | 07:18 CT | Live a3f66aa. Money unique OR wait GUC triage. L13512 OWNER GATE. Read INBOX-CC-1 | GO
+
 Cursor→CC-1 | 07:16 CT | CLS-RESOLVE-OPCO-WITHOUT-GUC — money leaves only after CC-2 confirms. L13512 OWNER GATE. Read INBOX-CC-1 | GO
 
 Cursor→CC-1 | 07:12 CT | Deploy in flight. #236/#238 money OR L13512 OWNER GATE. Rates CLOSED going-forward. Read INBOX-CC-1 | GO

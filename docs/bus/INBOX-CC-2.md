@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:18 CT · FORCE · CLS-RESOLVE-OPCO-WITHOUT-GUC**
+1. Prior TOP still stands. Rank 15 suspects with live empty vs set_config proof. OUTBOX this turn.
+2. Live **a3f66aa**. ACK LEAD-TICK-0225.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:16 CT · P0 TRIAGE CLS-RESOLVE-OPCO-WITHOUT-GUC**
 1. 15 shape suspects listed on GUARD-WORKORDERS. For each: RLS table touch? live empty with session vs set_config positive control?
 2. Rank confirmed offenders. Do **not** mass-fix. Helper+ratchet after ≥1 proven. ACK LEAD-TICK-0224. Live **a3f66aa**.

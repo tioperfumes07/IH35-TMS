@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:18 CT · LEAD-TICK-0225
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #243–#248 — re-spot on a3f66aa |
+| Cursor | LEAD | GUC class live on board |
+| CC-1 | WORKING | money · L13512 OWNER GATE |
+| CC-2 | WORKING | **FORCE: GUC triage 15** |
+| CC-3 | WORKING | Lists |
+| Codex | WORKING | Row 014 |
+| Cascade | OOS | |
+Live **a3f66aa** tip~9. Idle: **none**. OWNER GATE: L13512 · future JE · orphan 016.
+
 # LEAD-CENSUS · 2026-08-31 07:16 CT · LEAD-TICK-0224
 | Seat | Status | Note |
 |------|--------|------|
