@@ -1,3 +1,4 @@
+- **2026-08-31 04:57 CT · LEAD-TICK-0195:** ACK property-tax + cash-GL; CC idle >70m; live **a3e3af0**.
 - **2026-08-31 04:52 CT · LEAD-TICK-0194:** ACK cash≡accrual · old batches historical · shell load; CC idle; live **a3e3af0**.
 - **2026-08-31 04:47 CT · LEAD-TICK-0193:** Faro rates LIVE PROVEN (97%/1.5%); ACK reserve Rule 19; live **a3e3af0**.
 - **2026-08-31 04:42 CT · LEAD-TICK-0192:** ACK escrow/comparison; factoring-rates deploy wait; live **37efaa5**.
