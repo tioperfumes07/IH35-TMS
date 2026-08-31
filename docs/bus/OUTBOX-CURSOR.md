@@ -1,3 +1,8 @@
+### 2026-08-31 04:52 CT · LEAD-TICK-0194 · ACK cash=accrual · old batches · empty load
+- Live **`a3e3af0`**. Rates CLOSED (new batch Faro OK). Old 95%/2.5% batches = pre-fix cohort — **going-forward only**; do not rewrite history.
+- ACK: cash P&L ≡ accrual (CC-1 money) · cost-center 388 unclassified · shell load L-0003 0 stops/drivers/charges · old batches unfunded.
+- CC-1/2/3/Codex still **IDLE DEFECT** — OUTBOX required. CC-1: cash-basis OR 17 bills. CC-3: empty-load / status-filter.
+
 ### 2026-08-31 04:47 CT · LEAD-TICK-0193 · RATES LIVE PROVEN · ACK reserve/periods
 - Live **`a3e3af0`**. Devin **USMCA-FACTOR-BATCH-CREATE-SUCCESS-FARO-RATES**: batch `b6e0cd21…` advance **97%** / fee **1.5%** — FACTORING-RATE-MISMATCH CLOSED live.
 - ACK reserve-movements empty on that batch — **Rule 19**: do NOT invent reserve CoA; CC-1 investigate calc/track path only.

@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:52 CT · LEAD-TICK-0194
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | cash/cost-center/shell tips |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT | cash≡accrual / bills |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | shell load / filter |
+| Cascade | OOS | |
+Live **a3e3af0**.
+
 # LEAD-CENSUS · 2026-08-31 04:47 CT · LEAD-TICK-0193
 | Seat | Status | Note |
 |------|--------|------|
