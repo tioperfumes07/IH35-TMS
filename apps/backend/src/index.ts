@@ -324,6 +324,7 @@ import { initializeInsuranceLateFeeCron } from "./insurance/late-fee.service.js"
 import { initializeFactoringPacketSweepCron } from "./factoring/packet-assemble.service.js";
 import { registerInsurancePaymentScheduleRoutes } from "./insurance/payment-schedule.routes.js";
 import { registerInsurancePolicyRoutes } from "./insurance/policy.routes.js";
+import { registerScheduleConfirmationRoutes } from "./insurance/schedule-confirmations.routes.js";
 import { registerInsuranceSummaryRoutes } from "./insurance/summary.routes.js";
 import { registerInsuranceTypeCatalogRoutes } from "./insurance/type-catalog.routes.js";
 import { registerCashFlowModuleRoutes } from "./cash-flow/cash-flow.routes.js";
@@ -1122,6 +1123,7 @@ async function main() {
   await registerMaintenanceKpiRoutes(app);
   await registerMaintPartsRoutes(app);
   await registerInsurancePolicyRoutes(app);
+  await registerScheduleConfirmationRoutes(app);
   await registerInsuranceSummaryRoutes(app);
   await registerInsurancePolicyCreateAtomicRoutes(app);
   await registerInsuranceClaimRoutes(app);
