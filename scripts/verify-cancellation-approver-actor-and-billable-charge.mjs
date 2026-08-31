@@ -34,6 +34,14 @@ const serviceSrc = readFileSync(servicePath, "utf8");
 if (!/approved_by_user_id\s*,\s*approved_at/.test(serviceSrc)) {
   failures.push(`${servicePath}: writeLoadCancellationRecord's INSERT no longer includes approved_by_user_id/approved_at`);
 }
+// FAIL-CANCEL-PARAM-10: bare `$10` + NULL approved_by_user_id made Postgres raise
+// "could not determine data type of parameter $10" and blocked every direct Cancel Load
+// (Owner path stamps null approver). Cast keeps the CASE WHEN typed.
+if (!/\$10::uuid[\s\S]{0,80}?CASE WHEN \$10::uuid IS NOT NULL THEN now\(\)/.test(serviceSrc)) {
+  failures.push(
+    `${servicePath}: writeLoadCancellationRecord INSERT must cast $10::uuid (FAIL-CANCEL-PARAM-10) — bare $10 fails when approved_by_user_id is NULL`,
+  );
+}
 if (!/SET reason_code = EXCLUDED\.reason_code[\s\S]{0,600}?approved_by_user_id = EXCLUDED\.approved_by_user_id/.test(serviceSrc)) {
   failures.push(`${servicePath}: the ON CONFLICT UPDATE clause no longer updates approved_by_user_id`);
 }
@@ -77,6 +85,24 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
+if (process.argv.includes("--selftest")) {
+  // Planted regression: bare $10 must FAIL this guard (FAIL-CANCEL-PARAM-10).
+  const planted = serviceSrc.replace(
+    /\$10::uuid,CASE WHEN \$10::uuid IS NOT NULL THEN now\(\) ELSE NULL END/,
+    "$10,CASE WHEN $10 IS NOT NULL THEN now() ELSE NULL END",
+  );
+  if (planted === serviceSrc) {
+    console.error("verify-cancellation-approver-actor-and-billable-charge --selftest: FAIL — could not plant bare $10");
+    process.exit(1);
+  }
+  if (/\$10::uuid[\s\S]{0,80}?CASE WHEN \$10::uuid IS NOT NULL THEN now\(\)/.test(planted)) {
+    console.error("verify-cancellation-approver-actor-and-billable-charge --selftest: FAIL — planted bare $10 still matched cast assert");
+    process.exit(1);
+  }
+  console.log("verify-cancellation-approver-actor-and-billable-charge --selftest: OK — planted bare $10 rejected");
+  process.exit(0);
+}
+
 console.log(
-  "verify-cancellation-approver-actor-and-billable-charge: OK — both writeLoadCancellationRecord callers stamp an approver of record on status='approved', and billable-without-charge is rejected FE+BE"
+  "verify-cancellation-approver-actor-and-billable-charge: OK — both writeLoadCancellationRecord callers stamp an approver of record on status='approved', and billable-without-charge is rejected FE+BE; FAIL-CANCEL-PARAM-10 $10::uuid cast locked",
 );
