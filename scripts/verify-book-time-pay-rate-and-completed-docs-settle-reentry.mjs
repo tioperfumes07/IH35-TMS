@@ -80,8 +80,11 @@ function analyze(src) {
         "trip's settlement"
     );
   }
-  if (!/status = 'closed'/.test(pingBody)) {
-    failures.push(`${FILES.settle}: the completed_docs_received re-entry does not require status='closed' on the settlement it targets`);
+  if (!/status IN \('open', 'closed'\)/.test(pingBody)) {
+    failures.push(
+      `${FILES.settle}: the completed_docs_received re-entry must accept status IN ('open','closed') — ` +
+        "requiring closed-only made the #18830 branch a no-op at transition time (L-0017)"
+    );
   }
   const reentryAppendCount = (pingBody.match(/await appendSettlementLineFromDriverBillIfMissing\(client, \{/g) || []).length;
   if (reentryAppendCount < 1) {
@@ -89,6 +92,30 @@ function analyze(src) {
       `${FILES.settle}: expected the completed_docs_received branch to call ` +
         `appendSettlementLineFromDriverBillIfMissing at least once, found ${reentryAppendCount} within pingSettlementOnLoadEvent`
     );
+  }
+
+  // DEFECT B′ — Close-trip stamp must append earnings (Devin-A / CC-2 Live Click L-0017)
+  const stampStart = src.settle.indexOf("export async function stampTripClosedForBookendedSettlement");
+  if (stampStart < 0) {
+    failures.push(`${FILES.settle}: stampTripClosedForBookendedSettlement not found`);
+  } else {
+    const stampBody = src.settle.slice(stampStart, pingStart > stampStart ? pingStart : stampStart + 9000);
+    if (!/appendSettlementLineFromDriverBillIfMissing/.test(stampBody)) {
+      failures.push(
+        `${FILES.settle}: stampTripClosedForBookendedSettlement does not call ` +
+          "appendSettlementLineFromDriverBillIfMissing — Close trip closes $0 with open driver bills (DEFECT B′)"
+      );
+    }
+    if (!/aggregateSettlementTotals/.test(stampBody)) {
+      failures.push(
+        `${FILES.settle}: stampTripClosedForBookendedSettlement must roll up via aggregateSettlementTotals after append`
+      );
+    }
+    if (!/already_closed/.test(stampBody) || !/appendEarningsForAnchor|appendSettlementLineFromDriverBillIfMissing/.test(stampBody)) {
+      failures.push(
+        `${FILES.settle}: already_closed Close-trip path must still attempt append (heal empty closed settlements)`
+      );
+    }
   }
 
   return failures;
@@ -146,6 +173,16 @@ function selftest() {
       apply: (s) => ({
         ...s,
         settle: s.settle.replace("AND last_load_id = $3::uuid\n", ""),
+      }),
+    },
+    {
+      name: "DEFECT B′: Close-trip stamp drops appendSettlementLineFromDriverBillIfMissing",
+      apply: (s) => ({
+        ...s,
+        settle: s.settle.replace(
+          /const appendEarningsForAnchor = async \(\) => \{[\s\S]*?\};\n\n/,
+          "const appendEarningsForAnchor = async () => {};\n\n"
+        ),
       }),
     },
   ];

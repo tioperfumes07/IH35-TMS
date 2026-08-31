@@ -688,6 +688,8 @@ export type StampTripClosedResult =
   | {
       stamped: false;
       reason: "not_found" | "already_closed" | "cancelled" | "not_load_bookended" | "no_anchor_load";
+      trip_closed_at?: string;
+      anchor_load_id?: string;
     };
 
 /**
@@ -736,11 +738,52 @@ export async function stampTripClosedForBookendedSettlement(
   if (!row) return { stamped: false, reason: "not_found" };
   if (row.settlement_model !== "load_bookended") return { stamped: false, reason: "not_load_bookended" };
   if (row.voided_at || row.status === "cancelled") return { stamped: false, reason: "cancelled" };
-  if (row.trip_closed_at) return { stamped: false, reason: "already_closed" };
 
   const anchorLoadId = row.last_load_id ?? row.first_load_id;
   const anchorLoadNumber = row.last_load_number ?? row.first_load_number ?? anchorLoadId;
   if (!anchorLoadId) return { stamped: false, reason: "no_anchor_load" };
+
+  // DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP (L-0017 Live Click): Close trip used to stamp
+  // trip_closed_at / status=closed WITHOUT calling appendSettlementLineFromDriverBillIfMissing.
+  // Result: closed $0 settlements with an open driver bill and zero settlement_lines. Always
+  // attempt the append (idempotent) — including already_closed retries / Refresh→Close trip
+  // re-clicks that must heal empty closed settlements.
+  const appendEarningsForAnchor = async () => {
+    const team = await fetchTeamDriversForLoad(client, {
+      operatingCompanyId: opts.operatingCompanyId,
+      loadId: anchorLoadId,
+    });
+    if (team) {
+      for (const [driverId, lineType] of [
+        [team.primaryDriverId, "team_split_primary" as const],
+        [team.secondaryDriverId, "team_split_secondary" as const],
+      ] as const) {
+        await appendSettlementLineFromDriverBillIfMissing(client, {
+          settlementId: opts.settlementId,
+          driverId,
+          loadId: anchorLoadId,
+          teamId: team.teamId,
+          lineType,
+          actorUserId: opts.actorUserId,
+        });
+      }
+    } else {
+      await appendSettlementLineFromDriverBillIfMissing(client, {
+        settlementId: opts.settlementId,
+        driverId: row.driver_id,
+        loadId: anchorLoadId,
+        teamId: null,
+        lineType: "earnings",
+        actorUserId: opts.actorUserId,
+      });
+    }
+    await aggregateSettlementTotals(client, opts.settlementId, opts.operatingCompanyId);
+  };
+
+  if (row.trip_closed_at) {
+    await appendEarningsForAnchor();
+    return { stamped: false, reason: "already_closed", trip_closed_at: row.trip_closed_at, anchor_load_id: anchorLoadId };
+  }
 
   const closedAt = new Date().toISOString();
 
@@ -757,6 +800,8 @@ export async function stampTripClosedForBookendedSettlement(
     `,
     [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
   );
+
+  await appendEarningsForAnchor();
 
   await appendCrudAudit(
     client,
@@ -900,11 +945,10 @@ export async function pingSettlementOnLoadEvent(
   // remaining code path to attach a line once the bill eventually minted -- the manual repair
   // route (pre-settlement.routes.ts) is hard-blocked once trip_closed_at is stamped. Live-caught
   // + root-caused 2026-08-31 (L-20260831-0002/0004, GO-IDLE-WAKE DEFECT B). This branch is the
-  // narrowest possible re-entry: re-attempt the earnings-line append ONLY against a settlement
-  // this exact load already closed (last_load_id = this load), so it can never attach to an
-  // unrelated trip. appendSettlementLineFromDriverBillIfMissing is itself idempotent
-  // (ON CONFLICT (source_driver_bill_id) DO NOTHING), so calling it again once a bill now exists
-  // is safe and a no-op if a line was already appended.
+  // narrowest possible re-entry: re-attempt the earnings-line append against a settlement
+  // this exact load owns (last_load_id = this load). Accept open OR closed — at the moment
+  // completed_docs_received fires the settlement is often still open; requiring status='closed'
+  // alone made #18830's branch a permanent no-op (L-0017 Live Click). Idempotent append.
   if (normalizedStatus === "completed_docs_received") {
     const driverIds = team
       ? [team.primaryDriverId, team.secondaryDriverId]
@@ -919,7 +963,7 @@ export async function pingSettlementOnLoadEvent(
           WHERE operating_company_id = $1::uuid
             AND driver_id = $2
             AND settlement_model = 'load_bookended'
-            AND status = 'closed'
+            AND status IN ('open', 'closed')
             AND last_load_id = $3::uuid
           ORDER BY created_at DESC
           LIMIT 1
