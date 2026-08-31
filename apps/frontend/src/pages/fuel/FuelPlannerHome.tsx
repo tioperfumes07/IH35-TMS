@@ -54,7 +54,6 @@ type Props = {
 
 export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
