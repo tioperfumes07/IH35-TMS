@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:12 CT · LEAD-TICK-0186
+| Seat | Status | Evidence |
+|------|--------|----------|
+| Devin-A | WORKING | pay-rate create + Samsara tips |
+| CC-1 | IDLE DEFECT | must take pay-rate CREATE now |
+| CC-3 | IDLE DEFECT | Samsara 400 / filter |
+| Codex | IDLE | help Samsara/FE |
+| CC-2 | IDLE | grade |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 04:07 CT · LEAD-TICK-0185
 | Seat | Status | Evidence |
 |------|--------|----------|
