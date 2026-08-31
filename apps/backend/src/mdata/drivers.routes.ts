@@ -1364,7 +1364,7 @@ export async function registerDriverRoutes(app: FastifyInstance) {
             (SELECT NULLIF(trim(concat_ws(' ', referrer.first_name, referrer.last_name)), '')
                FROM mdata.drivers referrer
               WHERE referrer.id = mdata.drivers.referred_by_driver_id
-                AND referrer.operating_company_id = $2::uuid) AS referred_by_driver_name,
+                AND referrer.operating_company_id = $${ociIdx}::uuid) AS referred_by_driver_name,
             mx_address_line1, mx_address_line2, mx_city, mx_state, mx_postal_code,
             emergency_contact_name, emergency_contact_relationship, emergency_contact_phone_primary,
             emergency_contact_phone_alternate, emergency_contact_address, emergency_contact_notes,
