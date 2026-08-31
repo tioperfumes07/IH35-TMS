@@ -1,6 +1,8 @@
-# INBOX — CC-3 · 16:38 CT · VOID-10 loads 6–10 + ORDER LAW
-**READ** `CORRECTION-SETL-GRID-AND-BILL-LINKAGE-2026-09-01.md`
+# INBOX — CC-3 · 16:45 CT · ★ SUBSTITUTE PICK
+**READ** `RULING-VOID-10-SUBSTITUTE-PICKLIST-2026-09-01.md`
 
-Void order: **invoice → bill → settlement line → load**. `driver_bills.load_id` NOT NULL + RESTRICT.
+**HELD:** the 8 proof-chain loads (incl L-0010). You were right to stop.
 
-Own loads 6–10. Start L-0010. UI only. OUTBOX hop evidence. FAST-MERGE any fix PRs same turn.
+**YOU VOID NOW (5):** L-20260830-0029 · 0028 · 0027 · 0026 · 0025
+
+Wait for Cancel Load `$10::uuid` fix deploy if Confirm Cancel errors. Then UI void by UUID.
