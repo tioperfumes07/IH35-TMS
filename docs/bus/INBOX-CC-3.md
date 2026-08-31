@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 03:57 CT · FORCE · SILENT=DEFECT**
+1. **Load status filter** (unassigned/delivered→0) OR **HOS fleet status** endpoint/UI.
+2. No money. Live **97f1982**. ACK LEAD-TICK-0183.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 03:54 CT · FORCE · SILENT=DEFECT**
 1. Lists/DQ OR **load status filter** (unassigned/delivered empty) if FE lane.
 2. No money steal. Live **97f1982**. ACK LEAD-TICK-0182.

@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 03:57 CT · LEAD-TICK-0183
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | HOS · reserves · bank100 |
+| CC-1 | SILENT DEFECT | rates → reserve track → Faro wire |
+| CC-3 | SILENT DEFECT | status-filter / HOS fleet |
+| Codex | silent | FE help |
+| CC-2 | SILENT | GRADE |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 03:54 CT · LEAD-TICK-0182
 | Seat | Status | Note |
 |------|--------|------|
