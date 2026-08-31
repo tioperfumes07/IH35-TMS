@@ -130,12 +130,77 @@ export type UpdateDispatchLoadInput = {
   stops?: UpdateLoadStopInput[];
 };
 
-/** Owner standing law — edit/approve everything; lock is advisory for Owner with audit. */
+/** Owner standing law — non-money fields only behind edit lock; money requires reversal (WORM). */
 export function canOwnerOverrideLoadEditLock(role: string | undefined): boolean {
   return String(role ?? "") === "Owner";
 }
 
-/** AT# / AlwaysTrack linkage — non-financial metadata; allow backfill when load is money-locked. */
+/** Fields an Owner may PATCH while load_edit_locked — linkage / ops metadata only, never revenue/pay. */
+export const OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS = new Set<string>([
+  "live_load_number",
+  "notes",
+  "driver_instructions_text",
+  "customer_wo_number",
+  "pickup_number",
+  "border_routing",
+  "customer_po_number",
+  "dispatch_flag_color_id",
+  "is_sample_data",
+  "requires_tarps",
+  "tarp_type",
+  "tarp_qty",
+  "tarp_size",
+  "commodity",
+  "piece_count",
+  "reefer_temp_f",
+  "reefer_mode",
+  "pre_cool",
+  "temperature_type",
+  "detention_expected_y_n",
+  "detention_reason_id",
+  "detention_expected_hours",
+  "late_delivery_risk_y_n",
+  "late_delivery_reason",
+  "trip_type",
+  "tour_id",
+]);
+
+/** Money / assignment / rate fields — lock stands even for Owner until backing doc is reversed. */
+export const LOAD_EDIT_LOCK_MONEY_FIELD_KEYS = new Set<string>([
+  "customer_id",
+  "assigned_unit_id",
+  "assigned_primary_driver_id",
+  "assigned_secondary_driver_id",
+  "team_id",
+  "lumper_amount_cents",
+  "customer_chargeback_requested",
+  "customer_chargeback_reason",
+  "anticipated_chargeback_cents",
+  "anticipated_chargeback_reason",
+  "detention_bill_customer_per_hour_cents",
+  "detention_driver_pay_per_hour_cents",
+  "late_delivery_est_deduction_cents",
+  "miles_practical",
+  "miles_shortest",
+  "miles_deadhead",
+  "cargo_weight_lbs",
+  "catalog_load_type_id",
+  "load_trailer_equipment_id",
+]);
+
+/** True when Owner patches only allowed non-money scalar fields (no charges/stops). */
+export function isOwnerNonMoneyLockOverridePatch(input: UpdateDispatchLoadInput): boolean {
+  if (!canOwnerOverrideLoadEditLock(input.requestingUserRole)) return false;
+  if (input.stops !== undefined) return false;
+  if (input.charges !== undefined) return false;
+  const keys = Object.keys(input.fields ?? {});
+  if (keys.length === 0) return false;
+  return keys.every(
+    (k) => OWNER_LOCK_OVERRIDE_ALLOWED_FIELD_KEYS.has(k) && !LOAD_EDIT_LOCK_MONEY_FIELD_KEYS.has(k)
+  );
+}
+
+/** @deprecated use isOwnerNonMoneyLockOverridePatch — kept for guard + live_load_number-only path */
 export function isLiveLoadNumberOnlyPatch(input: UpdateDispatchLoadInput): boolean {
   if (input.stops !== undefined) return false;
   if (input.charges !== undefined) return false;
@@ -469,13 +534,14 @@ export async function updateDispatchLoad(
 
   const fields = input.fields ?? {};
 
-  // 2) Money/evidence lock — reject the whole edit if posted money depends on this load.
-  // LIVE-LOAD-NUMBER-NULL-REV-E: live_load_number-only backfill is linkage metadata, not revenue/pay.
-  // Owner standing law: Owner may override any lock; audit records the override.
+  // 2) Money/evidence lock — reject edits that desync revenue/pay behind posted documents.
+  // LIVE-LOAD-NUMBER-NULL: live_load_number-only is linkage metadata (any role).
+  // Owner: non-money fields only (notes, refs, AT#) with audit; money/assignment/miles/charges/stops → WORM.
   if (!isLiveLoadNumberOnlyPatch(input)) {
     const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
     if (lock) {
-      if (canOwnerOverrideLoadEditLock(input.requestingUserRole)) {
+      if (isOwnerNonMoneyLockOverridePatch(input)) {
+        const overrideFields = Object.keys(input.fields ?? {});
         await appendCrudAudit(
           client,
           requestingUserUuid,
@@ -483,6 +549,7 @@ export async function updateDispatchLoad(
           {
             load_id: loadId,
             operating_company_id: operatingCompanyId,
+            override_fields: overrideFields,
             lock_reason: lock.reason,
             lock_reference_id: lock.reference_id,
             lock_reference_display_id: lock.reference_display_id,

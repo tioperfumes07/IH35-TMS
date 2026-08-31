@@ -49,8 +49,11 @@ export function assertSettlementTripCloseStamp(sources) {
   if (!/settlements\/:id\/close-trip/.test(pr)) {
     fails.push("settlement-payrun-close.routes.ts must expose POST …/settlements/:id/close-trip");
   }
-  if (!/canOwnerOverrideLoadEditLock/.test(u)) {
-    fails.push("update-load.service.ts must export canOwnerOverrideLoadEditLock");
+  if (!/isOwnerNonMoneyLockOverridePatch/.test(u)) {
+    fails.push("update-load.service.ts must export isOwnerNonMoneyLockOverridePatch (field-scoped Owner bypass)");
+  }
+  if (!/override_fields/.test(u)) {
+    fails.push("Owner load edit override audit must include override_fields");
   }
   if (!/dispatch\.load\.edit_owner_override/.test(u)) {
     fails.push("Owner load edit override must append dispatch.load.edit_owner_override audit event");

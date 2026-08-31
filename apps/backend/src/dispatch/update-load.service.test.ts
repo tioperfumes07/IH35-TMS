@@ -59,7 +59,7 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     ).rejects.toMatchObject({ lock: { reason: "open_settlement", reference_display_id: "SETT-1" } });
   });
 
-  it("allows Owner to override open_settlement lock with audit", async () => {
+  it("allows Owner to override open_settlement lock for non-money fields with audit", async () => {
     const auditSqls: string[] = [];
     const { client, sqls } = makeClient([
       loadExists,
@@ -83,6 +83,40 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     });
     expect(auditSqls.some((e) => e === "dispatch.load.edit_owner_override")).toBe(true);
     expect(sqls.some((s) => /UPDATE mdata\.loads SET/.test(s))).toBe(true);
+  });
+
+  it("blocks Owner from changing miles behind an issued invoice (WORM — reverse document first)", async () => {
+    const { client } = makeClient([
+      loadExists,
+      noSettlement,
+      { match: /FROM accounting\.invoices/, rows: [{ id: "i1", display_id: "INV-9" }] },
+    ]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        fields: { miles_practical: 500 },
+      })
+    ).rejects.toMatchObject({ lock: { reason: "issued_invoice", reference_display_id: "INV-9" } });
+  });
+
+  it("blocks Owner from changing charges behind an open settlement", async () => {
+    const { client } = makeClient([
+      loadExists,
+      { match: /FROM driver_finance\.driver_settlements/, rows: [{ id: "s1", display_id: "SETT-1" }] },
+    ]);
+    await expect(
+      updateDispatchLoad(client, {
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        requestingUserRole: "Owner",
+        charges: [{ code: "LINEHAUL", amount_cents: 120000 }],
+        fields: {},
+      })
+    ).rejects.toMatchObject({ lock: { reason: "open_settlement" } });
   });
 
   it("blocks the edit (issued_invoice) when a non-draft invoice is sourced from the load", async () => {
