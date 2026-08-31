@@ -18,8 +18,8 @@
  *   - earnAmountCents() -> Event 2 would bill against a reversed Event 1 amount.
  *   - the ACCT-F59 invoice interlock -> that load's invoice is refused forever.
  *
- * ONE DEFINITION, EXPORTED. The reversal test lives in STANDING_LATCH_JE_PREDICATE and every caller
- * imports it. This repo has already shipped a load state machine in three copies and a delivery-
+ * ONE DEPENDENCY-FREE DEFINITION, EXPORTED. The reversal test lives in the standing-predicate leaf
+ * and every caller imports it. This repo has already shipped a load state machine in three copies and a delivery-
  * evidence rule in two; a second private copy of "is this latch still good" is the same failure
  * waiting to happen, so the guard fails if any file open-codes it.
  */
@@ -29,6 +29,7 @@ import { join, relative } from "node:path";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const POSTER = "apps/backend/src/accounting/revrec-delivery-posting/poster.service.ts";
+const PREDICATE = "apps/backend/src/accounting/revrec-delivery-posting/standing-latch-predicate.ts";
 const ENGINE = "apps/backend/src/accounting/posting-engine.service.ts";
 const LABEL = "verify-revrec-latch-respects-reversal";
 const TABLE = "load_revenue_recognition_postings";
@@ -56,16 +57,31 @@ export function auditLatchReads(src, rel) {
   return problems;
 }
 
-/** The predicate must be defined exactly once, in the poster, and exported. */
-export function auditSingleDefinition(posterSrc, engineSrc) {
+/** The predicate must be defined exactly once in its dependency-free leaf and preserve every standing-JE condition. */
+export function auditSingleDefinition(predicateSrc, posterSrc, engineSrc) {
   const problems = [];
+  const predicate = stripComments(predicateSrc);
   const poster = stripComments(posterSrc);
   const engine = stripComments(engineSrc);
-  if (!/export\s+function\s+standingLatchJePredicate/.test(poster)) {
-    problems.push(`${POSTER}: STANDING_LATCH_JE_PREDICATE is not defined and exported — the reversal test has no single home.`);
+  if (!/export\s+function\s+standingLatchJePredicate/.test(predicate)) {
+    problems.push(`${PREDICATE}: STANDING_LATCH_JE_PREDICATE is not defined and exported — the reversal test has no dependency-free home.`);
   }
-  if (/function\s+standingLatchJePredicate/.test(engine)) {
-    problems.push(`${ENGINE}: defines its own STANDING_LATCH_JE_PREDICATE. Import the poster's — two copies drift.`);
+  for (const [token, label] of [
+    ["je.id = ${alias}.journal_entry_id", "journal-entry identity"],
+    ["je.operating_company_id = ${alias}.operating_company_id", "operating-company identity"],
+    ["je.voided_at IS NULL", "void exclusion"],
+    ["je.reversed_by_je_id IS NULL", "reversal exclusion"],
+  ]) {
+    if (!predicate.includes(token)) problems.push(`${PREDICATE}: missing ${label} from the canonical standing-JE predicate.`);
+  }
+  if (/function\s+standingLatchJePredicate/.test(poster) || /function\s+standingLatchJePredicate/.test(engine)) {
+    problems.push(`poster/engine defines its own STANDING_LATCH_JE_PREDICATE. Import the predicate leaf — two copies drift.`);
+  }
+  if (!/from\s+["']\.\/revrec-delivery-posting\/standing-latch-predicate\.js["']/.test(engine)) {
+    problems.push(`${ENGINE}: must import the standing predicate from its dependency-free leaf, never the full revrec poster.`);
+  }
+  if (/from\s+["']\.\/revrec-delivery-posting\/poster\.service\.js["']/.test(engine)) {
+    problems.push(`${ENGINE}: imports the full revrec poster and recreates the journal-entries → posting-engine → poster cycle.`);
   }
   if (/reversed_by_je_id/.test(engine) && !/STANDING_LATCH_JE_PREDICATE/.test(engine)) {
     problems.push(`${ENGINE}: open-codes a reversed_by_je_id test instead of importing the shared predicate.`);
@@ -102,8 +118,9 @@ function auditTree() {
     problems.push(...auditLatchReads(src, rel));
   }
   const poster = readFileSync(join(ROOT, POSTER), "utf8");
+  const predicate = readFileSync(join(ROOT, PREDICATE), "utf8");
   const engine = readFileSync(join(ROOT, ENGINE), "utf8");
-  problems.push(...auditSingleDefinition(poster, engine));
+  problems.push(...auditSingleDefinition(predicate, poster, engine));
   return problems;
 }
 
@@ -118,12 +135,18 @@ function selftest() {
   const insert = "const q = `INSERT INTO accounting.load_revenue_recognition_postings (load_id, is_active) VALUES ($1, true)`;";
   if (auditLatchReads(insert, "x.ts").length !== 0) failures.push("case3 FAIL — the INSERT path was flagged as a read");
 
-  if (auditSingleDefinition("const x = 1;", "").length === 0) failures.push("case4 FAIL — a missing exported predicate was NOT caught");
-  if (!auditSingleDefinition("export function standingLatchJePredicate(a) { return ``; }", "function standingLatchJePredicate(a) { return ``; }").some((p) => p.includes("defines its own")))
+  const leaf = "export function standingLatchJePredicate(alias) { return `je.id = ${alias}.journal_entry_id AND je.operating_company_id = ${alias}.operating_company_id AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL`; }";
+  const engineImport = 'import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/standing-latch-predicate.js";';
+  if (auditSingleDefinition("const x = 1;", "", engineImport).length === 0) failures.push("case4 FAIL — a missing exported predicate was NOT caught");
+  if (!auditSingleDefinition(leaf, "", engineImport + "\nfunction standingLatchJePredicate(a) { return ''; }").some((p) => p.includes("defines its own")))
     failures.push("case5 FAIL — a duplicate predicate definition was NOT caught");
+  if (!auditSingleDefinition(leaf, "", 'import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";').some((p) => p.includes("full revrec poster")))
+    failures.push("case6 FAIL — the circular full-poster import was NOT caught");
+  if (!auditSingleDefinition(leaf.replace("je.reversed_by_je_id IS NULL", "TRUE"), "", engineImport).some((p) => p.includes("reversal exclusion")))
+    failures.push("case7 FAIL — removal of the reversal exclusion was NOT caught");
 
   const tree = auditTree();
-  if (tree.length !== 0) failures.push(`case6 FAIL — real sources flagged: ${tree.join(" | ")}`);
+  if (tree.length !== 0) failures.push(`case8 FAIL — real sources flagged: ${tree.join(" | ")}`);
 
   if (failures.length) {
     for (const f of failures) console.error(`  ✗ ${LABEL}: ${f}`);

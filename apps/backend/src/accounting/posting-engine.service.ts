@@ -1,7 +1,7 @@
 import { withCurrentUser } from "../auth/db.js";
 import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking/bank-account-visibility.js";
 import { resolveRoleAccountOptional } from "./coa-roles/resolver.service.js";
-import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/poster.service.js";
+import { STANDING_LATCH_JE_PREDICATE } from "./revrec-delivery-posting/standing-latch-predicate.js";
 import { resolveAccountForCategory } from "./expense-category-map/resolver.service.js";
 import { resolveBillLineDebitAccount, BillLineAccountError } from "./bill-account-resolver.js";
 import {

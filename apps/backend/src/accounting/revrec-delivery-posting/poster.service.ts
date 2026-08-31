@@ -27,6 +27,15 @@ import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { enqueueAfterCommit } from "../../lib/after-commit.js";
 import { companyBusinessDate } from "../../lib/company-business-date.js";
+import {
+  standingLatchJePredicate,
+  STANDING_LATCH_JE_PREDICATE,
+} from "./standing-latch-predicate.js";
+
+export {
+  standingLatchJePredicate,
+  STANDING_LATCH_JE_PREDICATE,
+} from "./standing-latch-predicate.js";
 
 export const REVENUE_RECOGNITION_POST_FLAG = "REVENUE_RECOGNITION_POST_ENABLED";
 
@@ -163,19 +172,6 @@ async function companyCode(client: DbClient, operatingCompanyId: string): Promis
  * definition, exported, used by every caller: the repo has already shipped a load state machine in
  * three copies and a revenue rule in two, and this is the same failure waiting to happen.
  */
-export function standingLatchJePredicate(alias = "p"): string {
-  return `EXISTS (
-    SELECT 1 FROM accounting.journal_entries je
-    WHERE je.id = ${alias}.journal_entry_id
-      AND je.operating_company_id = ${alias}.operating_company_id
-      AND je.voided_at IS NULL
-      AND je.reversed_by_je_id IS NULL
-  )`;
-}
-
-/** Default-alias form for the common `... postings p` shape. */
-export const STANDING_LATCH_JE_PREDICATE = standingLatchJePredicate("p");
-
 /**
  * ACCT-F59 reverse interlock: has an INVOICE for this load already put revenue/A-R on the books?
  *
