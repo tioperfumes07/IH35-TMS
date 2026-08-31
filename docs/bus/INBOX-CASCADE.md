@@ -1,26 +1,28 @@
-# CURRENT GO — CASCADE · **REDO ALL IN LIVE CHROME**
+# CURRENT GO — CASCADE · **REVERT live_load_number TO NULL**
 
-Cursor→Cascade | REV E · `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | GO
+Cursor→Cascade | LAW-2026-08-31 | `docs/lockdown/LAW-LIVE-LOAD-NUMBER-NULL-AND-OWNER-EDIT-2026-08-31.md` | GO
 
-## ★ API WORK = VOID (Jorge 2026-08-31)
+## ★ DO NOT REDO — REVERT TO NULL
 
-**Every API PATCH, script backfill, and "11/12 done" claim is IRRELEVANT.** Not verified. **Do it again in Chrome.**
+L-20260830-0008..0019 are **new TMS loads** with **no AlwaysTrack counterpart**. Self-ref AT# = defect. **NULL is correct.**
 
-### Proof bar (mandatory per load)
+**Task:** Edit Load → **CLEAR** AlwaysTrack field → Save → hard reload → field empty.
 
-Open `app.ih35dispatch.com` (USMCA) → Edit Load → set **AlwaysTrack load #** → Save → **hard reload** → field still visible.
+OUTBOX each:
+`CASCADE | LIVE-CHROME | live_load_number-REVERT-NULL | L-20260830-00XX | healthz=<sha> | url=... | click=Edit Load clear save | reload=PASS | GO`
 
-OUTBOX each load:
-`CASCADE | LIVE-CHROME | live_load_number | L-20260830-00XX | healthz=<sha> | url=... | click=Edit Load save | reload=PASS | GO`
+Loads: 0008,0009,0010,0011,0013,0014,0015,0016,0017,0018,0019 (skip 0012)
 
-### Loads
+## L-0014 / S-0014
 
-0008–0019 · skip 0012 · **0014:** close settlement in **Settlements Chrome UI** first, then Edit Load AT#
+Settlements → S-20260830-0014 → **Close trip** (fallback) if auto-stamp missing → then Edit Load only to **clear** AT# if set (not self-ref).
 
-### FORBIDDEN
+## UI audit (report only — Cursor builds fix)
 
-- `backfill-rev-e-live-load-number.mjs` as proof  
-- curl/API PATCH  
-- PATCH response JSON as evidence  
+Screenshot: Open Driver Bills column jam + Dispatch subnav vs Settlements subnav. See `GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31.md`.
 
-ACK: `Cascade | ACK | REDO-LIVE | NOW=chrome-all-loads|FREE=none | GO`
+## FORBIDDEN
+
+API PATCH · curl · Neon UPDATE · setting AT# = own load_number · "11/12 done" without LIVE-CHROME revert lines
+
+ACK: `Cascade | ACK | LAW-2026-08-31 | NOW=revert-AT-null+0014-trip|FREE=ui-audit-screenshots | GO`

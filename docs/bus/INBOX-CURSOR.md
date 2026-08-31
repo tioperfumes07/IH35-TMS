@@ -1,16 +1,24 @@
-# CURRENT GO — CURSOR · lead verifies Live Chrome
+# CURRENT GO — CURSOR · class fixes + UI consistency
 
-Cursor→Cursor | `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | GO
+Cursor→Cursor | LAW-2026-08-31 | GO
 
-## LEAD DUTY THIS TURN
+## P0 — ship field-scoped Owner override + guards
 
-1. **Read all seven OUTBOXes** — reject any `SHIPPED`/`BACKFILL`/`DONE` without `LIVE-CHROME` or healthz+url+click  
-2. **Ship bus law** to every INBOX (this packet)  
-3. **Name idle** + who is doing API bullshit vs real Chrome  
+- `update-load.service.ts` — Owner bypass **non-money fields only**; miles/rate/driver/charges/stops → 409 (WORM)
+- GUARD: `scripts/verify-owner-override-not-money-fields.mjs` (claim **2454** even first)
+- Update `verify-settlement-trip-close-stamp.mjs` sibling assertions
 
-## BLOCKING
+## P0 — GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31
 
-- Enforce Jorge ruling on Cascade VOID  
-- Deploy cadence 5–10 min (healthz still `02a3499` — merges not live yet)  
+1. Audit table ALL modules (subnav + list rows) **before code**
+2. Shared navy subnav (Settlements = standard) + shared DataTable primitive
+3. GUARDS: `verify-subnav-standard.mjs` + `verify-list-rows-use-datatable.mjs`
+4. Triage 969 middot hits → real N of list-row defects first
 
-ACK: `Cursor | ACK | LEAD | NOW=live-chrome-law|FREE=guard-board | GO`
+## BUS
+
+Law files shipped: `PASTE-ALL-SEATS-GO-2026-08-31.md` · keep INBOX TOP synced
+
+**FORBIDDEN:** Tell Cascade to redo 11 loads with AT# · settlements-only patch · dispatch-only subnav patch
+
+ACK: `Cursor | ACK | LAW-2026-08-31 | NOW=owner-override-guard+ui-audit|FREE=deploy-cadence | GO`
