@@ -39,13 +39,13 @@ try {
   await client.query("SELECT set_config('app.bypass_rls', 'lucia', true)");
 
   const { rows: loads } = await client.query(
-    `SELECT l.id, l.display_id, l.live_load_number, l.revenue_cents / 100.0 AS revenue_usd,
-            c.name AS customer_name
+    `SELECT l.id, l.load_number, l.live_load_number, l.rate_total_cents / 100.0 AS revenue_usd,
+            c.customer_name AS customer_name
      FROM mdata.loads l
      LEFT JOIN mdata.customers c ON c.id = l.customer_id
-     WHERE l.display_id LIKE 'L-20260830-%'
-       AND l.voided_at IS NULL
-     ORDER BY l.display_id`
+     WHERE l.load_number LIKE 'L-20260830-%'
+       AND l.soft_deleted_at IS NULL
+     ORDER BY l.load_number`
   );
 
   if (loads.length === 0) {
@@ -55,21 +55,44 @@ try {
   }
 
   let updated = 0;
+  const claimedAt = new Map(); // at# -> load_number already assigned this run, to catch double-assignment
   for (const load of loads) {
-    if (load.live_load_number) {
-      console.log(`SKIP ${load.display_id} already has live_load_number=${load.live_load_number}`);
+    // A real AT# was already backfilled correctly if live_load_number is set to
+    // something OTHER than the load's own internal load_number. Some REV-E loads
+    // were booked via the historical-import path with live_load_number typed in
+    // as a same-value placeholder (live_load_number === load_number) instead of
+    // the real AlwaysTrack number -- treat that as still needing the real match,
+    // not as already-correct.
+    if (load.live_load_number && load.live_load_number !== load.load_number) {
+      console.log(`SKIP ${load.load_number} already has real live_load_number=${load.live_load_number}`);
       continue;
     }
     const rev = Number(load.revenue_usd);
     const name = String(load.customer_name ?? "").toLowerCase();
-    const match = USMCA_AT_BY_REVENUE_CUSTOMER.find(
+    const matches = USMCA_AT_BY_REVENUE_CUSTOMER.filter(
       (m) => Math.abs(m.revenue - rev) < 0.01 && name.includes(m.customerLike)
     );
-    if (!match) {
-      console.warn(`NO MATCH ${load.display_id} rev=${rev} customer=${load.customer_name}`);
+    if (matches.length === 0) {
+      console.warn(`NO MATCH ${load.load_number} rev=${rev} customer=${load.customer_name}`);
       continue;
     }
-    console.log(`${dryRun ? "DRY" : "PATCH"} ${load.display_id} -> live_load_number=${match.at}`);
+    if (matches.length > 1) {
+      console.error(
+        `AMBIGUOUS ${load.load_number} rev=${rev} customer=${load.customer_name} -- ` +
+          `${matches.length} candidate AT#s (${matches.map((m) => m.at).join(", ")}); refusing to guess, skipping`
+      );
+      continue;
+    }
+    const match = matches[0];
+    if (claimedAt.has(match.at)) {
+      console.error(
+        `DUPLICATE-CLAIM ${load.load_number} would take AT#${match.at}, already assigned to ` +
+          `${claimedAt.get(match.at)} this run (same revenue+customer collision) -- refusing to guess, skipping`
+      );
+      continue;
+    }
+    claimedAt.set(match.at, load.load_number);
+    console.log(`${dryRun ? "DRY" : "PATCH"} ${load.load_number} -> live_load_number=${match.at}`);
     if (!dryRun) {
       await client.query(
         `UPDATE mdata.loads SET live_load_number = $1, updated_at = now() WHERE id = $2`,
