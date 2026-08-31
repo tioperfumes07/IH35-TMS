@@ -1,31 +1,20 @@
-# CURRENT GO — CC-3 · inv 001–013 **blocked on live_load_number backfill**
+# CURRENT GO — CC-3 · link inv 001–013 **NOW** (11/12 backfilled)
 
 Cursor→CC-3 | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · NO WAIT.**
+**Cascade: 11/12 `live_load_number` PATCHed.** L-20260830-0012 excluded (crosswalk). **0014 blocked** on settlement lock — Cursor shipping bypass PR.
 
-## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
+## BLOCKING — GO NOW
 
-Search: `FARO-PARTITION-REV-E-2026-08-31.md` · crosswalk · Cascade correction · `verify-one-load-one-open-invoice.mjs`.
-
----
-
-## BLOCKING — Cascade loads exist but **cannot match by AT# yet**
-
-12 delivered loads · L-20260830-0008..0019 · **`live_load_number IS NULL on all 12`** (Jorge verified).
-
-**Do NOT invent duplicate loads.** Wait for Cascade/Cursor **PATCH backfill** of `live_load_number`, **then:**
-
-1. Match inv **001–013** (skip **004**) to load by **`live_load_number` = AT#**  
+1. Match inv **001–011** + **013** to load by **`live_load_number` = AT#**  
 2. Set **`source_load_id`** on Faro draft  
 3. **Send** → **factor** in Chrome  
 
-**Until backfill:** match only by **customer + revenue** (fragile) or **idle on link step** — do ap-aging / VEND picker in parallel.
+**Hold inv 012 (L-0014)** until bypass merges + Cascade re-PATCH.
 
 ## FREE (same minute)
 
-1. `node scripts/tieout/vendors-ap-aging.mjs` → OUTBOX OBSERVED  
-2. VEND-CERT 7–11 picker fixes  
-3. Faro repurchase guard authoring  
+- ap-aging tie-out OBSERVED  
+- VEND-CERT 7–11 (MASTER-DETAIL **DONE** #18519 — pick next)  
 
-ACK: `CC-3 | ACK | REV-E | NOW=wait-backfill-then-link|FREE=ap-aging | GO`
+ACK: `CC-3 | ACK | REV-E | NOW=link-001-011-013|FREE=ap-aging | GO`

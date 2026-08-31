@@ -45,6 +45,31 @@ export function reuseQuery(src) {
   return m ? m[0] : null;
 }
 
+/** Isolate getActiveSettlementForDriver's own SELECT (same shape, no FOR UPDATE — it's a reader). */
+export function activeReaderQuery(src) {
+  const clean = stripComments(src);
+  const fnIdx = clean.indexOf("export async function getActiveSettlementForDriver");
+  if (fnIdx === -1) return null;
+  const m = /SELECT[\s\S]{0,200}?FROM\s+driver_finance\.driver_settlements[\s\S]{0,600}?LIMIT\s+1/i.exec(
+    clean.slice(fnIdx)
+  );
+  return m ? m[0] : null;
+}
+
+/**
+ * PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE (2026-08-31): trip_closed_at is set by the close path
+ * ATOMICALLY WITH status='closed' — but status can also reach a terminal value (approved/paid/
+ * locked/final/closed) through a DIFFERENT code path that was never audited for whether it also
+ * stamps trip_closed_at. Live-proven: S-20260816-0168 sits at status='approved' with
+ * trip_closed_at still NULL, and the OLD blacklist (`status <> 'cancelled'`) handed that
+ * already-approved, already-paid-out settlement back for a brand-new trip instead of opening one.
+ * A whitelist on the literal 'open' status — the ONLY value the INSERT itself ever creates a
+ * fresh row with — cannot be fooled by any future terminal status, known or not.
+ */
+function checksOpenOnly(q) {
+  return /status\s*=\s*'open'/i.test(q) && !/status\s*<>\s*'cancelled'/i.test(q);
+}
+
 export function collectProblems(src) {
   const problems = [];
   const q = reuseQuery(src);
@@ -74,24 +99,54 @@ export function collectProblems(src) {
         `on delivered freight (ACCT-F266).`
     );
   }
+  if (!checksOpenOnly(q)) {
+    problems.push(
+      `${SVC}: reuse does not whitelist status = 'open' on the settlement itself (or still carries the ` +
+        `old status <> 'cancelled' blacklist). trip_closed_at alone is not a reliable "still open" ` +
+        `signal — live: S-20260816-0168 reached status='approved' with trip_closed_at NULL, and the ` +
+        `blacklist handed that already-approved settlement back as if it were open ` +
+        `(PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
+    );
+  }
+  const reader = activeReaderQuery(src);
+  if (!reader) {
+    problems.push(
+      `${SVC}: getActiveSettlementForDriver's own SELECT was not found. If it moved, move this guard ` +
+        `with it (PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
+    );
+  } else if (!checksOpenOnly(reader)) {
+    problems.push(
+      `${SVC}: getActiveSettlementForDriver does not whitelist status = 'open' either — same gap as the ` +
+        `reuse query, same fix required (PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
+    );
+  }
   return problems;
 }
 
 if (process.argv.includes("--selftest")) {
   const failures = [];
-  const GOOD =
-    "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.first_load_id IS NOT NULL AND EXISTS (SELECT 1 FROM mdata.loads fl WHERE fl.id = s.first_load_id AND fl.soft_deleted_at IS NULL AND fl.status::text <> 'cancelled') ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE";
-  const BARE =
+  const GOOD_REUSE =
+    "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.voided_at IS NULL AND s.first_load_id IS NOT NULL AND EXISTS (SELECT 1 FROM mdata.loads fl WHERE fl.id = s.first_load_id AND fl.soft_deleted_at IS NULL AND fl.status::text <> 'cancelled') ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE";
+  const GOOD_READER =
+    "export async function getActiveSettlementForDriver(client, input) { const res = await client.query(`SELECT id, display_id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL AND status = 'open' AND voided_at IS NULL ORDER BY created_at DESC LIMIT 1`); }";
+  const GOOD = `${GOOD_REUSE}\n${GOOD_READER}`;
+  const BARE_REUSE =
     "SELECT id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE";
+  const BARE = `${BARE_REUSE}\n${GOOD_READER}`;
 
-  if (collectProblems(GOOD).length !== 0) failures.push("the anchor-checked reuse query was flagged");
-  if (collectProblems(BARE).length !== 2) failures.push("the pre-fix query did not raise BOTH problems");
+  if (collectProblems(GOOD).length !== 0) failures.push("the fully-fixed reuse+reader queries were flagged");
   if (!collectProblems(BARE).some((p) => /still LIVE/.test(p))) {
     failures.push("a reuse query without the live-anchor check was NOT caught");
   }
+  if (!collectProblems(BARE).some((p) => /first_load_id IS NOT NULL/.test(p))) {
+    failures.push("a reuse query without first_load_id IS NOT NULL was NOT caught");
+  }
+  if (!collectProblems(BARE).some((p) => /whitelist status = 'open' on the settlement itself/.test(p))) {
+    failures.push("a reuse query without status = 'open' was NOT caught");
+  }
   // Anchor present but liveness not checked — the half-fix.
   const HALF =
-    "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.first_load_id IS NOT NULL ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE";
+    `SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.first_load_id IS NOT NULL ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE\n${GOOD_READER}`;
   if (!collectProblems(HALF).some((p) => /still LIVE/.test(p))) {
     failures.push("a NOT NULL check without liveness was accepted — that is the half-fix");
   }
@@ -103,6 +158,22 @@ if (process.argv.includes("--selftest")) {
   if (!collectProblems("const x = 1;").some((p) => /was not found/.test(p))) {
     failures.push("a missing reuse query did not fail closed");
   }
+  // PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE: reverting status='open' back to the old blacklist
+  // must be caught on BOTH the reuse query and the reader, independently.
+  const REGRESSED_REUSE = GOOD_REUSE.replace("s.status = 'open'", "s.status <> 'cancelled'");
+  const REGRESSED = `${REGRESSED_REUSE}\n${GOOD_READER}`;
+  if (!collectProblems(REGRESSED).some((p) => /whitelist status = 'open' on the settlement itself/.test(p))) {
+    failures.push("reverting the reuse query's whitelist back to the old blacklist was NOT caught");
+  }
+  const REGRESSED_READER = GOOD_READER.replace("status = 'open'", "status <> 'cancelled'");
+  const REGRESSED2 = `${GOOD_REUSE}\n${REGRESSED_READER}`;
+  if (!collectProblems(REGRESSED2).some((p) => /getActiveSettlementForDriver does not whitelist/.test(p))) {
+    failures.push("reverting the reader's whitelist back to the old blacklist was NOT caught");
+  }
+  const NO_READER = GOOD_REUSE;
+  if (!collectProblems(NO_READER).some((p) => /own SELECT was not found/.test(p))) {
+    failures.push("a missing getActiveSettlementForDriver reader was not caught");
+  }
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
@@ -110,8 +181,9 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 6/6 (anchor-checked passes, pre-fix raises both, missing liveness caught, ` +
-      `half-fix caught, comment cannot fake, missing query fails closed)`
+    `${LABEL} SELFTEST OK — 10/10 (fully-fixed passes, missing liveness/anchor/open-whitelist each ` +
+      `caught, half-fix caught, comment cannot fake, missing reuse query fails closed, blacklist ` +
+      `regression caught on both reuse+reader independently, missing reader fails closed)`
   );
   process.exit(0);
 }
