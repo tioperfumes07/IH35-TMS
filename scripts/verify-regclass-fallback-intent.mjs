@@ -19,9 +19,11 @@
  * wrong) from an optional read (where degrading quietly is fine), and the card itself carves out several
  * NON-defects. Asserting otherwise would be exactly the over-claiming that wastes a builder's day.
  *
- * So: the current per-file counts are frozen in a baseline, and the guard fails when a file gains a NEW bare
- * probe. The class cannot grow while the per-site dispositions are worked through, and every ratchet-down is
- * a real, reviewable decrease.
+ * So: executable-code per-file counts are frozen in a baseline, and the guard fails when a file gains a NEW
+ * bare probe. Comments are removed lexically before counting: prose that merely names `to_regclass` is not a
+ * probe and prose saying "unavailable" cannot mask one. The 2026-08-31 re-anchor measures 134 undeclared
+ * executable branches across 91 files (down from the comment-inflated 185 across 110 files), with zero
+ * per-file increases. The class cannot grow while per-site dispositions are worked through.
  *
  * NOT CLAIMED: this is static text analysis. It proves the count of undeclared false-branches per file did
  * not rise. It cannot prove any individual site is correct — that is the per-site work the card describes.
@@ -37,14 +39,72 @@ const BASELINE = "scripts/regclass-fallback-intent-baseline.json";
 
 /** A false-branch "declares intent" if it throws, returns an HTTP error, or names an explicit unavailable code. */
 const DECLARES_INTENT =
-  /throw |reply\.code\(|E_[A-Z_]+|_unavailable|\bunavailable\b|undelivered|sources\.|NOT_APPLIED|fail(?:s)?[ _-]?closed|503/;
+  /throw |reply\.code\(|E_[A-Z_]+|_unavailable|\bunavailable\b|reason:\s*["']missing_|undelivered|sources\.|NOT_APPLIED|fail(?:s)?[ _-]?closed|503/;
+
+const INTENT_WINDOW = 1800;
+
+/** Remove JavaScript comments without touching strings/template SQL or changing source offsets. */
+export function stripJsComments(src) {
+  const chars = [...src];
+  let state = "code";
+  let escaped = false;
+
+  for (let i = 0; i < chars.length; i += 1) {
+    const char = chars[i];
+    const next = chars[i + 1];
+
+    if (state === "line-comment") {
+      if (char === "\n") state = "code";
+      else chars[i] = " ";
+      continue;
+    }
+    if (state === "block-comment") {
+      if (char === "*" && next === "/") {
+        chars[i] = " ";
+        chars[i + 1] = " ";
+        i += 1;
+        state = "code";
+      } else if (char !== "\n") {
+        chars[i] = " ";
+      }
+      continue;
+    }
+    if (state !== "code") {
+      if (escaped) escaped = false;
+      else if (char === "\\") escaped = true;
+      else if (
+        (state === "single" && char === "'") ||
+        (state === "double" && char === '"') ||
+        (state === "template" && char === "`")
+      ) state = "code";
+      continue;
+    }
+
+    if (char === "'") state = "single";
+    else if (char === '"') state = "double";
+    else if (char === "`") state = "template";
+    else if (char === "/" && next === "/") {
+      chars[i] = " ";
+      chars[i + 1] = " ";
+      i += 1;
+      state = "line-comment";
+    } else if (char === "/" && next === "*") {
+      chars[i] = " ";
+      chars[i + 1] = " ";
+      i += 1;
+      state = "block-comment";
+    }
+  }
+  return chars.join("");
+}
 
 export function scanSource(src) {
+  const executable = stripJsComments(src);
   let total = 0;
   let bare = 0;
-  for (const m of src.matchAll(/to_regclass/g)) {
+  for (const m of executable.matchAll(/to_regclass/g)) {
     total += 1;
-    if (!DECLARES_INTENT.test(src.slice(m.index, m.index + 900))) bare += 1;
+    if (!DECLARES_INTENT.test(executable.slice(m.index, m.index + INTENT_WINDOW))) bare += 1;
   }
   return { total, bare };
 }
@@ -93,6 +153,11 @@ if (process.argv.includes("--selftest")) {
     ["RATCHET — holding at baseline passes", () => compare({ "f.ts": 1 }, { "f.ts": 1 }).length, 0],
     ["RATCHET — ratcheting DOWN passes", () => compare({ "f.ts": 0 }, { "f.ts": 3 }).length, 0],
     ["RATCHET — a brand-new file with a bare probe fails", () => compare({ "new.ts": 1 }, {}).length, 1],
+    ["line-comment prose is not an executable probe", () => scanSource(`// sibling to_regclass guard\nconst x = 1;`).total, 0],
+    ["block-comment prose is not an executable probe", () => scanSource(`/* to_regclass('a.b') */\nconst x = 1;`).total, 0],
+    ["template SQL remains executable", () => scanSource("const t = q(`SELECT to_regclass('a.b')`); if (!t) return false;").bare, 1],
+    ["comment cannot mask a real bare probe", () => scanSource("// unavailable\nconst t = q(`SELECT to_regclass('a.b')`); if (!t) return false;").bare, 1],
+    ["structured missing reason declares intent", () => scanSource("const t = q(`SELECT to_regclass('a.b')`); if (!t) return { ok: false, reason: 'missing_table:a.b' };").bare, 0],
   ];
   let bad = 0;
   for (const [name, run, want] of cases) {
