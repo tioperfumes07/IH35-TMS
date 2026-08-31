@@ -1,12 +1,11 @@
-# LEAD-CENSUS · 2026-08-31 10:03 CT · LEAD-TICK-0249
-Deploy **LIVE** healthz=`9c2fab3`. WAKE-ALL (#18759) still **0 self-ACKs** (~3m).
-| Seat | Status | Note |
-|------|--------|------|
-| Cursor | LEAD + **L1 OVERFLOW** | Book Load wizard open (CORE + sample) — finishing baseline |
-| CC-1 | DEAD | no ACK 0248 |
-| CC-2 | DEAD | no JE confirm |
-| CC-3 | DEAD | no ACK |
-| Cascade | DEAD | no ACK |
-| Codex | DEAD | no ACK |
-| Devin-A | DEAD | no ACK |
-Sessions not pulling bus = process dead. Owner must rewake Claude/Cascade/Codex/Devin chats.
+# LEAD-CENSUS · 2026-08-31 10:06 CT · LEAD-TICK-0250
+**Correction:** CC-2 was mislabeled DEAD. Live=`9c2fab3`.
+| Seat | Status | Evidence |
+|------|--------|----------|
+| Cursor | LEAD + L1 overflow | Book Load in progress |
+| CC-1 | **IDLE** | tip Cursor→ only — no 0247/0248 self-ACK |
+| CC-2 | **WORKING (GUARD)** | PR #18760 aa4e24a · ACK 0247 · JE real=236 · nothing to grade yet · 10m watch |
+| CC-3 | **IDLE** | tip Cursor→ only |
+| Cascade | **IDLE** | tip Cursor→ only |
+| Codex | **IDLE** | tip Cursor→ only |
+| Devin-A | **WORKING** | OUTBOX ACK 0248 + TOP-20 Neon re-verify · JE 236 · next LOAD-6 |

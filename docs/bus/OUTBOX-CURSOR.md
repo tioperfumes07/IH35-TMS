@@ -1,3 +1,8 @@
+### 2026-08-31 10:06 CT · LEAD-TICK-0250
+- Read all INBOX/OUTBOX: CC-2 NOT idle (#18760 ACK 0247, JE=236). Devin ACK 0248 + top-20.
+- Still IDLE (no load start): CC-1, CC-3, Cascade, Codex.
+- Census 0249 over-called CC-2 DEAD — corrected.
+
 ### 2026-08-31 10:03 CT · LEAD-TICK-0249
 - Tick 106: healthz=`9c2fab3` LIVE. Zero seat ACKs after 0248. Cursor owns L1 overflow.
 
