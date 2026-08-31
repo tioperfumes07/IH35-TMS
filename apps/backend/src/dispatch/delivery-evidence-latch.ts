@@ -110,19 +110,29 @@ async function convertAndSendInvoiceOnDelivery(
 ): Promise<void> {
   if (typeof (client as QueryableClient).query !== "function") return;
   const db = client as QueryableClient;
+  // SAVEPOINT: a SQL failure inside convert/send aborts the Postgres txn (25P02). JS try/catch
+  // alone cannot un-poison it — later spine SQL on the same client then 500s the load transition
+  // (L-20260808-0099). Isolate invoice work so delivery status can still commit.
+  await db.query("SAVEPOINT delivery_invoice_convert_send");
   try {
     const pipelineOn = await isEnabled(db as never, "INVOICE_PROFORMA_PIPELINE_ENABLED", {
       operating_company_id: input.operatingCompanyId,
       user_uuid: input.actorUserId,
     });
-    if (!pipelineOn) return;
+    if (!pipelineOn) {
+      await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");
+      return;
+    }
 
     const converted = await convertProformaToOfficial(db as never, {
       operatingCompanyId: input.operatingCompanyId,
       loadId: input.loadId,
       userId: input.actorUserId,
     });
-    if (!converted.converted || !converted.invoiceId) return;
+    if (!converted.converted || !converted.invoiceId) {
+      await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");
+      return;
+    }
 
     const sent = await sendDraftInvoice(db as never, {
       invoiceId: converted.invoiceId,
@@ -135,7 +145,13 @@ async function convertAndSendInvoiceOnDelivery(
         "acct_f351_auto_send_after_delivery_failed"
       );
     }
+    await db.query("RELEASE SAVEPOINT delivery_invoice_convert_send");
   } catch (err) {
+    try {
+      await db.query("ROLLBACK TO SAVEPOINT delivery_invoice_convert_send");
+    } catch {
+      /* nested rollback already failed — outer still swallows */
+    }
     console.warn({ err, load_id: input.loadId }, "acct_f351_proforma_convert_failed");
   }
 }
