@@ -7087,8 +7087,8 @@
     "purpose": "verify-reconciliation-session-reopen-authorized-path"
   },
   "10181": {
-    "claimed_at": "2026-08-31",
+    "claimed_at": "2026-09-01",
     "claimed_by": "cc-1",
-    "purpose": "verify-void-source-linked-reads-full-je"
+    "purpose": "verify-void-reversal-resolves-by-journal-entry-not-source-tag"
   }
 }
