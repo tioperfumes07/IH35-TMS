@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:52 CT · LEAD-TICK-0229
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | FORCE CC-2 CREATE |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | **FORCE: pay-rate CREATE UI→Neon** |
+| CC-3 | WORKING | search OUTBOX · VEND-CERT · rate assist after |
+| Codex | WORKING | backup CREATE if CC-2 stalls |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **159283c**. Idle: **none**. SETL-45 blocked on CREATE proof.
+
 # LEAD-CENSUS · 2026-08-31 07:32 CT · LEAD-TICK-0228
 | Seat | Status | Note |
 |------|--------|------|

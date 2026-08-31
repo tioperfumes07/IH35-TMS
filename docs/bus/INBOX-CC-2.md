@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:52 CT · FORCE CREATE · AUTHORIZED**
+1. **FORCE:** LIVE UI CREATE one USMCA pay rate → Neon row with `created_at` today. Standing law CREATE-TEST-THEN-VOID + all seats have permission — bus/INBOX IS authorization. Do **not** wait for chat "human" OK.
+2. GUC triage CLOSED (14/15 FP) — leave settlements/approval to CC-1. OUTBOX Neon proof. Live **159283c**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:20 CT · PROVE #18666 + GUC triage**
 1. **First:** CREATE one real pay rate via live UI → Neon row lands (newest today was 08-07). OUTBOX proof.
 2. Continue CLS-RESOLVE-OPCO-WITHOUT-GUC triage. Live **a3f66aa**.
