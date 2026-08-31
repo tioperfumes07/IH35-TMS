@@ -1,14 +1,14 @@
-# LEAD-CENSUS · 15:20 CT · MONEY-FIRST LAW
-Live=`9b16a4a` · tip=`dc66562` (deploy catch-up) · **TEST-FREEZE ON** · Faro-only controls
+# LEAD-CENSUS · 15:25 CT · LEAD OWNED THE MISS
+Live=`dc66562` · tip=`17ce8fa` · TEST-FREEZE · Faro-only
 
-| Seat | NOW (order) | Idle? |
-|------|-------------|-------|
-| Devin-A | **P0** Live retest Book+dispatch (chip asset 200) — prove submit | FORCE |
-| CC-1 | After booking clear: **1 real chain → PAID** · then assets §1–4 | FORCE |
-| Codex | Bank-accept 500 → persist → attach to CC-1 chain | FORCE |
-| CC-2 | Posting-trace table + aggregate-guard COUNT · no build | FORCE |
-| CC-3 | Insured-asset assist w/ CC-1 · Inactive drivers · ID-card 404 | FORCE |
-| Cascade | Navy **parallel only** — never ahead of money | OK |
-| Cursor | Enforce freeze · merge/deploy · P0 close | LEAD |
+**LEAD DEFECT (Cursor):** missed CC-3 doc-attach scope question + treated Codex “no Live Chrome” as progress. Fixed this turn.
 
-**WITHDRAWN:** $388,976.50 / $75,918.76 — never tie-out.
+| Seat | NOW | Idle? |
+|------|-----|-------|
+| Devin-A | P0 Book+dispatch Live prove submit | FORCE |
+| CC-1 | Real chain → approve/post/send money-out → PAID | FORCE |
+| Codex | **NOT IDLE** — see INBOX (Chrome rewake OR Neon Faro recon; Cursor owns bank Live Click overflow) | FORCE |
+| CC-2 | Posting-trace + aggregate COUNT | FORCE |
+| CC-3 | COI scope = policy-level (decision locked) · ID-card 404 · Inactive drivers | FORCE |
+| Cascade | Navy parallel — #18916/#18912 | OK |
+| Cursor | Live Click bank confirm overflow + census every turn | LEAD |
