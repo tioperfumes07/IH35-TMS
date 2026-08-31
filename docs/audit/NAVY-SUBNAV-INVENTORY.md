@@ -15,7 +15,7 @@
 
 ## Remaining (fill as you inventory)
 - [x] Fuel — FuelPlannerHome NavyPageSubNav (LST-F10156 / Cursor rescue)
-- [ ] Finance — FinanceModuleTabs (8 tabs)
+- [x] Finance — FinanceModuleTabs NavyPageSubNav (LST-F10158 / Cursor rescue)
 - [x] Legal — LegalModuleTabs NavyPageSubNav (LST-F10157 / Cursor rescue)
 - [ ] Factoring — FactoringHome inline tabs (~13 routes)
 - [ ] Maintenance — MaintenanceHome HoverDropdownNav (~37 routes)
