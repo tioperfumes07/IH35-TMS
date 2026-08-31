@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:12 CT · IDLE DEFECT >85m — OUTBOX NOW**
+1. Self-ACK. ONE: cash-flow vs Undeposited Funds register · factoring advance liability vs submitted batches · Relay tiles.
+2. Live **a3e3af0**. Do not invent reserve CoA. Rates CLOSED going-forward.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:07 CT · IDLE DEFECT >80m — OUTBOX NOW**
 1. Self-ACK. ONE: Relay Fuel balance mismatch (tiles vs /balance) · cash-GL non-cash · 17 bills.
 2. Live **a3e3af0**. Negative TEST bank ≠ defect (G1). Future JE dates = FINDING.

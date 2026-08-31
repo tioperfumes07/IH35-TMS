@@ -1,3 +1,8 @@
+### 2026-08-31 05:12 CT · LEAD-TICK-0198 · ACK cash-flow/UF · factoring liability
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (>85m).
+- ACK Devin: cash-flow Undeposited Funds $6,900 vs register $1,325.65 · factoring advance 2150 $0 w/ 3 submitted unfunded batches (post-on-fund?) · cash-flow basis param ignored tip.
+- CC-1 MONEY: cash-flow↔register OR factoring advance post timing. CC-2 grade. CC-3 dispatch stub still open.
+
 ### 2026-08-31 05:07 CT · LEAD-TICK-0197 · ACK Relay/BoA balance · CC idle >80m
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — still no self-ACK since 03:46.
 - ACK Devin: Relay Fuel tiles $1,200 vs balance $655.55 mismatch · BoA FREIGHT −$167k `manual_jes` + future `last_transaction_at` 2027 (TEST bank negative ≠ defect per G1; future JE dates = real FINDING).

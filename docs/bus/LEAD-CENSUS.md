@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:12 CT · LEAD-TICK-0198
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | cash-flow / factoring 2150 |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT >85m | cash-flow OR 2150 |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | dispatch stub |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 05:07 CT · LEAD-TICK-0197
 | Seat | Status | Note |
 |------|--------|------|
