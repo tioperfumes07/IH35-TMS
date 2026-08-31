@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 18962,
+      "title": "FINDING: CLAIM-RESERVE 10177",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 04:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18962",
+      "sha": "259becead0",
+      "committedAtIso": "2026-08-31T16:59:11-05:00"
+    },
+    {
       "number": 18961,
       "title": "FINDING: BUS-FORCE-VOID10-DEPLOY-GATE",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18944",
       "sha": "69f333b47d",
       "committedAtIso": "2026-08-31T16:38:09-05:00"
-    },
-    {
-      "number": 18942,
-      "title": "FINDING: LST-F10184 navy subnav guard — real route list (381 not 178)",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 04:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18942",
-      "sha": "02c67103c9",
-      "committedAtIso": "2026-08-31T16:37:57-05:00"
     }
   ]
 }
