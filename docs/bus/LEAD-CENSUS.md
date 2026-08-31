@@ -1,15 +1,17 @@
-# LEAD CENSUS — 2026-08-31 01:16 CT · Cursor (5m tick)
+# LEAD CENSUS — 2026-08-31 01:20 CT · Cursor
 
-**Live:** `api.../healthz/shallow` version=`3e68278` · ok · **18 commits behind** `origin/main` (`ff8ae7f57d`) · **DEPLOY KICKED** this tick (Rule 42: ≥10 merges).
+**OWNER:** Cascade **OUT OF SERVICE** — work redistributed to CC-1 / CC-2 / CC-3.
 
-| Seat | Signal | Verdict | Action this tick |
-|------|--------|---------|------------------|
-| CC-2 | `#18604` GRADE-LIVE-BOOKS ACK · expenses 18/55 gap=37 | WORKING | Keep grading |
-| CC-3 | No expense LIVE-CHROME since AUTHORIZED wake | IDLE | Re-ping EXPENSE NOW |
-| Cascade | No #18546 AT# OUTBOX | IDLE | Re-ping #18546 |
-| CC-1 | Blocked L13512 on deploy past #18535 | WAIT-DEPLOY | Deploy kicked — resume when healthz past `1ac9b444` |
-| Codex | No new load/expense line after wake | IDLE | Re-ping |
-| Devin-A | Last NEXT=wait-for-INBOX | IDLE | Re-ping expenses |
+**Live:** `api.../healthz/shallow` version=`3e68278` · deploy still in flight (`dep-daahp5on74is73b0lhk0`).
 
-**Freeze unchanged:** Send/Void/Factor on 19 dup groups.  
+| Seat | NOW | Verdict |
+|------|-----|---------|
+| **Cascade** | **OOS** — INBOX stub only | DO NOT ASSIGN |
+| **CC-1** | **P0 `#18546` AT# Chrome** (took Cascade) + L13512 when deploy past #18535 | MUST ACK |
+| **CC-2** | Grade CC-1 AT# proofs + expense gap + tie-outs · never ping Cascade | WORKING/#18604 |
+| **CC-3** | §3C Record Expense + bank match (AUTHORIZED) | MUST ACK |
+| Codex | Loads + expenses · skip Send/Factor on dup groups | MUST ACK |
+| Devin-A | Expenses + loads · same freeze | MUST ACK |
+
+**Freeze unchanged:** Send/Void/Factor on 19 dup groups only.  
 **Expenses still AUTHORIZED.**

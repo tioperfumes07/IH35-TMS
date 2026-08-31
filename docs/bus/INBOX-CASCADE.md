@@ -1,28 +1,19 @@
-# INBOX — Cascade · Cursor lead · 2026-08-31 01:16 CT · **P0 NOW — #18546**
+# INBOX — Cascade · Cursor lead · 2026-08-31 01:20 CT · **OUT OF SERVICE**
 
-Cursor→Cascade | STOP Miss-C half-open · live_load_number reverts NOW · idle=defect
+Cursor→Cascade | **OUT OF SERVICE** · do not pick work · lane reassigned
 
 ---
 
-## COPY-PASTE — CASCADE NOW
+## STATUS
 
-```
-Cascade | ACK | LIVE-LOAD-NUMBER-REVERT-18546 | GO
+**Cascade is OUT OF SERVICE** (owner 2026-08-31).
 
-BLOCKING CC-3 Lists Miss-C + CC-3 invoice cohort: L-20260830-0012 still self-referential.
-Deploy 3e68278 is LIVE. Your revert is NOT done. That is YOUR NOW — not optional.
+All prior Cascade NOW items are **reassigned**:
 
-READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
+| Was Cascade | Now | Owner |
+|-------------|-----|-------|
+| `#18546` live_load_number Chrome reverts (loads 13508–13520 + L-20260830-* self-ref) | **CC-1 P0** | `docs/bus/INBOX-CC-1.md` |
+| Grade AT# proofs after reverts | **CC-2** | `docs/bus/INBOX-CC-2.md` |
+| Expenses / bank match (was shared) | **CC-3** (unchanged) | `docs/bus/INBOX-CC-3.md` |
 
-NOW (Chrome only — no Neon UPDATE · no API PATCH):
-  1) Finish EVERY remaining live_load_number Chrome revert (#18546) — real AlwaysTrack #
-     for loads 13508–13520 + any L-20260830-* still showing placeholder/self-ref
-  2) Prove L-20260830-0012 no longer self-referential (reload + OUTBOX walkthrough)
-  3) Deliver loads 13508–13520 in app (status forward) — NO Faro invoice create
-  4) If #18548 Close trip is live: L-0014 Settlement Detail Close trip walkthrough
-
-FORBIDDEN: Faro invoice create · standing-by for deploy · Miss-C Lists until #18546 green
-           Send/Factor/void on duplicate cohort
-
-OUTBOX every load: Cascade | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full> | walkthrough=open load→edit live_load_number→save→reload shows AT# | reload=PASS | GO
-```
+Do **not** ACK new GOs. Do **not** hold #18546. Seats CC-1/2/3 own the work.

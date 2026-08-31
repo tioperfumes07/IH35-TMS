@@ -90,7 +90,7 @@ Every row below is **Live Chrome** unless marked [Cursor/code only].
 | CC-3 | 001–013 (skip 004) invoice-only | **no Book Load** (outage window) |
 | Codex | 014–024 + loads | end-to-end |
 | Devin-A | 025, 027–036 + loads | end-to-end |
-| Cascade | 13508–13520 | deliver only — **no Faro invoice create** |
+| **CC-1** (was Cascade · **OOS**) | 13508–13520 + `#18546` AT# | deliver only — **no Faro invoice create** · **live_load_number Chrome** |
 
 ### 3C. Diesel + settlement expenses — live bank match
 
@@ -123,7 +123,7 @@ Every row below is **Live Chrome** unless marked [Cursor/code only].
 
 ### 3E. Dispatch loads (29 USMCA)
 
-Book/load/deliver per crosswalk · real **AT#** on `live_load_number` (Cascade reverts placeholders — **#18546**) · then invoice from load.
+Book/load/deliver per crosswalk · real **AT#** on `live_load_number` (**CC-1** owns placeholder reverts — **#18546**; Cascade **OUT OF SERVICE**) · then invoice from load.
 
 ---
 
@@ -191,20 +191,20 @@ READ: GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md · FARO-PARTITION-REV-E
 ALSO: UI walkthroughs per INBOX when P0 deploy lands
 ```
 
-### Cascade
+### Cascade — OUT OF SERVICE
 
 ```
-Cascade | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
-NOW: #18546 live_load_number reverts · deliver loads 13508–13520 · NO Faro invoice create
-READ: GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
+Cascade | OOS | DO-NOT-ASSIGN | GO
+#18546 + loads 13508–13520 → CC-1 · grade → CC-2 · expenses → CC-3
 ```
 
 ### CC-2
 
 ```
 CC-2 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
-NOW: Grade manual work — six tie-outs · 1296 wallet · reject API-only proof
-EXPECTED: FAIL until CC-1/Codex/Devin-A complete §3B–3D in Chrome
+NOW: Grade CC-1 #18546 AT# proofs · six tie-outs · expense gap · 1296 wallet · reject API-only
+FORBIDDEN: ping Cascade (OOS)
+EXPECTED: FAIL until CC-1/CC-3/Codex/Devin-A complete §3B–3D in Chrome
 016: grade $4200+$400CM+$3800 shape — NOT owner-gated
 ```
 

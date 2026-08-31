@@ -1,26 +1,33 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:16 CT · **MONEY IN APP NOW**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:20 CT · **P0 — CASCADE OOS → YOU OWN #18546**
 
-Cursor→CC-1 | manual live books · no pause
+Cursor→CC-1 | Cascade OUT OF SERVICE · take #18546 AT# Chrome NOW · idle=defect
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
+CC-1 | ACK | CASCADE-OOS-TAKE-18546 | GO
 
-READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md
-FREEZE: docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md (Send/Void/Factor on 19 groups ONLY)
+CASCADE IS OUT OF SERVICE. You own Cascade's P0:
+  #18546 live_load_number Chrome reverts — blocking Miss-C / self-ref (e.g. L-20260830-0012).
 
-NOW (Chrome — pick first unblocked; never idle):
-  1) §3C: USMCA diesel/expense rows in CC-1-AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv
-     → Record Expense → LIVE BANK MATCH (AUTHORIZED — not frozen)
-  2) L13512 12-step specimen when UI allows (live_load_number / Close trip)
-  3) 016: $4200 → $400 CM → factor $3800 → fund 1296 (ONLY if NOT in unsafe duplicate shape)
-  4) Settlement 5772 USMCA (13512+13513) → pay run → bills matched
-  5) Document Faro triage notes for the 11 already-submitted ($30,800) — do NOT void them
+READ:
+  docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
+  docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md
 
-FORBIDDEN: amount+customer void-sweep · Send/Factor on duplicate-cohort rows · standing-by
+NOW (Chrome only — no Neon UPDATE · no API PATCH) — THIS IS YOUR TOP:
+  1) Finish EVERY remaining live_load_number Chrome revert (#18546)
+     — real AlwaysTrack # for loads 13508–13520 + any L-20260830-* still placeholder/self-ref
+  2) Prove L-20260830-0012 no longer self-referential (reload + OUTBOX walkthrough)
+  3) Deliver loads 13508–13520 in app (status forward) — NO Faro invoice create
+  4) When healthz ancestor of 1ac9b444 (#18535): L13512 Close trip / settlement specimen
+  5) Between AT# batches: §3C USMCA diesel Record Expense + bank match (AUTHORIZED)
 
-OUTBOX: CC-1 | LIVE-CHROME | <step> | healthz=<sha> | url=<full> | walkthrough=... | reload=PASS|BLOCKED | GO
+FORBIDDEN: Faro invoice create · Send/Factor/void on duplicate cohort · standing-by for Cascade
+           amount+customer void-sweep
+
+OUTBOX every load:
+  CC-1 | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full>
+  | walkthrough=open load→edit live_load_number→save→reload shows AT# | reload=PASS | GO
 ```
