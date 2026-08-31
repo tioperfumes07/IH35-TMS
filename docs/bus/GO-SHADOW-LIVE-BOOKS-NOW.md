@@ -1,56 +1,46 @@
-# GO-SHADOW-LIVE-BOOKS-NOW — 2026-08-30 21:11 CT (Cursor lead) · REV C money-split
+# GO-SHADOW-LIVE-BOOKS-NOW — 2026-08-30 21:35 CT (Cursor lead) · REV D quad-money + dual-chrome
 
-**Owner:** load data NOW to find defects faster · finish · same eventual bar for all money modules.  
-**Claude→Cursor defects:** (1) money serialized on CC-1 (2) data vs tie-outs treated sequential (3) bar scoped by campaign.
+**Owner:** load data NOW · **four money seats · three Chrome load seats** · nobody waits on CC-1 or deploy.
 
-**THIS GO** = data load + money split **in parallel** with stub fills. Idle = defect.
-
----
-
-## Locked
-
-| Law | Meaning |
-|-----|---------|
-| U14 14/14 CERTIFIED | Never recertify seat hops |
-| USMCA only | No TRANSP/TRK · no TMS→QBO write-back |
-| Shadow = APP | `CC-1-HUMAN-SEQUENCE-REPLAY.txt` — no bulk SQL |
-| Face $95,075 | 016 = $4200 + CM $400 `unknown_pending_backup` → factor $3800 |
-| Intercompany bill | $7,241 |
-| Bar honesty | `docs/lockdown/BAR-HONESTY-AND-EXTEND-AFTER-URGENT6-2026-08-30.md` — bar-1 label tonight; **no new TIEOUTs tonight** |
-
-Packet: `docs/lockdown/Coders-Faro/`
+**LAW:** `docs/bus/NO-IDLE-PARALLEL-LANES-2026-08-31.md` — waiting = defect.
 
 ---
 
-## ★ MONEY AUTHORITY — TWO SEATS (fix the serialization defect)
+## ★ MONEY — FOUR SEATS (split Faro CSV; CC-1 owns only 016 shape + L13512 specimen)
 
-| Seat | Money NOW |
-|------|-----------|
-| **CC-1** | **016** Chrome ($4200+$400CM+$3800) · **L13512** full 12-step specimen · then **USMCA settlements** (5772 portion first) · JE-FUTURE lead decision |
-| **CC-3** | **2nd money seat AUTHORIZED** — remaining **Faro 32 invoices** factoring layer in Chrome (send/factor/fund) from `CC-1-USMCA-FARO-33-INVOICES.csv` **excluding** the one CC-1 owns for 016/L13512 specimen. Create invoice in app if missing; **zero advances is a throughput fail — fix by loading**. |
-| **Cascade** | USMCA **loads** from `CC-1-AUG-LOADS-BY-FACTOR.csv` Book Load UI — start 13512 |
-| **CC-2** | Grade every hop · FACT OBSERVED · fill SETL+ACCT stubs · never wait · never rubber-cert VEND |
-| **Codex** | Bank shadow steps 8–10 when advances land · no fabricate recon · fill remaining bank grade |
-| **Cursor** | Enforce split · merge · deploy · close idle |
+| Seat | Faro invoices (Chrome factor+fund) | Also |
+|------|-----------------------------------|------|
+| **CC-1** | **016 only** (+ $4200→$400 CM→$3800 shape) | L13512 12-step · settlements 5772 USMCA |
+| **CC-3** | **001–011** (skip 004) | VEND-CERT 7–11 between hops |
+| **Codex** | **012–024** (MONEY-3 authorized) | bank shadow 8–10 when YOUR advances land |
+| **CC-2** | — (grade only, opportunistic) | FREE: run all tie-outs · manifest honesty |
 
-CC-3 money = Faro factoring path only this shift (not CoA redesign / not period close). FAST-MERGE on green. Neon apply when your PR needs it.
+Skip **004** (13512 specimen, CC-1 Chrome) · skip **016** (CC-1 money shape).
 
----
-
-## Parallel lanes (both tonight)
-
-1. **DATA LOAD** (Chrome) — CC-1 + CC-3 + Cascade as above.  
-2. **TIEOUT SCRIPTS** — CC-2 fills SETL+ACCT; Cascade DISP script; leave VEND/BANK scripts as honest FAIL when real.  
-Neither waits on the other.
+Packet: `docs/lockdown/Coders-Faro/CC-1/CC-1-USMCA-FARO-33-INVOICES.csv`
 
 ---
 
-## Success
+## ★ CHROME LOADS — THREE SEATS (split AUG-LOADS CSV by load_number)
 
-- Live factoring advances > 0 (so FACT-TIEOUT has something to grade)  
-- L13512 specimen exercised  
-- 016 shape on books  
-- Settlements USMCA portions posting  
-- Manifests show **complete (bar-1)** for non-U6 complete modules  
+| Seat | USMCA Book Load rows | Port |
+|------|---------------------|------|
+| **Cascade** | **13508–13520** (inv 003,002,004,008,005,011,012,013,006…) | default |
+| **Devin-A** | **13521–13538** (inv 014–025 band) | **9227 CHROME-2** |
+| **CC-1** | **13512** specimen only (2239480) | — |
 
-**Forbidden:** wait on CC-1 · “nothing in my lane” · bulk SQL · add 10 TIEOUT items tonight · paint BANK-ECON PASS · shrink Faro EXPECTED · recertify U14
+CSV: `docs/lockdown/Coders-Faro/CC-1/CC-1-AUG-LOADS-BY-FACTOR.csv` — USMCA rows where `usmca_faro_inv` is set.
+
+Deliver + invoice link in app (shadow human sequence). **No bulk SQL.**
+
+---
+
+## Tie-outs (FREE lane — any seat when Chrome/deploy stalls)
+
+CC-2 primary: run all `scripts/tieout/*.mjs` → OBSERVED. Cursor filled DISP on main branch.
+
+---
+
+## Forbidden
+
+Wait on CC-1 · wait on deploy · one money seat · idle Chrome · OUTBOX without Chrome · recertify U14

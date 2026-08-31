@@ -1,2 +1,2 @@
 # FEED NOW — CASCADE
-**GO:** USMCA loads from AUG-LOADS CSV in Book Load.
+**GO:** CHROME load **13508** first → 13520. Devin-A has 13521+.
