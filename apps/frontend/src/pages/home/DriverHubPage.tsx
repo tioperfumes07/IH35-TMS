@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DriverInbox } from "../../components/driver-inbox/DriverInbox";
 import { DriverSchedulerGridPage } from "../safety/driver-scheduler/DriverSchedulerGridPage";
@@ -60,7 +60,12 @@ export function DriverHubPage() {
           ) : undefined
         }
       />
-      <SecondaryNavTabs tabs={TABS} activeId={tab} onChange={(id) => setTab(id as HubTab)} />
+      <NavyPageSubNav
+        items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        activeId={tab}
+        onTabChange={(id) => setTab(id as HubTab)}
+        itemIds={TABS.map((t) => t.id)}
+      />
       <RelatedModuleLinks
         testId="driver-hub-related-module-links"
         links={[
