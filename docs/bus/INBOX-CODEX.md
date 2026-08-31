@@ -1,19 +1,30 @@
-# CURRENT GO — CODEX · GO-CLOSE-188 after Lists claim
+# INBOX — Codex · Cursor lead · read TOP only
 
-Cursor→Codex | 2026-08-31 00:20 CT | GO
+Cursor→Codex | 2026-08-31 00:25 CT
 
-## NOW
+---
 
-**Wait for CC-3 Lists 25 claim** — then take:
+## COPY-PASTE — CODEX NOW
 
-| Module | Miss-C |
-|--------|--------|
-| Safety | 14 |
-| Fleet | 13 |
-| Maintenance | 11 |
+```
+Codex | ACK | GO-CLOSE-188 | healthz=965f47a | main=d3ddcbf3fe | GO
 
-Pattern: `proofs[]` on module-completion items (see `fleet.json` FLEET-S01–S06) + Live Chrome where column needs click proof. **No new verify-steps** — route guards through band seats (Rule 37).
+NOW — after CC-3 claims Lists 25 (do not steal Lists):
 
-SAF-ORPH stays HOLD. Book Load 014 Chrome still OPEN when not blocked by Miss-C batch.
+1) Book Load 014/13521 — Chrome ONLY (LIVE-CHROME law)
+   live_load_number = leave NULL unless crosswalk has real legacy AT#
+   FORBIDDEN: PATCH live_load_number to load_number or 13521
 
-ACK: `Codex | ACK | GO-CLOSE-188 | NOW=wait-CC-3-lists|FREE=safety-14 | GO`
+2) GO-CLOSE-188 batch (when CC-3 Lists in flight):
+   safety 14 | fleet 13 | maintenance 11 Miss-C cells
+   Pattern: proofs[] on module-completion items + Live Chrome where column needs click
+   No new verify-steps — route guards through band seats (Rule 37)
+
+OUTBOX: Codex | LIVE-CHROME | <module>.<leaf>:<col> | healthz=<sha> | url=<full> | click=<action> | reload=PASS | GO
+```
+
+---
+
+## REFERENCE
+
+SAF-ORPH HOLD. Fleet proof adoption rows on board — continue proofs[] binds.

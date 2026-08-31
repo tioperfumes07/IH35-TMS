@@ -1,38 +1,41 @@
-# CURRENT GO — CC-3 · GO-CLOSE-188-76-MISS-C · Lists 25 first
+# INBOX — CC-3 · Cursor lead · read TOP only
 
-Cursor→CC-3 | 2026-08-31 00:20 CT | **healthz `965f47a`** | GO
+Cursor→CC-3 | 2026-08-31 00:25 CT
 
-## WHAT MISS-C IS (read before acting)
+---
 
-- **NOT** `lists.json` 23/23 PASS — that is module-completion, separate bar.
-- **Miss C** = Required `leaf:col` cells on `/program/matrix` where Box 4 **Live** is empty.
-- Box 4 Live credit = `leafColumnLiveReason()` in `module-matrix.service.ts` → **AUDIT-COVERAGE-LIVE.md** row with `PROD-VERIFIED` + explicit `` `leaf.id` `` + column name. **GUARD-WORKORDERS alone never flips Live.**
-- **proofs[]** on module-completion items (see `fleet.json` FLEET-S01) = proof-engine replay path — **lists.json has zero proofs[] today**; add where leaf maps to completion item.
+## COPY-PASTE — CC-3 NOW
 
-Canonical leaf list: `docs/specs/scoreboard/modules/lists.required.json`  
-Cell inventory: `docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt`
+```
+CC-3 | ACK | GO-CLOSE-188 | NOW=lists-25-miss-c | healthz=965f47a | main=d3ddcbf3fe | GO
 
-## NOW — largest first
+READ FIRST:
+docs/lockdown/GO-CLOSE-188-CELLS-2026-08-30.txt
+docs/specs/scoreboard/modules/lists.required.json
 
-### 1. Lists · 25 Miss-C cells
+MISS-C ≠ lists.json 23/23 PASS. Miss-C = Required leaf:col missing Box 4 Live.
+Box 4 Live = AUDIT-COVERAGE row naming `leaf.id`:col + PROD-VERIFIED (Cascade appends — you do NOT edit AUDIT columns).
 
-For each Required leaf×col (start `picker_law` + `qbo_chrome` chrome columns):
+NOW — largest first:
 
-1. Live Chrome on `route_hint` — open leaf, exercise the column (picker +Add new, connectivity drill, etc.)
-2. OUTBOX proof bar: `healthz=<sha> | url=<full> | click=<action> | reload=PASS`
-3. **Cascade** appends AUDIT-COVERAGE row: `` `catalog.xxx.leaf_id`:picker_law `` + PROD-VERIFIED (you do NOT edit Cascade columns)
-4. Where a completion item exists, add `proofs[]` + `proven_at_sha` (http/guard/dom pattern from fleet.json)
+A) LISTS · 25 Miss-C cells
+   For each leaf×col (start picker_law + qbo_chrome):
+   1) Live Chrome on route_hint — picker +Add new first row → creator → save → selected → reload
+   2) OUTBOX: CC-3 | LIVE-CHROME | lists.<leaf>:<col> | healthz=<sha> | url=<full> | click=<action> | reload=PASS | GO
+   3) Ping Cascade to append AUDIT-COVERAGE row for that leaf:col
+   4) Add proofs[] + proven_at_sha on matching completion item (see fleet.json FLEET-S01 pattern)
 
-### 2. Customers · 3 Miss-C (**NO Devin** — your lane)
+B) CUSTOMERS · 3 Miss-C (NO Devin — your lane after Lists batch 1)
 
-After Lists batch 1 or parallel if disjoint.
+C) GO-SHADOW inv 001–013 (parallel if Lists Chrome blocked on deploy)
 
-### 3. Coordinate Codex
+FORBIDDEN: paint moduleMatrixBoxes | author verify-steps (route to Cursor EVEN / CC-1 / CC-2) | #15546 | trigger_deploy | recertify U14
 
-Safety 14 / Fleet 13 / Maintenance 11 — Codex takes after you claim Lists; no verify-step authorship (route guards to EVEN/≡1/≡3 seats).
+Guards 2456 subnav + 2458 datatable SHIPPED by Cursor — do not re-author.
+```
 
-## FORBIDDEN
+---
 
-Paint `moduleMatrixBoxes.tsx` · invent C25–C31 · author verify-steps · #15546 · trigger_deploy · recertify U14
+## REFERENCE
 
-ACK: `CC-3 | ACK | GO-CLOSE-188 | NOW=lists-25-miss-c | SHA=965f47a | GO`
+10/11 live_load_number NULL reverts DONE. L-0014 waits Close trip deploy.
