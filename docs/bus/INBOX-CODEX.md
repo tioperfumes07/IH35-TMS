@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 05:02 CT · silent >75m**
+1. Mechanical: kill phase3_stub driver-status OR load-availability opco mismatch. OUTBOX.
+2. ACK LEAD-TICK-0196. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 04:57 CT · silent**
 1. Help VERIFY or unique mechanical. OUTBOX.
 2. ACK LEAD-TICK-0195. Live **a3e3af0**.

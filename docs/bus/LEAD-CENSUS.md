@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:02 CT · LEAD-TICK-0196
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | dispatch stub / availability |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT >75m | cash-GL / bills |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | load-availability |
+| Codex | silent | stub kill |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex (no self-ACK).
+
 # LEAD-CENSUS · 2026-08-31 04:57 CT · LEAD-TICK-0195
 | Seat | Status | Note |
 |------|--------|------|
