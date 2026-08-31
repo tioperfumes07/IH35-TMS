@@ -1880,8 +1880,8 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
     const operatingCompanyId = String((req.query as Record<string, unknown> | undefined)?.["operating_company_id"] ?? "");
     if (!operatingCompanyId) return reply.code(400).send({ error: "operating_company_id_required" });
 
-    const row = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
-      const res = await client.query(
+    const result = await withCompanyScope(authUser.uuid, operatingCompanyId, async (client) => {
+      const loadRes = await client.query(
         `
           SELECT
             l.id,
@@ -1894,17 +1894,39 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         `,
         [params.data.id, operatingCompanyId]
       );
-      return res.rows[0] ?? null;
+      const load = loadRes.rows[0] ?? null;
+      if (!load) return null;
+
+      // Driver status history is evidence, not a projection. The prior implementation minted a
+      // new `now()` timeline row on every GET and labelled it `phase3_stub`, so merely refreshing
+      // the page appeared to move the driver's lifecycle clock. Read the immutable dispatch spine
+      // instead; an honestly empty history stays empty for pre-spine/imported loads.
+      const timelineRes = await client.query(
+        `
+          SELECT
+            e.payload->>'to_status' AS stage,
+            e.occurred_at AS at,
+            e.source
+          FROM events.event_log e
+          WHERE e.operating_company_id = $2::uuid
+            AND e.subject_type = 'load'
+            AND e.subject_id = $1::uuid
+            AND e.event_type = 'load.status_changed'
+            AND NULLIF(e.payload->>'to_status', '') IS NOT NULL
+            AND e.is_active = true
+          ORDER BY e.occurred_at ASC, e.event_id ASC
+        `,
+        [params.data.id, operatingCompanyId]
+      );
+      return { load, timeline: timelineRes.rows };
     });
 
-    if (!row) return reply.code(404).send({ error: "dispatch_load_not_found" });
+    if (!result) return reply.code(404).send({ error: "dispatch_load_not_found" });
     return {
-      load_id: row.id,
-      current_stage: row.driver_lifecycle_stage,
-      eta: row.latest_eta_prediction,
-      timeline: [
-        { stage: row.driver_lifecycle_stage, at: new Date().toISOString(), source: "phase3_stub" },
-      ],
+      load_id: result.load.id,
+      current_stage: result.load.driver_lifecycle_stage,
+      eta: result.load.latest_eta_prediction,
+      timeline: result.timeline,
     };
   });
 }
