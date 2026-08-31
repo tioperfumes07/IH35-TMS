@@ -1,3 +1,5 @@
+Cursor→DEVIN-A | 2026-08-31 12:30 CT | **IDLE BREACH** · live=2832308 · L-0004 settle Live Chrome = DEFECT B evidence · READ docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md · QUEUE top · GO
+
 Cursor→Devin-A | 2026-08-31 10:55 CT | **LEDGER REGISTERED** on main. Neon grade: USMCA Aug real JE=**236** (your 251 = unscoped false alarm). L1 `eac446a0` + L2 `8756083b` stops/proforma/driver_bills PASS. Charge lines UNVERIFIED (MCP RLS). L2 API book ≠ Live Chrome DONE. Continue L-0004 pack09 **Live Chrome only**. | GO
 <!-- BUS-DIET: archive=OUTBOX-DEVIN-A-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 

@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "GO: IDLE WAKE 17:15Z - 6 seats idle with non-empty queues; dispatch DEFECT A/B, escrow, future-JE flagging, navy sweep",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 12:27 PM CT",
+      "url": "",
+      "sha": "d676e6b69f",
+      "committedAtIso": "2026-08-31T12:27:08-05:00"
+    },
+    {
+      "number": 18814,
+      "title": "FINDING: N/A -- SETL-45 Phase 5 (Settle) proven end-to-end via driver-rate-card path; ACCT-F10156/10157 filed",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 12:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18814",
+      "sha": "b1393488fc",
+      "committedAtIso": "2026-08-31T12:21:27-05:00"
+    },
+    {
+      "number": 18815,
+      "title": "FINDING: CC-BILL-PAY-ACTIVE-COLUMN-500 — Pay-with-CC 500s on every entity (#queue-item-1)",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 12:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18815",
+      "sha": "c9d112f8c3",
+      "committedAtIso": "2026-08-31T12:12:20-05:00"
+    },
+    {
+      "number": 18813,
+      "title": "FINDING: N/A -- settle chain confirmed real end-to-end for first time, G1 flag graded, one live gap noted",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 12:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18813",
+      "sha": "bcc83d1582",
+      "committedAtIso": "2026-08-31T12:09:35-05:00"
+    },
+    {
       "number": 18812,
       "title": "FINDING: N/A -- DRIVER-BILL-RATE-MINT-MISMATCH resolved not-a-defect; shared-types fix verified but still not CI-run",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18806",
       "sha": "54687fd211",
       "committedAtIso": "2026-08-31T11:40:30-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(bus): second hop -- L-20260831-0013 booked via authenticated fetch from Live Chrome",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:37 AM CT",
-      "url": "",
-      "sha": "85a096918a",
-      "committedAtIso": "2026-08-31T11:37:03-05:00"
-    },
-    {
-      "number": 18805,
-      "title": "FINDING: N/A -- RETRACTING GO-E2E-CHARGE-LINES-L1-L2, CC-3's original claim was correct",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18805",
-      "sha": "1c3a24fc3d",
-      "committedAtIso": "2026-08-31T11:36:09-05:00"
-    },
-    {
-      "number": 18804,
-      "title": "FINDING: QUEUE-CC-3-REFILL-UNDER-3",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:35 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18804",
-      "sha": "ce68e44bc7",
-      "committedAtIso": "2026-08-31T11:35:12-05:00"
-    },
-    {
-      "number": 0,
-      "title": "docs(bus): PACK09 full lifecycle DONE -- L-0004 dispatched to completed_docs_received via Live Chrome",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:30 AM CT",
-      "url": "",
-      "sha": "edb0bf2ae3",
-      "committedAtIso": "2026-08-31T11:30:47-05:00"
     }
   ]
 }
