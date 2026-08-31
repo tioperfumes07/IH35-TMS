@@ -1,3 +1,5 @@
+**LEAD-TICK-0244** · 2026-08-31 09:52 CT · live **e09eea1** · Cursor **OVERFLOW** walking CC-1 ONE chain in Live Chrome · seats still DEAD
+
 **LEAD-TICK-0243** · 2026-08-31 09:47 CT · live **e09eea1** · Neon JE baseline **real=236** (sample=227) · seats still DEAD · Claude/CC-1 chain still unpaid
 
 **LEAD-TICK-0242** · 2026-08-31 09:42 CT · live **e09eea1** · seats **DEAD** on GO-E2E · IDLE=CC-1,CC-2,Devin · Claude chat: run 02-CC-1 ONE chain NOW · Cursor stays lead (no tripwire clobber)

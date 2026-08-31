@@ -1,3 +1,6 @@
+### 2026-08-31 09:52 CT · LEAD-TICK-0244
+- Tick 104: seats still silent. Cursor overflow started Book Load on app.ih35dispatch.com/dispatch/loads — Sample ON, AT TEST-E2E-0831-001, $1200, customer CORE (billing→jpm).
+
 ### 2026-08-31 09:47 CT · LEAD-TICK-0243
 - Tick 103: seats still silent. Cursor ran CC-2 JE sample: Aug USMCA JE sample=227 real=**236** total=463 (lucia).
 
