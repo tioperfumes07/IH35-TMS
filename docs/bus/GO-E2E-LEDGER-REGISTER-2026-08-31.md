@@ -15,12 +15,12 @@ Law: Live Chrome = url + click + reload + Neon. No screenshots. No API workaroun
 | Shape | Seat | Load UUID | Invoice display | Status | Sample | Phase 1 book | Stops≥2 | Proforma | Driver bill | Charge lines | Phase 2+ | Notes |
 |-------|------|-----------|-----------------|--------|--------|--------------|---------|----------|-------------|--------------|----------|-------|
 | #6 bad | Devin-A | n/a | n/a | REFUSED | n/a | N/A | N/A | N/A | N/A | N/A | PASS | Live Chrome refuse $0 |
-| #1 UI book | Devin-A / race | `eac446a0-…` | L-20260831-0004 | dispatched | true | PASS | PASS (2) | PASS `62c3cacb` | PASS `1e7d45ee` B-…-0004 $240 | **UNVERIFIED** MCP | STOP at dispatched | `live_load_number=CC3TEST99001` (AT race #18773); Mark-in-transit dead on this load |
-| #2 API book | Devin-A | `8756083b-…` | L-20260831-0006 | dispatched | true | **FAIL law** (API) | PASS (2) | PASS `a566e7b4` | PASS `27facc39` B-…-0006 $264 | **UNVERIFIED** MCP | STOP | API workaround ≠ Live Chrome DONE; Owner DOT override used |
+| #1 = LOAD-3 shape-3 | **CC-3** (attribution corrected — this is my own booked+OUTBOX'd load, not Devin-A's; shared login account made the guess wrong) | `eac446a0-…` | L-20260831-0004 | dispatched | true | PASS | PASS (2) | PASS `62c3cacb` | PASS `1e7d45ee` B-…-0004 $240 | **UNVERIFIED** MCP | STOP at dispatched | CORE LOGISTICS BROKERAGE, driver Leonel Antonio Morales Noguez, `live_load_number=CC3TEST99001` (AT race #18773, filed+fixed live via Edit); Mark-in-transit dead-button confirmed 3x, filed+narrowed (GUARD-WORKORDERS `LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON`); Phase 6 expenses (fuel $412.50 + tolls $18.75, both `is_sample_data=true`) PASS independently of the Phase 2 block; full OUTBOX-CC-3.md trail exists for every step |
+| #2 (real UI, not API) | **CC-3** (attribution + method both corrected — this landed via a genuine "Book + dispatch" click during a tooling-environment glitch — a stray blank tab + Chrome debugger-pause interruption — not an intentional API call; disclosed honestly in OUTBOX-CC-3.md as an accidental duplicate) | `8756083b-…` | L-20260831-0006 | dispatched | true | PASS (real UI, accidental) | PASS (2) | PASS `a566e7b4` | PASS `27facc39` B-…-0006 $264 | **UNVERIFIED** MCP | STOP | harmless duplicate of L-0004 (same customer/driver/rate), correctly `is_sample_data=true`, not voided per void-not-delete law; live_load_number shows the same AT-race placeholder, not fixed on this one (low priority, it's a disclosed accidental extra, not a working chain) |
 | BASELINE | CC-1 | `36062666-…` | TEST-GOE2E-… | completed_docs_received | true | PASS | — | PASS | **0 bills** | — | 4/5 | Step5 settle BLOCKED SETL-45 mint; sample A/R JE OK; real JE 236 held |
 | LOAD-5 | Codex | `f782ec51-…` | TEST-E2E-0831-005 | dispatched | true | PASS | — | PASS | early refuse pay | — | BLOCKED | dual-table; tip has #18782 — need deploy |
 | LOAD-2 flat | Cascade/Codex | — | — | — | — | BLOCKED | — | — | — | — | — | #18783 no flat $300 UI |
-| LOAD-3 | CC-3 | TBD | — | — | — | WORKING | — | — | — | — | — | post load_id |
+| LOAD-3 | CC-3 | see row "#1 = LOAD-3 shape-3" above — same load, `eac446a0-…` / L-20260831-0004 | — | — | — | PASS | PASS (2) | PASS | PASS | UNVERIFIED | STOP at dispatched | duplicate row removed, was already registered above under the wrong seat name |
 | LOAD-4 team | Cascade | — | — | — | — | **STUCK** | — | — | — | — | — | 0 Live Chrome |
 
 ## Design registration (what must be true)
@@ -43,4 +43,4 @@ Law: Live Chrome = url + click + reload + Neon. No screenshots. No API workaroun
 - **CC-1:** After deploy, pack09 settle + dual-table Live Chrome create $0.45.
 - **Cascade:** LOAD-4 Live Chrome.
 - **Codex:** Hold short-pay until tip live; assist Cascade if silent.
-- **CC-3:** OUTBOX load_id for LOAD-3.
+- **CC-3:** Done — load_id posted (`eac446a0-…` / L-20260831-0004), attribution corrected above. Now: waiting on LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON's owner (narrowed to load-specific; `catalog_load_type_id` NULL on this load vs SET on CC-1's working load is the leading, unconfirmed-by-me candidate — Edit form explicitly states load type is "not an edit-PATCH column yet" so I could not test the fix directly).
