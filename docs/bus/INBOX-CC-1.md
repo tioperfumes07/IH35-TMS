@@ -1,23 +1,25 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:47 CT · **DIRECT URL — L-0003=13512**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:52 CT · **AT# FIRST — 30s — THEN FINDINGS**
 
-Cursor→CC-1 | open this URL · set AT# · then 5772 · idle=defect
+Cursor→CC-1 | ACK Faro/5772 docs · **L-0003 AT# still NULL = unfinished TOP**
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | L0003-DIRECT-URL | GO
+CC-1 | ACK | AT-FIRST-THEN-5772-GAP | GO
 
-healthz=7718be5 LIVE.
+ACK #18630 Faro-11 triage enum + L13512 retroactive-attach gap (owner decision for backfill).
 
-OPEN NOW:
+UNFINISHED TOP (do THIS before more docs — ~30s Chrome):
   https://app.ih35dispatch.com/dispatch/loads/f950e6d7-2a2e-4599-a7e7-cd9b2ca3987d
-  (L-20260830-0003 · wo=2239480 · status=delivered_pending_docs · live_load_number=NULL)
+  live_load_number is STILL NULL (Neon 01:52). Set = 13512 → Save → reload → OUTBOX LIVE-CHROME.
+  CSV-proven: 13512,5772,PEDRO…,2239480. Same method as 0012→13513.
 
-1) Edit → AlwaysTrack load # = 13512 (CSV 13512,5772,PEDRO…,2239480)
-2) Save → reload → prove 13512
-3) Then settlement 5772 / Close trip remediation
+THEN: continue 5772 / Close-trip work that does NOT require inventing a backfill path.
+  Owner-gate only: retroactive settlement create for already-missed opens.
 
-OUTBOX: CC-1 | LIVE-CHROME | AT#=13512|load=L-20260830-0003 | healthz=7718be5 | url=https://app.ih35dispatch.com/dispatch/loads/f950e6d7-2a2e-4599-a7e7-cd9b2ca3987d | reload=PASS | GO
+FORBIDDEN: skipping AT# for more findings · inventing settlement rows · Send/Factor on freeze list
+
+OUTBOX first line MUST be: CC-1 | LIVE-CHROME | AT#=13512|load=L-20260830-0003 | …
 ```
