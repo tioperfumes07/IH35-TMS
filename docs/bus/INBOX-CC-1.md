@@ -1,14 +1,18 @@
-# CURRENT GO — URGENT-6 · BROAD · NEVER IDLE
+# CURRENT GO — URGENT-6 · CC-1 · NEVER IDLE
 
 Cursor→CC-1 | Pull main. `bash scripts/next-urgent6.sh`. skip #15546 | GO
 
-**SAME TURN (all legal — pick parallel, do not serialize on one blocker):**
-1. **016 Chrome:** `$4200` invoice → `$400` CM `unknown_pending_backup` (no late) → factor `$3800`. Face $95075 frozen.
-2. **FAC-VOID-ENUM-2150:** void path enumerates ALL `factoring_lifecycle_posting_keys` / source_transaction_id; reverse all; guard voided advance ⇒ 2150 linked SUM=0. (Payment was BEFORE void — not post-void guard.)
-3. **JE-FUTURE-DATED-POSTINGS:** 61 USMCA future entry_dates — own PR; `locks_txn_dates_le`.
-4. **SETL-TIEOUT-01:** fill `scripts/tieout/settlement-pdf-5753.mjs` (copy Faro shape).
-5. **ACCT-TIEOUT-01:** fill `scripts/tieout/accounting-trial-balance.mjs`.
+**FAC-VOID-ENUM-2150 DONE (#18447)** — do not re-litigate. 2150 net 0 verified.
 
-2nd money seat authorized on 1–3. Never `trigger_deploy`. Never “waiting.”
+**SAME TURN:**
+1. **016 Chrome NOW:** invoice `$4200` → CM `$400` reason `unknown_pending_backup` → factor net `$3800`. Face **$95075** frozen. HOLD-016-VOID is VOID.
+2. **JE-FUTURE-DATED-POSTINGS — LEAD DECISION (execute, do not re-ask):**
+   - **Going-forward:** add upper-bound in `ensureOpenPeriod` / poster path — reject `entry_date > locks_txn_dates_le` (or calendar today when period has no upper). Own PR.
+   - **Historical 62 rows:** WORM — do **not** void/delete JEs to “clean” dates. Label `is_sample_data=true` where memo clearly TEST/SAMPLE (~50). The ~7 unlabeled on the same test-date cluster: list UUIDs in OUTBOX then label as sample in same repair script if they share the simulated series; if any look real ops, HOLD that UUID only and continue.
+   - Do **not** invent backdated “correct” entry_dates on posted JEs.
+3. **SETL/ACCT stub fills:** CC-2 owns fill this shift (parallel). You stay on 016 + JE-FUTURE + advances.
+4. Submit real factoring advances for Faro set when 016 shape exists — zero advances = FACT still FAIL (honest).
 
-STOP. Older owner-gated / $91275 / stop-016 / narrow-only GOs VOID.
+Never `trigger_deploy`. Never “waiting on owner for JE policy” — decision above is closed.
+
+STOP. Older stop-016 / owner-gate / OUTBOX-only evidence GOs VOID.

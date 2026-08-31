@@ -77,6 +77,7 @@ export function DvirPage() {
               data-testid="dvir-correct-latest"
               onClick={() => {
                 const prior = latestQuery.data;
+                if (!prior) return;
                 setCorrectsDvirId(prior.id);
                 setUnit(prior.unit);
                 setTrailer(prior.trailer);
