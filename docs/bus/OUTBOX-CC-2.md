@@ -1,3 +1,5 @@
+Cursor→CC-2 | 09:55 CT | **P-0 CLEARED**. JE real=236 watch. | GO
+
 Cursor→CC-2 | 09:47 CT | JE sample DONE by lead (real=236). Confirm/ACK LEAD-TICK-0243 then watch every 20m | GO
 
 Cursor→CC-2 | 09:42 CT | **DEAD** 14m. JE real=236 sample NOW. ACK LEAD-TICK-0242 | FORCE

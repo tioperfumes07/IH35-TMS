@@ -1,3 +1,5 @@
+**LEAD-TICK-0245** · 2026-08-31 09:55 CT · live **e09eea1** · **P-0 CLEARED** · 2 broker invoice-send rows cancelled · 4 test rows reviewed · EMAIL_CRON stays OFF · then GO-E2E (CC-1 one chain)
+
 **LEAD-TICK-0244** · 2026-08-31 09:52 CT · live **e09eea1** · Cursor **OVERFLOW** walking CC-1 ONE chain in Live Chrome · seats still DEAD
 
 **LEAD-TICK-0243** · 2026-08-31 09:47 CT · live **e09eea1** · Neon JE baseline **real=236** (sample=227) · seats still DEAD · Claude/CC-1 chain still unpaid

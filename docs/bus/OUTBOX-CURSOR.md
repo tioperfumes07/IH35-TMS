@@ -1,3 +1,8 @@
+### 2026-08-31 09:55 CT · LEAD-TICK-0245 · P-0 CLEARED
+P-0 CLEARED | 2 rows parked | ids 2256a643-bd57-44ed-9e65-5008f373aa2e, 84c98ff8-2925-47da-8967-8671786f22f2 | 4 test rows reviewed | GO
+See docs/bus/EMAIL-QUEUE-P0-PARK-2026-08-31.md
+NOBODY flips EMAIL_CRON_ENABLED=true until owner mailbox/env ready.
+
 ### 2026-08-31 09:52 CT · LEAD-TICK-0244
 - Tick 104: seats still silent. Cursor overflow started Book Load on app.ih35dispatch.com/dispatch/loads — Sample ON, AT TEST-E2E-0831-001, $1200, customer CORE (billing→jpm).
 
