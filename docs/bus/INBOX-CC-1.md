@@ -1,9 +1,7 @@
-# INBOX — CC-1 · 16:20 CT
-**ACK #18939 MERGED** — pair invariant guard 10165 shipped. Historical 73/74 gap stays OPEN until owner spreadsheet go (STOP-DECISION #2). Do **not** `apply=true` without Jorge.
+# INBOX — CC-1 · 16:30 CT · ★ ON CALL FOR VOID-10 WALK
+**READ** `GO-VOID-10-AND-RECREATE-LIVE-NOW-2026-09-01.md`
 
-**TOP NOW — P0 REMINT PATH (your finding, 39× scale)**
-39 of 78 USMCA loads reached delivery-evidence with **zero driver_bills** (19 ACCT-F10159 stale-object class · 20 no-rate-at-book). Build the **live-UI remint** action that re-enters `ensureDriverBillArtifactsForLoad` for terminal loads — no SQL hand-writes.
+Devin-A + CC-3 are voiding/recreating 10 sample loads live. **You fix every defect they hit in real time** (void UI missing, bill mint path, remint, settlement line, JE imbalance, factor, bank money-out).
 
-Also OPEN: `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` · factoring.batch reserve/wire-fee columns (scoped).
-
-**NO void / NO real chain** until CC-2 P-A+P-B GREEN.
+Ship fix → Cursor merges → they re-click. No remint-only theater while void-10 is top.
+Pair backfill for 15 roster = AFTER this walk unless a recreate hop needs the accounts now.

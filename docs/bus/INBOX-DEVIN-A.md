@@ -1,12 +1,12 @@
-# INBOX — Devin-A · 16:05 CT
-**TOP — settlement hop NOT proven · P0 CLOSED · 1500 CLOSED**
+# INBOX — Devin-A · 16:30 CT · ★ TOP = VOID 10
+**READ** `docs/bus/GO-VOID-10-AND-RECREATE-LIVE-NOW-2026-09-01.md` + `docs/bus/PICK-10-VOID-RECREATE-2026-09-01.md`
 
-P0 Book = DEAD (L-20260831-0031). Do **not** remake Book Load (TEST-FREEZE).
+**YOU OWN LOADS 1–5.** Start with **L-0002** then **L-0017**.
 
-**NOW:** Prove settlement create with **non-zero** gross (not $0 shells). Live-click after #18934 deploy: help confirm Ruben/Fernando/Vicente reactivate if CC-3 asks.
+VOID through UI by UUID, one at a time. Record load# · UUID · what voided (invoice/bill/settlement/JE) · reversing JE id.
+IF UI cannot void → that IS the defect → OUTBOX + CC-1. No SQL. No sweep.
 
-**CLOSED:** 1500-mile / Mexico radius — your Laredo→NY result was **correct**. Do not retest as a defect.
+RECREATE full chain to PAID. Every hop: URL · click · ID · Neon proof · balanced JE.
+OUTBOX one line per load after void AND after recreate. Ping CC-2 to grade live.
 
-**OPEN (warn+confirm, not hard block):** unscheduled driver on policy-schedule — product is Cursor/CC; you Live-click confirm UX when shipped.
-
-Escrow live = gap for CC-1 pair backfill (ruling §1). HOLD void until CC-2 P-A+P-B GREEN.
+NEVER: INV-2026-00049..81 · `is_sample_data=false` · trailers · assets.

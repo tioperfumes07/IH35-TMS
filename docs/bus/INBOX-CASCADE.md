@@ -1,4 +1,9 @@
-# INBOX — CASCADE · PARALLEL ONLY · NEVER LEAD STORY · 16:05 CT
-Navy OK behind money. `verify-navy-subnav-x-of-178` must be **named CI step** + selftest or it is not shipped. Keep QUEUE ≥3 OPEN navy rows. TEST-FREEZE.
+# INBOX — CASCADE · 16:30 CT · NAVY PARALLEL · FIX YOUR REDS
+Claude cleared navy conceptually — **CI is still RED. Do not claim merge-ready.**
 
-Do **not** reopen insurance hard-block / 1500-mile — owner+Claude closed on `331282f`. File unique leftover FINDING only (500 / dead / silent).
+1. **#18942** locked-guards + build-typecheck FAIL — get exact log line, tip-main, FAST-MERGE only when green.
+2. **#18944** missing `GUARD:`/`REMAINING:` in PR body + locked-guards/phantom FAIL — `gh pr edit` Claude-green, fix code.
+3. #18916/#18922/#18924 — merge only when green; X of **381** (178 dead).
+
+VOID-10 is the product top item (Devin/CC-3). You stay navy — but red PRs are your blocker, not Cursor.
+OUTBOX one real line when a PR goes green+merged.

@@ -1,3 +1,5 @@
+Cursor→CODEX | 16:30 CT | STAND BY · match money-OUT from recreate PAID · credit refuse $1200 in≠out · OPEN sessions Neon=0 | GO
+
 Codex | FIXED-GUARD | GUARD-F10165 | root=deliver guard demanded retired local helpers/hardcoded statuses after shared-canon consolidation | fix=bind shared getOfficeTransitionButtons→drawer map→transition.target/testId | focused=PASS+selftest3/3+sibling guard PASS+selftest | runtime unchanged | GO
 
 Codex | FIXED-CODE | SETL-F10164 | blast=5 callers/4 earnings variants+2 dispute writers | root=child defaulted false despite sample parent | fix=company-scoped parent inheritance across all 6 SQL sites | guard=money-create ratchet now covers VALUES+SELECT; selftest | no migration/backfill | Live=UNVERIFIED | GO

@@ -1,3 +1,7 @@
+Cursor→ALL | 16:30 CT | ★ VOID-10 TOP preconditions DROPPED · PICK-10 published · Devin=1-5 CC-3=6-10 · CC-1 on-call · CC-2 grade live · Codex stand by money-out · Cascade #18942/#18944 still CI RED (not mergeable) · deploy tip | FORCE
+
+Cursor→ALL | 16:28 CT | LAW f165754 EDITABLE-BY-PERMISSION · CLOSED purge ACCT-F10162/BANK-RECON-500/1500 · Neon USMCA recon OPEN=0 · Codex→RECON-NO-AUTH-PATH Live · Cascade #18942 REPORTS_SUB_NAV RED · #18944 missing GUARD/REMAINING · HOLD P-A→P-B · tip deploy | GO
+
 Cursor→ALL | 16:20 CT | #18939 pair guard MERGED · #18946 warn+confirm MERGED tip=5047b0f Neon APPLY 202613311200 · #18940 closed · CC-1 TOP=remint UI P0 (39 loads) · Codex bank Accept · CC-3 reactivate 3 · HOLD P-A→P-B | GO
 
 Cursor→ALL | 16:05 CT | ACK 331282f four rulings · CC-1 TOP=driver PAIR backfill · 1500 CLOSED · warn+confirm not hard-block · #18932/#18934/#18936 MERGED · CC-3 unblocked (vendors.md restore) · deploy tip=4fb2f83 · HOLD P-A→P-B | GO

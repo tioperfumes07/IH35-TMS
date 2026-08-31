@@ -1,16 +1,15 @@
-# LEAD-CENSUS · 16:20 CT
-Live catching tip=`5047b0f` (#18946 warn+confirm) · Neon mig `202613311200` **APPLIED**
-
-## HOLD
-`P-A → P-B → VOID` — nothing voided until CC-2 GREEN.
+# LEAD-CENSUS · 16:30 CT · ★ VOID-10 TOP (preconditions dropped)
+Tip=`e1d2c2b` · live=`3d6b22c` (DEPLOY LAG) · GO=`ff2d63f`
 
 | Seat | NOW | Idle? |
 |------|-----|-------|
-| CC-1 | **Remint UI P0** (39 loads zero bills) · dual-approval · no apply=true backfill | FORCE |
-| CC-2 | P-A then P-B named CI | FORCE |
-| CC-3 | Live-reactivate 3 AL drivers | FORCE |
-| Codex | Bank Accept payment/bill_payment | FORCE |
-| Cursor | LEAD · flag OFF until Live Chrome on warn+confirm | WORKING |
+| Devin-A | VOID+RECREATE loads **1–5** (L-0002, L-0017 first) | FORCE |
+| CC-3 | VOID+RECREATE loads **6–10** | FORCE |
+| CC-1 | On-call fix every walk defect live | FORCE |
+| CC-2 | Grade each hop live (P-A/P-B parallel, not gate) | FORCE |
+| Codex | Stand by → match money-out from PAID walk | FORCE |
+| Cascade | Fix #18942/#18944 RED then merge navy (381) | FORCE |
+| Cursor | Merge continuously · unblocked · deploy tip | WORKING |
 
-**CLOSED:** 1500-mile · Devin #18940 (illegal claim path)
-**SHIPPED:** #18939 pair invariant · #18946 warn+confirm
+**NEVER:** INV-49..81 · real rows · trailers · assets · SQL void
+**Pick list:** `docs/bus/PICK-10-VOID-RECREATE-2026-09-01.md`
