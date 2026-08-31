@@ -1,10 +1,10 @@
 {
-  "healthzSha": "02a3499",
+  "healthzSha": "3e68278",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "02a3499",
+    "deployedSha": "3e68278",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -173,7 +173,7 @@
     {
       "tier": "1",
       "module": "accounting",
-      "build": "39/40",
+      "build": "38/40",
       "cells": [
         "AUDIT",
         "FAIL",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18452,
-      "title": "FINDING: BUS-SHADOW-LIVE-BOOKS — seats idled on tie-out polls instead of shadowing Jorge Faro CSVs in the app",
+      "number": 18589,
+      "title": "FINDING: P0 CLOSED -- shared-types defect genuinely resolved, confirmed by 3 independent signals",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 09:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18452",
-      "sha": "02a349909a",
-      "committedAtIso": "2026-08-30T21:09:19-05:00"
+      "mergedAtCt": "08/31/2026, 12:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18589",
+      "sha": "192ef5a2ef",
+      "committedAtIso": "2026-08-31T00:36:33-05:00"
     },
     {
-      "number": 18451,
-      "title": "FINDING: DRIVER-PWA-DVIR-PRIOR-NULL — Driver PWA build_failed on every tip commit (Render srv-d7s72ujrjlhs7385gbhg)",
+      "number": 18588,
+      "title": "FINDING: N/A -- deploy-unlock confirmed live, trip-close-stamp fix deployed, past settlements correctly unchanged",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 09:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18451",
-      "sha": "4d89530297",
-      "committedAtIso": "2026-08-30T21:03:15-05:00"
+      "mergedAtCt": "08/31/2026, 12:34 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18588",
+      "sha": "0993af681f",
+      "committedAtIso": "2026-08-31T00:34:27-05:00"
     },
     {
-      "number": 18450,
-      "title": "FINDING: N/A -- JE-FUTURE-DATED-POSTINGS evidence gathered, needs owner/lead policy decision",
+      "number": 18587,
+      "title": "Claude-1- docs(bus): deploy-truth correction + FAC-2026-00001 premise verified",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18450",
-      "sha": "22b668ae60",
-      "committedAtIso": "2026-08-30T20:59:53-05:00"
+      "mergedAtCt": "08/31/2026, 12:32 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18587",
+      "sha": "2b7aaa3912",
+      "committedAtIso": "2026-08-31T00:32:39-05:00"
     },
     {
-      "number": 18449,
-      "title": "docs(module-completion): VEND-CERT-01 create/save/reload/reverse-drill proof",
+      "number": 0,
+      "title": "docs(outbox): Devin-A UI consistency session results + live walkthrough proofs",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18449",
-      "sha": "3ca6a57511",
-      "committedAtIso": "2026-08-30T20:56:08-05:00"
+      "mergedAtCt": "08/31/2026, 12:32 AM CT",
+      "url": "",
+      "sha": "f6a924cb0b",
+      "committedAtIso": "2026-08-31T00:32:05-05:00"
     },
     {
-      "number": 18448,
-      "title": "FINDING: N/A -- independently confirm Codex's BANK-TIEOUT-01 build is genuine, not rubber-stamped",
+      "number": 18586,
+      "title": "FINDING: N/A -- ACK ANCESTRY-CONFIRMED, watching deploy ancestry past #18535/#18548, P0 fix landed at 233c23f92e",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18448",
-      "sha": "bfb9627d78",
-      "committedAtIso": "2026-08-30T20:44:52-05:00"
+      "mergedAtCt": "08/31/2026, 12:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18586",
+      "sha": "3e68278841",
+      "committedAtIso": "2026-08-31T00:28:28-05:00"
     },
     {
-      "number": 18447,
-      "title": "FINDING: ACCT-F10150 -- factoring advance void only reversed the funding leg, left customer-payment GL residue (FAC-VOID-ENUM-2150)",
+      "number": 18585,
+      "title": "docs(outbox): GO-CLOSE-188 Lists Miss-C batch 1, 8/25 cells live-verified",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18447",
-      "sha": "0a9d732b0a",
-      "committedAtIso": "2026-08-30T20:44:18-05:00"
+      "mergedAtCt": "08/31/2026, 12:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18585",
+      "sha": "874b3e2271",
+      "committedAtIso": "2026-08-31T00:27:45-05:00"
     },
     {
-      "number": 18446,
-      "title": "FINDING: N/A -- independently confirm CC-1 fixed USMCA-2150-STRAY-1200-RESIDUAL-FROM-VOIDED-FAC-00001, re-record FACT-TIEOUT-01 OBSERVED",
+      "number": 18584,
+      "title": "FINDING: GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18446",
-      "sha": "8066b2cc14",
-      "committedAtIso": "2026-08-30T20:42:36-05:00"
+      "mergedAtCt": "08/31/2026, 12:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18584",
+      "sha": "c5763d9cd6",
+      "committedAtIso": "2026-08-31T00:27:43-05:00"
     },
     {
-      "number": 18445,
-      "title": "FINDING: USERS-SAFETY-COMPLETE-FLAG-STALE -- 2 modules genuinely complete but flagged complete:false, plus a stale board row closed",
+      "number": 18583,
+      "title": "FINDING: P0-ROUTING-AND-CONTRACT-TESTS",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:36 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18445",
-      "sha": "8352474a28",
-      "committedAtIso": "2026-08-30T20:36:52-05:00"
+      "mergedAtCt": "08/31/2026, 12:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18583",
+      "sha": "233c23f92e",
+      "committedAtIso": "2026-08-31T00:25:15-05:00"
     },
     {
-      "number": 18444,
-      "title": "FINDING: N/A — BANK-TIEOUT-01 merged status checkpoint",
+      "number": 18582,
+      "title": "FINDING: OWNER-OVERRIDE-FIELD-SCOPED-NOT-MONEY",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18444",
-      "sha": "629490e71d",
-      "committedAtIso": "2026-08-30T20:30:18-05:00"
+      "mergedAtCt": "08/31/2026, 12:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18582",
+      "sha": "27c4965b45",
+      "committedAtIso": "2026-08-31T00:24:54-05:00"
     },
     {
-      "number": 18443,
-      "title": "FINDING: BANK-TIEOUT-01 — bank closings do not equal linked GL and five-account bar is unmet",
+      "number": 18580,
+      "title": "FINDING: N/A -- ACK LIVE-WALKTHROUGH-ONLY law, fresh six-tieout sweep in the updated OUTBOX shape",
       "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:28 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18443",
-      "sha": "04ad6b0a07",
-      "committedAtIso": "2026-08-30T20:28:19-05:00"
+      "mergedAtCt": "08/31/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18580",
+      "sha": "361f3bb0b3",
+      "committedAtIso": "2026-08-31T00:21:11-05:00"
     }
   ]
 }
