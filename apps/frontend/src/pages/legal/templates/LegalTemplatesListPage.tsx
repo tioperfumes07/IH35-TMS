@@ -89,7 +89,7 @@ export function LegalTemplatesListPage() {
       />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}
-      <LegalModuleTabs activeTabId="templates" />
+      <LegalModuleTabs />
 
       <ParityTable
         rows={rows}

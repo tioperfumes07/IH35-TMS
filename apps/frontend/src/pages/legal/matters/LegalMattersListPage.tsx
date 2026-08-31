@@ -188,7 +188,7 @@ export function LegalMattersListPage() {
           </Link>
         }
       />
-      <LegalModuleTabs activeTabId="matters" />
+      <LegalModuleTabs />
       {!companyId ? (
         <p className="text-sm text-gray-600">Select an operating company.</p>
       ) : listQuery.isError ? (

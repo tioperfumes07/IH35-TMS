@@ -228,7 +228,7 @@ export function LegalContractInstancesPage() {
         }
       />
 
-      <LegalModuleTabs activeTabId="contracts" />
+      <LegalModuleTabs />
 
       {listQuery.isError ? (
         <ListErrorState

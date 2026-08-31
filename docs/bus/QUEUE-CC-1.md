@@ -1,14 +1,13 @@
 # QUEUE — CC-1 · MONEY + WIRING
-# Pop = delete top OPEN when done. Cursor refills if <3 OPEN.
 
 OPEN:
-0. **LIVE CLICK** remint/settle L-0002 then L-0004 (then L-0017). LAW=GO-LIVE-CLICK-CYCLE-ONLY. No Neon/API invent. OUTBOX url|clicks|neon.
-1. Factoring batch UI + profile 97%/1.5% — code if hardcoded still; prove via Live Click pledge on a today sent invoice
-2. SETL-45 class: next completed_docs with zero lines after click re-entry
-3. GL verify new chain JEs · is_sample_data honest
-4. FE: Equipment Qual Create TEST-data control (is_test_data)
+0. **FIX** Close-trip append settlement_lines (DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP · Devin L-0017 Live Click · CC-2 confirmed). Guard+selftest. Then Live Click prove.
+1. FE/BE status vocabulary — remint path for completed_docs (your BLOCKED remint row)
+2. Live Click remint/settle L-0002/L-0004 after #0+#1 deploy
+3. Factoring Live Click pledge today invoice / profile if still wrong in batch UI
+4. ACCT-F10161 CI verify:pre-commit silent cutoff (infra) — after money path
+5. Equipment Qual TEST-data control FE
 
 DONE:
-- [x] DEFECT A+B code+guard #18830
-- [x] DEFECT A+B predicates named
-- [x] Rate create → driver_finance + G1 flag
+- [x] DEFECT A+B #18830 (incomplete vs Close-trip — new OPEN 0)
+- [x] predicates named · rates · G1
