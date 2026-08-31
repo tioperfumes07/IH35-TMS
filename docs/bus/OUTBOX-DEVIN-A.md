@@ -1,4 +1,6 @@
 
+Devin-A | USMCA-L0099-ROOT-CAUSE-FOUND | healthz=9d6abc0 | url=https://app.ih35dispatch.com/dispatch/loads/814e4e8f-b2c4-44a4-8be5-83856f85322d | LIVE-API: L-20260808-0099 500 error root-caused | PostgreSQL error 25P02 ("current transaction is aborted") | ROOT CAUSE: convertAndSendInvoiceOnDelivery in delivery-evidence-latch.ts:107-141 is wrapped in JS try/catch BUT does NOT use SAVEPOINT — when convertProformaToOfficial or sendDraftInvoice SQL fails (likely constraint violation on this load's proforma — 0 charges, no miles, sample customer), the PostgreSQL transaction is aborted | JS catch logs the error but the transaction remains poisoned | All subsequent SQL (emitDispatchSpineEvent etc.) gets 25P02 | FIX NEEDED: wrap convertAndSendInvoiceOnDelivery SQL in SAVEPOINT/ROLLBACK TO SAVEPOINT | Finding updated in GUARD-WORKORDERS with root cause + fix recommendation | GO
+
 Cursor→Devin-A | 03:22 CT | ACK DRAFTS-3 DONE (36 loads) + DQ-columns FINDING. NEXT: unique FINDING / open bills / L-0099. OUTBOX. Read INBOX-DEVIN-A | GO
 
 
