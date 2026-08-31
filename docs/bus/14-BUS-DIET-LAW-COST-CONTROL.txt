@@ -1,0 +1,81 @@
+BUS DIET LAW — TOKEN COST CONTROL — 2026-08-31
+OWNER DIRECTIVE: cut bus overhead to only what is necessary. Money is finite.
+Cursor owns enforcement. Effective immediately.
+
+################ THE MEASUREMENT ################
+  TOTAL docs/bus/ = 30,721 LINES
+     OUTBOX-DEVIN.md     15,816   <-- one file, ~200k tokens per read
+     OUTBOX-CC-1.md       4,232
+     OUTBOX-CODEX.md      2,859
+     OUTBOX-DEVIN-A.md    1,484
+     OUTBOX-CC-2.md       1,372
+     OUTBOX-CC-3.md       1,090
+     OUTBOX-CASCADE.md      549
+  MERGES LAST 24H: 967.  DOCS-ONLY: 760 (78%).
+  LEAD-TICKs today: 249+.
+
+WHERE THE MONEY ACTUALLY GOES — be precise, do not repeat the wrong version:
+  GitHub Actions minutes are FREE (public repo, unlimited). CI is NOT the bill.
+  THE BILL IS AI TOKENS. Every seat that wakes reads its INBOX and often the
+  OUTBOXes. A 15,816-line file is ~200k tokens PER READ, times 7 seats, times
+  many wakes per day. That is Claude subscriptions, Devin ACUs, Cursor usage.
+  Reducing bus SIZE and bus WRITES is the single biggest cost lever available.
+
+################ THE FIVE RULES ################
+
+RULE 1 — OUTBOX FILES ARE CAPPED AT 200 LINES.
+  An OUTBOX is a WORKING LOG, not an archive. Keep the most recent entries only.
+  Everything older moves to docs/bus/archive/OUTBOX-<SEAT>-<date>.md ONCE, and
+  NO SEAT EVER READS docs/bus/archive/. Nothing is deleted — WORM preserved,
+  just moved out of the read path.
+  IMMEDIATE ACTION: rotate all 7 OUTBOXes today. That is 30,721 lines -> under
+  1,500. A ~95% cut in the largest recurring token cost you have.
+
+RULE 2 — NO COMMIT FOR A MESSAGE THAT SAYS NOTHING NEW.
+  LEAD-TICK, census, wake, rewake, ACK, "still idle", "no delta", "seats dead"
+  are BANNED as standalone commits. 249 heartbeats in one day is not
+  communication; it is the system documenting that it is not working.
+  A status post is only allowed when STATE CHANGED: a chain step passed or
+  failed, a defect was found, a decision is needed from the owner.
+  If the answer to "what changed since my last post" is "nothing", DO NOT POST.
+
+RULE 3 — SEATS READ THEIR OWN INBOX TOP BLOCK ONLY.
+  Read the CURRENT GO block at the top of your own INBOX. Do not read other
+  seats' OUTBOXes unless you are grading a specific claim, and then read only
+  the lines for that claim. CC-2 grading is the ONLY role that reads across
+  seats, and it reads targeted, not whole files.
+  INBOXes stay under 40 lines. Superseded GOs are deleted, not stacked. An
+  INBOX that stacks 6 old GOs makes every seat re-read all 6 forever.
+
+RULE 4 — ONE BUS COMMIT PER SEAT PER HOUR, MAXIMUM.
+  Batch your updates. If you have three things to report, they are one commit.
+  Exception: a P0 or a stop-the-line finding posts immediately.
+
+RULE 5 — CODE AND EVIDENCE ALWAYS BEAT PAPERWORK.
+  If a seat's last 3 commits are all docs-only, it is off-task. Cursor stops it
+  and reassigns it to a chain. Target: docs-only share of merges UNDER 25%.
+  It is 78% today.
+
+################ WHAT STAYS — DO NOT OVER-CUT ################
+  The audit trail has real value and the owner may need it in a dispute.
+  KEEP: findings with evidence, defect filings, tie-out OBSERVED records,
+  owner decisions, laws, GO specs, and CC-2's verification records.
+  CUT: heartbeats, censuses, wake-ups, ACKs, "no change" posts, and stacked
+  superseded GOs.
+  The test: "would this line matter to a CPA, an auditor, or the owner in six
+  months?" If yes it stays. If it only says a seat was awake, it goes.
+
+################ CURSOR'S OWN LANE ################
+  You produced 249 LEAD-TICKs today. Under Rule 2 that becomes maybe 10.
+  Your hourly owner report is 5 lines and does NOT need a commit — it goes to
+  the owner directly. Committing a status file the owner never opens is pure
+  cost.
+  Replace the census with ONE line in STATUS-NOW.md, overwritten in place, not
+  appended. A file that only ever grows is a file that costs more every day.
+
+################ MEASURE IT ################
+  Post once a day, in the owner report, not as a commit:
+    total docs/bus/ line count  (target: under 2,000)
+    docs-only share of merges   (target: under 25%)
+    LEAD-TICK count             (target: under 10)
+  If those three numbers are not falling, this law is not being followed.

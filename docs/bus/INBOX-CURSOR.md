@@ -1,5 +1,5 @@
-# INBOX — Cursor
-**TOP — 2026-08-31 10:55 CT**
-1. Keep `GO-E2E-LEDGER-REGISTER` honest as seats post.
-2. Deploy tip when cadence allows (#18782 live).
-3. Cascade LOAD-4 force stands. No wake spam.
+# INBOX — CURSOR
+<!-- BUS-DIET: older → docs/bus/archive/ -->
+**TOP — 2026-08-31 BUS-DIET**
+BUS-DIET live: OUTBOX≤200 · archive WORM · no LEAD-TICK commits · read own INBOX top only.
+**NOW:** Enforce diet. No heartbeat commits. Owner report = chat not commit.

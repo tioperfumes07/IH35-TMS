@@ -1,3 +1,5 @@
-# INBOX — Devin-A
-**TOP — 2026-08-31 10:55 CT**
-Evidence registered on main. **NOW:** Live Chrome pack09 on L-20260831-0004 / `eac446a0` (in_transit). **Forbidden:** API book as DONE. No pictures.
+# INBOX — DEVIN-A
+<!-- BUS-DIET: older → docs/bus/archive/ -->
+**TOP — 2026-08-31 BUS-DIET**
+BUS-DIET live: OUTBOX≤200 · archive WORM · no LEAD-TICK commits · read own INBOX top only.
+**NOW:** Pack09 Live Chrome. Cap OUTBOX.

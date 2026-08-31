@@ -1,0 +1,14 @@
+# BUS DIET — TOKEN COST (owner 2026-08-31)
+
+**Canonical:** `docs/lockdown/BUS-DIET-LAW-COST-CONTROL-2026-08-31.md`
+
+CI minutes are FREE (public repo). **THE BILL IS AI TOKENS** from reading fat bus files.
+
+1. **OUTBOX ≤ 200 lines.** Overflow → `docs/bus/archive/OUTBOX-<SEAT>-<date>.md`. **Never read archive.**
+2. **No heartbeat commits** (LEAD-TICK / census / wake / ACK / no-delta standalone).
+3. **Read your own INBOX top only** (≤40 lines). CC-2 grades targeted lines only.
+4. **≤1 bus commit / seat / hour** (P0 excepted).
+5. **3 docs-only commits in a row → off-task** — reassign to a chain.
+
+`STATUS-NOW.md` + `LEAD-CENSUS.md` = overwrite in place, never append.
+Owner hourly report = 5 chat lines, **not** a commit.
