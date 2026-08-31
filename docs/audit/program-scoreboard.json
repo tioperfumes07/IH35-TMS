@@ -1,10 +1,10 @@
 {
-  "healthzSha": "56afbad",
-  "generated_at": "2026-08-30T18:02:57.000Z",
+  "healthzSha": "edb0bf2",
+  "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
-    "generatedAt": "2026-08-30T13:02:57-05:00",
-    "sourceSha": "6f90e979f1",
-    "deployedSha": "56afbad",
+    "generatedAt": "2026-08-31T10:22:35-05:00",
+    "sourceSha": "237d06c610",
+    "deployedSha": "edb0bf2",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #375 API loads-id-expenses 200 OK EXP-2026-00021 4114 posted fuel DEF category fuel diesel unit load L-20260830-0003 paid from BOA operating USMCA payment check per-load expense cross-module linkage accounting module 19 QBO NetSuite-parity financial reports new deploy 4a0541a",
+      "number": 18804,
+      "title": "FINDING: QUEUE-CC-3-REFILL-UNDER-3",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:03 AM CT",
-      "url": "",
-      "sha": "49c8dccfe1",
-      "committedAtIso": "2026-08-31T09:03:30-05:00"
+      "mergedAtCt": "08/31/2026, 11:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18804",
+      "sha": "ce68e44bc7",
+      "committedAtIso": "2026-08-31T11:35:12-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #374 API expense-categories 200 OK factoring fees factoring default interest depreciation expense qbo id null last synced accounting module 18 QBO NetSuite-parity financial reports new deploy 4a0541a",
+      "title": "docs(bus): PACK09 full lifecycle DONE -- L-0004 dispatched to completed_docs_received via Live Chrome",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:02 AM CT",
+      "mergedAtCt": "08/31/2026, 11:30 AM CT",
       "url": "",
-      "sha": "788225a16e",
-      "committedAtIso": "2026-08-31T09:02:46-05:00"
+      "sha": "edb0bf2ae3",
+      "committedAtIso": "2026-08-31T11:30:47-05:00"
     },
     {
-      "number": 18739,
-      "title": "FINDING: SETL-45-PAY-RATE-CREATE",
+      "number": 18799,
+      "title": "LAW: OPERATING MODEL — standing queues, lanes, merge/deploy cadence",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18739",
-      "sha": "24919cb993",
-      "committedAtIso": "2026-08-31T09:02:36-05:00"
+      "mergedAtCt": "08/31/2026, 11:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18799",
+      "sha": "5a1122bc5d",
+      "committedAtIso": "2026-08-31T11:30:36-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #373 API prepaid-expenses 200 OK total 2 TEST-PP-20260822 1200 12 periods 100 per period active posted amortization accounting module 17 QBO NetSuite-parity financial reports new deploy 4a0541a",
+      "number": 18803,
+      "title": "FINDING: record LOAD-5 stale billing rate",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:02 AM CT",
-      "url": "",
-      "sha": "51c89a592f",
-      "committedAtIso": "2026-08-31T09:02:15-05:00"
+      "mergedAtCt": "08/31/2026, 11:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18803",
+      "sha": "211321ea85",
+      "committedAtIso": "2026-08-31T11:30:09-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #372 API expenses 200 OK 1200 posted posting status posted journal entry id load id vendor uuid driver uuid trailer id accounting module 16 QBO NetSuite-parity financial reports new deploy 4a0541a",
+      "number": 18802,
+      "title": "FINDING: N/A — QUEUE-CC-3.md updated to reflect completed items",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:01 AM CT",
-      "url": "",
-      "sha": "822ecffeea",
-      "committedAtIso": "2026-08-31T09:01:27-05:00"
+      "mergedAtCt": "08/31/2026, 11:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18802",
+      "sha": "b63630ec18",
+      "committedAtIso": "2026-08-31T11:30:05-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #371 API opening-balance-import transp-2024-12-31 preview 200 OK flag off false as of 2024-12-31 entry 2025-01-01 lines unmapped je preview accounting module 15 QBO NetSuite-parity financial reports new deploy 4a0541a",
+      "number": 18801,
+      "title": "FINDING: N/A — L-20260831-0004 charge-lines reconcile + self-caught RLS-role correction",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 09:00 AM CT",
-      "url": "",
-      "sha": "d804457844",
-      "committedAtIso": "2026-08-31T09:00:36-05:00"
+      "mergedAtCt": "08/31/2026, 11:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18801",
+      "sha": "e6a14069b8",
+      "committedAtIso": "2026-08-31T11:28:33-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #370 API required-document-types 200 OK customer credit app W9 IRS authority enforcement warn has expiry false is seed compliance module 17 verified routes new deploy 4a0541a",
+      "number": 18800,
+      "title": "FINDING: N/A -- PAY-RATE-DUAL-TABLE-SPLIT P0 CLOSED, live positive-control independently confirmed",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:59 AM CT",
-      "url": "",
-      "sha": "ce432142a4",
-      "committedAtIso": "2026-08-31T08:59:56-05:00"
+      "mergedAtCt": "08/31/2026, 11:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18800",
+      "sha": "ddda675020",
+      "committedAtIso": "2026-08-31T11:28:27-05:00"
     },
     {
-      "number": 18738,
-      "title": "FINDING: LEAD-TICK-0236-PLAN-CONFIRM-HOLD",
+      "number": 18798,
+      "title": "FINDING: ORCH-GO-2026-08-31",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:59 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18738",
-      "sha": "d6caf9e4f2",
-      "committedAtIso": "2026-08-31T08:59:51-05:00"
+      "mergedAtCt": "08/31/2026, 11:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18798",
+      "sha": "635e5910be",
+      "committedAtIso": "2026-08-31T11:26:21-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #369 API missing-required 400 validation error entity kind driver unit customer vendor entity id required per-entity missing document tracking compliance module 16 verified routes new deploy 4a0541a",
+      "number": 18797,
+      "title": "FINDING: GO-WAKE-NO-IDLE-2026-08-31",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:59 AM CT",
-      "url": "",
-      "sha": "56afbad66b",
-      "committedAtIso": "2026-08-31T08:59:02-05:00"
+      "mergedAtCt": "08/31/2026, 11:15 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18797",
+      "sha": "b6b4549493",
+      "committedAtIso": "2026-08-31T11:15:08-05:00"
     },
     {
-      "number": 18737,
-      "title": "FINDING: N/A -- claim migration number 202613310000 (loads mileage numeric widen)",
+      "number": 18796,
+      "title": "FINDING: N/A -- live-Chrome confirmation of ACCT-F10153+10155 pay-rate dual-table fix",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18737",
-      "sha": "bd007c0b94",
-      "committedAtIso": "2026-08-31T08:58:37-05:00"
+      "mergedAtCt": "08/31/2026, 11:13 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18796",
+      "sha": "e3032b8e8b",
+      "committedAtIso": "2026-08-31T11:13:52-05:00"
     }
   ]
 }
