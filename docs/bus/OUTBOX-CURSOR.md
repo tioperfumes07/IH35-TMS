@@ -1,3 +1,7 @@
+### 2026-08-31 10:13 CT · LEAD-TICK-0252
+- Tick #108: CC-3 ACK 0248 at 15:03Z was buried under FORCE tips — corrected to WORKING.
+- Still DEAD: CC-1, Cascade, Codex. WORKING: CC-2, CC-3, Devin.
+
 ### 2026-08-31 10:10 CT · LEAD-TICK-0251
 - 5m tick #107: live=9c2fab3; four load seats still silent after 0250.
 - Named DEAD: CC-1, CC-3, Cascade, Codex. WORKING: CC-2 GUARD, Devin.
