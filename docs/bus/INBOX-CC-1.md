@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:42 CT · IDLE DEFECT ~115m — OUTBOX NOW**
+1. Self-ACK. ONE: unbilled revenue source linkage · AR/AP aging vs BS · dual TB · UF catch-all.
+2. Live **a3e3af0**. Rates CLOSED going-forward. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:37 CT · IDLE DEFECT ~110m — OUTBOX NOW**
 1. Self-ACK. ONE: dual TB · P&L defects · UF catch-all · settlement pay.
 2. Live **a3e3af0**. Rule 19 no invent reserve. §1 no invent PP&E.

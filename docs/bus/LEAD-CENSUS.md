@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:42 CT · LEAD-TICK-0204
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | unbilled / AR-AP≠BS |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT ~115m | unbilled / dual TB |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | equipment↔units |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 05:37 CT · LEAD-TICK-0203
 | Seat | Status | Note |
 |------|--------|------|
