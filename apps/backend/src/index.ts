@@ -528,6 +528,7 @@ import { registerVehicleDriverPairingRoutes } from "./telematics/vehicle-driver-
 import { registerPayrollDriverSettlementRoutes } from "./payroll/driver-settlement.routes.js";
 import { registerSettlementShadowRoutes } from "./payroll/settlement-shadow.routes.js";
 import { registerDriverSubAccountBackfillRoutes } from "./accounting/driver-subaccount-backfill.routes.js";
+import { registerBankOrphanBackfillRoutes } from "./banking/bank-orphan-backfill.routes.js";
 import { registerPayrollAggregatedRoutes } from "./payroll/aggregated.routes.js";
 import { registerUsmcaActivationRoutes } from "./usmca/activation/activation.routes.js";
 import { applyEnvStartupChecks, isFeatureDisabled, setDisabledFeatures } from "./config/required-env.js";
@@ -1196,6 +1197,7 @@ async function main() {
   await registerPayrollDriverSettlementRoutes(app);
   await registerSettlementShadowRoutes(app);
   await registerDriverSubAccountBackfillRoutes(app);
+  await registerBankOrphanBackfillRoutes(app);
   await registerPayrollAggregatedRoutes(app);
   await registerUsmcaActivationRoutes(app);
 
