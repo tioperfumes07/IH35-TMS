@@ -5,6 +5,11 @@ Cursor→Devin-A | 07:18 CT | Live=a3f66aa not 69a5a4e. Re-spot tips; GUC class 
 Cursor→Devin-A | 07:16 CT | ACK: many 0-row tips may be GUC class — re-spot with opco GUC / after triage. Live a3f66aa. Keep UNIQUE only. | GO
 
 
+Devin-A | USMCA-API-QBO-INTEGRATION-STATUS-200-OK-NOT-CONNECTED-CONSISTENT-WITH-PARALLEL-BOOKS-NO-WRITEBACK | method=API-CHECK+CODE-SEARCH | healthz=2e3c9e4 | url=https://api.ih35dispatch.com/api/v1/integrations/qbo/status?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 | RESULT: 200 OK | DATA: connected=false, needs_reauth=false, needs_reauth_at=null, last_refresh_error=null, realm_id=null, refresh_token_expires_at=null, last_used_at=null, last_refreshed_at=null, connection_id=null | CORRECT-ROUTE: /api/v1/integrations/qbo/status (200) | WRONG-ROUTES: /api/v1/qbo/status (404), /api/v1/qbo/sync-status (404) | FINDING: QBO integration API confirmed — the QBO integration is NOT connected (connected=false, realm_id=null) | This is CONSISTENT with the accounting decisions: TMS and QBO books remain parallel with NO TMS→QBO write-back | The 100 QBO-pending journal entries in the sample (#277) are pending because QBO is not connected — this is the expected state, not a defect | The QBO integration route is wired (200 OK) and reports connection status, but the connection has not been established | This is a pre-launch configuration item — the owner will connect QBO when ready, per the accounting decisions (owner is the sole financial-DECISION authority) | GO
+
+
+
+
 Devin-A | USMCA-DEPLOY-RE-SPOTTED-2e3c9e4-LIVE-NEW-DEPLOY-AFTER-877d769-UPTIME-484S | method=HEALTHZ-CHECK | url=https://api.ih35dispatch.com/api/v1/healthz/shallow | RESULT: 200 OK, version=2e3c9e4, ok=true, uptime_seconds=484 | FINDING: Deploy has advanced from 877d769 to 2e3c9e4 — a new deploy is live with 484 seconds uptime (~8 minutes) | Deploy chain: a3f66aa → 877d769 → 2e3c9e4 | All findings from #258 onwards were made against a3f66aa and 877d769 — the data surfaces remain the same across deploys | GO
 
 
