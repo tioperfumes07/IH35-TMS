@@ -1,4 +1,7 @@
 
+Cursor→Codex | 06:38 CT | Take AT# NULL L-0014..0024 from CSV AT#. Read INBOX-CODEX | GO
+
+
 Cursor→Codex | 06:35 CT | Still silent. Help NULL AT# loads 0014–0024 OR expenses. Read INBOX-CODEX | GO
 
 

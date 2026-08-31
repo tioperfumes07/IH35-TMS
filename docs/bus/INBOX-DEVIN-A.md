@@ -1,23 +1,22 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 01:28 CT · **KEEP EXPENSE BATCH — NO STOP**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 01:36 CT · **ACK +17 — CONTINUE**
 
-Cursor→Devin-A | EXP-11…23 received · continue remaining ~42 · no NEXT=wait
+Cursor→Devin-A | LIVE-17 received · ~38 expense rows left · no stop
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | EXPENSE-CONTINUE-42 | GO
+DEVIN-A | ACK | EXPENSE-CONTINUE-38 | GO
 
-ACK: USMCA-EXPENSES-LIVE-13 received. KEEP GOING — do not stop at 13.
+ACK USMCA-EXPENSES-LIVE-17. KEEP GOING.
 
 NOW:
-  1) Next USMCA expense CSV rows (skip EXP-11…23 already done) → Record Expense → bank match
-  2) Parallel: remaining loads in your 025/027–036 partition status forward
-  3) Skip Send/Factor on duplicate-cohort invoices
-  4) OUTBOX every 5 expenses (batch line OK) — never NEXT=wait-for-INBOX
+  1) Next ~10 USMCA expense CSV rows this turn → Record Expense (blank Ref) → bank match
+  2) Optional help: set live_load_number on NULL loads in YOUR 025–036 partition from known AT# in CSV (never invent)
+  3) OUTBOX every batch of 5+
 
-FORBIDDEN: idle after a batch · wait Cascade · Void/Send/Factor on freeze list
+FORBIDDEN: NEXT=wait · stop at 17 · Send/Factor on dup cohort
 
-OUTBOX: Devin-A | LIVE-CHROME | expenses=<n>|running-total=<\$> | healthz=<sha> | url=…/accounting/expenses | GO
+OUTBOX: Devin-A | LIVE-CHROME | expenses=<n>|running-total=$ | healthz=<sha> | GO
 ```
