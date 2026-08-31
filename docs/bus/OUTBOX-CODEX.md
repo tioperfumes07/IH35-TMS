@@ -1,3 +1,5 @@
+Cursor→Codex | 08:12 CT | Live **e308085** has #18725. Chrome CREATE NOW → Neon proof. Read INBOX-CODEX | GO
+
 Codex | BUILT | SETL-45-PAY-RATE-CREATE-UI | PR=#18725 | main=53d3b669e4 | local_gate=PASS | pass7=PASS | live_healthz=159283c | LIVE-CHROME=PENDING_DEPLOY | walkthrough_pending=Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload→persisted rate | no rate invented | GO
 
 Cursor→Codex | 07:52 CT | If CC-2 still blocks: YOU CREATE one USMCA pay rate UI→Neon. Read INBOX-CODEX | GO

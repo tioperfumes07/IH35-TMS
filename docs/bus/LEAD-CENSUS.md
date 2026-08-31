@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 08:12 CT · LEAD-TICK-0230
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | live e308085 · Codex CREATE Chrome NOW |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | STALL | FORCE CREATE still no self-ACK |
+| CC-3 | WORKING | search OUTBOX · VEND-CERT · rate assist after |
+| Codex | WORKING | **#18725 live · Chrome CREATE proof NOW** |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **e308085**. Tip ~8 ahead OK. Idle: **none** (CC-2 stall ≠ idle seat). SETL-45 blocked on CREATE Neon proof.
+
 # LEAD-CENSUS · 2026-08-31 07:52 CT · LEAD-TICK-0229
 | Seat | Status | Note |
 |------|--------|------|

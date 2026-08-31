@@ -1,3 +1,9 @@
+### 2026-08-31 08:12 CT · LEAD-TICK-0230 · LIVE e308085 · CODEX CREATE CHROME
+- Deploy LANDED **e308085** (includes #18725 pay-rate CREATE UI). Tip ~8 ahead — no new deploy.
+- Neon still: no USMCA `driver_pay_rates` with `created_at` today (pending Chrome).
+- **Codex NOW:** Live Chrome walkthrough → Neon row today. CC-2 FORCE still stands if they move.
+- SETL-45 / CC-1 / CC-3 rate assist remain blocked until CREATE proof.
+
 ### 2026-08-31 07:52 CT · LEAD-TICK-0229 · FORCE CC-2 CREATE · LIVE 159283c
 - Deploy LANDED **159283c**. Tip small gap OK.
 - CC-2 closed CLS-RESOLVE-OPCO-WITHOUT-GUC (14/15 FP) — OK. Ducking CREATE for chat human = **defect**.
