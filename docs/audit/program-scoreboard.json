@@ -1,10 +1,10 @@
 {
-  "healthzSha": "2832308",
+  "healthzSha": "a464d06",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "2832308",
+    "deployedSha": "a464d06",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
+      "number": 18897,
+      "title": "FINDING: SETL-F10163 | CLOSE-TRIP-RECHECK-GUARD-GAP",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 02:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18897",
+      "sha": "e7c08a4e9c",
+      "committedAtIso": "2026-08-31T14:47:26-05:00"
+    },
+    {
+      "number": 18890,
+      "title": "FINDING: BUS-FORCE-IDLE-CC2-CC3-SYNC-ALL",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 02:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18890",
+      "sha": "38f2886dd0",
+      "committedAtIso": "2026-08-31T14:44:40-05:00"
+    },
+    {
+      "number": 18888,
+      "title": "FINDING: LST-F10163 navy subnav: 12 of 178 (System module)",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 02:44 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18888",
+      "sha": "a464d066db",
+      "committedAtIso": "2026-08-31T14:44:27-05:00"
+    },
+    {
+      "number": 18884,
+      "title": "FINDING: LST-F10162 navy subnav: 11 of 178 (Drivers module)",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 02:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18884",
+      "sha": "bfb353ec69",
+      "committedAtIso": "2026-08-31T14:42:50-05:00"
+    },
+    {
+      "number": 18887,
+      "title": "FINDING: BANK-F10162 | BANK-RECON-ACCEPT-MATCH-500",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 02:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18887",
+      "sha": "6c9dd1a0d6",
+      "committedAtIso": "2026-08-31T14:42:00-05:00"
+    },
+    {
       "number": 0,
-      "title": "GO: IDLE WAKE 17:15Z - 6 seats idle with non-empty queues; dispatch DEFECT A/B, escrow, future-JE flagging, navy sweep",
+      "title": "STOP: insurance schema ALREADY EXISTS - do not build it. Verify+populate only. New rule: prove absence before building.",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:27 PM CT",
+      "mergedAtCt": "08/31/2026, 02:41 PM CT",
       "url": "",
-      "sha": "d676e6b69f",
-      "committedAtIso": "2026-08-31T12:27:08-05:00"
+      "sha": "6829083a01",
+      "committedAtIso": "2026-08-31T14:41:29-05:00"
     },
     {
-      "number": 18814,
-      "title": "FINDING: N/A -- SETL-45 Phase 5 (Settle) proven end-to-end via driver-rate-card path; ACCT-F10156/10157 filed",
+      "number": 18886,
+      "title": "FINDING: BUS-ACK-CC2-CC3-FAST-MERGE",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18814",
-      "sha": "b1393488fc",
-      "committedAtIso": "2026-08-31T12:21:27-05:00"
+      "mergedAtCt": "08/31/2026, 02:40 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18886",
+      "sha": "8fe34f6d19",
+      "committedAtIso": "2026-08-31T14:40:48-05:00"
     },
     {
-      "number": 18815,
-      "title": "FINDING: CC-BILL-PAY-ACTIVE-COLUMN-500 — Pay-with-CC 500s on every entity (#queue-item-1)",
+      "number": 18885,
+      "title": "FINDING: BUS-FAST-MERGE-RESPOND-CODERS",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:12 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18815",
-      "sha": "c9d112f8c3",
-      "committedAtIso": "2026-08-31T12:12:20-05:00"
+      "mergedAtCt": "08/31/2026, 02:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18885",
+      "sha": "b498ac18aa",
+      "committedAtIso": "2026-08-31T14:38:36-05:00"
     },
     {
-      "number": 18813,
-      "title": "FINDING: N/A -- settle chain confirmed real end-to-end for first time, G1 flag graded, one live gap noted",
+      "number": 18871,
+      "title": "FINDING: N/A -- close-trip already_closed heal now surfaces as success, UI Re-check button unblocked",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18813",
-      "sha": "bcc83d1582",
-      "committedAtIso": "2026-08-31T12:09:35-05:00"
+      "mergedAtCt": "08/31/2026, 02:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18871",
+      "sha": "34a1b71e80",
+      "committedAtIso": "2026-08-31T14:37:13-05:00"
     },
     {
-      "number": 18812,
-      "title": "FINDING: N/A -- DRIVER-BILL-RATE-MINT-MISMATCH resolved not-a-defect; shared-types fix verified but still not CI-run",
+      "number": 18878,
+      "title": "FINDING: LST-F10161 navy subnav: 10 of 178 (Dispatch module)",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18812",
-      "sha": "cd94819702",
-      "committedAtIso": "2026-08-31T12:04:09-05:00"
-    },
-    {
-      "number": 18811,
-      "title": "FINDING: DRIVER-BILL-RATE-MINT-MISMATCH + LOAD-3 genuine multi-stop shape proven live",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:58 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18811",
-      "sha": "7c6179c1e8",
-      "committedAtIso": "2026-08-31T11:58:39-05:00"
-    },
-    {
-      "number": 18809,
-      "title": "FINDING: BUS-G1-DONE-SETTLE-TARGETS-2026-08-31",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:48 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18809",
-      "sha": "2832308c55",
-      "committedAtIso": "2026-08-31T11:48:09-05:00"
-    },
-    {
-      "number": 18807,
-      "title": "FINDING: DISPATCH-STATE-MACHINE-TEST-NOT-COLLECTED",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18807",
-      "sha": "ba34bbe463",
-      "committedAtIso": "2026-08-31T11:45:02-05:00"
-    },
-    {
-      "number": 18808,
-      "title": "FINDING: N/A -- six-tieout sweep (DISP moved as expected), charge-lines doubly confirmed with CC-3",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:43 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18808",
-      "sha": "83a093d5d1",
-      "committedAtIso": "2026-08-31T11:43:43-05:00"
-    },
-    {
-      "number": 18806,
-      "title": "FINDING: N/A — L-0004 Phase 2-4 progress confirmed + correction of a Neon-MCP tool-role masked-empty finding",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18806",
-      "sha": "54687fd211",
-      "committedAtIso": "2026-08-31T11:40:30-05:00"
+      "mergedAtCt": "08/31/2026, 02:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18878",
+      "sha": "793ca8d44f",
+      "committedAtIso": "2026-08-31T14:37:09-05:00"
     }
   ]
 }
