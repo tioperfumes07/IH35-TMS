@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 06:02 CT**
+1. ACK'd P&L≠PPT + AR control variance. Parts TEST expected. QBO sync ignore.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0208.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 05:57 CT**
 1. ACK'd payment_terms=0 + escrow mostly $0 + pay-rates 404 (CREATE already live).
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0207.

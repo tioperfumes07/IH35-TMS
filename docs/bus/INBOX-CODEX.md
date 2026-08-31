@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 06:02 CT · silent ~135m**
+1. Mechanical: pay-rates list OR WO list fields OR phase3_stub. OUTBOX.
+2. ACK LEAD-TICK-0208. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 05:57 CT · silent ~130m**
 1. Mechanical: pay-rates list route OR WO list fields OR phase3_stub. OUTBOX.
 2. ACK LEAD-TICK-0207. Live **a3e3af0**.

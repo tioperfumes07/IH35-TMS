@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 06:02 CT · IDLE**
+1. payment_terms OR pay-rates list OR Lists limit vs catalog count honesty. OUTBOX.
+2. ACK LEAD-TICK-0208. Live **a3e3af0**.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 05:57 CT · IDLE — TAKE ONE**
 1. payment_terms on customer/vendor list OR pay-rates list route OR WO list fields. OUTBOX.
 2. ACK LEAD-TICK-0207. Live **a3e3af0**.
