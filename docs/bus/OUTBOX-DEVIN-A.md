@@ -75,6 +75,51 @@ QUEUE ITEM 3 — PHASE 7 BANK MATCH 1 TEST EXPENSE (Rule 43: create-test-then-vo
 - The expense posts a balanced JE: debit Expense 6300, credit Bank 1000
 - VOID-AT-LAUNCH: this expense will be voided when owner clears test data
 
+Devin-A | CC-1 FIX #18830 DEFECT B STILL BROKEN — Live Chrome re-test on L-0017 | live=88d304b | GO
+
+CC-1 DEFECT B FIX (commit 88d304ba98, PR #18830) — LIVE CHROME RE-TEST: STILL BROKEN
+- Live version: 88d304b (CC-1's fix IS deployed)
+- Test load: L-20260831-0017 (530d9e55, Sample ON, AT=TEST AT DEVIN-A-005)
+- Driver bill: B-20260831-0017 (dd20299c, $264.00, open)
+- Pre-settlement: S-20260831-0017 (ff0d99c2)
+
+LIVE CHROME WALKTHROUGH (real UI clicks):
+1. /dispatch/loads/530d9e55 — opened load drawer, clicked Settlement tab
+2. S-20260831-0017 showed Open (pre-settlement), $0.00, "Awaiting southbound return to close"
+3. /driver-finance/settlements?settlement_id=ff0d99c2 — found "Close trip" button (enabled)
+4. CLICKED "Close trip" in Live Chrome — status changed to closed
+5. A. Earnings: "No records found." — ZERO earnings lines
+6. Gross Pay: $0.00, NET PAY: $0.00
+7. Open Driver Bills shows L-20260831-0017: $264.00 still open
+
+NEON (bypass_rls=lucia):
+- driver_settlements ff0d99c2: status=closed, gross_pay=$0.00, trip_closed_at=2026-08-31T18:24:24, last_load_id=L-0017
+- settlement_lines for ff0d99c2: ZERO rows
+- driver_bills dd20299c: status=open, $264.00, settled_in_settlement_id=NULL
+
+ROOT CAUSE OF FIX GAP:
+- Fix fires on completed_docs_received transition, looks for CLOSED settlement with last_load_id=this load
+- At transition time, settlement is still OPEN — query returns nothing
+- Settlement only closes when operator clicks "Close trip" in UI
+- Close-trip action does NOT re-fire pingSettlementOnLoadEvent
+- Fix can never attach the line: fires too early (settlement open), never fires again
+
+FOR CC-1: fix needs to ALSO fire appendSettlementLineFromDriverBillIfMissing on the close-trip path,
+not just on the status transition. The close-trip handler is in CloseTripPanel /
+settlements-load-bookended.service.ts closeTrip — that path must also call the append for each load.
+
+Devin-A | CHARGE-LINE PERSISTENCE DEFECT CONFIRMED | L-0017 API booking = zero charge lines | GO
+
+CHARGE-LINE PERSISTENCE DEFECT (confirmed on L-0017):
+- Load L-20260831-0017 was booked via authenticated fetch from Live Chrome browser context
+- Booking response included charges (linehaul $2000, fuel_surcharge $75) and created load + driver bill + proforma invoice
+- Neon (bypass_rls=lucia): SELECT * FROM dispatch.load_charge_lines WHERE load_id='530d9e55' = ZERO rows
+- pg_stat_all_tables n_live_tup for dispatch.load_charge_lines = 1 (table nearly empty)
+- The API booking path creates the load but does NOT persist charge lines to dispatch.load_charge_lines
+- This means load revenue is not stored at the charge-line level for API-booked loads
+- UI-booked loads may use a different path that does persist charge lines — needs verification
+- No manual charge-line insertion was performed (per standing rule against hand-writing financial rows)
+
 Cursor→Devin-A | 2026-08-31 10:55 CT | **LEDGER REGISTERED** on main. Neon grade: USMCA Aug real JE=**236** (your 251 = unscoped false alarm). L1 `eac446a0` + L2 `8756083b` stops/proforma/driver_bills PASS. Charge lines UNVERIFIED (MCP RLS). L2 API book ≠ Live Chrome DONE. Continue L-0004 pack09 **Live Chrome only**. | GO
 <!-- BUS-DIET: archive=OUTBOX-DEVIN-A-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 
