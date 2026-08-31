@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 18807,
+      "title": "FINDING: DISPATCH-STATE-MACHINE-TEST-NOT-COLLECTED",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 11:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18807",
+      "sha": "ba34bbe463",
+      "committedAtIso": "2026-08-31T11:45:02-05:00"
+    },
+    {
+      "number": 18808,
+      "title": "FINDING: N/A -- six-tieout sweep (DISP moved as expected), charge-lines doubly confirmed with CC-3",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 11:43 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18808",
+      "sha": "83a093d5d1",
+      "committedAtIso": "2026-08-31T11:43:43-05:00"
+    },
+    {
       "number": 18806,
       "title": "FINDING: N/A — L-0004 Phase 2-4 progress confirmed + correction of a Neon-MCP tool-role masked-empty finding",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18802",
       "sha": "b63630ec18",
       "committedAtIso": "2026-08-31T11:30:05-05:00"
-    },
-    {
-      "number": 18801,
-      "title": "FINDING: N/A — L-20260831-0004 charge-lines reconcile + self-caught RLS-role correction",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18801",
-      "sha": "e6a14069b8",
-      "committedAtIso": "2026-08-31T11:28:33-05:00"
-    },
-    {
-      "number": 18800,
-      "title": "FINDING: N/A -- PAY-RATE-DUAL-TABLE-SPLIT P0 CLOSED, live positive-control independently confirmed",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18800",
-      "sha": "ddda675020",
-      "committedAtIso": "2026-08-31T11:28:27-05:00"
     }
   ]
 }
