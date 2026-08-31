@@ -7110,10 +7110,15 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1034,
+  "total_claimed": 1035,
   "10189": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-09-01",
     "purpose": "verify-settlement-void-cascade (SETL-NO-VOID-PATH-01 + BANK-ORPHAN-01)"
+  },
+  "10193": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-inv-open-void-respects-void (INV-OPEN-VOID-01)"
   }
 }
