@@ -1,12 +1,12 @@
 {
   "_band": {
-    "claude": "HH 00\u201311 (morning)",
-    "cursor": "HH 12\u201323 (afternoon)",
+    "claude": "HH 00–11 (morning)",
+    "cursor": "HH 12–23 (afternoon)",
     "locked": "2026-08-10",
     "note": "Mirrors scripts/verify-steps/CLAIMED-NUMBERS.json for migration timestamps. Claim-before-author required."
   },
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
-  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
+  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
     "202613301800": {
       "claimed_by": "cursor",
@@ -500,7 +500,12 @@
     "202613311300": {
       "claimed_by": "devin",
       "claimed_at": "2026-09-01",
-      "purpose": "insurance_driver_schedule_revoke_delete_grants (REVOKE DELETE on driver_schedule + REVOKE UPDATE/DELETE on schedule_confirmations \u2014 ALTER DEFAULT PRIVILEGES in insurance schema granted arwd, append-only/WORM tables need narrow grants)"
+      "purpose": "insurance_driver_schedule_revoke_delete_grants (REVOKE DELETE on driver_schedule + REVOKE UPDATE/DELETE on schedule_confirmations — ALTER DEFAULT PRIVILEGES in insurance schema granted arwd, append-only/WORM tables need narrow grants)"
+    },
+    "202613312000": {
+      "claimed_by": "cursor",
+      "claimed_at": "2026-09-01",
+      "purpose": "permission_model (dual is_primary_owner seed tioperfumes07+jpm · no lucia escalation escape · allow_owner_bootstrap recovery · PERMISSION_MODEL_ENFORCED OFF)"
     }
   }
 }
