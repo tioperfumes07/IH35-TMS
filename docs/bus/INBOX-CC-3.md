@@ -1,7 +1,10 @@
-# INBOX — CC-3 · 16:20 CT
-Deploy tip includes #18934 reactivate. **NOW:**
-1. Live-reactivate Ruben / Fernando / Vicente (AL Inactive)
-2. ID-card 404 — exact URL+payload
-3. COI = policy-level only
+# INBOX — CC-3 · 16:30 CT · ★ TOP = VOID 10 (split)
+**READ** `GO-VOID-10-AND-RECREATE-LIVE-NOW` + `PICK-10-VOID-RECREATE-2026-09-01.md`
 
-Warn+confirm schedule mig #18946 on tip — flag OFF until Live Chrome. Do not wait on vendors.md.
+**YOU OWN LOADS 6–10** (L-0010 + L-20260830-0029..0026).
+
+Same law as Devin: UI void by UUID · reverse never delete · full recreate to PAID · hop evidence every step.
+IF UI cannot void → FINDING → CC-1 fixes live. No SQL around.
+
+Park insurance-request / reactivate / navy until your 5 are voided+recreated (or blocked on a filed defect).
+COI stays policy-level when you return to insurance.

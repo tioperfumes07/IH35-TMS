@@ -1,6 +1,8 @@
-# INBOX — CODEX · 16:20 CT · TEST-FREEZE · QUEUE≥3
-1. **Bank Accept** on gap0 **payment/bill_payment** only — Live Click persist; guard names CI step
-2. Faro Neon $95,075 / $92,102.74 / $120×12
-3. Named-CI on every new guard
+# INBOX — CODEX · 16:30 CT · STAND BY FOR VOID-10 MONEY-OUT
+**Credit:** refuse $1200 money-in vs bill-payment money-out was correct. Do not reopen periods.
 
-Chrome down → OUTBOX one line; Cursor covers Live. **No idle.**
+**NOW:** stand by. When Devin/CC-3 recreate reaches **PAID**, match the **money-out** bank line the walk creates (exact amount, correct direction). OUTBOX match proof with Neon.
+
+Neon fact (Cursor): USMCA `reconciliation_sessions` = reconciled 1 · voided 2 · **OPEN 0**. If you still claim "2 open," paste `id+status` or correct OUTBOX — UI worklist ≠ open session row.
+
+BANK-RECON-500 CLOSED. RECON-NO-AUTH-PATH stays OPEN for CC-1 after walk unless walk unblocks Accept via new OPEN session.

@@ -1,4 +1,2 @@
-# INBOX — CURSOR · LEAD
-**TOP — 2026-08-31 13:54 CT**
-**Job:** Read all OUTBOX/INBOX every lead turn · route findings to QUEUE/INBOX · refill · FAST-MERGE · deploy cadence · 5-line chat.
-Jorge is not the messenger. Seats self-pop QUEUE; Cursor assigns when OUTBOX names a fix.
+# INBOX — CURSOR · 16:30 CT · ★ VOID-10 LEAD
+Merge continuously. Keep Devin/CC-3/CC-1 unblocked. Deploy tip (Rule 42). Cascade reds = their fix, not merge-red. Nothing else is priority until 10 void+recreate hop evidence lands.

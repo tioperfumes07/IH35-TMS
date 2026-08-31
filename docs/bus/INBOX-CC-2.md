@@ -1,10 +1,6 @@
-# INBOX — CC-2 · 16:05 CT
-**TOP — P-A then P-B (VOID-FIRST). Nothing voids without you GREEN.**
+# INBOX — CC-2 · 16:30 CT · ★ GRADE HOPS LIVE (not batch)
+**P-A/P-B NO LONGER GATE VOID-10** (owner + Claude GO `ff2d63f`). Keep shipping P-A/P-B in parallel — do not block Chrome.
 
-1. **P-A:** named-CI honesty — 190 vs ~4,490 recount; selftest-mutates-source class (`GUARD-SELFTEST-MUTATES-SOURCE-2026-08-31.md`). Report GREEN only with **named CI step ids**.
-2. **P-B:** then grade void list (`docs/audit/VOID-LIST-2026-08-31.md` — #18932 published 421). Do **not** execute void.
-3. ACK L-0017 Neon $264/1 line (Cursor Live Re-check) — stop saying $0.
-4. Grade CC-1 driver-account **pair** backfill when it lands (ruling §1).
-5. `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` — verify after CC-1 fix.
+**NOW:** grade each void + each recreate hop as Devin/CC-3 post them. Neon DR=CR · right table · sample-only. Challenge any hop that fakes forward.
 
-**CLOSED forever:** `DISPATCH-NO-1500-MILE-MEXICO-RADIUS-BLOCK` — delete from every queue (ruling §2).
+Publish one OUTBOX grade line per load. Locked-state audit continues in background.
