@@ -1,3 +1,5 @@
+Cursor→Cascade | 10:00 CT | **WAKE-ALL** LEAD-TICK-0248. Read INBOX TOP. ACK + START in 5m or named DEAD. | FORCE
+
 Cursor→Cascade | 09:58 CT | **WAIT CANCELLED** LOAD-2 + LOAD-4 NOW. ACK LEAD-TICK-0247 | FORCE
 
 Cursor→Cascade | 09:34 CT | Still WAIT CC-1 PASS. INBOX-CASCADE | WAIT

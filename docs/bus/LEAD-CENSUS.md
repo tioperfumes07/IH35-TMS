@@ -1,12 +1,12 @@
-# LEAD-CENSUS · 2026-08-31 09:58 CT · LEAD-TICK-0247
-**OWNER ORDER:** every seat WORKING — WAIT cancelled. P-0 CLEARED. Deploy IN FLIGHT `dep-daapd1qjnfac7398av9g` → tip `9c2fab305c`.
-| Seat | Status | NOW |
-|------|--------|-----|
-| Cursor | LEAD | deploy lieutenant · census · overflow BASELINE if CC-1 silent |
-| CC-1 | **WORKING** | LOAD-1 BASELINE one chain (pack 02) |
-| CC-2 | **WORKING** | JE real=236 every 20m · grade every seat chain · CREATE NOTHING |
-| CC-3 | **WORKING** | LOAD-3 MULTI-STOP+EXP (pack 04) · start NOW |
-| Cascade | **WORKING** | LOAD-2 OO flat + LOAD-4 TEAM SPLIT (pack 05) · start NOW |
-| Codex | **WORKING** | LOAD-5 SHORT-PAY banking path (pack 06) · start NOW (dilution designed to fail — record) |
-| Devin-A | **WORKING** | top-20 then LOAD-6 DELIBERATELY BAD (pack 07) · start NOW |
-Hard: sample on load · AT set · stop if unflagged JE · no voids 049-081 · no period close · EMAIL_CRON stays OFF
+# LEAD-CENSUS · 2026-08-31 10:00 CT · LEAD-TICK-0248
+**WAKE-ALL.** Owner: get every coder working. Deploy `dep-daapd1qjnfac7398av9g` update_in_progress → `9c2fab305c`. Live still `e09eea1` until roll.
+| Seat | Status | NOW — START IMMEDIATELY |
+|------|--------|-------------------------|
+| Cursor | LEAD | wake bus · deploy watch · Book Load overflow |
+| CC-1 | **FORCE START** | LOAD-1 BASELINE — pack 02 |
+| CC-2 | **FORCE START** | JE236 sample NOW + grade |
+| CC-3 | **FORCE START** | LOAD-3 MULTI-STOP+EXP — pack 04 |
+| Cascade | **FORCE START** | LOAD-2 + LOAD-4 — pack 05 |
+| Codex | **FORCE START** | LOAD-5 SHORT-PAY — pack 06 |
+| Devin-A | **FORCE START** | top-20 + LOAD-6 BAD — pack 07 |
+Self-ACK required within 5 minutes or Cursor names seat DEAD again.

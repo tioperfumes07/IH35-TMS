@@ -1,4 +1,9 @@
 # INBOX — CC-2
+**TOP — 2026-08-31 10:00 CT · WAKE · JE GUARD · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+Post Aug JE real/sample NOW. real must=236. Grade other seats. CREATE NOTHING.
+
+# INBOX — CC-2
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · JE GUARD · LEAD-TICK-0247**
 ACK now. CREATE NOTHING. Every 20m post Aug JE split — **real must stay 236**. Grade CC-1/CC-3/Cascade/Codex/Devin chains independently. Escalate if real rises.
 

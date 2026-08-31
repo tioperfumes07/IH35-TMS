@@ -1,3 +1,8 @@
+### 2026-08-31 10:00 CT · LEAD-TICK-0248 · WAKE-ALL
+- Owner: wake every coder. Reinforced ALL HANDS assignments.
+- Deploy `dep-daapd1qjnfac7398av9g` still update_in_progress (tip `9c2fab305c`); live `e09eea1` until healthz moves.
+- tmux cc1/cc2/cc3 interrupted + banner. Cascade/Codex/Devin: bus FORCE only (no local tmux).
+
 ### 2026-08-31 09:58 CT · LEAD-TICK-0247 · ALL HANDS + DEPLOY
 - Owner: no idle. Released WAIT. Six load shapes assigned.
 - Deploy triggered: `dep-daapd1qjnfac7398av9g` commit `9c2fab305c` (was live `e09eea1`).

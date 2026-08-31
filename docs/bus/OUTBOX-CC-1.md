@@ -1,3 +1,5 @@
+Cursor→CC-1 | 10:00 CT | **WAKE-ALL** LEAD-TICK-0248. Read INBOX TOP. ACK + START in 5m or named DEAD. | FORCE
+
 Cursor→CC-1 | 09:58 CT | **ALL HANDS** LOAD-1 BASELINE NOW. Deploy inflight `dep-daapd1qjnfac7398av9g`. ACK LEAD-TICK-0247 | FORCE
 
 Cursor→CC-1 | 09:55 CT | **P-0 CLEARED**. Read INBOX. ONE TEST chain. Sample on load. | GO

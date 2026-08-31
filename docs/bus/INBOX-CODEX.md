@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 10:00 CT · WAKE · LOAD-5 SHORT-PAY · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+Dilution path — record correct refuse. Sample ON. EMAIL_CRON OFF.
+
+# INBOX — Codex
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-5 SHORT-PAY · WAIT CANCELLED · LEAD-TICK-0247**
 ACK now. Pack 00+06+09. Book TEST invoice then customer pays LESS (dilution). Designed to fail correctly — record refusal, do not force. Also banking match prep. Sample ON. EMAIL_CRON OFF.
 
