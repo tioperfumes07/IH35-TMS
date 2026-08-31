@@ -1,10 +1,11 @@
-**THIS IS NOW — 2026-08-31 01:23 CT · DEPLOY CATCHING TIP · no idle**
+**THIS IS NOW — 2026-08-31 01:28 CT · CONTINUOUS · no idle**
 
-**Cascade = OUT OF SERVICE.**  
-**#18546 AT# → CC-1.** **Grade → CC-2.** **Expenses → CC-3.**
+**Cascade = OOS.** `#18546` → **CC-1**. Grade → **CC-2**. Expenses → **CC-3 + Devin-A** (parallel). Loads+expenses → **Codex**.
 
-**Deploy:** API building tip `f58356e50e` (`dep-daahrd8ae00c73a0s3jg`). Seats: Chrome work NOW — do not wait on deploy for AT#/expenses.
+**Live:** `api.../healthz/shallow` = `f58356e` · `#18535` live · seats Chrome NOW.
 
 **Execute:** `docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md`  
-**Freeze:** `docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md` (Send/Void/Factor only)  
-**Lead census:** `docs/bus/LEAD-CENSUS.md`
+**Freeze:** Send/Void/Factor on dup cohort only — `INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md`  
+**Lead:** `docs/bus/LEAD-CENSUS.md`
+
+Silent OUTBOX on your TOP >15m = **defect**.
