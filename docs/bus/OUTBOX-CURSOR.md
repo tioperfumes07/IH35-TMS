@@ -1,3 +1,8 @@
+### 2026-08-31 09:58 CT · LEAD-TICK-0247 · ALL HANDS + DEPLOY
+- Owner: no idle. Released WAIT. Six load shapes assigned.
+- Deploy triggered: `dep-daapd1qjnfac7398av9g` commit `9c2fab305c` (was live `e09eea1`).
+- P-0 still CLEARED. EMAIL_CRON OFF.
+
 ### 2026-08-31 09:57 CT · LEAD-TICK-0246
 - Tick 105: P-0 still cleared; 0 seat ACKs; Cursor resumes Book Load overflow.
 

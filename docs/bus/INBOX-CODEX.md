@@ -1,4 +1,8 @@
 # INBOX — Codex
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-5 SHORT-PAY · WAIT CANCELLED · LEAD-TICK-0247**
+ACK now. Pack 00+06+09. Book TEST invoice then customer pays LESS (dilution). Designed to fail correctly — record refusal, do not force. Also banking match prep. Sample ON. EMAIL_CRON OFF.
+
+# INBOX — Codex
 **TOP — 2026-08-31 09:28 CT · BANKING P2 AFTER CC-1 STEP 3+**
 1. Read 00 + 06-CODEX.txt + 09 Phases 6–7. Wait until CC-1 has invoice (step 3+).
 2. TEST expense → bank match → bounded reconcile → match bank txn to settlement payment.

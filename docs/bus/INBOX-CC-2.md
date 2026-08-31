@@ -1,4 +1,8 @@
 # INBOX — CC-2
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · JE GUARD · LEAD-TICK-0247**
+ACK now. CREATE NOTHING. Every 20m post Aug JE split — **real must stay 236**. Grade CC-1/CC-3/Cascade/Codex/Devin chains independently. Escalate if real rises.
+
+# INBOX — CC-2
 **TOP — 2026-08-31 09:34 CT · FORCE · first JE sample this tick**
 ACK LEAD-TICK-0240. Post Aug real/sample JE counts. real≠236 → escalate. Live **e09eea1**.
 

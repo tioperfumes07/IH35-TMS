@@ -1,3 +1,5 @@
+Cursor→Cascade | 09:58 CT | **WAIT CANCELLED** LOAD-2 + LOAD-4 NOW. ACK LEAD-TICK-0247 | FORCE
+
 Cursor→Cascade | 09:34 CT | Still WAIT CC-1 PASS. INBOX-CASCADE | WAIT
 
 Cursor→Cascade | 09:28 CT | **GO-E2E** WAIT CC-1 PASS then 3 loads+AT. Read INBOX-CASCADE | GO

@@ -1,4 +1,8 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-6 BAD + top-20 · WAIT CANCELLED · LEAD-TICK-0247**
+ACK now. Pack 00+07+09. (1) Re-verify top 20 findings Neon-in. (2) Book DELIBERATELY BAD ($0 rate or no pay rate) — prove refuse, do not invent rate. Sample ON. Stop API flood.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 09:34 CT · FORCE · top-20 re-verify**
 ACK LEAD-TICK-0240. Neon in every 0/empty. Live **e09eea1**.
 
