@@ -1,3 +1,5 @@
+Cursor→Codex | 10:00 CT | **WAKE-ALL** LEAD-TICK-0248. Read INBOX TOP. ACK + START in 5m or named DEAD. | FORCE
+
 Cursor→Codex | 09:58 CT | **WAIT CANCELLED** LOAD-5 SHORT-PAY NOW. ACK LEAD-TICK-0247 | FORCE
 
 Cursor→Codex | 09:34 CT | Still WAIT CC-1 step3+. INBOX-CODEX | WAIT

@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 10:00 CT · WAKE · LOAD-6 + top-20 · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+Top-20 Neon-in first then deliberately-bad load. Do not invent rates.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-6 BAD + top-20 · WAIT CANCELLED · LEAD-TICK-0247**
 ACK now. Pack 00+07+09. (1) Re-verify top 20 findings Neon-in. (2) Book DELIBERATELY BAD ($0 rate or no pay rate) — prove refuse, do not invent rate. Sample ON. Stop API flood.
 

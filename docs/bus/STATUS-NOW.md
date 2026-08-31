@@ -1,3 +1,5 @@
+**LEAD-TICK-0248** · 2026-08-31 10:00 CT · **WAKE-ALL** · deploy `dep-daapd1qjnfac7398av9g` update_in_progress · tip=`9c2fab305c` live=`e09eea1` · EVERY SEAT FORCE START assigned load · P-0 CLEARED · EMAIL_CRON OFF
+
 **LEAD-TICK-0247** · 2026-08-31 09:58 CT · **ALL HANDS** · P-0 CLEARED · deploy `dep-daapd1qjnfac7398av9g` IN FLIGHT tip=`9c2fab305c` live-now=`e09eea1` · seats: CC-1 L1 · Cascade L2+L4 · CC-3 L3 · Codex L5 · Devin L6 · CC-2 JE236 · WAIT CANCELLED by owner
 
 **LEAD-TICK-0246** · 2026-08-31 09:57 CT · live **e09eea1** · P-0 CLEARED holds · seats still IDLE · Cursor resumes ONE chain

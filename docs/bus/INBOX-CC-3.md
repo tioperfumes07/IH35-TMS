@@ -1,4 +1,9 @@
 # INBOX — CC-3
+**TOP — 2026-08-31 10:00 CT · WAKE · LOAD-3 · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+MULTI-STOP + lumper/fuel/tolls. Sample ON. Do not wait for anyone.
+
+# INBOX — CC-3
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-3 MULTI-STOP+EXP · WAIT CANCELLED · LEAD-TICK-0247**
 ACK now. Pack 00+04+09. Book TEST multi-stop with lumper/fuel/tolls on load. Sample ON. Stop if unflagged JE. Parallel with others — do not wait for CC-1.
 

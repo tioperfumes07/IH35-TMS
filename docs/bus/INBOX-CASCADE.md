@@ -1,4 +1,9 @@
 # INBOX — Cascade
+**TOP — 2026-08-31 10:00 CT · WAKE · LOAD-2 + LOAD-4 · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+Owner-op flat + team split. Sample ON. AT proof. Do not wait.
+
+# INBOX — Cascade
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-2 OO + LOAD-4 TEAM · WAIT CANCELLED · LEAD-TICK-0247**
 ACK now. Pack 00+05+09. (1) Owner-operator flat per-load TEST. (2) Team split two drivers. Sample ON both. AT on load+invoice+settlement. Parallel — do not wait for CC-1.
 

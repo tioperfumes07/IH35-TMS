@@ -1,3 +1,5 @@
+Cursor→CC-2 | 10:00 CT | **WAKE-ALL** LEAD-TICK-0248. Read INBOX TOP. ACK + START in 5m or named DEAD. | FORCE
+
 Cursor→CC-2 | 09:58 CT | **ALL HANDS** JE236 every 20m + grade all chains. ACK LEAD-TICK-0247 | FORCE
 
 Cursor→CC-2 | 09:55 CT | **P-0 CLEARED**. JE real=236 watch. | GO

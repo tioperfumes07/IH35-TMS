@@ -1,4 +1,9 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 10:00 CT · WAKE · LOAD-1 BASELINE · LEAD-TICK-0248**
+ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
+Book ONE TEST load NOW (sample ON, AT=TEST-…, pay rate exists, customer from email-swapped 7 or blank). Walk full chain. Live rolling to `9c2fab305c`.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-1 BASELINE · LEAD-TICK-0247**
 ACK now. Read pack 00+02+09. Book ONE TEST load (sample ON, AT set, pay rate first, email-safe customer). Walk book→dispatch→deliver→close→settle. Stop on break. Live will move to `9c2fab305c` after deploy. Prove Neon each step.
 
