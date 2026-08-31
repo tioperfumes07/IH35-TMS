@@ -35,60 +35,68 @@ type ReportRow = {
 async function gatherReportData(client: DbClient, operatingCompanyId: string): Promise<ReportRow> {
   await client.query("SELECT set_config('app.operating_company_id', $1::text, true)", [operatingCompanyId]);
 
-  // Units with active auto policy coverage
+  // Units with active policy coverage via mdata.assets bridge
   const unitCounts = await client.query<{ total: number; covered: number }>(
     `SELECT
-       count(DISTINCT u.unit_id)::int AS total,
-       count(DISTINCT pu.unit_id)::int AS covered
+       count(DISTINCT u.id)::int AS total,
+       count(DISTINCT pu.id)::int AS covered
      FROM mdata.units u
+     LEFT JOIN mdata.assets a
+       ON (a.unit_id = u.id OR (a.unit_id IS NULL AND a.unit_code = u.unit_number))
+       AND a.tenant_id = $1::uuid
      LEFT JOIN insurance.policy_unit pu
-       ON pu.unit_id = u.unit_id
+       ON pu.asset_id = a.id
        AND pu.removed_at IS NULL
+       AND pu.tenant_id = $1::uuid
      LEFT JOIN insurance.policy p
-       ON p.policy_id = pu.policy_id
+       ON p.id = pu.policy_id
        AND p.status = 'active'
        AND p.tenant_id = $1::uuid
-     WHERE u.deactivated_at IS NULL`
+     WHERE u.deactivated_at IS NULL
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid`
   );
 
-  // Trailers with active auto policy coverage
+  // Trailers (mdata.equipment) with active policy coverage via mdata.assets bridge
   const trailerCounts = await client.query<{ total: number; covered: number }>(
     `SELECT
-       count(DISTINCT t.trailer_id)::int AS total,
-       count(DISTINCT pt.trailer_id)::int AS covered
-     FROM mdata.trailers t
-     LEFT JOIN insurance.policy_trailer pt
-       ON pt.trailer_id = t.trailer_id
-       AND pt.removed_at IS NULL
+       count(DISTINCT e.id)::int AS total,
+       count(DISTINCT pu.id)::int AS covered
+     FROM mdata.equipment e
+     LEFT JOIN mdata.assets a
+       ON a.equipment_id = e.id
+       AND a.tenant_id = $1::uuid
+     LEFT JOIN insurance.policy_unit pu
+       ON pu.asset_id = a.id
+       AND pu.removed_at IS NULL
+       AND pu.tenant_id = $1::uuid
      LEFT JOIN insurance.policy p
-       ON p.policy_id = pt.policy_id
+       ON p.id = pu.policy_id
        AND p.status = 'active'
        AND p.tenant_id = $1::uuid
-     WHERE t.deactivated_at IS NULL`
+     WHERE e.deactivated_at IS NULL
+       AND COALESCE(e.currently_leased_to_company_id, e.owner_company_id) = $1::uuid`
   );
 
-  // Drivers with active auto policy coverage
+  // Drivers — no policy_driver table; count active drivers for coverage gap awareness
   const driverCounts = await client.query<{ total: number; covered: number }>(
     `SELECT
-       count(DISTINCT d.driver_id)::int AS total,
-       count(DISTINCT pd.driver_id)::int AS covered
+       count(DISTINCT d.id)::int AS total,
+       0::int AS covered
      FROM mdata.drivers d
-     LEFT JOIN insurance.policy_driver pd
-       ON pd.driver_id = d.driver_id
-       AND pd.removed_at IS NULL
-     LEFT JOIN insurance.policy p
-       ON p.policy_id = pd.policy_id
-       AND p.status = 'active'
-       AND p.tenant_id = $1::uuid
-     WHERE d.deactivated_at IS NULL`
+     WHERE d.deactivated_at IS NULL
+       AND d.operating_company_id = $1::uuid`
   );
 
-  // Aggregate insured value and premium from active policies
+  // Aggregate insured value from policy_unit and premium from active policies
   const valueRow = await client.query<{ total_insured_value: number | null; total_premium: number | null }>(
     `SELECT
-       COALESCE(sum(p.coverage_limit), 0)::numeric AS total_insured_value,
-       COALESCE(sum(p.premium_amount), 0)::numeric AS total_premium
+       COALESCE(sum(pu.insured_value_cents), 0)::bigint AS total_insured_value,
+       COALESCE(sum(p.total_premium_cents), 0)::bigint AS total_premium
      FROM insurance.policy p
+     LEFT JOIN insurance.policy_unit pu
+       ON pu.policy_id = p.id
+       AND pu.removed_at IS NULL
+       AND pu.tenant_id = $1::uuid
      WHERE p.tenant_id = $1::uuid
        AND p.status = 'active'`
   );
@@ -170,7 +178,8 @@ export async function runInsuranceMonthlyReportTick(app: FastifyInstance) {
     const companies = await client.query<CompanyRow>(
       `SELECT DISTINCT operating_company_id::text AS operating_company_id
        FROM mdata.drivers
-       WHERE deactivated_at IS NULL`
+       WHERE deactivated_at IS NULL
+         AND operating_company_id IS NOT NULL`
     );
 
     for (const row of companies.rows) {
