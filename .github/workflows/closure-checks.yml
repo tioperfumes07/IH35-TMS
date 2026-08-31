@@ -17,6 +17,24 @@ on:
     branches: [main]
 
 jobs:
+  bank-recon-closed-session-conflict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Guard self-test (closed-session mutation plants)
+        run: node scripts/verify-bank-recon-accept-closed-session-conflict.mjs --selftest
+
+      - name: Verify bank match rejects reconciled sessions as HTTP 409 before writes
+        run: node scripts/verify-bank-recon-accept-closed-session-conflict.mjs
+
   lucia-bypass-guard-pattern:
     runs-on: ubuntu-latest
     timeout-minutes: 10
