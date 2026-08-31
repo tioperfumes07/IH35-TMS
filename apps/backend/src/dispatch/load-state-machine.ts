@@ -1,3 +1,10 @@
+/**
+ * Load status state machine — canonical transition table for dispatch + revenue recognition.
+ *
+ * EXEMPT from `scripts/verify-delivered-status-single-source.mjs`: this file must enumerate every
+ * mdata.load_status_enum member (including legacy `delivered` aliases) for translation and transitions.
+ * Delivery-evidence predicate for filters/queues lives in delivery-evidence-status.ts only.
+ */
 import { z } from "zod";
 
 export const dispatchStatusSchema = z.enum([

@@ -1,4 +1,8 @@
 import type { PoolClient } from "pg";
+import {
+  DELIVERY_EVIDENCE_MDATA_STATUSES,
+  isDeliveryEvidenceStatus,
+} from "../dispatch/delivery-evidence-status.js";
 
 type DbLike = Pick<PoolClient, "query">;
 
@@ -34,10 +38,6 @@ function toMillis(value: string | Date | null | undefined): number | null {
 
 function activeMovementStatuses(): Set<string> {
   return new Set(["dispatched", "at_pickup", "at_delivery", "in_transit"]);
-}
-
-function deliveredStatuses(): Set<string> {
-  return new Set(["delivered", "invoiced", "paid", "closed"]);
 }
 
 export async function attributeExpenseToLoad(
@@ -82,7 +82,7 @@ export async function attributeExpenseToLoad(
         AND (
           l.status::text IN ('dispatched', 'at_pickup', 'at_delivery', 'in_transit')
           OR (
-            l.status::text IN ('delivered', 'invoiced', 'paid', 'closed')
+            l.status::text = ANY($6::text[])
             AND COALESCE(drop_drop.actual_departure_at, l.updated_at) BETWEEN $4::timestamptz AND $3::timestamptz
           )
           OR (
@@ -93,7 +93,7 @@ export async function attributeExpenseToLoad(
       ORDER BY COALESCE(drop_drop.actual_departure_at, pickup_pick.actual_departure_at, l.updated_at) DESC
       LIMIT 25
     `,
-    [opts.operatingCompanyId, opts.driverId, expenseIso, deliveredSinceIso, pickupSinceIso]
+    [opts.operatingCompanyId, opts.driverId, expenseIso, deliveredSinceIso, pickupSinceIso, DELIVERY_EVIDENCE_MDATA_STATUSES]
   );
 
   const rows = res.rows;
@@ -111,7 +111,7 @@ export async function attributeExpenseToLoad(
   }
 
   const deliveredRecent = rows
-    .filter((row) => deliveredStatuses().has(row.status))
+    .filter((row) => isDeliveryEvidenceStatus(row.status))
     .map((row) => ({
       row,
       deliveredMs: toMillis(row.delivered_at instanceof Date ? row.delivered_at : String(row.delivered_at ?? "")),

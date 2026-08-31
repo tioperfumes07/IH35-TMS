@@ -25,6 +25,7 @@ import { bankAccountHiddenFilterSql, isBankAccountHideEnabled } from "../banking
 import { sumAuthoritativeDepositoryCashCents } from "../banking/internal-wallet-balance.js";
 import { projectedCashDateSql } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { isFactoringPathLoadStatus } from "../dispatch/delivery-evidence-status.js";
 
 type Queryable = pg.PoolClient;
 
@@ -160,7 +161,9 @@ export function proformaRemainingCentsSql(invoiceAlias: string): string {
   , 0)`;
 }
 /** Delivered-or-beyond → income is Confirmed rather than Predicted. */
-const CONFIRMED_STATUSES = new Set(["delivered", "invoiced", "paid", "closed"]);
+function isConfirmedLoadStatus(status: string): boolean {
+  return isFactoringPathLoadStatus(status) || status === "delivered";
+}
 
 // ─── Daily Prediction ─────────────────────────────────────────────────────────
 
@@ -299,7 +302,7 @@ export async function getDailyPrediction(
       customer_name: row.customer_name,
       delivery_time: row.delivery_time,
       amount_cents: row.rate_total_cents ?? 0,
-      basis: CONFIRMED_STATUSES.has(row.status) ? ("Confirmed" as const) : ("Predicted" as const),
+      basis: isConfirmedLoadStatus(row.status) ? ("Confirmed" as const) : ("Predicted" as const),
     })),
   ];
 
