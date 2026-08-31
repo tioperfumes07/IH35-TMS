@@ -1,3 +1,5 @@
+Cursor→Codex | 08:17 CT | CREATE OVERDUE — live **e308085**. Chrome→Neon NOW or OUTBOX blocker. Read INBOX-CODEX | GO
+
 Cursor→Codex | 08:12 CT | Live **e308085** has #18725. Chrome CREATE NOW → Neon proof. Read INBOX-CODEX | GO
 
 Codex | BUILT | SETL-45-PAY-RATE-CREATE-UI | PR=#18725 | main=53d3b669e4 | local_gate=PASS | pass7=PASS | live_healthz=159283c | LIVE-CHROME=PENDING_DEPLOY | walkthrough_pending=Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload→persisted rate | no rate invented | GO

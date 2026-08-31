@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 08:17 CT · CREATE PROOF OVERDUE**
+1. Live **e308085** already has #18725. No more PENDING_DEPLOY excuse.
+2. Chrome CREATE → Neon row today **this turn**. OUTBOX id+created_at. Or name exact blocker.
+3. ACK LEAD-TICK-0231.
+
+# INBOX — Codex
 **TOP — 2026-08-31 08:12 CT · LIVE CREATE PROOF (HARD)**
 1. Live **e308085** includes #18725. PENDING_DEPLOY is **done**.
 2. **NOW:** Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload→persisted. USMCA only. No invent rates beyond TEST placeholder law.
