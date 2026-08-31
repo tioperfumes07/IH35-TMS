@@ -18,7 +18,8 @@ export type FileEntityType =
   | "dot_inspection"
   | "fuel_transaction"
   | "expense"
-  | "bill";
+  | "bill"
+  | "insurance_request";
 
 export type FileCategory = {
   id: string;

@@ -18,7 +18,23 @@ export type InsuranceCoverageType =
   | "cyber_liability";
 
 export type InsurancePolicyStatus = "active" | "expired" | "cancelled" | "pending";
-export type CoiRequestStatus = "pending" | "sent" | "received" | "expired" | "dismissed";
+// INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): the 5 original values are untouched (no
+// existing row/consumer is rewritten); the 4 new values are the owner's lifecycle for the general
+// request pipeline (requested -> sent -> acknowledged -> issued/declined). 'sent' is shared
+// verbatim between both vocabularies.
+export type CoiRequestStatus =
+  | "pending"
+  | "sent"
+  | "received"
+  | "expired"
+  | "dismissed"
+  | "requested"
+  | "acknowledged"
+  | "issued"
+  | "declined";
+// The 3 shapes ONE pipeline covers (owner: "no second table"). unit_add is declared now so a
+// future unit-add slice needs no further type change, only a route.
+export type InsuranceRequestType = "customer_coi" | "driver_add" | "unit_add";
 export type PaymentScheduleStatus = "scheduled" | "reminded" | "paid" | "overdue" | "late_fee_applied";
 export type InsuranceClaimStatus = "open" | "investigating" | "approved" | "denied" | "paid" | "closed";
 export type InsuranceLawsuitStatus = "filed" | "active" | "settled" | "dismissed" | "judgment";
@@ -157,25 +173,37 @@ export type InsuranceAssetCoverage = {
 export type InsuranceCoiRequest = {
   id: string;
   tenant_id: string;
-  customer_id: string;
+  request_type: InsuranceRequestType;
+  customer_id: string | null;
+  driver_id: string | null;
+  unit_id: string | null;
   policy_id: string | null;
   requested_at: string;
   requested_by: string | null;
   requested_by_name?: string | null;
   policy_number?: string | null;
   customer_name?: string | null;
+  driver_name?: string | null;
+  unit_number?: string | null;
   status: CoiRequestStatus;
   notes: string | null;
   document_url: string | null;
   expires_at: string | null;
   responded_at: string | null;
+  sent_at: string | null;
+  acknowledged_at: string | null;
+  broker_email: string;
+  email_queue_id: string | null;
   created_at: string;
   updated_at: string;
 };
 
 export type CreateCoiRequestPayload = {
   operating_company_id: string;
-  customer_id: string;
+  request_type?: InsuranceRequestType;
+  customer_id?: string | null;
+  driver_id?: string | null;
+  unit_id?: string | null;
   policy_id?: string | null;
   notes?: string | null;
   expires_at?: string | null;
@@ -187,7 +215,14 @@ export type UpdateCoiRequestPayload = {
   document_url?: string | null;
   expires_at?: string | null;
   responded_at?: string | null;
+  acknowledged_at?: string | null;
   policy_id?: string | null;
+  reason?: string | null;
+};
+
+export type DriverScheduleStatus = {
+  on_schedule: boolean;
+  latest_request: { id: string; status: CoiRequestStatus; acknowledged_at: string | null; requested_at: string } | null;
 };
 
 export type InsurancePaymentSchedule = {
@@ -454,8 +489,11 @@ export const insuranceCoiApi = {
   list(params: {
     operating_company_id: string;
     customer_id?: string;
+    driver_id?: string;
+    unit_id?: string;
     policy_id?: string;
     status?: CoiRequestStatus;
+    request_type?: InsuranceRequestType;
   }) {
     return apiRequest<{ requests: InsuranceCoiRequest[] }>(`/api/v1/insurance/coi-requests?${toInsuranceQuery(params)}`);
   },
@@ -472,6 +510,25 @@ export const insuranceCoiApi = {
         method: "PATCH",
         body: payload,
       }
+    );
+  },
+  // "NOTHING SENDS AUTOMATICALLY. A human presses send." (owner directive 2026-08-31) -- this is
+  // the only call that transitions a request to 'sent'.
+  send(id: string, operatingCompanyId: string, options?: { force?: boolean; reason?: string }) {
+    return apiRequest<InsuranceCoiRequest>(
+      `/api/v1/insurance/coi-requests/${id}/send?${toInsuranceQuery({ operating_company_id: operatingCompanyId })}`,
+      {
+        method: "POST",
+        body: options ?? {},
+      }
+    );
+  },
+  driverScheduleStatus(driverId: string, operatingCompanyId: string) {
+    return apiRequest<DriverScheduleStatus>(
+      `/api/v1/insurance/coi-requests/driver-schedule-status?${toInsuranceQuery({
+        operating_company_id: operatingCompanyId,
+        driver_id: driverId,
+      })}`
     );
   },
 };

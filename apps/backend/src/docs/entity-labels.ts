@@ -56,6 +56,9 @@ const ENTITY_LABEL_SQL: Record<string, { table: string; labelSelect: string; sco
   // capability. Voided rows excluded, matching invoice/dot_inspection above.
   expense: { table: "accounting.expenses", labelSelect: "NULLIF(TRIM(COALESCE(d.expense_number, '')), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
   bill: { table: "accounting.bills", labelSelect: "NULLIF(TRIM(d.display_id), '')", scopePredicate: "d.operating_company_id = $1::uuid AND d.voided_at IS NULL" },
+  // INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): request_type doubles as the label
+  // (customer_coi/driver_add/unit_add) -- coi_request has no separate display_id column.
+  insurance_request: { table: "insurance.coi_request", labelSelect: "NULLIF(TRIM(d.request_type), '')", scopePredicate: "d.tenant_id = $1::uuid" },
 };
 
 /** Hydrate document links from canonical records in the same operating company. */

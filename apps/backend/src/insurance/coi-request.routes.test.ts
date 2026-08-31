@@ -34,6 +34,11 @@ const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
     return { rows: [{ id: String(values?.[1]) }] };
   }
 
+  if (sql.includes("FROM mdata.drivers")) {
+    if (String(values?.[1]) === "dddddddd-dddd-4ddd-8ddd-dddddddddddd") return { rows: [] };
+    return { rows: [{ id: String(values?.[1]) }] };
+  }
+
   if (sql.includes("FROM insurance.policy")) {
     if (String(values?.[1]) === "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee") return { rows: [] };
     return { rows: [{ id: String(values?.[1]) }] };
@@ -196,6 +201,72 @@ describe("insurance coi request routes", () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.json()).toMatchObject({ error: "customer_not_found" });
+  });
+
+  // INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): driver-add is the second request
+  // type this ONE pipeline now covers (no second table) -- same route, request_type="driver_add".
+  it("creates a driver-add request", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/coi-requests",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        request_type: "driver_add",
+        driver_id: "22222222-2222-4222-8222-222222222222",
+        notes: "Please add this driver to the AL schedule",
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+  });
+
+  it("returns 404 when driver is missing during a driver-add create", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/coi-requests",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        request_type: "driver_add",
+        driver_id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toMatchObject({ error: "driver_not_found" });
+  });
+
+  // The DB-level coi_request_target_check mirrors this exactly (validated against a real local
+  // Postgres this session) -- this 400 must fire before the query ever reaches that constraint.
+  it("rejects a driver-add payload that also carries a customer_id", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/coi-requests",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        request_type: "driver_add",
+        driver_id: "22222222-2222-4222-8222-222222222222",
+        customer_id: "22222222-2222-4222-8222-222222222222",
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("rejects a driver-add payload with no driver_id", async () => {
+    const app = await buildApp();
+    const response = await app.inject({
+      method: "POST",
+      url: "/api/v1/insurance/coi-requests",
+      payload: {
+        operating_company_id: "11111111-1111-4111-8111-111111111111",
+        request_type: "driver_add",
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
   });
 
   it("updates request status/details", async () => {

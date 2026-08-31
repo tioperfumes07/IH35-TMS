@@ -53,6 +53,12 @@ const SUPPORTED_LINK_ENTITY_TYPES = [
   "fuel_transaction",
   "expense",
   "bill",
+  // INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): the generated request snapshot (and
+  // any returned COI/schedule document) hub-links (Rule 14) to insurance.coi_request, in addition
+  // to the existing customer/driver links -- migration 202613310200 widens the docs.file_links
+  // CHECK. ensureLinkEntityExists() below gains the matching branch in the SAME commit (DOC-F10063
+  // lesson: a type declared here with no reachable branch there silently 404s every link attempt).
+  "insurance_request",
 ] as const;
 
 const idParamSchema = z.object({ file_id: z.string().uuid() });
@@ -76,6 +82,7 @@ const entityTypeSchema = z.enum([
   "fuel_transaction",
   "expense",
   "bill",
+  "insurance_request",
 ]);
 
 function optionalQueryString() {
@@ -305,6 +312,13 @@ async function ensureLinkEntityExists(
   if (entityType === "bill") {
     const res = await client.query(
       "SELECT id FROM accounting.bills WHERE id = $1 AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1",
+      [entityId, operatingCompanyId]
+    );
+    return res.rows.length > 0;
+  }
+  if (entityType === "insurance_request") {
+    const res = await client.query(
+      "SELECT id FROM insurance.coi_request WHERE id = $1 AND tenant_id = $2::uuid LIMIT 1",
       [entityId, operatingCompanyId]
     );
     return res.rows.length > 0;

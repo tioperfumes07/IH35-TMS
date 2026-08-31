@@ -86,6 +86,7 @@ import { SafetyEventsView } from "./drivers/operations/SafetyEventsView";
 import { CommunicationsLogView } from "./drivers/operations/CommunicationsLogView";
 import { PwaEngagementView } from "./drivers/operations/PwaEngagementView";
 import { DocumentsVaultView } from "./drivers/operations/DocumentsVaultView";
+import { DriverInsuranceRequestPanel } from "../components/drivers/DriverInsuranceRequestPanel";
 import { useListState } from "../components/list-state";
 import { createOnboardingSession } from "../api/onboarding";
 
@@ -101,6 +102,9 @@ const tabs = [
   "ELD Edits",
   "Legal Matters",
   "Load History",
+  // INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): driver-add requests to the insurer,
+  // same pipeline as the Customer COI tab (insurance.coi_request, no second table).
+  "Insurance",
 ] as const;
 type DriverTab = (typeof tabs)[number];
 
@@ -1757,6 +1761,16 @@ export function DriverDetailPage() {
             You do not have permission to view documents for this driver.
           </div>
         )
+      ) : null}
+
+      {activeTab === "Insurance" ? (
+        <ErrorBoundary>
+          <DriverInsuranceRequestPanel
+            driverId={driver.id}
+            driverName={`${driver.first_name} ${driver.last_name}`}
+            operatingCompanyId={driver.operating_company_id ?? companyId}
+          />
+        </ErrorBoundary>
       ) : null}
 
       {activeTab === "Legal Matters" ? (

@@ -27,6 +27,10 @@ const allowedKeys = new Set([
   // scheduled-report-file.eta has existed in templates/ since scheduled reports shipped,
   // but was never registered here, so assertAllowedTemplateKey threw on every delivery.
   "scheduled-report-file",
+  // INSURANCE REQUEST FEATURE (owner-authorized 2026-08-31): coi-send.service.ts's sendCoiRequest
+  // is the only caller of either -- human-triggered "Send" action, never automatic.
+  "insurance-coi-request",
+  "insurance-driver-add-request",
 ]);
 
 export function assertAllowedTemplateKey(templateKey: string): string {
