@@ -4,6 +4,7 @@ OPEN:
 1. Next unpaid bill pay hop (expense create already done)
 2. Bank↔settlement match backup if Codex 30m Chrome miss
 3. Live-proof 5 navy URLs after Cascade converts a module
+4. Future-JE unflagged=57 — assist CC-2/CC-1: find amortization path that posts is_sample_data=false (Chrome repro URL)
 
 DONE:
 - [x] Multi-stop TEST load shape (3+ stops) — L-20260831-0015, PFL Logistics LLC, driver Rafael Rogelio Rivero Reynoso, 3 real stops (Laredo/San Antonio/Austin), sample=true, AT#=CC3TEST99002; also filed DRIVER-BILL-RATE-MINT-MISMATCH (real, unexplained rate discrepancy on the auto-created bill)
