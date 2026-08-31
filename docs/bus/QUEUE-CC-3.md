@@ -1,12 +1,12 @@
 # QUEUE — CC-3 · CHROME A
 
 OPEN:
-1. Multi-stop TEST load shape (3+ stops) · Sample ON · AT# never NULL · OUTBOX load_id
-2. Next unpaid bill pay hop (expense create already done)
-3. Bank↔settlement match backup if Codex 30m Chrome miss
-4. Live-proof 5 navy URLs after Cascade converts a module
+1. Next unpaid bill pay hop (expense create already done)
+2. Bank↔settlement match backup if Codex 30m Chrome miss
+3. Live-proof 5 navy URLs after Cascade converts a module
 
 DONE:
+- [x] Multi-stop TEST load shape (3+ stops) — L-20260831-0015, PFL Logistics LLC, driver Rafael Rogelio Rivero Reynoso, 3 real stops (Laredo/San Antonio/Austin), sample=true, AT#=CC3TEST99002; also filed DRIVER-BILL-RATE-MINT-MISMATCH (real, unexplained rate discrepancy on the auto-created bill)
 - [x] LOAD-DETAIL-MARK-IN-TRANSIT unblocked — L-0004 advanced to completed_docs_received on its own (root cause never found by me, fixed by someone else's deploy); also corrected a CC-2 finding that wrongly called my $75 lumper charge-line claim non-reproducing (was a Neon-MCP tool-role artifact — see GUARD-WORKORDERS)
 
 - [x] ACCT-F10153 rate positive-control ebe87013
