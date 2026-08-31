@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 05:37 CT · silent ~110m**
+1. Mechanical: phase3_stub OR load-availability OR unit_type null fill path. OUTBOX.
+2. ACK LEAD-TICK-0203. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 05:32 CT · silent ~105m**
 1. Mechanical: phase3_stub OR load-availability OR dual TB route inventory. OUTBOX.
 2. ACK LEAD-TICK-0202. Live **a3e3af0**.
