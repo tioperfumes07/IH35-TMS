@@ -889,5 +889,61 @@ export async function pingSettlementOnLoadEvent(
       operatingCompanyId: opts.operatingCompanyId,
       actorUserId: opts.actorUserId,
     });
+    return;
+  }
+
+  // ACCT-F10160 (DEFECT B) — the driver-bill MINT gate (loadStatusRequiresDeliveryDepartureStamp)
+  // fires on BOTH delivered_pending_docs AND completed_docs_received; this settlement-CLOSE
+  // predicate above only ever fired on delivered_pending_docs, one transition earlier. A load
+  // whose bill was not mintable yet at that exact instant (no pay rate resolvable, or a
+  // mint-less driver-PWA/bulk delivery route) had its settlement close EMPTY for it, with no
+  // remaining code path to attach a line once the bill eventually minted -- the manual repair
+  // route (pre-settlement.routes.ts) is hard-blocked once trip_closed_at is stamped. Live-caught
+  // + root-caused 2026-08-31 (L-20260831-0002/0004, GO-IDLE-WAKE DEFECT B). This branch is the
+  // narrowest possible re-entry: re-attempt the earnings-line append ONLY against a settlement
+  // this exact load already closed (last_load_id = this load), so it can never attach to an
+  // unrelated trip. appendSettlementLineFromDriverBillIfMissing is itself idempotent
+  // (ON CONFLICT (source_driver_bill_id) DO NOTHING), so calling it again once a bill now exists
+  // is safe and a no-op if a line was already appended.
+  if (normalizedStatus === "completed_docs_received") {
+    const driverIds = team
+      ? [team.primaryDriverId, team.secondaryDriverId]
+      : [load.assigned_primary_driver_id ?? load.assigned_secondary_driver_id ?? null];
+
+    for (const driverId of driverIds) {
+      if (!driverId) continue;
+      const closedSettlement = await client.query<{ id: string }>(
+        `
+          SELECT id
+          FROM driver_finance.driver_settlements
+          WHERE operating_company_id = $1::uuid
+            AND driver_id = $2
+            AND settlement_model = 'load_bookended'
+            AND status = 'closed'
+            AND last_load_id = $3::uuid
+          ORDER BY created_at DESC
+          LIMIT 1
+        `,
+        [opts.operatingCompanyId, driverId, opts.loadId]
+      );
+      const settlementId = closedSettlement.rows[0]?.id;
+      if (!settlementId) continue;
+
+      const lineType =
+        team && driverId === team.primaryDriverId
+          ? ("team_split_primary" as const)
+          : team
+            ? ("team_split_secondary" as const)
+            : ("earnings" as const);
+
+      await appendSettlementLineFromDriverBillIfMissing(client, {
+        settlementId: String(settlementId),
+        driverId,
+        loadId: opts.loadId,
+        teamId: team?.teamId ?? null,
+        lineType,
+        actorUserId: opts.actorUserId ?? null,
+      });
+    }
   }
 }
