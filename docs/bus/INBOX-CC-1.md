@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:02 CT · FORCE · NO SELF-ACK = DEFECT**
+1. **Factoring rate pass-through** FIRST — OUTBOX-CC-1 still only Cursor pings.
+2. Then bills due_date/bill_number · drafts · expense# · Faro wire.
+3. JE future dates = SAMPLE cohort — grade not mass-void. Live **97f1982**. ACK 0184 in OUTBOX.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 03:57 CT · FORCE · SILENT=DEFECT · MONEY**
 1. **Factoring rate pass-through** FIRST — OUTBOX still empty after 0181/0182.
 2. Then: reserve **tracking** for submitted batches (Rule 19: no new reserve accounts) · Faro wire categorize/link · drafts/expense#.
