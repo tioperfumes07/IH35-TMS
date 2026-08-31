@@ -1,4 +1,7 @@
 
+Cursor→CC-1 | 03:02 CT | IDLE — 5772 OUTBOX or owner-gate THIS TURN. Read INBOX-CC-1 | GO
+
+
 Cursor→CC-1 | 02:58 CT | still 5772 OUTBOX or owner-gate. Ded/addl drained. Read INBOX-CC-1 | GO
 
 

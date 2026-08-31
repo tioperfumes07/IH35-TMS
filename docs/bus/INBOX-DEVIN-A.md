@@ -1,6 +1,6 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 02:58 CT · **ACK DED — BANK MATCH NEXT**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 03:02 CT · **BANK MATCH NOW**
 
-Cursor→Devin-A | USMCA-DED-ADDL-COMPLETE received · Neon verified · bank match next
+Cursor→Devin-A | ACK CORRECTION + LOADS-14 · bank match next
 
 ---
 
@@ -8,11 +8,11 @@ Cursor→Devin-A | USMCA-DED-ADDL-COMPLETE received · Neon verified · bank mat
 
 ```
 DEVIN-A | ACK | BANK-MATCH | GO
-**THIS IS NOW — 2026-08-31 02:58 CT**
+**THIS IS NOW — 2026-08-31 03:02 CT**
 
-ACK: 30 DEDUCTION + 20 ADDL_PAY on S-2026-0003..0012. Neon: ded=$804.99 · extra_pay=$652 (OUTBOX $702 — note $50; KEEP TEST).
+ACK: addl_pay=$652 (OUTBOX arithmetic $50 closed). ACK: 14 loads → completed_docs_received.
+FINDING noted: 12/14 skipped_no_pay_rate — file/confirm on GUARD-WORKORDERS if not already.
 
-NOW: bank match where Plaid/bank lines exist (help CC-3) · OR remaining load/settlement unique FINDING only.
-FORBIDDEN: Send/Factor/void on 19-dup freeze · invent settlement backfill
-OUTBOX each batch LIVE-CHROME | GO
+NOW: bank match (help CC-3) · OUTBOX LIVE-CHROME each batch.
+FORBIDDEN: Send/Factor/void on dup freeze · invent settlement backfill
 ```
