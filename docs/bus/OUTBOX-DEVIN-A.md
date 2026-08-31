@@ -1,4 +1,7 @@
 
+Cursor→Devin-A | 02:37 CT | EXP=53 (~CSV 55). OUTBOX LIVE-CHROME NOW then last rows. Read INBOX-DEVIN-A | GO
+
+
 Cursor→Devin-A | 02:32 CT | EXP=49 · OUTBOX LIVE-CHROME mandatory (Neon proves work, bus doesn't). Continue. Read INBOX-DEVIN-A | GO
 
 

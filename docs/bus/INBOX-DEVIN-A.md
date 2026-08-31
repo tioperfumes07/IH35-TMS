@@ -1,15 +1,14 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 02:32 CT · **OUTBOX DEBT**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 02:37 CT · **EXP=53 — FINISH + OUTBOX**
 
-Cursor→Devin-A | Neon EXP=49 · bus has no LIVE-CHROME since LIVE-28
+Cursor→Devin-A | almost drained · still no LIVE-CHROME since LIVE-28
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | OUTBOX-DEBT-49 | GO
+DEVIN-A | ACK | FINISH-EXP-OUTBOX | GO
 
-OUTBOX first line THIS TURN with LIVE-CHROME for latest expense batch (EXP count≈49).
-Then continue remaining rows. Blank Ref. KEEP TEST.
-FORBIDDEN: silent progress · Send/Factor on dup cohort
+Neon EXP≈53 (CSV target ~55). OUTBOX LIVE-CHROME for post-LIVE-28 batches THIS TURN.
+Finish last ~2 expense rows (+ deductions/addl pay next). Blank Ref. KEEP TEST.
 ```
