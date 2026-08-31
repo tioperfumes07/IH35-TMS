@@ -1,10 +1,10 @@
 {
-  "healthzSha": "3e68278",
+  "healthzSha": "97f1982",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "3e68278",
+    "deployedSha": "97f1982",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18589,
-      "title": "FINDING: P0 CLOSED -- shared-types defect genuinely resolved, confirmed by 3 independent signals",
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — settlement S-20260816-0168 stuck approved",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:36 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18589",
-      "sha": "192ef5a2ef",
-      "committedAtIso": "2026-08-31T00:36:33-05:00"
-    },
-    {
-      "number": 18588,
-      "title": "FINDING: N/A -- deploy-unlock confirmed live, trip-close-stamp fix deployed, past settlements correctly unchanged",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:34 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18588",
-      "sha": "0993af681f",
-      "committedAtIso": "2026-08-31T00:34:27-05:00"
-    },
-    {
-      "number": 18587,
-      "title": "Claude-1- docs(bus): deploy-truth correction + FAC-2026-00001 premise verified",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:32 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18587",
-      "sha": "2b7aaa3912",
-      "committedAtIso": "2026-08-31T00:32:39-05:00"
+      "mergedAtCt": "08/31/2026, 03:52 AM CT",
+      "url": "",
+      "sha": "48ed8ac392",
+      "committedAtIso": "2026-08-31T03:52:04-05:00"
     },
     {
       "number": 0,
-      "title": "docs(outbox): Devin-A UI consistency session results + live walkthrough proofs",
+      "title": "docs(bus): OUTBOX-DEVIN-A — 14 maintenance WOs all open, none closed",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:32 AM CT",
+      "mergedAtCt": "08/31/2026, 03:49 AM CT",
       "url": "",
-      "sha": "f6a924cb0b",
-      "committedAtIso": "2026-08-31T00:32:05-05:00"
+      "sha": "b088771374",
+      "committedAtIso": "2026-08-31T03:49:58-05:00"
     },
     {
-      "number": 18586,
-      "title": "FINDING: N/A -- ACK ANCESTRY-CONFIRMED, watching deploy ancestry past #18535/#18548, P0 fix landed at 233c23f92e",
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — 50 draft invoices not sent (A/R not raised)",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:28 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18586",
-      "sha": "3e68278841",
-      "committedAtIso": "2026-08-31T00:28:28-05:00"
+      "mergedAtCt": "08/31/2026, 03:49 AM CT",
+      "url": "",
+      "sha": "ed154aa2c6",
+      "committedAtIso": "2026-08-31T03:49:15-05:00"
     },
     {
-      "number": 18585,
-      "title": "docs(outbox): GO-CLOSE-188 Lists Miss-C batch 1, 8/25 cells live-verified",
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — 35/100 expenses have null expense_number",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18585",
-      "sha": "874b3e2271",
-      "committedAtIso": "2026-08-31T00:27:45-05:00"
+      "mergedAtCt": "08/31/2026, 03:48 AM CT",
+      "url": "",
+      "sha": "127a100862",
+      "committedAtIso": "2026-08-31T03:48:10-05:00"
     },
     {
-      "number": 18584,
-      "title": "FINDING: GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31",
+      "number": 18656,
+      "title": "FINDING: LEAD-TICK-0180-ACK-FACTORING-RATE-RC",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:27 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18584",
-      "sha": "c5763d9cd6",
-      "committedAtIso": "2026-08-31T00:27:43-05:00"
+      "mergedAtCt": "08/31/2026, 03:47 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18656",
+      "sha": "98e12f3b0a",
+      "committedAtIso": "2026-08-31T03:47:54-05:00"
     },
     {
-      "number": 18583,
-      "title": "FINDING: P0-ROUTING-AND-CONTRACT-TESTS",
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — customer factor linkage gap",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:25 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18583",
-      "sha": "233c23f92e",
-      "committedAtIso": "2026-08-31T00:25:15-05:00"
+      "mergedAtCt": "08/31/2026, 03:46 AM CT",
+      "url": "",
+      "sha": "7e4fa3e0e6",
+      "committedAtIso": "2026-08-31T03:46:58-05:00"
     },
     {
-      "number": 18582,
-      "title": "FINDING: OWNER-OVERRIDE-FIELD-SCOPED-NOT-MONEY",
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — factoring rate mismatch root cause",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:24 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18582",
-      "sha": "27c4965b45",
-      "committedAtIso": "2026-08-31T00:24:54-05:00"
+      "mergedAtCt": "08/31/2026, 03:46 AM CT",
+      "url": "",
+      "sha": "97f1982c0a",
+      "committedAtIso": "2026-08-31T03:46:06-05:00"
     },
     {
-      "number": 18580,
-      "title": "FINDING: N/A -- ACK LIVE-WALKTHROUGH-ONLY law, fresh six-tieout sweep in the updated OUTBOX shape",
+      "number": 18655,
+      "title": "FINDING: L0099-DELIVERY-LATCH-INVOICE-SAVEPOINT",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 12:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18580",
-      "sha": "361f3bb0b3",
-      "committedAtIso": "2026-08-31T00:21:11-05:00"
+      "mergedAtCt": "08/31/2026, 03:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18655",
+      "sha": "8186e24d3b",
+      "committedAtIso": "2026-08-31T03:45:48-05:00"
+    },
+    {
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — factoring batch rate mismatch",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 03:45 AM CT",
+      "url": "",
+      "sha": "6e496c426b",
+      "committedAtIso": "2026-08-31T03:45:24-05:00"
+    },
+    {
+      "number": 0,
+      "title": "docs(bus): OUTBOX-DEVIN-A — 16/54 completed loads have no invoice",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 03:44 AM CT",
+      "url": "",
+      "sha": "026e4ea154",
+      "committedAtIso": "2026-08-31T03:44:10-05:00"
     }
   ]
 }
