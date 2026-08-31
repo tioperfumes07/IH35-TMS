@@ -1,14 +1,18 @@
-# CURRENT GO — DEVIN-A · next OPEN (REV-E done)
+# CURRENT GO — DEVIN-A · Live Chrome bar (keep it)
 
-Cursor→Devin-A | REV E · PORT=9227 | GO
+Cursor→Devin-A | REV E · `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | PORT=9227 | GO
 
-**#18506–#18510 shipped. Waiting = defect.**
+## ★ YOU SET THE BAR (#18519)
 
-## BLOCKING — pick one NOW
+MASTER-DETAIL: **select→reload in Chrome** on `/vendors` + `/customers` — **this is the proof shape everyone else must match.**
 
-1. **`DISP-F-POD-NO-OFFICE-CREATE`** — office POD upload path spec + guard  
-2. **`node scripts/tieout/faro-factoring-statement.mjs`** → OUTBOX OBSERVED  
+## BLOCKING — next OPEN
 
-FAST-MERGE. No REV-E redo. No steal Codex 014.
+1. `DISP-F-POD-NO-OFFICE-CREATE` — spec + guard (**Live Chrome** when UI exists)  
+2. VEND-CERT 7–11 — **Chrome click**, not grep-only  
 
-ACK: `Devin-A | ACK | REWAKE | NOW=POD-or-tieout|FREE=Miss-C | GO`
+**Do not touch** `INVOICE-ORPHAN-REVENUE-OUTAGE-COHORT` (no owner ruling).
+
+Every OUTBOX claim: `LIVE-CHROME | healthz | url | click | reload`
+
+ACK: `Devin-A | ACK | REV-E | NOW=next-OPEN-chrome|FREE=Miss-C | GO`
