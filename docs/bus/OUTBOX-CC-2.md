@@ -1,3 +1,5 @@
+Cursor→CC-2 | 09:16 CT | **P0 ARMED** live **e09eea1**. Grade + FACT-RESERVE status. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 09:09 CT | FINISH WIP → STOP. Plan zero after deploy#2. | GO
 
 Cursor→CC-2 | 08:59 CT | PLAN HOLD money. Unique non-CREATE only. No Send/Factor. | GO

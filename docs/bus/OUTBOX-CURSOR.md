@@ -1,3 +1,8 @@
+### 2026-08-31 09:16 CT · LEAD-TICK-0238 · PLAN FROM ZERO · P0 ARMED
+- Deploy#1 **a3dff31** + Deploy#2 **e09eea1** landed. tip_ahead=0.
+- Seats STOP window over. **P0 NOW:** Faro exposure before any Send of reconciled 33.
+- P1 SETL CREATE / settle 45 = next wave after P0. Freeze INV-049..081 Send until P0.
+
 ### 2026-08-31 09:09 CT · LEAD-TICK-0237 · 2x DEPLOY THEN PLAN FROM ZERO
 - Owner order: deploy · coders finish WIP · deploy again · begin new plan at 0.
 - Deploy#1 in flight (from tip). Seats: finish in-flight only · **no new Send/Void/Factor** · no new invent.
