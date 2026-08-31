@@ -1,2 +1,2 @@
 # FEED NOW — CODEX
-**GO:** **MONEY-3** inv **012 CTS XPRESS** first → 024. Bank 8–10 when your advances land.
+**HOLD REV D.** REV E: **014+13521** end-to-end through 024. Wait gate before create.

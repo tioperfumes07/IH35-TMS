@@ -1,15 +1,14 @@
-# CURRENT GO — QUAD MONEY · DUAL CHROME · NO WAIT
+# CURRENT GO — REV E crosswalk partition (HOLD REV D)
 
-**LAW:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` REV D + `NO-IDLE-PARALLEL-LANES-2026-08-31.md`
+**LAW:** `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md`
 
-| Seat | MONEY (Chrome) | CHROME loads |
-|------|----------------|--------------|
-| **CC-1** | 016 shape only | 13512 specimen |
-| **CC-3** | inv **001–011** | — |
-| **Codex** | inv **012–024** MONEY-3 | — |
-| **Cascade** | — | loads **13508–13520** |
-| **Devin-A** | — | loads **13521–13538** CHROME-2 |
-| **CC-2** | grade opportunistic | FREE: all tie-outs |
-| **Cursor** | enforce · merge · deploy | DISP script |
+| Seat | Owns | Creates inv 014+? |
+|------|------|-------------------|
+| CC-1 | 016 · 004/L13512 · settlements | after gate |
+| CC-3 | inv 001–013 (no loads) | 001–013 now |
+| Codex | inv 014–024 + loads | after gate |
+| Devin-A | inv 025, 027–036 + loads | after gate |
+| Cascade | loads 13508–13520 deliver only | **never** |
+| CC-2 | tie-outs + grade | — |
 
-**Four money coders. Three Chrome load coders. Zero waiting.**
+**Gate:** `one-load-one-open-invoice` on main before 014+ creates.

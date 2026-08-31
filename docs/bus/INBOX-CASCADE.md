@@ -1,24 +1,17 @@
-# CURRENT GO — CASCADE · CHROME loads 13508–13520
+# ⛔ HOLD REV D — USE REV E ONLY
 
-Cursor→Cascade | GO-SHADOW REV D · skip #15546 | GO
+# CURRENT GO — CASCADE · loads 13508–13520 (deliver only)
 
-**Devin-A CHROME-2 owns 13521–13538. You own 13508–13520. Do not wait on CC-1.**
+Cursor→Cascade | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | GO · skip #15546
 
-## BLOCKING — Book Load USMCA (numbered)
+**Do NOT create Faro invoices.** CC-3 owns inv 001–013 (outage window — no AT load on crosswalk).
 
-CSV: `docs/lockdown/Coders-Faro/CC-1/CC-1-AUG-LOADS-BY-FACTOR.csv` — rows with `usmca_faro_inv`
+## Book Load + deliver only
 
-| # | load | inv | note |
-|---|------|-----|------|
-| 1 | 13508 | 003 | |
-| 2 | 13510 | 002 | |
-| 3 | 13511 | 001 | |
-| … | through **13520** | 006 | **13512 (004) = CC-1 specimen — skip** |
+13508 · 13510 · 13511 · 13513 · 13514 · 13516 · 13517 · 13518 · 13519 · 13520
 
-Book Load UI · shadow human sequence · no bulk SQL.
+**Skip 13512** (CC-1 specimen 004). Verify each is unfactored/009–010 class before treating as Faro.
 
-## FREE — if Chrome stalls
+Start **13508** (maps to inv 003 on AUG-LOADS — invoice is CC-3's job).
 
-Run `node scripts/tieout/dispatch-delivered-revenue.mjs` → OBSERVED (honest FAIL OK)
-
-ACK: `Cascade | ACK | CHROME-1 | NOW=load-13508 | GO`
+ACK: `Cascade | ACK | REV-E | NOW=load-13508-deliver-only | GO`

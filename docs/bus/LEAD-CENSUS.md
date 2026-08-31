@@ -1,11 +1,10 @@
-# LEAD CENSUS — REV D quad-money dual-chrome
-**SEAT=CURSOR** · owner: no idle · no wait on CC-1
-| Seat | Assigned | Idle? |
+# LEAD CENSUS — REV E (HOLD REV D)
+**SEAT=CURSOR** · partition keyed on crosswalk
+| Seat | Assigned | HOLD? |
 |------|----------|-------|
-| CC-1 | 016 + L13512 + settlements | FORBIDDEN |
-| CC-3 | MONEY-2 inv 001–011 | FORBIDDEN |
-| Codex | **MONEY-3 inv 012–024** + bank 8–10 | FORBIDDEN |
-| Cascade | CHROME loads 13508–13520 | FORBIDDEN |
-| Devin-A | **CHROME-2 loads 13521–13538** | FORBIDDEN |
-| CC-2 | tie-out runs + grade | FORBIDDEN |
-| Codex/Cascade/Devin-A | **never wait on CC-1 or deploy** | |
+| CC-1 | 016 · 004/L13512 · settlements | REV E active |
+| CC-3 | inv 001–013 invoice-only | **STOP REV D** |
+| Codex | inv 014–024 + loads both ends | **STOP REV D** · wait gate for create |
+| Devin-A | inv 025, 027–036 + loads | **STOP REV D** · wait gate for create |
+| Cascade | 13508–13520 deliver only | **STOP REV D** · no invoices |
+| CC-2 | tie-outs | active |
