@@ -68,17 +68,29 @@ export function BillPaymentsListPage() {
   const [search, setSearch] = useState("");
   const [selectedBillId, setSelectedBillId] = useState("");
   // ACCT-F5057 — Topbar Create→Bill payment uses ?create=1 (opens PayBillModal; select unpaid bill on page).
-  const payModalOpen = searchParams.get("create") === "1";
-  function setPayModalOpen(next: boolean) {
+  const payModalOpenFromDeepLink = searchParams.get("create") === "1";
+  function clearPayModalDeepLink() {
     setSearchParams(
       (prev) => {
         const params = new URLSearchParams(prev);
-        if (next) params.set("create", "1");
-        else params.delete("create");
+        params.delete("create");
         return params;
       },
       { replace: true }
     );
+  }
+  // CC-BILL-PAY-RECORD-BUTTON-IGNORES-SELECTOR — the on-page "+ Record Bill Payment" button must NOT
+  // route through setSearchParams: this page is wrapped in a <Suspense key={pathname+search}> (see
+  // routes/manifest.tsx), so any search-param change fully remounts this component and wipes
+  // selectedBillId, reopening the drawer with bill=null ("No bill selected.") even though a bill was
+  // clearly selected right before the click. "Pay with CC" never hit this because ccModalOpen is plain
+  // local state. Local state here preserves the current selection; the ?create=1 deep-link path
+  // (topbar Create→Bill payment, which intentionally opens with no bill pre-selected) is untouched.
+  const [payModalOpenLocal, setPayModalOpenLocal] = useState(false);
+  const payModalOpen = payModalOpenFromDeepLink || payModalOpenLocal;
+  function closePayModal() {
+    if (payModalOpenFromDeepLink) clearPayModalDeepLink();
+    setPayModalOpenLocal(false);
   }
   const [ccModalOpen, setCcModalOpen] = useState(false);
 
@@ -343,7 +355,7 @@ export function BillPaymentsListPage() {
             disabled={!selectedBill}
             onClick={() => {
               if (!selectedBill) { pushToast("Select an unpaid bill first", "info"); return; }
-              setPayModalOpen(true);
+              setPayModalOpenLocal(true);
             }}
           >
             + Record Bill Payment
@@ -389,9 +401,9 @@ export function BillPaymentsListPage() {
           operatingCompanyId={companyId}
           vendorName={entityLabel(selectedBill?.vendor_name, selectedBill?.vendor_id, "Vendor")}
           bill={selectedBill}
-          onClose={() => setPayModalOpen(false)}
+          onClose={closePayModal}
           onSaved={() => {
-            setPayModalOpen(false);
+            closePayModal();
             pushToast("Bill payment recorded", "success");
             void queryClient.invalidateQueries({ queryKey: ["accounting", "bill-payments-list", companyId] });
             void queryClient.invalidateQueries({ queryKey: ["accounting", "vendor-balances", companyId] });
