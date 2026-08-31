@@ -64,6 +64,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-status-filter-enum-normalization"
   },
+  "2454": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-safety-layout-outlet-key"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
