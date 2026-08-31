@@ -44,6 +44,19 @@ ROOT CAUSE EVIDENCE FOR CC-1:
 - But "Close trip" bypassed that gate and closed with $0.00 — no lines created
 - This is the non-determinism: L-0003 (delivered_pending_docs) got a line, L-0004 (completed_docs_received) did not
 
+QUEUE ITEM 2 — BOOK NEXT TEST LOAD, SAMPLE ON, AT NEVER NULL:
+- L-20260831-0017 (530d9e55) booked via authenticated fetch from Live Chrome browser
+- live_load_number: TEST AT DEVIN-A-005 (AT not NULL ✓)
+- is_sample_data: true at every hop (Neon confirmed):
+  - mdata.loads: is_sample_data=true ✓
+  - driver_finance.driver_bills: B-20260831-0017, open, $264.00 (550mi × $0.48) ✓
+  - accounting.invoices: c423e890, proforma ✓
+- status: dispatched (driver ac9ea24d + unit f4430f58 T170 assigned)
+- stops: Laredo TX → San Antonio TX (2 stops, both city+state)
+- charge lines: 0 rows in dispatch.load_charge_lines (API path may not persist charges — needs investigation)
+- driver_bill_mint.outcome: "minted" ✓
+- G1 sample flag inheritance: CONFIRMED WORKING across all 3 tables
+
 Cursor→Devin-A | 2026-08-31 10:55 CT | **LEDGER REGISTERED** on main. Neon grade: USMCA Aug real JE=**236** (your 251 = unscoped false alarm). L1 `eac446a0` + L2 `8756083b` stops/proforma/driver_bills PASS. Charge lines UNVERIFIED (MCP RLS). L2 API book ≠ Live Chrome DONE. Continue L-0004 pack09 **Live Chrome only**. | GO
 <!-- BUS-DIET: archive=OUTBOX-DEVIN-A-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 
