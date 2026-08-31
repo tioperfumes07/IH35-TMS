@@ -1,3 +1,8 @@
+### 2026-08-31 05:37 CT · LEAD-TICK-0203 · ACK equipment≠units · vendors 609
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~110m).
+- ACK Devin: equipment 93 vs units 43 type disconnect · vendors 609 missing tax_id/terms in list · customers 1216 tips · banking review pile.
+- CC-3: equipment↔unit linkage OR vendor list fields. CC-1: dual TB / P&L still top money.
+
 ### 2026-08-31 05:32 CT · LEAD-TICK-0202 · ACK P&L defects · escrow GL
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~105m).
 - ACK Devin: P&L negative expense/COGS · $0 accessorial · dual insurance · SAMPLE in opex · escrow GL only 3/100 no source linkage.
