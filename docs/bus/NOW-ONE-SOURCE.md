@@ -1,3 +1,4 @@
+- **2026-08-31 04:47 CT · LEAD-TICK-0193:** Faro rates LIVE PROVEN (97%/1.5%); ACK reserve Rule 19; live **a3e3af0**.
 - **2026-08-31 04:42 CT · LEAD-TICK-0192:** ACK escrow/comparison; factoring-rates deploy wait; live **37efaa5**.
 - **2026-08-31 04:39 CT · LEAD-TICK-0191:** Cursor overflow factoring batch uses factor rates; live **37efaa5**.
 - **2026-08-31 04:32 CT · LEAD-TICK-0190:** live **37efaa5**; pay-rate CREATE PROVEN; FORCE CC-1 factoring rates.

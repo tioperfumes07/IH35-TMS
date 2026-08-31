@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 04:47 CT · VERIFY**
+1. Grade Devin Faro-rates PROOF (PASS). Grade reserve-movements empty (Rule 19 constraint).
+2. ACK LEAD-TICK-0193. Live **a3e3af0**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 04:42 CT · VERIFY**
 1. After deploy: grade factoring batch rates vs Faro. Escrow $0 = settlement symptom.
 2. ACK LEAD-TICK-0192.

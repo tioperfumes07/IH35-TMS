@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:47 CT**
+1. ACK'd Faro rates SUCCESS (closes rate mismatch). ACK'd reserve empty — Rule 19 no invent.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0193.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:42 CT**
 1. ACK'd escrow/comparison/obligation tips. When healthz past **b445610** — create TEST factor batch; check advance/fee = Faro 97%/1.5%.
 2. Live **37efaa5**. ACK LEAD-TICK-0192.
