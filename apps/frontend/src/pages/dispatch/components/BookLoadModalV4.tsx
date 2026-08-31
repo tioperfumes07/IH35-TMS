@@ -627,7 +627,9 @@ export function BookLoadModalV4({
   // events, 2 driver bills. So the fallback was not an edge case; it was what the operator saw on
   // essentially every load, and the number it showed was always the wrong side of the ledger.
   //
-  // Not priceable is now shown AS not priceable. Dispatch is never blocked from booking.
+  // This local preview covers only an explicit per-load override. Submit-time pricing may instead
+  // use the driver's active rate card, so a missing local preview must never claim that no bill
+  // will be created. Dispatch is never blocked from booking.
   const driverBillPreview = useMemo<number | null>(() => {
     const miles = Number(milesShortest || 0);
     const rate = Number(driverPayRatePerMile || 0);
@@ -1867,15 +1869,15 @@ export function BookLoadModalV4({
             <div className="text-xs text-gray-600">
               Driver bill preview <span className="font-mono font-semibold text-gray-800">{billNumberPreview}</span>{" "}
               {driverBillPreview === null ? (
-                <span className="font-semibold text-[#dc2626]" data-testid="book-load-driver-bill-not-priceable">
-                  Not priceable — no driver bill will be created
+                <span className="font-semibold text-amber-700" data-testid="book-load-driver-bill-not-priceable">
+                  Per-load preview unavailable — active driver rate card checked on submit
                 </span>
               ) : (
                 <span className="font-mono text-sm font-bold text-gray-900">{money.format(driverBillPreview / 100)}</span>
               )}
               <div className="text-[9.5px] text-gray-500">
                 {driverBillPreview === null
-                  ? `Missing ${driverBillMissing.join(" and ")}. The load still books; driver pay is recorded as skipped until this is entered.`
+                  ? `Missing ${driverBillMissing.join(" and ")} for this preview. The load still books; the backend uses an active driver rate card when available, otherwise it records a skipped-no-rate event.`
                   : `${Number(milesShortest || 0).toLocaleString()} short mi × $${Number(driverPayRatePerMile || 0).toFixed(2)}/mi · recalculates on field changes`}
               </div>
             </div>

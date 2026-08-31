@@ -108,6 +108,22 @@ export function collectProblems(files) {
         }
       }
     }
+
+    if (
+      rel.endsWith("pages/dispatch/components/BookLoadModalV4.tsx") &&
+      src.includes('data-testid="book-load-driver-bill-not-priceable"')
+    ) {
+      if (/no driver bill will be created/i.test(src)) {
+        problems.push(
+          `${rel}: missing per-load preview claims no driver bill will be created, but submit-time pricing may use the active driver rate card.`
+        );
+      }
+      if (!/active driver rate card/i.test(src) || !/skipped-no-rate event/i.test(src)) {
+        problems.push(
+          `${rel}: unavailable preview copy must disclose both submit-time active-rate-card fallback and the honest skipped-no-rate outcome.`
+        );
+      }
+    }
   }
 
   if (files.some((f) => f.rel.endsWith("pages/dispatch/components/BookLoadModalV4.tsx")) && !sawTheMemo) {
@@ -161,6 +177,26 @@ function selftest() {
     {
       name: "commented-out fallback does not count",
       files: [mk("apps/frontend/src/y/c.tsx", "const driverPayCents = 0; // sectionTotal + extraRatesCents")],
+      expect: 0,
+    },
+    {
+      name: "misleading no-bill copy is caught",
+      files: [
+        mk(
+          REAL,
+          'const driverBillPreview = useMemo(() => { return null; }, []); <span data-testid="book-load-driver-bill-not-priceable">Not priceable — no driver bill will be created</span>'
+        ),
+      ],
+      expectAtLeast: 1,
+    },
+    {
+      name: "honest rate-card and skip disclosure passes",
+      files: [
+        mk(
+          REAL,
+          'const driverBillPreview = useMemo(() => { return null; }, []); <span data-testid="book-load-driver-bill-not-priceable">Per-load preview unavailable — active driver rate card checked on submit; otherwise a skipped-no-rate event is recorded</span>'
+        ),
+      ],
       expect: 0,
     },
   ];
