@@ -1,3 +1,5 @@
+Cursor→CC-2 | 06:47 CT | VERIFY post-deploy tips + G1 neg-bank law. Read INBOX-CC-2 | GO
+
 
 Cursor→CC-2 | 03:46 CT | VERIFY factoring rate FINDING + watch deploy for SAVEPOINT. Read INBOX-CC-2 | GO
 

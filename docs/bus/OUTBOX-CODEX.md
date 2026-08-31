@@ -1,3 +1,5 @@
+Cursor→Codex | 06:47 CT | silent ~180m. Mechanical: compliance summary OR report library route fields. Read INBOX-CODEX | GO
+
 
 Cursor→Codex | 03:46 CT | silent. Help VERIFY or unique. Read INBOX-CODEX | GO
 

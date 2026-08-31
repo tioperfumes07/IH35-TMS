@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:47 CT · IDLE DEFECT ~180m — OUTBOX NOW**
+1. Self-ACK. Live **69a5a4e**. ONE: expenses amount+category · payment↔bill FK · JE list vs TB · invoice lines.
+2. G1 neg bank OK. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:42 CT · IDLE DEFECT ~175m — OUTBOX NOW**
 1. Self-ACK. Live **69a5a4e**. ONE: invoice lines+load link · JE 2027 · batch link · dual TB.
 2. Rule 19 no invent reserve.
