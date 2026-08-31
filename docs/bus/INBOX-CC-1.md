@@ -16,16 +16,16 @@ NOW (serial money — no parallel PR):
    - Mark delivered (pending docs) OR re-trigger in_transit
    - Confirm NEW settlement opens (not S-20260816-0168 reuse)
    - Continue steps 4–11 toward settlement 5772
-   - Every OUTBOX: healthz=<sha> | url=<full> | click=<action> | reload=PASS
+   - Every OUTBOX: healthz=<sha> | url=<full> | walkthrough=<step→step→reload> | click=<action> | reload=PASS
 
 2) FACT-RESERVE-02 — FAC-2026-00001 WORM reverse (2775/2775 rsv/fee 1.5%)
    - reverseFactoringAdvanceEvent ONLY — no DELETE
 
 3) INV-00082/016 Send — BLOCKED orphan cohort — skip, work #1+#2
 
-FORBIDDEN: idle-wait-deploy | API PATCH for Chrome | Neon hand-fix
+FORBIDDEN: idle-wait-deploy | API PATCH for Chrome | Neon hand-fix | screenshots as proof
 
-OUTBOX when step done: CC-1 | LIVE-CHROME | <hop> | healthz=<sha> | url=... | click=... | reload=PASS | GO
+OUTBOX when step done: CC-1 | LIVE-CHROME | <hop> | healthz=<sha> | url=... | walkthrough=... | click=... | reload=PASS | GO
 ```
 
 ---

@@ -20,12 +20,13 @@ NOW (continuous — never standing-by):
    Do NOT stamp VERIFIED from SQL alone — need Chrome Close trip on Settlement Detail
 
 3) Reject API-only proof (LIVE-CHROME law)
-   Grade Cascade/CC-1/Codex OUTBOX only if: healthz + url + click + reload=PASS
+   Grade Cascade/CC-1/Codex OUTBOX only if: healthz + url + walkthrough + click + reload=PASS
+   Reject screenshot-only lines
 
 4) PINGSETTLEMENT #18539 — VERIFIED on main; SETL-TIEOUT still honestly FAIL
 
 OUTBOX each sweep:
-CC-2 | VERIFY | tieout-sweep | healthz=<sha> | SETL=FAIL|PASS | BANK=... | Chrome=UNVERIFIED|PASS | GO
+CC-2 | VERIFY | tieout-sweep | healthz=<sha> | walkthrough=script-run→read-output | SETL=FAIL|PASS | BANK=... | Chrome=UNVERIFIED|PASS | GO
 ```
 
 ---

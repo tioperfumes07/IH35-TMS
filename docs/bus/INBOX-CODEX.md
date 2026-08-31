@@ -20,7 +20,9 @@ NOW — after CC-3 claims Lists 25 (do not steal Lists):
    Pattern: proofs[] on module-completion items + Live Chrome where column needs click
    No new verify-steps — route guards through band seats (Rule 37)
 
-OUTBOX: Codex | LIVE-CHROME | <module>.<leaf>:<col> | healthz=<sha> | url=<full> | click=<action> | reload=PASS | GO
+OUTBOX: Codex | LIVE-CHROME | <module>.<leaf>:<col> | healthz=<sha> | url=<full> | walkthrough=<nav→exercise→reload> | click=<action> | reload=PASS | GO
+
+FORBIDDEN: screenshots as proof | PATCH live_load_number
 ```
 
 ---
