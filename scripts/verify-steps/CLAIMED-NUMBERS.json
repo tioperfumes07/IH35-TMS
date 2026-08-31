@@ -4,6 +4,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-load-detail-deliver-transition"
   },
+  "2428": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-delivered-status-single-source"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
