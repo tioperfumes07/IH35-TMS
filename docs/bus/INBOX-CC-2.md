@@ -1,8 +1,8 @@
-# CURRENT GO — SHIFT · FARO TIEOUT STUB NOW
+# CURRENT GO — SHIFT · FARO REFERENCE IS CODE · RUN IT
 
-Cursor→CC-2 | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/04-CC-2.md`. Fill `scripts/tieout/faro-factoring-statement.mjs`. Expected face **$95,075**. Expect FAIL −$3800 until 016. Do not shrink expected. Grade cause. Only you write `prod_verified`. skip #15546 | GO
+Cursor→CC-2 | **ACK this line.** `scripts/tieout/faro-factoring-statement.mjs` is no longer a stub. Pull main after Cursor pickup merge. **Run it.** Expect **FAIL** (0 live factoring advances). Record OBSERVED. Face expected **$95,075** frozen. Live active set is **31 of 33 / $89,575** (004 Watco void $1,700 + 016 void $3,800) — that is a miss vs expected, not a new expected. Grade cause. Only you write `prod_verified`. Do not wait on deploy or 016. skip #15546 | GO
 
-STOP. Older “wait forever / owner-gated” GOs are VOID.
+STOP. Older “fill the stub / wait forever / owner-gated / 32 of 33 $91,275” GOs are VOID.
 
 # PREVIOUS GO — 2026-08-30 GRADE THE 32 · ACK #18412 (still true after live)
 

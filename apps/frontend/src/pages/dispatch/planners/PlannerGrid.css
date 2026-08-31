@@ -22,7 +22,32 @@
   line-height: 1.45;
 }
 .planner-grid-canonical .pg-scroll {
-  overflow-x: auto;
+  overflow-x: scroll;
+  scrollbar-gutter: stable;
+}
+.planner-grid-canonical .pg-scroll.fade-l {
+  box-shadow: inset 18px 0 12px -12px rgba(15, 23, 41, 0.35);
+}
+.planner-grid-canonical .pg-scroll.fade-r {
+  box-shadow: inset -18px 0 12px -12px rgba(15, 23, 41, 0.35);
+}
+.planner-grid-canonical .pg-scroll.fade-l.fade-r {
+  box-shadow:
+    inset 18px 0 12px -12px rgba(15, 23, 41, 0.35),
+    inset -18px 0 12px -12px rgba(15, 23, 41, 0.35);
+}
+.planner-grid-canonical .pg-outside {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  text-align: left;
+  cursor: pointer;
 }
 .planner-grid-canonical .pg-grid {
   min-width: max-content;
@@ -121,7 +146,7 @@
   z-index: 2;
   background: #fff;
   border-right: 2px solid var(--slate);
-  padding: 0 10px;
+  padding: 0 8px;
   height: var(--rowh);
   display: flex;
   align-items: center;
@@ -130,7 +155,45 @@
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
+}
+.planner-grid-canonical .pg-name.pg-name-cols {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 1fr) 64px;
+  gap: 0;
+  padding: 0;
+  align-items: stretch;
+}
+.planner-grid-canonical .pg-name.pg-name-cols.has-action {
+  grid-template-columns: minmax(100px, 1fr) minmax(0, 1fr) 56px 72px;
+}
+.planner-grid-canonical .pg-col-name,
+.planner-grid-canonical .pg-col-sec,
+.planner-grid-canonical .pg-col-unit,
+.planner-grid-canonical .pg-col-action {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 6px;
+  font-weight: 600;
+}
+.planner-grid-canonical .pg-col-name {
   text-overflow: ellipsis;
+}
+.planner-grid-canonical .pg-col-sec {
+  font-weight: 500;
+  gap: 4px;
+  font-size: 10px;
+}
+.planner-grid-canonical .pg-col-unit {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 11px;
+}
+.planner-grid-canonical .pg-col-action {
+  justify-content: flex-end;
+  padding-right: 8px;
 }
 .planner-grid-canonical .pg-r.idle .pg-name {
   color: var(--mute);

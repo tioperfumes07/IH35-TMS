@@ -170,33 +170,30 @@ export function UnifiedTimelinePlanner() {
       return {
         id: driver.id,
         idle: status === "Available",
-        name: (
+        name: <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />,
+        secondary: (
           <>
-            <EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} />
-            <span className="text-[10px] font-medium text-gray-500">
-              <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
-            </span>
             <StatusPill status={status} />
             <span data-testid={`timeline-util-${driver.id}`} className="text-[8px] font-medium text-slate-600">
               {pct}%
             </span>
-            {sorted[0] ? (
-              <span className="text-[10px] font-medium text-gray-500">
-                <LoadCustomerLink load={sorted[0]} />
-              </span>
-            ) : null}
-            {status === "Available" ? (
-              <button
-                type="button"
-                data-testid={`timeline-book-${driver.id}`}
-                onClick={() => openBookForUnit(driver.unit_id)}
-                className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
-              >
-                + Book
-              </button>
-            ) : null}
+            {sorted[0] ? <LoadCustomerLink load={sorted[0]} /> : null}
           </>
         ),
+        unit: driver.unit_number ? (
+          <EntityLinkOrTombstone kind="unit" id={driver.unit_id} name={driver.unit_number} noun="Unit" />
+        ) : null,
+        action:
+          status === "Available" ? (
+            <button
+              type="button"
+              data-testid={`timeline-book-${driver.id}`}
+              onClick={() => openBookForUnit(driver.unit_id)}
+              className="rounded-sm bg-slate-800 px-1.5 py-0.5 text-[9px] font-semibold text-white"
+            >
+              + Book
+            </button>
+          ) : null,
         dwells,
         bars: sorted.map((load) => ({
           id: load.id,
@@ -244,7 +241,7 @@ export function UnifiedTimelinePlanner() {
       <PlannerGrid
         days={days}
         frozenLabel="Driver / Unit"
-        frozenPx={320}
+        frozenPx={360}
         rows={toRows(inService)}
         empty={
           <span data-testid="dispatch-timeline-honest-empty">
@@ -258,7 +255,7 @@ export function UnifiedTimelinePlanner() {
           <PlannerGrid
             days={days}
             frozenLabel="Out of service"
-            frozenPx={320}
+            frozenPx={360}
             rows={toRows(oos)}
             empty={null}
           />

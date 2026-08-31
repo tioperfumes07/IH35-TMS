@@ -172,23 +172,21 @@ export function TruckPlanner() {
         <PlannerGrid
           days={days}
           frozenLabel="Unit"
-          frozenPx={240}
+          frozenPx={320}
           rows={truckRows
             .filter((row) => row.status !== "in-shop")
             .map((row) => ({
               id: row.unitId,
               idle: row.status === "available",
-              name: (
-                <>
-                  <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
-                  <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
-                    {truckStatusLabel(row.status)}
-                  </span>
-                  <span className="text-[10px] font-medium text-gray-600">
-                    <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
-                  </span>
-                </>
+              name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+              secondary: (
+                <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                  {truckStatusLabel(row.status)}
+                </span>
               ),
+              unit: row.driverName ? (
+                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+              ) : null,
               bars: [],
             }))}
           empty={
@@ -206,23 +204,21 @@ export function TruckPlanner() {
           <PlannerGrid
             days={days}
             frozenLabel="In shop"
-            frozenPx={240}
+            frozenPx={320}
             rows={truckRows
               .filter((row) => row.status === "in-shop")
               .map((row) => ({
                 id: `shop-${row.unitId}`,
                 idle: true,
-                name: (
-                  <>
-                    <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />
-                    <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
-                      {truckStatusLabel(row.status)}
-                    </span>
-                    <span className="text-[10px] font-medium text-gray-600">
-                      <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
-                    </span>
-                  </>
+                name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+                secondary: (
+                  <span className={`rounded-sm px-1 text-[9px] ${truckStatusClass(row.status)}`}>
+                    {truckStatusLabel(row.status)}
+                  </span>
                 ),
+                unit: row.driverName ? (
+                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                ) : null,
                 bars: [],
               }))}
             empty={null}

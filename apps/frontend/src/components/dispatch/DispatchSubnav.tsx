@@ -212,15 +212,24 @@ export function dispatchBreadcrumbLabel(
   );
 }
 
-function CountBadge({ count }: { count: number | null | undefined }) {
-  if (count == null) return null;
-  const hot = count > 0;
+const ALERT_BADGE_KEYS = new Set(["at_risk", "detention", "late", "border"]);
+
+function CountBadge({
+  count,
+  badgeKey,
+}: {
+  count: number | null | undefined;
+  badgeKey?: string;
+}) {
+  if (count == null || count === 0) return null;
+  const alert = Boolean(badgeKey && ALERT_BADGE_KEYS.has(badgeKey));
+  const noun = count === 1 ? "item" : "items";
   return (
     <span
       className={`ml-1 inline-flex min-w-[1.1rem] items-center justify-center rounded px-1 text-[10px] font-semibold leading-none ${
-        hot ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-500"
+        alert ? "bg-red-100 text-red-700" : "bg-slate-200 text-slate-600"
       }`}
-      aria-label={`${count} items`}
+      aria-label={`${count} ${noun}`}
     >
       {count}
     </span>
@@ -336,7 +345,10 @@ function DropdownColumn({
           >
             {item.label}
             {groupBadgeTotal > 0 ? (
-              <CountBadge count={groupBadgeTotal} />
+              <CountBadge
+                count={groupBadgeTotal}
+                badgeKey={(item.children ?? []).some((c) => c.badgeKey && ALERT_BADGE_KEYS.has(c.badgeKey)) ? "at_risk" : "load_board"}
+              />
             ) : null}
           </Link>
         ) : null}
@@ -357,7 +369,10 @@ function DropdownColumn({
             <>
               {item.label}
               {groupBadgeTotal > 0 ? (
-                <CountBadge count={groupBadgeTotal} />
+                <CountBadge
+                count={groupBadgeTotal}
+                badgeKey={(item.children ?? []).some((c) => c.badgeKey && ALERT_BADGE_KEYS.has(c.badgeKey)) ? "at_risk" : "load_board"}
+              />
               ) : null}
             </>
           )}
@@ -381,7 +396,7 @@ function DropdownColumn({
                 >
                   {child.label}
                   {child.badgeKey ? (
-                    <CountBadge count={badges[child.badgeKey]} />
+                    <CountBadge count={badges[child.badgeKey]} badgeKey={child.badgeKey} />
                   ) : null}
                 </Link>
               </li>
@@ -412,7 +427,7 @@ function LeafItem({
         className={active ? "active" : undefined}
       >
         {item.label}
-        {item.badgeKey ? <CountBadge count={badges[item.badgeKey]} /> : null}
+        {item.badgeKey ? <CountBadge count={badges[item.badgeKey]} badgeKey={item.badgeKey} /> : null}
       </Link>
     </li>
   );
