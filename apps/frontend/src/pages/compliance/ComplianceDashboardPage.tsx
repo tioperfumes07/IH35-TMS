@@ -17,6 +17,7 @@ import { NotificationRulesPanel } from "../../components/compliance/Notification
 import { SummaryCards } from "../../components/compliance/SummaryCards";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { FilingsComplianceDueSection } from "./FilingsComplianceDueSection";
 import { FleetHosBoardSection } from "./FleetHosBoardSection";
 import { HosTrackerSection } from "./HosTrackerSection";
@@ -185,20 +186,12 @@ export function ComplianceDashboardPage() {
       />
 
       {/* Tabs — ADDITIVE: Overview keeps every prior section; HOS Tracker/Viewer/Violations/History are new. */}
-      <div className="flex gap-0 border-b border-slate-200" role="tablist">
-        {COMPLIANCE_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === t.id}
-            onClick={() => setTab(t.id)}
-            className={`px-3 py-2 text-[12px] font-semibold ${tab === t.id ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "text-slate-500 hover:text-slate-700"}`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+      <NavyPageSubNav
+        items={COMPLIANCE_TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        activeId={tab}
+        onTabChange={(id) => setTab(id as ComplianceTab)}
+        itemIds={COMPLIANCE_TABS.map((t) => t.id)}
+      />
 
       <RelatedModuleLinks
         testId="compliance-related-module-links"
