@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 06:37 CT · IDLE**
+1. Doc types / Lists fields / DQ list / report 404 — after deploy if FE-facing.
+2. ACK LEAD-TICK-0215.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 06:32 CT · IDLE — TAKE ONE**
 1. load-document-types catalog OR completed_docs status gate OR Lists fields OR DQ list. OUTBOX.
 2. ACK LEAD-TICK-0214. Live **a3e3af0**.

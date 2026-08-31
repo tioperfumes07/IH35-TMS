@@ -1,3 +1,8 @@
+### 2026-08-31 06:37 CT · LEAD-TICK-0215 · DEPLOY KICKED · ACK stale 145 · settlements shell
+- Live was **`a3e3af0`** (~145 commits behind) — Rule 42 breach. **Deploy kicked** (API) — wait healthz ancestry past a3e3af0.
+- ACK Devin: deploy stale · settlements list shell (closed unpaid, no driver/pay fields).
+- CC-1/2/3/Codex still IDLE ~170m. After live advances: Devin re-spot; CC-2 VERIFY.
+
 ### 2026-08-31 06:32 CT · LEAD-TICK-0214 · ACK completed_docs w/ 0 docs · accidents
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~165m).
 - ACK Devin: `completed_docs_received` w/ 0 documents + 0 doc types · accidents 0 report# · 0 inspections · complaints null type.

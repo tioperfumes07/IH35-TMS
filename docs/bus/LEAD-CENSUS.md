@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:37 CT · LEAD-TICK-0215
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | deploy stale tip |
+| Cursor | LEAD | **DEPLOY IN FLIGHT** |
+| CC-1 | IDLE DEFECT ~170m | |
+| CC-2 | IDLE → VERIFY after live | |
+| CC-3 | IDLE | |
+| Codex | silent | |
+| Cascade | OOS | |
+Was live **a3e3af0** (~145 behind). Deploy kicked.
+
 # LEAD-CENSUS · 2026-08-31 06:32 CT · LEAD-TICK-0214
 | Seat | Status | Note |
 |------|--------|------|
