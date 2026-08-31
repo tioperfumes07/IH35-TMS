@@ -2668,3 +2668,4 @@ CODEX | WORKING | GUARD-F7539 | ROOT=work-order-close-read-plant-masked-by-ident
 CODEX | WORKING | GUARD-F7540 | ROOT=safety-pending-total-count-plant-hit-neighbor-all-requests-route | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7541 | ROOT=cargo-claim-qbo-chrome-arbitrary-distance-cap-stale-after-form-growth | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7542 | ROOT=detail-types-create-guard-rejected-canonical-shared-hook-while-product-remained-wired | focused=normal+selftest+3-production-shaped-mutations | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7543 | ROOT=banking-factoring-guard-demanded-dishonest-chargeback-alias-after-outstanding-liability-rename | focused=normal+selftest+honest-field-loss+dishonest-alias-mutations | NEXT=gate+FAST-MERGE | GO

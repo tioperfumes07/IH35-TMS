@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // verify-banking-factoring-virtual-fe-wired (0441-mod8) — locks FE wiring so Banking Home reads
-// reserve/chargeback balances from GET /api/v1/banking/factoring-virtual (accounting.factoring_companies),
+// reserve/outstanding-liability balances from GET /api/v1/banking/factoring-virtual,
 // not the stale views.banking_account_tiles / dashboard KPI proxy that showed $0.
 //
 // Self-test: node scripts/verify-banking-factoring-virtual-fe-wired.mjs --selftest
@@ -19,8 +19,8 @@ export function check({ bankingApi, bankingHome }) {
     f.push(`${BANKING_API}: must export getFactoringVirtual calling /api/v1/banking/factoring-virtual`);
   if (!/export\s+function\s+getFactoringVirtual/.test(bankingApi))
     f.push(`${BANKING_API}: must export getFactoringVirtual`);
-  if (!/reserve_balance/.test(bankingApi) || !/chargeback_balance/.test(bankingApi))
-    f.push(`${BANKING_API}: FactoringVirtualCompany must include reserve_balance and chargeback_balance`);
+  if (!/reserve_balance/.test(bankingApi) || !/outstanding_liability_balance/.test(bankingApi))
+    f.push(`${BANKING_API}: FactoringVirtualCompany must include reserve_balance and outstanding_liability_balance`);
 
   if (!/getFactoringVirtual/.test(bankingHome))
     f.push(`${BANKING_HOME}: must import and call getFactoringVirtual`);
@@ -30,8 +30,12 @@ export function check({ bankingApi, bankingHome }) {
     f.push(`${BANKING_HOME}: factoringReserve must come from factoringVirtualSummary.reserve (not kpiQuery.data?.factoring_reserve)`);
   if (/factoringReserve\s*=\s*Number\(\s*kpiQuery\.data\?\.factoring_reserve/.test(bankingHome))
     f.push(`${BANKING_HOME}: must NOT derive factoringReserve from kpiQuery.data?.factoring_reserve (stale tile view proxy)`);
-  if (!/factoringVirtualSummary\.chargeback/.test(bankingHome))
-    f.push(`${BANKING_HOME}: chargebacks panel must read factoringVirtualSummary.chargeback`);
+  if (!/factoringVirtualSummary\.outstandingLiability/.test(bankingHome))
+    f.push(`${BANKING_HOME}: factoring panel must read factoringVirtualSummary.outstandingLiability`);
+  if (!/row\.outstanding_liability_balance/.test(bankingHome))
+    f.push(`${BANKING_HOME}: factoring summary must aggregate row.outstanding_liability_balance`);
+  if (/factoringVirtualSummary\.chargeback|Number\(\s*row\.chargeback_balance/.test(bankingHome))
+    f.push(`${BANKING_HOME}: must not relabel outstanding liability as chargeback`);
   if (/Chargebacks open[\s\S]{0,120}money\.format\(0\)/.test(bankingHome))
     f.push(`${BANKING_HOME}: chargebacks open must not hardcode money.format(0)`);
 
@@ -57,7 +61,7 @@ export function run() {
 
 if (process.argv.includes("--selftest")) {
   const goodApi = `
-    export type FactoringVirtualCompany = { reserve_balance: number; chargeback_balance: number; };
+    export type FactoringVirtualCompany = { reserve_balance: number; chargeback_balance: number; outstanding_liability_balance: number; };
     export function getFactoringVirtual(companyId: string) {
       return apiRequest<{ companies: FactoringVirtualCompany[] }>(\`/api/v1/banking/factoring-virtual?\${q(companyId)}\`);
     }
@@ -65,10 +69,13 @@ if (process.argv.includes("--selftest")) {
   const goodHome = `
     import { getFactoringVirtual } from "../../api/banking";
     const factoringVirtualQuery = useQuery({ queryFn: () => getFactoringVirtual(companyId) });
-    const factoringVirtualSummary = useMemo(() => ({ reserve: 1, chargeback: 2 }), []);
+    const factoringVirtualSummary = useMemo(() => ({
+      reserve: row.reserve_balance,
+      outstandingLiability: row.outstanding_liability_balance,
+    }), []);
     const factoringReserve = factoringVirtualSummary.reserve;
-    const factoringChargebacks = factoringVirtualSummary.chargeback;
-    <span>{money.format(factoringChargebacks)}</span>
+    const factoringOutstandingLiability = factoringVirtualSummary.outstandingLiability;
+    <span>Outstanding liability</span><span>{money.format(factoringOutstandingLiability)}</span>
   `;
   const badHome = `
     const factoringReserve = Number(kpiQuery.data?.factoring_reserve ?? 0);
@@ -84,6 +91,22 @@ if (process.argv.includes("--selftest")) {
     [
       "kpi proxy regression caught",
       check({ bankingApi: goodApi, bankingHome: badHome }).length >= 2,
+    ],
+    [
+      "dishonest chargeback alias regression caught",
+      check({
+        bankingApi: goodApi,
+        bankingHome: goodHome
+          .replaceAll("outstandingLiability", "chargeback")
+          .replace("row.outstanding_liability_balance", "row.chargeback_balance"),
+      }).some((x) => x.includes("must not relabel")),
+    ],
+    [
+      "missing honest API field caught",
+      check({
+        bankingApi: goodApi.replace("outstanding_liability_balance: number;", ""),
+        bankingHome: goodHome,
+      }).some((x) => x.includes("outstanding_liability_balance")),
     ],
   ];
   const failed = checks.filter(([, ok]) => !ok);
