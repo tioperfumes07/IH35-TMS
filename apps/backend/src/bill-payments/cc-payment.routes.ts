@@ -44,7 +44,7 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         const ccProbe = await client.query(
-          `SELECT account_type::text, qbo_account_id FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid AND active = true LIMIT 1`,
+          `SELECT account_type::text, qbo_account_id FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
           [body.data.cc_account_id, query.data.operating_company_id]
         );
         const ccAccount = ccProbe.rows[0] as { account_type: string; qbo_account_id: string | null } | undefined;
