@@ -1,3 +1,8 @@
+### 2026-08-31 06:17 CT · LEAD-TICK-0211 · ACK JE 2027 dates · Faro/owner as vendor
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~150m).
+- ACK Devin: JEs all dated 2027-07-05 entry_type undefined · Faro/owner as bill vendors · TEST collision bills · QBO null ignore (USMCA-only no TMS→QBO).
+- CC-1: JE date/type poster OR factoring batch link OR dual TB. CC-3: report 404 still.
+
 ### 2026-08-31 06:12 CT · LEAD-TICK-0210 · ACK safety reports 404 · fuel recon 0%
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~145m).
 - ACK Devin: library marks HOS/CSA/DOT reports `real` but routes 404 · complaints null type/future · fleet-util 404 · fuel param inconsistency · fuel recon 0% match.

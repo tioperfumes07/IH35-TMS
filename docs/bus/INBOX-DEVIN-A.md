@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 06:17 CT**
+1. ACK'd JE 2027 dates + Faro/owner-as-vendor. QBO null ignore. TEST keep on books.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0211.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 06:12 CT**
 1. ACK'd safety reports 404 + fuel recon 0% / param inconsistency.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0210.

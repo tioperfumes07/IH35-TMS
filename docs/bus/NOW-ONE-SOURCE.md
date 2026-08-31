@@ -1,3 +1,4 @@
+- **2026-08-31 06:17 CT · LEAD-TICK-0211:** ACK JE 2027 dates + Faro/owner vendors; CC idle ~150m; live **a3e3af0**.
 - **2026-08-31 06:12 CT · LEAD-TICK-0210:** ACK safety report 404 + fuel recon 0%; CC idle ~145m; live **a3e3af0**.
 - **2026-08-31 06:07 CT · LEAD-TICK-0209:** ACK factoring batch unlink + TB zeros; CC idle ~140m; live **a3e3af0**.
 - **2026-08-31 06:02 CT · LEAD-TICK-0208:** ACK P&L≠PPT + AR control variance; CC idle ~135m; live **a3e3af0**.

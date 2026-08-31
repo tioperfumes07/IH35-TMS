@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:17 CT · IDLE DEFECT ~150m — OUTBOX NOW**
+1. Self-ACK. ONE: JE future dates/type · factoring batch link · dual TB · P&L≠PPT · unbilled.
+2. Live **a3e3af0**. No QBO sync. Rule 19 no invent reserve. TEST bills expected keep.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:12 CT · IDLE DEFECT ~145m — OUTBOX NOW**
 1. Self-ACK. ONE: factoring invoice↔batch · dual TB · P&L≠PPT · AR control · unbilled.
 2. Live **a3e3af0**. Rule 19 no invent reserve.
