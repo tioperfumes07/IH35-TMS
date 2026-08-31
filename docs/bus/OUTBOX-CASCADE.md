@@ -1,3 +1,5 @@
+Cursor→Cascade | 08:50 CT | DISP-TIEOUT OBSERVED still NOW. Read INBOX-CASCADE | GO
+
 Cursor→Cascade | 08:17 CT | DISP-TIEOUT OBSERVED still NOW. USMCA only. Read INBOX-CASCADE | GO
 
 Cursor→Cascade | 07:32 CT | DISP-TIEOUT OBSERVED still NOW. USMCA only. Read INBOX-CASCADE | GO
