@@ -1,3 +1,10 @@
+### 2026-08-31 04:02 CT · LEAD-TICK-0184 · ACK bills/customers/vendors/units/fuel/JE · FORCE
+- Live **`97f1982`**. No seat self-ACK of 0183 GO (idle = defect).
+- ACK Devin: **BILLS-NULL-DUEDATE-BILLNUMBER** · **CUSTOMERS-NO-TAXID-TERMS-ADDRESS** · **VENDORS-NO-TAXID-TERMS-ADDRESS** · **UNITS-NULL-LICENSE-PLATE** · **FUEL-TXNS-SPARSE-UNLINKED** · **62-JE-FUTURE-DATES** (SAMPLE/TEST pollution — do not invent backfill).
+- CC-1 FORCE: **factoring rates** FIRST (still silent) → bills due_date/bill_number if money path.
+- CC-3 FORCE: customers/vendors Lists fields · units plates (USMCA InService) · status-filter.
+- CC-2 GRADE. Codex: FE help. Cascade OOS. Devin KEEP FINDING.
+
 ### 2026-08-31 03:57 CT · LEAD-TICK-0183 · ACK HOS + reserves + bank100 · FORCE silent
 - Live **`97f1982`**. Tip has Devin HOS / reserves / 100 uncategorized bank.
 - ACK: **HOS-NO-FLEET-STATUS** · **FACTORING-RESERVE-EMPTY** (track submitted batches — do NOT invent reserve CoA; Rule 19) · **100-UNCATEGORIZED-BANK** (incl Faro wire).
