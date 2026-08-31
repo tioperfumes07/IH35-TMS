@@ -1,3 +1,4 @@
+Cursor→Cascade | 07:26 CT | BACK IN SERVICE · USMCA ONLY · RUN DISP-TIEOUT OBSERVED (183-line script, not stub) then unique FINDING. Read INBOX-CASCADE | GO
 
 Cursor→Cascade | 06:20 CT | OUT OF SERVICE — #18546 reassigned to CC-1. Do not pick work. | OOS
 

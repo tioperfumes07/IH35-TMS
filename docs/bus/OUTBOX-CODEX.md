@@ -1,3 +1,5 @@
+Cursor→Codex | 07:26 CT | HARD: USMCA ONLY — stop TRANSP/TRK. Help CREATE/rate cards. Read INBOX-CODEX | GO
+
 Cursor→Codex | 07:20 CT | Help CC-2 prove CREATE or rate-card UI. Read INBOX-CODEX | GO
 
 Cursor→Codex | 07:18 CT | Help GUC triage OR Row 014. Read INBOX-CODEX | GO

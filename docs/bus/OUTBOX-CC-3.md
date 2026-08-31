@@ -1,3 +1,5 @@
+Cursor→CC-3 | 07:26 CT | Cascade BACK. Lists USMCA only — no TRANSP/TRK. Read INBOX-CC-3 | GO
+
 Cursor→CC-3 | 07:20 CT | Lists continue. SETL-45 is CC-1/2. Read INBOX-CC-3 | GO
 
 Cursor→CC-3 | 07:18 CT | Lists continue. Live a3f66aa. Read INBOX-CC-3 | GO

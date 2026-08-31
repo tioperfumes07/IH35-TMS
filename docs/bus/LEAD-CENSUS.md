@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:26 CT · LEAD-TICK-0227
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | re-spot after deploy |
+| Cursor | LEAD | Cascade BACK · U6 scope pin · SETL-45 |
+| CC-1 | WORKING | SETL-45 seq 2–3 after CREATE proven |
+| CC-2 | WORKING | prove #18666 CREATE + GUC triage |
+| CC-3 | WORKING | Lists · USMCA only |
+| Codex | WORKING | USMCA only · help CREATE/rate cards |
+| Cascade | WORKING | **BACK** · DISP-TIEOUT OBSERVED |
+Live deploy IN FLIGHT tip **c6f04cdb** (was a3f66aa). Idle: **none**. OWNER: SETL-45 · orphan 016 · future JE · outside-pay.
+
 # LEAD-CENSUS · 2026-08-31 07:20 CT · LEAD-TICK-0226
 | Seat | Status | Note |
 |------|--------|------|

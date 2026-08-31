@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 07:26 CT · USMCA ONLY (HARD)**
+1. **STOP TRANSP/TRK.** Launch entity = USMCA only. QBO sync irrelevant.
+2. Help CC-2 prove pay-rate CREATE OR rate-card UI for SETL-45 drivers. Live deploy in flight.
+3. ACK LEAD-TICK-0227. OUTBOX.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
 1. Expenses+loads. Fail-closed until stops/miles document-backed. No fabricate.
 2. Send/Factor skip **only** documented duplicate groups. Live **69a5a4e**.
