@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 06:17 CT · silent ~150m**
+1. Mechanical: report routes OR WO list OR phase3_stub. OUTBOX.
+2. ACK LEAD-TICK-0211. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:12 CT · silent ~145m**
 1. Mechanical: mount missing report routes OR library status honesty OR phase3_stub. OUTBOX.
 2. ACK LEAD-TICK-0210. Live **a3e3af0**.
