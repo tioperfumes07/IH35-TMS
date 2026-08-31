@@ -7,7 +7,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { UploadModal } from "../../components/documents/UploadModal";
 import { PreviewModal } from "../../components/documents/PreviewModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -391,13 +391,14 @@ export function DocsHomePage() {
         />
       </div>
 
-      <SecondaryNavTabs
-        tabs={ENTITY_TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
+      <NavyPageSubNav
+        items={ENTITY_TABS.map((tab) => ({ label: tab.label, to: `#${tab.id}` }))}
         activeId={activeTab}
-        onChange={(next) => {
+        onTabChange={(next) => {
           setActiveTab(next as DocsEntityTabId);
           setPage(1);
         }}
+        itemIds={ENTITY_TABS.map((tab) => tab.id)}
       />
 
       <section className="rounded-sm border border-gray-200 bg-white p-3">
