@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:17 CT · LEAD-TICK-0187
+| Seat | Status | Evidence |
+|------|--------|----------|
+| Devin-A | WORKING | profitability + dates tips |
+| CC-1 | IDLE DEFECT ~30m+ | Cursor pings only — overflow next if no ACK |
+| CC-3 | IDLE DEFECT | Cursor pings only |
+| Codex | IDLE | |
+| CC-2 | IDLE | |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 04:12 CT · LEAD-TICK-0186
 | Seat | Status | Evidence |
 |------|--------|----------|
