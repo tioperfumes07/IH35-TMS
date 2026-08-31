@@ -1,12 +1,12 @@
-# LEAD CENSUS — 2026-08-31 02:25 CT · 5m tick
+# LEAD CENSUS — 2026-08-31 02:27 CT · 5m tick
 
-**Live:** `9d6abc0`. **Neon EXP 36h=44** (+6) · **L-0003 AT#=13512** ✓
+**Live:** `9d6abc0`. **Neon EXP 36h=46** · **L-0003 AT#=13512** ✓
 
 | Seat | Truth | Force |
 |------|-------|-------|
-| **CC-1** | AT# done · no 5772 OUTBOX | 5772 next |
-| **Devin-A** | EXP rising, silent | OUTBOX + continue |
-| **CC-3** | expenses | OUTBOX each |
+| **Devin-A** | EXP↑ no OUTBOX | OUTBOX NOW |
+| **CC-3** | expenses | OUTBOX |
+| **CC-1** | AT# done | 5772 |
 | Codex | silent | AT#/expenses |
-| CC-2 | stale VERIFY (said NULL) | VERIFY 13512 / EXP=44 |
+| CC-2 | grade | VERIFY 13512/46 |
 | Cascade | OOS | — |
