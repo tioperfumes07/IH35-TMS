@@ -13,6 +13,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { withMutatedCopy } from "./_lib/selftest-safe-mutation.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-settlement-dispute-adjustment-lines-and-aggregation";
@@ -28,65 +29,83 @@ const AGG_MARKER = "CASE WHEN line_type IN ('reimbursement', 'dispute_adjustment
 const WRITE_MARKER = "INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)";
 const TYPE_MARKER = "'dispute_adjustment'";
 
-function assertAll() {
+// `overrides` maps a relative file path (one of WRITER_FILES / AGG_FILE) to an alternate absolute
+// path to read instead of path.join(ROOT, file) — the copy-to-temp mechanism a selftest uses to
+// probe a mutation without ever writing the real tracked file.
+function assertAll(overrides = {}) {
   const problems = [];
   for (const file of WRITER_FILES) {
-    const src = fs.readFileSync(path.join(ROOT, file), "utf8");
+    const src = fs.readFileSync(overrides[file] ?? path.join(ROOT, file), "utf8");
     if (!src.includes(WRITE_MARKER) || !src.includes(TYPE_MARKER)) {
       problems.push(`${file}: does not write a settlement_lines('dispute_adjustment') row on approval.`);
     }
   }
-  const aggSrc = fs.readFileSync(path.join(ROOT, AGG_FILE), "utf8");
+  const aggSrc = fs.readFileSync(overrides[AGG_FILE] ?? path.join(ROOT, AGG_FILE), "utf8");
   if (!aggSrc.includes(AGG_MARKER)) {
     problems.push(`${AGG_FILE}: aggregateSettlementTotals no longer folds dispute_adjustment into the reimbursements bucket.`);
   }
   return problems;
 }
 
-if (SELFTEST) {
+// GUARD-SELFTEST-MUTATES-SOURCE fix: both probes below used to writeFileSync straight into the
+// real tracked file, restoring on the next line with no finally. Both now use withMutatedCopy —
+// the real files are only ever read; the planted mutation lives in a temp copy that assertAll()
+// is pointed at via `overrides`.
+async function selftest() {
   const p6File = "apps/backend/src/driver-finance/settlement-disputes-p6.service.ts";
   const p6Path = path.join(ROOT, p6File);
-  const p6Src = fs.readFileSync(p6Path, "utf8");
-  const droppedWrite = p6Src.replace(
-    /\n\s*\/\/ ACCT-F5619[\s\S]*?VALUES \(\$1::uuid, 'dispute_adjustment', \$2, \$3::numeric\)\n\s*`,\n\s*\[dispute\.settlement_id, `Dispute adjustment \(\$\{nextCanonical\}\)`, adjustment \/ 100\]\n\s*\);\n/,
-    "\n"
+  await withMutatedCopy(
+    p6Path,
+    (p6Src) => {
+      const droppedWrite = p6Src.replace(
+        /\n\s*\/\/ ACCT-F5619[\s\S]*?VALUES \(\$1::uuid, 'dispute_adjustment', \$2, \$3::numeric\)\n\s*`,\n\s*\[dispute\.settlement_id, `Dispute adjustment \(\$\{nextCanonical\}\)`, adjustment \/ 100\]\n\s*\);\n/,
+        "\n"
+      );
+      if (droppedWrite === p6Src) {
+        throw new Error(`${LABEL} SELFTEST SETUP FAILED: p6 write-drop mutation did not match live source`);
+      }
+      return droppedWrite;
+    },
+    (tmpPath) => {
+      const mutatedProblems = assertAll({ [p6File]: tmpPath });
+      if (!mutatedProblems.some((p) => p.includes(p6File))) {
+        throw new Error(`${LABEL} SELFTEST FAILED: dropping the p6 settlement_lines write not caught`);
+      }
+    },
   );
-  if (droppedWrite === p6Src) {
-    console.error(`${LABEL} SELFTEST SETUP FAILED: p6 write-drop mutation did not match live source`);
-    process.exit(1);
-  }
-  fs.writeFileSync(p6Path, droppedWrite);
-  const mutatedProblems = assertAll();
-  fs.writeFileSync(p6Path, p6Src);
-  if (!mutatedProblems.some((p) => p.includes(p6File))) {
-    console.error(`${LABEL} SELFTEST FAILED: dropping the p6 settlement_lines write not caught`);
-    process.exit(1);
-  }
 
   const aggPath = path.join(ROOT, AGG_FILE);
-  const aggSrc = fs.readFileSync(aggPath, "utf8");
-  const droppedAgg = aggSrc.replace(
-    AGG_MARKER,
-    "CASE WHEN line_type = 'reimbursement' THEN amount ELSE 0 END"
+  await withMutatedCopy(
+    aggPath,
+    (aggSrc) => {
+      const droppedAgg = aggSrc.replace(AGG_MARKER, "CASE WHEN line_type = 'reimbursement' THEN amount ELSE 0 END");
+      if (droppedAgg === aggSrc) {
+        throw new Error(`${LABEL} SELFTEST SETUP FAILED: aggregation mutation did not match live source`);
+      }
+      return droppedAgg;
+    },
+    (tmpPath) => {
+      const aggMutatedProblems = assertAll({ [AGG_FILE]: tmpPath });
+      if (!aggMutatedProblems.some((p) => p.includes(AGG_FILE))) {
+        throw new Error(`${LABEL} SELFTEST FAILED: dropping dispute_adjustment from the aggregation not caught`);
+      }
+    },
   );
-  if (droppedAgg === aggSrc) {
-    console.error(`${LABEL} SELFTEST SETUP FAILED: aggregation mutation did not match live source`);
-    process.exit(1);
-  }
-  fs.writeFileSync(aggPath, droppedAgg);
-  const aggMutatedProblems = assertAll();
-  fs.writeFileSync(aggPath, aggSrc);
-  if (!aggMutatedProblems.some((p) => p.includes(AGG_FILE))) {
-    console.error(`${LABEL} SELFTEST FAILED: dropping dispute_adjustment from the aggregation not caught`);
-    process.exit(1);
-  }
 
   const live = assertAll();
   if (live.length) {
-    console.error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
-    process.exit(1);
+    throw new Error(`${LABEL} SELFTEST FAILED live: ${live.join(" | ")}`);
   }
   console.log(`${LABEL} SELFTEST PASS`);
+}
+
+if (SELFTEST) {
+  try {
+    await selftest();
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
   process.exit(0);
 }
 

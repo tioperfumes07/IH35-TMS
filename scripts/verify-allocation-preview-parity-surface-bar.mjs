@@ -6,6 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { withMutatedCopy } from "./_lib/selftest-safe-mutation.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = "apps/frontend/src/components/allocation/AllocationPreviewTable.tsx";
@@ -14,8 +15,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(filePath = path.join(ROOT, PAGE)) {
+  const src = fs.readFileSync(filePath, "utf8");
   assert(src.includes("ParityTable"), "AllocationPreviewTable: must use ParityTable");
   assert(src.includes('storageKey="allocation-preview-rows"'), "AllocationPreviewTable: storageKey");
   assert(src.includes('tableTestId="allocation-preview-table"'), "AllocationPreviewTable: tableTestId");
@@ -24,30 +25,31 @@ export function check() {
   assert(!/<table\b/.test(src), "AllocationPreviewTable: must not use raw HTML table");
 }
 
-function selftest() {
+// GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it to
+// a temp path (withMutatedCopy), plant there, assert against the copy — apps/ is never touched.
+async function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
+  const realPath = path.join(ROOT, PAGE);
   const planted = [
     "export function AllocationPreviewTable() {",
     '  return <table className="min-w-full" data-testid="allocation-preview-table"><tbody /></table>;',
     "}",
     "",
   ].join("\n");
-  fs.writeFileSync(filePath, planted);
   let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  }
-  fs.writeFileSync(filePath, good);
+  await withMutatedCopy(realPath, () => planted, (tmpPath) => {
+    try {
+      check(tmpPath);
+    } catch {
+      failed = true;
+    }
+  });
   assert(failed, "selftest: expected FAIL on raw HTML table");
   console.log("verify-allocation-preview-parity-surface-bar --selftest PASS");
 }
 
 const args = process.argv.slice(2);
-if (args.includes("--selftest")) selftest();
+if (args.includes("--selftest")) await selftest();
 else {
   check();
   console.log("verify-allocation-preview-parity-surface-bar PASS");

@@ -1,0 +1,4 @@
+{
+  "count": 627,
+  "note": "Shrink-only ratchet baseline (2026-09-01, root-fix pass on GUARD-SELFTEST-MUTATES-SOURCE). Was 696 at guard introduction; lowered to 627 after converting the 32 files that were both no-finally AND targeting apps/or packages/ tracked source (comm of the owner's 210-no-finally list against this guard's own 282-file detection) to scripts/_lib/selftest-safe-mutation.mjs's copy-to-temp pattern. Remaining 627 call sites are the 401-with-a-finally population plus files this guard's heuristic could not confirm safe — still real debt, not yet converted. Lower this number as more are fixed; never raise it. See docs/bus/GUARD-SELFTEST-MUTATES-SOURCE-2026-08-31.md."
+}

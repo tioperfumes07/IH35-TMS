@@ -7,6 +7,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { withMutatedCopy } from "./_lib/selftest-safe-mutation.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const PAGE = "apps/frontend/src/pages/reports/GeofenceReconciliationReport.tsx";
@@ -15,8 +16,8 @@ function assert(cond, msg) {
   if (!cond) throw new Error(msg);
 }
 
-export function check() {
-  const src = fs.readFileSync(path.join(ROOT, PAGE), "utf8");
+export function check(filePath = path.join(ROOT, PAGE)) {
+  const src = fs.readFileSync(filePath, "utf8");
   assert(src.includes("ParityTable"), "GeofenceReconciliationReport: must use ParityTable");
   assert(src.includes('storageKey="geofence-recon"'), "GeofenceReconciliationReport: must use one always-mounted storageKey=geofence-recon");
   assert(!/Object\.entries\(\s*byClass\s*\)/.test(src), "GeofenceReconciliationReport: must not group into multiple ParityTables (missing surface bar on empty)");
@@ -32,10 +33,15 @@ export function check() {
   );
 }
 
-function selftest() {
+// GUARD-SELFTEST-MUTATES-SOURCE fix: never write the plant into the real tracked file. Copy it
+// to a temp path (withMutatedCopy), plant there, assert against the copy — apps/ is never touched.
+async function selftest() {
   check();
-  const filePath = path.join(ROOT, PAGE);
-  const good = fs.readFileSync(filePath, "utf8");
+  const realPath = path.join(ROOT, PAGE);
+  let failed = false;
+  await withMutatedCopy(
+    realPath,
+    (good) => {
   // Plant old defect: green-only empty + grouped tables, no always-mounted table.
   const bad = good
     .replace(/storageKey="geofence-recon"/, 'storageKey={`geofence-recon-${cls}`}')
@@ -52,14 +58,16 @@ function selftest() {
     );
   assert(bad.includes("bg-green-50"), "selftest fixture must include green bypass");
   assert(bad.includes("Object.entries(byClass)"), "selftest fixture must include grouped tables");
-  fs.writeFileSync(filePath, bad);
-  let failed = false;
-  try {
-    check();
-  } catch {
-    failed = true;
-  }
-  fs.writeFileSync(filePath, good);
+      return bad;
+    },
+    (tmpPath) => {
+      try {
+        check(tmpPath);
+      } catch {
+        failed = true;
+      }
+    },
+  );
   assert(failed, "selftest: expected FAIL on green-only/grouped bypass");
   console.log("verify-geofence-recon-surface-bar --selftest PASS");
 }

@@ -478,6 +478,12 @@ jobs:
       - name: verify:driver-export-pdf-resolves-api-url
         run: node scripts/verify-driver-export-pdf-resolves-api-url.mjs
 
+      - name: verify:no-selftest-mutates-tracked-source
+        run: node scripts/verify-no-selftest-mutates-tracked-source.mjs
+
+      - name: verify:selftest-safe-mutation:test
+        run: npm run verify:selftest-safe-mutation:test
+
       - name: verify:parts-canonical-source
         run: npm run verify:parts-canonical-source
 
