@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:07 CT · VERIFY on 7d226b2**
+1. Deploy LANDED **7d226b2**. First: drivers/units 0 tips — prove false-empty vs real empty (opco + Samsara 82 mapped).
+2. ACK LEAD-TICK-0222 + #227–#234 grades. OUTBOX.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:02 CT · VERIFY after deploy**
 1. ACK #18702 received. After healthz moves off 6de19ac: grade #220–#226.
 2. QBO disconnect = USMCA-only (not a sync campaign). ACK LEAD-TICK-0221.

@@ -1,3 +1,4 @@
+- **2026-08-31 07:07 CT · LEAD-TICK-0222:** Deploy LIVE **7d226b2**; ACK #227–#234; note drivers/units 0 may be false-empty (Samsara 82 mapped) — CC-2 verify; L13512 OWNER GATE holds.
 - **2026-08-31 07:02 CT · LEAD-TICK-0221:** Deploy kicked (tip~20); ACK #220 fuel · #221 QBO ignore · #222 geo · #223–224 maint · #225 deductions · #226 accidents; CC-2 ACK; L13512 OWNER GATE holds; live **6de19ac**.
 - **2026-08-31 06:57 CT · LEAD-TICK-0220:** Deploy LIVE **6de19ac**; ACK #216 RBAC empty · #217 HOS 0 · #218 periods all open (flag OFF = law); CC-3 Lists ACK; L13512 OWNER GATE holds.
 - **2026-08-31 06:54 CT · LEAD-TICK-0219:** ACK Devin #214 dispatch assign 0 · #215 notif/alerts/sched; seats still WORKING; deploy catch-up in flight; L13512 OWNER GATE holds; live **69a5a4e** tip~29.
