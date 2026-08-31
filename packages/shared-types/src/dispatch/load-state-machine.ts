@@ -28,8 +28,17 @@ export const ALLOWED_TRANSITIONS: Record<DispatchStatus, readonly DispatchStatus
   driver_no_show: [],
 };
 
-/** Cancel uses CancelLoadModal — not inline transition buttons. */
-export const OFFICE_DRAWER_EXCLUDED_TARGETS: readonly DispatchStatus[] = ["cancelled"];
+/**
+ * Targets that must NOT appear as one-click inline buttons in the office drawer.
+ * Exception outcomes keep reason-coded controls (CancelLoadModal / Report abandonment).
+ * Enforced by scripts/verify-load-state-machine-parity.mjs.
+ */
+export const OFFICE_DRAWER_EXCLUDED_TARGETS: readonly DispatchStatus[] = [
+  "cancelled",
+  "abandoned",
+  "driver_walkoff",
+  "driver_no_show",
+];
 
 export const OFFICE_TRANSITION_LABELS: Partial<Record<DispatchStatus, string>> = {
   assigned_not_dispatched: "Mark assigned",
@@ -60,6 +69,15 @@ export function fromMdataStatus(status: string): DispatchStatus {
   if (status === "driver_walkoff") return "driver_walkoff";
   if (status === "driver_no_show") return "driver_no_show";
   throw new RangeError(`Unknown mdata load status: ${status}`);
+}
+
+/** Total variant for render paths — returns null instead of throwing. */
+export function tryFromMdataStatus(status: string): DispatchStatus | null {
+  try {
+    return fromMdataStatus(status);
+  } catch {
+    return null;
+  }
 }
 
 export function toMdataStatus(status: DispatchStatus): string {
@@ -109,8 +127,8 @@ export type OfficeTransitionButton = {
 };
 
 export function getOfficeTransitionButtons(currentMdataStatus: string): OfficeTransitionButton[] {
-  if (isTerminalLoadStatus(currentMdataStatus)) return [];
-  const current = fromMdataStatus(currentMdataStatus);
+  const current = tryFromMdataStatus(currentMdataStatus);
+  if (current === null) return [];
   return ALLOWED_TRANSITIONS[current]
     .filter((target) => !OFFICE_DRAWER_EXCLUDED_TARGETS.includes(target))
     .map((target) => ({
@@ -120,7 +138,6 @@ export function getOfficeTransitionButtons(currentMdataStatus: string): OfficeTr
     }));
 }
 
-/** Back-compat aliases for guards/tests that referenced loadCanMark* helpers. */
 export function loadCanMarkInTransit(status: string | null | undefined): boolean {
   return getOfficeTransitionButtons(String(status ?? "")).some((b) => b.target === "in_transit");
 }

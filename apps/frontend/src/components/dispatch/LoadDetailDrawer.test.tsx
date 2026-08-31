@@ -351,9 +351,12 @@ describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice",
     vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
     pushToastSpy.mockClear();
     const button = renderDelivered(0);
-    // Deliberately NOT asserting the button is disabled: this is a "Create / View" control and blocking it
-    // outright would also stop users viewing an already-created (already broken) invoice.
-    expect(button).not.toBeDisabled();
+    // Deliberately NOT asserting the button is disabled *for the rate*: this is a "Create / View" control
+    // and blocking it outright would also stop users viewing an already-created (already broken) invoice.
+    // It IS disabled until the existing-invoice lookup settles (`invoiceLookupUnresolved`) -- a real user
+    // waits one tick for that, so the test must too. Asserting synchronously here raced that gate and
+    // failed on every run.
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
     // Wait on a POSITIVE signal (the refusal toast). A bare
     // `waitFor(() => expect(fn).not.toHaveBeenCalled())` is vacuous here — it succeeds on the very first
@@ -366,7 +369,11 @@ describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice",
   it("still creates normally when the load has a rate", async () => {
     vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
     vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
-    fireEvent.click(renderDelivered(321000));
+    const button = renderDelivered(321000);
+    // Same existing-invoice lookup gate: clicking before it settles is a no-op, so the mutation would
+    // never fire and this test failed for a reason that had nothing to do with the rate.
+    await waitFor(() => expect(button).not.toBeDisabled());
+    fireEvent.click(button);
     await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
   });
 });
@@ -390,7 +397,10 @@ describe("DISP-F6XXX — delivered_pending_docs must not dead-click the invoice 
     vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
     vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
     const button = renderStatus("delivered_pending_docs");
-    expect(button).not.toBeDisabled();
+    // The button is disabled while `invoiceLookupUnresolved` is true (the existing-invoice lookup is in
+    // flight). That gate is correct -- creating a second invoice for a load is unrecoverable -- so the
+    // assertion waits for it the way a user does, instead of racing it on the first render tick.
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
     await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
   });
@@ -399,13 +409,22 @@ describe("DISP-F6XXX — delivered_pending_docs must not dead-click the invoice 
     vi.mocked(accountingApi.createInvoiceFromLoad).mockClear();
     vi.mocked(accountingApi.createInvoiceFromLoad).mockResolvedValue({ invoice: { id: "inv-1" } } as never);
     const button = renderStatus("completed_docs_received");
-    expect(button).not.toBeDisabled();
+    // The button is disabled while `invoiceLookupUnresolved` is true (the existing-invoice lookup is in
+    // flight). That gate is correct -- creating a second invoice for a load is unrecoverable -- so the
+    // assertion waits for it the way a user does, instead of racing it on the first render tick.
+    await waitFor(() => expect(button).not.toBeDisabled());
     fireEvent.click(button);
     await waitFor(() => expect(vi.mocked(accountingApi.createInvoiceFromLoad)).toHaveBeenCalled());
   });
 
-  it("a load still in transit stays disabled (gate is narrowed, not removed)", () => {
+  it("a load still in transit stays disabled (gate is narrowed, not removed)", async () => {
     const button = renderStatus("in_transit");
+    // NON-VACUOUS: without the settle wait this passed for the WRONG reason -- every button is disabled on
+    // the first tick while `invoiceLookupUnresolved` is true, so the assertion proved nothing about the
+    // status gate. Wait for the lookup to be issued and settle, then assert; the helper-text assertion
+    // pins that the remaining reason is the STATUS gate (`canInvoiceFromLoad`), not the lookup.
+    await waitFor(() => expect(vi.mocked(accountingApi.listLoadInvoices)).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByText(/available once load is delivered/i)).toBeInTheDocument());
     expect(button).toBeDisabled();
   });
 });

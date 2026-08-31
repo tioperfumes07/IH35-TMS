@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ALLOWED_TRANSITIONS,
+  OFFICE_DRAWER_EXCLUDED_TARGETS,
   fromMdataStatus,
   getOfficeTransitionButtons,
   isTerminalLoadStatus,
@@ -8,6 +9,7 @@ import {
   loadCanMarkDeliveredPendingDocs,
   loadCanMarkInTransit,
   toMdataStatus,
+  tryFromMdataStatus,
   validateLoadStatusTransition,
   validateLoadStopStatusWrite,
 } from "./load-state-machine.js";
@@ -68,6 +70,43 @@ describe("load-state-machine contract", () => {
   it("getOfficeTransitionButtons excludes cancelled target", () => {
     const buttons = getOfficeTransitionButtons("dispatched");
     expect(buttons.some((b) => b.target === "cancelled")).toBe(false);
+  });
+
+  it("getOfficeTransitionButtons never throws in render on unknown or empty status", () => {
+    expect(tryFromMdataStatus("something_new")).toBeNull();
+    expect(() => getOfficeTransitionButtons("something_new")).not.toThrow();
+    expect(getOfficeTransitionButtons("something_new")).toEqual([]);
+    expect(() => getOfficeTransitionButtons("")).not.toThrow();
+    expect(getOfficeTransitionButtons("")).toEqual([]);
+  });
+
+  it("loadCanMark* return false instead of throwing on null/undefined", () => {
+    for (const predicate of [loadCanMarkInTransit, loadCanMarkDeliveredPendingDocs, loadCanMarkCompletedDocsReceived]) {
+      expect(() => predicate(null)).not.toThrow();
+      expect(predicate(null)).toBe(false);
+      expect(predicate(undefined)).toBe(false);
+    }
+  });
+
+  it("excludes every exception outcome from inline drawer buttons", () => {
+    const exceptionOutcomes = ["cancelled", "abandoned", "driver_walkoff", "driver_no_show"] as const;
+    for (const outcome of exceptionOutcomes) {
+      expect(OFFICE_DRAWER_EXCLUDED_TARGETS).toContain(outcome);
+    }
+    for (const status of Object.keys(ALLOWED_TRANSITIONS)) {
+      for (const button of getOfficeTransitionButtons(status)) {
+        expect(exceptionOutcomes).not.toContain(button.target);
+      }
+    }
+  });
+
+  it("offers exactly the forward step at each lifecycle stage", () => {
+    expect(getOfficeTransitionButtons("assigned_not_dispatched").map((b) => b.target)).toEqual(["dispatched"]);
+    expect(getOfficeTransitionButtons("dispatched").map((b) => b.target)).toEqual(["in_transit"]);
+    expect(getOfficeTransitionButtons("in_transit").map((b) => b.target)).toEqual(["delivered_pending_docs"]);
+    expect(getOfficeTransitionButtons("delivered_pending_docs").map((b) => b.target)).toEqual([
+      "completed_docs_received",
+    ]);
   });
 
   it("loadCanMarkInTransit true only when in_transit is legal next hop", () => {

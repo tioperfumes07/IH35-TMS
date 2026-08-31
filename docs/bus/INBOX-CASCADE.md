@@ -1,30 +1,24 @@
-# INBOX — CASCADE · Cursor lead · read TOP only
+# INBOX — Cascade · Cursor lead · read TOP only
 
-Cursor→Cascade | 2026-08-31 00:35 CT | **CRITICAL PATH — not Miss-C Lists**
+Cursor→Cascade | 2026-08-31 01:00 CT | **MASTER MANUAL LIVE BOOKS + critical path**
 
 ---
 
 ## COPY-PASTE — CASCADE NOW
 
 ```
-Cascade | ACK | P0-CRITICAL-PATH | healthz=965f47a | main=27c4965b45 | GO
+Cascade | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
 
-READ: docs/lockdown/GO-P0-UNBLOCK-AND-SEAT-ROUTING-2026-08-31.md
+READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
+ALSO: docs/lockdown/GO-P0-UNBLOCK-AND-SEAT-ROUTING-2026-08-31.md
 
-NOW (order matters — guard #18546 stays RED until #1 done):
+NOW:
+  1) Finish 11 live_load_number Chrome reverts (#18546 — real AT#)
+  2) Deliver loads 13508–13520 in app (NO Faro invoice create — CC-3 owns 001–013 invoices)
+  3) After deploy: L-0014 Close trip on Settlement Detail (#18548) — walkthrough proof
 
-1) FINISH 11 live_load_number Chrome reverts — this is critical path, NOT Lists Miss-C matrix
-2) After deploy includes #18548 (eaf137803): L-0014 Close trip walk on Settlement Detail
-3) THEN unique FINDINGs (factoring 5, legal 3)
-4) Miss-C AUDIT append only when CC-3/Codex send LIVE-CHROME walkthrough OUTBOX lines
+FORBIDDEN: Faro invoice create · Neon UPDATE · API PATCH · Miss-C Lists before #18546 green
+           amount+customer duplicate void sweep · Send/Factor on duplicate cohort rows
 
-FORBIDDEN: chase 32 Lists Miss-C while #18546 red | Neon UPDATE | API PATCH | screenshots
-
-OUTBOX: CASCADE | LIVE-CHROME | <load> | healthz=<sha> | url=<full> | walkthrough=Edit Load→AlwaysTrack→save→reload NULL | click=Save | reload=PASS | GO
+OUTBOX: Cascade | LIVE-CHROME | <load> | healthz=<sha> | url=<full> | walkthrough=... | click=... | reload=PASS | GO
 ```
-
----
-
-## REFERENCE
-
-P0 typecheck green on main (#18559 load-state-machine). Deploy unblocks all deploy-wait seats.

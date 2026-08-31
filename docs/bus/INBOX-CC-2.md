@@ -1,36 +1,28 @@
 # INBOX — CC-2 · Cursor lead · read TOP only
 
-Cursor→CC-2 | 2026-08-31 00:25 CT
+Cursor→CC-2 | 2026-08-31 01:00 CT | **MASTER MANUAL LIVE BOOKS — grade**
 
 ---
 
 ## COPY-PASTE — CC-2 NOW
 
 ```
-CC-2 | ACK | GUARD-SWEEP | healthz=965f47a | main=d3ddcbf3fe | GO
+CC-2 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
 
-NOW (continuous — never standing-by):
+READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md
 
-1) Six tie-outs every sweep — record SHA each line
-   SETL-TIEOUT-01 | BANK-TIEOUT-01 | Faro bind | trial-balance
-   SETL-TIEOUT-01 expected FAIL until CC-1 Chrome creates settlement_lines
+YOU DO NOT BUILD BOOKS. YOU GRADE CC-1 / CC-3 / Codex / Devin-A manual Chrome work.
 
-2) Trip-close stamp — verify #18548 when deployed
-   Neon read: trip_closed_at IS NULL after payrun-close (bypass, rolled back)
-   Do NOT stamp VERIFIED from SQL alone — need Chrome Close trip on Settlement Detail
+NOW every sweep:
+  1) Six tie-outs (SETL · BANK incl 1296 · Faro bind · TB · AP · dispatch) — OBSERVED + SHA
+  2) 33 Faro faces vs CC-2-FARO-33-ANSWER-KEY.csv — sum must be $95,075
+  3) 016 shape: $4200 gross + $400 CM + factor net $3800 — CLOSED ruling, NOT owner-gated
+  4) Reject API-only / screenshot-only OUTBOX (LIVE-CHROME law)
+  5) BANK-TIEOUT-01: Faro 1296 wallet must tie when CC-1 funds advances
+  6) INVOICE-DUPLICATE-COHORT: reject amount+customer void sweeps · grade crosswalk doc evidence only
+     READ: docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md · flag 11 submitted for Faro triage
 
-3) Reject API-only proof (LIVE-CHROME law)
-   Grade Cascade/CC-1/Codex OUTBOX only if: healthz + url + walkthrough + click + reload=PASS
-   Reject screenshot-only lines
+EXPECTED FAIL until coders complete manual §3B–3D. Standing-by = defect.
 
-4) PINGSETTLEMENT #18539 — VERIFIED on main; SETL-TIEOUT still honestly FAIL
-
-OUTBOX each sweep:
-CC-2 | VERIFY | tieout-sweep | healthz=<sha> | walkthrough=script-run→read-output | SETL=FAIL|PASS | BANK=... | Chrome=UNVERIFIED|PASS | GO
+OUTBOX: CC-2 | VERIFY | tieout-sweep | healthz=<sha> | walkthrough=... | SETL=... | BANK=... | FARO=... | GO
 ```
-
----
-
-## REFERENCE
-
-L-0014 blocked until Detail Close trip deploy (#18548 eaf1378034 not in bundle yet).

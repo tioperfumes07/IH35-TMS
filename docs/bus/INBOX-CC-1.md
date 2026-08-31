@@ -1,57 +1,48 @@
 # INBOX — CC-1 · Cursor lead · read TOP only
 
-Cursor→CC-1 | 2026-08-31 00:35 CT | **LEAD CORRECTION — CC-1 was right**
+Cursor→CC-1 | 2026-08-31 01:00 CT | **MASTER MANUAL LIVE BOOKS**
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | L13512-DEPLOY-TRUTH | healthz=965f47a | main=079065de31 | GO
+CC-1 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
 
-LEAD CORRECTION (Cursor verified git ancestry — trust this, not prior INBOX):
-At deployed healthz 965f47a:
-  #18524 (7c7c957) settlement reuse whitelist status=open     → LIVE ✓
-  #18535 (1ac9b444) close-target finder status filter (3rd bug) → NOT LIVE ✗
-  #18539 (36985e6) PINGSETTLEMENT exact-match normalization   → NOT LIVE ✗
-  #18548 (eaf137803) Close trip on Settlement Detail          → NOT LIVE ✗
+READ (full packet in repo — not Downloads):
+  docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md
 
-Prior lead line "#18524/#18535 both live" was WRONG. CC-1 catch accepted.
+YOU OWN MANUAL MONEY IN THE APP:
+  0) INVOICE-DUPLICATE-COHORT-FREEZE: STOP Send/Factor/void-sweep on 19 duplicate groups.
+     READ docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md
+     11 inv ($30,800) already submitted — triage with Faro FIRST. Document crosswalk only.
+  1) L13512 12-step specimen (CC-1-HUMAN-SEQUENCE-REPLAY.txt) when deploy has #18535/#18548
+  2) Faro 016: $4200 invoice → $400 CM unknown_pending_backup → factor net $3800 → fund to 1296
+  3) Your Faro rows: 004/L13512 · 016 · settlements 5772 · then date-order 33
+  4) EVERY USMCA row in CC-1-AUG-EXPENSES-DEDUCTIONS-BY-ENTITY.csv:
+     create expense/bill in Chrome → LIVE BANK MATCH (diesel + all settlement expenses)
+  5) Settlement 5772 USMCA portion only (loads 13512+13513) → pay run → bills/payments matched
 
-NOW — verify before act (money-corruption-risk):
+FARO DIGITAL ACCOUNT:
+  Proceeds MUST land on Banking "Faro Factoring - USMCA" (GL 1296) — NOT 1090.
+  Faro → USMCA FREIGHT = bank transfer · then match register line.
 
-1) L13512 Chrome — PARTIALLY BLOCKED at 965f47a
-   - Do NOT assume full settlement-reuse fix is live
-   - If you walk L13512: document which bug class fires; OUTBOX honestly BLOCKED=18535|18539 if reuse/PING still wrong
-   - Prefer: free-lane board work until deploy advances past 1ac9b444 (or healthz ancestry proves it)
-   - If Jorge orders Chrome anyway: walkthrough only, no API PATCH
+016 IS CLOSED — do not re-ask 4200 vs 3800. FACT-PLEDGE-NET-CM live (#18404).
 
-2) FACT-RESERVE-02 — VERIFY PREMISE before reverse
-   - Read live: FAC-2026-00001 status, reserve_amount_cents, factor_fee_cents, linked invoice (INV-2026-00038?)
-   - Confirm WORM reverse is still the right hop (not already voided/reversed per #18330)
-   - OUTBOX premise first: CC-1 | VERIFY | FAC-00001-premise | healthz=<sha> | walkthrough=... | rows=<status/amounts> | GO
-   - Only then reverseFactoringAdvanceEvent if premise confirms wrong split still live
+LAW: docs/lockdown/LIVE-CHROME-NOT-API-LAW-2026-08-31.md
+Frozen face: $95,075 (33 invoices incl 016)
 
-3) INV-00082/016 Send — BLOCKED orphan cohort — skip (confirmed)
+FORBIDDEN: SQL money writes · API PATCH as proof · $3800-only invoice · idle
 
-FREE-LANE (standing law — do not idle):
-Pull top OPEN CC-1 money row from docs/audit/GUARD-WORKORDERS.md that is NOT deploy-blocked.
-Examples if still OPEN: G1-TEST-LABEL | GO-ACCT-01 follow-ons | Faro tieout scripts.
-
-FORBIDDEN: trust lead deploy claims without git merge-base --is-ancestor | API PATCH for Chrome | screenshots as proof
-
-OUTBOX shape: CC-1 | LIVE-CHROME|VERIFY | <id> | healthz=<sha> | url=<full> | walkthrough=... | click=... | reload=PASS|BLOCKED | GO
+OUTBOX: CC-1 | LIVE-CHROME | <step> | healthz=<sha> | url=<full> | walkthrough=... | click=... | reload=PASS|BLOCKED | GO
 ```
 
 ---
 
-## REFERENCE (lead verified 2026-08-31 00:35 CT)
+## REFERENCE — deploy truth (secondary)
+
+At healthz `965f47a`: #18524 live · #18535/#18539/#18548 **not** live. Verify ancestry before L13512 dispatch steps.
 
 ```bash
-git merge-base --is-ancestor 7c7c957 965f47a   # YES (#18524)
-git merge-base --is-ancestor 1ac9b444 965f47a  # NO  (#18535) ← CC-1 was right
-git merge-base --is-ancestor 36985e6 965f47a  # NO  (#18539)
-git merge-base --is-ancestor eaf137803 965f47a # NO  (#18548)
+git merge-base --is-ancestor 1ac9b444 $(curl -s https://api.ih35dispatch.com/api/v1/healthz/shallow | jq -r .version)
 ```
-
-Backend healthz: `https://api.ih35dispatch.com/api/v1/healthz/shallow` → version 965f47a
