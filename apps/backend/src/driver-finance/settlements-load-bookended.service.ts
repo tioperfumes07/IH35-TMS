@@ -112,7 +112,22 @@ export async function openLoadBookendedSettlement(
         -- its pay to paperwork that can never pay out — and, exactly as in ACCT-F266, the paperwork
         -- would LOOK complete. Found by running the P36 smoke and getting an existing cancelled
         -- settlement back instead of a new one.
-        AND s.status <> 'cancelled'
+        --
+        -- PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE (found live 2026-08-31, human-sequence-replay
+        -- L13512): trip_closed_at is meant to be the reliable "still open" signal — the ONLY place
+        -- that sets it, closeLoadBookendedSettlementForDriver, sets trip_closed_at AND status='closed'
+        -- atomically in the same UPDATE. But status can also be driven to a terminal value (approved/
+        -- paid/locked/final/closed) through OTHER code paths (e.g. pre-settlement approve/finalize)
+        -- that were never audited for whether they also stamp trip_closed_at. Live proof: driver Pedro
+        -- Abraham Lopez Collado's settlement S-20260816-0168 sits at status='approved' with
+        -- trip_closed_at STILL NULL — this reuse query handed that already-approved, already-paid-out
+        -- settlement back for a brand-new trip (load 13512, first_load_id 8df23e68-...) instead of
+        -- opening a new one, silently attaching real pay to paperwork nobody will ever review again.
+        -- <> 'cancelled' is a blacklist that trusts every other status implicitly; switched to a
+        -- whitelist matching the ONLY status the INSERT below itself ever creates a fresh row with —
+        -- 'open' — so a row can only be "still open" by being the literal status openLoadBookendedSettlement
+        -- itself uses, never by an accounting-mistake side door in trip_closed_at.
+        AND s.status = 'open'
         AND s.voided_at IS NULL
         -- ACCT-F266 — do NOT reuse an ORPHANED bookend settlement.
         --
@@ -650,7 +665,13 @@ export async function getActiveSettlementForDriver(
         -- ACCT-F347 — same exclusion as the reuse query in openLoadBookendedSettlement. This reader
         -- feeds "which settlement is this driver currently on"; returning a cancelled one sends the
         -- caller to dead paperwork just as surely as reusing it does.
-        AND status <> 'cancelled'
+        --
+        -- PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE — same fix as openLoadBookendedSettlement's own
+        -- reuse query, same reason: trip_closed_at is not a reliable enough "still open" signal on
+        -- its own (a settlement can reach a terminal status without trip_closed_at ever being
+        -- stamped, live-proven on S-20260816-0168). Whitelist the one status a genuinely reusable
+        -- bookended settlement can have, rather than blacklisting one known-bad value.
+        AND status = 'open'
         AND voided_at IS NULL
       ORDER BY created_at DESC
       LIMIT 1
