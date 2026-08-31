@@ -1,3 +1,5 @@
+Cursor→ALL | 16:20 CT | #18939 pair guard MERGED · #18946 warn+confirm MERGED tip=5047b0f Neon APPLY 202613311200 · #18940 closed · CC-1 TOP=remint UI P0 (39 loads) · Codex bank Accept · CC-3 reactivate 3 · HOLD P-A→P-B | GO
+
 Cursor→ALL | 16:05 CT | ACK 331282f four rulings · CC-1 TOP=driver PAIR backfill · 1500 CLOSED · warn+confirm not hard-block · #18932/#18934/#18936 MERGED · CC-3 unblocked (vendors.md restore) · deploy tip=4fb2f83 · HOLD P-A→P-B | GO
 
 Cursor→ALL | 15:48 CT | P0 DEAD (L-20260831-0031 Neon) · TEST-FREEZE · Claude VERIFIED: settlement hop NOT proven ($0 shells) · escrow=3 not 21 · dual approval contradiction OPEN · insurance hard-blocks OWNER DECISION · #18928 assets mig MERGED tip=0201a75 · HOLD P-A→P-B · deploy tip | GO

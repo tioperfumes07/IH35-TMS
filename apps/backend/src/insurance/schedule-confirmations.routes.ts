@@ -31,6 +31,7 @@ function canMutate(role: string) {
 }
 
 export async function registerScheduleConfirmationRoutes(app: FastifyInstance) {
+  // Log a confirmation — append-only, cannot be bypassed.
   app.post("/api/v1/insurance/schedule-confirmations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!requireAuth(req, reply)) return reply;
     const user = req.user!;
@@ -58,6 +59,7 @@ export async function registerScheduleConfirmationRoutes(app: FastifyInstance) {
     return reply.code(201).send(result);
   });
 
+  // List confirmations — read-only audit trail.
   app.get("/api/v1/insurance/schedule-confirmations", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     if (!requireAuth(req, reply)) return reply;
     const user = req.user!;

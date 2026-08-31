@@ -16,6 +16,7 @@
 --
 -- Idempotent, CREATE-only, FORCED RLS, self-contained grants. No money, no GL, no backfill.
 
+-- ── insurance.driver_schedule ───────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS insurance.driver_schedule (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id  uuid NOT NULL,
@@ -57,6 +58,7 @@ CREATE INDEX IF NOT EXISTS driver_schedule_opco_idx
   ON insurance.driver_schedule (operating_company_id)
   WHERE is_active;
 
+-- ── insurance.schedule_confirmations (APPEND-ONLY audit log) ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS insurance.schedule_confirmations (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id  uuid NOT NULL,
@@ -97,6 +99,8 @@ CREATE INDEX IF NOT EXISTS schedule_confirmations_opco_idx
 CREATE INDEX IF NOT EXISTS schedule_confirmations_driver_idx
   ON insurance.schedule_confirmations (driver_id, confirmed_at DESC);
 
+-- ── Entity-scoped FORCED RLS ─────────────────────────────────────────────────────────────────────────
+
 ALTER TABLE insurance.driver_schedule ENABLE ROW LEVEL SECURITY;
 ALTER TABLE insurance.driver_schedule FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS driver_schedule_entity_select ON insurance.driver_schedule;
@@ -124,9 +128,11 @@ CREATE POLICY schedule_confirmations_entity_insert ON insurance.schedule_confirm
          OR (operating_company_id::text = current_setting('app.operating_company_id', true)
              AND identity.current_user_role() = ANY (ARRAY['Owner'::identity.role_enum,'Administrator'::identity.role_enum,'Manager'::identity.role_enum,'Dispatcher'::identity.role_enum])));
 
+-- ── Grants ──────────────────────────────────────────────────────────────────────────────────────────
 GRANT SELECT, INSERT, UPDATE ON insurance.driver_schedule TO ih35_app;
 GRANT SELECT, INSERT ON insurance.schedule_confirmations TO ih35_app;
 
+-- ── Feature flag (default OFF — owner-gated) ──────────────────────────────────────────────────────
 DO $flag$
 BEGIN
   PERFORM set_config('app.bypass_rls', 'lucia', true);
