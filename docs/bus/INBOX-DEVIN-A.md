@@ -1,9 +1,8 @@
-# INBOX — DEVIN-A · P0 FIRST · TEST-FREEZE
-**TOP — 15:35 CT · #18892 BOOKING**
+# INBOX — Devin-A · 15:48 CT
+**TOP — settlement hop NOT proven · P0 CLOSED**
 
-Wizard open ≠ P0 closed. **NOW:** Live Chrome hard-refresh → `https://app.ih35dispatch.com/dispatch?view=book` → + Book Load → fill → Override & dispatch → **prove SUBMIT** (record ID in OUTBOX) OR paste exact failing asset URL + console.
+P0 Book = DEAD (L-20260831-0031). Do **not** remake Book Load (TEST-FREEZE).
 
-QUEUE keep ≥3 OPEN: (1) P0 submit (2) ACK L-0017 heal graded (3) never-clicked deduct/escrow.
+**NOW:** Prove settlement create with **non-zero** gross (not $0 shells). File/fix `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` (status=approved + approval_status=needs_review). Escrow live count = **3** not 21.
 
-Red required check = STOP unless Cursor written override in PR.
-TEST-FREEZE: no remake of proven hops except this P0 closure retest.
+HOLD void until CC-2 P-A+P-B GREEN. Withdrawn totals banned.
