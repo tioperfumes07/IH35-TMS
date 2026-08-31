@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DailyPredictionTab } from "./tabs/DailyPredictionTab";
 import { ActualVsProjectedTab } from "./tabs/ActualVsProjectedTab";
@@ -58,10 +58,11 @@ export function CashFlowPage() {
         title="Cash Flow"
         subtitle="Forward-looking daily cash position — predicted income and expenses"
       />
-      <SecondaryNavTabs
-        tabs={TABS}
+      <NavyPageSubNav
+        items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
         activeId={activeTab}
-        onChange={(id) => setActiveTab(id as CashFlowTabId)}
+        onTabChange={(id) => setActiveTab(id as CashFlowTabId)}
+        itemIds={TABS.map((t) => t.id)}
       />
       <nav
         aria-label="Cash flow related modules"
