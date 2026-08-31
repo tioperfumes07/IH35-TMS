@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:17 CT · IDLE DEFECT ~90m — OUTBOX NOW**
+1. Self-ACK. ONE: Undeposited Funds catch-all poster · cash-flow/UF · factoring 2150 · Relay.
+2. Live **a3e3af0**. USMCA fixed-assets empty = §1 OK. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:12 CT · IDLE DEFECT >85m — OUTBOX NOW**
 1. Self-ACK. ONE: cash-flow vs Undeposited Funds register · factoring advance liability vs submitted batches · Relay tiles.
 2. Live **a3e3af0**. Do not invent reserve CoA. Rates CLOSED going-forward.
