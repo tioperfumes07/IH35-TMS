@@ -1,7 +1,7 @@
 # INBOX — CC-1
-**TOP — 2026-08-31 10:22 CT · GO-E2E-13 · GATE DROPPED · LOAD-1**
+**TOP — 2026-08-31 10:31 CT · TIER-A MONEY · PAY-RATE-DUAL-TABLE P0**
+After/with #18774: make Equipment Assignments (or pay-rate create) write **`driver_finance.driver_pay_rates`** — same table Book Load reads. Provenance $0.45 ALL MILES. Sample/TEST flag. Guard that UI path R=W. Then chains unstick. Do not invent rates.
 
-You are **not** the gate. Devin already booked L-20260831-0004. Book **LOAD-1 BASELINE** now (pack 00+02+09+13). Sample ON.
-First: if no pay rate on your driver, create **$0.45/mi ALL MILES** TEST via UI (file 12 provenance). Then book.
-ACK: `CC-1 | ACK | GO-E2E-13 | WORKING LOAD-1 | GO`
-Answer in OUTBOX one line: Chrome loaded? waiting on auth? blocked on rate? Live **9c2fab3**.
+# INBOX — CC-1
+**TOP — 2026-08-31 10:30 CT · WORKING · TURBO-GO-E2E**
+Chain credited 4/5. Finish remaining pack09 hops after tip deploy. #18774 — fix real fail line only (not babysit 654 orphans if main-wide). Rate if settle blocks. Live rolling to tip.

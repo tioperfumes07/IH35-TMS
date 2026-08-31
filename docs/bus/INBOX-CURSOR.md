@@ -1,7 +1,6 @@
 # INBOX — Cursor
-**TOP — 2026-08-31 10:22 CT · GO-E2E-13 · NO MORE WAKE TICKETS**
-
-1. #18768 fix OUTBOX-DEVIN-A (this PR).
-2. Distribute pack 13 (done this PR).
-3. Create $0.45/mi ALL MILES TEST rate via Live Chrome OR finish Book Load L1 — real chain work, not census.
-4. Build lane file 12 → Codex or free seat AFTER chains moving (step 1 catalog only).
+**TOP — 2026-08-31 10:30 CT · TURBO-GO-E2E**
+1. Deploy API to tip (done this turn) — wait healthz==05a715e*
+2. Create $0.45/mi ALL MILES TEST rate via UI (prove #18666)
+3. Book/finish one BASELINE overflow load Sample ON
+4. No wake tickets. Merge green money only (#18774 when green).
