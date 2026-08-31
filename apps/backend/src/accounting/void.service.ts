@@ -210,29 +210,25 @@ async function readOriginalGlPostings(
     );
     return res.rows.map((r) => ({ ...r, amount_cents: Number(r.amount_cents) }));
   }
-  // invoice / bill: GL lines posted by the posting engine carry the source linkage on
-  // journal_entry_postings (source_transaction_type matches the posting-engine source type).
+  // invoice / bill / …: at least one posting carries source_transaction_type/id. Live VOID-10
+  // (L-20260830-0020 invoice 35ce61d1…): the A/R debit was tagged `invoice` but the income credit
+  // on the SAME journal_entry_uuid was untagged — source-only SELECT returned one side, flip
+  // failed assertBalanced with void_reversal_requires_debit_and_credit, and the UI Void button
+  // could not complete. ACCT-F10181: expand to EVERY posting on those JE headers (same opco).
+  // ACCT-F331: do NOT require posting_batch_id (sub-ledger posters use idempotency_key).
   const res = await client.query<GlPostingRow>(
     `
       SELECT account_id::text, class_id::text, entity_uuid::text,
              debit_or_credit, amount_cents::bigint AS amount_cents, description, line_sequence
       FROM accounting.journal_entry_postings
       WHERE operating_company_id = $1::uuid
-        AND source_transaction_type = $3
-        AND source_transaction_id = $2
-        -- ACCT-F331 — the old predicate also required posting_batch_id IS NOT NULL, which silently
-        -- meant "posted BY THE POSTING ENGINE" rather than "posted". The sub-ledger posters
-        -- (amortization-posting.service.ts family: prepaid_purchase, fixed_asset_depreciation,
-        -- loan_payment) write real, balanced, source-linked lines keyed by idempotency_key instead of
-        -- a posting batch — so their documents were UNREVERSIBLE: postVoidReversal read 0 lines and
-        -- returned a null reversal with NO error, leaving the balance standing while the document read
-        -- "voided". That is the ACCT-F330 defect in a second place.
-        -- Provably safe, measured across ALL entities before changing: 3,681 source-linked posting
-        -- lines exist, 3,670 carry a batch, and the ONLY 11 without one are those three sub-ledger
-        -- types — none of which was in VoidableEntityType. So this widens nothing for
-        -- invoice/bill/expense/bill_payment/customer_payment (every one of their lines has a batch)
-        -- and unblocks the sub-ledger family. Drafts are not a risk here: an unposted draft has no
-        -- source-linked posting row at all.
+        AND journal_entry_uuid IN (
+          SELECT DISTINCT journal_entry_uuid
+          FROM accounting.journal_entry_postings
+          WHERE operating_company_id = $1::uuid
+            AND source_transaction_type = $3
+            AND source_transaction_id = $2
+        )
       ORDER BY line_sequence ASC
     `,
     [operatingCompanyId, entityId, entityType]
