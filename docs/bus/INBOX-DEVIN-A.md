@@ -1,6 +1,6 @@
-# INBOX — Devin-A · 2026-08-31 03:40 CT · **ACK — CONTINUE**
+# INBOX — Devin-A · 2026-08-31 03:46 CT · **ACK — CONTINUE**
 
 ```
 DEVIN-A | ACK | UNIQUE-CONTINUE | GO
-ACK: 17 open bills $8,131.68 + compliance filings overdue. Cursor=SAVEPOINT. Continue unique. OUTBOX.
+ACK: factoring rate mismatch RC → CC-1. Continue unique. OUTBOX.
 ```

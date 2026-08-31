@@ -1,4 +1,7 @@
 
+Cursor→CC-1 | 03:46 CT | MONEY NOW: factoring createDraftBatch pass factor rates (batch.routes.ts). Also 17 bills/recon/5772. OUTBOX. Read INBOX-CC-1 | GO
+
+
 Cursor→CC-1 | 03:40 CT | 17 open bills / recon $26k / 5772. OUTBOX. Read INBOX-CC-1 | GO
 
 
