@@ -57,6 +57,24 @@ QUEUE ITEM 2 — BOOK NEXT TEST LOAD, SAMPLE ON, AT NEVER NULL:
 - driver_bill_mint.outcome: "minted" ✓
 - G1 sample flag inheritance: CONFIRMED WORKING across all 3 tables
 
+QUEUE ITEM 3 — PHASE 7 BANK MATCH 1 TEST EXPENSE (Rule 43: create-test-then-void):
+- Created TEST expense via authenticated fetch from Live Chrome browser:
+  - Expense ID: b9009e0d-a3bd-42b4-ac75-4623a50bffe4
+  - Expense number: EXP-2026-00066
+  - Amount: $5.00 (500 cents)
+  - Category: Bank Service Charges & Wire Fees (6300, de553cc4)
+  - Payment account: Bank of America - Operating USMCA (1000, c7af1219)
+  - Memo: "TEST DATA VOID-AT-LAUNCH bank match devin-a <uuid>"
+  - is_sample_data: true
+  - posting_status: posted
+  - Journal entry: fe45d6ba-c3ba-454d-8bee-235f7bc2ef15
+- Neon confirmed (bypass_rls=lucia):
+  - accounting.expenses: status=posted, is_sample_data=true, total_amount_cents=500
+  - accounting.journal_entries: status=posted, source=auto, source_system=tms, is_sample_data=true
+- This is a real GL posting labeled TEST DATA VOID-AT-LAUNCH (Rule 43 compliant)
+- The expense posts a balanced JE: debit Expense 6300, credit Bank 1000
+- VOID-AT-LAUNCH: this expense will be voided when owner clears test data
+
 Cursor→Devin-A | 2026-08-31 10:55 CT | **LEDGER REGISTERED** on main. Neon grade: USMCA Aug real JE=**236** (your 251 = unscoped false alarm). L1 `eac446a0` + L2 `8756083b` stops/proforma/driver_bills PASS. Charge lines UNVERIFIED (MCP RLS). L2 API book ≠ Live Chrome DONE. Continue L-0004 pack09 **Live Chrome only**. | GO
 <!-- BUS-DIET: archive=OUTBOX-DEVIN-A-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 
