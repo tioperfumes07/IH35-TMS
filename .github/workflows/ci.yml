@@ -69,7 +69,30 @@ jobs:
       - name: Verify PR branch freshness
         run: npm run verify:branch-fresh
 
-  build-typecheck:
+  # DOC-ONLY SHORT-CIRCUIT (owner 2026-08-31 — suspend matrix burn).
+  # Required check context stays `ci / build-typecheck` via the aggregator below.
+  # Never use workflow-level paths-ignore on this required job (stuck "Expected" forever).
+  detect-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      doc_only: ${{ steps.scope.outputs.doc_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Detect doc-only PR
+        id: scope
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci-detect-doc-only.mjs
+
+
+  build-typecheck-heavy:
+    needs: detect-scope
+    if: needs.detect-scope.outputs.doc_only != 'true'
     runs-on: ubuntu-latest
     # Was 25 → 45 — money/FA PRs with full verify:pre-commit + migration replay still
     # hit cancel at ~45m on FA-ARCHIVE (#3648) with no code failure. 75m headroom after
@@ -1386,4 +1409,30 @@ jobs:
         env:
           IH35_TEST_AUTH_BYPASS: "1"
         run: npm run smoke:accounting
+
+  # Thin aggregator — ALWAYS reports as `ci / build-typecheck` (required context).
+  # Doc-only PRs: heavy job skipped → this job exits 0 in seconds.
+  # Code PRs: heavy must be success or this fails.
+  build-typecheck:
+    name: build-typecheck
+    needs: [detect-scope, build-typecheck-heavy]
+    if: always() && needs.detect-scope.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate required check
+        run: |
+          DOC="${{ needs.detect-scope.outputs.doc_only }}"
+          HEAVY="${{ needs.build-typecheck-heavy.result }}"
+          echo "doc_only=$DOC heavy=$HEAVY"
+          if [ "$DOC" = "true" ]; then
+            echo "DOC-ONLY — heavy matrix suspended (owner 2026-08-31). Required check green."
+            exit 0
+          fi
+          if [ "$HEAVY" = "success" ]; then
+            echo "Heavy matrix green."
+            exit 0
+          fi
+          echo "Heavy matrix did not succeed: $HEAVY"
+          exit 1
 

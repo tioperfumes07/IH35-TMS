@@ -1,24 +1,27 @@
 # INBOX — Cursor · lead · read TOP only
 
-Cursor→Cursor | 2026-08-31 01:00 CT | **MASTER MANUAL LIVE BOOKS — lead**
+Cursor→Cursor | 2026-08-31 01:15 CT | **FINISH CLAUDE GO — no return to Claude agent**
 
 ---
 
 ## COPY-PASTE — CURSOR NOW
 
 ```
-Cursor | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
+Cursor | ACK | GO-TO-CURSOR-2026-08-31 | GO
 
-CANONICAL: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md
-INDEX: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/00-MASTER-INDEX-AUG-30-31.md
+CANONICAL delivery from Claude (no write access): docs/lockdown/GO-TO-CURSOR-2026-08-31.md
+Desktop: ~/Desktop/GO-TO-CURSOR-2026-08-31.md
+
+DONE THIS SESSION (do not re-apply patch):
+  ✅ Drawer hardening + verify-step 2462 → #18594 claim + #18595 merge (2cf1080412)
+  ✅ INVOICE-DUPLICATE-COHORT-FREEZE locked · Option 3 STOP
+  ✅ CC-3 answered: (a) read-only PO/AT# crosswalk · NO Void/Send/Factor
 
 NOW:
-  1) Ship drawer transition hardening (#18559 follow-up) + claim verify-step 2462 for parity guard
-  2) P0 typecheck on main — RESOLVED #18559; deploy → healthz ancestry
-  3) INVOICE-DUPLICATE-COHORT-FREEZE locked in repo — keep INBOX TOP synced
-  4) Confirm Neon has 202613301500 Faro 1296 wallet applied
-  5) FAST-MERGE bus doc PRs · deploy every 5–10 PRs · never per-merge trigger_deploy
+  1) Ship CI doc-only short-circuit (ci + locked-guards + security-audit aggregators)
+  2) Keep seats off Send/Void/Factor on 19-group cohort
+  3) Deploy cadence 5–10 PRs · never per-merge trigger_deploy
+  4) Manual live books still OPEN for seats (non-duplicate rows only)
 
-OWNER BAR: coders manually complete purchases + 1296 wiring + diesel bank match + bills.
-Idle seat = rewrite INBOX + OUTBOX ping same turn.
+Do NOT ping Claude agent tonight — finish in this seat.
 ```
