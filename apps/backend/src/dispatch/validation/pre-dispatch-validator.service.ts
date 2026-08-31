@@ -357,6 +357,62 @@ async function checkDriverHos(
   return [];
 }
 
+// INS-SCHEDULE: Owner ruling 2026-08-31 — a driver not on the insurance policy schedule raises a
+// WARNING (not a hard block). The dispatcher MUST explicitly confirm before booking. Every confirm
+// is logged. Build on policy-schedule MEMBERSHIP (insurance.driver_schedule), NOT assigned_driver_id.
+// Gated by feature flag INSURANCE_SCHEDULE_WARNING_ENABLED (default OFF, owner-gated).
+async function checkDriverInsuranceSchedule(
+  client: DbClient,
+  driverUuid: string,
+  operatingCompanyId: string
+): Promise<ValidationItem[]> {
+  const flagRes = await client.query<{ enabled: boolean }>(
+    `SELECT COALESCE(
+       (SELECT ffo.enabled FROM lib.feature_flag_overrides ffo
+        WHERE ffo.flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' AND ffo.operating_company_id = $1::uuid LIMIT 1),
+       (SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' LIMIT 1),
+       false) AS enabled`,
+    [operatingCompanyId]
+  );
+  if (flagRes.rows[0]?.enabled !== true) return [];
+
+  const res = await client.query<{
+    on_schedule: boolean; submitted_at: string | null; confirmed_by_insurer_at: string | null;
+    full_name: string | null; first_name: string | null; last_name: string | null;
+  }>(
+    `SELECT EXISTS (
+       SELECT 1 FROM insurance.driver_schedule ds
+       WHERE ds.driver_id = $1::uuid AND ds.operating_company_id = $2::uuid
+         AND ds.is_active = true AND ds.voided_at IS NULL) AS on_schedule,
+     (SELECT ds.submitted_at::text FROM insurance.driver_schedule ds
+      WHERE ds.driver_id = $1::uuid AND ds.operating_company_id = $2::uuid
+        AND ds.is_active = true AND ds.voided_at IS NULL LIMIT 1) AS submitted_at,
+     (SELECT ds.confirmed_by_insurer_at::text FROM insurance.driver_schedule ds
+      WHERE ds.driver_id = $1::uuid AND ds.operating_company_id = $2::uuid
+        AND ds.is_active = true AND ds.voided_at IS NULL LIMIT 1) AS confirmed_by_insurer_at,
+     CONCAT_WS(' ', d.first_name, d.last_name) AS full_name, d.first_name, d.last_name
+     FROM mdata.drivers d
+     WHERE d.id = $1::uuid AND (d.operating_company_id = $2::uuid OR EXISTS (
+       SELECT 1 FROM mdata.driver_company_authorizations dca
+       WHERE dca.driver_id = d.id AND dca.company_id = $2::uuid
+         AND dca.is_authorized = true AND dca.deactivated_at IS NULL)) LIMIT 1`,
+    [driverUuid, operatingCompanyId]
+  );
+  const row = res.rows[0];
+  if (!row || row.on_schedule) return [];
+
+  const driverName = row.full_name ?? [row.first_name, row.last_name].filter(Boolean).join(" ") ?? "Driver";
+  const parts = [`${driverName}: Driver is not on the insurance policy schedule.`];
+  if (row.submitted_at && !row.confirmed_by_insurer_at) parts.push(`Submitted to insurer on ${row.submitted_at} — pending confirmation.`);
+  else if (!row.submitted_at) parts.push(`Driver has not been submitted to the insurer yet — this is a setup workflow state, not a violation.`);
+  parts.push(`The dispatcher MUST explicitly confirm before booking.`);
+
+  return [{
+    rule_id: "INS-SCHEDULE-NOT-ON-POLICY", severity: "warn", message: parts.join(" "),
+    evidence: { driver_id: driverUuid, on_schedule: false, submitted_at: row.submitted_at, confirmed_by_insurer_at: row.confirmed_by_insurer_at, confirmation_required: true },
+  }];
+}
+
 async function checkUnitOos(
   client: DbClient,
   unitUuid: string,
@@ -572,6 +628,7 @@ export async function validatePreDispatch(
     checks.push({ name: "driver_medical_card", run: (c) => checkDriverMedicalCard(c, driverUuid, input.operating_company_id) });
     checks.push({ name: "driver_debt", run: (c) => checkDriverDebt(c, driverUuid, input.operating_company_id) });
     checks.push({ name: "driver_hos", run: (c) => checkDriverHos(c, driverUuid, input.operating_company_id) });
+    checks.push({ name: "driver_insurance_schedule", run: (c) => checkDriverInsuranceSchedule(c, driverUuid, input.operating_company_id) });
   }
   if (input.unit_uuid) {
     const unitUuid = input.unit_uuid;
