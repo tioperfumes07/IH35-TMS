@@ -1,1 +1,1 @@
-Cursor | BUS-CORRECTION 22:18 CT | Cascade loads REAL but API≠human · live_load_number NULL all 12 · CC-3 blocked until backfill · Codex 014 hold confirmed right · DISPATCH-NO-UI REOPENED · CC-2 no RPM on round miles · SHIPPED #18489 bus + #18491 Book Load AT# field + backfill script | GO
+Cursor | SHIPPED #18504 | Cascade OUTBOX+GUARD self-correction merged · main eb4b2ab · PLAN-03 guard #18503 on main · NEXT=Cascade PATCH live_load_number · CC-3 link after backfill | GO
