@@ -51,6 +51,7 @@ export class DriverVendorMissingError extends Error {
 }
 
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { looksLikeSampleDataName } from "../mdata/sample-data-name-detection.js";
 
 type QueryClient = {
   query: <R extends Record<string, unknown> = Record<string, unknown>>(
@@ -109,8 +110,9 @@ export async function resolveDriverVendorLink(
  * WHY THIS EXISTS. ACCT-F159 made the settlement posters fail loud when a driver has no A/P vendor,
  * which is correct — you cannot book A/P to a payee that does not exist. But nothing in the system
  * ever CREATES a driver's vendor. Verified by sweeping every `INSERT INTO mdata.vendors` in the
- * backend: the only writers are the CSV seed importer, the manual vendors route, and the QBO
- * vendors puller/reconciler.
+ * backend at the time: the writers were the CSV seed importer, the manual vendors route, and the QBO
+ * vendors puller/reconciler — this function itself is a fourth (corrected 2026-08-31, G1 fix below;
+ * the claim of only three writers had gone stale the moment this function started creating vendors).
  *
  * That is survivable for TRANSP, whose vendors arrive from QuickBooks. It is NOT survivable for
  * USMCA, which by locked decision §8.5 has NO QuickBooks — so the automatic path can never run for
@@ -171,11 +173,19 @@ export async function ensureDriverApVendor(
     throw new Error(`driver_vendor_name_missing: driver ${driverId} has no name to create an A/P vendor from`);
   }
 
+  // G1 (GO-CLOSE-188 owner reply, 2026-08-30): "the TEST label must actually set is_sample_data."
+  // vendors.routes.ts's CREATE path derives it from the name; this fourth writer (found live —
+  // this file's own docblock above claimed only three writers exist, and was wrong) did not. A
+  // TEST-named driver auto-provisioned through this path minted an untagged vendor, feeding the
+  // same real-trial-balance sample-debit leak INV-7 already tracks. Same shared word-boundary
+  // helper as the other writers, so this can never drift from their pattern independently.
+  const isSampleData = looksLikeSampleDataName(name) || null;
+
   const created = await client.query<{ id: string }>(
-    `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id, qbo_vendor_id)
-     VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL)
+    `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type, driver_id, qbo_vendor_id, is_sample_data)
+     VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL, $4)
      RETURNING id::text AS id`,
-    [operatingCompanyId, name, driverId]
+    [operatingCompanyId, name, driverId, isSampleData]
   );
   const vendorId = created.rows[0]!.id;
   // Same client, same transaction as the INSERT — the vendor and the record of who created it commit
