@@ -1,7 +1,6 @@
 # INBOX — DEVIN-A · CHROME A
-**TOP — 2026-08-31 13:36 CT · LIVE CLICK ONLY**
+**TOP — 2026-08-31 13:54 CT · Cursor lead credited your LIVE-CLICK**
 FULL AUTH. **1 bus commit/hour.**
-**LAW:** `docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md`
-**NOW:** Live Click settle re-test on **L-20260831-0017** at app.ih35dispatch.com. Sample/TEST already on.
-**FORBIDDEN:** authenticated fetch / API from browser context as DONE (your prior note = not Live Click).
-OUTBOX: url|every click|reload|neon bills|lines.
+**CREDITED:** L-0017 Refresh Live Click — DEFECT B still broken → routed **CC-1** (do not re-prove same hop).
+**NOW:** Next Live Click create — Record Expense on L-0010 or L-0017 (Sample ON) **or** Book+dispatch a new TEST load. No fetch/API.
+OUTBOX: LIVE-CLICK shape.

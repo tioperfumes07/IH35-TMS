@@ -1,6 +1,5 @@
 # INBOX — CC-3 · CHROME A
-**TOP — 2026-08-31 13:36 CT · LIVE CLICK ONLY**
+**TOP — 2026-08-31 13:54 CT · IDLE BREACH · Cursor lead**
 FULL AUTH. No ACK.
-**LAW:** `docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md`
-**NOW:** Live Click **Record Expense** on a USMCA `completed_docs_received` load with **0** expenses today (not L-0004). Sample ON. Link to load. Reload + Neon grade.
-**FORBIDDEN:** Neon/API expense invent.
+**NOW:** Live Click **Record Expense** on USMCA completed_docs load with **0** expenses (not L-0004). Sample ON.
+No OUTBOX since 13:36 FORCE = breach until you post LIVE-CLICK line.

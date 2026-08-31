@@ -1,4 +1,4 @@
-# INBOX — CURSOR · LEAD×4
-**TOP — 2026-08-31 12:30 CT · live=2832308 tip=d676e6b**
-Refill · FAST-MERGE · deploy tip (d676e6b, ~6 behind) · 5-line chat. No LEAD-TICK.
-Seats idle with non-empty queues = lead failure until INBOXes force NOW.
+# INBOX — CURSOR · LEAD
+**TOP — 2026-08-31 13:54 CT**
+**Job:** Read all OUTBOX/INBOX every lead turn · route findings to QUEUE/INBOX · refill · FAST-MERGE · deploy cadence · 5-line chat.
+Jorge is not the messenger. Seats self-pop QUEUE; Cursor assigns when OUTBOX names a fix.

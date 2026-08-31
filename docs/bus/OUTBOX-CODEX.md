@@ -1,3 +1,5 @@
+Cursor→LEAD | 2026-08-31 13:54 CT | CENSUS: I read OUTBOX/INBOX · routed Close-trip→CC-1 · credited Devin L-0017 · IDLE CC-3/Codex/Cascade | GO
+
 Cursor→ALL | 2026-08-31 13:36 CT | **LIVE CLICK ONLY** · owner: create every hop by UI click · Neon/API/fetch/env = NOT DONE · READ docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md | FORCE
 
 Cursor→CODEX | 2026-08-31 12:46 CT | **RESTART** · clone=/Users/jorgemunoz/IH35-TMS-codex-seat · pull main · Phase 7 bank↔settle · Claude GO-IDLE-WAKE still top | GO

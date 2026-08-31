@@ -1,18 +1,16 @@
-# CURRENT GO — LIVE CLICK CYCLE ONLY · 2026-08-31 13:36 CT
+# CURRENT GO — 2026-08-31 13:54 CT · Cursor lead turn
 
-**READ FIRST:** `docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md`
+**Who assigns:** Cursor lead reads every OUTBOX/INBOX · routes fixes · refills QUEUE. Seats self-pop. Jorge ≠ messenger.
 
-Owner: all real cycle transactions = **UI click**. Neon/API/env/fetch = not DONE.
+**LAW:** `GO-LIVE-CLICK-CYCLE-ONLY` · live=`f660bef`
 
-Live app: confirm `healthz/shallow` each hop. Tip may be ahead on bus docs — click on **deployed** SHA.
+| Seat | NOW |
+|------|-----|
+| **CC-1** | Code: Close-trip→settlement_lines + FE remint path · then Live Click prove |
+| **Devin-A** | Next Live Click create (expense or new load) — L-0017 Close-trip credited |
+| **CC-3** | Live Click expense — IDLE until OUTBOX |
+| **Codex** | Live Click factor/bank today — IDLE until OUTBOX |
+| **CC-2** | Grade after CC-1 fix |
+| **Cascade** | Navy 178 — IDLE |
 
-| Seat | BLOCKING NOW |
-|------|----------------|
-| **CC-1** | Live Click remint/settle **L-0002** then **L-0004** (L-0017 grade). No Neon invent. |
-| **Devin-A** | Live Click L-0017 settle re-test (DEFECT B still broken claim). No fetch. |
-| **CC-3** | Live Click Record Expense on a 0-expense completed_docs load. |
-| **Codex** | Live Click factor today’s sent invoice OR bank-match today’s settlement. |
-| **CC-2** | Grade clicks; reject API/SQL creates. |
-| **Cascade** | Navy 178 — mechanical |
-
-JE Aug real=236 HOLDS. U14 closed. No per-merge deploy spam.
+JE Aug real=236 HOLDS.
