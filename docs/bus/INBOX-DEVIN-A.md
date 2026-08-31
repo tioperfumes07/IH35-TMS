@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 06:07 CT**
+1. ACK'd factoring batch unlink + TB all-zero. BS no PP&E = §1 OK.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0209.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 06:02 CT**
 1. ACK'd P&L≠PPT + AR control variance. Parts TEST expected. QBO sync ignore.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0208.

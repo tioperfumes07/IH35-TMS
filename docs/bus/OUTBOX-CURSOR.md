@@ -1,3 +1,8 @@
+### 2026-08-31 06:07 CT · LEAD-TICK-0209 · ACK factoring batch link · TB zeros
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~140m).
+- ACK Devin: 11 submitted invoices 0 batch_id · batches missing financial totals · `/trial-balance` all-zero (pairs with dual-TB tip) · cash-flow uncategorized 6 vs 311.
+- BS no PP&E = §1 expected. CC-1: factoring invoice↔batch link OR dual TB OR P&L≠PPT. CC-3: Lists still.
+
 ### 2026-08-31 06:02 CT · LEAD-TICK-0208 · ACK P&L≠PPT · AR control variance
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~135m).
 - ACK Devin: P&L vs profit-per-truck revenue −$46k · AR control vs subledger −$30k · parts all TEST · catalog counts vs limit=50 (pagination — recheck before treating as leak).
