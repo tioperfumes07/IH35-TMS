@@ -5110,6 +5110,16 @@
     "claimed_at": "2026-09-01",
     "purpose": "verify-permission-model (owner-escalation: no lucia escape; Admin cannot assign Owner; allow_owner_bootstrap recovery)"
   },
+  "10188": {
+    "claimed_at": "2026-09-01",
+    "lane": "cursor",
+    "purpose": "list-search-builder"
+  },
+  "10190": {
+    "claimed_at": "2026-09-01",
+    "lane": "cursor",
+    "purpose": "bulk-void-via-void-service"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
