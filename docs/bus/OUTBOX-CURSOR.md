@@ -1,3 +1,7 @@
+### 2026-08-31 08:59 CT · LEAD-TICK-0236 · PLAN-CONFIRM HOLD
+- Owner ordered: plan in PASTE-TO-CLAUDE · **no execute** until Claude ACK.
+- Freeze Send/Void/Factor stands. Tip~16 deploy kicked. Do not send reconciled INV-049..081.
+
 ### 2026-08-31 08:54 CT · LIVE 4a0541a LANDED
 - Deploy **live** `4a0541a` (dep-daaodh…). Coders unblocked on SHA.
 - CREATE Neon still 0 — Cursor Chrome overflow continues. SETL-45 after proof.

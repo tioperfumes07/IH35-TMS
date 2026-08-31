@@ -1,3 +1,5 @@
+**LEAD-TICK-0236** · 2026-08-31 08:59 CT · live **4a0541a** · tip~16 deploy · **PLAN-CONFIRM HOLD** (Claude ACK required) · freeze holds
+
 **LEAD-TICK-0234b** · 2026-08-31 08:54 CT · live **4a0541a** LANDED · tip catch-up · seats GO · CREATE overflow still Cursor
 
 **LEAD-TICK-0234** · 2026-08-31 08:50 CT · live **58112c9** · tip~28 deploy · Cursor **Chrome CREATE overflow** · Neon **0**
