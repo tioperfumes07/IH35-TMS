@@ -6,6 +6,7 @@ import { BankingRuleRow, mergeSuggestionPreferHigher, suggestionFromPlaidCategor
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { findCandidates } from "../accounting/bank-recon/match.service.js";
 import { bankTransactionHiddenFilterSql, isBankAccountHideEnabled } from "./bank-account-visibility.js";
+import { supersedePlaidPendingByExactPostedCandidate } from "./bank-tx-dedup.js";
 
 const financeRoles = new Set(["Owner", "Administrator", "Manager", "Accountant"]);
 
@@ -28,6 +29,36 @@ export async function registerBankingP7Wave2Routes(app: FastifyInstance) {
     search: z.string().optional(),
     cursor: z.coerce.number().int().min(0).optional(),
     limit: z.coerce.number().int().min(1).max(100).optional().default(50),
+  });
+
+  app.post("/api/v1/banking/transactions/:id/supersede-plaid-pending", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = financeUser(req, reply);
+    if (!user) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = companyQuerySchema.safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+
+    const result = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      const superseded = await supersedePlaidPendingByExactPostedCandidate(client, {
+        pendingRowId: params.data.id,
+        operatingCompanyId: body.data.operating_company_id,
+      });
+      if (superseded.superseded) {
+        await appendCrudAudit(client, user.uuid, "banking.plaid_pending_superseded", {
+          operating_company_id: body.data.operating_company_id,
+          pending_transaction_id: superseded.pending_id,
+          posted_transaction_id: superseded.posted_id,
+        }, "warning", "BANK-F10151");
+      }
+      return superseded;
+    });
+
+    if (!result.superseded) {
+      const status = result.reason === "pending_not_found" ? 404 : 409;
+      return reply.code(status).send({ error: result.reason });
+    }
+    return { ok: true, pending_transaction_id: result.pending_id, posted_transaction_id: result.posted_id };
   });
 
   app.get("/api/v1/banking/transactions/review", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {

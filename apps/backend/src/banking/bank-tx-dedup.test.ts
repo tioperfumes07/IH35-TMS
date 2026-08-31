@@ -4,6 +4,7 @@ import {
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
   retirePlaidPendingPredecessor,
+  supersedePlaidPendingByExactPostedCandidate,
 } from "./bank-tx-dedup.js";
 
 describe("bank-tx-dedup", () => {
@@ -129,5 +130,43 @@ describe("bank-tx-dedup", () => {
 
     expect(result).toEqual({ retired: false, reason: "financially_linked" });
     expect(queries).toHaveLength(1);
+  });
+
+  it("operator-supersedes a historical pending row only when one exact posted candidate exists", async () => {
+    const queries: Array<{ sql: string; values?: unknown[] }> = [];
+    const client = {
+      async query(sql: string, values?: unknown[]) {
+        queries.push({ sql, values });
+        if (sql.includes("FOR UPDATE")) {
+          return { rows: [{ id: "pending", bank_account_id: "bank", transaction_date: "2026-08-12", amount_cents: -163900, is_credit: true, matched_journal_entry_id: null, reconciled_obligation_id: null, categorization_gl_account_id: null }] };
+        }
+        if (sql.includes("LIMIT 2")) return { rows: [{ id: "posted" }] };
+        if (sql.includes("RETURNING id")) return { rows: [{ id: "pending" }], rowCount: 1 };
+        return { rows: [], rowCount: 0 };
+      },
+    };
+    const result = await supersedePlaidPendingByExactPostedCandidate(client, {
+      pendingRowId: "pending",
+      operatingCompanyId: "company",
+    });
+    expect(result).toEqual({ superseded: true, pending_id: "pending", posted_id: "posted" });
+    expect(queries.some((q) => q.sql.includes("DELETE FROM banking.bank_transactions"))).toBe(false);
+    expect(queries.some((q) => q.sql.includes("operator_confirmed_plaid_pending_replacement"))).toBe(true);
+  });
+
+  it("operator supersede fails closed when candidate matching is ambiguous", async () => {
+    const client = {
+      async query(sql: string) {
+        if (sql.includes("FOR UPDATE")) {
+          return { rows: [{ id: "pending", bank_account_id: "bank", transaction_date: "2026-08-12", amount_cents: -163900, is_credit: true, matched_journal_entry_id: null, reconciled_obligation_id: null, categorization_gl_account_id: null }] };
+        }
+        return { rows: [{ id: "posted-1" }, { id: "posted-2" }] };
+      },
+    };
+    const result = await supersedePlaidPendingByExactPostedCandidate(client, {
+      pendingRowId: "pending",
+      operatingCompanyId: "company",
+    });
+    expect(result).toEqual({ superseded: false, reason: "multiple_exact_posted_candidates" });
   });
 });

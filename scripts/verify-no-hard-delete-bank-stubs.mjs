@@ -15,6 +15,9 @@ const LABEL = "verify-no-hard-delete-bank-stubs";
 
 const DEDUP = "apps/backend/src/banking/bank-tx-dedup.ts";
 const PLAID_SERVICE = "apps/backend/src/integrations/plaid/plaid.service.ts";
+const P7_ROUTES = "apps/backend/src/banking/p7-wave2.routes.ts";
+const BANKING_API = "apps/frontend/src/api/banking.ts";
+const BANKING_VIEW = "apps/frontend/src/pages/banking/components/BankingTransactionsDesignView.tsx";
 const MIG = "db/migrations/202609010050_f9_01_bank_tx_stub_void_not_delete.sql";
 const DELETE_RE = /DELETE\s+FROM\s+banking\.bank_transactions\b/i;
 const EXCLUDE_DIR_RE = /(\/__tests__\/|\/tests\/|\.test\.|\.spec\.|e2e-)/i;
@@ -58,6 +61,19 @@ export function assertNoHardDeleteBankStubs(opts = {}) {
     if (!/retirePlaidPendingPredecessor/.test(src)) failures.push(`${DEDUP} must retire Plaid pending predecessors`);
     if (!/pending\s*=\s*true/.test(src)) failures.push(`${DEDUP} pending retirement must target pending rows only`);
     if (!/replaced_by_plaid_posted/.test(src)) failures.push(`${DEDUP} must explain the posted replacement on the WORM row`);
+    if (!/supersedePlaidPendingByExactPostedCandidate/.test(src)) failures.push(`${DEDUP} must expose fail-closed historical pending supersede`);
+    if (!/multiple_exact_posted_candidates/.test(src)) failures.push(`${DEDUP} must reject ambiguous posted candidates`);
+    if (!/operator_confirmed_plaid_pending_replacement/.test(src)) failures.push(`${DEDUP} operator supersede must retain an explicit WORM reason`);
+  }
+
+  for (const [rel, required] of [
+    [P7_ROUTES, /supersede-plaid-pending/],
+    [BANKING_API, /supersedePlaidPendingTransaction/],
+    [BANKING_VIEW, /Supersede pending duplicate/],
+  ]) {
+    const abs = path.join(root, rel);
+    if (!fs.existsSync(abs)) failures.push(`missing ${rel}`);
+    else if (!required.test(fs.readFileSync(abs, "utf8"))) failures.push(`${rel} must wire the operator pending-supersede control`);
   }
 
   const plaidServiceAbs = path.join(root, PLAID_SERVICE);
@@ -113,7 +129,11 @@ function selftest() {
     console.error(`[${LABEL}] SELFTEST FAIL — planted pending-replacement omission not caught`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE and pending-replacement omission caught (${planted.length})`);
+  if (!planted.some((failure) => failure.includes("historical pending supersede"))) {
+    console.error(`[${LABEL}] SELFTEST FAIL — planted historical supersede omission not caught`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE, ingest, and historical supersede omissions caught (${planted.length})`);
 }
 
 function main() {
@@ -127,7 +147,7 @@ function main() {
     for (const f of failures) console.error(`  - ${f}`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] PASS — bank stub/pending replacement merges void; no hard DELETE`);
+  console.log(`[${LABEL}] PASS — bank stub/pending replacement merges void; historical operator supersede wired; no hard DELETE`);
 }
 
 main();
