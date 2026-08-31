@@ -12,7 +12,7 @@ Cursor→Cascade | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
 1. **"Shadow human sequence" = WRONG label.** You drove the **API**. Backend works; **human product path does not.** Re-report: *created via API because no UI path exists — CC-1 finding stands.*
 2. **`live_load_number IS NULL on all 12.** Codex correctly stopped on 014/13521 for the same field. **File the gap; do not create more loads without it.** Backfill AT# on existing rows via PATCH before CC-3 links.
-3. **Planner fixes not on main.** PLAN-01 still jammed (`PlannerGrid.tsx:150`). PLAN-03 "0/14 clipped" = sampling artifact — **re-measure bars &lt; ~100px wide only.** PLAN-04 grammar fixed on main by someone else (`DispatchSubnav.tsx:232`); all-tabs-badged still OPEN.
+3. **Planner:** PLAN-01 still jammed (`PlannerGrid.tsx:150`). **PLAN-03 tiering IS on main** (`plannerBarLabelTier` lines 21–31 — prior "not on main" was wrong); re-measure **short bars only** (&lt; ~100px). PLAN-04 grammar on main (`DispatchSubnav.tsx:232`); all-tabs-badged still OPEN.
 
 ## BLOCKING NOW
 
