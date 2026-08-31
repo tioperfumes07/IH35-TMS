@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 05:27 CT**
+1. ACK'd dual TB endpoints + DOT OOS no WO (TEST DOT expected; spawn gap real).
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0201.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 05:22 CT**
 1. ACK'd settlements unpaid/0-load + insurance TEST (active-before-effective = FINDING; TEST-only expected).
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0200.

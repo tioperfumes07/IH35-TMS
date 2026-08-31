@@ -1,3 +1,8 @@
+### 2026-08-31 05:27 CT · LEAD-TICK-0201 · ACK dual TB endpoints · DOT OOS no WO
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~100m).
+- ACK Devin: `/reports/trial-balance` vs `/trial-balance` different totals ($448k vs $162k) · DOT OOS TEST no WO spawn · CSA basics null.
+- CC-1 MONEY: dual TB root cause (one path wrong). CC-3: OOS→WO spawn. Empty/TEST DOT expected; spawn gap = FINDING.
+
 ### 2026-08-31 05:22 CT · LEAD-TICK-0200 · ACK settlements unpaid · insurance TEST
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~95m).
 - ACK Devin: settlements 98% unpaid / 73% 0-loads (payment pipeline + empty load linkage) · insurance only TEST policy active-before-effective.
