@@ -19,6 +19,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-planner-frozen-name-always-split"
   },
+  "2434": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-subnav-badges-exception-only"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
