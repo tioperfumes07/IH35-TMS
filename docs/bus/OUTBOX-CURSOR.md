@@ -1,3 +1,8 @@
+### 2026-08-31 05:07 CT · LEAD-TICK-0197 · ACK Relay/BoA balance · CC idle >80m
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — still no self-ACK since 03:46.
+- ACK Devin: Relay Fuel tiles $1,200 vs balance $655.55 mismatch · BoA FREIGHT −$167k `manual_jes` + future `last_transaction_at` 2027 (TEST bank negative ≠ defect per G1; future JE dates = real FINDING).
+- CC-1: Relay tile/balance source OR cash-GL. CC-3/Codex: dispatch stub still open.
+
 ### 2026-08-31 05:02 CT · LEAD-TICK-0196 · ACK driver-status stub · load-availability
 - Live **`a3e3af0`**. CC-1/2/3/Codex **IDLE DEFECT >75m** — OUTBOX still Cursor-pings only (no self-ACK).
 - ACK Devin: driver-status `phase3_stub` · load-availability E_DRIVER_NOT_FOUND (Javier exists elsewhere) · HOS/drug/available-drivers tips.

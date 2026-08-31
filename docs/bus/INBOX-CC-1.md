@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:07 CT · IDLE DEFECT >80m — OUTBOX NOW**
+1. Self-ACK. ONE: Relay Fuel balance mismatch (tiles vs /balance) · cash-GL non-cash · 17 bills.
+2. Live **a3e3af0**. Negative TEST bank ≠ defect (G1). Future JE dates = FINDING.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:02 CT · IDLE DEFECT >75m — OUTBOX NOW**
 1. Self-ACK. ONE: cash-GL non-cash · cash≡accrual · 17 bills/recon.
 2. Live **a3e3af0**. Rates CLOSED. Rule 19 no invent reserve.

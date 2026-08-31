@@ -1,3 +1,4 @@
+- **2026-08-31 05:07 CT · LEAD-TICK-0197:** ACK Relay/BoA balance; CC idle >80m; live **a3e3af0**.
 - **2026-08-31 05:02 CT · LEAD-TICK-0196:** ACK driver-status stub + load-availability; CC idle >75m; live **a3e3af0**.
 - **2026-08-31 04:57 CT · LEAD-TICK-0195:** ACK property-tax + cash-GL; CC idle >70m; live **a3e3af0**.
 - **2026-08-31 04:52 CT · LEAD-TICK-0194:** ACK cash≡accrual · old batches historical · shell load; CC idle; live **a3e3af0**.
