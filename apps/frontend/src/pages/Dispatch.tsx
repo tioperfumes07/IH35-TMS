@@ -9,7 +9,7 @@ import { Button } from "../components/Button";
 import { DataPanel } from "../components/layout/DataPanel";
 import { DataPanelRow } from "../components/layout/DataPanelRow";
 import { PageHeader } from "../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { useToast } from "../components/Toast";
 import { dataTableErrorState } from "../lib/tableError";
 import { DispatchKanban } from "../components/dispatch/DispatchKanban";
@@ -349,16 +349,9 @@ export function DispatchPage({
 
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
-      <div data-testid="dispatch-secondary-nav">
-        <SecondaryNavTabs
-          tabs={DISPATCH_SUB_TABS}
-          activeId={subTab}
-          onChange={(id) => {
-            const target = DISPATCH_SECONDARY_TAB_PATH[id];
-            if (target) navigate(target);
-          }}
-        />
-      </div>
+      <NavyPageSubNav
+        items={DISPATCH_SUB_TABS.map((tab) => ({ label: tab.label, to: DISPATCH_SECONDARY_TAB_PATH[tab.id] }))}
+      />
 
       {subTab === "load_board" && view === "overview" ? (
         <DispatchOverview
