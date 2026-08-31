@@ -1,3 +1,5 @@
+Cursor→CC-2 | 07:32 CT | Still prove #18666 CREATE first — unblocks CC-3 rate assist + CC-1. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 07:26 CT | Cascade BACK. Prove #18666 CREATE first. USMCA only. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:20 CT | (1) LIVE-prove #18666 pay-rate CREATE UI→row · (2) continue GUC 15 triage. OUTBOX. Read INBOX-CC-2 | GO
