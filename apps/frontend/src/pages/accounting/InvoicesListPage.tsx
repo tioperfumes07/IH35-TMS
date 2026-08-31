@@ -302,11 +302,16 @@ export function InvoicesListPage() {
     return invoices.reduce(
       (acc, row) => {
         // LV-AR-OPEN-INCLUDES-VOIDED: exclude void from both "Total billed" and "Open".
-        acc.total += invoiceTotalCentsForAggregate(row);
-        acc.open += invoiceOpenCentsForDisplay(row);
+        // MONEY COLUMN LAW: Total / Open / Variance. Variance = Total - Paid - Open, should be 0.
+        const total = invoiceTotalCentsForAggregate(row);
+        const open = invoiceOpenCentsForDisplay(row);
+        const paid = isVoidInvoice(row) ? 0 : Number(row.amount_paid_cents ?? 0) || 0;
+        acc.total += total;
+        acc.open += open;
+        acc.variance += total - paid - open;
         return acc;
       },
-      { total: 0, open: 0 }
+      { total: 0, open: 0, variance: 0 }
     );
   }, [invoices]);
 
@@ -354,7 +359,7 @@ export function InvoicesListPage() {
             "—"
           ),
       },
-      { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(row.total_cents) },
+      { key: "total_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (row) => money(invoiceTotalCentsForAggregate(row)) },
       {
         key: "amount_open_cents",
         label: "Open",
@@ -363,6 +368,30 @@ export function InvoicesListPage() {
         cellClass: "text-right tabular-nums",
         sortValue: (row) => invoiceOpenCentsForDisplay(row),
         render: (row) => money(invoiceOpenCentsForDisplay(row)),
+      },
+      {
+        key: "variance_cents",
+        label: "Variance",
+        sortable: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        sortValue: (row) => {
+          const total = invoiceTotalCentsForAggregate(row);
+          const open = invoiceOpenCentsForDisplay(row);
+          const paid = isVoidInvoice(row) ? 0 : Number(row.amount_paid_cents ?? 0) || 0;
+          return total - paid - open;
+        },
+        render: (row) => {
+          const total = invoiceTotalCentsForAggregate(row);
+          const open = invoiceOpenCentsForDisplay(row);
+          const paid = isVoidInvoice(row) ? 0 : Number(row.amount_paid_cents ?? 0) || 0;
+          const variance = total - paid - open;
+          return (
+            <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>
+              {money(variance)}
+            </span>
+          );
+        },
       },
       {
         key: "source_load_id",
@@ -479,6 +508,9 @@ export function InvoicesListPage() {
             Bills/Settlements (ACCT-F370, PR #6024); this generalizes it here too. */}
         <span>Total billed: {query.isError ? "—" : money(totals.total)}</span>
         <span>Open: {query.isError ? "—" : money(totals.open)}</span>
+        <span className={totals.variance !== 0 ? "font-semibold text-red-700" : ""}>
+          Variance: {query.isError ? "—" : money(totals.variance)}
+        </span>
         <span>
           Rows: {invoices.length}
           {typeof listMeta.total === "number" ? ` of ${listMeta.total}` : ""}
