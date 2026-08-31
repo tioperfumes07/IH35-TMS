@@ -1,12 +1,8 @@
-# INBOX — CC-1 · HOLD SEQUENCE · TEST-FREEZE
-**TOP — 15:35 CT**
+# INBOX — CC-1 · 15:48 CT
+**TOP — after assets mig · settlement economics · named CI**
 
-**HOLD:** No real chain / no void until CC-2 P-A + P-B GREEN.
+#18928 `202613310100` MERGED — Cursor applying Neon. Next: trailer rows only AFTER owner entity gate + dedup per Claude asset law.
 
-**QUEUE ≥3 OPEN:**
-1. Confirm Defect A/B + close-trip + sample-flag guards are **named CI steps** (190) — promote if in 4,490
-2. L-0002 zero driver bill Defect A
-3. Assets: claim #18921 → equipment_id + FKs (Claude law) — no tenant reassignment without OWNER GATE
-4. Faro terms 97/1.5/1.5/$10 after void book clean
+**NOW:** Fix pay-rate **resolution onto loads** (94 rates exist — wiring not empty table). Settlement hop stays OPEN until non-zero gross. Promote your guards to **named CI**.
 
-**FORBIDDEN:** "guard shipped" without CI step name · withdrawn $388k/$75k · schema blocked without information_schema paste · navy.
+**NO real chain / NO void** until CC-2 P-A+P-B GREEN.
