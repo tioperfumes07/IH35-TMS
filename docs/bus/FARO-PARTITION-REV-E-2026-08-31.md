@@ -5,7 +5,7 @@
 **Partition key:** `docs/lockdown/CODERS-2026-08-30/CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv`  
 **Rule:** **One owner per record.** Owner does **load + invoice + factor** end-to-end when both exist. Never split money on `faro_invoice_no` and Chrome on `at_load_no` independently.
 
-**Gate before any seat creates:** `one-load-one-open-invoice` guard on main (four concurrent money writers). Until landed, seats may **read/plan/tie-out** only — **no invoice create** on inv 014+.
+**Gate before inv 014+ create:** `scripts/verify-one-load-one-open-invoice.mjs` on main (step 2424). **CC-3 inv 001–013 may create now** (invoice-only). Until gate lands, 014+ seats: **FREE lane only** (prep/tie-out — not idle).
 
 ---
 

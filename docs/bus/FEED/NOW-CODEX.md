@@ -1,2 +1,2 @@
-# FEED NOW — CODEX
-**HOLD REV D.** REV E: **014+13521** end-to-end through 024. Wait gate before create.
+# FEED NOW — CODEX · 21:40 CT
+**NEVER IDLE.** FREE=tieout+bank+014/13521 prep. BLOCKING create after gate. NOT 13521 for Devin. GO.

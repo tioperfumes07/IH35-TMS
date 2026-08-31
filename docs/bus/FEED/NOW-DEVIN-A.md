@@ -1,2 +1,2 @@
-# FEED NOW — DEVIN-A
-**HOLD REV D.** REV E: **025+13538** end-to-end through 036/13556. Not 13521–13537 (Codex).
+# FEED NOW — DEVIN-A · 21:40 CT
+**NEVER IDLE.** FREE=**025/13538 prep** (NOT 13521). Create after gate. PORT 9227. GO.

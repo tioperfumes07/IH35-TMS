@@ -1,11 +1,15 @@
-# CURRENT GO — CC-2 · FREE LANE (REV E — seats on HOLD for 014+ create)
+# CURRENT GO — CC-2 · tie-outs + grade (never wait)
 
-Cursor→CC-2 | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | GO · skip #15546
+Cursor→CC-2 | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**REV D HOLD.** Grade 014+ only after `one-load-one-open-invoice` gate on main.
+**NEVER IDLE.** Grade is opportunistic — **FREE lane is primary.**
 
-## FREE lane NOW
+## FREE — run NOW (all six, OBSERVED each)
+`settlement-pdf-5753.mjs` · `accounting-trial-balance.mjs` · `faro-factoring-statement.mjs` · `vendors-ap-aging.mjs` · `bank-ledger-closing.mjs` · `dispatch-delivered-revenue.mjs`
 
-Run all tie-outs → OBSERVED. Manifest honesty. Planner tests.
+Then: manifest honesty (safety complete+4 HOLDs) · planner tests · repurchase guards
 
-ACK: `CC-2 | ACK | REV-E | NOW=tieout-run | GO`
+## BLOCKING
+Grade hop → prod_verified when seats land data → FACT re-run → **back to FREE**
+
+ACK: `CC-2 | ACK | REV-E | NOW=tieout-all-6 | GO`
