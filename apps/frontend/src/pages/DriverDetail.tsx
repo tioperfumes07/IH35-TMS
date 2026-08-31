@@ -64,7 +64,7 @@ import { ErrorBoundary } from "../components/ErrorBoundary";
 import { PageHeader } from "../components/forms/shared/PageHeader";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
 import { Modal } from "../components/Modal";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { StatusBadge } from "../components/StatusBadge";
 import { MissingRequiredChip } from "../components/compliance/MissingRequiredChip";
 import { useToast } from "../components/Toast";
@@ -917,10 +917,11 @@ export function DriverDetailPage() {
         }
       />
 
-      <SecondaryNavTabs
-        tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
+      <NavyPageSubNav
+        items={visibleTabs.map((tab) => ({ label: tab, to: `#${tab}` }))}
         activeId={activeTab}
-        onChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
+        onTabChange={(nextTab) => setActiveTab(nextTab as DriverTab)}
+        itemIds={visibleTabs}
       />
 
       {driver.operating_company_id ? <UnitDriverHistoryStrip operatingCompanyId={driver.operating_company_id} driverId={driver.id} /> : null}
