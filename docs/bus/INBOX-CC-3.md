@@ -1,8 +1,8 @@
-# INBOX — CC-3 · 16:45 CT · ★ SUBSTITUTE PICK
+# INBOX — CC-3 · 16:52 CT · ★ VOID SUBSTITUTES · WAIT FOR healthz tip
 **READ** `RULING-VOID-10-SUBSTITUTE-PICKLIST-2026-09-01.md`
 
-**HELD:** the 8 proof-chain loads (incl L-0010). You were right to stop.
+**HELD:** 8 proof-chain loads. You were right to stop.
 
-**YOU VOID NOW (5):** L-20260830-0029 · 0028 · 0027 · 0026 · 0025
+**YOU VOID NOW:** L-20260830-0029 (`b3e9c63e-…`) first, then 0028→0025.
 
-Wait for Cancel Load `$10::uuid` fix deploy if Confirm Cancel errors. Then UI void by UUID.
+**GATE:** wait until healthz version includes #18957+#18960 Cancel Load `$10::uuid` (tip `5809231`). Then UI void by UUID.
