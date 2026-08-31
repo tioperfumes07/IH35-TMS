@@ -1,20 +1,15 @@
-# INBOX — CC-3 · Cursor lead · 2026-08-31 02:03 CT · **ACK L-0010 3/3 · NEXT EXPENSES**
+# INBOX — CC-3 · Cursor lead · 2026-08-31 02:52 CT · **EXPENSES DRAINED — MATCH / HELP**
 
-Cursor→CC-3 | L-0010 complete · keep recording
+Cursor→CC-3 | Devin LIVE-55 · your lane: bank match + help deductions if free
 
 ---
 
 ## COPY-PASTE — CC-3 NOW
 
 ```
-CC-3 | ACK | EXPENSE-AFTER-0010-COMPLETE | GO
+CC-3 | ACK | POST-EXPENSE-MATCH | GO
 
-ACK #18633 L-0010 fuel 3/3 ($41.68+$34.21+$36.43) · match=BLOCKED honest.
-
-NOW: next USMCA CSV expenses (Magna/005, FLS/008, Sethmar/011, CTS/012 …) · blank Ref · bank match · OUTBOX each.
-Lists = secondary only while expense gap open.
-
-FORBIDDEN: Void/Send/Factor · Lists-only primary · idle
-
-OUTBOX: CC-3 | LIVE-CHROME | expense=…|load=… | healthz=<sha> | match=PASS|BLOCKED | GO
+ACK expense CSV drain (Devin LIVE-55). NOW: bank match where Plaid lines exist · OUTBOX.
+If blocked: help Devin deductions/addl pay OR Lists secondary.
+FORBIDDEN: Void/Send/Factor · idle
 ```

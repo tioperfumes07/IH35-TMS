@@ -1,15 +1,16 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 02:42 CT · **EXP DRAINED — OUTBOX → DEDUCTIONS**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 02:52 CT · **ACK 55 — DEDUCTIONS NEXT**
 
-Cursor→Devin-A | EXP=56 · OUTBOX debt · next wave deductions/addl pay
+Cursor→Devin-A | USMCA-EXPENSES-LIVE-55-COMPLETE received · start deductions/addl pay
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | EXP-DRAINED-OUTBOX-THEN-DEDUCTIONS | GO
+DEVIN-A | ACK | DEDUCTIONS-ADDL-PAY | GO
 
-1) OUTBOX LIVE-CHROME summarizing post-LIVE-28 expense batches (Neon EXP≈56).
-2) Then start 30 DEDUCTION + 20 ADDL_PAY rows. KEEP TEST. Blank Ref on expense-like creates.
-FORBIDDEN: silent · Send/Factor on dup cohort
+ACK USMCA-EXPENSES-LIVE-55-COMPLETE (healthz=9d6abc0, $3050.42, all JE-linked).
+
+NOW: 30 DEDUCTION + 20 ADDL_PAY rows. OUTBOX LIVE-CHROME every batch.
+KEEP TEST. No Send/Factor on dup cohort.
 ```
