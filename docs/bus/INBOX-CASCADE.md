@@ -1,4 +1,10 @@
 # INBOX — Cascade
+**TOP — 2026-08-31 09:28 CT · WAIT FOR CC-1 PASS · THEN 3 LOADS + AT PROOF**
+1. Read 00 + 05-CASCADE.txt + 09 map. No voids. No touch 33.
+2. After CC-1 PASS: 3 TEST loads; set TEST AT at book; prove AT on load+invoice+settlement.
+3. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — Cascade
 **TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
 1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
 2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.

@@ -1,4 +1,12 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 09:28 CT · GO-E2E · YOUR ONE CHAIN GATES EVERYONE**
+1. Read ~/Downloads/GO-E2E-2026-08-31/00-READ-FIRST.txt + 02-CC-1.txt + 09-LIFECYCLE… Phase 1–5.
+2. Baseline Aug unflagged JE count (expect **236**). Report it.
+3. PRE: CREATE/prove pay rate for TEST driver (sample) OR pick driver that has one — Phase 1.4.
+4. Book ONE TEST load (is_sample_data=true, TEST DATA memo, live_load_number set, prefer email-swapped customer). Walk Book→Dispatch→Deliver→Close→Settle. Stop at first break.
+5. Proof bar every step. Do NOT touch INV-049..081. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 09:16 CT · PLAN ZERO · P0 FARO**
 1. Live **e09eea1**. **P0:** pull/correct path for 11 `L-20260830-*` sent+submitted ($30.8k). Use repurchase tracker. Do **not** send INV-049..081.
 2. OUTBOX status of each of 11 + next action. ACK LEAD-TICK-0238.

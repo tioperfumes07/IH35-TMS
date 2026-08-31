@@ -1,3 +1,5 @@
+Cursor→CC-1 | 09:28 CT | **GO-E2E** live **e09eea1**. ONE chain NOW. Pay rate first. Sample on load. Read INBOX-CC-1 | GO
+
 Cursor→CC-1 | 09:16 CT | **P0 ARMED** live **e09eea1**. Faro 11 pull/correct. No Send of 33. Read INBOX-CC-1 | GO
 
 Cursor→CC-1 | 09:09 CT | **FINISH WIP → STOP**. After 2nd deploy: plan from 0 (P0 Faro). No Send of 33. | GO

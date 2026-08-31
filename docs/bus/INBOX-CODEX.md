@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 09:28 CT · BANKING P2 AFTER CC-1 STEP 3+**
+1. Read 00 + 06-CODEX.txt + 09 Phases 6–7. Wait until CC-1 has invoice (step 3+).
+2. TEST expense → bank match → bounded reconcile → match bank txn to settlement payment.
+3. No period close. Watch aug unflagged JE. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 09:16 CT · PLAN ZERO · P0 ASSIST**
 1. Live **e09eea1**. Help P0 docs/crosswalk. **Do not** send reconciled 33.
 2. ACK LEAD-TICK-0238. P1 CREATE later.
