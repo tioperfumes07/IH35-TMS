@@ -158,7 +158,23 @@ export function Combobox({
   const listboxRef = useRef<HTMLDivElement | null>(null);
   const listboxId = useMemo(() => `combobox-list-${Math.random().toString(36).slice(2, 10)}`, []);
 
-  const selectedOption = useMemo(() => options.find((option) => option.value === value) ?? null, [options, value]);
+  // FE-COMBOBOX-STALE-LABEL: a valid commit can still render blank. SAF-F31 (below) resets the
+  // search query on close, which re-triggers an unfiltered/capped/alphabetically-sorted parent
+  // refetch (e.g. BookLoadCustomerSection's 500-row cap over 1,223+ USMCA customers) -- a
+  // late-alphabet selection like "Watco Supply Chain Services LLC DBA Watco Logistics" can fall
+  // outside that recap and vanish from `options`, even though the committed `value` (the FK) is
+  // still correct. Verified live on the human-sequence-replay build (docs/lockdown/Coders-Faro/
+  // CC-1/CC-1-HUMAN-SEQUENCE-REPLAY.txt, load 13512): customer_id stayed the right uuid the whole
+  // time, only the visible label blanked. Cache the option captured AT the moment of commit and
+  // fall back to it only when its own value still matches the current committed `value`, so a
+  // stale cache never survives an external clear/change.
+  const [committedOption, setCommittedOption] = useState<ComboboxOption | null>(null);
+  const selectedOption = useMemo(() => {
+    const fromOptions = options.find((option) => option.value === value) ?? null;
+    if (fromOptions) return fromOptions;
+    if (committedOption && committedOption.value === value) return committedOption;
+    return null;
+  }, [options, value, committedOption]);
   const displayValue = open ? query : selectedOption?.label ?? "";
 
   // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the
@@ -310,7 +326,8 @@ export function Combobox({
     setActiveIndex(showAddNew ? 0 : filteredOptions.length > 0 ? 0 : -1);
   }, [showAddNew, filteredOptions.length, open]);
 
-  function commitSelection(nextValue: string | null) {
+  function commitSelection(nextValue: string | null, option?: ComboboxOption | null) {
+    setCommittedOption(option ?? null);
     onChange(nextValue);
     closeListbox();
   }
@@ -349,7 +366,8 @@ export function Combobox({
       }
       const optionIndex = showAddNew ? activeIndex - 1 : activeIndex;
       if (optionIndex >= 0 && optionIndex < filteredOptions.length) {
-        commitSelection(filteredOptions[optionIndex]?.value ?? null);
+        const chosen = filteredOptions[optionIndex] ?? null;
+        commitSelection(chosen?.value ?? null, chosen);
       }
       return;
     }
@@ -422,7 +440,7 @@ export function Combobox({
                     // input (the load-cancel reason couldn't be picked). mouseDown still preventDefaults to
                     // keep the input focused so the dropdown doesn't blur-close before the click lands.
                     onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => commitSelection(option.value)}
+                    onClick={() => commitSelection(option.value, option)}
                     onMouseEnter={() => setActiveIndex(listIndex)}
                     className={`w-full px-2 py-1.5 text-left text-[13px] ${
                       activeIndex === listIndex ? "bg-slate-100 text-slate-700" : "text-gray-800 hover:bg-gray-50"
