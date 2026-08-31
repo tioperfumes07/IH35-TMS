@@ -127,5 +127,6 @@
   "pass_count": 7,
   "total_count": 7,
   "progress": "7 of 7",
-  "note": "| 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | CC-3 2026-08-30 (GO-T07-FOUR Part B, external packet 00-MASTER-GO-ALL-SEATS.txt): spot-checked -- all 7 items already prod_verified:true with live_verified_sha=ed4e2f2, confirmed an ancestor of live healthz (2ffb1d4) this turn. Only DOCS-S01/S02 had a stale status:UNVERIFIED label left over from before their same-day binding; corrected to PASS to match their own evidence. complete:true is now genuine (7 of 7, all independently stamped by CC-2/GUARD)."
+  "note": "| 2026-08-10T06:38:46Z CLOSED DOCS-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | CC-3 2026-08-30 (GO-T07-FOUR Part B, external packet 00-MASTER-GO-ALL-SEATS.txt): spot-checked -- all 7 items already prod_verified:true with live_verified_sha=ed4e2f2, confirmed an ancestor of live healthz (2ffb1d4) this turn. Only DOCS-S01/S02 had a stale status:UNVERIFIED label left over from before their same-day binding; corrected to PASS to match their own evidence. complete:true is now genuine (7 of 7, all independently stamped by CC-2/GUARD).",
+  "bar_version": 1
 }

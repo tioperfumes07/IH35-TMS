@@ -1,6 +1,6 @@
 {
   "module": "compliance",
-  "title": "Compliance \u2014 acceptance checklist",
+  "title": "Compliance — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T19:50:00Z",
   "live_sha": "b2448ce",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 3 -> 9 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 6 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29: 4 items FAIL \u2014 cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0105): the 4 items the REOPEN marked FAIL (S02/S03/T02/T06) were ALL false negatives -- the REOPEN's cited dead API paths were missing their real module-prefix segment (/compliance/, /telematics/) or used the wrong plural form. Every real, correctly-mounted endpoint returns 200 with live data; confirmed via both direct authenticated fetch AND the live UI. No actual defect existed. All 9 compliance items now PASS with bound evidence; prod_verified deliberately left untouched (GUARD's stamp).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 3 -> 9 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 6 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29: 4 items FAIL — cited HTTP 404 on live API (not a cache miss). complete:false. Prose-193 mass-reopen is OWNER-GATED. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0105): the 4 items the REOPEN marked FAIL (S02/S03/T02/T06) were ALL false negatives -- the REOPEN's cited dead API paths were missing their real module-prefix segment (/compliance/, /telematics/) or used the wrong plural form. Every real, correctly-mounted endpoint returns 200 with live data; confirmed via both direct authenticated fetch AND the live UI. No actual defect existed. All 9 compliance items now PASS with bound evidence; prod_verified deliberately left untouched (GUARD's stamp).",
   "items": [
     {
       "id": "COMP-S01",
@@ -53,7 +53,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoints are /api/v1/compliance/property-tax/renditions/:id and /api/v1/compliance/property-tax/candidate-assets (REOPEN cited unprefixed paths) -- confirmed live at /compliance/property-tax/1e8d0328-60b6-4375-942a-3df71748577d: real '2026 Rendition \u2014 Bexar Appraisal District' detail, 1 real taxable-asset line (Unit 01, $1,000.00 cost, $1.00 rendered), Total Rendered Value $1.00. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
+      "evidence": "PASS 2026-08-29 (CC-3, corrects 2026-08-29 REOPEN FAIL) -- this was a FALSE NEGATIVE: the REOPEN evidence cited a wrong/unprefixed API path and read its 404 as 'route not mounted'. The real, correctly-mounted endpoint returns real live data: real endpoints are /api/v1/compliance/property-tax/renditions/:id and /api/v1/compliance/property-tax/candidate-assets (REOPEN cited unprefixed paths) -- confirmed live at /compliance/property-tax/1e8d0328-60b6-4375-942a-3df71748577d: real '2026 Rendition — Bexar Appraisal District' detail, 1 real taxable-asset line (Unit 01, $1,000.00 cost, $1.00 rendered), Total Rendered Value $1.00. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5), including a real false-negative correction (wrong API path in the prior REOPEN evidence, not an actual defect). Binding on CC-3's evidence.",
       "pr": "#5324",
       "prod_verified": true,
       "live_verified_at": "2026-08-30T00:00:00.000Z",
@@ -69,7 +69,7 @@
       ],
       "spec": "Tab observed live on prod 2026-07-29; enumerated from the rendered tab strip",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'Overview' tab: 'Live Fleet \u2014 Location & HOS', real 12-row Samsara telemetry table (unit/driver/city/state/speed/heading/HOS remaining), 'refreshes every 5 min'. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /compliance tab strip confirmed present alongside the corroborated dashboard this same pass. Binding on CC-3's evidence.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- Compliance Dashboard 'Overview' tab: 'Live Fleet — Location & HOS', real 12-row Samsara telemetry table (unit/driver/city/state/speed/heading/HOS remaining), 'refreshes every 5 min'. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5). Live Chrome /compliance tab strip confirmed present alongside the corroborated dashboard this same pass. Binding on CC-3's evidence.",
       "pr": "#5326",
       "prod_verified": true,
       "live_verified_at": "2026-08-30T00:00:00.000Z",
@@ -159,5 +159,6 @@
   "M": 9,
   "pass_count": 9,
   "total_count": 9,
-  "progress": "9/9"
+  "progress": "9 of 9",
+  "bar_version": 1
 }

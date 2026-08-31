@@ -1,6 +1,6 @@
 # Module completion — Tasks — acceptance checklist
 
-**PROGRESS: 5 of 5** · complete: `true` · as_of: 2026-08-10T05:50:00.000Z · live_sha: `a1a7b50`
+**PROGRESS: 5 of 5** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-10T05:50:00.000Z · live_sha: `a1a7b50`
 
 | Status | Count |
 |---|---:|

@@ -541,7 +541,7 @@
         "VERIFY-8"
       ],
       "spec": "0243-g4-deploy-smoke-fixed-unit-test-owner \u00b7 ACCT-F15 \u00b7 G4-DEPLOY",
-      "status": "PASS",
+      "status": "FAIL",
       "evidence": "render.yaml ih35-tms-backend declares IH35_SMOKE_UNIT_ID + IH35_SMOKE_OPERATING_COMPANY_ID (sync:false) merged #3528; identity.users filters archived test seeds via EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL; closure guard verify-acct-r04-deploy-smoke-closure (step 1704) PASS. UNVERIFIED: Render dashboard UUID values remain operator-set. | PROD-VERIFIED 2026-08-09 Neon lucia (bypass) on br-fancy-credit-akjnd07a: bills=16293 bill_lines=155291 bill_payments=6551 ar_payments=12129 expenses=27086 expense_lines=33994 vendor_credits=7 jes=1854 invoices=12009 (USMCA invoices=29); bills unit_id=301 wo=3 claim=0; bank matched_je=174/11142; accounts_live=1277; healthz=49ff971 (#5367 deploy). Owner-ordered CERTIFIED Neon pass. | Live 2026-08-29 code: render.yaml declares IH35_SMOKE_UNIT_ID / IH35_SMOKE_OPERATING_COMPANY_ID (sync:false); EXCLUDE_ARCHIVED_IDENTITY_USERS_SQL wired into identity/users.routes.ts (2 call sites) + its own dedicated test file -- both confirmed present on current HEAD. GO-1405 Recipe B, CC-1, prod_verified left false for CC-2.",
       "pr": "#3528",
       "live_proof": "verify-step 1704 PASS on origin/main ancestry; verify-g4-deploy-smoke-env-in-render step 1492 PASS",
@@ -724,7 +724,11 @@
       "class": "TIEOUT",
       "bar_version": 2,
       "title": "Trial balance ties out (debits=credits AND read-only QBO comparative)",
-      "layers": ["TIEOUT", "DOD-E", "VERIFY-6"],
+      "layers": [
+        "TIEOUT",
+        "DOD-E",
+        "VERIFY-6"
+      ],
       "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
       "status": "OPEN",
       "evidence": "OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged.",
@@ -742,7 +746,9 @@
         {
           "kind": "guard",
           "script": "scripts/tieout/accounting-trial-balance.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     }
@@ -784,5 +790,6 @@
       }
     ]
   },
-  "note": "REOPEN 2026-08-29 OWNER: 27 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds."
+  "note": "REOPEN 2026-08-29 OWNER: 27 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "bar_version": 2
 }

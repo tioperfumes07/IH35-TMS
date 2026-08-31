@@ -1,6 +1,6 @@
 # Module completion — Drivers — acceptance checklist
 
-**PROGRESS: 20 of 20** · complete: `true` · as_of: 2026-08-30T04:56:54Z · live_sha: `48e08e5`
+**PROGRESS: 20 of 20** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-30T04:56:54Z · live_sha: `48e08e5`
 
 | Status | Count |
 |---|---:|

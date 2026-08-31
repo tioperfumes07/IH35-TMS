@@ -1,6 +1,6 @@
 # Module completion — Users & Admin
 
-**PROGRESS: 6 of 6** · complete: `true` · as_of: 2026-08-29T21:05:00Z · live_sha: `b2448ce`
+**PROGRESS: 6 of 6** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T21:05:00Z · live_sha: `b2448ce`
 
 | Status | Count |
 |---|---:|

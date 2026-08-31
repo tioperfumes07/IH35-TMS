@@ -96,5 +96,6 @@
   "pass_count": 5,
   "total_count": 5,
   "progress": "5 of 5",
-  "note": "| 2026-08-10T06:38:46Z CLOSED 425-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-29T20:15:00Z CC-3: live re-verify of 425-S01/425-ECON-01/425-LINK-01 (GO-0105/0106 form_425 slot). All 3 confirmed PASS with bound live evidence (browser + direct API build). prod_verified left untouched per law (GUARD/GO-0105R1 stamps it, not CC-3). No U14 restamp, no migrations, no verify-steps added."
+  "note": "| 2026-08-10T06:38:46Z CLOSED 425-VERIFY-01 after searching Cascade OUTBOX + Neon density (owner order). REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-29T20:15:00Z CC-3: live re-verify of 425-S01/425-ECON-01/425-LINK-01 (GO-0105/0106 form_425 slot). All 3 confirmed PASS with bound live evidence (browser + direct API build). prod_verified left untouched per law (GUARD/GO-0105R1 stamps it, not CC-3). No U14 restamp, no migrations, no verify-steps added.",
+  "bar_version": 1
 }

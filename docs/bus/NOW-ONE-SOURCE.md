@@ -1,11 +1,4 @@
-**THIS SHIFT = SHADOW JORGE’S UPLOADED DATA IN THE APP.**
-
-Canonical: `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` · `docs/bus/CURRENT-GO.md`  
-Packet: `docs/lockdown/Coders-Faro/` · start `CC-1-HUMAN-SEQUENCE-REPLAY.txt` L13512.
-
-U14 certify **CONCLUDED** — do not recertify.  
-Idle / “waiting on instructions” / “waiting on CC-1” = **defect**.
-
-Urgent-6 tie-outs grade **alongside** live Chrome — they do not replace uploads.
-
-**ARCHIVE BELOW — not current work.**
+**THIS SHIFT = SHADOW DATA + 2nd MONEY SEAT.**  
+`docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` REV C · CC-3 = Faro 32 factoring · CC-1 = 016+L13512+settlements.  
+Bar honesty: `docs/lockdown/BAR-HONESTY-AND-EXTEND-AFTER-URGENT6-2026-08-30.md` — **no new TIEOUTs tonight**.  
+Idle = defect.

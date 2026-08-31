@@ -1,6 +1,6 @@
 {
   "module": "fleet",
-  "title": "Fleet — acceptance checklist",
+  "title": "Fleet \u2014 acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T19:20:00Z",
   "live_sha": "b2448ce",
@@ -31,17 +31,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/units?include=trailers",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-fleet-table-complete-unified-roster.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -55,7 +61,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/:id is a legacy redirect (FleetUnitLegacyRedirect) to the canonical /fleet/units/:id (VehicleProfilePage) -- confirmed real via unit 395352db-7b51-4f07-8dc7-f1e2f1a321bc (T120, 2009 Freightliner Cascadia, VIN 1FUJGLBG69LAG2288, live Samsara GPS 27.6561,-99.6365, Plates honest-empty). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/395352db-7b51-4f07-8dc7-f1e2f1a321bc redirects to /fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc, renders \"Unit T120 · 2009 FREIGHTLINER CASCADIA\", VIN 1FUJGLBG69LAG2288, live location 27.6561,-99.6365 (fresh timestamp), 0 plates on file (honest empty) -- exact match to the cited evidence. Binding on this independent re-confirmation.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/:id is a legacy redirect (FleetUnitLegacyRedirect) to the canonical /fleet/units/:id (VehicleProfilePage) -- confirmed real via unit 395352db-7b51-4f07-8dc7-f1e2f1a321bc (T120, 2009 Freightliner Cascadia, VIN 1FUJGLBG69LAG2288, live Samsara GPS 27.6561,-99.6365, Plates honest-empty). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/395352db-7b51-4f07-8dc7-f1e2f1a321bc redirects to /fleet/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc, renders \"Unit T120 \u00b7 2009 FREIGHTLINER CASCADIA\", VIN 1FUJGLBG69LAG2288, live location 27.6561,-99.6365 (fresh timestamp), 0 plates on file (honest empty) -- exact match to the cited evidence. Binding on this independent re-confirmation.",
       "pr": "#5290",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:15:00.000Z",
@@ -65,17 +71,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/395352db-7b51-4f07-8dc7-f1e2f1a321bc",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/units/395352db-7b51-4f07-8dc7-f1e2f1a321bc",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-canonical-load-nav.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -89,7 +101,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS — positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/map redirects to /dispatch/map, renders \"Active Load Map\", \"Map provider not configured\", \"3 active loads with GPS — positions are not shown here until map rendering is enabled (no fake map pins).\" -- exact match. Binding on this independent re-confirmation.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/map redirects to the canonical /dispatch/map (PreserveSearchNavigate) -- same real content verified as DISP-S23 this session ('Map provider not configured... 3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins)', correct honesty, not a bug). healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): Codex handed bindable evidence via OUTBOX (LIVE_SHA=ed4e2f2). Independently re-verified live myself: live Chrome (USMCA context) navigating to /fleet/map redirects to /dispatch/map, renders \"Active Load Map\", \"Map provider not configured\", \"3 active loads with GPS \u2014 positions are not shown here until map rendering is enabled (no fake map pins).\" -- exact match. Binding on this independent re-confirmation.",
       "pr": "#5291",
       "prod_verified": true,
       "live_verified_at": "2026-08-29T23:15:00.000Z",
@@ -99,17 +111,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/map",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/integrations/samsara/positions/active-loads?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-cap-1-live-gps.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -133,22 +151,30 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/trailers/bfcd8574-86c3-433e-aba9-20d447990341",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/equipment/bfcd8574-86c3-433e-aba9-20d447990341?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-fleet-qbo-chrome-leaves.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-aggregate-shape-route.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -172,17 +198,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/transfers-in-progress",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/equipment-transfers?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-equipment-transfer-dual-confirm.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -206,17 +238,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-fleet-unit-profile-edit-detail.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -230,7 +268,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 — Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
+      "evidence": "PASS 2026-08-29 (CC-3) -- /fleet/units/:id/detail (UnitDetail, distinct component from VehicleProfilePage at S02): real 'T120 \u2014 Permits, toll tags, and finance linkage' page, honest-empty Maintenance inspections / In-Transit Issues / Default Drivers sections for this specific unit. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA 0dd70bf): CC-3 handed bindable evidence via OUTBOX (Recipe B, Hard Rule 5, GO-T07-FOUR). Independently spot-checked live this same pass: Chrome (USMCA) /driver-hub Inbox shows the real pending TEST DriverTESTMTDP79YF $1,200.00 cash advance request, and clicking it renders the exact cascade preview panel cited (Linked to / Posts as / Pay from / Also, Deny/Approve & post actions) -- word-for-word match to CC-3's evidence, confirming DHUB-S05/DHUB-LINK-01 directly and corroborating the surrounding surfaces (DHUB-S02/S03, CASH-T01/T02, FLEET-S07) as genuine, not fabricated. Binding on CC-3's evidence + this independent live confirmation.",
       "pr": "#5301",
       "live_verified_at": "2026-08-30T01:20:00.000Z",
       "live_verified_sha": "0dd70bf",
@@ -241,17 +279,23 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/fleet/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9/detail",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/mdata/units/1a3c98da-1fb1-4302-8ca8-87e276a1aaa9?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-fleet-unit-profile-edit-detail.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     }
@@ -259,5 +303,6 @@
   "M": 7,
   "pass_count": 7,
   "total_count": 7,
-  "progress": "7 of 7"
+  "progress": "7 of 7",
+  "bar_version": 1
 }

@@ -354,10 +354,15 @@ export function renderRankedFailRegistry(data) {
 }
 
 export function renderMarkdown(data, score) {
+  const barVer = data.bar_version == null ? 1 : data.bar_version;
+  const barShown =
+    data.complete === true
+      ? `complete (bar-${barVer})`
+      : `in-progress (bar-${barVer})`;
   const lines = [
     `# Module completion — ${data.title || data.module}`,
     "",
-    `**PROGRESS: ${score.progress}** · complete: \`${data.complete}\` · as_of: ${data.as_of || "—"} · live_sha: \`${data.live_sha || "—"}\``,
+    `**PROGRESS: ${score.progress}** · complete: \`${data.complete}\` · **${barShown}** · as_of: ${data.as_of || "—"} · live_sha: \`${data.live_sha || "—"}\``,
     "",
     `| Status | Count |`,
     `|---|---:|`,

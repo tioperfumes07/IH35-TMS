@@ -1,6 +1,6 @@
 {
   "module": "tasks",
-  "title": "Tasks — acceptance checklist",
+  "title": "Tasks \u2014 acceptance checklist",
   "complete": true,
   "as_of": "2026-08-10T05:50:00.000Z",
   "live_sha": "a1a7b50",
@@ -95,5 +95,6 @@
   "M": 5,
   "pass_count": 5,
   "total_count": 5,
-  "progress": "5 of 5"
+  "progress": "5 of 5",
+  "bar_version": 1
 }

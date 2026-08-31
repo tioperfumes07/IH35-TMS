@@ -1,6 +1,6 @@
 # Module completion — Maintenance — acceptance checklist
 
-**PROGRESS: 39 of 39** · complete: `true` · as_of: 2026-08-29T18:15:00Z · live_sha: `14daeed`
+**PROGRESS: 39 of 39** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T18:15:00Z · live_sha: `14daeed`
 
 | Status | Count |
 |---|---:|

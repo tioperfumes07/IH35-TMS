@@ -18,7 +18,7 @@
         "DOD-A",
         "DOD-B"
       ],
-      "spec": "ProgramBoardPage \u00b7 program-system-help breadth pass",
+      "spec": "ProgramBoardPage · program-system-help breadth pass",
       "status": "PASS",
       "evidence": "Route manifest mounts /program -> AuditScoreboardPage -> ScenarioTrackerHome; ProgramModuleNav links /program; verify-program-audit-scoreboard-api-url.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 GET /api/v1/program/audit-scoreboard returns 401 without session (auth-gated, expected); audit-scoreboard.routes stamps prodReadAt via Neon SELECT now() (verify-program-scoreboard-13gate-prodread PASS); node scripts/verify-program-audit-scoreboard-api-url.mjs exit 0; healthz version=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/legacy-scoreboard renders \"deployed @ ed4e2f2\" (current live SHA, exact match), \"Last synced: 08/29/2026 05:00 PM CT\". Binding on this independent re-confirmation.",
       "pr": "#5373",
@@ -35,7 +35,7 @@
       ],
       "spec": "npm run reconcile:blocks shared JSON",
       "status": "PASS",
-      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 committed docs/trackers/block-reconciliation-data.json date=2026-08-08 generated_at_iso=2026-08-08T02:25:00.607Z \u00b7 universe.total_blocks_after_dedup=1203 \u00b7 counts DONE=593 PENDING=15 NEEDS-VERIFY=59; GET /api/v1/program/board 401 auth-gated; verify-program-scoreboard-13gate-prodread.mjs exit 0; healthz=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/tracker (Build Progress) renders \"Deploy ed4e2f2\" (current live SHA, exact match), 1054 registered / 1245 tracked status rows -- a live, current spine, superseding the 08-08 committed-snapshot citation. Binding on this independent re-confirmation.",
+      "evidence": "Route /program/legacy-scoreboard -> ProgramBoardPage; getProgramBoard API; program-board.service.ts reads docs/trackers/block-reconciliation-data.json; verify-program-scoreboard-13gate-prodread.mjs PASS. Guard: scripts/verify-program-surfaces-s01-s05.mjs. | PROD-VERIFIED 2026-08-10 committed docs/trackers/block-reconciliation-data.json date=2026-08-08 generated_at_iso=2026-08-08T02:25:00.607Z · universe.total_blocks_after_dedup=1203 · counts DONE=593 PENDING=15 NEEDS-VERIFY=59; GET /api/v1/program/board 401 auth-gated; verify-program-scoreboard-13gate-prodread.mjs exit 0; healthz=50ce01b. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-surfaces-s01-s05.mjs exit 0. Independently re-verified live myself: live Chrome (USMCA context) /program/tracker (Build Progress) renders \"Deploy ed4e2f2\" (current live SHA, exact match), 1054 registered / 1245 tracked status rows -- a live, current spine, superseding the 08-08 committed-snapshot citation. Binding on this independent re-confirmation.",
       "pr": "#5373",
       "prod_verified": true,
       "live_verified_at": "2026-08-30T01:45:00.000Z",
@@ -48,7 +48,7 @@
         "DOD-A",
         "DOD-C"
       ],
-      "spec": "ModuleCompletionPage \u00b7 verify-module-completion",
+      "spec": "ModuleCompletionPage · verify-module-completion",
       "status": "PASS",
       "evidence": "Route /program/modules -> ModuleCompletionPage fetches GET /api/v1/program/module-completion (types-only import from generated). Guard: scripts/verify-program-surfaces-s01-s05.mjs. LIVE 2026-08-28 browser USMCA: FE version.json f16f7f5 fetches API; API healthz 4e5db76 returns 404 Route not found; page showed module-completion 404 + false 'not yet defined' for all rows before boardReady gate. Table must not paint empty as undefined when fetch fails. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): the 08-28 404/false-empty defect is CONFIRMED FIXED, not still active -- node scripts/verify-program-surfaces-s01-s05.mjs exit 0, and live Chrome (USMCA context) /program/modules now renders correctly: header shows served_sha=ed4e2f2 (current live, exact match, no 404), \"166 of 198 acceptance items passing across 14 modules... 39 of 198 live-proven (prod_verified)\" -- real data, no false 'not yet defined' painting. Binding on this independent re-confirmation that the fix landed.",
       "pr": "#5373 #17257",
@@ -92,7 +92,7 @@
         "DOD-B",
         "VERIFY-1"
       ],
-      "spec": "INBOX-CODEX task 14 \u00b7 program API client error banner",
+      "spec": "INBOX-CODEX task 14 · program API client error banner",
       "status": "PASS",
       "evidence": "PASS 2026-08-29 (CC-3) -- static guard scripts/verify-program-api-error-banner.mjs (asserts ProgramBoardPage + ProgramTrackerPage replace silent/red-only errors with ListErrorBanner + refetch on API failure) run locally this session: exit 0 PASS. healthz=b2448ce. | GUARD PACKET (CC-2, 2026-08-29, SHA ed4e2f2): node scripts/verify-program-api-error-banner.mjs re-run clean this pass. Binding on CC-3's evidence + this re-confirmation.",
       "pr": null,
@@ -124,6 +124,7 @@
   ],
   "pass_count": 7,
   "total_count": 7,
-  "progress": "7/7",
-  "note": "2026-08-10 Module matrix API failure is labeled unavailable, never SAMPLE; required cells remain committed-map facts and Audited/Done stay unprojected until the request-time feed responds. Mutation guard verify-program-audit-scoreboard-api-url protects the distinction. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0106): all 3 REOPEN items re-verified live. No product defects found in this module."
+  "progress": "7 of 7",
+  "note": "2026-08-10 Module matrix API failure is labeled unavailable, never SAMPLE; required cells remain committed-map facts and Audited/Done stay unprojected until the request-time feed responds. Mutation guard verify-program-audit-scoreboard-api-url protects the distinction. REOPEN 2026-08-29 OWNER: 3 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29 (GO-0106): all 3 REOPEN items re-verified live. No product defects found in this module.",
+  "bar_version": 1
 }

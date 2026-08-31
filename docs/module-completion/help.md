@@ -1,6 +1,6 @@
 # Module completion — Help Center
 
-**PROGRESS: 5 of 5** · complete: `true` · as_of: 2026-08-29T16:40:00Z · live_sha: `—`
+**PROGRESS: 5 of 5** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T16:40:00Z · live_sha: `—`
 
 | Status | Count |
 |---|---:|

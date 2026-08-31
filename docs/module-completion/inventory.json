@@ -127,5 +127,8 @@
   "pass_count": 7,
   "total_count": 7,
   "progress": "7 of 7",
-  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T04:50:00Z CC-2/GUARD: all 4 REOPENed items independently re-verified and bound (CC-3 supplied Recipe B live evidence; CC-2 spot-checked via fresh Neon read + direct test-file read). complete:true."
+  "note": "REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T04:50:00Z CC-2/GUARD: all 4 REOPENed items independently re-verified and bound (CC-3 supplied Recipe B live evidence; CC-2 spot-checked via fresh Neon read + direct test-file read). complete:true.",
+  "bar_version": 1,
+  "bar_2_queued": true,
+  "bar_2_after": "Urgent-6 close"
 }

@@ -349,5 +349,8 @@
         "evidence": "264 driver(s) on file"
       }
     ]
-  }
+  },
+  "bar_version": 1,
+  "bar_2_queued": true,
+  "bar_2_after": "Urgent-6 close"
 }

@@ -1,6 +1,6 @@
 # Module completion — Dispatch — acceptance checklist
 
-**PROGRESS: 37 of 38** · complete: `false` · as_of: 2026-08-29T18:40:00Z · live_sha: `965789a`
+**PROGRESS: 37 of 38** · complete: `false` · **in-progress (bar-2)** · as_of: 2026-08-29T18:40:00Z · live_sha: `965789a`
 
 | Status | Count |
 |---|---:|

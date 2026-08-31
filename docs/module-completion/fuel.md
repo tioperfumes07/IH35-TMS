@@ -1,6 +1,6 @@
 # Module completion — Fuel — acceptance checklist
 
-**PROGRESS: 9 of 9** · complete: `true` · as_of: 2026-08-29T19:00:00Z · live_sha: `b2448ce`
+**PROGRESS: 9 of 9** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T19:00:00Z · live_sha: `b2448ce`
 
 | Status | Count |
 |---|---:|

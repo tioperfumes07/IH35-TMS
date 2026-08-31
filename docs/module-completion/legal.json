@@ -1,6 +1,6 @@
 {
   "module": "legal",
-  "title": "Legal \u2014 acceptance checklist",
+  "title": "Legal — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T17:30:00Z",
   "live_sha": "14daeed",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). REOPEN 2026-08-29 OWNER: 11 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 11 REOPEN items (S02-S12) re-verified live via Chrome against the real USMCA app (screenshots cited per-item), STATUS set to PASS with bound browser-artifact evidence -- prod_verified deliberately left untouched (false) for all of them; that stamp is GUARD's independent live re-verify, not CC-3's to set. complete stays false until GUARD stamps prod_verified across the board.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). REOPEN 2026-08-29 OWNER: 11 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 11 REOPEN items (S02-S12) re-verified live via Chrome against the real USMCA app (screenshots cited per-item), STATUS set to PASS with bound browser-artifact evidence -- prod_verified deliberately left untouched (false) for all of them; that stamp is GUARD's independent live re-verify, not CC-3's to set. complete stays false until GUARD stamps prod_verified across the board.",
   "items": [
     {
       "id": "LEGAL-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
+      "evidence": "PASS 2026-08-09 — LegalLandingPage opco KPIs for templates/contracts; LegalModuleTabs.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -207,7 +207,7 @@
   "M": 12,
   "pass_count": 12,
   "total_count": 12,
-  "progress": "12/12",
+  "progress": "12 of 12",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
@@ -221,5 +221,6 @@
         "evidence": "5 legal matter(s)"
       }
     ]
-  }
+  },
+  "bar_version": 1
 }

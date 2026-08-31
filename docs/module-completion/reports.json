@@ -140,5 +140,6 @@
   "pass_count": 8,
   "total_count": 8,
   "progress": "8 of 8",
-  "note": "| 2026-08-10T16:50:00Z Profitability placeholder tables explicitly name their disconnected feed instead of presenting a successful zero-row result; mutation guard covers all four views. REOPEN 2026-08-29 OWNER: 5 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T04:34:04Z CC-2/GUARD: all 8 items now genuinely bound (CC-3 closed the RPT-S* constituent gap this session; CC-2 independently spot-checked and stamped prod_verified on all 6 remaining unbound items). complete:true."
+  "note": "| 2026-08-10T16:50:00Z Profitability placeholder tables explicitly name their disconnected feed instead of presenting a successful zero-row result; mutation guard covers all four views. REOPEN 2026-08-29 OWNER: 5 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T04:34:04Z CC-2/GUARD: all 8 items now genuinely bound (CC-3 closed the RPT-S* constituent gap this session; CC-2 independently spot-checked and stamped prod_verified on all 6 remaining unbound items). complete:true.",
+  "bar_version": 1
 }

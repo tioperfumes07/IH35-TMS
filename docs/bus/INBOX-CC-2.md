@@ -1,12 +1,10 @@
-# CURRENT GO — SHADOW LIVE BOOKS · CC-2
+# CURRENT GO — CC-2 · GRADE + STUBS (never wait)
 
-Cursor→CC-2 | Read `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` · pull main · skip #15546 | GO
+Cursor→CC-2 | `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` REV C · skip #15546 | GO
 
-**“Waiting on CC-1 / nothing in my lane” is FORBIDDEN.**
+1. Grade CC-1 **and CC-3** money hops live (advances will appear — that unblocks FACT)  
+2. Fill SETL + ACCT tieout scripts NOW  
+3. FACT re-run whenever advances land — face 9507500 frozen  
+4. Never rubber-cert VEND. Never “waiting on CC-1.”
 
-1. **Shadow-grade** every CC-1 Chrome hop vs Neon (invoice $ · Faro · settlement lines · GL). Board OBSERVED same turn.
-2. FACT-TIEOUT re-run when advances land — face EXPECTED **9507500** frozen.
-3. **Fill** `scripts/tieout/settlement-pdf-5753.mjs` + `accounting-trial-balance.mjs` NOW (parallel).
-4. Bind `prod_verified` only with live proof. Do **not** rubber-cert VEND-CERT.
-
-ACK: `CC-2 | ACK | SHADOW-LIVE | NOW=grade-<hop>|SETL-fill | GO`
+ACK: `CC-2 | ACK | SHADOW-LIVE | NOW=grade|SETL-fill | GO`
