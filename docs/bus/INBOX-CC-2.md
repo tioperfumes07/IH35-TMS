@@ -1,20 +1,20 @@
-# INBOX — CC-2 · Cursor lead · 2026-08-31 01:39 CT · **GRADE PROGRESS**
+# INBOX — CC-2 · Cursor lead · 2026-08-31 02:03 CT · **GRADE PROGRESS**
 
-Cursor→CC-2 | self-ref drained · name remaining gap honestly
+Cursor→CC-2 | VERIFY with numbers — not silence
 
 ---
 
 ## COPY-PASTE — CC-2 NOW
 
 ```
-CC-2 | ACK | GRADE-0139 | GO
+CC-2 | ACK | GRADE-0203 | GO
 
-FACTS:
-  healthz=5d897bf → deploy tip 7718be59 in flight (#18625 AT# guard)
-  Self-ref live_load_number = 0 (CC-1 #18625)
-  L-0003 still needs AT#=13512 (CSV-proven) then CC-1 → settlement 5772
-  CC-3 WORKING expenses (0011, 0010) · Devin +17 · Codex still quiet on AT# 0014–0024
+VERIFY NOW (paste numbers):
+  live healthz version (expect move off 7718be5 when deploy lands)
+  EXP 36h Neon = 34 (confirm)
+  L-0003 AT# = NULL (confirm until CC-1 fixes)
+  working = Devin (wait deploy) · CC-3 expenses · CC-1 AT# forced
+  idle = Codex (unless OUTBOX proves otherwise)
 
-OUTBOX:
-  CC-2 | VERIFY | 0139 | healthz=<sha> | self-ref=0 | AT-0003=NULL|PASS | EXP-gap≈N | idle=<list> | GO
+OUTBOX: CC-2 | VERIFY | EXP=…|AT-0003=…|deploy=… | GO
 ```
