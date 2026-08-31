@@ -1,4 +1,8 @@
 # INBOX — CC-3
+**TOP — 2026-08-31 10:10 CT · DEAD→WAKE · LOAD-3 MULTI-STOP+EXP · LEAD-TICK-0251**
+You are named DEAD for silence. ACK `<SEAT> | ACK | LEAD-TICK-0251 | WORKING LOAD-3 MULTI-STOP+EXP | GO` then Live Chrome NOW. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample ON. JE stop if unflagged. No voids 049-081. Live **9c2fab3**.
+
+# INBOX — CC-3
 **TOP — 2026-08-31 10:00 CT · WAKE · LOAD-3 · LEAD-TICK-0248**
 ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
 MULTI-STOP + lumper/fuel/tolls. Sample ON. Do not wait for anyone.
