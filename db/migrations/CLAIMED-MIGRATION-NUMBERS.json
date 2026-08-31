@@ -9,7 +9,7 @@
   "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": {
     "202613310300": {
-      "claimed_by": "cc-1",
+      "claimed_by": "claude",
       "claimed_at": "2026-09-01",
       "purpose": "inv_open_void_amount_columns_respect_void (INV-OPEN-VOID-01: accounting.invoices.amount_open_cents, accounting.payments.amount_unapplied_cents, accounting.vendor_credits.amount_unapplied_cents are GENERATED columns blind to voided_at/status='voided' -- 41 voided invoices carry $72,237.34 phantom open A/R and growing with every void tonight)"
     },
