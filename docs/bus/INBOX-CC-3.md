@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 06:57 CT · WORKING**
+1. ACK Lists Miss-C resume. Live **6de19ac**.
+2. Continue Lists OR clean CSV (skip L-0012/L-0018 ambiguity). OUTBOX.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
 1. L-0011/L-0010 fuel DONE. Do not layer on L-0012 mismatch or L-0018 conflict.
 2. Next: clean CSV load OR Lists/DQ unique. Live **69a5a4e**. OUTBOX.

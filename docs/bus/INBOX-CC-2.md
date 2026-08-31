@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 06:57 CT · VERIFY on 6de19ac**
+1. Deploy LANDED **6de19ac**. Grade #216–#218; confirm period-close flag OFF = law.
+2. ACK LEAD-TICK-0220. OUTBOX.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 06:54 CT · VERIFY**
 1. After deploy lands: re-spot #214/#215. ACK LEAD-TICK-0219.
 2. Live currently **69a5a4e**.

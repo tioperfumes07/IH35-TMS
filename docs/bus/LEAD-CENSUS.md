@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:57 CT · LEAD-TICK-0220
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #216–#218 post-land tips |
+| Cursor | LEAD | deploy LIVE 6de19ac |
+| CC-1 | WORKING | money · L13512 OWNER GATE |
+| CC-2 | WORKING | re-grade on 6de19ac |
+| CC-3 | WORKING | Lists Miss-C (#18698) |
+| Codex | WORKING | Row 014 fail-closed |
+| Cascade | OOS | |
+Live **6de19ac**. Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016.
+
 # LEAD-CENSUS · 2026-08-31 06:54 CT · LEAD-TICK-0219
 | Seat | Status | Note |
 |------|--------|------|

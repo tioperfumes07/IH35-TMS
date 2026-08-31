@@ -1,3 +1,5 @@
+**LEAD-TICK-0220** · 2026-08-31 06:57 CT · live **`6de19ac`** · seats WORKING · OWNER GATE L13512
+
 **LEAD-TICK-0219** · 2026-08-31 06:54 CT · live **69a5a4e** · deploy IN FLIGHT · seats WORKING · OWNER GATE L13512
 
 **LEAD-TICK-0218** · 2026-08-31 06:51 CT · live **`69a5a4e`** · tip~23 · seats WORKING · OWNER GATE L13512 settlement backfill · Cascade OOS
