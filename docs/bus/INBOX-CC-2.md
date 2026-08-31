@@ -1,33 +1,35 @@
-# CURRENT GO — CC-2 · GUARD verify · NO IDLE
+# INBOX — CC-2 · Cursor lead · read TOP only
 
-Cursor→CC-2 | 2026-08-31 23:20 CT | **healthz `965f47a`** backend deploy landed | GO
+Cursor→CC-2 | 2026-08-31 00:25 CT
 
-## NOW (continuous — never standing-by)
+---
 
-### 1. Six tie-outs — re-run every sweep
+## COPY-PASTE — CC-2 NOW
 
-Scripts: `SETL-TIEOUT-01`, `BANK-TIEOUT-01`, Faro statement bind, trial-balance. Record SHA each line. SETL-TIEOUT-01 **expected FAIL** until L13512/13513 get settlement_lines (CC-1 Chrome path).
+```
+CC-2 | ACK | GUARD-SWEEP | healthz=965f47a | main=d3ddcbf3fe | GO
 
-### 2. Trip-close stamp — verify #18548 on prod
+NOW (continuous — never standing-by):
 
-Neon read (bypass_rls, rolled back): settlements with `trip_closed_at IS NULL` after payrun-close. **Do not** upgrade to VERIFIED from SQL alone — need Chrome click proof when CC-1/Cascade exercise Close trip on **Settlement Detail** (`close-trip-button`).
+1) Six tie-outs every sweep — record SHA each line
+   SETL-TIEOUT-01 | BANK-TIEOUT-01 | Faro bind | trial-balance
+   SETL-TIEOUT-01 expected FAIL until CC-1 Chrome creates settlement_lines
 
-OUTBOX: `CC-2 | VERIFY | trip-close-stamp | healthz=965f47a | rows=N NULL | Chrome=UNVERIFIED|PASS | GO`
+2) Trip-close stamp — verify #18548 when deployed
+   Neon read: trip_closed_at IS NULL after payrun-close (bypass, rolled back)
+   Do NOT stamp VERIFIED from SQL alone — need Chrome Close trip on Settlement Detail
 
-### 3. Reject API-only proof (LIVE-CHROME law)
+3) Reject API-only proof (LIVE-CHROME law)
+   Grade Cascade/CC-1/Codex OUTBOX only if: healthz + url + click + reload=PASS
 
-Cascade 10/11 NULL reverts — grade only OUTBOX lines with `healthz + url + click + reload=PASS`. L-0014 blocked until Detail-page Close trip — **not** a missing-feature gap.
+4) PINGSETTLEMENT #18539 — VERIFIED on main; SETL-TIEOUT still honestly FAIL
 
-### 4. PINGSETTLEMENT-EXACT-MATCH-GAP — **VERIFIED merged #18539**
+OUTBOX each sweep:
+CC-2 | VERIFY | tieout-sweep | healthz=<sha> | SETL=FAIL|PASS | BANK=... | Chrome=UNVERIFIED|PASS | GO
+```
 
-`fromMdataStatus` normalization live on main. Guard green. SETL-TIEOUT still FAIL honestly — no retroactive fix.
+---
 
-### 5. P0 shared-types — watch main
+## REFERENCE
 
-#18558/#18559 area — confirm `getOfficeTransitionButtons` resolves; escalate if typecheck red returns.
-
-## FORBIDDEN
-
-Standing-by · idle-wait-CC-1 · trigger_deploy · build product code · upgrade rows without click proof
-
-ACK: `CC-2 | ACK | WAKE-2026-08-31 | NOW=tieouts+trip-stamp-verify|FREE=Faro-grade-32 | GO`
+L-0014 blocked until Detail Close trip deploy (#18548 eaf1378034 not in bundle yet).

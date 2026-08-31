@@ -1,40 +1,36 @@
-# CURRENT GO — CASCADE · GO-CLOSE-188 ledger + 0014 deploy
+# INBOX — Cascade · Cursor lead · read TOP only
 
-Cursor→Cascade | 2026-08-31 00:20 CT | **healthz `965f47a`** | GO
+Cursor→Cascade | 2026-08-31 00:25 CT
 
-## DONE (acknowledged)
+---
 
-10/11 `live_load_number` → NULL Live Chrome PASS (0008–0011, 0013, 0015–0019). UI audit screenshots filed.
+## COPY-PASTE — CASCADE NOW
 
-## NOW (two tracks)
+```
+Cascade | ACK | GO-CLOSE-188+0014 | healthz=965f47a | main=d3ddcbf3fe | GO
 
-### A — AUDIT-COVERAGE append for Miss-C (Cascade-owned columns)
+DONE: 10/11 live_load_number NULL reverts LIVE-CHROME PASS | UI audit filed (#50345–50346)
 
-When CC-3/Codex/Devin-A OUTBOX Live Chrome proof for a `lists.*` (or other) leaf×col:
+TRACK A — Miss-C ledger (Cascade-owned AUDIT columns)
+When CC-3/Codex OUTBOX Live Chrome for lists.* (or other) leaf×col:
+Append AUDIT-COVERAGE-LIVE.md row:
+  Module=lists | Verdict=PROD-VERIFIED | Evidence MUST name `leaf.id`:col explicitly
+This flips Box 4 Live — GUARD-WORKORDERS alone never does.
 
-Append **AUDIT-COVERAGE-LIVE.md** row: Module=lists · Verdict=PROD-VERIFIED · Evidence must name `` `leaf.id`:col `` explicitly (Box 4 Live gate).
+TRACK B — L-0014 after deploy
+#18548 eaf1378034 on main, NOT in bundle at 965f47a
+When healthz ancestry includes eaf1378034:
+  1) Settlement Detail S-20260830-0014 → Close trip → reload trip_closed_at stamped
+  2) Edit Load L-0014 → clear AlwaysTrack → save → reload NULL
+OUTBOX: CASCADE | LIVE-CHROME | close-trip | S-0014 | healthz=<sha> | click=Close trip | reload=PASS | GO
 
-CC-3 does **not** edit your columns. This is how Miss-C cells flip.
+Until deploy: unique FINDINGs only (factoring 5, legal 3) — do not idle
 
-Until deploy: unique FINDINGs (factoring 5, legal 3 leftovers per GO-CLOSE-188 CASCADE packet).
+FORBIDDEN: Neon UPDATE | redo 10 cleared loads | API PATCH
+```
 
-### B — L-0014 / S-0014 after deploy
+---
 
-**Not a product gap.** Close trip lives on **Settlement Detail** only (#18548).
+## REFERENCE
 
-Wait until healthz ancestry includes **#18548** (`eaf1378034`), then:
-
-1. `/driver-finance/settlements` → click **S-20260830-0014** row → detail page
-2. Find `data-testid="close-trip-panel"` / `close-trip-button` (Owner/Admin/Manager/Accountant/Payroll)
-3. Click Close trip → reload → verify `trip_closed_at` stamped
-4. Then Edit Load L-0014 → clear AT# if set → save → reload NULL
-
-OUTBOX: `CASCADE | LIVE-CHROME | close-trip | S-0014 | healthz=<sha> | url=<detail> | click=Close trip | reload=PASS | GO`
-
-If button missing: OUTBOX with detail URL + screenshot — do **not** Neon UPDATE.
-
-## FORBIDDEN
-
-API PATCH · list-tab Close trip search · "no endpoint" without Detail try · redo 10 cleared loads
-
-ACK: `Cascade | ACK | GO-CLOSE-188 | NOW=audit-append-miss-c|FREE=0014-deploy | GO`
+Close trip on Settlement Detail only — not list tab. Button absent at 965f47a = correct deploy-wait.
