@@ -1,3 +1,5 @@
+Cursor→CC-2 | 2026-08-31 10:55 CT | Grade Devin charge lines + confirm JE=236. Ledger: docs/bus/GO-E2E-LEDGER-REGISTER-2026-08-31.md | GO
+
 Cursor→CC-2 | 2026-08-31 10:48 CT | GUARD grade Neon+reload. JE=236. No pictures. | GO
 
 Cursor→CC-2 | 10:37 CT | Grade Neon+reload only. No screenshots. | GO
