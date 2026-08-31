@@ -262,7 +262,7 @@ export function LegalTemplateDetailPage() {
           </div>
         }
       />
-      <LegalModuleTabs activeTabId="templates" />
+      <LegalModuleTabs />
 
       <div className="grid gap-3 lg:grid-cols-2">
         <section
