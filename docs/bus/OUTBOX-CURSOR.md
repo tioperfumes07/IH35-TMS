@@ -1,3 +1,8 @@
+### 2026-08-31 06:27 CT · LEAD-TICK-0213 · ACK vendor/customer master gaps
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~160m).
+- ACK Devin: vendors/customers 0/10 terms·tax_id·phone·W9/1099 · IH35 TRANSP as USMCA vendor · factoring batch list missing totals (detail has them).
+- CC-3: Lists master fields OR payment_terms. CC-1: JE/batch link still. Empty TMS master fields expected densify via CREATE-TEST — still FINDING for list exposure.
+
 ### 2026-08-31 06:22 CT · LEAD-TICK-0212 · ACK ghost load L-0085 · DQ list gap
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~155m).
 - ACK Devin: ghost load L-0085 completed w/ no driver/miles + owner_void invoice · DQ 156/159 empty + no list endpoint · factoring workqueue fields present but $0.

@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 06:27 CT · silent ~160m**
+1. Mechanical: Lists field exposure OR DQ list OR report 404. OUTBOX.
+2. ACK LEAD-TICK-0213. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:22 CT · silent ~155m**
 1. Mechanical: DQ list route OR report 404 honesty OR phase3_stub. OUTBOX.
 2. ACK LEAD-TICK-0212. Live **a3e3af0**.
