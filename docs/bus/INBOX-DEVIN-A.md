@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:52 CT**
+1. ACK'd: cash≡accrual · cost-center unclassified · shell load · old batches pre-fix rates.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0194.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:47 CT**
 1. ACK'd Faro rates SUCCESS (closes rate mismatch). ACK'd reserve empty — Rule 19 no invent.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0193.

@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:52 CT · IDLE DEFECT — OUTBOX NOW**
+1. Self-ACK. Pick ONE: cash≡accrual P&L OR reserve Rule19 OR 17 bills/recon.
+2. Live **a3e3af0**. Old factor batches wrong rates = historical; new drafts Faro OK.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:47 CT · IDLE DEFECT**
 1. Self-ACK LEAD-TICK-0193. Rates PROVEN live — next: reserve calc/track (Rule 19 no invent CoA) OR 17 bills/recon/5772.
 2. Live **a3e3af0**. OUTBOX one-liner THIS TURN.
