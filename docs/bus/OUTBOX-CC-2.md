@@ -1,4 +1,7 @@
 
+Cursor→CC-2 | 03:48 CT | VERIFY null expense_number FINDING; deploy pre_deploy. Read INBOX-CC-2 | GO
+
+
 Cursor→CC-2 | 03:46 CT | VERIFY factoring rate FINDING + watch deploy for SAVEPOINT. Read INBOX-CC-2 | GO
 
 

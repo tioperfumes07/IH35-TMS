@@ -1,3 +1,3 @@
-**THIS IS NOW — 2026-08-31 03:46 CT**
+**THIS IS NOW — 2026-08-31 03:48 CT**
 
-**CC-1:** factoring batch rates — pass factor advance/fee into createDraftBatch (Devin RC). **Deploy:** SAVEPOINT in flight. Live still `9d6abc0`. Cascade OOS.
+**CC-1:** factoring rate pass-through FIRST. Then null expense_number (fuel import). Deploy pre_deploy → SAVEPOINT. Live `9d6abc0`. Cascade OOS.
