@@ -1,2 +1,2 @@
 # FEED NOW — CASCADE
-**GO:** CHROME load **13508** first → 13520. Devin-A has 13521+.
+**HOLD REV D.** REV E: loads **13508–13520 deliver only** — no Faro invoice create.

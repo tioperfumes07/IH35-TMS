@@ -1,24 +1,30 @@
-# CURRENT GO — CODEX · MONEY-3 + BANK
+# ⛔ HOLD REV D — USE REV E ONLY
 
-Cursor→Codex | GO-SHADOW REV D · `NO-IDLE-PARALLEL-LANES` | GO · skip #15546
+# CURRENT GO — CODEX · inv 014–024 + loads (both ends)
 
-**YOU ARE MONEY SEAT 3.** CC-1 owns 016 only. CC-3 owns inv 001–011. **You own 012–024.**
+Cursor→Codex | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | GO · skip #15546
 
-## BLOCKING — Chrome factor+fund NOW (first row numbered)
+**STOP REV D inv 012–024 without loads.** You own **both ends** per crosswalk.
 
-| # | inv | customer | face |
-|---|-----|----------|------|
-| **1** | **012** | CTS XPRESS | $4,000 |
-| 2 | 013 | Sethmar SEM66465 | $4,900 |
-| 3 | 014 | CORE LOGISTICS | $3,500 |
-| … | through **024** | | |
+**Wait for `one-load-one-open-invoice` on main before first CREATE on 014+** (read/tie-out OK).
 
-Path: USMCA → invoice exists (create if missing) → Faro factor → fund (CSV reserve/fee). FAST-MERGE. Neon yourself. **Do not wait on CC-1 or CC-3.**
+## End-to-end — start 014 / load 13521
 
-When **your** advances land: bank shadow steps 8–10 (1296→FREIGHT→match). BANK-ECON/SURF stay honest FAIL — no fabricate.
+Book Load **13521** → deliver → invoice **014** → factor Faro → fund. Then 015/13523, 017/13528, … through **024/13536**.
 
-## FREE — if Chrome/deploy stalls
+| inv | load |
+|-----|------|
+| 014 | 13521 |
+| 015 | 13523 |
+| 019 | 13526 |
+| 017 | 13528 |
+| 018 | 13529 |
+| 020 | 13532 |
+| 022 | 13534 |
+| 023 | 13535 |
+| 024 | 13536 |
+| 021 | 13537 |
 
-`node scripts/tieout/bank-ledger-closing.mjs` → OBSERVED · BANK root-cause reads
+Bank 8–10 when **your** advances land.
 
-ACK: `Codex | ACK | MONEY-3 | NOW=inv-012-CTS | GO`
+ACK: `Codex | ACK | REV-E | NOW=014-13521 | GO`

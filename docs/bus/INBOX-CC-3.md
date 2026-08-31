@@ -1,23 +1,21 @@
-# CURRENT GO — CC-3 · MONEY-2 inv 001–011
+# ⛔ HOLD REV D — USE REV E ONLY
 
-Cursor→CC-3 | GO-SHADOW REV D · skip #15546 | GO
+# CURRENT GO — CC-3 · invoice-only 001–013 (no loads)
 
-**Codex is MONEY-3 (012–024). You own 001–011 only. Never wait on CC-1.**
+Cursor→CC-3 | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | GO · skip #15546
 
-## BLOCKING — Chrome factor NOW
+**STOP if your INBOX still says inv 001–011 or REV D.** Crosswalk partition REV E.
 
-| # | inv | customer | face |
-|---|-----|----------|------|
-| **1** | **001** | REHMANN | $3,600 |
-| 2 | 002 | IMPACT BULK | $3,000 |
-| 3 | 003 | NCC | $2,500 |
-| 4 | 005 | Magna | $2,700 |
-| … | through **011** | | |
+**You own INVOICE ONLY** — AT outage window, **no Book Load**, zero collision with Codex/Devin-A.
 
-Skip **004** (13512) · skip **016** (CC-1). FAST-MERGE money PRs.
+## Your invoices (skip 004 = CC-1 specimen)
 
-## FREE — instant switch if stalled
+001 · 002 · 003 · 005 · 006 · 007 · 008 · 011 · 012 · 013
 
-VEND tie-out · VEND-CERT 7–11 · repurchase guards
+Start **001 REHMANN $3,600** → factor Faro in Chrome. Create invoice if missing. **Do not book loads.**
 
-ACK: `CC-3 | ACK | MONEY-2 | NOW=inv-001 | GO`
+## FREE if stalled
+
+VEND tie-out · VEND-CERT 7–11
+
+ACK: `CC-3 | ACK | REV-E | NOW=inv-001 | GO`

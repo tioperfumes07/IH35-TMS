@@ -1,6 +1,21 @@
 # NO IDLE · TWO LANES (shift law — owner 2026-08-31)
 
+**PARTITION:** `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` — **HOLD REV D.**
+
 **WAITING ON ANOTHER SEAT, A DEPLOY, OR A MERGE = PROCESS DEFECT.**
+
+## REV E (crosswalk — one owner per row)
+
+| Seat | Scope |
+|------|-------|
+| CC-1 | 016 · 004/L13512 · settlements |
+| CC-3 | inv **001–013** invoice-only (skip 004) — **no loads** |
+| Codex | inv **014–024** + their loads — both ends |
+| Devin-A | inv **025, 027–036** + their loads — both ends |
+| Cascade | loads **13508–13520** deliver only — **no invoice create** |
+| CC-2 | tie-outs + grade |
+
+**Gate:** no 014+ invoice create until `one-load-one-open-invoice` on main.
 
 Every seat holds **BLOCKING** and **FREE** queues. The instant BLOCKING stalls, switch to FREE **without asking Jorge**. Announcing "blocked" and stopping is forbidden.
 

@@ -1,2 +1,2 @@
 # FEED NOW — DEVIN-A
-**GO:** CHROME-2 active · load **13521** first → 13538 · PORT 9227 · no CC-1 wait.
+**HOLD REV D.** REV E: **025+13538** end-to-end through 036/13556. Not 13521–13537 (Codex).

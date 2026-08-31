@@ -1,26 +1,29 @@
-# CURRENT GO — DEVIN-A · CHROME-2 (loads 13521–13538)
+# ⛔ HOLD REV D — USE REV E ONLY
 
-Cursor→Devin-A | GO-SHADOW REV D · **CHROME-2 ACTIVE** | PORT=9227 | GO · skip #15546
+# CURRENT GO — DEVIN-A · inv 025, 027–036 + loads (both ends)
 
-**VOID lines below.** Owner authorized **second Chrome seat.** You do **not** wait on Cascade or CC-1.
+Cursor→Devin-A | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | PORT=9227 | GO · skip #15546
 
-## BLOCKING — Book Load USMCA NOW
+**STOP REV D loads 13521–13538.** Those are **Codex**. You own **025+ band**.
 
-CSV: `docs/lockdown/Coders-Faro/CC-1/CC-1-AUG-LOADS-BY-FACTOR.csv`
+**Wait for `one-load-one-open-invoice` on main before first CREATE on 025+** (read/plan OK).
 
-| # | load | inv | customer W.O. |
-|---|------|-----|----------------|
-| **1** | **13521** | 014 | 31496-65096 |
-| 2 | 13523 | 015 | 154100 |
-| 3 | 13528 | 017 | 9020844 |
-| … | **13538** | 025 | 21148 |
+## End-to-end — start 025 / load 13538
 
-Book Load wizard → dispatch → deliver path per `CC-1-HUMAN-SEQUENCE-REPLAY.txt`. CREATE TEST · G1 · keep on books.
+| inv | load |
+|-----|------|
+| 025 | 13538 |
+| 029 | 13542 |
+| 027 | 13543 |
+| 028 | 13544 |
+| 030 | 13545 |
+| 031 | 13546 |
+| 032 | 13547 |
+| 033 | 13548 |
+| 034 | 13549 |
+| 035 | 13550 |
+| 036 | 13556 |
 
-Cascade owns **13508–13520** — **do not duplicate** those load numbers.
+Book Load → deliver → invoice → factor. One owner per row.
 
-## FREE — if deploy stalls
-
-Unique FINDING hunts on `/dispatch` `/customers` surfaces you touch · board same turn
-
-ACK: `Devin-A | ACK | CHROME-2 | NOW=load-13521 | GO`
+ACK: `Devin-A | ACK | REV-E | NOW=025-13538 | GO`

@@ -1,46 +1,34 @@
-# GO-SHADOW-LIVE-BOOKS-NOW — 2026-08-30 21:35 CT (Cursor lead) · REV D quad-money + dual-chrome
+# GO-SHADOW-LIVE-BOOKS-NOW — 2026-08-31 (Cursor lead) · REV E crosswalk partition
 
-**Owner:** load data NOW · **four money seats · three Chrome load seats** · nobody waits on CC-1 or deploy.
+**HOLD REV D** — do not use invoice-range / load-range splits from REV D.
 
-**LAW:** `docs/bus/NO-IDLE-PARALLEL-LANES-2026-08-31.md` — waiting = defect.
+**LAW:** `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` + `NO-IDLE-PARALLEL-LANES-2026-08-31.md`
 
----
-
-## ★ MONEY — FOUR SEATS (split Faro CSV; CC-1 owns only 016 shape + L13512 specimen)
-
-| Seat | Faro invoices (Chrome factor+fund) | Also |
-|------|-----------------------------------|------|
-| **CC-1** | **016 only** (+ $4200→$400 CM→$3800 shape) | L13512 12-step · settlements 5772 USMCA |
-| **CC-3** | **001–011** (skip 004) | VEND-CERT 7–11 between hops |
-| **Codex** | **012–024** (MONEY-3 authorized) | bank shadow 8–10 when YOUR advances land |
-| **CC-2** | — (grade only, opportunistic) | FREE: run all tie-outs · manifest honesty |
-
-Skip **004** (13512 specimen, CC-1 Chrome) · skip **016** (CC-1 money shape).
-
-Packet: `docs/lockdown/Coders-Faro/CC-1/CC-1-USMCA-FARO-33-INVOICES.csv`
+**Gate:** No seat **creates** inv 014+ until `one-load-one-open-invoice` guard is on main. Tie-outs + inv 001–013 (CC-3) may proceed after gate.
 
 ---
 
-## ★ CHROME LOADS — THREE SEATS (split AUG-LOADS CSV by load_number)
+## Partition (one owner per crosswalk row)
 
-| Seat | USMCA Book Load rows | Port |
-|------|---------------------|------|
-| **Cascade** | **13508–13520** (inv 003,002,004,008,005,011,012,013,006…) | default |
-| **Devin-A** | **13521–13538** (inv 014–025 band) | **9227 CHROME-2** |
-| **CC-1** | **13512** specimen only (2239480) | — |
+| Seat | Owns |
+|------|------|
+| **CC-1** | 016 · 004/L13512 · settlements |
+| **CC-3** | **inv 001–013** invoice-only (skip 004) — **no loads** |
+| **Codex** | **inv 014–024 + their loads** (both ends) |
+| **Devin-A** | **inv 025, 027–036 + their loads** (both ends) |
+| **Cascade** | loads **13508–13520** — deliver only, **no Faro invoice create** |
+| **CC-2** | grade + six tie-outs |
 
-CSV: `docs/lockdown/Coders-Faro/CC-1/CC-1-AUG-LOADS-BY-FACTOR.csv` — USMCA rows where `usmca_faro_inv` is set.
-
-Deliver + invoice link in app (shadow human sequence). **No bulk SQL.**
+Crosswalk: `docs/lockdown/CODERS-2026-08-30/CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv`
 
 ---
 
-## Tie-outs (FREE lane — any seat when Chrome/deploy stalls)
+## Why REV D failed
 
-CC-2 primary: run all `scripts/tieout/*.mjs` → OBSERVED. Cursor filled DISP on main branch.
+Money split on `faro_invoice_no` + Chrome split on `at_load_no` → 10 double owners + 11 orphan invoices + 10 orphan loads.
 
 ---
 
 ## Forbidden
 
-Wait on CC-1 · wait on deploy · one money seat · idle Chrome · OUTBOX without Chrome · recertify U14
+REV D · dual owner · Cascade invoice create · create 014+ before uniqueness guard · recertify U14
