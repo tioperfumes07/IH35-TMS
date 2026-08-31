@@ -123,10 +123,17 @@ export type UpdateDispatchLoadInput = {
   loadId: string;
   operatingCompanyId: string;
   requestingUserUuid: string;
+  /** Owner may override money/evidence edit locks (audit-trail recorded). */
+  requestingUserRole?: string;
   fields: UpdateDispatchLoadFields;
   charges?: UpdateLoadCharge[];
   stops?: UpdateLoadStopInput[];
 };
+
+/** Owner standing law — edit/approve everything; lock is advisory for Owner with audit. */
+export function canOwnerOverrideLoadEditLock(role: string | undefined): boolean {
+  return String(role ?? "") === "Owner";
+}
 
 /** AT# / AlwaysTrack linkage — non-financial metadata; allow backfill when load is money-locked. */
 export function isLiveLoadNumberOnlyPatch(input: UpdateDispatchLoadInput): boolean {
@@ -464,9 +471,30 @@ export async function updateDispatchLoad(
 
   // 2) Money/evidence lock — reject the whole edit if posted money depends on this load.
   // LIVE-LOAD-NUMBER-NULL-REV-E: live_load_number-only backfill is linkage metadata, not revenue/pay.
+  // Owner standing law: Owner may override any lock; audit records the override.
   if (!isLiveLoadNumberOnlyPatch(input)) {
     const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
-    if (lock) throw new LoadEditLockedError(lock);
+    if (lock) {
+      if (canOwnerOverrideLoadEditLock(input.requestingUserRole)) {
+        await appendCrudAudit(
+          client,
+          requestingUserUuid,
+          "dispatch.load.edit_owner_override",
+          {
+            load_id: loadId,
+            operating_company_id: operatingCompanyId,
+            lock_reason: lock.reason,
+            lock_reference_id: lock.reference_id,
+            lock_reference_display_id: lock.reference_display_id,
+            lock_detail: lock.detail,
+          },
+          "warning",
+          "OWNER-LOAD-EDIT-OVERRIDE"
+        );
+      } else {
+        throw new LoadEditLockedError(lock);
+      }
+    }
   }
 
   // 3) Scalar fields — build the SET clause from present keys only (lockstep values/placeholders).

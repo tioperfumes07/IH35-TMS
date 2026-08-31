@@ -434,7 +434,9 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
             s.first_load_id,
             s.first_load_number,
             s.last_load_id,
-            s.last_load_number
+            s.last_load_number,
+            s.trip_closed_at,
+            s.settlement_model
           FROM views.driver_settlement_with_debt v
           JOIN driver_finance.driver_settlements s ON s.id = v.id
           WHERE v.id = $1 AND s.operating_company_id = $2::uuid

@@ -660,6 +660,108 @@ export async function closeSettlementForFinalLoad(
   return { closedSettlements: closed };
 }
 
+export type StampTripClosedResult =
+  | { stamped: true; trip_closed_at: string; anchor_load_id: string }
+  | {
+      stamped: false;
+      reason: "not_found" | "already_closed" | "cancelled" | "not_load_bookended" | "no_anchor_load";
+    };
+
+/**
+ * PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE — horizontal stamp for load-bookended settlements whose
+ * trip_closed_at was never set because closeLoadBookendedSettlementForDriver only runs on
+ * delivered_pending_docs and only matches status='open'. Payrun-close and approved/paid settlements
+ * on loads already past that milestone leave trip_closed_at NULL and block load edits.
+ */
+export async function stampTripClosedForBookendedSettlement(
+  client: DbClient,
+  opts: { settlementId: string; operatingCompanyId: string; actorUserId: string }
+): Promise<StampTripClosedResult> {
+  const sRes = await client.query<{
+    id: string;
+    driver_id: string;
+    status: string;
+    settlement_model: string;
+    trip_closed_at: string | null;
+    first_load_id: string | null;
+    last_load_id: string | null;
+    first_load_number: string | null;
+    last_load_number: string | null;
+    voided_at: string | null;
+  }>(
+    `
+      SELECT
+        id::text,
+        driver_id::text,
+        status,
+        settlement_model,
+        trip_closed_at::text,
+        first_load_id::text,
+        last_load_id::text,
+        first_load_number,
+        last_load_number,
+        voided_at::text
+      FROM driver_finance.driver_settlements
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [opts.settlementId, opts.operatingCompanyId]
+  );
+  const row = sRes.rows[0];
+  if (!row) return { stamped: false, reason: "not_found" };
+  if (row.settlement_model !== "load_bookended") return { stamped: false, reason: "not_load_bookended" };
+  if (row.voided_at || row.status === "cancelled") return { stamped: false, reason: "cancelled" };
+  if (row.trip_closed_at) return { stamped: false, reason: "already_closed" };
+
+  const anchorLoadId = row.last_load_id ?? row.first_load_id;
+  const anchorLoadNumber = row.last_load_number ?? row.first_load_number ?? anchorLoadId;
+  if (!anchorLoadId) return { stamped: false, reason: "no_anchor_load" };
+
+  const closedAt = new Date().toISOString();
+
+  await client.query(
+    `
+      UPDATE driver_finance.driver_settlements
+      SET trip_closed_at = $2::timestamptz,
+          period_end = ($2::timestamptz)::date,
+          last_load_id = COALESCE(last_load_id, $3::uuid),
+          last_load_number = COALESCE(last_load_number, $4),
+          status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
+          updated_at = now()
+      WHERE id = $1::uuid
+    `,
+    [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
+  );
+
+  await appendCrudAudit(
+    client,
+    opts.actorUserId,
+    "driver_finance.settlement.trip_closed",
+    {
+      settlement_id: opts.settlementId,
+      driver_id: row.driver_id,
+      operating_company_id: opts.operatingCompanyId,
+      anchor_load_id: anchorLoadId,
+      trip_closed_at: closedAt,
+      prior_status: row.status,
+    },
+    "info",
+    "PINGSETTLEMENT-TRIP-CLOSE-STAMP"
+  );
+
+  await emitOutbox(client, "driver_finance.settlement.trip_closed", {
+    settlement_id: opts.settlementId,
+    driver_id: row.driver_id,
+    operating_company_id: opts.operatingCompanyId,
+    anchor_load_id: anchorLoadId,
+    trip_closed_at: closedAt,
+  });
+
+  return { stamped: true, trip_closed_at: closedAt, anchor_load_id: anchorLoadId };
+}
+
 export async function getActiveSettlementForDriver(
   client: DbClient,
   input: { driverId: string; operatingCompanyId: string }

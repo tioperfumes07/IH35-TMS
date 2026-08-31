@@ -48,6 +48,7 @@ import { ReimbursementsSection } from "./components/ReimbursementsSection";
 import { SettlementHeader } from "./components/SettlementHeader";
 import { useLiveDebt } from "./hooks/useLiveDebt";
 import { PayRunClosePanel } from "./components/PayRunClosePanel";
+import { CloseTripPanel } from "./components/CloseTripPanel";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
@@ -510,6 +511,20 @@ export function SettlementDetailPage() {
                   })
                   .catch((error) => pushToast(userFacingApiError(error, "Finalize blocked"), "error"));
               }}
+            />
+          ) : null}
+          {companyId ? (
+            <CloseTripPanel
+              settlementId={settlementId}
+              companyId={companyId}
+              userRole={auth.user?.role}
+              settlementModel={
+                typeof settlement.settlement_model === "string" ? settlement.settlement_model : null
+              }
+              tripClosedAt={
+                typeof settlement.trip_closed_at === "string" ? settlement.trip_closed_at : null
+              }
+              onClosed={() => void refreshSettlementViews()}
             />
           ) : null}
           {companyId ? (

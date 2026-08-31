@@ -59,6 +59,32 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     ).rejects.toMatchObject({ lock: { reason: "open_settlement", reference_display_id: "SETT-1" } });
   });
 
+  it("allows Owner to override open_settlement lock with audit", async () => {
+    const auditSqls: string[] = [];
+    const { client, sqls } = makeClient([
+      loadExists,
+      { match: /FROM driver_finance\.driver_settlements/, rows: [{ id: "s1", display_id: "SETT-1" }] },
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
+    ]);
+    const origQuery = client.query.bind(client);
+    client.query = async (sql: string, values?: unknown[]) => {
+      if (/audit\.append_event/.test(sql)) auditSqls.push(String(values?.[0] ?? ""));
+      return origQuery(sql, values);
+    };
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      requestingUserRole: "Owner",
+      fields: { notes: "owner override" },
+    });
+    expect(auditSqls.some((e) => e === "dispatch.load.edit_owner_override")).toBe(true);
+    expect(sqls.some((s) => /UPDATE mdata\.loads SET/.test(s))).toBe(true);
+  });
+
   it("blocks the edit (issued_invoice) when a non-draft invoice is sourced from the load", async () => {
     const { client } = makeClient([
       loadExists,
