@@ -1,3 +1,8 @@
+### 2026-08-31 06:42 CT · LEAD-TICK-0216 · DEPLOY LIVE 69a5a4e · ACK invoice shell
+- Live **`69a5a4e`** (uptime~91s) — deploy catch-up **LANDED** (was a3e3af0 ~145 behind).
+- ACK Devin: invoice detail 0 line items / 0 load link / 0 invoice# · customer detail null phone/address/MC/DOT.
+- CC-1/2/3/Codex still IDLE ~175m — OUTBOX required. CC-1: invoice lines/load FK OR JE/batch. CC-3: Lists.
+
 ### 2026-08-31 06:37 CT · LEAD-TICK-0215 · DEPLOY KICKED · ACK stale 145 · settlements shell
 - Live was **`a3e3af0`** (~145 commits behind) — Rule 42 breach. **Deploy kicked** (API) — wait healthz ancestry past a3e3af0.
 - ACK Devin: deploy stale · settlements list shell (closed unpaid, no driver/pay fields).

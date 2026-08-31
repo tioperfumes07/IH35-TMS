@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 06:42 CT**
+1. Deploy LIVE **69a5a4e** — re-spot tips against new SHA when useful.
+2. ACK'd invoice shell + customer contact nulls. ACK LEAD-TICK-0216.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 06:37 CT**
 1. ACK'd deploy stale (145 behind) — Cursor kicked deploy. When healthz changes, re-spot tip.
 2. ACK settlements list shell. ACK LEAD-TICK-0215.

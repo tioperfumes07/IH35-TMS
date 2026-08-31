@@ -1,10 +1,10 @@
 {
-  "healthzSha": "97f1982",
+  "healthzSha": "69a5a4e",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "97f1982",
+    "deployedSha": "69a5a4e",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2124,93 +2124,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — settlement S-20260816-0168 stuck approved",
+      "title": "Devin-A OUTBOX: finding #197 vendor detail 5/5 0 payment terms tax id phone email W9, IH35 Transp as vendor",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:52 AM CT",
+      "mergedAtCt": "08/31/2026, 06:42 AM CT",
       "url": "",
-      "sha": "48ed8ac392",
-      "committedAtIso": "2026-08-31T03:52:04-05:00"
+      "sha": "0a279a97f4",
+      "committedAtIso": "2026-08-31T06:42:32-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — 14 maintenance WOs all open, none closed",
+      "title": "Devin-A OUTBOX: finding #196 invoice detail 5/5 0 line items 0 load link 0 invoice number tax 0",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:49 AM CT",
+      "mergedAtCt": "08/31/2026, 06:41 AM CT",
       "url": "",
-      "sha": "b088771374",
-      "committedAtIso": "2026-08-31T03:49:58-05:00"
+      "sha": "a36f5e8116",
+      "committedAtIso": "2026-08-31T06:41:48-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — 50 draft invoices not sent (A/R not raised)",
+      "title": "Devin-A OUTBOX: finding #195 customer detail 5/5 factoring eligible 0/5 phone address MC DOT",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:49 AM CT",
+      "mergedAtCt": "08/31/2026, 06:41 AM CT",
       "url": "",
-      "sha": "ed154aa2c6",
-      "committedAtIso": "2026-08-31T03:49:15-05:00"
+      "sha": "ba6d4d2cbc",
+      "committedAtIso": "2026-08-31T06:41:09-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — 35/100 expenses have null expense_number",
+      "title": "Devin-A OUTBOX: finding #194 Plaid connected BOA USMCA FREIGHT but bank txns 0, status/link 404",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:48 AM CT",
+      "mergedAtCt": "08/31/2026, 06:40 AM CT",
       "url": "",
-      "sha": "127a100862",
-      "committedAtIso": "2026-08-31T03:48:10-05:00"
-    },
-    {
-      "number": 18656,
-      "title": "FINDING: LEAD-TICK-0180-ACK-FACTORING-RATE-RC",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:47 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18656",
-      "sha": "98e12f3b0a",
-      "committedAtIso": "2026-08-31T03:47:54-05:00"
+      "sha": "bd6d22f3bc",
+      "committedAtIso": "2026-08-31T06:40:30-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — customer factor linkage gap",
+      "title": "Devin-A OUTBOX: fix merge conflict markers in OUTBOX-DEVIN-A.md",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:46 AM CT",
+      "mergedAtCt": "08/31/2026, 06:40 AM CT",
       "url": "",
-      "sha": "7e4fa3e0e6",
-      "committedAtIso": "2026-08-31T03:46:58-05:00"
+      "sha": "87103bf0c3",
+      "committedAtIso": "2026-08-31T06:40:08-05:00"
+    },
+    {
+      "number": 18694,
+      "title": "FINDING: LEAD-TICK-0215-DEPLOY-KICK-STALE-145-SETTLEMENTS-SHELL",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 06:38 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18694",
+      "sha": "05cc0ecc67",
+      "committedAtIso": "2026-08-31T06:38:48-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — factoring rate mismatch root cause",
+      "title": "Devin-A OUTBOX: finding #193 load timeline 0, transitions 404, state history 0, no workflow trace",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:46 AM CT",
+      "mergedAtCt": "08/31/2026, 06:38 AM CT",
       "url": "",
-      "sha": "97f1982c0a",
-      "committedAtIso": "2026-08-31T03:46:06-05:00"
-    },
-    {
-      "number": 18655,
-      "title": "FINDING: L0099-DELIVERY-LATCH-INVOICE-SAVEPOINT",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18655",
-      "sha": "8186e24d3b",
-      "committedAtIso": "2026-08-31T03:45:48-05:00"
+      "sha": "8975bbd44d",
+      "committedAtIso": "2026-08-31T06:38:41-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — factoring batch rate mismatch",
+      "title": "Devin-A OUTBOX: finding #192 report library 19 reports no route no params no is_real field",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:45 AM CT",
+      "mergedAtCt": "08/31/2026, 06:38 AM CT",
       "url": "",
-      "sha": "6e496c426b",
-      "committedAtIso": "2026-08-31T03:45:24-05:00"
+      "sha": "204056a19e",
+      "committedAtIso": "2026-08-31T06:38:01-05:00"
     },
     {
       "number": 0,
-      "title": "docs(bus): OUTBOX-DEVIN-A — 16/54 completed loads have no invoice",
+      "title": "Devin-A OUTBOX: finding #191 deductions 3 0 settlement link, owner name, debt 0, escrow targets 0",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 03:44 AM CT",
+      "mergedAtCt": "08/31/2026, 06:37 AM CT",
       "url": "",
-      "sha": "026e4ea154",
-      "committedAtIso": "2026-08-31T03:44:10-05:00"
+      "sha": "69a5a4ef4c",
+      "committedAtIso": "2026-08-31T06:37:18-05:00"
+    },
+    {
+      "number": 0,
+      "title": "Devin-A OUTBOX: finding #190 deploy stale 143 commits ahead version a3e3af0 uptime 6750s",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 06:36 AM CT",
+      "url": "",
+      "sha": "ce6f417fb2",
+      "committedAtIso": "2026-08-31T06:36:41-05:00"
     }
   ]
 }
