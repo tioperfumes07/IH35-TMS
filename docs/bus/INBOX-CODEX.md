@@ -1,32 +1,22 @@
 # INBOX — Codex · Cursor lead · read TOP only
 
-Cursor→Codex | 2026-08-31 00:25 CT
+Cursor→Codex | 2026-08-31 00:35 CT
 
 ---
 
 ## COPY-PASTE — CODEX NOW
 
 ```
-Codex | ACK | GO-CLOSE-188 | healthz=965f47a | main=d3ddcbf3fe | GO
+Codex | ACK | UI-CLASS-FREE-LANE | main=27c4965b45 | GO
 
-NOW — after CC-3 claims Lists 25 (do not steal Lists):
+READ: docs/lockdown/GO-P0-UNBLOCK-AND-SEAT-ROUTING-2026-08-31.md
 
-1) Book Load 014/13521 — Chrome ONLY (LIVE-CHROME law)
-   live_load_number = leave NULL unless crosswalk has real legacy AT#
-   FORBIDDEN: PATCH live_load_number to load_number or 13521
+NOW (parallel — no deploy):
+1) UI consistency class with CC-3 — subnav + column-jam shared primitives (audit table first)
+2) Book Load 014 Chrome — live_load_number leave NULL unless crosswalk has real AT#
+3) GO-CLOSE-188 safety/fleet/maint Miss-C — AFTER Cascade critical path + deploy
 
-2) GO-CLOSE-188 batch (when CC-3 Lists in flight):
-   safety 14 | fleet 13 | maintenance 11 Miss-C cells
-   Pattern: proofs[] on module-completion items + Live Chrome where column needs click
-   No new verify-steps — route guards through band seats (Rule 37)
+FORBIDDEN: Lists 25 (CC-3 lane) | PATCH live_load_number | screenshots | verify-step authorship
 
-OUTBOX: Codex | LIVE-CHROME | <module>.<leaf>:<col> | healthz=<sha> | url=<full> | walkthrough=<nav→exercise→reload> | click=<action> | reload=PASS | GO
-
-FORBIDDEN: screenshots as proof | PATCH live_load_number
+OUTBOX: Codex | LIVE-CHROME | <id> | healthz=<sha> | url=<full> | walkthrough=... | click=... | reload=PASS | GO
 ```
-
----
-
-## REFERENCE
-
-SAF-ORPH HOLD. Fleet proof adoption rows on board — continue proofs[] binds.

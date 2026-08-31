@@ -1,24 +1,20 @@
-# CURRENT GO — CURSOR · class fixes + UI consistency
+# INBOX — CURSOR · lead
 
-Cursor→Cursor | LAW-2026-08-31 | GO
+Cursor→Cursor | 2026-08-31 00:35 CT
 
-## P0 — ship field-scoped Owner override + guards
+---
 
-- `update-load.service.ts` — Owner bypass **non-money fields only**; miles/rate/driver/charges/stops → 409 (WORM)
-- GUARD: `scripts/verify-owner-override-not-money-fields.mjs` (claim **2454** even first)
-- Update `verify-settlement-trip-close-stamp.mjs` sibling assertions
+## COPY-PASTE — CURSOR NOW
 
-## P0 — GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31
+```
+Cursor | ACK | P0-ROUTING | main=27c4965b45 | GO
 
-1. Audit table ALL modules (subnav + list rows) **before code**
-2. Shared navy subnav (Settlements = standard) + shared DataTable primitive
-3. GUARDS: `verify-subnav-standard.mjs` + `verify-list-rows-use-datatable.mjs`
-4. Triage 969 middot hits → real N of list-row defects first
+DONE: #18582 owner override (2460) | #18559 P0 load-state-machine on main | typecheck exit 0
 
-## BUS
+NOW:
+1) Ship contract tests (18/18) + GO-P0-UNBLOCK seat routing doc
+2) Deploy cadence when 5–10 PR law triggers (unblocks #18535/#18539/#18548)
+3) assigned_not_dispatched→dispatched office button — FINDING only (no silent button)
 
-Law files shipped: `PASTE-ALL-SEATS-GO-2026-08-31.md` · keep INBOX TOP synced
-
-**FORBIDDEN:** Tell Cascade to redo 11 loads with AT# · settlements-only patch · dispatch-only subnav patch
-
-ACK: `Cursor | ACK | LAW-2026-08-31 | NOW=owner-override-guard+ui-audit|FREE=deploy-cadence | GO`
+FORBIDDEN: merge before typecheck + preflight PASS
+```
