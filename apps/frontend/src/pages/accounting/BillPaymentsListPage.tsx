@@ -10,6 +10,8 @@ import { listBillPayments, listBills, type BillPayment, type VendorBill, voidVen
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAuth } from "../../auth/useAuth";
 import { Button } from "../../components/Button";
+import { BulkProgressDialog } from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -167,8 +169,11 @@ export function BillPaymentsListPage() {
   });
 
   const [voidTarget, setVoidTarget] = useState<string | null>(null);
+  const bulk = useEntityBulkAction();
+  const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [batchVoidOpen, setBatchVoidOpen] = useState(false);
 
-  const canVoid = user?.role === "Owner";
+  const canVoid = user?.role === "Owner" || user?.role === "Administrator" || user?.role === "Accountant";
   // BANK-SORT-ROLLOUT-ACCT: ?sort=&dir= URL persistence (same as Bills/Expenses).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
 
@@ -392,6 +397,23 @@ export function BillPaymentsListPage() {
         sortDirection={sortDirection}
         onSortChange={onSortChange}
         onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
+        selectable={canVoid}
+        maxSelectable={200}
+        onSelectionCapExceeded={() => pushToast("You can select up to 200 bill payments at once.", "error")}
+        batchActions={(selected) =>
+          canVoid ? (
+            <button
+              type="button"
+              className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
+              onClick={() => {
+                setPendingVoidIds(selected.filter((row) => !row.revoked_at).map((row) => row.id));
+                setBatchVoidOpen(true);
+              }}
+            >
+              Void
+            </button>
+          ) : null
+        }
         emptyText="No bill payments found."
       />
 
@@ -427,6 +449,42 @@ export function BillPaymentsListPage() {
           }}
         />
       ) : null}
+      <VoidReasonModal
+        open={batchVoidOpen}
+        title="Void bill payments"
+        entityRef={`${pendingVoidIds.length} selected`}
+        minLength={10}
+        onClose={() => setBatchVoidOpen(false)}
+        onSubmit={async (reason) => {
+          if (!companyId || pendingVoidIds.length === 0) return;
+          setBatchVoidOpen(false);
+          await bulk.runBulk(
+            {
+              domain: "accounting",
+              resource: "bill-payments",
+              ids: pendingVoidIds,
+              action: "void",
+              reason,
+              operatingCompanyId: companyId,
+              invalidateKeys: [
+                ["accounting", "bill-payments-list", companyId],
+                ["accounting", "vendor-balances", companyId],
+                ["accounting", "bills-has-balance", companyId],
+              ],
+            },
+            () => setPendingVoidIds([])
+          );
+        }}
+      />
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
+      />
       <VoidReasonModal
         open={Boolean(voidTarget)}
         title="Void Bill Payment"

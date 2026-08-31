@@ -5,11 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
+import { BulkProgressDialog } from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { useToast } from "../../components/Toast";
 import { RecordPaymentModal } from "./RecordPaymentModal";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -55,6 +59,10 @@ export function PaymentsListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
+  const { pushToast } = useToast();
+  const bulk = useEntityBulkAction();
+  const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -278,7 +286,55 @@ export function PaymentsListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        selectable
+        maxSelectable={200}
+        onSelectionCapExceeded={() => pushToast("You can select up to 200 payments at once.", "error")}
+        batchActions={(selected) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
+            onClick={() => {
+              setPendingVoidIds(selected.filter((row) => !row.voided_at).map((row) => row.id));
+              setBatchVoidOpen(true);
+            }}
+          >
+            Void
+          </button>
+        )}
         emptyText="No payments found."
+      />
+
+      <VoidReasonModal
+        open={batchVoidOpen}
+        title="Void payments"
+        entityRef={`${pendingVoidIds.length} selected`}
+        minLength={10}
+        onClose={() => setBatchVoidOpen(false)}
+        onSubmit={async (reason) => {
+          if (!selectedCompanyId || pendingVoidIds.length === 0) return;
+          setBatchVoidOpen(false);
+          await bulk.runBulk(
+            {
+              domain: "accounting",
+              resource: "payments",
+              ids: pendingVoidIds,
+              action: "void",
+              reason,
+              operatingCompanyId: selectedCompanyId,
+              invalidateKeys: [["accounting", "payments", selectedCompanyId]],
+            },
+            () => setPendingVoidIds([])
+          );
+        }}
+      />
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
       />
 
       {selectedCompanyId ? (

@@ -40,9 +40,31 @@ function main() {
   assert.match(billsBulk, /BATCH_VOID_ACTION/);
   assert.match(billsBulk, /voidBillInClientTx/);
 
+  const payBulk = read("apps/backend/src/accounting/payments-bulk.routes.ts");
+  assert.match(payBulk, /BATCH_VOID_ACTION/);
+  assert.match(payBulk, /voidCustomerPaymentInBulk/);
+  assert.match(payBulk, /accounting\/payments\/bulk-update/);
+
+  const bpBulk = read("apps/backend/src/accounting/bill-payments-bulk.routes.ts");
+  assert.match(bpBulk, /BATCH_VOID_ACTION/);
+  assert.match(bpBulk, /voidBillPaymentInBulk|voidBillPaymentInClientTx/);
+  assert.match(bpBulk, /accounting\/bill-payments\/bulk-update/);
+
+  const voidSvcSrc2 = read("apps/backend/src/accounting/bulk-void.service.ts");
+  assert.match(voidSvcSrc2, /entityType: "customer_payment"/);
+  assert.match(voidSvcSrc2, /voidBillPaymentInBulk/);
+
   const feInv = read("apps/frontend/src/pages/accounting/InvoicesListPage.tsx");
   assert.match(feInv, /action: "void"|runInvoiceBulk\("void"/);
   assert.match(feInv, /VoidReasonModal/);
+
+  const fePay = read("apps/frontend/src/pages/accounting/PaymentsListPage.tsx");
+  assert.match(fePay, /resource: "payments"/);
+  assert.match(fePay, /action: "void"/);
+
+  const feBp = read("apps/frontend/src/pages/accounting/BillPaymentsListPage.tsx");
+  assert.match(feBp, /resource: "bill-payments"/);
+  assert.match(feBp, /action: "void"/);
 
   if (process.argv.includes("--selftest")) {
     const target = path.join(ROOT, "apps/backend/src/accounting/invoices-bulk.routes.ts");
