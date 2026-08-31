@@ -67,6 +67,12 @@ export function assertSettlementTripCloseStamp(sources) {
   if (!/close-trip-button/.test(ui)) {
     fails.push("CloseTripPanel must expose close-trip-button for Live Chrome");
   }
+  if (!/if \(tripClosedAt\)[\s\S]{0,1800}close-trip-recheck-button[\s\S]{0,500}Re-check settlement/.test(ui)) {
+    fails.push("CloseTripPanel must expose the closed-settlement re-check action instead of unmounting");
+  }
+  if ((ui.match(/void runCloseTrip\(\)/g) ?? []).length < 2) {
+    fails.push("both initial close and closed-settlement re-check must invoke the canonical close-trip action");
+  }
   if (!/CloseTripPanel/.test(sd)) {
     fails.push("SettlementDetailPage must mount CloseTripPanel");
   }
@@ -83,16 +89,18 @@ if (process.argv.includes("--selftest")) {
     console.error(`${LABEL} SELFTEST FAIL — current sources should pass`);
     process.exit(1);
   }
-  const bad = {
-    ...good,
-    payrun: good.payrun.replace(/stampTripClosedForBookendedSettlement\s*\(\s*client/g, "REMOVED_STAMP(client"),
-  };
-  const planted = assertSettlementTripCloseStamp(bad);
-  if (!planted.length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted payrun regression not detected`);
-    process.exit(1);
+  const mutations = [
+    ["payrun stamp removed", { ...good, payrun: good.payrun.replace(/stampTripClosedForBookendedSettlement\s*\(\s*client/g, "REMOVED_STAMP(client") }],
+    ["closed re-check removed", { ...good, closeTripPanel: good.closeTripPanel.replace('data-testid="close-trip-recheck-button"', 'data-testid="removed-recheck"') }],
+    ["re-check disconnected", { ...good, closeTripPanel: good.closeTripPanel.replace(/onClick=\{\(\) => void runCloseTrip\(\)\}/, "onClick={() => undefined}") }],
+  ];
+  for (const [name, bad] of mutations) {
+    if (!assertSettlementTripCloseStamp(bad).length) {
+      console.error(`${LABEL} SELFTEST FAIL — planted regression not detected: ${name}`);
+      process.exit(1);
+    }
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS (${mutations.length}/${mutations.length})`);
   process.exit(0);
 }
 
@@ -102,4 +110,4 @@ if (fails.length) {
   for (const f of fails) console.error(` - ${f}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — trip close stamp + Owner load override + Close trip UI wired`);
+console.log(`${LABEL}: OK — trip close stamp + Owner load override + initial close and closed-settlement re-check UI wired`);
