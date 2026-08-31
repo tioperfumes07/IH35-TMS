@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
 import {
@@ -21,7 +21,7 @@ import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
-import { SubTabRow } from "../../components/layout/SubTabRow";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { maintenancePartsStockQueryKey } from "../inventory/partsStockQueryKeys";
@@ -320,28 +320,9 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       <MaintenanceSubNav />
 
-      <SubTabRow data-subtab-row="maintenance">
-        {SUBNAV.map((item) => {
-          const active = item.id === tab;
-          const target = MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance";
-          // LV-MAINT-SUBNAV-ARIA-CURRENT-ALIAS: NavLink aria-current is URL-path based, so aliases
-          // (/maintenance/dvir → pre_flight_dvir) never get aria-current=page even when the leaf
-          // body is correct — Live walks mis-read that as "dashboard shell". Drive current from tab id.
-          return (
-            <Link
-              key={item.id}
-              to={target}
-              data-maintenance-subtab={item.id}
-              aria-current={active ? "page" : undefined}
-              className={`pb-0.5 text-xs font-semibold ${
-                active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </SubTabRow>
+      <NavyPageSubNav
+        items={SUBNAV.map((item) => ({ label: item.label, to: MAINTENANCE_TAB_PATH[item.id] ?? "/maintenance" }))}
+      />
 
       {/* MAINT-F7528 — R&M owns its purpose-built RMStatStrip below. Rendering the global strip
           here as well duplicated Open WOs and PM Due with different labels on the same surface. */}
