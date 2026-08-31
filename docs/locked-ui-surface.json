@@ -652,7 +652,7 @@
     ],
     "form425c": [
       "Profiles & Defaults",
-      "QB Import",
+      "Deposit Import",
       "Form 425C",
       "Merge & Export",
       "History"
@@ -680,8 +680,7 @@
       "Drivers",
       "Debt Alert \u00b7 before any payment",
       "Permit / Document Expirations",
-      "Leave Overview",
-      "Pay Rate Templates"
+      "Leave Overview"
     ],
     "dispatch": [
       "Book load"

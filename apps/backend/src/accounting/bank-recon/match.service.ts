@@ -149,7 +149,7 @@ const AUTO_MATCH_DATE_WINDOW_DAYS = 5;
  * cannot auto-match. That is a data-completeness gap in the poster's fallback label, not a matching-
  * threshold problem, and is out of scope for this fix (see REMAINING in the shipping commit).
  */
-const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.5;
+const AUTO_MATCH_MEMO_SIMILARITY_MIN = 0.8;
 
 function normalizeText(input: string | null | undefined) {
   return String(input ?? "")
