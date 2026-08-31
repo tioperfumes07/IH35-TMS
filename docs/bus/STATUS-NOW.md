@@ -1,3 +1,2 @@
 # STATUS-NOW
-**Overwrite (BUS-DIET).**
-Live=ef848ab. Rate PROVEN today (ebe87013). JE=236. Every seat has NOW+NEXT. Deploy is not a seat blocker.
+Overwrite. live=ef848ab. Orch GO. Rate proven. G1 flags fixed on today's 2 rates (Neon). Devin plain SUSPENDED. CC-1 → settle. Cascade → navy. JE=236.

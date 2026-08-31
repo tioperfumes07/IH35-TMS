@@ -1,0 +1,87 @@
+SEAT ROUTING BY CAPABILITY — STANDING LAW — 2026-08-31
+OWNER DIRECTIVE: route work to the seats that can actually do it. Seats that
+reliably fail on Chrome/terminal get MECHANICAL BUILD work. Seats that reliably
+drive Chrome get LIVE WALKTHROUGH work. Stop assigning by rotation.
+
+################ WHY THIS IS A LAW, NOT A PREFERENCE ################
+Today, five seats sat idle for three hours behind a gate, and Cascade was
+assigned live-Chrome load work it could not start (#18785
+CASCADE-STUCK-LIVE-CHROME-FORCE). Cursor's answer was 249 LEAD-TICK wake
+commits. The seat was not lazy. It was mis-assigned.
+A seat that cannot run the tool its task requires will never produce, no matter
+how many times it is woken. Route to capability first.
+
+################ THE ROSTER — FROM TODAY'S EVIDENCE, NOT OPINION ################
+
+  CHROME-CAPABLE  (proven working in live Chrome today)
+    DEVIN-A   booked TEST loads, ran the DELIBERATELY-BAD load test, proved the
+              system refuses a $0 rate and a no-pay-rate load. Withdrew 3 of its
+              own false findings after re-verifying against Neon.
+    CC-3      created driver_load_statuses (14->15), driver_teams (1->2),
+              accident_types — all three independently confirmed in Neon with
+              matching timestamps. Best proof discipline of any seat.
+
+  CHROME-BLOCKED  (fails repeatedly — do not assign Chrome work)
+    CASCADE   stuck again today (#18785). Historically fails on Chrome and
+              terminal. Assign MECHANICAL BUILD ONLY.
+
+  UNKNOWN — CURSOR MUST ESTABLISH THIS BEFORE NEXT ASSIGNMENT
+    CC-1      4 commits, 0 code, 0 loads booked in 12 hours. Held the gate that
+              stalled five seats. Nobody has asked why.
+    CODEX     4 commits, 1 code. Banking lane never started.
+
+  NOT A CHROME SEAT BY DESIGN
+    CC-2      verification only. Neon-script based. Never needs Chrome.
+              Only seat that writes prod_verified (Hard Rule 5).
+
+################ THE TWO LANES ################
+
+  LANE A — LIVE WALKTHROUGH (Chrome required)
+    Booking loads, dispatching, delivering, settling, expenses, bank matching,
+    factoring. Anything that must be proven with create -> reload -> Neon.
+    ASSIGN: Devin-A, CC-3. Plus CC-1/Codex once capability is confirmed.
+
+  LANE B — MECHANICAL BUILD (no Chrome, no terminal gymnastics)
+    File conversion sweeps, component extraction, guards + selftests, schema
+    migrations, catalog/reason-code work, test authoring.
+    ASSIGN: Cascade. Plus any seat that fails Lane A twice in a shift.
+
+################ ASSIGNMENTS NOW ################
+
+  CASCADE -> LANE B. Two jobs, in this order:
+    1. NAVY SUBNAV SWEEP (pack file 15). 178 routes, 87 modules, 3 done.
+       Convert bespoke tab rows to <NavyPageSubNav>. One PR per module.
+       Every commit states "navy subnav: X of 178". The number must rise.
+       Then the guard + selftest so it cannot regress.
+    2. DRIVER PAY CODES + PER-DATE LAYOVER (pack file 12). Additive steps 1-2
+       first (catalog table, nullable columns) — cannot break a chain in flight.
+    Cascade also has 10 frontend silent-error files staged on
+    cascade-silent-error-fixes-50224-50246. Same codebase area. Ship it as part
+    of Lane B once the navy sweep is moving — it is real work (50224 is a
+    genuine SILENT-NO-OP across 29+ catalog pages), just not chain work.
+
+  DEVIN-A -> STAYS IN LANE A. It is the only seat proving the chain.
+    BUT: 401 commits in 12 hours, ZERO touching code, OUTBOX-DEVIN.md at 15,816
+    lines. That single file is ~200k tokens every time any seat reads it.
+    Devin's work is good; its commit discipline is the most expensive habit in
+    the system. Bus diet law Rule 4 applies hardest here: ONE bus commit per
+    hour, batched. Rotate OUTBOX-DEVIN.md to archive TODAY.
+
+  CC-3 -> STAYS IN LANE A. Load shape 3 (multi-stop + expenses).
+
+  CODEX -> LANE A pending capability check. Banking half is completely
+    untouched: zero bank matches, and NOBODY has ever matched a bank
+    transaction to a settlement — the link the owner named by name.
+    If Codex cannot drive Chrome, move it to Lane B and give banking to CC-3.
+
+  CC-1 -> NO NEW ASSIGNMENT UNTIL CURSOR ANSWERS THREE QUESTIONS:
+    a) does it have live-Chrome tooling LOADED this session? yes/no
+    b) is it waiting on an authorization no human has given? yes/no
+    c) is it blocked on the missing driver pay rate? yes/no
+    Twelve hours of zero output has a cause. Ask it. Do not wake it again.
+
+################ THE STANDING RULE ################
+  A seat that fails to start a Lane A task TWICE in one shift is moved to
+  Lane B for the rest of that shift. No ticket, no census, no wake sequence —
+  just move it. Re-test capability at the start of the next shift.
+  Cursor records the move in ONE line. Not a LEAD-TICK.

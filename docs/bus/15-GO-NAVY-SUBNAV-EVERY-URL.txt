@@ -1,0 +1,83 @@
+GO — NAVY SUBNAV ON EVERY MODULE, EVERY URL — 2026-08-31
+OWNER: "IT WAS SUPPOSED TO BE IN EVERY SINGLE MODULE, EVERY SINGLE URL."
+This reopens CLS-UI-SUBNAV-NOT-NAVY. It was closed without being done.
+
+################ THE COUNT — THIS IS THE BLAST RADIUS ################
+  DISTINCT ROUTES (URLs) IN THE APP ........ 178
+  TOP-LEVEL MODULES ........................  87
+  PAGES USING NavyPageSubNav ...............   3
+  PAGES CONVERTED BY #18569 ................   0
+
+  The 3 that have it are:
+    apps/frontend/src/pages/driver-finance/SettlementsPage.tsx
+    apps/frontend/src/pages/driver-finance/SettlementCloseArrivalPage.tsx
+    apps/frontend/src/components/driver-inbox/DriverInbox.tsx
+  THOSE ARE THE OWNER'S REFERENCE PAGES. They were already correct. The fix
+  converted NOTHING.
+
+  What #18569 actually changed:
+    apps/frontend/src/components/forms/shared/HoverDropdownNav.css | 12 +-
+    scripts/verify-steps/CLAIMED-NUMBERS.json                      |  5 +
+    2 files changed, 11 insertions, 6 deletions
+  One CSS file on a DIFFERENT component. Then the row was marked fixed.
+
+  Meanwhile 131 page files render their own bespoke tab/nav markup.
+
+################ THIS IS A LAW VIOLATION, NAME IT ################
+  LAW-BLAST-RADIUS-NO-VERTICAL-FIXES: "Every finding states how many
+  rows/files/call sites carry the same defect, WITH the query that produced the
+  number, before any fix ships. A fix closing 1 of N does not merge. No fix
+  merges without a guard that makes the CLASS impossible."
+  #18569 closed 0 of 178, shipped no guard, and was marked done.
+  VOID THE CLOSED CLAIM. Reopen the row as OPEN with N=178.
+
+################ THE STANDARD ALREADY EXISTS — DO NOT REDESIGN IT ################
+  apps/frontend/src/components/layout/NavyPageSubNav.tsx
+    "Software-wide navy sub-nav banner.
+     Locked tokens: bg-[#1A1F36] text-white text-[11px] overflow-x-auto"
+  It is correct. It is the owner's reference design. Nobody re-designs it,
+  re-themes it, or forks a variant. Every page IMPORTS it.
+
+################ THE WORK ################
+  1. INVENTORY. Produce the full list: every one of the 178 routes, its page
+     file, and whether it renders NavyPageSubNav. Commit it ONCE as
+     docs/audit/NAVY-SUBNAV-INVENTORY.md. That file is the scoreboard.
+     Every route is a checkbox. 3 are ticked today.
+  2. CONVERT. Replace bespoke tab rows with <NavyPageSubNav items={...} />.
+     Mechanical, not design work. Batch by module, one PR per module (87
+     modules -> manageable PRs under the 4-minute merge law).
+     Do NOT hand-style 131 files into 131 near-identical shapes. That is how
+     this happened the first time.
+  3. COUNT COVERAGE ON EVERY PR. The commit message states
+     "navy subnav: X of 178 routes" and the number must go UP.
+  4. GUARD + SELFTEST (Rule 16/17 — no fix merges without one):
+     scripts/verify-navy-subnav-every-route.mjs
+       - every page file that renders a tab/nav row imports NavyPageSubNav
+       - no file hardcodes a subnav background other than #1A1F36
+       - the inventory file's tick count matches the real count
+       SELFTEST: plant a bespoke tab row -> exit 1; plant a wrong bg color ->
+       exit 1; restore -> exit 0. A guard with no selftest is not a guard.
+  5. LIVE PROOF. Devin-A or CC-3 walks a sample of 10 converted URLs in live
+     Chrome, reload each, confirm the navy banner renders. Post the URLs.
+
+################ THE PROCESS DEFECT — BIGGER THAN THIS TICKET ################
+  A defect was marked RESOLVED after touching 2% of its blast radius (and in
+  truth 0% of the actual target). If that happened here it has happened
+  elsewhere. EVERY closed UI-class row on the board is now suspect.
+
+  NEW RULE, applies to every class defect from now on:
+    A class row cannot be closed without (a) the N, (b) the count fixed, and
+    (c) a guard with a passing selftest. "Fixed the component" is not "fixed
+    the class." Cursor rejects any close that lacks all three.
+
+  AUDIT TASK: re-open every closed UI-class row and state X of N for each.
+  Start with CLS-UI-LIST-COLUMN-JAM — the owner's other reported issue
+  (Driver Settlements columns must be separately sortable: date, driver, load
+  number, settlement number). Cursor's own grep found 24 files with the jam
+  shape. Confirm how many were actually converted before that row is trusted.
+
+################ UNCHANGED ################
+  This is a FREE LANE. No deploy needed, does not touch the E2E chains, does
+  not touch money paths. It runs in parallel and must not block a chain.
+  4-minute merge law, one deploy per 5-10 PRs, CC never trigger_deploy.
+  Nobody closes August. No voids on INV-2026-00049..00081.
