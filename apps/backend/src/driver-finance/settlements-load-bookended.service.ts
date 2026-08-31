@@ -758,6 +758,25 @@ export async function stampTripClosedForBookendedSettlement(
     [opts.settlementId, closedAt, anchorLoadId, anchorLoadNumber]
   );
 
+  // DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP (live-caught 2026-08-31, Devin-A + CC-2 independently on
+  // L-20260831-0017, settlement ff0d99c2-...) -- pingSettlementOnLoadEvent's completed_docs_received
+  // re-entry branch only fires from the LOAD-status-transition handler, and only attaches a line to a
+  // settlement that is ALREADY status='closed' at that instant. In practice the settlement is still
+  // 'open' when completed_docs_received fires -- it gets closed LATER, by a human clicking "Close
+  // trip" here, a SEPARATE code path that stamped trip_closed_at/status but never re-attempted the
+  // earnings-line append. Result: a real, correctly-priced driver_bills row (open, unattached) sits
+  // next to a settlement that closed at $0.00/$0.00 -- the exact live-reproduced shape. Fix: re-run
+  // the same idempotent append here too, for the load this stamp just anchored the settlement to.
+  // appendSettlementLineFromDriverBillIfMissing is itself a no-op once a line exists (ON CONFLICT
+  // (source_driver_bill_id) DO NOTHING), so this is safe to run on every close-trip stamp.
+  await appendSettlementLineFromDriverBillIfMissing(client, {
+    settlementId: opts.settlementId,
+    driverId: row.driver_id,
+    loadId: anchorLoadId,
+    lineType: "earnings",
+    actorUserId: opts.actorUserId,
+  });
+
   await appendCrudAudit(
     client,
     opts.actorUserId,

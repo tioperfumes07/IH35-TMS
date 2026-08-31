@@ -17,11 +17,22 @@
  * attach: the settlement-close window is one-shot and the manual repair route is hard-blocked
  * once trip_closed_at is stamped. Live-caught on L-20260831-0002/0004 (GO-IDLE-WAKE DEFECT B).
  *
+ * DEFECT B2 (DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP, live-caught 2026-08-31 by Devin-A + CC-2 on
+ * L-20260831-0017): DEFECT B's completed_docs_received re-entry only fires from the load-status
+ * transition handler, and only attaches when the settlement is ALREADY status='closed' at that
+ * instant. In practice the settlement is usually still 'open' when completed_docs_received fires
+ * — it gets closed LATER by a human clicking "Close trip" (stampTripClosedForBookendedSettlement,
+ * settlement-payrun-close.routes.ts's /close-trip route), a separate code path that stamped
+ * trip_closed_at/status but never re-attempted the earnings-line append. Fixed by also calling
+ * appendSettlementLineFromDriverBillIfMissing inside stampTripClosedForBookendedSettlement itself,
+ * right after it stamps the settlement closed, for the load it just anchored to.
+ *
  * This guard asserts: (A) the C9-hold UPDATE call in bookLoad is immediately followed by an
  * in-memory patch of load.driver_pay_rate_per_mile from input; (B) pingSettlementOnLoadEvent has
  * a completed_docs_received branch that re-attempts appendSettlementLineFromDriverBillIfMissing
  * against a settlement THIS load already closed (last_load_id match, so it can never attach to
- * an unrelated trip).
+ * an unrelated trip); (B2) stampTripClosedForBookendedSettlement (the Close-trip action's own
+ * closer) also re-attempts the same append after it stamps a settlement closed.
  */
 import { readFileSync } from "node:fs";
 
@@ -91,6 +102,30 @@ function analyze(src) {
     );
   }
 
+  // ---- DEFECT B2 (Close-trip) ----
+  const stampStart = src.settle.indexOf("export async function stampTripClosedForBookendedSettlement");
+  if (stampStart < 0) {
+    failures.push(`${FILES.settle}: stampTripClosedForBookendedSettlement not found`);
+    return failures;
+  }
+  const nextExportAfterStamp = src.settle.indexOf("\nexport ", stampStart + 1);
+  const stampBody = src.settle.slice(stampStart, nextExportAfterStamp >= 0 ? nextExportAfterStamp : undefined);
+
+  if (!/await appendSettlementLineFromDriverBillIfMissing\(client, \{/.test(stampBody)) {
+    failures.push(
+      `${FILES.settle}: stampTripClosedForBookendedSettlement (the Close-trip action's closer) no ` +
+        "longer re-attempts appendSettlementLineFromDriverBillIfMissing after stamping a settlement " +
+        "closed — a driver_bills row that only became mintable after the settlement was manually " +
+        "closed via Close-trip will again sit open and unattached (DEFECT B2 regression)"
+    );
+  }
+  if (!/loadId:\s*anchorLoadId/.test(stampBody)) {
+    failures.push(
+      `${FILES.settle}: stampTripClosedForBookendedSettlement's re-attempt does not scope to ` +
+        "anchorLoadId — without that it risks attaching a line to the wrong load"
+    );
+  }
+
   return failures;
 }
 
@@ -148,6 +183,16 @@ function selftest() {
         settle: s.settle.replace("AND last_load_id = $3::uuid\n", ""),
       }),
     },
+    {
+      name: "DEFECT B2: Close-trip re-attempt removed from stampTripClosedForBookendedSettlement",
+      apply: (s) => ({
+        ...s,
+        settle: s.settle.replace(
+          /await appendSettlementLineFromDriverBillIfMissing\(client, \{\s*settlementId: opts\.settlementId,\s*driverId: row\.driver_id,\s*loadId: anchorLoadId,\s*lineType: "earnings",\s*actorUserId: opts\.actorUserId,\s*\}\);\n\n/,
+          ""
+        ),
+      }),
+    },
   ];
 
   let allCaught = true;
@@ -178,7 +223,8 @@ if (process.argv.includes("--selftest")) {
   }
   console.log(
     "verify-book-time-pay-rate-and-completed-docs-settle-reentry: OK -- bookLoad refreshes driver_pay_rate_per_mile " +
-      "before minting (DEFECT A), and pingSettlementOnLoadEvent re-attempts a scoped settlement-line append on " +
-      "completed_docs_received (DEFECT B)"
+      "before minting (DEFECT A), pingSettlementOnLoadEvent re-attempts a scoped settlement-line append on " +
+      "completed_docs_received (DEFECT B), and stampTripClosedForBookendedSettlement (Close-trip) re-attempts " +
+      "the same append after stamping a settlement closed (DEFECT B2)"
   );
 }
