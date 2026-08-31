@@ -17,7 +17,25 @@ on:
     - cron: "0 6 * * *"
 
 jobs:
-  security-audit:
+  detect-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      doc_only: ${{ steps.scope.outputs.doc_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci-detect-doc-only.mjs
+
+
+  security-audit-heavy:
+    needs: detect-scope
+    if: needs.detect-scope.outputs.doc_only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -141,3 +159,20 @@ jobs:
       - name: Gitleaks history scan (informational)
         continue-on-error: true
         run: gitleaks detect --source . --verbose || true
+
+  security-audit:
+    name: security-audit
+    needs: [detect-scope, security-audit-heavy]
+    if: always() && needs.detect-scope.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate required check
+        run: |
+          DOC="${{ needs.detect-scope.outputs.doc_only }}"
+          HEAVY="${{ needs.security-audit-heavy.result }}"
+          echo "doc_only=$DOC heavy=$HEAVY"
+          if [ "$DOC" = "true" ]; then echo "DOC-ONLY — security-audit heavy suspended"; exit 0; fi
+          if [ "$HEAVY" = "success" ]; then exit 0; fi
+          echo "Heavy security-audit failed: $HEAVY"; exit 1
+

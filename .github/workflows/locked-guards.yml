@@ -14,8 +14,28 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  locked-guards:
-    name: locked-guards
+  detect-scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      doc_only: ${{ steps.scope.outputs.doc_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Detect doc-only PR
+        id: scope
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci-detect-doc-only.mjs
+
+
+  locked-guards-heavy:
+    name: locked-guards-heavy
+    needs: detect-scope
+    if: needs.detect-scope.outputs.doc_only != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -1326,3 +1346,27 @@ jobs:
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs --selftest
       - name: verify:inventory-reorder-threshold-ui
         run: node scripts/verify-inventory-reorder-threshold-ui.mjs
+
+  # Thin aggregator — required context `locked-guards / locked-guards` always reports.
+  locked-guards:
+    name: locked-guards
+    needs: [detect-scope, locked-guards-heavy]
+    if: always() && needs.detect-scope.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate required check
+        run: |
+          DOC="${{ needs.detect-scope.outputs.doc_only }}"
+          HEAVY="${{ needs.locked-guards-heavy.result }}"
+          echo "doc_only=$DOC heavy=$HEAVY"
+          if [ "$DOC" = "true" ]; then
+            echo "DOC-ONLY — locked-guards heavy suspended (owner 2026-08-31)."
+            exit 0
+          fi
+          if [ "$HEAVY" = "success" ]; then
+            exit 0
+          fi
+          echo "Heavy locked-guards did not succeed: $HEAVY"
+          exit 1
+
