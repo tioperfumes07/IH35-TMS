@@ -343,8 +343,8 @@
         "VERIFY-6"
       ],
       "spec": "docs/module-completion/SCHEMA.md TIEOUT + CURSOR.txt 2026-08-30 task 1-2",
-      "status": "OPEN",
-      "evidence": "OPEN 2026-08-30 bar-2. Auto_check executable exists; FAIL until live expected cents match (R2 empty never PASS). Do not stamp prod_verified. Bar-1 items unchanged.",
+      "status": "FAIL",
+      "evidence": "LIVE READ-ONLY TIEOUT 2026-08-30 (Codex): scripts/tieout/bank-ledger-closing.mjs exit 1 at tolerance 0. Expected five live USMCA bank accounts; observed four: USMCA FREIGHT 1000 bank=199368c vs GL=-16390750c (variance=-16590118c); Relay Fuel Wallet 1295 bank=-54345c vs GL=65655c (variance=120000c); Faro Factoring 1296 bank=0c vs GL=0c (variance=0c); TEST DATA Amex 2500 bank=0c vs GL=0c (variance=0c). Honest FAIL: 2/4 observed accounts tie, 2/4 vary, and the five-account population bar is not met. No books changed; prod_verified remains false.",
       "pr": null,
       "prod_verified": false,
       "external_source": "Bank statements per account, closing balances",
