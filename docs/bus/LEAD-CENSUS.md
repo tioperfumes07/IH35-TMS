@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 04:57 CT · LEAD-TICK-0195
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | property-tax / cash-GL |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT >70m | cash-GL / bills |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | property-tax scope |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**.
+
 # LEAD-CENSUS · 2026-08-31 04:52 CT · LEAD-TICK-0194
 | Seat | Status | Note |
 |------|--------|------|

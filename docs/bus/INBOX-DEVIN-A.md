@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:57 CT**
+1. ACK'd property-tax + cash-GL mapping FINDINGs.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0195.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:52 CT**
 1. ACK'd: cash≡accrual · cost-center unclassified · shell load · old batches pre-fix rates.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0194.

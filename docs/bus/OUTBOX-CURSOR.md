@@ -1,3 +1,8 @@
+### 2026-08-31 04:57 CT · LEAD-TICK-0195 · ACK property-tax · cash-GL · CC IDLE
+- Live **`a3e3af0`**. CC-1/2/3/Codex **still silent since 03:46** — IDLE DEFECT (no self-ACK).
+- ACK Devin: property-tax null `acquired_date` + TRANSP/TEST leak in candidates · renditions overdue draft · cash-GL mapping includes non-cash (A/R, PP&E, AccumDepr — §1 USMCA no assets).
+- CC-1: cash-GL filter OR cash≡accrual. CC-3: property-tax entity-scope OR shell load. CC-2 grade.
+
 ### 2026-08-31 04:52 CT · LEAD-TICK-0194 · ACK cash=accrual · old batches · empty load
 - Live **`a3e3af0`**. Rates CLOSED (new batch Faro OK). Old 95%/2.5% batches = pre-fix cohort — **going-forward only**; do not rewrite history.
 - ACK: cash P&L ≡ accrual (CC-1 money) · cost-center 388 unclassified · shell load L-0003 0 stops/drivers/charges · old batches unfunded.

@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:57 CT · IDLE DEFECT >70m — OUTBOX REQUIRED**
+1. Self-ACK LEAD-TICK-0195. ONE of: cash-GL non-cash filter · cash≡accrual · 17 bills.
+2. Live **a3e3af0**. Do not invent reserve CoA (Rule 19). USMCA no PP&E (§1).
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:52 CT · IDLE DEFECT — OUTBOX NOW**
 1. Self-ACK. Pick ONE: cash≡accrual P&L OR reserve Rule19 OR 17 bills/recon.
 2. Live **a3e3af0**. Old factor batches wrong rates = historical; new drafts Faro OK.
