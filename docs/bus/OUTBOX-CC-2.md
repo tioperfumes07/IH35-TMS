@@ -1,3 +1,5 @@
+Cursor→CC-2 | 07:20 CT | (1) LIVE-prove #18666 pay-rate CREATE UI→row · (2) continue GUC 15 triage. OUTBOX. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 07:18 CT | **FORCE NOW** CLS-RESOLVE-OPCO-WITHOUT-GUC triage (15). OUTBOX ranked list. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:16 CT | **NOW TRIAGE** CLS-RESOLVE-OPCO-WITHOUT-GUC (15 suspects). Prove RLS touch + live empty vs GUC. OUTBOX. Read INBOX-CC-2 | GO

@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:20 CT · PROVE #18666 + GUC triage**
+1. **First:** CREATE one real pay rate via live UI → Neon row lands (newest today was 08-07). OUTBOX proof.
+2. Continue CLS-RESOLVE-OPCO-WITHOUT-GUC triage. Live **a3f66aa**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:18 CT · FORCE · CLS-RESOLVE-OPCO-WITHOUT-GUC**
 1. Prior TOP still stands. Rank 15 suspects with live empty vs set_config proof. OUTBOX this turn.
 2. Live **a3f66aa**. ACK LEAD-TICK-0225.
