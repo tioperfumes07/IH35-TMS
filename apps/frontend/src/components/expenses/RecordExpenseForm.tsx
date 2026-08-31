@@ -515,6 +515,20 @@ export function RecordExpenseForm({
         />
       </label>
 
+      {/* GO-E2E month-end safety: the submit mapper and backend already persist is_sample_data, but
+          an operator could not set the form state from the UI. Keep this explicit and opt-in: normal
+          expenses remain real, while TEST walkthroughs can mark the cash-out before it posts a JE. */}
+      <label className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+        <input
+          type="checkbox"
+          data-testid="record-expense-is-sample-data"
+          checked={values.isSampleData}
+          onChange={(event) => setValues((prev) => ({ ...prev, isSampleData: event.target.checked }))}
+          className="h-4 w-4 rounded-sm border-gray-300"
+        />
+        Sample / TEST DATA expense
+      </label>
+
       <label className="text-xs font-semibold text-gray-700" htmlFor={fieldId("payment-method")}>
         Payment method *
         <div className="mt-1">
