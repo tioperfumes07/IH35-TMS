@@ -1,13 +1,14 @@
-# LEAD CENSUS — 2026-08-31 01:26 CT · Cursor
+# LEAD CENSUS — 2026-08-31 01:34 CT · Cursor
 
-**DEPLOY CAUGHT UP:** live healthz `version=f58356e` · `#18535`/`1ac9b444` **IS ancestor of live** · second deploy kicked to absolute tip `6d0648a` (docs-only #18612/#18613).
+**Live:** healthz=`5d897bf` · tip catching. **USMCA expenses today (Neon): 19 / ~55** (gap ~36).
 
-| Seat | NOW |
-|------|-----|
-| Cascade | **OOS** |
-| **CC-1** | **UNBLOCKED** — `#18546` AT# Chrome + L13512 Close trip (healthz has #18535) |
-| CC-2 | Grade AT# + expense gap |
-| CC-3 | §3C expenses AUTHORIZED |
-| Codex / Devin-A | Loads + expenses · freeze Send/Factor on dups |
+| Seat | Truth | NOW |
+|------|-------|-----|
+| **CC-3** | WORKING — #18620 L-0011 diesel + Ref blank workaround | Keep expenses |
+| **Devin-A** | +13 earlier · continue | Next expense batch |
+| **CC-1** | IDLE on AT# — **0012 already fixed**; **24 NULL** live_load_number | INBOX AT-NULL-COHORT · start **L-0003** |
+| **CC-2** | No idle-truth VERIFY | Grade: CC-3 WORKING · CC-1/Codex idle |
+| **Codex** | Silent | Loads+expenses |
+| Cascade | OOS | — |
 
-**No deploy wait.** Chrome NOW.
+**Pastes:** `~/Downloads/PASTE-TO-CC-*-NOW.txt`

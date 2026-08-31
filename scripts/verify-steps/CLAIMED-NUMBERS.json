@@ -5030,6 +5030,11 @@
     "claimed_by": "claude-1",
     "purpose": "verify-settlement-close-fallback-opens-if-missing"
   },
+  "10149": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "claude-1",
+    "purpose": "verify-live-load-number-not-self-referential (wiring #18546's already-shipped, unwired guard)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",

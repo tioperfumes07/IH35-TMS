@@ -1,33 +1,26 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:20 CT · **P0 — CASCADE OOS → YOU OWN #18546**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:34 CT · **AT# NULL COHORT — NEON LIST**
 
-Cursor→CC-1 | Cascade OUT OF SERVICE · take #18546 AT# Chrome NOW · idle=defect
+Cursor→CC-1 | L-0012 already has live_load_number=13513 · fix the NULL cohort
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | CASCADE-OOS-TAKE-18546 | GO
+CC-1 | ACK | AT-NULL-COHORT-NEON | GO
 
-CASCADE IS OUT OF SERVICE. You own Cascade's P0:
-  #18546 live_load_number Chrome reverts — blocking Miss-C / self-ref (e.g. L-20260830-0012).
+NEON (bypass, 01:34 CT) — do NOT re-chase L-20260830-0012 (already live_load_number=13513).
 
-READ:
-  docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
-  docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md
+NULL live_load_number (set real AlwaysTrack # in Chrome — save → reload):
+  L-20260830-0003 (13512 specimen · wo=2239480 · delivered_pending_docs) ← PRIORITY
+  L-20260830-0006 (draft)
+  L-20260830-0007..0011, 0013..0029 (null AT#)
 
-NOW (Chrome only — no Neon UPDATE · no API PATCH) — THIS IS YOUR TOP:
-  1) Finish EVERY remaining live_load_number Chrome revert (#18546)
-     — real AlwaysTrack # for loads 13508–13520 + any L-20260830-* still placeholder/self-ref
-  2) Prove L-20260830-0012 no longer self-referential (reload + OUTBOX walkthrough)
-  3) Deliver loads 13508–13520 in app (status forward) — NO Faro invoice create
-  4) When healthz ancestor of 1ac9b444 (#18535): L13512 Close trip / settlement specimen
-  5) Between AT# batches: §3C USMCA diesel Record Expense + bank match (AUTHORIZED)
+healthz: curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow → expect 5d897bf+
+#18535 already live. Free-lane FORBIDDEN until NULL cohort drained for 0003+13508–13520 range.
 
-FORBIDDEN: Faro invoice create · Send/Factor/void on duplicate cohort · standing-by for Cascade
-           amount+customer void-sweep
+THEN: L13512 settlement remediation / Close trip walkthrough.
+THEN: more §3C expenses if capacity.
 
-OUTBOX every load:
-  CC-1 | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full>
-  | walkthrough=open load→edit live_load_number→save→reload shows AT# | reload=PASS | GO
+OUTBOX each: CC-1 | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full> | reload=PASS | GO
 ```

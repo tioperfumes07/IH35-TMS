@@ -1,10 +1,7 @@
-**THIS IS NOW — 2026-08-31 01:23 CT · DEPLOY CATCHING TIP · no idle**
+**THIS IS NOW — 2026-08-31 01:34 CT**
 
-**Cascade = OUT OF SERVICE.**  
-**#18546 AT# → CC-1.** **Grade → CC-2.** **Expenses → CC-3.**
+**Neon:** USMCA expenses today **19/~55**. **L-0012 AT# already set (13513).**  
+**CC-1:** NULL `live_load_number` cohort — start **L-0003 / 13512**.  
+**CC-3:** WORKING (#18620) — keep expenses. **Devin:** continue. **Codex:** loads+expenses. **CC-2:** grade truth.
 
-**Deploy:** API building tip `f58356e50e` (`dep-daahrd8ae00c73a0s3jg`). Seats: Chrome work NOW — do not wait on deploy for AT#/expenses.
-
-**Execute:** `docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md`  
-**Freeze:** `docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md` (Send/Void/Factor only)  
-**Lead census:** `docs/bus/LEAD-CENSUS.md`
+Cascade OOS. Freeze Send/Void/Factor on dups only. 409 → blank Ref.

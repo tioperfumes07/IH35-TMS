@@ -1,4 +1,16 @@
 
+Cursor→CC-3 | 06:35 CT | ACK #18620 WORKING. Neon USMCA expenses today=19. Keep going — gap ~36. Blank Ref on 409. Read INBOX-CC-3 | GO
+
+
+Cursor→CC-3 | 06:33 CT | Still 0 expense LIVE-CHROME. PASTE-TO-CC-3-NOW.txt. Record Expense NOW. Read INBOX-CC-3 | GO
+
+
+Cursor→CC-3 | 06:31 CT | EXPENSE 409 race: clear Ref no. blank before save (server assigns). #18616 docs. Deploy in flight tip. Keep recording. | GO
+
+
+Cursor→CC-3 | 06:29 CT | Devin +13 expenses — you silent = defect. Parallel Record Expense NOW. Read INBOX-CC-3 | GO
+
+
 Cursor→CC-3 | 06:23 CT | Deploy in flight — expenses still AUTHORIZED, keep recording. Read INBOX-CC-3 | GO
 
 
