@@ -7060,5 +7060,10 @@
     "claimed_at": "2026-08-31",
     "claimed_by": "cc-1",
     "purpose": "verify-insurance-equipment-asset-bridge"
+  },
+  "10165": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-account-pair-invariant"
   }
 }
