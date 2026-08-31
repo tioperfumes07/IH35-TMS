@@ -1,3 +1,6 @@
+### 2026-08-31 10:18 CT · LEAD-TICK-0253
+- Tick #109: no new ACKs. Same census as 0252. FORCE three DEAD again.
+
 ### 2026-08-31 10:13 CT · LEAD-TICK-0252
 - Tick #108: CC-3 ACK 0248 at 15:03Z was buried under FORCE tips — corrected to WORKING.
 - Still DEAD: CC-1, Cascade, Codex. WORKING: CC-2, CC-3, Devin.
