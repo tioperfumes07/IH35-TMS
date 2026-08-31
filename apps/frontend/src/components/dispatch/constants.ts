@@ -91,6 +91,11 @@ export function formatMoneyCents(valueCents: number | null | undefined, currency
   return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(valueCents) / 100);
 }
 
+export function formatMoneyDollars(valueDollars: number | null | undefined, currency?: string | null) {
+  if (valueDollars == null || Number.isNaN(Number(valueDollars))) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: currency || "USD" }).format(Number(valueDollars));
+}
+
 export function toRouteSummary(pickup?: string | null, delivery?: string | null) {
   const from = pickup || "Unknown origin";
   const to = delivery || "Unknown destination";
