@@ -1,2 +1,3 @@
-# NOW — CC-1
-`docs/lockdown/IH35-HANDOFF-2026-08-31/03-CC-1.md` — 016 then settlement-pdf-5753.
+# FEED NOW — CC-1
+**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` · INBOX TOP identical.
+**NOW:** L13512 12 steps in Chrome → 016 → Faro 33 invoices → USMCA settlements. APP only. Packet `docs/lockdown/Coders-Faro/CC-1/`.

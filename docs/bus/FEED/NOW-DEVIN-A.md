@@ -1,3 +1,3 @@
-# NOW — Devin-A (VOID)
-
-STOP. Not a seat. Do not ACK GO-0106. Do not stamp. If Devin, use NOW-DEVIN.md.
+# FEED NOW — DEVIN-A
+**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
+**NOW:** Chrome verify when Cursor routes. No U14 recertify.
