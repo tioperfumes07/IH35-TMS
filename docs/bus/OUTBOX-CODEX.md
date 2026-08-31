@@ -2669,3 +2669,4 @@ CODEX | WORKING | GUARD-F7540 | ROOT=safety-pending-total-count-plant-hit-neighb
 CODEX | WORKING | GUARD-F7541 | ROOT=cargo-claim-qbo-chrome-arbitrary-distance-cap-stale-after-form-growth | focused=normal+selftest | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7542 | ROOT=detail-types-create-guard-rejected-canonical-shared-hook-while-product-remained-wired | focused=normal+selftest+3-production-shaped-mutations | NEXT=gate+FAST-MERGE | GO
 CODEX | WORKING | GUARD-F7543 | ROOT=banking-factoring-guard-demanded-dishonest-chargeback-alias-after-outstanding-liability-rename | focused=normal+selftest+honest-field-loss+dishonest-alias-mutations | NEXT=gate+FAST-MERGE | GO
+CODEX | WORKING | GUARD-F7544 | ROOT=invoice-filter-guard-demanded-capped-listCustomers-after-exhaustive-company-scoped-listAllCustomers-upgrade | focused=normal+selftest+capped-client+scope-loss-mutations | NEXT=gate+FAST-MERGE | GO
