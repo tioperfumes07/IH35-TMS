@@ -1,3 +1,8 @@
+### 2026-08-31 06:12 CT · LEAD-TICK-0210 · ACK safety reports 404 · fuel recon 0%
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~145m).
+- ACK Devin: library marks HOS/CSA/DOT reports `real` but routes 404 · complaints null type/future · fleet-util 404 · fuel param inconsistency · fuel recon 0% match.
+- CC-3/Codex: report library honesty OR route mount. CC-1: factoring batch link / dual TB / P&L≠PPT still.
+
 ### 2026-08-31 06:07 CT · LEAD-TICK-0209 · ACK factoring batch link · TB zeros
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~140m).
 - ACK Devin: 11 submitted invoices 0 batch_id · batches missing financial totals · `/trial-balance` all-zero (pairs with dual-TB tip) · cash-flow uncategorized 6 vs 311.
