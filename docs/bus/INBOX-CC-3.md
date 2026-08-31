@@ -1,4 +1,2 @@
-# INBOX — CC-3 · TURBO
-**TOP — 15:10 CT · QUEUE-0**
-**NOW:** Record Expense on a completed_docs load with 0 expenses (NOT L-0004). Sample ON. OUTBOX LIVE-CLICK.
-Then deep-link 5 newly navy modules (Customers/Users/425C/Driver Detail).
+# INBOX — CC-3 · TEST-FREEZE
+**NOW with CC-1:** insured-asset reconciliation (Claude law) — do not solo tenant moves. Inactive scheduled drivers (3). ID-card 404 file+fix. COI+PDFs. Schema exists — paste information_schema if anyone claims blocked.

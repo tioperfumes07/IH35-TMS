@@ -1,2 +1,2 @@
-# INBOX — CASCADE · TURBO
-Users→Customers navy MERGED (#18906–#18911). **NOW:** next unchecked row in `docs/audit/NAVY-SUBNAV-INVENTORY.md`. One PR. Hooks ON. No `.gitignore` thrash.
+# INBOX — CASCADE · PARALLEL ONLY
+Navy chrome OK **behind** money. Extend NavyPageSubNav dropdowns → Accounting proof. Real denominator. Guard x-of-N + selftest. **Never ahead of money. Never lead story.**

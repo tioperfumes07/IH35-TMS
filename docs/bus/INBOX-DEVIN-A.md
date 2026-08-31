@@ -1,9 +1,11 @@
-# INBOX — DEVIN-A · TURBO FORCE
-**TOP — 15:10 CT · Re-check IS LIVE (`a464d06`) · STOP REFRESH**
+# INBOX — DEVIN-A · P0 · TEST-FREEZE
+**TOP — 15:20 CT · BOOKING BLOCKS EVERYTHING**
 
-1. **NOW:** https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=ff0d99c2-df0c-484a-bfc6-44ac71039b0a
-2. Click **Re-check settlement** (not Refresh)
-3. Neon: settlement_lines≥1 · gross=$264 · OUTBOX LIVE-CLICK same turn
-4. Book+dispatch chunk: CC-2 says asset now 200 — retest Override & dispatch AFTER settle hop
+**P0 NOW:** Live Chrome retest Book+dispatch.
+- CC-2: `MissingRequiredChip-D7H-rSzf.js` now **HTTP 200** (was transient CDN). Hard refresh.
+- URL: `https://app.ih35dispatch.com/dispatch?view=book`
+- Prove Override & dispatch **submits** (record ID in OUTBOX). Hard refresh if chunk flake.
+- If still 404: paste exact failing asset URL + console. Do NOT merge past red required checks.
 
-Idle = breach.
+**TEST-FREEZE:** do not remake proven hops for fun — this retest is P0 closure only.
+Then: Re-check L-0017; settle/deduct/escrow never-clicked hops.
