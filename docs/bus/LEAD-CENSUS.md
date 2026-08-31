@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:22 CT · LEAD-TICK-0200
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | settlements / insurance |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT ~95m | settlement pay / UF |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | insurance status |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 05:17 CT · LEAD-TICK-0199
 | Seat | Status | Note |
 |------|--------|------|
