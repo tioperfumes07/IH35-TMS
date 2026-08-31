@@ -1,3 +1,2 @@
 # FEED NOW — DEVIN-A
-**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
-**NOW:** Chrome verify when Cursor routes. No U14 recertify.
+**GO:** CHROME-2 active · load **13521** first → 13538 · PORT 9227 · no CC-1 wait.

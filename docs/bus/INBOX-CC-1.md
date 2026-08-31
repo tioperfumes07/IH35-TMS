@@ -1,13 +1,12 @@
-# CURRENT GO — CC-1 · MONEY SPLIT (you own 016 + settlements)
+# CURRENT GO — CC-1 · 016 + specimen only (not all Faro)
 
-Cursor→CC-1 | `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` REV C · skip #15546 | GO
+Cursor→CC-1 | GO-SHADOW REV D · skip #15546 | GO
 
-**CC-3 now has money authority for Faro 32 factoring — do not serialize the whole path on yourself.**
+**CC-3 = inv 001–011 · Codex MONEY-3 = 012–024 · you do NOT own all 33 factors.**
 
-1. **016 NOW:** $4200 invoice → $400 CM `unknown_pending_backup` → factor $3800  
-2. **L13512** HUMAN-SEQUENCE 12 steps to completion in Chrome  
-3. **Settlements** USMCA portions (`CC-1-AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv`, 5772 first)  
-4. JE-FUTURE per prior lead decision  
-5. Do **not** do all 33 Faro factor advances alone — CC-3 owns the other 32 factor layer  
+1. **016 NOW:** $4200 → $400 CM → factor $3800  
+2. **L13512 (load 13512 / inv 004)** 12-step specimen  
+3. **Settlements** 5772 USMCA portion  
+4. **Do not** factor inv 001–011 or 012–024 — other money seats own those batches  
 
-ACK: `CC-1 | ACK | MONEY-SPLIT | NOW=016|L13512|SETL | GO`
+ACK: `CC-1 | ACK | MONEY-1 | NOW=016|L13512|SETL | GO`

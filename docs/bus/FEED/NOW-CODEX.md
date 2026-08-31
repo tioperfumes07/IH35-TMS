@@ -1,2 +1,2 @@
 # FEED NOW — CODEX
-**GO:** Bank shadow 8–10 when advances land · no fabricate.
+**GO:** **MONEY-3** inv **012 CTS XPRESS** first → 024. Bank 8–10 when your advances land.
