@@ -644,3 +644,45 @@ export async function findLifecyclePostingKeyJe(
   );
   return res.rows[0]?.journal_entry_id ?? null;
 }
+
+/**
+ * FAC-VOID-ENUM-2150: an advance's lifecycle can accumulate MORE than one linked posting key --
+ * funding, one-or-more factoring_customer_payment installments, factoring_default_interest accruals,
+ * a recourse return, etc. -- and nothing in this schema guarantees the advance stays in
+ * 'submitted'/'advanced' status until every downstream event is closed out (proven live: a
+ * factoring_customer_payment JE posted while an advance was still 'advanced', then the advance was
+ * voided anyway). A void/reversal path that looks up only ONE hardcoded event_key (e.g. "funding")
+ * leaves every OTHER linked, still-posted JE standing -- the advance reads 'voided' while its own
+ * customer-payment leg keeps a live, un-reversed debit sitting on the factoring-advance liability
+ * account (2150) forever. This returns every linked posting key for the advance whose JE is STILL
+ * posted (not itself already reversed), so a caller can walk and reverse the complete set, not just
+ * one assumed leg.
+ */
+export async function findAllLifecyclePostingKeyJes(
+  client: DbClient,
+  opts: {
+    operating_company_id: string;
+    factoring_advance_id: string;
+  }
+): Promise<Array<{ source_transaction_type: string; event_key: string; journal_entry_id: string }>> {
+  const notReversedSql = await liveJournalEntryNotReversedSql(client);
+  const res = await client.query<{
+    source_transaction_type: string;
+    event_key: string;
+    journal_entry_id: string;
+  }>(
+    `
+      SELECT plk.source_transaction_type, plk.event_key, plk.journal_entry_id::text AS journal_entry_id
+        FROM accounting.factoring_lifecycle_posting_keys plk
+        JOIN accounting.journal_entries je ON je.id = plk.journal_entry_id
+       WHERE plk.operating_company_id = $1::uuid
+         AND plk.factoring_advance_id = $2::uuid
+         AND je.status = 'posted'
+         AND je.voided_at IS NULL
+         ${notReversedSql}
+       ORDER BY je.entry_date, plk.created_at
+    `,
+    [opts.operating_company_id, opts.factoring_advance_id]
+  );
+  return res.rows;
+}
