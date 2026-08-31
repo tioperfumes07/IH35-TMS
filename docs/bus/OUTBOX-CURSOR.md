@@ -1,3 +1,6 @@
+### 2026-08-31 11:10 CT · NO-IDLE WAKE
+- Rate proven. All seats NOW+NEXT. No LEAD-TICK.
+
 ### 2026-08-31 11:00 CT · LIGHTNING
 <!-- BUS-DIET: archive=OUTBOX-CURSOR-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 - Assist-ship Cascade silent-error FE.
@@ -195,6 +198,3 @@ NOBODY flips EMAIL_CRON_ENABLED=true until owner mailbox/env ready.
 ### 2026-08-31 06:54 CT · LEAD-TICK-0219 · ACK Devin #214/#215 · deploy watch · seats WORKING
 - Live still **`69a5a4e`** — catch-up deploy `dep-daamm7ks728c738r8i20` in flight (tip ~29).
 - ACK Devin: dispatch assign 0 driver/unit · notifications 10 all system unread · alerts 0 · scheduled reports 6 all inactive.
-- Seats WORKING (0218). OWNER GATE L13512 unchanged. Cascade OOS.
-
-### 2026-08-31 06:51 CT · LEAD-TICK-0218 · SEAT STATUS ACK · IDLE CLEARED · L13512 OWNER GATE

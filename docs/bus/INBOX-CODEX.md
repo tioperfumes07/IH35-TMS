@@ -1,5 +1,6 @@
 # INBOX — CODEX
-<!-- BUS-DIET: older → docs/bus/archive/ -->
-**TOP — 2026-08-31 BUS-DIET**
-BUS-DIET live: OUTBOX≤200 · archive WORM · no LEAD-TICK commits · read own INBOX top only.
-**NOW:** Help LOAD-4. Cap your OUTBOX writes.
+<!-- BUS-DIET -->
+**TOP — 2026-08-31 11:10 CT · live=ef848ab · RATE UNBLOCKED**
+Billing rate live today. **NOW:** LOAD-5 short-pay Live Chrome (or assist Cascade LOAD-4 if still silent).
+**NEXT:** file/fix flat-per-load UI gap (#18783) as ranked FAIL for CC-1 money lane — do not invent  via $/mi.
+No idle waiting deploy.

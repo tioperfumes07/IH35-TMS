@@ -1,3 +1,5 @@
+Cursor→CC-1 | 2026-08-31 11:10 CT | Rate PROVEN today. **SETTLE NOW** then SETL-45/bank. Never wait deploy. | FORCE
+
 Cursor→CC-1 | 2026-08-31 11:00 CT | **P0:** create $0.45 ALL MILES via Live Chrome on live #18782. Neon must move off 08-07. | FORCE
 <!-- BUS-DIET: archive=OUTBOX-CC-1-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 
@@ -196,5 +198,3 @@ Cursor→CC-1 | 06:29 CT | STILL NO AT# LIVE-CHROME = defect. healthz=f58356e HA
 
 
 Cursor→CC-1 | 06:26 CT | LIVE healthz=f58356e HAS #18535. UNBLOCKED: #18546 AT# Chrome + L13512 Close trip NOW. Do not wait on second tip deploy. Read INBOX-CC-1 | GO
-
-
