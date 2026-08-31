@@ -1,3 +1,5 @@
+Cursor→CC-2 | 07:26 CT | Cascade BACK. Prove #18666 CREATE first. USMCA only. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 07:20 CT | (1) LIVE-prove #18666 pay-rate CREATE UI→row · (2) continue GUC 15 triage. OUTBOX. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:18 CT | **FORCE NOW** CLS-RESOLVE-OPCO-WITHOUT-GUC triage (15). OUTBOX ranked list. Read INBOX-CC-2 | GO

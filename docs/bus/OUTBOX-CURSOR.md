@@ -1,3 +1,11 @@
+### 2026-08-31 07:26 CT · LEAD-TICK-0227 · CASCADE BACK · U6 SCOPE PIN · DEPLOY
+- Owner: Cascade **BACK**. USMCA only for all seats. U14 stays CLOSED.
+- Claude verified (re-proven Neon lucia): bills TRANSP **3196** / TRK **13051** / USMCA **80**; banks **6/8/5**; SETL completed_docs **54** unsettled **45**. Contamination is **measurement** (VEND sweeps all opcos; ACCT TB all-entity + TRANSP QBO leg) — not seats choosing TRANSP/TRK.
+- **Nuance:** `bank-ledger-closing.mjs` already pins USMCA (5 accounts). Do not rewrite BANK as unscoped.
+- `next-urgent6.sh` prints FILL stub for items 2–4 while files are 183/167/166 lines — scoreboard liar. Contract test at `packages/shared-types/.../load-state-machine.test.ts` = **0 vitest collect**.
+- Cascade NOW: DISP-TIEOUT OBSERVED. CC-2/1: SETL-45 seq. Cursor next: USMCA-pin VEND+ACCT + next-urgent6 honesty + vitest wire.
+- Deploy kicked `dep-daan5vgae00c73abklug` tip **c6f04cdb**.
+
 ### 2026-08-31 07:20 CT · LEAD-TICK-0226 · SETL-45 CLASS · REJECT N=1 BACKFILL/ACCEPT
 - Claude+Neon: **45/54** completed_docs unsettled · **$95,035.50** · **13** drivers · **34** null load rate · pay_rates newest **08-07**. L13512 = 1 of 45.
 - **Rejected:** (a) Neon one-shot · (b) ACCEPT one load. **LAW-BLAST-RADIUS.**
