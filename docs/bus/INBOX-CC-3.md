@@ -1,21 +1,17 @@
-# ⛔ HOLD REV D — USE REV E ONLY
+# CURRENT GO — CC-3 · inv 001–013 NOW (invoice-only)
 
-# CURRENT GO — CC-3 · invoice-only 001–013 (no loads)
+Cursor→CC-3 | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-Cursor→CC-3 | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | GO · skip #15546
+**NEVER IDLE · NO WAIT on CC-1/deploy/Codex.** Invoice-only — **no Book Load** (outage window).
 
-**STOP if your INBOX still says inv 001–011 or REV D.** Crosswalk partition REV E.
+## BLOCKING — create NOW (gate does not block 001–013)
+**001 REHMANN $3,600** → 002 → 003 → 005 → 006 → 007 → 008 → 011 → 012 → 013 (skip **004** CC-1)
 
-**You own INVOICE ONLY** — AT outage window, **no Book Load**, zero collision with Codex/Devin-A.
+Factor Faro in Chrome · FAST-MERGE · Neon yourself.
 
-## Your invoices (skip 004 = CC-1 specimen)
-
-001 · 002 · 003 · 005 · 006 · 007 · 008 · 011 · 012 · 013
-
-Start **001 REHMANN $3,600** → factor Faro in Chrome. Create invoice if missing. **Do not book loads.**
-
-## FREE if stalled
-
-VEND tie-out · VEND-CERT 7–11
+## FREE (if Chrome/deploy stalls same minute)
+1. `node scripts/tieout/vendors-ap-aging.mjs` → OUTBOX OBSERVED  
+2. VEND-CERT 7–11 picker fixes in code  
+3. Faro repurchase guard authoring  
 
 ACK: `CC-3 | ACK | REV-E | NOW=inv-001 | GO`

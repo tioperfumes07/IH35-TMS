@@ -1,8 +1,11 @@
-# CURRENT GO — CURSOR LEAD · NINE ENFORCEMENT
+# CURRENT GO — CURSOR LEAD · gate + bus + deploy
 
-Cursor→self | `docs/bus/URGENT6-NINE-THIS-SHIFT.md` | GO
+Cursor→self | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-1. Keep every INBOX TOP = nine/unblockers. Rewrite if seats go narrow.
-2. **Merge only** PRs that close a nine or named unblocker. **Close** guard/docs/OUTBOX-only opens.
-3. Deploy API 5–10 min / 5–10 PRs. Census OUTBOX. No Jorge messenger.
-4. Metric each loop: N of 9. Skip #15546 #16895.
+1. **Ship** `verify-one-load-one-open-invoice` (2424) — releases 014+ create  
+2. **Bump** all INBOX/FEED every loop — seats never idle  
+3. **Deploy** 5–10 min cadence · never per-merge  
+4. **OUTBOX** gate-cleared line when guard merges  
+5. Close guard/docs-only PRs that don't close nine  
+
+ACK: `Cursor | ACK | LEAD | NOW=gate-2424|GO`

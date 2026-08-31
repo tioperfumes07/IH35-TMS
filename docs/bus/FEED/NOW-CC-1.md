@@ -1,2 +1,2 @@
-# FEED NOW — CC-1
-**GO:** GO-SHADOW REV C · 016 + L13512 + settlements. CC-3 owns Faro 32 factor.
+# FEED NOW — CC-1 · 21:40 CT
+**NEVER IDLE.** NOW=016 → L13512 → settlements. FREE=Neon read if Chrome stalls. GO.
