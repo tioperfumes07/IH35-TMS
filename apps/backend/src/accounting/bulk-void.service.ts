@@ -124,3 +124,163 @@ export async function voidInvoiceInBulk(
 
   return { ok: true };
 }
+
+/**
+ * Customer payment bulk void — same writes as POST /payments/:id/void (FOR UPDATE + unapply + postVoidReversal).
+ */
+export async function voidCustomerPaymentInBulk(
+  ctx: BulkPerEntityContext<Record<string, unknown>>,
+  actorRole: string | null | undefined,
+  opts: {
+    emitSpine: (args: {
+      client: VoidQueryableClient;
+      operatingCompanyId: string;
+      actorUserId: string;
+      paymentId: string;
+      voidReason: string;
+    }) => Promise<void>;
+  }
+): Promise<BulkPerEntityResult> {
+  const denied = assertBatchVoidActorRole(actorRole);
+  if (denied) return denied;
+
+  const { id, reason, operatingCompanyId, actorUserId, bulkCallId, client } = ctx;
+  if (!reason || reason.trim().length < 10) {
+    return { ok: false, code: "E_REASON_REQUIRED", message: "reason must be at least 10 characters" };
+  }
+
+  const voidClient = client as unknown as VoidQueryableClient;
+  const paymentRes = await voidClient.query(
+    `
+      SELECT *,
+             payment_date::text AS payment_date_iso
+      FROM accounting.payments
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [id, operatingCompanyId]
+  );
+  const payment = paymentRes.rows[0] as Record<string, unknown> | undefined;
+  if (!payment) return { ok: false, code: "E_NOT_FOUND", message: "Payment not found" };
+  if (payment.voided_at) return { ok: false, code: "E_ALREADY_VOID", message: "Payment is already void" };
+
+  const flipped = await voidClient.query(
+    `
+      UPDATE accounting.payments
+      SET voided_at = now(),
+          voided_by_user_id = $2::uuid,
+          void_reason = $3
+      WHERE id = $1::uuid
+        AND voided_at IS NULL
+      RETURNING id
+    `,
+    [id, actorUserId, reason.trim()]
+  );
+  if (flipped.rows.length === 0) {
+    return { ok: false, code: "E_ALREADY_VOID", message: "Payment is already void" };
+  }
+
+  await voidClient.query(
+    `UPDATE accounting.payment_applications
+     SET unapplied_at = now(), unapplied_by_user_id = $2::uuid
+     WHERE payment_id = $1::uuid AND unapplied_at IS NULL`,
+    [id, actorUserId]
+  );
+
+  let reversal: VoidReversalResult;
+  try {
+    reversal = await postVoidReversal(
+      voidClient,
+      {
+        operatingCompanyId,
+        entityType: "customer_payment",
+        entityId: id,
+        originalDate: pgDateColumnToIsoDay(
+          (payment.payment_date_iso as string | null | undefined) ?? payment.payment_date
+        ),
+        memo: `Void reversal: payment ${String(payment.display_id ?? id)}`,
+      },
+      { userId: actorUserId }
+    );
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "void_reversal_failed";
+    return { ok: false, code: "E_VOID_REVERSAL", message };
+  }
+
+  await appendCrudAudit(
+    client,
+    actorUserId,
+    "accounting.payment_voided",
+    {
+      resource_type: "accounting.payments",
+      resource_id: id,
+      operating_company_id: operatingCompanyId,
+      void_reason: reason.trim(),
+      reversal_journal_entry_id: reversal.reversal_journal_entry_id,
+      reversal_date: reversal.reversal_date,
+      closed_period_reversal: reversal.closed_period_reversal,
+      reversed_line_count: reversal.reversed_line_count,
+      bulk_call_id: bulkCallId,
+    },
+    "warning",
+    "P3-T11.20.3-PAYMENT-RECORDING"
+  );
+
+  await opts.emitSpine({
+    client: voidClient,
+    operatingCompanyId,
+    actorUserId,
+    paymentId: id,
+    voidReason: reason.trim(),
+  });
+
+  return { ok: true };
+}
+
+/**
+ * Bill payment bulk void — voidBillInClientTx sibling (voidBillPaymentInClientTx).
+ */
+export async function voidBillPaymentInBulk(
+  ctx: BulkPerEntityContext<Record<string, unknown>>,
+  actorRole: string | null | undefined,
+  voidBillPaymentInClientTx: (
+    client: unknown,
+    input: {
+      operatingCompanyId: string;
+      paymentId: string;
+      reason: string;
+      userId: string;
+      currentBusinessDate: string;
+    }
+  ) => Promise<{ reversal_journal_entry_id?: string | null }>,
+  currentBusinessDate: string
+): Promise<BulkPerEntityResult> {
+  const denied = assertBatchVoidActorRole(actorRole);
+  if (denied) return denied;
+
+  const { id, reason, operatingCompanyId, actorUserId, client } = ctx;
+  if (!reason || reason.trim().length < 10) {
+    return { ok: false, code: "E_REASON_REQUIRED", message: "reason must be at least 10 characters" };
+  }
+
+  try {
+    await voidBillPaymentInClientTx(client, {
+      operatingCompanyId,
+      paymentId: id,
+      reason: reason.trim(),
+      userId: actorUserId,
+      currentBusinessDate,
+    });
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "bill_payment_void_failed";
+    if (message === "bill_payment_not_found") return { ok: false, code: "E_NOT_FOUND", message: "Bill payment not found" };
+    if (message === "bill_payment_already_voided") {
+      return { ok: false, code: "E_ALREADY_VOID", message: "Bill payment is already void" };
+    }
+    if (message === "bill_not_found") return { ok: false, code: "E_NOT_FOUND", message: "Bill not found" };
+    return { ok: false, code: "E_VOID_FAILED", message };
+  }
+}
