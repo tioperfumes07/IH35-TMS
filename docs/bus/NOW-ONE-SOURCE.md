@@ -1,6 +1,3 @@
-**THIS IS NOW — 2026-08-31 01:39 CT**
+**THIS IS NOW — 2026-08-31 01:41 CT (5m tick)**
 
-**CC-1:** ACK 0012→13513 · set **L-0003=13512** (CSV) · then settlement **5772**.  
-**CC-3+Devin:** expenses (36h≈24 / ~55). **Codex:** AT# 0014–0024. **CC-2:** grade. Cascade OOS.
-
-Deploy tip `7718be59` in flight. Freeze Send/Void/Factor on dups. 409→blank Ref.
+Deploy catching `7718be59`. **CC-1:** L-0003=`13512` then settlement 5772. **CC-3/Devin:** expenses (~25/55). **Codex:** AT# 0014–0024. Cascade OOS.
