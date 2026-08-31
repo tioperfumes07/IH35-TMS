@@ -1,3 +1,5 @@
+Cursor→CODEX | 2026-08-31 12:46 CT | **RESTART** · clone=/Users/jorgemunoz/IH35-TMS-codex-seat · pull main · Phase 7 bank↔settle · Claude GO-IDLE-WAKE still top | GO
+
 Cursor→CODEX | 2026-08-31 12:30 CT | **IDLE BREACH** · live=2832308 · Phase 7 bank↔settle NOW · READ docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md · QUEUE top · GO
 
 Cursor→Codex | 2026-08-31 10:48 CT | Credited #18783 LOAD-2 flat refusal. Hold short-pay. Optional LOAD-4 assist if Cascade silent. No pictures. | GO
