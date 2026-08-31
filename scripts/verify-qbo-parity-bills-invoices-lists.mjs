@@ -9,7 +9,7 @@
 // Invoices list (InvoicesListPage.tsx) must keep:
 //   - a "Load #" column and a "Memo" column
 //   - the QBO status filter options "Not sent" (not_sent) and "With balance" (with_balance)
-//   - a server-side Customer filter (listCustomers import + customer_id wired + "All customers")
+//   - a server-side Customer filter (exhaustive listAllCustomers roster + customer_id wired + "All customers")
 //
 // Self-test: node scripts/verify-qbo-parity-bills-invoices-lists.mjs --selftest
 import fs from "node:fs";
@@ -48,8 +48,12 @@ export function check({ bills, invoices }) {
   if (!/label:\s*"Memo"/.test(invoices)) f.push(`${INVOICES}: Invoices list must have a "Memo" column`);
   if (!/value:\s*"not_sent"/.test(invoices)) f.push(`${INVOICES}: Invoices list must offer the "Not sent" (not_sent) status filter`);
   if (!/value:\s*"with_balance"/.test(invoices)) f.push(`${INVOICES}: Invoices list must offer the "With balance" (with_balance) status filter`);
-  if (!/import\s*\{\s*listCustomers\s*\}\s*from\s*["']\.\.\/\.\.\/api\/mdata["']/.test(invoices))
-    f.push(`${INVOICES}: Invoices list must import listCustomers for the Customer filter`);
+  if (!/import\s*\{\s*listAllCustomers\s*\}\s*from\s*["']\.\.\/\.\.\/api\/mdata["']/.test(invoices))
+    f.push(`${INVOICES}: Invoices list must import exhaustive listAllCustomers for the Customer filter`);
+  if (!/listAllCustomers\(\s*\{[\s\S]{0,240}?operating_company_id:\s*selectedCompanyId/.test(invoices))
+    f.push(`${INVOICES}: Customer filter must call listAllCustomers with selectedCompanyId scope`);
+  if (/\blistCustomers\s*\(/.test(invoices))
+    f.push(`${INVOICES}: Customer filter must not regress to the capped listCustomers roster`);
   if (!/customer_id:\s*customerId\s*\|\|\s*undefined/.test(invoices))
     f.push(`${INVOICES}: Invoices list must wire customer_id (customerId) into listInvoices`);
   if (!/All customers/.test(invoices)) f.push(`${INVOICES}: Invoices list must have an "All customers" Customer filter option`);
@@ -87,7 +91,8 @@ if (process.argv.includes("--selftest")) {
     <option value="">All vendors</option>
   `;
   const goodInvoices = `
-    import { listCustomers } from "../../api/mdata";
+    import { listAllCustomers } from "../../api/mdata";
+    listAllCustomers({ operating_company_id: selectedCompanyId });
     const STATUS_OPTIONS = [{ value: "not_sent", label: "Not sent" }, { value: "with_balance", label: "With balance" }];
     const columns = [
       { key: "source_load_id", label: "Load #", render: (r) => <EntityLink kind="load" id={r.source_load_id} label={entityLabel(row.source_load_number, row.source_load_id, "Load")} /> },
@@ -106,6 +111,8 @@ if (process.argv.includes("--selftest")) {
     ["null load label chrome caught", check({ bills: goodBills, invoices: goodInvoices.replace("row.source_load_number", "null") }).some((x) => /source_load_number|UUID chrome/.test(x))],
     ["missing invoices not_sent option caught", check({ bills: goodBills, invoices: goodInvoices.replace('value: "not_sent"', 'value: "x"') }).some((x) => x.includes("Not sent"))],
     ["missing invoices Customer filter caught", check({ bills: goodBills, invoices: goodInvoices.replace("customer_id: customerId || undefined", "") }).some((x) => x.includes("customer_id"))],
+    ["capped customer roster regression caught", check({ bills: goodBills, invoices: goodInvoices.replaceAll("listAllCustomers", "listCustomers") }).some((x) => /exhaustive|capped/.test(x))],
+    ["missing company scope caught", check({ bills: goodBills, invoices: goodInvoices.replace("operating_company_id: selectedCompanyId", "operating_company_id: undefined") }).some((x) => x.includes("selectedCompanyId scope"))],
   ];
   const failed = checks.filter(([, ok]) => !ok);
   if (failed.length) {
