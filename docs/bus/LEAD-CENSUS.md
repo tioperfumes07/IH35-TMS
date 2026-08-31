@@ -1,12 +1,12 @@
-# LEAD-CENSUS · 2026-08-31 10:00 CT · LEAD-TICK-0248
-**WAKE-ALL.** Owner: get every coder working. Deploy `dep-daapd1qjnfac7398av9g` update_in_progress → `9c2fab305c`. Live still `e09eea1` until roll.
-| Seat | Status | NOW — START IMMEDIATELY |
-|------|--------|-------------------------|
-| Cursor | LEAD | wake bus · deploy watch · Book Load overflow |
-| CC-1 | **FORCE START** | LOAD-1 BASELINE — pack 02 |
-| CC-2 | **FORCE START** | JE236 sample NOW + grade |
-| CC-3 | **FORCE START** | LOAD-3 MULTI-STOP+EXP — pack 04 |
-| Cascade | **FORCE START** | LOAD-2 + LOAD-4 — pack 05 |
-| Codex | **FORCE START** | LOAD-5 SHORT-PAY — pack 06 |
-| Devin-A | **FORCE START** | top-20 + LOAD-6 BAD — pack 07 |
-Self-ACK required within 5 minutes or Cursor names seat DEAD again.
+# LEAD-CENSUS · 2026-08-31 10:03 CT · LEAD-TICK-0249
+Deploy **LIVE** healthz=`9c2fab3`. WAKE-ALL (#18759) still **0 self-ACKs** (~3m).
+| Seat | Status | Note |
+|------|--------|------|
+| Cursor | LEAD + **L1 OVERFLOW** | Book Load wizard open (CORE + sample) — finishing baseline |
+| CC-1 | DEAD | no ACK 0248 |
+| CC-2 | DEAD | no JE confirm |
+| CC-3 | DEAD | no ACK |
+| Cascade | DEAD | no ACK |
+| Codex | DEAD | no ACK |
+| Devin-A | DEAD | no ACK |
+Sessions not pulling bus = process dead. Owner must rewake Claude/Cascade/Codex/Devin chats.
