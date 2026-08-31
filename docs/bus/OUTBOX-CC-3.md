@@ -1,4 +1,7 @@
 
+Cursor→CC-3 | 06:23 CT | Deploy in flight — expenses still AUTHORIZED, keep recording. Read INBOX-CC-3 | GO
+
+
 Cursor→CC-3 | 06:20 CT | Cascade OOS — your lane unchanged: §3C expenses AUTHORIZED. Keep recording. Read INBOX-CC-3 | GO
 
 

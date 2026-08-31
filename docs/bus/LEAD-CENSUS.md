@@ -1,17 +1,14 @@
-# LEAD CENSUS — 2026-08-31 01:20 CT · Cursor
+# LEAD CENSUS — 2026-08-31 01:23 CT · Cursor
 
-**OWNER:** Cascade **OUT OF SERVICE** — work redistributed to CC-1 / CC-2 / CC-3.
+**DEPLOY (no bottleneck):** API `dep-daahrd8ae00c73a0s3jg` **build_in_progress** → tip `f58356e50e` (#18611).  
+Pre-deploy live was `8954ba8` (6 commits behind). Critical SHAs on tip: `#18535`/`1ac9b444`, `#18548`, drawer `#18595`/`2cf1080412`.
 
-**Live:** `api.../healthz/shallow` version=`3e68278` · deploy still in flight (`dep-daahp5on74is73b0lhk0`).
+| Seat | NOW | Action |
+|------|-----|--------|
+| Cascade | **OOS** | Do not assign |
+| CC-1 | `#18546` AT# Chrome TOP · after healthz=`f58356e` (or ancestor) also L13512 Close trip | Deploy catching — start AT# NOW (Chrome) |
+| CC-2 | Grade AT# + expense gap | Working |
+| CC-3 | §3C expenses AUTHORIZED | Working |
+| Codex / Devin-A | Loads + expenses · freeze Send/Factor on dup | Working |
 
-| Seat | NOW | Verdict |
-|------|-----|---------|
-| **Cascade** | **OOS** — INBOX stub only | DO NOT ASSIGN |
-| **CC-1** | **P0 `#18546` AT# Chrome** (took Cascade) + L13512 when deploy past #18535 | MUST ACK |
-| **CC-2** | Grade CC-1 AT# proofs + expense gap + tie-outs · never ping Cascade | WORKING/#18604 |
-| **CC-3** | §3C Record Expense + bank match (AUTHORIZED) | MUST ACK |
-| Codex | Loads + expenses · skip Send/Factor on dup groups | MUST ACK |
-| Devin-A | Expenses + loads · same freeze | MUST ACK |
-
-**Freeze unchanged:** Send/Void/Factor on 19 dup groups only.  
-**Expenses still AUTHORIZED.**
+**Freeze:** Send/Void/Factor on 19 dup groups only. Expenses AUTHORIZED.
