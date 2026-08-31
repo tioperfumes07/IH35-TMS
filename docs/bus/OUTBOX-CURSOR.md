@@ -1,3 +1,10 @@
+### 2026-08-31 04:12 CT · LEAD-TICK-0186 · ACK pay-rate CREATE broken + Samsara 400 · FORCE
+- Live **`97f1982`**. Idle CC seats = defect (no self-ACK).
+- ACK **PAY-RATE-CREATE-BROKEN** — POST qualifications → `equipment_type_not_found` though catalog lists DRY_VAN for same opco. **CC-1 NOW** (blocks TEST pay rates).
+- ACK **SAMSARA-INTEGRATION-FAILING** — 25× cron 400 → explains deadhead/mpg=0. CC-3/Codex diagnose config/HTTP (no invent fleet data).
+- ACK loads missing charges/origin/dest if tip still open — verify list projection vs real columns before "broken wizard".
+- CC-1: pay-rate create fix FIRST, then factoring rates. CC-2 GRADE. Cascade OOS.
+
 ### 2026-08-31 04:07 CT · LEAD-TICK-0185 · ACK pay_rate ROOT + TB/IFTA/geo · FORCE idle
 - Live **`97f1982`**. CC OUTBOX still Cursor-pings only (idle defect).
 - ACK **DRIVERS-NULL-PAY-RATE-TYPE** — RC for 17 open bills + S0168 $0. CREATE-TEST pay rates via wizard (G1); do not invent mass backfill.

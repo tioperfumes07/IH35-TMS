@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:12 CT · FORCE · IDLE DEFECT · MONEY**
+1. **NOW: PAY-RATE-CREATE-BROKEN** — POST `/mdata/drivers/:id/qualifications` returns `equipment_type_not_found` for DRY_VAN id that GET catalogs/equipment-types returns for USMCA. Fix R=W / opco predicate.
+2. Then factoring rate pass-through (batch.routes).
+3. Live **97f1982**. Self-ACK in OUTBOX-CC-1 same turn.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:07 CT · FORCE · IDLE DEFECT**
 1. **Factoring rate pass-through** (batch.routes) — still no self-ACK.
 2. **Driver pay_rate/pay_type** — RC for 17 bills + S0168 $0; wire create + set labeled TEST rates (CREATE-TEST-THEN-VOID / G1).
