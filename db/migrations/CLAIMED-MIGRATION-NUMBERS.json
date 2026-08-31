@@ -481,11 +481,16 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-31",
       "purpose": "loads_mileage_columns_numeric_widen (LOADS-MILEAGE-INTEGER-TRUNCATION: mdata.loads.loaded_miles/miles_practical/miles_shortest/miles_deadhead integer -> numeric(10,1), no backfill)"
+    },
+    "202613310100": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-31",
+      "purpose": "mdata_assets_equipment_id_and_fks (additive: equipment_id FK to mdata.equipment, plus tenant_id/unit_id/equipment_id FKs mdata.assets never had -- CLAUDE-OWNED-INSURED-ASSET-RECONCILIATION-2026-08-31)"
+    },
+    "202613311200": {
+      "claimed_by": "devin",
+      "claimed_at": "2026-08-31",
+      "purpose": "insurance_driver_schedule_and_confirmations (driver insurance policy schedule membership table + append-only confirmations audit log -- owner ruling 2026-08-31: warning not block, explicit confirm + log who/when/driver/load/truck)"
     }
-  },
-  "202613310100": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-08-31",
-    "purpose": "mdata_assets_equipment_id_and_fks (additive: equipment_id FK to mdata.equipment, plus tenant_id/unit_id/equipment_id FKs mdata.assets never had -- CLAUDE-OWNED-INSURED-ASSET-RECONCILIATION-2026-08-31)"
   }
 }
