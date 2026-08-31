@@ -1,3 +1,8 @@
+### 2026-08-31 08:22 CT · LEAD-TICK-0232 · DEPLOY LANDED · CODEX SOLE CREATE
+- Live advanced **25d463a** (was e308085). Tip ~8 — no new deploy.
+- CREATE silence after OVERDUE → **sole-assign Codex**. CC-2 off CREATE hook; help only if Codex OUTBOX asks.
+- Neon USMCA `driver_pay_rates` today still **0**. SETL-45 blocked until proof.
+
 ### 2026-08-31 08:17 CT · LEAD-TICK-0231 · CREATE STILL OPEN · DEPLOY
 - Live still **e308085**; tip ~14 → deploy kicked (Rule 42).
 - Neon: USMCA `driver_pay_rates` `created_at` today = **0**. #18725 is on live; Chrome proof missing.

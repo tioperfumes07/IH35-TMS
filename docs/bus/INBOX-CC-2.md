@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 08:22 CT · CREATE HANDED TO CODEX**
+1. Lead sole-assigned CREATE to Codex after OVERDUE silence. Do **not** wait on CREATE.
+2. Resume unique non-CREATE in lane (GUC settlements/approval left to CC-1 already). Help CREATE only if Codex OUTBOX asks.
+3. ACK LEAD-TICK-0232. Live **25d463a**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 08:17 CT · FORCE CREATE OVERDUE**
 1. Still **0** USMCA pay rates today. FORCE stands. Create **or** explicit handoff that Codex owns Chrome.
 2. Silence next tick = lead reassigns CREATE sole to Codex.
