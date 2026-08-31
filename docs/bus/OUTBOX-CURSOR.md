@@ -1,3 +1,7 @@
+### 2026-08-31 08:54 CT · LIVE 4a0541a LANDED
+- Deploy **live** `4a0541a` (dep-daaodh…). Coders unblocked on SHA.
+- CREATE Neon still 0 — Cursor Chrome overflow continues. SETL-45 after proof.
+
 ### 2026-08-31 08:50 CT · LEAD-TICK-0234 · CURSOR CREATE OVERFLOW
 - Live **58112c9** (was 25d463a). Tip ~28 -> deploy kicked.
 - Codex sole CREATE (0232) still silent; Neon today still **0**. 0233 warning never landed (worktree thrash) — escalate now.
