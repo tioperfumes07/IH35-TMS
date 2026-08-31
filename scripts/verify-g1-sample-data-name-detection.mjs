@@ -11,6 +11,12 @@
  * like "Loves-IN471-DEMOTTE"), (2) both customers.routes.ts and vendors.routes.ts wire it into their
  * CREATE path with an explicit-caller-value-always-wins fallback, and (3) the backfill migration
  * uses the SAME pattern (kept in lockstep by construction, not convention) and is idempotent.
+ *
+ * EXTENDED 2026-08-31 (live gap found by CC-1): vendors.routes.ts is not the only vendor-minting
+ * writer. `ensureDriverApVendor` (driver-vendor-link.service.ts) auto-provisions a driver's A/P
+ * vendor from the driver's own name and had never been swept into this guard -- it minted untagged
+ * vendors for TEST-named drivers with zero derivation at all, the same INV-7 sample-debit leak this
+ * guard exists to close off. Now covered as a fourth required writer.
  */
 import { readFileSync } from "node:fs";
 
@@ -18,6 +24,7 @@ const FILES = {
   helper: "apps/backend/src/mdata/sample-data-name-detection.ts",
   customers: "apps/backend/src/mdata/customers.routes.ts",
   vendors: "apps/backend/src/mdata/vendors.routes.ts",
+  driverVendorLink: "apps/backend/src/accounting/driver-vendor-link.service.ts",
   migration: "db/migrations/202613291110_g1_is_sample_data_name_backfill.sql",
 };
 
@@ -43,6 +50,16 @@ function analyze(src) {
   }
   if (!src.vendors.includes('addOptional("is_sample_data", b.is_sample_data ?? (looksLikeSampleDataName(b.name) || undefined));')) {
     failures.push(`${FILES.vendors}: CREATE does not auto-derive is_sample_data from the name (explicit caller value must still win)`);
+  }
+
+  if (!src.driverVendorLink.includes('import { looksLikeSampleDataName } from "../mdata/sample-data-name-detection.js";')) {
+    failures.push(`${FILES.driverVendorLink}: does not import looksLikeSampleDataName`);
+  }
+  if (!src.driverVendorLink.includes("const isSampleData = looksLikeSampleDataName(name) || null;")) {
+    failures.push(`${FILES.driverVendorLink}: ensureDriverApVendor does not derive is_sample_data from the driver's name`);
+  }
+  if (!src.driverVendorLink.includes("VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL, $4)")) {
+    failures.push(`${FILES.driverVendorLink}: ensureDriverApVendor's INSERT does not write the derived is_sample_data value`);
   }
 
   if (!src.migration.includes("customer_name ~* '\\y(test|demo|sample)\\y'")) {
@@ -97,6 +114,28 @@ function selftest() {
       }),
     },
     {
+      name: "driver-vendor-link.service.ts loses the looksLikeSampleDataName import",
+      apply: (s) => ({
+        ...s,
+        driverVendorLink: s.driverVendorLink.replace(
+          'import { looksLikeSampleDataName } from "../mdata/sample-data-name-detection.js";\n',
+          ""
+        ),
+      }),
+    },
+    {
+      name: "ensureDriverApVendor regresses to not deriving is_sample_data at all",
+      apply: (s) => ({
+        ...s,
+        driverVendorLink: s.driverVendorLink
+          .replace("const isSampleData = looksLikeSampleDataName(name) || null;\n\n", "")
+          .replace(
+            "VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL, $4)",
+            "VALUES ($1::uuid, $2::text, 'Other', $3::uuid, NULL)"
+          ),
+      }),
+    },
+    {
       name: "migration's customer backfill regex drifts from the shared pattern",
       apply: (s) => ({ ...s, migration: s.migration.replace("customer_name ~* '\\y(test|demo|sample)\\y'", "customer_name ILIKE '%test%'") }),
     },
@@ -136,6 +175,6 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    "verify-g1-sample-data-name-detection: OK -- customers/vendors CREATE auto-derive is_sample_data from a shared word-boundary name pattern, explicit caller value always wins, backfill migration uses the same pattern idempotently"
+    "verify-g1-sample-data-name-detection: OK -- customers/vendors CREATE and ensureDriverApVendor auto-derive is_sample_data from a shared word-boundary name pattern, explicit caller value always wins where one exists, backfill migration uses the same pattern idempotently"
   );
 }
