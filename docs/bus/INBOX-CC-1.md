@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:42 CT · IDLE DEFECT ~175m — OUTBOX NOW**
+1. Self-ACK. Live **69a5a4e**. ONE: invoice lines+load link · JE 2027 · batch link · dual TB.
+2. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:37 CT · IDLE DEFECT ~170m — OUTBOX NOW**
 1. Self-ACK. Deploy in flight — after live advances: JE dates · batch link · dual TB.
 2. Live was **a3e3af0**; redeploy kicked. Rule 19 no invent reserve.

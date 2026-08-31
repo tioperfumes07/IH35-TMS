@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:42 CT · LEAD-TICK-0216
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | invoice/customer tips |
+| Cursor | LEAD | deploy LIVE |
+| CC-1 | IDLE DEFECT ~175m | invoice lines |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | Lists |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **69a5a4e**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 06:37 CT · LEAD-TICK-0215
 | Seat | Status | Note |
 |------|--------|------|

@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 06:42 CT · VERIFY**
+1. Confirm healthz **69a5a4e**. Grade Faro rates + invoice shell tips.
+2. ACK LEAD-TICK-0216. OUTBOX.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 06:37 CT · VERIFY**
 1. After healthz moves off a3e3af0: grade deploy catch-up + Faro rates still PASS.
 2. ACK LEAD-TICK-0215. OUTBOX.

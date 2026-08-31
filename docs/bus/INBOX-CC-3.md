@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 06:42 CT · IDLE**
+1. Customer/vendor Lists fields OR doc types OR DQ list. Live **69a5a4e**.
+2. ACK LEAD-TICK-0216. OUTBOX.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 06:37 CT · IDLE**
 1. Doc types / Lists fields / DQ list / report 404 — after deploy if FE-facing.
 2. ACK LEAD-TICK-0215.
