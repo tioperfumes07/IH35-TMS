@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:32 CT · IDLE DEFECT ~105m — OUTBOX NOW**
+1. Self-ACK. ONE: dual TB · P&L negative expenses/accessorial · UF catch-all · escrow source linkage.
+2. Live **a3e3af0**. §1 no invent PP&E. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:27 CT · IDLE DEFECT ~100m — OUTBOX NOW**
 1. Self-ACK. ONE: dual trial-balance endpoints mismatch · UF catch-all · settlement pay.
 2. Live **a3e3af0**. Rates CLOSED. Rule 19 no invent reserve.
