@@ -1,10 +1,10 @@
 {
-  "healthzSha": "edb0bf2",
+  "healthzSha": "2832308",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "edb0bf2",
+    "deployedSha": "2832308",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 18812,
+      "title": "FINDING: N/A -- DRIVER-BILL-RATE-MINT-MISMATCH resolved not-a-defect; shared-types fix verified but still not CI-run",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 12:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18812",
+      "sha": "cd94819702",
+      "committedAtIso": "2026-08-31T12:04:09-05:00"
+    },
+    {
+      "number": 18811,
+      "title": "FINDING: DRIVER-BILL-RATE-MINT-MISMATCH + LOAD-3 genuine multi-stop shape proven live",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 11:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18811",
+      "sha": "7c6179c1e8",
+      "committedAtIso": "2026-08-31T11:58:39-05:00"
+    },
+    {
+      "number": 18809,
+      "title": "FINDING: BUS-G1-DONE-SETTLE-TARGETS-2026-08-31",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 11:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18809",
+      "sha": "2832308c55",
+      "committedAtIso": "2026-08-31T11:48:09-05:00"
+    },
+    {
       "number": 18807,
       "title": "FINDING: DISPATCH-STATE-MACHINE-TEST-NOT-COLLECTED",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "",
       "sha": "edb0bf2ae3",
       "committedAtIso": "2026-08-31T11:30:47-05:00"
-    },
-    {
-      "number": 18799,
-      "title": "LAW: OPERATING MODEL — standing queues, lanes, merge/deploy cadence",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18799",
-      "sha": "5a1122bc5d",
-      "committedAtIso": "2026-08-31T11:30:36-05:00"
-    },
-    {
-      "number": 18803,
-      "title": "FINDING: record LOAD-5 stale billing rate",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18803",
-      "sha": "211321ea85",
-      "committedAtIso": "2026-08-31T11:30:09-05:00"
-    },
-    {
-      "number": 18802,
-      "title": "FINDING: N/A — QUEUE-CC-3.md updated to reflect completed items",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 11:30 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18802",
-      "sha": "b63630ec18",
-      "committedAtIso": "2026-08-31T11:30:05-05:00"
     }
   ]
 }

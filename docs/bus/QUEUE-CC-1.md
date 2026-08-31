@@ -12,3 +12,4 @@ OPEN:
 DONE:
 - [x] Rate create → driver_finance ebe87013 + d55f85e4
 - [x] G1: both is_test_data=true (Neon 11:25+11:41 CT)
+- [x] LIVE-CHROME settle completed TEST load → driver_finance.settlement_lines 0->1 (fc42eafe-4465-4675-9d13-ea5b6bdd607c, $120.00) — L-20260831-0010, driver-rate-card path, CC-1 healthz=ef848ab
