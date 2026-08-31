@@ -34,6 +34,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-load-detail-complete-transition"
   },
+  "2440": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-hover-dropdown-close-on-menu-click"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
