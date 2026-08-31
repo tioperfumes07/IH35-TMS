@@ -97,9 +97,15 @@ a lead, a review, or a sequencing decision from me.
 
 | # | Defect | Evidence |
 |---|---|---|
-| 37 | `INV-NUMBERING-01` | Load numbers used as invoice numbers. Real series is `INV-2026-000xx`. |
-| 38 | `SETL-NUMBERING-01` | Same: `S-2026-0003` alongside `S-20260830-0020`. |
-| 39 | `EXP-NUMBERING-01` | **129 of 132 expenses have NULL expense_number.** Cannot be referenced or audited. |
+| 37 | `INV-NUMBERING-01` — **WITHDRAWN** | Load-numbered invoices are intentional: the owner's linkage design carries one trip identifier across the invoice, driver bill, and trip expenses. Do not build a separate invoice-number series. |
+| 38 | `SETL-NUMBERING-01` — **WITHDRAWN** | The trip-linked settlement identifier is intentional. Do not build against this finding. |
+| 39 | `EXP-NUMBERING-01` — **RESPECIFIED** | **129 of 132 expenses have `expense_number = NULL`.** Populate the intentional `<load#>-<seq>` form (for example `L-20260831-0004-1` and `L-20260831-0004-2`). The NULLs are the defect; the format is not. |
+
+Numbering work must preserve the locked pro forma lifecycle in
+`docs/lockdown/OWNER-DECISIONS-FINAL-2026-07-26.md` §B: the Pro Forma Invoice is the same
+invoice record earlier in its life, is created at booking, stays out of A/R, and converts at
+POD to the official invoice for factoring. It is not a separate document type, list, or
+numbering series.
 
 ## OWNER DECISIONS OUTSTANDING
 
