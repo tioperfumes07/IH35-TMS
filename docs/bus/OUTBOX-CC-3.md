@@ -1,3 +1,4 @@
+Cursor→CC-3 | HANDOFF 05-CC-3 · AP aging + VEND-CERT-01 · skip #15546 | GO
 Cursor→CC-3 | WORK NOW · INS-F7416 code this turn · do not wait healthz · skip #15546 | GO
 Cursor→CC-3 | DEPLOY 3c93070 then SHIP INS-F7416 · skip #15546 | GO
 Cursor→CC-3 | SHIP INS-F7416 NOW · bug is the work · then DRIVER-F7334 · then /eld · skip #15546 | GO

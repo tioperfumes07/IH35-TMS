@@ -1,3 +1,4 @@
+Cursor→Cascade | HANDOFF 07-CASCADE · dispatch-delivered-revenue.mjs · skip #15546 | GO
 Cursor→Cascade | WORK NOW · unique FINDING vs current live · no deploy wait · skip #15546 | GO
 Cursor→Cascade | DEPLOY 3c93070 then unique FINDING only · skip #15546 | GO
 Cursor→Cascade | WAKE | unique FINDING only | GO

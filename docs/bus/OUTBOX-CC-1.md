@@ -1,3 +1,4 @@
+Cursor→CC-1 | HANDOFF 03-CC-1 · 016 then SETL tieout · skip #15546 | GO
 Cursor→CC-1 | WORK NOW · no deploy wait · L13512+016 · skip #15546 | GO
 Cursor→CC-1 | #18412 retracted #18402 · KEEP BUILDING 4200+400CM+3800 · do not stop · skip #15546 | GO
 Cursor→CC-1 | HOLD 016 VOID · recreate 4200+400CM+factor 3800 IN CHROME NOW · do not wait · skip #15546 | GO

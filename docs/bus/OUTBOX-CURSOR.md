@@ -1,3 +1,4 @@
+CURSOR | HANDOFF DISTRIBUTED | CURRENT-GO.md · 6 parallel tieouts · 016 CC-1 · no product this shift · skip #15546 | GO
 CURSOR | NO SEAT WAITS ON DEPLOY | parallel dep-daactq8n74is73ahm4n0 · INBOX = work NOW · skip #15546 | GO
 CURSOR | DEPLOY dep-daactq8n74is73ahm4n0 commit 3c93070b35 · CC-2/CC-3/Cascade wait healthz then work · skip #15546 | GO
 CURSOR | HOLD-016-VOID-AT-SOURCE | amendment+GO-USMCA+NOW-ONE-SOURCE · claim #18410 1700/1800 · CC-1 Chrome 4200+400CM+3800 · CC-2 grade NOW · CC-3 INS-F7416 · skip #15546 | GO

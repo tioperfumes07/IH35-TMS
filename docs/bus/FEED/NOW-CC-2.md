@@ -1,5 +1,2 @@
 # NOW — CC-2
-
-**ACK:** `CC-2 | ACK | NO-DEPLOY-WAIT | NOW=grade-the-32 | SHA=live | GO`
-
-Grade the 32 **now**. Do not wait for deploy or 016.
+`docs/lockdown/IH35-HANDOFF-2026-08-31/04-CC-2.md` — faro-factoring-statement.mjs

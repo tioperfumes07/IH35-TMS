@@ -1,3 +1,2 @@
 # NOW — Cursor
-
-Lead. Deploy is **parallel**. Seats work NOW. Skip #15546.
+Lead. `docs/bus/CURRENT-GO.md`. No product this shift.

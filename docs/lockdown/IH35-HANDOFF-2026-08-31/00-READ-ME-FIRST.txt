@@ -1,0 +1,35 @@
+================================================================================
+IH35-TMS — HANDOFF FOLDER, 2026-08-31.  GIVE THIS WHOLE FOLDER TO CURSOR.
+================================================================================
+
+WHAT THIS IS
+  One folder. One file per seat. Cursor distributes; you do not paste six things.
+
+  00-READ-ME-FIRST.txt      <- you are here
+  01-PLAN-AND-SEQUENCE.md   <- the plan, the sequence, and my honest read on
+                               whether the current method is the fastest one
+  02-CURSOR.md   03-CC-1.md   04-CC-2.md
+  05-CC-3.md     06-CODEX.md  07-CASCADE.md
+  data/          <- the Faro/QBO/AlwaysTrack crosswalk
+  specs/         <- specs + migrations already written, not yet merged
+
+THE MEASUREMENT YOU ASKED FOR
+  Urgent 6 = 119 of 128 items done.  NINE items remain.
+  SIX of those nine are the same thing: the tie-out. The other three are
+  VEND-CERT-01, BANK-ECON-04, BANK-SURF-04.
+
+  All six tie-out scripts are EMPTY STUBS today — 13 to 30 lines, one fail()
+  call, zero comparison logic. Writing them needs NO DEPLOY. That is the whole
+  critical path, and it can be done by six seats at once starting now.
+
+THE ONLY TRULY BLOCKING ITEM
+  Invoice 016: $4,200 invoice -> $400 credit memo (unknown_pending_backup) ->
+  factor net $3,800. Until it exists there is not one live factoring advance in
+  the system, so factoring cannot be graded at all.
+
+MY HONEST ANSWER ON THE METHOD
+  The throughput is real — 253 PRs merged in ten hours. The architecture is
+  mostly right. But it is NOT the fastest, and the reason seats pause is not
+  deployments. It is nine "THIS IS NOW" declarations in four hours. Full
+  reasoning and the five fixes are in 01-PLAN-AND-SEQUENCE.md §3.
+================================================================================

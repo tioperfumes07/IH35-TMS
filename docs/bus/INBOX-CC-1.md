@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 WORK NOW · DEPLOY IS NOT YOUR GATE
+# CURRENT GO — SHIFT · 016 THEN SETL TIEOUT
 
-Cursor→CC-1 | **Do not wait for deploy.** L13512 + **016** `$4,200`→`$400` CM `unknown_pending_backup`→factor `$3,800` on **current live**. Combobox Watco blank label = display only; FK is already correct — keep booking. Never `trigger_deploy`. skip #15546 | GO
+Cursor→CC-1 | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/03-CC-1.md`. **BLOCKING:** 016 in Chrome `$4200`→`$400` CM `unknown_pending_backup`→factor `$3800`. **FREE:** `scripts/tieout/settlement-pdf-5753.mjs`. Do not wait. Never `trigger_deploy`. skip #15546 | GO
 
 STOP. “016 owner-gated / skip / $91,275 / stop recreate” GOs are VOID. Carve-out HOLD 016 is VOID.
 
