@@ -1,10 +1,10 @@
 {
-  "healthzSha": "877d769",
+  "healthzSha": "4a0541a",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "877d769",
+    "deployedSha": "4a0541a",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #272 live chrome dispatch planners fully wired timeline driver truck loads planner 35 drivers new deploy a3f66aa",
+      "number": 18735,
+      "title": "FINDING: LEAD-TICK-0234B-LIVE-LANDED",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:44 AM CT",
-      "url": "",
-      "sha": "5d328520a8",
-      "committedAtIso": "2026-08-31T07:44:10-05:00"
+      "mergedAtCt": "08/31/2026, 08:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18735",
+      "sha": "16d815cb96",
+      "committedAtIso": "2026-08-31T08:54:59-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #271 live chrome dispatch overview border crossings fleet OOS 14 detention 2 new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #363 API drug-alcohol annual-rate-status 200 OK year 2026 pool size 18 drug minimum 50pct alcohol minimum 10pct on track false FMCSA random testing rate compliance compliance module 11 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:43 AM CT",
+      "mergedAtCt": "08/31/2026, 08:54 AM CT",
       "url": "",
-      "sha": "669e11f0d4",
-      "committedAtIso": "2026-08-31T07:43:13-05:00"
+      "sha": "f16249fcc8",
+      "committedAtIso": "2026-08-31T08:54:41-05:00"
+    },
+    {
+      "number": 18734,
+      "title": "FINDING: PAY-RATE-TEST-DATA-NOT-G1-EXCLUDED -- confirmed gap; SETL-45 create routed to CC-3 per owner ruling",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 08:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18734",
+      "sha": "e10bded323",
+      "committedAtIso": "2026-08-31T08:54:24-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #270 live chrome banking page fully wired 4 accounts 3193 401 txns Plaid BoA factoring escrow corrects 237 new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #362 API form-425c profiles 200 OK company name case number district division judge EIN filing address NAISC questionnaire bankruptcy filing profile compliance module 10 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:42 AM CT",
+      "mergedAtCt": "08/31/2026, 08:53 AM CT",
       "url": "",
-      "sha": "2fdb6cf005",
-      "committedAtIso": "2026-08-31T07:42:19-05:00"
+      "sha": "ec9b86bf0a",
+      "committedAtIso": "2026-08-31T08:53:54-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #269 live chrome invoices list fully wired 114 invoices 191K total 37K open load linkage every row corrects 238 249 new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #361 API form-425c banking-summary 200 OK line 19 opening cash 0 line 20 receipts 209278 line 21 disbursements 198145 line 22 net cash flow 11132 line 23 ending cash 11132 US Trustee monthly operating report compliance module 9 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:41 AM CT",
+      "mergedAtCt": "08/31/2026, 08:53 AM CT",
       "url": "",
-      "sha": "f12929464c",
-      "committedAtIso": "2026-08-31T07:41:34-05:00"
-    },
-    {
-      "number": 18722,
-      "title": "FINDING: N/A -- CLS-RESOLVE-OPCO-WITHOUT-GUC triage 10/15 done, all false positives; related defense-in-depth observation noted honestly as unconfirmed",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:40 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18722",
-      "sha": "14c580c84f",
-      "committedAtIso": "2026-08-31T07:40:51-05:00"
+      "sha": "805f6aa720",
+      "committedAtIso": "2026-08-31T08:53:10-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #268 live chrome bills page fully wired 26 bills 8298 open 3 overdue WO linkage new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #360 API filings-dashboard 200 OK items counts Texas Business Personal Property Tax Rendition Bexar overdue drill through compliance module 8 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:40 AM CT",
+      "mergedAtCt": "08/31/2026, 08:52 AM CT",
       "url": "",
-      "sha": "71a800a2e2",
-      "committedAtIso": "2026-08-31T07:40:44-05:00"
+      "sha": "8426ecb559",
+      "committedAtIso": "2026-08-31T08:52:18-05:00"
+    },
+    {
+      "number": 18733,
+      "title": "FINDING: LEAD-TICK-0234-CURSOR-CREATE-OVERFLOW",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 08:52 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18733",
+      "sha": "c74a1b7486",
+      "committedAtIso": "2026-08-31T08:52:03-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #267 live chrome factoring page fully wired 1 batch voided 0 invoices Faro Factoring corrects 235 new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #359 API fmcsa-safer status 200 OK coverage 100pct meets threshold true stale customers 1 stale vendors 1 FMCSA SAFER carrier verification compliance module 7 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:39 AM CT",
+      "mergedAtCt": "08/31/2026, 08:51 AM CT",
       "url": "",
-      "sha": "40be044049",
-      "committedAtIso": "2026-08-31T07:39:53-05:00"
+      "sha": "b552c1fb52",
+      "committedAtIso": "2026-08-31T08:51:36-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #266 live chrome reports page fully wired 19 reports 6 scheduled IFTA preparer 15 runs 7d new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #358 API form-425c 200 OK reports draft filed petition date case number amended from uuid bankruptcy filing management compliance module 6 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:39 AM CT",
+      "mergedAtCt": "08/31/2026, 08:50 AM CT",
       "url": "",
-      "sha": "18f9e65cf7",
-      "committedAtIso": "2026-08-31T07:39:10-05:00"
+      "sha": "4a0541a8ae",
+      "committedAtIso": "2026-08-31T08:50:53-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #265 live chrome expenses page fully wired 200 rows 133K matched 110 load vendor JE bank linkage corrects 245 new deploy a3f66aa",
+      "title": "Devin-A OUTBOX: finding #357 API property-tax appraisal-districts 200 OK Bexar Cameron Dallas El Paso CAD name is active TX county compliance module 5 verified routes new deploy 58112c9",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:38 AM CT",
+      "mergedAtCt": "08/31/2026, 08:50 AM CT",
       "url": "",
-      "sha": "840d8b5028",
-      "committedAtIso": "2026-08-31T07:38:19-05:00"
-    },
-    {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #264 live chrome driver finance settlements fully wired 41 settlements 17 open bills 8131 load linkage corrects 230 new deploy a3f66aa",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 07:37 AM CT",
-      "url": "",
-      "sha": "30fd24bc94",
-      "committedAtIso": "2026-08-31T07:37:27-05:00"
+      "sha": "c90166766d",
+      "committedAtIso": "2026-08-31T08:50:16-05:00"
     }
   ]
 }
