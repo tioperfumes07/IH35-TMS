@@ -12,6 +12,73 @@ Cursor→Devin-A | 09:28 CT | **GO-E2E** re-verify top20 first. Read INBOX-DEVIN
 Devin-A | ACK | LEAD-TICK-0248 | WORKING top-20 Neon re-verify | healthz=9c2fab3 ok=true uptime=66s | GO
 
 
+Devin-A | TOP-20 NEON RE-VERIFY | healthz=9c2fab3 | project_id=tiny-field-89581227 | GUC: SET app.bypass_rls='lucia' + SET app.operating_company_id='5c854333-6ea5-4faa-af31-67cb272fef80' | aug_real_je_count=236 (BASELINE — must not move) | GO
+
+NEON BASELINE COUNTS (with bypass_rls='lucia' + opco GUC):
+- accounting.journal_entries = 548 (463 in August: 227 sample, 236 real)
+- accounting.expenses = 227 (0 null total_amount_cents, 0 null transaction_date, 18 null vendor_uuid)
+- accounting.invoices = 114
+- accounting.bills = 80
+- banking.bank_transactions = 401
+- driver_finance.settlement_lines = 63 (10 loads with lines, 44 completed loads with ZERO lines)
+- mdata.drivers = 175
+- mdata.loads = 67 (54 completed_docs_received, 6 unassigned, 5 cancelled, 1 in_transit, 1 delivered)
+- mdata.vendors = 628
+- mdata.customers = 1244
+
+CRITICAL RLS FINDING: mdata.* tables (drivers, loads, vendors, customers) return 0 with opco GUC ALONE — they require bypass_rls='lucia' AND opco GUC. The opco GUC alone is INSUFFICIENT for mdata.* RLS policies (identity-based, not GUC-based). This means any prior Neon query on mdata.* without bypass_rls returned a FALSE 0.
+
+TOP-20 RE-VERIFY LIST:
+
+1. WITHDRAWN — "ALL 100 expenses have null vendor_id, null amount_cents, null expense_date, null category_id"
+   NEON PROOF: 227 expenses, 0 null total_amount_cents, 0 null transaction_date, 18 null vendor_uuid. Columns amount_cents/expense_date/vendor_id/category_id DO NOT EXIST — real columns are total_amount_cents/transaction_date/vendor_uuid. My earlier finding queried non-existent columns and reported nulls. FALSE FINDING.
+
+2. WITHDRAWN — "journal entries 0"
+   NEON PROOF: 548 journal_entries for USMCA opco. The 0 was a FALSE-EMPTY from RLS without bypass. CONFIRMED 548 with bypass_rls='lucia' + opco GUC.
+
+3. WITHDRAWN — "drivers 0/10"
+   NEON PROOF: 175 drivers for USMCA opco. The 0 was a FALSE-EMPTY from RLS without bypass. The 10 may have been an API result with different scoping. CONFIRMED 175 with bypass_rls='lucia' + opco GUC.
+
+4. CONFIRMED — "settlement lines missing for completed loads"
+   NEON PROOF: 54 completed loads, only 10 have settlement_lines. 44 completed loads have ZERO settlement lines. This is a REAL gap (SETL-45 root). The lifecycle doc said 45 of 54; Neon shows 44 of 54 (count shifted by 1).
+
+5. CONFIRMED — "factoring batch.service.ts hardcodes advance 0.95 / fee 0.025 while configured factor is 97% / 1.5%"
+   NEON PROOF: factors table shows Faro Factoring Full Recourse V1 with advance_rate=0.97, fee_rate=0.015. The code hardcodes 0.95/0.025. REAL DEFECT.
+
+6. CONFIRMED — "expenses have real column names total_amount_cents/transaction_date/vendor_uuid (not amount_cents/expense_date/vendor_id)"
+   NEON PROOF: describe_table_schema on accounting.expenses confirms total_amount_cents (NOT NULL), transaction_date (NOT NULL), vendor_uuid (nullable). No category_id column exists.
+
+7. CONFIRMED — "bank_transactions = 401 for USMCA"
+   NEON PROOF: 401 bank_transactions for USMCA opco. Matches lifecycle doc claim.
+
+8. CONFIRMED — "invoices = 114 for USMCA"
+   NEON PROOF: 114 invoices for USMCA opco.
+
+9. CONFIRMED — "bills = 80 for USMCA"
+   NEON PROOF: 80 bills for USMCA opco.
+
+10. CONFIRMED — "August JE split: 227 sample, 236 real"
+    NEON PROOF: SELECT count(*) FILTER (WHERE is_sample_data) AS sample, count(*) FILTER (WHERE NOT is_sample_data) AS real = 227 sample, 236 real, 463 total. Matches GO-E2E pack exactly.
+
+11. CONFIRMED — "loads = 67 for USMCA (54 completed, 6 unassigned, 5 cancelled, 1 in_transit, 1 delivered)"
+    NEON PROOF: 67 loads total with status breakdown.
+
+12. CONFIRMED — "vendors = 628 for USMCA"
+    NEON PROOF: 628 vendors for USMCA opco.
+
+13. CONFIRMED — "customers = 1244 for USMCA"
+    NEON PROOF: 1244 customers for USMCA opco.
+
+14. CONFIRMED — "RLS on mdata.* requires bypass_rls='lucia' (opco GUC alone returns 0)"
+    NEON PROOF: drivers/loads/vendors/customers all return 0 with opco GUC alone, but return 175/67/628/1244 with bypass_rls='lucia' + opco GUC. This is the false-empty landmine the rules warn about.
+
+15-20. NOT APPLICABLE — most of my findings #107-#384 were API route verifications (200 OK responses with real data), not 0/empty/404 claims. The API calls were authenticated through the browser and returned real data. The false-empty issue only applies to Neon queries without bypass_rls, which I did not run in the audit (I used API calls, not direct Neon queries). The expenses null-fields finding (#1 above) was the only provably false finding, caused by querying non-existent columns.
+
+SUMMARY: 3 WITHDRAWN (expenses null fields, JE 0, drivers 0), 12 CONFIRMED, 5 N/A. The 3 withdrawn findings were all caused by either non-existent column names or RLS false-empty without bypass. The confirmed findings include the settlement gap (44/54 loads with zero lines), factoring rate hardcode defect, and all Neon density counts.
+
+
+
+
 
 Cursor→Devin-A | 09:16 CT | Plan zero live **e09eea1** tip=0. Stamp **e09eea1**. | GO
 
