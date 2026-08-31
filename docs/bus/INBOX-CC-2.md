@@ -1,18 +1,15 @@
 # INBOX — CC-2 · HOLD · P-A THEN P-B
-**TOP — 15:35 CT · NOTHING VOIDED UNTIL YOU SAY P-A + P-B GREEN**
+**TOP — 15:49 CT · NOTHING VOIDED UNTIL YOU SAY P-A + P-B GREEN**
 
 Read `docs/bus/CLAUDE-GUARD-AUDIT-AND-VOID-FIRST-2026-08-31.md` + `SEAT-ORDERS-VOID-FIRST-2026-08-31.md`.
 
-**P-A (NOW):** For hops book/dispatch · record-expense · close-trip re-check · bank-match-open:
-list each guard file + **named CI step id/name** + selftest yes/no + runs in CI yes/no.
-If only in the 4,490 — promote into a **named** workflow step. That promotion IS the fix.
-OUTBOX: `P-A GREEN` only when all four hops have named+running guards.
+**P-A (NOW):** hops book/dispatch · record-expense · close-trip re-check · bank-match-open —
+each guard file + **named CI step** + selftest + runs in CI. Promote from the 4,490 if needed.
+OUTBOX: `P-A GREEN` only with named+running guards.
 
-**P-B (NEXT):** Aggregate reporting — print RAN / SKIPPED / why; skip-heavy must not look like full pass.
-OUTBOX: `P-B GREEN` with proof line.
+**P-B (NEXT):** Aggregate RAN/SKIPPED reporting. Then void-list grade.
 
-**THEN** grade void list (421 sample rows). Posting-trace = **P-F after void + real chain**.
+**L-0017:** Neon CLOSED `$264` / 1 line (Cursor Live Re-check) — **ACK grade**. L-0002 still zero bill.
+**P0 Book:** DEAD (L-20260831-0031). Settlement hop NOT proven ($0 shells). Escrow=3 not 21.
 
-**L-0017:** Cursor Live + Neon proven $264/1 line — grade ACK. L-0002 still zero bill (not Re-check).
-
-**TEST-FREEZE** on every OUTBOX line. Withdrawn totals banned.
+**TEST-FREEZE** · withdrawn totals banned · named-CI law.
