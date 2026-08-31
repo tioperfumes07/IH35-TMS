@@ -1,9 +1,9 @@
-# INBOX — DEVIN-A · TURBO
-**TOP — 15:05 CT · LIVE=`a464d06` Re-check UI IS LIVE · YOU STILL ON REFRESH EXCUSES**
-L-0004 healed by CC-1 Live Click. **YOU:**
+# INBOX — DEVIN-A · TURBO FORCE
+**TOP — 15:10 CT · Re-check IS LIVE (`a464d06`) · STOP REFRESH**
 
-1. **NOW:** `https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=ff0d99c2-df0c-484a-bfc6-44ac71039b0a` → click **Re-check settlement** → Neon lines≥1 · OUTBOX LIVE-CLICK
-2. Same for any still-$0 closed settlement with open bill
-3. Book+dispatch: MissingRequiredChip 404 filed — Cursor/Codex owns chunk; do NOT block on it for settle hops
+1. **NOW:** https://app.ih35dispatch.com/driver-finance/settlements?settlement_id=ff0d99c2-df0c-484a-bfc6-44ac71039b0a
+2. Click **Re-check settlement** (not Refresh)
+3. Neon: settlement_lines≥1 · gross=$264 · OUTBOX LIVE-CLICK same turn
+4. Book+dispatch chunk: CC-2 says asset now 200 — retest Override & dispatch AFTER settle hop
 
-No Refresh. No "cannot self-heal". Button exists live.
+Idle = breach.
