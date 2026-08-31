@@ -42,7 +42,7 @@ const FLAKY_ENDPOINTS = [
     path: "/api/v1/catalogs/fleet/tire-positions",
     query: "is_active=true&limit=500",
     routeFile: "apps/backend/src/catalogs/fleet/tire-positions.routes.ts",
-    resilienceNeedles: ["max(500)", "tirePositionsListQuerySchema"],
+    resilienceNeedles: [["max(500)", "listLimitMax: 500"], ["tirePositionsListQuerySchema", "createCatalogRoutes"]],
   },
 ];
 
@@ -60,6 +60,19 @@ function readText(relPath) {
   const abs = path.join(ROOT, relPath);
   if (!fs.existsSync(abs)) fail(`missing file: ${relPath}`);
   return fs.readFileSync(abs, "utf8");
+}
+
+function routeIsRegistered(source, endpointPath) {
+  if (source.includes(endpointPath)) return true;
+  const slash = endpointPath.lastIndexOf("/");
+  const prefix = endpointPath.slice(0, slash);
+  const segment = endpointPath.slice(slash + 1);
+  return source.includes(`routePrefix: "${prefix}"`) && source.includes(`urlSegment: "${segment}"`);
+}
+
+function hasResilienceMarker(source, marker) {
+  const alternatives = Array.isArray(marker) ? marker : [marker];
+  return alternatives.some((needle) => source.includes(needle));
 }
 
 function staticChecks() {
@@ -92,15 +105,37 @@ function staticChecks() {
 
   for (const endpoint of FLAKY_ENDPOINTS) {
     const source = readText(endpoint.routeFile);
-    if (!source.includes(endpoint.path)) {
+    if (!routeIsRegistered(source, endpoint.path)) {
       fail(`${endpoint.routeFile} must register ${endpoint.path}`);
     }
-    for (const needle of endpoint.resilienceNeedles) {
-      if (!source.includes(needle)) {
-        fail(`${endpoint.routeFile} missing resilience marker "${needle}"`);
+    for (const marker of endpoint.resilienceNeedles) {
+      if (!hasResilienceMarker(source, marker)) {
+        const expected = Array.isArray(marker) ? marker.join(" or ") : marker;
+        fail(`${endpoint.routeFile} missing resilience marker "${expected}"`);
       }
     }
   }
+}
+
+function selftest() {
+  const canonicalFactoryRoute = `
+    createCatalogRoutes(app, {
+      urlSegment: "tire-positions",
+      routePrefix: "/api/v1/catalogs/fleet",
+      listLimitMax: 500,
+    });
+  `;
+  if (!routeIsRegistered(canonicalFactoryRoute, "/api/v1/catalogs/fleet/tire-positions")) {
+    fail("selftest: canonical factory route must PASS");
+  }
+  const plantedMissingSegment = canonicalFactoryRoute.replace('urlSegment: "tire-positions"', 'urlSegment: "tires"');
+  if (routeIsRegistered(plantedMissingSegment, "/api/v1/catalogs/fleet/tire-positions")) {
+    fail("selftest: planted missing endpoint segment must FAIL");
+  }
+  if (!hasResilienceMarker(canonicalFactoryRoute, ["max(500)", "listLimitMax: 500"])) {
+    fail("selftest: canonical factory limit must PASS");
+  }
+  console.log("verify:no-flaky-endpoints-on-page-load --selftest PASS");
 }
 
 async function runtimeProbe(baseUrl, cookie, companyId) {
@@ -150,4 +185,5 @@ async function main() {
   console.log(`verify:no-flaky-endpoints-on-page-load PASS (static+runtime: ${FLAKY_ENDPOINTS.length} endpoints)`);
 }
 
-main().catch((error) => fail(String(error?.message ?? error)));
+if (process.argv.includes("--selftest")) selftest();
+else main().catch((error) => fail(String(error?.message ?? error)));

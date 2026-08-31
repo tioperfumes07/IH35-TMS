@@ -247,6 +247,7 @@ export function DriverDetailPage() {
     qualified_at: companyToday(),
     notes: "",
   });
+  const [newQualificationRates, setNewQualificationRates] = useState<Record<string, string>>({});
   const [rateChangeForm, setRateChangeForm] = useState<Record<string, string>>({
     amount: "",
     // DRV-MONEY-F6959 — companyToday(), not new Date().toISOString() (UTC): a qualification-rate
@@ -520,6 +521,7 @@ export function DriverDetailPage() {
         qualified_at: companyToday(),
         notes: "",
       });
+      setNewQualificationRates({});
       pushToast("Qualification added", "success");
     },
     onError: () => pushToast("Failed to add qualification", "error"),
@@ -817,6 +819,9 @@ export function DriverDetailPage() {
   const safetyEvents = safetyEventsQuery.data ?? [];
   const equipmentTypeOptions =
     equipmentTypesQuery.data?.filter((type) => !qualifications.some((qualification) => qualification.equipment_type_id === type.id)) ?? [];
+  const selectedNewQualificationType = equipmentTypeOptions.find(
+    (type) => type.id === newQualificationForm.equipment_type_id
+  );
 
   const selectedRateFromCard = qualifications
     .find((qualification) => qualification.id === selectedQualificationId)
@@ -1918,6 +1923,16 @@ export function DriverDetailPage() {
                 equipment_type_id: newQualificationForm.equipment_type_id,
                 qualified_at: newQualificationForm.qualified_at || undefined,
                 notes: newQualificationForm.notes || undefined,
+                initial_rates: selectedNewQualificationType?.line_items.flatMap((lineItem) => {
+                  const amount = newQualificationRates[lineItem.id]?.trim();
+                  if (!amount) return [];
+                  return [{
+                    line_item_template_id: lineItem.id,
+                    amount: Number(amount),
+                    change_reason: "initial_hire" as const,
+                    change_notes: "Initial agreed rate entered with equipment qualification",
+                  }];
+                }),
               },
             });
           }}
@@ -1931,9 +1946,10 @@ export function DriverDetailPage() {
             */}
             <ReferenceSelect
               value={newQualificationForm.equipment_type_id || null}
-              onChange={(nextValue) =>
-                setNewQualificationForm((current) => ({ ...current, equipment_type_id: nextValue ?? "" }))
-              }
+              onChange={(nextValue) => {
+                setNewQualificationForm((current) => ({ ...current, equipment_type_id: nextValue ?? "" }));
+                setNewQualificationRates({});
+              }}
               options={equipmentTypeOptions.map((option) => ({ value: option.id, label: option.name }))}
               createKind="equipment_type"
               operatingCompanyId={String(driver?.operating_company_id ?? companyId)}
@@ -1946,6 +1962,34 @@ export function DriverDetailPage() {
               }}
             />
           </div>
+          {selectedNewQualificationType?.line_items.length ? (
+            <fieldset className="space-y-2 rounded-sm border border-gray-200 p-3">
+              <legend className="px-1 text-xs font-semibold text-gray-700">Initial pay rates</legend>
+              <p className="text-xs text-gray-600">
+                Enter only rates documented for this driver. Blank lines are not created.
+              </p>
+              {selectedNewQualificationType.line_items.map((lineItem) => (
+                <div key={lineItem.id} className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-gray-600" htmlFor={`initial-rate-${lineItem.id}`}>
+                    {lineItem.name} ({lineItem.unit.replaceAll("_", " ")})
+                  </label>
+                  <input
+                    id={`initial-rate-${lineItem.id}`}
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    inputMode="decimal"
+                    value={newQualificationRates[lineItem.id] ?? ""}
+                    onChange={(event) =>
+                      setNewQualificationRates((current) => ({ ...current, [lineItem.id]: event.target.value }))
+                    }
+                    className={FORM_INPUT_CLASS}
+                    placeholder="Leave blank if not documented"
+                  />
+                </div>
+              ))}
+            </fieldset>
+          ) : null}
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-600">Qualified date</label>
             <DatePicker
