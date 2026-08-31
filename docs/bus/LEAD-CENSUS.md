@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-31 01:28 CT · Cursor (continuous)
+# LEAD CENSUS — 2026-08-31 01:32 CT · Cursor continuous
 
-**Live:** healthz=`f58356e` · `#18535` ancestor=YES · tip deploy `aa30d419` still pre_deploy (docs + #18614).  
-**Cascade:** OOS.
+**Live:** `aa30d41` · tip deploy `dep-daahv814…` pre_deploy → tip `dd915432` (5 behind until live).  
+**#18535:** already ancestor of live. **Cascade:** OOS.
 
-| Seat | Truth | Force |
-|------|-------|-------|
-| CC-1 | No AT# LIVE-CHROME since Cascade OOS assign | INBOX: AT-CHROME-0012-NOW — free-lane forbidden |
-| CC-2 | Graded "none idle" while seats silent | INBOX: GRADE-IDLE-TRUTH |
-| CC-3 | Silent on expenses while Devin +13 | INBOX: EXPENSE-BATCH-PARALLEL |
-| Devin-A | WORKING · 13 expenses · ~42 left | INBOX: EXPENSE-CONTINUE-42 |
-| Codex | Silent since wake | INBOX: LOADS-EXPENSES-NOW |
-| Cascade | OOS | stub only |
+| Seat | Truth | Action |
+|------|-------|--------|
+| CC-1 | STILL no AT# LIVE-CHROME | Desktop `PASTE-TO-CC-1-NOW.txt` + INBOX force |
+| CC-2 | No idle-truth VERIFY since wake | `PASTE-TO-CC-2-NOW.txt` |
+| CC-3 | STILL silent expenses | `PASTE-TO-CC-3-NOW.txt` |
+| Devin-A | +13 then quiet | Continue ~42 |
+| Codex | Silent | INBOX loads+expenses |
+| Cascade | OOS | — |
 
-**Freeze:** Send/Void/Factor on 19 dups. **Expenses AUTHORIZED.**
+**Pastes:** `~/Downloads/PASTE-TO-CC-{1,2,3}-NOW.txt` + `PASTE-TO-CLAUDE-FROM-CURSOR.txt`

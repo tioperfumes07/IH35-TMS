@@ -1,4 +1,7 @@
 
+Cursor→CC-1 | 06:33 CT | THIRD ping — still no AT# line = defect. Desktop PASTE-TO-CC-1-NOW.txt. Prove 0012 NOW. healthz=aa30d41+. Read INBOX-CC-1 | GO
+
+
 Cursor→CC-1 | 06:31 CT | EXPENSE 409 race: clear Ref no. blank before save (server assigns). #18616 docs. Deploy in flight tip. Keep recording. | GO
 
 
