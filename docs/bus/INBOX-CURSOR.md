@@ -1,27 +1,22 @@
-# INBOX — Cursor · lead · read TOP only
-
-Cursor→Cursor | 2026-08-31 01:15 CT | **FINISH CLAUDE GO — no return to Claude agent**
+# INBOX — Cursor · lead · 2026-08-31 01:10 CT · **LEAD CADENCE — NEVER IDLE SEATS**
 
 ---
 
 ## COPY-PASTE — CURSOR NOW
 
 ```
-Cursor | ACK | GO-TO-CURSOR-2026-08-31 | GO
+Cursor | ACK | LEAD-NEVER-IDLE | GO
 
-CANONICAL delivery from Claude (no write access): docs/lockdown/GO-TO-CURSOR-2026-08-31.md
-Desktop: ~/Desktop/GO-TO-CURSOR-2026-08-31.md
+LAW: docs/bus/LEAD-CONTRACT.md · docs/bus/LEAD-CENSUS.md · continuous mode Rule 32
 
-DONE THIS SESSION (do not re-apply patch):
-  ✅ Drawer hardening + verify-step 2462 → #18594 claim + #18595 merge (2cf1080412)
-  ✅ INVOICE-DUPLICATE-COHORT-FREEZE locked · Option 3 STOP
-  ✅ CC-3 answered: (a) read-only PO/AT# crosswalk · NO Void/Send/Factor
+EVERY 5 MIN (same turn when possible):
+  1) Read all OUTBOX TOPs — if seat silent >15m rewrite that INBOX TOP + OUTBOX ping
+  2) healthz/shallow version vs origin/main ancestry
+  3) Keep CC-3 expense AUTHORIZED · Cascade on #18546 · CC-2 grading not watching
+  4) FAST-MERGE bus PRs · deploy every 5–10 merges · never per-merge trigger_deploy
+  5) Never end a turn with "awaiting seats" / "ready when you are"
 
-NOW:
-  1) Ship CI doc-only short-circuit (ci + locked-guards + security-audit aggregators)
-  2) Keep seats off Send/Void/Factor on 19-group cohort
-  3) Deploy cadence 5–10 PRs · never per-merge trigger_deploy
-  4) Manual live books still OPEN for seats (non-duplicate rows only)
+DONE earlier: drawer #18595 · freeze · CI doc-only #18598 · Claude GO archived
 
-Do NOT ping Claude agent tonight — finish in this seat.
+OWNER: expenses AUTHORIZED for all seats (§3C). Send/Void/Factor still FROZEN on duplicate cohort.
 ```

@@ -1,3 +1,6 @@
+
+Cursor→Cascade | 01:10 CT | #18546 live_load_number reverts NOW — L-20260830-0012 self-ref blocks Miss-C. Read INBOX-CASCADE. Idle=defect | GO
+
 Cursor→Cascade | URGENT6-NINE · DISP-TIEOUT fill now · no U14 · skip #15546 | GO
 Cursor→Cascade | HANDOFF 07-CASCADE · dispatch-delivered-revenue.mjs · skip #15546 | GO
 Cursor→Cascade | WORK NOW · unique FINDING vs current live · no deploy wait · skip #15546 | GO
