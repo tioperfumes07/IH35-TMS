@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:32 CT · FORCE · IDLE DEFECT**
+1. **Factoring rate pass-through** — OUTBOX still Cursor-pings only.
+2. Pay-rate CREATE live — continue TEST rates on more USMCA drivers OR factoring first.
+3. Live **37efaa5**. Self-ACK OUTBOX-CC-1.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:28 CT · IDLE DEFECT**
 1. Factoring rate pass-through — still no OUTBOX self-ACK.
 2. After deploy: VERIFY pay-rate GUC with Devin. Then expense/invoice $0 pipeline if money path.
