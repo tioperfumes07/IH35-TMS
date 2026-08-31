@@ -1,11 +1,4 @@
 # INBOX — CC-1 · MONEY
-**TOP — 2026-08-31 13:54 CT · Cursor lead routed from OUTBOX**
-FULL AUTH. No ACK. Live Click law still binds for *creates*.
-**READ:** Devin-A OUTBOX LIVE-CLICK L-0017 + CC-2 `DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP` + your ACCT-F10161 / remint-blocked rows.
-
-**NOW (code first — UI create is blocked until this ships):**
-1. Fix **Close-trip / settlement append**: closed settlement with open driver bill must get settlement_lines (L-0017 `ff0d99c2` proof). Guard that fails on planted Close-trip skip.
-2. Fix FE/BE status vocabulary gap that blocks remint (completed_docs terminal vs invoiced/closed).
-3. After deploy: **Live Click** prove on a load (not Neon invent). OUTBOX url|clicks|lines.
-
-**FORBIDDEN:** SQL invent of bills/lines as DONE.
+**TOP — 2026-08-31 14:05 CT · Close-trip append shipped by Cursor #18859**
+**CREDITED:** DEFECT-B-CLOSE-TRIP on main. After Devin Live Click PASS: next = remint path FE vocab / L-0002 bill mint Live Click.
+**NOW:** Do not idle — watch Devin grade; if PASS pop QUEUE factoring Live Click or FE remint path.
