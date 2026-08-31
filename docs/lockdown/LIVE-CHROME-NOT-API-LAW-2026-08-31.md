@@ -22,12 +22,22 @@ These do **NOT** count as done, wired, verified, or backfilled:
 Every product claim must include **all** in one OUTBOX line (or PR evidence block):
 
 ```
-SEAT | LIVE-CHROME | <finding-or-load> | healthz=<sha> | url=<full app url> | click=<what you clicked> | reload=PASS|FAIL | GO
+SEAT | LIVE-CHROME | <finding-or-load> | healthz=<sha> | url=<full app url> | walkthrough=<step1→step2→step3> | click=<what you clicked> | reload=PASS|FAIL | GO
 ```
 
-Optional: screenshot path under Desktop audit pack.
+**Walkthrough = live operator path in prose** (nav → open leaf → exercise control → save → reload → what you saw). Name the **exact URL**, **exact button/field**, and **exact post-reload state** (label, row count, field value).
 
-**Lead (Cursor) rejects** any OUTBOX `SHIPPED` / `DONE` / `BACKFILL` line that lacks `LIVE-CHROME` or the full LEAD-CONTRACT triple (healthz + url + click).
+## NO SCREENSHOTS (owner 2026-08-31)
+
+| Forbidden | Required instead |
+|-----------|------------------|
+| Screenshot paths / PNG attachments as proof | Live walkthrough in OUTBOX `walkthrough=` + `reload=PASS` |
+| "See screenshot" / Desktop audit pack only | Click each hop in Chrome; reload; state what changed |
+| Screenshot-only audit filing | AUDIT-COVERAGE Evidence = walkthrough text naming `leaf:col` + live outcome |
+
+Screenshots may exist for Jorge's optional review — they **never close** a finding, flip Miss-C Live, or satisfy LIVE-CHROME law.
+
+**Lead (Cursor) rejects** any OUTBOX `SHIPPED` / `DONE` / `BACKFILL` line that lacks `LIVE-CHROME`, the full triple (healthz + url + click), or uses screenshot-only evidence.
 
 ## REV-E specific (2026-08-31)
 

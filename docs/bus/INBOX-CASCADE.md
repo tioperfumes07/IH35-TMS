@@ -22,11 +22,11 @@ TRACK B — L-0014 after deploy
 When healthz ancestry includes eaf1378034:
   1) Settlement Detail S-20260830-0014 → Close trip → reload trip_closed_at stamped
   2) Edit Load L-0014 → clear AlwaysTrack → save → reload NULL
-OUTBOX: CASCADE | LIVE-CHROME | close-trip | S-0014 | healthz=<sha> | click=Close trip | reload=PASS | GO
+OUTBOX: CASCADE | LIVE-CHROME | close-trip | S-0014 | healthz=<sha> | url=<detail full> | walkthrough=settlements-list→row→detail→Close trip→reload | click=Close trip | reload=PASS | GO
 
 Until deploy: unique FINDINGs only (factoring 5, legal 3) — do not idle
 
-FORBIDDEN: Neon UPDATE | redo 10 cleared loads | API PATCH
+FORBIDDEN: Neon UPDATE | redo 10 cleared loads | API PATCH | screenshots as proof
 ```
 
 ---
