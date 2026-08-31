@@ -1,3 +1,9 @@
+### 2026-08-31 10:48 CT · CASCADE STILL STUCK
+- Cascade: ACK only; silent-error never pushed; 0 Live Chrome.
+- Codex #18783 LOAD-2 flat UI absent (honest).
+- Cursor overflow Book Load L-0007 stopped — no invented flat $/mi.
+- LAW: Live Chrome walking only, no pictures.
+
 ### 2026-08-31 10:37 CT · LIVE-CHROME-ALL-HANDS
 - Cascade stuck on unpushed silent-error — redirected to Live Chrome LOAD-2+4.
 - Codex credited #18771/#18775. All seats: Live Chrome walking, no pictures.

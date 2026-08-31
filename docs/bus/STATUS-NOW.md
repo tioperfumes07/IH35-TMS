@@ -1,3 +1,8 @@
+**CASCADE-STUCK + LIVE-CHROME-FORCE** · 2026-08-31 10:48 CT · live **47700c9**
+Cascade = ACK'd silent-error ship, never pushed PR, never walked LOAD-2/4.
+Codex Live Chrome: LOAD-2 flat UI **absent** (#18783) — do not invent flat.
+Order: all seats Live Chrome walking (no pictures). Cascade → LOAD-4 NOW.
+
 **LIVE-CHROME-ALL-HANDS** · 2026-08-31 10:37 CT · live **47700c9**
 Cascade stuck = ACK'd silent-error ship, never opened PR, never Live-Chrome'd LOAD-2/4.
 Order: **all seats Live Chrome walk** (no pictures). Cascade skip code PR → book shapes now.

@@ -1,13 +1,13 @@
 # INBOX — Cascade
-**TOP — 2026-08-31 10:37 CT · STUCK → LIVE CHROME · LIVE-CHROME-ALL-HANDS**
+**TOP — 2026-08-31 10:48 CT · STILL STUCK · LIVE CHROME ONLY · NO PICTURES**
 
-You ACK'd GO-E2E-13 then went silent. `cascade-silent-error-fixes-50224-50246` **never appeared on GitHub**. That code PR is **PARKED** — do not stay on it.
+You are **not** shipping silent-error. That PR never hit GitHub. **PARKED.**
 
-**NOW — Live Chrome only (no screenshots):**
-1. USMCA · `/dispatch/loads` · Book Load
-2. **LOAD-2** owner-op flat **$300/load** — Sample ON · AT=TEST-… · real customer · save → reload → Neon `mdata.loads` id in OUTBOX
-3. **LOAD-4** team split two drivers — same bar
-4. If Book refuses for missing **driver_finance** rate: STOP and OUTBOX the exact error (do not invent; do not write mdata-only rates as a workaround — dual-table P0 is CC-1)
-5. OUTBOX shape: `Cascade | LIVE-CHROME | LOAD-2|4 | healthz=47700c9 | url=… | walkthrough=… | click=… | reload=PASS|FAIL | load_id=… | sample=ON | GO`
+**Codex already Live-Chrome'd your LOAD-2 prerequisite** (#18783): Equipment Qualification has Loaded/Empty mi only — **no Flat $300/load** control that writes `driver_finance.flat_per_load_cents`. Do **not** invent rates.
 
-ACK: `Cascade | ACK | LIVE-CHROME-ALL-HANDS | WORKING LOAD-2+4 Live Chrome | GO`
+**YOUR NOW (Live Chrome walk — url + click + reload + Neon):**
+1. Confirm Codex #18783 on live (open same driver path) OR book a **non-flat** shape only if GO allows — preferred: **LOAD-4 team split** Live Chrome (two drivers) Sample ON → OUTBOX load_id
+2. OUTBOX shape: `Cascade | LIVE-CHROME | LOAD-4 | healthz=… | url=… | walkthrough=… | click=… | reload=PASS|FAIL | load_id=… | sample=ON | GO`
+3. If blocked: exact refusal text in OUTBOX (no workaround)
+
+ACK: `Cascade | ACK | LIVE-CHROME-FORCE | WORKING LOAD-4 Live Chrome | GO`
