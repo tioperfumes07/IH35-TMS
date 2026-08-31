@@ -493,10 +493,20 @@ export async function decideSettlementDisputeP6(
       // write this row is disputes.routes.ts's own resolveDispute.
       await client.query(
         `
-          INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount)
-          VALUES ($1::uuid, 'dispute_adjustment', $2, $3::numeric)
+          INSERT INTO driver_finance.settlement_lines (
+            settlement_id, line_type, description, amount, is_sample_data
+          )
+          SELECT ds.id, 'dispute_adjustment', $2, $3::numeric, ds.is_sample_data
+          FROM driver_finance.driver_settlements ds
+          WHERE ds.id = $1::uuid
+            AND ds.operating_company_id = $4::uuid
         `,
-        [dispute.settlement_id, `Dispute adjustment (${nextCanonical})`, adjustment / 100]
+        [
+          dispute.settlement_id,
+          `Dispute adjustment (${nextCanonical})`,
+          adjustment / 100,
+          input.operating_company_id,
+        ]
       );
     }
 

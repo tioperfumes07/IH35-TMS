@@ -88,6 +88,7 @@ export async function appendSettlementLineFromDriverBillIfMissing(
   client: DbClient,
   input: {
     settlementId: string;
+    operatingCompanyId: string;
     driverId: string;
     loadId: string;
     teamId?: string | null;
@@ -98,6 +99,22 @@ export async function appendSettlementLineFromDriverBillIfMissing(
 ): Promise<void> {
   const reg = await client.query<{ ok: boolean }>(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);
   if (!reg.rows[0]?.ok) return;
+
+  // SETL-F10164 — the settlement is the canonical real-vs-sample parent. Derive the child flag from
+  // that row under the same company scope; accepting a caller boolean would let a sample settlement
+  // mint a line that reports as real money (the exact live failure this closes).
+  const settlementRes = await client.query<{ is_sample_data: boolean }>(
+    `
+      SELECT is_sample_data
+      FROM driver_finance.driver_settlements
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+      LIMIT 1
+    `,
+    [input.settlementId, input.operatingCompanyId]
+  );
+  const settlement = settlementRes.rows[0];
+  if (!settlement) return;
 
   const billRes = await client.query<{ id: string; gross_amount_cents: number | string | null; load_number: string | null }>(
     `
@@ -208,12 +225,12 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             description,
             amount,
             team_id,
-            source_driver_bill_id${loadCols.join("")}
+            source_driver_bill_id${loadCols.join("")}, is_sample_data
           )
-          VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid${loadColPlaceholder(7).join("")})
+          VALUES ($1,$2,$3,$4,$5::uuid,$6::uuid${loadColPlaceholder(7).join("")},$${hasLoadCol.rows[0]?.ok ? 8 : 7}::boolean)
           ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
         `,
-        [input.settlementId, lineType, description, dollars, input.teamId ?? null, bill.id, ...loadParam]
+        [input.settlementId, lineType, description, dollars, input.teamId ?? null, bill.id, ...loadParam, settlement.is_sample_data]
       );
       return;
     }
@@ -225,12 +242,12 @@ export async function appendSettlementLineFromDriverBillIfMissing(
           line_type,
           description,
           amount,
-          source_driver_bill_id${loadCols.join("")}
+          source_driver_bill_id${loadCols.join("")}, is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")})
+        VALUES ($1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean)
         ON CONFLICT (source_driver_bill_id) WHERE source_driver_bill_id IS NOT NULL DO NOTHING
       `,
-      [input.settlementId, lineType, description, dollars, bill.id, ...loadParam]
+      [input.settlementId, lineType, description, dollars, bill.id, ...loadParam, settlement.is_sample_data]
     );
     return;
   }
@@ -238,8 +255,8 @@ export async function appendSettlementLineFromDriverBillIfMissing(
   if (hasTeamCol.rows[0]?.ok) {
     await client.query(
       `
-        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id${loadCols.join("")})
-        SELECT $1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")}
+        INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount, team_id${loadCols.join("")}, is_sample_data)
+        SELECT $1,$2,$3,$4,$5::uuid${loadColPlaceholder(6).join("")},$${hasLoadCol.rows[0]?.ok ? 7 : 6}::boolean
         WHERE NOT EXISTS (
           SELECT 1
           FROM driver_finance.settlement_lines sl
@@ -248,15 +265,15 @@ export async function appendSettlementLineFromDriverBillIfMissing(
             AND sl.line_type = $2
         )
       `,
-      [input.settlementId, lineType, description, dollars, input.teamId ?? null, ...loadParam]
+      [input.settlementId, lineType, description, dollars, input.teamId ?? null, ...loadParam, settlement.is_sample_data]
     );
     return;
   }
 
   await client.query(
     `
-      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount${loadCols.join("")})
-      SELECT $1,$2,$3,$4${loadColPlaceholder(5).join("")}
+      INSERT INTO driver_finance.settlement_lines (settlement_id, line_type, description, amount${loadCols.join("")}, is_sample_data)
+      SELECT $1,$2,$3,$4${loadColPlaceholder(5).join("")},$${hasLoadCol.rows[0]?.ok ? 6 : 5}::boolean
       WHERE NOT EXISTS (
         SELECT 1
         FROM driver_finance.settlement_lines sl
@@ -265,6 +282,6 @@ export async function appendSettlementLineFromDriverBillIfMissing(
           AND sl.line_type = $2
       )
     `,
-    [input.settlementId, lineType, description, dollars, ...loadParam]
+    [input.settlementId, lineType, description, dollars, ...loadParam, settlement.is_sample_data]
   );
 }

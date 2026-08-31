@@ -259,6 +259,7 @@ export async function registerPreSettlementRoutes(app: FastifyInstance) {
 
       await appendSettlementLineFromDriverBillIfMissing(client, {
         settlementId: params.data.id,
+        operatingCompanyId: body.operating_company_id,
         driverId,
         loadId: body.load_id,
         teamId: team?.teamId ?? null,
