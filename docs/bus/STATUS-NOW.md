@@ -1,3 +1,5 @@
+**LEAD-TICK-0246** · 2026-08-31 09:57 CT · live **e09eea1** · P-0 CLEARED holds · seats still IDLE · Cursor resumes ONE chain
+
 **LEAD-TICK-0245** · 2026-08-31 09:55 CT · live **e09eea1** · **P-0 CLEARED** · 2 broker invoice-send rows cancelled · 4 test rows reviewed · EMAIL_CRON stays OFF · then GO-E2E (CC-1 one chain)
 
 **LEAD-TICK-0244** · 2026-08-31 09:52 CT · live **e09eea1** · Cursor **OVERFLOW** walking CC-1 ONE chain in Live Chrome · seats still DEAD
