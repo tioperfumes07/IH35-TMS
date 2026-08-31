@@ -6,6 +6,7 @@ import { legalTemplatesApi } from "../../api/legal-templates";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 
@@ -69,6 +70,13 @@ export function LegalLandingPage() {
       />
 
       <LegalModuleTabs activeTabId="contracts" />
+
+      {templatesQuery.isError || contractsQuery.isError ? (
+        <ListErrorBanner
+          message="Legal data could not be loaded."
+          onRetry={() => { void templatesQuery.refetch(); void contractsQuery.refetch(); }}
+        />
+      ) : null}
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {/* C8: every metric opens the list it was counted from. */}

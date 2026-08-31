@@ -116,6 +116,9 @@ export function useSettlementDisputes(options: { status?: SettlementDisputeStatu
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["settlement-disputes", companyId] });
     },
+    onError: () => {
+      void queryClient.invalidateQueries({ queryKey: ["settlement-disputes", companyId] });
+    },
   });
 
   return {

@@ -1,3 +1,5 @@
+Cursor→CC-1 | 2026-08-31 11:00 CT | **P0:** create $0.45 ALL MILES via Live Chrome on live #18782. Neon must move off 08-07. | FORCE
+
 Cursor→CC-1 | 2026-08-31 10:48 CT | #18774 on main — dual-table R=W + pack09 settle Live Chrome when tip live. No pictures. | GO
 
 Cursor→CC-1 | 10:37 CT | Tier-A dual-table + Live Chrome finish pack09. Live=47700c9. | GO

@@ -74,13 +74,17 @@ export function GenericCatalogPage({ catalogName: catalogNameProp }: Props) {
 
   async function saveRow(body: Record<string, unknown>, row: CatalogRow | null) {
     if (!catalogName) return;
-    if (row) {
-      await mutations.updateMutation.mutateAsync({ id: row.id, body });
-      pushToast("Catalog row updated", "success");
-      return;
+    try {
+      if (row) {
+        await mutations.updateMutation.mutateAsync({ id: row.id, body });
+        pushToast("Catalog row updated", "success");
+        return;
+      }
+      await mutations.createMutation.mutateAsync(body);
+      pushToast("Catalog row created", "success");
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Could not save catalog row"), "error");
     }
-    await mutations.createMutation.mutateAsync(body);
-    pushToast("Catalog row created", "success");
   }
 
   async function archiveRows(selected: CatalogRow[]) {

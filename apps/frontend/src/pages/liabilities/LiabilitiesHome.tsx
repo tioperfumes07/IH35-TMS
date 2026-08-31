@@ -11,6 +11,7 @@ import { LIABILITY_TABS, LiabilitiesKpiRow } from "./components/LiabilitiesKpiRo
 import { LiabilitiesTable } from "./components/LiabilitiesTable";
 import { LiabilityDetailDrawer } from "./components/LiabilityDetailDrawer";
 import { SendAckRequestModal } from "./components/SendAckRequestModal";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 // C8: the tab list is owned by LiabilitiesKpiRow so a KPI drill and a tab click cannot drift apart.
 const SUBNAV = LIABILITY_TABS;
@@ -157,6 +158,13 @@ export function LiabilitiesHomePage() {
         </div>
       </div>
 
+      {kpisQuery.isError || activeQuery.isError ? (
+        <ListErrorBanner
+          message="Liabilities data could not be loaded."
+          onRetry={() => { void kpisQuery.refetch(); void activeQuery.refetch(); }}
+        />
+      ) : null}
+
       <LiabilitiesKpiRow kpis={kpisQuery.data} onSelectTab={setTab} />
       <LiabilitiesTable
         rows={rows}
@@ -169,6 +177,12 @@ export function LiabilitiesHomePage() {
           setAckModalOpen(true);
         }}
       />
+
+      {detailOpen && detailQuery.isError ? (
+        <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+          Failed to load liability detail. <button type="button" className="font-semibold underline" onClick={() => void detailQuery.refetch()}>Retry</button>
+        </div>
+      ) : null}
 
       <LiabilityDetailDrawer
         open={detailOpen}
