@@ -5204,6 +5204,27 @@
       "used_at",
       "user_id"
     ],
+    "identity.permissions": [
+      "action",
+      "created_at",
+      "description",
+      "field_name",
+      "id",
+      "is_active",
+      "module",
+      "permission_key",
+      "resource_type",
+      "updated_at"
+    ],
+    "identity.role_permissions": [
+      "deactivated_at",
+      "granted_at",
+      "granted_by_user_id",
+      "id",
+      "operating_company_id",
+      "permission_id",
+      "role"
+    ],
     "identity.sessions": [
       "expires_at",
       "id",
@@ -5221,6 +5242,18 @@
       "updated_at",
       "user_uuid",
       "whatsapp_enabled"
+    ],
+    "identity.user_permissions": [
+      "deactivated_at",
+      "expires_at",
+      "grant_type",
+      "granted_at",
+      "granted_by_user_id",
+      "id",
+      "operating_company_id",
+      "permission_id",
+      "reason",
+      "user_id"
     ],
     "identity.user_preferences": [
       "created_at",
@@ -5240,6 +5273,7 @@
       "first_name",
       "google_user_id",
       "id",
+      "is_primary_owner",
       "last_login_at",
       "last_name",
       "onboarding_completed_at",

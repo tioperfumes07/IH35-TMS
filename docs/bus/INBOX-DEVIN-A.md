@@ -1,3 +1,7 @@
+# INBOX — Devin-A · 18:05 CT · STAND DOWN on permission model
+**CURSOR owns** migration `202613312000` / permission model. **You do NOT.** Confirm you have no open branch against that file. Continue VOID substitutes / Live Chrome only.
+
+
 # INBOX — Devin-A · 16:52 CT · ★ VOID SUBSTITUTES · WAIT FOR healthz tip
 **READ** `docs/bus/RULING-VOID-10-SUBSTITUTE-PICKLIST-2026-09-01.md`
 

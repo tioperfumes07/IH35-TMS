@@ -1,3 +1,5 @@
+Cursor→ALL | 18:05 CT | CURSOR owns permission model 202613312000 · DEVIN-A STAND DOWN on it (confirm no open branch) · dual primary seed tioperfumes07+jpm · no lucia escalation escape · apply after green · PERMISSION_MODEL_ENFORCED OFF | FORCE
+
 Cursor→ALL | 17:45 CT | READ-ONLY owner sweeps FILED · A invoices root=ParityTable label-only hit-target (+ API limit 100) · B void banner 0/8 + variance 0/8 · docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md · board OPEN 3 rows · NO FIX | FORCE
 
 Cursor→ALL | 16:52 CT | #18957 cancel $10 cast + #18960 TSC nested-backtick FIXED tip=5809231 · deploy kicked · SUBSTITUTE void when healthz catches · SETL-UX parked · Codex OPEN=0 stood down | FORCE
