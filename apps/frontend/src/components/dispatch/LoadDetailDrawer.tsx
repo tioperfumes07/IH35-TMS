@@ -105,9 +105,14 @@ function loadHasCrossBorder(load: LoadDetail): boolean {
   );
 }
 
+/** Human-sequence: office marks in transit after dispatch (state machine requires this hop). */
+export function loadCanMarkInTransit(status: string | null | undefined): boolean {
+  return ["dispatched", "at_pickup"].includes(String(status ?? ""));
+}
+
 /** Human-sequence deliver: office marks delivery pending docs (WIRE-07 stamp path). */
 export function loadCanMarkDeliveredPendingDocs(status: string | null | undefined): boolean {
-  return ["dispatched", "in_transit", "at_pickup", "at_delivery"].includes(String(status ?? ""));
+  return ["in_transit", "at_delivery"].includes(String(status ?? ""));
 }
 
 /** Human-sequence complete: office marks docs received after delivery (WIRE-07 stamp path). */
@@ -628,6 +633,30 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
+                    {canEdit && load && loadCanMarkInTransit(load.status) ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        loading={statusMutation.isPending}
+                        data-testid="load-detail-mark-in-transit"
+                        onClick={async () => {
+                          try {
+                            await statusMutation.mutateAsync({
+                              id: load.id,
+                              body: { new_status: "in_transit" },
+                            });
+                            pushToast(`Load ${load.load_number} marked in transit`, "success");
+                            refetchLoad();
+                            void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                          } catch (err) {
+                            pushToast(userFacingApiError(err, "Could not mark load in transit"), "error");
+                          }
+                        }}
+                      >
+                        Mark in transit
+                      </Button>
+                    ) : null}
                     {canEdit && load && loadCanMarkDeliveredPendingDocs(load.status) ? (
                       <Button
                         type="button"

@@ -29,6 +29,18 @@ export function assertLoadDetailDeliverTransition(source) {
   if (!/data-testid="load-detail-mark-delivered"/.test(source)) {
     fails.push("LoadDetailDrawer must expose load-detail-mark-delivered control");
   }
+  if (!/loadCanMarkInTransit/.test(source)) {
+    fails.push("LoadDetailDrawer must export loadCanMarkInTransit eligibility helper");
+  }
+  if (!/new_status:\s*"in_transit"/.test(source)) {
+    fails.push("LoadDetailDrawer must transition to in_transit before deliver");
+  }
+  if (!/data-testid="load-detail-mark-in-transit"/.test(source)) {
+    fails.push("LoadDetailDrawer must expose load-detail-mark-in-transit control");
+  }
+  if (/function loadCanMarkDeliveredPendingDocs[\s\S]{0,220}dispatched/.test(source)) {
+    fails.push("loadCanMarkDeliveredPendingDocs must not offer deliver from dispatched (invalid_transition)");
+  }
   if (!/Mark delivered \(pending docs\)/.test(source)) {
     fails.push("LoadDetailDrawer must label the deliver action for operators");
   }
