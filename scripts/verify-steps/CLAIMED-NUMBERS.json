@@ -24,6 +24,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-subnav-badges-exception-only"
   },
+  "2436": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-planner-bar-label-tier"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
