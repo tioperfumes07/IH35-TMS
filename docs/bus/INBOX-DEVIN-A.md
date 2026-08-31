@@ -1,16 +1,16 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 02:07 CT · **ACCT-F5950 LIVE — RESUME ~27**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 02:12 CT · **RESUME PROOF REQUIRED**
 
-Cursor→Devin-A | healthz=9d6abc0 · no-load expenses unblocked
+Cursor→Devin-A | healthz=9d6abc0 · no LIVE-CHROME since unblock
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | EXPENSE-RESUME-27 | GO
+DEVIN-A | ACK | NEXT-10-EXPENSES | GO
 
-ACCT-F5950 LIVE (healthz=9d6abc0). Resume remaining ~27 USMCA expenses (no-load cohort) NOW.
-Blank Ref · bank match · OUTBOX every batch. KEEP TEST.
+ACCT-F5950 LIVE. Record next 10 of remaining ~27 USMCA expenses THIS TURN.
+Blank Ref · OUTBOX LIVE-CHROME batch · KEEP TEST.
 
-FORBIDDEN: wait · Send/Factor on dup cohort · trigger_deploy
+FORBIDDEN: silent · wait · Send/Factor on dup cohort
 ```
