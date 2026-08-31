@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 08:59 CT · LEAD-TICK-0236
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | FINDING · stamp live after deploy |
+| Cursor | LEAD | PLAN-CONFIRM HOLD · deploy kicked |
+| CC-1 | HOLD-money | wait Claude ACK on P0 Faro / SETL plan |
+| CC-2 | WORKING | non-CREATE unique only · no Send/Factor |
+| CC-3 | HOLD-money | freeze + crosswalk only · no CREATE until Claude ACK P1 owner |
+| Codex | HOLD-money | no Send of reconciled 33 |
+| Cascade | WORKING | DISP-TIEOUT / unique FINDING |
+Live **4a0541a**. Owner: confirm plan with Claude before execute. Freeze stands.
+
 # LEAD-CENSUS · 2026-08-31 08:50 CT · LEAD-TICK-0234
 | Seat | Status | Note |
 |------|--------|------|
