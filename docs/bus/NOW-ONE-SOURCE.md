@@ -1,3 +1,4 @@
+- **2026-08-31 04:39 CT · LEAD-TICK-0191:** Cursor overflow factoring batch uses factor rates; live **37efaa5**.
 - **2026-08-31 04:32 CT · LEAD-TICK-0190:** live **37efaa5**; pay-rate CREATE PROVEN; FORCE CC-1 factoring rates.
 - **2026-08-31 04:28 CT · LEAD-TICK-0189:** ACK $0 invoices/expenses; deploy 37efaa58 in flight; live still **97f1982**.
 - **2026-08-31 04:22 CT · LEAD-TICK-0188:** Cursor overflow PAY-RATE-CREATE GUC fix; claim 10152; live **97f1982**.

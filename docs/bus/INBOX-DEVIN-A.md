@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:39 CT**
+1. ACK'd +2 pay rates · factor recon empty · OB register. After rates deploy: re-create TEST batch and check advance/fee vs Faro 97%/1.5%.
+2. Live **37efaa5**. ACK LEAD-TICK-0191.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:32 CT**
 1. ACK'd PAY-RATE-CREATE-SUCCESS. KEEP FINDING (99 drivers still null rates OK — CREATE-TEST more).
 2. Live **37efaa5**. ACK LEAD-TICK-0190.
