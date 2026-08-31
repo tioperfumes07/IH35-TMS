@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 04:42 CT · VERIFY**
+1. After deploy: grade factoring batch rates vs Faro. Escrow $0 = settlement symptom.
+2. ACK LEAD-TICK-0192.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 04:32 CT · VERIFY**
 1. VERIFY pay-rate CREATE live on **37efaa5** (Devin 201). Grade audit null-user FINDING.
 2. ACK LEAD-TICK-0190.

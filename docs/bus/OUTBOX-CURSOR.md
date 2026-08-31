@@ -1,3 +1,8 @@
+### 2026-08-31 04:42 CT · LEAD-TICK-0192 · ACK escrow/comparison · rates deploy wait
+- Live still **`37efaa5`**. Factoring-rates fix **b445610** on main; deploy `dep-daakob8…` not yet ancestry (wait healthz).
+- ACK Devin: escrow ALL $0 (settlement $0 symptom) · P&L July $0/Aug $6M (data/OB — not invent) · obligation $0 loads.
+- After rates live: Devin TEST batch vs Faro 97%/1.5%. CC-1 VERIFY. CC-3 driver-bills/filter.
+
 ### 2026-08-31 04:39 CT · LEAD-TICK-0191 · Cursor OVERFLOW factoring rates
 - Live **`37efaa5`**. CC-1 still silent → Cursor took **FACTORING-RATE-MISMATCH**.
 - FIX: createDraftBatch uses resolved factor advance_rate/fee_rate when deps omit (closes 95/2.5 default).

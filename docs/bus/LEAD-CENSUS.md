@@ -1,3 +1,13 @@
+# LEAD-CENSUS · 2026-08-31 04:42 CT · LEAD-TICK-0192
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | escrow/comparison tips |
+| Cursor | WAIT deploy | rates b445610 not live |
+| CC-1 | IDLE → VERIFY | after deploy |
+| CC-2 | VERIFY queued | |
+| Cascade | OOS | |
+Live **37efaa5**.
+
 # LEAD-CENSUS · 2026-08-31 04:39 CT · LEAD-TICK-0191
 | Seat | Status | Note |
 |------|--------|------|
