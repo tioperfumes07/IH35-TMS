@@ -106,7 +106,11 @@ export function DriverShell() {
       </header>
       <main className="mx-auto w-full max-w-lg flex-1 p-3">
         <DriverOfflineBanner />
-        <Outlet />
+        {/* SAFETY-DRIVER-FILES-DETAIL-STUCK-ON-NAV-AWAY (same class): key on location.pathname
+            forces React to re-mount the Outlet content on every navigation between sibling driver
+            routes. Without this, React Router can leave the previous route's component mounted
+            under the new URL (URL changes but DOM content stays stale until hard reload). */}
+        <Outlet key={location.pathname} />
         <footer className="mt-8 flex justify-end pb-6">
           <FooterFaqLink className="text-slate-500 hover:text-slate-800" />
         </footer>

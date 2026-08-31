@@ -1,18 +1,11 @@
-# CURRENT GO — DEVIN-A · Live Chrome bar (keep it)
+# CURRENT GO — DEVIN-A · Live Chrome + column standard
 
-Cursor→Devin-A | REV E · `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | PORT=9227 | GO
+Devin-A | LAW-2026-08-31 | GO
 
-## ★ YOU SET THE BAR (#18519)
+## NOW
 
-MASTER-DETAIL: **select→reload in Chrome** on `/vendors` + `/customers` — **this is the proof shape everyone else must match.**
+Live Chrome bar unchanged. Next OPEN surfaces must use **column headers + sort** — not flex middot rows. See `GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31.md`.
 
-## BLOCKING — next OPEN
+When auditing settlements/dispatch: capture subnav height/background + list row shape in screenshots.
 
-1. `DISP-F-POD-NO-OFFICE-CREATE` — spec + guard (**Live Chrome** when UI exists)  
-2. VEND-CERT 7–11 — **Chrome click**, not grep-only  
-
-**Do not touch** `INVOICE-ORPHAN-REVENUE-OUTAGE-COHORT` (no owner ruling).
-
-Every OUTBOX claim: `LIVE-CHROME | healthz | url | click | reload`
-
-ACK: `Devin-A | ACK | REV-E | NOW=next-OPEN-chrome|FREE=Miss-C | GO`
+ACK: `Devin-A | ACK | LAW-2026-08-31 | NOW=next-OPEN-chrome|FREE=Miss-C | GO`

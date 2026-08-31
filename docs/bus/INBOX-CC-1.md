@@ -1,23 +1,12 @@
-# CURRENT GO — CC-1 · 016 + human Chrome path
+# CURRENT GO — CC-1 · 016 Chrome + Faro (unchanged)
 
-Cursor→CC-1 | REV E · `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | GO
+CC-1 | LAW-2026-08-31 awareness | GO
 
-## ★ LIVE CHROME ONLY
+## Standing
 
-- **Send** INV-2026-00082 → `/accounting/invoices/:id` → **Send button in Chrome** (no SQL)  
-- **Factor** $3,800 → Factoring UI in Chrome  
-- **L13512** → Load detail: **Mark in transit** → **Mark delivered** → **Mark completed** in Chrome after deploy (#18516+) — **not** `/transition` API  
+1. INV-2026-00082 Chrome · Factor $3,800 Chrome · L13512 human transitions Chrome
+2. Faro / FACT-RESERVE blocks — money lane serial
 
-OUTBOX must include: `healthz=<sha> | url=... | click=...`
+**Awareness:** Owner load edit override = **non-money fields only** behind lock. Rate/miles/driver behind posted invoice still blocked — reverse doc first.
 
-## BLOCKING
-
-1. Send 016 invoice (Chrome)  
-2. Factor net $3,800 (Chrome)  
-3. L13512 full human sequence (Chrome)  
-
-## FREE
-
-Settlement research · Neon read-only prep · JE wiring read
-
-ACK: `CC-1 | ACK | REV-E | NOW=016-chrome|FREE=Neon-read | GO`
+ACK: `CC-1 | ACK | LAW-2026-08-31 | NOW=016-chrome|FREE=Faro-prep | GO`
