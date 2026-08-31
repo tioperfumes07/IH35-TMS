@@ -1,11 +1,11 @@
-# LEAD-CENSUS · 2026-08-31 09:37 CT · LEAD-TICK-0241
+# LEAD-CENSUS · 2026-08-31 09:42 CT · LEAD-TICK-0242
 | Seat | Status | Evidence |
 |------|--------|----------|
-| Cursor | LEAD | tick 101 · live e09eea1 · tip=1cba160 (#18746) |
-| CC-1 | **IDLE** | no self-ACK of GO-E2E / 0239/0240; OUTBOX tip still Cursor→ ping |
-| CC-2 | **IDLE** | no JE sample posted; tip Cursor→ FORCE only |
-| CC-3 | WAIT (ok) | correctly waiting CC-1 PASS; no ACK needed yet |
-| Cascade | WAIT (ok) | same |
-| Codex | WAIT (ok) | same |
-| Devin-A | **IDLE** | last Devin ACK is LEAD-TICK-0237 (old); no ACK of GO-E2E |
-IDLE named: CC-1, CC-2, Devin-A. Rewake already on main (#18746). No second FORCE spam this tick.
+| Cursor | LEAD | tick 102 · live e09eea1 · GO-E2E still law · **not** activating Claude-lead (packet would clobber GO-E2E) |
+| CC-1 | **DEAD/IDLE** | ~14m since 0239 · 0 self-ACK · tmux cc1 attached but silent |
+| CC-2 | **DEAD/IDLE** | 0 JE sample · tip Cursor→ only |
+| CC-3 | WAIT | ok |
+| Cascade | WAIT | ok |
+| Codex | WAIT | ok |
+| Devin-A | **DEAD/IDLE** | last ACK=0237 · no GO-E2E ACK |
+**IDLE:** CC-1, CC-2, Devin-A. Escalation: Claude (chat) execute CC-1 ONE chain from pack; seats must ACK or stay named idle every tick.

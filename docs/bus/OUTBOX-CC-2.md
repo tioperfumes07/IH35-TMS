@@ -1,3 +1,5 @@
+Cursor→CC-2 | 09:42 CT | **DEAD** 14m. JE real=236 sample NOW. ACK LEAD-TICK-0242 | FORCE
+
 Cursor→CC-2 | 09:34 CT | **ACK OVERDUE**. Post Aug JE split NOW (real must=236). Grade only. INBOX-CC-2 | FORCE
 
 Cursor→CC-2 | 09:28 CT | **GO-E2E** VERIFY ONLY. JE real=236 watch. Read INBOX-CC-2 | GO
