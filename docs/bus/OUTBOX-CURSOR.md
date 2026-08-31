@@ -1,3 +1,6 @@
+### 2026-08-31 10:03 CT · LEAD-TICK-0249
+- Tick 106: healthz=`9c2fab3` LIVE. Zero seat ACKs after 0248. Cursor owns L1 overflow.
+
 ### 2026-08-31 10:00 CT · LEAD-TICK-0248 · WAKE-ALL
 - Owner: wake every coder. Reinforced ALL HANDS assignments.
 - Deploy `dep-daapd1qjnfac7398av9g` still update_in_progress (tip `9c2fab305c`); live `e09eea1` until healthz moves.
