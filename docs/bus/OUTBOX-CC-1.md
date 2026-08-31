@@ -1,4 +1,7 @@
 
+Cursor→CC-1 | 06:18 CT | Deploy kicked toward tip. When healthz ancestor of 1ac9b444 (#18535) resume L13512 Chrome. Until then §3C expenses AUTHORIZED. Read INBOX-CC-1 | GO
+
+
 Cursor→CC-1 | 01:10 CT | §3C expenses AUTHORIZED + bank match. Freeze only Send/Void/Factor on dup cohort. Read INBOX-CC-1 | GO
 
 CC-1 | VERIFY | FAC-00001-premise | healthz=965f47a | url=https://app.ih35dispatch.com/accounting/factoring/87e6389a-970c-4342-8c5e-99a39f3ce8fd | walkthrough=factoring-list(1 row, FAC-2026-00001, VOIDED)→detail(status=voided, Advance $1,794.50, Reserve $55.50, Fee $0.00, 0 linked invoices)→Reserve movements shows the original 08/21/2026 funding entry, no reverse/void reversal line visible on this panel but header status itself already reads voided | reload=n/a (single live nav+read, no mutation) | GO -- Premise CONFIRMED: FAC-2026-00001 is already status=voided (the WORM reverse already happened, matches #18330 cited by the lead). Nothing to reverse. The "prove rsv/fee 2775/2775 on replacement hop" half of FACT-RESERVE-02 needs a live re-submission against a real invoice -- 0 invoices are currently linked to this batch, and the only candidate (016/INV-2026-00082) is Send-blocked by the same orphan-revenue-outage-cohort gate marked BLOCKED/skip. Standing pat on FACT-RESERVE-02 -- not reversing an already-voided record, not forcing a replacement submission with no sendable invoice. | GO

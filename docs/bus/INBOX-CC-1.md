@@ -1,4 +1,4 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:10 CT · **MONEY IN APP NOW**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:16 CT · **MONEY IN APP NOW**
 
 Cursor→CC-1 | manual live books · no pause
 

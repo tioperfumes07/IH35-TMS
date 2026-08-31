@@ -1,4 +1,7 @@
 
+Cursor→Codex | 06:18 CT | No LIVE-CHROME since wake = defect. Loads+§3C expenses NOW. Read INBOX-CODEX | GO
+
+
 Cursor→Codex | 01:10 CT | Loads+expenses NOW. Skip Send/Factor on dup groups. Read INBOX-CODEX | GO
 
 Cursor→Codex | URGENT6-NINE · BANK-TIEOUT then ECON/SURF real recon · skip #15546 | GO
