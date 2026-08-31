@@ -139,12 +139,18 @@ export function registerSettlementPayRunCloseRoutes(app: FastifyInstance) {
     });
 
     if (!result.stamped) {
-      const code =
-        result.reason === "not_found"
-          ? 404
-          : result.reason === "already_closed"
-            ? 409
-            : 422;
+      // ACCT-F10161-adjacent (live-caught 2026-08-31, CC-1) — #18859 made
+      // stampTripClosedForBookendedSettlement re-attempt appendSettlementLineFromDriverBillIfMissing
+      // even on the already_closed path (a real heal, not a no-op refusal), but this route was never
+      // updated to match: it still 409'd already_closed as if it were a rejected request, so the
+      // CloseTripPanel's own catch handler reported "Close trip failed" on a call that had, in fact,
+      // just successfully re-attached a driver bill and rolled up the settlement totals. already_closed
+      // is now a completed, successful re-check — respond 200 with the anchor load it re-verified, not
+      // an error status. not_found/other reasons remain genuine failures.
+      if (result.reason === "already_closed") {
+        return { stamped: false, reason: result.reason, anchor_load_id: result.anchor_load_id };
+      }
+      const code = result.reason === "not_found" ? 404 : 422;
       return reply.code(code).send({ error: `trip_close_${result.reason}`, stamped: false, reason: result.reason });
     }
     return { stamped: true, trip_closed_at: result.trip_closed_at, anchor_load_id: result.anchor_load_id };
