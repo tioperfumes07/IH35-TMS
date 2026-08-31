@@ -7055,5 +7055,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1339
+  "total_claimed": 1339,
+  "10161": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-equipment-asset-bridge"
+  }
 }
