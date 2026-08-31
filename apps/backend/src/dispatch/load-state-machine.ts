@@ -70,6 +70,26 @@ const allowedTransitions: Record<DispatchStatus, DispatchStatus[]> = {
   driver_no_show: [],
 };
 
+export const loadStatusTransitionControls: Record<
+  DispatchStatus,
+  { label: string; action: "transition" | "assignment_modal" | "cancel_modal"; destructive?: true }
+> = {
+  unassigned: { label: "Mark unassigned", action: "transition" },
+  assigned_not_dispatched: { label: "Assign driver", action: "assignment_modal" },
+  dispatched: { label: "Mark dispatched", action: "transition" },
+  in_transit: { label: "Mark in transit", action: "transition" },
+  delivered_pending_docs: { label: "Mark delivered (pending docs)", action: "transition" },
+  completed_docs_received: { label: "Mark completed (docs received)", action: "transition" },
+  cancelled: { label: "Cancel load", action: "cancel_modal", destructive: true },
+  abandoned: { label: "Mark abandoned", action: "transition" },
+  driver_walkoff: { label: "Mark driver walk-off", action: "transition" },
+  driver_no_show: { label: "Mark driver no-show", action: "transition" },
+};
+
+export function getAllowedLoadStatusTransitions(currentMdataStatus: string): DispatchStatus[] {
+  return allowedTransitions[fromMdataStatus(currentMdataStatus)];
+}
+
 export function validateLoadStatusTransition(
   currentMdataStatus: string,
   targetStatus: DispatchStatus
@@ -83,7 +103,7 @@ export function validateLoadStatusTransition(
 
 /** true when a load can no longer transition forward (cancelled / completed / abandoned / walkoff / no-show). */
 export function isTerminalLoadStatus(currentMdataStatus: string): boolean {
-  return allowedTransitions[fromMdataStatus(currentMdataStatus)].length === 0;
+  return getAllowedLoadStatusTransitions(currentMdataStatus).length === 0;
 }
 
 /**

@@ -8,6 +8,8 @@ import { bookLoad } from "./book-load.service.js";
 import {
   dispatchStatusSchema,
   fromMdataStatus,
+  getAllowedLoadStatusTransitions,
+  loadStatusTransitionControls,
   toMdataStatus,
   validateLoadStatusTransition,
 } from "./load-state-machine.js";
@@ -982,7 +984,11 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
         [resolvedLoadId, operatingCompanyId]
       );
       const charges = chargesRes.rows;
-      return { ...load, stops: stopsRes.rows, charges, drivers: [] };
+      const allowed_status_transitions = getAllowedLoadStatusTransitions(String(load.status)).map((status) => ({
+        status,
+        ...loadStatusTransitionControls[status],
+      }));
+      return { ...load, stops: stopsRes.rows, charges, drivers: [], allowed_status_transitions };
     });
 
     if (!detail) return reply.code(404).send({ error: "dispatch_load_not_found" });

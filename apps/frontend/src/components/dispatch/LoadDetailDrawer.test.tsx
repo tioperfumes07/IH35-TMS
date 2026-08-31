@@ -152,6 +152,10 @@ function mockLoadDetail(overrides: Partial<LoadDetail> = {}): LoadDetail {
     soft_deleted_at: null,
     deleted_by_user_id: null,
     stops: [],
+    allowed_status_transitions: [
+      { status: "assigned_not_dispatched", label: "Assign driver", action: "assignment_modal" },
+      { status: "cancelled", label: "Cancel load", action: "cancel_modal", destructive: true },
+    ],
     ...overrides,
   };
 }
@@ -271,7 +275,9 @@ describe("P31 load hub forward links", () => {
 describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", () => {
   it("shows Mark delivered for in-transit loads and hides it once delivered", () => {
     mockUseDispatchLoad.mockReturnValue({
-      data: mockLoadDetail({ status: "in_transit" }),
+      data: mockLoadDetail({ status: "in_transit", allowed_status_transitions: [
+        { status: "delivered_pending_docs", label: "Mark delivered (pending docs)", action: "transition" },
+      ] }),
       isLoading: false,
       isError: false,
       error: null,
@@ -287,7 +293,9 @@ describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", 
     unmount();
 
     mockUseDispatchLoad.mockReturnValue({
-      data: mockLoadDetail({ status: "delivered_pending_docs" }),
+      data: mockLoadDetail({ status: "delivered_pending_docs", allowed_status_transitions: [
+        { status: "completed_docs_received", label: "Mark completed (docs received)", action: "transition" },
+      ] }),
       isLoading: false,
       isError: false,
       error: null,
@@ -301,7 +309,9 @@ describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", 
 describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_transit hop", () => {
   it("dispatched shows Mark in transit and hides deliver (invalid_transition if skipped)", () => {
     mockUseDispatchLoad.mockReturnValue({
-      data: mockLoadDetail({ status: "dispatched" }),
+      data: mockLoadDetail({ status: "dispatched", allowed_status_transitions: [
+        { status: "in_transit", label: "Mark in transit", action: "transition" },
+      ] }),
       isLoading: false,
       isError: false,
       error: null,
@@ -318,7 +328,9 @@ describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_trans
 
   it("in_transit shows deliver and hides in-transit", () => {
     mockUseDispatchLoad.mockReturnValue({
-      data: mockLoadDetail({ status: "in_transit" }),
+      data: mockLoadDetail({ status: "in_transit", allowed_status_transitions: [
+        { status: "delivered_pending_docs", label: "Mark delivered (pending docs)", action: "transition" },
+      ] }),
       isLoading: false,
       isError: false,
       error: null,

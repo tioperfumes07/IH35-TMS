@@ -48,7 +48,6 @@ import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
 import { listDispatchFlagColors } from "../../api/catalogs";
 import { ReferenceSelect } from "../parity/ReferenceSelect";
-import { getOfficeTransitionButtons } from "@ih35/shared-types";
 
 type Props = {
   loadId: string | null;
@@ -180,6 +179,27 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   };
   const auditQuery = useLoadAudit(loadId, operatingCompanyId);
   const statusMutation = useUpdateLoadStatus(load?.operating_company_id ?? operatingCompanyId ?? null);
+  const allowedStatusTransitions = load?.allowed_status_transitions ?? [];
+
+  const runStatusTransition = async (transition: LoadDetail["allowed_status_transitions"][number]) => {
+    if (!load) return;
+    if (transition.action === "cancel_modal") {
+      setCancelOpen(true);
+      return;
+    }
+    if (transition.action === "assignment_modal") {
+      setReassignOpen(true);
+      return;
+    }
+    try {
+      await statusMutation.mutateAsync({ id: load.id, body: { new_status: transition.status } });
+      pushToast(`Load ${load.load_number} — ${transition.label}`, "success");
+      refetchLoad();
+      void queryClient.invalidateQueries({ queryKey: ["loads"] });
+    } catch (err) {
+      pushToast(userFacingApiError(err, `Could not transition load (${transition.label})`), "error");
+    }
+  };
   const updateMutation = useMutation({
     mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
       updateLoad(id, operatingCompanyId, body),
@@ -621,27 +641,15 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
                     {canEdit && load
-                      ? getOfficeTransitionButtons(load.status).map((transition) => (
+                      ? allowedStatusTransitions.map((transition) => (
                           <Button
-                            key={transition.target}
+                            key={transition.status}
                             type="button"
-                            variant="primary"
+                            variant={transition.destructive ? "danger" : "primary"}
                             size="sm"
                             loading={statusMutation.isPending}
-                            data-testid={transition.testId}
-                            onClick={async () => {
-                              try {
-                                await statusMutation.mutateAsync({
-                                  id: load.id,
-                                  body: { new_status: transition.target },
-                                });
-                                pushToast(`Load ${load.load_number} — ${transition.label}`, "success");
-                                refetchLoad();
-                                void queryClient.invalidateQueries({ queryKey: ["loads"] });
-                              } catch (err) {
-                                pushToast(userFacingApiError(err, `Could not transition load (${transition.label})`), "error");
-                              }
-                            }}
+                            data-testid={`load-detail-transition-${transition.status.replaceAll("_", "-")}`}
+                            onClick={() => void runStatusTransition(transition)}
                           >
                             {transition.label}
                           </Button>
@@ -1314,9 +1322,3 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     document.body
   );
 }
-
-export {
-  loadCanMarkCompletedDocsReceived,
-  loadCanMarkDeliveredPendingDocs,
-  loadCanMarkInTransit,
-} from "@ih35/shared-types";

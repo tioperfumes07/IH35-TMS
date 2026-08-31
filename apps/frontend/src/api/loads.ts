@@ -148,6 +148,13 @@ export type LoadsListResponse = {
 };
 
 export type LoadDetail = DispatchLoadRow & {
+  /** Derived by the backend's canonical state machine for this load's exact current status. */
+  allowed_status_transitions: Array<{
+    status: DispatchStatus;
+    label: string;
+    action: "transition" | "assignment_modal" | "cancel_modal";
+    destructive?: true;
+  }>;
   stops: LoadStop[];
   charges?: Array<{
     code: string;
