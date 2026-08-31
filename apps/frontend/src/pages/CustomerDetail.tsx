@@ -83,7 +83,7 @@ import { CoiRequestsTab } from "./customers/tabs/CoiRequestsTab";
 import { PortalUsersTab } from "./customers/components/PortalUsersTab";
 import { parseApiErrorPayload } from "../components/forms/useFormValidation";
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { useToast } from "../components/Toast";
 import { DataPanel } from "../components/layout/DataPanel";
 import { FlatFieldGrid } from "../components/layout/FlatFieldGrid";
@@ -1290,10 +1290,11 @@ export function CustomerDetailPage() {
 
       <CustomerFinancialOverviewSection summary={financialSummaryQuery.data} loading={financialSummaryQuery.isLoading} error={financialSummaryQuery.isError} onRetry={() => void financialSummaryQuery.refetch()} />
 
-      <SecondaryNavTabs
-        tabs={visibleTabs.map((tab) => ({ id: tab, label: tab }))}
+      <NavyPageSubNav
+        items={visibleTabs.map((tab) => ({ label: tab, to: `#${tab}` }))}
         activeId={activeTab}
-        onChange={(nextTab) => setActiveTab(nextTab as CustomerTab)}
+        onTabChange={(nextTab) => setActiveTab(nextTab as CustomerTab)}
+        itemIds={visibleTabs}
       />
 
       {activeTab === "Profile" ? (
