@@ -104,6 +104,8 @@ type FormValues = BookLoadFormValues & {
   assignment_mode: "solo" | "team";
   team_id: string;
   assigned_primary_driver_id: string;
+  historical_import_driver_id: string;
+  historical_import_reason: string;
   assigned_secondary_driver_id: string;
   temp_fahrenheit: number;
   driver_pay_rate_per_mile: number;
@@ -327,6 +329,8 @@ export function BookLoadModalV4({
       assignment_mode: "solo",
       team_id: "",
       assigned_primary_driver_id: prefillDriverId ?? "",
+      historical_import_driver_id: "",
+      historical_import_reason: "",
       assigned_secondary_driver_id: "",
       temp_fahrenheit: 0,
       driver_pay_rate_per_mile: 0,
@@ -863,7 +867,12 @@ export function BookLoadModalV4({
         // creating the load; mdata.loads intentionally has no trailer FK column.
         assigned_trailer_unit_id: values.assigned_trailer_unit_id || undefined,
         team_id: values.assignment_mode === "team" ? values.team_id || undefined : undefined,
-        assigned_primary_driver_id: values.assignment_mode === "solo" ? values.assigned_primary_driver_id || undefined : undefined,
+        assigned_primary_driver_id:
+          values.assignment_mode === "solo"
+            ? values.historical_import_driver_id || values.assigned_primary_driver_id || undefined
+            : undefined,
+        historical_import_driver_id: values.historical_import_driver_id || undefined,
+        historical_import_reason: values.historical_import_driver_id ? values.historical_import_reason || undefined : undefined,
         assigned_secondary_driver_id: values.assignment_mode === "solo" ? values.assigned_secondary_driver_id || undefined : undefined,
         temp_fahrenheit: values.temp_fahrenheit || undefined,
         charges:
@@ -1395,6 +1404,27 @@ export function BookLoadModalV4({
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Historical inactive driver UUID
+                      <input
+                        {...form.register("historical_import_driver_id")}
+                        data-testid="book-load-historical-inactive-driver-id"
+                        placeholder="Historical import only"
+                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                      />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500 md:col-span-2">
+                      Historical import reason
+                      <input
+                        {...form.register("historical_import_reason")}
+                        data-testid="book-load-historical-import-reason"
+                        placeholder="Why an inactive driver belongs on this historical load"
+                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
+                      />
+                      <span className="mt-0.5 block normal-case tracking-normal text-gray-400">
+                        Owner-only. This does not reactivate the driver or widen the live dispatch picker.
+                      </span>
                     </label>
                     {/* FAIL-D6 — the ONLY UI path that sets mdata.loads.is_sample_data. The column has
                         existed since migration 0403 (NOT NULL DEFAULT false) but no create surface ever
