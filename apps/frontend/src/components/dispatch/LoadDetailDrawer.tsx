@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit } from "../../api/loads";
+import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
@@ -104,6 +104,11 @@ function loadHasCrossBorder(load: LoadDetail): boolean {
       Boolean(stop.country && !["US", "USA", "United States"].includes(String(stop.country)))
   );
 }
+
+/** Human-sequence deliver: office marks delivery pending docs (WIRE-07 stamp path). */
+export function loadCanMarkDeliveredPendingDocs(status: string | null | undefined): boolean {
+  return ["dispatched", "in_transit", "at_pickup", "at_delivery"].includes(String(status ?? ""));
+}
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
 type FactoringPackageMeta = {
@@ -177,6 +182,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     void mdataLoadQuery.refetch();
   };
   const auditQuery = useLoadAudit(loadId, operatingCompanyId);
+  const statusMutation = useUpdateLoadStatus(load?.operating_company_id ?? operatingCompanyId ?? null);
   const updateMutation = useMutation({
     mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
       updateLoad(id, operatingCompanyId, body),
@@ -617,6 +623,30 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
 
                 {load.operating_company_id ? (
                   <div className="flex flex-wrap gap-2">
+                    {canEdit && load && loadCanMarkDeliveredPendingDocs(load.status) ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        loading={statusMutation.isPending}
+                        data-testid="load-detail-mark-delivered"
+                        onClick={async () => {
+                          try {
+                            await statusMutation.mutateAsync({
+                              id: load.id,
+                              body: { new_status: "delivered_pending_docs" },
+                            });
+                            pushToast(`Load ${load.load_number} marked delivered (pending docs)`, "success");
+                            refetchLoad();
+                            void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                          } catch (err) {
+                            pushToast(userFacingApiError(err, "Could not mark load delivered"), "error");
+                          }
+                        }}
+                      >
+                        Mark delivered (pending docs)
+                      </Button>
+                    ) : null}
                     {canEdit ? (
                       <>
                         <Button type="button" variant="secondary" size="sm" onClick={() => setReassignOpen(true)}>
