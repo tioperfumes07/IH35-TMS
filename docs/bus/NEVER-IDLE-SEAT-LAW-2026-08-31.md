@@ -1,6 +1,18 @@
 # NEVER IDLE — SEAT LAW (owner 2026-08-31 · every seat every turn)
 
-**Idle = defect.** Announcing blocked and stopping = defect.
+**Idle = defect.** Announcing blocked and stopping = defect. **Asking Jorge before searching = defect.**
+
+## Search before ask (§6 — every seat, every turn)
+
+Before any question reaches Jorge or lead chat, search **in order**:
+
+1. `docs/lockdown/` · `docs/specs/` · `docs/bus/` · `.cursor/rules/`
+2. `docs/audit/GUARD-WORKORDERS.md` · `AUDIT-COVERAGE-LIVE.md`
+3. Repo grep (`apps/` · `scripts/` · relevant module)
+4. `~/Desktop/IH35-CURSOR-AUDIT/` · CPA/decision lock files · blueprint · architecture
+5. Only if genuinely absent → file OPEN on GUARD board and **continue FREE lane**
+
+**All standard questions have been answered.** Re-ask = process defect (`OWNER-QUALITY-COMPACT.md`).
 
 ## Two lanes (switch instantly — never ask Jorge)
 

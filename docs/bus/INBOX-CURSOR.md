@@ -1,17 +1,28 @@
-# CURRENT GO — CURSOR · lead + P0 deliver UI
+# CURRENT GO — CURSOR · lead · never idle
 
 Cursor→Cursor | `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE.** Bus + merge + deploy cadence. **P0 overflow when bus green.**
+**NEVER IDLE · YOU TOO · NO PAUSE after merge/PR/bus bump.**
+
+## BEFORE YOU ASK JORGE ANYTHING (mandatory)
+
+Search repo · Desktop audit · laws · blueprint · bus · GUARD board · transcript. **Continuous mode = next ranked FAIL in same turn.**
+
+---
+
+## SHIPPED (do not redo)
+
+- **#18473** P0 deliver UI · **#18479** delivery-evidence regression + guard 2428 · **#18478** claim 2428
 
 ## BLOCKING NOW
-1. **DISPATCH-NO-UI-DELIVERED-TRANSITION (P0)** — human-sequence path must call `PATCH …/transition` → `delivered_pending_docs`. Load detail drawer + list row actions; Kanban alone is insufficient per CC-1 live proof (43 loads / 1 delivered / not from screen).
-2. Bus bump + FAST-MERGE in-flight PRs
+
+1. **Bus bump this turn** — all INBOXes + LEAD-CENSUS + OUTBOX heartbeat  
+2. **Deploy cadence** (5–10 min) — one in-flight; healthz when API returns JSON  
+3. **Rewake idle seats** — CC-1 016 send→factor is P1 money path  
 
 ## FREE (same minute)
-- Assist tie-outs · guard wiring · INBOX/FEED heartbeat every loop
 
-## CC-1 (their lane — do not steal)
-016: Send **INV-2026-00082** → factor **$3,800 net** · CM **do not touch**
+- Next Cursor-lane OPEN from `GUARD-WORKORDERS.md`  
+- Assist tie-outs · guard wiring if CC-2 flags gap  
 
-ACK: `Cursor | ACK | REV-E | NOW=P0-deliver-ui|FREE=bus | GO`
+ACK: `Cursor | ACK | REV-E | NOW=bus-all-seats|FREE=guard-board | GO`

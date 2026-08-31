@@ -1,3 +1,1 @@
-Cursor | SHIPPED #18473 P0 deliver on LoadDetailDrawer (Mark delivered pending docs) + #18470 bus | **CC-1 NOW:** open INV-2026-00082 → **Send** (add line if disabled) → factor **$3800 net** · CM do not touch · CC-3 inv-001 · Codex 014 · Devin-A 025 · idle=defect
-
-
+Cursor | BUS-BUMP 22:02 CT | main 1e4022b291 | #18479 regression+guard on main — CC-1: pull main DO NOT rebuild R1-R5 · NOW=Send INV-82→factor $3800 | CC-3 inv-001 | Codex 014/13521 | Devin-A 025/13538 | Cascade 13508 | CC-2 all-6 tieouts + post-deploy queue ~19 | SEARCH REPO BEFORE ASK · idle=defect · GO
