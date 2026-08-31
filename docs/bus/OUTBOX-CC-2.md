@@ -1,3 +1,5 @@
+Cursor→CC-2 | 06:54 CT | VERIFY #214/#215 + watch deploy land. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 06:51 CT | ACK grading · six FAIL honest · close-fallback LIVE. Continue VERIFY. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 06:47 CT | VERIFY post-deploy tips + G1 neg-bank law. Read INBOX-CC-2 | GO
