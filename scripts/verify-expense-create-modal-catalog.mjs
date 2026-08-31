@@ -10,6 +10,8 @@
  *   (3) INLINE CATALOG CREATE: BOTH the Vendor and Category pickers expose an inline "+ Add new ___"
  *       creator (shared ReferenceSelect → canonical mdata.vendors / catalogs.accounts).
  *   (4) VOCAB: zero "+ New" literal anywhere on the expense-create surface (inline create is "+ Add new").
+ *   (5) SAMPLE SAFETY: the real modal exposes an operator control bound both ways to isSampleData;
+ *       carrying the field only in the submit mapper is inert when no UI can ever set it true.
  *
  * --selftest exercises each assertion against inline fixtures (pass + each failure mode).
  * LINKAGE: N/A (UI design-law enforcement). Additive only.
@@ -61,6 +63,17 @@ export function assertExpenseCreate({ list, modal, form, page }) {
     }
   }
 
+  // (5) the month-end TEST flag must be reachable from the actual form, not submit-only dead state
+  if (!/data-testid=["']record-expense-is-sample-data["']/.test(form)) {
+    errors.push(`${FORM}: no visible TEST/sample expense control (is_sample_data cannot be set from Live Chrome)`);
+  }
+  if (!/checked=\{values\.isSampleData\}/.test(form)) {
+    errors.push(`${FORM}: TEST/sample expense control is not bound to values.isSampleData`);
+  }
+  if (!/isSampleData:\s*event\.target\.checked/.test(form)) {
+    errors.push(`${FORM}: TEST/sample expense control does not write the operator choice back to form state`);
+  }
+
   return errors;
 }
 
@@ -74,16 +87,18 @@ function selftest() {
   const good = {
     list: `import { RecordExpenseModal } from "x";\n<button onClick={() => setCreateOpen(true)}>+ Record expense</button>\n<RecordExpenseModal open={createOpen} />`,
     modal: `<Modal><div className="space-y-4"><RecordExpenseForm /></div></Modal>`,
-    form: `<ReferenceSelect createKind="vendor" /> ... <ReferenceSelect createKind="category" /> <input className="rounded-sm border border-gray-300 px-2" />`,
+    form: `<ReferenceSelect createKind="vendor" /> ... <ReferenceSelect createKind="category" /> <input className="rounded-sm border border-gray-300 px-2" /><input data-testid="record-expense-is-sample-data" checked={values.isSampleData} onChange={(event) => setValues((prev) => ({ ...prev, isSampleData: event.target.checked }))} />`,
     page: `<div className="mx-auto max-w-3xl"><RecordExpenseForm /></div>`,
   };
   const cases = [
     { name: "well-formed → 0 errors", in: good, want: 0 },
     { name: "list is page-nav not modal", in: { ...good, list: `<Link to="/accounting/expenses/create">+ Record expense</Link>` }, wantMin: 1 },
     { name: "nested box in page", in: { ...good, page: `<div className="mx-auto max-w-3xl rounded-sm border border-gray-200 p-4"><RecordExpenseForm /></div>` }, wantMin: 1 },
-    { name: "vendor not inline-create", in: { ...good, form: `<QboCombobox /> <ReferenceSelect createKind="category" />` }, wantMin: 1 },
-    { name: "category not inline-create", in: { ...good, form: `<ReferenceSelect createKind="vendor" />` }, wantMin: 1 },
-    { name: "'+ New' vocab present", in: { ...good, form: `<ReferenceSelect createKind="vendor" /><ReferenceSelect createKind="category" /><button>+ New</button>` }, wantMin: 1 },
+    { name: "vendor not inline-create", in: { ...good, form: good.form.replace(`createKind="vendor"`, "") }, wantMin: 1 },
+    { name: "category not inline-create", in: { ...good, form: good.form.replace(`createKind="category"`, "") }, wantMin: 1 },
+    { name: "'+ New' vocab present", in: { ...good, form: `${good.form}<button>+ New</button>` }, wantMin: 1 },
+    { name: "sample control missing", in: { ...good, form: good.form.replace(`data-testid="record-expense-is-sample-data"`, `data-testid="removed"`) }, wantMin: 1 },
+    { name: "sample control cannot update state", in: { ...good, form: good.form.replace("isSampleData: event.target.checked", "isSampleData: false") }, wantMin: 1 },
   ];
   let failed = 0;
   for (const c of cases) {
@@ -108,4 +123,4 @@ if (errors.length) {
   for (const e of errors) console.error(`  ✗ ${e}`);
   process.exit(1);
 }
-console.log(`[${LABEL}] OK — Expense create is a flat modal with canonical inline "+ Add new" vendor + category pickers.`);
+console.log(`[${LABEL}] OK — Expense create is a flat modal with canonical inline catalog pickers and a reachable TEST/sample flag.`);
