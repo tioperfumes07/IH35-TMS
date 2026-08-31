@@ -1,3 +1,3 @@
-**THIS IS NOW — 2026-08-31 03:35 CT**
+**THIS IS NOW — 2026-08-31 03:40 CT**
 
-**Codex:** SAVEPOINT overdue (L-0099). **CC-1:** recon OR 5772. **Devin:** unique (DQ 156 filed). Live `9d6abc0`. Cascade OOS.
+**Cursor:** L-0099 SAVEPOINT. **CC-1:** 17 open bills / recon / 5772. **Devin:** unique. Live `9d6abc0`. Cascade OOS.
