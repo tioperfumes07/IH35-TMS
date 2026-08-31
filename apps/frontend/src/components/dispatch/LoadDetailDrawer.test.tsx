@@ -283,7 +283,7 @@ describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", 
     const { unmount } = renderDrawer(
       <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />
     );
-    expect(screen.getByTestId("load-detail-mark-delivered")).toHaveTextContent("Mark delivered (pending docs)");
+    expect(screen.getByTestId("load-detail-transition-delivered-pending-docs")).toHaveTextContent("Mark delivered (pending docs)");
     unmount();
 
     mockUseDispatchLoad.mockReturnValue({
@@ -294,7 +294,7 @@ describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", 
       refetch: vi.fn(),
     });
     renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
-    expect(screen.queryByTestId("load-detail-mark-delivered")).toBeNull();
+    expect(screen.queryByTestId("load-detail-transition-delivered-pending-docs")).toBeNull();
   });
 });
 
@@ -312,8 +312,8 @@ describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_trans
 
     renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
 
-    expect(screen.getByTestId("load-detail-mark-in-transit")).toBeInTheDocument();
-    expect(screen.queryByTestId("load-detail-mark-delivered")).not.toBeInTheDocument();
+    expect(screen.getByTestId("load-detail-transition-in-transit")).toBeInTheDocument();
+    expect(screen.queryByTestId("load-detail-transition-delivered-pending-docs")).not.toBeInTheDocument();
   });
 
   it("in_transit shows deliver and hides in-transit", () => {
@@ -329,8 +329,8 @@ describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_trans
 
     renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
 
-    expect(screen.getByTestId("load-detail-mark-delivered")).toBeInTheDocument();
-    expect(screen.queryByTestId("load-detail-mark-in-transit")).not.toBeInTheDocument();
+    expect(screen.getByTestId("load-detail-transition-delivered-pending-docs")).toBeInTheDocument();
+    expect(screen.queryByTestId("load-detail-transition-in-transit")).not.toBeInTheDocument();
   });
 });
 
