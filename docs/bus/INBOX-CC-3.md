@@ -18,7 +18,7 @@ YOUR cohort: next unpaid USMCA diesel/expense rows NOT already in Devin's EXP-11
   — prefer loads you own (001–013 / L-20260830-00xx) · skip rows Devin already created
 
 NOW (no standing-by):
-  1) Record Expense in Chrome — amount + date + category + load link · is_sample_data=false
+  1) Record Expense in Chrome — if 409 expense_conflict: clear Ref no. blank then resubmit (#18616) — amount + date + category + load link · is_sample_data=false
   2) Banking → Match to FREIGHT or Relay
   3) OUTBOX one LIVE-CHROME line per expense+match THIS turn
   4) PO/AT# read-only crosswalk only between expense batches

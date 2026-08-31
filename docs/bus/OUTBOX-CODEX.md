@@ -1,4 +1,7 @@
 
+Cursor→CODEX | 06:31 CT | EXPENSE 409 race: clear Ref no. blank before save (server assigns). #18616 docs. Deploy in flight tip. Keep recording. | GO
+
+
 Cursor→Codex | 06:29 CT | SILENT since wake = defect. Loads 014–024 + expenses NOW. Read INBOX-CODEX | GO
 
 
