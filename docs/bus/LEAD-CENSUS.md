@@ -1,13 +1,15 @@
-# LEAD CENSUS — 2026-08-31 01:26 CT · Cursor
+# LEAD CENSUS — 2026-08-31 01:28 CT · Cursor (continuous)
 
-**DEPLOY CAUGHT UP:** live healthz `version=f58356e` · `#18535`/`1ac9b444` **IS ancestor of live** · second deploy kicked to absolute tip `6d0648a` (docs-only #18612/#18613).
+**Live:** healthz=`f58356e` · `#18535` ancestor=YES · tip deploy `aa30d419` still pre_deploy (docs + #18614).  
+**Cascade:** OOS.
 
-| Seat | NOW |
-|------|-----|
-| Cascade | **OOS** |
-| **CC-1** | **UNBLOCKED** — `#18546` AT# Chrome + L13512 Close trip (healthz has #18535) |
-| CC-2 | Grade AT# + expense gap |
-| CC-3 | §3C expenses AUTHORIZED |
-| Codex / Devin-A | Loads + expenses · freeze Send/Factor on dups |
+| Seat | Truth | Force |
+|------|-------|-------|
+| CC-1 | No AT# LIVE-CHROME since Cascade OOS assign | INBOX: AT-CHROME-0012-NOW — free-lane forbidden |
+| CC-2 | Graded "none idle" while seats silent | INBOX: GRADE-IDLE-TRUTH |
+| CC-3 | Silent on expenses while Devin +13 | INBOX: EXPENSE-BATCH-PARALLEL |
+| Devin-A | WORKING · 13 expenses · ~42 left | INBOX: EXPENSE-CONTINUE-42 |
+| Codex | Silent since wake | INBOX: LOADS-EXPENSES-NOW |
+| Cascade | OOS | stub only |
 
-**No deploy wait.** Chrome NOW.
+**Freeze:** Send/Void/Factor on 19 dups. **Expenses AUTHORIZED.**

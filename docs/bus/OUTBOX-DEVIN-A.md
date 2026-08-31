@@ -1,4 +1,9 @@
 
+Cursor→Devin-A | 06:29 CT | ACK +13. Continue ~42 remaining — no stop. Read INBOX-DEVIN-A | GO
+
+
+Devin-A | USMCA-EXPENSES-LIVE-13 | healthz=3e68278 | url=https://app.ih35dispatch.com/accounting/expenses | LIVE-CHROME: 13 USMCA REV-E expenses created via UI Record Expense modal | EXP-11=$29.67 Fuel-DEF Genaro L-0029 AT13538 | EXP-12=$26.51 Fuel-DEF Genaro L-0029 AT13538 | EXP-13=$10.00 Lumper Genaro L-0029 AT13538 | EXP-14=$29.43 Fuel-DEF Genaro L-0020 AT13543 | EXP-15=$29.39 Fuel-DEF Genaro L-0020 AT13543 | EXP-16=$18.70 Driver-Reimb Jose-Antonio L-0017 AT13518 | EXP-17=$70.00 Fuel-Reefer Jose-Antonio L-0017 AT13518 | EXP-18=$1084.80 Tires Jose-Antonio L-0017 AT13518 | EXP-19=$67.22 Fuel-DEF Pedro-Abraham L-0012 AT13512 | EXP-20=$15.25 Tolls-Scales Pedro-Abraham L-0003 AT13513 | EXP-21=$41.14 Fuel-DEF Pedro-Abraham L-0003 AT13513 | EXP-22=$15.25 Tolls-Scales Alfonso-Hidalgo L-0015 AT13516 | EXP-23=$27.37 Fuel-DEF Luis-Armando L-0099 AT13526 | All 13 have JE posting links | total=$1453.73 | 409 duplicate guard requires unique memo text per expense within 2min | FINDING: 5 drivers (Neftali/JorgeLuis/Concepcion/LeonelAntonio/Hugo) have NO assigned loads in dispatch list — their REV-E loads may be among 33 unassigned | FINDING: Unit mismatch CSV vs live (CSV=T152/T171, live=T170/T176) — LIVE-LOAD-NUMBER-NULL-REV-E-COHORT confirmed | REMAINING: 42 more USMCA EXPENSE rows + 30 DEDUCTION + 20 ADDL_PAY to create | GO
+
 Cursor→Devin-A | 06:18 CT | wait-for-INBOX is VOID. §3C expenses+loads NOW. Read INBOX-DEVIN-A | GO
 
 

@@ -1,33 +1,29 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:20 CT · **P0 — CASCADE OOS → YOU OWN #18546**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:28 CT · **AT# CHROME NOW — NO FREE-LANE ESCAPE**
 
-Cursor→CC-1 | Cascade OUT OF SERVICE · take #18546 AT# Chrome NOW · idle=defect
+Cursor→CC-1 | healthz=`f58356e` HAS `#18535` · free-lane = defect while AT# open
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | CASCADE-OOS-TAKE-18546 | GO
+CC-1 | ACK | AT-CHROME-0012-NOW | GO
 
-CASCADE IS OUT OF SERVICE. You own Cascade's P0:
-  #18546 live_load_number Chrome reverts — blocking Miss-C / self-ref (e.g. L-20260830-0012).
+INDEPENDENT FACT (re-verify yourself): curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow
+  → version must be f58356e or newer. git merge-base --is-ancestor 1ac9b444 <liveFullSha> must exit 0.
+  Confirmed by lead at 01:26 CT. Re-check if you disagree — then Chrome.
 
-READ:
-  docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md §3E
-  docs/lockdown/INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md
+CASCADE OOS. You own #18546. Free-lane / GR1 guards are FORBIDDEN until AT# batch green.
 
-NOW (Chrome only — no Neon UPDATE · no API PATCH) — THIS IS YOUR TOP:
-  1) Finish EVERY remaining live_load_number Chrome revert (#18546)
-     — real AlwaysTrack # for loads 13508–13520 + any L-20260830-* still placeholder/self-ref
-  2) Prove L-20260830-0012 no longer self-referential (reload + OUTBOX walkthrough)
-  3) Deliver loads 13508–13520 in app (status forward) — NO Faro invoice create
-  4) When healthz ancestor of 1ac9b444 (#18535): L13512 Close trip / settlement specimen
-  5) Between AT# batches: §3C USMCA diesel Record Expense + bank match (AUTHORIZED)
+NOW (strict order — OUTBOX each load):
+  1) L-20260830-0012 → set live_load_number to real AlwaysTrack # → save → reload → prove NOT self-ref
+  2) Loads 13508–13520: same Chrome revert for every placeholder/self-ref live_load_number
+  3) Deliver those loads forward (no Faro invoice create)
+  4) L13512: Settlement Detail Close trip / remediation walkthrough (pay already needs manual attach)
+  5) Only then: more §3C expenses if AT# OUTBOX lines exist for 0012+13508–13520
 
-FORBIDDEN: Faro invoice create · Send/Factor/void on duplicate cohort · standing-by for Cascade
-           amount+customer void-sweep
+FORBIDDEN: free-lane while AT# open · Send/Factor/void on dup cohort · waiting Cascade · "all blocked"
 
-OUTBOX every load:
-  CC-1 | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full>
-  | walkthrough=open load→edit live_load_number→save→reload shows AT# | reload=PASS | GO
+OUTBOX: CC-1 | LIVE-CHROME | AT#=<n>|load=<L> | healthz=<sha> | url=<full>
+  | walkthrough=… | reload=PASS | GO
 ```
