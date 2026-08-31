@@ -1,4 +1,232 @@
 {
+  "10001": {
+    "claimed_at": "2026-08-28",
+    "claimed_by": "cc-1",
+    "purpose": "verify-invoice-source-load-uniqueness-race"
+  },
+  "10005": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-tonu-invoice-line-zero-rows-check"
+  },
+  "10009": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cancellation-tonu-backlink-scoped-check"
+  },
+  "10013": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-notify-claim-before-send"
+  },
+  "10017": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-bridge-scoped-checks"
+  },
+  "10021": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-edit-load-charge-replacement-checked"
+  },
+  "10025": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-profitability-trip-end-active-stop"
+  },
+  "10029": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-package-popup-block-honesty"
+  },
+  "10033": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-factoring-package-metadata-failures-caught"
+  },
+  "10037": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
+  },
+  "10041": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-drawer-money-query-error-disclosure"
+  },
+  "10042": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-static-ratchet"
+  },
+  "10044": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-audit-coverage-ledger-integrity"
+  },
+  "10046": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-requireauth-returns-reply"
+  },
+  "10048": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-sql-placeholder-param-count"
+  },
+  "10050": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-ct-timezone-rendering"
+  },
+  "10051": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-2",
+    "purpose": "verify-guard-selftests-are-real (GR-2 meta-guard, GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2)"
+  },
+  "10052": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
+  },
+  "10053": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-medical-card-background-check-linkage"
+  },
+  "10054": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-cert-fw6-leaf-specific CERT-01 B4 leafRe theater"
+  },
+  "10057": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dqf01-required-document-types-and-file-fks"
+  },
+  "10061": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-fine-company-violation-linkage"
+  },
+  "10065": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-drug-test-hos-violation-linkage"
+  },
+  "10069": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-dot-inspection-fuel-transaction-linkage"
+  },
+  "10073": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-expense-bill-linkage"
+  },
+  "10077": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-dot-oos-fmcsa-inspection-reconcile (GO-1405 P0)"
+  },
+  "10081": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-maintenance-kpis-view-not-dead-stub (GO-1405 P1 mtd_repair_cost)"
+  },
+  "10085": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-je-type-id-wired-into-all-posters (ACCT-LINK-01 regression fix, GO-1405)"
+  },
+  "10089": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-fuel-and-border-credentials-uploads (GO-1405 DOC-01 remainder)"
+  },
+  "10093": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-wonum-d1-refuse-missing-unit-number (GO-1405 WONUM D1)"
+  },
+  "10097": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-cert01-fw-server-assertions (CERT-01 B2+B7, GO-1405)"
+  },
+  "10101": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-wonum-d2-v5-lock-and-refresh-fix (GO-WONUM-01 D2)"
+  },
+  "10103": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-2",
+    "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
+  },
+  "10105": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-period-close-01-ensureopenperiod-wired (ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT)"
+  },
+  "10109": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-defect-b-amex-cc-dedupe (GO-CLOSE-188 CC-1 DEFECT B)"
+  },
+  "10113": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-defect-a-deposit-sweep-wired (GO-CLOSE-188 CC-1 DEFECT A)"
+  },
+  "10117": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-g1-sample-data-name-detection (GO-CLOSE-188 owner G1)"
+  },
+  "10118": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "codex",
+    "purpose": "verify-planner-grid-canonical (GO-INSTRUMENT-PLANNER A1-A7)"
+  },
+  "10121": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-econ-c25-c31-auto-check-wrappers (6 thin wrappers made real + column-mapping guard, ACCT-F10125)"
+  },
+  "10125": [
+    "10125-verify-recon-sessions-void-and-unique-period.mjs"
+  ],
+  "10129": [
+    "10129-verify-coa-roles-unique-per-company-role.mjs"
+  ],
+  "10133": [
+    "10133-verify-factoring-advance-reserve-fee-independent.mjs"
+  ],
+  "10137": [
+    "10137-verify-factoring-submit-rates-fail-closed.mjs"
+  ],
+  "10141": [
+    "10141-verify-factor-resolver-excludes-voided-inactive.mjs"
+  ],
+  "10142": [
+    "10142-verify-module-completion-requires-tieout.mjs"
+  ],
+  "10145": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "claude-1",
+    "purpose": "verify-settlement-close-fallback-opens-if-missing"
+  },
+  "10149": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "claude-1",
+    "purpose": "verify-live-load-number-not-self-referential (wiring #18546's already-shipped, unwired guard)"
+  },
+  "10150": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-delivery-latch-invoice-savepoint"
+  },
   "2426": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
@@ -70,14 +298,24 @@
     "purpose": "verify-safety-layout-outlet-key"
   },
   "2456": {
+    "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
-    "purpose": "verify-owner-override-not-money-fields",
-    "claimed_at": "2026-08-31"
+    "purpose": "verify-owner-override-not-money-fields"
   },
   "2458": {
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
     "purpose": "verify-list-rows-use-datatable"
+  },
+  "2460": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-owner-override-not-money-fields"
+  },
+  "2462": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-state-machine-parity"
   },
   "2912": {
     "claimed_at": "2026-08-08",
@@ -2398,69 +2636,69 @@
     "purpose": "verify-factoring-tab-customer-entitylink"
   },
   "3940": {
-    "guard": "verify-pre-settlement-panel-driver-entitylink",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-pre-settlement-panel-driver-entitylink"
   },
   "3942": {
-    "guard": "verify-load-drawer-assignment-history-driver-entitylinks",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-load-drawer-assignment-history-driver-entitylinks"
   },
   "3944": {
-    "guard": "verify-book-load-equipment-selected-entitylinks",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-book-load-equipment-selected-entitylinks"
   },
   "3946": {
-    "guard": "verify-deadhead-optimizer-unit-entitylink",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-deadhead-optimizer-unit-entitylink"
   },
   "3948": {
-    "guard": "verify-load-settlement-tab-driver-entitylink",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-load-settlement-tab-driver-entitylink"
   },
   "3950": {
-    "guard": "verify-fleet-oos-strip-unit-entitylink",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-fleet-oos-strip-unit-entitylink"
   },
   "3952": {
-    "guard": "verify-kanban-awaiting-truck-entitylinks",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-kanban-awaiting-truck-entitylinks"
   },
   "3954": {
-    "guard": "verify-kanban-oos-strip-entitylinks",
+    "claimed_at": "2026-08-19",
     "claimer": "cursor",
-    "claimed_at": "2026-08-19"
+    "guard": "verify-kanban-oos-strip-entitylinks"
   },
   "3956": {
+    "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
-    "purpose": "verify-kanban-compact-card-entitylinks",
-    "claimed_at": "2026-08-19"
+    "purpose": "verify-kanban-compact-card-entitylinks"
   },
   "3958": {
+    "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
-    "purpose": "verify-border-wizard-broker-entitylink",
-    "claimed_at": "2026-08-19"
+    "purpose": "verify-border-wizard-broker-entitylink"
   },
   "3960": {
+    "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
-    "purpose": "verify-book-load-customer-entitylink",
-    "claimed_at": "2026-08-19"
+    "purpose": "verify-book-load-customer-entitylink"
   },
   "3962": {
+    "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
-    "purpose": "verify-border-wizard-step6-entitylinks",
-    "claimed_at": "2026-08-19"
+    "purpose": "verify-border-wizard-step6-entitylinks"
   },
   "3964": {
+    "claimed_at": "2026-08-19",
     "claimed_by": "cursor",
-    "purpose": "verify-book-load-edit-header-entitylink",
-    "claimed_at": "2026-08-19"
+    "purpose": "verify-book-load-edit-header-entitylink"
   },
   "3966": {
     "claimed_at": "2026-08-19",
@@ -2488,351 +2726,351 @@
     "purpose": "verify-accidents-staged-filters"
   },
   "3976": {
-    "lane": "cursor",
     "finding": "CLAIM-RESERVE-3976",
+    "lane": "cursor",
     "reserved_at": "2026-08-19"
   },
   "3978": {
-    "lane": "cursor",
     "finding": "CLAIM-RESERVE-3978",
+    "lane": "cursor",
     "reserved_at": "2026-08-19"
   },
   "3980": {
-    "lane": "cursor",
     "finding": "CLAIM-RESERVE-3980",
+    "lane": "cursor",
     "reserved_at": "2026-08-19"
   },
   "3982": {
-    "lane": "cursor",
     "finding": "CLAIM-RESERVE-3982",
+    "lane": "cursor",
     "reserved_at": "2026-08-19"
   },
   "3984": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-POSITION-HISTORY-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-POSITION-HISTORY-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3986": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-COMPLAINTS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-COMPLAINTS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3988": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-COMPANY-VIOLATIONS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-COMPANY-VIOLATIONS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3990": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-TRAINING-RECORDS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-TRAINING-RECORDS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3992": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-INTERNAL-FINES-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-INTERNAL-FINES-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3994": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-EXTERNAL-FINES-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-EXTERNAL-FINES-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3996": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-INTEGRITY-ALERTS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-INTEGRITY-ALERTS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "3998": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-ESCROW-RECORD-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-ESCROW-RECORD-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4000": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-HOS-VIOLATIONS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-HOS-VIOLATIONS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4002": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-DRUG-ALCOHOL-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-DRUG-ALCOHOL-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4004": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-EVENTS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-EVENTS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4006": {
-    "owner": "cursor",
-    "note": "LV-SAFETY-CARGO-CLAIMS-FILTER-SILENT-APPLY"
+    "note": "LV-SAFETY-CARGO-CLAIMS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4008": {
-    "owner": "cursor",
-    "note": "LV-DRIVERS-PENDING-DEDUCTIONS-FILTER-SILENT-APPLY"
+    "note": "LV-DRIVERS-PENDING-DEDUCTIONS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4010": {
-    "owner": "cursor",
-    "note": "LV-DISPATCH-INTRANSIT-ISSUES-FILTER-SILENT-APPLY"
+    "note": "LV-DISPATCH-INTRANSIT-ISSUES-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4012": {
-    "owner": "cursor",
-    "note": "LV-FACTORING-HOME-FILTER-SILENT-APPLY"
+    "note": "LV-FACTORING-HOME-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4014": {
-    "owner": "cursor",
-    "note": "LV-FACTORING-SUBMISSION-QUEUE-FILTER-SILENT-APPLY"
+    "note": "LV-FACTORING-SUBMISSION-QUEUE-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4016": {
-    "owner": "cursor",
-    "note": "LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY"
+    "note": "LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4018": {
-    "owner": "cursor",
-    "note": "LV-FACTORING-FACTOR-ADMIN-FILTER-SILENT-APPLY"
+    "note": "LV-FACTORING-FACTOR-ADMIN-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4020": {
-    "owner": "cursor",
-    "note": "LV-DRIVER-FINANCE-SETTLEMENT-DISPUTES-FILTER-SILENT-APPLY"
+    "note": "LV-DRIVER-FINANCE-SETTLEMENT-DISPUTES-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4022": {
-    "owner": "cursor",
-    "note": "LV-DRIVERS-AUTO-DEDUCTION-FILTER-SILENT-APPLY"
+    "note": "LV-DRIVERS-AUTO-DEDUCTION-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4024": {
-    "owner": "cursor",
-    "note": "LV-DRIVERS-TEAM-SPLIT-FILTER-SILENT-APPLY"
+    "note": "LV-DRIVERS-TEAM-SPLIT-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4026": {
-    "owner": "cursor",
-    "note": "LV-DRIVER-FINANCE-CASH-ADVANCE-REQUESTS-FILTER-SILENT-APPLY"
+    "note": "LV-DRIVER-FINANCE-CASH-ADVANCE-REQUESTS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4028": {
-    "owner": "cursor",
-    "note": "LV-CASH-ADVANCES-HOME-FILTER-SILENT-APPLY"
+    "note": "LV-CASH-ADVANCES-HOME-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4030": {
-    "owner": "cursor",
-    "note": "LV-FAULT-DRAFTS-FILTER-SILENT-APPLY"
+    "note": "LV-FAULT-DRAFTS-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4032": {
-    "owner": "cursor",
-    "note": "LV-LOAD-TEMPLATE-LIBRARY-FILTER-SILENT-APPLY"
+    "note": "LV-LOAD-TEMPLATE-LIBRARY-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4034": {
-    "owner": "cursor",
-    "note": "LV-LIABILITIES-HOME-FILTER-SILENT-APPLY"
+    "note": "LV-LIABILITIES-HOME-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4036": {
-    "owner": "cursor",
-    "note": "LV-HOS-TRACKER-FILTER-SILENT-APPLY"
+    "note": "LV-HOS-TRACKER-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4038": {
-    "owner": "cursor",
-    "note": "LV-FLEET-HOS-BOARD-FILTER-SILENT-APPLY"
+    "note": "LV-FLEET-HOS-BOARD-FILTER-SILENT-APPLY",
+    "owner": "cursor"
   },
   "4040": {
     "claimed_by": "cursor",
-    "purpose": "verify-use-driver-labels-null-safe",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-use-driver-labels-null-safe"
   },
   "4042": {
     "claimed_by": "cursor",
-    "purpose": "verify-permits-page-test-toast-provider",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-permits-page-test-toast-provider"
   },
   "4044": {
     "claimed_by": "cursor",
-    "purpose": "verify-safety-b24-label-tests-mock-get-driver-labels",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-safety-b24-label-tests-mock-get-driver-labels"
   },
   "4046": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-meet-train-create-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-meet-train-create-error-surface"
   },
   "4048": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-create-drawers-error-surface-class",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-create-drawers-error-surface-class"
   },
   "4050": {
     "claimed_by": "cursor",
-    "purpose": "verify-company-violation-create-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-company-violation-create-error-surface"
   },
   "4052": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-create-silent-fail-wave2",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-create-silent-fail-wave2"
   },
   "4054": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-integrity-csa-mutation-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-integrity-csa-mutation-error-surface"
   },
   "4056": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-detail-drawer-mutation-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-detail-drawer-mutation-error-surface"
   },
   "4058": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-drug-alcohol-mutation-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-drug-alcohol-mutation-error-surface"
   },
   "4060": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-dot-followup-mutation-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-dot-followup-mutation-error-surface"
   },
   "4062": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-action-mutation-error-wave3",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-action-mutation-error-wave3"
   },
   "4064": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-action-mutation-error-wave4",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-action-mutation-error-wave4"
   },
   "4066": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-action-mutation-error-wave5",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-action-mutation-error-wave5"
   },
   "4068": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-action-mutation-error-wave6",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-action-mutation-error-wave6"
   },
   "4070": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-action-mutation-error-wave7",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-action-mutation-error-wave7"
   },
   "4072": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-random-pool-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-random-pool-query-error-surface"
   },
   "4074": {
     "claimed_by": "cursor",
-    "purpose": "verify-vendor-txn-type-filter-staged",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-vendor-txn-type-filter-staged"
   },
   "4076": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-drug-alcohol-dashboard-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-drug-alcohol-dashboard-query-error-surface"
   },
   "4078": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-csa-score-tab-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-csa-score-tab-query-error-surface"
   },
   "4080": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-rtd-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-rtd-query-error-surface"
   },
   "4082": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-geofence-breaches-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-geofence-breaches-query-error-surface"
   },
   "4084": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-anomaly-dashboard-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-anomaly-dashboard-query-error-surface"
   },
   "4086": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-dot-dwell-events-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-dot-dwell-events-query-error-surface"
   },
   "4088": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-integrity-reports-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-integrity-reports-query-error-surface"
   },
   "4090": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-permits-deadline-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-permits-deadline-query-error-surface"
   },
   "4092": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-complaints-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-complaints-query-error-surface"
   },
   "4094": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-drug-alcohol-tab-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-drug-alcohol-tab-query-error-surface"
   },
   "4096": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-safety-layout-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-safety-layout-query-error-surface"
   },
   "4098": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-safety-home-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-safety-home-query-error-surface"
   },
   "4100": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-cert-expiry-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-cert-expiry-query-error-surface"
   },
   "4102": {
     "claimed_by": "cursor",
-    "purpose": "verify-customer-detail-edit-cancel",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-customer-detail-edit-cancel"
   },
   "4104": {
     "claimed_by": "cursor",
-    "purpose": "verify-safety-accident-reverse-deep-link",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-safety-accident-reverse-deep-link"
   },
   "4106": {
     "claimed_by": "cursor",
-    "purpose": "verify-safety-dot-expiry-driver-link",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-safety-dot-expiry-driver-link"
   },
   "4108": {
     "claimed_by": "cursor",
-    "purpose": "verify-safety-event-detail-list-fallback",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-safety-event-detail-list-fallback"
   },
   "4110": {
     "claimed_by": "cursor",
-    "purpose": "verify-safety-training-record-canonical-routes",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-safety-training-record-canonical-routes"
   },
   "4112": {
     "claimed_by": "cursor",
-    "purpose": "verify-task-planner-primary-link-fallback",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-task-planner-primary-link-fallback"
   },
   "4114": {
     "claimed_by": "cursor",
-    "purpose": "verify-vendor-category-picker-law",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-vendor-category-picker-law"
   },
   "4116": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-safety-settings-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-safety-settings-query-error-surface"
   },
   "4118": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-harsh-event-clips-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-harsh-event-clips-query-error-surface"
   },
   "4120": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-eld-audit-trail-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-eld-audit-trail-query-error-surface"
   },
   "4122": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-damage-report-detail-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-damage-report-detail-query-error-surface"
   },
   "4124": {
     "claimed_by": "cursor",
-    "purpose": "verify-saf-photo-session-detail-query-error-surface",
-    "date": "2026-08-19"
+    "date": "2026-08-19",
+    "purpose": "verify-saf-photo-session-detail-query-error-surface"
   },
   "4126": {
     "claimed_at": "2026-08-19",
@@ -3160,103 +3398,103 @@
     "purpose": "verify-tonu-coa-additive-and-flag-gated"
   },
   "4206": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
     "purpose": "verify-safety-incidents-cluster-trailer-column"
   },
   "4208": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
     "purpose": "verify-invoice-create-modal-customer-entitylink"
   },
   "4209": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
     "purpose": "verify-banking-driver-escrow-uses-accounting-escrow-source"
   },
   "4213": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
     "purpose": "verify-parts-inventory-purchase-on-conflict-matches-index"
   },
   "4214": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-3",
     "purpose": "verify-scheduled-reports-crash-resilience"
   },
   "4217": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
     "purpose": "verify-customer-payment-posts-with-zero-applications"
   },
   "4221": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-21",
+    "claimed_by": "cc-1",
     "purpose": "verify-je-source-links-bill-uses-bill-number"
   },
   "4225": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-db-pool-budget"
   },
   "4229": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-migration-verification-readonly"
   },
   "4233": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-account-register-reference-not-uuid"
   },
   "4234": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
     "purpose": "verify-driver-planner-leave-requests-label-honest"
   },
   "4237": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-je-list-memo-resolves-source-name"
   },
   "4238": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
     "purpose": "verify-combobox-anchor-motion-reposition (renumbered off colliding 4127, see LST-ORPH-04-DUPLICATE-4127 fix)"
   },
   "4241": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-banking-escrow-register-settlement-je-link"
   },
   "4245": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-reconciliation-workspace-matched-labels-not-null"
   },
   "4249": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-factoring-recourse-view-real-cents-columns"
   },
   "4253": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-reconciliation-unmatch-clears-all-six-kinds"
   },
   "4257": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-parts-invoice-links-void-not-delete"
   },
   "4258": {
-    "claimed_by": "cc-3",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-3",
     "purpose": "verify-customer-shipping-country-nullable"
   },
   "4261": {
-    "claimed_by": "cc-1",
     "claimed_at": "2026-08-22",
+    "claimed_by": "cc-1",
     "purpose": "verify-audit-trigger-coverage-abandonment-chargebacks-settlement-disputes"
   },
   "4265": {
@@ -4572,14 +4810,14 @@
   "9859": {
     "claimed_at": "2026-08-27",
     "claimed_by": "cc-3",
-    "purpose": "verify-ledger-health-no-human-resolve",
-    "note": "COLLISION RESOLVED 2026-08-28: cc-2's claim-reserve commit d837e234db (23:24:18) landed AFTER cc-3's file already merged on origin/main (a6801b12, earlier same session) with this exact number and a near-identical purpose (GET-only + no UPDATE/DELETE on _system.reconciliation_findings anywhere in the backend, table-wide not integration-scoped, so it already covers 'ledger' once that value exists). cc-2's reservation is superseded \u2014 see INBOX-CC-2.md for the redirect to 9863."
+    "note": "COLLISION RESOLVED 2026-08-28: cc-2's claim-reserve commit d837e234db (23:24:18) landed AFTER cc-3's file already merged on origin/main (a6801b12, earlier same session) with this exact number and a near-identical purpose (GET-only + no UPDATE/DELETE on _system.reconciliation_findings anywhere in the backend, table-wide not integration-scoped, so it already covers 'ledger' once that value exists). cc-2's reservation is superseded \u2014 see INBOX-CC-2.md for the redirect to 9863.",
+    "purpose": "verify-ledger-health-no-human-resolve"
   },
   "9863": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
-    "purpose": "verify-ledger-findings-no-human-resolve",
-    "note": "Redirected here from 9859 per CC-3's collision-correction (see 9859's own note) -- distinct scope from CC-3's 9859 guard: this one also asserts the ledger-integrity detector's own auto-resolve path leaves resolved_by_user_id NULL, not just that no route UPDATEs the table."
+    "note": "Redirected here from 9859 per CC-3's collision-correction (see 9859's own note) -- distinct scope from CC-3's 9859 guard: this one also asserts the ledger-integrity detector's own auto-resolve path leaves resolved_by_user_id NULL, not just that no route UPDATEs the table.",
+    "purpose": "verify-ledger-findings-no-human-resolve"
   },
   "9867": {
     "claimed_at": "2026-08-28",
@@ -4628,14 +4866,14 @@
   },
   "9882": {
     "claimedBy": "cursor",
-    "purpose": "verify-prod-verified-live-binding",
-    "date": "2026-08-29"
+    "date": "2026-08-29",
+    "purpose": "verify-prod-verified-live-binding"
   },
   "9883": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-2",
-    "purpose": "verify-banking-factoring-timeline-no-silent-catch",
-    "note": "9881 was claimed first but is n%4=1 (ODD) \u2014 verify-verify-step-lane-band.mjs requires cc-2 to claim \u22613 (mod 4); 9883 is the correct number, 9881 stays reserved-but-unused"
+    "note": "9881 was claimed first but is n%4=1 (ODD) \u2014 verify-verify-step-lane-band.mjs requires cc-2 to claim \u22613 (mod 4); 9883 is the correct number, 9881 stays reserved-but-unused",
+    "purpose": "verify-banking-factoring-timeline-no-silent-catch"
   },
   "9887": {
     "claimed_at": "2026-08-28",
@@ -4812,229 +5050,6 @@
     "claimed_by": "cc-1",
     "purpose": "verify-financial-reports-business-date-defaults"
   },
-  "10001": {
-    "claimed_at": "2026-08-28",
-    "claimed_by": "cc-1",
-    "purpose": "verify-invoice-source-load-uniqueness-race"
-  },
-  "10005": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-tonu-invoice-line-zero-rows-check"
-  },
-  "10009": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cancellation-tonu-backlink-scoped-check"
-  },
-  "10013": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-notify-claim-before-send"
-  },
-  "10017": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-bridge-scoped-checks"
-  },
-  "10021": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-edit-load-charge-replacement-checked"
-  },
-  "10025": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-profitability-trip-end-active-stop"
-  },
-  "10029": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-package-popup-block-honesty"
-  },
-  "10033": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-factoring-package-metadata-failures-caught"
-  },
-  "10037": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-detention-customer-deactivation-survives-lifecycle"
-  },
-  "10041": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-drawer-money-query-error-disclosure"
-  },
-  "10042": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-static-ratchet"
-  },
-  "10044": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-audit-coverage-ledger-integrity"
-  },
-  "10046": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-requireauth-returns-reply"
-  },
-  "10048": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-sql-placeholder-param-count"
-  },
-  "10050": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-ct-timezone-rendering"
-  },
-  "10051": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-2",
-    "purpose": "verify-guard-selftests-are-real (GR-2 meta-guard, GO-TURBO-CC-2 WAVE-4 / GO-GR2-BASELINE item 2)"
-  },
-  "10052": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
-  },
-  "10053": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-medical-card-background-check-linkage"
-  },
-  "10054": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-cert-fw6-leaf-specific CERT-01 B4 leafRe theater"
-  },
-  "10057": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-dqf01-required-document-types-and-file-fks"
-  },
-  "10061": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-fine-company-violation-linkage"
-  },
-  "10065": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-drug-test-hos-violation-linkage"
-  },
-  "10069": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-dot-inspection-fuel-transaction-linkage"
-  },
-  "10073": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-expense-bill-linkage"
-  },
-  "10077": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-dot-oos-fmcsa-inspection-reconcile (GO-1405 P0)"
-  },
-  "10081": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-maintenance-kpis-view-not-dead-stub (GO-1405 P1 mtd_repair_cost)"
-  },
-  "10085": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-je-type-id-wired-into-all-posters (ACCT-LINK-01 regression fix, GO-1405)"
-  },
-  "10089": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-fuel-and-border-credentials-uploads (GO-1405 DOC-01 remainder)"
-  },
-  "10093": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-wonum-d1-refuse-missing-unit-number (GO-1405 WONUM D1)"
-  },
-  "10097": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-cert01-fw-server-assertions (CERT-01 B2+B7, GO-1405)"
-  },
-  "10101": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-wonum-d2-v5-lock-and-refresh-fix (GO-WONUM-01 D2)"
-  },
-  "10103": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-2",
-    "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
-  },
-  "10105": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-acct-period-close-01-ensureopenperiod-wired (ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT)"
-  },
-  "10109": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-acct-defect-b-amex-cc-dedupe (GO-CLOSE-188 CC-1 DEFECT B)"
-  },
-  "10113": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-acct-defect-a-deposit-sweep-wired (GO-CLOSE-188 CC-1 DEFECT A)"
-  },
-  "10117": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-g1-sample-data-name-detection (GO-CLOSE-188 owner G1)"
-  },
-  "10118": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "codex",
-    "purpose": "verify-planner-grid-canonical (GO-INSTRUMENT-PLANNER A1-A7)"
-  },
-  "10121": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-econ-c25-c31-auto-check-wrappers (6 thin wrappers made real + column-mapping guard, ACCT-F10125)"
-  },
-  "10125": [
-    "10125-verify-recon-sessions-void-and-unique-period.mjs"
-  ],
-  "10129": [
-    "10129-verify-coa-roles-unique-per-company-role.mjs"
-  ],
-  "10133": [
-    "10133-verify-factoring-advance-reserve-fee-independent.mjs"
-  ],
-  "10137": [
-    "10137-verify-factoring-submit-rates-fail-closed.mjs"
-  ],
-  "10141": [
-    "10141-verify-factor-resolver-excludes-voided-inactive.mjs"
-  ],
-  "10142": [
-    "10142-verify-module-completion-requires-tieout.mjs"
-  ],
-  "10145": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "claude-1",
-    "purpose": "verify-settlement-close-fallback-opens-if-missing"
-  },
-  "10149": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "claude-1",
-    "purpose": "verify-live-load-number-not-self-referential (wiring #18546's already-shipped, unwired guard)"
-  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -5047,385 +5062,20 @@
   "_note": "CLAIMED verify-step numbers. Every PR adding a verify-step MUST add its number here IN THE SAME COMMIT. Two agents claiming the same number then CONFLICT IN GIT instead of silently agreeing and reddening main afterwards.",
   "_why": "Six collisions on 2026-07-26 alone. Convention-based allocation cannot see a concurrent claimant on another branch: the clash only appears at merge, AFTER both PRs went green, and then reds every branch cut from main. A registry converts an invisible race into a merge conflict, which is where it belongs.",
   "claimed": {
+    "01": "01-ensure-database-url.mjs",
+    "02": "02-db-reset.mjs",
+    "03": "03-build-backend-emit.mjs",
+    "04": "04-frontend-tsc.mjs",
+    "05": "05-verify-arch-design.mjs",
+    "06": "06-verify-scheduler-tenant-context.mjs",
+    "07": "07-verify-canonical-schema-names.mjs",
+    "08": "08-verify-outbox-handler-parity.mjs",
+    "09": "09-verify-migration-application-consistency.mjs",
     "10": "10-backend-vitest.mjs",
-    "11": "11-frontend-vitest.mjs",
-    "12": "12-verify-geofence-breach-tenant-scope.mjs",
-    "13": "13-verify-collections-readonly.mjs",
-    "14": "14-verify-collections-tenant-scope.mjs",
-    "15": [
-      "15-verify-accounting-autoload-coverage.mjs",
-      "15-verify-collections-readonly.mjs"
-    ],
-    "16": "16-verify-no-boot-throwing-env-checks.mjs",
-    "17": [
-      "17-verify-google-oauth-lazy-env.mjs",
-      "17-verify-no-duplicate-modal-headers.mjs"
-    ],
-    "18": "18-verify-no-stub-strings.mjs",
-    "19": "19-verify-no-seed-data-in-prod-fixtures.mjs",
-    "20": "20-verify-sidebar-route-resolution.mjs",
-    "21": "21-verify-no-internal-strings.mjs",
-    "22": "22-verify-applied-migrations-immutable.mjs",
-    "23": "23-verify-content-drift-check.mjs",
-    "24": "24-verify-maintenance-routes-bootstrapped.mjs",
-    "25": "25-verify-maintenance-tab-coverage.mjs",
-    "26": "26-verify-wo-display-id-format.mjs",
-    "27": "27-verify-wo-status-transitions.mjs",
-    "28": [
-      "28-verify-no-demo-rows-in-safety.mjs",
-      "28-verify-pm-due-soon-calculation.mjs"
-    ],
-    "29": [
-      "29-verify-maintenance-reports-coverage.mjs",
-      "29-verify-no-internal-payload-in-notes.mjs",
-      "29-verify-safety-tab-coverage.mjs"
-    ],
-    "30": [
-      "30-verify-no-orphan-route-aliases.mjs",
-      "30-verify-safety-rls-coverage.mjs"
-    ],
-    "31": "31-verify-safety-expiry-tracking-coverage.mjs",
-    "34": "34-verify-safety-random-pool-determinism.mjs",
-    "35": "35-verify-safety-reports-coverage.mjs",
-    "36": "36-verify-safety-route-coverage.mjs",
-    "37": "37-verify-safety-accidents-wire-up.mjs",
-    "38": "38-verify-safety-count-nav-integrity.mjs",
-    "39": [
-      "39-verify-drivers-count-nav-integrity.mjs",
-      "39-verify-master-data-write-routes.mjs"
-    ],
-    "40": "40-verify-csv-import-gated-for-projected-entities.mjs",
-    "41": "41-verify-eld-foundation-coverage.mjs",
-    "42": "42-verify-maint-pm.mjs",
-    "43": "43-verify-dispatch-coming-soon-triage.mjs",
-    "44": "44-verify-maint-nav-count-reconcile.mjs",
-    "45": [
-      "45-verify-dispatch-arch-tab-parity.mjs",
-      "45-verify-drivers-profile-action-bar.mjs"
-    ],
-    "46": [
-      "46-verify-drivers-create-vocab.mjs",
-      "46-verify-parts-canonical-source.mjs"
-    ],
-    "47": [
-      "47-verify-book-load-accessorial.mjs",
-      "47-verify-dvir-schema-presence.mjs"
-    ],
-    "48": [
-      "48-verify-maint-create-vocab.mjs",
-      "48-verify-safety-meetings-training-wire.mjs"
-    ],
-    "49": [
-      "49-verify-drivers-earnings-debt-tab.mjs",
-      "49-verify-safety-hos-dashboard-wire.mjs",
-      "49-verify-trailer-wo-equipment-id.mjs"
-    ],
-    "50": "50-verify-dispatch-late-arrivals-alerts.mjs",
-    "51": [
-      "51-verify-dispatch-planner-calendar.mjs",
-      "51-verify-safety-incidents-cluster-wire.mjs"
-    ],
-    "52": [
-      "52-verify-dispatch-detention-board.mjs",
-      "52-verify-rls-uuid-cast-nullif.mjs"
-    ],
-    "53": "53-verify-dispatch-ocr-queue.mjs",
-    "54": "54-verify-dispatch-assignment-optimizer.mjs",
-    "55": "55-verify-dispatch-customer-eta-notify.mjs",
-    "56": "56-verify-dispatch-pod-bol-workflow.mjs",
-    "57": [
-      "57-verify-dispatch-settings-tab.mjs",
-      "57-verify-drivers-comm-center.mjs"
-    ],
-    "58": "58-verify-dispatch-secondary-nav-depth.mjs",
-    "59": [
-      "59-verify-drivers-audit-history-tab.mjs",
-      "59-verify-maint-dvir-defect-intake.mjs"
-    ],
-    "60": [
-      "60-verify-drivers-training-crud-on-profile.mjs",
-      "60-verify-maint-pm-auto-wo-engine.mjs"
-    ],
-    "61": [
-      "61-verify-drivers-onboarding-wizard.mjs",
-      "61-verify-maint-vendor-master-unify.mjs"
-    ],
-    "62": [
-      "62-verify-drivers-document-expiry-alerts.mjs",
-      "62-verify-maint-inspections-crud.mjs"
-    ],
-    "63": [
-      "63-verify-drivers-pwa-live-data.mjs",
-      "63-verify-maint-service-history-timeline.mjs"
-    ],
-    "64": [
-      "64-verify-drivers-application-portal.mjs",
-      "64-verify-maint-tire-program.mjs"
-    ],
-    "65": [
-      "65-verify-maint-mech-labor-ux.mjs",
-      "65-verify-maint-warranty-claims.mjs"
-    ],
-    "66": [
-      "66-verify-maint-kpi-dashboard.mjs",
-      "66-verify-maint-reefer-hours.mjs"
-    ],
-    "67": "67-verify-af1-coa-role-binding-heal.mjs",
-    "68": [
-      "68-verify-advance-recovery-load-id.mjs",
-      "68-verify-schema-parity.mjs"
-    ],
-    "69": "69-verify-bookload-stop-boolean-coercion.mjs",
-    "70": "70-verify-no-conflict-markers.mjs",
-    "71": "71-verify-planner-no-nplus1.mjs",
-    "73": "73-verify-intransit-issues-rls-forced.mjs",
-    "74": "74-verify-no-audit-audit-log-writes.mjs",
-    "75": "75-verify-jep-insert-idempotency-key.mjs",
-    "76": "76-verify-orphaned-relocated-tables-rls-forced.mjs",
-    "77": "77-verify-event-log-not-force-tailed.mjs",
-    "78": "78-verify-legal-template-seed-no-status-flip.mjs",
-    "79": "79-verify-legal-draft-preview-no-instance.mjs",
-    "80": "80-verify-legal-no-gl-posting.mjs",
-    "81": [
-      "81-verify-legal-esign-verified-at-gate.mjs",
-      "81-verify-legal-template-library-seedable.mjs"
-    ],
-    "82": "82-verify-legal-draft-pdf-readonly.mjs",
-    "83": "83-verify-settlement-500-diagnostics.mjs",
-    "84": "84-verify-mdata-entity-scope.mjs",
-    "85": "85-verify-load-number-business-date.mjs",
-    "86": "86-verify-cashflow-business-date.mjs",
-    "87": "87-verify-wo-void-reverses-gl.mjs",
-    "88": "88-verify-void-cancel-authz.mjs",
-    "89": "89-verify-banking-bank-accounts-opco-scope.mjs",
-    "90": "90-verify-no-global-posting-flags.mjs",
-    "91": "91-verify-factoring-treatment.mjs",
-    "92": "92-verify-block-registry-complete.mjs",
-    "93": "93-verify-block-acceptance.mjs",
-    "94": "94-verify-guard-wired.mjs",
-    "95": "95-verify-no-silent-noop-posting.mjs",
-    "96": "96-verify-canonical-table-writes.mjs",
-    "97": "97-verify-bill-create-posts-gl.mjs",
-    "98": "98-verify-bill-payment-posts-gl.mjs",
-    "99": "99-verify-a11y-input-labels.mjs",
     "100": [
       "100-verify-bill-lines-load-id.mjs",
       "100-verify-settlement-approval-canonical.mjs"
     ],
-    "101": [
-      "101-verify-bank-automatch-observable.mjs",
-      "101-verify-no-payroll-settlement-writes.mjs"
-    ],
-    "102": "102-verify-detention-invoice-fk.mjs",
-    "103": "103-verify-bills-mdata-vendor-fk.mjs",
-    "104": "104-verify-work-order-entity-fks.mjs",
-    "105": "105-verify-incidents-auto-claim-fk.mjs",
-    "106": "106-verify-phase4-crossmodule-fks.mjs",
-    "107": "107-verify-no-raw-date-input.mjs",
-    "108": "108-verify-no-nested-box.mjs",
-    "109": "109-verify-create-forms-wired.mjs",
-    "110": "110-verify-dead-forms-unmounted.mjs",
-    "111": "111-verify-reference-dropdown-inline-create.mjs",
-    "112": "112-verify-list-error-state-coverage.mjs",
-    "113": "113-verify-referenceselect-coverage-ratchet.mjs",
-    "114": "114-verify-dispatch-load-invoice-linkage.mjs",
-    "115": [
-      "115-verify-banking-uncategorized-kpi-parity.mjs",
-      "115-verify-safety-event-load-linkage.mjs"
-    ],
-    "116": "116-verify-coa-list-total-pagination.mjs",
-    "117": [
-      "117-verify-equipment-list-total-pagination.mjs",
-      "117-verify-samsara-position-entity-scope.mjs"
-    ],
-    "118": "118-verify-customers-vendors-total-count-is-server.mjs",
-    "119": "119-verify-samsara-webhook-unit-fallback.mjs",
-    "120": "120-verify-cors-prod-defaults.mjs",
-    "121": [
-      "121-verify-cors-origins-canonical.mjs",
-      "121-verify-e2e-specs-assert-or-skip.mjs"
-    ],
-    "123": "123-verify-no-circular-dependencies.mjs",
-    "124": "124-verify-alerts-routes-membership.mjs",
-    "125": "125-verify-qbo-minorversion-consistent.mjs",
-    "126": "126-verify-orphan-fk-inventory.mjs",
-    "127": "127-verify-local-ci-parity.mjs",
-    "128": [
-      "128-verify-no-dead-clicks.mjs",
-      "128-verify-no-qbo-write-path.mjs"
-    ],
-    "129": "129-verify-no-emoji-in-dispatch-chrome.mjs",
-    "130": "130-verify-claim-crossmodule-fks.mjs",
-    "131": "131-verify-shared-coa-role-tests-serialized.mjs",
-    "132": "132-verify-qbo-sync-step-isolation.mjs",
-    "133": "133-verify-no-test-fixture-names.mjs",
-    "134": [
-      "134-verify-internal-labor-no-lineless-je.mjs",
-      "134-verify-vendor-test-fixture-guard.mjs"
-    ],
-    "135": "135-verify-no-stray-migrations.mjs",
-    "136": [
-      "136-verify-inventory-assignments-honesty.mjs",
-      "136-verify-relay-status-not-hardcoded.mjs"
-    ],
-    "137": "137-verify-pm-schedule-create-form.mjs",
-    "138": "138-verify-fault-drafts-nav.mjs",
-    "139": "139-verify-bank-automatch-button-wired.mjs",
-    "140": [
-      "140-verify-accident-edit-status-columns.mjs",
-      "140-verify-insurance-units-assets-bridge.mjs",
-      "140-verify-inventory-reorder-threshold-ui.mjs",
-      "140-verify-record-transfer-mark-transfer-wired.mjs"
-    ],
-    "141": [
-      "141-verify-backdated-check-wired.mjs",
-      "141-verify-inventory-read-path-api-request.mjs"
-    ],
-    "142": [
-      "142-verify-banking-bankaccountdetail-is-credit-amounts.mjs",
-      "142-verify-driver-border-credentials-edit.mjs",
-      "142-verify-entity-badge-single-source.mjs",
-      "142-verify-h02-qbo-topbar-sync-now.mjs",
-      "142-verify-sql-column-existence.mjs",
-      "142-verify-user-detail-activity-tab.mjs"
-    ],
-    "143": "143-verify-no-guard-hotfile-thrash.mjs",
-    "144": "144-verify-xlsx-cve-closeout.mjs",
-    "145": [
-      "145-verify-company-membership-assert.mjs",
-      "145-verify-schema-parity-determinism.mjs"
-    ],
-    "146": "146-verify-unit-parts-history-reverse-drill.mjs",
-    "147": "147-verify-equipment-transfer-notifies.mjs",
-    "148": "148-verify-vendor-drawer-fields-not-dropped.mjs",
-    "149": "149-verify-coi-single-component.mjs",
-    "150": "150-verify-equipment-transfer-writes-equipment-log.mjs",
-    "901": "901-verify-home-quickjump-counts.mjs",
-    "902": "902-verify-push-gate-classification.mjs",
-    "903": "903-verify-csa-hazmat-source-integrity.mjs",
-    "904": "904-verify-item-editor-account-addnew.mjs",
-    "905": "905-verify-expenses-list-route.mjs",
-    "906": "906-verify-accounting-catalog-profile.mjs",
-    "907": [
-      "907-verify-accounting-query-error-states-wave-b.mjs",
-      "907-verify-accounting-query-error-states.mjs",
-      "907-verify-finance-landing-hub.mjs",
-      "907-verify-invoice-pickup-sort.mjs"
-    ],
-    "908": "908-verify-accounting-query-error-states-wave-c.mjs",
-    "909": [
-      "909-verify-acct-posting-business-date.mjs",
-      "909-verify-qbo-sync-staleness.mjs"
-    ],
-    "910": [
-      "910-verify-cpa-answers-phase1-decisions.mjs",
-      "910-verify-local-ci-gate-acyclic.mjs",
-      "910-verify-report-refresh-no-nplus1.mjs",
-      "910-verify-settlement-reversal-atomicity.mjs"
-    ],
-    "911": "911-verify-block-ready-retirement.mjs",
-    "912": "912-verify-revenue-gl-linkage.mjs",
-    "913": "913-verify-fmcsa-fire-and-forget-retry.mjs",
-    "914": "914-verify-pending-approvals-gl-linkage.mjs",
-    "915": "915-verify-orphan-components.mjs",
-    "916": "916-verify-no-orphan-migration-ledger-entries.mjs",
-    "917": "917-verify-legal-reverse-drill-fleet-insurance.mjs",
-    "918": "918-verify-banking-grid-sort-resize-rows-per-page.mjs",
-    "920": "920-verify-chain-06-invoice-ar-chain-proof.mjs",
-    "921": "921-verify-chain-06-ar-subledger-fix.mjs",
-    "922": "922-verify-chain-06-factoring-ar-tieout.mjs",
-    "923": "923-verify-factoring-poster-secured-borrowing.mjs",
-    "924": "924-verify-bank-split-vendor-bill-gl-honesty.mjs",
-    "925": "925-verify-ap-aging-qbo-mirror-population.mjs",
-    "926": "926-verify-pre-push-env-isolation.mjs",
-    "927": "927-verify-mgmt-report-aging-drill.mjs",
-    "928": "928-verify-revenue-gl-linkage-db-isolation.mjs",
-    "929": "929-verify-factoring-balance-invoice-linkage.mjs",
-    "930": "930-verify-entity-link-adoption.mjs",
-    "931": "931-verify-entitylink-deep-links.mjs",
-    "932": "932-verify-94-live-counter-linkage.mjs",
-    "933": "933-verify-accounting-sortable-headers.mjs",
-    "934": "934-verify-custvend-sortable-headers.mjs",
-    "935": "935-verify-factor-reconciliation-import-mutation-error.mjs",
-    "936": "936-verify-revenue-recognition-two-event-latch-decisions.mjs",
-    "937": "937-verify-invoice-detail-mutation-error.mjs",
-    "938": "938-verify-qbo-drift-resolve-mutation-onerror.mjs",
-    "939": "939-verify-factoring-detail-mutation-onerror.mjs",
-    "940": "940-verify-payment-detail-mutation-onerror.mjs",
-    "941": "941-verify-coa-sync-panel-mutation-onerror.mjs",
-    "942": "942-verify-create-multiple-bills-onerror.mjs",
-    "943": "943-verify-escrow-page-mutation-onerror.mjs",
-    "944": "944-verify-accounting-audit-trail-mutation-onerror.mjs",
-    "945": "945-verify-source-lineage-page-onerror.mjs",
-    "946": "946-verify-payment-methods-catalog-mutation-onerror.mjs",
-    "947": "947-verify-receipts-page-query-error.mjs",
-    "948": "948-verify-verify-step-runner-return-status.mjs",
-    "949": "949-verify-sec-audit-deps-includes-root.mjs",
-    "950": "950-verify-reports-library-routes-no-any-client.mjs",
-    "951": "951-verify-factoring-list-url-sort.mjs",
-    "952": "952-verify-prepaid-fixedassets-url-sort.mjs",
-    "953": "953-verify-receipts-integration-url-sort.mjs",
-    "954": "954-verify-escrow-audittrail-url-sort.mjs",
-    "955": "955-verify-source-lineage-list-url-sort.mjs",
-    "956": "956-verify-factoring-invoice-detail-url-sort.mjs",
-    "957": "957-verify-account-register-url-sort.mjs",
-    "958": "958-verify-bill-detail-url-sort.mjs",
-    "959": "959-verify-items-list-url-sort.mjs",
-    "960": "960-verify-customer-vendor-detail-url-sort.mjs",
-    "961": "961-verify-idvr-row-clickable.mjs",
-    "962": "962-verify-compliance-tabs-url-sync.mjs",
-    "963": "963-verify-legal-matters-list-row-deeplink.mjs",
-    "964": "964-verify-hos-create-violation-link.mjs",
-    "965": "965-verify-driver-hub-tabs-url-sync.mjs",
-    "966": "966-verify-cash-flow-tabs-url-sync.mjs",
-    "967": "967-verify-qbo-sync-status-tabs-url-sync.mjs",
-    "968": "968-verify-document-alerts-tabs-url-sync.mjs",
-    "969": "969-verify-docs-upload-company-scope.mjs",
-    "970": "970-verify-cancel-load-draft-close.mjs",
-    "971": "971-verify-drivers-teams-view-url-sync.mjs",
-    "972": "972-verify-anomaly-alerts-url-sync.mjs",
-    "973": "973-verify-fuel-reconciliation-tabs-url-sync.mjs",
-    "974": "974-verify-insurance-create-vocab.mjs",
-    "975": "975-verify-factor-admin-create-vocab.mjs",
-    "976": "976-verify-insurance-type-catalog-create-vocab.mjs",
-    "977": "977-verify-eld-tabs-url-sync.mjs",
-    "978": "978-verify-docs-entity-tabs-url-sync.mjs",
-    "979": "979-verify-integrity-alerts-tabs-url-sync.mjs",
-    "980": "980-verify-legal-matter-detail-tabs-url-sync.mjs",
-    "981": "981-verify-program-board-tabs-url-sync.mjs",
-    "982": "982-verify-system-tabs-url-sync.mjs",
-    "983": "983-verify-form425c-tabs-url-sync.mjs",
-    "984": "984-verify-customers-detail-tabs-url-sync.mjs",
-    "985": "985-verify-vendors-detail-tabs-url-sync.mjs",
-    "986": "986-verify-qbo-reconcile-tabs-url-sync.mjs",
-    "987": "987-verify-user-detail-tabs-url-sync.mjs",
-    "988": "988-verify-daily-tasks-view-url-sync.mjs",
-    "989": "989-verify-profitability-tabs-url-sync.mjs",
-    "990": [
-      "990-verify-cash-advances-tabs-url-sync.mjs",
-      "990-verify-safety-incident-list-filters.mjs"
-    ],
-    "991": "991-verify-preflight-dvir-tabs-url-sync.mjs",
-    "992": [
-      "992-verify-active-driver-set-worker-registered.mjs",
-      "992-verify-financial-statements-tabs-url-sync.mjs"
-    ],
-    "993": [
-      "993-verify-fuel-fraud-detector-worker-registered.mjs",
-      "993-verify-qbo-vendor-linkage-tabs-url-sync.mjs"
-    ],
-    "994": [
-      "994-verify-ap-aging-view-url-sync.mjs",
-      "994-verify-fact-fix1-duplicate-vendors-banner.mjs"
-    ],
-    "995": "995-verify-factoring-submission-queue-routed.mjs",
-    "996": [
-      "996-verify-factoring-index-tabs-url-sync.mjs",
-      "996-verify-parts-vendor-link-rendered.mjs"
-    ],
-    "997": "997-verify-expenses-canonical-route-is-list.mjs",
-    "998": "998-verify-drivers-subnav-routes-registered.mjs",
-    "999": "999-verify-fuel-recon-manual-match-honest.mjs",
     "1000": "1000-verify-inventory-purchases-honesty.mjs",
     "1001": "1001-verify-program-tracker-tabs-url-sync.mjs",
     "1002": "1002-verify-fuel-home-dashboard-wired.mjs",
@@ -5436,6 +5086,10 @@
     "1007": "1007-verify-bank-recon-workspace-has-balance-header.mjs",
     "1008": "1008-verify-recon-collector-wired.mjs",
     "1009": "1009-verify-recon-no-green-on-no-data.mjs",
+    "101": [
+      "101-verify-bank-automatch-observable.mjs",
+      "101-verify-no-payroll-settlement-writes.mjs"
+    ],
     "1010": "1010-verify-qbo-remote-counts-entity-scope.mjs",
     "1011": "1011-verify-cash-flow-driver-pay-populated.mjs",
     "1012": [
@@ -5449,6 +5103,7 @@
     "1017": "1017-verify-dispatch-alerts-query-error.mjs",
     "1018": "1018-verify-eld-audit-pdf-is-real-export.mjs",
     "1019": "1019-verify-compliance-table-uses-paritytable.mjs",
+    "102": "102-verify-detention-invoice-fk.mjs",
     "1020": "1020-verify-asset-list-table-uses-paritytable.mjs",
     "1021": "1021-verify-deadhead-fuel-columns-real.mjs",
     "1022": "1022-verify-section7-palette-financial.mjs",
@@ -5468,6 +5123,7 @@
       "1028-verify-frequently-run-table-uses-paritytable.mjs"
     ],
     "1029": "1029-verify-vehicle-plates-uses-paritytable.mjs",
+    "103": "103-verify-bills-mdata-vendor-fk.mjs",
     "1030": "1030-verify-vehicle-recent-activity-uses-paritytable.mjs",
     "1032": "1032-verify-load-history-tab-uses-paritytable.mjs",
     "1033": "1033-verify-at-risk-queue-error-entitylink.mjs",
@@ -5480,6 +5136,7 @@
       "1038-verify-driver-day-summary-uses-paritytable.mjs"
     ],
     "1039": "1039-verify-trailer-plates-uses-paritytable.mjs",
+    "104": "104-verify-work-order-entity-fks.mjs",
     "1040": "1040-verify-vehicle-compliance-uses-paritytable.mjs",
     "1041": "1041-verify-stop-reasoning-table-uses-paritytable.mjs",
     "1042": "1042-verify-qbo-vendor-linkage-uses-paritytable.mjs",
@@ -5493,6 +5150,7 @@
     "1047": "1047-verify-accessorial-editor-uses-paritytable.mjs",
     "1048": "1048-verify-driver-settlements-section-uses-paritytable.mjs",
     "1049": "1049-verify-lane-detail-modal-uses-paritytable.mjs",
+    "105": "105-verify-incidents-auto-claim-fk.mjs",
     "1050": "1050-verify-labor-tracker-uses-paritytable.mjs",
     "1051": "1051-verify-ifta-step1-mileage-uses-paritytable.mjs",
     "1052": "1052-verify-ifta-step2-fuel-uses-paritytable.mjs",
@@ -5503,6 +5161,7 @@
     "1057": "1057-verify-booking-gap-report-uses-paritytable.mjs",
     "1058": "1058-verify-cancellations-report-uses-paritytable.mjs",
     "1059": "1059-verify-ifta-step-gallons-uses-paritytable.mjs",
+    "106": "106-verify-phase4-crossmodule-fks.mjs",
     "1060": [
       "1060-verify-block-ready-manifest-multiblock.mjs",
       "1060-verify-ifta-step-miles-uses-paritytable.mjs"
@@ -5516,6 +5175,7 @@
     "1067": "1067-verify-driver-layover-history-uses-paritytable.mjs",
     "1068": "1068-verify-safety-events-table-uses-paritytable.mjs",
     "1069": "1069-verify-position-history-uses-paritytable.mjs",
+    "107": "107-verify-no-raw-date-input.mjs",
     "1070": "1070-verify-daily-tasks-uses-paritytable.mjs",
     "1071": "1071-verify-driver-dqf-panel-uses-paritytable.mjs",
     "1072": "1072-verify-geofences-page-uses-paritytable.mjs",
@@ -5526,6 +5186,7 @@
     "1077": "1077-verify-audit-events-list-uses-paritytable.mjs",
     "1078": "1078-verify-bulk-demo-uses-paritytable.mjs",
     "1079": "1079-verify-driver-import-modal-uses-paritytable.mjs",
+    "108": "108-verify-no-nested-box.mjs",
     "1080": "1080-verify-legal-template-detail-uses-paritytable.mjs",
     "1081": "1081-verify-docs-home-page-uses-paritytable.mjs",
     "1082": "1082-verify-lease-to-own-creator-uses-paritytable.mjs",
@@ -5536,6 +5197,7 @@
     "1087": "1087-verify-driver-score-detail-uses-paritytable.mjs",
     "1088": "1088-verify-safety-incidents-cluster-uses-paritytable.mjs",
     "1089": "1089-verify-vendor-mapping-resolution-uses-paritytable.mjs",
+    "109": "109-verify-create-forms-wired.mjs",
     "1090": "1090-verify-unit-permits-tab-uses-paritytable.mjs",
     "1091": "1091-verify-unit-toll-tags-uses-paritytable.mjs",
     "1092": "1092-verify-wo-time-tracking-uses-paritytable.mjs",
@@ -5549,6 +5211,8 @@
     "1097": "1097-verify-profitability-by-customer-uses-paritytable.mjs",
     "1098": "1098-verify-profitability-by-lane-uses-paritytable.mjs",
     "1099": "1099-verify-profitability-by-load-uses-paritytable.mjs",
+    "11": "11-frontend-vitest.mjs",
+    "110": "110-verify-dead-forms-unmounted.mjs",
     "1100": "1100-verify-profitability-by-type-uses-paritytable.mjs",
     "1101": "1101-verify-maintenance-parts-catalog-uses-paritytable.mjs",
     "1102": "1102-verify-maintenance-services-catalog-uses-paritytable.mjs",
@@ -5559,11 +5223,13 @@
     "1107": "1107-verify-driver-catalog-list-uses-paritytable.mjs",
     "1108": "1108-verify-drivers-reference-catalog-uses-paritytable.mjs",
     "1109": "1109-verify-names-master-hub-uses-paritytable.mjs",
+    "111": "111-verify-reference-dropdown-inline-create.mjs",
     "1110": "1110-verify-qbo-sync-health-card-uses-paritytable.mjs",
     "1111": "1111-verify-payroll-aggregate-table-uses-paritytable.mjs",
     "1112": "1112-verify-qbo-bulk-link-uses-paritytable.mjs",
     "1113": "1113-verify-qbo-sync-status-dashboard-uses-paritytable.mjs",
     "1114": "1114-verify-qbo-sync-detail-uses-paritytable.mjs",
+    "112": "112-verify-list-error-state-coverage.mjs",
     "1120": "1120-verify-earnings-section-uses-paritytable.mjs",
     "1121": "1121-verify-reimbursements-section-uses-paritytable.mjs",
     "1122": "1122-verify-liability-breakdown-modal-uses-paritytable.mjs",
@@ -5574,6 +5240,7 @@
     "1127": "1127-verify-factoring-home-uses-paritytable.mjs",
     "1128": "1128-verify-factor-admin-uses-paritytable.mjs",
     "1129": "1129-verify-reserve-dashboard-uses-paritytable.mjs",
+    "113": "113-verify-referenceselect-coverage-ratchet.mjs",
     "1130": "1130-verify-reserve-tracker-uses-paritytable.mjs",
     "1131": "1131-verify-faro-import-page-uses-paritytable.mjs",
     "1132": "1132-verify-batch-wizard-uses-paritytable.mjs",
@@ -5584,6 +5251,7 @@
     "1137": "1137-verify-loan-wizard-page-uses-paritytable.mjs",
     "1138": "1138-verify-calculator-page-uses-paritytable.mjs",
     "1139": "1139-verify-qb-import-tab-uses-paritytable.mjs",
+    "114": "114-verify-dispatch-load-invoice-linkage.mjs",
     "1140": "1140-verify-actual-vs-projected-tab-uses-paritytable.mjs",
     "1141": "1141-verify-period-comparison-page-uses-paritytable.mjs",
     "1142": "1142-verify-sales-tax-page-uses-paritytable.mjs",
@@ -5594,6 +5262,10 @@
     "1147": "1147-verify-accounts-payable-aging-page-uses-paritytable.mjs",
     "1148": "1148-verify-transaction-register-page-uses-paritytable.mjs",
     "1149": "1149-verify-my-accountant-page-uses-paritytable.mjs",
+    "115": [
+      "115-verify-banking-uncategorized-kpi-parity.mjs",
+      "115-verify-safety-event-load-linkage.mjs"
+    ],
     "1150": "1150-verify-multi-entity-accounting-page-uses-paritytable.mjs",
     "1151": "1151-verify-factor-reconciliation-page-uses-paritytable.mjs",
     "1152": "1152-verify-qbo-reconciliation-page-uses-paritytable.mjs",
@@ -5604,6 +5276,7 @@
     "1157": "1157-verify-qbo-sync-drift-dashboard-uses-paritytable.mjs",
     "1158": "1158-verify-account-register-page-uses-paritytable.mjs",
     "1159": "1159-verify-journal-entry-detail-page-uses-paritytable.mjs",
+    "116": "116-verify-coa-list-total-pagination.mjs",
     "1160": "1160-verify-recurring-bill-list-uses-paritytable.mjs",
     "1162": "1162-verify-fixed-assets-page-uses-paritytable.mjs",
     "1163": "1163-verify-bank-account-detail-uses-paritytable.mjs",
@@ -5612,15 +5285,21 @@
     "1167": "1167-verify-payroll-aggregated-page-uses-paritytable.mjs",
     "1168": "1168-verify-prepaid-expenses-page-uses-paritytable.mjs",
     "1169": "1169-verify-factor-reserve-card-uses-paritytable.mjs",
+    "117": [
+      "117-verify-equipment-list-total-pagination.mjs",
+      "117-verify-samsara-position-entity-scope.mjs"
+    ],
     "1170": "1170-verify-bills-page-uses-paritytable.mjs",
     "1172": "1172-verify-paritytable-controlled-expansion.mjs",
     "1174": "1174-verify-settlement-payment-state-guard.mjs",
     "1176": "1176-verify-paritytable-group-bands.mjs",
     "1178": "1178-verify-no-payroll-settlement-readers.mjs",
+    "118": "118-verify-customers-vendors-total-count-is-server.mjs",
     "1182": "1182-verify-no-settlements-disputes-table-refs.mjs",
     "1184": "1184-verify-paritytable-controlled-pagination.mjs",
     "1186": "1186-verify-auto-deductions-subledger.mjs",
     "1188": "1188-verify-paritytable-external-sort.mjs",
+    "119": "119-verify-samsara-webhook-unit-fallback.mjs",
     "1190": "1190-verify-no-settlements-team-split-refs.mjs",
     "1192": "1192-verify-paritytable-controlled-selection.mjs",
     "1194": "1194-verify-no-retire-table-writes.mjs",
@@ -5629,6 +5308,8 @@
     "1197": "1197-verify-customers-uses-paritytable.mjs",
     "1198": "1198-verify-training-records-uses-paritytable.mjs",
     "1199": "1199-verify-unit-parts-history-uses-paritytable.mjs",
+    "12": "12-verify-geofence-breach-tenant-scope.mjs",
+    "120": "120-verify-cors-prod-defaults.mjs",
     "1200": [
       "1200-verify-coa-roles-route-reachable.mjs",
       "1200-verify-live-audit-reproducible.mjs"
@@ -5644,6 +5325,10 @@
       "1208-verify-coa-role-values-include-settlement-roles.mjs"
     ],
     "1209": "1209-verify-settlement-lines-line-type-check-superset.mjs",
+    "121": [
+      "121-verify-cors-origins-canonical.mjs",
+      "121-verify-e2e-specs-assert-or-skip.mjs"
+    ],
     "1210": [
       "1210-verify-accounting-line-scope-inheritance.mjs",
       "1210-verify-dispatcher-home-invoice-status.mjs",
@@ -5680,6 +5365,7 @@
     "1227": "1227-verify-invoice-detail-je-links.mjs",
     "1228": "1228-verify-je-detail-source-links.mjs",
     "1229": "1229-verify-invoice-reverse-routes.mjs",
+    "123": "123-verify-no-circular-dependencies.mjs",
     "1230": [
       "1230-verify-push-gate-conflict-markers.mjs",
       "1230-verify-safety-filter-chrome.mjs"
@@ -5708,6 +5394,7 @@
     "1237": "1237-verify-owner-financial-gates-ungated.mjs",
     "1238": "1238-verify-driver-picker-audit-present.mjs",
     "1239": "1239-verify-plus-driver-system-create.mjs",
+    "124": "124-verify-alerts-routes-membership.mjs",
     "1240": "1240-verify-dual-path-audit-present.mjs",
     "1241": "1241-verify-fleet-profile-no-dual-activity.mjs",
     "1242": "1242-verify-legal-matter-lawsuit-linkage.mjs",
@@ -5721,6 +5408,7 @@
       "1248-verify-claim-economics-slice2.mjs"
     ],
     "1249": "1249-verify-bill-payment-detail-reverse.mjs",
+    "125": "125-verify-qbo-minorversion-consistent.mjs",
     "1250": "1250-verify-manual-je-hub-create.mjs",
     "1251": [
       "1251-verify-allocations-page.mjs",
@@ -5734,6 +5422,7 @@
     "1257": "1257-verify-acct-catalog-accounts-opco-scope.mjs",
     "1258": "1258-verify-acct-multi-bills-parity.mjs",
     "1259": "1259-verify-acct-bill-total-tax-display-only.mjs",
+    "126": "126-verify-orphan-fk-inventory.mjs",
     "1260": "1260-verify-account-create-no-silent-field-drop.mjs",
     "1261": "1261-verify-acct-templates-subnav.mjs",
     "1262": "1262-verify-acct-invoice-create-coa.mjs",
@@ -5744,6 +5433,7 @@
     "1267": "1267-verify-acct-ensure-driver-vendors.mjs",
     "1268": "1268-verify-acct-receipts-leaf.mjs",
     "1269": "1269-verify-acct-period-close-dualpath.mjs",
+    "127": "127-verify-local-ci-parity.mjs",
     "1270": "1270-verify-acct-ap-aging-drill-has-balance.mjs",
     "1271": "1271-verify-acct-receipts-reverse-linkage.mjs",
     "1272": [
@@ -5763,6 +5453,10 @@
     "1277": "1277-verify-acct-collections-customer-link.mjs",
     "1278": "1278-verify-sales-tax-entitylink-reverse.mjs",
     "1279": "1279-verify-payment-methods-catalog-create.mjs",
+    "128": [
+      "128-verify-no-dead-clicks.mjs",
+      "128-verify-no-qbo-write-path.mjs"
+    ],
     "1280": "1280-verify-prepaid-expenses-entitylink-reverse.mjs",
     "1281": "1281-verify-fixed-assets-entitylink-reverse.mjs",
     "1282": "1282-verify-escrow-posting-entitylink-reverse.mjs",
@@ -5773,6 +5467,7 @@
     "1287": "1287-verify-account-type-catalog-create.mjs",
     "1288": "1288-verify-faro-import-linkage.mjs",
     "1289": "1289-verify-multi-entity-leaf.mjs",
+    "129": "129-verify-no-emoji-in-dispatch-chrome.mjs",
     "1290": "1290-verify-acct-integration-txn-entitylink.mjs",
     "1291": "1291-verify-acct-qbo-drift-entitylink.mjs",
     "1292": "1292-verify-acct-abandonment-settlement-link.mjs",
@@ -5786,6 +5481,8 @@
     "1297": "1297-verify-banking-settings-tab.mjs",
     "1298": "1298-verify-banking-statement-import-tab.mjs",
     "1299": "1299-verify-banking-arch-design-tabs.mjs",
+    "13": "13-verify-collections-readonly.mjs",
+    "130": "130-verify-claim-crossmodule-fks.mjs",
     "1300": "1300-verify-banking-recon-empty-honesty.mjs",
     "1301": "1301-verify-banking-forreview-match-honesty.mjs",
     "1302": "1302-verify-banking-plaid-connections-tab.mjs",
@@ -5796,6 +5493,7 @@
     "1307": "1307-verify-banking-factoring-entry-honesty.mjs",
     "1308": "1308-verify-banking-relay-entry-honesty.mjs",
     "1309": "1309-verify-banking-aging-fees-honesty.mjs",
+    "131": "131-verify-shared-coa-role-tests-serialized.mjs",
     "1310": "1310-verify-banking-statement-import-honesty.mjs",
     "1311": "1311-verify-banking-settings-honesty.mjs",
     "1312": [
@@ -5808,6 +5506,7 @@
     "1317": "1317-verify-banking-transfer-je-reverse.mjs",
     "1318": "1318-verify-banking-bank-feed-gl-honesty.mjs",
     "1319": "1319-verify-banking-attachments-notes-honesty.mjs",
+    "132": "132-verify-qbo-sync-step-isolation.mjs",
     "1320": "1320-verify-banking-relay-tab-honesty.mjs",
     "1321": [
       "1321-verify-banking-match-drawer-create.mjs",
@@ -5833,6 +5532,7 @@
     "1327": "1327-verify-fine-amend-guards.mjs",
     "1328": "1328-verify-escrow-forfeit-posting.mjs",
     "1329": "1329-verify-accident-wizard-fields-persisted.mjs",
+    "133": "133-verify-no-test-fixture-names.mjs",
     "1330": "1330-verify-fines-driver-name-not-uuid.mjs",
     "1331": "1331-verify-accidents-list-names-not-uuid.mjs",
     "1332": "1332-verify-safety-entitylink-reverse.mjs",
@@ -5843,6 +5543,10 @@
     "1337": "1337-verify-safety-orphan-routes-and-drillthrough.mjs",
     "1338": "1338-verify-internal-fine-lifecycle.mjs",
     "1339": "1339-verify-definition-of-done-is-auto-loaded.mjs",
+    "134": [
+      "134-verify-internal-labor-no-lineless-je.mjs",
+      "134-verify-vendor-test-fixture-guard.mjs"
+    ],
     "1340": "1340-verify-dispatch-drug-alcohol-gate.mjs",
     "1341": "1341-verify-fine-links-and-violation-catalog.mjs",
     "1342": "1342-verify-incident-lifecycle.mjs",
@@ -5853,6 +5557,7 @@
     "1347": "1347-verify-held-column-consumers.mjs",
     "1348": "1348-verify-safety-schema-delete-hardening.mjs",
     "1349": "1349-verify-fleet-catalog-no-metadata-phantom.mjs",
+    "135": "135-verify-no-stray-migrations.mjs",
     "1350": "1350-verify-catalog-default-entity-resolver.mjs",
     "1351": [
       "1351-verify-acct-account-picker-createkind.mjs",
@@ -5865,10 +5570,24 @@
     "1357": "1357-verify-vendor-credit-active-path.mjs",
     "1358": "1358-verify-catalog-scoping-classification.mjs",
     "1359": "1359-verify-cancellation-canonical-direction.mjs",
+    "136": [
+      "136-verify-inventory-assignments-honesty.mjs",
+      "136-verify-relay-status-not-hardcoded.mjs"
+    ],
     "1360": "1360-verify-catalog-registry-code-parity.mjs",
     "1361": "1361-verify-held-registry-integrity.mjs",
     "1362": "1362-verify-entity-resolver-membership.mjs",
     "1363": "1363-verify-cancel-paths-write-canonical-record.mjs",
+    "137": "137-verify-pm-schedule-create-form.mjs",
+    "138": "138-verify-fault-drafts-nav.mjs",
+    "139": "139-verify-bank-automatch-button-wired.mjs",
+    "14": "14-verify-collections-tenant-scope.mjs",
+    "140": [
+      "140-verify-accident-edit-status-columns.mjs",
+      "140-verify-insurance-units-assets-bridge.mjs",
+      "140-verify-inventory-reorder-threshold-ui.mjs",
+      "140-verify-record-transfer-mark-transfer-wired.mjs"
+    ],
     "1400": "1400-verify-banking-cash-gl-is-postable.mjs",
     "1401": "1401-verify-coa-roles-accounts-picker-entity-scoped.mjs",
     "1402": [
@@ -5881,6 +5600,10 @@
     "1406": "1406-verify-cost-of-labor-seed-transp-usmca.mjs",
     "1407": "1407-verify-coa-hide-account-numbers.mjs",
     "1408": "1408-verify-entity-coa-roles-and-plaid-mask.mjs",
+    "141": [
+      "141-verify-backdated-check-wired.mjs",
+      "141-verify-inventory-read-path-api-request.mjs"
+    ],
     "1410": "1410-verify-coa-optional-unused-recoveries.mjs",
     "1411": "1411-verify-qbo-ap-bill-lines-projection.mjs",
     "1412": "1412-verify-refuse-qbo-bill-post-gl.mjs",
@@ -5893,6 +5616,14 @@
     "1419": [
       "1419-verify-driver-load-statuses-per-entity.mjs",
       "1419-verify-qbo-ar-payments-projection-wired.mjs"
+    ],
+    "142": [
+      "142-verify-banking-bankaccountdetail-is-credit-amounts.mjs",
+      "142-verify-driver-border-credentials-edit.mjs",
+      "142-verify-entity-badge-single-source.mjs",
+      "142-verify-h02-qbo-topbar-sync-now.mjs",
+      "142-verify-sql-column-existence.mjs",
+      "142-verify-user-detail-activity-tab.mjs"
     ],
     "1420": "1420-verify-equipment-types-per-entity.mjs",
     "1421": [
@@ -5908,6 +5639,7 @@
     "1425": "1425-verify-acct-expense-list-wo-reverse.mjs",
     "1426": "1426-verify-qbo-ar-payment-deposit-bridge.mjs",
     "1428": "1428-verify-no-parallel-scoreboard-prs.mjs",
+    "143": "143-verify-no-guard-hotfile-thrash.mjs",
     "1430": "1430-verify-no-money-theater.mjs",
     "1431": "1431-verify-module-completion.mjs",
     "1432": [
@@ -5932,6 +5664,7 @@
     ],
     "1438": "1438-verify-bill-reverse-density.mjs",
     "1439": "1439-verify-bank-surf-home-detail.mjs",
+    "144": "144-verify-xlsx-cve-closeout.mjs",
     "1440": "1440-verify-bank-surf-entry-tabs.mjs",
     "1441": "1441-verify-bank-surfaces-and-counterparty.mjs",
     "1442": "1442-verify-bank-account-cashbind.mjs",
@@ -5945,6 +5678,10 @@
     "1447": "1447-verify-no-hardcoded-list-counts.mjs",
     "1448": "1448-verify-header-counts-match-actual.mjs",
     "1449": "1449-verify-fleet-catalogs-per-entity.mjs",
+    "145": [
+      "145-verify-company-membership-assert.mjs",
+      "145-verify-schema-parity-determinism.mjs"
+    ],
     "1450": "1450-verify-universal-picker-law.mjs",
     "1451": "1451-verify-no-lowest-uuid-entity-resolution.mjs",
     "1452": "1452-verify-lists-hub-driver-load-statuses.mjs",
@@ -5954,6 +5691,7 @@
     "1456": "1456-verify-coa-postable-count-stability.mjs",
     "1457": "1457-verify-account-role-bindings-entity-scoped.mjs",
     "1458": "1458-verify-acct-r15-cost-center-class-variance.mjs",
+    "146": "146-verify-unit-parts-history-reverse-drill.mjs",
     "1460": "1460-verify-acct-surf-01-bills.mjs",
     "1461": "1461-verify-acct-surf-03-bill-payment.mjs",
     "1462": "1462-verify-acct-surf-07-register.mjs",
@@ -5964,6 +5702,7 @@
     "1467": "1467-verify-banking-fail-registry.mjs",
     "1468": "1468-verify-projection-flags-off-by-design.mjs",
     "1469": "1469-verify-thin-hold-pr-manifest-map.mjs",
+    "147": "147-verify-equipment-transfer-notifies.mjs",
     "1470": "1470-verify-detail-types-owner-lock.mjs",
     "1471": "1471-verify-acct-r17-expense-duplicates.mjs",
     "1472": "1472-verify-acct-wizard-picker-matrix.mjs",
@@ -5974,6 +5713,7 @@
     "1477": "1477-verify-bank-surface-dod-sweep.mjs",
     "1478": "1478-verify-expense-categories-consumer-fk.mjs",
     "1479": "1479-verify-posting-templates-consumer-fk.mjs",
+    "148": "148-verify-vendor-drawer-fields-not-dropped.mjs",
     "1480": "1480-verify-bank-econ-02-poster-path-wired.mjs",
     "1481": "1481-verify-bank-econ-03-transfer-path-wired.mjs",
     "1482": "1482-verify-bank-link-01-counterparty-fk.mjs",
@@ -5984,6 +5724,7 @@
     "1487": "1487-verify-held-set-covers-every-section.mjs",
     "1488": "1488-verify-acct-r03-coa-merge-repoint.mjs",
     "1489": "1489-verify-acct-r01-escrow-canonical-write-path.mjs",
+    "149": "149-verify-coi-single-component.mjs",
     "1490": "1490-verify-acct-r11-tx-fields-sent.mjs",
     "1491": "1491-verify-saf-b31-safety-placeholder-surfaces.mjs",
     "1492": "1492-verify-g4-deploy-smoke-env-in-render.mjs",
@@ -5994,6 +5735,11 @@
     "1497": "1497-verify-esc-forfeit-split-driver-finance.mjs",
     "1498": "1498-verify-acct-r16-revenue-leakage.mjs",
     "1499": "1499-verify-lst-f10-driver-teams-surface.mjs",
+    "15": [
+      "15-verify-accounting-autoload-coverage.mjs",
+      "15-verify-collections-readonly.mjs"
+    ],
+    "150": "150-verify-equipment-transfer-writes-equipment-log.mjs",
     "1500": "1500-verify-form-2290-due-date-irs-correct.mjs",
     "1501": "1501-verify-block-docs-committed-and-owner-decides.mjs",
     "1502": "1502-verify-saf-b12-external-fine-lifecycle-actions-wired.mjs",
@@ -6039,6 +5785,7 @@
     "1580": "1580-verify-no-jsonb-id-array-as-fk.mjs",
     "1590": "1590-verify-no-unauth-integration-state-route.mjs",
     "1599": "1599-verify-step-number-registry.mjs",
+    "16": "16-verify-no-boot-throwing-env-checks.mjs",
     "1601": "1601-verify-closed-period-immutability.mjs",
     "1602": "1602-verify-mnt-link-02-work-order-lines-fk.mjs",
     "1603": "1603-verify-bank-dom-03-adjusted-balance-rec.mjs",
@@ -6142,6 +5889,10 @@
     "1695": "1695-verify-inline-create-inside-picker.mjs",
     "1697": "1697-verify-verify-step-numbers-unique.mjs",
     "1699": "1699-verify-catalog-inventory-classified.mjs",
+    "17": [
+      "17-verify-google-oauth-lazy-env.mjs",
+      "17-verify-no-duplicate-modal-headers.mjs"
+    ],
     "1700": "1700-verify-acct-link-03-bill-unit-density.mjs",
     "1702": "1702-verify-money-pr-local-gate.mjs",
     "1704": "1704-verify-acct-r04-deploy-smoke-closure.mjs",
@@ -6213,6 +5964,7 @@
     "1797": "1797-verify-posting-flag-readiness-single-source.mjs",
     "1798": "1798-verify-customer-payment-bank-reverse-links.mjs",
     "1799": "1799-verify-bank-superseded-duplicate-suppression.mjs",
+    "18": "18-verify-no-stub-strings.mjs",
     "1801": "1801-verify-bank-account-liveness-single-truth.mjs",
     "1802": "1802-verify-bank-surf-05-relay-identity.mjs",
     "1803": "1803-verify-verify-step-lane-band.mjs",
@@ -6274,6 +6026,11 @@
     "1896": "1896-verify-lst-picker01-fine-create-driver-entity-picker.mjs",
     "1898": "1898-verify-disp-filter-01-mdata-status-contract.mjs",
     "1899": "1899-verify-freshness-union-exemption-parity.mjs",
+    "19": "19-verify-no-seed-data-in-prod-fixtures.mjs",
+    "20": "20-verify-sidebar-route-resolution.mjs",
+    "21": "21-verify-no-internal-strings.mjs",
+    "22": "22-verify-applied-migrations-immutable.mjs",
+    "23": "23-verify-content-drift-check.mjs",
     "2371": "2371-verify-test-typecheck-ratchet.mjs",
     "2373": "2373-verify-disp-wire-01-book-invoice.mjs",
     "2378": "2378-verify-dispatch-trailer-entity-picker.mjs",
@@ -6286,6 +6043,7 @@
     "2394": "2394-verify-incident-trailer-entity-picker.mjs",
     "2396": "2396-verify-cash-advance-load-trailer-entity-picker.mjs",
     "2398": "2398-verify-escrow-forfeit-liability-select.mjs",
+    "24": "24-verify-maintenance-routes-bootstrapped.mjs",
     "2400": "2400-verify-verify-step-claimed-on-main.mjs",
     "2401": "2401-verify-no-extract-over-date-difference.mjs",
     "2402": "2402-verify-claude-settings-hard-deny.mjs",
@@ -6320,6 +6078,7 @@
       "file": "2424-verify-one-load-one-open-invoice.mjs",
       "purpose": "REV E gate \u2014 one load maps to at most one open TMS invoice"
     },
+    "25": "25-verify-maintenance-tab-coverage.mjs",
     "2501": "2501-verify-disp-wire-02-driver-bill.mjs",
     "2505": "2505-verify-disp-wire-05-revrec-latch.mjs",
     "2509": "2509-verify-disp-wire-08-settlement-ping.mjs",
@@ -6362,6 +6121,7 @@
     "2594": "2594-verify-entitylink-vendor-id-ratchet.mjs",
     "2596": "2596-verify-datepicker-company-tz-residual.mjs",
     "2598": "2598-verify-moneyinput-dollars-mode-residual.mjs",
+    "26": "26-verify-wo-display-id-format.mjs",
     "2600": "2600-verify-paritydrawer-money-dualpath-residual.mjs",
     "2602": "2602-verify-selectcombobox-bare-enum-residual.mjs",
     "2604": "2604-verify-no-archived-import-in-active-path.mjs",
@@ -6394,6 +6154,7 @@
     "2648": "2648-verify-join-entity-scoped.mjs",
     "2649": "2649-verify-financial-tables-not-deletable.mjs",
     "2650": "2650-verify-entity-param-never-silently-all.mjs",
+    "27": "27-verify-wo-status-transitions.mjs",
     "2723": "2723-verify-gl-posting-coverage.mjs",
     "2724": "2724-verify-qbo-canonical-recon.mjs",
     "2725": "2725-verify-no-outbound-qbo-write-events.mjs",
@@ -6429,6 +6190,10 @@
     "2795": "2795-verify-pod-bol-evidence-linkage.mjs",
     "2797": "2797-verify-void-status-literal-matches-column.mjs",
     "2799": "2799-verify-guards-mask-comments.mjs",
+    "28": [
+      "28-verify-no-demo-rows-in-safety.mjs",
+      "28-verify-pm-due-soon-calculation.mjs"
+    ],
     "2801": "2801-verify-customer-payment-posts-in-caller-tx.mjs",
     "2803": "2803-verify-route-file-mounted.mjs",
     "2805": "2805-verify-load-status-money-effects-wired.mjs",
@@ -6464,6 +6229,11 @@
     "2893": "2893-verify-gl-inherits-load-sample-tag.mjs",
     "2897": "2897-verify-void-reversal-inherits-sample-tag.mjs",
     "2898": "2898-verify-book-dispatch-sets-dispatched.mjs",
+    "29": [
+      "29-verify-maintenance-reports-coverage.mjs",
+      "29-verify-no-internal-payload-in-notes.mjs",
+      "29-verify-safety-tab-coverage.mjs"
+    ],
     "2900": "2900-verify-customer-create-invoice-email.mjs",
     "2902": "2902-verify-list-sample-tag-structured.mjs",
     "2904": "2904-verify-vendor-bill-memo-preserves-operator-tag.mjs",
@@ -6508,6 +6278,14 @@
       "claimed_by": "cursor",
       "purpose": "verify-load-reassign-driver-exists"
     },
+    "30": [
+      "30-verify-no-orphan-route-aliases.mjs",
+      "30-verify-safety-rls-coverage.mjs"
+    ],
+    "31": "31-verify-safety-expiry-tracking-coverage.mjs",
+    "34": "34-verify-safety-random-pool-determinism.mjs",
+    "35": "35-verify-safety-reports-coverage.mjs",
+    "36": "36-verify-safety-route-coverage.mjs",
     "3620": {
       "guard": "verify-driver-pay-types-tarp-seeded",
       "note": "LV-NO-TARP-ACCESSORIAL-PAY-TYPE",
@@ -6643,23 +6421,490 @@
       "claimer": "cc-1",
       "name": "verify-liabilities-dashboard-kpis-not-empty-stub"
     },
+    "37": "37-verify-safety-accidents-wire-up.mjs",
+    "38": "38-verify-safety-count-nav-integrity.mjs",
+    "39": [
+      "39-verify-drivers-count-nav-integrity.mjs",
+      "39-verify-master-data-write-routes.mjs"
+    ],
     "3906": {
       "claimed_at": "2026-08-18",
       "claimed_by": "cursor",
       "purpose": "verify-load-drawer-stops-picker-law"
     },
-    "01": "01-ensure-database-url.mjs",
-    "02": "02-db-reset.mjs",
-    "03": "03-build-backend-emit.mjs",
-    "04": "04-frontend-tsc.mjs",
-    "05": "05-verify-arch-design.mjs",
-    "06": "06-verify-scheduler-tenant-context.mjs",
-    "07": "07-verify-canonical-schema-names.mjs",
-    "08": "08-verify-outbox-handler-parity.mjs",
-    "09": "09-verify-migration-application-consistency.mjs"
+    "40": "40-verify-csv-import-gated-for-projected-entities.mjs",
+    "41": "41-verify-eld-foundation-coverage.mjs",
+    "42": "42-verify-maint-pm.mjs",
+    "43": "43-verify-dispatch-coming-soon-triage.mjs",
+    "44": "44-verify-maint-nav-count-reconcile.mjs",
+    "45": [
+      "45-verify-dispatch-arch-tab-parity.mjs",
+      "45-verify-drivers-profile-action-bar.mjs"
+    ],
+    "46": [
+      "46-verify-drivers-create-vocab.mjs",
+      "46-verify-parts-canonical-source.mjs"
+    ],
+    "47": [
+      "47-verify-book-load-accessorial.mjs",
+      "47-verify-dvir-schema-presence.mjs"
+    ],
+    "48": [
+      "48-verify-maint-create-vocab.mjs",
+      "48-verify-safety-meetings-training-wire.mjs"
+    ],
+    "49": [
+      "49-verify-drivers-earnings-debt-tab.mjs",
+      "49-verify-safety-hos-dashboard-wire.mjs",
+      "49-verify-trailer-wo-equipment-id.mjs"
+    ],
+    "50": "50-verify-dispatch-late-arrivals-alerts.mjs",
+    "51": [
+      "51-verify-dispatch-planner-calendar.mjs",
+      "51-verify-safety-incidents-cluster-wire.mjs"
+    ],
+    "52": [
+      "52-verify-dispatch-detention-board.mjs",
+      "52-verify-rls-uuid-cast-nullif.mjs"
+    ],
+    "53": "53-verify-dispatch-ocr-queue.mjs",
+    "54": "54-verify-dispatch-assignment-optimizer.mjs",
+    "55": "55-verify-dispatch-customer-eta-notify.mjs",
+    "56": "56-verify-dispatch-pod-bol-workflow.mjs",
+    "57": [
+      "57-verify-dispatch-settings-tab.mjs",
+      "57-verify-drivers-comm-center.mjs"
+    ],
+    "58": "58-verify-dispatch-secondary-nav-depth.mjs",
+    "59": [
+      "59-verify-drivers-audit-history-tab.mjs",
+      "59-verify-maint-dvir-defect-intake.mjs"
+    ],
+    "60": [
+      "60-verify-drivers-training-crud-on-profile.mjs",
+      "60-verify-maint-pm-auto-wo-engine.mjs"
+    ],
+    "61": [
+      "61-verify-drivers-onboarding-wizard.mjs",
+      "61-verify-maint-vendor-master-unify.mjs"
+    ],
+    "62": [
+      "62-verify-drivers-document-expiry-alerts.mjs",
+      "62-verify-maint-inspections-crud.mjs"
+    ],
+    "63": [
+      "63-verify-drivers-pwa-live-data.mjs",
+      "63-verify-maint-service-history-timeline.mjs"
+    ],
+    "64": [
+      "64-verify-drivers-application-portal.mjs",
+      "64-verify-maint-tire-program.mjs"
+    ],
+    "65": [
+      "65-verify-maint-mech-labor-ux.mjs",
+      "65-verify-maint-warranty-claims.mjs"
+    ],
+    "66": [
+      "66-verify-maint-kpi-dashboard.mjs",
+      "66-verify-maint-reefer-hours.mjs"
+    ],
+    "67": "67-verify-af1-coa-role-binding-heal.mjs",
+    "68": [
+      "68-verify-advance-recovery-load-id.mjs",
+      "68-verify-schema-parity.mjs"
+    ],
+    "69": "69-verify-bookload-stop-boolean-coercion.mjs",
+    "70": "70-verify-no-conflict-markers.mjs",
+    "71": "71-verify-planner-no-nplus1.mjs",
+    "73": "73-verify-intransit-issues-rls-forced.mjs",
+    "74": "74-verify-no-audit-audit-log-writes.mjs",
+    "75": "75-verify-jep-insert-idempotency-key.mjs",
+    "76": "76-verify-orphaned-relocated-tables-rls-forced.mjs",
+    "77": "77-verify-event-log-not-force-tailed.mjs",
+    "78": "78-verify-legal-template-seed-no-status-flip.mjs",
+    "79": "79-verify-legal-draft-preview-no-instance.mjs",
+    "80": "80-verify-legal-no-gl-posting.mjs",
+    "81": [
+      "81-verify-legal-esign-verified-at-gate.mjs",
+      "81-verify-legal-template-library-seedable.mjs"
+    ],
+    "82": "82-verify-legal-draft-pdf-readonly.mjs",
+    "83": "83-verify-settlement-500-diagnostics.mjs",
+    "84": "84-verify-mdata-entity-scope.mjs",
+    "85": "85-verify-load-number-business-date.mjs",
+    "86": "86-verify-cashflow-business-date.mjs",
+    "87": "87-verify-wo-void-reverses-gl.mjs",
+    "88": "88-verify-void-cancel-authz.mjs",
+    "89": "89-verify-banking-bank-accounts-opco-scope.mjs",
+    "90": "90-verify-no-global-posting-flags.mjs",
+    "901": "901-verify-home-quickjump-counts.mjs",
+    "902": "902-verify-push-gate-classification.mjs",
+    "903": "903-verify-csa-hazmat-source-integrity.mjs",
+    "904": "904-verify-item-editor-account-addnew.mjs",
+    "905": "905-verify-expenses-list-route.mjs",
+    "906": "906-verify-accounting-catalog-profile.mjs",
+    "907": [
+      "907-verify-accounting-query-error-states-wave-b.mjs",
+      "907-verify-accounting-query-error-states.mjs",
+      "907-verify-finance-landing-hub.mjs",
+      "907-verify-invoice-pickup-sort.mjs"
+    ],
+    "908": "908-verify-accounting-query-error-states-wave-c.mjs",
+    "909": [
+      "909-verify-acct-posting-business-date.mjs",
+      "909-verify-qbo-sync-staleness.mjs"
+    ],
+    "91": "91-verify-factoring-treatment.mjs",
+    "910": [
+      "910-verify-cpa-answers-phase1-decisions.mjs",
+      "910-verify-local-ci-gate-acyclic.mjs",
+      "910-verify-report-refresh-no-nplus1.mjs",
+      "910-verify-settlement-reversal-atomicity.mjs"
+    ],
+    "911": "911-verify-block-ready-retirement.mjs",
+    "912": "912-verify-revenue-gl-linkage.mjs",
+    "913": "913-verify-fmcsa-fire-and-forget-retry.mjs",
+    "914": "914-verify-pending-approvals-gl-linkage.mjs",
+    "915": "915-verify-orphan-components.mjs",
+    "916": "916-verify-no-orphan-migration-ledger-entries.mjs",
+    "917": "917-verify-legal-reverse-drill-fleet-insurance.mjs",
+    "918": "918-verify-banking-grid-sort-resize-rows-per-page.mjs",
+    "92": "92-verify-block-registry-complete.mjs",
+    "920": "920-verify-chain-06-invoice-ar-chain-proof.mjs",
+    "921": "921-verify-chain-06-ar-subledger-fix.mjs",
+    "922": "922-verify-chain-06-factoring-ar-tieout.mjs",
+    "923": "923-verify-factoring-poster-secured-borrowing.mjs",
+    "924": "924-verify-bank-split-vendor-bill-gl-honesty.mjs",
+    "925": "925-verify-ap-aging-qbo-mirror-population.mjs",
+    "926": "926-verify-pre-push-env-isolation.mjs",
+    "927": "927-verify-mgmt-report-aging-drill.mjs",
+    "928": "928-verify-revenue-gl-linkage-db-isolation.mjs",
+    "929": "929-verify-factoring-balance-invoice-linkage.mjs",
+    "93": "93-verify-block-acceptance.mjs",
+    "930": "930-verify-entity-link-adoption.mjs",
+    "931": "931-verify-entitylink-deep-links.mjs",
+    "932": "932-verify-94-live-counter-linkage.mjs",
+    "933": "933-verify-accounting-sortable-headers.mjs",
+    "934": "934-verify-custvend-sortable-headers.mjs",
+    "935": "935-verify-factor-reconciliation-import-mutation-error.mjs",
+    "936": "936-verify-revenue-recognition-two-event-latch-decisions.mjs",
+    "937": "937-verify-invoice-detail-mutation-error.mjs",
+    "938": "938-verify-qbo-drift-resolve-mutation-onerror.mjs",
+    "939": "939-verify-factoring-detail-mutation-onerror.mjs",
+    "94": "94-verify-guard-wired.mjs",
+    "940": "940-verify-payment-detail-mutation-onerror.mjs",
+    "941": "941-verify-coa-sync-panel-mutation-onerror.mjs",
+    "942": "942-verify-create-multiple-bills-onerror.mjs",
+    "943": "943-verify-escrow-page-mutation-onerror.mjs",
+    "944": "944-verify-accounting-audit-trail-mutation-onerror.mjs",
+    "945": "945-verify-source-lineage-page-onerror.mjs",
+    "946": "946-verify-payment-methods-catalog-mutation-onerror.mjs",
+    "947": "947-verify-receipts-page-query-error.mjs",
+    "948": "948-verify-verify-step-runner-return-status.mjs",
+    "949": "949-verify-sec-audit-deps-includes-root.mjs",
+    "95": "95-verify-no-silent-noop-posting.mjs",
+    "950": "950-verify-reports-library-routes-no-any-client.mjs",
+    "951": "951-verify-factoring-list-url-sort.mjs",
+    "952": "952-verify-prepaid-fixedassets-url-sort.mjs",
+    "953": "953-verify-receipts-integration-url-sort.mjs",
+    "954": "954-verify-escrow-audittrail-url-sort.mjs",
+    "955": "955-verify-source-lineage-list-url-sort.mjs",
+    "956": "956-verify-factoring-invoice-detail-url-sort.mjs",
+    "957": "957-verify-account-register-url-sort.mjs",
+    "958": "958-verify-bill-detail-url-sort.mjs",
+    "959": "959-verify-items-list-url-sort.mjs",
+    "96": "96-verify-canonical-table-writes.mjs",
+    "960": "960-verify-customer-vendor-detail-url-sort.mjs",
+    "961": "961-verify-idvr-row-clickable.mjs",
+    "962": "962-verify-compliance-tabs-url-sync.mjs",
+    "963": "963-verify-legal-matters-list-row-deeplink.mjs",
+    "964": "964-verify-hos-create-violation-link.mjs",
+    "965": "965-verify-driver-hub-tabs-url-sync.mjs",
+    "966": "966-verify-cash-flow-tabs-url-sync.mjs",
+    "967": "967-verify-qbo-sync-status-tabs-url-sync.mjs",
+    "968": "968-verify-document-alerts-tabs-url-sync.mjs",
+    "969": "969-verify-docs-upload-company-scope.mjs",
+    "97": "97-verify-bill-create-posts-gl.mjs",
+    "970": "970-verify-cancel-load-draft-close.mjs",
+    "971": "971-verify-drivers-teams-view-url-sync.mjs",
+    "972": "972-verify-anomaly-alerts-url-sync.mjs",
+    "973": "973-verify-fuel-reconciliation-tabs-url-sync.mjs",
+    "974": "974-verify-insurance-create-vocab.mjs",
+    "975": "975-verify-factor-admin-create-vocab.mjs",
+    "976": "976-verify-insurance-type-catalog-create-vocab.mjs",
+    "977": "977-verify-eld-tabs-url-sync.mjs",
+    "978": "978-verify-docs-entity-tabs-url-sync.mjs",
+    "979": "979-verify-integrity-alerts-tabs-url-sync.mjs",
+    "98": "98-verify-bill-payment-posts-gl.mjs",
+    "980": "980-verify-legal-matter-detail-tabs-url-sync.mjs",
+    "981": "981-verify-program-board-tabs-url-sync.mjs",
+    "982": "982-verify-system-tabs-url-sync.mjs",
+    "983": "983-verify-form425c-tabs-url-sync.mjs",
+    "984": "984-verify-customers-detail-tabs-url-sync.mjs",
+    "985": "985-verify-vendors-detail-tabs-url-sync.mjs",
+    "986": "986-verify-qbo-reconcile-tabs-url-sync.mjs",
+    "987": "987-verify-user-detail-tabs-url-sync.mjs",
+    "988": "988-verify-daily-tasks-view-url-sync.mjs",
+    "989": "989-verify-profitability-tabs-url-sync.mjs",
+    "99": "99-verify-a11y-input-labels.mjs",
+    "990": [
+      "990-verify-cash-advances-tabs-url-sync.mjs",
+      "990-verify-safety-incident-list-filters.mjs"
+    ],
+    "991": "991-verify-preflight-dvir-tabs-url-sync.mjs",
+    "992": [
+      "992-verify-active-driver-set-worker-registered.mjs",
+      "992-verify-financial-statements-tabs-url-sync.mjs"
+    ],
+    "993": [
+      "993-verify-fuel-fraud-detector-worker-registered.mjs",
+      "993-verify-qbo-vendor-linkage-tabs-url-sync.mjs"
+    ],
+    "994": [
+      "994-verify-ap-aging-view-url-sync.mjs",
+      "994-verify-fact-fix1-duplicate-vendors-banner.mjs"
+    ],
+    "995": "995-verify-factoring-submission-queue-routed.mjs",
+    "996": [
+      "996-verify-factoring-index-tabs-url-sync.mjs",
+      "996-verify-parts-vendor-link-rendered.mjs"
+    ],
+    "997": "997-verify-expenses-canonical-route-is-list.mjs",
+    "998": "998-verify-drivers-subnav-routes-registered.mjs",
+    "999": "999-verify-fuel-recon-manual-match-honest.mjs"
   },
   "generated_at": "2026-08-09T02:10:17.093Z",
   "known_duplicates_frozen": {
+    "100": [
+      "100-verify-bill-lines-load-id.mjs",
+      "100-verify-settlement-approval-canonical.mjs"
+    ],
+    "101": [
+      "101-verify-bank-automatch-observable.mjs",
+      "101-verify-no-payroll-settlement-writes.mjs"
+    ],
+    "1012": [
+      "1012-verify-drivers-deductions-tab-distinct.mjs",
+      "1012-verify-sql-column-existence-coverage.mjs"
+    ],
+    "1023": [
+      "1023-verify-activity-log-uses-paritytable.mjs",
+      "1023-verify-driver-load-history-entitylink.mjs"
+    ],
+    "1024": [
+      "1024-verify-late-arrivals-error-entitylink.mjs",
+      "1024-verify-notification-rules-uses-paritytable.mjs"
+    ],
+    "1028": [
+      "1028-verify-compliance-routes-mounted.mjs",
+      "1028-verify-frequently-run-table-uses-paritytable.mjs"
+    ],
+    "1038": [
+      "1038-verify-audit-log-viewer-uses-paritytable.mjs",
+      "1038-verify-driver-day-summary-uses-paritytable.mjs"
+    ],
+    "1045": [
+      "1045-verify-block-status-overrides-downgrade-only.mjs",
+      "1045-verify-catalog-table-uses-paritytable.mjs"
+    ],
+    "1060": [
+      "1060-verify-block-ready-manifest-multiblock.mjs",
+      "1060-verify-ifta-step-miles-uses-paritytable.mjs"
+    ],
+    "1095": [
+      "1095-verify-bills-amount-cents-canonical.mjs",
+      "1095-verify-driver-detail-uses-paritytable.mjs"
+    ],
+    "115": [
+      "115-verify-banking-uncategorized-kpi-parity.mjs",
+      "115-verify-safety-event-load-linkage.mjs"
+    ],
+    "117": [
+      "117-verify-equipment-list-total-pagination.mjs",
+      "117-verify-samsara-position-entity-scope.mjs"
+    ],
+    "1200": [
+      "1200-verify-coa-roles-route-reachable.mjs",
+      "1200-verify-live-audit-reproducible.mjs"
+    ],
+    "1208": [
+      "1208-verify-banking-register-categorize-capable.mjs",
+      "1208-verify-coa-role-values-include-settlement-roles.mjs"
+    ],
+    "121": [
+      "121-verify-cors-origins-canonical.mjs",
+      "121-verify-e2e-specs-assert-or-skip.mjs"
+    ],
+    "1210": [
+      "1210-verify-accounting-line-scope-inheritance.mjs",
+      "1210-verify-dispatcher-home-invoice-status.mjs",
+      "1210-verify-no-accounting-qbo-writes.mjs",
+      "1210-verify-startup-drift-guard-exempts-held.mjs"
+    ],
+    "1212": [
+      "1212-verify-bill-payment-posting-uses-resolver.mjs",
+      "1212-verify-safety-active-path.mjs"
+    ],
+    "1213": [
+      "1213-verify-chain-04-bill-payment-bank-tieout.mjs",
+      "1213-verify-drivers-active-path.mjs"
+    ],
+    "1222": [
+      "1222-verify-banking-active-categorize-path.mjs",
+      "1222-verify-fuel-gl-map-codes-no-silent-alias.mjs"
+    ],
+    "1226": [
+      "1226-verify-bank-categorization-je-reverse.mjs",
+      "1226-verify-reference-select-catalog-plus.mjs"
+    ],
+    "1230": [
+      "1230-verify-push-gate-conflict-markers.mjs",
+      "1230-verify-safety-filter-chrome.mjs"
+    ],
+    "1231": [
+      "1231-verify-expense-detail-route.mjs",
+      "1231-verify-money-reference-select-plus.mjs"
+    ],
+    "1232": [
+      "1232-verify-je-detail-source-links.mjs",
+      "1232-verify-qbo-filter-collapse.mjs"
+    ],
+    "1234": [
+      "1234-verify-insurance-legal-reference-select.mjs",
+      "1234-verify-invoice-p0-linkage.mjs"
+    ],
+    "1235": [
+      "1235-verify-chrome-11-nested-create-drawer.mjs",
+      "1235-verify-chrome-12-money-modal-drawer.mjs"
+    ],
+    "1236": [
+      "1236-verify-chrome-13-billpay-unify.mjs",
+      "1236-verify-chrome-14-remaining-modal-shells.mjs"
+    ],
+    "1248": [
+      "1248-verify-bill-detail-reverse.mjs",
+      "1248-verify-claim-economics-slice2.mjs"
+    ],
+    "1251": [
+      "1251-verify-allocations-page.mjs",
+      "1251-verify-uuid-text-join-casts.mjs"
+    ],
+    "1272": [
+      "1272-verify-acct-bill-void-ui.mjs",
+      "1272-verify-acct-live-economics-evidence-pack.mjs"
+    ],
+    "1275": [
+      "1275-verify-acct-factor-recon-invoice-link.mjs",
+      "1275-verify-acct-payment-detail-has-balance.mjs"
+    ],
+    "1276": [
+      "1276-verify-acct-bill-payments-has-balance.mjs",
+      "1276-verify-acct-coa-roles-createkind-account.mjs"
+    ],
+    "128": [
+      "128-verify-no-dead-clicks.mjs",
+      "128-verify-no-qbo-write-path.mjs"
+    ],
+    "1295": [
+      "1295-verify-acct-open-balance-nets-vendor-credits.mjs",
+      "1295-verify-banking-email-queue-nav.mjs"
+    ],
+    "1312": [
+      "1312-verify-banking-categorization-links-panel.mjs",
+      "1312-verify-selftests-can-fail.mjs"
+    ],
+    "1321": [
+      "1321-verify-banking-match-drawer-create.mjs",
+      "1321-verify-safety-dashboard-kpis-wired.mjs"
+    ],
+    "1322": [
+      "1322-verify-banking-escrow-settlement-linkage.mjs",
+      "1322-verify-cancellation-reason-label-source.mjs"
+    ],
+    "1323": [
+      "1323-verify-banking-transfer-cc-chrome.mjs",
+      "1323-verify-no-base-less-api-fetch.mjs"
+    ],
+    "1324": [
+      "1324-verify-banking-faro-advance-linkage.mjs",
+      "1324-verify-definition-of-done-evidence.mjs"
+    ],
+    "1325": [
+      "1325-verify-banking-categorize-pickers.mjs",
+      "1325-verify-safety-void-requires-reason.mjs"
+    ],
+    "134": [
+      "134-verify-internal-labor-no-lineless-je.mjs",
+      "134-verify-vendor-test-fixture-guard.mjs"
+    ],
+    "1351": [
+      "1351-verify-acct-account-picker-createkind.mjs",
+      "1351-verify-catalog-items-route-rls-scope.mjs"
+    ],
+    "136": [
+      "136-verify-inventory-assignments-honesty.mjs",
+      "136-verify-relay-status-not-hardcoded.mjs"
+    ],
+    "140": [
+      "140-verify-accident-edit-status-columns.mjs",
+      "140-verify-insurance-units-assets-bridge.mjs",
+      "140-verify-inventory-reorder-threshold-ui.mjs",
+      "140-verify-record-transfer-mark-transfer-wired.mjs"
+    ],
+    "1402": [
+      "1402-verify-cash-dip-coa-primary-role.mjs",
+      "1402-verify-combobox-listbox-portaled.mjs"
+    ],
+    "141": [
+      "141-verify-backdated-check-wired.mjs",
+      "141-verify-inventory-read-path-api-request.mjs"
+    ],
+    "1419": [
+      "1419-verify-driver-load-statuses-per-entity.mjs",
+      "1419-verify-qbo-ar-payments-projection-wired.mjs"
+    ],
+    "142": [
+      "142-verify-banking-bankaccountdetail-is-credit-amounts.mjs",
+      "142-verify-driver-border-credentials-edit.mjs",
+      "142-verify-entity-badge-single-source.mjs",
+      "142-verify-h02-qbo-topbar-sync-now.mjs",
+      "142-verify-sql-column-existence.mjs",
+      "142-verify-user-detail-activity-tab.mjs"
+    ],
+    "1421": [
+      "1421-verify-banking-bulk-categorize-posts-je.mjs",
+      "1421-verify-prod-ledger-checksum-parity.mjs"
+    ],
+    "1422": [
+      "1422-check-pr-evidence-body.mjs",
+      "1422-verify-claim-wo-bill-expense-fk-wired.mjs"
+    ],
+    "1432": [
+      "1432-verify-cancel-load-canonical-reason-fk.mjs",
+      "1432-verify-qbo-stage1-flag-off-sync-run.mjs"
+    ],
+    "1433": [
+      "1433-verify-expense-category-fk-wired.mjs",
+      "1433-verify-item-picker-canonical-table.mjs",
+      "1433-verify-journal-entries-type-fk.mjs",
+      "1433-verify-posting-batches-template-link.mjs"
+    ],
+    "1436": [
+      "1436-verify-banking-recon-start-session-wired.mjs",
+      "1436-verify-vendor-credit-live-path.mjs"
+    ],
+    "1437": [
+      "1437-verify-bank-accounts-rls-bypass-lucia.mjs",
+      "1437-verify-schema-parity-from-prod.mjs"
+    ],
+    "1445": [
+      "1445-verify-acct-surfaces-structural.mjs",
+      "1445-verify-expense-category-picker-canonical.mjs"
+    ],
+    "145": [
+      "145-verify-company-membership-assert.mjs",
+      "145-verify-schema-parity-determinism.mjs"
+    ],
     "15": [
       "15-verify-accounting-autoload-coverage.mjs",
       "15-verify-collections-readonly.mjs"
@@ -6758,60 +7003,6 @@
       "81-verify-legal-esign-verified-at-gate.mjs",
       "81-verify-legal-template-library-seedable.mjs"
     ],
-    "100": [
-      "100-verify-bill-lines-load-id.mjs",
-      "100-verify-settlement-approval-canonical.mjs"
-    ],
-    "101": [
-      "101-verify-bank-automatch-observable.mjs",
-      "101-verify-no-payroll-settlement-writes.mjs"
-    ],
-    "115": [
-      "115-verify-banking-uncategorized-kpi-parity.mjs",
-      "115-verify-safety-event-load-linkage.mjs"
-    ],
-    "117": [
-      "117-verify-equipment-list-total-pagination.mjs",
-      "117-verify-samsara-position-entity-scope.mjs"
-    ],
-    "121": [
-      "121-verify-cors-origins-canonical.mjs",
-      "121-verify-e2e-specs-assert-or-skip.mjs"
-    ],
-    "128": [
-      "128-verify-no-dead-clicks.mjs",
-      "128-verify-no-qbo-write-path.mjs"
-    ],
-    "134": [
-      "134-verify-internal-labor-no-lineless-je.mjs",
-      "134-verify-vendor-test-fixture-guard.mjs"
-    ],
-    "136": [
-      "136-verify-inventory-assignments-honesty.mjs",
-      "136-verify-relay-status-not-hardcoded.mjs"
-    ],
-    "140": [
-      "140-verify-accident-edit-status-columns.mjs",
-      "140-verify-insurance-units-assets-bridge.mjs",
-      "140-verify-inventory-reorder-threshold-ui.mjs",
-      "140-verify-record-transfer-mark-transfer-wired.mjs"
-    ],
-    "141": [
-      "141-verify-backdated-check-wired.mjs",
-      "141-verify-inventory-read-path-api-request.mjs"
-    ],
-    "142": [
-      "142-verify-banking-bankaccountdetail-is-credit-amounts.mjs",
-      "142-verify-driver-border-credentials-edit.mjs",
-      "142-verify-entity-badge-single-source.mjs",
-      "142-verify-h02-qbo-topbar-sync-now.mjs",
-      "142-verify-sql-column-existence.mjs",
-      "142-verify-user-detail-activity-tab.mjs"
-    ],
-    "145": [
-      "145-verify-company-membership-assert.mjs",
-      "145-verify-schema-parity-determinism.mjs"
-    ],
     "907": [
       "907-verify-accounting-query-error-states-wave-b.mjs",
       "907-verify-accounting-query-error-states.mjs",
@@ -6847,193 +7038,7 @@
     "996": [
       "996-verify-factoring-index-tabs-url-sync.mjs",
       "996-verify-parts-vendor-link-rendered.mjs"
-    ],
-    "1012": [
-      "1012-verify-drivers-deductions-tab-distinct.mjs",
-      "1012-verify-sql-column-existence-coverage.mjs"
-    ],
-    "1023": [
-      "1023-verify-activity-log-uses-paritytable.mjs",
-      "1023-verify-driver-load-history-entitylink.mjs"
-    ],
-    "1024": [
-      "1024-verify-late-arrivals-error-entitylink.mjs",
-      "1024-verify-notification-rules-uses-paritytable.mjs"
-    ],
-    "1028": [
-      "1028-verify-compliance-routes-mounted.mjs",
-      "1028-verify-frequently-run-table-uses-paritytable.mjs"
-    ],
-    "1038": [
-      "1038-verify-audit-log-viewer-uses-paritytable.mjs",
-      "1038-verify-driver-day-summary-uses-paritytable.mjs"
-    ],
-    "1045": [
-      "1045-verify-block-status-overrides-downgrade-only.mjs",
-      "1045-verify-catalog-table-uses-paritytable.mjs"
-    ],
-    "1060": [
-      "1060-verify-block-ready-manifest-multiblock.mjs",
-      "1060-verify-ifta-step-miles-uses-paritytable.mjs"
-    ],
-    "1095": [
-      "1095-verify-bills-amount-cents-canonical.mjs",
-      "1095-verify-driver-detail-uses-paritytable.mjs"
-    ],
-    "1200": [
-      "1200-verify-coa-roles-route-reachable.mjs",
-      "1200-verify-live-audit-reproducible.mjs"
-    ],
-    "1208": [
-      "1208-verify-banking-register-categorize-capable.mjs",
-      "1208-verify-coa-role-values-include-settlement-roles.mjs"
-    ],
-    "1210": [
-      "1210-verify-accounting-line-scope-inheritance.mjs",
-      "1210-verify-dispatcher-home-invoice-status.mjs",
-      "1210-verify-no-accounting-qbo-writes.mjs",
-      "1210-verify-startup-drift-guard-exempts-held.mjs"
-    ],
-    "1212": [
-      "1212-verify-bill-payment-posting-uses-resolver.mjs",
-      "1212-verify-safety-active-path.mjs"
-    ],
-    "1213": [
-      "1213-verify-chain-04-bill-payment-bank-tieout.mjs",
-      "1213-verify-drivers-active-path.mjs"
-    ],
-    "1222": [
-      "1222-verify-banking-active-categorize-path.mjs",
-      "1222-verify-fuel-gl-map-codes-no-silent-alias.mjs"
-    ],
-    "1226": [
-      "1226-verify-bank-categorization-je-reverse.mjs",
-      "1226-verify-reference-select-catalog-plus.mjs"
-    ],
-    "1230": [
-      "1230-verify-push-gate-conflict-markers.mjs",
-      "1230-verify-safety-filter-chrome.mjs"
-    ],
-    "1231": [
-      "1231-verify-expense-detail-route.mjs",
-      "1231-verify-money-reference-select-plus.mjs"
-    ],
-    "1232": [
-      "1232-verify-je-detail-source-links.mjs",
-      "1232-verify-qbo-filter-collapse.mjs"
-    ],
-    "1234": [
-      "1234-verify-insurance-legal-reference-select.mjs",
-      "1234-verify-invoice-p0-linkage.mjs"
-    ],
-    "1235": [
-      "1235-verify-chrome-11-nested-create-drawer.mjs",
-      "1235-verify-chrome-12-money-modal-drawer.mjs"
-    ],
-    "1236": [
-      "1236-verify-chrome-13-billpay-unify.mjs",
-      "1236-verify-chrome-14-remaining-modal-shells.mjs"
-    ],
-    "1248": [
-      "1248-verify-bill-detail-reverse.mjs",
-      "1248-verify-claim-economics-slice2.mjs"
-    ],
-    "1251": [
-      "1251-verify-allocations-page.mjs",
-      "1251-verify-uuid-text-join-casts.mjs"
-    ],
-    "1272": [
-      "1272-verify-acct-bill-void-ui.mjs",
-      "1272-verify-acct-live-economics-evidence-pack.mjs"
-    ],
-    "1275": [
-      "1275-verify-acct-factor-recon-invoice-link.mjs",
-      "1275-verify-acct-payment-detail-has-balance.mjs"
-    ],
-    "1276": [
-      "1276-verify-acct-bill-payments-has-balance.mjs",
-      "1276-verify-acct-coa-roles-createkind-account.mjs"
-    ],
-    "1295": [
-      "1295-verify-acct-open-balance-nets-vendor-credits.mjs",
-      "1295-verify-banking-email-queue-nav.mjs"
-    ],
-    "1312": [
-      "1312-verify-banking-categorization-links-panel.mjs",
-      "1312-verify-selftests-can-fail.mjs"
-    ],
-    "1321": [
-      "1321-verify-banking-match-drawer-create.mjs",
-      "1321-verify-safety-dashboard-kpis-wired.mjs"
-    ],
-    "1322": [
-      "1322-verify-banking-escrow-settlement-linkage.mjs",
-      "1322-verify-cancellation-reason-label-source.mjs"
-    ],
-    "1323": [
-      "1323-verify-banking-transfer-cc-chrome.mjs",
-      "1323-verify-no-base-less-api-fetch.mjs"
-    ],
-    "1324": [
-      "1324-verify-banking-faro-advance-linkage.mjs",
-      "1324-verify-definition-of-done-evidence.mjs"
-    ],
-    "1325": [
-      "1325-verify-banking-categorize-pickers.mjs",
-      "1325-verify-safety-void-requires-reason.mjs"
-    ],
-    "1351": [
-      "1351-verify-acct-account-picker-createkind.mjs",
-      "1351-verify-catalog-items-route-rls-scope.mjs"
-    ],
-    "1402": [
-      "1402-verify-cash-dip-coa-primary-role.mjs",
-      "1402-verify-combobox-listbox-portaled.mjs"
-    ],
-    "1419": [
-      "1419-verify-driver-load-statuses-per-entity.mjs",
-      "1419-verify-qbo-ar-payments-projection-wired.mjs"
-    ],
-    "1421": [
-      "1421-verify-banking-bulk-categorize-posts-je.mjs",
-      "1421-verify-prod-ledger-checksum-parity.mjs"
-    ],
-    "1422": [
-      "1422-check-pr-evidence-body.mjs",
-      "1422-verify-claim-wo-bill-expense-fk-wired.mjs"
-    ],
-    "1432": [
-      "1432-verify-cancel-load-canonical-reason-fk.mjs",
-      "1432-verify-qbo-stage1-flag-off-sync-run.mjs"
-    ],
-    "1433": [
-      "1433-verify-expense-category-fk-wired.mjs",
-      "1433-verify-item-picker-canonical-table.mjs",
-      "1433-verify-journal-entries-type-fk.mjs",
-      "1433-verify-posting-batches-template-link.mjs"
-    ],
-    "1436": [
-      "1436-verify-banking-recon-start-session-wired.mjs",
-      "1436-verify-vendor-credit-live-path.mjs"
-    ],
-    "1437": [
-      "1437-verify-bank-accounts-rls-bypass-lucia.mjs",
-      "1437-verify-schema-parity-from-prod.mjs"
-    ],
-    "1445": [
-      "1445-verify-acct-surfaces-structural.mjs",
-      "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1339,
-  "2460": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cursor",
-    "purpose": "verify-owner-override-not-money-fields"
-  },
-  "2462": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cursor",
-    "purpose": "verify-load-state-machine-parity"
-  }
+  "total_claimed": 1339
 }
