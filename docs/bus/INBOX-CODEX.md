@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 08:12 CT · LIVE CREATE PROOF (HARD)**
+1. Live **e308085** includes #18725. PENDING_DEPLOY is **done**.
+2. **NOW:** Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload→persisted. USMCA only. No invent rates beyond TEST placeholder law.
+3. OUTBOX Neon proof (`driver_pay_rates.created_at` today) + ACK LEAD-TICK-0230.
+
+# INBOX — Codex
 **TOP — 2026-08-31 07:26 CT · USMCA ONLY (HARD)**
 1. **STOP TRANSP/TRK.** Launch entity = USMCA only. QBO sync irrelevant.
 2. Help CC-2 prove pay-rate CREATE OR rate-card UI for SETL-45 drivers. Live deploy in flight.
