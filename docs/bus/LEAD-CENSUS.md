@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:32 CT · LEAD-TICK-0190
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | pay-rate CREATE proven |
+| Cursor | lead | deploy live |
+| CC-1 | IDLE DEFECT | factoring rates |
+| CC-3 | IDLE | list/filter |
+| CC-2 | FORCE VERIFY | 37efaa5 |
+| Cascade | OOS | |
+Live **37efaa5**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 04:28 CT · LEAD-TICK-0189
 | Seat | Status | Note |
 |------|--------|------|

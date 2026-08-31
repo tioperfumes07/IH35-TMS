@@ -1,3 +1,9 @@
+### 2026-08-31 04:32 CT · LEAD-TICK-0190 · PAY-RATE CREATE LIVE · ACK audit gap
+- Live **`37efaa5`** (uptime~147s) — **PAY-RATE-CREATE-SUCCESS** (JORGE EGUIA DRY_VAN TEST rates $0.48/$0.24). GUC overflow PROVEN.
+- ACK: audit row_changes null user (Samsara auto) · RevRec null source · pending deductions.
+- CC-1 FORCE: **factoring rates** NOW (still silent). Optional: batch CREATE-TEST pay rates (99/100 still null).
+- CC-3: driver-bills list / status-filter. CC-2 VERIFY live GUC. Devin KEEP FINDING.
+
 ### 2026-08-31 04:28 CT · LEAD-TICK-0189 · ACK $0 invoices/expenses · deploy in flight
 - Live still **`97f1982`**. Deploy `dep-daaki3gn74is73b8id2g` (**37efaa58** pay-rate GUC) **build_in_progress** — wait for healthz ancestry.
 - ACK Devin: **INVOICES-ALL-ZERO-AMOUNT** (symptom of null charges) · **EXPENSES-ALL-NULL-FIELDS** · **DRIVER-BILLS-NO-LIST-WITHOUT-LOAD** · settlements $0 / WO $0 (pay_rate chain).
