@@ -1854,6 +1854,22 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
       input.operating_company_id
     );
     await writeC9HoldFieldsIfPresent(client, String(load.id), input, resolvedFactoringVendorId);
+    // ACCT-F10159 (DEFECT A) — writeC9HoldFieldsIfPresent's UPDATE is the ONLY place
+    // driver_pay_rate_per_mile is persisted on a newly-booked load (it is deliberately absent
+    // from the lockstep INSERT above — see W-FIX-3b for why the 8 C9-hold fields live off that
+    // INSERT). The in-memory `load` object bound at :1736 (`RETURNING *` from BEFORE this UPDATE
+    // ran) still holds NULL for it. resolveDriverBasePayCents() (via createDriverBillArtifacts,
+    // called on `load` further below) reads load.driver_pay_rate_per_mile FIRST, before falling
+    // back to the driver-rate-card table — so every load priced solely by a per-load override
+    // (no driver-level rate card) was minting a false `skipped_no_pay_rate` at book time even
+    // though the DB row was correctly priced one statement later. Live-caught + root-caused
+    // 2026-08-31 on L-20260831-0002 (skip audit event 91e71366-57fa-42b9-9b77-8eefc877fc77,
+    // fired 15:06:11 UTC, same transaction as load_created). ACCT-F10152 fixed the sibling
+    // delivery-time re-read (ensureDriverBillArtifactsForLoad's own SELECT); this is the
+    // book-time instance of the identical defect class. Patch just the one field the pricer
+    // actually reads, matching exactly what the UPDATE above wrote — the safest fix that keeps
+    // `load`'s shape otherwise unchanged for every other downstream consumer.
+    load.driver_pay_rate_per_mile = input.driver_pay_rate_per_mile ?? null;
 
     // W-FIX-3b persist (post-insert, same pattern): record the selected trailer (mdata.equipment id) on the
     // REAL link dispatch.load_assignment_history.new_trailer_id — the only real sink (mdata.loads has no
