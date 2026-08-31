@@ -2152,6 +2152,18 @@ export async function registerDriverRoutes(app: FastifyInstance) {
     if ("referred_by_driver_id" in b) add("referred_by_driver_id", b.referred_by_driver_id ?? null);
     if ("referral_source" in b) add("referral_source", b.referral_source ?? null);
     if ("status" in b) add("status", b.status);
+    // DRV-F-STATUS-REACTIVATE-500 — chk_drivers_status_deactivated_consistent (0016_...) requires
+    // deactivated_at IS NULL whenever status is NOT Inactive/Terminated. The Driver Profile edit
+    // form's Status combobox sends only { status } when a caller reactivates a driver (e.g. Active),
+    // never deactivated_at — so a previously-deactivated row 500s on every reactivation attempt
+    // (live-reproduced 2026-08-31: PATCH .../drivers/:id { status: "Active" } on a row with
+    // deactivated_at set -> Postgres 23514, "new row for relation drivers violates check constraint
+    // chk_drivers_status_deactivated_consistent"). Auto-clear deactivated_at in the same statement
+    // when the caller is setting an active-ish status and did not explicitly pass deactivated_at —
+    // this is the Reactivate action's own intent, not a silent side effect on any other field.
+    if ("status" in b && !("deactivated_at" in b) && !["Inactive", "Terminated"].includes(b.status as string)) {
+      add("deactivated_at", null);
+    }
     if ("notes" in b) add("notes", b.notes ?? null);
     if ("deactivated_at" in b) add("deactivated_at", b.deactivated_at ?? null);
     if ("qbo_vendor_id" in b) add("qbo_vendor_id", b.qbo_vendor_id ?? null);
