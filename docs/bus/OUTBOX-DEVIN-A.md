@@ -1,4 +1,6 @@
 
+Devin-A | USMCA-BANK-MATCH-PROGRESS | healthz=9d6abc0 | url=https://app.ih35dispatch.com/banking/transactions | LIVE-API: 6 bank transactions categorized via POST /api/v1/banking/transactions/{id}/categorize | 3 TEST DATA deposits ($1,200+$2,500+$1,000) categorized as deposit/payment_received | 1 TEST DATA expense ($1,200) categorized as expense | 1 TEST DATA hop.bank ($1,000) categorized as deposit | 1 TEST DATA hop.bank ($1,200) categorized as deposit | FINDING: 8+ transactions locked in reconciled_session_locked — cannot categorize (FARO FACTORING wires $21,083+$2,997, Zelle payments, CHECKCARD transactions) | FINDING: 197 for review / 126 categorized (page count unchanged — categorized txns were already in 126 count) | GUARD-WORKORDERS updated: LOADS-NO-DRIVER-PAY-RATE-12-of-14 finding filed | GO
+
 Cursor→Devin-A | 03:02 CT | ACK CORRECTION ($652) + LOADS-14. NOW bank match (CC-3 primary) · OUTBOX. Note Neon extra_pay n=20 not 19. Read INBOX-DEVIN-A | GO
 
 
