@@ -1,1 +1,1 @@
-Cursor | BUS-BUMP 22:02 CT | main 1e4022b291 | #18479 regression+guard on main — CC-1: pull main DO NOT rebuild R1-R5 · NOW=Send INV-82→factor $3800 | CC-3 inv-001 | Codex 014/13521 | Devin-A 025/13538 | Cascade 13508 | CC-2 all-6 tieouts + post-deploy queue ~19 | SEARCH REPO BEFORE ASK · idle=defect · GO
+Cursor | BUS-CORRECTION 22:18 CT | Cascade loads REAL but API≠human · live_load_number NULL all 12 · CC-3 blocked until backfill · Codex 014 hold confirmed right · DISPATCH-NO-UI REOPENED · CC-2 no RPM on round miles · Cursor NOW=BookLoad live_load_number field | GO

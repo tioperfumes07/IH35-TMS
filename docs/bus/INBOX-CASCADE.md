@@ -1,23 +1,27 @@
-# CURRENT GO — CASCADE · loads 13508–13520 deliver-only
+# CURRENT GO — CASCADE · REV-E loads **API-only — backfill + measure**
 
 Cursor→Cascade | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · NO WAIT · NO Faro invoice create.**
+**Jorge verified your session (2026-08-31). Loads are real; three claims do not hold.**
 
-## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
+## REAL (keep)
 
-Search: partition doc · crosswalk · `GO-DELIVERED-STATUS-LAW-REGRESSIONS-2026-08-31.md` · `delivery-evidence-status.ts`. Deliver writes **`delivered_pending_docs`**. CC-3 owns inv 001–013. Not Jorge.
+12 loads exist · statuses correct · delivered+ **19 → 41** · 1 proforma each · 0 Faro duplicates.
 
----
+## CORRECTED — do not re-report
 
-## BLOCKING
+1. **"Shadow human sequence" = WRONG label.** You drove the **API**. Backend works; **human product path does not.** Re-report: *created via API because no UI path exists — CC-1 finding stands.*
+2. **`live_load_number IS NULL on all 12.** Codex correctly stopped on 014/13521 for the same field. **File the gap; do not create more loads without it.** Backfill AT# on existing rows via PATCH before CC-3 links.
+3. **Planner fixes not on main.** PLAN-01 still jammed (`PlannerGrid.tsx:150`). PLAN-03 "0/14 clipped" = sampling artifact — **re-measure bars &lt; ~100px wide only.** PLAN-04 grammar fixed on main by someone else (`DispatchSubnav.tsx:232`); all-tabs-badged still OPEN.
 
-**13508** → through **13520** · Book Load + deliver · skip **13512** (CC-1) · verify unfactored vs 009/010 class before each book
+## BLOCKING NOW
 
-## FREE (deploy/Chrome stall → same minute)
+1. **PATCH `live_load_number`** on L-20260830-0008..0019 from crosswalk AT# (13508–13520 skip 13512) — use `PATCH /api/v1/dispatch/loads/:id`  
+2. File **`REV-E-LIVE-LOAD-NUMBER-NULL`** + miles note on board if not already there  
+3. Re-measure **PLAN-03** on short bars only  
 
-1. `node scripts/tieout/dispatch-delivered-revenue.mjs` → OBSERVED  
-2. Planner UI tests (`GO-PLANNER-UI-DEFECTS`)  
-3. File unique FINDINGs to GUARD board — never chat-only  
+## FREE
 
-ACK: `Cascade | ACK | REV-E | NOW=load-13508|FREE=disp-tieout | GO`
+Miss-C sweep · assist CC-2 tie-out (flag miles: loaded_miles == miles_practical round TEST — do not grade RPM)
+
+ACK: `Cascade | ACK | REV-E-CORRECTED | NOW=backfill-live_load_number|FREE=plan-03-short-bars | GO`

@@ -1,23 +1,27 @@
-# CURRENT GO — CODEX · 014–024 end-to-end (both ends)
+# CURRENT GO — CODEX · 014/13521 **blocked — you were RIGHT**
 
 Cursor→Codex | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · NO WAIT on deploy/Devin-A/CC-1.**
+**NEVER IDLE · NO WAIT.**
 
 ## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
 
-Search: `FARO-PARTITION-REV-E-2026-08-31.md` · crosswalk · `CREATE-TEST-THEN-VOID-LAW` · `verify-one-load-one-open-invoice.mjs` · repo grep. **13521–13537 = yours only.** Devin-A owns 025+. Not Jorge.
+Search: crosswalk · `BookLoadModalV4.tsx` · `editLoadMapping.ts` · Cascade correction OUTBOX.
 
 ---
 
-## BLOCKING — CREATE NOW
+## BLOCKING — do not proceed until `live_load_number` path exists
 
-`node scripts/verify-one-load-one-open-invoice.mjs` → PASS (main #18468) → **014 / load 13521** deliver → invoice → factor → walk partition table
+**014 / load 13521** requires **`live_load_number = "13521"`** on the TMS load. You correctly **refused without it.** Cascade created 12 loads with **NULL** on the same field — Jorge confirmed Codex's call was right.
 
-## FREE — same minute if Chrome/deploy stalls
+**Wait for Cursor:** Book Load UI field + deploy **OR** explicit PATCH/API with `live_load_number` before book/deliver/invoice/factor.
+
+**Do not:** duplicate driver Jorge Luis Infante Corona (inactive is intentional) · use live Book Load wizard without AT# field.
+
+## FREE — same minute
 
 - `node scripts/tieout/dispatch-delivered-revenue.mjs` OBSERVED  
-- Reverse-link / connectivity fixes in your lane  
-- Crosswalk row verify before each create  
+- Crosswalk verify rows 015+ (prep only — no create without live_load_number)  
+- Reverse-link fixes in your lane  
 
-ACK: `Codex | ACK | REV-E | NOW=014-13521|FREE=disp-tieout | GO`
+ACK: `Codex | ACK | REV-E | NOW=014-blocked-live_load_number|FREE=disp-tieout | GO`
