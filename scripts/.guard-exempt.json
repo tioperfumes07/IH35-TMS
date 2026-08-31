@@ -531,5 +531,19 @@
   "verify-wo-create-presave-honesty.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-wo-create-ux-escape-zindex.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
   "verify-wo-linked-expense-human-labels.mjs": "baselined 2026-08-10 war CI unblock — orphan guard backlog; verify-steps janitor wave follows",
-  "verify-wave-c-gl-je-system-qbo-recon.mjs": "2026-08-15 — owner USMCA sprint N/A (ORPHAN-GUARD-OWNER-HANDOFF); excluded from CC-1 money orphan batch (verify-cc1-money-orphan-guard-registry-batch MAX_REMAINING=1). Not a product Built claim; wire later or keep exempt."
+  "verify-wave-c-gl-je-system-qbo-recon.mjs": "2026-08-15 — owner USMCA sprint N/A (ORPHAN-GUARD-OWNER-HANDOFF); excluded from CC-1 money orphan batch (verify-cc1-money-orphan-guard-registry-batch MAX_REMAINING=1). Not a product Built claim; wire later or keep exempt.",
+  "verify-apierror-message-reads-fielderrors.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-customer-factoring-reverse-error-recovery.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-dispatch-overview-dashboard-error.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-driver-pay-tab-generic-error-has-retry.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-eld-read-error-suppresses-stale-rows.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-form2290-generate-draft-visible-errors.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-legal-create-matter-error-surfacing.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-lists-catalog-archive-restore-error-surfacing.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-load-drawer-money-query-error-disclosure.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-program-board-note-error-surfacing.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-safety-cargo-claim-read-errors.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-safety-void-actions-visible-errors.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-samsara-sync-errors-surfaced-in-log.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt",
+  "verify-settlement-pending-deductions-error-suppresses-cache.mjs": "baselined 2026-08-31 — pre-existing orphan on main; wire later or keep exempt"
 }
