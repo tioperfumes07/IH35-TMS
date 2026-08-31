@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4a0541a",
+  "healthzSha": "56afbad",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "4a0541a",
+    "deployedSha": "56afbad",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18735,
-      "title": "FINDING: LEAD-TICK-0234B-LIVE-LANDED",
+      "number": 0,
+      "title": "Devin-A OUTBOX: finding #375 API loads-id-expenses 200 OK EXP-2026-00021 4114 posted fuel DEF category fuel diesel unit load L-20260830-0003 paid from BOA operating USMCA payment check per-load expense cross-module linkage accounting module 19 QBO NetSuite-parity financial reports new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18735",
-      "sha": "16d815cb96",
-      "committedAtIso": "2026-08-31T08:54:59-05:00"
+      "mergedAtCt": "08/31/2026, 09:03 AM CT",
+      "url": "",
+      "sha": "49c8dccfe1",
+      "committedAtIso": "2026-08-31T09:03:30-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #363 API drug-alcohol annual-rate-status 200 OK year 2026 pool size 18 drug minimum 50pct alcohol minimum 10pct on track false FMCSA random testing rate compliance compliance module 11 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #374 API expense-categories 200 OK factoring fees factoring default interest depreciation expense qbo id null last synced accounting module 18 QBO NetSuite-parity financial reports new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:54 AM CT",
+      "mergedAtCt": "08/31/2026, 09:02 AM CT",
       "url": "",
-      "sha": "f16249fcc8",
-      "committedAtIso": "2026-08-31T08:54:41-05:00"
+      "sha": "788225a16e",
+      "committedAtIso": "2026-08-31T09:02:46-05:00"
     },
     {
-      "number": 18734,
-      "title": "FINDING: PAY-RATE-TEST-DATA-NOT-G1-EXCLUDED -- confirmed gap; SETL-45 create routed to CC-3 per owner ruling",
+      "number": 18739,
+      "title": "FINDING: SETL-45-PAY-RATE-CREATE",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18734",
-      "sha": "e10bded323",
-      "committedAtIso": "2026-08-31T08:54:24-05:00"
+      "mergedAtCt": "08/31/2026, 09:02 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18739",
+      "sha": "24919cb993",
+      "committedAtIso": "2026-08-31T09:02:36-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #362 API form-425c profiles 200 OK company name case number district division judge EIN filing address NAISC questionnaire bankruptcy filing profile compliance module 10 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #373 API prepaid-expenses 200 OK total 2 TEST-PP-20260822 1200 12 periods 100 per period active posted amortization accounting module 17 QBO NetSuite-parity financial reports new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:53 AM CT",
+      "mergedAtCt": "08/31/2026, 09:02 AM CT",
       "url": "",
-      "sha": "ec9b86bf0a",
-      "committedAtIso": "2026-08-31T08:53:54-05:00"
+      "sha": "51c89a592f",
+      "committedAtIso": "2026-08-31T09:02:15-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #361 API form-425c banking-summary 200 OK line 19 opening cash 0 line 20 receipts 209278 line 21 disbursements 198145 line 22 net cash flow 11132 line 23 ending cash 11132 US Trustee monthly operating report compliance module 9 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #372 API expenses 200 OK 1200 posted posting status posted journal entry id load id vendor uuid driver uuid trailer id accounting module 16 QBO NetSuite-parity financial reports new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:53 AM CT",
+      "mergedAtCt": "08/31/2026, 09:01 AM CT",
       "url": "",
-      "sha": "805f6aa720",
-      "committedAtIso": "2026-08-31T08:53:10-05:00"
+      "sha": "822ecffeea",
+      "committedAtIso": "2026-08-31T09:01:27-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #360 API filings-dashboard 200 OK items counts Texas Business Personal Property Tax Rendition Bexar overdue drill through compliance module 8 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #371 API opening-balance-import transp-2024-12-31 preview 200 OK flag off false as of 2024-12-31 entry 2025-01-01 lines unmapped je preview accounting module 15 QBO NetSuite-parity financial reports new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:52 AM CT",
+      "mergedAtCt": "08/31/2026, 09:00 AM CT",
       "url": "",
-      "sha": "8426ecb559",
-      "committedAtIso": "2026-08-31T08:52:18-05:00"
-    },
-    {
-      "number": 18733,
-      "title": "FINDING: LEAD-TICK-0234-CURSOR-CREATE-OVERFLOW",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18733",
-      "sha": "c74a1b7486",
-      "committedAtIso": "2026-08-31T08:52:03-05:00"
+      "sha": "d804457844",
+      "committedAtIso": "2026-08-31T09:00:36-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #359 API fmcsa-safer status 200 OK coverage 100pct meets threshold true stale customers 1 stale vendors 1 FMCSA SAFER carrier verification compliance module 7 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #370 API required-document-types 200 OK customer credit app W9 IRS authority enforcement warn has expiry false is seed compliance module 17 verified routes new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:51 AM CT",
+      "mergedAtCt": "08/31/2026, 08:59 AM CT",
       "url": "",
-      "sha": "b552c1fb52",
-      "committedAtIso": "2026-08-31T08:51:36-05:00"
+      "sha": "ce432142a4",
+      "committedAtIso": "2026-08-31T08:59:56-05:00"
+    },
+    {
+      "number": 18738,
+      "title": "FINDING: LEAD-TICK-0236-PLAN-CONFIRM-HOLD",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 08:59 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18738",
+      "sha": "d6caf9e4f2",
+      "committedAtIso": "2026-08-31T08:59:51-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #358 API form-425c 200 OK reports draft filed petition date case number amended from uuid bankruptcy filing management compliance module 6 verified routes new deploy 58112c9",
+      "title": "Devin-A OUTBOX: finding #369 API missing-required 400 validation error entity kind driver unit customer vendor entity id required per-entity missing document tracking compliance module 16 verified routes new deploy 4a0541a",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:50 AM CT",
+      "mergedAtCt": "08/31/2026, 08:59 AM CT",
       "url": "",
-      "sha": "4a0541a8ae",
-      "committedAtIso": "2026-08-31T08:50:53-05:00"
+      "sha": "56afbad66b",
+      "committedAtIso": "2026-08-31T08:59:02-05:00"
     },
     {
-      "number": 0,
-      "title": "Devin-A OUTBOX: finding #357 API property-tax appraisal-districts 200 OK Bexar Cameron Dallas El Paso CAD name is active TX county compliance module 5 verified routes new deploy 58112c9",
+      "number": 18737,
+      "title": "FINDING: N/A -- claim migration number 202613310000 (loads mileage numeric widen)",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 08:50 AM CT",
-      "url": "",
-      "sha": "c90166766d",
-      "committedAtIso": "2026-08-31T08:50:16-05:00"
+      "mergedAtCt": "08/31/2026, 08:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18737",
+      "sha": "bd007c0b94",
+      "committedAtIso": "2026-08-31T08:58:37-05:00"
     }
   ]
 }
