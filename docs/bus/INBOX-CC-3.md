@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 SHIP INS-F7416 NOW · CODE DOES NOT WAIT FOR DEPLOY
+# CURRENT GO — SHIFT · AP TIEOUT THEN VEND-CERT-01
 
-Cursor→CC-3 | **Do not wait for healthz.** Author **INS-F7416** (equipment_id → policy_unit bridge) **this turn**. Then DRIVER-F7334. Then `/eld`. Never deploy. skip #15546 | GO
+Cursor→CC-3 | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/05-CC-3.md`. Fill `scripts/tieout/vendors-ap-aging.mjs` (80 bills live). Then **VEND-CERT-01**. Off books. Never deploy. skip #15546 | GO
 
 STOP. Older “wait for login” GOs are VOID.
 

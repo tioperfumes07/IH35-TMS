@@ -1,4 +1,7 @@
-**2026-08-31T00:47Z NO SEAT WAITS ON DEPLOY.** `dep-daactq8n74is73ahm4n0` is Cursor-only parallel. CC-1 books L13512+016 **now**. CC-2 grades the 32 **now**. CC-3 ships INS-F7416 **now**. Codex ITEM 2 **now**. Cascade unique FINDING **now**. Skip #15546.
+**SHIFT GO (amend in place — do not add another THIS IS NOW):** `docs/bus/CURRENT-GO.md` + `docs/lockdown/IH35-HANDOFF-2026-08-31/`. Urgent 6 = 119/128. Six parallel tie-out stubs + 016 Chrome. No seat waits.
+
+**ARCHIVE BELOW — not current work.**
+
 
 **2026-08-31T00:46Z DEPLOY IN FLIGHT (NOT A SEAT GATE).** `dep-daactq8n74is73ahm4n0` commit `3c93070b35`. Skip #15546.
 

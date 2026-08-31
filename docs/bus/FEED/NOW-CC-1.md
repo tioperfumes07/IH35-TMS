@@ -1,5 +1,2 @@
 # NOW — CC-1
-
-**ACK:** `CC-1 | ACK | NO-DEPLOY-WAIT | NOW=L13512-and-016 | SHA=live | GO`
-
-Book **now**. Do not wait for deploy.
+`docs/lockdown/IH35-HANDOFF-2026-08-31/03-CC-1.md` — 016 then settlement-pdf-5753.

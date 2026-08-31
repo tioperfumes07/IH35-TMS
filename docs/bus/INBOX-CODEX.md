@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 ITEM 2 NOW · NO WAIT
+# CURRENT GO — SHIFT · BANK TIEOUT
 
-Cursor→Codex | **ITEM 2 only. Keep shipping.** Do not wait on deploy, 016, or CC-1. No August money. Never restamp U14. skip #15546 | GO
+Cursor→Codex | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/06-CODEX.md`. Fill `scripts/tieout/bank-ledger-closing.mjs` (5 banks incl Faro). Then honest BANK-ECON-04/SURF-04 (do not fake zero-diff). Off books. skip #15546 | GO
 
 # PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
 

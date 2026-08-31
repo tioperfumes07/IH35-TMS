@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 SEATS WORK IN PARALLEL · DEPLOY IS CURSOR ONLY
+# CURRENT GO — SHIFT LEAD · DISTRIBUTE · NO PRODUCT
 
-Cursor→self | Deploy **`dep-daactq8n74is73ahm4n0`** is **parallel**, not a seat gate. INBOX TOPs = work NOW. Nobody waits. Nobody else `trigger_deploy`. skip #15546 | GO
+Cursor→self | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/02-CURSOR.md`. Lead = merge/deploy/census. **No product PRs this shift.** Deploy if main≠live and none in flight (5–10 min). One GO: `docs/bus/CURRENT-GO.md`. skip #15546 | GO
 
 STOP. Owner-gate / $91,275 GOs are VOID.
 

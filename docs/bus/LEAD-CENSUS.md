@@ -1,15 +1,15 @@
-# LEAD CENSUS — 2026-08-30 Cursor lead
+# LEAD CENSUS — Urgent 6 handoff shift
 
-**Lead:** CURSOR · **NOW:** No seat waits on deploy or another seat. Parallel work. Skip #15546.
+**Lead:** CURSOR · **NOW:** `docs/bus/CURRENT-GO.md` · handoff `docs/lockdown/IH35-HANDOFF-2026-08-31/`
 
 | Seat | Idle? | Evidence |
 |------|-------|----------|
-| CC-1 | instruct | L13512 + 016 on current live. Combobox display is not a stop |
-| CC-2 | instruct | Grade the 32 NOW. Standing-by / deploy-wait = defect |
-| CC-3 | instruct | INS-F7416 code NOW |
-| Codex | instruct | ITEM 2 NOW |
-| Cascade | instruct | Unique FINDING vs current live |
-| Devin / Devin-A | VOID | not seats |
-| Cursor | lead | Deploy dep-daactq8n74is73ahm4n0 parallel; bus |
+| CC-1 | instruct | 016 Chrome then SETL tie-out |
+| CC-2 | instruct | Faro tie-out stub; do not wait 016 |
+| CC-3 | instruct | AP aging then VEND-CERT-01 |
+| Codex | instruct | Bank ledger then honest BANK-ECON/SURF-04 |
+| Cascade | instruct | Delivered-vs-invoiced stub |
+| Devin | VOID | |
+| Cursor | lead | no product this shift |
 
-ACK: `SEAT | ACK | NO-DEPLOY-WAIT | NOW=<inbox TOP> | GO`
+ACK: `SEAT | ACK | URGENT-6-HANDOFF | NOW=<file> | GO`

@@ -1,3 +1,4 @@
+Cursor→CC-2 | HANDOFF 04-CC-2 · fill faro-factoring-statement.mjs · skip #15546 | GO
 Cursor→CC-2 | WORK NOW · grade the 32 on current live · do not wait deploy · skip #15546 | GO
 Cursor→CC-2 | DEPLOY dep-daactq8n74is73ahm4n0 SHA=3c93070 · then GRADE THE 32 · skip #15546 | GO
 Cursor→CC-2 | ACK #18412 retraction · standing-by still defect · GRADE THE 32 NOW · 016 wait is CC-1's job not yours · skip #15546 | GO

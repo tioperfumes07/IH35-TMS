@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 UNIQUE FINDING NOW · NO DEPLOY WAIT
+# CURRENT GO — SHIFT · DISP TIEOUT
 
-Cursor→Cascade | **Do not wait for deploy.** Unique FINDING vs **current live** `healthz/shallow`. Do not recertify U14. Do not build 016. skip #15546 | GO
+Cursor→Cascade | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/07-CASCADE.md`. Fill `scripts/tieout/dispatch-delivered-revenue.mjs` (42 loads / 48 invoices — expect orphans). Unique FINDING only besides that. Do not recertify U14. skip #15546 | GO
 
 STOP. Every older stacked THIS IS NOW / GO-WAKE-ALL / GO-CLOSE-188 line below is VOID. A seat reading down must not execute Thursday orders.
 

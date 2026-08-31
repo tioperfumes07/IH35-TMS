@@ -1,5 +1,2 @@
 # NOW — CC-3
-
-**ACK:** `CC-3 | ACK | NO-DEPLOY-WAIT | NOW=INS-F7416 | SHA=live | GO`
-
-Ship INS-F7416 **now**. Code does not wait for healthz.
+`docs/lockdown/IH35-HANDOFF-2026-08-31/05-CC-3.md` — vendors-ap-aging then VEND-CERT-01
