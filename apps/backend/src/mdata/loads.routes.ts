@@ -259,6 +259,16 @@ function isOwnerRole(role: string): boolean {
   return role === "Owner";
 }
 
+// LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE-2026-09-01: "the OWNER is always authorized, the
+// ACCOUNTANT is authorized." Administrator kept (mirrors driver-subaccount-backfill.routes.ts's
+// APPLY_ROLES) since it already holds equivalent write authority elsewhere in this driver-money
+// surface; Manager/Dispatcher deliberately excluded — this mints a real driver payable, not a
+// dispatch-status flip.
+const REMINT_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
+const remintBodySchema = z.object({
+  reason: z.string().trim().min(1).max(2000),
+});
+
 function toCompanyLoadToken(input: string | null | undefined): string {
   const cleaned = String(input ?? "")
     .toUpperCase()
@@ -1330,6 +1340,100 @@ export async function registerLoadRoutes(app: FastifyInstance) {
     }
     return result.row;
   });
+
+  // ACCT-F10164 (GO-IDLE-WAKE, live-verified 39 USMCA loads past delivery-evidence with zero
+  // driver_bills, 19 with a resolvable rate that never minted): ensureDriverBillArtifactsForLoad
+  // (ACCT-F277) is already the canonical, idempotent, re-entrant mint — the status-PATCH route above
+  // calls it, but ONLY on a transition INTO a delivery-evidence status. A load already SITTING at
+  // completed_docs_received/delivered_pending_docs (the exact class this finding is about) never
+  // re-enters it — no PATCH fires because the status is not changing. This route is the missing
+  // live-UI re-entry point: same function, same idempotency (existingBill check + advisory lock, no
+  // duplicate-mint risk), callable directly against a load already at rest. Never hand-writes
+  // driver_bills; if the rate still cannot resolve, this returns the SAME durable, queryable skip
+  // ensureDriverBillArtifactsForLoad already records — it does not fabricate one.
+  app.post(
+    "/api/v1/mdata/loads/:id/remint-driver-bill",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const authUser = currentAuthUser(req, reply);
+      if (!authUser) return reply;
+      // LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE-2026-09-01: "the OWNER is always authorized, the
+      // ACCOUNTANT is authorized." isOfficeWriteRole (Owner/Administrator/Manager/Dispatcher) does
+      // NOT include Accountant — this action creates a real payable, so it gets its own role set
+      // rather than inheriting a broader dispatch-write gate that would both miss the accountant and
+      // over-grant to Dispatcher.
+      if (!REMINT_ROLES.has(authUser.role)) return reply.code(403).send({ error: "forbidden" });
+      const body = remintBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return sendValidationError(reply, body.error);
+
+      const parsedParams = loadIdParamSchema.safeParse(req.params ?? {});
+      if (!parsedParams.success) return sendValidationError(reply, parsedParams.error);
+      const parsedQuery = loadDetailQuerySchema.safeParse(req.query ?? {});
+      if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+      const scopedCompanyId = parsedQuery.data.operating_company_id;
+      await assertCompanyMembership(authUser.uuid, scopedCompanyId);
+
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        const currentRes = await client.query<{
+          id: string;
+          status: string;
+          operating_company_id: string;
+          load_number: string;
+          assigned_primary_driver_id: string | null;
+          driver_pay_rate_per_mile: string | null;
+        }>(
+          `SELECT id, status, operating_company_id, load_number, assigned_primary_driver_id, driver_pay_rate_per_mile
+             FROM mdata.loads
+            WHERE id = $1 AND soft_deleted_at IS NULL AND operating_company_id = $2::uuid
+            LIMIT 1`,
+          [parsedParams.data.id, scopedCompanyId]
+        );
+        const current = currentRes.rows[0] ?? null;
+        if (!current) return { error: "mdata_load_not_found" as const };
+        // Only meaningful once delivery evidence exists — matches the same gate the status-PATCH
+        // route uses to decide whether to mint in the first place.
+        if (!loadStatusRequiresDeliveryDepartureStamp(current.status)) {
+          return { error: "load_not_past_delivery_evidence" as const, status: current.status };
+        }
+
+        const outcome = await ensureDriverBillArtifactsForLoad(client, {
+          loadId: current.id,
+          operatingCompanyId: current.operating_company_id,
+          actorUserId: authUser.uuid,
+        });
+
+        // LAW: "every such edit is TRACEABLE — who, when, what changed, from what to what, and why."
+        // Named fields (not buried in a JSON blob) so the audit trail answers the law's own question
+        // list without reconstruction: actor, load, driver, rate, reason.
+        await appendCrudAudit(
+          client,
+          authUser.uuid,
+          "mdata.loads.driver_bill_remint_attempted",
+          {
+            resource_id: current.id,
+            resource_type: "mdata.loads",
+            operating_company_id: current.operating_company_id,
+            actor_role: authUser.role,
+            load_number: current.load_number,
+            driver_id: current.assigned_primary_driver_id,
+            driver_pay_rate_per_mile: current.driver_pay_rate_per_mile,
+            reason: body.data.reason,
+            outcome: outcome.outcome,
+          },
+          "info",
+          "ACCT-F10164-REMINT-PATH"
+        );
+
+        return { ok: true as const, outcome };
+      });
+
+      if ("error" in result) {
+        const code = result.error === "mdata_load_not_found" ? 404 : 422;
+        return reply.code(code).send(result);
+      }
+      return result;
+    }
+  );
 
   app.patch("/api/v1/mdata/loads/:id", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
