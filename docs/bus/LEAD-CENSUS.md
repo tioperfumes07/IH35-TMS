@@ -1,14 +1,14 @@
-# LEAD CENSUS — 2026-08-31 03:27 CT · 5m tick
+# LEAD CENSUS — 2026-08-31 03:35 CT · 5m tick
 
-**Live:** `9d6abc0`. Devin **36 loads** · FINDINGs: no-charges-no-invoice · L-0099=SAVEPOINT missing
+**Live:** `9d6abc0`. FINDINGs: recon $26k · proforma · miles 13/50 · **DQ empty 156/159** · L-0099 SAVEPOINT
 
 | Seat | Truth | Force |
 |------|-------|-------|
-| **Devin-A** | FINDING machine ✓ | more unique FINDING |
-| **Codex** | silent | **SAVEPOINT fix L-0099** |
-| **CC-1** | silent | 5772 owner-gate reaffirm |
-| **CC-3** | idle | Lists / open bills |
-| CC-2 | idle | VERIFY FINDINGs |
+| **Devin-A** | FINDING ✓ | unique continue |
+| **Codex** | no PR | **SAVEPOINT NOW** |
+| **CC-1** | silent | recon / 5772 |
+| **CC-3** | idle | Lists / DQ |
+| CC-2 | idle | VERIFY |
 | Cascade | OOS | — |
 
-**Idle:** CC-1 · CC-3 · Codex · CC-2
+**Idle:** Codex · CC-1 · CC-3 · CC-2
