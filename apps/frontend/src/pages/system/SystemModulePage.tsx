@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { resolveApiUrl } from "../../api/client";
 import { getQboReconciliation, type QboReconResponse, type ReconObject } from "../../api/qbo-recon";
@@ -1164,7 +1164,12 @@ export function SystemModulePage() {
   return (
     <div className="space-y-3">
       <PageHeader breadcrumb={["Home", "System"]} backHref="/home" title="SYSTEM" subtitle="Owner-only" />
-      <SecondaryNavTabs tabs={visibleTabs.map((t) => ({ id: t.id, label: t.label }))} activeId={tab} onChange={(id) => setTab(id as SystemTabId)} />
+      <NavyPageSubNav
+        items={visibleTabs.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        activeId={tab}
+        onTabChange={(id) => setTab(id as SystemTabId)}
+        itemIds={visibleTabs.map((t) => t.id)}
+      />
 
       <div className="pt-1">
         {tab === "overview" ? <OverviewTab data={data} onOpen={setTab} qboAvailable={qboAvailable} /> : null}
