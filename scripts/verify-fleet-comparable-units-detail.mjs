@@ -14,6 +14,8 @@ function audit(text) {
   need(/comparable\.this_unit_maintenance_per_mile_cents/.test(text) && /comparable\.fleet_avg_maintenance_per_mile_cents/.test(text), "detail must compare unit and fleet maintenance cost");
   need(/comparable\.deviation_pct == null/.test(text), "detail must preserve unknown deviation rather than inventing zero");
   need(/comparable\.rank_in_fleet/.test(text) && /comparable\.total_units_in_fleet/.test(text), "detail must show rank denominator");
+  need(/import \{ DataTable/.test(text) && /hideToolbar/.test(text) && /hidePager/.test(text), "embedded comparison must use the canonical DataTable without list chrome");
+  need(!/<table/.test(text), "embedded comparison must not reintroduce a hand-rolled table");
   return failures;
 }
 
@@ -31,7 +33,8 @@ if (process.argv.includes("--selftest")) {
     source.replaceAll("comparable.fleet_avg_maintenance_per_mile_cents", "null"),
     source.replace("comparable.deviation_pct == null", "false"),
     source.replaceAll("comparable.total_units_in_fleet", "null"),
-    source.replace("<table", '<p>Fleet comparison table (modal V1 placeholder).</p><table'),
+    source.replace("<DataTable", "<table><tbody /></table><DataTable"),
+    source.replace("import { DataTable", "import { RetiredTable"),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (mutation === source || audit(mutation).length === 0) throw new Error(`mutation ${index + 1} escaped`);
