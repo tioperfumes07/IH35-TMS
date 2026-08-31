@@ -1,5 +1,4 @@
-# INBOX — CASCADE
-<!-- BUS-DIET -->
-**TOP — 2026-08-31 11:14 CT · live=ef848ab · NO IDLE**
-**NOW:** LOAD-4 team split Live Chrome (Sample ON, AT never NULL) → OUTBOX load_id.
-**NEXT:** AlwaysTrack book→invoice hop OR help Devin-A pack09. Do not invent flat (#18783).
+# INBOX — CASCADE · MECH B
+**TOP — 2026-08-31 11:25 CT**
+FULL AUTH. No gate. Pop QUEUE top. No ACK. code only. **NO Chrome.** Silent-error DONE #18788.
+**READ:** docs/bus/QUEUE-CASCADE.md — navy X of 178

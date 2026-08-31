@@ -1,6 +1,5 @@
-# INBOX — CC-1
-<!-- BUS-DIET -->
-**TOP — 2026-08-31 11:14 CT · live=ef848ab · NEVER WAIT ON DEPLOY**
-**DONE:** Rate proven (CC-3 Live Chrome) — driver_finance ebe87013 · 45c · Rafael c864a4bb.
-**NOW:** Live Chrome pack09 SETTLE → settlement_lines > 0.
-**NEXT:** SETL-45 batch OR bank-match Phase 7. No idle. No wait deploy.
+# INBOX — CC-1 · MONEY
+**TOP — 2026-08-31 11:25 CT · live=ef848ab**
+FULL AUTH. No gate. Pop QUEUE top. No ACK.
+**READ:** docs/bus/QUEUE-CC-1.md
+**NOW:** item 0 G1 flags (ebe87013/d55f85e4) then SETTLE. Not re-create rate.

@@ -1,0 +1,106 @@
+ORCHESTRATION LAW — STANDING LANES, NO BOTTLENECK — 2026-08-31
+OWNER DIRECTIVE: every coder produces. No waiting. No disorganization.
+Replaces per-task assignment entirely. Cursor stops being the dispatcher.
+
+################ THE DIAGNOSIS ################
+Cursor is the bottleneck because EVERY decision routes through it: what to work
+on, what changed, when to merge, when to deploy, who is idle. Result today:
+  Cursor  23 commits, 15 docs-only (65% paperwork)
+  249 LEAD-TICK wake commits
+  5 seats idle 3 hours waiting on a gate
+  1 seat (CC-1) produced 0 code in 12 hours and nobody asked why
+A lead that spends its output telling seats they are idle is not leading.
+
+################ RULE 1 — STANDING LANES. A SEAT NEVER WAITS TO BE TOLD. ################
+Each seat OWNS a permanent lane and a QUEUE FILE with ordered work items.
+When a seat finishes an item, it POPS THE NEXT ITEM FROM ITS OWN QUEUE.
+It does not ask. It does not wait. It does not ACK. It works.
+
+  docs/bus/QUEUE-<SEAT>.md   -- ordered list, top item is current work
+  Max 40 lines. Cursor refills it when it drops below 3 items.
+  Popping an item = deleting that line. The queue only shrinks as work is done.
+
+A seat is IDLE only if its queue is EMPTY. That is the only legitimate idle,
+and it is Cursor's failure to refill, not the seat's failure to work.
+
+################ RULE 2 — NO SEAT EVER WAITS ON ANOTHER SEAT ################
+Blocked on your current item? Do not report and stop. Do not wait for a gate.
+POP THE NEXT ITEM. Log the block in ONE line and move.
+The CC-1 gate cost five seats three hours today. Gates are abolished.
+If two items truly conflict (same file, same table), Cursor sequences them
+inside ONE seat's queue — never across seats.
+
+################ RULE 3 — CURSOR'S JOB SHRINKS TO FOUR THINGS ################
+  1. REFILL QUEUES when a seat drops below 3 items.
+  2. MERGE PRs (4-minute law).
+  3. DEPLOY on cadence — one deploy per 5-10 PRs or per 10 minutes, whichever
+     comes first. On a TIMER, not per-merge, never trigger_deploy from a CC seat.
+  4. REPORT to the owner hourly, 5 lines, NOT as a commit.
+  That is all. Cursor does NOT: assign per-task, run censuses, post heartbeats,
+  wake seats, or write LEAD-TICKs. Those are abolished.
+
+################ RULE 4 — THE STANDING LANES ################
+
+  CC-1 — MONEY + WIRING LANE (owner directive). Permanent queue:
+     1. Create ONE real driver pay rate through the FIXED UI ($0.45/mi, basis
+        ALL MILES, is_test_data=true). Proves #18782/#18666. NOTHING settles
+        until this exists — driver_pay_rates newest is still 08-07.
+     2. Settlement generation on a completed load. L-20260831-0002 is closed
+        with ZERO settlement lines — reproduce and fix.
+     3. Driver bill mint carries the per-load rate (#18770 root cause).
+     4. Factoring batch uses the FACTOR PROFILE rates, not the hardcoded
+        0.95/0.025 (batch.service.ts:179-180 vs configured 97%/1.5%).
+     5. GL verification: every chain JE balanced, is_sample_data correct.
+     CC-1 owns money end-to-end. It does not do UI, docs, or guards.
+
+  DEVIN-A — LIVE CHROME LANE (proven capable). Queue: load shapes, walkthroughs,
+     Phase 7 bank matching. HARD LIMIT: one batched bus commit per hour.
+     295 commits in 12h is the most expensive habit in the system.
+
+  CC-3 — LIVE CHROME LANE (proven capable). Queue: multi-stop + expenses shape,
+     then Phase 7 bank-to-settlement match if Codex cannot.
+
+  CASCADE — MECHANICAL BUILD LANE (Chrome-blocked, do not assign Chrome).
+     Queue: navy subnav sweep (178 routes), pay-codes + layover build,
+     its staged silent-error fixes.
+
+  CODEX — BANKING LANE, capability check first. If it cannot drive Chrome in
+     30 minutes, it moves to MECHANICAL and banking goes to CC-3.
+
+  CC-2 — VERIFICATION ONLY. Creates nothing. JE 236 watch every 20 min.
+     Grades other seats' claims against Neon. Sole writer of prod_verified.
+
+  DEVIN (plain) — SUSPEND. Zero output since 2026-08-29. Its 15,816-line
+     OUTBOX is the largest token drain in the repo. Archive it today.
+
+################ RULE 5 — EVERY SEAT SHIPS ITS OWN PR ################
+No seat hands work to another seat to merge. You wrote it, you PR it.
+  - 4-minute merge law
+  - a PR may not merge until its own build-typecheck CONCLUDED green
+  - a commit may not cite a GUARD or LIVE PROOF for a file it does not contain
+  - class defects: state X of N, or the close is rejected
+Cursor merges. Cursor does not rewrite other seats' work.
+
+################ RULE 6 — ONE DEPLOY, ONE VERIFIER ################
+Deploy on the cadence in Rule 3. After EVERY deploy, CC-2 posts one line:
+  healthz sha | migrations ok | JE-236 unchanged | chains still green
+If that line does not appear, the next deploy does not happen.
+
+################ RULE 7 — THE ONLY REPORT THAT MATTERS ################
+Hourly to the owner, 5 lines, direct — not committed:
+  1. chains complete (n of 6) and which shapes
+  2. chains broken and at which phase of the 47-check list
+  3. unflagged August JE count vs 236
+  4. driver pay rates created today (0 = the blocker)
+  5. what is blocked on the owner
+No merge counts. No census. No bus volume. If a number did not move, say so
+in three words and stop.
+
+################ HOW TO KNOW IT IS WORKING ################
+  docs-only share of merges     78% today  ->  under 25%
+  LEAD-TICK count               249 today  ->  0
+  total docs/bus/ lines         30,721     ->  under 2,000
+  seats idle waiting on a gate  5          ->  0
+  driver pay rates created      0          ->  at least 1
+  chains complete               0 of 6     ->  rising
+If these are not moving next shift, the problem is not the seats.
