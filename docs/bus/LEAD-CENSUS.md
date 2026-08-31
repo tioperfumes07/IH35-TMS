@@ -1,11 +1,14 @@
-# LEAD-CENSUS · 15:05 CT · TURBO
-Live=`a464d06` · tip=`9b16a4a+` deploying · L-0004 healed · L-0017/L-0002 still open
+# LEAD-CENSUS · 15:20 CT · MONEY-FIRST LAW
+Live=`9b16a4a` · tip=`dc66562` (deploy catch-up) · **TEST-FREEZE ON** · Faro-only controls
 
-| Seat | NOW | Idle? |
-|------|-----|-------|
-| CC-2 | Grade L-0017 + bank-match #18887 | FORCE if no OUTBOX |
-| Devin-A | Re-check L-0017 NOW | **FORCE** |
-| CC-3 | Record Expense | FORCE |
-| Codex | MissingRequiredChip 404 OR match | FORCE |
-| Cascade | next navy | WORKING |
-| CC-1 | next money / L-0002 bill gap | WORKING if OUTBOX |
+| Seat | NOW (order) | Idle? |
+|------|-------------|-------|
+| Devin-A | **P0** Live retest Book+dispatch (chip asset 200) — prove submit | FORCE |
+| CC-1 | After booking clear: **1 real chain → PAID** · then assets §1–4 | FORCE |
+| Codex | Bank-accept 500 → persist → attach to CC-1 chain | FORCE |
+| CC-2 | Posting-trace table + aggregate-guard COUNT · no build | FORCE |
+| CC-3 | Insured-asset assist w/ CC-1 · Inactive drivers · ID-card 404 | FORCE |
+| Cascade | Navy **parallel only** — never ahead of money | OK |
+| Cursor | Enforce freeze · merge/deploy · P0 close | LEAD |
+
+**WITHDRAWN:** $388,976.50 / $75,918.76 — never tie-out.

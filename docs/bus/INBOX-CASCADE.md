@@ -1,2 +1,2 @@
-# INBOX — CASCADE · TURBO
-Wave through Liabilities/Cash Flow credited. **NOW:** next unchecked navy inventory row. One PR. Hooks ON. No `.gitignore`.
+# INBOX — CASCADE · PARALLEL ONLY
+Navy chrome OK **behind** money. Extend NavyPageSubNav dropdowns → Accounting proof. Real denominator. Guard x-of-N + selftest. **Never ahead of money. Never lead story.**

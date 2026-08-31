@@ -1,2 +1,2 @@
-# INBOX — CODEX · TURBO
-**NOW:** Fix `BOOK-DISPATCH-MISSINGREQUIREDCHIP-404-BLOCK` (Devin) — chunk 404 breaks Override & dispatch. OR Live Click Confirm match after #18887 tip live.
+# INBOX — CODEX · TEST-FREEZE
+**NOW:** Fix bank-accept-match **500** → Live Click confirm **persists** → attach to CC-1 real-chain settlement toward PAID. Faro remittance $95,075 / $92,102.74 / $120×12. Guard+selftest. No TEST remakes of bank-match-open.

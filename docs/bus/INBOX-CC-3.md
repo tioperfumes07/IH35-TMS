@@ -1,4 +1,2 @@
-# INBOX — CC-3 · TURBO
-**TOP — 15:05 CT · IDLE BREACH · QUEUE-0**
-**NOW:** Record Expense on completed_docs load with 0 expenses (not L-0004). Sample ON. OUTBOX.
-Then 5 navy deep-links (Cascade modules merged through #18905). No waiting on insurance schema.
+# INBOX — CC-3 · TEST-FREEZE
+**NOW with CC-1:** insured-asset reconciliation (Claude law) — do not solo tenant moves. Inactive scheduled drivers (3). ID-card 404 file+fix. COI+PDFs. Schema exists — paste information_schema if anyone claims blocked.
