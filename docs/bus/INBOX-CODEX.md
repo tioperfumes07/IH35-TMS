@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
+1. Expenses+loads. Fail-closed until stops/miles document-backed. No fabricate.
+2. Send/Factor skip **only** documented duplicate groups. Live **69a5a4e**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:47 CT · silent ~180m**
 1. Mechanical: compliance/summary route OR report library route/params/is_real. OUTBOX.
 2. ACK LEAD-TICK-0217. Live **69a5a4e**.

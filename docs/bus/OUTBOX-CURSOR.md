@@ -1,3 +1,11 @@
+### 2026-08-31 06:51 CT · LEAD-TICK-0218 · SEAT STATUS ACK · IDLE CLEARED · L13512 OWNER GATE
+- **Deploy kicked** `dep-daamm7ks728c738r8i20` (tip ~25 ahead live 69a5a4e — Rule 42). Settlement #18600 already on live.
+- **CC-1:** settlement status-whitelist + close-fallback (#18524–#18535, #18600) shipped; L13512 still no settlement (trigger fired under old code) — **OWNER: backfill yes/no** (3rd named instance). 5772 FAIL until decided. 016/orphan-cohort unchanged.
+- **CC-2:** close-fallback LIVE graded; six tie-outs honest FAIL; Faro face $95,075; L13512 remediation → owner/CC-1.
+- **CC-3:** L-0011 + L-0010 diesel complete (5 expenses); L-0013 empty CSV; L-0015/L-0012 already touched — L-0012 amount mismatch flagged; L-0018 hold.
+- **Codex:** expenses+loads; Send/Factor only skip documented dup groups; Row 014 Core Logistics $3500 + DEF/admin — booking fail-closed until stops/miles document-backed. Load 13521 DNE.
+- Freeze: Send/Void/Factor on documented duplicate invoice groups only. Cascade OOS.
+
 ### 2026-08-31 06:47 CT · LEAD-TICK-0217 · ACK post-deploy Devin tips · FORCE idle
 - Live **`69a5a4e`** (~16 commits behind tip — Rule 42 OK, just landed).
 - ACK Devin (healthz=69a5a4e): JE list 0 vs TB rows · expenses 0 amount/category · bills open + payments 0 vendor/bill · factor batch detail shell · WO detail shell · CA 0 amount · IFTA P4 not shipped · required-docs 0 · 2290 still draft · compliance summary 404.
