@@ -5115,10 +5115,30 @@
     "lane": "cursor",
     "purpose": "list-search-builder"
   },
+  "10189": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-settlement-void-cascade (SETL-NO-VOID-PATH-01 + BANK-ORPHAN-01)"
+  },
   "10190": {
     "claimed_at": "2026-09-01",
     "lane": "cursor",
     "purpose": "bulk-void-via-void-service"
+  },
+  "10192": {
+    "claimed_at": "2026-08-31",
+    "purpose": "verify-accounting-toolbar-one-create",
+    "lane": "cursor"
+  },
+  "10193": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-inv-open-void-respects-void (INV-OPEN-VOID-01)"
+  },
+  "10197": {
+    "claimed_by": "cc-1",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-bank-orphan-backfill-authorized-path (BANK-ORPHAN-01 one-time backfill for the 4 pre-fix orphaned bank_transactions)"
   },
   "_band": {
     "cc-1": "n%4===1",
@@ -7110,20 +7130,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1036,
-  "10189": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-settlement-void-cascade (SETL-NO-VOID-PATH-01 + BANK-ORPHAN-01)"
-  },
-  "10193": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-inv-open-void-respects-void (INV-OPEN-VOID-01)"
-  },
-  "10197": {
-    "claimed_by": "cc-1",
-    "claimed_at": "2026-09-01",
-    "purpose": "verify-bank-orphan-backfill-authorized-path (BANK-ORPHAN-01 one-time backfill for the 4 pre-fix orphaned bank_transactions)"
-  }
+  "total_claimed": 1036
 }
