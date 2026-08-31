@@ -7,7 +7,18 @@
  *   invoice_without_delivered_load — active TMS invoice whose source_load_id is null OR points
  *                                    to a load not in delivered+ status
  *
- * Delivered+ statuses mirror dispatch/factoring-queue.routes.ts revenue latch cohort.
+ * Delivered+ statuses were checked empirically against live data before picking a list, not
+ * copied from a single screen's query: apps/backend/src/dispatch/factoring-queue.routes.ts's
+ * own cohort (delivered/invoiced/paid/closed) looked authoritative but governs a LATER,
+ * narrower gate (which loads are ready to submit to a factor) — live data shows real invoices
+ * are routinely created against 'delivered_pending_docs' and 'completed_docs_received' loads
+ * (9 of 13, and 1 of 5, respectively, as of this check), so excluding those two produced 12
+ * false-positive "invoice_without_delivered_load" hits. The correct, empirically-grounded
+ * "delivered enough that a missing/premature invoice is a real question" set is every status
+ * from 'delivered' onward in the natural lifecycle: delivered, delivered_pending_docs,
+ * completed_docs_received, invoiced, paid, closed — excluding only pre-delivery statuses
+ * (draft/unassigned/assigned_not_dispatched/dispatched/in_transit) and non-delivered terminal
+ * ones (cancelled/abandoned/driver_walkoff/driver_no_show).
  * Scoped to USMCA (launch entity) and accounting.invoices.source_system = 'tms'.
  */
 import pg from "pg";
@@ -21,6 +32,7 @@ const USMCA_OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const DELIVERED_STATUSES = [
   "delivered",
   "delivered_pending_docs",
+  "completed_docs_received",
   "invoiced",
   "paid",
   "closed",
