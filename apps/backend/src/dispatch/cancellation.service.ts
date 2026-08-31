@@ -55,10 +55,11 @@ export async function writeLoadCancellationRecord(
         billable_to_customer, cancellation_charge_cents, status, cancelled_by_user_id, cancelled_at,
         approved_by_user_id, approved_at
       )
-      -- FAIL-CANCEL-PARAM-10: bare `$10` with a NULL bind made Postgres raise
+      -- FAIL-CANCEL-PARAM-10: bare $10 with a NULL bind made Postgres raise
       -- "could not determine data type of parameter $10" (the CASE WHEN branch never
       -- gives the planner a typed null). Cast keeps Owner-approved cancels (non-null)
       -- and direct Owner cancels (null approver) both writable.
+      -- NOTE: do not put backticks around $10 in this comment — they close the TS template literal.
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,now(),$10::uuid,CASE WHEN $10::uuid IS NOT NULL THEN now() ELSE NULL END)
       ON CONFLICT (load_id) DO UPDATE
       SET reason_code = EXCLUDED.reason_code,
