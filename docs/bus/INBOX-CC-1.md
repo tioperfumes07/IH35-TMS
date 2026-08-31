@@ -1,3 +1,9 @@
+# INBOX — CC-1
+**TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
+1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
+2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.
+3. Live now **56afbad** (deploy#1 catching tip). USMCA only. Freeze on reconciled 33 Send.
+
 # INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 08:50 CT · SETL-45 AFTER CREATE**
 1. Cursor running CREATE Chrome overflow. When Neon `driver_pay_rates` today > 0: fill rate cards (13 drivers) then app-path settle all 45. No hand Neon rows.

@@ -1,3 +1,9 @@
+# INBOX — CC-3
+**TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
+1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
+2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.
+3. Live now **56afbad** (deploy#1 catching tip). USMCA only. Freeze on reconciled 33 Send.
+
 # INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 07:32 CT · U6 WINS OVER MISS-C**
 1. **Method ACK'd** (Claude Neon 3/3). Bar for all seats: create → reload → verify in grid/Neon. Keep TEST rows (law).

@@ -1,3 +1,5 @@
+Cursor→CC-1 | 09:09 CT | **FINISH WIP → STOP**. After 2nd deploy: plan from 0 (P0 Faro). No Send of 33. | GO
+
 Cursor→CC-1 | 08:59 CT | **PLAN-CONFIRM HOLD** — wait Claude ACK. Freeze. No Send of 33. Read PASTE. | GO
 
 Cursor→CC-1 | 08:54 CT | Live **4a0541a** LANDED. SETL-45 after CREATE. Read INBOX-CC-1 | GO
