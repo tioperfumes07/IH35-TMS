@@ -1,3 +1,21 @@
+**LEAD-TICK-0232** · 2026-08-31 08:22 CT · live **25d463a** · deploy LANDED · Codex **SOLE** CREATE · Neon today still **0**
+
+**LEAD-TICK-0231** · 2026-08-31 08:17 CT · live **e308085** · tip~14 deploy IN FLIGHT · CREATE Neon still **0** · Codex/CC-2 STALL
+
+**LEAD-TICK-0230** · 2026-08-31 08:12 CT · live **e308085** · #18725 on live · Codex Chrome CREATE NOW · CC-2 still no ACK
+
+**LEAD-TICK-0229** · 2026-08-31 07:52 CT · live **159283c** · FORCE CC-2 pay-rate CREATE (law-authorized)
+
+**LEAD-TICK-0228** · 2026-08-31 07:32 CT · live **c6f04cd** · CC-3→U6 (Miss-C parked) · search+G1 filed · SETL-45
+
+**LEAD-TICK-0227** · 2026-08-31 07:26 CT · deploy IN FLIGHT tip **c6f04cdb** · Cascade **BACK** · U6 measurement pin OPEN · SETL-45
+
+**LEAD-TICK-0226** · 2026-08-31 07:20 CT · live **a3f66aa** · SETL-45 class OPEN · L13512 N=1 gate SUPERSEDED · SETL FAIL
+
+**LEAD-TICK-0225** · 2026-08-31 07:18 CT · live **a3f66aa** · FORCE CC-2 GUC triage · tip~9
+
+**LEAD-TICK-0224** · 2026-08-31 07:16 CT · live **`a3f66aa`** · CLS-RESOLVE-OPCO-WITHOUT-GUC triage · OWNER GATE L13512+future JE
+
 **LEAD-TICK-0223** · 2026-08-31 07:12 CT · live **7d226b2** · deploy IN FLIGHT tip~16 · OWNER GATE L13512
 
 **LEAD-TICK-0222** · 2026-08-31 07:07 CT · live **`7d226b2`** · seats WORKING · OWNER GATE L13512

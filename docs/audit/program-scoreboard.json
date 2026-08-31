@@ -1,10 +1,10 @@
 {
-  "healthzSha": "69a5a4e",
+  "healthzSha": "877d769",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "69a5a4e",
+    "deployedSha": "877d769",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2124,93 +2124,93 @@
   "recentActivity": [
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #197 vendor detail 5/5 0 payment terms tax id phone email W9, IH35 Transp as vendor",
+      "title": "Devin-A OUTBOX: finding #272 live chrome dispatch planners fully wired timeline driver truck loads planner 35 drivers new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:42 AM CT",
+      "mergedAtCt": "08/31/2026, 07:44 AM CT",
       "url": "",
-      "sha": "0a279a97f4",
-      "committedAtIso": "2026-08-31T06:42:32-05:00"
+      "sha": "5d328520a8",
+      "committedAtIso": "2026-08-31T07:44:10-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #196 invoice detail 5/5 0 line items 0 load link 0 invoice number tax 0",
+      "title": "Devin-A OUTBOX: finding #271 live chrome dispatch overview border crossings fleet OOS 14 detention 2 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:41 AM CT",
+      "mergedAtCt": "08/31/2026, 07:43 AM CT",
       "url": "",
-      "sha": "a36f5e8116",
-      "committedAtIso": "2026-08-31T06:41:48-05:00"
+      "sha": "669e11f0d4",
+      "committedAtIso": "2026-08-31T07:43:13-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #195 customer detail 5/5 factoring eligible 0/5 phone address MC DOT",
+      "title": "Devin-A OUTBOX: finding #270 live chrome banking page fully wired 4 accounts 3193 401 txns Plaid BoA factoring escrow corrects 237 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:41 AM CT",
+      "mergedAtCt": "08/31/2026, 07:42 AM CT",
       "url": "",
-      "sha": "ba6d4d2cbc",
-      "committedAtIso": "2026-08-31T06:41:09-05:00"
+      "sha": "2fdb6cf005",
+      "committedAtIso": "2026-08-31T07:42:19-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #194 Plaid connected BOA USMCA FREIGHT but bank txns 0, status/link 404",
+      "title": "Devin-A OUTBOX: finding #269 live chrome invoices list fully wired 114 invoices 191K total 37K open load linkage every row corrects 238 249 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:40 AM CT",
+      "mergedAtCt": "08/31/2026, 07:41 AM CT",
       "url": "",
-      "sha": "bd6d22f3bc",
-      "committedAtIso": "2026-08-31T06:40:30-05:00"
+      "sha": "f12929464c",
+      "committedAtIso": "2026-08-31T07:41:34-05:00"
+    },
+    {
+      "number": 18722,
+      "title": "FINDING: N/A -- CLS-RESOLVE-OPCO-WITHOUT-GUC triage 10/15 done, all false positives; related defense-in-depth observation noted honestly as unconfirmed",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 07:40 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18722",
+      "sha": "14c580c84f",
+      "committedAtIso": "2026-08-31T07:40:51-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: fix merge conflict markers in OUTBOX-DEVIN-A.md",
+      "title": "Devin-A OUTBOX: finding #268 live chrome bills page fully wired 26 bills 8298 open 3 overdue WO linkage new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:40 AM CT",
+      "mergedAtCt": "08/31/2026, 07:40 AM CT",
       "url": "",
-      "sha": "87103bf0c3",
-      "committedAtIso": "2026-08-31T06:40:08-05:00"
-    },
-    {
-      "number": 18694,
-      "title": "FINDING: LEAD-TICK-0215-DEPLOY-KICK-STALE-145-SETTLEMENTS-SHELL",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:38 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18694",
-      "sha": "05cc0ecc67",
-      "committedAtIso": "2026-08-31T06:38:48-05:00"
+      "sha": "71a800a2e2",
+      "committedAtIso": "2026-08-31T07:40:44-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #193 load timeline 0, transitions 404, state history 0, no workflow trace",
+      "title": "Devin-A OUTBOX: finding #267 live chrome factoring page fully wired 1 batch voided 0 invoices Faro Factoring corrects 235 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:38 AM CT",
+      "mergedAtCt": "08/31/2026, 07:39 AM CT",
       "url": "",
-      "sha": "8975bbd44d",
-      "committedAtIso": "2026-08-31T06:38:41-05:00"
+      "sha": "40be044049",
+      "committedAtIso": "2026-08-31T07:39:53-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #192 report library 19 reports no route no params no is_real field",
+      "title": "Devin-A OUTBOX: finding #266 live chrome reports page fully wired 19 reports 6 scheduled IFTA preparer 15 runs 7d new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:38 AM CT",
+      "mergedAtCt": "08/31/2026, 07:39 AM CT",
       "url": "",
-      "sha": "204056a19e",
-      "committedAtIso": "2026-08-31T06:38:01-05:00"
+      "sha": "18f9e65cf7",
+      "committedAtIso": "2026-08-31T07:39:10-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #191 deductions 3 0 settlement link, owner name, debt 0, escrow targets 0",
+      "title": "Devin-A OUTBOX: finding #265 live chrome expenses page fully wired 200 rows 133K matched 110 load vendor JE bank linkage corrects 245 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:37 AM CT",
+      "mergedAtCt": "08/31/2026, 07:38 AM CT",
       "url": "",
-      "sha": "69a5a4ef4c",
-      "committedAtIso": "2026-08-31T06:37:18-05:00"
+      "sha": "840d8b5028",
+      "committedAtIso": "2026-08-31T07:38:19-05:00"
     },
     {
       "number": 0,
-      "title": "Devin-A OUTBOX: finding #190 deploy stale 143 commits ahead version a3e3af0 uptime 6750s",
+      "title": "Devin-A OUTBOX: finding #264 live chrome driver finance settlements fully wired 41 settlements 17 open bills 8131 load linkage corrects 230 new deploy a3f66aa",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 06:36 AM CT",
+      "mergedAtCt": "08/31/2026, 07:37 AM CT",
       "url": "",
-      "sha": "ce6f417fb2",
-      "committedAtIso": "2026-08-31T06:36:41-05:00"
+      "sha": "30fd24bc94",
+      "committedAtIso": "2026-08-31T07:37:27-05:00"
     }
   ]
 }

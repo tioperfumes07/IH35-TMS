@@ -1,3 +1,111 @@
+# LEAD-CENSUS · 2026-08-31 08:22 CT · LEAD-TICK-0232
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING flood |
+| Cursor | LEAD | live 25d463a · Codex **SOLE** CREATE |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | CREATE handed to Codex · resume non-CREATE (GUC leftovers / unique) |
+| CC-3 | WORKING | search flaky OUTBOX · VEND-CERT |
+| Codex | WORKING | **SOLE OWNER: Chrome CREATE→Neon** |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **25d463a**. Tip ~8 OK. Neon pay_rates today still **0**. Idle: **none**.
+
+# LEAD-CENSUS · 2026-08-31 08:17 CT · LEAD-TICK-0231
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING flood |
+| Cursor | LEAD | tip~14 · deploy kicked · CREATE still 0 |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | STALL | FORCE CREATE · no ACK · no Neon row |
+| CC-3 | WORKING | search OUTBOX owed · VEND-CERT |
+| Codex | STALL | #18725 live · Chrome CREATE not OUTBOX'd |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **e308085**. Tip **d45c6b2** (~14). Neon USMCA pay_rates today = **0**. Idle hazard: CC-2+Codex on CREATE.
+
+# LEAD-CENSUS · 2026-08-31 08:12 CT · LEAD-TICK-0230
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | live e308085 · Codex CREATE Chrome NOW |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | STALL | FORCE CREATE still no self-ACK |
+| CC-3 | WORKING | search OUTBOX · VEND-CERT · rate assist after |
+| Codex | WORKING | **#18725 live · Chrome CREATE proof NOW** |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **e308085**. Tip ~8 ahead OK. Idle: **none** (CC-2 stall ≠ idle seat). SETL-45 blocked on CREATE Neon proof.
+
+# LEAD-CENSUS · 2026-08-31 07:52 CT · LEAD-TICK-0229
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | FORCE CC-2 CREATE |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | **FORCE: pay-rate CREATE UI→Neon** |
+| CC-3 | WORKING | search OUTBOX · VEND-CERT · rate assist after |
+| Codex | WORKING | backup CREATE if CC-2 stalls |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **159283c**. Idle: **none**. SETL-45 blocked on CREATE proof.
+
+# LEAD-CENSUS · 2026-08-31 07:32 CT · LEAD-TICK-0228
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | CC-3→U6 · search filed · G1 latent |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | prove #18666 CREATE |
+| CC-3 | WORKING | **U6:** search repro → VEND-CERT → SETL-45 rate UI |
+| Codex | WORKING | USMCA · help CREATE |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **c6f04cd**. Idle: **none**. Miss-C parked for CC-3. OWNER: SETL-45 · outside-pay · orphan 016 · future JE.
+
+# LEAD-CENSUS · 2026-08-31 07:26 CT · LEAD-TICK-0227
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | re-spot after deploy |
+| Cursor | LEAD | Cascade BACK · U6 scope pin · SETL-45 |
+| CC-1 | WORKING | SETL-45 seq 2–3 after CREATE proven |
+| CC-2 | WORKING | prove #18666 CREATE + GUC triage |
+| CC-3 | WORKING | Lists · USMCA only |
+| Codex | WORKING | USMCA only · help CREATE/rate cards |
+| Cascade | WORKING | **BACK** · DISP-TIEOUT OBSERVED |
+Live deploy IN FLIGHT tip **c6f04cdb** (was a3f66aa). Idle: **none**. OWNER: SETL-45 · orphan 016 · future JE · outside-pay.
+
+# LEAD-CENSUS · 2026-08-31 07:20 CT · LEAD-TICK-0226
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | re-spot a3f66aa |
+| Cursor | LEAD | SETL-45 class · reject N=1 gate |
+| CC-1 | WORKING | **SETL-45 recovery seq 2–3** |
+| CC-2 | WORKING | prove #18666 CREATE + GUC triage |
+| CC-3 | WORKING | Lists |
+| Codex | WORKING | help rate cards / Row 014 |
+| Cascade | OOS | |
+Live **a3f66aa**. Idle: **none**. OWNER: SETL-45 seq (not L13512-only) · orphan 016 · future JE.
+
+# LEAD-CENSUS · 2026-08-31 07:18 CT · LEAD-TICK-0225
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #243–#248 — re-spot on a3f66aa |
+| Cursor | LEAD | GUC class live on board |
+| CC-1 | WORKING | money · L13512 OWNER GATE |
+| CC-2 | WORKING | **FORCE: GUC triage 15** |
+| CC-3 | WORKING | Lists |
+| Codex | WORKING | Row 014 |
+| Cascade | OOS | |
+Live **a3f66aa** tip~9. Idle: **none**. OWNER GATE: L13512 · future JE · orphan 016.
+
+# LEAD-CENSUS · 2026-08-31 07:16 CT · LEAD-TICK-0224
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | FINDING machine — re-read after GUC triage |
+| Cursor | LEAD | Claude ACK · CLS-RESOLVE-OPCO-WITHOUT-GUC |
+| CC-1 | WORKING | money leaves of GUC class · L13512 OWNER GATE |
+| CC-2 | WORKING | **NOW: triage 15 GUC suspects** |
+| CC-3 | WORKING | Lists · catalogs suspects |
+| Codex | WORKING | Row 014 · help GUC triage |
+| Cascade | OOS | |
+Live **a3f66aa**. Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016 · 62 future JEs.
+
 # LEAD-CENSUS · 2026-08-31 07:12 CT · LEAD-TICK-0223
 | Seat | Status | Note |
 |------|--------|------|

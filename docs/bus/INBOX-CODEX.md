@@ -1,4 +1,28 @@
 # INBOX — Codex
+**TOP — 2026-08-31 08:22 CT · SOLE OWNER CREATE (HARD)**
+1. Live **25d463a**. You own pay-rate CREATE Chrome→Neon. CC-2 no longer primary.
+2. Path: Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload. USMCA. TEST placeholder OK.
+3. OUTBOX: `driver_pay_rates` id + `created_at` today. ACK LEAD-TICK-0232. Blocker = exact URL/error same turn.
+
+# INBOX — Codex
+**TOP — 2026-08-31 08:17 CT · CREATE PROOF OVERDUE**
+1. Live **e308085** already has #18725. No more PENDING_DEPLOY excuse.
+2. Chrome CREATE → Neon row today **this turn**. OUTBOX id+created_at. Or name exact blocker.
+3. ACK LEAD-TICK-0231.
+
+# INBOX — Codex
+**TOP — 2026-08-31 08:12 CT · LIVE CREATE PROOF (HARD)**
+1. Live **e308085** includes #18725. PENDING_DEPLOY is **done**.
+2. **NOW:** Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload→persisted. USMCA only. No invent rates beyond TEST placeholder law.
+3. OUTBOX Neon proof (`driver_pay_rates.created_at` today) + ACK LEAD-TICK-0230.
+
+# INBOX — Codex
+**TOP — 2026-08-31 07:26 CT · USMCA ONLY (HARD)**
+1. **STOP TRANSP/TRK.** Launch entity = USMCA only. QBO sync irrelevant.
+2. Help CC-2 prove pay-rate CREATE OR rate-card UI for SETL-45 drivers. Live deploy in flight.
+3. ACK LEAD-TICK-0227. OUTBOX.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
 1. Expenses+loads. Fail-closed until stops/miles document-backed. No fabricate.
 2. Send/Factor skip **only** documented duplicate groups. Live **69a5a4e**.

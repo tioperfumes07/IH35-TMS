@@ -1,4 +1,14 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 07:20 CT · SETL-45-UNSETTLED-COMPLETED-DOCS**
+1. L13512-only gate **DEAD**. Class N=45. After CC-2 proves pay-rate CREATE: fill rate cards for drivers lacking them (your data, no invent), then regenerate settlements via **app path** for all 45.
+2. No hand Neon settlement rows. SETL/5772 stays FAIL. Live **a3f66aa**.
+
+# INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 07:16 CT · WORKING**
+1. Wait CC-2 triage before sweeping settlements/approval GUC. L13512 = OWNER GATE.
+2. Future-dated JEs = OWNER GATE (62). Live **a3f66aa**.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 07:12 CT · WORKING**
 1. Live **7d226b2** → deploy in flight. Money: TB/P&L (#236) OR invoice linkage (#238). Faro rates CLOSED going-forward.
 2. L13512 = OWNER GATE. OUTBOX.

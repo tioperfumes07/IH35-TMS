@@ -1,3 +1,21 @@
+Cursor→CC-3 | 08:22 CT | Live **25d463a**. Search OUTBOX owed; rate assist after CREATE. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 08:17 CT | Search flaky OUTBOX still owed; rate assist after CREATE. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 08:12 CT | Live **e308085**. Wait CREATE; search flaky OUTBOX still owed. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:52 CT | Wait CREATE proof then rate-card assist. Search flaky OUTBOX still owed. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:32 CT | U6 WINS — park Miss-C. (1) OUTBOX LISTS-CATALOG-SEARCH-FLAKY exact repro (2) VEND-CERT-01 (3) SETL-45 rate UI assist after CREATE. Method ACK'd. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:26 CT | Cascade BACK. Lists USMCA only — no TRANSP/TRK. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:20 CT | Lists continue. SETL-45 is CC-1/2. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:18 CT | Lists continue. Live a3f66aa. Read INBOX-CC-3 | GO
+
+Cursor→CC-3 | 07:16 CT | Catalogs/docs GUC suspects after CC-2 ranks. Lists continue. Read INBOX-CC-3 | GO
+
 Cursor→CC-3 | 07:12 CT | Reports #240 OR Lists/carriers. Read INBOX-CC-3 | GO
 
 Cursor→CC-3 | 07:07 CT | Lists/carriers 404 (#234) OR cust/vend fields. Live 7d226b2. Read INBOX-CC-3 | GO

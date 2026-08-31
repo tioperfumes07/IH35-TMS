@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TARGET = path.join(ROOT, "apps/backend/src/mdata/driver-profile.routes.ts");
+const FRONTEND_TARGET = path.join(ROOT, "apps/frontend/src/pages/DriverDetail.tsx");
 
 function fail(msg) {
   console.error(`FAIL: ${msg}`);
@@ -37,6 +38,20 @@ function checkSource(src, label) {
   return null;
 }
 
+function checkFrontendSource(src, label) {
+  if (!/Initial pay rates/.test(src)) return `${label}: qualification create UI must expose initial pay rates`;
+  if (!/selectedNewQualificationType\.line_items\.map/.test(src)) {
+    return `${label}: qualification create UI must render the selected equipment type's canonical line items`;
+  }
+  if (!/initial_rates:\s*selectedNewQualificationType\?\.line_items\.flatMap/.test(src)) {
+    return `${label}: qualification create must send entered rates through initial_rates`;
+  }
+  if (!/line_item_template_id:\s*lineItem\.id/.test(src)) {
+    return `${label}: initial rate must preserve the canonical line item template id`;
+  }
+  return null;
+}
+
 function selftest() {
   const good = `
   app.post<{ Params: { id: string }; Querystring: { operating_company_id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async () => {
@@ -55,6 +70,15 @@ function selftest() {
   if (!badErr) fail("selftest: planted-bad must FAIL");
   const goodErr = checkSource(good, "selftest-good");
   if (goodErr) fail(`selftest: planted-good must PASS (${goodErr})`);
+  const goodFrontend = `
+    <legend>Initial pay rates</legend>
+    {selectedNewQualificationType.line_items.map((lineItem) => <input />)}
+    initial_rates: selectedNewQualificationType?.line_items.flatMap(() => [{ line_item_template_id: lineItem.id }])
+  `;
+  const badFrontend = goodFrontend.replace("initial_rates:", "rates:");
+  if (!checkFrontendSource(badFrontend, "planted-bad-frontend")) fail("selftest: planted frontend omission must FAIL");
+  const goodFrontendErr = checkFrontendSource(goodFrontend, "selftest-good-frontend");
+  if (goodFrontendErr) fail(`selftest: planted frontend wiring must PASS (${goodFrontendErr})`);
   console.log("verify-driver-qualification-sets-opco-guc --selftest PASS");
 }
 
@@ -65,4 +89,6 @@ if (process.argv.includes("--selftest")) {
 
 const err = checkSource(fs.readFileSync(TARGET, "utf8"), TARGET);
 if (err) fail(err);
+const frontendErr = checkFrontendSource(fs.readFileSync(FRONTEND_TARGET, "utf8"), FRONTEND_TARGET);
+if (frontendErr) fail(frontendErr);
 console.log("verify-driver-qualification-sets-opco-guc PASS");
