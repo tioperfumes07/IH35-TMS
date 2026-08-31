@@ -5,6 +5,8 @@ import { buildPatchChanges } from "../audit/crud-audit.js";
 import { appendBulkCrudAudit, registerBulkRoute } from "../bulk/bulk-update.factory.js";
 import type { BulkPerEntityContext, BulkPerEntityResult } from "../bulk/bulk.types.js";
 import { getAppliedVendorCreditsCents, getAppliedBillPaymentApplicationsCents, voidBillInClientTx, type BillMutationClient } from "./bills.service.js";
+import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
+import { BATCH_VOID_ACTION } from "./bulk-void.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 
 const billStatusSchema = z.enum(["open", "partial", "paid", "voided"]);
@@ -16,6 +18,8 @@ const setStatusPayloadSchema = z.object({
 const markScheduledPayloadSchema = z.object({
   scheduled_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
+
+const emptyPayloadSchema = z.object({}).default({});
 
 const markPaidPayloadSchema = z.object({
   paid_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -132,6 +136,39 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
       }
       auditPayload.changes = buildPatchChanges({ status: statusPayload.status }, oldRow, updateRes.rows[0] as Record<string, unknown>);
     }
+  } else if (action === BATCH_VOID_ACTION) {
+    if (!canVoidCancel(String(ctx.actorRole ?? ""))) {
+      return { ok: false, code: "E_FORBIDDEN", message: "Owner, Administrator, or Accountant required to void" };
+    }
+    if (!reason || reason.trim().length < 10) {
+      return { ok: false, code: "E_REASON_REQUIRED", message: "reason must be at least 10 characters" };
+    }
+    if (Number(oldRow.paid_cents ?? 0) > 0) {
+      return { ok: false, code: "E_STATE_INVALID", message: "Bill has payments and cannot be voided via bulk" };
+    }
+    try {
+      const voided = await voidBillInClientTx(client as unknown as BillMutationClient, {
+        operatingCompanyId,
+        billId: id,
+        reason: reason.trim(),
+        userId: actorUserId,
+        currentBusinessDate: companyBusinessDate(),
+      });
+      auditPayload.reversal_journal_entry_id = voided.reversal_journal_entry_id;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "bill_void_failed";
+      if (message === "bill_not_found") return { ok: false, code: "E_NOT_FOUND", message: "Bill not found" };
+      if (message === "bill_already_void") return { ok: false, code: "E_STATE_INVALID", message: "Bill is already void" };
+      if (message === "bill_has_payments_cannot_void") {
+        return { ok: false, code: "E_STATE_INVALID", message: "Bill has payments and cannot be voided via bulk" };
+      }
+      throw err;
+    }
+    const refreshed = await client.query(`SELECT * FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [
+      id,
+      operatingCompanyId,
+    ]);
+    auditPayload.changes = buildPatchChanges({ status: "voided" }, oldRow, refreshed.rows[0] as Record<string, unknown>);
   } else if (action === "mark_scheduled") {
     const scheduledPayload = payload as z.infer<typeof markScheduledPayloadSchema>;
     if (String(oldRow.status) === "paid") {
@@ -258,12 +295,21 @@ export async function registerBillsBulkRoutes(app: FastifyInstance) {
     domain: "accounting",
     resource: "bills",
     entityType: "bill",
-    requireReasonActions: ["set_status", "mark_paid"],
+    requireReasonActions: ["set_status", "mark_paid", BATCH_VOID_ACTION],
     destructiveActions: ["set_status", "mark_paid"],
+    atomicFailStopActions: [BATCH_VOID_ACTION],
+    actionRoleGate: (role, action) => {
+      if (action !== BATCH_VOID_ACTION) return { ok: true };
+      if (!canVoidCancel(role)) {
+        return { ok: false, code: "E_FORBIDDEN", message: "Owner, Administrator, or Accountant required to void" };
+      }
+      return { ok: true };
+    },
     actionMap: {
       set_status: setStatusPayloadSchema,
       mark_scheduled: markScheduledPayloadSchema,
       mark_paid: markPaidPayloadSchema,
+      [BATCH_VOID_ACTION]: emptyPayloadSchema,
     },
     perEntityHandler: handleBillBulk,
   });

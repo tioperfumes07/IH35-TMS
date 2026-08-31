@@ -15,6 +15,7 @@ import { ReferenceSelect, type ReferenceOption } from "../../components/parity/R
 import { vendorFilterReferenceOptions } from "../../components/parity/referenceOptionLabels";
 import { BulkActionModal, BulkProgressDialog } from "../../components/bulk";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { useToast } from "../../components/Toast";
 import { TasksTab } from "../../components/tasks/TasksTab";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
@@ -202,6 +203,7 @@ export function BillsPage() {
   const { pushToast } = useToast();
   const bulk = useEntityBulkAction();
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   const [scheduledDate, setScheduledDate] = useState("");
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [tableResetKey, setTableResetKey] = useState(0);
@@ -814,16 +816,28 @@ export function BillsPage() {
         }}
         rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-slate-100" : "")}
         batchActions={(selected) => (
-          <button
-            type="button"
-            className="rounded-sm border border-gray-300 px-1.5 py-0.5"
-            onClick={() => {
-              setPendingIds(selected.map((bill) => bill.id));
-              setScheduleModalOpen(true);
-            }}
-          >
-            Mark scheduled
-          </button>
+          <>
+            <button
+              type="button"
+              className="rounded-sm border border-gray-300 px-1.5 py-0.5"
+              onClick={() => {
+                setPendingIds(selected.map((bill) => bill.id));
+                setScheduleModalOpen(true);
+              }}
+            >
+              Mark scheduled
+            </button>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
+              onClick={() => {
+                setPendingIds(selected.map((bill) => bill.id));
+                setBatchVoidOpen(true);
+              }}
+            >
+              Void
+            </button>
+          </>
         )}
         renderExpanded={(bill) => (
           <div className="space-y-3">
@@ -837,6 +851,30 @@ export function BillsPage() {
           </div>
         )}
         emptyText="No bills found."
+      />
+
+      <VoidReasonModal
+        open={batchVoidOpen}
+        title="Void bills"
+        entityRef={`${pendingIds.length} selected`}
+        minLength={10}
+        onClose={() => setBatchVoidOpen(false)}
+        onSubmit={async (reason) => {
+          if (!companyId) return;
+          setBatchVoidOpen(false);
+          await bulk.runBulk(
+            {
+              domain: "accounting",
+              resource: "bills",
+              ids: pendingIds,
+              action: "void",
+              reason,
+              operatingCompanyId: companyId,
+              invalidateKeys: [["accounting", "bills", companyId]],
+            },
+            () => setPendingIds([])
+          );
+        }}
       />
 
       <BulkActionModal

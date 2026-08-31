@@ -35,6 +35,11 @@ function main() {
   assert.match(expBulk, /reversePostedSourceTransactionInClientTx/);
   assert.match(expBulk, /accounting\/expenses\/bulk-update/);
 
+  const billsBulk = read("apps/backend/src/accounting/bills-bulk.routes.ts");
+  assert.match(billsBulk, /E_USE_BULK_VOID/);
+  assert.match(billsBulk, /BATCH_VOID_ACTION/);
+  assert.match(billsBulk, /voidBillInClientTx/);
+
   const feInv = read("apps/frontend/src/pages/accounting/InvoicesListPage.tsx");
   assert.match(feInv, /action: "void"|runInvoiceBulk\("void"/);
   assert.match(feInv, /VoidReasonModal/);
