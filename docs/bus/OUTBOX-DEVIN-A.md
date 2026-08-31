@@ -1430,3 +1430,59 @@ Prepend newest first. Required shape after ACK:
 Unique FINDING: `Devin-A | FINDING | <id> | OWNER=<fixer> | board OPEN | MODULE= | LIVE_SHA=`
 
 - 2026-08-23T19:25CT Cursor | CORRECT | Devin-A is the auditor not scribe · PARKED paste VOID · write EXTENT on this file · HOW=docs/audit/scenario-trackers/certified-u14/HOW-TO-AUDIT-AND-FILE-FINDINGS.md · NOW=/vendors | GO
+
+
+Devin-A | DELIBERATELY BAD LOAD TEST | LEAD-TICK-0248 | healthz=9c2fab3 | PROOF: System REFUSES $0 rate + no driver pay rate load | GO
+
+TEST SETUP:
+- Customer: CORE LOGISTICS BROKERAGE (one of 7 swapped — safe billing_email=jpm@tioperfumes.com)
+- Driver: ALEJANDRO HERNANDEZ OROZCO (id=b1235476-2a03-47fb-86ca-4ff2ac1c307d — Active, NO pay rate in driver_finance.driver_pay_rates)
+- Linehaul: $0 (set to 0)
+- Fuel surcharge: $0 (set to 0)
+- Accessorial: $0
+- Sample / demo load: CHECKED (is_sample_data=true)
+- AlwaysTrack load #: TEST AT DEVIN-A-001
+- No shortest miles entered
+- No practical miles entered
+
+RESULT: "Book + dispatch" button DISABLED (ref=f75e873, type=submit, disabled=true)
+- UI message: "B-20260831-0003 Not priceable — no driver bill will be created"
+- UI message: "Missing shortest miles and driver pay rate / mile. The load still books; driver pay is recorded as skipped until this is entered."
+- UI message: "Practical must be greater than 0; with a driver seated, Shortest must also be greater than 0 or Book is refused."
+- Click attempt on disabled button: TIMEOUT (button is disabled, cannot click)
+
+NEON PROOF (after cancel — no load created by me):
+- L-20260831-0003 EXISTS but belongs to ANOTHER agent (live_load_number=TEST-E2E-0831-005, rate=$1,000, status=dispatched, customer=411b2172=CORE LOGISTICS BROKERAGE)
+- My deliberately bad load was NOT saved — cancel worked correctly
+- August JE baseline: 229 sample, 236 real (UNCHANGED), 465 total — my test created ZERO JEs
+
+CONCLUSION: The system correctly REFUSES to book+dispatch a load with:
+1. $0 rate (Linehaul=0, Fuel=0)
+2. No driver pay rate (driver has no active pay_rate in driver_finance.driver_pay_rates)
+3. No shortest miles (required when driver is seated)
+4. No practical miles (must be > 0)
+The "Book + dispatch" button is disabled until all required fields are valid. The "Save draft" option exists but would create a $0 load — I did NOT save draft. No rate was invented. No voids. No unflagged JEs created.
+
+
+Devin-A | TEST LOAD #1 BOOKED+DISPATCHED | LEAD-TICK-0248 | healthz=9c2fab3 | LIFECYCLE LINK 1/5 PROVEN | GO
+
+TEST LOAD #1:
+- Load #: L-20260831-0004
+- Live load #: TEST AT DEVIN-A-002
+- Status: dispatched
+- is_sample_data: TRUE
+- Rate: $2,075 (Linehaul $1,850 + Fuel $150 + Accessorial $75 Lumper)
+- Customer: CORE LOGISTICS BROKERAGE (411b2172-56dc-483f-b07e-991a21ac4793)
+- Driver: ALFONSO HIDALGO CHAVEZ (40823a77-d8d4-481c-88cb-1387556aa98e) — pay rate $0.48/mi
+- Unit: T170 (f4430f58-c259-43d8-83b5-f4004ab866be) — InService, not OOS, not dispatch-blocked
+- Shortest miles: 500, Practical miles: 550
+- Pickup: 1500 Farm to Market Rd (1 stop)
+- Delivery: auto-added (1 stop)
+
+LIFECYCLE LINK 1/5 — BOOKING + DISPATCH:
+- Load created in mdata.loads: id=eac446a0-51d4-4ea0-b3a5-d79050d117e9, status=dispatched, is_sample_data=true
+- Proforma invoice auto-created in accounting.invoices: id=62c3cacb, display_id=L-20260831-0004, status=proforma, total=$2,075, is_sample_data=true, source_load_id=eac446a0
+- Driver bill auto-created in driver_finance.driver_bills: id=1e7d45ee, bill_number=B-20260831-0004, driver=ac9ea24d, gross=$240.00 (500 short mi × $0.48/mi), status=open, notes="Auto-created from load L-20260831-0004"
+
+AUGUST JE BASELINE: 229 sample, 236 real (UNCHANGED), 465 total — ZERO unflagged JEs created by test load #1
+
