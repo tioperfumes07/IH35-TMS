@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { Link, NavLink, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { entityLabel } from "../../lib/entity-label";
@@ -57,6 +57,7 @@ import { DeactivateFactorConfirmModal } from "../../components/factoring/Deactiv
 import { DuplicateVendorsBanner } from "../../components/factoring/DuplicateVendorsBanner";
 import { apiRequest } from "../../api/client";
 import { FACTORING_TAB_PATH, factoringTabFromPath } from "../../router/route-manifest";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 
 const SUBNAV = [
   { id: "reserve_tracker", label: "Reserve Tracker" },
@@ -684,37 +685,9 @@ export function FactoringHomePage({ initialTab = "recourse_pipeline" }: Factorin
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-sm bg-[#1f2a44] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {SUBNAV.map((item) => {
-            const target = FACTORING_TAB_PATH[item.id];
-            const active = tab === item.id;
-            // Tabs without a registered route path (e.g. reserve_tracker — Lane A wires route later)
-            // are rendered as buttons that set local state directly.
-            if (!target) {
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setTab(item.id as FactoringTabId)}
-                  className={active ? "border-b border-white pb-0.5 font-semibold" : "pb-0.5 hover:opacity-80"}
-                >
-                  {item.label}
-                </button>
-              );
-            }
-            return (
-              <NavLink
-                key={item.id}
-                to={target}
-                className={active ? "border-b border-white pb-0.5 font-semibold" : "pb-0.5"}
-              >
-                {item.label}
-              </NavLink>
-            );
-          })}
-        </div>
-      </div>
+      <NavyPageSubNav
+        items={SUBNAV.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] }))}
+      />
 
       {tab === "reserve_tracker" ? (
         <div className="rounded-sm border border-gray-200 bg-white p-3">
