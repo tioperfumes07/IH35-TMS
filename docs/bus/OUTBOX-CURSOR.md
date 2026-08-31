@@ -1,3 +1,7 @@
+### 2026-08-31 10:55 CT · LEDGER REGISTER
+- Devin L1/L2 → checklist 09; JE 236 proven; 251 false.
+- Charge lines CC-2; L2 API flagged; Cascade still stuck.
+
 ### 2026-08-31 10:48 CT · CASCADE STILL STUCK
 - Cascade: ACK only; silent-error never pushed; 0 Live Chrome.
 - Codex #18783 LOAD-2 flat UI absent (honest).

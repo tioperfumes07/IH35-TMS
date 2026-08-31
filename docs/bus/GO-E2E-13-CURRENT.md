@@ -1,3 +1,10 @@
+# GO-E2E-13 CURRENT · 2026-08-31 10:55 CT · SEE ALSO `docs/bus/GO-E2E-LEDGER-REGISTER-2026-08-31.md`
+
+**JE:** USMCA Aug real=**236** held (Cursor Neon). Ignore unscoped 251.
+**Registered:** Devin L1 UI + L2 API artifacts (stops/invoice/bill). Charge lines → CC-2.
+**Blocked:** Cascade LOAD-4; LOAD-2 flat UI #18783; tip deploy for #18782; SETL-45 settle.
+**Law:** Live Chrome walking only — no pictures; API book ≠ DONE.
+
 PASTE TO CURSOR — CURRENT STATE GO — 2026-08-31 ~15:20 UTC
 SUPERSEDES the P-0 and gating sections of 11-MASTER. Everything else in the pack
 (00,01-07,08,09,10,12) still stands as written.

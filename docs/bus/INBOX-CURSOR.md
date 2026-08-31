@@ -1,5 +1,5 @@
 # INBOX — Cursor
-**TOP — 2026-08-31 10:37 CT · LIVE-CHROME-ALL-HANDS**
-1. Force Cascade off silent-error stuck → Live Chrome (this PR).
-2. Live Chrome overflow: Book **LOAD-2** OO flat if Cascade remains silent.
-3. No wake-ticket spam. Deploy already live 47700c9.
+**TOP — 2026-08-31 10:55 CT**
+1. Keep `GO-E2E-LEDGER-REGISTER` honest as seats post.
+2. Deploy tip when cadence allows (#18782 live).
+3. Cascade LOAD-4 force stands. No wake spam.

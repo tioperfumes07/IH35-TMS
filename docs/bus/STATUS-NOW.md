@@ -1,3 +1,6 @@
+**LEDGER-REGISTER** · 2026-08-31 10:55 CT · live **47700c9**
+Devin L1/L2 registered vs checklist 09. JE real=**236** (251 false). Charge lines → CC-2. L2 API ≠ Chrome DONE. Cascade LOAD-4 still owed.
+
 **CASCADE-STUCK + LIVE-CHROME-FORCE** · 2026-08-31 10:48 CT · live **47700c9**
 Cascade = ACK'd silent-error ship, never pushed PR, never walked LOAD-2/4.
 Codex Live Chrome: LOAD-2 flat UI **absent** (#18783) — do not invent flat.
