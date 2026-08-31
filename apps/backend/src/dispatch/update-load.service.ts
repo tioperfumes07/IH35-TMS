@@ -128,6 +128,14 @@ export type UpdateDispatchLoadInput = {
   stops?: UpdateLoadStopInput[];
 };
 
+/** AT# / AlwaysTrack linkage — non-financial metadata; allow backfill when load is money-locked. */
+export function isLiveLoadNumberOnlyPatch(input: UpdateDispatchLoadInput): boolean {
+  if (input.stops !== undefined) return false;
+  if (input.charges !== undefined) return false;
+  const keys = Object.keys(input.fields ?? {});
+  return keys.length === 1 && keys[0] === "live_load_number";
+}
+
 export class LoadNotFoundError extends Error {
   constructor() {
     super("load_not_found");
@@ -452,12 +460,16 @@ export async function updateDispatchLoad(
   const old = existing.rows[0];
   if (!old) throw new LoadNotFoundError();
 
+  const fields = input.fields ?? {};
+
   // 2) Money/evidence lock — reject the whole edit if posted money depends on this load.
-  const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
-  if (lock) throw new LoadEditLockedError(lock);
+  // LIVE-LOAD-NUMBER-NULL-REV-E: live_load_number-only backfill is linkage metadata, not revenue/pay.
+  if (!isLiveLoadNumberOnlyPatch(input)) {
+    const lock = await detectLoadEditLock(client, operatingCompanyId, loadId);
+    if (lock) throw new LoadEditLockedError(lock);
+  }
 
   // 3) Scalar fields — build the SET clause from present keys only (lockstep values/placeholders).
-  const fields = input.fields ?? {};
 
   // FAIL-D1 — Edit Load must run the same shared driver-qualification gate as book-load and quicksave
   // when assigned_primary_driver_id (or secondary) changes. Without this, a load that passed the gate

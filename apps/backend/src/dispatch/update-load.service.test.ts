@@ -3,6 +3,7 @@ import {
   updateDispatchLoad,
   LoadEditLockedError,
   LoadNotFoundError,
+  isLiveLoadNumberOnlyPatch,
 } from "./update-load.service.js";
 
 // ACCT-F289 mint-if-empty path calls buildInvoiceFromLoad when no draft/proforma lines match.
@@ -79,6 +80,43 @@ describe("updateDispatchLoad — money/evidence guards", () => {
     await expect(
       updateDispatchLoad(client, { loadId: LOAD_ID, operatingCompanyId: OCI, requestingUserUuid: USER, fields: { notes: "x" } })
     ).rejects.toBeInstanceOf(LoadEditLockedError);
+  });
+
+  it("allows live_load_number-only backfill when an open settlement would otherwise lock the load", async () => {
+    expect(
+      isLiveLoadNumberOnlyPatch({
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        fields: { live_load_number: "L-20260830-0014" },
+      }),
+    ).toBe(true);
+    expect(
+      isLiveLoadNumberOnlyPatch({
+        loadId: LOAD_ID,
+        operatingCompanyId: OCI,
+        requestingUserUuid: USER,
+        fields: { live_load_number: "L-20260830-0014", notes: "x" },
+      }),
+    ).toBe(false);
+
+    const { client, sqls } = makeClient([
+      loadExists,
+      { match: /UPDATE mdata\.loads SET/, rows: [{ id: LOAD_ID }] },
+      { match: /SELECT \* FROM mdata\.loads WHERE id/, rows: [{ id: LOAD_ID, rate_total_cents: 100000 }] },
+      { match: /SELECT \* FROM mdata\.load_stops WHERE load_id/, rows: [] },
+      driverBillReentryNoDriver,
+    ]);
+
+    await updateDispatchLoad(client, {
+      loadId: LOAD_ID,
+      operatingCompanyId: OCI,
+      requestingUserUuid: USER,
+      fields: { live_load_number: "L-20260830-0014" },
+    });
+
+    expect(sqls.some((s) => /FROM driver_finance\.driver_settlements/.test(s))).toBe(false);
+    expect(sqls.some((s) => /live_load_number/.test(s))).toBe(true);
   });
 });
 
