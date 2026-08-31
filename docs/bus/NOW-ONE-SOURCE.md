@@ -1,3 +1,4 @@
+- **2026-08-31 07:12 CT · LEAD-TICK-0223:** Deploy kicked (tip~16); ACK #235–#240; Faro 95/2.5 = historical batches (97/1.5 going-forward proven); bank 0 suspect false-empty; L13512 OWNER GATE holds; live **7d226b2**.
 - **2026-08-31 07:07 CT · LEAD-TICK-0222:** Deploy LIVE **7d226b2**; ACK #227–#234; note drivers/units 0 may be false-empty (Samsara 82 mapped) — CC-2 verify; L13512 OWNER GATE holds.
 - **2026-08-31 07:02 CT · LEAD-TICK-0221:** Deploy kicked (tip~20); ACK #220 fuel · #221 QBO ignore · #222 geo · #223–224 maint · #225 deductions · #226 accidents; CC-2 ACK; L13512 OWNER GATE holds; live **6de19ac**.
 - **2026-08-31 06:57 CT · LEAD-TICK-0220:** Deploy LIVE **6de19ac**; ACK #216 RBAC empty · #217 HOS 0 · #218 periods all open (flag OFF = law); CC-3 Lists ACK; L13512 OWNER GATE holds.

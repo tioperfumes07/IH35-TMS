@@ -1,3 +1,8 @@
+### 2026-08-31 07:12 CT · LEAD-TICK-0223 · DEPLOY KICKED tip~16 · ACK #235–#240
+- Live **`7d226b2`** (~16 behind tip) — Rule 42. **Deploy kicked**.
+- ACK Devin: factor batches 95/2.5 + reserve/recon 404 · TB 0 balance_cents / P&L 404 · bank 0/recon 404 · invoice↔load↔payment 0/10 · audit empty · report lib 0 active.
+- **LAW:** Faro **97%/1.5%** proven going-forward (#18670); 95/2.5 on old batches = historical — not re-open rate bug. Bank/drivers 0 = CC-2 false-empty first. L13512 OWNER GATE unchanged.
+
 ### 2026-08-31 07:07 CT · LEAD-TICK-0222 · DEPLOY LIVE 7d226b2 · ACK #227–#234
 - Catch-up **LANDED** — live **`7d226b2`** (was 6de19ac). Tip ~9 ahead — Rule 42 OK.
 - ACK Devin: tenders/carrier 404 · credit-hold UUID · tracking 404 · settlements shell · AR payment-apps 404 · fleet/drivers 0 (suspect false-empty vs Samsara 82) · carriers 404 · cust/vend master gaps.

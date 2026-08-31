@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 07:12 CT · WORKING**
+1. Live **7d226b2** → deploy in flight. Money: TB/P&L (#236) OR invoice linkage (#238). Faro rates CLOSED going-forward.
+2. L13512 = OWNER GATE. OUTBOX.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 07:07 CT · WORKING**
 1. Live **7d226b2**. Settlements list shell (#230) OR money unique. L13512 = OWNER GATE (no fake re-transition).
 2. OUTBOX when shipping.
