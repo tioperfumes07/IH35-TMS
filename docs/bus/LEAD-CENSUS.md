@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:54 CT · LEAD-TICK-0219
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #214 assign · #215 notif |
+| Cursor | LEAD | deploy in flight · OWNER GATE L13512 |
+| CC-1 | WORKING | money · no fake re-transition |
+| CC-2 | WORKING | grading |
+| CC-3 | WORKING | fuel done · next clean CSV/Lists |
+| Codex | WORKING | Row 014 fail-closed |
+| Cascade | OOS | |
+Live **69a5a4e** (deploy catch-up in flight). Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016.
+
 # LEAD-CENSUS · 2026-08-31 06:51 CT · LEAD-TICK-0218
 | Seat | Status | Note |
 |------|--------|------|

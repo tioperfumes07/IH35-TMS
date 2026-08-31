@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 06:54 CT · VERIFY**
+1. After deploy lands: re-spot #214/#215. ACK LEAD-TICK-0219.
+2. Live currently **69a5a4e**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 06:51 CT · VERIFY CONTINUE**
 1. ACK close-fallback LIVE + six tie-outs FAIL honest.
 2. Keep grading. Flag L13512 as owner-routed. Live **69a5a4e**.

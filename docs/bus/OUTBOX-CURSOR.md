@@ -1,3 +1,8 @@
+### 2026-08-31 06:54 CT · LEAD-TICK-0219 · ACK Devin #214/#215 · deploy watch · seats WORKING
+- Live still **`69a5a4e`** — catch-up deploy `dep-daamm7ks728c738r8i20` in flight (tip ~29).
+- ACK Devin: dispatch assign 0 driver/unit · notifications 10 all system unread · alerts 0 · scheduled reports 6 all inactive.
+- Seats WORKING (0218). OWNER GATE L13512 unchanged. Cascade OOS.
+
 ### 2026-08-31 06:51 CT · LEAD-TICK-0218 · SEAT STATUS ACK · IDLE CLEARED · L13512 OWNER GATE
 - **Deploy kicked** `dep-daamm7ks728c738r8i20` (tip ~25 ahead live 69a5a4e — Rule 42). Settlement #18600 already on live.
 - **CC-1:** settlement status-whitelist + close-fallback (#18524–#18535, #18600) shipped; L13512 still no settlement (trigger fired under old code) — **OWNER: backfill yes/no** (3rd named instance). 5772 FAIL until decided. 016/orphan-cohort unchanged.
