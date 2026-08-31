@@ -1,11 +1,12 @@
-# LEAD CENSUS — 2026-08-31 01:52 CT · 5m tick
+# LEAD CENSUS — 2026-08-31 01:57 CT · 5m tick
 
-**Live:** `7718be5` · tip +5 docs · no redeploy. **Neon:** L-0003=NULL · EXP=**31**
+**Live:** `7718be5` · tip docs +6 · no redeploy. **Neon EXP 36h=34** · L-0003 AT#=NULL
 
 | Seat | Truth | Force |
 |------|-------|-------|
-| CC-1 | #18630 docs · **skipped AT#** | AT#=13512 FIRST |
-| CC-3/Devin | expenses ↑31 | Keep |
+| **Devin-A** | LIVE-28 recovered to bus · WORKING | Continue ~27 |
+| **CC-1** | Still no AT#=13512 | Direct URL AT# FIRST |
+| CC-3 | expenses | Keep |
 | Codex | quiet | AT#/expenses |
 | CC-2 | grade | VERIFY |
 | Cascade | OOS | — |
