@@ -1,3 +1,11 @@
+### 2026-08-31 10:31 CT · TURBO
+- Deploy API dep-daaps6e7… tip 47700c94 (#18775 dual-table).
+- Closed #18560 queue clog. CC-1→Tier-A dual-table fix. All seats WORKING.
+
+### 2026-08-31 10:30 CT · TURBO-GO-E2E
+- Deploy API triggered (21 commits behind). Closed #18560 clog.
+- CC-1/Codex promoted WORKING. Cursor Live Chrome: pay rate + book.
+
 ### 2026-08-31 10:22 CT · GO-E2E-13
 - Executing pack 13: drop CC-1 gate; credit Devin; fix #18768; Cascade IN SERVICE.
 - Stop LEAD-TICK-DEAD series. Hourly report only (5 lines).

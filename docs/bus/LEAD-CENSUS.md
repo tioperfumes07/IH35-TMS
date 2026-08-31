@@ -1,14 +1,12 @@
-# LEAD-CENSUS · 2026-08-31 10:22 CT · GO-E2E-13
-Live=`9c2fab3`. **CC-1 gate DROPPED.** Stop wake tickets. Pack 13 supersedes 11 gating.
-
-| Seat | Status | a Chrome? | b waiting auth? | c blocked on rate? | NOW |
-|------|--------|-----------|-----------------|--------------------|-----|
-| Cursor | LEAD + L1 | yes | no | yes until rate exists | Create $0.45/mi ALL MILES rate OR finish Book Load; fix #18768 |
-| CC-1 | UNKNOWN | **ask** | **ask** | likely yes | LOAD-1 BASELINE — do NOT wait; create rate first if missing |
-| CC-2 | WORKING GUARD | no (verify) | no | n/a create nothing | JE=236; grade Devin L-20260831-0004 + shape6; grade others as they land |
-| CC-3 | WORKING | yes (proven) | no | likely | LOAD-3 multi-stop+exp; rate first if needed |
-| Cascade | **IN SERVICE** | yes (shipping PR) | no | likely | 1) ship silent-error PR 2) LOAD-2 OO + LOAD-4 team |
-| Codex | UNKNOWN | **ask** | **ask** | likely | LOAD-5 short-pay |
-| Devin-A | WORKING | yes | no | proved by refuse | Shape#6 PASS; continue chain on L-20260831-0004 or help rate |
-
-DEAD/OOS labels from LEAD-TICK-025x are **void**. Parallel book. Nobody waits on CC-1.
+# LEAD-CENSUS · 2026-08-31 10:30 CT · TURBO-GO-E2E
+Deploy: API triggered tip `05a715e` (#18773 mark-in-transit + AT race). Live was `9c2fab3` (+21).
+| Seat | Status | NOW |
+|------|--------|-----|
+| Cursor | LEAD+L1 | Deploy + create $0.45 ALL MILES rate + Book Load overflow |
+| CC-1 | **WORKING** | Chain 4/5 PASS — continue step5 / pack09; SETL-45 PR #18774 CI red (orphan guards — main class) |
+| CC-2 | GUARD | Grade CC-1 chain + Devin L-0004; JE=236 |
+| CC-3 | WORKING | LOAD-3 multi-stop — post load id |
+| Cascade | WORKING | Ship silent-error → LOAD-2+4 |
+| Codex | WORKING | LOAD-5 blocked-early — unblock after rate/#18773 live |
+| Devin-A | WORKING | Continue L-0004 checklist or shared rate |
+Open queue: #18774 only money; closed #18560 clog. |

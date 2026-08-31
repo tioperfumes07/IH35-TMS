@@ -1,3 +1,14 @@
+**TURBO P0** · 2026-08-31 10:31 CT
+PAY-RATE-DUAL-TABLE (#18775/#18770): Equipment UI → `mdata.driver_pay_rates`; Book Load → `driver_finance.driver_pay_rates`. Codex entered 0.45 on wrong table. **CC-1 money (Tier A)** wires UI write to `driver_finance` (or single writer). Until then LOAD-5/settle stay blocked for real. Deploy `dep-daaps6e7bikc73fj4vdg` tip 47700c94.
+
+**TURBO-GO-E2E** · 2026-08-31 10:30 CT
+1 chains: CC-1 4/5 · Devin L-0004+shape6 · Codex LOAD-5 early-block · sample loads CC3TEST99001 etc
+2 broken: pay rates today=0; #18774 locked-guards orphan noise; Codex short-pay early block
+3 JE real=236 sample=229
+4 rates today=0 — Cursor creating now
+5 owner: EMAIL From when cron on
+DEPLOY: API tip 05a715e triggered
+
 **GO-E2E-13** · 2026-08-31 10:22 CT · live **9c2fab3**
 1 chains: **1 of 6** — Devin shape#6 PASS + L-20260831-0004 booked (baseline still open)
 2 broken: CC-1 never started; others rate-blocked until $0.45 ALL MILES exists
