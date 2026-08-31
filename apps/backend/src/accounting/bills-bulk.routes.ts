@@ -30,7 +30,8 @@ const markPaidPayloadSchema = z.object({
 type BillBulkPayload =
   | z.infer<typeof setStatusPayloadSchema>
   | z.infer<typeof markScheduledPayloadSchema>
-  | z.infer<typeof markPaidPayloadSchema>;
+  | z.infer<typeof markPaidPayloadSchema>
+  | z.infer<typeof emptyPayloadSchema>;
 
 function storageStatusForPaid(amountCents: number, paidCents: number): string {
   if (paidCents <= 0) return "open";
@@ -73,50 +74,13 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
     }
 
     if (statusPayload.status === "voided") {
-      // Owner 2026-09-01 — set_status voided CLOSED for the same reason as invoices: callers must
-      // use a dedicated void action. Until bills get action "void", refuse the set_status path that
-      // historically flipped without reversal (ACCT-F5634 fixed the GL call, but owner law still
-      // forbids void-via-set_status).
+      // Owner 2026-09-01 — set_status voided CLOSED. Use action "void" → voidBillInClientTx.
+      // Historical defect: this branch used to flip status with no GL reversal (ACCT-F5634 class).
       return {
         ok: false,
         code: "E_USE_BULK_VOID",
         message: "Use dedicated void path (voidBillInClientTx). set_status status=voided is closed for bulk.",
       };
-      // ACCT-F5634 — this branch used to be a bare status-flip UPDATE with no GL reversal at all,
-      // the THIRD independent bill-void writer in the backend (alongside voidBillInClientTx itself
-      // and governance/void-cancel-executors.ts's executeBill, both of which correctly reverse the
-      // posted JE) and the only one that didn't. A bill voided through this bulk endpoint left its
-      // posted DR-expense/CR-AP journal entry standing forever with no reversing entry and no later
-      // repair path (the bill is already status='void', so a subsequent voidBillInClientTx call
-      // correctly refuses with bill_already_void) -- confirmed live on prod: 18 status='void',
-      // paid_cents=0 bills join to posted, unreversed journal_entry_postings rows. Reuse the SAME
-      // function the other two writers already call instead of reimplementing a partial duplicate,
-      // so this path gets the GL reversal, the paid_cents=0 reset, and the bill_has_payments guard
-      // for free and can never drift from the other two again.
-      try {
-        const voided = await voidBillInClientTx(client as unknown as BillMutationClient, {
-          operatingCompanyId,
-          billId: id,
-          reason: reason ?? "Bulk void",
-          userId: actorUserId,
-          currentBusinessDate: companyBusinessDate(),
-        });
-        auditPayload.reversal_journal_entry_id = voided.reversal_journal_entry_id;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "bill_void_failed";
-        if (message === "bill_not_found") return { ok: false, code: "E_NOT_FOUND", message: "Bill not found" };
-        if (message === "bill_already_void") return { ok: false, code: "E_STATE_INVALID", message: "Bill is already void" };
-        if (message === "bill_has_payments_cannot_void") {
-          return { ok: false, code: "E_STATE_INVALID", message: "Bill has payments and cannot be voided via bulk" };
-        }
-        throw err;
-      }
-
-      const refreshed = await client.query(`SELECT * FROM accounting.bills WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [
-        id,
-        operatingCompanyId,
-      ]);
-      auditPayload.changes = buildPatchChanges({ status: statusPayload.status }, oldRow, refreshed.rows[0] as Record<string, unknown>);
     } else {
       const storageStatus = statusPayload.status === "open" ? "open" : statusPayload.status;
 
@@ -155,7 +119,7 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
         currentBusinessDate: companyBusinessDate(),
       });
       auditPayload.reversal_journal_entry_id = voided.reversal_journal_entry_id;
-    } catch (err) {
+    } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "bill_void_failed";
       if (message === "bill_not_found") return { ok: false, code: "E_NOT_FOUND", message: "Bill not found" };
       if (message === "bill_already_void") return { ok: false, code: "E_STATE_INVALID", message: "Bill is already void" };
@@ -168,7 +132,11 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
       id,
       operatingCompanyId,
     ]);
-    auditPayload.changes = buildPatchChanges({ status: "voided" }, oldRow, refreshed.rows[0] as Record<string, unknown>);
+    const refreshedRow = refreshed.rows[0] as Record<string, unknown> | undefined;
+    if (!refreshedRow) {
+      return { ok: false, code: "E_UPDATE_FAILED", message: "Bill missing after void" };
+    }
+    auditPayload.changes = buildPatchChanges({ status: "voided" }, oldRow, refreshedRow);
   } else if (action === "mark_scheduled") {
     const scheduledPayload = payload as z.infer<typeof markScheduledPayloadSchema>;
     if (String(oldRow.status) === "paid") {
