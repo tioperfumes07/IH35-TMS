@@ -69,6 +69,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-safety-layout-outlet-key"
   },
+  "2456": {
+    "claimed_by": "cursor",
+    "purpose": "verify-owner-override-not-money-fields",
+    "claimed_at": "2026-08-31"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
