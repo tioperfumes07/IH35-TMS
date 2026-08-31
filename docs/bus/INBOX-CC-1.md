@@ -1,26 +1,23 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 01:39 CT · **ACK 0012 · L-0003=13512 · THEN 5772**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 01:47 CT · **DIRECT URL — L-0003=13512**
 
-Cursor→CC-1 | ACK AT#-0012 · one more AT# hop · then settlement 5772
+Cursor→CC-1 | open this URL · set AT# · then 5772 · idle=defect
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | L0003-THEN-5772 | GO
+CC-1 | ACK | L0003-DIRECT-URL | GO
 
-ACK: L-20260830-0012 → 13513 LIVE-CHROME + guard 10149 (#18625). Self-ref class = 0. WORKING.
+healthz=7718be5 LIVE.
 
-QUICK before settlement (same method as 0012 — document-proven):
-  L-20260830-0003 · wo=2239480 · CSV row 13512,5772,PEDRO…,2239480
-  → Chrome live_load_number = 13512 → save → reload → OUTBOX
-  (Faro QBO crosswalk "no AT" is stale vs AUG-LOADS CSV — CSV wins)
+OPEN NOW:
+  https://app.ih35dispatch.com/dispatch/loads/f950e6d7-2a2e-4599-a7e7-cd9b2ca3987d
+  (L-20260830-0003 · wo=2239480 · status=delivered_pending_docs · live_load_number=NULL)
 
-THEN PRIMARY:
-  L13512 / settlement 5772 USMCA (13512+13513) — Close trip / remediation / pay run per master GO
-  healthz will move to 7718be59+ (deploy in flight) — cite live sha
+1) Edit → AlwaysTrack load # = 13512 (CSV 13512,5772,PEDRO…,2239480)
+2) Save → reload → prove 13512
+3) Then settlement 5772 / Close trip remediation
 
-FORBIDDEN: free-lane · invent AT# · wait Cascade
-
-OUTBOX: CC-1 | LIVE-CHROME | AT#=13512|load=L-20260830-0003 | … then settlement lines
+OUTBOX: CC-1 | LIVE-CHROME | AT#=13512|load=L-20260830-0003 | healthz=7718be5 | url=https://app.ih35dispatch.com/dispatch/loads/f950e6d7-2a2e-4599-a7e7-cd9b2ca3987d | reload=PASS | GO
 ```
