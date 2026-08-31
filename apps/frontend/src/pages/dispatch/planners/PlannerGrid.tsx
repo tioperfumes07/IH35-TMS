@@ -145,17 +145,13 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
 }
 
 function FrozenName({ row }: { row: PlannerGridRow }) {
-  const split = row.secondary != null || row.unit != null || row.action != null;
-  if (!split) {
-    return <div className="pg-name">{row.name}</div>;
-  }
   return (
     <div className={`pg-name pg-name-cols${row.action != null ? " has-action" : ""}`}>
       <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
         {row.name}
       </div>
-      <div className="pg-col-sec">{row.secondary}</div>
-      <div className="pg-col-unit">{row.unit}</div>
+      {row.secondary != null ? <div className="pg-col-sec">{row.secondary}</div> : <div className="pg-col-sec" />}
+      {row.unit != null ? <div className="pg-col-unit">{row.unit}</div> : <div className="pg-col-unit" />}
       {row.action != null ? <div className="pg-col-action">{row.action}</div> : null}
     </div>
   );
