@@ -9,6 +9,7 @@ import { buildEquipmentAggregate } from "./equipment-aggregate.service.js";
 import { registerEquipmentPdfExportRoutes } from "./equipment-pdf-export.routes.js";
 import { registerEquipmentPlatesRoutes } from "./equipment-plates.routes.js";
 import { validateTrailerStatusTransition } from "../fleet/trailer-status-state-machine.js";
+import { ensureEquipmentAsset } from "./ensure-equipment-asset.shared.js";
 
 const equipmentStatusSchema = z.enum([
   "InService",
@@ -332,6 +333,28 @@ export async function registerEquipmentRoutes(app: FastifyInstance) {
         );
         const row = res.rows[0];
         if (!row?.id) throw new Error("invalid_equipment_fk_reference");
+
+        // INSURED-ASSET-RECONCILIATION-2026-08-31 -- mint the canonical mdata.assets row alongside
+        // the equipment, mirroring units.routes.ts's FAIL-INS-POLICY-ASSET-404 fix exactly.
+        // insurance.policy_unit.asset_id and insurance.claim.asset_id resolve only through
+        // mdata.assets; before this, equipment-create never wrote one, so mdata.assets held zero
+        // trailer rows and a freshly created trailer could never be insured (resolveMdataAssetId
+        // only ever bridges through mdata.units, never mdata.equipment). Tenancy mirrors the unit
+        // fix: the LESSEE operates the equipment, so the asset belongs to effectiveCompanyId
+        // (COALESCE(currently_leased_to, owner)), the same value the equipment row itself was just
+        // scoped under. Deliberately NOT set: insured_value_cents stays NULL, never 0 -- the owner
+        // supplies real insured values. ON CONFLICT on the natural key (tenant_id, unit_code) keeps
+        // this idempotent.
+        await ensureEquipmentAsset(client, {
+          tenantId: effectiveCompanyId,
+          equipmentId: String(row.id),
+          equipmentNumber: String(row.equipment_number),
+          vin: (row.vin as string | null) ?? null,
+          make: (row.make as string | null) ?? null,
+          model: (row.model as string | null) ?? null,
+          year: (row.year as number | null) ?? null,
+        });
+
         await appendCrudAudit(client, authUser.uuid, "mdata.equipment.created", {
           resource_id: row.id,
           resource_type: "mdata.equipment",
