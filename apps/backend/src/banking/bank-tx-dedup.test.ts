@@ -3,6 +3,7 @@ import {
   computeBankTransactionDedupHash,
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
+  retirePlaidPendingPredecessor,
 } from "./bank-tx-dedup.js";
 
 describe("bank-tx-dedup", () => {
@@ -70,5 +71,63 @@ describe("bank-tx-dedup", () => {
       )
     ).toBe(true);
     expect(queries.some((q) => q.sql.includes("UPDATE banking.bank_transactions") && q.sql.includes("receipt_evidence_r2_key"))).toBe(true);
+  });
+
+  it("retires Plaid's pending predecessor into its posted replacement without deleting evidence", async () => {
+    const queries: Array<{ sql: string; values?: unknown[] }> = [];
+    const client = {
+      async query(sql: string, values?: unknown[]) {
+        queries.push({ sql, values });
+        if (sql.includes("matched_journal_entry_id") && sql.includes("SELECT")) {
+          return {
+            rows: [{ id: "pending-row", matched_journal_entry_id: null, reconciled_obligation_id: null, categorization_gl_account_id: null }],
+          };
+        }
+        if (sql.includes("RETURNING id")) return { rows: [{ id: "pending-row" }], rowCount: 1 };
+        return { rows: [], rowCount: 0 };
+      },
+    };
+
+    const result = await retirePlaidPendingPredecessor(client, {
+      postedRowId: "posted-row",
+      postedPlaidTransactionId: "posted-plaid-id",
+      pendingPlaidTransactionId: "pending-plaid-id",
+      operatingCompanyId: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      bankAccountId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    });
+
+    expect(result).toEqual({ retired: true, pending_id: "pending-row" });
+    expect(queries.some((query) => query.sql.includes("DELETE FROM banking.bank_transactions"))).toBe(false);
+    expect(
+      queries.some(
+        (query) =>
+          query.sql.includes("replaced_by_plaid_posted") &&
+          query.sql.includes("merged_into_bank_transaction_id") &&
+          query.sql.includes("operating_company_id = $4::uuid")
+      )
+    ).toBe(true);
+  });
+
+  it("fails closed when the pending predecessor already has financial linkage", async () => {
+    const queries: string[] = [];
+    const client = {
+      async query(sql: string) {
+        queries.push(sql);
+        return {
+          rows: [{ id: "pending-row", matched_journal_entry_id: "je-id", reconciled_obligation_id: null, categorization_gl_account_id: null }],
+        };
+      },
+    };
+
+    const result = await retirePlaidPendingPredecessor(client, {
+      postedRowId: "posted-row",
+      postedPlaidTransactionId: "posted-plaid-id",
+      pendingPlaidTransactionId: "pending-plaid-id",
+      operatingCompanyId: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      bankAccountId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    });
+
+    expect(result).toEqual({ retired: false, reason: "financially_linked" });
+    expect(queries).toHaveLength(1);
   });
 });

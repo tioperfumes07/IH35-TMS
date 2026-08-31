@@ -25,6 +25,81 @@ export type MergeManualStubResult =
   | { merged: false; reason: "no_stub" | "multiple_stubs" }
   | { merged: true; stub_id: string };
 
+export type RetirePlaidPendingResult =
+  | { retired: false; reason: "no_pending_predecessor" | "financially_linked" }
+  | { retired: true; pending_id: string };
+
+/**
+ * Plaid gives a posted transaction a new id and points back to the replaced pending id.
+ * Preserve the pending row as WORM evidence, but remove it from active cash exactly once.
+ */
+export async function retirePlaidPendingPredecessor(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
+  args: {
+    postedRowId: string;
+    postedPlaidTransactionId: string;
+    pendingPlaidTransactionId: string | null | undefined;
+    operatingCompanyId: string;
+    bankAccountId: string;
+  }
+): Promise<RetirePlaidPendingResult> {
+  if (!args.pendingPlaidTransactionId) return { retired: false, reason: "no_pending_predecessor" };
+
+  const candidate = await client.query(
+    `
+      SELECT
+        id,
+        matched_journal_entry_id,
+        reconciled_obligation_id,
+        categorization_gl_account_id
+      FROM banking.bank_transactions
+      WHERE plaid_transaction_id = $1::text
+        AND bank_account_id = $2::uuid
+        AND operating_company_id = $3::uuid
+        AND pending = true
+        AND voided_at IS NULL
+      LIMIT 1
+    `,
+    [args.pendingPlaidTransactionId, args.bankAccountId, args.operatingCompanyId]
+  );
+  const pending = candidate.rows[0] as
+    | {
+        id: string;
+        matched_journal_entry_id: string | null;
+        reconciled_obligation_id: string | null;
+        categorization_gl_account_id: string | null;
+      }
+    | undefined;
+  if (!pending) return { retired: false, reason: "no_pending_predecessor" };
+  if (pending.matched_journal_entry_id || pending.reconciled_obligation_id || pending.categorization_gl_account_id) {
+    return { retired: false, reason: "financially_linked" };
+  }
+
+  const retired = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET
+        voided_at = now(),
+        voided_reason = 'replaced_by_plaid_posted:' || $2::text,
+        merged_into_bank_transaction_id = $3::uuid,
+        dedup_hash = NULL,
+        updated_at = now()
+      WHERE id = $1::uuid
+        AND operating_company_id = $4::uuid
+        AND bank_account_id = $5::uuid
+        AND pending = true
+        AND voided_at IS NULL
+        AND matched_journal_entry_id IS NULL
+        AND reconciled_obligation_id IS NULL
+        AND categorization_gl_account_id IS NULL
+      RETURNING id
+    `,
+    [pending.id, args.postedPlaidTransactionId, args.postedRowId, args.operatingCompanyId, args.bankAccountId]
+  );
+  if ((retired.rowCount ?? 0) === 0) return { retired: false, reason: "financially_linked" };
+  return { retired: true, pending_id: pending.id };
+}
+
 /** Merge a single manual receipt/intake row into a Plaid-backed row and void the stub (never DELETE). */
 export async function mergeManualBankTransactionStub(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
