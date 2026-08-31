@@ -69,11 +69,25 @@ export function assertNoHardDeleteBankStubs(opts = {}) {
   for (const [rel, required] of [
     [P7_ROUTES, /supersede-plaid-pending/],
     [BANKING_API, /supersedePlaidPendingTransaction/],
-    [BANKING_VIEW, /Supersede pending duplicate/],
   ]) {
     const abs = path.join(root, rel);
     if (!fs.existsSync(abs)) failures.push(`missing ${rel}`);
     else if (!required.test(fs.readFileSync(abs, "utf8"))) failures.push(`${rel} must wire the operator pending-supersede control`);
+  }
+
+  const bankingViewAbs = path.join(root, BANKING_VIEW);
+  if (!fs.existsSync(bankingViewAbs)) failures.push(`missing ${BANKING_VIEW}`);
+  else {
+    const src = fs.readFileSync(bankingViewAbs, "utf8");
+    if (!/Supersede pending duplicate/.test(src)) {
+      failures.push(`${BANKING_VIEW} must wire the operator pending-supersede control`);
+    }
+    if (!/className=\{`relative flex items-center justify-end gap-1 \$\{menuOpen \? "z-50" : ""\}`\}/.test(src)) {
+      failures.push(`${BANKING_VIEW} open action-menu parent must own z-50 so later table rows cannot occlude clicks`);
+    }
+    if (!/absolute right-0 top-7 z-50 min-w-\[220px\]/.test(src)) {
+      failures.push(`${BANKING_VIEW} action menu must retain the elevated z-50 layer`);
+    }
   }
 
   const plaidServiceAbs = path.join(root, PLAID_SERVICE);
@@ -111,6 +125,10 @@ function selftest() {
   fs.mkdirSync(dedupDir, { recursive: true });
   fs.mkdirSync(plaidDir, { recursive: true });
   fs.mkdirSync(migDir, { recursive: true });
+  const viewDir = path.join(tmp, "apps/frontend/src/pages/banking/components");
+  const apiDir = path.join(tmp, "apps/frontend/src/api");
+  fs.mkdirSync(viewDir, { recursive: true });
+  fs.mkdirSync(apiDir, { recursive: true });
   fs.writeFileSync(
     path.join(migDir, "202609010050_f9_01_bank_tx_stub_void_not_delete.sql"),
     "-- DO NOT RUN ON PROD\nALTER TABLE banking.bank_transactions ADD COLUMN IF NOT EXISTS voided_at timestamptz;\nALTER TABLE banking.bank_transactions ADD COLUMN IF NOT EXISTS merged_into_bank_transaction_id uuid;\nCREATE UNIQUE INDEX uq_bank_transactions_account_dedup_active ON banking.bank_transactions (bank_account_id, dedup_hash) WHERE voided_at IS NULL;\n"
@@ -120,6 +138,13 @@ function selftest() {
     `await client.query(\`DELETE FROM banking.bank_transactions WHERE id = $1\`, [stubId]);\n`
   );
   fs.writeFileSync(path.join(plaidDir, "plaid.service.ts"), "// planted: pending replacement retirement removed\n");
+  fs.writeFileSync(path.join(dedupDir, "p7-wave2.routes.ts"), "supersede-plaid-pending\n");
+  fs.writeFileSync(path.join(apiDir, "banking.ts"), "supersedePlaidPendingTransaction\n");
+  fs.writeFileSync(
+    path.join(viewDir, "BankingTransactionsDesignView.tsx"),
+    'className={`relative flex items-center justify-end gap-1 ${menuOpen ? "" : ""}`}\n' +
+      '<div className="absolute right-0 top-7 z-20 min-w-[220px]">Supersede pending duplicate</div>\n'
+  );
   const planted = assertNoHardDeleteBankStubs({ root: tmp });
   if (planted.length === 0) {
     console.error(`[${LABEL}] SELFTEST FAIL — planted DELETE not caught`);
@@ -133,7 +158,11 @@ function selftest() {
     console.error(`[${LABEL}] SELFTEST FAIL — planted historical supersede omission not caught`);
     process.exit(1);
   }
-  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE, ingest, and historical supersede omissions caught (${planted.length})`);
+  if (!planted.some((failure) => failure.includes("cannot occlude clicks"))) {
+    console.error(`[${LABEL}] SELFTEST FAIL — planted action-menu stacking regression not caught`);
+    process.exit(1);
+  }
+  console.log(`[${LABEL}] SELFTEST PASS — planted DELETE, ingest, historical supersede, and menu-occlusion omissions caught (${planted.length})`);
 }
 
 function main() {

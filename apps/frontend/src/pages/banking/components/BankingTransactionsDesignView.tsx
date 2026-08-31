@@ -1407,7 +1407,11 @@ export function BankingTransactionsDesignView({
           const menuOpen = actionMenuTxId === tx.id;
           return (
             <div
-              className="relative flex items-center justify-end gap-1"
+              // Table rows paint in document order. Without elevating the action cell's own
+              // stacking context, lower menu items can sit visually above a later row while that
+              // row still owns the hit target. Keep the open menu's parent above sibling rows so
+              // destructive/config actions receive the click the operator can see.
+              className={`relative flex items-center justify-end gap-1 ${menuOpen ? "z-50" : ""}`}
               onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}
             >
               <ActionButton
@@ -1425,7 +1429,7 @@ export function BankingTransactionsDesignView({
                 ▾
               </button>
               {menuOpen ? (
-                <div className="absolute right-0 top-7 z-20 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
+                <div className="absolute right-0 top-7 z-50 min-w-[220px] rounded-sm border border-gray-200 bg-white shadow-md">
                   <button
                     type="button"
                     className="block w-full border-b border-gray-100 px-3 py-2 text-left text-xs hover:bg-gray-50"
