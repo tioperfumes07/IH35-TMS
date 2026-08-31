@@ -3,7 +3,7 @@ import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { DataPanel } from "../layout/DataPanel";
 import { DataPanelRow } from "../layout/DataPanelRow";
-import { DataTable, type DataTableColumn } from "../shared/DataTable";
+import { DataTable, type DataTableColumn } from "../DataTable";
 import { colors } from "../../design/tokens";
 import { formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
@@ -76,14 +76,14 @@ function renderSettlementLinks(settlement: SettlementListRow) {
 const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   {
     key: "date",
-    header: "Date",
+    label: "Date",
     sortable: true,
     sortValue: (row) => row.period_start,
     render: (row) => `${formatDateUS(row.period_start)} – ${formatDateUS(row.period_end)}`,
   },
   {
     key: "driver",
-    header: "Driver",
+    label: "Driver",
     sortable: true,
     sortValue: (row) => row.driver_full_name,
     render: (row) => (
@@ -97,21 +97,21 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   },
   {
     key: "load_number",
-    header: "Load Number",
+    label: "Load Number",
     sortable: true,
     sortValue: (row) => row.load_links?.[0]?.label ?? row.load_count,
     render: renderLoadLinks,
   },
   {
     key: "settlement_number",
-    header: "Settlement / Bill Number",
+    label: "Settlement / Bill Number",
     sortable: true,
     sortValue: (row) => row.display_id ?? row.id,
     render: renderSettlementLinks,
   },
   {
     key: "amount",
-    header: "Amount",
+    label: "Amount",
     sortable: true,
     sortValue: (row) => Number(row.net_pay ?? 0),
     className: "text-right tabular-nums",
@@ -119,7 +119,7 @@ const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
   },
   {
     key: "status",
-    header: "Status",
+    label: "Status",
     sortable: true,
     sortValue: (row) => row.status,
     render: (row) => row.status,
@@ -142,6 +142,7 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
           rows={rows}
           rowKey={(row) => row.id}
           rowTestId={() => "pre-settlement-row-reverse"}
+          hidePager
         />
       ) : null}
       {!loading && !isError && rows.length === 0 ? (

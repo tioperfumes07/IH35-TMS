@@ -13,11 +13,11 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const failures = [];
 
 // 1. DataTable primitive exists
-const dataTablePath = path.join(root, "apps/frontend/src/components/shared/DataTable.tsx");
+const dataTablePath = path.join(root, "apps/frontend/src/components/DataTable.tsx");
 try {
   readFileSync(dataTablePath, "utf8");
 } catch (e) {
-  failures.push("DataTable primitive missing at apps/frontend/src/components/shared/DataTable.tsx");
+  failures.push("canonical DataTable primitive missing at apps/frontend/src/components/DataTable.tsx");
 }
 
 // 2. SettlementsPage imports and uses DataTable for OpenDriverBillsPanel
@@ -26,18 +26,18 @@ const settlements = readFileSync(settlementsPath, "utf8");
 const preSettlementsPath = path.join(root, "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx");
 const preSettlements = readFileSync(preSettlementsPath, "utf8");
 
-if (!settlements.includes("import { DataTable")) {
-  failures.push("SettlementsPage must import DataTable from shared/DataTable");
+if (!settlements.includes('from "../../components/DataTable"')) {
+  failures.push("SettlementsPage must import the canonical components/DataTable primitive");
 }
 
 if (!settlements.includes("openDriverBillColumns")) {
   failures.push("SettlementsPage must define openDriverBillColumns with DataTable columns");
 }
-if (!preSettlements.includes("import { DataTable") || !preSettlements.includes("preSettlementColumns")) {
-  failures.push("PreSettlementsPanel must use the shared DataTable column primitive");
+if (!preSettlements.includes('from "../DataTable"') || !preSettlements.includes("preSettlementColumns")) {
+  failures.push("PreSettlementsPanel must use the canonical components/DataTable column primitive");
 }
 for (const header of ["Date", "Driver", "Load Number", "Settlement / Bill Number", "Amount", "Status"]) {
-  if (!preSettlements.includes(`header: "${header}"`)) {
+  if (!preSettlements.includes(`label: "${header}"`)) {
     failures.push(`PreSettlementsPanel missing governed ${header} column`);
   }
 }
@@ -56,11 +56,18 @@ const dataTable = readFileSync(dataTablePath, "utf8");
 if (!dataTable.includes("<thead")) {
   failures.push("DataTable primitive must use <thead> convention");
 }
-if (!dataTable.includes("bg-slate-50")) {
-  failures.push("DataTable primitive must use bg-slate-50 thead standard");
+if (!dataTable.includes("bg-gray-50")) {
+  failures.push("DataTable primitive must use the canonical bg-gray-50 thead standard");
 }
-if (!dataTable.includes("aria-sort") || !dataTable.includes("changeSort(col)")) {
+if (!dataTable.includes("aria-sort") || !dataTable.includes("column.sortValue")) {
   failures.push("DataTable sortable columns must render an operable, accessible sort control");
+}
+const duplicateDataTablePath = path.join(root, "apps/frontend/src/components/shared/DataTable.tsx");
+try {
+  readFileSync(duplicateDataTablePath, "utf8");
+  failures.push("duplicate shared/DataTable primitive must not exist; consolidate on components/DataTable");
+} catch {
+  // Expected: one canonical primitive only.
 }
 
 if (process.argv.includes("--selftest")) {

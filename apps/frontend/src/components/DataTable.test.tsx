@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { DataTable } from "./DataTable";
 
-type Row = { id: string; code: string };
+type Row = { id: string; code: string; rank?: number };
 
 describe("DataTable", () => {
   it("renders list error state instead of empty rows when errorState is set", () => {
@@ -47,8 +47,34 @@ describe("DataTable", () => {
       />,
     );
     await user.type(screen.getByRole("textbox", { name: "Search rows…" }), "bravo");
-    expect(screen.queryByText("ALPHA")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("ALPHA")).not.toBeInTheDocument());
     expect(screen.getByText("BRAVO")).toBeInTheDocument();
     expect(screen.getByText("1 of 2 rows")).toBeInTheDocument();
+  });
+
+  it("sorts rendered columns by their explicit value with accessible state", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <DataTable<Row>
+        columns={[{
+          key: "display_rank",
+          label: "Rank",
+          sortable: true,
+          sortValue: (row) => row.rank,
+          render: (row) => `Rank ${row.rank}`,
+        }]}
+        rows={[{ id: "b", code: "BRAVO", rank: 20 }, { id: "a", code: "ALPHA", rank: 3 }]}
+        rowKey={(row) => row.id}
+      />,
+    );
+
+    const header = screen.getByRole("columnheader", { name: "Rank" });
+    expect(header).toHaveAttribute("aria-sort", "none");
+    await user.click(screen.getByRole("button", { name: "Rank" }));
+    expect(header).toHaveAttribute("aria-sort", "ascending");
+    expect(Array.from(container.querySelectorAll("tbody tr")).map((row) => row.textContent)).toEqual([
+      "Rank 3",
+      "Rank 20",
+    ]);
   });
 });

@@ -76,11 +76,11 @@ describe("PreSettlementsPanel (DISP-S33)", () => {
 
     wrap(<PreSettlementsPanel rows={rows} loading={false} isError={false} />);
     for (const header of ["Date", "Driver", "Load Number", "Settlement / Bill Number", "Amount", "Status"]) {
-      expect(screen.getByRole("button", { name: new RegExp(header) })).toBeTruthy();
+      expect(screen.getByRole("button", { name: new RegExp(`^${header}$`) })).toBeTruthy();
     }
 
-    fireEvent.click(screen.getByRole("button", { name: /Driver/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Driver$/ }));
     expect(screen.getAllByTestId("pre-settlement-row-reverse")[0]?.textContent).toContain("Alpha Driver");
-    expect(screen.getByText("Driver").closest("th")?.getAttribute("aria-sort")).toBe("ascending");
+    expect(screen.getByRole("columnheader", { name: /^Driver/ })).toHaveAttribute("aria-sort", "ascending");
   });
 });
