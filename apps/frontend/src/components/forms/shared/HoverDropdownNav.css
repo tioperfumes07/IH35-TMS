@@ -1,8 +1,8 @@
 @import "../../../design/design-tokens.css";
 
 .hover-dropdown-nav {
-  background: var(--color-bg-surface);
-  border-bottom: 1px solid var(--color-border-default);
+  background: #1A1F36;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 0 var(--space-7);
   overflow-x: auto;
 }
@@ -26,10 +26,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-2) var(--space-5);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.85);
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -40,8 +40,8 @@
 
 .hover-dropdown-nav a[role="menuitem"].active,
 .nav-item-with-dropdown button.active {
-  color: var(--color-text-primary);
-  border-bottom-color: var(--color-text-primary);
+  color: #ffffff;
+  border-bottom-color: #ffffff;
 }
 
 /* C-1 split control: a navigable label (Link) + a click-toggle chevron (button)
