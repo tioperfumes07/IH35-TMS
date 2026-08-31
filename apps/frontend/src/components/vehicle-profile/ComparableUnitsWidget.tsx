@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
+import { DataTable, type DataTableColumn } from "../DataTable";
 
 type Comparable = {
   fleet_avg_maintenance_per_mile_cents?: number | null;
@@ -14,6 +15,19 @@ function usdPerMile(cents: number | null | undefined) {
   return `$${(cents / 100).toFixed(2)}/mi`;
 }
 
+type ComparisonRow = {
+  key: "maintenance" | "deviation" | "rank";
+  metric: string;
+  unit: string;
+  fleet: string;
+};
+
+const comparisonColumns: DataTableColumn<ComparisonRow>[] = [
+  { key: "metric", label: "Metric", align: "left" },
+  { key: "unit", label: "This unit", align: "right", numeric: true },
+  { key: "fleet", label: "Fleet", align: "right", numeric: true },
+];
+
 export function ComparableUnitsWidget({
   unitId,
   unitNumber,
@@ -26,6 +40,26 @@ export function ComparableUnitsWidget({
   const [open, setOpen] = useState(false);
   const dev = comparable.deviation_pct ?? 0;
   const showBanner = dev > 15;
+  const comparisonRows: ComparisonRow[] = [
+    {
+      key: "maintenance",
+      metric: "Maintenance per mile",
+      unit: usdPerMile(comparable.this_unit_maintenance_per_mile_cents),
+      fleet: usdPerMile(comparable.fleet_avg_maintenance_per_mile_cents),
+    },
+    {
+      key: "deviation",
+      metric: "Difference from fleet",
+      unit: comparable.deviation_pct == null ? "—" : `${dev > 0 ? "+" : ""}${dev}%`,
+      fleet: "Baseline",
+    },
+    {
+      key: "rank",
+      metric: "Fleet rank",
+      unit: String(comparable.rank_in_fleet ?? "—"),
+      fleet: `of ${comparable.total_units_in_fleet ?? "—"}`,
+    },
+  ];
 
   return (
     <div className="mt-3 rounded-sm border border-gray-200 p-3" data-testid="vp-comparable-units">
@@ -60,37 +94,13 @@ export function ComparableUnitsWidget({
           aria-label={`Fleet comparison for unit ${unitNumber}`}
           className="mt-2 overflow-hidden"
         >
-          {/* MOBILE-RESPONSIVE-AUDIT: overflow-x-auto lets this table scroll horizontally on a
-              narrow viewport instead of clipping under the parent's overflow-hidden (border-radius
-              clip) — no visual change at normal widths, defensive on a 375px mobile viewport. */}
-          <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="px-2 py-1.5 font-medium">Metric</th>
-                <th className="px-2 py-1.5 text-right font-medium">This unit</th>
-                <th className="px-2 py-1.5 text-right font-medium">Fleet</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-gray-800">
-              <tr>
-                <td className="px-2 py-1.5">Maintenance per mile</td>
-                <td className="px-2 py-1.5 text-right">{usdPerMile(comparable.this_unit_maintenance_per_mile_cents)}</td>
-                <td className="px-2 py-1.5 text-right">{usdPerMile(comparable.fleet_avg_maintenance_per_mile_cents)}</td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1.5">Difference from fleet</td>
-                <td className="px-2 py-1.5 text-right">{comparable.deviation_pct == null ? "—" : `${dev > 0 ? "+" : ""}${dev}%`}</td>
-                <td className="px-2 py-1.5 text-right">Baseline</td>
-              </tr>
-              <tr>
-                <td className="px-2 py-1.5">Fleet rank</td>
-                <td className="px-2 py-1.5 text-right">{comparable.rank_in_fleet ?? "—"}</td>
-                <td className="px-2 py-1.5 text-right">of {comparable.total_units_in_fleet ?? "—"}</td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
+          <DataTable
+            columns={comparisonColumns}
+            rows={comparisonRows}
+            rowKey={(row) => row.key}
+            hideToolbar
+            hidePager
+          />
         </div>
       ) : null}
     </div>

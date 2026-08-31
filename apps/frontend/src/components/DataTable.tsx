@@ -61,6 +61,8 @@ type DataTableProps<T> = {
   emptyText?: string;
   /** Server-ranged consumers render their own authoritative pager. */
   hidePager?: boolean;
+  /** Compact embedded comparisons keep canonical table semantics without list search/settings chrome. */
+  hideToolbar?: boolean;
   /** Stable row hook for focused accessibility/reverse-link tests. */
   rowTestId?: (row: T) => string | undefined;
 };
@@ -76,6 +78,7 @@ export function DataTable<T>({
   errorState,
   emptyText = "No records found.",
   hidePager = false,
+  hideToolbar = false,
   rowTestId,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
@@ -136,7 +139,7 @@ export function DataTable<T>({
 
   return (
     <div className="overflow-x-auto rounded-md border border-gray-200 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+      {!hideToolbar ? <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         <UniversalListToolbar
           search={toolbarSearch}
           onSearchChange={(value) => { setToolbarSearch(value); setPage(1); }}
@@ -164,7 +167,7 @@ export function DataTable<T>({
           onPageSizeChange={setSelectedPageSize}
           pageSizeOptions={[10, 25, 50, 100]}
         />
-      </div>
+      </div> : null}
       <table className="w-full table-fixed text-left" style={{ fontSize: typography.tableRow }}>
         <thead className="bg-gray-50">
           <tr style={{ height: spacing.tableHeaderHeight }}>
