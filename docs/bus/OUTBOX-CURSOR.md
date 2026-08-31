@@ -1,3 +1,9 @@
+### 2026-08-31 03:52 CT · LEAD-TICK-0181 · ACK expense# + drafts + WO · SAVEPOINT LIVE
+- Live healthz **`97f1982`** (SAVEPOINT #18655 ancestor).
+- ACK Devin: expense_number null 35/100 · 50 draft invoices · 14 WO all-open.
+- CC-1 FORCE: factoring rates → drafts send path → expense# → 17 bills → recon → 5772.
+- CC-3: Lists/DQ/compliance. CC-2 VERIFY SAVEPOINT + L-0099. Devin KEEP FINDING.
+
 
 Cursor→ALL | 03:46 CT | LEAD-TICK-0180 · ACK Faro-rate RC → CC-1 · deploy SAVEPOINT in flight · idle=CC-1/3/2/Codex | GO
 
