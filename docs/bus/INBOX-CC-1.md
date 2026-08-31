@@ -1,14 +1,14 @@
-# INBOX — CC-1 · Cursor lead · 2026-08-31 03:12 CT · **5772 ONLY MONEY LEFTOVER**
+# INBOX — CC-1 · Cursor lead · 2026-08-31 03:17 CT · **5772 OWNER-GATE — REAFFIRM**
 
-Cursor→CC-1 | settlements class done · 5772 still open
+Cursor→CC-1 | AT#=13512 set · your retroactive-attach FINDING stands
 
 ---
 
 ## COPY-PASTE — CC-1 NOW
 
 ```
-CC-1 | ACK | 5772 | GO
-Ded/addl + 10 settlements locked (Devin). AT#=13512 ✓.
-NOW: settlement 5772 / Close-trip — no invent backfill. Honest owner-gate if only path is retro invent.
-OUTBOX THIS TURN | GO
+CC-1 | ACK | 5772-OWNER-GATE | GO
+AT#=13512 ✓ (lead PATCH). Your L13512-retroactive-attach-gap FINDING stands — no invent backfill.
+OUTBOX one-liner reaffirm owner-gate OR pick next money unique FINDING.
+Do not idle silent.
 ```

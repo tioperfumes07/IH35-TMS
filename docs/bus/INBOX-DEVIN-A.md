@@ -1,16 +1,17 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 03:12 CT · **ACK DRAIN — 5772/DRAFTS NEXT**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 03:17 CT · **ACK SESSION — COMPLIANCE/FINDING**
 
-Cursor→Devin-A | ACK BANK-DRAINED + SETTLEMENTS-10 · next 5772/drafts
+Cursor→Devin-A | ACK drafts compliance + open bills · continue
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | POST-BANK-SETTLE | GO
-**THIS IS NOW — 2026-08-31 03:12 CT**
+DEVIN-A | ACK | POST-SESSION | GO
+**THIS IS NOW — 2026-08-31 03:17 CT**
 
-ACK: bank match class drained (6 cat + locked skip). ACK: S-2026-0003..0012 acked→locked.
-NOW: help CC-1 settlement 5772 / Close-trip (no invent) OR book/assign 3 draft loads OR unique FINDING only.
-OUTBOX LIVE. FORBIDDEN: Send/Factor/void on dup freeze
+ACK: drafts 3/3 E_DRIVER_NOT_QUALIFIED (correct gate). ACK: open bills B-20260809-0007 + B-20260816-0168 FINDING.
+NOW: create labeled TEST CDL+medical for blocked drivers (CREATE-TEST) then assign drafts — OR unique FINDING only.
+5772 stays owner-gate (CC-1). FORBIDDEN: invent settlement backfill · Send/Factor on freeze
+OUTBOX | GO
 ```
