@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFuelActiveRoutes,
@@ -18,7 +18,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityPicker } from "../../components/parity/EntityPicker";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -54,7 +54,6 @@ type Props = {
 
 export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
@@ -278,11 +277,6 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
 
   const activeLabel = SUBNAV.find((item) => item.id === tab)?.label ?? "Fuel";
 
-  const goToTab = (next: FuelTabId) => {
-    const target = FUEL_TAB_PATH[next];
-    if (target) navigate(target);
-  };
-
   if (!companyId) {
     return (
       <div className="space-y-3 p-4">
@@ -341,10 +335,8 @@ export function FuelPlannerHomePage({ initialTab = "planner" }: Props) {
         }
       />
 
-      <SecondaryNavTabs
-        tabs={SUBNAV.map((item) => ({ id: item.id, label: item.label }))}
-        activeId={tab}
-        onChange={(next) => goToTab(next as FuelTabId)}
+      <NavyPageSubNav
+        items={SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }))}
       />
 
       {tab === "home" ? <FuelHomePage /> : null}
