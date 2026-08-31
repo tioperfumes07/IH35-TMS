@@ -24,7 +24,7 @@ Cursor→CC-1 | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
 ## BLOCKING — 016 finish (this order)
 
-1. **Send INV-2026-00082** draft → sent **through the UI** (`/accounting/invoices/:id` → **Send**). If Send is disabled/missing → file **INVOICE-NO-UI-SEND-TRANSITION** (same class as deliver P0) and say so in OUTBOX — **no SQL.**
+1. **Send INV-2026-00082** draft → sent **through the UI** (`/accounting/invoices/:id` → **Send**). **Note:** Send is disabled until the invoice has **≥1 line item** — use **+ Create Line** first if header-only. If no Send control at all → file **INVOICE-NO-UI-SEND-TRANSITION** — **no SQL.**
 2. **Factor net $3,800** on **pledge-net** (advance 97 / reserve 1.5 / fee 1.5 on **$3,800**, not $4,200 — verify pledge reads 3,800 live).
 3. Only then is **016 done.** FACT-TIEOUT-01 needs a live advance to grade.
 

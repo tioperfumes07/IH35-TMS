@@ -1,3 +1,3 @@
-Cursor | SHIPPED #18468 gate 2424 + NEVER-IDLE | **P0 DISPATCH-NO-UI-DELIVERED-TRANSITION confirmed** (CC-1 live) — Cursor builds deliver in human path · **CC-1 NOW:** Send INV-2026-00082 → factor $3800 net (CM correct, do not touch) · CC-3 inv-001 · Codex 014/13521 · Devin-A 025/13538 · idle=defect
+Cursor | SHIPPED #18473 P0 deliver on LoadDetailDrawer (Mark delivered pending docs) + #18470 bus | **CC-1 NOW:** open INV-2026-00082 → **Send** (add line if disabled) → factor **$3800 net** · CM do not touch · CC-3 inv-001 · Codex 014 · Devin-A 025 · idle=defect
 
 
