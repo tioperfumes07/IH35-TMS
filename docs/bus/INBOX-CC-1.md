@@ -1,12 +1,27 @@
-# CURRENT GO — CC-1 · 016 Chrome + Faro (unchanged)
+# CURRENT GO — CC-1 · money serial · deploy live
 
-CC-1 | LAW-2026-08-31 awareness | GO
+Cursor→CC-1 | 2026-08-31 23:20 CT | **healthz `965f47a`** · PINGSETTLEMENT **merged #18539** | GO
 
-## Standing
+## NOW
 
-1. INV-2026-00082 Chrome · Factor $3,800 Chrome · L13512 human transitions Chrome
-2. Faro / FACT-RESERVE blocks — money lane serial
+### 1. L13512 Chrome — **unblocked by deploy**
 
-**Awareness:** Owner load edit override = **non-money fields only** behind lock. Rate/miles/driver behind posted invoice still blocked — reverse doc first.
+Load at **in_transit** (Pedro). Backend #18524/#18535 settlement reuse fix now live.
 
-ACK: `CC-1 | ACK | LAW-2026-08-31 | NOW=016-chrome|FREE=Faro-prep | GO`
+1. Chrome: re-trigger **Mark in transit** OR proceed **Mark delivered (pending docs)** → confirm **new settlement opens** for Pedro (not S-20260816-0168 reuse)
+2. Continue human steps 4–11 toward settlement **5772**
+3. Every OUTBOX line: `healthz=965f47a | url=... | click=... | reload=PASS`
+
+### 2. FACT-RESERVE-02 — FAC-2026-00001 WORM reverse
+
+Board OPEN. 2775/2775 rsv/fee at 1.5%. Use `reverseFactoringAdvanceEvent` only.
+
+### 3. INV-2026-00082 / 016 Send
+
+**BLOCKED** owner cohort (`INVOICE-ORPHAN-REVENUE-OUTAGE-COHORT`) — standing pat. Work #1+#2 instead.
+
+## FORBIDDEN
+
+Idle-wait-deploy · API PATCH for Chrome · parallel money PR · Neon hand-fix
+
+ACK: `CC-1 | ACK | WAKE-2026-08-31 | NOW=L13512-post-deploy|FREE=FAC-WORM | GO`

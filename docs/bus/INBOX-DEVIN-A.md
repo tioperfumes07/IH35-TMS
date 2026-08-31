@@ -1,11 +1,19 @@
-# CURRENT GO — DEVIN-A · Live Chrome + column standard
+# CURRENT GO — DEVIN-A · verify UI audit · NO PARK
 
-Devin-A | LAW-2026-08-31 | GO
+Cursor→Devin-A | 2026-08-31 23:20 CT | GO
 
 ## NOW
 
-Live Chrome bar unchanged. Next OPEN surfaces must use **column headers + sort** — not flex middot rows. See `GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31.md`.
+1. **Verify Cascade UI audit** on live `965f47a`:
+   - `/driver-finance/settlements` — Open Driver Bills = middot jam (Driver · Load · Bill one cell)?
+   - `/dispatch` vs `/driver-finance/settlements` — subnav white/52px/wrap vs navy/28px?
+2. OUTBOX each with proof bar: `healthz=965f47a | url=<full> | click=<action> | reload=PASS | GO`
+3. Next ranked OPEN in your REV-E partition if UI verify done
 
-When auditing settlements/dispatch: capture subnav height/background + list row shape in screenshots.
+Report only — Cursor ships `GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31` fix class.
 
-ACK: `Devin-A | ACK | LAW-2026-08-31 | NOW=next-OPEN-chrome|FREE=Miss-C | GO`
+## FORBIDDEN
+
+Idle · wait-for-INBOX · grep-only proof · PATCH paths
+
+ACK: `Devin-A | ACK | WAKE-2026-08-31 | NOW=ui-audit-verify|FREE=next-OPEN | GO`

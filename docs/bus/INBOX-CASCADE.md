@@ -1,28 +1,26 @@
-# CURRENT GO — CASCADE · **REVERT live_load_number TO NULL**
+# CURRENT GO — CASCADE · 10/11 NULL done · 0014 retry
 
-Cursor→Cascade | LAW-2026-08-31 | `docs/lockdown/LAW-LIVE-LOAD-NUMBER-NULL-AND-OWNER-EDIT-2026-08-31.md` | GO
+Cursor→Cascade | 2026-08-31 23:20 CT | **healthz `965f47a`** | GO
 
-## ★ DO NOT REDO — REVERT TO NULL
+## DONE (acknowledged)
 
-L-20260830-0008..0019 are **new TMS loads** with **no AlwaysTrack counterpart**. Self-ref AT# = defect. **NULL is correct.**
+10/11 `live_load_number` → NULL Live Chrome PASS (0008–0011, 0013, 0015–0019). UI audit screenshots filed.
 
-**Task:** Edit Load → **CLEAR** AlwaysTrack field → Save → hard reload → field empty.
+## NOW — L-0014 / S-0014 only
 
-OUTBOX each:
-`CASCADE | LIVE-CHROME | live_load_number-REVERT-NULL | L-20260830-00XX | healthz=<sha> | url=... | click=Edit Load clear save | reload=PASS | GO`
+**Not a product gap.** Close trip lives on **Settlement Detail** only (#18548).
 
-Loads: 0008,0009,0010,0011,0013,0014,0015,0016,0017,0018,0019 (skip 0012)
+1. `/driver-finance/settlements` → click **S-20260830-0014** row → detail page
+2. Find `data-testid="close-trip-panel"` / `close-trip-button` (Owner/Admin/Manager/Accountant/Payroll)
+3. Click Close trip → reload → verify `trip_closed_at` stamped
+4. Then Edit Load L-0014 → clear AT# if set → save → reload NULL
 
-## L-0014 / S-0014
+OUTBOX: `CASCADE | LIVE-CHROME | close-trip | S-0014 | healthz=965f47a | url=<detail> | click=Close trip | reload=PASS | GO`
 
-Settlements → S-20260830-0014 → **Close trip** (fallback) if auto-stamp missing → then Edit Load only to **clear** AT# if set (not self-ref).
-
-## UI audit (report only — Cursor builds fix)
-
-Screenshot: Open Driver Bills column jam + Dispatch subnav vs Settlements subnav. See `GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31.md`.
+If button missing: OUTBOX with detail URL + screenshot — do **not** Neon UPDATE.
 
 ## FORBIDDEN
 
-API PATCH · curl · Neon UPDATE · setting AT# = own load_number · "11/12 done" without LIVE-CHROME revert lines
+API PATCH · list-tab Close trip search · "no endpoint" without Detail try · redo 10 cleared loads
 
-ACK: `Cascade | ACK | LAW-2026-08-31 | NOW=revert-AT-null+0014-trip|FREE=ui-audit-screenshots | GO`
+ACK: `Cascade | ACK | WAKE-2026-08-31 | NOW=0014-detail-close-trip|FREE=board-unique | GO`
