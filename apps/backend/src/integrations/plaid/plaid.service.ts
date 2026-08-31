@@ -6,6 +6,7 @@ import {
   computeBankTransactionDedupHash,
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
+  retirePlaidPendingPredecessor,
 } from "../../banking/bank-tx-dedup.js";
 import { applyBankingRulesForTransaction } from "../../banking/banking-rules.engine.js";
 import { maybePostBankCategorizationToGl } from "../../banking/bank-feed-gl-posting.service.js";
@@ -760,6 +761,16 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
           counts.added += 1;
           const row = insert.rows[0] as { id: string; operating_company_id: string; plaid_category: string[] } | undefined;
           if (row) {
+            const pendingRetirement = await retirePlaidPendingPredecessor(client, {
+              postedRowId: row.id,
+              postedPlaidTransactionId: transaction.transaction_id,
+              pendingPlaidTransactionId: transaction.pending_transaction_id,
+              operatingCompanyId: row.operating_company_id,
+              bankAccountId: bankAccount.id,
+            });
+            if (!pendingRetirement.retired && pendingRetirement.reason === "financially_linked") {
+              throw new Error("plaid_pending_predecessor_financially_linked");
+            }
             await applyBankingRulesForTransaction(client, row.id, row.operating_company_id);
             await mergeManualBankTransactionStub(client, {
               plaidRowId: row.id,
@@ -1042,4 +1053,3 @@ export async function handleItemError(itemId: string, errorCode: string) {
     "warning"
   );
 }
-
