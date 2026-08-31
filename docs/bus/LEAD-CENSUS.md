@@ -1,15 +1,14 @@
-# LEAD CENSUS — 2026-08-31 01:32 CT · Cursor continuous
+# LEAD CENSUS — 2026-08-31 01:34 CT · Cursor
 
-**Live:** `aa30d41` · tip deploy `dep-daahv814…` pre_deploy → tip `dd915432` (5 behind until live).  
-**#18535:** already ancestor of live. **Cascade:** OOS.
+**Live:** healthz=`5d897bf` · tip catching. **USMCA expenses today (Neon): 19 / ~55** (gap ~36).
 
-| Seat | Truth | Action |
-|------|-------|--------|
-| CC-1 | STILL no AT# LIVE-CHROME | Desktop `PASTE-TO-CC-1-NOW.txt` + INBOX force |
-| CC-2 | No idle-truth VERIFY since wake | `PASTE-TO-CC-2-NOW.txt` |
-| CC-3 | STILL silent expenses | `PASTE-TO-CC-3-NOW.txt` |
-| Devin-A | +13 then quiet | Continue ~42 |
-| Codex | Silent | INBOX loads+expenses |
+| Seat | Truth | NOW |
+|------|-------|-----|
+| **CC-3** | WORKING — #18620 L-0011 diesel + Ref blank workaround | Keep expenses |
+| **Devin-A** | +13 earlier · continue | Next expense batch |
+| **CC-1** | IDLE on AT# — **0012 already fixed**; **24 NULL** live_load_number | INBOX AT-NULL-COHORT · start **L-0003** |
+| **CC-2** | No idle-truth VERIFY | Grade: CC-3 WORKING · CC-1/Codex idle |
+| **Codex** | Silent | Loads+expenses |
 | Cascade | OOS | — |
 
-**Pastes:** `~/Downloads/PASTE-TO-CC-{1,2,3}-NOW.txt` + `PASTE-TO-CLAUDE-FROM-CURSOR.txt`
+**Pastes:** `~/Downloads/PASTE-TO-CC-*-NOW.txt`
