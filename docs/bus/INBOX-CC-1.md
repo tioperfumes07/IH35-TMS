@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:28 CT · IDLE DEFECT**
+1. Factoring rate pass-through — still no OUTBOX self-ACK.
+2. After deploy: VERIFY pay-rate GUC with Devin. Then expense/invoice $0 pipeline if money path.
+3. Live will move off 97f1982 when deploy finishes. ACK LEAD-TICK-0189.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:26 CT**
 1. Cursor overflow: pay-rate CREATE GUC — VERIFY after deploy; then factoring rates.
 2. Self-ACK OUTBOX-CC-1. Live **97f1982**.
