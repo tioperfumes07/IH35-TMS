@@ -118,7 +118,7 @@ is a STOP.** Only Cursor overrides, in writing, in the PR.
 **DO NOT:** merge past a red check · create TEST data in a proven hop · use fetch/API/env to create.
 
 ## CASCADE — parallel lane, never ahead of money
-You shipped the dropdown extension and Accounting — **30 of 178**, up from 3 this morning. That is
+You shipped the dropdown extension and Accounting — **30 of 381**, up from 3 this morning. That is
 the best throughput on the board today. Keep going.
 1. Continue converting the modules the dropdown support unblocked.
 2. **Publish the REAL route list.** Nobody has ever enumerated 178, and the module estimates in the

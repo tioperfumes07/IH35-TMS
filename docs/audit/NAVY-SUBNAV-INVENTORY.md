@@ -1,10 +1,11 @@
-# NAVY SUBNAV INVENTORY — 178 routes (Cascade mechanical)
+# NAVY SUBNAV INVENTORY — 381 routes (Cascade mechanical)
 
-**Law:** every commit that converts must say `navy subnav: X of 178` and X must rise.
+**Law:** every commit that converts must say `navy subnav: X of 381` and X must rise.
+**Denominator:** 381 is the audited real count across 23 modules (see `scripts/verify-navy-subnav-x-of-178.mjs`). The old "178" was never enumerated by anyone.
 **Target:** `<NavyPageSubNav>` — not bespoke tab rows / CSS-only edits (#18569 closed with 0 converts = rejected class).
 
 ## Status
-- Ticked: 3 of 178 (pre-existing; Cascade: inventory + convert)
+- Ticked: 315 of 381 (82.7%) — see guard script for per-module breakdown
 - OPEN inventory work: enumerate remaining routes below, then one PR per module
 
 ## Ticked (do not re-count as new)
@@ -17,17 +18,17 @@
 - [x] Fuel — FuelPlannerHome NavyPageSubNav (LST-F10156 / Cursor rescue)
 - [x] Finance — FinanceModuleTabs NavyPageSubNav (LST-F10158 / Cursor rescue)
 - [x] Legal — LegalModuleTabs NavyPageSubNav (LST-F10157 / Cursor rescue)
-- [ ] Factoring — FactoringHome inline tabs (~13 routes)
-- [ ] Maintenance — MaintenanceHome HoverDropdownNav (~37 routes)
-- [ ] Reports — ReportsSubNav HoverDropdownNav (~46 routes)
-- [ ] Lists — ListsSubNav HoverDropdownNav (~89 routes)
-- [ ] Safety — SafetyLayout inline tabs (~40 tabs)
+- [x] Factoring — FactoringHome inline tabs (route-manifest)
+- [x] Maintenance — MaintenanceHome (route-manifest)
+- [x] Reports — ReportsSubNav NavyPageSubNav dropdown (LST-F10182, PR #18922)
+- [x] Lists — ListsSubNav NavyPageSubNav dropdown (LST-F10183, PR #18924)
+- [ ] Safety — SafetyLayout HoverDropdown (79 tabs — needs different approach, not HoverDropdownNav)
 - [x] Drivers — DriversPage NavyPageSubNav (LST-F10162)
-- [ ] Accounting — AccountingSubNavWrapper HoverDropdownNav (~68 routes)
-- [ ] Dispatch — DispatchSubnav custom (~39 routes)
-- [ ] Cash Flow — inline (1)
-- [ ] Docs — inline (1)
-- [ ] Program — inline (~8 routes)
+- [x] Accounting — AccountingSubNavWrapper NavyPageSubNav dropdown (LST-F10182, PR #18916)
+- [x] Dispatch — DispatchSubnav (route-manifest)
+- [x] Cash Flow — inline (3)
+- [x] Docs — inline (6)
+- [ ] WorkOrders — local-state tabs (5 — not route-based, needs different approach)
 
 ## Guard
-Claim EVEN step before authoring verify-navy-subnav-x-of-178.mjs.
+`scripts/verify-navy-subnav-x-of-178.mjs` — selftest + named in `locked-guards.yml`. Run: `npm run verify:navy-subnav-x-of-178`
