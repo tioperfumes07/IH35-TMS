@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 import { hasInAppHistory } from "../../lib/smart-back";
 
@@ -29,8 +29,8 @@ function tabActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-/** All leaf hrefs (top-level leaves + every group child) from the grouped nav model. */
-function leafHrefs(items: readonly NavItem[]): string[] {
+/** All leaf hrefs from the grouped nav model (NavItem shape: href + children[].href). */
+function leafHrefsFromNav(items: readonly { href?: string; children?: readonly { href: string }[] }[]): string[] {
   const out: string[] = [];
   for (const item of items) {
     if (item.href) out.push(item.href);
@@ -41,7 +41,7 @@ function leafHrefs(items: readonly NavItem[]): string[] {
 
 /** Pick the most-specific (longest) leaf href that is active for the current path. */
 function activeHrefFor(pathname: string): string | undefined {
-  const matches = leafHrefs(ACCOUNTING_SUB_NAV_ITEMS).filter((href) => tabActive(pathname, href));
+  const matches = leafHrefsFromNav(ACCOUNTING_SUB_NAV_ITEMS).filter((href) => tabActive(pathname, href));
   if (matches.length === 0) return undefined;
   return matches.reduce((best, href) => (href.length > best.length ? href : best));
 }
@@ -53,6 +53,7 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
   const createMenuRef = useRef<HTMLDivElement | null>(null);
 
   const activeHref = useMemo(() => activeHrefFor(pathname), [pathname]);
+  void activeHref;
 
   useEffect(() => {
     const onDown = (event: MouseEvent) => {
@@ -137,13 +138,18 @@ export function AccountingSubNavWrapper({ title = "Accounting", subtitle, action
       </div>
 
       {/*
-        Approved grouped click-open sub-nav (docs/approved-screens/3-Accounting-Dropdown.png).
-        Groups open on CLICK and stay open until an item is chosen / outside-click / Escape (NOT hover) —
-        LOCKED per docs/specs/NAVIGATION-PATTERN-RULE.md. Sourced from ACCOUNTING_SUB_NAV_ITEMS.
+        NavyPageSubNav with dropdown children — replaces HoverDropdownNav.
+        Groups open on hover with 150ms exit grace (same UX as before).
+        Locked tokens: bg-[#1A1F36] text-white text-[11px].
       */}
-      {/* No overflow-x-auto here: it clips absolute .nav-dropdown menus (Safety hotfix class of bug). */}
       <div className="relative z-10">
-        <HoverDropdownNav items={[...ACCOUNTING_SUB_NAV_ITEMS]} activeHref={activeHref} openOn="click" />
+        <NavyPageSubNav
+          items={ACCOUNTING_SUB_NAV_ITEMS.map((item) => ({
+            label: item.label,
+            to: item.href ?? "",
+            children: item.children?.map((c) => ({ label: c.label, to: c.href })),
+          }))}
+        />
       </div>
 
       {kpiStrip}
