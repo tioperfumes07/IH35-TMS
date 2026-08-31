@@ -109,6 +109,11 @@ function loadHasCrossBorder(load: LoadDetail): boolean {
 export function loadCanMarkDeliveredPendingDocs(status: string | null | undefined): boolean {
   return ["dispatched", "in_transit", "at_pickup", "at_delivery"].includes(String(status ?? ""));
 }
+
+/** Human-sequence complete: office marks docs received after delivery (WIRE-07 stamp path). */
+export function loadCanMarkCompletedDocsReceived(status: string | null | undefined): boolean {
+  return ["delivered_pending_docs"].includes(String(status ?? ""));
+}
 const FACTORING_PACKAGE_META_PREFIX = "IH35_FACTORING_PACKAGE_V1::";
 
 type FactoringPackageMeta = {
@@ -645,6 +650,30 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                         }}
                       >
                         Mark delivered (pending docs)
+                      </Button>
+                    ) : null}
+                    {canEdit && load && loadCanMarkCompletedDocsReceived(load.status) ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        loading={statusMutation.isPending}
+                        data-testid="load-detail-mark-completed-docs"
+                        onClick={async () => {
+                          try {
+                            await statusMutation.mutateAsync({
+                              id: load.id,
+                              body: { new_status: "completed_docs_received" },
+                            });
+                            pushToast(`Load ${load.load_number} marked completed (docs received)`, "success");
+                            refetchLoad();
+                            void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                          } catch (err) {
+                            pushToast(userFacingApiError(err, "Could not mark completed docs received"), "error");
+                          }
+                        }}
+                      >
+                        Mark completed (docs received)
                       </Button>
                     ) : null}
                     {canEdit ? (
