@@ -1,6 +1,6 @@
 {
   "module": "insurance",
-  "title": "Insurance \u2014 acceptance checklist",
+  "title": "Insurance — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T19:00:00Z",
   "live_sha": "b2448ce",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn. REOPEN 2026-08-29 OWNER: 5 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 5 REOPEN items (T01-T05, one shared Insurance page, one live walk = GROUP-INS-TABS) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 6 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 5 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. | complete:true set 2026-08-10 after tip search: all items PASS, owner ordered update data / wire-only stop burn. REOPEN 2026-08-29 OWNER: 5 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: 5 REOPEN items (T01-T05, one shared Insurance page, one live walk = GROUP-INS-TABS) re-verified live via Chrome, STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
   "items": [
     {
       "id": "INS-S01",
@@ -111,7 +111,7 @@
   "M": 6,
   "pass_count": 6,
   "total_count": 6,
-  "progress": "6/6",
+  "progress": "6 of 6",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
@@ -127,5 +127,8 @@
     ]
   },
   "complete_unpinned_at": "2026-08-24T13:20:00Z",
-  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog \u2014 not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY."
+  "complete_unpinned_reason": "OWNER 2026-08-24: all items PASS. complete:false was a stale wave-queue pin (ACCT-F5441 flipped the flag so CLS-MONEY-HOLD / CLS-BANK-MATCH-DENSITY / CLS-ECON-EMPTY / CLS-DISP-WIRE-06 would not fail CI). Those cards now pins_complete:false (HOLD / empty-TMS-expected / N/A-PRE-OP / ops backlog — not an incomplete checklist). complete:true is N-of-M, not a second U14 CERTIFY.",
+  "bar_version": 1,
+  "bar_2_queued": true,
+  "bar_2_after": "Urgent-6 close"
 }

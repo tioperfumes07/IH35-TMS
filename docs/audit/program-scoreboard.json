@@ -1,10 +1,10 @@
 {
-  "healthzSha": "bfb9627",
+  "healthzSha": "02a3499",
   "generated_at": "2026-08-30T18:02:57.000Z",
   "meta": {
     "generatedAt": "2026-08-30T13:02:57-05:00",
     "sourceSha": "6f90e979f1",
-    "deployedSha": "bfb9627",
+    "deployedSha": "02a3499",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 18452,
+      "title": "FINDING: BUS-SHADOW-LIVE-BOOKS — seats idled on tie-out polls instead of shadowing Jorge Faro CSVs in the app",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 09:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18452",
+      "sha": "02a349909a",
+      "committedAtIso": "2026-08-30T21:09:19-05:00"
+    },
+    {
+      "number": 18451,
+      "title": "FINDING: DRIVER-PWA-DVIR-PRIOR-NULL — Driver PWA build_failed on every tip commit (Render srv-d7s72ujrjlhs7385gbhg)",
+      "state": "merged",
+      "mergedAtCt": "08/30/2026, 09:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18451",
+      "sha": "4d89530297",
+      "committedAtIso": "2026-08-30T21:03:15-05:00"
+    },
+    {
       "number": 18450,
       "title": "FINDING: N/A -- JE-FUTURE-DATED-POSTINGS evidence gathered, needs owner/lead policy decision",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18443",
       "sha": "04ad6b0a07",
       "committedAtIso": "2026-08-30T20:28:19-05:00"
-    },
-    {
-      "number": 18442,
-      "title": "FINDING: MASTER-DETAIL-SELECTED-ROW-NOT-URL-ADDRESSABLE",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18442",
-      "sha": "f21c9922bc",
-      "committedAtIso": "2026-08-30T20:26:32-05:00"
-    },
-    {
-      "number": 18441,
-      "title": "FINDING: BUS-URGENT6-NINE-LOCK",
-      "state": "merged",
-      "mergedAtCt": "08/30/2026, 08:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18441",
-      "sha": "86843fa3e8",
-      "committedAtIso": "2026-08-30T20:25:26-05:00"
     }
   ]
 }

@@ -1,16 +1,13 @@
-# CURRENT GO — SHADOW LIVE BOOKS · CC-1
+# CURRENT GO — CC-1 · MONEY SPLIT (you own 016 + settlements)
 
-Cursor→CC-1 | Read `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` · pull main · skip #15546 | GO
+Cursor→CC-1 | `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` REV C · skip #15546 | GO
 
-**YOU BUILD THE BOOKS IN THE APP. No bulk SQL. No “waiting.”**
+**CC-3 now has money authority for Faro 32 factoring — do not serialize the whole path on yourself.**
 
-1. Open `docs/lockdown/Coders-Faro/CC-1/CC-1-HUMAN-SEQUENCE-REPLAY.txt`
-2. **Finish L13512 steps 1–12 in Chrome** (customer→dispatch→invoice→factor→bank→settlement). Every break = FINDING + fix + continue.
-3. **016:** `$4200` invoice + `$400` CM `unknown_pending_backup` → factor `$3800`
-4. Then `CC-1-USMCA-FARO-33-INVOICES.csv` date order — invoice/send/factor/fund **one by one**
-5. Settlements: USMCA portion of `CC-1-AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv` (5772 with L13512 first) + driver lines from `CC-1-DRIVER-SETTLEMENTS.csv`
-6. JE-FUTURE: lead decision already closed — upper-bound + sample-label; do not re-ask
+1. **016 NOW:** $4200 invoice → $400 CM `unknown_pending_backup` → factor $3800  
+2. **L13512** HUMAN-SEQUENCE 12 steps to completion in Chrome  
+3. **Settlements** USMCA portions (`CC-1-AUG-SETTLEMENTS-MIXED-BY-FACTOR.csv`, 5772 first)  
+4. JE-FUTURE per prior lead decision  
+5. Do **not** do all 33 Faro factor advances alone — CC-3 owns the other 32 factor layer  
 
-Face **$95,075** frozen. Intercompany bill **$7,241**. FAC-VOID DONE. Never `trigger_deploy`.
-
-ACK: `CC-1 | ACK | SHADOW-LIVE | NOW=L13512-step-N | GO`
+ACK: `CC-1 | ACK | MONEY-SPLIT | NOW=016|L13512|SETL | GO`

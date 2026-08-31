@@ -1,6 +1,6 @@
 {
   "module": "eld",
-  "title": "Eld \u2014 acceptance checklist",
+  "title": "Eld — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T19:15:00Z",
   "live_sha": "b2448ce",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 5 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 4 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). M GROWN 1 -> 5 on 2026-07-29 (Rule 21): the landing route verified live, which revealed 4 further tabs inside it. Counting the module complete on its landing surface alone would have been a wave-slice close. REOPEN 2026-08-29 OWNER: 4 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "ELD-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. 5 tabs (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD Settings). TRANSP: 6 drivers on the canonical roster from GET /api/v1/telematics/hos/daily-roster with real duty status, drive-left and shift-left values (e.g. T176 Sleeper Berth 10h54m / 3h51m). USMCA: 0 rows with an explicit honest-empty message, 'No HOS duty events for this company today (honest empty \u2014 ingest may be quiet)' \u2014 an honest empty, not a silent blank.",
+      "evidence": "VERIFIED LIVE on prod 2026-07-29 in BOTH entities. 5 tabs (Live Duty Status, HOS Violations, Unidentified Driving, Driver Certifications, ELD Settings). TRANSP: 6 drivers on the canonical roster from GET /api/v1/telematics/hos/daily-roster with real duty status, drive-left and shift-left values (e.g. T176 Sleeper Berth 10h54m / 3h51m). USMCA: 0 rows with an explicit honest-empty message, 'No HOS duty events for this company today (honest empty — ingest may be quiet)' — an honest empty, not a silent blank.",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -95,5 +95,6 @@
   "M": 5,
   "pass_count": 5,
   "total_count": 5,
-  "progress": "5/5"
+  "progress": "5 of 5",
+  "bar_version": 1
 }

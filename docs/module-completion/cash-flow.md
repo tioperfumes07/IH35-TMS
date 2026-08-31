@@ -1,6 +1,6 @@
 # Module completion — Cash Flow — acceptance checklist
 
-**PROGRESS: 3 of 3** · complete: `true` · as_of: 2026-08-29T19:15:00Z · live_sha: `b2448ce`
+**PROGRESS: 3 of 3** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T19:15:00Z · live_sha: `b2448ce`
 
 | Status | Count |
 |---|---:|

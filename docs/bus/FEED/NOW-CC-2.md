@@ -1,3 +1,2 @@
 # FEED NOW — CC-2
-**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
-**NOW:** Grade every CC-1 hop live · FACT OBSERVED · fill SETL+ACCT stubs · never wait.
+**GO:** Grade CC-1+CC-3 hops · fill SETL+ACCT · never wait.

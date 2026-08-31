@@ -1,6 +1,6 @@
 {
   "module": "maintenance",
-  "title": "Maintenance \u2014 acceptance checklist",
+  "title": "Maintenance — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T18:15:00Z",
   "live_sha": "14daeed",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar \u2014 'renders real entity-scoped data' \u2014 is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty | MAINT-S03/S07 PASS 2026-08-09 settled empty | MAINT surface batch PASS 2026-08-09 (S04-S06,S09-S21,S23-S24) | MAINT remain-17 PASS 2026-08-09 \u2192 complete surface empty-state bar REOPEN 2026-08-29 OWNER: 38 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 38 REOPEN items (S02-S39) re-verified live via Chrome+DOM checks against the real USMCA app, batched by shared surface (GROUP-MAINT-TABROUTE covers 16 items in one MaintenanceHomePage walk; GROUP-MAINT-PARTS/VENDORS/WORKORDERS each cover 2-3 items in one walk) -- STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
+  "note": "RE-SCOPED 2026-07-31 (owner decision). The prior bar — 'renders real entity-scoped data' — is UNSATISFIABLE on prod today and is why this module sat at 0 since the 2026-07-29 baseline: the backing tables are empty (maintenance work_order_lines/defects/inspections/dvir/road_service/all 5 tire tables/both brake tables/warranty_claims/pm_alerts = 0, work_orders = 2, pm_schedules 30 rows but 0 ACTIVE; dispatch assignment_history/detention x3/intransit_issues/equipment_transfers/ocr_queue/pod_documents/driver_layovers = 0, geo.geofences = 0, mdata.loads = 10 all TRANSP; TRK and USMCA hold zero dispatch and zero maintenance operational rows). Marking PASS on density would have asserted what the data cannot support; marking FAIL on a correct empty screen would be equally false. The bar is now renders + entity-scoped + honest empty state, which IS provable today on all three entities and is the bar McLeod/NetSuite hold an unseeded module to. This is a change of bar, NOT a lowering of standard: the seed dependency is tracked as its own block (DISP-MAINT-DATA-01) and is deliberately NOT a click-through gate. Evidence: docs/trackers/DISP-MAINT-SURFACE-SWEEP-BLOCKED-ON-DATA-2026-07-31.md. No item was flipped by this re-scope.\n\nORIGINAL BASELINE NOTE (kept, append-only): BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). | MAINT-S01/S02 PASS 2026-08-09 WorkOrdersTable settled empty | MAINT-S03/S07 PASS 2026-08-09 settled empty | MAINT surface batch PASS 2026-08-09 (S04-S06,S09-S21,S23-S24) | MAINT remain-17 PASS 2026-08-09 → complete surface empty-state bar REOPEN 2026-08-29 OWNER: 38 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. CC-3 2026-08-29: all 38 REOPEN items (S02-S39) re-verified live via Chrome+DOM checks against the real USMCA app, batched by shared surface (GROUP-MAINT-TABROUTE covers 16 items in one MaintenanceHomePage walk; GROUP-MAINT-PARTS/VENDORS/WORKORDERS each cover 2-3 items in one walk) -- STATUS set to PASS with bound evidence, prod_verified deliberately left untouched (GUARD's stamp).",
   "items": [
     {
       "id": "MAINT-S01",
@@ -21,7 +21,7 @@
       ],
       "spec": "Empty-state DoD (owner decision 2026-07-31) + route registered in apps/frontend/src/routes/manifest.tsx",
       "status": "PASS",
-      "evidence": "PASS 2026-08-09 \u2014 /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
+      "evidence": "PASS 2026-08-09 — /maintenance + /maintenance/active-wos via MaintenanceHomePage (opco-scoped workOrdersQuery/listWorkOrdersFiltered). WorkOrdersTable ParityTable loading= gate + honest emptyText. Parts inventory already MIGRATED. Guard verify-list-empty-settled WorkOrdersTable entry. Density not required (module note 2026-07-31).",
       "pr": null,
       "prod_verified": true,
       "live_verified_at": "2026-08-29T03:43:00.000Z",
@@ -31,22 +31,30 @@
         {
           "kind": "http",
           "url": "https://app.ih35dispatch.com/maintenance",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "http",
           "url": "https://api.ih35dispatch.com/api/v1/maintenance/dashboard/kpis?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80",
-          "expect": { "mount": true }
+          "expect": {
+            "mount": true
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-maintenance-tab-coverage.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         },
         {
           "kind": "guard",
           "script": "scripts/verify-maintenance-home-read-recovery.mjs",
-          "expect": { "exit": 0 }
+          "expect": {
+            "exit": 0
+          }
         }
       ]
     },
@@ -701,7 +709,7 @@
   "rescoped_on": "2026-07-31",
   "pass_count": 39,
   "total_count": 39,
-  "progress": "39/39",
+  "progress": "39 of 39",
   "live_scenario_probe": {
     "source": "scripts/scoreboard-from-live.mjs (live prod probes, TMS-native only)",
     "pass_count": 1,
@@ -715,5 +723,8 @@
         "evidence": "8 work order(s)"
       }
     ]
-  }
+  },
+  "bar_version": 1,
+  "bar_2_queued": true,
+  "bar_2_after": "Urgent-6 close"
 }

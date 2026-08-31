@@ -164,5 +164,8 @@
   "pass_count": 9,
   "total_count": 9,
   "progress": "9 of 9",
-  "note": "| 2026-08-10 FIN-CERTIFIED-NEON: FIN-S01..S08 prod_verified:true (Neon lucia feature_flags + overrides TRANSP/TRK/USMCA + aging/statement source density; healthz=ed061c2). FIN-VERIFY-01 remains OPEN (no Cascade click notes). complete:false until wave unlocks VERIFY-01 / remaining gates. | 2026-08-10 Cursor CLOSED FIN-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T05:05:00Z CC-2/GUARD: FIN-S02..S08 (7 items) independently re-verified and bound (CC-1 supplied Recipe B evidence; CC-2 spot-checked via 3 direct source reads). complete:true."
+  "note": "| 2026-08-10 FIN-CERTIFIED-NEON: FIN-S01..S08 prod_verified:true (Neon lucia feature_flags + overrides TRANSP/TRK/USMCA + aging/statement source density; healthz=ed061c2). FIN-VERIFY-01 remains OPEN (no Cascade click notes). complete:false until wave unlocks VERIFY-01 / remaining gates. | 2026-08-10 Cursor CLOSED FIN-VERIFY-01 from Cascade OUTBOX PROD-VERIFIED + Neon Neftali/5743/5753 + audit.scenario_status (searched trackers, not memory). REOPEN 2026-08-29 OWNER: 7 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds. | 2026-08-30T05:05:00Z CC-2/GUARD: FIN-S02..S08 (7 items) independently re-verified and bound (CC-1 supplied Recipe B evidence; CC-2 spot-checked via 3 direct source reads). complete:true.",
+  "bar_version": 1,
+  "bar_2_queued": true,
+  "bar_2_after": "Urgent-6 close"
 }

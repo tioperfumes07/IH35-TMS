@@ -1,6 +1,6 @@
 {
   "module": "home",
-  "title": "Home \u2014 acceptance checklist",
+  "title": "Home — acceptance checklist",
   "complete": true,
   "as_of": "2026-08-29T19:15:00Z",
   "live_sha": "b2448ce",
@@ -9,7 +9,7 @@
     "apps/frontend/src/routes/manifest.tsx",
     "apps/frontend/src/components/layout/sidebar-config.ts"
   ],
-  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified \u2014 this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). COMPLETE 2026-07-29. Home is a single-route dashboard with no tab strip \u2014 its surfaces are sections of one page, all of which rendered in both entities during the live check. Unlike ELD/Insurance/Cash Flow/Compliance, there was no hidden tab layer to grow M with, so the module genuinely closes on one item. It reopens the moment a section is found broken (Rule 21: M grows when new FAILs appear). REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
+  "note": "BASELINE created 2026-07-29. Until now this module had NO acceptance list, so \"completely built\" had no definition and no honest percentage could be shown. Every item starts OPEN because none has been verified — this is a scope statement, not a claim of failure. M grows when new surfaces or defects appear (Rule 21). COMPLETE 2026-07-29. Home is a single-route dashboard with no tab strip — its surfaces are sections of one page, all of which rendered in both entities during the live check. Unlike ELD/Insurance/Cash Flow/Compliance, there was no hidden tab layer to grow M with, so the module genuinely closes on one item. It reopens the moment a section is found broken (Rule 21: M grows when new FAILs appear). REOPEN 2026-08-29 OWNER: 1 unbound-prose items UNVERIFIED (not fake-green). complete:false until GUARD rebinds.",
   "items": [
     {
       "id": "HOME-S01",
@@ -31,5 +31,6 @@
   "M": 1,
   "pass_count": 1,
   "total_count": 1,
-  "progress": "1/1"
+  "progress": "1 of 1",
+  "bar_version": 1
 }

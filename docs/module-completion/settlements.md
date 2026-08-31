@@ -1,6 +1,6 @@
 # Module completion — Settlements / Driver Finance
 
-**PROGRESS: 8 of 10** · complete: `false` · as_of: 2026-08-29T16:40:00Z · live_sha: `49ff971`
+**PROGRESS: 8 of 10** · complete: `false` · **in-progress (bar-2)** · as_of: 2026-08-29T16:40:00Z · live_sha: `49ff971`
 
 | Status | Count |
 |---|---:|

@@ -1,16 +1,15 @@
-# CURRENT GO — SHADOW LIVE BOOKS (Jorge data) · U14 NEVER RECERTIFY
+# CURRENT GO — SHADOW + 2nd MONEY SEAT (CC-3)
 
-**LAW:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`  
-**Packet:** `docs/lockdown/Coders-Faro/`  
-**Test:** `CC-1/CC-1-HUMAN-SEQUENCE-REPLAY.txt` (app only · no bulk SQL)
+**LAW:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` (REV C)  
+**Bar:** `docs/lockdown/BAR-HONESTY-AND-EXTEND-AFTER-URGENT6-2026-08-30.md`
 
-| Seat | Parallel NOW |
-|------|----------------|
-| **CC-1** | L13512 12 steps → 016 $4200+CM$400 → Faro 33 invoices in app → USMCA settlement portions |
-| **Cascade** | USMCA loads from `CC-1-AUG-LOADS-BY-FACTOR.csv` in Book Load UI |
-| **CC-3** | Unblock pickers/customers/vendors for that path · VEND Built 7–11 |
-| **CC-2** | Grade each hop live · FACT OBSERVED · fill SETL+ACCT scripts · never wait |
-| **Codex** | Shadow bank steps 8–10 · no fabricate recon |
-| **Cursor** | Keep INBOXes = this GO · merge · deploy |
+| Seat | NOW |
+|------|-----|
+| **CC-1** | 016 + L13512 specimen + settlements |
+| **CC-3** | **MONEY** — Faro 32 invoices factor/fund in Chrome |
+| **Cascade** | USMCA loads from AUG-LOADS CSV |
+| **CC-2** | Grade + SETL/ACCT stub fill |
+| **Codex** | Bank 8–10 · no fabricate |
+| **Cursor** | Enforce · merge · deploy |
 
-U14 14/14 CERTIFIED = closed. “Finish modules” = live path + leftover unique FAILs, not re-stamp.
+No new TIEOUTs tonight. Idle = defect.

@@ -1,6 +1,6 @@
 # Module completion — Safety (Module 3)
 
-**PROGRESS: 38 of 38** · complete: `true` · as_of: 2026-08-30T11:56:39Z · live_sha: `9c61c63`
+**PROGRESS: 38 of 38** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-30T11:56:39Z · live_sha: `9c61c63`
 
 | Status | Count |
 |---|---:|

@@ -30,6 +30,15 @@
 **COMPLETE** = N === M and `complete: true` in JSON (guard sets/validates).  
 **CERTIFIED (scoreboard)** = every item `prod_verified: true`. `complete:true` alone renders as **code-verified**, never certified.
 
+## Module-level `bar_version` (required honesty · 2026-08-30)
+
+| Field | Rule |
+|---|---|
+| `bar_version` | **1** = wiring/surface (`complete (bar-1)`). **2** = Urgent-6 / TIEOUT campaign. |
+| `bar_2_queued` | Optional. GL modules waiting for bar-2 **after** Urgent-6 closes — `docs/lockdown/BAR-HONESTY-AND-EXTEND-AFTER-URGENT6-2026-08-30.md`. |
+
+Do **not** add new TIEOUT items to bar-1 modules until Urgent-6 closes.
+
 ## Bar versioning (WORM — reverse, never erase)
 
 A bar-1 PASS was never wrong. It was never sufficient. Do **not** flip existing `PASS` / `prod_verified` stamps to false. Do **not** delete or rewrite existing items.

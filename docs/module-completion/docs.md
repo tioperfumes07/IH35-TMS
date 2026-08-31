@@ -1,6 +1,6 @@
 # Module completion — Documents (DOCS)
 
-**PROGRESS: 7 of 7** · complete: `true` · as_of: 2026-08-29T16:40:00Z · live_sha: `1b3a44d`
+**PROGRESS: 7 of 7** · complete: `true` · **complete (bar-1)** · as_of: 2026-08-29T16:40:00Z · live_sha: `1b3a44d`
 
 | Status | Count |
 |---|---:|

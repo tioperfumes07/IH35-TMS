@@ -568,5 +568,6 @@
         "httpPaths": []
       }
     ]
-  }
+  },
+  "bar_version": 1
 }

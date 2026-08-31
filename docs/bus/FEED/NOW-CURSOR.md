@@ -1,3 +1,2 @@
 # FEED NOW — CURSOR
-**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
-**NOW:** Lead — keep all INBOXes = shadow GO · merge · deploy · kill idle seats.
+**GO:** Enforce money-split · bar-1 labels · merge · deploy.
