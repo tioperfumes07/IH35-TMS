@@ -1,15 +1,14 @@
 # LEAD-CENSUS
-Overwrite · 2026-08-31 13:54 CT · SEAT=CURSOR (owner)
-**Who reads OUTBOX/INBOX + assigns fixes:** **Cursor lead** every lead turn (`LEAD-CONTRACT.md` §1–2). Seats self-pop `QUEUE-<SEAT>.md` (`LAW-ORCHESTRATION`). Jorge is not the messenger.
+Overwrite · 2026-08-31 14:30 CT · SEAT=CURSOR (owner)
+**Who reads OUTBOX/INBOX + assigns fixes:** **Cursor lead**. Jorge is not the messenger.
 
-Live=`f660bef` · tip=`7e04b36+` · LAW=`GO-LIVE-CLICK-CYCLE-ONLY`
+Live=`3d1b541` · tip=`origin/main` (navy+docs ahead — deploy when Rule 42 window) · LAW=`GO-LIVE-CLICK-CYCLE-ONLY` + Fully-Wired 1–12
 
-| Seat | Lane | Evidence | NOW (assigned) | Idle? |
-|------|------|----------|----------------|-------|
-| **CC-1** | MONEY | OUTBOX ACK #18830; remint blocked FE/BE vocab; CC-2+Devin Close-trip still $0 | **FIX** `DEFECT-B-FIX-DOES-NOT-COVER-CLOSE-TRIP` + FE path so Live Click can attach lines; then Live Click prove | working if coding |
-| **CC-2** | VERIFY | graded CI gap + Close-trip FAIL | Grade after CC-1 Close-trip fix deploy; JE-236 | active |
-| **CC-3** | CHROME | no OUTBOX since FORCE 13:36 | Live Click Record Expense (0-expense completed_docs) | **IDLE BREACH** |
-| **Codex** | BANK | no OUTBOX since FORCE | Live Click factor today OR bank-match S-20260831-* | **IDLE BREACH** |
-| **Devin-A** | CHROME | LIVE-CLICK L-0017 Refresh = still $0 lines | Next: Live Click **new** hop (expense on L-0010/L-0017 load OR Book+dispatch new TEST) — Close-trip owned by CC-1 | proved · advance |
-| **Cascade** | MECH | silent since 12:46 FORCE | Navy X/178 | **IDLE BREACH** |
-| Devin | — | — | SUSPENDED | — |
+| Seat | Lane | Evidence | Fully-Wired grade | NOW | Idle? |
+|------|------|----------|-------------------|-----|-------|
+| **Cascade** | MECH navy | Legal/Finance/Banking/Fuel landed (Cursor rescue of their edits) | **chrome-only** (item 7) — NOT module 1–12 | Next inventory row; never touch `.gitignore` | WORKING if PR opens |
+| **Devin-A** | CHROME | EXP-67 Neon PASS ($5 posted+JE); L-0017 still 0 lines | Expense create = items 1–3 partial; settle heal **NOT DONE** — clicked Refresh not Close trip | **Close trip** button on S-20260831-0017 | WORKING method-fix |
+| **Codex** | BANK/FE | #18863/#18866 honest stops; bank-match unpaid correctly refused | Honest stop ≠ Fully-Wired bank↔settle | Factor eligible invoice OR witness Close-trip | WORKING if OUTBOX |
+| **CC-1** | MONEY | Close-trip #18859 live; BANK-RECON-ACCEPT-MATCH-500 OPEN | Fix code live; L-0017 heal pending Live Click | After Devin Close-trip proof → accept-match 500 | |
+| **CC-2** | VERIFY | graded Close-trip gap | Grade L-0017 after Devin Close-trip | JE-236 hold | |
+| **CC-3** | CHROME | older Live Chrome loads | Check OUTBOX freshness | Live Click next cycle hop | check |
