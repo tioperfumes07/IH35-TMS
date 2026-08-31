@@ -6206,6 +6206,12 @@
       "file": "2422-verify-bills-list-null-number-honest.mjs",
       "purpose": "F-18 bills null bill_number honest label"
     },
+    "2424": {
+      "claimed_at": "2026-08-31",
+      "claimed_by": "cursor",
+      "file": "2424-verify-one-load-one-open-invoice.mjs",
+      "purpose": "REV E gate — one load maps to at most one open TMS invoice"
+    },
     "2501": "2501-verify-disp-wire-02-driver-bill.mjs",
     "2505": "2505-verify-disp-wire-05-revrec-latch.mjs",
     "2509": "2509-verify-disp-wire-08-settlement-ping.mjs",
