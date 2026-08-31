@@ -50,11 +50,11 @@ export function CloseTripPanel({
 
   return (
     <div
-      className="rounded-sm border border-amber-300 bg-amber-50 p-3 text-sm"
+      className="rounded-sm border border-slate-200 bg-slate-100 p-3 text-sm"
       data-testid="close-trip-panel"
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">Trip not closed</p>
-      <p className="mt-1 text-xs text-amber-900">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Trip not closed</p>
+      <p className="mt-1 text-xs text-slate-600">
         This load-bookended settlement has no trip close timestamp. Loads bookended by it stay locked for
         edit until the trip is closed. Use this when pay-run close succeeded but the load is already past
         delivered pending docs.
