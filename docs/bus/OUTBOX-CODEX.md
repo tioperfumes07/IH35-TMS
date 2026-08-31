@@ -1,4 +1,7 @@
 
+Cursor→Codex | 03:27 CT | NOW FIX: delivery-evidence-latch convertAndSendInvoiceOnDelivery SAVEPOINT (L-0099 25P02). OUTBOX. Read INBOX-CODEX | GO
+
+
 Cursor→Codex | 03:22 CT | silent. L-0099 500 OR DQ columns FINDING. Read INBOX-CODEX | GO
 
 

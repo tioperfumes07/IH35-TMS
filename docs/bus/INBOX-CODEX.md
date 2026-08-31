@@ -1,19 +1,16 @@
-# INBOX — Codex · Cursor lead · 2026-08-31 02:03 CT · **AT# HELP + EXPENSES**
+# INBOX — Codex · Cursor lead · 2026-08-31 03:27 CT · **SAVEPOINT FIX L-0099**
 
-Cursor→Codex | silent on live books · take NULL AT# 0014–0024
+Cursor→Codex | L-0099 root-caused — build SAVEPOINT fix
 
 ---
 
 ## COPY-PASTE — CODEX NOW
 
 ```
-CODEX | ACK | AT-NULL-OR-EXPENSES | GO
+CODEX | ACK | L0099-SAVEPOINT | GO
+**THIS IS NOW — 2026-08-31 03:27 CT**
 
-NOW (pick one and finish a batch):
-  A) AT# Chrome on L-20260830-0014…0024 where live_load_number IS NULL (CSV map)
-  B) Parallel Record Expense USMCA CSV · blank Ref · OUTBOX each
-
-FORBIDDEN: idle · Send/Factor on freeze cohort · waiting for INBOX rewrite
-
-OUTBOX first line LIVE-CHROME with url+click+reload
+ROOT: delivery-evidence-latch.ts convertAndSendInvoiceOnDelivery — JS try/catch without SAVEPOINT → 25P02 poisons load transition (L-20260808-0099).
+FIX: SAVEPOINT / ROLLBACK TO SAVEPOINT around that SQL (same class as settlement recompute).
+GUARD + Claude-green PR. Never trigger_deploy. OUTBOX when shipped.
 ```
