@@ -246,7 +246,12 @@ export function SafetyLayout() {
             the single source of truth for this navigation; no second imperative navigate() call. */}
         <SafetyGroupNav groups={SAFETY_GROUPS} activeTabId={activeTabId} />
         <div className="px-[22px] py-3">
-          <Outlet />
+          {/* SAFETY-DRIVER-FILES-DETAIL-STUCK-ON-NAV-AWAY: key on location.pathname forces React
+              to re-mount the Outlet content on every navigation between sibling safety routes.
+              Without this, React Router can leave the previous route's component mounted under
+              the new URL when navigating via HoverDropdown NavLink (the URL changes but the DOM
+              content stays stale until a hard reload). */}
+          <Outlet key={location.pathname} />
         </div>
       </div>
     </SafetyUiContext.Provider>
