@@ -8,6 +8,7 @@ import {
 import { writeTransactionSourceLink } from "../accounting-spine-emit.js";
 import { applyCashBasisSuppression, type CashBasisEntry } from "../cash-basis/engine.js";
 import { backlinkBankTransactionToInvoice } from "../payments/bank-invoice-backlink.service.js";
+import { assertBankTxnNotInReconciledSession } from "../../banking/closed-session-immutability.js";
 // ACCT-LINK-01 regression fix (GO-1405 Recipe B, 2026-08-29): this variance-JE insert never
 // populated journal_entry_type_id -- one of several direct posters contributing to the live
 // 46/2214 (2%) density gap. Leaf module, no accounting-service imports.
@@ -938,6 +939,12 @@ export async function acceptMatchWithResolveDifference(input: ResolveDifferenceI
     if (!txn) {
       throw new Error("bank_transaction_not_found");
     }
+
+    // BANK-RECON-ACCEPT-MATCH-500 — a reconciled session is a closed period. The database trigger
+    // already rejects the later bank_transactions UPDATE, but without the shared application gate
+    // an otherwise-valid exact candidate surfaced as a generic 500. Assert before any match, link,
+    // or GL write so the path returns the canonical conflict without relying on late rollback.
+    await assertBankTxnNotInReconciledSession(client, input.bank_transaction_id, input.operating_company_id);
 
     // Only persist kinds the reconciliation_matches CHECK constraint permits (Part 2a widened it to
     // include 'expense'). 'bill' is a read-only suggestion — accepting it is Part 2b (CHAIN-04).

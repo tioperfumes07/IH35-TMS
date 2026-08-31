@@ -3,6 +3,7 @@ import fp from "fastify-plugin";
 import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError } from "../shared.js";
 import { assertCompanyMembership } from "../../_helpers/company-membership-guard.js";
+import { ReconciledSessionLockedError } from "../../banking/closed-session-immutability.js";
 import { type LedgerEntryKind } from "./match.service.js";
 import { acceptReconMatch, closeReconPeriod, getReconWorklist, rejectReconMatch } from "./recon-worklist.service.js";
 
@@ -85,6 +86,9 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       return { ok: true, result };
     } catch (error) {
       const message = String((error as Error).message ?? "");
+      if (error instanceof ReconciledSessionLockedError) {
+        return reply.code(409).send({ error: error.code, message: error.message });
+      }
       if (message === "variance_account_id_required") {
         return reply.code(400).send({ error: message });
       }
@@ -137,6 +141,9 @@ export async function registerBankReconWorklistRoutes(app: FastifyInstance) {
       return { ok: true, result };
     } catch (error) {
       const message = String((error as Error).message ?? "");
+      if (error instanceof ReconciledSessionLockedError) {
+        return reply.code(409).send({ error: error.code, message: error.message });
+      }
       if (message === "variance_account_id_required") {
         return reply.code(400).send({ error: message });
       }
