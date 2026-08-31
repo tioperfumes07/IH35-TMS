@@ -13,93 +13,6 @@ function formatMoney(value: number) {
   return formatUsd(value);
 }
 
-// GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31: PreSettlementsPanel uses DataTable columns
-// (DRIVER · PERIOD · LOADS · DEBT · NET PAY) instead of the old column-jam flex layout.
-const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
-  {
-    key: "driver",
-    header: "Driver",
-    render: (settlement) => (
-      <EntityLinkOrTombstone
-        kind="driver"
-        id={settlement.driver_id}
-        name={settlement.driver_full_name}
-        noun="Driver"
-      />
-    ),
-  },
-  {
-    key: "period",
-    header: "Period",
-    render: (settlement) => (
-      <EntityLink
-        kind="settlement"
-        id={settlement.id}
-        label={`${formatDateUS(settlement.period_start)} – ${formatDateUS(settlement.period_end)}`}
-      />
-    ),
-  },
-  {
-    key: "loads",
-    header: "Loads",
-    render: (settlement) => {
-      // P14: real per-load EntityLinks when ids are present, fallback to count
-      const links = settlement.load_links ?? [];
-      if (links.length > 0) {
-        return (
-          <span className="flex flex-wrap gap-1">
-            {links.map((link) => (
-              <EntityLink
-                key={link.id}
-                kind="load"
-                id={link.id}
-                label={entityLabel(link.label, link.id, "Load")}
-                className="text-xs text-gray-500 hover:underline"
-              />
-            ))}
-          </span>
-        );
-      }
-      if (settlement.load_count > 0) {
-        return (
-          <span className="text-xs text-gray-500">
-            {settlement.load_count} load{settlement.load_count !== 1 ? "s" : ""}
-          </span>
-        );
-      }
-      return <span className="text-xs text-gray-400">—</span>;
-    },
-  },
-  {
-    key: "debt",
-    header: "Debt",
-    render: (settlement) => {
-      // LINK-F5187: same real driver_finance.driver_liabilities ids the Settlements list links
-      const ids = settlement.liability_ids ?? [];
-      if (ids.length === 0) return <span className="text-xs text-gray-400">—</span>;
-      return (
-        <span className="flex flex-wrap gap-1">
-          {ids.map((id, idx) => (
-            <EntityLink
-              key={id}
-              kind="liability"
-              id={id}
-              label={ids.length > 1 ? `debt #${idx + 1}` : "debt →"}
-              className="text-[10px] text-red-600 hover:underline"
-            />
-          ))}
-        </span>
-      );
-    },
-  },
-  {
-    key: "net_pay",
-    header: "Net Pay",
-    className: "text-right",
-    render: (settlement) => <span className="font-semibold">{formatMoney(Number(settlement.net_pay ?? 0))}</span>,
-  },
-];
-
 type Props = {
   rows: SettlementListRow[];
   loading?: boolean;
@@ -114,6 +27,105 @@ type Props = {
   showTotal?: boolean;
 };
 
+function renderLoadLinks(settlement: SettlementListRow) {
+  return (settlement.load_links ?? []).length > 0 ? (
+    <span className="flex flex-wrap gap-1">
+      {(settlement.load_links ?? []).map((link) => (
+        <EntityLink
+          key={link.id}
+          kind="load"
+          id={link.id}
+          label={entityLabel(link.label, link.id, "Load")}
+        />
+      ))}
+    </span>
+  ) : (
+    <span>
+      {settlement.load_count > 0
+        ? `${settlement.load_count} load${settlement.load_count === 1 ? "" : "s"}`
+        : "—"}
+    </span>
+  );
+}
+
+function renderSettlementLinks(settlement: SettlementListRow) {
+  return (
+    <span className="flex flex-col items-start gap-1">
+      <EntityLink
+        kind="settlement"
+        id={settlement.id}
+        label={entityLabel(settlement.display_id, settlement.id, "Settlement")}
+      />
+      {(settlement.liability_ids ?? []).length > 0 ? (
+        <span className="flex flex-wrap gap-1">
+          {(settlement.liability_ids ?? []).map((id, index) => (
+            <EntityLink
+              key={id}
+              kind="liability"
+              id={id}
+              label={(settlement.liability_ids?.length ?? 0) > 1 ? `debt #${index + 1}` : "debt →"}
+              className="text-[10px] text-red-600 hover:underline"
+            />
+          ))}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+const preSettlementColumns: DataTableColumn<SettlementListRow>[] = [
+  {
+    key: "date",
+    header: "Date",
+    sortable: true,
+    sortValue: (row) => row.period_start,
+    render: (row) => `${formatDateUS(row.period_start)} – ${formatDateUS(row.period_end)}`,
+  },
+  {
+    key: "driver",
+    header: "Driver",
+    sortable: true,
+    sortValue: (row) => row.driver_full_name,
+    render: (row) => (
+      <EntityLinkOrTombstone
+        kind="driver"
+        id={row.driver_id}
+        name={row.driver_full_name}
+        noun="Driver"
+      />
+    ),
+  },
+  {
+    key: "load_number",
+    header: "Load Number",
+    sortable: true,
+    sortValue: (row) => row.load_links?.[0]?.label ?? row.load_count,
+    render: renderLoadLinks,
+  },
+  {
+    key: "settlement_number",
+    header: "Settlement / Bill Number",
+    sortable: true,
+    sortValue: (row) => row.display_id ?? row.id,
+    render: renderSettlementLinks,
+  },
+  {
+    key: "amount",
+    header: "Amount",
+    sortable: true,
+    sortValue: (row) => Number(row.net_pay ?? 0),
+    className: "text-right tabular-nums",
+    render: (row) => formatMoney(Number(row.net_pay ?? 0)),
+  },
+  {
+    key: "status",
+    header: "Status",
+    sortable: true,
+    sortValue: (row) => row.status,
+    render: (row) => row.status,
+  },
+];
+
 export function PreSettlementsPanel({ rows, loading = false, isError = false, title = "Pre-settlements", showTotal = true }: Props) {
   const total = rows.reduce((sum, row) => sum + Number(row.net_pay ?? 0), 0);
   return (
@@ -124,16 +136,14 @@ export function PreSettlementsPanel({ rows, loading = false, isError = false, ti
           Couldn&apos;t load pre-settlements. Try refreshing the page.
         </p>
       ) : null}
-      {!loading &&
-        !isError &&
-        rows.length > 0 &&
-        (
-          <DataTable
-            columns={preSettlementColumns}
-            rows={rows}
-            rowKey={(s) => s.id}
-          />
-        )}
+      {!loading && !isError && rows.length > 0 ? (
+        <DataTable
+          columns={preSettlementColumns}
+          rows={rows}
+          rowKey={(row) => row.id}
+          rowTestId={() => "pre-settlement-row-reverse"}
+        />
+      ) : null}
       {!loading && !isError && rows.length === 0 ? (
         <p
           className="px-2 py-2 text-xs text-gray-500"
