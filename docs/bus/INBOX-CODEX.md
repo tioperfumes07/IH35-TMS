@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 05:52 CT · silent ~125m**
+1. Mechanical: WO list field exposure OR phase3_stub OR load-availability. OUTBOX.
+2. ACK LEAD-TICK-0206. Live **a3e3af0**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 05:47 CT · silent ~120m**
 1. Mechanical: phase3_stub OR load-availability. OUTBOX.
 2. ACK LEAD-TICK-0205. Live **a3e3af0**.

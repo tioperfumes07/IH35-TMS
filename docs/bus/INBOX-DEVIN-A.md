@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 05:52 CT**
+1. ACK'd Samsara/HOS gaps + WO list missing fields.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0206.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 05:47 CT**
 1. ACK'd recon $261k (TEST force_complete) + home widgets empty ops.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0205.

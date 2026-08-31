@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:52 CT · IDLE DEFECT ~125m — OUTBOX NOW**
+1. Self-ACK. ONE: unbilled $48k · dual TB · recon status · AR/AP≠BS · UF catch-all.
+2. Live **a3e3af0**. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:47 CT · IDLE DEFECT ~120m — OUTBOX NOW**
 1. Self-ACK. ONE: recon reconciled-without-finalize · unbilled $48k · dual TB · AR/AP≠BS.
 2. Live **a3e3af0**. TEST force_complete noted — fix status law, don’t invent money.
