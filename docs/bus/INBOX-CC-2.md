@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 04:28 CT · GRADE**
+1. Grade $0 invoice/expense FINDINGs as symptoms of charges/pay_rate; watch deploy → VERIFY GUC live.
+2. ACK LEAD-TICK-0189.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 04:17 CT · GRADE**
 1. Grade profitability-as-symptom + null pickup/delivery FINDINGs.
 2. ACK LEAD-TICK-0187.
