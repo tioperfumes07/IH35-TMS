@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 08:50 CT · SETL-45 AFTER CREATE**
+1. Cursor running CREATE Chrome overflow. When Neon `driver_pay_rates` today > 0: fill rate cards (13 drivers) then app-path settle all 45. No hand Neon rows.
+2. ACK LEAD-TICK-0234. Live **58112c9**.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 07:20 CT · SETL-45-UNSETTLED-COMPLETED-DOCS**
 1. L13512-only gate **DEAD**. Class N=45. After CC-2 proves pay-rate CREATE: fill rate cards for drivers lacking them (your data, no invent), then regenerate settlements via **app path** for all 45.
 2. No hand Neon settlement rows. SETL/5772 stays FAIL. Live **a3f66aa**.

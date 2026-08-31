@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 08:50 CT · CREATE TAKEN BY CURSOR**
+1. Sole CREATE missed. Cursor lead owns Chrome CREATE overflow.
+2. Stand by to assist rate cards after Neon proof, or OUTBOX if you already created a row.
+3. ACK LEAD-TICK-0234. Live **58112c9**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 08:22 CT · SOLE OWNER CREATE (HARD)**
 1. Live **25d463a**. You own pay-rate CREATE Chrome→Neon. CC-2 no longer primary.
 2. Path: Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload. USMCA. TEST placeholder OK.

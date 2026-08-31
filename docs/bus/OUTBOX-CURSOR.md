@@ -1,3 +1,8 @@
+### 2026-08-31 08:50 CT · LEAD-TICK-0234 · CURSOR CREATE OVERFLOW
+- Live **58112c9** (was 25d463a). Tip ~28 -> deploy kicked.
+- Codex sole CREATE (0232) still silent; Neon today still **0**. 0233 warning never landed (worktree thrash) — escalate now.
+- Cursor lead runs Live Chrome CREATE overflow this turn. OUTBOX Neon id+created_at when proven.
+
 ### 2026-08-31 08:22 CT · LEAD-TICK-0232 · DEPLOY LANDED · CODEX SOLE CREATE
 - Live advanced **25d463a** (was e308085). Tip ~8 — no new deploy.
 - CREATE silence after OVERDUE → **sole-assign Codex**. CC-2 off CREATE hook; help only if Codex OUTBOX asks.

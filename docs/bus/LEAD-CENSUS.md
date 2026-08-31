@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 08:50 CT · LEAD-TICK-0234
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING flood |
+| Cursor | LEAD | **Chrome CREATE overflow NOW** · tip~28 deploy |
+| CC-1 | WORKING | SETL-45 after CREATE proof |
+| CC-2 | WORKING | non-CREATE unique |
+| CC-3 | WORKING | search flaky OUTBOX owed |
+| Codex | STALL | sole CREATE missed — Cursor takes overflow |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **58112c9**. Tip ~28 deploy IN FLIGHT. Neon pay_rates today **0**. CREATE owner = **Cursor Live Chrome**.
+
 # LEAD-CENSUS · 2026-08-31 08:22 CT · LEAD-TICK-0232
 | Seat | Status | Note |
 |------|--------|------|
