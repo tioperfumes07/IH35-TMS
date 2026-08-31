@@ -53,7 +53,7 @@ Multi-stop + expenses shape. Then bank-to-settlement match if Codex cannot.
 ### CASCADE — MECHANICAL
 1. Navy subnav sweep: 178 routes, 87 modules, 3 done. Convert bespoke tab rows
    to `<NavyPageSubNav>`. One PR per module. EVERY commit states
-   "navy subnav: X of 178" and the number must rise. Then the guard + selftest.
+   "navy subnav: X of 381" and the number must rise. Then the guard + selftest.
 2. Driver pay codes + per-date layover. Additive steps first (catalog table,
    nullable columns) so nothing breaks a chain in flight.
 
@@ -75,7 +75,7 @@ Grade other seats' claims against Neon. Creates nothing. Judge CC-2 by the
 - A commit may not cite a GUARD or LIVE PROOF line for a file it does not
   contain. `git show --stat` must list it.
 - Class defects: state **X of N** or the close is rejected. #18569 closed
-  CLS-UI-SUBNAV-NOT-NAVY having converted **0 of 178**.
+  CLS-UI-SUBNAV-NOT-NAVY having converted **0 of 381**.
 - DEPLOY: one per 5-10 PRs or per 10 minutes, whichever first. On a TIMER,
   never per-merge. Only the lead deploys. CC seats never trigger_deploy.
 - AFTER EVERY DEPLOY CC-2 posts one line: healthz sha | migrations ok |
