@@ -476,6 +476,11 @@
       "claimed_by": "cc-1",
       "claimed_at": "2026-08-31",
       "purpose": "sync_alerts_severity_check_add_error (fix schema drift: code inserts 'error' severity but CHECK only allowed info/warning/critical)"
+    },
+    "202613310000": {
+      "claimed_by": "cc-1",
+      "claimed_at": "2026-08-31",
+      "purpose": "loads_mileage_columns_numeric_widen (LOADS-MILEAGE-INTEGER-TRUNCATION: mdata.loads.loaded_miles/miles_practical/miles_shortest/miles_deadhead integer -> numeric(10,1), no backfill)"
     }
   }
 }
