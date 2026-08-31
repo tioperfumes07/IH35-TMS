@@ -39,6 +39,20 @@ if (hasOldJam) {
   failures.push("OpenDriverBillsPanel must NOT use the old column-jam flex layout (Driver · Load · Bill in one cell) — use DataTable");
 }
 
+// 2b. PreSettlementsPanel also uses DataTable
+const preSettlementsPath = path.join(root, "apps/frontend/src/components/driver-finance/PreSettlementsPanel.tsx");
+const preSettlements = readFileSync(preSettlementsPath, "utf8");
+if (!preSettlements.includes("import { DataTable")) {
+  failures.push("PreSettlementsPanel must import DataTable from shared/DataTable");
+}
+if (!preSettlements.includes("preSettlementColumns")) {
+  failures.push("PreSettlementsPanel must define preSettlementColumns with DataTable columns");
+}
+const hasPreSettlementOldJam = /PreSettlementsPanel[\s\S]*?flex flex-wrap items-center gap-1[\s\S]*?·[\s\S]*?settlement/.test(preSettlements);
+if (hasPreSettlementOldJam) {
+  failures.push("PreSettlementsPanel must NOT use the old column-jam flex layout (Driver · Period · Load · Debt in one cell) — use DataTable");
+}
+
 // 3. DataTable uses the standard thead convention
 const dataTable = readFileSync(dataTablePath, "utf8");
 if (!dataTable.includes("<thead")) {
