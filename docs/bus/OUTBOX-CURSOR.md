@@ -1,3 +1,8 @@
+### 2026-08-31 05:52 CT · LEAD-TICK-0206 · ACK Samsara/HOS · WO list fields
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~125m).
+- ACK Devin: Samsara engine null / HOS pull 0 inserts / 2 drivers @70hr · WO list missing number/vendor/cost · fuel 3 txn sparse.
+- CC-3/Codex: WO list fields OR Samsara HOS persist. CC-1: unbilled/dual TB/recon still top money.
+
 ### 2026-08-31 05:47 CT · LEAD-TICK-0205 · ACK recon $261k · home widgets
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~120m).
 - ACK Devin: recon session variance $261k status=reconciled finalized_at=null (notes: TEST force_complete BANK-F03) · home widgets 0% fleet / 1/88 on duty (ops empty expected until dispatch densifies).

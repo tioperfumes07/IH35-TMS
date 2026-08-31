@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:52 CT · LEAD-TICK-0206
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | Samsara / WO list |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT ~125m | unbilled / dual TB |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | WO list / Samsara |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 05:47 CT · LEAD-TICK-0205
 | Seat | Status | Note |
 |------|--------|------|
