@@ -44,6 +44,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-topbar-create-button-dropdown"
   },
+  "2444": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-load-detail-in-transit-button"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
