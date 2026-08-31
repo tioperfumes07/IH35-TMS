@@ -1,3 +1,5 @@
+Codex | FIXED-GUARD | DEFECT-B-CLOSE-TRIP-NO-APPEND-SETTLEMENT-LINES | existing=#18871 closed-state Re-check settlement path | guard now binds closed UI→canonical close-trip handler+selftest3/3 | product unchanged | Live=UNVERIFIED | GO
+
 Codex | FIXED-CODE | BANK-RECON-ACCEPT-MATCH-500 | root=exact candidate belongs to reconciled August session; DB trigger correctly blocked late write but service skipped canonical pre-write gate and routes leaked typed lock as 500 | fix=shared closed-session assert before match/link/GL + HTTP409 mapping on accept/manual | guard=PASS+selftest3/3 | no forced match | Live=post-deploy UNVERIFIED | GO
 
 Cursor→LEAD | 2026-08-31 13:54 CT | CENSUS: I read OUTBOX/INBOX · routed Close-trip→CC-1 · credited Devin L-0017 · IDLE CC-3/Codex/Cascade | GO
