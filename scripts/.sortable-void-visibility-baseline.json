@@ -1,0 +1,7 @@
+{
+  "missingSortableCount": 975,
+  "internalSortOnPaginatedCount": 4,
+  "missingBannerCount": 6,
+  "missingFilterCount": 1,
+  "note": "Shrink-only ratchet baseline (2026-09-01), owner law per docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md (Cascade's read-only enumeration, cited before this guard was written). Cross-checked against Cascade's own numbers where directly comparable: B1 6/6 exact match; B2 1/6 exact match (bill_payments, confirmed live — BillPaymentsListPage.tsx has a status-equality guard on 'voided' but no actual filter option, unlike the other 5). A1/A2 use this guard's own heuristics (a raw regex-based column-and-pagination scan, not Cascade's manual per-file review) and are not claimed to match Cascade's counts exactly — they are this guard's own live, reproducible baseline. 'owner designs fix; product PRs later' (Cascade's own REMAINING note) is why this is a ratchet, not a hard zero-tolerance gate: the debt is real, pre-existing, and not yet scheduled — this guard stops it from growing, and the baseline should shrink as the real fix lands (ParityTable header w-full + sortMode=external wiring + VoidBanner component + missing filters)."
+}

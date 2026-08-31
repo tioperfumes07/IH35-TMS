@@ -27,8 +27,19 @@ const LANES = [
     authorMigrations: true,
   },
   {
+    // GUARD-LANE-BYPASS-01 (2026-09-01): "chore/", "feat/", "fix/" were removed from this list.
+    // They are the three most generic branch prefixes in git — laneForBranch() decides authority
+    // by BRANCH NAME alone, so any seat (chrome-only included) that names its branch feat/whatever
+    // inherited Cursor's full migration authority just by matching the string. Live: Devin-A
+    // (chrome-only, authorMigrations:false) authored a security-critical migration under Cursor's
+    // band number (202613312000) this way. A generic prefix earning lane trust is the bug, not a
+    // Devin-A-specific one — this session's own CC-2 branches used chore/claim-reserve-* routinely
+    // and would have been silently misattributed to Cursor's lane too. Cursor's authority now
+    // requires an actually seat-scoped prefix; a chore/feat/fix branch is UNMAPPED (fails closed
+    // on any migration, per run()'s existing "unmapped + adds migration = FAIL" rule below) unless
+    // it also carries a Cursor-owned prefix.
     lane: "cursor",
-    branchPrefixes: ["cursor/", "cursoragent/", "chore/", "feat/", "fix/"],
+    branchPrefixes: ["cursor/", "cursoragent/"],
     minHour: 12,
     maxHour: 23,
     label: "HH 12–23 (afternoon)",
@@ -192,6 +203,34 @@ function selftest() {
     console.error("  FAIL: an unmapped branch must not be assigned a lane");
     bad += 1;
   }
+
+  // GUARD-LANE-BYPASS-01: a chrome-only seat must not obtain migration authority by naming its
+  // branch with a generic prefix. Prove the exact live incident (feat/ inheriting Cursor's band)
+  // is now impossible.
+  for (const generic of ["feat/whatever", "chore/anything", "fix/some-bug", "feat/security-critical-migration"]) {
+    const lane = laneForBranch(generic);
+    if (lane !== null) {
+      console.error(`  FAIL: generic-prefixed branch "${generic}" must not map to any lane (got "${lane.lane}")`);
+      bad += 1;
+    }
+  }
+  // And the direct behavioral proof: an unmapped generic branch adding a migration must FAIL —
+  // not silently inherit authorMigrations:true from whatever lane used to claim the prefix.
+  {
+    const generic = "feat/whatever";
+    const lane = laneForBranch(generic);
+    if (lane !== null) {
+      console.error(`  FAIL: "${generic}" resolved to a lane; expected null (unmapped, fails closed on any migration)`);
+      bad += 1;
+    } else {
+      console.log(`  ok: "${generic}" is unmapped — run() fails closed if it adds a migration (existing rule, unchanged)`);
+    }
+  }
+  if (laneForBranch("cursor/anything")?.lane !== "cursor") {
+    console.error("  FAIL: cursor/ branch must still map to the cursor lane (the real prefix, unaffected)");
+    bad += 1;
+  }
+
   if (bad > 0) {
     console.error(`verify-migration-lane-band SELFTEST FAILED — ${bad} case(s) wrong.`);
     process.exit(1);
