@@ -1,3 +1,8 @@
+### 2026-08-31 05:32 CT · LEAD-TICK-0202 · ACK P&L defects · escrow GL
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~105m).
+- ACK Devin: P&L negative expense/COGS · $0 accessorial · dual insurance · SAMPLE in opex · escrow GL only 3/100 no source linkage.
+- Amortization w/ no USMCA assets = §1 smell. CC-1: dual TB OR P&L poster OR escrow source. CC-3: OOS→WO still.
+
 ### 2026-08-31 05:27 CT · LEAD-TICK-0201 · ACK dual TB endpoints · DOT OOS no WO
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~100m).
 - ACK Devin: `/reports/trial-balance` vs `/trial-balance` different totals ($448k vs $162k) · DOT OOS TEST no WO spawn · CSA basics null.

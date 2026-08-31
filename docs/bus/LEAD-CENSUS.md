@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 05:32 CT · LEAD-TICK-0202
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | P&L / escrow GL |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT ~105m | dual TB / P&L |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | OOS→WO |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 05:27 CT · LEAD-TICK-0201
 | Seat | Status | Note |
 |------|--------|------|
