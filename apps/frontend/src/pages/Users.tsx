@@ -24,7 +24,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombstone";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { StatusBadge } from "../components/StatusBadge";
 import { companyToday } from "../lib/businessDate";
 import { useToast } from "../components/Toast";
@@ -642,18 +642,18 @@ export function UsersPage() {
         <KpiCard label="Deactivated" number={tabCounts.deactivated} accent={colors.crit.strong} to="/users?tab=deactivated" />
       </KpiStrip>
 
-      <SecondaryNavTabs
-        className="-mx-1"
+      <NavyPageSubNav
         activeId={listTab}
-        onChange={(id) => {
+        onTabChange={(id) => {
           if ((USER_TAB_IDS as readonly string[]).includes(id)) setListTab(id as UserListTabId);
         }}
-        tabs={[
-          { id: "all", label: `All (${tabCounts.all})` },
-          { id: "active", label: `Active (${tabCounts.active})` },
-          { id: "pending", label: `Pending (${tabCounts.pending})` },
-          { id: "deactivated", label: `Deactivated (${tabCounts.deactivated})` },
+        items={[
+          { label: `All (${tabCounts.all})`, to: "#all" },
+          { label: `Active (${tabCounts.active})`, to: "#active" },
+          { label: `Pending (${tabCounts.pending})`, to: "#pending" },
+          { label: `Deactivated (${tabCounts.deactivated})`, to: "#deactivated" },
         ]}
+        itemIds={["all", "active", "pending", "deactivated"]}
       />
 
       {usersQuery.isError ? <ListErrorBanner onRetry={() => void usersQuery.refetch()} /> : null}
