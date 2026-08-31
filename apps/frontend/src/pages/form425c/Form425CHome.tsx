@@ -22,7 +22,7 @@ import { confirmUpload, requestUploadUrlFromFile, uploadFileToR2 } from "../../a
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { buildPrintHTML, suggestedFilename } from "./lib/buildPrintHTML";
 import { DEFAULT_PROFILES } from "./lib/constants";
@@ -608,11 +608,11 @@ export function Form425CHome() {
         </Link>
       </div>
 
-      <SecondaryNavTabs
-        className="px-4 pt-2"
-        tabs={TABS.map((t) => ({ id: t.id, label: t.label }))}
+      <NavyPageSubNav
+        items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
         activeId={tab}
-        onChange={(next) => setTab(next as TabId)}
+        onTabChange={(next) => setTab(next as TabId)}
+        itemIds={TABS.map((t) => t.id)}
       />
 
       <RelatedModuleLinks
