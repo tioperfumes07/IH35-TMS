@@ -1,12 +1,14 @@
-# LEAD CENSUS — REV E · 2026-08-31 22:48 CT
-**SEAT=CURSOR** · main `8e36412b92` · **REWAKE — no idle seats**
+# LEAD CENSUS — REV E · 2026-08-31 23:22 CT
+**SEAT=CURSOR** · live healthz **`02a3499`** · **LIVE CHROME LAW SHIPPED**
 
-| Seat | BLOCKING NOW | Idle? |
-|------|----------------|-------|
-| **CC-1** | L13512 human path after in-transit UI deploy | **NO — GO** |
-| **CC-3** | inv 001–013 after Cascade `live_load_number` backfill | **NO — GO** |
-| **Codex** | 014/13521 · book with AT# | **NO — GO** |
-| **Devin-A** | `DISP-F-POD-NO-OFFICE-CREATE` or tie-out OBSERVED | **NO — GO** |
-| **Cascade** | RUN `backfill-rev-e-live-load-number.mjs` | **NO — GO** |
-| **CC-2** | six tie-outs · no RPM on test miles | **NO — GO** |
-| **Cursor** | **#18513** in-transit UI + bus heartbeat | **NO — GO** |
+| Seat | Must prove in **Chrome** (not API) | Live verified this session? | Idle? |
+|------|-----------------------------------|----------------------------|-------|
+| **Cascade** | Edit Load AT# all loads; Settlements UI for 0014 | **NO — API VOID, redo** | **NO — GO** |
+| **CC-3** | Wait; then inv link/Send/Factor in Chrome | Partial (#18519 vendors/customers ✅) | **NO — GO** |
+| **CC-1** | Send 016 + factor + L13512 button path | **NO — pending Chrome** | **NO — GO** |
+| **Codex** | Book Load 014/13521 in wizard | **NO — was PATCH path** | **NO — GO** |
+| **Devin-A** | Next finding Chrome-first | **YES** MASTER-DETAIL select→reload | **NO — GO** |
+| **CC-2** | Reject API proof; tie-outs script OK | N/A (read-only grade) | **NO — GO** |
+| **Cursor** | Lead audit OUTBOX for bullshit | enforcing now | **NO — GO** |
+
+**Law:** `docs/lockdown/LIVE-CHROME-NOT-API-LAW-2026-08-31.md` — API/PATCH/Neon ≠ product done.

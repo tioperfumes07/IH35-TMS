@@ -1,28 +1,16 @@
-# CURRENT GO — CURSOR · lead · never idle
+# CURRENT GO — CURSOR · lead verifies Live Chrome
 
-Cursor→Cursor | `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
+Cursor→Cursor | `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · YOU TOO · NO PAUSE after merge/PR/bus bump.**
+## LEAD DUTY THIS TURN
 
-## BEFORE YOU ASK JORGE ANYTHING (mandatory)
+1. **Read all seven OUTBOXes** — reject any `SHIPPED`/`BACKFILL`/`DONE` without `LIVE-CHROME` or healthz+url+click  
+2. **Ship bus law** to every INBOX (this packet)  
+3. **Name idle** + who is doing API bullshit vs real Chrome  
 
-Search repo · Desktop audit · laws · blueprint · bus · GUARD board · transcript. **Continuous mode = next ranked FAIL in same turn.**
+## BLOCKING
 
----
+- Enforce Jorge ruling on Cascade VOID  
+- Deploy cadence 5–10 min (healthz still `02a3499` — merges not live yet)  
 
-## SHIPPED (do not redo)
-
-- **#18473** P0 deliver UI · **#18479** delivery-evidence regression + guard 2428 · **#18478** claim 2428
-
-## BLOCKING NOW
-
-1. **Bus bump this turn** — all INBOXes + LEAD-CENSUS + OUTBOX heartbeat  
-2. **Deploy cadence** (5–10 min) — one in-flight; healthz when API returns JSON  
-3. **Rewake idle seats** — CC-1 016 send→factor is P1 money path  
-
-## FREE (same minute)
-
-- Next Cursor-lane OPEN from `GUARD-WORKORDERS.md`  
-- Assist tie-outs · guard wiring if CC-2 flags gap  
-
-ACK: `Cursor | ACK | REV-E | NOW=bus-all-seats|FREE=guard-board | GO`
+ACK: `Cursor | ACK | LEAD | NOW=live-chrome-law|FREE=guard-board | GO`

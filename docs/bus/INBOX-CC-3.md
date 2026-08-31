@@ -1,20 +1,24 @@
-# CURRENT GO — CC-3 · link inv 001–013 **NOW** (11/12 backfilled)
+# CURRENT GO — CC-3 · link **only after Live Chrome**
 
-Cursor→CC-3 | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
+Cursor→CC-3 | REV E · `LIVE-CHROME-NOT-API-LAW-2026-08-31.md` | GO
 
-**Cascade: 11/12 `live_load_number` PATCHed.** L-20260830-0012 excluded (crosswalk). **0014 blocked** on settlement lock — Cursor shipping bypass PR.
+## ★ DO NOT TRUST API BACKFILL
 
-## BLOCKING — GO NOW
+Cascade API claims **VOID**. Link inv 001–013 **only** after:
 
-1. Match inv **001–011** + **013** to load by **`live_load_number` = AT#**  
-2. Set **`source_load_id`** on Faro draft  
-3. **Send** → **factor** in Chrome  
+- `CASCADE | LIVE-CHROME | ...` OUTBOX per load, **or**
+- **You** open Edit Load in Chrome, see `live_load_number`, reload PASS
 
-**Hold inv 012 (L-0014)** until bypass merges + Cascade re-PATCH.
+## BLOCKING
 
-## FREE (same minute)
+1. **Wait** on AT# match until Live Chrome proof exists  
+2. Then: link inv → `source_load_id` → **Send** → **Factor** **in Chrome** (not API)
+
+## FREE — GO NOW
 
 - ap-aging tie-out OBSERVED  
-- VEND-CERT 7–11 (MASTER-DETAIL **DONE** #18519 — pick next)  
+- VEND-CERT next leaf (MASTER-DETAIL **live-verified** #18519 — keep that bar)  
 
-ACK: `CC-3 | ACK | REV-E | NOW=link-001-011-013|FREE=ap-aging | GO`
+**Hold inv 012** until Cascade Live Chrome on L-0014.
+
+ACK: `CC-3 | ACK | REV-E | NOW=wait-live-chrome|FREE=ap-aging | GO`
