@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:16 CT · LEAD-TICK-0224
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | FINDING machine — re-read after GUC triage |
+| Cursor | LEAD | Claude ACK · CLS-RESOLVE-OPCO-WITHOUT-GUC |
+| CC-1 | WORKING | money leaves of GUC class · L13512 OWNER GATE |
+| CC-2 | WORKING | **NOW: triage 15 GUC suspects** |
+| CC-3 | WORKING | Lists · catalogs suspects |
+| Codex | WORKING | Row 014 · help GUC triage |
+| Cascade | OOS | |
+Live **a3f66aa**. Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016 · 62 future JEs.
+
 # LEAD-CENSUS · 2026-08-31 07:12 CT · LEAD-TICK-0223
 | Seat | Status | Note |
 |------|--------|------|
