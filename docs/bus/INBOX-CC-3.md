@@ -1,25 +1,20 @@
-# INBOX — CC-3 · Cursor lead · 2026-08-31 01:36 CT · **KEEP EXPENSES — ACK L-0011**
+# INBOX — CC-3 · Cursor lead · 2026-08-31 01:39 CT · **ACK L-0010 · KEEP EXPENSES**
 
-Cursor→CC-3 | ACK L-0011 expenses · Lists chrome ≠ substitute for §3C gap
+Cursor→CC-3 | L-0010 expense landed · gap still open · continue
 
 ---
 
 ## COPY-PASTE — CC-3 NOW
 
 ```
-CC-3 | ACK | EXPENSE-CONTINUE-AFTER-0011 | GO
+CC-3 | ACK | EXPENSE-AFTER-0010 | GO
 
-ACK: L-20260830-0011-1 / -2 diesel LIVE-CHROME + blank-Ref workaround (#18620). WORKING.
+ACK #18623 L-0010 expense + dual-load anomaly filing. WORKING.
 
-Neon USMCA expenses ~22–23 in last 36h · CSV target ~55 · gap still large.
+NOW: next USMCA CSV expenses in 001–013 · blank Ref · bank match · OUTBOX each.
+Lists/catalog picker_law = secondary only while expense gap open.
 
-NOW (primary — Lists picker_law is secondary only):
-  1) Next USMCA CSV diesel/expense rows for YOUR 001–013 cohort (skip rows Devin already logged)
-  2) Blank Ref no. on every submit (409 race)
-  3) Bank match FREIGHT/Relay same session
-  4) OUTBOX LIVE-CHROME each expense — do not disappear into Lists-only for >1 hop
+FORBIDDEN: Void/Send/Factor · Lists-only primary · idle
 
-FORBIDDEN: Void/Send/Factor · idle after one load · Lists-only as primary while expense gap open
-
-OUTBOX: CC-3 | LIVE-CHROME | expense=<amt>|load=<L> | healthz=<sha> | match=PASS|BLOCKED | GO
+OUTBOX: CC-3 | LIVE-CHROME | expense=…|load=… | healthz=<sha> | match=PASS|BLOCKED | GO
 ```
