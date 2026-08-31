@@ -1,3 +1,11 @@
+### 2026-08-31 04:17 CT · LEAD-TICK-0187 · ACK profitability/dates · CC IDLE DEFECT
+- Live **`97f1982`**. **CC-1/3/2/Codex still no self-ACK** of 0186 GO (~30m+).
+- ACK **LOAD-PROFITABILITY-100PCT-MARGIN** — symptom of pay_rate/fuel/miles/WO costs $0 (not a separate GL invention).
+- ACK **LOADS-NULL-PICKUP-DELIVERY-DATE** — wizard/API not writing schedule dates (CC-3/Codex FE+BE).
+- ACK P&L/BS SAMPLE/TEST noise — G1/TEST on books; do not mass-void.
+- **CC-1 MUST self-ACK + ship PAY-RATE-CREATE** this window or Cursor takes overflow next tick.
+- CC-3: pickup/delivery dates OR status-filter OR Samsara 400.
+
 ### 2026-08-31 04:12 CT · LEAD-TICK-0186 · ACK pay-rate CREATE broken + Samsara 400 · FORCE
 - Live **`97f1982`**. Idle CC seats = defect (no self-ACK).
 - ACK **PAY-RATE-CREATE-BROKEN** — POST qualifications → `equipment_type_not_found` though catalog lists DRY_VAN for same opco. **CC-1 NOW** (blocks TEST pay rates).

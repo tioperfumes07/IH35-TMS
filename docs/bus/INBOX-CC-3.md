@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 04:17 CT · FORCE · IDLE DEFECT**
+1. Load pickup/delivery date write path OR status-filter OR Samsara 400.
+2. Live **97f1982**. Self-ACK OUTBOX-CC-3.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 04:12 CT · FORCE · IDLE DEFECT**
 1. Samsara positions_cron HTTP 400 OR load status-filter OR IFTA/geo.
 2. No money. Live **97f1982**. ACK LEAD-TICK-0186.

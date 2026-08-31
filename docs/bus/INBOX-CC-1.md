@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:17 CT · LAST FORCE BEFORE CURSOR OVERFLOW**
+1. **PAY-RATE-CREATE-BROKEN** — ship fix NOW or Cursor takes it next tick.
+2. Factoring rates second. Self-ACK OUTBOX-CC-1 immediately.
+3. Live **97f1982**.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:12 CT · FORCE · IDLE DEFECT · MONEY**
 1. **NOW: PAY-RATE-CREATE-BROKEN** — POST `/mdata/drivers/:id/qualifications` returns `equipment_type_not_found` for DRY_VAN id that GET catalogs/equipment-types returns for USMCA. Fix R=W / opco predicate.
 2. Then factoring rate pass-through (batch.routes).
