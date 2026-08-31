@@ -1,3 +1,9 @@
+### 2026-08-31 04:47 CT · LEAD-TICK-0193 · RATES LIVE PROVEN · ACK reserve/periods
+- Live **`a3e3af0`**. Devin **USMCA-FACTOR-BATCH-CREATE-SUCCESS-FARO-RATES**: batch `b6e0cd21…` advance **97%** / fee **1.5%** — FACTORING-RATE-MISMATCH CLOSED live.
+- ACK reserve-movements empty on that batch — **Rule 19**: do NOT invent reserve CoA; CC-1 investigate calc/track path only.
+- ACK periods ALL open (flag OFF) · 1099 TEST-only · sales-tax $0 freight — not invent OB / not mass-close periods.
+- CC-1/CC-2 IDLE DEFECT — VERIFY + grade. CC-3 Lists/filter.
+
 ### 2026-08-31 04:42 CT · LEAD-TICK-0192 · ACK escrow/comparison · rates deploy wait
 - Live still **`37efaa5`**. Factoring-rates fix **b445610** on main; deploy `dep-daakob8…` not yet ancestry (wait healthz).
 - ACK Devin: escrow ALL $0 (settlement $0 symptom) · P&L July $0/Aug $6M (data/OB — not invent) · obligation $0 loads.

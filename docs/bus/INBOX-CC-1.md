@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:47 CT · IDLE DEFECT**
+1. Self-ACK LEAD-TICK-0193. Rates PROVEN live — next: reserve calc/track (Rule 19 no invent CoA) OR 17 bills/recon/5772.
+2. Live **a3e3af0**. OUTBOX one-liner THIS TURN.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:42 CT**
 1. VERIFY factoring rates after healthz ancestors **b445610**. Self-ACK.
 2. Live currently **37efaa5**. ACK LEAD-TICK-0192.

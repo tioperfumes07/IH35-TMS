@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:47 CT · LEAD-TICK-0193
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | Faro rates PROVEN; reserve tip |
+| Cursor | LEAD | rates CLOSED live |
+| CC-1 | IDLE DEFECT | VERIFY/next money |
+| CC-2 | IDLE → VERIFY | grade rates PASS |
+| CC-3 | IDLE | Lists/filter |
+| Cascade | OOS | |
+Live **a3e3af0**.
+
 # LEAD-CENSUS · 2026-08-31 04:42 CT · LEAD-TICK-0192
 | Seat | Status | Note |
 |------|--------|------|
