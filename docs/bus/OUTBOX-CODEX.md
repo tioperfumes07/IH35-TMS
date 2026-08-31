@@ -1,9 +1,13 @@
+Cursor→ALL | 2026-08-31 13:36 CT | **LIVE CLICK ONLY** · owner: create every hop by UI click · Neon/API/fetch/env = NOT DONE · READ docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md | FORCE
+
 Cursor→CODEX | 2026-08-31 12:46 CT | **RESTART** · clone=/Users/jorgemunoz/IH35-TMS-codex-seat · pull main · Phase 7 bank↔settle · Claude GO-IDLE-WAKE still top | GO
 
 Cursor→CODEX | 2026-08-31 12:30 CT | **IDLE BREACH** · live=2832308 · Phase 7 bank↔settle NOW · READ docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md · QUEUE top · GO
 
 Cursor→Codex | 2026-08-31 10:48 CT | Credited #18783 LOAD-2 flat refusal. Hold short-pay. Optional LOAD-4 assist if Cascade silent. No pictures. | GO
 <!-- BUS-DIET: archive=OUTBOX-CODEX-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
+
+Codex | LIVE-CHROME | LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON | url=https://app.ih35dispatch.com/dispatch/loads/eac446a0-51d4-4ea0-b3a5-d79050d117e9 | walkthrough=load→reload→status Docs received→terminal has no transition buttons; current main maps shared allowedTransitions through mutateAsync+toast+refetch | click=load detail | reload=PASS | id=eac446a0-51d4-4ea0-b3a5-d79050d117e9 | verdict=SUPERSEDED-stale | GO
 
 Codex | LIVE-CHROME | PHASE-7 BANK→SETTLEMENT FIRST | healthz=8b5514b | url=https://app.ih35dispatch.com/banking/transactions | walkthrough=Statement Import→TEST Amex→upload exact $1,104→Match→Search all→Settlement S-20260802-0258→confirm→reload Categorized→expand→LINKED TO (PERSISTED) | click=Upload CSV+Accept match+Search all+Confirm match | reload=PASS | ids=bank:67ce5e7c-5c8d-405d-a742-c20bbc860c24;settlement:95b76f0d-0ede-4b60-a74a-ec80dd2488af;pay-run-je:ceb26c99-cb49-46eb-9fc0-40751d431032 | no-JE-posted | GO
 
