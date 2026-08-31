@@ -55,3 +55,7 @@ its own sum by $383,580, and $2,532.18 between the carrier quotes and the financ
 **No insurance JE, policy row, prepaid asset or note-payable entry until the owner supplies signed values.**
 
 **Idle = defect. Do not wait on a deploy or on another seat.**
+
+## CURSOR CLOSEOUT — 2026-08-31 12:35 CT
+- Future JE flag: **DONE** — `future_unflagged=0`, `future_sample=62`, `AUG_REAL=236` unchanged (Neon lucia).
+- Queue refill: **N/A** — every QUEUE-* has ≥4 OPEN (CC-1:7 CC-2:5 CC-3:4 CASCADE:6 CODEX:4 DEVIN-A:5 CURSOR:4).
