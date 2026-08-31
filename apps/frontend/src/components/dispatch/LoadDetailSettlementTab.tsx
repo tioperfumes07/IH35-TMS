@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
-import { formatMoneyCents } from "./constants";
+import { formatMoneyDollars } from "./constants";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 
 type SettlementLeg = {
@@ -150,28 +150,28 @@ export function LoadDetailSettlementTab({ loadId, operatingCompanyId, currencyCo
       <div className="grid grid-cols-2 gap-2 rounded-sm border border-gray-200 bg-gray-50 p-3 text-sm">
         <div>
           <div className="text-xs text-gray-500">Gross pay</div>
-          <div className="font-semibold text-gray-900">{formatMoneyCents(settlement.gross_pay, currencyCode)}</div>
+          <div className="font-semibold text-gray-900">{formatMoneyDollars(settlement.gross_pay, currencyCode)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-500">Deductions</div>
           <div className="font-semibold text-red-600">
             {settlement.deductions_total > 0
-              ? `−${formatMoneyCents(settlement.deductions_total, currencyCode)}`
-              : formatMoneyCents(0, currencyCode)}
+              ? `−${formatMoneyDollars(settlement.deductions_total, currencyCode)}`
+              : formatMoneyDollars(0, currencyCode)}
           </div>
         </div>
         {settlement.reimbursements_total > 0 ? (
           <div>
             <div className="text-xs text-gray-500">Reimbursements</div>
             <div className="font-semibold text-slate-700">
-              +{formatMoneyCents(settlement.reimbursements_total, currencyCode)}
+              +{formatMoneyDollars(settlement.reimbursements_total, currencyCode)}
             </div>
           </div>
         ) : null}
         <div className="col-span-2 border-t border-gray-200 pt-2">
           <div className="text-xs font-semibold text-gray-500">Net pay</div>
           <div className={`text-base font-bold ${settlement.net_pay >= 0 ? "text-green-700" : "text-red-700"}`}>
-            {formatMoneyCents(settlement.net_pay, currencyCode)}
+            {formatMoneyDollars(settlement.net_pay, currencyCode)}
           </div>
         </div>
       </div>
