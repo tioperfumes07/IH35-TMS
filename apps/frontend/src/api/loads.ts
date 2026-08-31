@@ -380,6 +380,21 @@ export function updateLoadStatus(
   });
 }
 
+/**
+ * ACCT-F10164 — re-entry point for ensureDriverBillArtifactsForLoad (ACCT-F277) against a load
+ * ALREADY sitting past delivery evidence (completed_docs_received/delivered_pending_docs). The
+ * status-PATCH route only fires this on a TRANSITION into that status; a load already at rest with
+ * zero driver_bills (39 of 78 USMCA loads, live-verified) has no other live path to it. Idempotent —
+ * a load that already has a bill returns outcome "already_exists", never a duplicate.
+ */
+export function remintDriverBill(id: string, operatingCompanyId: string, reason: string) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<
+    | { ok: true; outcome: { outcome: string; [key: string]: unknown } }
+    | { error: string; status?: string }
+  >(`/api/v1/mdata/loads/${id}/remint-driver-bill?${query.toString()}`, { method: "POST", body: { reason } });
+}
+
 export function cancelLoad(
   id: string,
   cancellationReasonCode: string,
@@ -463,6 +478,21 @@ export function useUpdateLoadStatus(operatingCompanyId: string | null) {
     },
     onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "list"] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "detail", operatingCompanyId, vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["loads", "audit", operatingCompanyId, vars.id] });
+      void queryClient.invalidateQueries({ queryKey: ["dispatch", "load-detail", vars.id, operatingCompanyId] });
+    },
+  });
+}
+
+export function useRemintDriverBill(operatingCompanyId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => {
+      if (!operatingCompanyId) return Promise.reject(new Error("operating_company_id is required to remint a driver bill"));
+      return remintDriverBill(id, operatingCompanyId, reason);
+    },
+    onSuccess: (_data, vars) => {
       void queryClient.invalidateQueries({ queryKey: ["loads", "detail", operatingCompanyId, vars.id] });
       void queryClient.invalidateQueries({ queryKey: ["loads", "audit", operatingCompanyId, vars.id] });
       void queryClient.invalidateQueries({ queryKey: ["dispatch", "load-detail", vars.id, operatingCompanyId] });
