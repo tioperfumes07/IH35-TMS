@@ -5065,6 +5065,51 @@
     "claimed_by": "cc-1",
     "purpose": "verify-book-time-pay-rate-and-completed-docs-settle-reentry"
   },
+  "10161": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cc-1",
+    "purpose": "verify-insurance-equipment-asset-bridge"
+  },
+  "10165": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-account-pair-invariant"
+  },
+  "10166": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-insurance-schedule-warning-guard (warn+confirm owner ruling 331282f)"
+  },
+  "10169": {
+    "claimed_at": "2026-09-01",
+    "claimed_by": "cc-1",
+    "purpose": "verify-driver-subaccount-backfill-apply-authorized-path"
+  },
+  "10173": {
+    "claimed_at": "2026-09-01",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-remint-driver-bill-path"
+  },
+  "10177": {
+    "claimed_at": "2026-09-01",
+    "claimed_by": "cc-1",
+    "purpose": "verify-reconciliation-session-reopen-authorized-path"
+  },
+  "10181": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cc-1",
+    "purpose": "verify-void-source-linked-reads-full-je"
+  },
+  "10185": {
+    "claimed_at": "2026-09-01",
+    "claimed_by": "cc-1",
+    "purpose": "verify-load-cancel-void-cascade"
+  },
+  "10186": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-09-01",
+    "purpose": "verify-permission-model (owner-escalation: no lucia escape; Admin cannot assign Owner; allow_owner_bootstrap recovery)"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -7055,45 +7100,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1033,
-  "10161": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cc-1",
-    "purpose": "verify-insurance-equipment-asset-bridge"
-  },
-  "10165": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-account-pair-invariant"
-  },
-  "10166": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cursor",
-    "purpose": "verify-insurance-schedule-warning-guard (warn+confirm owner ruling 331282f)"
-  },
-  "10169": {
-    "claimed_at": "2026-09-01",
-    "claimed_by": "cc-1",
-    "purpose": "verify-driver-subaccount-backfill-apply-authorized-path"
-  },
-  "10173": {
-    "claimed_at": "2026-09-01",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-remint-driver-bill-path"
-  },
-  "10177": {
-    "claimed_at": "2026-09-01",
-    "claimed_by": "cc-1",
-    "purpose": "verify-reconciliation-session-reopen-authorized-path"
-  },
-  "10181": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cc-1",
-    "purpose": "verify-void-source-linked-reads-full-je"
-  },
-  "10185": {
-    "claimed_at": "2026-09-01",
-    "claimed_by": "cc-1",
-    "purpose": "verify-load-cancel-void-cascade"
-  }
+  "total_claimed": 1033
 }
