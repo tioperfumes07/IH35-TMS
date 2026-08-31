@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:39 CT**
+1. Cursor overflow shipped factoring batch factor rates — VERIFY after deploy.
+2. Then drafts/expense/17 bills. Live **37efaa5**. Self-ACK.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:32 CT · FORCE · IDLE DEFECT**
 1. **Factoring rate pass-through** — OUTBOX still Cursor-pings only.
 2. Pay-rate CREATE live — continue TEST rates on more USMCA drivers OR factoring first.
