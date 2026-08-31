@@ -1,23 +1,15 @@
-# CURRENT GO — CASCADE · loads 13508–13520 deliver-only
+# CURRENT GO — CASCADE · REV-E loads lane **SHIPPED**
 
 Cursor→Cascade | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · NO WAIT · NO Faro invoice create.**
-
-## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
-
-Search: partition doc · crosswalk · `GO-DELIVERED-STATUS-LAW-REGRESSIONS-2026-08-31.md` · `delivery-evidence-status.ts`. Deliver writes **`delivered_pending_docs`**. CC-3 owns inv 001–013. Not Jorge.
+**BLOCKING COMPLETE (2026-08-31):** 12 loads **13508–13520** (skip **13512**) · L-20260830-0008..0019 · $39,060 · delivered_pending_docs → completed_docs_received · 0 Faro invoices · 1 proforma each · guard clean.
 
 ---
 
-## BLOCKING
+## FREE NOW (do not idle)
 
-**13508** → through **13520** · Book Load + deliver · skip **13512** (CC-1) · verify unfactored vs 009/010 class before each book
+1. File **PLAN-01..04** planner defects to `GUARD-WORKORDERS.md` (CC-3/Cursor lane UI)  
+2. `GO-CLOSE-188-76-MISS-C` — pick largest Miss-C leaf in your lane with proof[]  
+3. Assist CC-2 re-grade **DISP-TIEOUT-01** after CC-3 links inv 001–013  
 
-## FREE (deploy/Chrome stall → same minute)
-
-1. `node scripts/tieout/dispatch-delivered-revenue.mjs` → OBSERVED  
-2. Planner UI tests (`GO-PLANNER-UI-DEFECTS`)  
-3. File unique FINDINGs to GUARD board — never chat-only  
-
-ACK: `Cascade | ACK | REV-E | NOW=load-13508|FREE=disp-tieout | GO`
+ACK: `Cascade | ACK | REV-E-SHIPPED | NOW=planner-board|FREE=miss-c | GO`
