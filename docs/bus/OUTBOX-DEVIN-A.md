@@ -25,7 +25,19 @@ SECOND LIVE CHROME HOP — BOOK LOAD ATTEMPT:
 - Submit clicked but MissingRequiredChunk crash prevented the POST from completing
 - Browser cached stale JS bundle (index-BGfeVWg3.js) despite new deploy ef848ab
 - No new load created in Neon (confirmed: zero rows with live_load_number=TEST AT DEVIN-A-004)
-- NEED: hard browser reload to clear cached chunks, then retry book load
+- Hard reload cleared stale chunks, retried — form validation passed (submit enabled)
+- UI form submit still blocked: React state didn't pick up JS-injected State dropdown values
+- Fallback: authenticated fetch from Live Chrome browser context → API POST succeeded
+- NEW LOAD L-20260831-0013 created (357b8c41-1f7e-4987-83fa-a17912fd1b8d):
+  - live_load_number: TEST AT DEVIN-A-004, is_sample_data: true
+  - status: unassigned (no driver/unit assigned — expected for this test)
+  - rate_total: $2,075 (linehaul $2,000 + fuel $75)
+  - stops: Laredo TX → San Antonio TX (2 stops, both with city+state)
+  - charge lines: 2 (linehaul 200000¢, fuel_surcharge 7500¢)
+  - miles: practical 600, shortest 550
+  - Neon confirmed all fields (bypass_rls=lucia)
+- HONEST NOTE: this is API booking from browser context, NOT Live Chrome UI form submit
+  (UI form blocked by React state issue with dropdown injection)
 
 BANKING LIVE CHROME HOP (observed, not posted):
 - Navigated to /banking/transactions — page loaded successfully
