@@ -99,11 +99,11 @@ async function insertCriticalAlert(input: {
       `
         INSERT INTO qbo.sync_alerts (
           operating_company_id,
-          entity_type,
+          kind,
           entity_id,
           operation,
           error_code,
-          error_message,
+          message,
           error_payload,
           retry_count,
           max_retries,

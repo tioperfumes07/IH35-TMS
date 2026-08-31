@@ -66,10 +66,10 @@ async function insertUnattributedAlert(client: any, operatingCompanyId: string, 
     `
       INSERT INTO qbo.sync_alerts (
         operating_company_id,
-        entity_type,
+        kind,
         entity_id,
         operation,
-        error_message,
+        message,
         severity,
         replay_hint,
         error_payload

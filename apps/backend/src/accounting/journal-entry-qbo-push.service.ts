@@ -29,11 +29,11 @@ async function persistJournalFailureAlert(operatingCompanyId: string, journalEnt
         `
           INSERT INTO qbo.sync_alerts (
             operating_company_id,
-            entity_type,
+            kind,
             entity_id,
             operation,
             error_code,
-            error_message,
+            message,
             error_payload,
             retry_count,
             max_retries,
@@ -54,7 +54,7 @@ async function persistJournalFailureAlert(operatingCompanyId: string, journalEnt
           0,
           3,
           new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-          "error",
+          "critical",
           "qbo_journal_entry",
         ]
       );
@@ -80,8 +80,8 @@ async function persistImportRefusalAlert(operatingCompanyId: string, journalEntr
       await client.query(
         `
           INSERT INTO qbo.sync_alerts (
-            operating_company_id, entity_type, entity_id, operation,
-            error_code, error_message, error_payload,
+            operating_company_id, kind, entity_id, operation,
+            error_code, message, error_payload,
             retry_count, max_retries, next_retry_at, severity, replay_hint
           )
           VALUES ($1,$2,$3::uuid,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12)
@@ -97,7 +97,7 @@ async function persistImportRefusalAlert(operatingCompanyId: string, journalEntr
           0,
           0,
           null, // no retry — permanent refusal
-          "error",
+          "critical",
           null, // replay_hint NULL → never replayable
         ]
       );

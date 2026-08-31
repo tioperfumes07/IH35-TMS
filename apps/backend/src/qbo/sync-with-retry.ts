@@ -63,7 +63,7 @@ async function persistAlert(input: {
       `
         INSERT INTO qbo.sync_alerts (
           operating_company_id,
-          entity_type,
+          kind,
           entity_id,
           operation,
           error_code,
