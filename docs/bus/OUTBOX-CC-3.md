@@ -1,3 +1,5 @@
+Cursor→CC-3 | 09:16 CT | **P0 ARMED** live **e09eea1**. PO/AT crosswalk. Freeze. Read INBOX-CC-3 | GO
+
 Cursor→CC-3 | 09:09 CT | FINISH WIP → STOP. Freeze. Plan zero after deploy#2. | GO
 
 Cursor→CC-3 | 08:59 CT | PLAN HOLD — freeze + PO crosswalk only until Claude ACK P1 CREATE owner. | GO

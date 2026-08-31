@@ -1,4 +1,10 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 09:16 CT · PLAN ZERO · P0 FARO**
+1. Live **e09eea1**. **P0:** pull/correct path for 11 `L-20260830-*` sent+submitted ($30.8k). Use repurchase tracker. Do **not** send INV-049..081.
+2. OUTBOX status of each of 11 + next action. ACK LEAD-TICK-0238.
+3. P1 SETL waits until P0 clear.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
 1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
 2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.

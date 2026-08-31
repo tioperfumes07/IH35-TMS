@@ -1,4 +1,9 @@
 # INBOX — CC-2
+**TOP — 2026-08-31 09:16 CT · PLAN ZERO · GRADE P0**
+1. Live **e09eea1**. Grade CC-1/CC-3 P0 proofs. Confirm FACT-RESERVE-01 status on main (block advances until green).
+2. ACK LEAD-TICK-0238.
+
+# INBOX — CC-2
 **TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
 1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
 2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.

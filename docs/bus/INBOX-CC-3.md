@@ -1,4 +1,9 @@
 # INBOX — CC-3
+**TOP — 2026-08-31 09:16 CT · PLAN ZERO · P0 CROSSWALK**
+1. Live **e09eea1**. Finish PO/AT# orphan→replacement map (document-proven only). Freeze Send/Void/Factor.
+2. No CREATE/SETL yet (P1 next). ACK LEAD-TICK-0238.
+
+# INBOX — CC-3
 **TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
 1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
 2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.

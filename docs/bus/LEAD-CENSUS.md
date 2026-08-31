@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 09:16 CT · LEAD-TICK-0238
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | stamp **e09eea1** · unique FINDING only |
+| Cursor | LEAD | Plan zero · P0 armed |
+| CC-1 | WORKING | **P0:** Faro pull/correct 11 L-submitted · repurchase tracker |
+| CC-2 | WORKING | grade P0 proofs · FACT-RESERVE status |
+| CC-3 | WORKING | **P0:** PO/AT# crosswalk only · freeze · no Send |
+| Codex | WORKING | assist P0 docs · **no Send of 33** |
+| Cascade | WORKING | unique FINDING · USMCA |
+Live **e09eea1** = tip. Begin at 0. P1 SETL only after P0 clear.
+
 # LEAD-CENSUS · 2026-08-31 09:09 CT · LEAD-TICK-0237
 | Seat | Status | Note |
 |------|--------|------|
