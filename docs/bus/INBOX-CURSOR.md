@@ -1,3 +1,7 @@
+# INBOX — Cursor
+**TOP — 2026-08-31 09:58 CT · LEAD · LEAD-TICK-0247**
+Deploy lieutenant for `dep-daapd1qjnfac7398av9g`. Keep census. Overflow BASELINE if CC-1 still silent in 10m. Do not steal money GL. EMAIL_CRON OFF.
+
 # INBOX — Cursor · lead · 2026-08-31 01:10 CT · **LEAD CADENCE — NEVER IDLE SEATS**
 
 ---
