@@ -12,6 +12,7 @@ import { LiabilitiesTable } from "./components/LiabilitiesTable";
 import { LiabilityDetailDrawer } from "./components/LiabilityDetailDrawer";
 import { SendAckRequestModal } from "./components/SendAckRequestModal";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 
 // C8: the tab list is owned by LiabilitiesKpiRow so a KPI drill and a tab click cannot drift apart.
 const SUBNAV = LIABILITY_TABS;
@@ -143,20 +144,12 @@ export function LiabilitiesHomePage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {SUBNAV.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className={tab === item ? "border-b border-white pb-0.5 font-semibold" : ""}
-              onClick={() => setTab(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-      </div>
+      <NavyPageSubNav
+        items={SUBNAV.map((item) => ({ label: item, to: `#${item}` }))}
+        activeId={tab}
+        onTabChange={(id) => setTab(id as typeof tab)}
+        itemIds={[...SUBNAV]}
+      />
 
       {kpisQuery.isError || activeQuery.isError ? (
         <ListErrorBanner
