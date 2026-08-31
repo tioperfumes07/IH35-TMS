@@ -1,3 +1,4 @@
+- **2026-08-31 06:57 CT · LEAD-TICK-0220:** Deploy LIVE **6de19ac**; ACK #216 RBAC empty · #217 HOS 0 · #218 periods all open (flag OFF = law); CC-3 Lists ACK; L13512 OWNER GATE holds.
 - **2026-08-31 06:54 CT · LEAD-TICK-0219:** ACK Devin #214 dispatch assign 0 · #215 notif/alerts/sched; seats still WORKING; deploy catch-up in flight; L13512 OWNER GATE holds; live **69a5a4e** tip~29.
 - **2026-08-31 06:51 CT · LEAD-TICK-0218:** Seat status ACK — CC-1/2/3/Codex WORKING (idle cleared). Settlement reuse+close-fallback shipped; **L13512 settlement backfill = OWNER GATE** (no fake re-transition). 5772 stays FAIL until then. Orphan-cohort/016 unchanged. CC-3 L-0011+L-0010 fuel closed; L-0012 mismatch flagged. Codex Row 014 fail-closed. Live **69a5a4e** tip~23.
 - **2026-08-31 06:47 CT · LEAD-TICK-0217:** ACK post-deploy tips (JE list 0 · expenses shell · bills/payments unlink · factor batch shell · IFTA P4 · 2290 draft); G1 neg bank OK; CC idle ~180m; live **69a5a4e**.
