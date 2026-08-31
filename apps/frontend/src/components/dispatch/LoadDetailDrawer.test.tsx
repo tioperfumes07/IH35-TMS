@@ -298,6 +298,42 @@ describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", 
   });
 });
 
+describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_transit hop", () => {
+  it("dispatched shows Mark in transit and hides deliver (invalid_transition if skipped)", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "dispatched" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    expect(screen.getByTestId("load-detail-mark-in-transit")).toBeInTheDocument();
+    expect(screen.queryByTestId("load-detail-mark-delivered")).not.toBeInTheDocument();
+  });
+
+  it("in_transit shows deliver and hides in-transit", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "in_transit" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    expect(screen.getByTestId("load-detail-mark-delivered")).toBeInTheDocument();
+    expect(screen.queryByTestId("load-detail-mark-in-transit")).not.toBeInTheDocument();
+  });
+});
+
 describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice", () => {
   // An invoice snapshots load.rate_total_cents ONCE (accounting/from-load.ts:186) and no backend path ever
   // re-syncs it, so an invoice created at rate 0 is permanently $0 — L-0087 ($3,210 load / $0 invoice).

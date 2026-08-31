@@ -1,23 +1,14 @@
-# CURRENT GO — DEVIN-A · 025+ end-to-end (NOT 13521)
+# CURRENT GO — DEVIN-A · next OPEN (REV-E done)
 
-Cursor→Devin-A | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | PORT=9227 | GO
+Cursor→Devin-A | REV E · PORT=9227 | GO
 
-**NEVER IDLE · NO WAIT on deploy/Codex/CC-1.**
+**#18506–#18510 shipped. Waiting = defect.**
 
-## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
+## BLOCKING — pick one NOW
 
-Search: `FARO-PARTITION-REV-E-2026-08-31.md` · crosswalk · handoff folder · repo laws. **13521 = Codex (014). You start 025/13538.** Click-through CREATE in Chrome — not Jorge.
+1. **`DISP-F-POD-NO-OFFICE-CREATE`** — office POD upload path spec + guard  
+2. **`node scripts/tieout/faro-factoring-statement.mjs`** → OUTBOX OBSERVED  
 
----
+FAST-MERGE. No REV-E redo. No steal Codex 014.
 
-## BLOCKING — CREATE NOW (gate on main #18468)
-
-`node scripts/verify-one-load-one-open-invoice.mjs` → PASS → **025 / load 13538 Jericho** → deliver → invoice → factor → 027–036 per partition table
-
-## FREE — same minute if Chrome/deploy stalls
-
-- Crosswalk verify for next row  
-- `node scripts/tieout/faro-factoring-statement.mjs` OBSERVED  
-- Connectivity reverse-link in Codex lane only if your row blocked  
-
-ACK: `Devin-A | ACK | REV-E | NOW=025-13538|FREE=crosswalk | GO`
+ACK: `Devin-A | ACK | REWAKE | NOW=POD-or-tieout|FREE=Miss-C | GO`
