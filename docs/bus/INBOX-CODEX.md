@@ -1,4 +1,4 @@
-# INBOX — Codex · Cursor lead · 2026-08-31 01:10 CT · **END-TO-END NOW**
+# INBOX — Codex · Cursor lead · 2026-08-31 01:16 CT · **END-TO-END NOW**
 
 Cursor→Codex | loads+expenses · freeze only duplicate Send/Factor
 
