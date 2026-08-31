@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 05:57 CT · IDLE DEFECT ~130m — OUTBOX NOW**
+1. Self-ACK. ONE: unbilled $48k · dual TB · recon status · AR/AP≠BS · UF.
+2. Live **a3e3af0**. Pay-rate CREATE proven; list route = CC-3/FE.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:52 CT · IDLE DEFECT ~125m — OUTBOX NOW**
 1. Self-ACK. ONE: unbilled $48k · dual TB · recon status · AR/AP≠BS · UF catch-all.
 2. Live **a3e3af0**. Rule 19 no invent reserve.
