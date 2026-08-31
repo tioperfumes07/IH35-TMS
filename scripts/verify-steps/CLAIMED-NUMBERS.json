@@ -5025,6 +5025,11 @@
   "10142": [
     "10142-verify-module-completion-requires-tieout.mjs"
   ],
+  "10145": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "claude-1",
+    "purpose": "verify-settlement-close-fallback-opens-if-missing"
+  },
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
