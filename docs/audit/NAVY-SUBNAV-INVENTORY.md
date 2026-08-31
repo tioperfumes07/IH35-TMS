@@ -14,7 +14,7 @@
 4. BankingHome — `apps/frontend/src/pages/banking/BankingHome.tsx` (inline NavLink tabs → NavyPageSubNav)
 
 ## Remaining (fill as you inventory)
-- [ ] Fuel — FuelHome inline tabs (8 tabs)
+- [x] Fuel — FuelPlannerHome NavyPageSubNav (LST-F10156 / Cursor rescue)
 - [ ] Finance — FinanceModuleTabs (8 tabs)
 - [ ] Legal — LegalModuleTabs (10 tabs)
 - [ ] Factoring — FactoringHome inline tabs (~13 routes)
