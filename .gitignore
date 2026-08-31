@@ -1,1 +1,3 @@
 CLAUDE.md
+node_modules/
+apps/frontend/src/generated/module-completion.ts
