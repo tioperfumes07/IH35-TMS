@@ -1,2 +1,4 @@
-# INBOX — CURSOR · 16:30 CT · ★ VOID-10 LEAD
-Merge continuously. Keep Devin/CC-3/CC-1 unblocked. Deploy tip (Rule 42). Cascade reds = their fix, not merge-red. Nothing else is priority until 10 void+recreate hop evidence lands.
+# INBOX — CURSOR · 16:40 CT · ★ VOID-10 ONLY
+Owner+Claude ACK: SETL-GRID withdrawn · SETL-UX-01 LOW parked · Cascade red stays red · Codex OPEN=0 stood down · pick list accepted.
+
+**NOW:** merge continuously · keep Devin-A + CC-3 unblocked · live-void L-0002 in order (invoice→bill→line→load) · **nothing else**.

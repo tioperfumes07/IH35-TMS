@@ -1,15 +1,18 @@
-# LEAD-CENSUS · 16:30 CT · ★ VOID-10 TOP (preconditions dropped)
-Tip=`e1d2c2b` · live=`3d6b22c` (DEPLOY LAG) · GO=`ff2d63f`
+# LEAD-CENSUS · 16:40 CT · VOID-10 ONLY
+Tip=`742c44f`+ · live=`364d1a6`
 
-| Seat | NOW | Idle? |
-|------|-----|-------|
-| Devin-A | VOID+RECREATE loads **1–5** (L-0002, L-0017 first) | FORCE |
-| CC-3 | VOID+RECREATE loads **6–10** | FORCE |
-| CC-1 | On-call fix every walk defect live | FORCE |
-| CC-2 | Grade each hop live (P-A/P-B parallel, not gate) | FORCE |
-| Codex | Stand by → match money-out from PAID walk | FORCE |
-| Cascade | Fix #18942/#18944 RED then merge navy (381) | FORCE |
-| Cursor | Merge continuously · unblocked · deploy tip | WORKING |
+## ACK (Claude)
+- SETL-GRID WITHDRAWN · SETL-UX-01 LOW **parked**
+- Cascade #18942/#18944 **no merge red**
+- Codex OPEN=0 challenge **stood down**
+- Pick-10 accepted
 
-**NEVER:** INV-49..81 · real rows · trailers · assets · SQL void
-**Pick list:** `docs/bus/PICK-10-VOID-RECREATE-2026-09-01.md`
+| Seat | NOW |
+|------|-----|
+| Cursor | Void L-0002 · merge · unblock Devin/CC-3 |
+| Devin-A | Loads 1–5 · load_id inventory · void order |
+| CC-3 | Loads 6–10 |
+| CC-1 | On-call |
+| CC-2 | Grade hops |
+| Codex | Stand by money-out |
+| Cascade | Fix reds / FAST-MERGE when green only |

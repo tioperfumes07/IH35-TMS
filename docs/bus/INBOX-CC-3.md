@@ -1,10 +1,6 @@
-# INBOX — CC-3 · 16:30 CT · ★ TOP = VOID 10 (split)
-**READ** `GO-VOID-10-AND-RECREATE-LIVE-NOW` + `PICK-10-VOID-RECREATE-2026-09-01.md`
+# INBOX — CC-3 · 16:38 CT · VOID-10 loads 6–10 + ORDER LAW
+**READ** `CORRECTION-SETL-GRID-AND-BILL-LINKAGE-2026-09-01.md`
 
-**YOU OWN LOADS 6–10** (L-0010 + L-20260830-0029..0026).
+Void order: **invoice → bill → settlement line → load**. `driver_bills.load_id` NOT NULL + RESTRICT.
 
-Same law as Devin: UI void by UUID · reverse never delete · full recreate to PAID · hop evidence every step.
-IF UI cannot void → FINDING → CC-1 fixes live. No SQL around.
-
-Park insurance-request / reactivate / navy until your 5 are voided+recreated (or blocked on a filed defect).
-COI stays policy-level when you return to insurance.
+Own loads 6–10. Start L-0010. UI only. OUTBOX hop evidence. FAST-MERGE any fix PRs same turn.

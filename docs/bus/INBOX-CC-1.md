@@ -1,7 +1,4 @@
-# INBOX — CC-1 · 16:30 CT · ★ ON CALL FOR VOID-10 WALK
-**READ** `GO-VOID-10-AND-RECREATE-LIVE-NOW-2026-09-01.md`
+# INBOX — CC-1 · 16:38 CT · ON CALL + VOID ORDER
+Correction `742c44f`: bill↔load FK is real. Fix any UI that cannot void invoice/bill/settlement/load **in that order**. SETL-UX-01 (bills panel above grid) = LOW, park until after void-10.
 
-Devin-A + CC-3 are voiding/recreating 10 sample loads live. **You fix every defect they hit in real time** (void UI missing, bill mint path, remint, settlement line, JE imbalance, factor, bank money-out).
-
-Ship fix → Cursor merges → they re-click. No remint-only theater while void-10 is top.
-Pair backfill for 15 roster = AFTER this walk unless a recreate hop needs the accounts now.
+Stand by for Cursor/Devin/CC-3 defects live.
