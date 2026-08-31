@@ -53,10 +53,18 @@ function assertAll(src) {
     }
   }
 
+  // GR1-MONEY-GUARDS-STALE-AFTER-CANONICAL-REFRACTORS — these three anchors required the bare
+  // two-argument `app.post(path, async (req, reply) => {...})` signature. A later rate-limit pass
+  // inserted a Fastify options object (`{ config: { rateLimit: {...} } }`) as the second argument on
+  // all three routes, making the handler the THIRD argument — the guard then reported "route not
+  // found or shape drifted" even though requireSettlementWriteRole is still called first thing
+  // inside every one of them (live-confirmed, unchanged). The optional-options-object group below
+  // tolerates that shape without weakening what's actually asserted (still requires the very next
+  // statement in the handler body to be `const user = requireSettlementWriteRole(...)`).
   const routeGuardPairs = [
-    [/app\.post\("\/api\/v1\/driver-finance\/settlements", async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "POST /settlements"],
-    [/app\.patch\("\/api\/v1\/driver-finance\/settlements\/:id\/acknowledge", async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "PATCH /:id/acknowledge"],
-    [/app\.patch\("\/api\/v1\/driver-finance\/settlements\/:id\/finalize", async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "PATCH /:id/finalize"],
+    [/app\.post\("\/api\/v1\/driver-finance\/settlements",\s*(?:\{[\s\S]*?\},\s*)?async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "POST /settlements"],
+    [/app\.patch\("\/api\/v1\/driver-finance\/settlements\/:id\/acknowledge",\s*(?:\{[\s\S]*?\},\s*)?async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "PATCH /:id/acknowledge"],
+    [/app\.patch\("\/api\/v1\/driver-finance\/settlements\/:id\/finalize",\s*(?:\{[\s\S]*?\},\s*)?async \(req, reply\) => \{\s*\n\s*const user = (\w+)\(req, reply\);/, "PATCH /:id/finalize"],
   ];
   for (const [re, label] of routeGuardPairs) {
     const m = src.match(re);
@@ -85,10 +93,12 @@ const read = () => fs.readFileSync(path.join(ROOT, FILE), "utf8");
 if (SELFTEST) {
   const src = read();
 
-  // Plant defect 1: regress POST /settlements back to the role-agnostic authed().
+  // Plant defect 1: regress POST /settlements back to the role-agnostic authed(). Mutation target
+  // matches the CURRENT three-argument shape (rate-limit options object included) — the guard's own
+  // GR1 fix note above explains why this can no longer be the bare two-argument form.
   const planted1 = src.replace(
-    'app.post("/api/v1/driver-finance/settlements", async (req, reply) => {\n    const user = requireSettlementWriteRole(req, reply);',
-    'app.post("/api/v1/driver-finance/settlements", async (req, reply) => {\n    const user = authed(req, reply);',
+    'const user = requireSettlementWriteRole(req, reply);\n    if (!user) return;\n    const parsed = createBodySchema.safeParse',
+    'const user = authed(req, reply);\n    if (!user) return;\n    const parsed = createBodySchema.safeParse',
   );
   if (planted1 === src) {
     console.error(`${LABEL} SELFTEST SETUP FAILED: mutation 1 target not found (guard text drifted from real code)`);

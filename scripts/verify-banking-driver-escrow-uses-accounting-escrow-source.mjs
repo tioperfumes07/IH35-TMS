@@ -46,11 +46,19 @@ function failures(sources) {
   }
 
   // Site 3: banking.routes.ts virtual "escrow" register branch
+  // GR1-MONEY-GUARDS-STALE-AFTER-CANONICAL-REFRACTORS — this used to slice a fixed 1400 chars from
+  // the branch start, which stopped BEFORE the real accounting.escrow_postings/escrow_accounts joins
+  // once BANKING-DRIVER-ESCROW-REGISTER-MISSING-SETTLEMENT-JE-LINK/BANK-F5751/BANK-F6050 added ~1400
+  // chars of explanatory comment ahead of the SELECT (live-measured: FROM lands at offset 2529, JOIN
+  // at 2578, branch itself runs 3381 chars before the next `if (virtual ===` sibling). A magic number
+  // goes stale every time a future finding adds another comment; slicing to the NEXT sibling `if
+  // (virtual === ` branch (or end of file) is self-sizing and cannot go stale the same way again.
   const escrowBranchStart = bankingRoutes.indexOf('if (virtual === "escrow")');
   if (escrowBranchStart === -1) {
     out.push(`${BANKING_ROUTES}: virtual "escrow" register branch not found — re-check this guard`);
   } else {
-    const scoped = bankingRoutes.slice(escrowBranchStart, escrowBranchStart + 1400);
+    const nextBranch = bankingRoutes.indexOf('if (virtual === ', escrowBranchStart + 1);
+    const scoped = bankingRoutes.slice(escrowBranchStart, nextBranch === -1 ? undefined : nextBranch);
     if (/FROM driver_finance\.escrow_ledger/.test(scoped)) {
       out.push(`${BANKING_ROUTES}: virtual escrow register branch still sources driver_finance.escrow_ledger`);
     }
