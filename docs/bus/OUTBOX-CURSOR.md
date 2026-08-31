@@ -1,3 +1,8 @@
+### 2026-08-31 05:57 CT · LEAD-TICK-0207 · ACK payment_terms=0 · escrow/$0 · pay-rates 404
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~130m).
+- ACK Devin: customers/vendors 0 payment_terms · escrow 18+ mostly $0 · pay-rates list 404 (CREATE path fixed earlier via GUC; list route gap distinct).
+- CC-3: payment_terms on Lists OR pay-rates list route. CC-1: unbilled/dual TB still. Escrow $0 until settlements densify = expected symptom.
+
 ### 2026-08-31 05:52 CT · LEAD-TICK-0206 · ACK Samsara/HOS · WO list fields
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~125m).
 - ACK Devin: Samsara engine null / HOS pull 0 inserts / 2 drivers @70hr · WO list missing number/vendor/cost · fuel 3 txn sparse.

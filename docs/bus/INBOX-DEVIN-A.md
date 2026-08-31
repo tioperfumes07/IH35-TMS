@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 05:57 CT**
+1. ACK'd payment_terms=0 + escrow mostly $0 + pay-rates 404 (CREATE already live).
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0207.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 05:52 CT**
 1. ACK'd Samsara/HOS gaps + WO list missing fields.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0206.
