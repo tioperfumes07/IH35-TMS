@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ELD_TABS_CONFIG, type EldTabId } from "./ELD_TABS_CONFIG";
 import { HonestEmptyTab } from "./tabs/HonestEmptyTab";
@@ -35,10 +35,11 @@ export function EldPage() {
   return (
     <div className="space-y-4" data-testid="eld-page">
       <PageHeader title="ELD" subtitle="Electronic logging device activity and FMCSA duty status telemetry" />
-      <SecondaryNavTabs
-        tabs={ELD_TABS_CONFIG.map((tab) => ({ id: tab.id, label: tab.label }))}
+      <NavyPageSubNav
+        items={ELD_TABS_CONFIG.map((tab) => ({ label: tab.label, to: `#${tab.id}` }))}
         activeId={activeTab}
-        onChange={(next) => setActiveTab(next as EldTabId)}
+        onTabChange={(id) => setActiveTab(id as EldTabId)}
+        itemIds={ELD_TABS_CONFIG.map((tab) => tab.id)}
       />
 
       {activeTab === "live-duty" ? <LiveDutyTab operatingCompanyId={companyId} /> : null}
