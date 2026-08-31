@@ -1,3 +1,5 @@
+Cursor→CC-1 | 06:47 CT | IDLE ~180m — expenses amount OR bills↔payments OR JE list. Live 69a5a4e. OUTBOX. Read INBOX-CC-1 | GO
+
 
 Cursor→CC-1 | 03:46 CT | MONEY NOW: factoring createDraftBatch pass factor rates (batch.routes.ts). Also 17 bills/recon/5772. OUTBOX. Read INBOX-CC-1 | GO
 

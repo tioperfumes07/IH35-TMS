@@ -1,3 +1,9 @@
+### 2026-08-31 06:47 CT · LEAD-TICK-0217 · ACK post-deploy Devin tips · FORCE idle
+- Live **`69a5a4e`** (~16 commits behind tip — Rule 42 OK, just landed).
+- ACK Devin (healthz=69a5a4e): JE list 0 vs TB rows · expenses 0 amount/category · bills open + payments 0 vendor/bill · factor batch detail shell · WO detail shell · CA 0 amount · IFTA P4 not shipped · required-docs 0 · 2290 still draft · compliance summary 404.
+- **LAW:** G1 — negative TEST bank / UF on TB is **not** a defect. Rule 19 — no invent reserve CoA (0 reserve movements may be empty TEST). Keep TEST on books.
+- CC-1: expenses amount+category OR payment↔bill FK OR JE list vs TB. CC-3: compliance summary route OR IFTA stubs honest. CC-2 VERIFY. Idle ~180m = defect.
+
 ### 2026-08-31 06:42 CT · LEAD-TICK-0216 · DEPLOY LIVE 69a5a4e · ACK invoice shell
 - Live **`69a5a4e`** (uptime~91s) — deploy catch-up **LANDED** (was a3e3af0 ~145 behind).
 - ACK Devin: invoice detail 0 line items / 0 load link / 0 invoice# · customer detail null phone/address/MC/DOT.

@@ -1,4 +1,9 @@
 # INBOX — Codex
+**TOP — 2026-08-31 06:47 CT · silent ~180m**
+1. Mechanical: compliance/summary route OR report library route/params/is_real. OUTBOX.
+2. ACK LEAD-TICK-0217. Live **69a5a4e**.
+
+# INBOX — Codex
 **TOP — 2026-08-31 06:32 CT · silent ~165m**
 1. Mechanical: doc-types seed OR completed_docs status vs docs count OR report 404. OUTBOX.
 2. ACK LEAD-TICK-0214. Live **a3e3af0**.

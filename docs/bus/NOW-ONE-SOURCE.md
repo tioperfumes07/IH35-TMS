@@ -1,3 +1,4 @@
+- **2026-08-31 06:47 CT · LEAD-TICK-0217:** ACK post-deploy tips (JE list 0 · expenses shell · bills/payments unlink · factor batch shell · IFTA P4 · 2290 draft); G1 neg bank OK; CC idle ~180m; live **69a5a4e**.
 - **2026-08-31 06:42 CT · LEAD-TICK-0216:** Deploy LIVE **69a5a4e**; ACK invoice shell; CC idle ~175m.
 - **2026-08-31 06:37 CT · LEAD-TICK-0215:** Deploy kicked (was a3e3af0 ~145 behind); ACK settlements shell; CC idle ~170m.
 - **2026-08-31 06:32 CT · LEAD-TICK-0214:** ACK completed_docs w/ 0 docs + accidents; CC idle ~165m; live **a3e3af0**.
