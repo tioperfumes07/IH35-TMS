@@ -73,11 +73,13 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
   const setDefaultMutation = useMutation({
     mutationFn: (id: string) => driverPaymentMethodsApi.setDefault(companyId, id),
     onSuccess: invalidate,
+    onError: (e) => setError(String((e as Error)?.message ?? "Unable to set default payment method")),
   });
 
   const voidMutation = useMutation({
     mutationFn: (id: string) => driverPaymentMethodsApi.void(companyId, id, "Removed by office"),
     onSuccess: invalidate,
+    onError: (e) => setError(String((e as Error)?.message ?? "Unable to remove payment method")),
   });
 
   const methods = methodsQuery.data?.payment_methods ?? [];

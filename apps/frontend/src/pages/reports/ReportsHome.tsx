@@ -24,6 +24,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { useNavigate } from "react-router-dom";
 import { ReportsSubNav } from "./ReportsSubNav";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const BLOCK_W_FREQUENT_ROWS: FrequentlyRunReport[] = [
   {
@@ -91,21 +92,22 @@ export function ReportsHomePage() {
   // that reads as “proven empty”). Real 0 is fine once the query succeeds.
   const ifta = kpiQuery.data?.ifta_status;
   const kpiReady = kpiQuery.isSuccess && kpiQuery.data != null;
+  const anyQueryError = kpiQuery.isError || frequentQuery.isError || iftaQuery.isError;
   const reportsKpis: ReportsKpi[] = [
     {
       label: "Available reports",
       value: kpiReady ? String(kpiQuery.data?.available_reports ?? 0) : "—",
-      meta: kpiReady ? "categories live" : "Loading…",
+      meta: kpiReady ? "categories live" : kpiQuery.isError ? "Failed to load" : "Loading…",
     },
     {
       label: "Custom schedules",
       value: kpiReady ? String(kpiQuery.data?.scheduled ?? 0) : "—",
-      meta: kpiReady ? "auto-emailed" : "Loading…",
+      meta: kpiReady ? "auto-emailed" : kpiQuery.isError ? "Failed to load" : "Loading…",
     },
     {
       label: "Run last 7 days",
       value: kpiReady ? String(kpiQuery.data?.run_last_7d ?? 0) : "—",
-      meta: kpiReady ? "across all users" : "Loading…",
+      meta: kpiReady ? "across all users" : kpiQuery.isError ? "Failed to load" : "Loading…",
     },
     ifta
       ? {
@@ -114,7 +116,7 @@ export function ReportsHomePage() {
           meta: `${formatDateUS(ifta.dueAt)} — file before`,
           warn: true,
         }
-      : { label: "IFTA due", value: "—", meta: "Loading…", warn: false },
+      : { label: "IFTA due", value: "—", meta: iftaQuery.isError ? "Failed to load" : "Loading…", warn: false },
   ];
 
   function handleRunReport(row: FrequentlyRunReport) {
@@ -175,6 +177,13 @@ export function ReportsHomePage() {
         activeCategory={category}
         onCategoryChange={setCategory}
       />
+
+      {anyQueryError ? (
+        <ListErrorBanner
+          message="Reports data could not be loaded."
+          onRetry={() => { void kpiQuery.refetch(); void frequentQuery.refetch(); void iftaQuery.refetch(); }}
+        />
+      ) : null}
 
       <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
         {reportsKpis.map((item) => (

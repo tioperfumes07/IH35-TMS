@@ -24,6 +24,7 @@ import { DrugAlcoholTable } from "./components/DrugAlcoholTable";
 import { SafetyEventsTable } from "./components/SafetyEventsTable";
 import { SafetyKpiRow } from "./components/SafetyKpiRow";
 import { TrainingTable } from "./components/TrainingTable";
+import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 
 const SAFETY_SUBNAV = [
   "Events",
@@ -119,6 +120,13 @@ export function SafetyHomePage() {
       </div>
 
       <SafetyKpiRow kpis={kpisQuery.data} />
+
+      {kpisQuery.isError || eventsQuery.isError ? (
+        <ListErrorBanner
+          message="Safety data could not be loaded."
+          onRetry={() => { void kpisQuery.refetch(); void eventsQuery.refetch(); }}
+        />
+      ) : null}
 
       {tab === "Training" ? (
         <TrainingTable rows={trainingQuery.data?.training_completions ?? []} />

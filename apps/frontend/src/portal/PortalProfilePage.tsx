@@ -50,12 +50,19 @@ export function PortalProfilePage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["portal", "profile"] });
     },
+    onError: () => {
+      const el = document.getElementById("portal-profile-error");
+      if (el) el.textContent = "Failed to save preferences. Please try again.";
+    },
   });
 
   return (
     <div className="max-w-lg space-y-4">
       <h1 className="text-xl font-semibold text-slate-900">Profile & notifications</h1>
       {profileQuery.isLoading ? <p className="text-sm text-slate-600">Loading…</p> : null}
+      {profileQuery.isError ? (
+        <p className="text-sm text-red-700">Failed to load profile. <button type="button" className="font-semibold underline" onClick={() => void profileQuery.refetch()}>Retry</button></p>
+      ) : null}
       {profileQuery.data ? (
         <form
           className="space-y-4 rounded-sm border border-slate-200 bg-white p-4"
@@ -95,6 +102,7 @@ export function PortalProfilePage() {
             {saveMutation.isPending ? "Saving…" : "Save preferences"}
           </Button>
           {saveMutation.isSuccess ? <p className="text-sm text-green-700">Saved.</p> : null}
+          <p id="portal-profile-error" className="text-sm text-red-700" />
         </form>
       ) : null}
     </div>

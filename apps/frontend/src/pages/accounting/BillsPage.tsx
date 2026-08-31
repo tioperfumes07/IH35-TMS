@@ -503,6 +503,7 @@ export function BillsPage() {
         key: "is_reconciled",
         label: "Reconciled",
         sortable: true,
+        defaultHidden: true,
         sortValue: (bill) => (bill.is_reconciled ? 1 : 0),
         render: (bill) => <ReconciledBadge isReconciled={bill.is_reconciled} />,
       },
@@ -521,6 +522,7 @@ export function BillsPage() {
         key: "insurance_claim_id",
         label: "Claim",
         sortable: true,
+        defaultHidden: true,
         sortValue: (bill) => bill.insurance_claim_number || bill.insurance_claim_id || "",
         render: (bill) =>
           bill.insurance_claim_id ? (
@@ -537,6 +539,7 @@ export function BillsPage() {
         key: "linked_work_order_uuid",
         label: "Work order",
         sortable: true,
+        defaultHidden: true,
         sortValue: (bill) => bill.linked_work_order_display_id || bill.linked_work_order_uuid || "",
         render: (bill) =>
           bill.linked_work_order_uuid ? (
@@ -553,6 +556,7 @@ export function BillsPage() {
         key: "memo",
         label: "Memo",
         sortable: true,
+        defaultHidden: true,
         render: (bill) => (
           <span className="single-line-name" title={bill.memo ?? undefined}>
             {bill.memo || "—"}

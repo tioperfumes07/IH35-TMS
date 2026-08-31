@@ -119,7 +119,7 @@ export function SettlementDisputeList() {
                         id: row.id,
                         status: "in_review",
                         resolution_notes: "Marked in review from drivers disputes tab",
-                      })
+                      }).catch(() => undefined)
                     }
                   >
                     Start review

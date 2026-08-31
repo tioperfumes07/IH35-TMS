@@ -1,3 +1,8 @@
+### 2026-08-31 11:00 CT · LIGHTNING
+- Assist-ship Cascade silent-error FE.
+- Force CC-1 rate create (newest still 08-07).
+- Cascade LOAD-4 Live Chrome.
+
 ### 2026-08-31 10:55 CT · LEDGER REGISTER
 - Devin L1/L2 → checklist 09; JE 236 proven; 251 false.
 - Charge lines CC-2; L2 API flagged; Cascade still stuck.
