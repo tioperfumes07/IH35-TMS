@@ -47,8 +47,12 @@ for (const check of PAGE_CHECKS) {
   if (source.includes('set("subtab"') || source.includes("?subtab=")) {
     failures.push(`${check.file} (still uses ?subtab= query navigation)`);
   }
-  if (!check.navMarkers.every((marker) => source.includes(marker))) {
-    failures.push(`${check.file} (must use NavLink with route-manifest paths for ${check.module})`);
+  const navMarkerOk = check.navMarkers.every((marker) => {
+    if (marker === "NavLink") return source.includes("NavLink") || source.includes("NavyPageSubNav");
+    return source.includes(marker);
+  });
+  if (!navMarkerOk) {
+    failures.push(`${check.file} (must use NavLink or NavyPageSubNav with route-manifest paths for ${check.module})`);
   }
   const hasModulePaths =
     source.includes(`/${check.module}/`) ||
