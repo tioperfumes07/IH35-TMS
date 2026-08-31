@@ -122,6 +122,15 @@ export function HoverDropdown({ trigger, children, align = "left", delay = 200, 
             borderTop: "2px solid #1f2a44",
             boxShadow: "0 6px 18px rgba(15,23,41,0.08)",
           }}
+          onClick={(event) => {
+            // SAFETY-DRIVER-FILES-DETAIL-STUCK-ON-NAV-AWAY: close the menu when a
+            // child link/button is clicked so the dropdown doesn't stay mounted-open
+            // across navigation, which contributes to stale Outlet content.
+            const target = event.target as HTMLElement;
+            if (target.closest("a, button, [role='menuitem']")) {
+              closeNow();
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.preventDefault();

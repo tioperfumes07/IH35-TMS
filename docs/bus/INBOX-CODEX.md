@@ -1,23 +1,30 @@
-# CURRENT GO — CODEX · 014–024 end-to-end (both ends)
+# CURRENT GO — CODEX · 014/13521 **after deploy #18491**
 
 Cursor→Codex | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
-**NEVER IDLE · NO WAIT on deploy/Devin-A/CC-1.**
+**NEVER IDLE · NO WAIT.**
 
 ## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
 
-Search: `FARO-PARTITION-REV-E-2026-08-31.md` · crosswalk · `CREATE-TEST-THEN-VOID-LAW` · `verify-one-load-one-open-invoice.mjs` · repo grep. **13521–13537 = yours only.** Devin-A owns 025+. Not Jorge.
+Search: crosswalk · `BookLoadModalV4.tsx` · `editLoadMapping.ts` · backfill script.
 
 ---
 
-## BLOCKING — CREATE NOW
+## BLOCKING — Book Load AT# field shipped (#18491)
 
-`node scripts/verify-one-load-one-open-invoice.mjs` → PASS (main #18468) → **014 / load 13521** deliver → invoice → factor → walk partition table
+**014 / load 13521:** After deploy SHA carries #18491, book or PATCH with **`live_load_number = "13521"`** via:
 
-## FREE — same minute if Chrome/deploy stalls
+- Book Load wizard → **AlwaysTrack load # (legacy)** field, **or**
+- `PATCH /api/v1/dispatch/loads/:id` with `live_load_number`
+
+**Do not** duplicate inactive driver Jorge Luis Infante Corona — use existing UUID + Owner override on book if required.
+
+**Do not** proceed until healthz SHA ≥ merge #18491.
+
+## FREE — same minute
 
 - `node scripts/tieout/dispatch-delivered-revenue.mjs` OBSERVED  
-- Reverse-link / connectivity fixes in your lane  
-- Crosswalk row verify before each create  
+- Crosswalk prep 015+  
+- Reverse-link fixes  
 
-ACK: `Codex | ACK | REV-E | NOW=014-13521|FREE=disp-tieout | GO`
+ACK: `Codex | ACK | REV-E | NOW=014-after-deploy|FREE=disp-tieout | GO`

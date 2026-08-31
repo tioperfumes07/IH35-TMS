@@ -9,6 +9,36 @@
     "claimed_by": "cursor",
     "purpose": "verify-delivered-status-single-source"
   },
+  "2430": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-book-load-live-load-number-field"
+  },
+  "2432": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-planner-frozen-name-always-split"
+  },
+  "2434": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-subnav-badges-exception-only"
+  },
+  "2436": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-planner-bar-label-tier"
+  },
+  "2438": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-load-detail-complete-transition"
+  },
+  "2440": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-hover-dropdown-close-on-menu-click"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",

@@ -254,6 +254,10 @@ const createDispatchLoadBodySchema = z.object({
   assigned_trailer_unit_id: z.string().uuid().optional(),
   temperature_type: z.enum(["frozen", "fresh"]).optional(), // W-FIX-1: reefer Frozen/Fresh → loads.temperature_type
   assigned_primary_driver_id: z.string().uuid().optional(),
+  // Historical imports deliberately do not widen the live active-driver picker. The existing inactive
+  // driver is supplied by UUID with an attributed reason and validated again inside bookLoad().
+  historical_import_driver_id: z.string().uuid().optional(),
+  historical_import_reason: z.string().trim().min(10).max(1000).optional(),
   assigned_secondary_driver_id: z.string().uuid().optional(),
   team_id: z.string().uuid().optional(),
   temp_fahrenheit: z.number().int().optional(),

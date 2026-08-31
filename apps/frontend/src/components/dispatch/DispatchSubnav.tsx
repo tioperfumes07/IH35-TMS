@@ -222,6 +222,8 @@ function CountBadge({
   badgeKey?: string;
 }) {
   if (count == null || count === 0) return null;
+  // PLAN-04: only exception queues show badges — spec says non-alert tabs stay clean
+  if (badgeKey && !ALERT_BADGE_KEYS.has(badgeKey)) return null;
   const alert = Boolean(badgeKey && ALERT_BADGE_KEYS.has(badgeKey));
   const noun = count === 1 ? "item" : "items";
   return (
