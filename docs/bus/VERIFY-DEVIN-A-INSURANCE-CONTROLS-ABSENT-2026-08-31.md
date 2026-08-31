@@ -46,33 +46,18 @@ and will not catch the real case. **Build it on policy-schedule membership.**
 
 ---
 
-# ⛔ OWNER DECISION REQUIRED — two safety controls do not exist
-Devin proved both by clicking, and I accept both findings.
+# ✅ OWNER RULINGS LANDED — `331282f` / `OWNER-RULINGS-DRIVER-ACCOUNTS-AND-INSURANCE-REQUEST-2026-09-01.md`
 
-**1 · Dispatch does not block an unscheduled driver on a scheduled truck.**
-The form accepted the combination. Only a customer FMCSA warning and a DVIR authorization appeared —
-no insurance or scheduling block of any kind.
+**1 · Unscheduled driver — WARN + CONFIRM + owner override (NOT hard block).**
+Hard-block recommendation **WITHDRAWN**. Dispatcher must get an on-screen message and **explicitly
+confirm**; confirm is logged (who/when/driver/load/truck); owner override beyond that. Build on
+**policy-schedule membership**, never `assigned_driver_id`. Setup-era list + every driver is sent to
+insurer → "not on schedule" ≈ workflow state. Insurance request feature AUTHORIZED (COI customer +
+driver-add via `insurance.coi_request` + existing email).
 
-**2 · Dispatch does not block the 1,500-mile / Mexico radius.**
-Laredo TX → New York NY, ~1,800 practical miles, well beyond the 1,500-mile limit. **Book + dispatch
-stayed ENABLED.** No radius blocker, no Mexico blocker.
+**2 · 1,500-mile / Mexico radius — CLOSED. Not a defect.**
+`DISPATCH-NO-1500-MILE-MEXICO-RADIUS-BLOCK` deleted from every queue. Devin-A Laredo→NY = correct.
+Nobody builds a radius block. Nobody re-raises.
 
-### Why this matters, in the policy's own words
-> "Coverage only applies for Scheduled Vehicles driven by Scheduled Drivers listed in the policy.
-> Unscheduled Vehicles or Drivers are Excluded."
-> "MILEAGE RESTRICTIONS: … a strict condition of this policy and coverage. The policy does not
-> provide coverage beyond the mileage stated."
-
-Today the software will happily dispatch a load that has **no liability coverage behind it**, and
-nothing on the screen tells the dispatcher. This is not a reporting gap — it is the difference
-between an insured load and an uninsured one.
-
-### The decision
-**Build both blocks before USMCA launch, or accept the exposure in writing.** My recommendation is
-to build them, as **hard blocks with a logged owner override** — not warnings. A warning gets
-clicked through by a dispatcher under pressure at 2am; that is precisely when it matters.
-The data to enforce it already exists: the AL vehicle schedule (14 VINs), the AL driver schedule
-(13 names), and the 1,500-mile radius from the point of entry.
-
-**Filed:** `DISPATCH-NO-UNSCHEDULED-DRIVER-ON-SCHEDULED-TRUCK-BLOCK` ·
-`DISPATCH-NO-1500-MILE-MEXICO-RADIUS-BLOCK`. Both stay OPEN pending the owner's ruling.
+**Filed open (correct shape):** warn+confirm+log+owner-override on policy-schedule membership +
+insurance request pipeline. **Closed:** mileage hard-block · unscheduled hard-block.

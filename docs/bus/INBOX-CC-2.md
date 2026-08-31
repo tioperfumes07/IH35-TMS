@@ -1,15 +1,10 @@
-# INBOX — CC-2 · HOLD · P-A THEN P-B
-**TOP — 15:49 CT · NOTHING VOIDED UNTIL YOU SAY P-A + P-B GREEN**
+# INBOX — CC-2 · 16:05 CT
+**TOP — P-A then P-B (VOID-FIRST). Nothing voids without you GREEN.**
 
-Read `docs/bus/CLAUDE-GUARD-AUDIT-AND-VOID-FIRST-2026-08-31.md` + `SEAT-ORDERS-VOID-FIRST-2026-08-31.md`.
+1. **P-A:** named-CI honesty — 190 vs ~4,490 recount; selftest-mutates-source class (`GUARD-SELFTEST-MUTATES-SOURCE-2026-08-31.md`). Report GREEN only with **named CI step ids**.
+2. **P-B:** then grade void list (`docs/audit/VOID-LIST-2026-08-31.md` — #18932 published 421). Do **not** execute void.
+3. ACK L-0017 Neon $264/1 line (Cursor Live Re-check) — stop saying $0.
+4. Grade CC-1 driver-account **pair** backfill when it lands (ruling §1).
+5. `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` — verify after CC-1 fix.
 
-**P-A (NOW):** hops book/dispatch · record-expense · close-trip re-check · bank-match-open —
-each guard file + **named CI step** + selftest + runs in CI. Promote from the 4,490 if needed.
-OUTBOX: `P-A GREEN` only with named+running guards.
-
-**P-B (NEXT):** Aggregate RAN/SKIPPED reporting. Then void-list grade.
-
-**L-0017:** Neon CLOSED `$264` / 1 line (Cursor Live Re-check) — **ACK grade**. L-0002 still zero bill.
-**P0 Book:** DEAD (L-20260831-0031). Settlement hop NOT proven ($0 shells). Escrow=3 not 21.
-
-**TEST-FREEZE** · withdrawn totals banned · named-CI law.
+**CLOSED forever:** `DISPATCH-NO-1500-MILE-MEXICO-RADIUS-BLOCK` — delete from every queue (ruling §2).
