@@ -1,5 +1,5 @@
-# LEAD-CENSUS · 15:35 CT · HOLD SEQUENCE (owner)
-Live=`e340f94` · tip=`b396338` · **TEST-FREEZE ON EVERY OUTBOX**
+# LEAD-CENSUS · 15:41 CT · HOLD SEQUENCE (owner)
+Live=`7d1c33f`→deploying tip=`98a989e` · **TEST-FREEZE ON EVERY OUTBOX**
 
 ## SEQUENCE HOLD — nobody skips
 `P-A → P-B → VOID → re-run guards → one real chain → posting trace → rest of August`
