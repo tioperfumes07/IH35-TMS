@@ -6,6 +6,7 @@ import { applyPendingDeductionsToSettlementWithNetFloor } from "./settlement-ded
 import { applyAutoDeductionsToSettlement } from "../settlements/auto-deductions/apply.js";
 import { computeSettlementContractTerms, SETTLEMENT_CONTRACT_TERMS_FLAG } from "./settlement-contract-terms.service.js";
 import { appendSettlementLineFromDriverBillIfMissing, fetchTeamDriversForLoad } from "./settlement-engine.js";
+import { fromMdataStatus } from "../dispatch/load-state-machine.js";
 
 /**
  * OFF-by-default flag (per-entity-only; routed through the canonical `isEnabled` resolver, NOT a
@@ -702,6 +703,12 @@ export async function pingSettlementOnLoadEvent(
     actorUserId: string;
   }
 ): Promise<void> {
+  // PINGSETTLEMENT-EXACT-MATCH-GAP: normalize the target status through fromMdataStatus
+  // so raw mdata values (at_pickup, at_delivery, delivered) from driver-PWA callers are
+  // mapped to their narrow DispatchStatus equivalents before the exact-match checks below.
+  // fromMdataStatus is idempotent on already-narrow values (e.g. "in_transit" -> "in_transit").
+  const normalizedStatus = fromMdataStatus(opts.dispatchTargetStatus);
+
   const loadRes = await client.query<{
     assigned_primary_driver_id: string | null;
     assigned_secondary_driver_id: string | null;
@@ -720,7 +727,7 @@ export async function pingSettlementOnLoadEvent(
 
   const team = await fetchTeamDriversForLoad(client, { operatingCompanyId: opts.operatingCompanyId, loadId: opts.loadId });
 
-  if (opts.dispatchTargetStatus === "in_transit") {
+  if (normalizedStatus === "in_transit") {
     if (team) {
       await openLoadBookendedSettlement(client, {
         driverId: team.primaryDriverId,
@@ -751,7 +758,7 @@ export async function pingSettlementOnLoadEvent(
     return;
   }
 
-  if (opts.dispatchTargetStatus === "delivered_pending_docs") {
+  if (normalizedStatus === "delivered_pending_docs") {
     await closeSettlementForFinalLoad(client, {
       loadId: opts.loadId,
       operatingCompanyId: opts.operatingCompanyId,
