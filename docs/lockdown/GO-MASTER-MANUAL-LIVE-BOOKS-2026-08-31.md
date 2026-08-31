@@ -155,6 +155,7 @@ CC-1 | ACK | MASTER-MANUAL-LIVE-BOOKS | GO
 READ: docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md (this file)
 
 ORDER:
+0) **CASCADE OOS → YOU:** #18546 live_load_number Chrome reverts + deliver 13508–13520 (NO Faro invoice create) — TOP until L-20260830-0012 proved
 1) L13512 12-step specimen (CC-1-HUMAN-SEQUENCE-REPLAY.txt) — when deploy allows #18535/#18548
 2) 016: $4200 invoice → $400 CM unknown_pending_backup → factor $3800 → fund to 1296
 3) Remaining Faro 33 in date order (your partition: 004 done path + settlements 5772)
