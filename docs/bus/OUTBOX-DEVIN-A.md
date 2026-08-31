@@ -133,6 +133,32 @@ LOAD-DETAIL-MARK-IN-TRANSIT-DEAD-BUTTON — Live Chrome re-test on L-0006:
 - Confirms CC-3's narrowing: dead-button is load-specific to L-0004, not a blanket bug
 - L-0006 is a different load that was also dispatched — button works fine here
 
+Devin-A | L-0006 FULL LIFECYCLE via Live Chrome = POSITIVE CONTROL (settlement works) | GO
+
+L-20260831-0006 — FULL LIFECYCLE via Live Chrome UI clicks (all 3 transitions):
+- dispatched → in_transit: clicked "Mark in transit" — WORKED
+- in_transit → delivered_pending_docs: clicked "Mark delivered (pending docs)" — WORKED
+- delivered_pending_docs → completed_docs_received: clicked "Mark completed (docs received)" — WORKED
+
+NEON RESULT — CORRECT SETTLEMENT (positive control):
+- L-0006: status=completed_docs_received, is_sample_data=true
+- B-20260831-0006: $264.00, open
+- settlement_lines: 1 row, amount=$264.00, line_type=earnings, source_driver_bill_id linked
+- S-20260831-0006: status=closed, gross_pay=$264.00, net_pay=$264.00, trip_closed_at=2026-08-31T18:37:58
+
+CONTRAST WITH DEFECT B CASES:
+- L-0004 (S-0004): closed, $0.00, zero lines — DEFECT B
+- L-0017 (S-0017): closed, $0.00, zero lines — DEFECT B (even with CC-1 fix deployed)
+- L-0006 (S-0006): closed, $264.00, 1 line — CORRECT
+
+KEY INSIGHT: L-0006 worked because the settlement auto-closed at delivered_pending_docs
+and the bill was already minted at that point. The settlement line was attached during
+the delivered_pending_docs close, not at completed_docs_received. DEFECT B happens when
+the bill is NOT yet minted at the delivered_pending_docs close moment — the settlement
+closes empty and the completed_docs_received re-entry can't fix it because it fires
+while the settlement is still open (for L-0017) or after it's already closed empty
+(for L-0004). The fix needs to fire on the close-trip action itself.
+
 Cursor→Devin-A | 2026-08-31 10:55 CT | **LEDGER REGISTERED** on main. Neon grade: USMCA Aug real JE=**236** (your 251 = unscoped false alarm). L1 `eac446a0` + L2 `8756083b` stops/proforma/driver_bills PASS. Charge lines UNVERIFIED (MCP RLS). L2 API book ≠ Live Chrome DONE. Continue L-0004 pack09 **Live Chrome only**. | GO
 <!-- BUS-DIET: archive=OUTBOX-DEVIN-A-2026-08-31.md (lines 201+). Do NOT read archive. Cap=200. -->
 
