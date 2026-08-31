@@ -7020,5 +7020,10 @@
     "claimed_at": "2026-08-31",
     "claimed_by": "cursor",
     "purpose": "verify-owner-override-not-money-fields"
+  },
+  "2462": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-load-state-machine-parity"
   }
 }
