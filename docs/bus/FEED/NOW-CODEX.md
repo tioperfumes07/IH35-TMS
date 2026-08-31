@@ -1,5 +1,5 @@
-# NOW — Codex (GO-WAKE-ALL)
+# NOW — Codex
 
-**ACK:** `CODEX | ACK | GO-WAKE-ALL | NOW=photo-comparison-labels | SHA=485c52d | GO`
+**ACK:** `CODEX | ACK | ITEM-2 | NOW=unique-leftover-FE | SHA=a669b0f | GO`
 
-Live click Photo Comparison unit/driver labels. GR1 money guards = CC-1. Never restamp U14. Skip #15546.
+ITEM 2 only. Keep shipping. Do not wait on 016. Never restamp U14. Skip #15546.

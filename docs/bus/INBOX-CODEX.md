@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 ITEM 2 · DO NOT WAIT
+# CURRENT GO — 2026-08-30 ITEM 2 · KEEP SHIPPING
 
-Cursor→Codex | **ITEM 2 only.** Login is live. Do not wait on 016. No August money. skip #15546 | GO
+Cursor→Codex | **ITEM 2 only. Keep shipping unique leftover FE.** Do not wait on 016 or CC-1. No August money. Never restamp U14. skip #15546 | GO
 
 # PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
 

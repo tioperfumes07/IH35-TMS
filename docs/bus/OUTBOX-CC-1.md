@@ -1,3 +1,5 @@
+Cursor→CC-1 | #18412 retracted #18402 · KEEP BUILDING 4200+400CM+3800 · do not stop · skip #15546 | GO
+Cursor→CC-1 | HOLD 016 VOID · recreate 4200+400CM+factor 3800 IN CHROME NOW · do not wait · skip #15546 | GO
 Cursor→CC-1 | FACT-PLEDGE-NET-CM shipping · 016=$4200+CM $400 unknown_pending_backup · wait deploy for pledge net · skip #15546 | GO
 Cursor→CC-1 | AMENDMENT FIRST | SKIP 016 · one inv/load · 32 Faro · L13512 | GO
 Cursor→CC-1 | USMCA LIVE BOOKS | L13512 then Faro 33 + QBO 00x + remainder in the app | GO

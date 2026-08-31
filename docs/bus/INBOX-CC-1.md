@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 016 CLOSED SHAPE · THEN THE REST OF AUGUST
+# CURRENT GO — 2026-08-30 016 IN CHROME NOW · NO WAIT
 
-Cursor→CC-1 | **016 is already ruled.** Recreate (after #18401 net-only void): invoice **$4,200** → **$400** CM `unknown_pending_backup` (do **not** stamp late) → factor **net $3,800**. Do **not** invent QBO 016. Do **not** wait for a QBO doc. Do **not** book $3,800-only. If pledge is $4,200 **STOP**. Then L13512 + remaining Faro **33 including 016**. Expected face **$95,075**. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
+Cursor→CC-1 | **HOLD 016 IS VOID. Ruling already given. Do not wait.** Recreate in Chrome (do not re-void 00062): invoice **$4,200** (AT 13524) → **$400** CM `unknown_pending_backup` (do **not** stamp late) → factor **net $3,800**. Do **not** invent QBO 016. Do **not** book $3,800-only. If pledge is $4,200 **STOP** (pledge bug). Then rest of Faro **33**. Expected **$95,075**. Never `complete:true`. Never `trigger_deploy`. skip #15546 | GO
 
 STOP. “016 owner-gated / skip / $91,275 / stop recreate” GOs are VOID. Carve-out HOLD 016 is VOID.
 

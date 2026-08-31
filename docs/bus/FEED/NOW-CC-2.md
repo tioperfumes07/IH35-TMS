@@ -1,5 +1,5 @@
-# NOW — CC-2 (GO-WAKE-ALL)
+# NOW — CC-2
 
-**ACK:** `CC-2 | ACK | GO-WAKE-ALL | NOW=hearing-list-USMCA-485c52d | SHA=485c52d | GO`
+**ACK:** `CC-2 | ACK | 18412 | NOW=grade-the-32-vs-faro-csv | SHA=60fb815 | GO`
 
-Click `/legal/matters` USMCA `MAT-LAWSUI-TESTMTDQ164H` hearing ≠ `—`. BANK-ECON-04 stay FAIL. Never `trigger_deploy`.
+#18412 retraction is correct. Do **not** stand by. Grade the 32 that exist. 016 rebuild = CC-1. Never `trigger_deploy`.

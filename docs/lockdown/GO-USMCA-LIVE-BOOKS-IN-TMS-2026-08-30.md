@@ -5,7 +5,7 @@
 
 Do **not** “then the Faro 33.” That would post invoices with no source document.
 
-- Create **32 of 33** Faro invoices. **HOLD 016 MPH** until Jorge rules $4,200 vs $3,800.
+- Create **all 33** Faro invoices. **HOLD 016 is VOID.** Recreate 016 as **$4,200 invoice → $400 CM `unknown_pending_backup` → factor net $3,800**. Expected face **$95,075**. $91,275 is mid-fix, not the target.
 - One load, one TMS invoice: 3-digit QBO doc only (019 not 13526, …). Do not import QBO duplicates. **006** = one BV $2,600 “Load Number - 006” only.
 - **Do not** cite `mdata.qbo_ar_invoices` as proof of **absence** (mirror last synced ~08/14; live QBO runs to **036**). Use the crosswalk: `docs/lockdown/CODERS-2026-08-30/CC-1/CC-1-FARO-QBO-AT-CROSSWALK.csv`. Never match on AT **Total** (net of QP). Use **Charges**.
 

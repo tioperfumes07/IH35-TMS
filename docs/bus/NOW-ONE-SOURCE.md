@@ -1,4 +1,6 @@
-**2026-08-30T22:25Z GO-AMENDMENT BEFORE CREATE.** `docs/lockdown/CODERS-2026-08-30/00-PASTE-NOW-GO-AMENDMENT.txt`. Faro **32** not 33. HOLD 016. Deploy `dep-daaarmpf2nfc739ol8rg`. Skip #15546.
+**2026-08-30T00:01Z HOLD 016 VOID · ALL SEATS WORK.** Amendment carve-out 1 rewritten. CC-1: $4,200 → $400 CM → factor $3,800 in Chrome. CC-2: grade NOW ($95,075; $91,275 = missing 016 = CC-1 miss). CC-3: ship INS-F7416 (do not idle because a bug exists). Codex: ITEM 2 leftover FE. Cursor: bus + claim #18410 1700/1800. Skip #15546.
+
+**2026-08-30T22:25Z GO-AMENDMENT BEFORE CREATE (SUPERSEDED — HOLD 016 VOID).** File still named `00-PASTE-NOW-GO-AMENDMENT.txt` but carve-out 1 is VOID HOLD. Faro **33 including 016**. Skip #15546.
 
 **2026-08-30T22:16Z GO-USMCA-LIVE-BOOKS THIS IS NOW.** Packet `docs/lockdown/GO-USMCA-LIVE-BOOKS-IN-TMS-2026-08-30.md`. CC-1 builds USMCA invoices/settlements/factoring in the app from Faro+AT+QBO. Skip #15546.
 
