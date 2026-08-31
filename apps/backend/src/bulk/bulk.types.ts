@@ -30,6 +30,8 @@ export type BulkPerEntityContext<TPayload> = {
   reason?: string;
   operatingCompanyId: string;
   actorUserId: string;
+  /** Session role — bulk void gates on Owner/Admin/Accountant. */
+  actorRole?: string;
   bulkCallId: string;
   client: {
     query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }>;

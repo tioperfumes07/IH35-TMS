@@ -13,6 +13,7 @@ import { emitAccountingSpineEvent } from "./accounting-spine-emit.js";
 import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal, type VoidReversalResult } from "./void.service.js";
 import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { buildListSearchClause, invoiceListSearchFields } from "../lib/list-search/build-list-search.js";
 
 const idParamsSchema = z.object({ id: z.string().uuid() });
 
@@ -259,16 +260,15 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
         extraWhere.push(`i.source_load_id = $${values.length}::uuid`);
       }
       if (q.search) {
-        values.push(`%${q.search}%`);
-        const idx = values.length;
-        // ACCT-F5611 REMAINDER — this used to match only the plain-JOIN c.customer_name, so a
-        // deactivated customer's real invoices could never be found by name search even after the
-        // row-visibility half of ACCT-F5611 fixed the row from vanishing outright (that fix's own
-        // row explicitly left this open). COALESCE with the same same-company resolver the SELECT
-        // below already uses so search and display agree on what a customer is named.
-        extraWhere.push(
-          `(i.display_id ILIKE $${idx} OR COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id)) ILIKE $${idx})`
-        );
+        const clause = buildListSearchClause({
+          search: q.search,
+          values,
+          fields: invoiceListSearchFields({
+            customerNameExpr:
+              "COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(i.customer_id, i.operating_company_id))",
+          }),
+        });
+        if (clause) extraWhere.push(clause);
       }
       if (q.from_date) {
         values.push(q.from_date);

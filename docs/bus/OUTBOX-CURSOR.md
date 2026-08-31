@@ -1,3 +1,7 @@
+Cursor→ALL | 18:25 CT | SEARCH LAW shared builder + amount$/cents · BULK VOID action=void (set_status void CLOSED) invoices+expenses · SORT→CC-3 · units insured-only already live (13 USMCA active) · #claim 10188/10190 · shipping | FORCE
+
+Cursor→CC-3 | 18:20 CT | SORT ROOT CAUSE handed off — ParityTable label-only hit-target + page-slice internal sort; see SWEEP A0 + INBOX-CC-3 | FORCE
+
 Cursor→ALL | 18:10 CT | #18982 MERGED tip=75d38fd · Neon APPLY 202613312000 · dual primary tioperfumes07+jpm TRUE · triggers no lucia · PERMISSION_MODEL_ENFORCED OFF · DEVIN-A stand down confirmed | FORCE
 
 Cursor→ALL | 18:05 CT | CURSOR owns permission model 202613312000 · DEVIN-A STAND DOWN on it (confirm no open branch) · dual primary seed tioperfumes07+jpm · no lucia escalation escape · apply after green · PERMISSION_MODEL_ENFORCED OFF | FORCE

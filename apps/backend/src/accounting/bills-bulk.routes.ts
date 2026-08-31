@@ -69,6 +69,15 @@ async function handleBillBulk(ctx: BulkPerEntityContext<BillBulkPayload>): Promi
     }
 
     if (statusPayload.status === "voided") {
+      // Owner 2026-09-01 — set_status voided CLOSED for the same reason as invoices: callers must
+      // use a dedicated void action. Until bills get action "void", refuse the set_status path that
+      // historically flipped without reversal (ACCT-F5634 fixed the GL call, but owner law still
+      // forbids void-via-set_status).
+      return {
+        ok: false,
+        code: "E_USE_BULK_VOID",
+        message: "Use dedicated void path (voidBillInClientTx). set_status status=voided is closed for bulk.",
+      };
       // ACCT-F5634 — this branch used to be a bare status-flip UPDATE with no GL reversal at all,
       // the THIRD independent bill-void writer in the backend (alongside voidBillInClientTx itself
       // and governance/void-cancel-executors.ts's executeBill, both of which correctly reverse the
