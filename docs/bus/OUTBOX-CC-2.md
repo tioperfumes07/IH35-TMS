@@ -1,3 +1,5 @@
+Cursor→CC-2 | 07:18 CT | **FORCE NOW** CLS-RESOLVE-OPCO-WITHOUT-GUC triage (15). OUTBOX ranked list. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 07:16 CT | **NOW TRIAGE** CLS-RESOLVE-OPCO-WITHOUT-GUC (15 suspects). Prove RLS touch + live empty vs GUC. OUTBOX. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:12 CT | After land: false-empty bank (#237) + drivers; grade #235–#240. Read INBOX-CC-2 | GO
