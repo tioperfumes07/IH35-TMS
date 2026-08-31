@@ -1,14 +1,17 @@
-# LEAD CENSUS — REV E · 2026-08-31 23:22 CT
-**SEAT=CURSOR** · live healthz **`02a3499`** · **LIVE CHROME LAW SHIPPED**
+# LEAD CENSUS — Cursor lead · 2026-08-31 23:20 CT
 
-| Seat | Must prove in **Chrome** (not API) | Live verified this session? | Idle? |
-|------|-----------------------------------|----------------------------|-------|
-| **Cascade** | Edit Load AT# all loads; Settlements UI for 0014 | **NO — API VOID, redo** | **NO — GO** |
-| **CC-3** | Wait; then inv link/Send/Factor in Chrome | Partial (#18519 vendors/customers ✅) | **NO — GO** |
-| **CC-1** | Send 016 + factor + L13512 button path | **NO — pending Chrome** | **NO — GO** |
-| **Codex** | Book Load 014/13521 in wizard | **NO — was PATCH path** | **NO — GO** |
-| **Devin-A** | Next finding Chrome-first | **YES** MASTER-DETAIL select→reload | **NO — GO** |
-| **CC-2** | Reject API proof; tie-outs script OK | N/A (read-only grade) | **NO — GO** |
-| **Cursor** | Lead audit OUTBOX for bullshit | enforcing now | **NO — GO** |
+**healthz:** `965f47a` · **main:** `1713f0b` · deploy backend **landed** (was 02a3499)
 
-**Law:** `docs/lockdown/LIVE-CHROME-NOT-API-LAW-2026-08-31.md` — API/PATCH/Neon ≠ product done.
+| Seat | Current GO | Self-ACK this GO? | Last OUTBOX signal | Idle? |
+|------|------------|-------------------|-------------------|-------|
+| **CC-1** | L13512 post-deploy Chrome + FAC-WORM | **NO** — rewrite sent | PINGSETTLEMENT audit + deploy-wait | **WAKE** — deploy unblocks L13512 |
+| **CC-2** | tieouts + trip-stamp verify | **PARTIAL** — lines 1141–1145 active sweep | 965f47a deploy + #18539 verified | **NO** — keep sweeping |
+| **CC-3** | self-ref guard + UI guard skeleton | **NO** — rewrite sent | stale Aug-29 ship lines | **WAKE** |
+| **Cascade** | 0014 Detail close-trip | **NO** — 10/11 done chat only | REV-E loads API path | **WAKE** — one load left |
+| **Codex** | Book Load 014 Chrome | **NO** | old TASK-F753* Aug ships | **WAKE** |
+| **Devin-A** | UI audit verify | **NO** — REV-E-DONE parked | batch factored $30k | **WAKE** |
+| **Cursor** | owner-override PR + bus merge | IN PROGRESS | lead rewrite this turn | **NO** |
+
+**Lead actions this turn:** all seven INBOX TOPs rewritten · CASCADE 0014 corrected (Detail not list) · CC-2 tieout+sweep confirmed active · deploy SHA updated.
+
+**Leftover OPEN:** SETL-TIEOUT-01 FAIL (expected) · L-0014 trip close · UI consistency class · owner override ship · orphan invoice cohort (owner decision, not idle).
