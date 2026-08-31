@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { PlannerGrid } from "./PlannerGrid";
+import { PlannerGrid, plannerBarLabelTier } from "./PlannerGrid";
 
 describe("PlannerGrid", () => {
   it("paints a single track with repeating day rules and labelled dwell, no Available cells", () => {
@@ -55,5 +55,11 @@ describe("PlannerGrid", () => {
       />
     );
     expect(document.querySelectorAll('[data-load-id="load-17d"]').length).toBe(1);
+  });
+
+  it("plannerBarLabelTier drops to last segment then empty when the bar is too narrow", () => {
+    expect(plannerBarLabelTier("L-1", 100)).toBe("L-1");
+    expect(plannerBarLabelTier("LUSMCAFREIGHT-20260806-0001", 100)).toBe("0001");
+    expect(plannerBarLabelTier("LUSMCAFREIGHT-20260806-0001", 20)).toBe("");
   });
 });

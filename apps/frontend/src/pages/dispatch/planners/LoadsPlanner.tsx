@@ -83,13 +83,11 @@ export function LoadsPlanner() {
             const lane = [load.pickup_city, load.pickup_state].filter(Boolean).join(", ") || "—";
             return {
               id: load.id,
-              name: (
+              name: <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />,
+              secondary: (
                 <>
-                  <EntityLinkOrTombstone kind="load" id={load.id} name={load.load_number} noun="Load" />
                   <span className="text-[10px] font-medium text-gray-600">{lane}</span>
-                  <span className="text-[9px]">
-                    <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
-                  </span>
+                  <EntityLinkOrTombstone kind="customer" id={load.customer_id} name={load.customer_name} noun="Customer" />
                 </>
               ),
               bars: [

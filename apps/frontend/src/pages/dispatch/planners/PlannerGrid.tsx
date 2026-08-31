@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import "./PlannerGrid.css";
 import {
   formatPlannerDwell,
@@ -14,11 +14,27 @@ import {
 export const PLANNER_DAY_PX = 52;
 export const PLANNER_ROW_PX = 34;
 
+/** ~11px semibold tabular estimate; deterministic, no layout measure. */
+const CHAR_PX = 7.2;
+const BAR_PAD = 14;
+
+export function plannerBarLabelTier(label: string, widthPx: number): string {
+  const budget = Math.max(0, widthPx - BAR_PAD);
+  const fits = (s: string) => s.length * CHAR_PX <= budget;
+  if (!label) return "";
+  if (fits(label)) return label;
+  const parts = label.split(/[-/]/).filter(Boolean);
+  const mid = parts.slice(-2).join("-");
+  if (mid && fits(mid)) return mid;
+  const tail = parts[parts.length - 1] ?? "";
+  if (tail && fits(tail)) return tail;
+  return "";
+}
+
 export type PlannerBarKind = "nb" | "sb" | "tr";
 
 export type PlannerGridBar = {
   id: string;
-  /** Canonical load uuid for A4 — one element per load. Defaults to id. */
   loadId?: string;
   label: string;
   startYmd: string;
@@ -41,6 +57,9 @@ export type PlannerGridDwell = {
 export type PlannerGridRow = {
   id: string;
   name: ReactNode;
+  secondary?: ReactNode;
+  unit?: ReactNode;
+  action?: ReactNode;
   idle?: boolean;
   bars: PlannerGridBar[];
   dwells?: PlannerGridDwell[];
@@ -74,7 +93,6 @@ export function dwellLabelFromMs(startMs: number, endMs: number): string {
   return raw ? `${raw} idle` : "idle";
 }
 
-/** Consecutive days matching `kindFor` → labelled dwells (leave / shop), never per-day cell text. */
 export function dwellsFromDayMap(
   days: string[],
   kindFor: (ymd: string) => string | undefined,
@@ -112,9 +130,7 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
         const left = i * dayPx;
         return (
           <span key={s}>
-            {isPlannerWeekend(s) ? (
-              <div className="pg-wash" style={{ left, width: dayPx }} />
-            ) : null}
+            {isPlannerWeekend(s) ? <div className="pg-wash" style={{ left, width: dayPx }} /> : null}
             {isPlannerMonthStart(s) ? (
               <div className="pg-mrule" style={{ left }} />
             ) : isPlannerMonday(s) ? (
@@ -128,10 +144,27 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
   );
 }
 
+function FrozenName({ row }: { row: PlannerGridRow }) {
+  const split = row.secondary != null || row.unit != null || row.action != null;
+  if (!split) {
+    return <div className="pg-name">{row.name}</div>;
+  }
+  return (
+    <div className={`pg-name pg-name-cols${row.action != null ? " has-action" : ""}`}>
+      <div className="pg-col-name" title={typeof row.name === "string" ? row.name : undefined}>
+        {row.name}
+      </div>
+      <div className="pg-col-sec">{row.secondary}</div>
+      <div className="pg-col-unit">{row.unit}</div>
+      {row.action != null ? <div className="pg-col-action">{row.action}</div> : null}
+    </div>
+  );
+}
+
 export function PlannerGrid({
   days,
   frozenLabel,
-  frozenPx = 180,
+  frozenPx = 280,
   rows,
   empty,
   legend = false,
@@ -142,6 +175,36 @@ export function PlannerGrid({
   const bands = plannerMonthBands(days);
   const dayPx = PLANNER_DAY_PX;
   const trackW = days.length * dayPx;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+  const rangeStart = days[0];
+  const rangeEnd = days[days.length - 1];
+
+  const outside = useMemo(() => {
+    let n = 0;
+    for (const row of rows) {
+      for (const bar of row.bars) {
+        if ((rangeStart && bar.startYmd < rangeStart) || (rangeEnd && bar.endYmd > rangeEnd)) n += 1;
+      }
+    }
+    return n;
+  }, [rows, rangeStart, rangeEnd]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || days.length === 0) return;
+    const idx = Math.max(0, days.indexOf(today));
+    const target = Math.max(0, idx * dayPx - el.clientWidth * 0.25);
+    el.scrollLeft = target;
+    const onScroll = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      setEdge({ left: el.scrollLeft > 2, right: el.scrollLeft < max - 2 });
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [days, today, dayPx, rows.length]);
+
   const vars = {
     ["--frozen" as string]: `${frozenPx}px`,
     ["--day"]: `${dayPx}px`,
@@ -151,7 +214,19 @@ export function PlannerGrid({
 
   return (
     <div className="planner-grid-canonical overflow-hidden rounded-sm border border-slate-300 bg-white" data-testid={testId} style={vars}>
-      <div className="pg-scroll">
+      {outside > 0 ? (
+        <button
+          type="button"
+          className="pg-outside"
+          onClick={() => {
+            const el = scrollRef.current;
+            if (el) el.scrollLeft = el.scrollWidth;
+          }}
+        >
+          {outside} load{outside === 1 ? "" : "s"} outside this range →
+        </button>
+      ) : null}
+      <div className={`pg-scroll${edge.left ? " fade-l" : ""}${edge.right ? " fade-r" : ""}`} ref={scrollRef}>
         <div className="pg-grid">
           <div className="pg-axis" data-testid="planner-time-axis">
             <div className="pg-arow" data-testid="planner-axis-month-row">
@@ -188,7 +263,7 @@ export function PlannerGrid({
           ) : (
             rows.map((row) => (
               <div key={row.id} className={`pg-r${row.idle ? " idle" : ""}`}>
-                <div className="pg-name">{row.name}</div>
+                <FrozenName row={row} />
                 <div
                   className="pg-track"
                   data-testid="planner-grid-track"
@@ -216,12 +291,12 @@ export function PlannerGrid({
                     );
                   })}
                   {row.bars.map((bar) => {
-                    const rangeStart = days[0];
-                    const rangeEnd = days[days.length - 1];
                     const cl = Boolean(rangeStart && bar.startYmd < rangeStart);
                     const cr = Boolean(rangeEnd && bar.endYmd > rangeEnd);
                     const a = clampDayIndex(days, bar.startYmd);
                     const z = clampDayIndex(days, bar.endYmd);
+                    const width = Math.max(24, (z - a + 1) * dayPx - 4);
+                    const shown = plannerBarLabelTier(bar.label, width);
                     const cls = `pg-bar ${bar.kind}${cl ? " cl" : ""}${cr ? " cr" : ""}`;
                     return (
                       <button
@@ -232,11 +307,12 @@ export function PlannerGrid({
                         data-load-id={bar.loadId ?? bar.id}
                         data-rt-trip-type={bar.tripType}
                         data-rt-long-leg={bar.longLeg ? "1" : "0"}
-                        style={{ left: a * dayPx + 2, width: Math.max(8, (z - a + 1) * dayPx - 4) }}
+                        style={{ left: a * dayPx + 2, width }}
                         title={bar.label}
+                        aria-label={bar.label}
                         onClick={bar.onClick}
                       >
-                        {bar.label}
+                        {shown}
                       </button>
                     );
                   })}

@@ -57,7 +57,7 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       <PlannerGrid
         days={days}
         frozenLabel="Driver"
-        frozenPx={240}
+        frozenPx={280}
         rows={drivers.map((dr) => {
           const driverId = String(dr.driver_id);
           const name = String(dr.driver_name ?? "");
@@ -65,14 +65,8 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
           const unit = dr.unit_number ? String(dr.unit_number) : null;
           return {
             id: driverId,
-            name: (
-              <>
-                <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />
-                <span className="text-[10px] font-medium text-gray-600">
-                  <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" />
-                </span>
-              </>
-            ),
+            name: <EntityLinkOrTombstone kind="driver" id={driverId} name={name} noun="Driver" />,
+            unit: unit ? <EntityLinkOrTombstone kind="unit" id={unitId} name={unit} noun="Unit" /> : null,
             bars: [],
             dwells: dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`),
           };
