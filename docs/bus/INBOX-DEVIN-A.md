@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 07:16 CT**
+1. Live **a3f66aa**. Prefer re-spots that set opco GUC / note if tip may be GUC-false-empty.
+2. Do not treat Neon density (548 JE / 175 drivers) as contradicted by empty API without GUC check.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 06:42 CT**
 1. Deploy LIVE **69a5a4e** — re-spot tips against new SHA when useful.
 2. ACK'd invoice shell + customer contact nulls. ACK LEAD-TICK-0216.

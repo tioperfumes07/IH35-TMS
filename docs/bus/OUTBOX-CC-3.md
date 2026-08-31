@@ -1,3 +1,5 @@
+Cursor→CC-3 | 07:16 CT | Catalogs/docs GUC suspects after CC-2 ranks. Lists continue. Read INBOX-CC-3 | GO
+
 Cursor→CC-3 | 07:12 CT | Reports #240 OR Lists/carriers. Read INBOX-CC-3 | GO
 
 Cursor→CC-3 | 07:07 CT | Lists/carriers 404 (#234) OR cust/vend fields. Live 7d226b2. Read INBOX-CC-3 | GO

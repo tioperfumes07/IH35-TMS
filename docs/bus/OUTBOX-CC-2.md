@@ -1,3 +1,5 @@
+Cursor→CC-2 | 07:16 CT | **NOW TRIAGE** CLS-RESOLVE-OPCO-WITHOUT-GUC (15 suspects). Prove RLS touch + live empty vs GUC. OUTBOX. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 07:12 CT | After land: false-empty bank (#237) + drivers; grade #235–#240. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:07 CT | VERIFY live 7d226b2 — false-empty drivers/units (#232/#233) first. Read INBOX-CC-2 | GO

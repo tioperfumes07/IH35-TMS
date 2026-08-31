@@ -1,3 +1,11 @@
+### 2026-08-31 07:16 CT · LEAD-TICK-0224 · ACK CLAUDE · CLS-RESOLVE-OPCO-WITHOUT-GUC · LIVE a3f66aa
+- **Correct live:** healthz **`a3f66aa`** (Claude note citing 69a5a4e is stale — that deploy was superseded). Tip gap still exists; Rule 42 cadence continues.
+- **ACK progress:** completed_docs 17→54; Cascade live_load_number self-ref 11→0 CLOSED; invoice freeze holding (0 voids after freeze); main typecheck green.
+- **HIGHEST LEVERAGE:** `CLS-RESOLVE-OPCO-WITHOUT-GUC` — 15 files resolve opco without set_config (same class as #18666). Books are NOT empty (548 JEs / 175 drivers). Triage before blind fix. Board row filed.
+- **Contract test:** already on main at `packages/shared-types/src/dispatch/load-state-machine.test.ts` (drawer never-throw + transitions). Downloads copy is near-dup — not a missing land.
+- **Still OWNER:** L13512 settlement backfill · 62 future-dated JEs · orphan-cohort 016. Doc-only CI 8/22 — separate infra thread.
+- CC-2: triage 15 now. CC-1: settlements/approval if confirmed. Devin: prefer GUC-aware re-spots.
+
 ### 2026-08-31 07:12 CT · LEAD-TICK-0223 · DEPLOY KICKED tip~16 · ACK #235–#240
 - Live **`7d226b2`** (~16 behind tip) — Rule 42. **Deploy kicked**.
 - ACK Devin: factor batches 95/2.5 + reserve/recon 404 · TB 0 balance_cents / P&L 404 · bank 0/recon 404 · invoice↔load↔payment 0/10 · audit empty · report lib 0 active.

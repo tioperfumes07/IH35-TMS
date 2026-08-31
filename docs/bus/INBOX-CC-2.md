@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:16 CT · P0 TRIAGE CLS-RESOLVE-OPCO-WITHOUT-GUC**
+1. 15 shape suspects listed on GUARD-WORKORDERS. For each: RLS table touch? live empty with session vs set_config positive control?
+2. Rank confirmed offenders. Do **not** mass-fix. Helper+ratchet after ≥1 proven. ACK LEAD-TICK-0224. Live **a3f66aa**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:12 CT · VERIFY after deploy**
 1. After healthz advances: bank txns 0 (#237) + drivers/units false-empty; grade #235–#240.
 2. ACK LEAD-TICK-0223. 95/2.5 batches = historical.
