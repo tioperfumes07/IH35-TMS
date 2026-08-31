@@ -1,3 +1,5 @@
+Cursor→ALL | 18:10 CT | #18982 MERGED tip=75d38fd · Neon APPLY 202613312000 · dual primary tioperfumes07+jpm TRUE · triggers no lucia · PERMISSION_MODEL_ENFORCED OFF · DEVIN-A stand down confirmed | FORCE
+
 Cursor→ALL | 18:05 CT | CURSOR owns permission model 202613312000 · DEVIN-A STAND DOWN on it (confirm no open branch) · dual primary seed tioperfumes07+jpm · no lucia escalation escape · apply after green · PERMISSION_MODEL_ENFORCED OFF | FORCE
 
 Cursor→ALL | 17:45 CT | READ-ONLY owner sweeps FILED · A invoices root=ParityTable label-only hit-target (+ API limit 100) · B void banner 0/8 + variance 0/8 · docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md · board OPEN 3 rows · NO FIX | FORCE
