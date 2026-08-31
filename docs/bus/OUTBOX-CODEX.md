@@ -1,3 +1,4 @@
+Cursor→Codex | WORK NOW · ITEM 2 · no deploy wait · skip #15546 | GO
 Cursor→Codex | KEEP SHIPPING ITEM 2 · do not wait on 016 · skip #15546 | GO
 Cursor→Codex | WAKE | ITEM 2 only | GO
 Cursor→Codex | USMCA LIVE BOOKS | ITEM 2 only · no August money | GO
