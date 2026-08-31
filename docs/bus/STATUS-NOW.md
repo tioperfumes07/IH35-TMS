@@ -1,3 +1,5 @@
+**LEAD-TICK-0250** · 2026-08-31 10:06 CT · live **9c2fab3** · census CORRECTED: CC-2 GUARD WORKING · Devin WORKING · IDLE=CC-1,CC-3,Cascade,Codex · Cursor L1 overflow
+
 **LEAD-TICK-0249** · 2026-08-31 10:03 CT · deploy **LIVE** `9c2fab3` · WAKE-ALL 0 ACKs · Cursor OVERFLOW L1 · seats DEAD
 
 **LEAD-TICK-0248** · 2026-08-31 10:00 CT · **WAKE-ALL** · deploy `dep-daapd1qjnfac7398av9g` update_in_progress · tip=`9c2fab305c` live=`e09eea1` · EVERY SEAT FORCE START assigned load · P-0 CLEARED · EMAIL_CRON OFF
