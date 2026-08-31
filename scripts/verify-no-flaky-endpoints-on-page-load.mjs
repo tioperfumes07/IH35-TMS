@@ -7,6 +7,7 @@
 import dotenv from "dotenv";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 dotenv.config();
@@ -42,7 +43,11 @@ const FLAKY_ENDPOINTS = [
     path: "/api/v1/catalogs/fleet/tire-positions",
     query: "is_active=true&limit=500",
     routeFile: "apps/backend/src/catalogs/fleet/tire-positions.routes.ts",
-    resilienceNeedles: ["max(500)", "tirePositionsListQuerySchema"],
+    routeNeedles: ['routePrefix: "/api/v1/catalogs/fleet"', 'urlSegment: "tire-positions"'],
+    resilienceSources: [
+      { file: "apps/backend/src/catalogs/fleet/tire-positions.routes.ts", needles: ["listLimitMax: 500", "companyScoped: false"] },
+      { file: "apps/backend/src/catalogs/fleet/factory.ts", needles: ["const basePath =", "app.get(basePath", "config.listLimitMax"] },
+    ],
   },
 ];
 
@@ -59,7 +64,12 @@ function fail(message) {
 function readText(relPath) {
   const abs = path.join(ROOT, relPath);
   if (!fs.existsSync(abs)) fail(`missing file: ${relPath}`);
-  return fs.readFileSync(abs, "utf8");
+  const source = fs.readFileSync(abs, "utf8");
+  const plant = process.env.PASS7_ENDPOINT_GUARD_PLANT;
+  if (plant === "route-prefix" && relPath.endsWith("tire-positions.routes.ts")) return source.replace('routePrefix: "/api/v1/catalogs/fleet"', 'routePrefix: "/api/v1/catalogs/PLANTED"');
+  if (plant === "list-limit" && relPath.endsWith("tire-positions.routes.ts")) return source.replace("listLimitMax: 500", "listLimitMax: 50");
+  if (plant === "factory-get" && relPath.endsWith("factory.ts")) return source.replace("app.get(basePath", "app.get(PLANTED");
+  return source;
 }
 
 function staticChecks() {
@@ -92,12 +102,19 @@ function staticChecks() {
 
   for (const endpoint of FLAKY_ENDPOINTS) {
     const source = readText(endpoint.routeFile);
-    if (!source.includes(endpoint.path)) {
-      fail(`${endpoint.routeFile} must register ${endpoint.path}`);
-    }
-    for (const needle of endpoint.resilienceNeedles) {
+    const routeNeedles = endpoint.routeNeedles ?? [endpoint.path];
+    for (const needle of routeNeedles) {
       if (!source.includes(needle)) {
-        fail(`${endpoint.routeFile} missing resilience marker "${needle}"`);
+        fail(`${endpoint.routeFile} must register ${endpoint.path} (missing ${JSON.stringify(needle)})`);
+      }
+    }
+    const resilienceSources = endpoint.resilienceSources ?? [{ file: endpoint.routeFile, needles: endpoint.resilienceNeedles }];
+    for (const resilienceSource of resilienceSources) {
+      const resilienceText = readText(resilienceSource.file);
+      for (const needle of resilienceSource.needles) {
+        if (!resilienceText.includes(needle)) {
+          fail(`${resilienceSource.file} missing resilience marker "${needle}" for ${endpoint.path}`);
+        }
       }
     }
   }
@@ -150,4 +167,18 @@ async function main() {
   console.log(`verify:no-flaky-endpoints-on-page-load PASS (static+runtime: ${FLAKY_ENDPOINTS.length} endpoints)`);
 }
 
-main().catch((error) => fail(String(error?.message ?? error)));
+if (process.argv.includes("--selftest")) {
+  const plants = ["route-prefix", "list-limit", "factory-get"];
+  const escaped = plants.filter((plant) => {
+    const result = spawnSync(process.execPath, [fileURLToPath(import.meta.url)], {
+      cwd: ROOT,
+      encoding: "utf8",
+      env: { ...process.env, PASS7_ENDPOINT_GUARD_PLANT: plant },
+    });
+    return result.status === 0;
+  });
+  if (escaped.length) fail(`selftest mutation(s) escaped: ${escaped.join(", ")}`);
+  console.log(`verify:no-flaky-endpoints-on-page-load selftest PASS (${plants.length}/${plants.length})`);
+} else {
+  main().catch((error) => fail(String(error?.message ?? error)));
+}
