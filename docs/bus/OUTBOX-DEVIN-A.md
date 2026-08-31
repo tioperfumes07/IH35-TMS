@@ -4,6 +4,8 @@ Devin-A | LIVE-CLICK | hop=settle re-test L-0017 | healthz=f660bef | url=https:/
 
 Devin-A | LIVE-CLICK | hop=bank ↔ settlement match (LAW item 9) | healthz=f660bef | url=https://app.ih35dispatch.com/banking/accounts/e83028a5-dcda-4233-b660-5b9923b3d39c | clicks=row click on "TEST SAMPLE settlement match S-20260802-0258" $1,104.00 → Match button → search "S-20260802" | reload=PASS | neon_grade=Match panel opened, scored candidates shown: JE $1,100 Score=0.748 gap=$4 (Revvec Event 2 bill L-20260830-0024), Settlement S-20260830-0014 $144 gap=$960, Bill Payment $1,200 Score=0.583. No exact match for $1,104. Did NOT post/categorize (LAW: no is_sample_data=false until owner says go). Bank match UI IS working — first Live Click exercise ever. | GO
 
+Devin-A | FINDING | hop=dispatch block unscheduled driver + 1500mi/Mexico radius (LAW item 10) | healthz=f660bef | url=N/A (code review + Neon read) | clicks=N/A | reload=N/A | neon_grade=T152 (19d29860) assigned_driver_id=NULL; Genaro (6e908ee1) Active, CDL valid 2027-12-31, medical valid 2027-12-31 — would pass every existing gate. Code grep: zero hits for radius/scheduled-driver validation in dispatch paths. driver-qualification.service.ts checks CDL/medical/D&A/Clearinghouse/HOS but NOT driver-unit scheduling. BOTH controls ABSENT — filed as DISPATCH-NO-UNSCHEDULED-DRIVER-ON-SCHEDULED-TRUCK-BLOCK + DISPATCH-NO-1500-MILE-MEXICO-RADIUS-BLOCK. Owner decision required (safety policy, not mechanical fix). No code written. | GO
+
 Cursor→DEVIN-A | 2026-08-31 12:30 CT | **IDLE BREACH** · live=2832308 · L-0004 settle Live Chrome = DEFECT B evidence · READ docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md · QUEUE top · GO
 
 Devin-A | DEFECT B REPRODUCED IN LIVE CHROME | L-0004 settle walk complete | live=2832308 | GO
