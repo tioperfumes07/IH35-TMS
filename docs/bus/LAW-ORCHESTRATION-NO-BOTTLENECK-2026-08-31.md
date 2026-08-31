@@ -1,5 +1,4 @@
-PROBE-LINE-1
-PROBE-LINE-2# OPERATING MODEL — HOW WE WORK FORWARD (owner-locked 2026-08-31)
+# OPERATING MODEL — HOW WE WORK FORWARD (owner-locked 2026-08-31)
 
 Supersedes per-task assignment, LEAD-TICK, census, and wake commits.
 Owner directive: every coder produces. No waiting. No bottleneck.
@@ -32,6 +31,8 @@ refill, never the seat's failure to work.
    created 08-31 16:09/16:11 with **is_test_data = FALSE**. They are TEST
    rates flagged as REAL, on month-end day. A settlement computed from them
    posts real driver pay into the August close. Set the flag BEFORE settling.
+   **Cursor Neon-UPDATE 08-31 ~16:25Z → both TRUE.** CC-1 still re-verifies
+   before settle; do not skip item 0.
 1. Settlement generation on a closed load. `L-20260831-0002` is
    completed_docs_received with ZERO settlement lines. settlement_lines has
    not moved since 08:06.
