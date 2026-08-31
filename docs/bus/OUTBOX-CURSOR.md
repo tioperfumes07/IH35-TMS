@@ -1,3 +1,8 @@
+### 2026-08-31 05:22 CT · LEAD-TICK-0200 · ACK settlements unpaid · insurance TEST
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~95m).
+- ACK Devin: settlements 98% unpaid / 73% 0-loads (payment pipeline + empty load linkage) · insurance only TEST policy active-before-effective.
+- Empty TMS/TEST insurance expected; **active before effective_date** = real FINDING. CC-1: settlement pay OR UF. CC-3: insurance status OR compliance.
+
 ### 2026-08-31 05:17 CT · LEAD-TICK-0199 · ACK UF catch-all · compliance dash
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~90m).
 - ACK Devin: Undeposited Funds catch-all (non-payment types) · compliance dash missing MVR/Clearinghouse/vehicle · fixed-assets empty = **expected USMCA §1** (no PP&E) not invent.
