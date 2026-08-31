@@ -70,6 +70,11 @@
     "purpose": "verify-safety-layout-outlet-key"
   },
   "2456": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-subnav-standard"
+  },
+  "2456": {
     "claimed_by": "cursor",
     "purpose": "verify-owner-override-not-money-fields",
     "claimed_at": "2026-08-31"
