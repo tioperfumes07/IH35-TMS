@@ -43,7 +43,12 @@ inline once resolved; never delete a row.
 10. INV-OPEN-VOID-01 moved up (worsening in real time): amount_open_cents / amount_unapplied_
     cents (x2) are GENERATED columns blind to voided_at/status='voided'. 41 invoices/$72,237.34
     phantom open now, was 33/$45,837.34 four hours ago, ~190 documents left to void tonight.
-    [DOING — migration 202613310300 claimed (628eaf5c74), authoring the .sql next]
+    [DONE — PR #18997/ACCT-F10193, migration 202613310300 merged. ih35-migration-guard review
+    caught 2 real defects pre-ship: silently-dropped security_invoker on the recreated
+    views.ar_aging (RLS bypass risk) and grant widened to PUBLIC instead of ih35_app; both
+    fixed, guard scripts/verify-inv-open-void-respects-void.mjs (step 10193) tightened to
+    assert both positively, 9/9 mutations. Recompute-on-alter confirmed empirically by the
+    subagent against a live Postgres container.]
 11. NEW OWNER RULE: driver auto-inactivation, no load in 40 days -> status change only (never
     cascade-delete), scheduled daily, sourced from mdata.loads (not a status field), reversible
     +traceable audit row, reactivates on new load assignment, match BY PERSON (fail loud on
@@ -63,6 +68,16 @@ inline once resolved; never delete a row.
 13. Devin-A handoff: driver account provisioning migration + job authorship is CC-1's
     (Devin-A has cited opening balances for the 14 drivers, cannot author migrations).
     [Same as item 12 — BLOCKED on DRIVER-PERSON-IDENTITY-01]
+14b. WITHDRAWN: INV-NUMBERING-01 (mine) and CC-3's INV-F-DISPLAYID — load-numbered invoices are
+    the owner's LINKAGE DESIGN (one trip identifier carried across invoice/driver-bill/expense,
+    tied to the settlement), not a defect. SETL-NUMBERING-01 withdrawn same reason. Not built
+    against either. EXP-NUMBERING-01 RESPECIFIED (not mine to build -- Cursor's NUMBERING item):
+    129/132 expenses have expense_number=NULL; correct format is <load#>-<seq> (matching
+    L-20260831-0004-1/-2 pattern); the defect is the NULLs, not the numbering scheme. PROFORMA:
+    locked per claude/OWNER-DECISIONS-FINAL-2026-07-26.md §B -- same record earlier in its life,
+    not a separate document type, no separate numbering series, no touching the conversion;
+    already correctly enforced in poster.service.ts + ledger-integrity-detectors.service.ts.
+    [Logged, no action needed from CC-1 -- not touching any of these]
 14. QUEUE DISCIPLINE standing rule (ALL SEATS): new instructions APPEND, never redirect;
     never stash/reset/checkout away from uncommitted work for a new item; commit/push what's
     safe first; report DOING/QUEUED/BLOCKED/DONE with evidence every update; log every
@@ -70,5 +85,6 @@ inline once resolved; never delete a row.
     [DONE — this file adopted, OUTBOX-CC-1.md queue-status entry posted this turn]
 
 **STATED QUEUE ORDER (owner, most recent restatement):** SETL-SELECTION-BINDING (proof posted,
-awaiting confirm) → SETL-NO-VOID-PATH-01 (DONE) → INV-OPEN-VOID-01 (DOING) → BANK-ORPHAN-01
-(DONE, backfill-for-4-pre-fix-orphans remaining).
+awaiting confirm) → SETL-NO-VOID-PATH-01 (DONE) → INV-OPEN-VOID-01 (DONE) → BANK-ORPHAN-01
+(shared engine DONE; one-time backfill for the 4 pre-fix orphans is the remaining piece, DOING
+next).
