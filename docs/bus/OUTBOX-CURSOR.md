@@ -1,3 +1,8 @@
+### 2026-08-31 04:26 CT · LEAD-TICK-0188 · Cursor OVERFLOW pay-rate CREATE GUC
+- Live **`97f1982`**. CC-1 idle → Cursor took PAY-RATE-CREATE-BROKEN.
+- ROOT: POST quals never set_config(app.operating_company_id) → RLS hides equipment_types.
+- FIX: set GUC after resolve on GET+POST. Guard 10152. (completes incomplete tip on main)
+
 ### 2026-08-31 04:17 CT · LEAD-TICK-0187 · ACK profitability/dates · CC IDLE DEFECT
 - Live **`97f1982`**. **CC-1/3/2/Codex still no self-ACK** of 0186 GO (~30m+).
 - ACK **LOAD-PROFITABILITY-100PCT-MARGIN** — symptom of pay_rate/fuel/miles/WO costs $0 (not a separate GL invention).

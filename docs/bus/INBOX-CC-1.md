@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:26 CT**
+1. Cursor overflow: pay-rate CREATE GUC — VERIFY after deploy; then factoring rates.
+2. Self-ACK OUTBOX-CC-1. Live **97f1982**.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:17 CT · LAST FORCE BEFORE CURSOR OVERFLOW**
 1. **PAY-RATE-CREATE-BROKEN** — ship fix NOW or Cursor takes it next tick.
 2. Factoring rates second. Self-ACK OUTBOX-CC-1 immediately.
