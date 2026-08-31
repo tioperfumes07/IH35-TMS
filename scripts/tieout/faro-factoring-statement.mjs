@@ -31,11 +31,8 @@
  *   nfe_cents            factoring_advance_gl_cents - factoring_reserve_gl_cents, compared to
  *                        the packet's own stated identity (2150 - 1230 = Faro statement NFE).
  */
-import pg from "pg";
 import { fail, requireDb, unverified } from "./_lib.mjs";
 import pgConnectionOptions from "../lib/pg-connection-options.cjs";
-
-const { Pool } = pg;
 const { buildPgPoolConfig } = pgConnectionOptions;
 
 const USMCA_OPCO = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -88,6 +85,8 @@ if (process.argv.includes("--expected-only")) {
 }
 
 const url = requireDb();
+const { default: pg } = await import("pg");
+const { Pool } = pg;
 
 async function main() {
   const pool = new Pool(buildPgPoolConfig(url));
