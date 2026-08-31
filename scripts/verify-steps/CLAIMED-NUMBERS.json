@@ -69,20 +69,15 @@
     "claimed_by": "cursor",
     "purpose": "verify-safety-layout-outlet-key"
   },
-  "2458": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cc-3",
-    "purpose": "verify-list-rows-use-datatable"
-  },
-  "2456": {
-    "claimed_at": "2026-08-31",
-    "claimed_by": "cursor",
-    "purpose": "verify-subnav-standard"
-  },
   "2456": {
     "claimed_by": "cursor",
     "purpose": "verify-owner-override-not-money-fields",
     "claimed_at": "2026-08-31"
+  },
+  "2458": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-list-rows-use-datatable"
   },
   "2912": {
     "claimed_at": "2026-08-08",
