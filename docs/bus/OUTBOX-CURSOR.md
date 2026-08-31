@@ -1,3 +1,6 @@
+### 2026-08-31 09:37 CT · LEAD-TICK-0241
+- Tick 101 census: seats still silent on GO-E2E. IDLE CC-1/CC-2/Devin-A. tmux display-message sent to cc1/cc2/cc3.
+
 ### 2026-08-31 09:34 CT · LEAD-TICK-0240
 - Tick 100: healthz=e09eea1; main tip=6a8da3c (#18745). Zero seat ACKs on GO-E2E. Rewake CC-1/CC-2/Devin.
 
