@@ -33,7 +33,8 @@ import { SyncStatusStrip } from "./components/SyncStatusStrip";
 import { getQboConnectionStatus } from "../../api/forensic";
 import { ManualJEModal } from "../accounting/ManualJEModal";
 import { BankingPlaidConnectionsPanel } from "./components/BankingPlaidConnectionsPanel";
-import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { TransferModal } from "./TransferModal";
 import { RecordTransferModal } from "./RecordTransferModal";
 import { RecordCCPaymentModal } from "./RecordCCPaymentModal";
@@ -48,7 +49,6 @@ import { BANKING_MODULE_TABS, type BankingModuleTabId } from "./BANKING_NAV_CONF
 import { formatUsd } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 
-const BANKING_TABS = BANKING_MODULE_TABS;
 
 type BankingTabId = BankingModuleTabId;
 
@@ -387,28 +387,12 @@ export function BankingHomePage({ initialTab }: Props = {}) {
         subtitle="QBO mirrored accounts + categorization"
         actions={headerActions}
       />
-      <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1">
-        <div className="flex min-w-max gap-4">
-          {BANKING_TABS.map((tab) => {
-            const target = BANKING_TAB_PATH[tab.id];
-            const active = activeTab === tab.id;
-            return (
-              <NavLink
-                key={tab.id}
-                to={target}
-                onClick={() => {
-                  if (tab.id === "transactions") setTransactionsInitialFilter("all");
-                }}
-                className={`pb-0.5 text-xs font-semibold ${
-                  active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-                }`}
-              >
-                {tab.label}
-              </NavLink>
-            );
-          })}
-        </div>
-      </div>
+      <NavyPageSubNav
+        items={BANKING_MODULE_TABS.map((tab) => ({
+          label: tab.label,
+          to: BANKING_TAB_PATH[tab.id],
+        }))}
+      />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       <PlaidSyncStatusPanel operatingCompanyId={companyId} />
       <PlaidLink
