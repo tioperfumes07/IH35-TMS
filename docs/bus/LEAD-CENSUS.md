@@ -1,3 +1,13 @@
+# LEAD-CENSUS · 2026-08-31 04:26 CT · LEAD-TICK-0188
+| Seat | Status | Note |
+|------|--------|------|
+| Cursor | WORKING | pay-rate CREATE GUC overflow |
+| Devin-A | WORKING | FINDING |
+| CC-1 | IDLE | VERIFY next then factoring rates |
+| CC-3 | IDLE | Samsara/dates |
+| Cascade | OOS | |
+Live **97f1982**.
+
 # LEAD-CENSUS · 2026-08-31 04:17 CT · LEAD-TICK-0187
 | Seat | Status | Evidence |
 |------|--------|----------|

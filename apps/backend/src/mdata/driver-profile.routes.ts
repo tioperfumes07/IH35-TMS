@@ -110,6 +110,9 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         parsedQuery.data.operating_company_id
       );
       if (!companyId) return { found: false as const, qualifications: [] };
+      // catalogs.equipment_types RLS = company_scope on app.operating_company_id GUC.
+      // resolveOperatingCompanyId does not set it; without this, JOINs/lookups return 0.
+      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
 
       const parent = await client.query(
         `
@@ -245,6 +248,10 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         // against it.
         const companyId = await resolveOperatingCompanyId(client, authUser.uuid, parsedQuery.data.operating_company_id);
         if (!companyId) return reply.code(400).send({ error: "operating_company_unresolved" });
+        // PAY-RATE-CREATE-BROKEN: catalogs.equipment_types FORCE RLS company_scope requires
+        // app.operating_company_id. List route sets it via scopeToCompany; this POST did not →
+        // equipment_type_not_found even when GET /catalogs/equipment-types returns the same id.
+        await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [companyId]);
         const driverRes = await client.query(
           `SELECT d.id FROM mdata.drivers d
             WHERE d.id = $1
