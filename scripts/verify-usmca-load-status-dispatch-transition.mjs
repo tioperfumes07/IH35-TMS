@@ -30,6 +30,8 @@ export function run() {
   );
   const dispatchTransitionRoute =
     dispatchTransitionStart < 0 ? "" : dispatchRouteSrc.slice(dispatchTransitionStart, dispatchTransitionEnd);
+  const driverStatusRoute =
+    dispatchTransitionEnd < 0 ? "" : dispatchRouteSrc.slice(dispatchTransitionEnd);
 
   if (!src.includes("transitionDispatchLoad")) {
     errors.push(`${API} must call transitionDispatchLoad for dispatch-mapped statuses`);
@@ -72,6 +74,18 @@ export function run() {
   ) {
     errors.push(`${DISPATCH_ROUTE}: dispatch transition UPDATE must bind company and prove the row changed before side effects`);
   }
+  if (driverStatusRoute.includes('source: "phase3_stub"') || driverStatusRoute.includes("new Date().toISOString()")) {
+    errors.push(`${DISPATCH_ROUTE}: driver-status timeline must never fabricate a request-time lifecycle event`);
+  }
+  if (!/FROM events\.event_log e[\s\S]*e\.operating_company_id = \$2::uuid[\s\S]*e\.subject_id = \$1::uuid[\s\S]*e\.event_type = 'load\.status_changed'/.test(driverStatusRoute)) {
+    errors.push(`${DISPATCH_ROUTE}: driver-status timeline must read exact-company immutable load.status_changed events`);
+  }
+  if (!/NULLIF\(e\.payload->>'to_status', ''\) IS NOT NULL/.test(driverStatusRoute)) {
+    errors.push(`${DISPATCH_ROUTE}: driver-status timeline must exclude spine events without a canonical destination stage`);
+  }
+  if (!/ORDER BY e\.occurred_at ASC, e\.event_id ASC/.test(driverStatusRoute)) {
+    errors.push(`${DISPATCH_ROUTE}: driver-status timeline must be deterministically chronological`);
+  }
 
   return errors;
 }
@@ -101,12 +115,17 @@ function selftest() {
         "AND operating_company_id = $3::uuid\n         RETURNING id",
         "AND operating_company_id IN (SELECT org.user_accessible_company_ids())\n         RETURNING id"
       )
-      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)");
+      .replace("if (!transitionUpdate.rows[0]?.id)", "if (false)")
+      .replace("FROM events.event_log e", "FROM mdata.loads e")
+      .replace("e.operating_company_id = $2::uuid", "e.operating_company_id IN (SELECT org.user_accessible_company_ids())")
+      .replace("NULLIF(e.payload->>'to_status', '') IS NOT NULL", "true")
+      .replace("ORDER BY e.occurred_at ASC, e.event_id ASC", "ORDER BY now()")
+      .replace("timeline: result.timeline", 'timeline: [{ stage: result.load.driver_lifecycle_stage, at: new Date().toISOString(), source: "phase3_stub" }]');
     fs.writeFileSync(apiPath, broken, "utf8");
     fs.writeFileSync(routePath, brokenRoute, "utf8");
     fs.writeFileSync(dispatchRoutePath, brokenDispatchRoute, "utf8");
     const planted = run();
-    if (planted.length < 10) {
+    if (planted.length < 14) {
       throw new Error(`planted status scope vertical produced only ${planted.length} failures`);
     }
     console.log(`[${LABEL}] SELFTEST PASS (${planted.length} planted failures detected)`);
