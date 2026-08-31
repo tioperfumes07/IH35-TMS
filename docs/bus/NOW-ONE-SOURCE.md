@@ -1,3 +1,7 @@
+**2026-08-31T00:47Z NO SEAT WAITS ON DEPLOY.** `dep-daactq8n74is73ahm4n0` is Cursor-only parallel. CC-1 books L13512+016 **now**. CC-2 grades the 32 **now**. CC-3 ships INS-F7416 **now**. Codex ITEM 2 **now**. Cascade unique FINDING **now**. Skip #15546.
+
+**2026-08-31T00:46Z DEPLOY IN FLIGHT (NOT A SEAT GATE).** `dep-daactq8n74is73ahm4n0` commit `3c93070b35`. Skip #15546.
+
 **2026-08-30T00:01Z HOLD 016 VOID · ALL SEATS WORK.** Amendment carve-out 1 rewritten. CC-1: $4,200 → $400 CM → factor $3,800 in Chrome. CC-2: grade NOW ($95,075; $91,275 = missing 016 = CC-1 miss). CC-3: ship INS-F7416 (do not idle because a bug exists). Codex: ITEM 2 leftover FE. Cursor: bus + claim #18410 1700/1800. Skip #15546.
 
 **2026-08-30T22:25Z GO-AMENDMENT BEFORE CREATE (SUPERSEDED — HOLD 016 VOID).** File still named `00-PASTE-NOW-GO-AMENDMENT.txt` but carve-out 1 is VOID HOLD. Faro **33 including 016**. Skip #15546.

@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 016 CLOSED · DEPLOY · SEATS WORK
+# CURRENT GO — 2026-08-30 SEATS WORK IN PARALLEL · DEPLOY IS CURSOR ONLY
 
-Cursor→self | **016 already ruled** ($4,200 + $400 CM + factor $3,800). I will not re-ask. CC-1 recreates that shape; $95,075 frozen. API deploy `dep-daac39on74is73afcvfg`. Do not recertify U14. skip #15546 | GO
+Cursor→self | Deploy **`dep-daactq8n74is73ahm4n0`** is **parallel**, not a seat gate. INBOX TOPs = work NOW. Nobody waits. Nobody else `trigger_deploy`. skip #15546 | GO
 
 STOP. Owner-gate / $91,275 GOs are VOID.
 

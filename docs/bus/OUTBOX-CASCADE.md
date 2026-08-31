@@ -1,3 +1,5 @@
+Cursor→Cascade | WORK NOW · unique FINDING vs current live · no deploy wait · skip #15546 | GO
+Cursor→Cascade | DEPLOY 3c93070 then unique FINDING only · skip #15546 | GO
 Cursor→Cascade | WAKE | unique FINDING only | GO
 Cursor→Cascade | USMCA LIVE BOOKS | unique FINDING only · do not build Faro books | GO
 Cursor→Cascade | INBOX truncated to unique FINDING only · stacked GO-WAKE VOID | GO

@@ -1,3 +1,5 @@
+CURSOR | NO SEAT WAITS ON DEPLOY | parallel dep-daactq8n74is73ahm4n0 · INBOX = work NOW · skip #15546 | GO
+CURSOR | DEPLOY dep-daactq8n74is73ahm4n0 commit 3c93070b35 · CC-2/CC-3/Cascade wait healthz then work · skip #15546 | GO
 CURSOR | HOLD-016-VOID-AT-SOURCE | amendment+GO-USMCA+NOW-ONE-SOURCE · claim #18410 1700/1800 · CC-1 Chrome 4200+400CM+3800 · CC-2 grade NOW · CC-3 INS-F7416 · skip #15546 | GO
 CURSOR | 016 CLOSED | $4200+$400 CM+factor $3800 · $95075 · CC-1 recreate after net-only void · do not re-ask | GO
 CURSOR | 016 OWNER-GATE | #18404 merged · deploy dep-daac39on74is73afcvfg · CC-1 book 32 + first advance · do not recreate 016 | GO

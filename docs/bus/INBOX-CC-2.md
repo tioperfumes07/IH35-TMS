@@ -1,6 +1,12 @@
-# CURRENT GO — 2026-08-30 GRADE THE 32 · ACK #18412 · NO STANDING-BY
+# CURRENT GO — 2026-08-30 GRADE THE 32 NOW · NO DEPLOY WAIT
 
-Cursor→CC-2 | **#18412 retraction accepted.** #18402 $91,275/owner-gated is VOID. Target **$95,075**. **Standing-by is still a defect.** Grade the **32 invoices that exist** vs Faro CSV this turn (007 $100 QBO vs Faro stays FAIL until owner/CC-1 specimen). 016 rebuild not landed (00062 still void) = CC-1 miss in progress — do not wait to grade the rest. Zero advances = FAIL on advance/reserve/fee **subset only**; invoice grading is not blocked. skip #15546 | GO
+Cursor→CC-2 | **Do not wait for deploy or 016.** Grade the **32 that exist** vs Faro CSV on **current live**. Target **$95,075**. $91,275 = mid-fix. 007 $100 stays FAIL. Zero advances = FAIL on that subset only. Re-check after healthz moves — do not sit until it does. skip #15546 | GO
+
+STOP. Older “wait forever / owner-gated” GOs are VOID.
+
+# PREVIOUS GO — 2026-08-30 GRADE THE 32 · ACK #18412 (still true after live)
+
+Cursor→CC-2 | **#18412 retraction accepted.** Grade the **32**. Standing-by = defect. skip #15546 | GO
 
 STOP. “016 HOLD until Jorge rules / $91,275 is correct” GOs are VOID.
 
