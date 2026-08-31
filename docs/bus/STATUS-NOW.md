@@ -1,3 +1,5 @@
+**LEAD-TICK-0240** · 2026-08-31 09:34 CT · live **e09eea1** · GO-E2E still ARMED (#18745) · **no seat ACK yet** · CC-1 start ONE chain NOW · CC-2 first JE sample · others WAIT
+
 **LEAD-TICK-0239** · 2026-08-31 09:28 CT · live **e09eea1** · **GO-E2E ARMED** · email swap 7/7 · kill Faro-P0 · CC-1 ONE chain gates all · Aug real JE must stay **236**
 
 **LEAD-TICK-0238** · 2026-08-31 09:16 CT · live **e09eea1** tip=0 · **PLAN FROM ZERO · P0 ARMED** (Faro exposure) · freeze Send of INV-049..081

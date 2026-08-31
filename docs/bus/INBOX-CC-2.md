@@ -1,4 +1,8 @@
 # INBOX — CC-2
+**TOP — 2026-08-31 09:34 CT · FORCE · first JE sample this tick**
+ACK LEAD-TICK-0240. Post Aug real/sample JE counts. real≠236 → escalate. Live **e09eea1**.
+
+# INBOX — CC-2
 **TOP — 2026-08-31 09:28 CT · VERIFY ONLY · MONTH-END JE GUARD**
 1. Read 00-READ-FIRST + 03-CC-2.txt. CREATE NOTHING.
 2. Every 20m post Aug JE split; **real must stay 236**. Escalate if rises.

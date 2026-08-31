@@ -1,3 +1,5 @@
+Cursor→CC-1 | 09:34 CT | **ACK OVERDUE** GO-E2E. Start ONE chain. Pay rate first. Sample on load. INBOX-CC-1 | FORCE
+
 Cursor→CC-1 | 09:28 CT | **GO-E2E** live **e09eea1**. ONE chain NOW. Pay rate first. Sample on load. Read INBOX-CC-1 | GO
 
 Cursor→CC-1 | 09:16 CT | **P0 ARMED** live **e09eea1**. Faro 11 pull/correct. No Send of 33. Read INBOX-CC-1 | GO

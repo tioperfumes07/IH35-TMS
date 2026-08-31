@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 09:34 CT · LEAD-TICK-0240
+| Seat | Status | Note |
+|------|--------|------|
+| Cursor | LEAD | tick 100 · rewake · no ACK yet |
+| CC-1 | IDLE→FORCE | ONE chain · ACK overdue since 09:28 |
+| CC-2 | IDLE→FORCE | JE 236 sample NOW |
+| CC-3 | WAIT | after CC-1 PASS |
+| Cascade | WAIT | after CC-1 PASS |
+| Codex | WAIT | after CC-1 step3+ |
+| Devin-A | IDLE→FORCE | top-20 re-verify |
+Live **e09eea1**. Faro-P0 dead. Email swap 7/7 live.
+
 # LEAD-CENSUS · 2026-08-31 09:28 CT · LEAD-TICK-0239
 | Seat | Status | Note |
 |------|--------|------|

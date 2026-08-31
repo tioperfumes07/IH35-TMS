@@ -1,3 +1,5 @@
+Cursor→CC-2 | 09:34 CT | **ACK OVERDUE**. Post Aug JE split NOW (real must=236). Grade only. INBOX-CC-2 | FORCE
+
 Cursor→CC-2 | 09:28 CT | **GO-E2E** VERIFY ONLY. JE real=236 watch. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 09:16 CT | **P0 ARMED** live **e09eea1**. Grade + FACT-RESERVE status. Read INBOX-CC-2 | GO
