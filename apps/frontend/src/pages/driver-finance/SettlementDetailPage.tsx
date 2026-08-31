@@ -16,6 +16,8 @@ import {
   queueSettlementPayment,
   reopenSettlementManualPaid,
   resumeSettlementDeduction,
+  reverseSettlement,
+  unlockSettlement,
   type SettlementDisputeCategory,
   type OpenDriverBill,
 } from "../../api/driverFinance";
@@ -93,6 +95,8 @@ export function SettlementDetailPage() {
   const [disputeAmount, setDisputeAmount] = useState("");
   const [disputeDescription, setDisputeDescription] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState<"mark_paid" | "reopen" | null>(null);
+  const [reverseBusy, setReverseBusy] = useState(false);
+  const [unlockBusy, setUnlockBusy] = useState(false);
 
   const detailQuery = useQuery({
     queryKey: ["driver-finance", "settlement-detail", settlementId, companyId],
@@ -127,6 +131,14 @@ export function SettlementDetailPage() {
   const showFinalizeBlock = !isFinalSettlement;
   const showManualPaidDraftBanner = paymentState === "manual_paid" && !isFinalSettlement;
   const canOpenDispute = auth.user?.role === "Owner" || auth.user?.role === "Administrator" || auth.user?.role === "Driver";
+  // SETL-NO-VOID-PATH-01 — matches void.service.ts's canVoid() exactly (Owner + Accountant only).
+  // Hardcoded fallback per VOID LAW item 6: PERMISSION_MODEL_ENFORCED is OFF today, so this stays the
+  // gate rather than leaving the control ungated in the gap; swap for a permission-key check when that
+  // flag flips on.
+  const canVoidSettlement = auth.user?.role === "Owner" || auth.user?.role === "Accountant";
+  const settlementIsCancelled = String(settlement.status ?? "") === "cancelled";
+  const settlementIsLocked = Boolean(settlement.locked_at) && !settlementIsCancelled;
+  const settlementIsPaid = String(settlement.status ?? "") === "paid";
 
   async function refreshSettlementViews() {
     await Promise.all([
@@ -134,6 +146,55 @@ export function SettlementDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-detail", settlementId, companyId] }),
       queryClient.invalidateQueries({ queryKey: ["driver-finance", "settlement-payment-events", settlementId, companyId] }),
     ]);
+  }
+
+  // SETL-NO-VOID-PATH-01 — reason prompt required, always (VOID LAW item 4). window.prompt matches
+  // this app's existing lightweight-reason-capture precedent (e.g. the load remint action).
+  async function handleReverseSettlement() {
+    if (!settlementId || !companyId) return;
+    const reason = window.prompt("Reason for reversing this settlement (required):", "");
+    if (reason == null) return;
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      pushToast("A reason is required to reverse a settlement", "error");
+      return;
+    }
+    setReverseBusy(true);
+    try {
+      const result = await reverseSettlement(settlementId, companyId, trimmed);
+      pushToast(
+        result.bank_transaction_unmatched
+          ? "Settlement reversed — linked bank transaction returned to review"
+          : "Settlement reversed",
+        "success"
+      );
+      await refreshSettlementViews();
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Reverse blocked"), "error");
+    } finally {
+      setReverseBusy(false);
+    }
+  }
+
+  async function handleUnlockSettlement() {
+    if (!settlementId || !companyId) return;
+    const reason = window.prompt("Reason for unlocking this settlement (required):", "");
+    if (reason == null) return;
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      pushToast("A reason is required to unlock a settlement", "error");
+      return;
+    }
+    setUnlockBusy(true);
+    try {
+      await unlockSettlement(settlementId, companyId, trimmed);
+      pushToast("Settlement unlocked", "success");
+      await refreshSettlementViews();
+    } catch (error) {
+      pushToast(userFacingApiError(error, "Unlock failed"), "error");
+    } finally {
+      setUnlockBusy(false);
+    }
   }
 
   const driverId = settlement.driver_id ? String(settlement.driver_id) : null;
@@ -299,6 +360,33 @@ export function SettlementDetailPage() {
             >
               View settlement PDF
             </Button>
+            {!settlementIsCancelled ? (
+              settlementIsLocked ? (
+                canVoidSettlement ? (
+                  <Button variant="secondary" size="sm" disabled={unlockBusy} onClick={() => void handleUnlockSettlement()}>
+                    {unlockBusy ? "Unlocking…" : "Unlock to reverse"}
+                  </Button>
+                ) : (
+                  <Button variant="secondary" size="sm" disabled title="Requires Owner or Accountant">
+                    Locked
+                  </Button>
+                )
+              ) : canVoidSettlement ? (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={reverseBusy || settlementIsPaid}
+                  title={settlementIsPaid ? "Already paid out to the driver — cannot reverse via this path" : undefined}
+                  onClick={() => void handleReverseSettlement()}
+                >
+                  {reverseBusy ? "Reversing…" : "Reverse settlement"}
+                </Button>
+              ) : (
+                <Button variant="secondary" size="sm" disabled title="Reversing a settlement requires Owner or Accountant">
+                  Reverse settlement
+                </Button>
+              )
+            ) : null}
           </div>
         }
       />
@@ -319,6 +407,13 @@ export function SettlementDetailPage() {
         loadIds={settlementLoadIds}
         onRefresh={() => void debt.refresh()}
       />
+      {settlementIsCancelled ? (
+        <div className="rounded-sm border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-800">
+          <span className="font-semibold uppercase tracking-wide">Reversed</span>{" "}
+          {settlement.reversed_at ? `on ${String(settlement.reversed_at).slice(0, 10)}` : ""}
+          {settlement.reversal_reason ? ` — ${String(settlement.reversal_reason)}` : ""}
+        </div>
+      ) : null}
       {showManualPaidDraftBanner ? (
         <div className="rounded-sm border border-slate-300 bg-slate-100 px-3 py-2 text-xs text-slate-800">
           Payment is recorded as <span className="font-semibold">manual_paid</span> but this settlement is not

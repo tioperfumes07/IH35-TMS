@@ -11,6 +11,9 @@ import { renderSettlementStatementPdf } from "./settlement-pdf-renderer.service.
 import { notifySettlementAvailable } from "../services/push-notification.service.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { SETTLEMENT_DEDUCTION_SOURCE_TABLE } from "./deductions.service.js";
+import { reverseSettlementBillPaymentInClientTx } from "../accounting/settlement-posting/settlement-bill-payment-posting.service.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { canVoid, unmatchBankTransactionById } from "../accounting/void.service.js";
 
 const settlementStatusSchema = z.enum([
   "draft",
@@ -94,6 +97,20 @@ function requireSettlementWriteRole(req: FastifyRequest, reply: FastifyReply) {
 
 function validationError(reply: FastifyReply, err: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: err.flatten() });
+}
+
+// SETL-NO-VOID-PATH-01 — reversal is restricted to Owner + Accountant (the SAME canVoid gate every
+// other financial void in this codebase uses, imported straight from void.service.ts rather than
+// re-declared here), never the broader SETTLEMENT_WRITE_ROLES set above.
+function requireSettlementVoidRole(req: FastifyRequest, reply: FastifyReply) {
+  const user = authed(req, reply);
+  if (!user) return null;
+  const role = String((user as { role?: string }).role ?? "");
+  if (!canVoid(role)) {
+    reply.code(403).send({ error: "forbidden", detail: "settlement reversal/unlock requires Owner or Accountant" });
+    return null;
+  }
+  return user;
 }
 
 async function withCompany<T>(userId: string, companyId: string, fn: (client: any) => Promise<T>) {
@@ -856,4 +873,191 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
     }));
     return { ...result.row, payment_auto_queue: queueResult };
   });
+
+  // SETL-NO-VOID-PATH-01 — driver_settlements has always carried reversed_at / reversed_by_user_id /
+  // reversal_reason (plus a separate unused voided_at / void_reason / voided_by_user_id set), but
+  // nothing ever wrote any of the six columns from a route: SettlementsTable.tsx's action column
+  // rendered only "Open →", and the only void/reverse routes anywhere in driver-finance were
+  // driver-payment-methods/:id/void and abandonment-chargebacks/:id/reverse. 17 sample settlements
+  // had no way to be undone.
+  //
+  // REVERSE, not VOID — grounded in existing shipped code, not a guess: governance/void-cancel-
+  // executors.ts's executeDriverSettlement (VOID-EVERYWHERE PR-3 / Task #24) already flips
+  // status='cancelled' + reversed_at/reversed_by_user_id/reversal_reason for this exact entity type,
+  // via this SAME reverseSettlementBillPaymentInClientTx engine — that is the one place this decision
+  // was already made in this codebase, so this route matches it rather than inventing a second,
+  // competing answer. The voided_at/void_reason/voided_by_user_id columns stay unwritten by this
+  // route; if the owner rules a real distinction is needed between "void" and "reverse" for
+  // settlements specifically, that is a decision to get explicitly, not to guess a second time.
+  const settlementReasonBodySchema = z.object({
+    operating_company_id: z.string().uuid(),
+    reason: z.string().trim().min(1).max(2000),
+  });
+
+  app.post(
+    "/api/v1/driver-finance/settlements/:id/reverse",
+    { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = requireSettlementVoidRole(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const body = settlementReasonBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+      const companyId = body.data.operating_company_id;
+
+      const result = await withCompany(user.uuid, companyId, async (client) => {
+        if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
+
+        const currentRes = await client.query(
+          `SELECT id::text, status::text, locked_at::text, paid_via_bank_txn_id::text
+             FROM driver_finance.driver_settlements
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid
+            LIMIT 1 FOR UPDATE`,
+          [params.data.id, companyId]
+        );
+        const current = currentRes.rows[0] as
+          | { id: string; status: string; locked_at: string | null; paid_via_bank_txn_id: string | null }
+          | undefined;
+        if (!current) return { notFound: true as const };
+        if (current.status === "cancelled") return { alreadyDone: true as const };
+        // Matches executeDriverSettlement's existing rule exactly: money already paid out to the
+        // driver cannot be reversed through this path (a paid settlement needs a real clawback /
+        // adjusting entry, not a reversal that pretends the pay run never happened).
+        if (current.status === "paid") return { blocked: true as const, reason: "settlement_reverse_blocked_paid" };
+        // LOCKED settlements require an explicit separate unlock first — a reversal must never
+        // silently bypass the lock. POST …/unlock clears locked_at before this can proceed.
+        if (current.locked_at) return { blocked: true as const, reason: "settlement_reverse_blocked_locked" };
+
+        const currentBusinessDate = companyBusinessDate();
+        // Same shared engine as the governance executor: resolves every linked bill / bill_payment /
+        // deduction journal entry and reverses ALL of it (never by source tag, never a bare status
+        // write), restores driver_bills to 'open', and proves an equal-and-opposite reconciliation
+        // before returning. NO new GL math written in this route.
+        const reversal = await reverseSettlementBillPaymentInClientTx(
+          client,
+          { operatingCompanyId: companyId, settlementId: params.data.id, reason: body.data.reason },
+          { userId: user.uuid },
+          currentBusinessDate
+        );
+
+        // Cascade: this settlement's own line items are historical once the settlement is reversed —
+        // void-never-delete, so deactivate (is_active=false), never hard-delete.
+        await client.query(
+          `UPDATE driver_finance.settlement_lines
+              SET is_active = false, updated_at = now()
+            WHERE settlement_id = $1::uuid AND operating_company_id = $2::uuid
+              AND is_active IS DISTINCT FROM false`,
+          [params.data.id, companyId]
+        );
+
+        const flipped = await client.query(
+          `UPDATE driver_finance.driver_settlements
+              SET status = 'cancelled', reversed_at = now(), reversed_by_user_id = $3::uuid,
+                  reversal_reason = $4, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'cancelled'
+            RETURNING id::text`,
+          [params.data.id, companyId, user.uuid, body.data.reason]
+        );
+        if (!flipped.rows[0]) throw new Error("settlement_reverse_race_lost");
+
+        // BANK-ORPHAN-01 — driver_settlements.paid_via_bank_txn_id is a direct pointer, not one of
+        // the four VoidableEntityType-linked tables void.service.ts's shared cascade already covers
+        // (that cascade DID already run, inside reverseSettlementBillPaymentInClientTx's own
+        // voidBillPaymentInClientTx/voidBillInClientTx -> postVoidReversal calls above, for any bank
+        // match on the underlying bill/bill_payment). This is the settlement's OWN match, reset with
+        // the same shared primitive so the reset shape is identical everywhere in the codebase.
+        let bankTransactionUnmatched = false;
+        if (current.paid_via_bank_txn_id) {
+          bankTransactionUnmatched = await unmatchBankTransactionById(client, companyId, current.paid_via_bank_txn_id);
+          await client.query(
+            `UPDATE driver_finance.driver_settlements SET paid_via_bank_txn_id = NULL WHERE id = $1::uuid`,
+            [params.data.id]
+          );
+        }
+
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "driver_finance.driver_settlement.reversed",
+          {
+            resource_type: "driver_finance.driver_settlements",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            reason: body.data.reason,
+            before_status: current.status,
+            after_status: "cancelled",
+            gl_reversal_result: reversal.result,
+            gl_run_id: reversal.run_id,
+            bank_transaction_unmatched: bankTransactionUnmatched,
+            via: "settlements.routes.direct",
+          },
+          "warning",
+          "SETL-NO-VOID-PATH-01"
+        );
+
+        return {
+          row: {
+            id: params.data.id,
+            status: "cancelled",
+            reversal_result: reversal.result,
+            bank_transaction_unmatched: bankTransactionUnmatched,
+          },
+        };
+      });
+
+      if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+      if ("notFound" in result) return reply.code(404).send({ error: "settlement_not_found" });
+      if ("alreadyDone" in result) return reply.code(200).send({ status: "cancelled", already_done: true });
+      if ("blocked" in result) return reply.code(409).send({ error: result.reason });
+      return result.row;
+    }
+  );
+
+  // SETL-NO-VOID-PATH-01 — the explicit, separate unlock a LOCKED settlement requires before /reverse
+  // will run. Owner/Accountant only, same gate as reverse itself; reason required and audited so an
+  // unlock is exactly as traceable as the reversal it unblocks.
+  app.post(
+    "/api/v1/driver-finance/settlements/:id/unlock",
+    { config: { rateLimit: { max: 15, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const user = requireSettlementVoidRole(req, reply);
+      if (!user) return;
+      const params = idParamsSchema.safeParse(req.params ?? {});
+      if (!params.success) return validationError(reply, params.error);
+      const body = settlementReasonBodySchema.safeParse(req.body ?? {});
+      if (!body.success) return validationError(reply, body.error);
+      const companyId = body.data.operating_company_id;
+
+      const result = await withCompany(user.uuid, companyId, async (client) => {
+        if (!(await hasSettlementSchema(client))) return { unavailable: true as const };
+        const updated = await client.query(
+          `UPDATE driver_finance.driver_settlements
+              SET locked_at = NULL, updated_at = now()
+            WHERE id = $1::uuid AND operating_company_id = $2::uuid AND locked_at IS NOT NULL
+            RETURNING id::text, status::text`,
+          [params.data.id, companyId]
+        );
+        if (!updated.rows[0]) return { notFoundOrNotLocked: true as const };
+        await appendCrudAudit(
+          client,
+          user.uuid,
+          "driver_finance.driver_settlement.unlocked",
+          {
+            resource_type: "driver_finance.driver_settlements",
+            resource_id: params.data.id,
+            operating_company_id: companyId,
+            reason: body.data.reason,
+          },
+          "warning",
+          "SETL-NO-VOID-PATH-01"
+        );
+        return { row: updated.rows[0] };
+      });
+
+      if ("unavailable" in result) return reply.code(501).send({ error: "driver_finance_schema_not_available" });
+      if ("notFoundOrNotLocked" in result) return reply.code(404).send({ error: "settlement_not_found_or_not_locked" });
+      return result.row;
+    }
+  );
 }
