@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a464d06",
+  "healthzSha": "5809231",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "a464d06",
+    "deployedSha": "5809231",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 18897,
-      "title": "FINDING: SETL-F10163 | CLOSE-TRIP-RECHECK-GUARD-GAP",
+      "number": 18961,
+      "title": "FINDING: BUS-FORCE-VOID10-DEPLOY-GATE",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:47 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18897",
-      "sha": "e7c08a4e9c",
-      "committedAtIso": "2026-08-31T14:47:26-05:00"
+      "mergedAtCt": "08/31/2026, 04:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18961",
+      "sha": "8dc22d3c62",
+      "committedAtIso": "2026-08-31T16:54:40-05:00"
     },
     {
-      "number": 18890,
-      "title": "FINDING: BUS-FORCE-IDLE-CC2-CC3-SYNC-ALL",
+      "number": 18960,
+      "title": "FINDING: FAIL-CANCEL-PARAM-10-TSC",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18890",
-      "sha": "38f2886dd0",
-      "committedAtIso": "2026-08-31T14:44:40-05:00"
+      "mergedAtCt": "08/31/2026, 04:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18960",
+      "sha": "5809231e24",
+      "committedAtIso": "2026-08-31T16:53:22-05:00"
     },
     {
-      "number": 18888,
-      "title": "FINDING: LST-F10163 navy subnav: 12 of 178 (System module)",
+      "number": 18959,
+      "title": "FINDING: N/A -- SETL-SELECTION-BINDING reproduced live, does NOT reproduce on tip (healthz=364d1a6)",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:44 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18888",
-      "sha": "a464d066db",
-      "committedAtIso": "2026-08-31T14:44:27-05:00"
+      "mergedAtCt": "08/31/2026, 04:51 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18959",
+      "sha": "884641c621",
+      "committedAtIso": "2026-08-31T16:51:08-05:00"
     },
     {
-      "number": 18884,
-      "title": "FINDING: LST-F10162 navy subnav: 11 of 178 (Drivers module)",
+      "number": 18958,
+      "title": "FINDING: BUS-ACK-OWNER-VOID10-SPLIT",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18884",
-      "sha": "bfb353ec69",
-      "committedAtIso": "2026-08-31T14:42:50-05:00"
+      "mergedAtCt": "08/31/2026, 04:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18958",
+      "sha": "38b7c07e15",
+      "committedAtIso": "2026-08-31T16:50:00-05:00"
     },
     {
-      "number": 18887,
-      "title": "FINDING: BANK-F10162 | BANK-RECON-ACCEPT-MATCH-500",
+      "number": 18957,
+      "title": "FINDING: FAIL-CANCEL-PARAM-10",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:42 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18887",
-      "sha": "6c9dd1a0d6",
-      "committedAtIso": "2026-08-31T14:42:00-05:00"
+      "mergedAtCt": "08/31/2026, 04:47 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18957",
+      "sha": "1032cfbcf6",
+      "committedAtIso": "2026-08-31T16:47:54-05:00"
+    },
+    {
+      "number": 18955,
+      "title": "FINDING: CLAIM-RESERVE 10173",
+      "state": "merged",
+      "mergedAtCt": "08/31/2026, 04:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18955",
+      "sha": "ae50f09cf6",
+      "committedAtIso": "2026-08-31T16:43:14-05:00"
     },
     {
       "number": 0,
-      "title": "STOP: insurance schema ALREADY EXISTS - do not build it. Verify+populate only. New rule: prove absence before building.",
+      "title": "RULING: 8 proof-chain loads HELD (0 of 19 settlements ever PAID + 0 open recon sessions); void proceeds NOW on 10 clean substitutes",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:41 PM CT",
+      "mergedAtCt": "08/31/2026, 04:43 PM CT",
       "url": "",
-      "sha": "6829083a01",
-      "committedAtIso": "2026-08-31T14:41:29-05:00"
+      "sha": "c510868bd4",
+      "committedAtIso": "2026-08-31T16:43:08-05:00"
     },
     {
-      "number": 18886,
-      "title": "FINDING: BUS-ACK-CC2-CC3-FAST-MERGE",
+      "number": 18954,
+      "title": "FINDING: BUS-FORCE-VOID10-ACK-742c44f",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18886",
-      "sha": "8fe34f6d19",
-      "committedAtIso": "2026-08-31T14:40:48-05:00"
+      "mergedAtCt": "08/31/2026, 04:42 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18954",
+      "sha": "5137a3f5b7",
+      "committedAtIso": "2026-08-31T16:42:55-05:00"
     },
     {
-      "number": 18885,
-      "title": "FINDING: BUS-FAST-MERGE-RESPOND-CODERS",
+      "number": 18944,
+      "title": "FINDING: INS-F10185 monthly insurance report by 5th — alarms, never fails silently",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18885",
-      "sha": "b498ac18aa",
-      "committedAtIso": "2026-08-31T14:38:36-05:00"
+      "mergedAtCt": "08/31/2026, 04:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18944",
+      "sha": "69f333b47d",
+      "committedAtIso": "2026-08-31T16:38:09-05:00"
     },
     {
-      "number": 18871,
-      "title": "FINDING: N/A -- close-trip already_closed heal now surfaces as success, UI Re-check button unblocked",
+      "number": 18942,
+      "title": "FINDING: LST-F10184 navy subnav guard — real route list (381 not 178)",
       "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18871",
-      "sha": "34a1b71e80",
-      "committedAtIso": "2026-08-31T14:37:13-05:00"
-    },
-    {
-      "number": 18878,
-      "title": "FINDING: LST-F10161 navy subnav: 10 of 178 (Dispatch module)",
-      "state": "merged",
-      "mergedAtCt": "08/31/2026, 02:37 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18878",
-      "sha": "793ca8d44f",
-      "committedAtIso": "2026-08-31T14:37:09-05:00"
+      "mergedAtCt": "08/31/2026, 04:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/18942",
+      "sha": "02c67103c9",
+      "committedAtIso": "2026-08-31T16:37:57-05:00"
     }
   ]
 }
