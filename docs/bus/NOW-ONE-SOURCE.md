@@ -1,11 +1,9 @@
-**THIS IS NOW — 2026-08-31 01:28 CT · CONTINUOUS · no idle**
+**THIS IS NOW — 2026-08-31 01:32 CT · CONTINUOUS**
 
-**Cascade = OOS.** `#18546` → **CC-1**. Grade → **CC-2**. Expenses → **CC-3 + Devin-A** (parallel). Loads+expenses → **Codex**.
+**Cascade OOS.** AT# → CC-1. Expenses → CC-3 + Devin. Loads → Codex. Grade → CC-2.
 
-**Live:** `api.../healthz/shallow` = `f58356e` · `#18535` live · seats Chrome NOW.
+**Live:** `aa30d41` (+ tip deploy in flight). `#18535` live. Chrome NOW — no free-lane / no wait.
 
-**Execute:** `docs/lockdown/GO-MASTER-MANUAL-LIVE-BOOKS-2026-08-31.md`  
-**Freeze:** Send/Void/Factor on dup cohort only — `INVOICE-DUPLICATE-COHORT-FREEZE-2026-08-31.md`  
-**Lead:** `docs/bus/LEAD-CENSUS.md`
+Desktop pastes: `~/Downloads/PASTE-TO-CC-*-NOW.txt` · `PASTE-TO-CLAUDE-FROM-CURSOR.txt`
 
-Silent OUTBOX on your TOP >15m = **defect**.
+Freeze: Send/Void/Factor on dup cohort only. Expenses AUTHORIZED. 409 → blank Ref no.

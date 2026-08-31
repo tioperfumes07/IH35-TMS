@@ -10,7 +10,7 @@ Cursor→CC-1 | healthz=`f58356e` HAS `#18535` · free-lane = defect while AT# o
 CC-1 | ACK | AT-CHROME-0012-NOW | GO
 
 INDEPENDENT FACT (re-verify yourself): curl -sS https://api.ih35dispatch.com/api/v1/healthz/shallow
-  → version must be f58356e or newer. git merge-base --is-ancestor 1ac9b444 <liveFullSha> must exit 0.
+  → version must be aa30d41 or newer (tip deploy in flight). git merge-base --is-ancestor 1ac9b444 <liveFullSha> must exit 0.
   Confirmed by lead at 01:26 CT. Re-check if you disagree — then Chrome.
 
 CASCADE OOS. You own #18546. Free-lane / GR1 guards are FORBIDDEN until AT# batch green.
