@@ -12,7 +12,7 @@ import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -534,17 +534,18 @@ export function VendorsPage() {
       />
       {companyId && qboAvailable ? <VendorsSyncPanel operatingCompanyId={companyId} /> : null}
       {/* §7 RESTORE — segment tabs (All/Active/Inactive/By Category). listTab≠detail tab. */}
-      <SecondaryNavTabs
+      <NavyPageSubNav
         activeId={listStatus}
-        onChange={(id) => {
+        onTabChange={(id) => {
           if ((VENDOR_LIST_TAB_IDS as readonly string[]).includes(id)) setListStatus(id as VendorListTabId);
         }}
-        tabs={[
-          { id: "all", label: `All (${vendorTabCounts.all})` },
-          { id: "active", label: `Active (${vendorTabCounts.active})` },
-          { id: "inactive", label: `Inactive (${vendorTabCounts.inactive})` },
-          { id: "by-category", label: `By Category (${vendorTabCounts.byCategory})` },
+        items={[
+          { label: `All (${vendorTabCounts.all})`, to: "#all" },
+          { label: `Active (${vendorTabCounts.active})`, to: "#active" },
+          { label: `Inactive (${vendorTabCounts.inactive})`, to: "#inactive" },
+          { label: `By Category (${vendorTabCounts.byCategory})`, to: "#by-category" },
         ]}
+        itemIds={["all", "active", "inactive", "by-category"]}
       />
       {listStatus === "by-category" ? (
         <div className="space-y-2">
@@ -663,7 +664,12 @@ export function VendorsPage() {
                 </section>
               </div>
 
-              <SecondaryNavTabs tabs={VENDOR_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as VendorTabId)} />
+              <NavyPageSubNav
+                items={VENDOR_TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+                activeId={activeTab}
+                onTabChange={(id) => setActiveTab(id as VendorTabId)}
+                itemIds={VENDOR_TABS.map((t) => t.id)}
+              />
 
               {activeTab === "transaction_list" ? (
                 billsQuery.isError ? (
