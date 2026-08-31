@@ -35,7 +35,6 @@ import { Modal } from "../components/Modal";
 import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLink } from "../components/shared/EntityLink";
 import { entityLabel } from "../lib/entity-label";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
 import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
@@ -631,16 +630,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
       />
       <DriversCashAdvanceRequestsLink />
 
-      <SecondaryNavTabs
-        className="-mx-2"
+      <NavyPageSubNav
         activeId={activeTab}
-        onChange={(id) => {
-          if (id === "drivers" || id === "teams") setDriversHomeView(id);
+        onTabChange={(id) => {
+          if (id === "drivers" || id === "teams") setDriversHomeView(id as DriversHomeViewId);
         }}
-        tabs={[
-          { id: "drivers", label: "Drivers" },
-          { id: "teams", label: "Teams" },
+        items={[
+          { label: "Drivers", to: "#drivers" },
+          { label: "Teams", to: "#teams" },
         ]}
+        itemIds={["drivers", "teams"]}
       />
 
       {activeTab === "teams" ? (
@@ -711,16 +710,16 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
 
       {activeTab === "drivers" ? (
         <>
-          <SecondaryNavTabs
-            className="-mx-2"
+          <NavyPageSubNav
             activeId={driverListStatus}
-            onChange={(id) => {
+            onTabChange={(id) => {
               if ((DRIVER_LIST_STATUS_IDS as readonly string[]).includes(id)) setDriverListStatus(id as DriversListStatusId);
             }}
-            tabs={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
-              id: tab.id,
+            items={DRIVERS_LIST_STATUS_TABS.map((tab) => ({
               label: `${tab.label} (${driverListTabCounts[tab.id] ?? 0})`,
+              to: `#${tab.id}`,
             }))}
+            itemIds={DRIVERS_LIST_STATUS_TABS.map((tab) => tab.id)}
           />
           <p className="text-[12px] text-slate-600 px-1">
             Active = load or driving activity in the last 30 days (or hired within 30 days). All others stay Inactive; use Reactivate to return a driver to Active.
