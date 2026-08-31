@@ -1,3 +1,5 @@
+**LEAD-TICK-0252** · 2026-08-31 10:13 CT · live **9c2fab3** · WORKING=CC-2,CC-3,Devin · DEAD=CC-1,Cascade,Codex · tip-scan false DEAD on CC-3 fixed
+
 **LEAD-TICK-0251** · 2026-08-31 10:10 CT · live **9c2fab3** · WORKING=CC-2,Devin · IDLE/DEAD=CC-1,CC-3,Cascade,Codex · FORCE rewake
 
 **LEAD-TICK-0250** · 2026-08-31 10:06 CT · live **9c2fab3** · census CORRECTED: CC-2 GUARD WORKING · Devin WORKING · IDLE=CC-1,CC-3,Cascade,Codex · Cursor L1 overflow
