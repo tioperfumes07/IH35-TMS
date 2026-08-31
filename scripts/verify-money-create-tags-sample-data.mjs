@@ -102,7 +102,6 @@ const BASELINE = new Set([
   "apps/backend/src/driver-finance/abandonment.service.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlement-contract-terms.service.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlement-deduction-cap.service.ts::driver_finance.settlement_lines",
-  "apps/backend/src/driver-finance/settlement-engine.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlements-mvp.routes.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/settlements.routes.ts::driver_finance.settlement_lines",
   "apps/backend/src/driver-finance/weekly-close.routes.ts::driver_finance.settlement_lines",
@@ -135,7 +134,10 @@ export function untaggedInserts(src, tables = SAMPLE_TAGGED_TABLES) {
   const clean = stripComments(src);
   const out = [];
   for (const table of tables) {
-    const re = new RegExp(`INSERT\\s+INTO\\s+${table.replace(".", "\\.")}\\s*\\(([\\s\\S]{0,3000}?)\\)\\s*VALUES`, "gi");
+    const re = new RegExp(
+      `INSERT\\s+INTO\\s+${table.replace(".", "\\.")}\\s*\\(([\\s\\S]{0,3000}?)\\)\\s*(?:VALUES|SELECT)`,
+      "gi"
+    );
     let m;
     while ((m = re.exec(clean)) !== null) {
       const columnList = m[1];
@@ -193,8 +195,12 @@ if (process.argv.includes("--selftest")) {
 
   const bad = "INSERT INTO accounting.invoices (id, customer_id) VALUES ($1,$2)";
   const good = "INSERT INTO accounting.invoices (id, customer_id, is_sample_data) VALUES ($1,$2,$3)";
+  const badSelect = "INSERT INTO accounting.invoices (id, customer_id) SELECT $1,$2";
+  const goodSelect = "INSERT INTO accounting.invoices (id, customer_id, is_sample_data) SELECT $1,$2,$3";
   if (untaggedInserts(bad, T).length !== 1) failures.push("an untagged INSERT was NOT caught");
   if (untaggedInserts(good, T).length !== 0) failures.push("a tagged INSERT was flagged");
+  if (untaggedInserts(badSelect, T).length !== 1) failures.push("an untagged INSERT SELECT was NOT caught");
+  if (untaggedInserts(goodSelect, T).length !== 0) failures.push("a tagged INSERT SELECT was flagged");
 
   // A comment naming the column must not satisfy the check.
   const commentOnly = "-- is_sample_data derived from the load\n" + bad;

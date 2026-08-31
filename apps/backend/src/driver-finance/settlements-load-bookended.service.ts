@@ -496,6 +496,7 @@ async function closeLoadBookendedSettlementForDriver(
 
   await appendSettlementLineFromDriverBillIfMissing(client, {
     settlementId,
+    operatingCompanyId: opts.operatingCompanyId,
     driverId: opts.driverId,
     loadId: opts.load.id,
     teamId: opts.team?.teamId ?? null,
@@ -760,6 +761,7 @@ export async function stampTripClosedForBookendedSettlement(
       ] as const) {
         await appendSettlementLineFromDriverBillIfMissing(client, {
           settlementId: opts.settlementId,
+          operatingCompanyId: opts.operatingCompanyId,
           driverId,
           loadId: anchorLoadId,
           teamId: team.teamId,
@@ -770,6 +772,7 @@ export async function stampTripClosedForBookendedSettlement(
     } else {
       await appendSettlementLineFromDriverBillIfMissing(client, {
         settlementId: opts.settlementId,
+        operatingCompanyId: opts.operatingCompanyId,
         driverId: row.driver_id,
         loadId: anchorLoadId,
         teamId: null,
@@ -982,6 +985,7 @@ export async function pingSettlementOnLoadEvent(
 
       await appendSettlementLineFromDriverBillIfMissing(client, {
         settlementId: String(settlementId),
+        operatingCompanyId: opts.operatingCompanyId,
         driverId,
         loadId: opts.loadId,
         teamId: team?.teamId ?? null,

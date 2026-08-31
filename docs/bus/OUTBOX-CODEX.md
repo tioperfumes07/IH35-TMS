@@ -1,3 +1,5 @@
+Codex | FIXED-CODE | SETL-F10164 | blast=5 callers/4 earnings variants+2 dispute writers | root=child defaulted false despite sample parent | fix=company-scoped parent inheritance across all 6 SQL sites | guard=money-create ratchet now covers VALUES+SELECT; selftest | no migration/backfill | Live=UNVERIFIED | GO
+
 Codex | FIXED-GUARD | DEFECT-B-CLOSE-TRIP-NO-APPEND-SETTLEMENT-LINES | existing=#18871 closed-state Re-check settlement path | guard now binds closed UI→canonical close-trip handler+selftest3/3 | product unchanged | Live=UNVERIFIED | GO
 
 Codex | FIXED-CODE | BANK-RECON-ACCEPT-MATCH-500 | root=exact candidate belongs to reconciled August session; DB trigger correctly blocked late write but service skipped canonical pre-write gate and routes leaked typed lock as 500 | fix=shared closed-session assert before match/link/GL + HTTP409 mapping on accept/manual | guard=PASS+selftest3/3 | no forced match | Live=post-deploy UNVERIFIED | GO
