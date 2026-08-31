@@ -1,3 +1,7 @@
+### 2026-08-31 10:37 CT · LIVE-CHROME-ALL-HANDS
+- Cascade stuck on unpushed silent-error — redirected to Live Chrome LOAD-2+4.
+- Codex credited #18771/#18775. All seats: Live Chrome walking, no pictures.
+
 ### 2026-08-31 10:31 CT · TURBO
 - Deploy API dep-daaps6e7… tip 47700c94 (#18775 dual-table).
 - Closed #18560 queue clog. CC-1→Tier-A dual-table fix. All seats WORKING.

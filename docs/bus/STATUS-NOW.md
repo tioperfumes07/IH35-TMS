@@ -1,3 +1,7 @@
+**LIVE-CHROME-ALL-HANDS** · 2026-08-31 10:37 CT · live **47700c9**
+Cascade stuck = ACK'd silent-error ship, never opened PR, never Live-Chrome'd LOAD-2/4.
+Order: **all seats Live Chrome walk** (no pictures). Cascade skip code PR → book shapes now.
+
 **TURBO P0** · 2026-08-31 10:31 CT
 PAY-RATE-DUAL-TABLE (#18775/#18770): Equipment UI → `mdata.driver_pay_rates`; Book Load → `driver_finance.driver_pay_rates`. Codex entered 0.45 on wrong table. **CC-1 money (Tier A)** wires UI write to `driver_finance` (or single writer). Until then LOAD-5/settle stay blocked for real. Deploy `dep-daaps6e7bikc73fj4vdg` tip 47700c94.
 
