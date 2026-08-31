@@ -294,6 +294,108 @@ export type VoidReversalResult = {
   reversed_line_count: number;
 };
 
+// ---------------------------------------------------------------------------
+// BANK-ORPHAN-01 — un-match on void (owner ruling, 2026-08-31).
+//
+// "Voiding a transaction MUST automatically un-categorize / un-match its bank transaction and
+// return it to the review worklist. QuickBooks behavior and the correct one: the match is a
+// property of the transaction, so it dies with it." Live proof it was broken: 4
+// banking.bank_transactions stayed status='categorized' while the accounting.payments rows they
+// point to were voided (8b944104…$1,200.00, 2bdef3a9…$1,000.00, 8521d332…$1,000.00,
+// 5404b1cb…$2,500.00) — same orphan shape as VOID-REVERSAL-SOURCE-TAG, one level down the chain.
+//
+// Two independent, NON-implying pointer shapes exist and both must be checked:
+//   REVERSE — <entity table>.source_bank_transaction_id -> banking.bank_transactions.id
+//             (accounting.payments, accounting.bill_payments, accounting.bills). This is the ONLY
+//             link the 4 live orphans above carried — their bank_transactions row had
+//             linked_entity_id = NULL, so a forward-only search would have missed every one.
+//   FORWARD — banking.bank_transactions.linked_entity_id -> <entity>.id (the categorize-as-expense
+//             / categorize-as-bill flows; accounting.expenses has NO reverse column at all, so
+//             FORWARD is its ONLY link for that type).
+// Reset targets EITHER shape in one statement; a bank_transactions row with neither pointer set is
+// a no-op (0 rows, no error) — most voided entities were never bank-matched at all.
+const BANK_MATCH_REVERSE_TABLE: Partial<Record<VoidableEntityType, string>> = {
+  bill: "accounting.bills",
+  bill_payment: "accounting.bill_payments",
+  customer_payment: "accounting.payments",
+};
+
+// Mirrors banking.routes.ts's undo-categorization reset exactly (same columns, same target status)
+// EXCEPT it does not touch/require reversing matched_journal_entry_id's own JE: the entity being
+// voided already had ITS journal entry reversed by postVoidReversal above (or by the caller, for a
+// direct GL void) before this runs, so clearing the pointer here cannot orphan a live, unreversed
+// JE — it only clears a categorization/link field on the bank-transaction side.
+const BANK_TX_UNMATCH_RESET_SQL = `
+  UPDATE banking.bank_transactions
+     SET status = 'pending_categorization',
+         matched_journal_entry_id = NULL,
+         linked_entity_id = NULL,
+         category = NULL,
+         category_kind = NULL,
+         categorization_customer_id = NULL,
+         categorization_vendor_id = NULL,
+         categorization_gl_account_id = NULL,
+         categorization_project_id = NULL,
+         categorization_memo = NULL,
+         categorization_driver_id = NULL,
+         categorization_unit_id = NULL,
+         categorization_load_id = NULL,
+         categorization_recover_from_driver = NULL,
+         categorization_recover_deduction_type = NULL,
+         categorization_deduction_id = NULL,
+         categorization_item_id = NULL,
+         categorization_trailer_id = NULL,
+         categorization_class_id = NULL,
+         categorization_location = NULL,
+         suggested_match_invoice_id = NULL,
+         suggested_match_bill_id = NULL,
+         categorized_at = NULL,
+         updated_at = now()
+   WHERE operating_company_id = $1::uuid
+`;
+
+/**
+ * BANK-ORPHAN-01 shared primitive #1: reset ONE bank_transactions row (known by its own id) back to
+ * the review worklist. Callers that already hold a bank_transaction_id directly (a column that is not
+ * one of the four VoidableEntityType-linked tables below, e.g. driver_settlements.paid_via_bank_txn_id)
+ * call this instead of duplicating the reset SQL.
+ */
+export async function unmatchBankTransactionById(
+  client: QueryableClient,
+  operatingCompanyId: string,
+  bankTransactionId: string
+): Promise<boolean> {
+  const res = await client.query<{ id: string }>(
+    `${BANK_TX_UNMATCH_RESET_SQL} AND id = $2::uuid RETURNING id`,
+    [operatingCompanyId, bankTransactionId]
+  );
+  return res.rows.length > 0;
+}
+
+/**
+ * BANK-ORPHAN-01 shared primitive #2: resolve + reset every bank_transactions row matched against a
+ * VoidableEntityType entity (both pointer shapes above), in one statement. Called unconditionally from
+ * postVoidReversal so every existing caller — direct void routes, the load-cancel cascade, the
+ * governance void/cancel executors, the settlement reversal path — gets this for free, per the owner's
+ * instruction: "Build it into the void cascade, not as a cleanup job."
+ */
+export async function unmatchBankTransactionsForVoid(
+  client: QueryableClient,
+  params: { operatingCompanyId: string; entityType: VoidableEntityType; entityId: string }
+): Promise<number> {
+  const reverseTable = BANK_MATCH_REVERSE_TABLE[params.entityType];
+  const reverseIdSql = reverseTable
+    ? `(SELECT source_bank_transaction_id FROM ${reverseTable} WHERE id = $2::uuid AND operating_company_id = $1::uuid)`
+    : `NULL::uuid`;
+  const res = await client.query<{ id: string }>(
+    `${BANK_TX_UNMATCH_RESET_SQL}
+       AND (linked_entity_id = $2::uuid OR id = ${reverseIdSql})
+     RETURNING id`,
+    [params.operatingCompanyId, params.entityId]
+  );
+  return res.rows.length;
+}
+
 /**
  * Post the reversing journal entry for a void on the SAME client (atomic with the caller's status flip).
  * Returns null reversal id when the entity had no posted GL lines (e.g. a draft invoice) — nothing to reverse.
@@ -312,6 +414,17 @@ export async function postVoidReversal(
   },
   actor: { userId: string }
 ): Promise<VoidReversalResult> {
+  // BANK-ORPHAN-01 — runs FIRST and unconditionally, before the "nothing to reverse" early return
+  // below. A bank match is a property of the entity being voided, not of its GL postings — a draft
+  // document with zero posted lines could still (in principle) carry a bank match, and the owner's
+  // rule has no "only if something reversed" exception: "no voided document may leave a bank
+  // transaction categorized against it."
+  await unmatchBankTransactionsForVoid(client, {
+    operatingCompanyId: params.operatingCompanyId,
+    entityType: params.entityType,
+    entityId: params.entityId,
+  });
+
   const originalLines = await readOriginalGlPostings(client, params.operatingCompanyId, params.entityType, params.entityId);
   if (originalLines.length === 0) {
     return { reversal_journal_entry_id: null, reversal_date: null, closed_period_reversal: false, reversed_line_count: 0 };

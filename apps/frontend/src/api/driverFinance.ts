@@ -167,6 +167,25 @@ export function finalizeSettlement(id: string, companyId: string) {
   });
 }
 
+// SETL-NO-VOID-PATH-01 — Owner/Accountant reversal, same shared void.service.ts engine as every
+// other financial void in this app. Reason is required server-side (min length 1) — always pass a
+// real one, never a placeholder string.
+export function reverseSettlement(id: string, companyId: string, reason: string) {
+  return apiRequest<{ id: string; status: string; reversal_result: string; bank_transaction_unmatched: boolean }>(
+    `/api/v1/driver-finance/settlements/${id}/reverse`,
+    { method: "POST", body: { operating_company_id: companyId, reason } }
+  );
+}
+
+// SETL-NO-VOID-PATH-01 — required before /reverse on a LOCKED settlement; a reversal must never
+// silently bypass the lock.
+export function unlockSettlement(id: string, companyId: string, reason: string) {
+  return apiRequest<Record<string, unknown>>(`/api/v1/driver-finance/settlements/${id}/unlock`, {
+    method: "POST",
+    body: { operating_company_id: companyId, reason },
+  });
+}
+
 // SETTLE-PAY-FE-COMPANY-ID — every driver-pay settlement mutation requires
 // `operating_company_id` as a query param (settlement-payment.routes parseCompanyQuery).
 // Omitting it 400s validation_error before the service runs — Jorge cannot Mark Paid / Queue.
