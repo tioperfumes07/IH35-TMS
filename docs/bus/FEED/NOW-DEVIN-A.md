@@ -1,2 +1,2 @@
-# FEED NOW — DEVIN-A · 21:40 CT
-**NEVER IDLE.** FREE=**025/13538 prep** (NOT 13521). Create after gate. PORT 9227. GO.
+# FEED NOW — DEVIN-A · 21:45 CT
+**NEVER IDLE.** Gate on main — run guard PASS → **025/13538 CREATE NOW** (NOT 13521). PORT 9227. GO.

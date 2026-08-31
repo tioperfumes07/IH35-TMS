@@ -1,2 +1,2 @@
-# FEED NOW — CODEX · 21:40 CT
-**NEVER IDLE.** FREE=tieout+bank+014/13521 prep. BLOCKING create after gate. NOT 13521 for Devin. GO.
+# FEED NOW — CODEX · 21:45 CT
+**NEVER IDLE.** Gate on main — run guard PASS → **014/13521 CREATE NOW**. FREE=tieout same minute. GO.
