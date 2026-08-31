@@ -4,6 +4,10 @@
  * for the dispatched/at_pickup → in_transit transition.
  * DISPATCH-NO-UI-DELIVERED-TRANSITION full sequence: dispatched → in_transit
  * → delivered_pending_docs → completed_docs_received.
+ *
+ * Updated for class-level fix (PR #18545): the drawer now renders ONE BUTTON PER
+ * ALLOWED TRANSITION from getOfficeTransitionButtons() in @ih35/shared-types.
+ * This guard checks the canon-driven shape, not hardcoded helpers/testIds.
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -15,35 +19,34 @@ const src = readFileSync(filePath, "utf8");
 
 const failures = [];
 
-// Required: loadCanMarkInTransit helper
-if (!src.includes("export function loadCanMarkInTransit")) {
-  failures.push("Missing loadCanMarkInTransit helper");
+// Required: import getOfficeTransitionButtons from shared canon
+if (!src.includes("getOfficeTransitionButtons")) {
+  failures.push("Missing getOfficeTransitionButtons import from shared canon");
 }
 
-// Required: helper gates on dispatched and at_pickup only
-if (!src.includes('["dispatched", "at_pickup"].includes')) {
-  failures.push("loadCanMarkInTransit must gate on dispatched and at_pickup only");
+// Required: drawer renders buttons via getOfficeTransitionButtons(load.status)
+if (!src.includes("getOfficeTransitionButtons(load.status).map")) {
+  failures.push("Drawer must render buttons via getOfficeTransitionButtons(load.status).map()");
 }
 
-// Required: visible button with data-testid
-if (!src.includes('data-testid="load-detail-mark-in-transit"')) {
-  failures.push("Missing visible Mark in transit button (data-testid)");
+// Required: button uses transition.target for new_status (not hardcoded)
+if (!src.includes("new_status: transition.target")) {
+  failures.push("Button must use transition.target for new_status (canon-driven, not hardcoded)");
 }
 
-// Required: transitions to in_transit
-if (!src.includes('new_status: "in_transit"')) {
-  failures.push("Button must transition to in_transit");
+// Required: button uses transition.testId for data-testid (not hardcoded)
+if (!src.includes("data-testid={transition.testId}")) {
+  failures.push("Button must bind data-testid from transition.testId (state-machine driven)");
 }
 
-// Required: deliver button no longer accepts dispatched (must go through in_transit first)
-const deliverLine = src.match(/loadCanMarkDeliveredPendingDocs[\s\S]*?\[([^\]]+)\]/);
-if (deliverLine && deliverLine[1].includes("dispatched")) {
-  failures.push("loadCanMarkDeliveredPendingDocs must NOT accept dispatched — in_transit hop is required first");
+// Required: loadCanMarkInTransit re-exported from shared canon (back-compat)
+if (!src.includes("loadCanMarkInTransit") || !src.includes("@ih35/shared-types")) {
+  failures.push("loadCanMarkInTransit must be re-exported from @ih35/shared-types");
 }
 
 if (process.argv.includes("--selftest")) {
-  const bad = src.replace('data-testid="load-detail-mark-in-transit"', 'data-testid="removed"');
-  if (bad.includes('data-testid="load-detail-mark-in-transit"')) {
+  const bad = src.replace("getOfficeTransitionButtons(load.status).map", "getOfficeTransitionButtons_REMOVED(load.status).map");
+  if (bad.includes("getOfficeTransitionButtons(load.status).map")) {
     console.error("selftest: could not plant failure");
     process.exit(1);
   }
@@ -57,5 +60,5 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("verify-dispatch-load-detail-in-transit-button: OK — LoadDetailDrawer has Mark in transit button + deliver requires in_transit hop");
+console.log("verify-dispatch-load-detail-in-transit-button: OK — LoadDetailDrawer renders in_transit transition via canon getOfficeTransitionButtons");
 process.exit(0);
