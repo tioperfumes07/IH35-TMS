@@ -1,12 +1,7 @@
-import { useLocation } from "react-router-dom";
 import type { ReportCategory } from "../../api/reports";
 import { REPORT_CATEGORY_FLYOUT_ITEMS } from "../../components/reports/CategoryHoverNav";
 import { phase6ReportHref } from "../../components/reports/phase6ReportLinks";
-import {
-  HoverDropdownNav,
-  type NavChild,
-  type NavItem,
-} from "../../components/forms/shared/HoverDropdownNav";
+import { NavyPageSubNav, type NavyPageSubNavItem, type NavySubNavChild } from "../../components/layout/NavyPageSubNav";
 
 const CATEGORY_ORDER: ReportCategory[] = [
   "all",
@@ -39,9 +34,9 @@ const PHASE_6_RUNNER_ITEMS: Array<{ id: string; label: string }> = [
   { id: "scheduled-reports", label: "Default subscriptions" },
 ];
 
-function flattenReportRunLinks(): NavChild[] {
+function flattenReportRunLinks(): NavySubNavChild[] {
   const seen = new Set<string>();
-  const out: NavChild[] = [];
+  const out: NavySubNavChild[] = [];
   for (const cat of CATEGORY_ORDER) {
     for (const item of REPORT_CATEGORY_FLYOUT_ITEMS[cat]) {
       if (seen.has(item.id)) continue;
@@ -54,7 +49,7 @@ function flattenReportRunLinks(): NavChild[] {
           : item.id === "ap-aging"
             ? "/reports/ap-aging"
             : `/reports/run/${encodeURIComponent(item.id)}`);
-      out.push({ label: item.label, href });
+      out.push({ label: item.label, to: href });
     }
   }
   for (const p of PHASE_6_RUNNER_ITEMS) {
@@ -62,45 +57,45 @@ function flattenReportRunLinks(): NavChild[] {
     const href = phase6ReportHref(p.id);
     if (!href) continue;
     seen.add(p.id);
-    out.push({ label: p.label, href });
+    out.push({ label: p.label, to: href });
   }
   return out;
 }
 
 /** Top /reports sub-nav (invariant #20). Runner links deduped in same order as CategoryHoverNav flyouts. */
-const AUDIT_REPORT_CHILDREN: NavChild[] = [
-  { label: "Activity by user", href: "/reports/audit/activity-by-user" },
-  { label: "Activity by module", href: "/reports/audit/activity-by-module" },
+const AUDIT_REPORT_CHILDREN: NavySubNavChild[] = [
+  { label: "Activity by user", to: "/reports/audit/activity-by-user" },
+  { label: "Activity by module", to: "/reports/audit/activity-by-module" },
   {
     label: "Financial change log",
-    href: "/reports/audit/financial-change-log",
+    to: "/reports/audit/financial-change-log",
   },
   {
     label: "Maintenance decision log",
-    href: "/reports/audit/maintenance-decision-log",
+    to: "/reports/audit/maintenance-decision-log",
   },
-  { label: "Deduction trail", href: "/reports/audit/deduction-trail" },
-  { label: "Void & reversal", href: "/reports/audit/void-reversal" },
+  { label: "Deduction trail", to: "/reports/audit/deduction-trail" },
+  { label: "Void & reversal", to: "/reports/audit/void-reversal" },
   {
     label: "Period close history",
-    href: "/reports/audit/period-close-history",
+    to: "/reports/audit/period-close-history",
   },
 ];
 
-export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [
-  { label: "Reports", href: "/reports" },
-  { label: "Category hub", href: "/reports/hub" },
+export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
+  { label: "Reports", to: "/reports" },
+  { label: "Category hub", to: "/reports/hub" },
   // Label navigates to hub; chevron lists every runner (nav-split — same class as Accounting).
   {
     label: "Run report",
-    href: "/reports/hub",
+    to: "/reports/hub",
     children: flattenReportRunLinks(),
   },
-  { label: "Cancellations", href: "/reports/cancellations" },
-  { label: "Scheduled (custom)", href: "/reports/scheduled-custom" },
+  { label: "Cancellations", to: "/reports/cancellations" },
+  { label: "Scheduled (custom)", to: "/reports/scheduled-custom" },
   {
     label: "Audit",
-    href: "/reports/audit/activity-by-user",
+    to: "/reports/audit/activity-by-user",
     children: AUDIT_REPORT_CHILDREN,
   },
 ];
@@ -136,11 +131,7 @@ export function reportsSubNavActiveHref(pathname: string): string {
 }
 
 export function ReportsSubNav() {
-  const { pathname } = useLocation();
   return (
-    <HoverDropdownNav
-      items={[...REPORTS_SUB_NAV_ITEMS]}
-      activeHref={reportsSubNavActiveHref(pathname)}
-    />
+    <NavyPageSubNav items={REPORTS_SUB_NAV_ITEMS} />
   );
 }
