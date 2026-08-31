@@ -1,3 +1,5 @@
+**LEAD-TICK-0231** · 2026-08-31 08:17 CT · live **e308085** · tip~14 deploy IN FLIGHT · CREATE Neon still **0** · Codex/CC-2 STALL
+
 **LEAD-TICK-0230** · 2026-08-31 08:12 CT · live **e308085** · #18725 on live · Codex Chrome CREATE NOW · CC-2 still no ACK
 
 **LEAD-TICK-0229** · 2026-08-31 07:52 CT · live **159283c** · FORCE CC-2 pay-rate CREATE (law-authorized)

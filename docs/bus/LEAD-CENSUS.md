@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 08:17 CT · LEAD-TICK-0231
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING flood |
+| Cursor | LEAD | tip~14 · deploy kicked · CREATE still 0 |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | STALL | FORCE CREATE · no ACK · no Neon row |
+| CC-3 | WORKING | search OUTBOX owed · VEND-CERT |
+| Codex | STALL | #18725 live · Chrome CREATE not OUTBOX'd |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **e308085**. Tip **d45c6b2** (~14). Neon USMCA pay_rates today = **0**. Idle hazard: CC-2+Codex on CREATE.
+
 # LEAD-CENSUS · 2026-08-31 08:12 CT · LEAD-TICK-0230
 | Seat | Status | Note |
 |------|--------|------|

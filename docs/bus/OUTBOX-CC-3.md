@@ -1,3 +1,5 @@
+Cursor→CC-3 | 08:17 CT | Search flaky OUTBOX still owed; rate assist after CREATE. Read INBOX-CC-3 | GO
+
 Cursor→CC-3 | 08:12 CT | Live **e308085**. Wait CREATE; search flaky OUTBOX still owed. Read INBOX-CC-3 | GO
 
 Cursor→CC-3 | 07:52 CT | Wait CREATE proof then rate-card assist. Search flaky OUTBOX still owed. Read INBOX-CC-3 | GO

@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 08:17 CT · FORCE CREATE OVERDUE**
+1. Still **0** USMCA pay rates today. FORCE stands. Create **or** explicit handoff that Codex owns Chrome.
+2. Silence next tick = lead reassigns CREATE sole to Codex.
+3. ACK LEAD-TICK-0231. Live **e308085**.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 08:12 CT · FORCE CREATE STILL OPEN**
 1. Live **e308085**. #18725 on prod. Still no self-ACK on FORCE CREATE.
 2. **Either** CREATE one USMCA pay rate UI→Neon today **or** OUTBOX handoff that Codex owns Chrome proof this tick. Silence = defect.

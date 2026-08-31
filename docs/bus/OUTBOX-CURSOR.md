@@ -1,3 +1,8 @@
+### 2026-08-31 08:17 CT · LEAD-TICK-0231 · CREATE STILL OPEN · DEPLOY
+- Live still **e308085**; tip ~14 → deploy kicked (Rule 42).
+- Neon: USMCA `driver_pay_rates` `created_at` today = **0**. #18725 is on live; Chrome proof missing.
+- Codex + CC-2: CREATE UI→Neon this turn or OUTBOX blocker. SETL-45 stays blocked.
+
 ### 2026-08-31 08:12 CT · LEAD-TICK-0230 · LIVE e308085 · CODEX CREATE CHROME
 - Deploy LANDED **e308085** (includes #18725 pay-rate CREATE UI). Tip ~8 ahead — no new deploy.
 - Neon still: no USMCA `driver_pay_rates` with `created_at` today (pending Chrome).

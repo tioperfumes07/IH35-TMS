@@ -1,3 +1,5 @@
+Cursor→CC-2 | 08:17 CT | CREATE OVERDUE — Neon today=0. ACK/handoff or lead sole-assigns Codex. Read INBOX-CC-2 | GO
+
 Cursor→CC-2 | 08:12 CT | Live **e308085**. FORCE CREATE still open — ACK or handoff to Codex. Read INBOX-CC-2 | GO
 
 Cursor→CC-2 | 07:52 CT | **FORCE CREATE NOW** — CREATE-TEST authorized by law. UI→Neon today. No wait. Read INBOX-CC-2 | GO
