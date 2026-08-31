@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:42 CT**
+1. VERIFY factoring rates after healthz ancestors **b445610**. Self-ACK.
+2. Live currently **37efaa5**. ACK LEAD-TICK-0192.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:39 CT**
 1. Cursor overflow shipped factoring batch factor rates — VERIFY after deploy.
 2. Then drafts/expense/17 bills. Live **37efaa5**. Self-ACK.

@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:42 CT**
+1. ACK'd escrow/comparison/obligation tips. When healthz past **b445610** — create TEST factor batch; check advance/fee = Faro 97%/1.5%.
+2. Live **37efaa5**. ACK LEAD-TICK-0192.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:39 CT**
 1. ACK'd +2 pay rates · factor recon empty · OB register. After rates deploy: re-create TEST batch and check advance/fee vs Faro 97%/1.5%.
 2. Live **37efaa5**. ACK LEAD-TICK-0191.
