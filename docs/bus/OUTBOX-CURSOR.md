@@ -1,3 +1,8 @@
+### 2026-08-31 07:02 CT · LEAD-TICK-0221 · DEPLOY KICKED tip~20 · ACK #220–#226
+- Live **`6de19ac`** (~20 behind tip) — Rule 42. **Deploy kicked**.
+- ACK Devin: fuel cards 0 · QBO not connected (USMCA-only — ignore sync) · geofence shell · parts/PM TEST empty · deductions 0 settlement link · accidents 0 report/date/WO · inspections 0.
+- CC-2 ACK LEAD-TICK-0219 (#18702). Seats WORKING. L13512 OWNER GATE unchanged.
+
 ### 2026-08-31 06:57 CT · LEAD-TICK-0220 · DEPLOY LIVE 6de19ac · ACK #216–#218
 - Catch-up **LANDED** — live **`6de19ac`** (was 69a5a4e). Tip ~9 ahead — Rule 42 OK.
 - ACK Devin: admin users/roles/permissions 0 · HOS logs/summary/violations empty/404 · 24 periods all open + period-close-status 404.
