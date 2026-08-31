@@ -1,74 +1,55 @@
 #!/usr/bin/env node
-/**
- * DISPATCH-NO-UI-DELIVERED-TRANSITION (P0): human-sequence load detail must call
- * PATCH …/transition via delivered_pending_docs — not labels/reads only.
- */
+/** DISPATCH-NO-UI-DELIVERED-TRANSITION — drawer consumes shared transition canon. */
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DRAWER = path.join(ROOT, "apps/frontend/src/components/dispatch/LoadDetailDrawer.tsx");
+const SHARED = path.join(ROOT, "packages/shared-types/src/dispatch/load-state-machine.ts");
 const LABEL = "verify-dispatch-load-detail-deliver-transition";
 
-function readDrawer() {
-  return fs.readFileSync(DRAWER, "utf8");
-}
-
-export function assertLoadDetailDeliverTransition(source) {
+export function failures(drawer, shared) {
   const fails = [];
-  if (!/useUpdateLoadStatus/.test(source)) {
-    fails.push("LoadDetailDrawer must use useUpdateLoadStatus for office deliver");
-  }
-  if (!/loadCanMarkDeliveredPendingDocs/.test(source)) {
-    fails.push("LoadDetailDrawer must export loadCanMarkDeliveredPendingDocs eligibility helper");
-  }
-  if (!/new_status:\s*"delivered_pending_docs"/.test(source)) {
-    fails.push('LoadDetailDrawer must transition to delivered_pending_docs (WIRE-07 stamp path)');
-  }
-  if (!/data-testid="load-detail-mark-delivered"/.test(source)) {
-    fails.push("LoadDetailDrawer must expose load-detail-mark-delivered control");
-  }
-  if (!/loadCanMarkInTransit/.test(source)) {
-    fails.push("LoadDetailDrawer must export loadCanMarkInTransit eligibility helper");
-  }
-  if (!/new_status:\s*"in_transit"/.test(source)) {
-    fails.push("LoadDetailDrawer must transition to in_transit before deliver");
-  }
-  if (!/data-testid="load-detail-mark-in-transit"/.test(source)) {
-    fails.push("LoadDetailDrawer must expose load-detail-mark-in-transit control");
-  }
-  if (/function loadCanMarkDeliveredPendingDocs[\s\S]{0,220}dispatched/.test(source)) {
-    fails.push("loadCanMarkDeliveredPendingDocs must not offer deliver from dispatched (invalid_transition)");
-  }
-  if (!/Mark delivered \(pending docs\)/.test(source)) {
-    fails.push("LoadDetailDrawer must label the deliver action for operators");
-  }
+  if (!drawer.includes('import { getOfficeTransitionButtons } from "@ih35/shared-types"')) fails.push("drawer must import shared transition canon");
+  if (!/getOfficeTransitionButtons\(load\.status\)\.map\(\(transition\)/.test(drawer)) fails.push("drawer must render every canonical transition button");
+  if (!/body:\s*\{\s*new_status:\s*transition\.target\s*\}/.test(drawer)) fails.push("drawer must submit each canonical transition target");
+  if (!/data-testid=\{transition\.testId\}/.test(drawer)) fails.push("drawer must expose canonical transition test ids");
+
+  const transit = shared.getOfficeTransitionButtons("dispatched");
+  if (!transit.some((b) => b.target === "in_transit" && b.label === "Mark in transit")) fails.push("canon must offer dispatched → in_transit");
+  const delivered = shared.getOfficeTransitionButtons("in_transit");
+  if (!delivered.some((b) => b.target === "delivered_pending_docs" && b.label === "Mark delivered (pending docs)")) fails.push("canon must offer in_transit → delivered_pending_docs");
+  if (transit.some((b) => b.target === "delivered_pending_docs")) fails.push("canon must not offer delivered directly from dispatched");
   return fails;
 }
 
+const drawer = fs.readFileSync(DRAWER, "utf8");
+const shared = await import(pathToFileURL(SHARED).href);
+
 if (process.argv.includes("--selftest")) {
-  const good = readDrawer();
-  if (assertLoadDetailDeliverTransition(good).length) {
-    console.error(`${LABEL} SELFTEST FAIL — current drawer should pass`);
+  if (failures(drawer, shared).length) {
+    console.error(`${LABEL} SELFTEST FAIL — current canonical chain should pass`);
     process.exit(1);
   }
-  const bad = good
-    .replace('data-testid="load-detail-mark-delivered"', 'data-testid="removed"')
-    .replace(/new_status:\s*"delivered_pending_docs"/, 'new_status: "delivered"');
-  const planted = assertLoadDetailDeliverTransition(bad);
-  if (!planted.length) {
-    console.error(`${LABEL} SELFTEST FAIL — planted regression not detected`);
+  const mutations = [
+    drawer.replace("getOfficeTransitionButtons(load.status).map", "[].map"),
+    drawer.replace("new_status: transition.target", 'new_status: "delivered_pending_docs"'),
+    drawer.replace("data-testid={transition.testId}", 'data-testid="hardcoded"'),
+  ];
+  const survivors = mutations.filter((mutated) => failures(mutated, shared).length === 0);
+  if (survivors.length) {
+    console.error(`${LABEL} SELFTEST FAIL — ${survivors.length}/3 planted regressions survived`);
     process.exit(1);
   }
-  console.log(`${LABEL} --selftest PASS`);
+  console.log(`${LABEL} --selftest PASS — 3/3 planted regressions rejected`);
   process.exit(0);
 }
 
-const fails = assertLoadDetailDeliverTransition(readDrawer());
-if (fails.length) {
+const found = failures(drawer, shared);
+if (found.length) {
   console.error(`${LABEL} FAIL`);
-  for (const f of fails) console.error(` - ${f}`);
+  for (const failure of found) console.error(` - ${failure}`);
   process.exit(1);
 }
-console.log(`${LABEL}: OK — load detail drawer wires delivered_pending_docs transition`);
+console.log(`${LABEL}: OK — shared canon drives in-transit and delivered controls`);
