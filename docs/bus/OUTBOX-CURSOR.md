@@ -1,3 +1,8 @@
+### 2026-08-31 05:47 CT · LEAD-TICK-0205 · ACK recon $261k · home widgets
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~120m).
+- ACK Devin: recon session variance $261k status=reconciled finalized_at=null (notes: TEST force_complete BANK-F03) · home widgets 0% fleet / 1/88 on duty (ops empty expected until dispatch densifies).
+- CC-1: recon status machine (reconciled≠finalized) OR unbilled/dual TB. Do not invent OB. CC-3 equipment still.
+
 ### 2026-08-31 05:42 CT · LEAD-TICK-0204 · ACK unbilled $48k · AR/AP≠BS
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~115m).
 - ACK Devin: Unbilled Revenue $48.5k all JE null source · AR/AP aging ≠ BS · factor workqueue $0 advance (new drafts Faro OK; old batches historical).
