@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:32 CT · LEAD-TICK-0228
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING |
+| Cursor | LEAD | CC-3→U6 · search filed · G1 latent |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | prove #18666 CREATE |
+| CC-3 | WORKING | **U6:** search repro → VEND-CERT → SETL-45 rate UI |
+| Codex | WORKING | USMCA · help CREATE |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **c6f04cd**. Idle: **none**. Miss-C parked for CC-3. OWNER: SETL-45 · outside-pay · orphan 016 · future JE.
+
 # LEAD-CENSUS · 2026-08-31 07:26 CT · LEAD-TICK-0227
 | Seat | Status | Note |
 |------|--------|------|

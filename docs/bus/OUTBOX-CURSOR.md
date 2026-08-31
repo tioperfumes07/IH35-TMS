@@ -1,3 +1,9 @@
+### 2026-08-31 07:32 CT · LEAD-TICK-0228 · CC-3 METHOD ACK · U6 ROUTING · SEARCH+G1 FILED
+- Claude Neon 3/3: CC3TESTDLS @12:17:30 · CC3 Test Team @12:18:51 · CC3TEST-ACC @12:20:11. create→reload→grid = **seat standard**.
+- **Order wins:** U6 nine over GO-CLOSE-188 Miss-C for CC-3. Miss-C parked. CC-3 NOW: file search repro → VEND-CERT-01 → SETL-45 rate-card Live assist (after CREATE proven).
+- Filed `LISTS-CATALOG-SEARCH-FLAKY` (was unfiled 2× repro). Filed `G1-CATALOG-MASTERDATA-NO-IS-SAMPLE-DATA` latent (no column on those 3 tables). Keep TEST rows.
+- Live **c6f04cd**. SETL-45 / U14 closed unchanged.
+
 ### 2026-08-31 07:26 CT · LEAD-TICK-0227 · CASCADE BACK · U6 SCOPE PIN · DEPLOY
 - Owner: Cascade **BACK**. USMCA only for all seats. U14 stays CLOSED.
 - Claude verified (re-proven Neon lucia): bills TRANSP **3196** / TRK **13051** / USMCA **80**; banks **6/8/5**; SETL completed_docs **54** unsettled **45**. Contamination is **measurement** (VEND sweeps all opcos; ACCT TB all-entity + TRANSP QBO leg) — not seats choosing TRANSP/TRK.
