@@ -295,7 +295,7 @@ Bankers Factoring. IH35 is secured borrowing per its own locked ruling.
 Detention/Layover Denied, so a billing mistake had nowhere to go but `4960 UNKNOWN` —
 which would have quietly inflated the leak gauge with money whose cause we actually knew.
 
-## Accounts added — `db/migrations/202608302340_shortpay_accountability_close_the_gaps.sql`
+## Accounts added — `db/migrations/202613301600_shortpay_accountability_close_the_gaps.sql` (202608302340 was below ledger tail; never run)
 | # | Name | Fault | Why it is its own account |
 |---|---|---|---|
 | 4955 | Short-Pay — Our Billing Error | carrier | A rating/mileage/accessorial mistake is a **billing** failure, not a service failure. Different department, different fix. Folding it into 4910 hides which team to go talk to. |

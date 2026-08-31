@@ -10,25 +10,31 @@ create in the product, date order, USMCA only, 13512 first as the 12-step
 specimen, is_sample_data false, a blocking screen IS the finding, keep going.
 
 --------------------------------------------------------------------------------
-CARVE-OUT 1 — CREATE 32 OF THE FARO 33, NOT 33. HOLD 016.
+CARVE-OUT 1 — HOLD 016 IS VOID. RULING UNEXECUTED. CC-1 BUILDS IT. DO NOT WAIT.
 --------------------------------------------------------------------------------
-Faro invoice 016, MPH Carrier Services, $3,800, PO MPHC261334, purchased
-08/18, wired $3,676.
+Faro invoice 016, MPH Carrier Services, Faro face $3,800, PO MPHC261334,
+purchased 08/18, wired $3,676.
 
 THERE IS NO QUICKBOOKS INVOICE 016. The QBO series jumps 015 -> 017.
-AlwaysTrack load 13524 exists (MPH, 08/18, W.O. "pending") at gross rate $4,200.
+AlwaysTrack load 13524 exists (MPH, 08/18, W.O. "pending") at gross $4,200.
 
-$4,200 hauled. $3,800 factored. $0 invoiced. The receivable is pledged to Faro
-with nothing on the books behind it. ASC 860 secured borrowing — already locked
-in this repo and enforced by verify-factoring-treatment.mjs — requires the
-receivable to exist on-book to be pledged.
+Owner ruling is CLOSED. Do not re-ask. Do not log OPEN-OWNER-DECISION.
+Do not book $3,800-only (that hides the $400). Do not invent QBO 016.
 
-CC-1: SKIP 016. Do not create it. Do not invent a face for it.
-      Log it as OPEN-OWNER-DECISION and continue to 017.
-CC-2: 016 is a P0 finding, not a CC-1 miss. Grade it as such.
+CC-1 MUST recreate in Chrome (after #18401 correctly voided net-only
+INV-2026-00062 — draft, 0 GL lines, WORM; do not re-void):
+  1. Invoice AlwaysTrack load 13524 at $4,200.
+  2. $400 credit memo, reason unknown_pending_backup. Do NOT stamp late.
+     Driver $235 on 13524 is a different party/number.
+  3. Factor net $3,800 as Faro 016 (wired $3,676).
+If pledge still reads $4,200 after the credit memo: STOP. That is the
+pledge-net bug (FACT-PLEDGE-NET-CM), not a new 016 question.
 
-OWNER DECISION REQUIRED: is the MPH 08/18 load $4,200 or $3,800?
-No seat posts 016 until Jorge rules.
+CC-2: missing 016 or $3,800-only = CC-1 miss. Expected Faro face STAYS
+$95,075. Active $91,275 (32 of 33) is MID-FIX, not the target.
+Standing-by / owner-decision-hold = defect.
+
+Faro face never shrinks to $91,275.
 
 --------------------------------------------------------------------------------
 CARVE-OUT 2 — ONE LOAD, ONE INVOICE. DO NOT REPLICATE THE QBO DUPLICATES.

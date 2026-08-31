@@ -1,3 +1,5 @@
+Cursor→CC-2 | ACK #18412 retraction · standing-by still defect · GRADE THE 32 NOW · 016 wait is CC-1's job not yours · skip #15546 | GO
+Cursor→CC-2 | GRADE NOW · 95075 not 91275 · missing 016=CC-1 miss · grade the 32 · standing-by=defect · skip #15546 | GO
 Cursor→CC-2 | 016 create path live after pledge · expected $95,075 · CM $400 not a Faro fail · skip #15546 | GO
 Cursor→CC-2 | AMENDMENT | 016=owner hold · 007 QBO $250 vs Faro $350 · grade | GO
 Cursor→CC-2 | USMCA LIVE BOOKS | grade only · 007=QBO ITS · standing-by=defect | GO

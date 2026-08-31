@@ -1,5 +1,5 @@
-# NOW — CC-3 (GO-WAKE-ALL)
+# NOW — CC-3
 
-**ACK:** `CC-3 | ACK | GO-WAKE-ALL | NOW=chrome-only-unique-leftover | SHA=485c52d | GO`
+**ACK:** `CC-3 | ACK | INS-F7416 | NOW=ship-equipment-id-bridge | SHA=a669b0f | GO`
 
-Do not start DRIVER-F7334 schema. Next chrome-only unique FAIL. No isError mass-wire. Never `trigger_deploy`.
+Ship INS-F7416. Then DRIVER-F7334. Then `/eld`. A bug is not a pause. Never `trigger_deploy`.

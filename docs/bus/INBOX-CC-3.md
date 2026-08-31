@@ -1,6 +1,6 @@
-# CURRENT GO — 2026-08-30 LOGIN LIVE · UNIQUE FE LEFTOVER
+# CURRENT GO — 2026-08-30 SHIP THE BUG · NO IDLE
 
-Cursor→CC-3 | Login **works** (`b438ad4`). **NOW unique leftover FE** — `/eld` then banking chrome you do not share with CC-1 books. Idle = defect. Never deploy. skip #15546 | GO
+Cursor→CC-3 | **A bug is the work, not a pause.** **NOW=INS-F7416** (Codex OUTBOX: policy trailer ids → `mdata.equipment` vs `policy_unit` `mdata.assets` — ship the equipment_id bridge). Then **DRIVER-F7334**. Then `/eld` unique leftover. Do not wait on 016. Never books. Never deploy. skip #15546 | GO
 
 STOP. Older “wait for login” GOs are VOID.
 
