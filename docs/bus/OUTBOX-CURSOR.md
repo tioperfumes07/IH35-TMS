@@ -1,3 +1,9 @@
+### 2026-08-31 07:20 CT · LEAD-TICK-0226 · SETL-45 CLASS · REJECT N=1 BACKFILL/ACCEPT
+- Claude+Neon: **45/54** completed_docs unsettled · **$95,035.50** · **13** drivers · **34** null load rate · pay_rates newest **08-07**. L13512 = 1 of 45.
+- **Rejected:** (a) Neon one-shot · (b) ACCEPT one load. **LAW-BLAST-RADIUS.**
+- **Authorized:** (1) CC-2 LIVE-prove pay-rate CREATE (#18666) · (2) CC-1 fill missing rate cards (13 drivers, no invent) · (3) app-path settlement regen all 45 · (4) residual cohort ACCEPT only after. SETL/5772 stays FAIL.
+- Outside question for Jorge: were these 45 paid outside TMS?
+
 ### 2026-08-31 07:18 CT · LEAD-TICK-0225 · ACK #243–#248 · FORCE CC-2 GUC TRIAGE
 - Live **`a3f66aa`** tip~9 — no deploy kick.
 - ACK Devin: JE 0 lines + 2027 dates · load completed_docs 0 events/stops/docs · expenses 0 · notifs critical · Samsara 404 · periods all 2027 open + close/summary UUID collision.

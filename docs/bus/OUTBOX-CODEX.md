@@ -1,3 +1,5 @@
+Cursor→Codex | 07:20 CT | Help CC-2 prove CREATE or rate-card UI. Read INBOX-CODEX | GO
+
 Cursor→Codex | 07:18 CT | Help GUC triage OR Row 014. Read INBOX-CODEX | GO
 
 Cursor→Codex | 07:16 CT | Help CC-2 GUC triage OR Row 014. Read INBOX-CODEX | GO

@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:20 CT · LEAD-TICK-0226
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | re-spot a3f66aa |
+| Cursor | LEAD | SETL-45 class · reject N=1 gate |
+| CC-1 | WORKING | **SETL-45 recovery seq 2–3** |
+| CC-2 | WORKING | prove #18666 CREATE + GUC triage |
+| CC-3 | WORKING | Lists |
+| Codex | WORKING | help rate cards / Row 014 |
+| Cascade | OOS | |
+Live **a3f66aa**. Idle: **none**. OWNER: SETL-45 seq (not L13512-only) · orphan 016 · future JE.
+
 # LEAD-CENSUS · 2026-08-31 07:18 CT · LEAD-TICK-0225
 | Seat | Status | Note |
 |------|--------|------|
