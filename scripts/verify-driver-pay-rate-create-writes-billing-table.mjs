@@ -45,6 +45,16 @@ function analyze(src) {
   if (!/input\.lineItemTemplateCode !== "LOADED_MILE"/.test(helperBody)) {
     failures.push(`${FILES.routes}: syncDriverFinancePayRateFromQualificationRate lost its LOADED_MILE-only gate`);
   }
+  // driver_finance.driver_pay_rates_tenant_scope RLS requires app.operating_company_id (or lucia
+  // bypass) -- live-caught 2026-08-31: a real Chrome submit through the rates/change route 500'd
+  // with a 42501 policy violation because that route never set this GUC. The set_config call must
+  // run before the writes, inside this helper, so neither call site can regress independently.
+  if (!/set_config\('app\.operating_company_id', \$1::text, true\)/.test(helperBody)) {
+    failures.push(
+      `${FILES.routes}: syncDriverFinancePayRateFromQualificationRate no longer sets app.operating_company_id ` +
+        "before writing -- driver_pay_rates_tenant_scope RLS will 42501 on the rates/change route again"
+    );
+  }
 
   const callCount = (src.routes.match(/await syncDriverFinancePayRateFromQualificationRate\(client, \{/g) || []).length;
   if (callCount !== 2) {
@@ -78,6 +88,16 @@ function selftest() {
         routes: s.routes.replace(
           "INSERT INTO driver_finance.driver_pay_rates (",
           "INSERT INTO mdata.some_other_table_not_the_billing_one ("
+        ),
+      }),
+    },
+    {
+      name: "helper loses the app.operating_company_id set_config call (would 42501 again)",
+      apply: (s) => ({
+        ...s,
+        routes: s.routes.replace(
+          "await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);\n\n  ",
+          ""
         ),
       }),
     },
