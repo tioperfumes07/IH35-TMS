@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 07:07 CT · WORKING**
+1. Carriers 404 (#234) OR customer MC/DOT / vendor terms Lists.
+2. Live **7d226b2**. OUTBOX.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 07:02 CT · WORKING**
 1. Lists Miss-C OR accidents/PM/parts unique (empty TEST expected densify via CREATE-TEST).
 2. Live **6de19ac** → deploy in flight. OUTBOX.

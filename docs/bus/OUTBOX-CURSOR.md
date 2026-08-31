@@ -1,3 +1,8 @@
+### 2026-08-31 07:07 CT · LEAD-TICK-0222 · DEPLOY LIVE 7d226b2 · ACK #227–#234
+- Catch-up **LANDED** — live **`7d226b2`** (was 6de19ac). Tip ~9 ahead — Rule 42 OK.
+- ACK Devin: tenders/carrier 404 · credit-hold UUID · tracking 404 · settlements shell · AR payment-apps 404 · fleet/drivers 0 (suspect false-empty vs Samsara 82) · carriers 404 · cust/vend master gaps.
+- CC-2: re-prove #232/#233 with app-path/opco before treating as empty TMS. CC-1: #230 settlements. CC-3: Lists/carriers. L13512 OWNER GATE unchanged.
+
 ### 2026-08-31 07:02 CT · LEAD-TICK-0221 · DEPLOY KICKED tip~20 · ACK #220–#226
 - Live **`6de19ac`** (~20 behind tip) — Rule 42. **Deploy kicked**.
 - ACK Devin: fuel cards 0 · QBO not connected (USMCA-only — ignore sync) · geofence shell · parts/PM TEST empty · deductions 0 settlement link · accidents 0 report/date/WO · inspections 0.

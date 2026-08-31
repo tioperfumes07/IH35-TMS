@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 07:07 CT · WORKING**
+1. Live **7d226b2**. Settlements list shell (#230) OR money unique. L13512 = OWNER GATE (no fake re-transition).
+2. OUTBOX when shipping.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:51 CT · WORKING — ACK'd**
 1. Settlement reuse+fallback = shipped. **L13512 backfill = OWNER GATE** — do not invent UI re-transition.
 2. Next unique money FAIL (not orphan-cohort fabricate). Live **69a5a4e**. OUTBOX when shipping.

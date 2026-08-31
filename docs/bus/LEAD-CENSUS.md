@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:07 CT · LEAD-TICK-0222
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #227–#234 |
+| Cursor | LEAD | deploy LIVE 7d226b2 |
+| CC-1 | WORKING | settlements/#230 · L13512 OWNER GATE |
+| CC-2 | WORKING | re-grade · false-empty check #232/#233 |
+| CC-3 | WORKING | Lists #234 · carriers 404 |
+| Codex | WORKING | Row 014 · tracking 404 |
+| Cascade | OOS | |
+Live **7d226b2**. Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016.
+
 # LEAD-CENSUS · 2026-08-31 07:02 CT · LEAD-TICK-0221
 | Seat | Status | Note |
 |------|--------|------|
