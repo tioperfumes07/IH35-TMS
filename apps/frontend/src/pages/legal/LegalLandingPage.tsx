@@ -69,7 +69,7 @@ export function LegalLandingPage() {
         }
       />
 
-      <LegalModuleTabs activeTabId="contracts" />
+      <LegalModuleTabs />
 
       {templatesQuery.isError || contractsQuery.isError ? (
         <ListErrorBanner
