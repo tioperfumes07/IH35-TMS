@@ -179,6 +179,8 @@ export type DispatchBookLoadPayload = {
   assigned_trailer_unit_id?: string;
   temperature_type?: "frozen" | "fresh"; // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type
   assigned_primary_driver_id?: string;
+  historical_import_driver_id?: string;
+  historical_import_reason?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;
   temp_fahrenheit?: number;

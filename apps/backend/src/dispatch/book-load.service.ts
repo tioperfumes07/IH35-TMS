@@ -138,6 +138,8 @@ export type BookLoadInput = {
   // W-FIX-1: reefer Frozen/Fresh → mdata.loads.temperature_type (migration 202606231600).
   temperature_type?: "frozen" | "fresh";
   assigned_primary_driver_id?: string;
+  historical_import_driver_id?: string;
+  historical_import_reason?: string;
   assigned_secondary_driver_id?: string;
   team_id?: string;
   // [HOLD-FOR-JORGE — TIER 1] Booked advances. CASH advance → a PENDING driver cash-advance request (owner-approval,
@@ -887,6 +889,85 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
   return withCurrentUser(input.requestingUserUuid, async (client) => {
     await setScopedCompanyContext(client, input.requestingUserUuid, input.operating_company_id);
 
+    const historicalImportDriverId = input.historical_import_driver_id?.trim() || null;
+    let historicalDriverAttestation: Record<string, unknown> | null = null;
+    if (historicalImportDriverId) {
+      if (input.requestingUserRole !== "Owner") {
+        return { kind: "error", status: 403, payload: { error: "historical_import_owner_required" } };
+      }
+      if (!input.live_load_number?.trim()) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_live_load_number_required" } };
+      }
+      if (!input.historical_import_reason || input.historical_import_reason.trim().length < 10) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_reason_required" } };
+      }
+      if (input.assigned_primary_driver_id !== historicalImportDriverId) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_driver_mismatch" } };
+      }
+      if (input.team_id || input.assigned_secondary_driver_id) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_solo_driver_only" } };
+      }
+
+      const historicalDriver = await client.query<{
+        id: string;
+        full_name: string | null;
+        deactivated_at: string | null;
+        archived_at: string | null;
+        termination_date: string | null;
+        status: string | null;
+        employment_status: string | null;
+      }>(
+        `
+          SELECT d.id::text,
+                 NULLIF(TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, ''))), '') AS full_name,
+                 d.deactivated_at::text, d.archived_at::text,
+                 d.termination_date::text, d.status::text, d.employment_status::text
+          FROM mdata.drivers d
+          WHERE d.id = $1::uuid
+            AND (
+              d.operating_company_id = $2::uuid
+              OR EXISTS (
+                SELECT 1
+                FROM mdata.driver_company_authorizations historical_dca
+                WHERE historical_dca.driver_id = d.id
+                  AND historical_dca.company_id = $2::uuid
+              )
+            )
+          LIMIT 1
+        `,
+        [historicalImportDriverId, input.operating_company_id]
+      );
+      const driver = historicalDriver.rows[0] ?? null;
+      const inactive = Boolean(
+        driver &&
+          (driver.deactivated_at ||
+            driver.archived_at ||
+            driver.termination_date ||
+            ["inactive", "terminated"].includes(String(driver.status ?? "").toLowerCase()) ||
+            ["inactive", "terminated"].includes(String(driver.employment_status ?? "").toLowerCase()))
+      );
+      if (!driver) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_driver_not_in_company" } };
+      }
+      if (!inactive) {
+        return { kind: "error", status: 400, payload: { error: "historical_import_driver_must_be_inactive" } };
+      }
+
+      historicalDriverAttestation = {
+        operating_company_id: input.operating_company_id,
+        live_load_number: input.live_load_number.trim(),
+        driver_id: driver.id,
+        driver_name: driver.full_name,
+        historical_import_reason: input.historical_import_reason.trim(),
+        deactivated_at: driver.deactivated_at,
+        archived_at: driver.archived_at,
+        termination_date: driver.termination_date,
+        status: driver.status,
+        employment_status: driver.employment_status,
+        attestation_scope: "historical_import_only",
+      };
+    }
+
     const wf044Warnings: Array<Record<string, unknown>> = [];
     const insuranceCoverageWarnings: Array<Record<string, unknown>> = [];
 
@@ -1158,7 +1239,7 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // (who-can-drive-now) belongs with the HOS/settlement engine, not this booking
     // gate. NOTE: the co-driver IS still hard-gated for active/CDL/medical below
     // (E_DRIVER_NOT_QUALIFIED covers every assigned driver).
-    if (input.assigned_primary_driver_id) {
+    if (input.assigned_primary_driver_id && input.assigned_primary_driver_id !== historicalImportDriverId) {
       const hosRows = await optionalQuery(
         client,
         `
@@ -1260,7 +1341,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
 
     const hasDrugTestTable = await relationExists(client, "safety.drug_test");
     if (hasDrugTestTable) {
-      const assignedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
+      const assignedDriverIds = (await collectAssignedDriverIdsForDrugGate(client, input)).filter(
+        (driverId) => driverId !== historicalImportDriverId
+      );
       if (assignedDriverIds.length > 0) {
         const latestDrugRows = await optionalQuery<{
           driver_id: string;
@@ -1327,7 +1410,9 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
     // A DIRECT client.query (not optionalQuery): mdata.drivers always exists, so any
     // error here must fail CLOSED (abort the booking), never be swallowed into [].
     {
-      const gatedDriverIds = await collectAssignedDriverIdsForDrugGate(client, input);
+      const gatedDriverIds = (await collectAssignedDriverIdsForDrugGate(client, input)).filter(
+        (driverId) => driverId !== historicalImportDriverId
+      );
       const isHazmatLoad = Boolean(input.hazmat);
       for (const gatedDriverId of gatedDriverIds) {
         // Shared gate (G9-C1 + D3-1): identical credential logic to the sibling assignment paths,
@@ -2124,6 +2209,17 @@ export async function bookLoad(input: BookLoadInput): Promise<BookLoadResult> {
           operating_company_id: load.operating_company_id,
           actor_user_id: input.requestingUserUuid,
         }
+      );
+    }
+
+    if (historicalDriverAttestation) {
+      await appendCrudAudit(
+        client,
+        input.requestingUserUuid,
+        "dispatch.historical_import_inactive_driver_attested",
+        { ...historicalDriverAttestation, load_id: load.id, load_number: load.load_number },
+        "warning",
+        "DISPATCH-HISTORICAL-IMPORT-INACTIVE-DRIVER-PATH"
       );
     }
 
