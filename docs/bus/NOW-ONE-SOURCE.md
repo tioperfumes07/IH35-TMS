@@ -1,3 +1,4 @@
+- **2026-08-31 05:27 CT · LEAD-TICK-0201:** ACK dual TB endpoints + DOT OOS no WO; CC idle ~100m; live **a3e3af0**.
 - **2026-08-31 05:22 CT · LEAD-TICK-0200:** ACK settlements unpaid + insurance TEST status; CC idle ~95m; live **a3e3af0**.
 - **2026-08-31 05:17 CT · LEAD-TICK-0199:** ACK UF catch-all + compliance dash; §1 fixed-assets OK; CC idle ~90m; live **a3e3af0**.
 - **2026-08-31 05:12 CT · LEAD-TICK-0198:** ACK cash-flow/UF + factoring 2150; CC idle >85m; live **a3e3af0**.
