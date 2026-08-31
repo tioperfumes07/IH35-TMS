@@ -89,6 +89,91 @@ function canManageCompanyAuth(role: string) {
   return role === "Owner" || role === "Administrator" || role === "Manager" || role === "Safety";
 }
 
+/**
+ * SETL-45-PAYRATE-CREATE-WRONG-TABLE / PAY-RATE-DUAL-TABLE-SPLIT-DISCONNECTED-FROM-BILLING —
+ * this Equipment Assignments / Qualifications UI is the only reachable place a company user can
+ * enter a driver's per-mile pay rate. It has only ever written mdata.driver_pay_rates (an
+ * equipment-qualification "agreed rate at hire" record). book-load.service.ts's
+ * resolveDriverBasePayCents() reads a completely different table, driver_finance.driver_pay_rates,
+ * which nothing anywhere in the backend ever wrote — live-proven 2026-08-31 (GO-E2E chain): a
+ * driver priced correctly in the wizard via a per-load rate override still produced zero driver
+ * bills on delivery, because no driver-level rate card was reachable at all.
+ *
+ * This keeps the SAME UI as the single source of entry, but mirrors a LOADED_MILE rate change into
+ * the table the settlement engine actually reads, so the two can never drift the way the old
+ * mdata-only write and the driver_finance-only read did. EMPTY_MILE / other line items are not
+ * mirrored — book-load.service.ts only ever prices off miles_shortest/miles_practical (loaded trip
+ * miles), never deadhead/empty miles, so an empty-mile rate has no driver_finance-side equivalent
+ * to write.
+ *
+ * `amountDollars` is the qualification-rate's own decimal amount (dollars per mile, e.g. 0.48);
+ * driver_finance.driver_pay_rates stores cents. Deactivates any prior open row for this driver
+ * (effective_to IS NULL) before inserting the new one, mirroring the mdata-side same-day-correction
+ * vs supersede logic in the sibling rates/change route, so resolveDriverBasePayCents' own
+ * `ORDER BY effective_from DESC LIMIT 1` can never see two "open" rows and pick the wrong one.
+ */
+async function syncDriverFinancePayRateFromQualificationRate(
+  client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
+  input: {
+    driverId: string;
+    operatingCompanyId: string;
+    lineItemTemplateCode: string;
+    amountDollars: number;
+    effectiveFrom: string;
+    actorUserId: string;
+  }
+): Promise<void> {
+  if (input.lineItemTemplateCode !== "LOADED_MILE") return;
+  const ratePerMileCents = Math.round(Number(input.amountDollars) * 100);
+  if (!Number.isFinite(ratePerMileCents) || ratePerMileCents < 0) return;
+
+  await client.query(
+    `
+      UPDATE driver_finance.driver_pay_rates
+      SET effective_to = ($1::date - interval '1 day')::date,
+          is_active = false,
+          updated_by_user_id = $3,
+          updated_at = now()
+      WHERE driver_id = $2::uuid
+        AND effective_to IS NULL
+        AND effective_from < $1::date
+    `,
+    [input.effectiveFrom, input.driverId, input.actorUserId]
+  );
+  // A same-day correction (effective_from equal to an already-open row's own effective_from) would
+  // violate driver_pay_rates_effective_range (effective_to >= effective_from) if closed via the
+  // clause above -- deactivate those instead, mirroring mdata.driver_pay_rates' own sameDayCorrection
+  // branch in the sibling rates/change route.
+  await client.query(
+    `
+      UPDATE driver_finance.driver_pay_rates
+      SET is_active = false, updated_by_user_id = $3, updated_at = now()
+      WHERE driver_id = $2::uuid
+        AND effective_to IS NULL
+        AND effective_from = $1::date
+    `,
+    [input.effectiveFrom, input.driverId, input.actorUserId]
+  );
+
+  await client.query(
+    `
+      INSERT INTO driver_finance.driver_pay_rates (
+        operating_company_id, driver_id, basis_type, rate_per_mile_cents, miles_basis,
+        effective_from, is_active, notes, created_by_user_id, updated_by_user_id
+      )
+      VALUES ($1::uuid, $2::uuid, 'per_mile_pay', $3, 'short_miles', $4::date, true, $5, $6, $6)
+    `,
+    [
+      input.operatingCompanyId,
+      input.driverId,
+      ratePerMileCents,
+      input.effectiveFrom,
+      "Mirrored from mdata.driver_pay_rates (Equipment Assignments — Loaded mile rate)",
+      input.actorUserId,
+    ]
+  );
+}
+
 export async function registerDriverProfileRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>("/api/v1/mdata/drivers/:id/qualifications", async (req, reply) => {
     const authUser = currentAuthUser(req, reply);
@@ -299,7 +384,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         if (initialRates.length > 0) {
           const validTemplateRes = await client.query(
             `
-              SELECT id
+              SELECT id, code
               FROM catalogs.equipment_line_item_templates
               WHERE equipment_type_id = $1
                 AND id = ANY($2::uuid[])
@@ -313,6 +398,8 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
             ]
           );
           const validTemplateIds = new Set(validTemplateRes.rows.map((row) => String(row.id)));
+          const templateCodeById = new Map(validTemplateRes.rows.map((row) => [String(row.id), String(row.code)]));
+          const initialRatesEffectiveFrom = parsedBody.data.qualified_at ?? companyBusinessDate();
           for (const rate of initialRates) {
             if (!validTemplateIds.has(rate.line_item_template_id)) {
               return reply.code(400).send({ error: "line_item_template_not_in_equipment_type" });
@@ -328,13 +415,21 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
                 qualification.id,
                 rate.line_item_template_id,
                 rate.amount,
-                parsedBody.data.qualified_at ?? companyBusinessDate(),
+                initialRatesEffectiveFrom,
                 rate.change_reason ?? "initial_hire",
                 rate.change_notes ?? "Initial agreed rate at qualification creation",
                 authUser.uuid,
               ]
             );
             createdRates.push(rateRes.rows[0]);
+            await syncDriverFinancePayRateFromQualificationRate(client, {
+              driverId: parsedParams.data.id,
+              operatingCompanyId: companyId,
+              lineItemTemplateCode: templateCodeById.get(rate.line_item_template_id) ?? "",
+              amountDollars: Number(rate.amount),
+              effectiveFrom: initialRatesEffectiveFrom,
+              actorUserId: authUser.uuid,
+            });
             await appendCrudAudit(
               client,
               authUser.uuid,
@@ -632,7 +727,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
 
         const templateRes = await client.query(
           `
-            SELECT id
+            SELECT id, code
             FROM catalogs.equipment_line_item_templates
             WHERE id = $1
               AND equipment_type_id = $2
@@ -645,6 +740,7 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
         if (templateRes.rows.length === 0) {
           return reply.code(400).send({ error: "line_item_template_not_in_equipment_type" });
         }
+        const templateCode = String(templateRes.rows[0].code);
 
         const effectiveFrom = parsedBody.data.effective_from ?? companyBusinessDate();
         const currentRes = await client.query(
@@ -712,6 +808,15 @@ export async function registerDriverProfileRoutes(app: FastifyInstance) {
           ]
         );
         const newRate = newRateRes.rows[0];
+
+        await syncDriverFinancePayRateFromQualificationRate(client, {
+          driverId: parsedParams.data.id,
+          operatingCompanyId: companyId,
+          lineItemTemplateCode: templateCode,
+          amountDollars: Number(parsedBody.data.amount),
+          effectiveFrom,
+          actorUserId: authUser.uuid,
+        });
 
         await appendCrudAudit(
           client,
