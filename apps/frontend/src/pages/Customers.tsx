@@ -23,7 +23,7 @@ import {
 import { Button } from "../components/Button";
 import { ActionButton } from "../components/shared/ActionButton";
 import { SelectCombobox } from "../components/shared/SelectCombobox";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { PageHeader } from "../components/layout/PageHeader";
 import { CollapsedListFilters, useStagedListFilters } from "../components/table";
 import { Modal } from "../components/Modal";
@@ -981,17 +981,18 @@ export function CustomersPage() {
       {/* §7 RESTORE — segment tabs, additive. Wired to the EXISTING `listStatus` state, which already filters
           the roster in `visibleCustomers`, so no filtering logic is added and no URL behaviour changes: this
           page's `?tab=` param stays owned by the customer DETAIL tabs, untouched. */}
-      <SecondaryNavTabs
+      <NavyPageSubNav
         activeId={listTab}
-        onChange={(id) => setListTab(id)}
-        tabs={[
-          { id: "all", label: `All (${customerTabCounts.all})` },
-          { id: "preferred", label: `Preferred (${customerTabCounts.preferred})` },
-          { id: "watch", label: `Watch (${customerTabCounts.watch})` },
-          { id: "active", label: `Active (${customerTabCounts.active})` },
-          { id: "inactive", label: `Inactive (${customerTabCounts.inactive})` },
-          { id: "factored", label: `Factored (${customerTabCounts.factored})` },
+        onTabChange={(id) => setListTab(id)}
+        items={[
+          { label: `All (${customerTabCounts.all})`, to: "#all" },
+          { label: `Preferred (${customerTabCounts.preferred})`, to: "#preferred" },
+          { label: `Watch (${customerTabCounts.watch})`, to: "#watch" },
+          { label: `Active (${customerTabCounts.active})`, to: "#active" },
+          { label: `Inactive (${customerTabCounts.inactive})`, to: "#inactive" },
+          { label: `Factored (${customerTabCounts.factored})`, to: "#factored" },
         ]}
+        itemIds={["all", "preferred", "watch", "active", "inactive", "factored"]}
       />
       {allInvoicesQuery.isError ? (
         <ListErrorState
@@ -1106,7 +1107,12 @@ export function CustomersPage() {
                 </section>
               </div>
 
-              <SecondaryNavTabs tabs={CUSTOMER_TABS} activeId={activeTab} onChange={(id) => setActiveTab(id as CustomerTabId)} />
+              <NavyPageSubNav
+                items={CUSTOMER_TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+                activeId={activeTab}
+                onTabChange={(id) => setActiveTab(id as CustomerTabId)}
+                itemIds={CUSTOMER_TABS.map((t) => t.id)}
+              />
 
               {activeTab === "transaction_list" ? (
                 invoicesQuery.isError ? (
