@@ -39,13 +39,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4.37.7
+        uses: github/codeql-action/init@v4.37.9
         with:
           languages: ${{ matrix.language }}
           # security-extended adds deeper security queries beyond the default set.
           queries: security-extended
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4.37.7
+        uses: github/codeql-action/autobuild@v4.37.9
       # upload: never — NOT a downgrade, and NOT fake-green. Uploading SARIF to the Security tab is a
       # GitHub Advanced Security feature; GHAS is free on public repos and licensed on private ones, so
       # the moment this repository was made private (2026-08-06, to make a self-hosted runner safe) the
@@ -61,7 +61,7 @@ jobs:
       # If GHAS is enabled later, delete `upload`/`output` and the enforcement step and let findings
       # flow to the Security tab again — that is strictly better, because it keeps history and dedup.
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4.37.7
+        uses: github/codeql-action/analyze@v4.37.9
         with:
           category: '/language:${{ matrix.language }}'
           upload: never
