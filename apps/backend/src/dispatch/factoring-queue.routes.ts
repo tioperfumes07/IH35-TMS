@@ -11,6 +11,7 @@
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { FACTORING_PATH_LOAD_MDATA_STATUSES } from "./delivery-evidence-status.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
@@ -101,7 +102,12 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
       // LINK-F5179: server-side customer_id/load_id scoping, not a client-side filter of this
       // already-capped result set (default limit 200) — a client filter would silently drop a
       // customer/load's own rows once the queue crosses that cap.
-      const filterParams: Array<string | number> = [companyId, limit + 1, offset];
+      const filterParams: Array<string | number | readonly string[]> = [
+        companyId,
+        FACTORING_PATH_LOAD_MDATA_STATUSES,
+        limit + 1,
+        offset,
+      ];
       let customerFilter = "";
       if (customerId) {
         filterParams.push(customerId);
@@ -197,11 +203,11 @@ export async function registerFactoringQueueRoutes(app: FastifyInstance) {
         ) sd ON true
         WHERE l.operating_company_id = $1::uuid
           AND l.soft_deleted_at IS NULL
-          AND l.status IN ('delivered', 'invoiced', 'paid', 'closed')
+          AND l.status = ANY($2::mdata.load_status_enum[])
           ${customerFilter}
           ${loadFilter}
         ORDER BY l.updated_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         `,
         filterParams,
       );

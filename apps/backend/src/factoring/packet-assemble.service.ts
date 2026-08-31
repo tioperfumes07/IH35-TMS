@@ -31,6 +31,10 @@ import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import {
+  FACTORING_PATH_LOAD_MDATA_STATUSES,
+  isFactoringPathLoadStatus,
+} from "../dispatch/delivery-evidence-status.js";
 
 // Mirrors the established SYSTEM_ACTOR_USER_ID convention used by every other unattended cron in this
 // backend (depreciation-autopost.cron.ts, factoring-posting/default-interest.service.ts, etc.).
@@ -129,8 +133,7 @@ export async function assembleFactoringPacket(
     const load = loadRes.rows[0];
     if (!load) return { ok: false, reason: "load_not_found" };
 
-    const eligibleStatuses = ["delivered", "invoiced", "paid", "closed"];
-    if (!eligibleStatuses.includes(load.status)) {
+    if (!isFactoringPathLoadStatus(load.status)) {
       return { ok: false, reason: `load_status_not_deliverable:${load.status}` };
     }
 
@@ -306,10 +309,10 @@ export async function sweepAndAssemblePackets(
         AND p.archived_at IS NULL
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
-        AND l.status IN ('delivered', 'invoiced', 'paid', 'closed')
+        AND l.status::text = ANY($2::text[])
       LIMIT 500
       `,
-      [operatingCompanyId],
+      [operatingCompanyId, FACTORING_PATH_LOAD_MDATA_STATUSES],
     );
 
     let assembled = 0;

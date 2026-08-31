@@ -8,6 +8,8 @@
  * NEVER OVERWRITE an existing driver-captured departure.
  * actual_arrival_at is left NULL (office is not asserting arrival).
  */
+import { loadStatusRequiresDeliveryDepartureStamp } from "./delivery-evidence-status.js";
+
 /**
  * Accept PoolClient OR the thinner `{ query }` wrappers used by route tx helpers.
  * Requiring full PoolClient caused TS2345 on loads.routes / loads-bulk.routes (CI red).
@@ -19,14 +21,7 @@ type Queryable = {
   ) => Promise<{ rows: unknown[]; rowCount?: number | null }>;
 };
 
-const DELIVERY_EVIDENCE_STATUSES = new Set([
-  "delivered_pending_docs",
-  "completed_docs_received",
-]);
-
-export function loadStatusRequiresDeliveryDepartureStamp(status: string): boolean {
-  return DELIVERY_EVIDENCE_STATUSES.has(status);
-}
+export { loadStatusRequiresDeliveryDepartureStamp };
 
 /**
  * @returns number of stop rows updated (0 or 1)
@@ -55,7 +50,7 @@ export async function stampFinalActiveDeliveryDeparture(
                   AND s2.status::text <> 'cancelled'
                   AND s2.soft_deleted_at IS NULL
                 ORDER BY s2.sequence_number DESC
-                LIMIT 1
+                 LIMIT 1
              )
          AND s.actual_departure_at IS NULL
     `,

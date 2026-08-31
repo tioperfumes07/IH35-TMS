@@ -12,6 +12,7 @@ import {
   type InvoiceHtmlModel,
   type InvoiceLineRender,
 } from "../render/invoice.template.js";
+import { isDeliveryEvidenceStatus } from "../dispatch/delivery-evidence-status.js";
 
 const paramsSchema = z.object({ invoiceId: z.string().uuid() });
 
@@ -301,7 +302,7 @@ export async function registerAccountingInvoiceHtmlRoutes(app: FastifyInstance) 
         {
           flag: "Late delivery risk",
           booking: "No",
-          actual: String(load?.status ?? "").includes("delivered") ? "Delivered" : "In progress",
+          actual: load?.status && isDeliveryEvidenceStatus(String(load.status)) ? "Delivered" : "In progress",
           net: "—",
         },
       ];
