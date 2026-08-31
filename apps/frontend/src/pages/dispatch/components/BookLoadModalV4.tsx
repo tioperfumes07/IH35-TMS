@@ -1384,6 +1384,15 @@ export function BookLoadModalV4({
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
                     <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      AlwaysTrack load # (legacy)
+                      <input
+                        {...form.register("live_load_number")}
+                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                        placeholder="e.g. 13521"
+                        data-testid="book-load-live-load-number"
+                      />
+                    </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
