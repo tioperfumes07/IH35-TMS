@@ -1,3 +1,9 @@
+### 2026-08-31 09:09 CT · LEAD-TICK-0237 · 2x DEPLOY THEN PLAN FROM ZERO
+- Owner order: deploy · coders finish WIP · deploy again · begin new plan at 0.
+- Deploy#1 in flight (from tip). Seats: finish in-flight only · **no new Send/Void/Factor** · no new invent.
+- After deploy#2 live: arm P0 (Faro pull/crosswalk) → P1 SETL CREATE → settle 45 → P2 factor correct INV → P3 U6 pins.
+- Freeze on reconciled INV-049..081 until P0 clears.
+
 ### 2026-08-31 08:59 CT · LEAD-TICK-0236 · PLAN-CONFIRM HOLD
 - Owner ordered: plan in PASTE-TO-CLAUDE · **no execute** until Claude ACK.
 - Freeze Send/Void/Factor stands. Tip~16 deploy kicked. Do not send reconciled INV-049..081.

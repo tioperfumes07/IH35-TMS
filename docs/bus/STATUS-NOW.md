@@ -1,3 +1,5 @@
+**LEAD-TICK-0237** · 2026-08-31 09:09 CT · live **56afbad** · deploy#1 IN FLIGHT · seats **FINISH WIP then STOP** · after deploy#2 = **PLAN FROM ZERO**
+
 **LEAD-TICK-0236** · 2026-08-31 08:59 CT · live **4a0541a** · tip~16 deploy · **PLAN-CONFIRM HOLD** (Claude ACK required) · freeze holds
 
 **LEAD-TICK-0234b** · 2026-08-31 08:54 CT · live **4a0541a** LANDED · tip catch-up · seats GO · CREATE overflow still Cursor

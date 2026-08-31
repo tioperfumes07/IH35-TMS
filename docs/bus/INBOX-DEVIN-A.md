@@ -1,4 +1,10 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
+1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
+2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.
+3. Live now **56afbad** (deploy#1 catching tip). USMCA only. Freeze on reconciled 33 Send.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 07:16 CT**
 1. Live **a3f66aa**. Prefer re-spots that set opco GUC / note if tip may be GUC-false-empty.
 2. Do not treat Neon density (548 JE / 175 drivers) as contradicted by empty API without GUC check.

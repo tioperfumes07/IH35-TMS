@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 09:09 CT · LEAD-TICK-0237
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | FINISH-THEN-STOP | close open FINDING push · then STOP |
+| Cursor | LEAD | 2x deploy then arm plan P0 |
+| CC-1 | FINISH-THEN-STOP | no new money Send/Factor · then STOP for reset |
+| CC-2 | FINISH-THEN-STOP | unique only · then STOP |
+| CC-3 | FINISH-THEN-STOP | freeze holds · then STOP |
+| Codex | FINISH-THEN-STOP | no Send of 33 · then STOP |
+| Cascade | FINISH-THEN-STOP | then STOP |
+Owner: finish current WIP → deploy again → begin plan at 0 (P0 Faro → P1 SETL → P2 factor → P3 U6).
+
 # LEAD-CENSUS · 2026-08-31 08:59 CT · LEAD-TICK-0236
 | Seat | Status | Note |
 |------|--------|------|

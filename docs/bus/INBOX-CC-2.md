@@ -1,3 +1,9 @@
+# INBOX — CC-2
+**TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
+1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
+2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.
+3. Live now **56afbad** (deploy#1 catching tip). USMCA only. Freeze on reconciled 33 Send.
+
 # INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 08:22 CT · CREATE HANDED TO CODEX**
 1. Lead sole-assigned CREATE to Codex after OVERDUE silence. Do **not** wait on CREATE.
