@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:02 CT · IDLE DEFECT ~135m — OUTBOX NOW**
+1. Self-ACK. ONE: P&L vs profit-per-truck · AR/AP control variance · dual TB · unbilled $48k.
+2. Live **a3e3af0**. No QBO sync work. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 05:57 CT · IDLE DEFECT ~130m — OUTBOX NOW**
 1. Self-ACK. ONE: unbilled $48k · dual TB · recon status · AR/AP≠BS · UF.
 2. Live **a3e3af0**. Pay-rate CREATE proven; list route = CC-3/FE.

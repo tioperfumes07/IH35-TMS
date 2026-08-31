@@ -1,3 +1,8 @@
+### 2026-08-31 06:02 CT · LEAD-TICK-0208 · ACK P&L≠PPT · AR control variance
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~135m).
+- ACK Devin: P&L vs profit-per-truck revenue −$46k · AR control vs subledger −$30k · parts all TEST · catalog counts vs limit=50 (pagination — recheck before treating as leak).
+- QBO sync 404 = irrelevant (USMCA-only). CC-1: P&L/PPT reconcile OR AR control OR dual TB. CC-3: Lists pagination clarity.
+
 ### 2026-08-31 05:57 CT · LEAD-TICK-0207 · ACK payment_terms=0 · escrow/$0 · pay-rates 404
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~130m).
 - ACK Devin: customers/vendors 0 payment_terms · escrow 18+ mostly $0 · pay-rates list 404 (CREATE path fixed earlier via GUC; list route gap distinct).

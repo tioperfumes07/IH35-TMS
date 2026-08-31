@@ -1,3 +1,4 @@
+- **2026-08-31 06:02 CT · LEAD-TICK-0208:** ACK P&L≠PPT + AR control variance; CC idle ~135m; live **a3e3af0**.
 - **2026-08-31 05:57 CT · LEAD-TICK-0207:** ACK payment_terms=0 + pay-rates 404; CC idle ~130m; live **a3e3af0**.
 - **2026-08-31 05:52 CT · LEAD-TICK-0206:** ACK Samsara/HOS + WO list fields; CC idle ~125m; live **a3e3af0**.
 - **2026-08-31 05:47 CT · LEAD-TICK-0205:** ACK recon $261k status + home widgets; CC idle ~120m; live **a3e3af0**.

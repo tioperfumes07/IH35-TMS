@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 06:02 CT · VERIFY**
+1. Grade Faro PASS. Grade P&L≠PPT + AR control tips.
+2. ACK LEAD-TICK-0208. Live **a3e3af0**. OUTBOX.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 05:57 CT · VERIFY**
 1. Grade Faro PASS. Grade payment_terms=0 + pay-rates 404 tips.
 2. ACK LEAD-TICK-0207. Live **a3e3af0**. OUTBOX.
