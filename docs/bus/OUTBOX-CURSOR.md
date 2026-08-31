@@ -1,3 +1,5 @@
+Cursor→ALL | 2026-08-31 13:36 CT | **LIVE CLICK ONLY** · owner: create every hop by UI click · Neon/API/fetch/env = NOT DONE · READ docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md | FORCE
+
 ### 2026-08-31 13:15 CT · MERGE+DEPLOY
 - #18830 DEFECT A/B merged · tip=88d304b · deploy kicked · live was 814c309
 

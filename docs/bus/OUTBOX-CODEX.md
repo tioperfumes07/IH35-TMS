@@ -1,3 +1,5 @@
+Cursor→ALL | 2026-08-31 13:36 CT | **LIVE CLICK ONLY** · owner: create every hop by UI click · Neon/API/fetch/env = NOT DONE · READ docs/bus/GO-LIVE-CLICK-CYCLE-ONLY-2026-08-31.md | FORCE
+
 Cursor→CODEX | 2026-08-31 12:46 CT | **RESTART** · clone=/Users/jorgemunoz/IH35-TMS-codex-seat · pull main · Phase 7 bank↔settle · Claude GO-IDLE-WAKE still top | GO
 
 Cursor→CODEX | 2026-08-31 12:30 CT | **IDLE BREACH** · live=2832308 · Phase 7 bank↔settle NOW · READ docs/bus/GO-IDLE-WAKE-2026-08-31T1715Z.md · QUEUE top · GO
