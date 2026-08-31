@@ -60,7 +60,13 @@ export function check(routesText, serviceText, mappingText, bookLoadText) {
   // 2) commodity + cargo_weight_lbs MUST be present and correctly wired post-fix (migration
   // 202613220000 added the real columns — regressing back to "removed" is itself a regression).
   const patchIdx = routesText.indexOf("const updateDispatchLoadBodySchema = z.object({");
-  const patchBlock = patchIdx >= 0 ? routesText.slice(patchIdx, patchIdx + 4000) : "";
+  // Self-sizing: find the schema object's own closing `});` at column 0 rather than a fixed
+  // character count — a fixed window silently stops "seeing" fields near the end of a growing
+  // schema block once enough comments/fields are added earlier in it (the exact GR1-MONEY-GUARDS
+  // stale-slice class, ACCT-F5576/ACCT-F5703; this guard hit the same trap when
+  // LOADS-MILEAGE-INTEGER-TRUNCATION added a few comment lines ahead of commodity/cargo_weight_lbs).
+  const patchEnd = patchIdx >= 0 ? routesText.indexOf("\n});", patchIdx) : -1;
+  const patchBlock = patchIdx >= 0 ? routesText.slice(patchIdx, patchEnd >= 0 ? patchEnd : undefined) : "";
   if (!/^\s*commodity:\s*z\./m.test(patchBlock)) {
     failures.push(`${ROUTES_FILE} updateDispatchLoadBodySchema no longer accepts "commodity" (regression — the column is real, migration 202613220000)`);
   }

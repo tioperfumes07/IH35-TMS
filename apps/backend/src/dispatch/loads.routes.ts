@@ -232,9 +232,12 @@ const createDispatchLoadBodySchema = z.object({
   late_delivery_est_deduction_cents: z.number().int().min(0).optional(),
   late_delivery_reason: z.string().trim().max(1000).optional(),
   ocr_source_pdf_r2_key: z.string().trim().max(512).optional(),
-  miles_practical: z.number().int().min(0).optional(),
-  miles_shortest: z.number().int().min(0).optional(),
-  miles_deadhead: z.number().int().min(0).optional(),
+  // LOADS-MILEAGE-INTEGER-TRUNCATION (migration 202613310000 widened the columns to numeric(10,1)):
+  // AlwaysTrack carries tenths of a mile; multipleOf(0.1) matches the DB precision exactly instead
+  // of forcing the caller to round to a whole mile.
+  miles_practical: z.number().min(0).multipleOf(0.1).optional(),
+  miles_shortest: z.number().min(0).multipleOf(0.1).optional(),
+  miles_deadhead: z.number().min(0).multipleOf(0.1).optional(),
   pickup_number: z.string().trim().max(120).optional(),
   border_routing: z.string().trim().max(120).optional(),
   // FAIL-D6 — demo/sample flag, set at creation. Column exists since 0403 (NOT NULL DEFAULT false) but
@@ -359,9 +362,12 @@ const updateDispatchLoadBodySchema = z.object({
   late_delivery_risk_y_n: z.boolean().optional(),
   late_delivery_est_deduction_cents: z.number().int().min(0).nullable().optional(),
   late_delivery_reason: z.string().trim().max(1000).nullable().optional(),
-  miles_practical: z.number().int().min(0).nullable().optional(),
-  miles_shortest: z.number().int().min(0).nullable().optional(),
-  miles_deadhead: z.number().int().min(0).nullable().optional(),
+  // LOADS-MILEAGE-INTEGER-TRUNCATION (migration 202613310000 widened the columns to numeric(10,1)):
+  // AlwaysTrack carries tenths of a mile; multipleOf(0.1) matches the DB precision exactly instead
+  // of forcing the caller to round to a whole mile.
+  miles_practical: z.number().min(0).multipleOf(0.1).nullable().optional(),
+  miles_shortest: z.number().min(0).multipleOf(0.1).nullable().optional(),
+  miles_deadhead: z.number().min(0).multipleOf(0.1).nullable().optional(),
   trip_type: z.enum(["NB", "TR", "SB"]).optional(),
   // DISPATCH-LOAD-PATCH-COMMODITY-COLUMN-MISSING-500 (2026-08-27): commodity/cargo_weight_lbs/
   // reefer_setpoint_temp_f were REMOVED here because mdata.loads had never had these columns
