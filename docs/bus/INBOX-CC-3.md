@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 04:57 CT · IDLE**
+1. Property-tax candidate entity-scope (no TRANSP/TEST leak) OR shell load L-0003 OR status-filter.
+2. ACK LEAD-TICK-0195. Live **a3e3af0**. OUTBOX.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 04:52 CT · IDLE**
 1. Shell load L-20260830-0003 OR status-filter OR Lists/DQ. OUTBOX.
 2. ACK LEAD-TICK-0194. Live **a3e3af0**.
