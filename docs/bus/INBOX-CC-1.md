@@ -1,17 +1,9 @@
-# INBOX — CC-1 · 16:05 CT
-**TOP — OWNER RULING 331282f · DRIVER ACCOUNT PAIR**
+# INBOX — CC-1 · 16:20 CT
+**ACK #18939 MERGED** — pair invariant guard 10165 shipped. Historical 73/74 gap stays OPEN until owner spreadsheet go (STOP-DECISION #2). Do **not** `apply=true` without Jorge.
 
-Read `docs/bus/OWNER-RULINGS-DRIVER-ACCOUNTS-AND-INSURANCE-REQUEST-2026-09-01.md` §1.
+**TOP NOW — P0 REMINT PATH (your finding, 39× scale)**
+39 of 78 USMCA loads reached delivery-evidence with **zero driver_bills** (19 ACCT-F10159 stale-object class · 20 no-rate-at-book). Build the **live-UI remint** action that re-enters `ensureDriverBillArtifactsForLoad` for terminal loads — no SQL hand-writes.
 
-**NOW (money · you own · CC-2 grades):**
-1. Auto-create **PAIR** on driver activation — Cash Advance **asset** + Escrow **liability**, never one without the other.
-2. Backfill all **86** USMCA Active drivers (live gap: advance=14 · escrow=2 · neither=73).
-3. Backfill **12** historical escrow deductions ($1,100) at **original August dates**.
-4. Guard + selftest **named in a workflow** — no Active driver without both; no escrow deduction without escrow account.
-5. Reuse existing poster — **no new GL math**.
-
-**ACK your 6-item pass:** void list #18932 MERGED · L-0017 live heal OK · real chain HOLD until P-C/P-D · Faro rates already correct · assets #18928 MERGED. Correct sequencing.
-
-**STILL OPEN (after pair):** pay-rate **resolution onto loads** · `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` · factoring.batch reserve/wire-fee columns (scoped).
+Also OPEN: `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` · factoring.batch reserve/wire-fee columns (scoped).
 
 **NO void / NO real chain** until CC-2 P-A+P-B GREEN.
