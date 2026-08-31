@@ -30,6 +30,10 @@ if (!/FROM accounting\.invoices[\s\S]*status IN \('sent', 'partial', 'paid', 'fa
 if (!/FROM driver_finance\.driver_bills[\s\S]*status <> 'open'/.test(svc))
   fail("must guard on a NON-OPEN driver bill");
 if (!/LoadEditLockedError/.test(svc)) fail("must throw LoadEditLockedError when locked");
+if (!/isLiveLoadNumberOnlyPatch/.test(svc))
+  fail("must allow live_load_number-only linkage backfill to bypass money lock");
+if (!/LIVE-LOAD-NUMBER-NULL-REV-E/.test(svc))
+  fail("live_load_number bypass must be documented as linkage-only (not revenue/pay)");
 
 // 3) Route maps the lock to 409 and never self-merges (gated comment present).
 const route = read("apps/backend/src/dispatch/loads.routes.ts");
