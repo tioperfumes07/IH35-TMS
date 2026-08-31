@@ -115,6 +115,17 @@ function fail(msg) {
   return msg;
 }
 
+function honorsCreateQueryParam(source, openCreatePattern) {
+  const direct =
+    /searchParams\.get\("create"\)\s*!==\s*"1"/.test(source) ||
+    /(?:searchParams\.)?get\("create"\)\s*===\s*"1"/.test(source);
+  const sharedHook =
+    /useCreateQueryParam\s*\(\s*\{[\s\S]{0,800}?onOpenCreate\s*:\s*\(\)\s*=>\s*\{[\s\S]{0,800}?\}\s*,?\s*\}\s*\)/.test(
+      source
+    );
+  return (direct || sharedHook) && openCreatePattern.test(source);
+}
+
 export function collectProblems(sources = {}) {
   const manifest = sources.manifest ?? read(PATHS.manifest);
   const catalogsMap = sources.catalogsMap ?? read(PATHS.catalogsMap);
@@ -250,7 +261,7 @@ export function collectProblems(sources = {}) {
       errors.push(fail("ItemsListPage must honor ?create=1 → ItemEditorModal"));
     }
     if (!detailTypesPage) errors.push(fail("missing DetailTypesListPage.tsx"));
-    else if (!/searchParams\.get\("create"\) === "1"/.test(detailTypesPage) && !/get\("create"\) === "1"/.test(detailTypesPage)) {
+    else if (!honorsCreateQueryParam(detailTypesPage, /setModalMode\("create"\)/)) {
       errors.push(fail("DetailTypesListPage must honor ?create=1 → create modal"));
     }
     if (!postingTemplatesPage) errors.push(fail("missing PostingTemplatesListPage.tsx"));
@@ -300,6 +311,30 @@ export function collectProblems(sources = {}) {
 }
 
 function selftest() {
+  const productionShapedDetailTypes = `
+useCreateQueryParam({
+  companyId,
+  onOpenCreate: () => {
+    setSubmitError("");
+    setActiveRow(null);
+    setModalMode("create");
+  },
+});`;
+  if (!honorsCreateQueryParam(productionShapedDetailTypes, /setModalMode\("create"\)/)) {
+    console.error(`${LABEL} --selftest FAIL: production-shaped shared-hook fixture should pass`);
+    process.exit(1);
+  }
+  for (const [name, source] of [
+    ["hook removed", productionShapedDetailTypes.replace("useCreateQueryParam", "ignoreCreateQueryParam")],
+    ["callback removed", productionShapedDetailTypes.replace("onOpenCreate", "onOpenEdit")],
+    ["wrong modal mode", productionShapedDetailTypes.replace('setModalMode("create")', 'setModalMode("edit")')],
+  ]) {
+    if (honorsCreateQueryParam(source, /setModalMode\("create"\)/)) {
+      console.error(`${LABEL} --selftest FAIL: ${name} mutation should fail`);
+      process.exit(1);
+    }
+  }
+
   const goodManifest = `
 function ListsDomainRoute() {
   const { domain } = useParams();
