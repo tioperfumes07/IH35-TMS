@@ -1,2 +1,3 @@
-# NOW — CC-2
-`docs/lockdown/IH35-HANDOFF-2026-08-31/04-CC-2.md` — faro-factoring-statement.mjs
+# FEED NOW — CC-2
+**GO:** `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md`
+**NOW:** Grade every CC-1 hop live · FACT OBSERVED · fill SETL+ACCT stubs · never wait.

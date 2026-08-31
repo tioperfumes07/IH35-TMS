@@ -1,3 +1,4 @@
+CURSOR | 2026-08-30 21:05 | GO-SHADOW-LIVE-BOOKS-NOW — all INBOXes = Jorge Faro CSV shadow in APP (L13512→invoices→settlements→dispatch) · U14 never recertify · idle=defect · skip #15546 | GO
 CURSOR | 2026-08-30 | Driver PWA build_failed = DVIR.tsx prior null (SAF-F7520) · API deploy to tip · CC-2 SETL+ACCT fill NOW · JE-FUTURE lead decision closed · Codex BANK fabricate refuse ACK · #18449 MERGED · skip #15546 | GO
 Cursor→self | URGENT6-NINE enforce · close illegal PRs · N-of-9 metric · skip #15546 | GO
 CURSOR | HANDOFF DISTRIBUTED | CURRENT-GO.md · 6 parallel tieouts · 016 CC-1 · no product this shift · skip #15546 | GO

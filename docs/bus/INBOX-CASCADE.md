@@ -1,8 +1,13 @@
-# CURRENT GO — URGENT-6 · CASCADE
+# CURRENT GO — SHADOW LIVE BOOKS · CASCADE
 
-Cursor→Cascade | Pull main. `bash scripts/next-urgent6.sh`. skip #15546 | GO
+Cursor→Cascade | Read `docs/bus/GO-SHADOW-LIVE-BOOKS-NOW.md` · pull main · skip #15546 | GO
 
-1. **DISP-TIEOUT-01:** fill `scripts/tieout/dispatch-delivered-revenue.mjs` from Faro template (42 loads/48 invoices — orphans = FINDING).
-2. Unique FINDING only after that. **No U14 recertify.** No false-positive grep waves this shift.
+**YOU OWN DISPATCH SHADOW.**
 
-STOP. Stacked GO-WAKE / CLOSE-188 VOID.
+1. Open `docs/lockdown/Coders-Faro/CC-1/CC-1-AUG-LOADS-BY-FACTOR.csv`
+2. Filter `FACTOR_OWNER=USMCA` — create/complete each load in **Book Load UI** (customer, W.O., route, dates, miles). Start **13512**.
+3. Assign driver + unit from CSV; deliver when dates say. No bulk SQL.
+4. UI break → FINDING board + OUTBOX. Fill `dispatch-delivered-revenue.mjs` as grade alongside — not instead of loads.
+5. No U14 recertify.
+
+ACK: `Cascade | ACK | SHADOW-LIVE | NOW=load-NNNN | GO`
