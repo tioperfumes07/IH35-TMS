@@ -68,6 +68,18 @@ const voidBodySchema = z.object({
   reason: z.string().trim().min(1).max(500),
 });
 
+// LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE-2026-09-01: "the OWNER is always authorized, the
+// ACCOUNTANT is authorized... a hard 'cannot be mutated' with no authorized path is a DEFECT."
+// closed-session-immutability.ts's ReconciledSessionLockedError was a genuine dead end -- the
+// 'reopened' status value and the reopened_at/reopened_by_user_id/reopen_reason columns already
+// existed on this table (schema was fully ready), but zero code anywhere referenced them. This is
+// the missing authorized path: reason required, RECON_ROLES (includes Accountant, unlike
+// OWNER_ADMIN_ROLES used for void), audited.
+const reopenBodySchema = z.object({
+  operating_company_id: z.string().uuid(),
+  reason: z.string().trim().min(1).max(2000),
+});
+
 const csvUploadBodySchema = z.object({
   bank_account_id: z.string().uuid(),
 });
@@ -513,6 +525,81 @@ export async function registerBankingReconciliationRoutes(app: FastifyInstance) 
 
     if (!voided) return reply.code(409).send({ error: "void_race_lost" });
     return { session_id: voided, status: "voided" };
+  });
+
+  // RECON-CLOSED-SESSION-NO-AUTHORIZED-PATH (Codex found + honestly refused to route around,
+  // 2026-09-01): the correct behavior per the new law is "blocked for most roles, permitted for
+  // owner/accountant, always logged" -- never a hand SQL reopen, never a fabricated bank
+  // transaction. This route IS that authorized path: 'reconciled' -> 'reopened' only (never
+  // 'voided' -- a reconciled period is reopened for correction, not erased), reason required,
+  // audited with the prior status and every session field a reviewer would need.
+  app.post("/api/v1/banking/reconciliation/:sessionId/reopen", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!canReconcile(user.role)) {
+      return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    }
+
+    const params = sessionParamsSchema.safeParse(req.params ?? {});
+    if (!params.success) return sendValidationError(reply, params.error);
+    const body = reopenBodySchema.safeParse(req.body ?? {});
+    if (!body.success) return sendValidationError(reply, body.error);
+
+    const session = await loadSession(user.uuid, params.data.sessionId, body.data.operating_company_id);
+    if (!session) return reply.code(404).send({ error: "session_not_found" });
+    if (session.status !== "reconciled") {
+      return reply.code(422).send({
+        error: "not_reconciled",
+        message: "Only a reconciled (closed) session can be reopened through this path.",
+        status: session.status,
+      });
+    }
+
+    const reopened = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
+      const res = await client.query<{ id: string }>(
+        `
+          UPDATE banking.reconciliation_sessions
+          SET status = 'reopened',
+              reopened_at = now(),
+              reopened_by_user_id = $3::uuid,
+              reopen_reason = $4,
+              updated_at = now()
+          WHERE id = $1::uuid
+            AND operating_company_id = $2::uuid
+            AND status = 'reconciled'
+          RETURNING id
+        `,
+        [params.data.sessionId, body.data.operating_company_id, user.uuid, body.data.reason]
+      );
+      const reopenedId = res.rows[0]?.id;
+      if (!reopenedId) return null;
+      // LAW: "every such edit is TRACEABLE -- who, when, what changed, from what to what, and
+      // why." Named fields, not a generic blob, so this audit row alone answers the law's own
+      // question list without reconstruction from other tables.
+      await appendCrudAudit(
+        client,
+        user.uuid,
+        "banking.reconciliation.reopened",
+        {
+          resource_type: "banking.reconciliation_sessions",
+          resource_id: reopenedId,
+          operating_company_id: body.data.operating_company_id,
+          actor_role: user.role,
+          bank_account_id: session.bank_account_id,
+          period_start: session.period_start,
+          period_end: session.period_end,
+          prior_status: "reconciled",
+          new_status: "reopened",
+          reason: body.data.reason,
+        },
+        "warning",
+        "LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE"
+      );
+      return reopenedId;
+    });
+
+    if (!reopened) return reply.code(409).send({ error: "reopen_race_lost" });
+    return { session_id: reopened, status: "reopened" };
   });
 
   app.get("/api/v1/banking/reconciliation/:sessionId", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
