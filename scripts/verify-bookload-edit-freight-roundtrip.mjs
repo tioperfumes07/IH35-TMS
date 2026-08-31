@@ -58,6 +58,9 @@ function assertLive() {
   if (!/round-trip on edit/i.test(modal)) {
     problems.push(`${MODAL}: edit honesty must state commodity/weight/trip/reefer round-trip`);
   }
+  if (!/form\.register\("live_load_number"\)/.test(modal) || !/data-testid="book-load-live-load-number"/.test(modal)) {
+    problems.push(`${MODAL}: live_load_number must be operator-editable for canonical historical dispatch linkage`);
+  }
   for (const token of [
     "isEditMode && editLoadQuery.isError",
     'message="Could not load persisted load details." onRetry={() => void editLoadQuery.refetch()}',
@@ -131,7 +134,16 @@ if (SELFTEST) {
     process.exit(1);
   }
 
-  console.log(`${LABEL} SELFTEST PASS — four planted regressions correctly caught; baseline clean`);
+  const brokenLiveLoadNumber = modal.replace('form.register("live_load_number")', 'form.register("pickup_number")');
+  fs.writeFileSync(path.join(ROOT, MODAL), brokenLiveLoadNumber);
+  const failuresE = assertLive();
+  fs.writeFileSync(path.join(ROOT, MODAL), modal);
+  if (failuresE.length === 0) {
+    console.error(`${LABEL} SELFTEST FAIL — planted historical/live load-number disconnection was NOT caught`);
+    process.exit(1);
+  }
+
+  console.log(`${LABEL} SELFTEST PASS — five planted regressions correctly caught; baseline clean`);
   process.exit(0);
 }
 

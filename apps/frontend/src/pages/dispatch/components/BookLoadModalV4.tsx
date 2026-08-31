@@ -1387,6 +1387,15 @@ export function BookLoadModalV4({
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
+                    <label className="text-[9px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                      Historical / live load #
+                      <input
+                        {...form.register("live_load_number")}
+                        data-testid="book-load-live-load-number"
+                        placeholder="Legacy dispatch reference"
+                        className="mt-0.5 h-7 w-full rounded-sm border border-gray-300 px-2 text-xs"
+                      />
+                    </label>
                     {/* FAIL-D6 — the ONLY UI path that sets mdata.loads.is_sample_data. The column has
                         existed since migration 0403 (NOT NULL DEFAULT false) but no create surface ever
                         populated it, so every TMS-native load was written `false` whether it was real or a
