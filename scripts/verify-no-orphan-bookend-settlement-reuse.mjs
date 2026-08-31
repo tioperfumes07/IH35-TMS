@@ -57,6 +57,24 @@ export function activeReaderQuery(src) {
 }
 
 /**
+ * Isolate closeLoadBookendedSettlementForDriver's own "which settlement do I close" SELECT — a
+ * THIRD occurrence of the same shape, found live 2026-08-31 with NO status filter at all (not
+ * even the old blacklist). This one is the highest-stakes of the three: it decides which
+ * settlement gets this load's real settlement_lines attached on CLOSE, not just which one gets
+ * handed back as "the current one". Matching an already-approved settlement here doesn't just
+ * misreport — it attaches new money to paperwork that already paid out.
+ */
+export function closeFinderQuery(src) {
+  const clean = stripComments(src);
+  const fnIdx = clean.indexOf("async function closeLoadBookendedSettlementForDriver");
+  if (fnIdx === -1) return null;
+  const m = /SELECT[\s\S]{0,200}?FROM\s+driver_finance\.driver_settlements[\s\S]{0,600}?FOR\s+UPDATE/i.exec(
+    clean.slice(fnIdx)
+  );
+  return m ? m[0] : null;
+}
+
+/**
  * PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE (2026-08-31): trip_closed_at is set by the close path
  * ATOMICALLY WITH status='closed' — but status can also reach a terminal value (approved/paid/
  * locked/final/closed) through a DIFFERENT code path that was never audited for whether it also
@@ -120,6 +138,21 @@ export function collectProblems(src) {
         `reuse query, same fix required (PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
     );
   }
+  const closeFinder = closeFinderQuery(src);
+  if (!closeFinder) {
+    problems.push(
+      `${SVC}: closeLoadBookendedSettlementForDriver's own "which settlement do I close" SELECT was not ` +
+        `found. If it moved, move this guard with it — this is the highest-stakes of the three, it ` +
+        `decides which settlement gets this load's real settlement_lines (PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
+    );
+  } else if (!checksOpenOnly(closeFinder)) {
+    problems.push(
+      `${SVC}: closeLoadBookendedSettlementForDriver's close-target SELECT does not whitelist ` +
+        `status = 'open' — this query decides which settlement gets NEW settlement_lines attached on ` +
+        `close, so matching an already-approved settlement here does not just misreport, it attaches ` +
+        `real money to paperwork that already paid out (PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE).`
+    );
+  }
   return problems;
 }
 
@@ -129,10 +162,12 @@ if (process.argv.includes("--selftest")) {
     "SELECT s.id FROM driver_finance.driver_settlements s WHERE s.trip_closed_at IS NULL AND s.status = 'open' AND s.voided_at IS NULL AND s.first_load_id IS NOT NULL AND EXISTS (SELECT 1 FROM mdata.loads fl WHERE fl.id = s.first_load_id AND fl.soft_deleted_at IS NULL AND fl.status::text <> 'cancelled') ORDER BY s.created_at DESC LIMIT 1 FOR UPDATE";
   const GOOD_READER =
     "export async function getActiveSettlementForDriver(client, input) { const res = await client.query(`SELECT id, display_id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL AND status = 'open' AND voided_at IS NULL ORDER BY created_at DESC LIMIT 1`); }";
-  const GOOD = `${GOOD_REUSE}\n${GOOD_READER}`;
+  const GOOD_CLOSE_FINDER =
+    "async function closeLoadBookendedSettlementForDriver(client, opts) { const busyRes = await client.query(`SELECT count(*)::int AS cnt FROM mdata.loads l WHERE l.id <> $2`); const openRes = await client.query(`SELECT id FROM driver_finance.driver_settlements WHERE operating_company_id = $1::uuid AND driver_id = $2 AND settlement_model = 'load_bookended' AND trip_closed_at IS NULL AND status = 'open' ORDER BY created_at DESC LIMIT 1 FOR UPDATE`); }";
+  const GOOD = `${GOOD_REUSE}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
   const BARE_REUSE =
     "SELECT id FROM driver_finance.driver_settlements WHERE driver_id = $1 AND trip_closed_at IS NULL ORDER BY created_at DESC LIMIT 1 FOR UPDATE";
-  const BARE = `${BARE_REUSE}\n${GOOD_READER}`;
+  const BARE = `${BARE_REUSE}\n${GOOD_READER}\n${GOOD_CLOSE_FINDER}`;
 
   if (collectProblems(GOOD).length !== 0) failures.push("the fully-fixed reuse+reader queries were flagged");
   if (!collectProblems(BARE).some((p) => /still LIVE/.test(p))) {
@@ -174,6 +209,20 @@ if (process.argv.includes("--selftest")) {
   if (!collectProblems(NO_READER).some((p) => /own SELECT was not found/.test(p))) {
     failures.push("a missing getActiveSettlementForDriver reader was not caught");
   }
+  // PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE: the THIRD query (closeLoadBookendedSettlementForDriver's
+  // own close-target finder) must be independently checked — missing, and regressed back to no filter.
+  const NO_CLOSE_FINDER = `${GOOD_REUSE}\n${GOOD_READER}`;
+  if (!collectProblems(NO_CLOSE_FINDER).some((p) => /which settlement do I close.*was not found/.test(p))) {
+    failures.push("a missing closeLoadBookendedSettlementForDriver close-finder was not caught");
+  }
+  const REGRESSED_CLOSE_FINDER = GOOD_CLOSE_FINDER.replace(
+    "AND trip_closed_at IS NULL AND status = 'open' ORDER BY",
+    "AND trip_closed_at IS NULL ORDER BY"
+  );
+  const REGRESSED3 = `${GOOD_REUSE}\n${GOOD_READER}\n${REGRESSED_CLOSE_FINDER}`;
+  if (!collectProblems(REGRESSED3).some((p) => /close-target SELECT does not whitelist/.test(p))) {
+    failures.push("the close-finder query with no status filter at all was NOT caught");
+  }
 
   if (failures.length) {
     console.error(`${LABEL} SELFTEST FAILED:`);
@@ -181,9 +230,10 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 10/10 (fully-fixed passes, missing liveness/anchor/open-whitelist each ` +
+    `${LABEL} SELFTEST OK — 13/13 (fully-fixed passes, missing liveness/anchor/open-whitelist each ` +
       `caught, half-fix caught, comment cannot fake, missing reuse query fails closed, blacklist ` +
-      `regression caught on both reuse+reader independently, missing reader fails closed)`
+      `regression caught on reuse+reader+close-finder independently, missing reader/close-finder ` +
+      `fail closed)`
   );
   process.exit(0);
 }

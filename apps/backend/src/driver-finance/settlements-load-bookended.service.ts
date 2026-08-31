@@ -428,6 +428,15 @@ async function closeLoadBookendedSettlementForDriver(
         AND driver_id = $2
         AND settlement_model = 'load_bookended'
         AND trip_closed_at IS NULL
+        -- PINGSETTLEMENT-REUSE-APPROVED-NULL-CLOSE — a THIRD occurrence of the same gap fixed in
+        -- openLoadBookendedSettlement/getActiveSettlementForDriver, found while about to progress
+        -- L13512 to delivered_pending_docs and realizing THIS query (the one that decides which
+        -- settlement gets CLOSED, i.e. gets this load's real settlement_lines attached) had no
+        -- status filter at all — not even the old blacklist. Without this, closing 13512's trip
+        -- would have matched S-20260816-0168 (trip_closed_at NULL despite status='approved') and
+        -- attached brand-new settlement_lines to an already-approved, already-paid-out settlement —
+        -- corrupting real driver pay, not just misreporting it. Same whitelist, same reasoning.
+        AND status = 'open'
       ORDER BY created_at DESC
       LIMIT 1
       FOR UPDATE
