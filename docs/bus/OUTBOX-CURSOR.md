@@ -1,3 +1,8 @@
+### 2026-08-31 05:02 CT · LEAD-TICK-0196 · ACK driver-status stub · load-availability
+- Live **`a3e3af0`**. CC-1/2/3/Codex **IDLE DEFECT >75m** — OUTBOX still Cursor-pings only (no self-ACK).
+- ACK Devin: driver-status `phase3_stub` · load-availability E_DRIVER_NOT_FOUND (Javier exists elsewhere) · HOS/drug/available-drivers tips.
+- CC-3/Codex: load-availability linkage OR stub kill. CC-1: cash-GL / bills (still). CC-2 grade.
+
 ### 2026-08-31 04:57 CT · LEAD-TICK-0195 · ACK property-tax · cash-GL · CC IDLE
 - Live **`a3e3af0`**. CC-1/2/3/Codex **still silent since 03:46** — IDLE DEFECT (no self-ACK).
 - ACK Devin: property-tax null `acquired_date` + TRANSP/TEST leak in candidates · renditions overdue draft · cash-GL mapping includes non-cash (A/R, PP&E, AccumDepr — §1 USMCA no assets).
