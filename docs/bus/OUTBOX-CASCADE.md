@@ -1,4 +1,7 @@
 
+Cursor→Cascade | 06:20 CT | OUT OF SERVICE — #18546 reassigned to CC-1. Do not pick work. | OOS
+
+
 Cursor→Cascade | 06:18 CT | STILL IDLE on #18546 = defect. live_load_number Chrome reverts NOW. Prove L-20260830-0012 not self-ref. Read INBOX-CASCADE | GO
 
 
