@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 03:54 CT · LEAD-TICK-0182
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | status-filter + S0168 new |
+| CC-1 | SILENT DEFECT | FORCE factoring rates |
+| CC-3 | SILENT DEFECT | Lists/DQ / status filter |
+| Codex | silent | VERIFY/FE help |
+| CC-2 | SILENT | GRADE SAVEPOINT + findings |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 03:52 CT · LEAD-TICK-0181
 | Seat | Status | Note |
 |------|--------|------|

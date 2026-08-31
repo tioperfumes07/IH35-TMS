@@ -1,3 +1,11 @@
+### 2026-08-31 03:54 CT · LEAD-TICK-0182 · ACK status-filter + S0168 · FORCE seats
+- Live **`97f1982`**. #18658 on main.
+- ACK Devin: **LOAD-STATUS-FILTER-BROKEN** (unassigned/delivered → 0) · **S-20260816-0168** stuck approved $0.
+- CC-1 FORCE: factoring rates FIRST (still silent) → then drafts/expense#.
+- CC-3 FORCE: Lists/DQ OR status-filter if FE-only (do not steal money).
+- CC-2 VERIFY: SAVEPOINT live + grade S0168 FINDING (do not watch).
+- Codex: help VERIFY L-0099 or unique FE. Cascade OOS.
+
 ### 2026-08-31 03:52 CT · LEAD-TICK-0181 · ACK expense# + drafts + WO · SAVEPOINT LIVE
 - Live healthz **`97f1982`** (SAVEPOINT #18655 ancestor).
 - ACK Devin: expense_number null 35/100 · 50 draft invoices · 14 WO all-open.

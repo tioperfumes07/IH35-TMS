@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 03:54 CT · FORCE · SILENT=DEFECT**
+1. Lists/DQ OR **load status filter** (unassigned/delivered empty) if FE lane.
+2. No money steal. Live **97f1982**. ACK LEAD-TICK-0182.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 03:52 CT · FORCE**
 1. Lists/DQ (156/159 empty + columns vs files) · compliance filings.
 2. Do NOT steal CC-1 money. Live **97f1982**. ACK LEAD-TICK-0181.
