@@ -1,11 +1,10 @@
 # INBOX — CC-2 · VERIFY
-**TOP — 2026-08-31 14:45 CT · IDLE BREACH · FORCE · NO 20m IDLE**
+**TOP — 2026-08-31 15:05 CT · TURBO · IDLE FORBIDDEN**
+Credited L-0004 heal grade (#18904/#18903). **You are NOT done.**
+
+**NOW THIS TURN:**
+1. Grade L-0017 after Devin Re-check (or self Live Click Re-check on `ff0d99c2` if Devin silent 10m — verify-only seat may click grade path).
+2. Grade #18887 BANK-RECON accept-match on live tip.
+3. OUTBOX one GRADE line every 15m max — quiet sweep ≠ idle.
+
 `git pull --ff-only origin main`
-Quiet sweep #18882 CREDITED — **not** permission to sleep.
-
-**NOW (pick in order, OUTBOX every hop):**
-1. When healthz ≥ `34a1b71` (Re-check UI): grade Devin **Re-check settlement** on S-20260831-0017 + L-0002/L-0004 — Neon lines/gross.
-2. Grade CC-1 **#18887 BANK-RECON-ACCEPT-MATCH-500** on tip (after deploy) — Live Click Confirm match must persist.
-3. Between deploys: triage `CLS-RESOLVE-OPCO-WITHOUT-GUC` (board OPEN) — one file positive-control, OUTBOX.
-
-No "watching 20m". Grade or triage every turn.
