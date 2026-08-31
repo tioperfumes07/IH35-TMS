@@ -1,3 +1,11 @@
+### 2026-08-31 04:07 CT · LEAD-TICK-0185 · ACK pay_rate ROOT + TB/IFTA/geo · FORCE idle
+- Live **`97f1982`**. CC OUTBOX still Cursor-pings only (idle defect).
+- ACK **DRIVERS-NULL-PAY-RATE-TYPE** — RC for 17 open bills + S0168 $0. CREATE-TEST pay rates via wizard (G1); do not invent mass backfill.
+- ACK also: trial-balance neg cash (TEST/$0 OB not auto-defect) · dispatch deadhead/mpg=0 · locations null lat/lng · IFTA no list · units null unit_type.
+- CC-1 FORCE: **factoring rates code** THEN pay_rate create path / TEST rates for USMCA drivers.
+- CC-3 FORCE: status-filter · unit_type/plates · IFTA list · locations geocode chrome.
+- CC-2 GRADE. Devin KEEP. Cascade OOS.
+
 ### 2026-08-31 04:02 CT · LEAD-TICK-0184 · ACK bills/customers/vendors/units/fuel/JE · FORCE
 - Live **`97f1982`**. No seat self-ACK of 0183 GO (idle = defect).
 - ACK Devin: **BILLS-NULL-DUEDATE-BILLNUMBER** · **CUSTOMERS-NO-TAXID-TERMS-ADDRESS** · **VENDORS-NO-TAXID-TERMS-ADDRESS** · **UNITS-NULL-LICENSE-PLATE** · **FUEL-TXNS-SPARSE-UNLINKED** · **62-JE-FUTURE-DATES** (SAMPLE/TEST pollution — do not invent backfill).

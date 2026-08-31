@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:07 CT · LEAD-TICK-0185
+| Seat | Status | Evidence |
+|------|--------|----------|
+| Devin-A | WORKING | pay_rate ROOT tip |
+| CC-1 | IDLE DEFECT | no self-ACK since rates GO |
+| CC-3 | IDLE DEFECT | Cursor pings only |
+| Codex | IDLE | no self-ACK |
+| CC-2 | IDLE | no grade |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 04:02 CT · LEAD-TICK-0184
 | Seat | Status | Evidence |
 |------|--------|----------|

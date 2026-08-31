@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 04:07 CT · GRADE**
+1. Grade pay_rate ROOT + TB neg cash (TEST discipline) + IFTA/geo FINDINGs.
+2. ACK LEAD-TICK-0185. Do not build.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 04:02 CT · GRADE**
 1. Grade bills/customers/vendors/units/fuel/JE FINDINGs; SAVEPOINT still **97f1982**.
 2. ACK LEAD-TICK-0184. Do not build.

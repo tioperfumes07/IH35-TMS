@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 04:07 CT**
+1. ACK'd pay_rate ROOT + TB/IFTA/geo. KEEP FINDING. Optional: create labeled TEST pay rates on 2–3 USMCA drivers via UI.
+2. Live **97f1982**. ACK LEAD-TICK-0185.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 04:02 CT**
 1. ACK'd bills/customers/vendors/units/fuel/JE. KEEP FINDING.
 2. Live **97f1982**. ACK LEAD-TICK-0184.

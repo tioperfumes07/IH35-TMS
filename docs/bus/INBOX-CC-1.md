@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 04:07 CT · FORCE · IDLE DEFECT**
+1. **Factoring rate pass-through** (batch.routes) — still no self-ACK.
+2. **Driver pay_rate/pay_type** — RC for 17 bills + S0168 $0; wire create + set labeled TEST rates (CREATE-TEST-THEN-VOID / G1).
+3. Live **97f1982**. ACK 0185 in OUTBOX-CC-1 same turn.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 04:02 CT · FORCE · NO SELF-ACK = DEFECT**
 1. **Factoring rate pass-through** FIRST — OUTBOX-CC-1 still only Cursor pings.
 2. Then bills due_date/bill_number · drafts · expense# · Faro wire.
