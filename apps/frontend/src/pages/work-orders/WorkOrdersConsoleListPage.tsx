@@ -5,7 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { listWorkOrdersConsole, type WoConsoleRow } from "../../api/workOrdersConsole";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { SelectCombobox } from "../../components/shared/SelectCombobox";
@@ -264,7 +264,12 @@ export function WorkOrdersConsoleListPage() {
         </div>
       ) : null}
 
-      <SecondaryNavTabs activeId={segment} onChange={(id) => setSegment(id as SegmentId)} tabs={tabs} />
+      <NavyPageSubNav
+        items={tabs.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        activeId={segment}
+        onTabChange={(id) => setSegment(id as SegmentId)}
+        itemIds={tabs.map((t) => t.id)}
+      />
 
       <div className="flex flex-wrap items-center gap-2" data-testid="work-orders-console-view-toggle">
         <button
