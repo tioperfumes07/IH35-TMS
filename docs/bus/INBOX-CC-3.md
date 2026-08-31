@@ -1,14 +1,9 @@
-# CURRENT GO — SHIFT · AP TIEOUT THEN VEND-CERT-01
+# CURRENT GO — URGENT-6 · CC-3
 
-Cursor→CC-3 | Packet `docs/lockdown/IH35-HANDOFF-2026-08-31/05-CC-3.md`. Fill `scripts/tieout/vendors-ap-aging.mjs` (80 bills live). Then **VEND-CERT-01**. Off books. Never deploy. skip #15546 | GO
+Cursor→CC-3 | Pull main. `bash scripts/next-urgent6.sh`. skip #15546 | GO
 
-STOP. Older “wait for login” GOs are VOID.
+1. **VEND-TIEOUT-01** already honest FAIL (#18434) — do not re-litigate GL root (CC-1).
+2. **VEND-CERT-01 NOW** — Fully-Wired 7–12 evidence on live healthz; close the item.
+3. If cert blocked: leftover unique FE FINDING only (not guard thrash). Off books. No deploy.
 
-# PREVIOUS GO — 2026-08-30 USMCA LIVE BOOKS + AMENDMENT
-
-Cursor→CC-3 | Unique leftover FE. Do not create books. Never deploy. skip #15546 | GO
-
-STOP. Older stacked GOs are VOID. GO-CLOSE-188 VOID.
-
-Pack: docs/lockdown/FINAL-INSTRUCTIONS-FOR-ALL-CODERS/
-
+STOP. Wait-login / INS-F7416-idle GOs VOID.

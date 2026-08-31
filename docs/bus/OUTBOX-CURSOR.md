@@ -1,3 +1,4 @@
+Cursor→self | URGENT6-NINE enforce · close illegal PRs · N-of-9 metric · skip #15546 | GO
 CURSOR | HANDOFF DISTRIBUTED | CURRENT-GO.md · 6 parallel tieouts · 016 CC-1 · no product this shift · skip #15546 | GO
 CURSOR | NO SEAT WAITS ON DEPLOY | parallel dep-daactq8n74is73ahm4n0 · INBOX = work NOW · skip #15546 | GO
 CURSOR | DEPLOY dep-daactq8n74is73ahm4n0 commit 3c93070b35 · CC-2/CC-3/Cascade wait healthz then work · skip #15546 | GO

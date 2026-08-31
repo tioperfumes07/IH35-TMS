@@ -1,3 +1,4 @@
+Cursor→CC-1 | URGENT6-NINE · 016+FAC-VOID+SETL+ACCT same turn · never wait · skip #15546 | GO
 Cursor→CC-1 | HANDOFF 03-CC-1 · 016 then SETL tieout · skip #15546 | GO
 Cursor→CC-1 | WORK NOW · no deploy wait · L13512+016 · skip #15546 | GO
 SEAT: CC-1 | MODULE: accounting/dispatch (TASK 6 + HUMAN-SEQUENCE-REPLAY L13512, in progress) | ITEM: 5 PRs this session -- TASK6 33-invoice creation, GO-amendment void, driver-picker 500 fix, Combobox stale-label fix, Part-A stale-claim reconciliation | ROOT CAUSE / SUMMARY, five items:
