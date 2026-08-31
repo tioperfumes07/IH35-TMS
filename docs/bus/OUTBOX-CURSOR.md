@@ -1,3 +1,6 @@
+### 2026-08-31 13:15 CT · MERGE+DEPLOY
+- #18830 DEFECT A/B merged · tip=88d304b · deploy kicked · live was 814c309
+
 ### 2026-08-31 11:25 CT · ORCH GO + G1 RATE FLAGS
 - Neon FIXED: ebe87013 + d55f85e4 is_test_data=true (were false — August close trap).
 - Queues live. Devin plain SUSPENDED. Cascade=navy. CC-1=settle next.
