@@ -127,6 +127,14 @@ async function syncDriverFinancePayRateFromQualificationRate(
   const ratePerMileCents = Math.round(Number(input.amountDollars) * 100);
   if (!Number.isFinite(ratePerMileCents) || ratePerMileCents < 0) return;
 
+  // driver_finance.driver_pay_rates_tenant_scope RLS requires app.operating_company_id (or
+  // lucia bypass) -- live-caught 2026-08-31: the CREATE-with-initial-rates call site sets this GUC
+  // for catalogs.equipment_types' own RLS (line ~200), but the sibling rates/change route never
+  // did, so a real Chrome submit through that route 500'd with "new row violates row-level security
+  // policy for table \"driver_pay_rates\"" the moment this helper's INSERT ran. Set it here,
+  // unconditionally, so this helper never depends on a caller having already done it.
+  await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
+
   await client.query(
     `
       UPDATE driver_finance.driver_pay_rates
