@@ -19,7 +19,9 @@ inline once resolved; never delete a row.
 5. BANK-ORPHAN-01 owner ruling: void must un-categorize the matched bank transaction, build
    into the cascade not a cleanup job, guard named in a workflow.
    [DONE — shared unmatchBankTransactionsForVoid/unmatchBankTransactionById wired into
-   postVoidReversal, PR #18989. REMAINING: one-time backfill for the 4 pre-fix orphans]
+   postVoidReversal, PR #18989. Reach-back backfill route for the 4 pre-fix orphans shipped
+   PR #19001/ACCT-F10197 (dry-run + Owner/Accountant-gated apply); apply not yet executed
+   against prod, that is the owner's/an authorized session's explicit go]
 6. SETL-NO-VOID-PATH-01: no void/reverse path for driver settlements at all, 17 stuck.
    Detail-view control, same void.service.ts path, cascade incl. BANK-ORPHAN-01, LOCKED
    requires explicit unlock, Owner/Accountant only, reverse-vs-void decision grounded in
@@ -84,7 +86,11 @@ inline once resolved; never delete a row.
     instruction here before acting.
     [DONE — this file adopted, OUTBOX-CC-1.md queue-status entry posted this turn]
 
-**STATED QUEUE ORDER (owner, most recent restatement):** SETL-SELECTION-BINDING (proof posted,
-awaiting confirm) → SETL-NO-VOID-PATH-01 (DONE) → INV-OPEN-VOID-01 (DONE) → BANK-ORPHAN-01
-(shared engine DONE; one-time backfill for the 4 pre-fix orphans is the remaining piece, DOING
-next).
+**STATED QUEUE ORDER (owner, most recent restatement):** SETL-SELECTION-BINDING (proof posted
+twice, freeze NOT lifted, awaiting Codex/CC-2 confirm) → SETL-NO-VOID-PATH-01 (DONE, PR #18989)
+→ INV-OPEN-VOID-01 (DONE, PR #18997) → BANK-ORPHAN-01 (DONE, PR #18989 + #19001 — apply not yet
+run against prod, awaiting authorized session).
+
+All four P0s now shipped or proof-posted. Next: LAW-FIX-INSTANTLY-FULL-REGISTER items 4-10
+(VOID LAW sweep beyond settlements, SETL-DUAL-APPROVAL, SETL-NEGATIVE-NET-01,
+RECON-NO-OPEN-SESSION, bills-never-auto-created) — none started yet.
