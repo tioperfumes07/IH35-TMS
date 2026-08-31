@@ -59,3 +59,7 @@ its own sum by $383,580, and $2,532.18 between the carrier quotes and the financ
 ## CURSOR CLOSEOUT — 2026-08-31 12:35 CT
 - Future JE flag: **DONE** — `future_unflagged=0`, `future_sample=62`, `AUG_REAL=236` unchanged (Neon lucia).
 - Queue refill: **N/A** — every QUEUE-* has ≥4 OPEN (CC-1:7 CC-2:5 CC-3:4 CASCADE:6 CODEX:4 DEVIN-A:5 CURSOR:4).
+
+## CURSOR · 2026-08-31 12:46 CT
+- Deploy kicked tip **8b5514b** (CC-3 #18819 bill-pay + Devin-A bus + future-JE). live was 5ff60ec.
+- Claude GO receipt: CC-1 #18820 DEFECT A/B **named** (working). Devin-A wake DONE. Cascade still silent → INBOX re-force. Codex restart path forced.
