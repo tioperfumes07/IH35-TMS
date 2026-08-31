@@ -1,5 +1,4 @@
 # INBOX — CURSOR
-<!-- BUS-DIET: older → docs/bus/archive/ -->
-**TOP — 2026-08-31 BUS-DIET**
-BUS-DIET live: OUTBOX≤200 · archive WORM · no LEAD-TICK commits · read own INBOX top only.
-**NOW:** Enforce diet. No heartbeat commits. Owner report = chat not commit.
+<!-- BUS-DIET -->
+**TOP — 2026-08-31 11:14 CT**
+Lead no-idle. No LEAD-TICK. Overflow Live Chrome if seat silent >10m. Deploy tip only Rule 42.

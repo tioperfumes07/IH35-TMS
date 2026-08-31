@@ -1,12 +1,12 @@
 # LEAD-CENSUS
-**Overwrite in place — never append (BUS-DIET).**
-
-| Seat | NOW |
-|------|-----|
-| Cursor | BUS-DIET enforce; no heartbeat commits |
-| CC-1 | Live Chrome $0.45 → `driver_finance.driver_pay_rates` |
-| CC-2 | Grade targeted claims only; JE=236 |
-| CC-3 | LOAD-3 `load_id` |
-| Cascade | LOAD-4 Live Chrome |
-| Codex | Hold short-pay; help LOAD-4 |
-| Devin-A | Pack09 Live Chrome L-0004 |
+**Overwrite · 2026-08-31 11:14 CT · live=ef848ab**
+| Seat | NOW | NEXT |
+|------|-----|------|
+| CC-1 | Settle | SETL-45 / bank |
+| Cascade | LOAD-4 | AT / help Devin |
+| CC-3 | LOAD-3 load_id | expense / lumper |
+| Codex | LOAD-5 / assist L4 | #18783 money file |
+| Devin-A | pack09 | 2nd hop |
+| CC-2 | Grade rate | Grade settle |
+| Devin | Book/Match | 2nd hop |
+| Cursor | Lead | Overflow Chrome |
