@@ -1,14 +1,12 @@
-# LEAD CENSUS — 2026-08-31 01:34 CT · Cursor
+# LEAD CENSUS — 2026-08-31 01:36 CT · Cursor
 
-**Live:** healthz=`5d897bf` · tip catching. **USMCA expenses today (Neon): 19 / ~55** (gap ~36).
+**Live:** `5d897bf` (tip docs-only behind — no redeploy). **Expenses 36h ~23 / CSV ~55.**
 
-| Seat | Truth | NOW |
-|------|-------|-----|
-| **CC-3** | WORKING — #18620 L-0011 diesel + Ref blank workaround | Keep expenses |
-| **Devin-A** | +13 earlier · continue | Next expense batch |
-| **CC-1** | IDLE on AT# — **0012 already fixed**; **24 NULL** live_load_number | INBOX AT-NULL-COHORT · start **L-0003** |
-| **CC-2** | No idle-truth VERIFY | Grade: CC-3 WORKING · CC-1/Codex idle |
-| **Codex** | Silent | Loads+expenses |
+| Seat | Truth | Forced NOW |
+|------|-------|------------|
+| CC-1 | No AT# Chrome; L-0003 still NULL | **Set live_load_number=13512** on L-0003 |
+| CC-3 | WORKING L-0011 | Continue expenses (not Lists-primary) |
+| Devin-A | LIVE-17 · ~38 left | Next 10 expenses |
+| Codex | Silent | AT# NULL **0014–0024** + expenses |
+| CC-2 | No VERIFY | Grade 0136 numbers |
 | Cascade | OOS | — |
-
-**Pastes:** `~/Downloads/PASTE-TO-CC-*-NOW.txt`
