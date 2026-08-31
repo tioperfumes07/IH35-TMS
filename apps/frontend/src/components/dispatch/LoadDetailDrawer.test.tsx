@@ -21,6 +21,7 @@ vi.mock("../../api/loads", () => ({
   useLoad: (...args: unknown[]) => mockUseLoad(...args),
   useLoadAudit: (...args: unknown[]) => mockUseLoadAudit(...args),
   updateLoad: vi.fn(),
+  useUpdateLoadStatus: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock("../../api/accounting", () => ({
@@ -264,6 +265,36 @@ describe("P31 load hub forward links", () => {
     expect(screen.getByRole("link", { name: "TRUCK-1" })).toHaveAttribute("href", "/fleet/units/unit-1");
     expect(screen.getByRole("link", { name: "TRAILER-1" })).toHaveAttribute("href", "/fleet/trailers/trailer-1");
     expect(screen.getByRole("link", { name: "Driver One" })).toHaveAttribute("href", "/drivers/driver-1");
+  });
+});
+
+describe("DISPATCH-NO-UI-DELIVERED-TRANSITION — load detail deliver control", () => {
+  it("shows Mark delivered for in-transit loads and hides it once delivered", () => {
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "in_transit" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    const { unmount } = renderDrawer(
+      <LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />
+    );
+    expect(screen.getByTestId("load-detail-mark-delivered")).toHaveTextContent("Mark delivered (pending docs)");
+    unmount();
+
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "delivered_pending_docs" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+    expect(screen.queryByTestId("load-detail-mark-delivered")).toBeNull();
   });
 });
 
