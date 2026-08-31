@@ -14,10 +14,12 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100, -1] as const;
 const ALL_SENTINEL = -1;
 const pageSizeLabel = (n: number) => (n === ALL_SENTINEL ? "All" : String(n));
 
-type Column<T> = {
+export type DataTableColumn<T> = {
   key: keyof T | string;
   label: string;
   sortable?: boolean;
+  /** Value used by the shared sorter when rendered content is not the raw row field. */
+  sortValue?: (row: T) => string | number | null | undefined;
   render?: (row: T) => ReactNode;
   className?: string;
   cellClass?: string;
@@ -46,7 +48,7 @@ export function resolveAlign(col: { align?: "left" | "center" | "right"; numeric
 }
 
 type DataTableProps<T> = {
-  columns: Array<Column<T>>;
+  columns: Array<DataTableColumn<T>>;
   rows: T[];
   rowKey: (row: T) => string;
   loading?: boolean;
@@ -59,6 +61,8 @@ type DataTableProps<T> = {
   emptyText?: string;
   /** Server-ranged consumers render their own authoritative pager. */
   hidePager?: boolean;
+  /** Stable row hook for focused accessibility/reverse-link tests. */
+  rowTestId?: (row: T) => string | undefined;
 };
 
 export function DataTable<T>({
@@ -72,6 +76,7 @@ export function DataTable<T>({
   errorState,
   emptyText = "No records found.",
   hidePager = false,
+  rowTestId,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -97,14 +102,27 @@ export function DataTable<T>({
   const sortedRows = useMemo(() => {
     if (!sortKey) return toolbarFilteredRows;
     const copy = [...toolbarFilteredRows];
-    copy.sort((a, b) => {
-      const aValue = String((a as Record<string, unknown>)[sortKey] ?? "");
-      const bValue = String((b as Record<string, unknown>)[sortKey] ?? "");
-      const comparison = aValue.localeCompare(bValue);
-      return sortDirection === "asc" ? comparison : -comparison;
-    });
-    return copy;
-  }, [sortKey, sortDirection, toolbarFilteredRows]);
+    const column = columns.find((candidate) => String(candidate.key) === sortKey);
+    return copy
+      .map((row, index) => {
+        const rawValue = column?.sortValue
+          ? column.sortValue(row)
+          : (row as Record<string, unknown>)[sortKey];
+        return { row, index, value: rawValue };
+      })
+      .sort((a, b) => {
+        if (a.value == null && b.value == null) return a.index - b.index;
+        if (a.value == null) return 1;
+        if (b.value == null) return -1;
+        const comparison =
+          typeof a.value === "number" && typeof b.value === "number"
+            ? a.value - b.value
+            : String(a.value).localeCompare(String(b.value), undefined, { numeric: true, sensitivity: "base" });
+        if (comparison === 0) return a.index - b.index;
+        return sortDirection === "asc" ? comparison : -comparison;
+      })
+      .map(({ row }) => row);
+  }, [columns, sortKey, sortDirection, toolbarFilteredRows]);
 
   // "All" (-1) shows every row; otherwise the chosen page size.
   const effectivePageSize = selectedPageSize === ALL_SENTINEL ? Math.max(1, sortedRows.length) : selectedPageSize;
@@ -155,6 +173,13 @@ export function DataTable<T>({
               return (
               <th
                 key={String(column.key)}
+                aria-sort={
+                  column.sortable
+                    ? sortKey === String(column.key)
+                      ? sortDirection === "asc" ? "ascending" : "descending"
+                      : "none"
+                    : undefined
+                }
                 className={`font-semibold uppercase text-gray-600 ${a.textClass} ${a.numeric ? "tabular-nums" : ""} ${column.className ?? ""}`}
                 style={{
                   paddingLeft: spacing.tableCellPaddingX,
@@ -216,6 +241,7 @@ export function DataTable<T>({
             pageRows.map((row) => (
               <tr
                 key={rowKey(row)}
+                data-testid={rowTestId?.(row)}
                 className={`border-t border-gray-100 ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}`}
                 style={{ height: spacing.tableRowHeight }}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}

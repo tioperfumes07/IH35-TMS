@@ -13,7 +13,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { DataTable, type DataTableColumn } from "../../components/shared/DataTable";
+import { DataTable, type DataTableColumn } from "../../components/DataTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -383,7 +383,9 @@ export function SettlementsPage() {
 const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
   {
     key: "driver",
-    header: "Driver",
+    label: "Driver",
+    sortable: true,
+    sortValue: (bill) => bill.driver_name,
     render: (bill) => (
       <EntityLink
         kind="driver"
@@ -394,7 +396,9 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
   },
   {
     key: "load_number",
-    header: "Load Number",
+    label: "Load Number",
+    sortable: true,
+    sortValue: (bill) => bill.load_number,
     render: (bill) => (
       <EntityLink
         kind="load"
@@ -405,7 +409,9 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
   },
   {
     key: "bill_number",
-    header: "Bill Number",
+    label: "Bill Number",
+    sortable: true,
+    sortValue: (bill) => bill.bill_number,
     render: (bill) => (
       // ACCT-F5444: driver_finance.driver_bills is NOT accounting.bills — kind="bill"
       // drills to /accounting/bills/:id and live-404s for a driver_finance.driver_bills
@@ -420,7 +426,9 @@ const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
   },
   {
     key: "amount",
-    header: "Amount",
+    label: "Amount",
+    sortable: true,
+    sortValue: (bill) => bill.gross_amount_cents,
     className: "text-right",
     render: (bill) => (
       <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
@@ -455,7 +463,7 @@ function OpenDriverBillsPanel({
           columns={openDriverBillColumns}
           rows={items}
           rowKey={(bill) => bill.id}
-          emptyMessage="No open driver bills — all driver pay is either settled or not yet booked."
+          hidePager
         />
       )}
     </DataPanel>
