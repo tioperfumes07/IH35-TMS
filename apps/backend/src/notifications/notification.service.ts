@@ -7,7 +7,9 @@ export type NotificationType =
   | "load_status"
   | "driver_alert"
   | "system"
-  | "message";
+  | "message"
+  | "insurance_monthly_report"
+  | "insurance_monthly_report_error";
 
 export type NotificationSeverity = "info" | "low" | "medium" | "high" | "critical";
 
