@@ -1,4 +1,9 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 06:22 CT**
+1. ACK'd ghost load L-0085 + DQ list gap. Owner void noted — keep TEST on books going forward.
+2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0212.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 06:17 CT**
 1. ACK'd JE 2027 dates + Faro/owner-as-vendor. QBO null ignore. TEST keep on books.
 2. Continue FINDING machine. Live **a3e3af0**. ACK LEAD-TICK-0211.

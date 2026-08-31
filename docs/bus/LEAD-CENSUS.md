@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 06:22 CT · LEAD-TICK-0212
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | ghost load / DQ list |
+| Cursor | LEAD | rates CLOSED |
+| CC-1 | IDLE DEFECT ~155m | JE / batch link |
+| CC-2 | IDLE → VERIFY | |
+| CC-3 | IDLE | DQ list / report 404 |
+| Codex | silent | |
+| Cascade | OOS | |
+Live **a3e3af0**. Idle named: CC-1/2/3/Codex.
+
 # LEAD-CENSUS · 2026-08-31 06:17 CT · LEAD-TICK-0211
 | Seat | Status | Note |
 |------|--------|------|

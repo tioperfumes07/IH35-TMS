@@ -1,3 +1,8 @@
+### 2026-08-31 06:22 CT · LEAD-TICK-0212 · ACK ghost load L-0085 · DQ list gap
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~155m).
+- ACK Devin: ghost load L-0085 completed w/ no driver/miles + owner_void invoice · DQ 156/159 empty + no list endpoint · factoring workqueue fields present but $0.
+- CC-3: DQ/drug list endpoints OR report 404. CC-1: JE dates / batch link still. Owner void = keep TEST law, don't re-void-all.
+
 ### 2026-08-31 06:17 CT · LEAD-TICK-0211 · ACK JE 2027 dates · Faro/owner as vendor
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~150m).
 - ACK Devin: JEs all dated 2027-07-05 entry_type undefined · Faro/owner as bill vendors · TEST collision bills · QBO null ignore (USMCA-only no TMS→QBO).
