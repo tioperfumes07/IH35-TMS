@@ -13,6 +13,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { DataPanel } from "../../components/layout/DataPanel";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { DataTable, type DataTableColumn } from "../../components/shared/DataTable";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -376,6 +377,57 @@ export function SettlementsPage() {
   );
 }
 
+// GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31: Open Driver Bills uses DataTable columns
+// (DRIVER · LOAD NUMBER · BILL NUMBER · AMOUNT) instead of the old column-jam flex
+// layout (Driver · Load · Bill in one cell).
+const openDriverBillColumns: DataTableColumn<OpenDriverBill>[] = [
+  {
+    key: "driver",
+    header: "Driver",
+    render: (bill) => (
+      <EntityLink
+        kind="driver"
+        id={bill.driver_id}
+        label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}
+      />
+    ),
+  },
+  {
+    key: "load_number",
+    header: "Load Number",
+    render: (bill) => (
+      <EntityLink
+        kind="load"
+        id={bill.load_id ?? ""}
+        label={entityLabel(bill.load_number, bill.load_id, "Load")}
+      />
+    ),
+  },
+  {
+    key: "bill_number",
+    header: "Bill Number",
+    render: (bill) => (
+      // ACCT-F5444: driver_finance.driver_bills is NOT accounting.bills — kind="bill"
+      // drills to /accounting/bills/:id and live-404s for a driver_finance.driver_bills
+      // row. "Open" bills here are not yet settled, so plain honest text.
+      <span
+        className="text-[10px] text-gray-400"
+        data-testid="settlements-open-driver-bill-number"
+      >
+        {visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")}
+      </span>
+    ),
+  },
+  {
+    key: "amount",
+    header: "Amount",
+    className: "text-right",
+    render: (bill) => (
+      <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
+    ),
+  },
+];
+
 function OpenDriverBillsPanel({
   loading,
   totalCount,
@@ -399,38 +451,12 @@ function OpenDriverBillsPanel({
       {items.length === 0 ? (
         <p className="text-xs text-gray-500">No open driver bills — all driver pay is either settled or not yet booked.</p>
       ) : (
-        <div className="space-y-1">
-          {items.map((bill) => (
-            <div key={bill.id} className="flex items-center justify-between text-sm">
-              <span className="flex flex-wrap items-center gap-1">
-                <EntityLink
-                  kind="driver"
-                  id={bill.driver_id}
-                  label={entityLabel(bill.driver_name, bill.driver_id, "Driver")}
-                />
-                <span className="text-gray-400">·</span>
-                <EntityLink
-                  kind="load"
-                  id={bill.load_id ?? ""}
-                  label={entityLabel(bill.load_number, bill.load_id, "Load")}
-                />
-                {/* ACCT-F5444: driver_finance.driver_bills is NOT accounting.bills — kind="bill"
-                    drills to /accounting/bills/:id and live-404s for a driver_finance.driver_bills
-                    row (real repro: B-20260810-0003 -> 31f155f3-...). "Open" bills here are, by
-                    definition, not yet settled (no settled_in_settlement_id on this shape), so
-                    there is no legitimate drill target yet — plain honest text, matching the
-                    same-class fix already shipped for LoadDetailDriverPayTab.tsx (ACCT-F5443). */}
-                <span
-                  className="text-[10px] text-gray-400"
-                  data-testid="settlements-open-driver-bill-number"
-                >
-                  ({visibleDocumentLabel(bill.bill_number, bill.id, "Driver bill")})
-                </span>
-              </span>
-              <span className="font-semibold">{formatUsdCents(bill.gross_amount_cents)}</span>
-            </div>
-          ))}
-        </div>
+        <DataTable
+          columns={openDriverBillColumns}
+          rows={items}
+          rowKey={(bill) => bill.id}
+          emptyMessage="No open driver bills — all driver pay is either settled or not yet booked."
+        />
       )}
     </DataPanel>
   );
