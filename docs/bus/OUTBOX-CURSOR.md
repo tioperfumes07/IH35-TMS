@@ -1,3 +1,8 @@
+### 2026-08-31 05:42 CT · LEAD-TICK-0204 · ACK unbilled $48k · AR/AP≠BS
+- Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~115m).
+- ACK Devin: Unbilled Revenue $48.5k all JE null source · AR/AP aging ≠ BS · factor workqueue $0 advance (new drafts Faro OK; old batches historical).
+- CC-1 MONEY: unbilled source linkage OR AR/AP aging reconcile OR dual TB. CC-3 equipment still open.
+
 ### 2026-08-31 05:37 CT · LEAD-TICK-0203 · ACK equipment≠units · vendors 609
 - Live **`a3e3af0`**. Idle: **CC-1/2/3/Codex** — no self-ACK since 03:46 (~110m).
 - ACK Devin: equipment 93 vs units 43 type disconnect · vendors 609 missing tax_id/terms in list · customers 1216 tips · banking review pile.
