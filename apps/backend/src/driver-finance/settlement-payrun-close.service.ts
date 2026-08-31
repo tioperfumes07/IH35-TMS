@@ -45,6 +45,7 @@ import {
   resolveDriverEscrowLiabilityAccount,
 } from "./escrow-resolver.service.js";
 import { resolveSettlementMinNet } from "./settlement-deduction-cap.service.js";
+import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 
 import {
   SETTLEMENT_GL_POSTING_FLAG_KEY,
@@ -106,6 +107,8 @@ type SettlementRow = {
   locked_at: string | null;
   period_end: string;
   gross_pay: string;
+  settlement_model: string | null;
+  trip_closed_at: string | null;
 };
 
 export type PayRunNetBreakdown = {
@@ -141,6 +144,7 @@ export type SettlementPayRunResult = {
   recovered_advance_ids: string[];
   je_preview: PayRunJeLegPreview[];
   disbursement: { recorded: boolean; payment_method_id: string | null; payment_method_name: string | null };
+  trip_close_stamp?: import("./settlements-load-bookended.service.js").StampTripClosedResult | null;
 };
 
 function scoped<T>(actor: Actor, operatingCompanyId: string, fn: (client: DbClient) => Promise<T>): Promise<T> {
@@ -163,7 +167,16 @@ async function resolvePayRunRoleAccount(client: DbClient, operatingCompanyId: st
 async function loadSettlement(client: DbClient, operatingCompanyId: string, settlementId: string): Promise<SettlementRow> {
   const res = await client.query<SettlementRow>(
     `
-      SELECT id::text, driver_id::text, display_id, status, locked_at::text, period_end::text, gross_pay::text
+      SELECT
+        id::text,
+        driver_id::text,
+        display_id,
+        status,
+        locked_at::text,
+        period_end::text,
+        gross_pay::text,
+        settlement_model,
+        trip_closed_at::text
       FROM driver_finance.driver_settlements
       WHERE operating_company_id = $1::uuid AND id = $2::uuid
       LIMIT 1
@@ -701,6 +714,14 @@ export async function closeSettlementPayRun(
           WHERE operating_company_id = $1::uuid AND settlement_id = $2::uuid LIMIT 1`,
         [opco, settlementId]
       );
+      let trip_close_stamp: Awaited<ReturnType<typeof stampTripClosedForBookendedSettlement>> | null = null;
+      if (settlement.settlement_model === "load_bookended" && !settlement.trip_closed_at) {
+        trip_close_stamp = await stampTripClosedForBookendedSettlement(client, {
+          settlementId,
+          operatingCompanyId: opco,
+          actorUserId: actor.userId,
+        });
+      }
       return {
         result: "posted" as const,
         posting_enabled: true,
@@ -711,6 +732,7 @@ export async function closeSettlementPayRun(
         recovered_advance_ids: [],
         je_preview: legs,
         disbursement: { recorded: false, payment_method_id: paymentMethod?.id ?? null, payment_method_name: paymentMethod?.name ?? null },
+        trip_close_stamp,
       };
     }
     const payrunRunId = claim.rows[0]!.id;
@@ -826,6 +848,15 @@ export async function closeSettlementPayRun(
       "SETTLEMENT-PAYRUN-CLOSE"
     );
 
+    let trip_close_stamp: Awaited<ReturnType<typeof stampTripClosedForBookendedSettlement>> | null = null;
+    if (settlement.settlement_model === "load_bookended" && !settlement.trip_closed_at) {
+      trip_close_stamp = await stampTripClosedForBookendedSettlement(client, {
+        settlementId,
+        operatingCompanyId: opco,
+        actorUserId: actor.userId,
+      });
+    }
+
     return {
       result: "posted" as const,
       posting_enabled: true,
@@ -836,6 +867,7 @@ export async function closeSettlementPayRun(
       recovered_advance_ids: recoveredIds,
       je_preview: legs,
       disbursement: { recorded: disbursementRecorded, payment_method_id: paymentMethod?.id ?? null, payment_method_name: paymentMethod?.name ?? null },
+      trip_close_stamp,
       __freshJeInput: jeInput,
       __freshJeId: je.id,
     };

@@ -747,3 +747,17 @@ export function closeSettlementPayRun(
     { method: "POST", body: payload }
   );
 }
+
+export type CloseSettlementTripResult = {
+  stamped: boolean;
+  trip_closed_at?: string;
+  anchor_load_id?: string;
+  reason?: string;
+};
+
+export function closeSettlementTrip(settlementId: string, operatingCompanyId: string) {
+  return apiRequest<CloseSettlementTripResult>(
+    `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}/close-trip`,
+    { method: "POST", body: { operating_company_id: operatingCompanyId } }
+  );
+}

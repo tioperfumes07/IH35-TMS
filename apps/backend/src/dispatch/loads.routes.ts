@@ -1396,6 +1396,7 @@ export async function registerDispatchLoadRoutes(app: FastifyInstance) {
           loadId: params.data.id,
           operatingCompanyId: operating_company_id,
           requestingUserUuid: authUser.uuid,
+          requestingUserRole: authUser.role,
           fields: fields as UpdateDispatchLoadFields,
           charges,
           stops,
