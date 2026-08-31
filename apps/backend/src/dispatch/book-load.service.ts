@@ -823,10 +823,19 @@ export async function ensureDriverBillArtifactsForLoad(
   client: { query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }> },
   input: { loadId: string; operatingCompanyId: string; actorUserId: string }
 ): Promise<DriverBillMintOutcome> {
+  // SETL-45-DRIVER-BILL-MINT-DROPS-PER-LOAD-RATE-OVERRIDE — this SELECT used to omit
+  // driver_pay_rate_per_mile. resolveDriverBasePayCents() (below, via createDriverBillArtifacts)
+  // reads load.driver_pay_rate_per_mile FIRST, before falling back to the driver-rate-card table
+  // (driver_finance.driver_pay_rates) — but the load object this function builds never carried that
+  // column, so a per-load rate entered and honored at Book Load time (the wizard's own "Driver bill
+  // preview" priced it correctly) went invisible again the moment delivery/close tried to mint the
+  // actual driver_bills row from it. Live-proven 2026-08-31: a TEST load priced at $117.60 via a
+  // $0.48/mi per-load override in the wizard still produced zero driver_bills / zero
+  // settlement_lines end to end.
   const loadRes = await client.query<Record<string, unknown>>(
     `SELECT id, operating_company_id, load_number, customer_id, status,
             assigned_primary_driver_id, assigned_secondary_driver_id, team_id,
-            requires_tarps, miles_shortest, miles_practical
+            requires_tarps, miles_shortest, miles_practical, driver_pay_rate_per_mile
        FROM mdata.loads
       WHERE id = $1::uuid
         AND operating_company_id = $2::uuid
