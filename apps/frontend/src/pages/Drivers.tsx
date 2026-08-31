@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getEscrowDriverBalances } from "../api/banking";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { listAllDispatchLoads } from "../api/dispatch";
@@ -36,6 +36,7 @@ import { ActionButton } from "../components/shared/ActionButton";
 import { EntityLink } from "../components/shared/EntityLink";
 import { entityLabel } from "../lib/entity-label";
 import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { StatusBadge } from "../components/StatusBadge";
 import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -620,65 +621,15 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         <KpiCard label="Escrow" number={escrowTotal == null ? "—" : formatMoney(escrowTotal)} accent={colors.fleet.strong} to="/banking/driver-escrow" />
       </KpiStrip>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="overflow-x-auto border-b border-gray-200 bg-white px-2 py-1" data-testid="drivers-unified-subnav">
-          <div className="flex min-w-max gap-4">
-            {DRIVERS_SUBNAV.slice(0, 8).map((tab) => {
-              const target = DRIVERS_SUBTAB_PATH[tab.id];
-              const active = subnavTab === tab.id;
-              return (
-                <NavLink
-                  key={tab.id}
-                  to={target}
-                  className={`pb-0.5 text-xs font-semibold ${
-                    active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.label}
-                </NavLink>
-              );
-            })}
-            <NavLink
-              to={DRIVERS_TEAM_SPLITS_SUBTAB_PATH}
-              data-testid="drivers-team-splits-tab"
-              className={`pb-0.5 text-xs font-semibold ${
-                subnavTab === DRIVERS_TEAM_SPLITS_SUBTAB_ID
-                  ? "border-b-2 border-[#1f2a44] text-[#1f2a44]"
-                  : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Team Splits
-            </NavLink>
-            <NavLink
-              to={DRIVERS_DISPUTES_SUBTAB_PATH}
-              data-testid="drivers-disputes-tab"
-              className={`pb-0.5 text-xs font-semibold ${
-                subnavTab === DRIVERS_DISPUTES_SUBTAB_ID
-                  ? "border-b-2 border-[#1f2a44] text-[#1f2a44]"
-                  : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Disputes{openCount > 0 ? ` (${openCount})` : ""}
-            </NavLink>
-            {DRIVERS_SUBNAV.slice(8).map((tab) => {
-              const target = DRIVERS_SUBTAB_PATH[tab.id];
-              const active = subnavTab === tab.id;
-              return (
-                <NavLink
-                  key={tab.id}
-                  to={target}
-                  className={`pb-0.5 text-xs font-semibold ${
-                    active ? "border-b-2 border-[#1f2a44] text-[#1f2a44]" : "border-b-2 border-transparent text-slate-500 hover:text-slate-700"
-                  }`}
-                >
-                  {tab.label}
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
-        <DriversCashAdvanceRequestsLink />
-      </div>
+      <NavyPageSubNav
+        items={[
+          ...DRIVERS_SUBNAV.slice(0, 8).map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] })),
+          { label: "Team Splits", to: DRIVERS_TEAM_SPLITS_SUBTAB_PATH },
+          { label: `Disputes${openCount > 0 ? ` (${openCount})` : ""}`, to: DRIVERS_DISPUTES_SUBTAB_PATH },
+          ...DRIVERS_SUBNAV.slice(8).map((tab) => ({ label: tab.label, to: DRIVERS_SUBTAB_PATH[tab.id] })),
+        ]}
+      />
+      <DriversCashAdvanceRequestsLink />
 
       <SecondaryNavTabs
         className="-mx-2"
