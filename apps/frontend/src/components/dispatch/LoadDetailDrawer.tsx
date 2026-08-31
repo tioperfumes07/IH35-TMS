@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useUpdateLoadStatus } from "../../api/loads";
+import { type LoadDetail, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
 import { cancelDispatchLoad, distributeLoadInstructions, getDispatchAssignmentHistory, getRecentAutoStatusSwitches } from "../../api/dispatch";
 import { AutoStatusSwitchedBadge } from "./AutoStatusSwitchedBadge";
@@ -180,6 +180,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
   };
   const auditQuery = useLoadAudit(loadId, operatingCompanyId);
   const statusMutation = useUpdateLoadStatus(load?.operating_company_id ?? operatingCompanyId ?? null);
+  const remintDriverBillMutation = useRemintDriverBill(load?.operating_company_id ?? operatingCompanyId ?? null);
   const updateMutation = useMutation({
     mutationFn: ({ id, operatingCompanyId, body }: { id: string; operatingCompanyId: string; body: Record<string, unknown> }) =>
       updateLoad(id, operatingCompanyId, body),
@@ -255,6 +256,13 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
     // /accounting/invoices/from-load route itself has no status gate at all (only load_not_found /
     // load_has_no_rate), so this FE check was strictly narrower than the real business rule.
     return ["delivered", "delivered_pending_docs", "completed_docs_received", "invoiced", "paid", "closed"].includes(load.status);
+  }, [load]);
+  // ACCT-F10164 — matches the backend's own loadStatusRequiresDeliveryDepartureStamp gate exactly
+  // (delivery-evidence-status.ts), the same predicate the status-PATCH route uses to decide whether
+  // ensureDriverBillArtifactsForLoad should even run.
+  const canRemintDriverBill = useMemo(() => {
+    if (!load) return false;
+    return ["delivered_pending_docs", "completed_docs_received"].includes(load.status);
   }, [load]);
   const packageState = useMemo(() => parseFactoringPackageNotes(load?.notes), [load?.notes]);
   const loadDocsQuery = useQuery({
@@ -647,6 +655,39 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, operatingCompanyId, 
                           </Button>
                         ))
                       : null}
+                    {canEdit && canRemintDriverBill ? (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        loading={remintDriverBillMutation.isPending}
+                        data-testid="load-remint-driver-bill-button"
+                        onClick={async () => {
+                          // LAW-EDITABLE-BY-PERMISSION-ALWAYS-TRACEABLE-2026-09-01: every edit is
+                          // traceable to why — this mints a real driver payable, so a reason is
+                          // required, not optional.
+                          const reason = window.prompt("Reason for reminting this driver bill (required, logged):");
+                          if (!reason || !reason.trim()) return;
+                          try {
+                            const res = await remintDriverBillMutation.mutateAsync({ id: load.id, reason: reason.trim() });
+                            const outcome = "outcome" in res ? res.outcome.outcome : "error";
+                            const messages: Record<string, string> = {
+                              minted: "Driver bill minted",
+                              already_exists: "Driver bill already exists — nothing to remint",
+                              skipped_no_pay_rate: "Still no pay rate/miles for this driver — recorded a durable skip",
+                              not_applicable: "No driver assigned to this load",
+                            };
+                            pushToast(messages[outcome] ?? `Remint outcome: ${outcome}`, outcome === "minted" ? "success" : "info");
+                            refetchLoad();
+                            void queryClient.invalidateQueries({ queryKey: ["loads"] });
+                          } catch (err) {
+                            pushToast(userFacingApiError(err, "Could not remint driver bill"), "error");
+                          }
+                        }}
+                      >
+                        Remint driver bill
+                      </Button>
+                    ) : null}
                     {canEdit ? (
                       <>
                         <Button type="button" variant="secondary" size="sm" onClick={() => setReassignOpen(true)}>
