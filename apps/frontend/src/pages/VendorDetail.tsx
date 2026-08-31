@@ -20,7 +20,7 @@ import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombston
 import { ListErrorBanner } from "../components/shared/ListErrorBanner";
 import { DocumentsTab } from "../components/documents/DocumentsTab";
 import { listAllFiles } from "../api/docs";
-import { SecondaryNavTabs } from "../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../components/layout/NavyPageSubNav";
 import { TasksTab } from "../components/tasks/TasksTab";
 import { EntityAuditHistoryTab } from "../components/audit/EntityAuditHistoryTab";
 import { Button } from "../components/Button";
@@ -653,10 +653,11 @@ export function VendorDetailPage() {
 
       {/* CUST-01 C9: raw buttons replaced with the shared SecondaryNavTabs -- matches
           CustomerDetail's tab strip exactly (same component, same ?tab=<slug> contract above). */}
-      <SecondaryNavTabs
-        tabs={tabs.filter((tab) => tab !== "Documents" || canViewDocuments).map((tab) => ({ id: tab, label: tab }))}
+      <NavyPageSubNav
+        items={tabs.filter((tab) => tab !== "Documents" || canViewDocuments).map((tab) => ({ label: tab, to: `#${tab}` }))}
         activeId={activeTab}
-        onChange={(nextTab) => setActiveTab(nextTab as VendorTab)}
+        onTabChange={(nextTab) => setActiveTab(nextTab as VendorTab)}
+        itemIds={tabs.filter((tab) => tab !== "Documents" || canViewDocuments).map((tab) => tab)}
       />
 
       {activeTab === "Profile" ? (
