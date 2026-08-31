@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import dotenv from "dotenv";
@@ -30,7 +30,29 @@ if (resolvedManifest.manifest) {
 }
 const stepsDir = path.join(__dirname, "verify-steps");
 const stepFiles = readdirSync(stepsDir).filter((f) => f.endsWith(".mjs") && !f.startsWith("_")).sort();
-const steps = (await Promise.all(stepFiles.map(async (file) => (await import(pathToFileURL(path.join(stepsDir, file)).href)).default))).filter(Boolean);
+const stepDefinitions = await Promise.all(
+  stepFiles.map(async (file) => {
+    const filePath = path.join(stepsDir, file);
+    const source = readFileSync(filePath, "utf8");
+
+    if (/^\s*export\s+default\b/m.test(source)) {
+      const step = (await import(pathToFileURL(filePath).href)).default;
+      if (!step) {
+        throw new Error(`verify:pre-commit structured step has no default export: ${file}`);
+      }
+      return step;
+    }
+
+    // Legacy verify-step files execute at module scope. Importing them into this process is unsafe:
+    // process.exit(0) in any one file terminates the aggregate runner before the structured steps run.
+    // Keep their historical CLI contract, but isolate termination and failures in a child process.
+    return {
+      name: path.basename(file, ".mjs"),
+      run: (ctx) => ctx.run("node", [path.relative(ROOT, filePath)]),
+    };
+  })
+);
+const steps = stepDefinitions.filter(Boolean);
 const resolvedSteps = steps.map((step) => {
   if (step.name !== "backend-vitest") {
     return step;
