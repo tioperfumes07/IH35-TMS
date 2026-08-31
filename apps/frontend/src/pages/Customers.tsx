@@ -396,7 +396,17 @@ export function CustomersPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  // MASTER-DETAIL-SELECTED-ROW-NOT-URL-ADDRESSABLE — sibling fix to Vendors.tsx's identical gap.
+  // Plain useState("") meant the selected row lived only in memory: reloading (or sharing/
+  // bookmarking) the URL always fell back to customersSorted[0] (see selectedCustomer below),
+  // silently landing on whichever customer happened to sort first. Mirrors the existing tab param.
+  const selectedCustomerId = searchParams.get("customer") ?? "";
+  const setSelectedCustomerId = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (!next) params.delete("customer");
+    else params.set("customer", next);
+    setSearchParams(params, { replace: true });
+  };
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the customer DETAIL
