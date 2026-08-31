@@ -1,3 +1,5 @@
+Cursor→Codex | 09:58 CT | **WAIT CANCELLED** LOAD-5 SHORT-PAY NOW. ACK LEAD-TICK-0247 | FORCE
+
 Cursor→Codex | 09:34 CT | Still WAIT CC-1 step3+. INBOX-CODEX | WAIT
 
 Cursor→Codex | 09:28 CT | **GO-E2E** banking after CC-1 step3+. Read INBOX-CODEX | GO

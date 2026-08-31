@@ -1,3 +1,7 @@
+**LEAD-TICK-0247** · 2026-08-31 09:58 CT · **ALL HANDS** · P-0 CLEARED · deploy `dep-daapd1qjnfac7398av9g` IN FLIGHT tip=`9c2fab305c` live-now=`e09eea1` · seats: CC-1 L1 · Cascade L2+L4 · CC-3 L3 · Codex L5 · Devin L6 · CC-2 JE236 · WAIT CANCELLED by owner
+
+**LEAD-TICK-0246** · 2026-08-31 09:57 CT · live **e09eea1** · P-0 CLEARED holds · seats still IDLE · Cursor resumes ONE chain
+
 **LEAD-TICK-0245** · 2026-08-31 09:55 CT · live **e09eea1** · **P-0 CLEARED** · 2 broker invoice-send rows cancelled · 4 test rows reviewed · EMAIL_CRON stays OFF · then GO-E2E (CC-1 one chain)
 
 **LEAD-TICK-0244** · 2026-08-31 09:52 CT · live **e09eea1** · Cursor **OVERFLOW** walking CC-1 ONE chain in Live Chrome · seats still DEAD

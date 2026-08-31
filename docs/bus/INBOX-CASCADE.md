@@ -1,4 +1,8 @@
 # INBOX — Cascade
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-2 OO + LOAD-4 TEAM · WAIT CANCELLED · LEAD-TICK-0247**
+ACK now. Pack 00+05+09. (1) Owner-operator flat per-load TEST. (2) Team split two drivers. Sample ON both. AT on load+invoice+settlement. Parallel — do not wait for CC-1.
+
+# INBOX — Cascade
 **TOP — 2026-08-31 09:28 CT · WAIT FOR CC-1 PASS · THEN 3 LOADS + AT PROOF**
 1. Read 00 + 05-CASCADE.txt + 09 map. No voids. No touch 33.
 2. After CC-1 PASS: 3 TEST loads; set TEST AT at book; prove AT on load+invoice+settlement.

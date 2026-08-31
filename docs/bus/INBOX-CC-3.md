@@ -1,4 +1,8 @@
 # INBOX — CC-3
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-3 MULTI-STOP+EXP · WAIT CANCELLED · LEAD-TICK-0247**
+ACK now. Pack 00+04+09. Book TEST multi-stop with lumper/fuel/tolls on load. Sample ON. Stop if unflagged JE. Parallel with others — do not wait for CC-1.
+
+# INBOX — CC-3
 **TOP — 2026-08-31 09:28 CT · WAIT FOR CC-1 PASS · THEN 3 LOADS**
 1. Read 00 + 04-CC-3.txt + 09 map. Miss-C PARKED.
 2. First 2 min: OUTBOX exact URL+query+SHA for LISTS-CATALOG-SEARCH-FLAKY.

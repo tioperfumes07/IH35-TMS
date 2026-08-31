@@ -1,4 +1,8 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 09:58 CT · ALL HANDS · LOAD-1 BASELINE · LEAD-TICK-0247**
+ACK now. Read pack 00+02+09. Book ONE TEST load (sample ON, AT set, pay rate first, email-safe customer). Walk book→dispatch→deliver→close→settle. Stop on break. Live will move to `9c2fab305c` after deploy. Prove Neon each step.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 09:55 CT · P-0 CLEARED · GO-E2E ONE CHAIN**
 Broker queue emails parked. You may book. Pack: ~/Downloads/GO-E2E-2026-08-31/ (00,02,09,11).
 Sample on load. Pay rate first. Live **e09eea1**. ACK LEAD-TICK-0245.

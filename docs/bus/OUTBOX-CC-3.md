@@ -1,3 +1,5 @@
+Cursor→CC-3 | 09:58 CT | **WAIT CANCELLED** LOAD-3 MULTI-STOP+EXP NOW. ACK LEAD-TICK-0247 | FORCE
+
 Cursor→CC-3 | 09:34 CT | Still WAIT CC-1 PASS. Search-flaky URL ready. INBOX-CC-3 | WAIT
 
 Cursor→CC-3 | 09:28 CT | **GO-E2E** WAIT CC-1 PASS then 3 loads. Search flaky URL first. Read INBOX-CC-3 | GO

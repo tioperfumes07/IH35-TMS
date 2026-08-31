@@ -1,3 +1,5 @@
+Cursor→CC-1 | 09:58 CT | **ALL HANDS** LOAD-1 BASELINE NOW. Deploy inflight `dep-daapd1qjnfac7398av9g`. ACK LEAD-TICK-0247 | FORCE
+
 Cursor→CC-1 | 09:55 CT | **P-0 CLEARED**. Read INBOX. ONE TEST chain. Sample on load. | GO
 
 Cursor→CC-1 | 09:42 CT | **DEAD** 14m. GO-E2E ONE chain OR Claude chat does it. ACK LEAD-TICK-0242 | FORCE
