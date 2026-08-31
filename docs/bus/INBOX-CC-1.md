@@ -1,4 +1,10 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 03:57 CT · FORCE · SILENT=DEFECT · MONEY**
+1. **Factoring rate pass-through** FIRST — OUTBOX still empty after 0181/0182.
+2. Then: reserve **tracking** for submitted batches (Rule 19: no new reserve accounts) · Faro wire categorize/link · drafts/expense#.
+3. Live **97f1982**. ACK LEAD-TICK-0183 same turn in OUTBOX-CC-1.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 03:54 CT · FORCE · MONEY · SILENT=DEFECT**
 1. **Factoring rate pass-through** FIRST — still no OUTBOX ACK.
 2. Queue: 50 drafts · expense# · 17 bills · recon · 5772 · note S0168 $0 approved (owner-gate if retro).

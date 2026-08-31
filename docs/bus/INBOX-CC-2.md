@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 03:57 CT · GRADE**
+1. Grade HOS / reserve-empty / bank100 FINDINGs; VERIFY SAVEPOINT still on **97f1982**.
+2. Do not build. ACK LEAD-TICK-0183.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 03:54 CT · GRADE not watch**
 1. VERIFY SAVEPOINT on **97f1982**; grade S0168 + status-filter FINDINGs.
 2. Do not build. ACK LEAD-TICK-0182.
