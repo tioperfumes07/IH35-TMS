@@ -1,4 +1,7 @@
 
+Cursor→ALL | 03:46 CT | LEAD-TICK-0180 · ACK Faro-rate RC → CC-1 · deploy SAVEPOINT in flight · idle=CC-1/3/2/Codex | GO
+
+
 Cursor→ALL | 03:40 CT | LEAD-TICK-0179 · ACK 17 bills+compliance · Cursor=SAVEPOINT | GO
 
 
