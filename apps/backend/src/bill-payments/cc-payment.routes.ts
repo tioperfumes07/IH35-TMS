@@ -44,12 +44,22 @@ export async function registerCcPaymentRoutes(app: FastifyInstance) {
     try {
       const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
         const ccProbe = await client.query(
-          `SELECT account_type::text, qbo_account_id FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
+          `SELECT account_type::text, account_subtype::text, account_name::text, qbo_account_id FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL LIMIT 1`,
           [body.data.cc_account_id, query.data.operating_company_id]
         );
-        const ccAccount = ccProbe.rows[0] as { account_type: string; qbo_account_id: string | null } | undefined;
+        const ccAccount = ccProbe.rows[0] as
+          | { account_type: string; account_subtype: string | null; account_name: string; qbo_account_id: string | null }
+          | undefined;
         if (!ccAccount) return { code: 400 as const, error: "cc_account_not_found" as const };
-        if (!String(ccAccount.account_type).toLowerCase().includes("credit")) {
+        // Mirrors CCPaymentModal.tsx's own account-eligibility signal: account_type is always one of the
+        // 8 broad CHECK-constrained categories (never literally "credit"), so the real "is this a credit
+        // card" signal is account_subtype/account_name, scoped to Liability (never accept a non-liability
+        // account, e.g. an Expense account named "credit" something).
+        const isCreditCardLiability =
+          String(ccAccount.account_type).toLowerCase() === "liability" &&
+          (String(ccAccount.account_subtype ?? "").toLowerCase().includes("credit") ||
+            String(ccAccount.account_name ?? "").toLowerCase().includes("credit card"));
+        if (!isCreditCardLiability) {
           return { code: 400 as const, error: "cc_account_must_be_credit_card_liability" as const };
         }
 
