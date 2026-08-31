@@ -281,7 +281,7 @@ export function LegalMatterDetailPage() {
           </div>
         }
       />
-      <LegalModuleTabs activeTabId="matters" />
+      <LegalModuleTabs />
       {!companyId || !id ? (
         <p className="text-sm text-gray-600">Missing company or matter.</p>
       ) : detailQuery.isLoading ? (

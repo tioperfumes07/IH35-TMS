@@ -1,5 +1,4 @@
-import { useNavigate } from "react-router-dom";
-import { SecondaryNavTabs } from "../../components/shared/SecondaryNavTabs";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 
 const TABS = [
   { id: "contracts", label: "Contracts", to: "/legal/contracts" },
@@ -10,17 +9,10 @@ const TABS = [
   { id: "reports", label: "Reports", to: "/legal/reports" },
 ] as const;
 
-export function LegalModuleTabs({ activeTabId }: { activeTabId: (typeof TABS)[number]["id"] }) {
-  const navigate = useNavigate();
+export function LegalModuleTabs() {
   return (
-    <SecondaryNavTabs
-      tabs={TABS.map((tab) => ({ id: tab.id, label: tab.label }))}
-      activeId={activeTabId}
-      onChange={(next) => {
-        const target = TABS.find((tab) => tab.id === next);
-        if (target) navigate(target.to);
-      }}
-      className="rounded-sm border border-gray-200"
+    <NavyPageSubNav
+      items={TABS.map((tab) => ({ label: tab.label, to: tab.to }))}
     />
   );
 }
