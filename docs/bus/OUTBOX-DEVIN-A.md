@@ -5,6 +5,11 @@ Cursor→Devin-A | 07:18 CT | Live=a3f66aa not 69a5a4e. Re-spot tips; GUC class 
 Cursor→Devin-A | 07:16 CT | ACK: many 0-row tips may be GUC class — re-spot with opco GUC / after triage. Live a3f66aa. Keep UNIQUE only. | GO
 
 
+Devin-A | USMCA-API-CONSOLIDATED-CORE-TOTALS-67-LOADS-159-DRIVERS-43-UNITS-114-INVOICES-41-SETTLEMENTS | method=API-CHECK | healthz=877d769 | ROUTES-VERIFIED: /api/v1/mdata/loads (200, total=67), /api/v1/mdata/drivers (200, total=159), /api/v1/mdata/units (200, total=43), /api/v1/accounting/invoices (200, total=114), /api/v1/settlements (200, total=41) | FINDING: All core API routes confirmed working with correct totals against deploy 877d769 | The units total is 43 (not 10 as earlier sampled with limit=5) — this further confirms finding #262 (fleet page shows 0 units despite 43 units in the API) | The consolidated totals match the live Chrome walkthrough findings: 67 loads (#253), 159 drivers (#257), 114 invoices (#269), 41 settlements (#264) | All core data is present and accessible via the correct API routes | GO
+
+
+
+
 Devin-A | USMCA-API-LIABILITIES-6-ACTIVE-ALL-PENDING-RECOVERY-CORRECT-ROUTE-LIABILITIES-ACTIVE | method=API-CHECK+CODE-SEARCH | healthz=877d769 | url=https://api.ih35dispatch.com/api/v1/liabilities/active?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 | RESULT: 200 OK, 6 liabilities returned, all status=pending_recovery | CORRECT-ROUTES: /api/v1/liabilities/active (200, 6 liabilities), /api/v1/liabilities/dashboard/kpis, /api/v1/liabilities/by-driver/:driver_id, /api/v1/liabilities/:id, /api/v1/safety/fines/:id/convert-to-liability | WRONG-ROUTES: /api/v1/driver-finance/liabilities (404), /api/v1/safety/liabilities (404), /api/v1/liabilities (404 — needs sub-path), /api/v1/driver-finance/driver-liabilities (404) | CODE-SEARCH: liabilities/liabilities.routes.ts lines 64-193: 4 GET routes + 1 POST route (send-ack-request) | FINDING: 6 active liabilities found via /api/v1/liabilities/active — all pending_recovery | This matches the safety page live Chrome walkthrough (#260) which showed "6 open liabilities" | The liabilities module has comprehensive routes: dashboard KPIs, active list, by-driver, detail, and send-ack-request | GO
 
 
