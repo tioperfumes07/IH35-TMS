@@ -106,7 +106,18 @@ export function VendorsPage() {
     else params.set("tab", next);
     setSearchParams(params, { replace: true });
   };
-  const [selectedVendorId, setSelectedVendorId] = useState("");
+  // MASTER-DETAIL-SELECTED-ROW-NOT-URL-ADDRESSABLE — this used to be plain useState(""), so the
+  // selected row lived only in memory: reloading (or sharing/bookmarking) the URL always fell back
+  // to vendorsSorted[0] (see selectedVendor below), silently landing on whatever vendor happened to
+  // sort first instead of the one actually being viewed. Mirrors the existing tab/listTab/category
+  // param pattern already used on this page.
+  const selectedVendorId = searchParams.get("vendor") ?? "";
+  const setSelectedVendorId = (next: string) => {
+    const params = new URLSearchParams(searchParams);
+    if (!next) params.delete("vendor");
+    else params.set("vendor", next);
+    setSearchParams(params, { replace: true });
+  };
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   // §7 list segments are URL-addressable via `listTab` — NOT `tab`, which belongs to the vendor DETAIL tabs
