@@ -174,7 +174,17 @@ export function EldAuditTrailViewer() {
       </section>
 
       <section className="p-4 print:border-0">
-        {historyQuery.isLoading ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
+        {/* ELD-AUDIT-TRAIL-FALSE-EMPTY-ON-503 — this used to gate the three branches on the derived
+            booleans isLoading (= isPending && isFetching) and isError. TanStack Query v5 can leave a
+            query in status "pending" while isFetching is momentarily false (a retry backoff window
+            that here never completes a second attempt), so isLoading and isError were BOTH false —
+            and "!isLoading && !isError" was wrongly treated as a successful empty result, silently
+            rendering "No edits found" for what was actually a 503 (source unavailable) that had never
+            resolved. Confirmed live and reproducible: the backend consistently 503s for this tenant,
+            and the false-empty text showed every time. Driving the branches off the primitive `status`
+            (isPending/isError/isSuccess) instead has no such gap: those three are mutually exclusive
+            and exhaustive, with no "not loading, not errored, but also not actually successful" hole. */}
+        {driverUuid && historyQuery.isPending ? <p className="text-sm text-gray-500">Loading edit history…</p> : null}
         {driverUuid && historyQuery.isError ? (
           <div data-testid="eld-audit-trail-query-error">
             <ListErrorState
@@ -185,8 +195,8 @@ export function EldAuditTrailViewer() {
             />
           </div>
         ) : null}
-        {driverUuid && !historyQuery.isLoading && !historyQuery.isError ? (
-          historyQuery.data?.edits?.length ? (
+        {driverUuid && historyQuery.isSuccess ? (
+          historyQuery.data.edits?.length ? (
             <EldEditHistoryTimeline
               driverUuid={driverUuid}
               operatingCompanyId={companyId}
