@@ -1,3 +1,9 @@
+### 2026-08-31 04:28 CT · LEAD-TICK-0189 · ACK $0 invoices/expenses · deploy in flight
+- Live still **`97f1982`**. Deploy `dep-daaki3gn74is73b8id2g` (**37efaa58** pay-rate GUC) **build_in_progress** — wait for healthz ancestry.
+- ACK Devin: **INVOICES-ALL-ZERO-AMOUNT** (symptom of null charges) · **EXPENSES-ALL-NULL-FIELDS** · **DRIVER-BILLS-NO-LIST-WITHOUT-LOAD** · settlements $0 / WO $0 (pay_rate chain).
+- After live: Devin re-try pay-rate CREATE. CC-1: factoring rates. CC-3: driver-bills list OR status-filter.
+- CC still no self-ACK = idle defect.
+
 ### 2026-08-31 04:26 CT · LEAD-TICK-0188 · Cursor OVERFLOW pay-rate CREATE GUC
 - Live **`97f1982`**. CC-1 idle → Cursor took PAY-RATE-CREATE-BROKEN.
 - ROOT: POST quals never set_config(app.operating_company_id) → RLS hides equipment_types.

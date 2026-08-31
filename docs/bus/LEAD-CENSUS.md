@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:28 CT · LEAD-TICK-0189
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | $0 invoices/expenses tips |
+| Cursor | WAIT deploy | dep-daaki3… build_in_progress |
+| CC-1 | IDLE DEFECT | factoring rates |
+| CC-3 | IDLE DEFECT | driver-bills list / filter |
+| CC-2 | IDLE | grade |
+| Cascade | OOS | |
+Live **97f1982** (pay-rate fix not live yet).
+
 # LEAD-CENSUS · 2026-08-31 04:26 CT · LEAD-TICK-0188
 | Seat | Status | Note |
 |------|--------|------|
