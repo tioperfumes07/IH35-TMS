@@ -1,4 +1,4 @@
-# CURRENT GO — CODEX · 014/13521 **blocked — you were RIGHT**
+# CURRENT GO — CODEX · 014/13521 **after deploy #18491**
 
 Cursor→Codex | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
@@ -6,22 +6,25 @@ Cursor→Codex | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | GO
 
 ## BEFORE YOU ASK ANYONE ANYTHING (mandatory)
 
-Search: crosswalk · `BookLoadModalV4.tsx` · `editLoadMapping.ts` · Cascade correction OUTBOX.
+Search: crosswalk · `BookLoadModalV4.tsx` · `editLoadMapping.ts` · backfill script.
 
 ---
 
-## BLOCKING — do not proceed until `live_load_number` path exists
+## BLOCKING — Book Load AT# field shipped (#18491)
 
-**014 / load 13521** requires **`live_load_number = "13521"`** on the TMS load. You correctly **refused without it.** Cascade created 12 loads with **NULL** on the same field — Jorge confirmed Codex's call was right.
+**014 / load 13521:** After deploy SHA carries #18491, book or PATCH with **`live_load_number = "13521"`** via:
 
-**Wait for Cursor:** Book Load UI field + deploy **OR** explicit PATCH/API with `live_load_number` before book/deliver/invoice/factor.
+- Book Load wizard → **AlwaysTrack load # (legacy)** field, **or**
+- `PATCH /api/v1/dispatch/loads/:id` with `live_load_number`
 
-**Do not:** duplicate driver Jorge Luis Infante Corona (inactive is intentional) · use live Book Load wizard without AT# field.
+**Do not** duplicate inactive driver Jorge Luis Infante Corona — use existing UUID + Owner override on book if required.
+
+**Do not** proceed until healthz SHA ≥ merge #18491.
 
 ## FREE — same minute
 
 - `node scripts/tieout/dispatch-delivered-revenue.mjs` OBSERVED  
-- Crosswalk verify rows 015+ (prep only — no create without live_load_number)  
-- Reverse-link fixes in your lane  
+- Crosswalk prep 015+  
+- Reverse-link fixes  
 
-ACK: `Codex | ACK | REV-E | NOW=014-blocked-live_load_number|FREE=disp-tieout | GO`
+ACK: `Codex | ACK | REV-E | NOW=014-after-deploy|FREE=disp-tieout | GO`

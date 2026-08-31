@@ -10,9 +10,9 @@
     "purpose": "verify-delivered-status-single-source"
   },
   "2430": {
-    "claimedBy": "cursor",
-    "purpose": "verify-book-load-live-load-number-field",
-    "at": "2026-08-31"
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-book-load-live-load-number-field"
   },
   "2912": {
     "claimed_at": "2026-08-08",

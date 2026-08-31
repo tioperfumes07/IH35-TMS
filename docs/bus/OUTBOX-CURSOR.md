@@ -1,1 +1,1 @@
-Cursor | BUS-CORRECTION 22:18 CT | Cascade loads REAL but API≠human · live_load_number NULL all 12 · CC-3 blocked until backfill · Codex 014 hold confirmed right · DISPATCH-NO-UI REOPENED · CC-2 no RPM on round miles · Cursor NOW=BookLoad live_load_number field | GO
+Cursor | BUS-CORRECTION 22:18 CT | Cascade loads REAL but API≠human · live_load_number NULL all 12 · CC-3 blocked until backfill · Codex 014 hold confirmed right · DISPATCH-NO-UI REOPENED · CC-2 no RPM on round miles · SHIPPED #18489 bus + #18491 Book Load AT# field + backfill script | GO
