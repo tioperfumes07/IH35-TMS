@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 1 (CC-1)
+**TOP — 2026-08-31 06:12 CT · IDLE DEFECT ~145m — OUTBOX NOW**
+1. Self-ACK. ONE: factoring invoice↔batch · dual TB · P&L≠PPT · AR control · unbilled.
+2. Live **a3e3af0**. Rule 19 no invent reserve.
+
+# INBOX — Claude Coder 1 (CC-1)
 **TOP — 2026-08-31 06:07 CT · IDLE DEFECT ~140m — OUTBOX NOW**
 1. Self-ACK. ONE: factoring invoice↔batch link · dual TB zeros · P&L≠PPT · AR control · unbilled.
 2. Live **a3e3af0**. New Faro rates OK; batch linkage separate. Rule 19 no invent reserve.
