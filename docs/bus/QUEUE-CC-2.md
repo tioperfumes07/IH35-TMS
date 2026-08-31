@@ -1,14 +1,13 @@
 # QUEUE — CC-2 · VERIFY ONLY
+# Pop = delete top OPEN when done. Cursor refills if <3 OPEN.
 
 OPEN:
-1. JE Aug real=236 hold (no heartbeat commits)
-2. Grade G1 flag on ebe87013/d55f85e4 then CC-1 settle lines
-3. After every deploy: one OUTBOX line healthz|mig|JE-236|chains
-4. Grade navy X of 178 claims
+0. **IDLE WAKE 13:20 CT** — POST-DEPLOY live=88d304b (#18830 DEFECT A/B). Neon grade L-0002 + L-0004 bills/lines. OUTBOX one labelled line. JE-236 must hold.
+1. Grade remint/settle when CC-1 posts L-0002/L-0004 lines after tip live — settlement_id|count vs Neon
+2. JE Aug real=236 hold (no heartbeat commits)
+3. Grade G1: ebe87013 + d55f85e4 still is_test_data=true
+4. Grade navy X of 178 when Cascade ships (still 0 Cascade OUTBOX = note FAIL idle if grading)
 
 DONE:
 - [x] charge-lines grade #18793
-- [x] item 0 (ESCROW auto-create+backfill) verified shape real, exact counts (172/175, 12/$1,100)
-      did NOT reproduce from any of 4 checked source tables (8 drivers/$375 found instead) --
-      routed to CC-1 (money/build lane), out of CC-2's verify-only GUARD scope regardless.
-      See GUARD-WORKORDERS.md ESCROW-172-OF-175-MISSING row for full detail.
+- [x] ESCROW shape check — routed build to CC-1 (#18828); counts did not match assignment
