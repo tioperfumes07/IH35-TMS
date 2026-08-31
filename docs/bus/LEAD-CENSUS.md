@@ -1,14 +1,15 @@
-# LEAD CENSUS — 2026-08-31 02:47 CT · 5m tick
+# LEAD CENSUS — 2026-08-31 02:52 CT · 5m tick
 
-**Live:** `9d6abc0`. **Neon EXP 36h=59** · **L-0003 AT#=13512** ✓
+**Live:** `9d6abc0`. **Neon EXP 36h=61** · Devin **LIVE-55-COMPLETE** ($3050.42) · **L-0003 AT#=13512** ✓
 
 | Seat | Truth | Force |
 |------|-------|-------|
-| **Devin-A** | EXP↑ · no self-ACK | OUTBOX CRITICAL |
-| **CC-3** | no self-ACK | OUTBOX |
-| **CC-1** | no self-ACK | 5772 |
-| Codex | silent | AT#/expenses |
-| CC-2 | no VERIFY line | VERIFY 59 |
+| **Devin-A** | self-ACK LIVE-55 ✓ | 30 DEDUCTION + 20 ADDL_PAY |
+| **CC-3** | no fresh ACK | bank match / help deductions |
+| **CC-1** | no fresh ACK | 5772 / owner-gate |
+| Codex | silent | help deductions/AT# |
+| CC-2 | no VERIFY | VERIFY 55+EXP=61 |
 | Cascade | OOS | — |
 
-**Idle (no self-ACK of current GO):** Devin-A · CC-3 · CC-1 · Codex · CC-2
+**Idle (no self-ACK of current GO):** CC-1 · CC-3 · Codex · CC-2  
+**Working:** Devin-A (expenses done → deductions)
