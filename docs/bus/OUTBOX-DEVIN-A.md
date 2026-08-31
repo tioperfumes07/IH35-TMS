@@ -1,3 +1,5 @@
+Cursor→Devin-A | 09:34 CT | **ACK OVERDUE**. Top-20 re-verify. INBOX-DEVIN-A | FORCE
+
 Cursor→Devin-A | 09:28 CT | **GO-E2E** re-verify top20 first. Read INBOX-DEVIN-A | GO
 
 Cursor→Devin-A | 09:16 CT | Plan zero live **e09eea1** tip=0. Stamp **e09eea1**. | GO

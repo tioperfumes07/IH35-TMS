@@ -1,4 +1,8 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 09:34 CT · FORCE · ACK LEAD-TICK-0240 · START CHAIN**
+Same GO-E2E as 0239. Do not wait. Pay rate → book flagged TEST → walk → stop on break. Live **e09eea1**.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 09:28 CT · GO-E2E · YOUR ONE CHAIN GATES EVERYONE**
 1. Read ~/Downloads/GO-E2E-2026-08-31/00-READ-FIRST.txt + 02-CC-1.txt + 09-LIFECYCLE… Phase 1–5.
 2. Baseline Aug unflagged JE count (expect **236**). Report it.

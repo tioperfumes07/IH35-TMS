@@ -1,4 +1,8 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 09:34 CT · FORCE · top-20 re-verify**
+ACK LEAD-TICK-0240. Neon in every 0/empty. Live **e09eea1**.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 09:28 CT · STOP FLOOD · RE-VERIFY TOP 20**
 1. Read 00 + 07-DEVIN-A.txt. Neon query IN every 0/empty/404 finding.
 2. First: re-verify top 20 → CONFIRMED or WITHDRAWN list OUTBOX.
