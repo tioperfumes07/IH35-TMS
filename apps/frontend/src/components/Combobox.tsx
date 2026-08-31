@@ -175,6 +175,16 @@ export function Combobox({
     if (committedOption && committedOption.value === value) return committedOption;
     return null;
   }, [options, value, committedOption]);
+  // Edit/hydrate paths set `value` without going through commitSelection — sync the label cache
+  // whenever options (including a parent-seeded committed row) contain the current FK.
+  useEffect(() => {
+    if (value == null || value === "") {
+      setCommittedOption(null);
+      return;
+    }
+    const fromOptions = options.find((option) => option.value === value) ?? null;
+    if (fromOptions) setCommittedOption(fromOptions);
+  }, [options, value]);
   const displayValue = open ? query : selectedOption?.label ?? "";
 
   // SAF-F31: tell the parent what was typed so it can refetch server-side. Effect (not inline in the

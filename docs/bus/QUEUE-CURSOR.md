@@ -1,10 +1,10 @@
 # QUEUE — CURSOR · LEAD×4
 
 OPEN:
-1. Refill QUEUE-* if <3 OPEN — checked 12:35 CT: all seats ≥4 OPEN (none under 3)
+1. Refill QUEUE-* if <3 OPEN
 2. FAST-MERGE
-3. Deploy cadence Rule 42 (live=2832308; tip ahead — CC-2 post-deploy on new SHA)
-4. Overflow Chrome only after refill
+3. Deploy cadence Rule 42 (live=8b5514b; tip may be ahead after this PR)
+4. Overflow: ACCT-F10158 Edit Load customer hydrate (this PR)
 
 DONE:
 - [x] BUS-DIET #18791 · WAKE #18797 · orch GO

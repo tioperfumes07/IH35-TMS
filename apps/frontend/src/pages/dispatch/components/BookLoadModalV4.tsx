@@ -549,17 +549,26 @@ export function BookLoadModalV4({
     enabled: Boolean(operatingCompanyId),
     staleTime: 15_000,
   });
-  const customerOptions = useMemo(
-    () =>
-      (customersQuery.data?.customers ?? [])
-        .map((c) => ({
-          value: c.id,
-          label: String(c.name || c.customer_code || "").trim() || c.id,
-        }))
-        .filter((o) => o.label)
-        .sort((a, b) => a.label.localeCompare(b.label)),
-    [customersQuery.data?.customers]
-  );
+  // ACCT-F10158 / FE-COMBOBOX-STALE-LABEL: Edit Load prefills customer_id via form.reset, but the
+  // listCustomers page (limit 500, alpha-sorted) often omits late-alphabet / SAMPLE customers.
+  // Combobox then shows the empty placeholder even though the FK is set — and clearCommittedOnEdit
+  // + typing one keystroke clears the FK, so Save looks like a dead click (validation fails with
+  // no visible field when Edit hides create-only sections). Always seed the committed customer.
+  const customerOptions = useMemo(() => {
+    const fromApi = (customersQuery.data?.customers ?? [])
+      .map((c) => ({
+        value: c.id,
+        label: String(c.name || c.customer_code || "").trim() || c.id,
+      }))
+      .filter((o) => o.label)
+      .sort((a, b) => a.label.localeCompare(b.label));
+    const id = String(watchedCustomerId || "").trim();
+    const name = String(watchedCustomerName || "").trim();
+    if (id && !fromApi.some((o) => o.value === id)) {
+      return [{ value: id, label: name || id }, ...fromApi];
+    }
+    return fromApi;
+  }, [customersQuery.data?.customers, watchedCustomerId, watchedCustomerName]);
   const pickupTimeTypesQuery = useQuery({
     queryKey: ["book-load-pickup-time-types", operatingCompanyId],
     queryFn: () => listAllDispatchCatalogRows(pickupTimeTypesCatalogClient, { operating_company_id: operatingCompanyId, is_active: "true" }),
