@@ -29,6 +29,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-planner-bar-label-tier"
   },
+  "2438": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-load-detail-complete-transition"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
