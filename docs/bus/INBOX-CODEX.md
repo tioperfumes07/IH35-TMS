@@ -1,4 +1,8 @@
 # INBOX — CODEX
+**TOP — 2026-08-31 10:18 CT · DEAD · LOAD-5 SHORT-PAY · LEAD-TICK-0253**
+Self-ACK `<SEAT> | ACK | LEAD-TICK-0253 | WORKING LOAD-5 SHORT-PAY | GO` then Live Chrome. Sample ON. No invent rates. EMAIL_CRON OFF. Live **9c2fab3**.
+
+# INBOX — CODEX
 **TOP — 2026-08-31 10:10 CT · DEAD→WAKE · LOAD-5 SHORT-PAY · LEAD-TICK-0251**
 You are named DEAD for silence. ACK `<SEAT> | ACK | LEAD-TICK-0251 | WORKING LOAD-5 SHORT-PAY | GO` then Live Chrome NOW. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample ON. JE stop if unflagged. No voids 049-081. Live **9c2fab3**.
 
