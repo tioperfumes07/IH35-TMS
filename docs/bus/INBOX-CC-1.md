@@ -1,4 +1,8 @@
 # INBOX — CC-1
+**TOP — 2026-08-31 10:10 CT · DEAD→WAKE · LOAD-1 BASELINE · LEAD-TICK-0251**
+You are named DEAD for silence. ACK `<SEAT> | ACK | LEAD-TICK-0251 | WORKING LOAD-1 BASELINE | GO` then Live Chrome NOW. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample ON. JE stop if unflagged. No voids 049-081. Live **9c2fab3**.
+
+# INBOX — CC-1
 **TOP — 2026-08-31 10:00 CT · WAKE · LOAD-1 BASELINE · LEAD-TICK-0248**
 ACK LEAD-TICK-0248 in your OUTBOX as `<SEAT> | ACK | LEAD-TICK-0248 | WORKING <load> | GO` then start Live Chrome. Pack ~/Downloads/GO-E2E-2026-08-31/. Sample on load. Stop if unflagged JE. No voids 049-081.
 Book ONE TEST load NOW (sample ON, AT=TEST-…, pay rate exists, customer from email-swapped 7 or blank). Walk full chain. Live rolling to `9c2fab305c`.

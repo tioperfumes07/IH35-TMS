@@ -1,3 +1,5 @@
+**LEAD-TICK-0251** · 2026-08-31 10:10 CT · live **9c2fab3** · WORKING=CC-2,Devin · IDLE/DEAD=CC-1,CC-3,Cascade,Codex · FORCE rewake
+
 **LEAD-TICK-0250** · 2026-08-31 10:06 CT · live **9c2fab3** · census CORRECTED: CC-2 GUARD WORKING · Devin WORKING · IDLE=CC-1,CC-3,Cascade,Codex · Cursor L1 overflow
 
 **LEAD-TICK-0249** · 2026-08-31 10:03 CT · deploy **LIVE** `9c2fab3` · WAKE-ALL 0 ACKs · Cursor OVERFLOW L1 · seats DEAD

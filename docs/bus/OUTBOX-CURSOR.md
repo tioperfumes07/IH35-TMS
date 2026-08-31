@@ -1,3 +1,8 @@
+### 2026-08-31 10:10 CT · LEAD-TICK-0251
+- 5m tick #107: live=9c2fab3; four load seats still silent after 0250.
+- Named DEAD: CC-1, CC-3, Cascade, Codex. WORKING: CC-2 GUARD, Devin.
+- Paste Claude for non-tmux rewake.
+
 ### 2026-08-31 10:06 CT · LEAD-TICK-0250
 - Read all INBOX/OUTBOX: CC-2 NOT idle (#18760 ACK 0247, JE=236). Devin ACK 0248 + top-20.
 - Still IDLE (no load start): CC-1, CC-3, Cascade, Codex.
