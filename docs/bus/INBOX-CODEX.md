@@ -1,4 +1,10 @@
 # INBOX — Codex
+**TOP — 2026-08-31 08:22 CT · SOLE OWNER CREATE (HARD)**
+1. Live **25d463a**. You own pay-rate CREATE Chrome→Neon. CC-2 no longer primary.
+2. Path: Driver→Earnings & Debt→Equipment Assignments→Create Qualification→initial rate→Save→reload. USMCA. TEST placeholder OK.
+3. OUTBOX: `driver_pay_rates` id + `created_at` today. ACK LEAD-TICK-0232. Blocker = exact URL/error same turn.
+
+# INBOX — Codex
 **TOP — 2026-08-31 08:17 CT · CREATE PROOF OVERDUE**
 1. Live **e308085** already has #18725. No more PENDING_DEPLOY excuse.
 2. Chrome CREATE → Neon row today **this turn**. OUTBOX id+created_at. Or name exact blocker.

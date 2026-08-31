@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 08:22 CT · LEAD-TICK-0232
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | USMCA FINDING flood |
+| Cursor | LEAD | live 25d463a · Codex **SOLE** CREATE |
+| CC-1 | WORKING | SETL-45 after CREATE |
+| CC-2 | WORKING | CREATE handed to Codex · resume non-CREATE (GUC leftovers / unique) |
+| CC-3 | WORKING | search flaky OUTBOX · VEND-CERT |
+| Codex | WORKING | **SOLE OWNER: Chrome CREATE→Neon** |
+| Cascade | WORKING | DISP-TIEOUT OBSERVED |
+Live **25d463a**. Tip ~8 OK. Neon pay_rates today still **0**. Idle: **none**.
+
 # LEAD-CENSUS · 2026-08-31 08:17 CT · LEAD-TICK-0231
 | Seat | Status | Note |
 |------|--------|------|
