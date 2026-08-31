@@ -29,6 +29,91 @@ export type RetirePlaidPendingResult =
   | { retired: false; reason: "no_pending_predecessor" | "financially_linked" }
   | { retired: true; pending_id: string };
 
+export type SupersedePlaidPendingResult =
+  | { superseded: false; reason: "pending_not_found" | "no_exact_posted_candidate" | "multiple_exact_posted_candidates" | "financially_linked" }
+  | { superseded: true; pending_id: string; posted_id: string };
+
+/** Operator remediation for historical rows ingested before pending_transaction_id was honored. */
+export async function supersedePlaidPendingByExactPostedCandidate(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
+  args: { pendingRowId: string; operatingCompanyId: string }
+): Promise<SupersedePlaidPendingResult> {
+  const pendingRes = await client.query(
+    `
+      SELECT id, bank_account_id, transaction_date, amount_cents, is_credit,
+             matched_journal_entry_id, reconciled_obligation_id, categorization_gl_account_id
+      FROM banking.bank_transactions
+      WHERE id = $1::uuid
+        AND operating_company_id = $2::uuid
+        AND source = 'plaid'
+        AND pending = true
+        AND voided_at IS NULL
+      FOR UPDATE
+    `,
+    [args.pendingRowId, args.operatingCompanyId]
+  );
+  const pending = pendingRes.rows[0] as
+    | {
+        id: string;
+        bank_account_id: string;
+        transaction_date: string;
+        amount_cents: number;
+        is_credit: boolean;
+        matched_journal_entry_id: string | null;
+        reconciled_obligation_id: string | null;
+        categorization_gl_account_id: string | null;
+      }
+    | undefined;
+  if (!pending) return { superseded: false, reason: "pending_not_found" };
+  if (pending.matched_journal_entry_id || pending.reconciled_obligation_id || pending.categorization_gl_account_id) {
+    return { superseded: false, reason: "financially_linked" };
+  }
+
+  const candidates = await client.query(
+    `
+      SELECT id, plaid_transaction_id
+      FROM banking.bank_transactions
+      WHERE operating_company_id = $1::uuid
+        AND bank_account_id = $2::uuid
+        AND id <> $3::uuid
+        AND source = 'plaid'
+        AND pending = false
+        AND voided_at IS NULL
+        AND amount_cents = $4
+        AND is_credit = $5
+        AND transaction_date BETWEEN $6::date - INTERVAL '7 days' AND $6::date + INTERVAL '7 days'
+      ORDER BY transaction_date, id
+      LIMIT 2
+    `,
+    [args.operatingCompanyId, pending.bank_account_id, pending.id, pending.amount_cents, pending.is_credit, pending.transaction_date]
+  );
+  if (candidates.rows.length === 0) return { superseded: false, reason: "no_exact_posted_candidate" };
+  if (candidates.rows.length > 1) return { superseded: false, reason: "multiple_exact_posted_candidates" };
+  const posted = candidates.rows[0] as { id: string };
+
+  const retired = await client.query(
+    `
+      UPDATE banking.bank_transactions
+      SET voided_at = now(),
+          voided_reason = 'operator_confirmed_plaid_pending_replacement:' || $2::text,
+          merged_into_bank_transaction_id = $2::uuid,
+          dedup_hash = NULL,
+          updated_at = now()
+      WHERE id = $1::uuid
+        AND operating_company_id = $3::uuid
+        AND pending = true
+        AND voided_at IS NULL
+        AND matched_journal_entry_id IS NULL
+        AND reconciled_obligation_id IS NULL
+        AND categorization_gl_account_id IS NULL
+      RETURNING id
+    `,
+    [pending.id, posted.id, args.operatingCompanyId]
+  );
+  if ((retired.rowCount ?? 0) !== 1) return { superseded: false, reason: "financially_linked" };
+  return { superseded: true, pending_id: pending.id, posted_id: posted.id };
+}
+
 /**
  * Plaid gives a posted transaction a new id and points back to the replaced pending id.
  * Preserve the pending row as WORM evidence, but remove it from active cash exactly once.

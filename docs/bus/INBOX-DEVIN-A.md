@@ -1,29 +1,12 @@
-# ⛔ HOLD REV D — USE REV E ONLY
+# CURRENT GO — DEVIN-A · 025+ end-to-end (NOT 13521)
 
-# CURRENT GO — DEVIN-A · inv 025, 027–036 + loads (both ends)
+Cursor→Devin-A | REV E · `NEVER-IDLE-SEAT-LAW-2026-08-31.md` | PORT=9227 | GO
 
-Cursor→Devin-A | `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md` | PORT=9227 | GO · skip #15546
+**NEVER IDLE · NO WAIT on deploy/CC-1/Codex.** **13521 = Codex (inv 014). You start 025/13538.**
 
-**STOP REV D loads 13521–13538.** Those are **Codex**. You own **025+ band**.
+## BLOCKING — CREATE NOW (gate on main #18468)
+Run `node scripts/verify-one-load-one-open-invoice.mjs` → PASS → **025 / load 13538 Jericho** → deliver → invoice → factor → 027–036 table
 
-**Wait for `one-load-one-open-invoice` on main before first CREATE on 025+** (read/plan OK).
+## FREE — same minute if Chrome/deploy stalls
 
-## End-to-end — start 025 / load 13538
-
-| inv | load |
-|-----|------|
-| 025 | 13538 |
-| 029 | 13542 |
-| 027 | 13543 |
-| 028 | 13544 |
-| 030 | 13545 |
-| 031 | 13546 |
-| 032 | 13547 |
-| 033 | 13548 |
-| 034 | 13549 |
-| 035 | 13550 |
-| 036 | 13556 |
-
-Book Load → deliver → invoice → factor. One owner per row.
-
-ACK: `Devin-A | ACK | REV-E | NOW=025-13538 | GO`
+ACK: `Devin-A | ACK | REV-E | NOW=025-13538|FREE=crosswalk | GO`

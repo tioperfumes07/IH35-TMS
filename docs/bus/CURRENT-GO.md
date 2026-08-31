@@ -1,14 +1,15 @@
-# CURRENT GO — REV E crosswalk partition (HOLD REV D)
+# CURRENT GO — NEVER IDLE · REV E · all seats
 
-**LAW:** `docs/bus/FARO-PARTITION-REV-E-2026-08-31.md`
+**LAW:** `docs/bus/NEVER-IDLE-SEAT-LAW-2026-08-31.md` + `FARO-PARTITION-REV-E-2026-08-31.md`
 
-| Seat | Owns | Creates inv 014+? |
-|------|------|-------------------|
-| CC-1 | 016 · 004/L13512 · settlements | after gate |
-| CC-3 | inv 001–013 (no loads) | 001–013 now |
-| Codex | inv 014–024 + loads | after gate |
-| Devin-A | inv 025, 027–036 + loads | after gate |
-| Cascade | loads 13508–13520 deliver only | **never** |
-| CC-2 | tie-outs + grade | — |
+| Seat | BLOCKING NOW | FREE if stalled |
+|------|--------------|-----------------|
+| CC-1 | **016: Send INV-82 → factor $3800** · L13512 · settlements | Neon prep |
+| Cursor | **P0 deliver UI** · bus · deploy | tie-out assist |
+| CC-3 | **inv 001 factor NOW** | VEND tie-out |
+| Codex | **014/13521 CREATE NOW** (run gate PASS first) | tie-out |
+| Devin-A | **025/13538 CREATE NOW** (run gate PASS first) | crosswalk prep |
+| Cascade | load 13508 deliver | disp tie-out |
+| CC-2 | grade opportunistic | **all 6 tie-outs** |
 
-**Gate:** `one-load-one-open-invoice` on main before 014+ creates.
+**Idle = defect. No wait on deploy or another seat.**

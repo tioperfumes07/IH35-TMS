@@ -1,4 +1,9 @@
 {
+  "2426": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-load-detail-deliver-transition"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
@@ -4822,15 +4827,15 @@
     "claimed_by": "cursor",
     "purpose": "verify-cert-sha-stale CERT-01 B1 STALE rule"
   },
-  "10054": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cursor",
-    "purpose": "verify-cert-fw6-leaf-specific CERT-01 B4 leafRe theater"
-  },
   "10053": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-doc01-medical-card-background-check-linkage"
+  },
+  "10054": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cursor",
+    "purpose": "verify-cert-fw6-leaf-specific CERT-01 B4 leafRe theater"
   },
   "10057": {
     "claimed_at": "2026-08-29",
@@ -4872,20 +4877,45 @@
     "claimed_by": "cc-1",
     "purpose": "verify-je-type-id-wired-into-all-posters (ACCT-LINK-01 regression fix, GO-1405)"
   },
+  "10089": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-doc01-fuel-and-border-credentials-uploads (GO-1405 DOC-01 remainder)"
+  },
+  "10093": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-wonum-d1-refuse-missing-unit-number (GO-1405 WONUM D1)"
+  },
   "10097": {
     "claimed_at": "2026-08-29",
     "claimed_by": "cc-1",
     "purpose": "verify-cert01-fw-server-assertions (CERT-01 B2+B7, GO-1405)"
+  },
+  "10101": {
+    "claimed_at": "2026-08-29",
+    "claimed_by": "cc-1",
+    "purpose": "verify-wonum-d2-v5-lock-and-refresh-fix (GO-WONUM-01 D2)"
   },
   "10103": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-2",
     "purpose": "verify-reconciliation-one-open-per-account-period (GO-ACCT-01 control fix)"
   },
-  "10121": {
+  "10105": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-1",
-    "purpose": "verify-econ-c25-c31-auto-check-wrappers (6 thin wrappers made real + column-mapping guard, ACCT-F10125)"
+    "purpose": "verify-acct-period-close-01-ensureopenperiod-wired (ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT)"
+  },
+  "10109": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-defect-b-amex-cc-dedupe (GO-CLOSE-188 CC-1 DEFECT B)"
+  },
+  "10113": {
+    "claimed_at": "2026-08-30",
+    "claimed_by": "cc-1",
+    "purpose": "verify-acct-defect-a-deposit-sweep-wired (GO-CLOSE-188 CC-1 DEFECT A)"
   },
   "10117": {
     "claimed_at": "2026-08-30",
@@ -4897,36 +4927,29 @@
     "claimed_by": "codex",
     "purpose": "verify-planner-grid-canonical (GO-INSTRUMENT-PLANNER A1-A7)"
   },
-  "10113": {
+  "10121": {
     "claimed_at": "2026-08-30",
     "claimed_by": "cc-1",
-    "purpose": "verify-acct-defect-a-deposit-sweep-wired (GO-CLOSE-188 CC-1 DEFECT A)"
+    "purpose": "verify-econ-c25-c31-auto-check-wrappers (6 thin wrappers made real + column-mapping guard, ACCT-F10125)"
   },
-  "10109": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-acct-defect-b-amex-cc-dedupe (GO-CLOSE-188 CC-1 DEFECT B)"
-  },
-  "10105": {
-    "claimed_at": "2026-08-30",
-    "claimed_by": "cc-1",
-    "purpose": "verify-acct-period-close-01-ensureopenperiod-wired (ACCT-PERIOD-CLOSE-BLOCKS-UNIVERSAL-EDIT)"
-  },
-  "10101": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-wonum-d2-v5-lock-and-refresh-fix (GO-WONUM-01 D2)"
-  },
-  "10093": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-wonum-d1-refuse-missing-unit-number (GO-1405 WONUM D1)"
-  },
-  "10089": {
-    "claimed_at": "2026-08-29",
-    "claimed_by": "cc-1",
-    "purpose": "verify-doc01-fuel-and-border-credentials-uploads (GO-1405 DOC-01 remainder)"
-  },
+  "10125": [
+    "10125-verify-recon-sessions-void-and-unique-period.mjs"
+  ],
+  "10129": [
+    "10129-verify-coa-roles-unique-per-company-role.mjs"
+  ],
+  "10133": [
+    "10133-verify-factoring-advance-reserve-fee-independent.mjs"
+  ],
+  "10137": [
+    "10137-verify-factoring-submit-rates-fail-closed.mjs"
+  ],
+  "10141": [
+    "10141-verify-factor-resolver-excludes-voided-inactive.mjs"
+  ],
+  "10142": [
+    "10142-verify-module-completion-requires-tieout.mjs"
+  ],
   "_band": {
     "cc-1": "n%4===1",
     "cc-2": "n%4===3",
@@ -6206,6 +6229,12 @@
       "file": "2422-verify-bills-list-null-number-honest.mjs",
       "purpose": "F-18 bills null bill_number honest label"
     },
+    "2424": {
+      "claimed_at": "2026-08-31",
+      "claimed_by": "cursor",
+      "file": "2424-verify-one-load-one-open-invoice.mjs",
+      "purpose": "REV E gate — one load maps to at most one open TMS invoice"
+    },
     "2501": "2501-verify-disp-wire-02-driver-bill.mjs",
     "2505": "2505-verify-disp-wire-05-revrec-latch.mjs",
     "2509": "2509-verify-disp-wire-08-settlement-ping.mjs",
@@ -6911,23 +6940,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1339,
-  "10125": [
-    "10125-verify-recon-sessions-void-and-unique-period.mjs"
-  ],
-  "10129": [
-    "10129-verify-coa-roles-unique-per-company-role.mjs"
-  ],
-  "10133": [
-    "10133-verify-factoring-advance-reserve-fee-independent.mjs"
-  ],
-  "10137": [
-    "10137-verify-factoring-submit-rates-fail-closed.mjs"
-  ],
-  "10141": [
-    "10141-verify-factor-resolver-excludes-voided-inactive.mjs"
-  ],
-  "10142": [
-    "10142-verify-module-completion-requires-tieout.mjs"
-  ]
+  "total_claimed": 1339
 }

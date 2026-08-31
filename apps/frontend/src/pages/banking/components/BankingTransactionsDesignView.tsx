@@ -13,6 +13,7 @@ import {
   getPlaidCompanyTransactions,
   isManualBankTransaction,
   skipBankTransactionInvestigation,
+  supersedePlaidPendingTransaction,
   updateBankTransactionDate,
   uploadBankStatementCsv,
   type BankMatchCandidate,
@@ -31,6 +32,7 @@ import { ActionButton } from "../../../components/shared/ActionButton";
 import { EntityLink, type EntityKind } from "../../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
 import { Button } from "../../../components/Button";
+import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { useBulkSelection } from "../../../hooks/useBulkSelection";
 import { SelectCombobox } from "../../../components/shared/SelectCombobox";
 import { useToast } from "../../../components/Toast";
@@ -301,6 +303,7 @@ export function BankingTransactionsDesignView({
   const [linkMenuOpen, setLinkMenuOpen] = useState(false);
   const [postingTxId, setPostingTxId] = useState<string | null>(null);
   const [excludingTxId, setExcludingTxId] = useState<string | null>(null);
+  const [supersedePendingTx, setSupersedePendingTx] = useState<PlaidBankTransaction | null>(null);
   const [drafts, setDrafts] = useState<Record<string, RowDetailDraft>>({});
   const [currentPage, setCurrentPage] = useState(1);
   // BANK-SPLIT-1 — the transaction currently open in the Split-transaction popup (real, persisted; HELD).
@@ -1469,6 +1472,18 @@ export function BankingTransactionsDesignView({
                   >
                     {excludingTxId === tx.id ? "excluding..." : "Exclude"}
                   </button>
+                  {tx.source === "plaid" && tx.pending ? (
+                    <button
+                      type="button"
+                      className="block w-full border-t border-gray-100 px-3 py-2 text-left text-xs text-red-700 hover:bg-red-50"
+                      onClick={() => {
+                        setActionMenuTxId(null);
+                        setSupersedePendingTx(tx);
+                      }}
+                    >
+                      Supersede pending duplicate
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -2886,6 +2901,26 @@ export function BankingTransactionsDesignView({
               }
             : undefined
         }
+      />
+
+      <ConfirmModal
+        open={Boolean(supersedePendingTx)}
+        title="Supersede Plaid pending duplicate"
+        message="This preserves the pending row as voided evidence and links it to the one exact posted Plaid candidate on the same account, amount, direction, and seven-day window. It fails without exactly one safe candidate."
+        confirmLabel="Supersede pending row"
+        danger
+        onClose={() => setSupersedePendingTx(null)}
+        onConfirm={async () => {
+          if (!supersedePendingTx) return;
+          try {
+            await supersedePlaidPendingTransaction(supersedePendingTx.id, companyId);
+            pushToast("Pending Plaid duplicate superseded", "success");
+            onDataChanged();
+          } catch (error) {
+            pushToast(userFacingApiError(error, "Could not supersede pending duplicate"), "error");
+            throw error;
+          }
+        }}
       />
 
       <BankTransactionSplitModal

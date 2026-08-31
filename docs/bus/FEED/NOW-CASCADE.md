@@ -1,2 +1,2 @@
-# FEED NOW — CASCADE
-**HOLD REV D.** REV E: loads **13508–13520 deliver only** — no Faro invoice create.
+# FEED NOW — CASCADE · 21:40 CT
+**NEVER IDLE.** NOW=load **13508** deliver-only. FREE=disp tie-out. No invoices. GO.
