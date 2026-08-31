@@ -144,7 +144,10 @@ export async function createDraftBatch(
     throw new FactoringBatchError("invoice_not_eligible", 400, { invoice_ids: missingIds });
   }
 
-  const customerResolution = new Map<string, { factor_id: string | null; factor_name: string | null }>();
+  const customerResolution = new Map<
+    string,
+    { factor_id: string | null; factor_name: string | null; advance_rate: number | null; fee_rate: number | null }
+  >();
 
   for (const invoice of invoiceRes.rows) {
     const customerId = invoice.customer_id ? String(invoice.customer_id) : null;
@@ -158,6 +161,8 @@ export async function createDraftBatch(
     customerResolution.set(customerId, {
       factor_id: factor?.id ?? null,
       factor_name: factor?.name ?? null,
+      advance_rate: factor != null ? toNumber(factor.advance_rate) : null,
+      fee_rate: factor != null ? toNumber(factor.fee_rate) : null,
     });
   }
 
@@ -166,6 +171,8 @@ export async function createDraftBatch(
       customer_id,
       factor_id: factor.factor_id,
       factor_name: factor.factor_name,
+      advance_rate: factor.advance_rate,
+      fee_rate: factor.fee_rate,
     }))
     .sort((a, b) => a.customer_id.localeCompare(b.customer_id));
 
@@ -176,8 +183,10 @@ export async function createDraftBatch(
 
   const resolvedFactorId = factorPairs[0]?.factor_id ?? null;
 
-  const advanceRate = deps.advanceRate ?? 0.95;
-  const feeRate = deps.feeRate ?? 0.025;
+  // FACTORING-RATE-MISMATCH: callers (batch.routes / submission-queue) often omit rates.
+  // Defaults 0.95/0.025 must NOT override the resolved factor's configured rates (e.g. Faro 0.97/0.015).
+  const advanceRate = deps.advanceRate ?? factorPairs[0]?.advance_rate ?? 0.95;
+  const feeRate = deps.feeRate ?? factorPairs[0]?.fee_rate ?? 0.025;
   const totals = calculateBatchTotals(
     invoiceRes.rows.map((row) => ({
       id: String(row.id),

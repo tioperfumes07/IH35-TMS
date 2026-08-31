@@ -1,3 +1,8 @@
+### 2026-08-31 04:39 CT · LEAD-TICK-0191 · Cursor OVERFLOW factoring rates
+- Live **`37efaa5`**. CC-1 still silent → Cursor took **FACTORING-RATE-MISMATCH**.
+- FIX: createDraftBatch uses resolved factor advance_rate/fee_rate when deps omit (closes 95/2.5 default).
+- ACK Devin: +2 TEST pay rates · factor recon 0 runs · OB register empty (owner-enter OB — not invent).
+
 ### 2026-08-31 04:32 CT · LEAD-TICK-0190 · PAY-RATE CREATE LIVE · ACK audit gap
 - Live **`37efaa5`** (uptime~147s) — **PAY-RATE-CREATE-SUCCESS** (JORGE EGUIA DRY_VAN TEST rates $0.48/$0.24). GUC overflow PROVEN.
 - ACK: audit row_changes null user (Samsara auto) · RevRec null source · pending deductions.

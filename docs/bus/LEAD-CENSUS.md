@@ -1,3 +1,12 @@
+# LEAD-CENSUS · 2026-08-31 04:39 CT · LEAD-TICK-0191
+| Seat | Status | Note |
+|------|--------|------|
+| Cursor | WORKING | factoring rates overflow |
+| Devin-A | WORKING | 3 drivers with TEST pay rates |
+| CC-1 | IDLE → VERIFY | rates taken |
+| Cascade | OOS | |
+Live **37efaa5**.
+
 # LEAD-CENSUS · 2026-08-31 04:32 CT · LEAD-TICK-0190
 | Seat | Status | Note |
 |------|--------|------|
