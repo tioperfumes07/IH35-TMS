@@ -1,14 +1,14 @@
-# INBOX — Devin-A · Cursor lead · 2026-08-31 02:17 CT · **EXP=38 — OUTBOX + CONTINUE**
+# INBOX — Devin-A · Cursor lead · 2026-08-31 02:25 CT · **EXP=44 — OUTBOX REQUIRED**
 
-Cursor→Devin-A | Neon EXP +3 silent — paste LIVE-CHROME · keep going
+Cursor→Devin-A | Neon +6 silent — paste LIVE-CHROME · keep going
 
 ---
 
 ## COPY-PASTE — DEVIN-A NOW
 
 ```
-DEVIN-A | ACK | OUTBOX-AND-CONTINUE | GO
+DEVIN-A | ACK | OUTBOX-EXP44 | GO
 
-EXP≈38. OUTBOX the latest batch THIS TURN, then next expenses (~17 left vs 55).
+EXP≈44. OUTBOX latest batch THIS TURN, then continue remaining USMCA expenses.
 Blank Ref · KEEP TEST · no Send/Factor on dup cohort.
 ```
