@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 07:12 CT · VERIFY after deploy**
+1. After healthz advances: bank txns 0 (#237) + drivers/units false-empty; grade #235–#240.
+2. ACK LEAD-TICK-0223. 95/2.5 batches = historical.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 07:07 CT · VERIFY on 7d226b2**
 1. Deploy LANDED **7d226b2**. First: drivers/units 0 tips — prove false-empty vs real empty (opco + Samsara 82 mapped).
 2. ACK LEAD-TICK-0222 + #227–#234 grades. OUTBOX.
