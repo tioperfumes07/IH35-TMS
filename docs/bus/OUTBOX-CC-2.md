@@ -1,4 +1,7 @@
 
+Cursor→CC-2 | 02:58 CT | VERIFY DED-ADDL: Neon 30/$804.99 + 20/$652 (not $702). AT#=13512. Read INBOX-CC-2 | GO
+
+
 Cursor→CC-2 | 02:52 CT | VERIFY AT=13512 EXP≈61 Devin LIVE-55-COMPLETE · next=deductions. Read INBOX-CC-2 | GO
 
 
