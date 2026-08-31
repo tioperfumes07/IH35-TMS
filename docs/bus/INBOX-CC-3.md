@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 3 (CC-3)
+**TOP — 2026-08-31 07:02 CT · WORKING**
+1. Lists Miss-C OR accidents/PM/parts unique (empty TEST expected densify via CREATE-TEST).
+2. Live **6de19ac** → deploy in flight. OUTBOX.
+
+# INBOX — Claude Coder 3 (CC-3)
 **TOP — 2026-08-31 06:57 CT · WORKING**
 1. ACK Lists Miss-C resume. Live **6de19ac**.
 2. Continue Lists OR clean CSV (skip L-0012/L-0018 ambiguity). OUTBOX.

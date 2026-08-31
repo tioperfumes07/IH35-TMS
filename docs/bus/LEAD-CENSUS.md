@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 07:02 CT · LEAD-TICK-0221
+| Seat | Status | Note |
+|------|--------|------|
+| Devin-A | WORKING | #220–#226 tips |
+| Cursor | LEAD | deploy kicked tip~20 |
+| CC-1 | WORKING | money · L13512 OWNER GATE |
+| CC-2 | WORKING | ACK 0219 (#18702) |
+| CC-3 | WORKING | Lists Miss-C |
+| Codex | WORKING | Row 014 fail-closed |
+| Cascade | OOS | |
+Live **6de19ac** → deploy IN FLIGHT. Idle: **none**. OWNER GATE: L13512 · orphan-cohort 016.
+
 # LEAD-CENSUS · 2026-08-31 06:57 CT · LEAD-TICK-0220
 | Seat | Status | Note |
 |------|--------|------|
