@@ -445,7 +445,30 @@ async function closeLoadBookendedSettlementForDriver(
     [opts.operatingCompanyId, opts.driverId]
   );
 
-  const settlementId = openRes.rows[0]?.id ? String(openRes.rows[0].id) : "";
+  let settlementId = openRes.rows[0]?.id ? String(openRes.rows[0].id) : "";
+
+  // PINGSETTLEMENT-CLOSE-NO-OPEN-SETTLEMENT-FALLBACK — live-proven 2026-08-31 on load 13512: the
+  // in_transit OPEN event and the delivered_pending_docs CLOSE event can straddle a deploy (the
+  // open fired under pre-fix code, or any other reason no settlement was ever opened for this
+  // driver's trip), and busy=0 here means this genuinely IS the driver's last active load — no
+  // FUTURE load will ever trigger an open event to bookend this trip. Before this fallback, that
+  // silently returned 0: the load reached its terminal delivery-evidence status with real revenue
+  // already recognized (latchOnDeliveryEvidence, same call site) while its driver pay vanished —
+  // no settlement, no settlement_lines, nothing for anyone to notice or query. Matches the same
+  // "invisible skip" class MILES-ON-BOOK was fixed for (a refusal that only ever wrote to
+  // audit.audit_events, which no dispatcher reads). Self-heals by opening a fresh settlement
+  // anchored to THIS load (openLoadBookendedSettlement — same function, same reuse/anchor
+  // guarantees, so it can never attach to the wrong driver or a dead load) and immediately closing
+  // it below, exactly as if the open event had fired correctly moments earlier.
+  if (!settlementId) {
+    const opened = await openLoadBookendedSettlement(client, {
+      driverId: opts.driverId,
+      operatingCompanyId: opts.operatingCompanyId,
+      firstLoadId: opts.load.id,
+      actorUserId: opts.actorUserId,
+    });
+    settlementId = opened.settlementId;
+  }
   if (!settlementId) return 0;
 
   const closedAt = new Date().toISOString();
