@@ -1,3 +1,3 @@
-**THIS IS NOW — 2026-08-31 01:41 CT (5m tick)**
+**THIS IS NOW — 2026-08-31 01:43 CT**
 
-Deploy catching `7718be59`. **CC-1:** L-0003=`13512` then settlement 5772. **CC-3/Devin:** expenses (~25/55). **Codex:** AT# 0014–0024. Cascade OOS.
+Live `7718be5`. **CC-1:** L-0003=`13512` then 5772 (blocking). **Expenses ~26/55.** Codex AT#/expenses. Cascade OOS.
