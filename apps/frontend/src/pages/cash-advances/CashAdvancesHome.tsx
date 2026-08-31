@@ -14,6 +14,7 @@ import { CashAdvancesTable } from "./components/CashAdvancesTable";
 import { CreateAdvanceModal } from "./components/CreateAdvanceModal";
 import { MarkDisbursedModal } from "./components/MarkDisbursedModal";
 import { ListErrorState } from "../../components/ListErrorState";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 
 const EMPTY_FILTERS = {
   driverId: "",
@@ -169,20 +170,12 @@ export function CashAdvancesHomePage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-sm bg-[#1A1F36] px-2 py-1 text-[11px] text-white">
-        <div className="flex min-w-max gap-4">
-          {SUBNAV.map(([label, value]) => (
-            <button
-              key={value}
-              type="button"
-              className={tab === value ? "border-b border-white pb-0.5 font-semibold" : ""}
-              onClick={() => setTab(value)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <NavyPageSubNav
+        items={SUBNAV.map(([label, value]) => ({ label, to: `#${value}` }))}
+        activeId={tab}
+        onTabChange={(id) => setTab(id as CashAdvancesTab)}
+        itemIds={SUBNAV.map(([, value]) => value)}
+      />
 
       {kpisQuery.isError ? (
         <ListErrorState
