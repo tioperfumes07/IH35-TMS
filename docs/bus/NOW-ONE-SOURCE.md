@@ -1,3 +1,4 @@
+- **2026-08-31 04:02 CT · LEAD-TICK-0184:** ACK bills/customers/vendors/units/fuel/JE; idle CC-1/3/2/Codex; live **97f1982**.
 - **2026-08-31 03:57 CT · LEAD-TICK-0183:** ACK HOS/reserves/bank100; FORCE silent CC-1/3; live **97f1982**.
 - **2026-08-31 03:54 CT · LEAD-TICK-0182:** ACK status-filter + S0168; FORCE silent CC-1/3/2; live **97f1982**.
 - **2026-08-31 03:52 CT · LEAD-TICK-0181:** live **97f1982**; ACK expense#/drafts/WO; FORCE CC-1 factoring rates.

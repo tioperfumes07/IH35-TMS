@@ -1,4 +1,9 @@
 # INBOX — Claude Coder 2 (CC-2)
+**TOP — 2026-08-31 04:02 CT · GRADE**
+1. Grade bills/customers/vendors/units/fuel/JE FINDINGs; SAVEPOINT still **97f1982**.
+2. ACK LEAD-TICK-0184. Do not build.
+
+# INBOX — Claude Coder 2 (CC-2)
 **TOP — 2026-08-31 03:57 CT · GRADE**
 1. Grade HOS / reserve-empty / bank100 FINDINGs; VERIFY SAVEPOINT still on **97f1982**.
 2. Do not build. ACK LEAD-TICK-0183.

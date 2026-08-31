@@ -1,3 +1,14 @@
+# LEAD-CENSUS · 2026-08-31 04:02 CT · LEAD-TICK-0184
+| Seat | Status | Evidence |
+|------|--------|----------|
+| Devin-A | WORKING | self-ACK FINDING tips |
+| CC-1 | IDLE DEFECT | OUTBOX = Cursor pings only |
+| CC-3 | IDLE DEFECT | OUTBOX = Cursor pings only |
+| Codex | IDLE | no self-ACK |
+| CC-2 | IDLE | no grade ACK |
+| Cascade | OOS | |
+Live **97f1982**. Freeze Send/Void/Factor on 19 dup groups.
+
 # LEAD-CENSUS · 2026-08-31 03:57 CT · LEAD-TICK-0183
 | Seat | Status | Note |
 |------|--------|------|
