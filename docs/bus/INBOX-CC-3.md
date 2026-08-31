@@ -1,4 +1,11 @@
 # INBOX — CC-3
+**TOP — 2026-08-31 09:28 CT · WAIT FOR CC-1 PASS · THEN 3 LOADS**
+1. Read 00 + 04-CC-3.txt + 09 map. Miss-C PARKED.
+2. First 2 min: OUTBOX exact URL+query+SHA for LISTS-CATALOG-SEARCH-FLAKY.
+3. After CC-1 PASS: 3 TEST loads E2E (sample flag on load). Stop per break.
+4. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — CC-3
 **TOP — 2026-08-31 09:16 CT · PLAN ZERO · P0 CROSSWALK**
 1. Live **e09eea1**. Finish PO/AT# orphan→replacement map (document-proven only). Freeze Send/Void/Factor.
 2. No CREATE/SETL yet (P1 next). ACK LEAD-TICK-0238.

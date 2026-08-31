@@ -1,4 +1,10 @@
 # INBOX — Devin-A
+**TOP — 2026-08-31 09:28 CT · STOP FLOOD · RE-VERIFY TOP 20**
+1. Read 00 + 07-DEVIN-A.txt. Neon query IN every 0/empty/404 finding.
+2. First: re-verify top 20 → CONFIRMED or WITHDRAWN list OUTBOX.
+3. After CC-1 PASS: 2 TEST loads same 5 links. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — Devin-A
 **TOP — 2026-08-31 09:09 CT · FINISH WIP → STOP → PLAN ZERO**
 1. Finish **only** what is already in-flight this turn. Push/OUTBOX proof. Do **not** start new money Send/Void/Factor.
 2. Then **STOP** and ACK LEAD-TICK-0237. Wait for live after deploy#2 + LEAD-TICK arming P0.

@@ -1,3 +1,10 @@
+### 2026-08-31 09:28 CT · LEAD-TICK-0239 · GO-E2E ARMED
+- Cancelled prior Faro-P0 / void-orphan / repurchase narrative (Claude error + lead inherited).
+- Email: 7 Aug-invoiced billing_email -> jpm@tioperfumes.com (RESTORE: docs/bus/EMAIL-SWAP-RESTORE-2026-08-31.md).
+- Pack: ~/Downloads/GO-E2E-2026-08-31/ (+ lifecycle 09). Amendments A1–A3 in force.
+- Sequence: CC-1 one chain → on PASS release CC-3/Cascade/Devin → Codex banking → factoring last.
+- Hard: book load is_sample_data=true first; pay rate BEFORE dispatch; stop if unflagged JE posts.
+
 ### 2026-08-31 09:16 CT · LEAD-TICK-0238 · PLAN FROM ZERO · P0 ARMED
 - Deploy#1 **a3dff31** + Deploy#2 **e09eea1** landed. tip_ahead=0.
 - Seats STOP window over. **P0 NOW:** Faro exposure before any Send of reconciled 33.

@@ -1,3 +1,15 @@
+# LEAD-CENSUS · 2026-08-31 09:28 CT · LEAD-TICK-0239
+| Seat | Status | Note |
+|------|--------|------|
+| Cursor | LEAD | E2E GO · JE watch · hourly owner report |
+| CC-1 | WORKING | **P0 ONE CHAIN** — gates everyone |
+| CC-2 | WORKING | VERIFY ONLY · JE 236 every 20m |
+| CC-3 | WAIT | after CC-1 PASS · 3 loads |
+| Cascade | WAIT | after CC-1 PASS · 3 loads + AT linkage |
+| Codex | WAIT | P2 banking after CC-1 step 3+ |
+| Devin-A | WORKING | re-verify top 20 findings first |
+Live **e09eea1**. INV-049..081 untouchable. No voids. No Faro unwind.
+
 # LEAD-CENSUS · 2026-08-31 09:16 CT · LEAD-TICK-0238
 | Seat | Status | Note |
 |------|--------|------|

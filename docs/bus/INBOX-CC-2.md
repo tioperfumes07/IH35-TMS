@@ -1,4 +1,11 @@
 # INBOX — CC-2
+**TOP — 2026-08-31 09:28 CT · VERIFY ONLY · MONTH-END JE GUARD**
+1. Read 00-READ-FIRST + 03-CC-2.txt. CREATE NOTHING.
+2. Every 20m post Aug JE split; **real must stay 236**. Escalate if rises.
+3. Independently grade CC-1 chain Neon. Correct board rows that still say Faro-pledged/void-33.
+4. ACK LEAD-TICK-0239. Live **e09eea1**.
+
+# INBOX — CC-2
 **TOP — 2026-08-31 09:16 CT · PLAN ZERO · GRADE P0**
 1. Live **e09eea1**. Grade CC-1/CC-3 P0 proofs. Confirm FACT-RESERVE-01 status on main (block advances until green).
 2. ACK LEAD-TICK-0238.
