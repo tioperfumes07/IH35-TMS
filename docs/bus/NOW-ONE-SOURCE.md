@@ -1,3 +1,4 @@
+- **2026-08-31 06:37 CT · LEAD-TICK-0215:** Deploy kicked (was a3e3af0 ~145 behind); ACK settlements shell; CC idle ~170m.
 - **2026-08-31 06:32 CT · LEAD-TICK-0214:** ACK completed_docs w/ 0 docs + accidents; CC idle ~165m; live **a3e3af0**.
 - **2026-08-31 06:27 CT · LEAD-TICK-0213:** ACK vendor/customer master gaps; CC idle ~160m; live **a3e3af0**.
 - **2026-08-31 06:22 CT · LEAD-TICK-0212:** ACK ghost load L-0085 + DQ list gap; CC idle ~155m; live **a3e3af0**.
