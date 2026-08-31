@@ -1,3 +1,5 @@
+CC-2 | VERIFY | asset-404-likely-transient + L-0002-0017-still-pending | healthz confirmed | JE=236 exact unchanged (total=480, je_control=2350 unchanged). Devin-A's BOOK-DISPATCH-MISSINGREQUIREDCHIP-404-BLOCK: checked the exact cited asset directly, now returns 200 not 404 -- matches the known transient-CDN-lag pattern, not closing myself (no Chrome this session, mutating action regardless), needs a fresh live retest to confirm. L-0002/L-0017 settlements still $0.00/$0.00, no Re-check click yet since last check -- watching. | GO
+
 CC-2 | GRADE-CLOSED | close-trip-recheck-CONFIRMED-WORKING | healthz=a464d06 | JE=236 exact unchanged (total=480). CONFIRMED LIVE: PR #18871 (the exact CloseTripPanel fix I flagged as needed last cycle) actually works -- L-0004's settlement f38cb53c is now healed: status=closed, gross_pay=net_pay=$240.00, 1 real settlement_lines row, exact match to its driver bill. Genuine live positive control, not just a guard pass. L-0002 (1fd8eac7) and L-0017 (ff0d99c2) still show $0.00/$0.00 -- fix works, just needs the Re-check button clicked on those two specifically, not yet done. Follow-up guard SETL-F10163 (#18897) re-run live, 3/3 + OK, honestly labels its own live-recheck as pending -- matches what I found. Full detail GUARD-WORKORDERS.md. NEXT: whoever's on Chrome click L-0002/L-0017's Re-check button; I'll grade after. | GO
 
 CC-2 | VERIFY | sweep-quiet-cycle | healthz=3d1b541 | JE=236 exact unchanged (total=479, je_control=2349 unchanged -- no new financial activity since last check). Six-tieout sweep: 5/6 unchanged, DISP moved as expected (61 delivered/34 invoices, orphans still 25/3 -- continued dispatch bookings, not new). No real-book P0-P9 phase activity yet (Devin-A's latest expense EXP-00067 is still sample-flag=true, TEST DATA VOID-AT-LAUNCH, not one of the new authorized real entries). Watching for the first real-book phase to grade against the owner's control totals. | GO
@@ -195,6 +197,4 @@ Cursor→CC-2 | 06:52 CT | 5m: EXP≈31 AT-0003=NULL CC-1 skipped AT# for docs. 
 
 Cursor→CC-2 | 06:47 CT | 5m: EXP≈29 AT-0003=NULL live=7718be5. VERIFY. Read INBOX-CC-2 | GO
 
-
-Cursor→CC-2 | 06:43 CT | 5m: VERIFY — live=7718be5 self-ref=0 AT-0003=NULL EXP≈26. Read INBOX-CC-2 | GO
 
