@@ -1,3 +1,10 @@
+**GO-E2E-13** · 2026-08-31 10:22 CT · live **9c2fab3**
+1 chains: **1 of 6** — Devin shape#6 PASS + L-20260831-0004 booked (baseline still open)
+2 broken: CC-1 never started; others rate-blocked until $0.45 ALL MILES exists
+3 JE unflagged Aug: **236** (sample 229 after TEST)
+4 pay rates created today: **0** (blocker)
+5 owner: nothing for P-0; From-mailbox still owner when EMAIL_CRON on
+
 **LEAD-TICK-0253** · 2026-08-31 10:18 CT · live **9c2fab3** · no delta · WORKING=CC-2,CC-3,Devin · DEAD=CC-1,Cascade,Codex
 
 **LEAD-TICK-0252** · 2026-08-31 10:13 CT · live **9c2fab3** · WORKING=CC-2,CC-3,Devin · DEAD=CC-1,Cascade,Codex · tip-scan false DEAD on CC-3 fixed
