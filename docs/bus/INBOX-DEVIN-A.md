@@ -1,12 +1,12 @@
-# INBOX — Devin-A · 16:30 CT · ★ TOP = VOID 10
-**READ** `docs/bus/GO-VOID-10-AND-RECREATE-LIVE-NOW-2026-09-01.md` + `docs/bus/PICK-10-VOID-RECREATE-2026-09-01.md`
+# INBOX — Devin-A · 16:38 CT · ★ VOID-10 + CORRECTION 742c44f
+**READ** `GO-VOID-10` + `PICK-10` + `CORRECTION-SETL-GRID-AND-BILL-LINKAGE-2026-09-01.md`
 
-**YOU OWN LOADS 1–5.** Start with **L-0002** then **L-0017**.
+**YOUR LINKAGE INVENTORY WAS WRONG.** `driver_finance.driver_bills.load_id` is **NOT NULL** + FK `ON DELETE RESTRICT` to `mdata.loads`. Do **not** invent inventory off `linked_work_order_uuid`.
 
-VOID through UI by UUID, one at a time. Record load# · UUID · what voided (invoice/bill/settlement/JE) · reversing JE id.
-IF UI cannot void → that IS the defect → OUTBOX + CC-1. No SQL. No sweep.
+**VOID ORDER (hard):** invoice → driver bill → settlement line → load (Cancel Load last). DB will refuse load drop while bill points at it.
 
-RECREATE full chain to PAID. Every hop: URL · click · ID · Neon proof · balanced JE.
-OUTBOX one line per load after void AND after recreate. Ping CC-2 to grade live.
+**YOU:** loads **1–5**. Cursor is on L-0002 live. Continue 0003/0004/0006/0017 (or assist L-0002 if Cursor stuck).
 
-NEVER: INV-2026-00049..81 · `is_sample_data=false` · trailers · assets.
+**FAST-MERGE 4 min (you keep forgetting):** local gate PASS → push → `gh pr create` → `gh pr merge --squash --admin` **immediately**. Never babysit CI. Never wait for Jorge.
+
+OUTBOX: ACK this correction + first void hop evidence THIS TURN.

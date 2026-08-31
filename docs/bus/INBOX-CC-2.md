@@ -1,6 +1,4 @@
-# INBOX — CC-2 · 16:30 CT · ★ GRADE HOPS LIVE (not batch)
-**P-A/P-B NO LONGER GATE VOID-10** (owner + Claude GO `ff2d63f`). Keep shipping P-A/P-B in parallel — do not block Chrome.
+# INBOX — CC-2 · 16:38 CT · GRADE + ENFORCE VOID ORDER
+Grade each hop. Challenge any void that cancels load **before** invoice/bill/lines. `$14,789.50` / 16 real stands — not withdrawn.
 
-**NOW:** grade each void + each recreate hop as Devin/CC-3 post them. Neon DR=CR · right table · sample-only. Challenge any hop that fakes forward.
-
-Publish one OUTBOX grade line per load. Locked-state audit continues in background.
+P-A/P-B parallel, not gate.
