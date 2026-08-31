@@ -104,6 +104,21 @@ export type RegisterBulkRouteOptions<TPayload> = {
   maxIds?: number;
   requireReasonActions?: string[];
   destructiveActions?: string[];
+  /**
+   * When true, the first per-row failure rolls back the entire batch (no partial succeed).
+   * Prefer atomicFailStopActions for action-scoped fail-stop (bulk void only).
+   */
+  atomicFailStop?: boolean;
+  /** Actions that use atomic fail-stop (e.g. ["void"]). */
+  atomicFailStopActions?: string[];
+  /**
+   * Optional per-action role gate. Return a 403 body to reject before processing.
+   * Used so bulk `void` can allow Accountant (canVoidCancel) without opening other destructive ops.
+   */
+  actionRoleGate?: (
+    role: string,
+    action: string
+  ) => { ok: true } | { ok: false; code: string; message: string };
   actionMap: Record<string, z.ZodType<TPayload>>;
   perEntityHandler: (ctx: BulkPerEntityContext<TPayload>) => Promise<BulkPerEntityResult>;
 };
@@ -132,18 +147,56 @@ export async function appendBulkCrudAudit(
   );
 }
 
+export class BulkFailStopError extends Error {
+  readonly code = "bulk_fail_stop";
+  constructor(
+    readonly failure: BulkUpdateFailure,
+    readonly attemptedIndex: number,
+    readonly attemptedCount: number
+  ) {
+    super(
+      `Bulk fail-stop at ${attemptedIndex + 1}/${attemptedCount}: ${failure.code} — ${failure.message}`
+    );
+    this.name = "BulkFailStopError";
+  }
+}
+
 export async function processBulkPerId<TPayload>(
   client: SavepointQueryClient,
   ids: string[],
   handler: (ctx: BulkPerEntityContext<TPayload>) => Promise<BulkPerEntityResult>,
-  baseCtx: Omit<BulkPerEntityContext<TPayload>, "id" | "client">
+  baseCtx: Omit<BulkPerEntityContext<TPayload>, "id" | "client">,
+  options: { atomicFailStop?: boolean } = {}
 ): Promise<{ succeeded: string[]; failed: BulkUpdateFailure[]; auditLogIds: string[] }> {
   const succeeded: string[] = [];
   const failed: BulkUpdateFailure[] = [];
   const auditLogIds: string[] = [];
+  const atomicFailStop = options.atomicFailStop === true;
 
   for (let i = 0; i < ids.length; i += 1) {
     const id = ids[i]!;
+
+    if (atomicFailStop) {
+      // No savepoint: first failure aborts the whole transaction (never a partial batch).
+      let result: BulkPerEntityResult;
+      try {
+        result = await handler({ ...baseCtx, id, client });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Bulk row processing failed";
+        throw new BulkFailStopError({ id, code: "E_INTERNAL", message }, i, ids.length);
+      }
+      if (!result.ok) {
+        throw new BulkFailStopError(
+          { id, code: result.code, message: result.message },
+          i,
+          ids.length
+        );
+      }
+      succeeded.push(id);
+      if (result.auditLogId) auditLogIds.push(result.auditLogId);
+      continue;
+    }
+
     const savepoint = `bulk_id_${i}`;
     const result = await withSavepoint(
       client,
@@ -205,42 +258,70 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
       const permission = assertBulkActionAllowed(authUser.role, action, destructiveActions);
       if (!permission.ok) return reply.code(403).send({ error: "forbidden", code: permission.code });
 
+      if (options.actionRoleGate) {
+        const gated = options.actionRoleGate(String(authUser.role ?? ""), action);
+        if (!gated.ok) {
+          return reply.code(403).send({ error: "forbidden", code: gated.code, message: gated.message });
+        }
+      }
+
       const parsedPayload = actionSchema.safeParse(payload);
       if (!parsedPayload.success) return sendBulkValidationError(reply, parsedPayload.error);
 
       const bulkCallId = randomUUID();
       const operatingCompanyId = parsedQuery.data.operating_company_id;
 
-      const response = await withCurrentUser(authUser.uuid, async (client) => {
-        await setScopedCompanyContext(client, authUser.uuid, operatingCompanyId);
+      try {
+        const response = await withCurrentUser(authUser.uuid, async (client) => {
+          await setScopedCompanyContext(client, authUser.uuid, operatingCompanyId);
 
-        return processBulkPerId(
-          client,
-          ids,
-          (ctx) =>
-            options.perEntityHandler({
-              ...ctx,
+          return processBulkPerId(
+            client,
+            ids,
+            (ctx) =>
+              options.perEntityHandler({
+                ...ctx,
+                payload: parsedPayload.data,
+              }),
+            {
+              action,
               payload: parsedPayload.data,
-            }),
-          {
-            action,
-            payload: parsedPayload.data,
-            reason,
-            operatingCompanyId,
-            actorUserId: authUser.uuid,
-            bulkCallId,
-          }
-        );
-      });
+              reason,
+              operatingCompanyId,
+              actorUserId: authUser.uuid,
+              actorRole: String(authUser.role ?? ""),
+              bulkCallId,
+            },
+            { atomicFailStop: options.atomicFailStop === true || (options.atomicFailStopActions ?? []).includes(action) }
+          );
+        });
 
-      const body: BulkUpdateResponse = {
-        requested: ids.length,
-        succeeded: response.succeeded,
-        failed: response.failed,
-        audit_log_ids: response.auditLogIds,
-        bulk_call_id: bulkCallId,
-      };
-      return reply.code(200).send(body);
+        const body: BulkUpdateResponse = {
+          requested: ids.length,
+          succeeded: response.succeeded,
+          failed: response.failed,
+          audit_log_ids: response.auditLogIds,
+          bulk_call_id: bulkCallId,
+        };
+        return reply.code(200).send(body);
+      } catch (err) {
+        if (err instanceof BulkFailStopError) {
+          const body: BulkUpdateResponse = {
+            requested: ids.length,
+            succeeded: [],
+            failed: [err.failure],
+            audit_log_ids: [],
+            bulk_call_id: bulkCallId,
+          };
+          return reply.code(409).send({
+            ...body,
+            error: "bulk_fail_stop",
+            message: err.message,
+            fail_index: err.attemptedIndex,
+          });
+        }
+        throw err;
+      }
     } finally {
       releaseBulkInFlight(authUser.uuid);
     }

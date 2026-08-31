@@ -29,6 +29,7 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
@@ -103,6 +104,7 @@ export function InvoicesListPage() {
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
   const [sentModalOpen, setSentModalOpen] = useState(false);
   const [factoredModalOpen, setFactoredModalOpen] = useState(false);
+  const [voidModalOpen, setVoidModalOpen] = useState(false);
   const [pendingIds, setPendingIds] = useState<string[]>([]);
   const [batchId, setBatchId] = useState("");
   // Bidirectional URL sync: customer_id / status / has_balance are searchParams-driven so
@@ -252,7 +254,7 @@ export function InvoicesListPage() {
     [query.data?.total, query.data?.has_more]
   );
 
-  const runInvoiceBulk = async (action: "mark_sent" | "mark_factored", payload?: Record<string, unknown>) => {
+  const runInvoiceBulk = async (action: "mark_sent" | "mark_factored" | "void", payload?: Record<string, unknown>, reason?: string) => {
     if (!selectedCompanyId) {
       pushToast("Select an operating company before bulk updates.", "error");
       return;
@@ -265,6 +267,7 @@ export function InvoicesListPage() {
           ids: pendingIds,
           action,
           payload,
+          reason,
           operatingCompanyId: selectedCompanyId,
           invalidateKeys: [["accounting", "invoices", selectedCompanyId]],
         },
@@ -540,6 +543,16 @@ export function InvoicesListPage() {
             >
               Mark factored
             </button>
+            <button
+              type="button"
+              className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
+              onClick={() => {
+                setPendingIds(selected.map((row) => row.id));
+                setVoidModalOpen(true);
+              }}
+            >
+              Void
+            </button>
           </>
         )}
         emptyText="No invoices found for the selected filters."
@@ -583,6 +596,18 @@ export function InvoicesListPage() {
         onConfirm={() => {
           setFactoredModalOpen(false);
           void runInvoiceBulk("mark_factored", { batch_id: batchId.trim() });
+        }}
+      />
+
+      <VoidReasonModal
+        open={voidModalOpen}
+        title="Void invoices"
+        entityRef={`${pendingIds.length} selected`}
+        minLength={10}
+        onClose={() => setVoidModalOpen(false)}
+        onSubmit={async (reason) => {
+          setVoidModalOpen(false);
+          await runInvoiceBulk("void", {}, reason);
         }}
       />
 

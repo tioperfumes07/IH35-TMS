@@ -1,3 +1,16 @@
+# INBOX — CC-3 · 18:20 CT · ★ SORT LAW TOP (Cursor diagnosed)
+**READ** `docs/audit/SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md` §A0–A3 · `docs/specs/GLOBAL-SORT-RULE.md`
+
+**ROOT CAUSE (do not re-diagnose blind across 351 files):**
+1. ParityTable sort hit-target is **label-only** `inline-flex` (no `w-full`) — header padding clicks = no-op. DataTable already uses `w-full`.
+2. Default resize grip steals the right edge (`stopPropagation`).
+3. URL `?sort=&dir=` never reaches list APIs → no SQL `ORDER BY`.
+4. Server-paginated + **internal** sort = orders only the fetched page (invoices API default limit=100) — correctness bug.
+5. Fix CENTER: ParityTable hit-target + resize; then controlled/external sort + server ORDER BY for paged lists. Sweep modules after center.
+
+**YOUR LIST:** SORT-01 · SORT-02 · sweep · insurance docs (LAW-FIX-INSTANTLY #18–21).
+
+---
 # INBOX — CC-3 · 16:52 CT · ★ VOID SUBSTITUTES · WAIT FOR healthz tip
 **READ** `RULING-VOID-10-SUBSTITUTE-PICKLIST-2026-09-01.md`
 

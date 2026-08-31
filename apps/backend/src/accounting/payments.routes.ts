@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
 import { z } from "zod";
+import { buildListSearchClause } from "../lib/list-search/build-list-search.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
 import { nextPaymentDisplayId } from "./display-id.js";
@@ -236,9 +237,23 @@ export async function registerPaymentsRoutes(app: FastifyInstance) {
         where.push(`p.payment_date <= $${values.length}::date`);
       }
       if (q.search) {
-        values.push(`%${q.search}%`);
-        const idx = values.length;
-        where.push(`(p.display_id ILIKE $${idx} OR c.customer_name ILIKE $${idx})`);
+        const clause = buildListSearchClause({
+          search: q.search,
+          values,
+          fields: [
+            { kind: "text", sql: "p.display_id" },
+            {
+              kind: "text",
+              sql: "COALESCE(c.customer_name, mdata.resolve_customer_label_same_company(p.customer_id, p.operating_company_id))",
+            },
+            { kind: "amount_cents", sql: "p.amount_cents" },
+            { kind: "date", sql: "p.payment_date" },
+            { kind: "status", sql: "p.payment_method" },
+            { kind: "text", sql: "p.notes" },
+            { kind: "text", sql: "p.reference" },
+          ],
+        });
+        if (clause) where.push(clause);
       }
 
       const countRes = await client.query(

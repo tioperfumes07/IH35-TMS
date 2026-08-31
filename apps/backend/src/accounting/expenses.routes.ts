@@ -15,6 +15,7 @@ import { canVoidCancel } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { listExpenseDuplicateGroups } from "./expense-duplicate.service.js";
 import { nextExpenseDisplayId } from "./display-id.js";
+import { buildListSearchClause, expenseListSearchFields } from "../lib/list-search/build-list-search.js";
 
 export const EXPENSE_GL_POSTING_FLAG_KEY = "EXPENSE_GL_POSTING_ENABLED";
 
@@ -169,6 +170,7 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
   work_order_id: z.string().uuid().optional(),
   // ACCT-F5034 — insurance_claim_id written on create; list filter for ClaimsTab ExpensesReverseSection.
   insurance_claim_id: z.string().uuid().optional(),
+  search: z.string().trim().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -186,6 +188,7 @@ export type ExpenseListFilters = {
   unitId?: string;
   workOrderId?: string;
   insuranceClaimId?: string;
+  search?: string;
   limit: number;
   offset: number;
 };
@@ -302,6 +305,17 @@ export async function queryExpensesList(
     values.push(filters.insuranceClaimId);
     where.push(`e.insurance_claim_id = $${values.length}::uuid`);
   }
+  if (filters.search) {
+    const clause = buildListSearchClause({
+      search: filters.search,
+      values,
+      fields: expenseListSearchFields({
+        vendorNameExpr:
+          "COALESCE(v.vendor_name, mdata.resolve_vendor_label_same_company(e.vendor_uuid, e.operating_company_id))",
+      }),
+    });
+    if (clause) where.push(clause);
+  }
   values.push(filters.limit);
   const limitIdx = values.length;
   values.push(filters.offset);
@@ -409,6 +423,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         unitId: q.unit_id,
         workOrderId: q.work_order_id,
         insuranceClaimId: q.insurance_claim_id,
+        search: q.search,
         limit: q.limit,
         offset: q.offset,
       });

@@ -24,6 +24,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { humanMemo } from "./ManualJEListPage";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
+import { BulkProgressDialog } from "../../components/bulk";
+import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 
 const STATUS_OPTIONS: Array<{ value: "" | ExpenseListStatus; label: string }> = [
   { value: "", label: "All statuses" },
@@ -98,6 +100,7 @@ export function ExpensesListPage() {
   const deepLinkWorkOrderId = searchParams.get("work_order_id");
   const deepLinkInsuranceClaimId = searchParams.get("insurance_claim_id");
   const [status, setStatus] = useState<"" | ExpenseListStatus>("");
+  const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const staged = useStagedListFilters({
@@ -154,6 +157,9 @@ export function ExpensesListPage() {
     );
   }
   // LST-F5195 — reverse entity filters commit via staged Apply (no silent URL helper).
+  const bulk = useEntityBulkAction();
+  const [pendingVoidIds, setPendingVoidIds] = useState<string[]>([]);
+  const [batchVoidOpen, setBatchVoidOpen] = useState(false);
   const [voidOpen, setVoidOpen] = useState(false);
   const [voidTarget, setVoidTarget] = useState<{ id: string; displayId: string } | null>(null);
   const [highlightedExpenseId, setHighlightedExpenseId] = useState<string | null>(deepLinkExpenseId);
@@ -179,6 +185,7 @@ export function ExpensesListPage() {
       "expenses",
       companyId,
       status,
+      search,
       fromDate,
       toDate,
       deepLinkLoadId,
@@ -189,7 +196,7 @@ export function ExpensesListPage() {
       deepLinkInsuranceClaimId,
     ],
     queryFn: () =>
-      listExpenses(companyId, {
+      listExpenses(companyId, { search: search || undefined,
         status: status || undefined,
         date_from: fromDate || undefined,
         date_to: toDate || undefined,
@@ -503,6 +510,38 @@ export function ExpensesListPage() {
         }}
       />
       <VoidReasonModal
+        open={batchVoidOpen}
+        title="Void expenses"
+        entityRef={`${pendingVoidIds.length} selected`}
+        minLength={10}
+        onClose={() => setBatchVoidOpen(false)}
+        onSubmit={async (reason) => {
+          if (!selectedCompanyId) return;
+          setBatchVoidOpen(false);
+          await bulk.runBulk(
+            {
+              domain: "accounting",
+              resource: "expenses",
+              ids: pendingVoidIds,
+              action: "void",
+              reason,
+              operatingCompanyId: selectedCompanyId,
+              invalidateKeys: [["accounting", "expenses", selectedCompanyId]],
+            },
+            () => setPendingVoidIds([])
+          );
+        }}
+      />
+      <BulkProgressDialog
+        open={bulk.progressOpen}
+        loading={bulk.progressLoading}
+        requested={bulk.progress.requested}
+        succeeded={bulk.progress.succeeded}
+        failed={bulk.progress.failed}
+        bulk_call_id={bulk.progress.bulk_call_id}
+        onClose={() => bulk.setProgressOpen(false)}
+      />
+      <VoidReasonModal
         open={voidOpen}
         title="Void Expense"
         entityRef={voidTarget?.displayId ?? ""}
@@ -562,7 +601,16 @@ export function ExpensesListPage() {
           </p>
         ) : null}
 
-        <ParityTable
+        <div className="mb-2">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search # · vendor · amount · date · status · load · memo"
+          className="w-full max-w-xl rounded-sm border border-gray-300 px-2 py-1 text-sm"
+        />
+      </div>
+      <ParityTable
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}
@@ -578,7 +626,21 @@ export function ExpensesListPage() {
           sortKey={sortKey}
           sortDirection={sortDirection}
           onSortChange={onSortChange}
-          emptyText="No expenses found for the selected filters."
+          selectable
+        maxSelectable={200}
+        batchActions={(selected) => (
+          <button
+            type="button"
+            className="rounded-sm border border-slate-400 px-1.5 py-0.5 text-slate-800"
+            onClick={() => {
+              setPendingVoidIds(selected.map((row) => row.id));
+              setBatchVoidOpen(true);
+            }}
+          >
+            Void
+          </button>
+        )}
+        emptyText="No expenses found for the selected filters."
         />
       </div>
     </AccountingSubNavWrapper>
