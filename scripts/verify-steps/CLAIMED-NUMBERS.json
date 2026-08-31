@@ -39,6 +39,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-hover-dropdown-close-on-menu-click"
   },
+  "2442": {
+    "claimed_at": "2026-08-31",
+    "claimed_by": "cursor",
+    "purpose": "verify-topbar-create-button-dropdown"
+  },
   "2912": {
     "claimed_at": "2026-08-08",
     "claimed_by": "cursor",
