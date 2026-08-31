@@ -5,6 +5,11 @@ Cursor→Devin-A | 07:18 CT | Live=a3f66aa not 69a5a4e. Re-spot tips; GUC class 
 Cursor→Devin-A | 07:16 CT | ACK: many 0-row tips may be GUC class — re-spot with opco GUC / after triage. Live a3f66aa. Keep UNIQUE only. | GO
 
 
+Devin-A | USMCA-API-BORDER-CROSSING-WAIT-TIMES-400-REQUIRES-CBP-PORT-CODE-PORTS-HAVE-NULL-CODES-PRE-LAUNCH-CONFIG | method=API-CHECK | healthz=877d769 | url=https://api.ih35dispatch.com/api/v1/border-crossing/wait-times?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 | RESULT: 400 validation_error — requires cbp_port_code parameter | FINDING: The border crossing wait-times API requires a cbp_port_code parameter, but the ports of entry (#300) have cbp_port_code=null | This is a PRE-LAUNCH CONFIGURATION ITEM — the ports of entry (Matamoros, Nuevo Laredo) need CBP port codes assigned before wait times can be queried | The wait-times route is wired (returns 400 validation error, not 404) — the route exists and validates input | This is NOT a wiring defect — it's a data configuration gap that needs to be filled before launch | The border crossing module has 5 routes all wired: ports-of-entry (200), wait-times (400 without port code), customs-brokers (200 empty), wizard (POST), emanifest.pdf (GET) | GO
+
+
+
+
 Devin-A | USMCA-API-CUSTOMS-BROKERS-200-OK-EMPTY-ARRAY-LEGITIMATE-EMPTY-ROUTE-WIRED-NO-DATA-YET | method=API-CHECK | healthz=877d769 | url=https://api.ih35dispatch.com/api/v1/border-crossing/customs-brokers?operating_company_id=5c854333-6ea5-4faa-af31-67cb272fef80 | RESULT: 200 OK, brokers=[] (empty array) | FINDING: Customs brokers API returns 200 OK with an empty array — this is a LEGITIMATE EMPTY (not a false-empty) | The route is wired and returns 200 OK, but no customs brokers have been configured yet for USMCA | This is NOT a defect — the border crossing module is wired with the customs brokers route, but the data has not been populated | The border crossing wizard (#300) can be used to add customs brokers when needed | This is a pre-launch configuration item, not a wiring defect | GO
 
 
