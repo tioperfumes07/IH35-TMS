@@ -21,6 +21,7 @@ type Props = {
   lockReason?: string;
   disabled?: boolean;
   hint?: string;
+  autoFocus?: boolean;
   "data-testid"?: string;
 };
 
@@ -41,6 +42,7 @@ export function QboDocumentNumberField({
   lockReason,
   disabled,
   hint,
+  autoFocus = false,
   "data-testid": testId = "qbo-document-number",
 }: Props) {
   const nextQuery = useQuery({
@@ -74,12 +76,18 @@ export function QboDocumentNumberField({
       <input
         data-testid={testId}
         aria-label={label}
-        className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono placeholder:text-gray-400"
+        autoFocus={autoFocus}
+        autoComplete="off"
+        spellCheck={false}
+        inputMode="numeric"
+        className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-slate-900 caret-slate-900 normal-case tracking-normal placeholder:text-gray-400"
         value={value}
         disabled={disabled || locked}
         placeholder={suggested}
         onChange={(event) => onChange(event.target.value)}
-        onFocus={(event) => event.currentTarget.select()}
+        onFocus={(event) => {
+          if (event.currentTarget.value) event.currentTarget.select();
+        }}
       />
       {taken ? (
         <span className="font-normal text-red-700">Already used on {fieldName} {value.trim()}.</span>
