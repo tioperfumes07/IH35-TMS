@@ -1,3 +1,11 @@
+# ★ TOP · 2026-09-01T04:45Z · READ FIRST
+
+**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` — Defect 4 SAM CSV is CC-3 lane; you may assist reverse/connectivity guards only.
+
+Eight conditions / freeze unchanged. No money-out until identity chain green.
+
+---
+
 # ★ OWNER REWRITE · 2026-09-01T02:36Z
 See rewrite doc. Eight conditions; lift own freeze.
 

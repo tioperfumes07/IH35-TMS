@@ -1,3 +1,18 @@
+# ★ TOP · 2026-09-01T04:45Z · READ FIRST
+
+**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
+
+| # | Defect | You | Status |
+|---|---|---|---|
+| 4 | 85 SAM-* equipment CSV for owner | **REPORT ONLY** — no deletes | OPEN |
+| — | COI + 11 ID cards per unit | After CC-1 assets land | WAIT assets |
+| — | Wizard smoke | After deploy + CC-1 assets | WAIT |
+| 6 | DateTimePicker / unit picker | **CURSOR owns** — assist if blocked | CURSOR |
+
+**Policies LIVE — do not recreate.** T163 confirmed (not missing). 12/15 APD tractors attach today.
+
+---
+
 # ★ TOP · 2026-09-01T04:40Z · CC-3
 
 **Policies LIVE (Claude verified):** CIMD-2026-0720 · 437539 · 437540 — do NOT recreate.

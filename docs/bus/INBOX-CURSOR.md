@@ -1,12 +1,21 @@
-# ★ TOP · 2026-09-01T04:40Z · CURSOR
+# ★ TOP · 2026-09-01T04:45Z · READ FIRST
 
-1. **SHIPPING:** insurance wizard `$2::uuid` bill INSERT fix + dispatch board column drag-reorder + resize/sort (already wired) — PR this turn.
-2. **PURGE:** phases 1–2 **COMMITTED** (fake bank 0, settlements 0). Phase 3 failed — voided non-sample invoices touched REAL GL. Script now **sample-only** (`is_sample_data=true`). Re-run `--commit` from phase 3.
-3. **CC-1 NOW:** asset register — T144/T174/T156 USMCA rows, VIN 1M1AN4GY0PM030370 unit+asset, 20 trailer assets + ACVs, 13 driver_schedule for CIMD-2026-0720. See Desktop `Ih35 usmca insurance built live 2026 09 01`.
-4. **CC-3 NOW:** after CC-1 assets — wizard smoke "+ Create policy + schedule 12 bills" on one policy; COI/ID attach; date picker Escape fix.
-5. **Codex:** app-wide movable columns primitive → sweep remaining ParityTable/DataTable call sites per `SWEEP-SORTABLE-AND-VOID-VISIBILITY-2026-08-31.md`.
+**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
 
-**Law:** `OWNER-EXECUTE-NO-PUSHBACK-LAW-2026-09-01.md` · financial unchanged · NO-SEAT prod fixtures.
+| # | Defect | You | Status |
+|---|---|---|---|
+| 6a | DateTimePicker typed entry + month/year jump | **BUILD** | OPEN |
+| 6b | Escape closes picker only, not wizard | **BUILD** | OPEN |
+| 6c | Empty search → no red unit-list error | **BUILD** | OPEN |
+| 6d | Block duplicate-VIN "+ Add new unit" | **BUILD** | OPEN |
+| — | Load board column drag/sort/resize | **SHIPPED** #19063 | deploy wait |
+| — | App-wide column sweep | After CC-3 ParityTable tokens | QUEUED |
+
+**Owner creates loads AFTER:** purge complete + insurance DoD in GO file.
+
+**Purge:** phases 1–3b committed; phase 4 (485 JEs) running.
+
+**Fan-out:** INBOXes updated this turn — wake CC-1/CC-3/CC-2.
 
 ---
 
