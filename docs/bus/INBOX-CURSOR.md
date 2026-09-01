@@ -1,55 +1,35 @@
-# ★ TOP · 2026-09-01T06:55Z · DISPATCH BOARD HISTORY FIX — on same branch (uncommitted)
+# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
 
-**From [Dispatch board LIVE/HISTORY](9f35c23f-9241-4ec6-b215-1cb9f0b1916f):** #19059/#19063 already shipped live filter, PU/DEL columns, sort, drag-reorder.
+**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
+**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
+**Reply:** `CURSOR | ACK | GO-MECH-0901 | NOW=LAY-04 | GO`
 
-**Gap fixed locally:** History mode no longer mixes live truck sections — flat **Loads history** + 30-day delivery default.
+**Unblocked:** ratchet PASS · gate PASS · CC-3 owns ParityTable COL-02/03 · Cursor lead owns deploy batch.
 
-**Files:** `DispatchBoard.tsx` · `Dispatch.tsx` · `verify-dispatch-board-live-history.mjs` · `DispatchBoard.test.tsx` (7/7)
+--- Owner audit on main today.
 
-**Still open:** per-section sort/filters · CC-3 column tokens · verify-step claim for guard
+**Your lane (25 items):** LAY-01,03–07,10 · CTL-04,05 · COL-04 · FLT-02,03 · SRC-01,02 · MOD-01,04,05 · SEL-02–04 · VIS-02,04 · DSP-01–04 + **DSP-05 UI** · PLN-03,04,06 · UPL-04–06 · WIR-01,03,04 · DQF UI.
 
----
+**Wave 0 NOW (this seat):**
+1. **LAY-04/05** KPI tiles — in progress (`KpiCard` drop flex-1)
+2. **MOD-02/03 on DatePicker** — #19067 fixed DateTimePicker only; insurance expiry uses **DatePicker** (still button-only) — port typed entry + Escape stopPropagation
+3. **SEL-01** select-all scope — ParityTable vs ListView; owner expects cross-list act not page-only
+4. **DSP-05** dispatch assign confirm modal — after CC-1 API lands
 
-# ★ TOP · 2026-09-01T06:50Z · DEFECT 6a–6c BUILT · branch `cursor/defect6-datetime-picker-escape`
+**Register corrections (main today, deploy may lag):**
+- DateTimePicker typed + Escape = **#19067 merged**
+- Driver PDF `resolveApiUrl` = **on main** — CC-2 verify prod
+- Dispatch LIVE/History + PU/DEL = **#19059/#19067**
 
-**From [DateTimePicker Defect 6 fixes](7180580b-b387-49c8-80aa-34ed0f03fe7c)** — tests **41/41 PASS** (uncommitted on branch).
-
-| # | Item | Status |
-|---|------|--------|
-| 6a | DateTimePicker typed MM/DD/YYYY + month/year jump | **BUILT** |
-| 6b | Escape closes picker only (not wizard) | **BUILT** |
-| 6c | EntityPicker no false red on empty search | **BUILT** |
-| 6d | Block duplicate-VIN `+ Add new unit` | **OPEN** — needs cross-entity VIN lookup API + picker guard |
-
-**Next:** PR + merge 6a–6c · then scope 6d (API + EntityPicker + guard).
-
----
-
-# ★ TOP · 2026-09-01T04:45Z · READ FIRST
-
-**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
-
-| # | Defect | You | Status |
-|---|---|---|---|
-| 6a | DateTimePicker typed entry + month/year jump | **BUILD** | OPEN |
-| 6b | Escape closes picker only, not wizard | **BUILD** | OPEN |
-| 6c | Empty search → no red unit-list error | **BUILD** | OPEN |
-| 6d | Block duplicate-VIN "+ Add new unit" | **BUILD** | OPEN |
-| — | Load board LIVE/HISTORY + PU/DEL columns | **#19059/#19063 on main** + history-section fix **BUILT** locally |
-| — | App-wide column sweep | After CC-3 ParityTable tokens | QUEUED |
-
-**Owner creates loads AFTER:** purge complete + insurance DoD in GO file.
-
-**Purge:** phases 1–3b committed; phase 4 (485 JEs) running.
-
-**Fan-out:** INBOXes updated this turn — wake CC-1/CC-3/CC-2.
+**Do not compete with CC-3 on ParityTable column reorder/auto-fit.**
 
 ---
 
-# ★ OWNER EXECUTE · INSURANCE / LEGAL HOPS · 2026-09-01
+# ★ TOP · 2026-09-01T07:00Z · SHIPPED
 
-**Scoped law:** insurance/legal/hiring/ethics — live create, fix blockers same turn. **Financial work unchanged.**
+| PR | What |
+|----|------|
+| **#19067** | Defect 6a–6c + dispatch history |
+| **#19068** | Samsara HOS roster LEFT JOIN |
 
 ---
-
-# ★ OWNER WALK · STAND BY · 2026-09-01T03:07Z · LIVE=`d870922`

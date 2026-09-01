@@ -1,3 +1,7 @@
+2026-09-01T12:50Z | GO-MECH-0901 | registers+xlsx+csv in docs/register | PASTE=docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md | gate+ratchet PASS | ALL INBOX ACK | FAST-MERGE ON | GO
+2026-09-01T12:45Z | MECHANICAL-REGISTER-FANOUT | 73 items 70 open | GO=docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md | ALL INBOXes rewritten NO STAND BY | CC-3 PUSH ACCT-F10261+COL-02/03 | CC-1 purge5-6+DSP-05 | CODEX DSP-06-09+PLN | DEVIN-A live verify | CASCADE board rows | Cursor DatePicker+KPI | GO
+2026-09-01T07:05Z | PURGE-WORM-RULING | NO hard DELETE — void/deactivate/cancel is done | CC-1 proceed | verify-static-ratchet PASS on main | CC-3 push insurance P0 first | purge phase4 running | GO
+2026-09-01T06:58Z | SHIPPED #19067 DISPATCH-DEFECT-6-HISTORY | SHIPPED #19068 SAMSARA-HOS-ROSTER-01 | purge agent running | next=6d VIN block + CC-1 D1 | GO
 2026-09-01T06:55Z | DISPATCH-HISTORY-FIX | history=flat Loads history no truck sections | guards PASS | tests 7/7 | branch=cursor/defect6-datetime-picker-escape mixed w/ Defect6 | PR next | GO
 2026-09-01T06:50Z | DEFECT-6a-c BUILT | branch=cursor/defect6-datetime-picker-escape | tests=41/41 | 6d OPEN cross-entity VIN API | PR next | GO
 2026-09-01T06:45Z | SAMSARA-HOS-ROSTER-FIX | paired-only 5→Active+samsara LEFT JOIN | GO=docs/bus/GO-SAMSARA-HOS-ROSTER-FIX-2026-09-01.md | branch=cursor/dispatch-board-live-history | CC-1 D1+reactivate 4 | GO

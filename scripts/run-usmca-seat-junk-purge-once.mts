@@ -369,20 +369,78 @@ async function reverseSampleJes(c: Client): Promise<number> {
   return n;
 }
 
-async function cancelLoads(c: Client): Promise<number> {
-  const rows = await c.query<{ id: string; load_number: string }>(
+/** Deactivate sample settlement lines so cancellation gate does not block on dead sample settlements. */
+async function prepareSampleLoadsForCancel(c: Client): Promise<number> {
+  const r = await c.query(
     `
-      SELECT id::text, load_number
-        FROM mdata.loads
-       WHERE operating_company_id = $1::uuid
-         AND soft_deleted_at IS NULL
-         AND status NOT IN ('cancelled')
-       ORDER BY created_at
+      UPDATE driver_finance.settlement_lines sl
+         SET is_active = false,
+             updated_at = now()
+        FROM mdata.loads l,
+             driver_finance.driver_settlements ds
+       WHERE sl.load_id = l.id
+         AND ds.id = sl.settlement_id
+         AND l.operating_company_id = $1::uuid
+         AND l.is_sample_data = true
+         AND l.soft_deleted_at IS NULL
+         AND l.status NOT IN ('cancelled')
+         AND COALESCE(sl.is_active, true) = true
+         AND COALESCE(sl.is_sample_data, false) = true
+         AND COALESCE(ds.is_sample_data, false) = true
+       RETURNING sl.id
     `,
     [USMCA]
   );
-  let n = 0;
+  return r.rowCount ?? 0;
+}
+
+async function cancelLoads(c: Client): Promise<{ ok: number; skip: number }> {
+  await prepareSampleLoadsForCancel(c);
+
+  const rows = await c.query<{ id: string; load_number: string; skip_reason: string | null }>(
+    `
+      SELECT l.id::text,
+             l.load_number,
+             CASE
+               WHEN EXISTS (
+                 SELECT 1 FROM accounting.invoices i
+                  WHERE i.source_load_id = l.id
+                    AND i.operating_company_id = l.operating_company_id
+                    AND i.status <> 'void'
+                    AND COALESCE(i.is_sample_data, false) = false
+               ) THEN 'real_invoice_attached'
+               WHEN EXISTS (
+                 SELECT 1 FROM driver_finance.settlement_lines sl
+                  WHERE sl.load_id = l.id
+                    AND COALESCE(sl.is_active, true) = true
+                    AND COALESCE(sl.is_sample_data, false) = false
+               ) THEN 'real_settlement_line_attached'
+               WHEN EXISTS (
+                 SELECT 1 FROM driver_finance.driver_bills db
+                  WHERE db.load_id = l.id
+                    AND db.operating_company_id = l.operating_company_id
+                    AND db.status <> 'void'
+               ) THEN 'open_driver_bill_attached'
+               ELSE NULL
+             END AS skip_reason
+        FROM mdata.loads l
+       WHERE l.operating_company_id = $1::uuid
+         AND l.soft_deleted_at IS NULL
+         AND l.status NOT IN ('cancelled')
+         AND l.is_sample_data = true
+       ORDER BY l.created_at
+    `,
+    [USMCA]
+  );
+
+  let ok = 0;
+  let skip = 0;
   for (const row of rows.rows) {
+    if (row.skip_reason) {
+      skip += 1;
+      console.log(`  load ${row.load_number} SKIP ${row.skip_reason}`);
+      continue;
+    }
     try {
       await cancelLoadInClientTx(c, ACTOR, "Owner", {
         operating_company_id: USMCA,
@@ -391,12 +449,13 @@ async function cancelLoads(c: Client): Promise<number> {
         cancellation_notes: `${REASON} — purge seat test load ${row.load_number}`,
         billable_to_customer: false,
       });
-      n += 1;
+      ok += 1;
     } catch (e) {
+      skip += 1;
       console.log(`  load ${row.load_number}: ${e instanceof Error ? e.message : e}`);
     }
   }
-  return n;
+  return { ok, skip };
 }
 
 async function cancelTestInsurance(c: Client): Promise<number> {
@@ -484,7 +543,7 @@ try {
   });
 
   await runPhase("Phase 5: cancel loads...", async () => {
-    console.log(`  cancelled ${await cancelLoads(client)} loads`);
+    console.log(`  ${JSON.stringify(await cancelLoads(client))}`);
   });
 
   await runPhase("Phase 6: cancel test insurance policies...", async () => {
