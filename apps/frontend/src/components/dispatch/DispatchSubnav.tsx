@@ -50,7 +50,7 @@ const DISPATCH_NAV_ITEMS: readonly NavItem[] = [
   { label: "Late", href: "/dispatch/alerts/late-arrivals", badgeKey: "late" },
   { label: "Live Map", href: "/dispatch/geofencing", badgeKey: "live_map" },
   { label: "Trip Pairing", href: "/dispatch/trip-pairing" },
-  { label: "Factoring", href: "/accounting/factoring", badgeKey: "factoring" },
+  { label: "Factoring", href: "/dispatch/factoring-queue", badgeKey: "factoring" },
   {
     label: "Planning",
     href: "/dispatch/planners/loads",
@@ -123,7 +123,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   "/dispatch/border-crossing/history": "Border",
   "/dispatch/alerts/late-arrivals": "Late",
   "/dispatch/geofencing": "Live Map",
-  "/accounting/factoring": "Factoring",
+  "/dispatch/factoring-queue": "Factoring",
   "/dispatch/planners/driver": "Driver Planner",
   "/dispatch/planners/truck": "Truck Planner",
   "/dispatch/planners/loads": "Loads Planner",
@@ -190,8 +190,8 @@ export function dispatchSubNavActiveHref(
     return "/dispatch/alerts/late-arrivals";
   if (pathname.startsWith("/dispatch/geofencing"))
     return "/dispatch/geofencing";
-  if (pathname.startsWith("/accounting/factoring"))
-    return "/accounting/factoring";
+  if (pathname.startsWith("/dispatch/factoring-queue"))
+    return "/dispatch/factoring-queue";
   if (pathname.startsWith("/driver-finance/settlements"))
     return "/driver-finance/settlements";
   if (pathname.startsWith("/accounting/pre-settlements"))

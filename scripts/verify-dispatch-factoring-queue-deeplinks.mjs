@@ -135,12 +135,24 @@ export function checkDispatchConsumer(src) {
   return failures;
 }
 
-export function checkSubnavReserveHref(src) {
+export function checkSubnavRoutes(src) {
   const failures = [];
   if (!/label:\s*["']Reserve a Load["'][\s\S]{0,80}?href:\s*["'][^"']*book_load=1["']/.test(src)) {
     failures.push(
       `${SUBNAV}: "Reserve a Load" nav href must include book_load=1`,
     );
+  }
+  if (!/label:\s*["']Factoring["'][\s\S]{0,80}?href:\s*["']\/dispatch\/factoring-queue["']/.test(src)) {
+    failures.push(`${SUBNAV}: Dispatch Factoring tab must stay inside Dispatch at /dispatch/factoring-queue`);
+  }
+  if (/label:\s*["']Factoring["'][\s\S]{0,80}?href:\s*["']\/accounting\/factoring["']/.test(src)) {
+    failures.push(`${SUBNAV}: Dispatch Factoring tab must not leave the module for /accounting/factoring`);
+  }
+  if (!src.includes('"/dispatch/factoring-queue": "Factoring"')) {
+    failures.push(`${SUBNAV}: Dispatch Factoring queue must have its own breadcrumb label`);
+  }
+  if (!/pathname\.startsWith\(["']\/dispatch\/factoring-queue["']\)[\s\S]{0,80}?return ["']\/dispatch\/factoring-queue["']/.test(src)) {
+    failures.push(`${SUBNAV}: active-route resolver must keep Factoring selected on the Dispatch queue`);
   }
   return failures;
 }
@@ -160,7 +172,7 @@ export function run() {
     if (rel === ROUTES) failures.push(...checkFactoringQueueApi(src));
     if (rel === FACTORING_HOME) failures.push(...checkFactoringHomeHubReverseLinks(src));
     if (rel === DISPATCH) failures.push(...checkDispatchConsumer(src));
-    if (rel === SUBNAV) failures.push(...checkSubnavReserveHref(src));
+    if (rel === SUBNAV) failures.push(...checkSubnavRoutes(src));
   }
   return { ok: failures.length === 0, failures };
 }
@@ -186,8 +198,15 @@ if (process.argv.includes("--selftest")) {
     const loadId = searchParams.get("load_id") ?? searchParams.get("load");
     // no book_load handling
   `;
-  const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }`;
-  const badSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load" }`;
+  const goodSubnav = `{ label: "Reserve a Load", href: "/dispatch/book-load?book_load=1" }
+    { label: "Factoring", href: "/dispatch/factoring-queue" }
+    "/dispatch/factoring-queue": "Factoring"
+    if (pathname.startsWith("/dispatch/factoring-queue")) return "/dispatch/factoring-queue";`;
+  const badSubnav = goodSubnav.replace("/dispatch/book-load?book_load=1", "/dispatch/book-load");
+  const badFactoringSubnav = goodSubnav.replace(
+    '{ label: "Factoring", href: "/dispatch/factoring-queue" }',
+    '{ label: "Factoring", href: "/accounting/factoring" }',
+  );
   const goodApi = `SELECT c.id AS customer_id FROM mdata.load_stops WHERE load_id = l.id AND stop_type = 'delivery' AND soft_deleted_at IS NULL ORDER BY sequence_number DESC; customer_id: row.customer_id`;
   const badApiRetiredStop = goodApi.replace("AND soft_deleted_at IS NULL", "");
 
@@ -198,8 +217,9 @@ if (process.argv.includes("--selftest")) {
     ["good dispatch passes", checkDispatchConsumer(goodDispatch).length === 0],
     ["dispatch missing load fallback fails", checkDispatchConsumer(badDispatchNoLoad).length > 0],
     ["dispatch missing book_load fails", checkDispatchConsumer(badDispatchNoBook).length > 0],
-    ["good subnav passes", checkSubnavReserveHref(goodSubnav).length === 0],
-    ["bad subnav fails", checkSubnavReserveHref(badSubnav).length > 0],
+    ["good subnav passes", checkSubnavRoutes(goodSubnav).length === 0],
+    ["bad reserve subnav fails", checkSubnavRoutes(badSubnav).length > 0],
+    ["accounting factoring subnav escape fails", checkSubnavRoutes(badFactoringSubnav).length > 0],
     ["active delivery stop API passes", checkFactoringQueueApi(goodApi).length === 0],
     ["retired delivery stop API fails", checkFactoringQueueApi(badApiRetiredStop).length > 0],
   ];
