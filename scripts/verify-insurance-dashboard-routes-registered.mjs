@@ -28,6 +28,9 @@ const CHECKS = [
   ["fleet:t144-excluded", "fleetSql", /a\.unit_code <> 'T144'/],
   ["fleet:honest-tiv", "fleet", /POLICY_437539_TIV_CENTS = 104_054_000/],
   ["fleet:data-gap-fails-loud", "fleet", />DATA GAP<\/span>/],
+  ["fleet:covered-count-ratchet", "fleet", /coveredRows\.length === 34/],
+  ["fleet:allocation-header", "fleet", /Premium allocation:/],
+  ["fleet:coverage-chips", "fleet", /border-red-300 bg-red-50/],
 ];
 
 export function collectProblems(sources) {

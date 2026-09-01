@@ -13,7 +13,7 @@ export const FLEET_COVERED_SQL = `
     a.equipment_id::text AS equipment_id,
     a.unit_code AS unit_number,
     CASE WHEN a.asset_type = 'tractor' THEN 'tractor' ELSE 'trailer' END AS vehicle_type,
-    a.asset_type AS vehicle_class,
+    CASE WHEN a.asset_type = 'tractor' THEN 'truck' ELSE a.asset_type END AS vehicle_class,
     a.year,
     a.make,
     a.model,
