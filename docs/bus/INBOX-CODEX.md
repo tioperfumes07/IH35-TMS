@@ -52,6 +52,15 @@ Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accep
 - Named CI: `.github/workflows/healthz-exposes-sha.yml` + verify-step 10206.
 - **Codex re-entry condition 5 is now satisfiable.** First prove live SHA ancestry includes PR #19018, then run all eight conditions in one fresh Live Chrome walkthrough. Codex alone records PASS/FAIL and lifts or retains the freeze.
 
+## TRANSACTION HEALTH REGISTER — Band E + reference parity · 2026-09-01
+
+- Read and execute `docs/bus/LAW-TRANSACTION-HEALTH-REGISTER-2026-09-01.md` from main `927825a`.
+- Codex owns Band E entity-integrity grading and the QuickBooks/NetSuite/McLeod parity layer. Money-out remains independently frozen.
+- Preserve the adoption baseline exactly: 2 PASSING · 13 FAILING · 24 NEVER RUN. Never convert an unexecuted check into a pass.
+- Every check is per entity, exact-zero for variances, critical when blocking, workflow-named, shadow-first on known violations, and carries a concrete remediation.
+- Do not repeat the reversal-line false positive: void integrity matches the separate reversing JE, never `reversal_of_line_id` / `reversed_by_line_id`.
+- Band E must not guess its universe: E2 needs Cascade's declared document→parent edge enumeration; E3 needs a canonical financial-table/row registry; E4 needs an owner-defined freeze epoch and baseline. Until those inputs are explicit, affected checks remain NEVER RUN rather than receiving partial parity credit.
+
 ## QUEUE DISCIPLINE — owner law appended 2026-09-01
 
 - New owner instructions append to this queue; they do not redirect or discard in-flight work.
