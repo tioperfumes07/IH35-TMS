@@ -18,6 +18,7 @@ export function check(s) {
   const end = s.backend.indexOf("\n  app.get(", start + 10);
   const route = start >= 0 ? s.backend.slice(start, end >= 0 ? end : undefined) : "";
   if ((route.match(/LIMIT \$2 OFFSET \$3/g) ?? []).length !== 2) failures.push("both WO histories must page in SQL");
+  if (!/status IS DISTINCT FROM 'cancelled'/.test(route)) failures.push("recent must exclude cancelled WOs");
   if (/LIMIT 5/.test(route)) failures.push("fixed five-row cap remains");
   if (!/recent_offset[\s\S]*?completed_offset/.test(s.api)) failures.push("API must carry independent offsets");
   if (!/recentWoPage, completedWoPage/.test(s.page) || !/recent_offset: recentWoPage \* activityPageSize/.test(s.page)) failures.push("page query must identify both histories");

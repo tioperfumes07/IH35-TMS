@@ -80,7 +80,7 @@ export async function registerMaintenancePmAlertsRoutes(app: FastifyInstance) {
           SELECT
             a.id::text,
             a.unit_id::text,
-            COALESCE(u.unit_number, a.unit_id::text) AS unit_number,
+            NULLIF(TRIM(u.unit_number), '') AS unit_number,
             a.pm_schedule_id::text,
             COALESCE(s.label, 'PM schedule') AS schedule_label,
             a.trigger_odometer,
