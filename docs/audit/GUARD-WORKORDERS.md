@@ -8431,3 +8431,16 @@ authenticated session), `/system` Software/Build panel, `git merge-base --is-anc
 checks, both guards' normal+selftest runs | **GRADED · Safety Internal Fines PASS (+1 addendum
 finding filed, not fixed) · Dispatch column law code-correct/guard-verified but pending FE
 deploy (not a defect)** |
+
+| **RE-VERIFIED LIVE (CC-2 2026-09-01, closing the "pending FE deploy" gap on
+`GUARD-SAF-FINES-DSP-COLUMN-LAW-GRADE` above):** `DSP-05-SWEEP-A-NOW-LIVE` — frontend deploy
+caught up (build `c8e471b`); `git merge-base --is-ancestor 19fa6bbd78 c8e471b` and `...
+1114560657 c8e471b` both now **true** (was false). Re-navigated `app.ih35dispatch.com/dispatch?
+board=assignment&view=list`, `get_page_text` confirms **LOCATION** now renders as a real header
+column in both "BOOKED LOADS" and "ASSIGNED UNITS" bands (was absent). `DSP-05-ASSIGNMENT-
+PARITY-LOCATION` (#19253) and `SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET` (#19258) are now fully
+PASS, live and code both. | `apps/frontend/src/pages/dispatch/DispatchBoard.tsx` (unchanged,
+verification only) | **CC-2 GUARD** (verify-only) | none — confirms the prior grade's own
+REMAINING item, closes it | live Chrome `get_page_text` on `app.ih35dispatch.com/dispatch?
+board=assignment&view=list`, `git merge-base --is-ancestor` against deployed frontend build
+`c8e471b` | **CLOSED · both PRs confirmed live-correct, no further action** |
