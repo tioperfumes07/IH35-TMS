@@ -132,7 +132,10 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
           data-testid="dqf-create-checklist-form"
         >
           <div className="mb-2 space-y-1">
-            <h3 id="dqf-create-checklist-heading" className="text-xs font-semibold text-slate-900">
+            <h3
+              id="dqf-create-checklist-heading"
+              className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-800"
+            >
               Add DQF checklist item
             </h3>
             <p id="dqf-create-checklist-help" className="text-xs text-slate-600">

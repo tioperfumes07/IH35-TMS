@@ -1,5 +1,5 @@
 /**
- * EarningsSection — settlement earnings lines: Load | Description | Miles | Rate | Amount
+ * EarningsSection — settlement earnings lines: Load | Source | Description | Miles | Rate | Amount
  *
  * Display-only section (lines passed in as props; no query/mutation here — the parent
  * settlement page owns fetch/error state). Migrated to the shared ParityTable grammar;
@@ -16,6 +16,9 @@ type Line = {
    *  direct-trace column the parent already reads at SettlementDetailPage.tsx:118-124). */
   load_id?: string | null;
   load_number?: string | null;
+  /** SRC-02 — canonical driver bill that generated this earnings line (when linked). */
+  source_driver_bill_id?: string | null;
+  source_label?: string | null;
   description: string;
   miles?: number;
   rate?: number;
@@ -39,6 +42,13 @@ const COLUMNS: Array<ParityColumn<Line>> = [
       ) : (
         "—"
       ),
+  },
+  {
+    key: "source_label",
+    label: "Source",
+    sortable: true,
+    sortValue: (line) => line.source_label ?? "",
+    render: (line) => line.source_label ?? "—",
   },
   { key: "description", label: "Description" },
   { key: "miles", label: "Miles", render: (line) => <>{line.miles ?? "—"}</> },

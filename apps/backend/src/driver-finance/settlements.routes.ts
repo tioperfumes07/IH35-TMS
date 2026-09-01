@@ -494,6 +494,7 @@ export async function registerDriverFinanceSettlementRoutes(app: FastifyInstance
           SELECT
             sl.*,
             l.load_number,
+            db.bill_number AS source_driver_bill_number,
             COALESCE(db.load_id, sl.load_id) AS load_id,
             dsd.id AS source_deduction_id,
             dsd.is_held AS deduction_is_held,
