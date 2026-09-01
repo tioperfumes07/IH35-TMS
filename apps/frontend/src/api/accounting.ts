@@ -995,6 +995,7 @@ export function createVendorBill(
   body: {
     vendor_id: string;
     bill_number?: string;
+    display_id?: string;
     bill_date: string;
     due_date?: string;
     amount_cents: number;

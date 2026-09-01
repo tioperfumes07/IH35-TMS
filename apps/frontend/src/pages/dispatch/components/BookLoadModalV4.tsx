@@ -851,8 +851,8 @@ export function BookLoadModalV4({
         customer_chargeback_requested: values.customer_chargeback_requested,
         customer_chargeback_reason: values.customer_chargeback_reason || undefined,
         live_load_number: values.live_load_number || undefined,
-        load_number: values.reserved_load_number || undefined,
-        requested_load_number: values.reserved_load_number || undefined,
+        load_number: (values.reserved_load_number?.trim() || values.live_load_number?.trim() || undefined),
+        requested_load_number: (values.reserved_load_number?.trim() || values.live_load_number?.trim() || undefined),
         addToOpenPresettlement: values.addToOpenPresettlement,
         reservation_uuid: values.reservation_uuid || undefined,
         anticipated_chargeback_cents: numOrUndef(values.anticipated_chargeback_cents),
@@ -1047,6 +1047,22 @@ export function BookLoadModalV4({
             message,
             warnings: (data.wf_044_maintenance_warnings as Array<Record<string, unknown>> | undefined) ?? [],
           });
+          return;
+        }
+        if (error.status === 409 && (code === "duplicate_load_number" || code === "duplicate_document_number")) {
+          const existingId = String(data.existing_id ?? "").trim();
+          const loadNo = String(data.load_number ?? "").trim();
+          setSubmitErrorMessage(
+            existingId
+              ? `Load ${loadNo || "number"} already exists. Open existing load ${existingId}.`
+              : `Load ${loadNo || "number"} already exists (duplicate). Not saved.`
+          );
+          pushToast("Duplicate load number", "error");
+          return;
+        }
+        if (error.status === 422 && code === "first_load_number_required") {
+          setSubmitErrorMessage("Type the first load number yourself (for example 13508). Leave later loads blank and the system will follow that sequence.");
+          pushToast("First load number required", "error");
           return;
         }
         if (error.status === 422 && code === "credit_limit_exceeded") {

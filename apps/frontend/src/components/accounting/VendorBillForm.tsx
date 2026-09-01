@@ -29,6 +29,7 @@ export { buildVendorBillLinePayloads };
 export type VendorBillFormSubmitPayload = {
   vendor_id: string;
   bill_number?: string;
+  display_id?: string;
   bill_date: string;
   due_date?: string;
   amount_cents: number;
@@ -147,6 +148,7 @@ export function VendorBillForm({
   const [dueDate, setDueDate] = useState(() => dueDateFromBillTerms(companyToday(), "net_30"));
   const [dueDateTouched, setDueDateTouched] = useState(false);
   const [billNumber, setBillNumber] = useState("");
+  const [oursDisplayId, setOursDisplayId] = useState("");
   /** Operator memo / Gate-B sample tag — persisted at the front of `memo` (LV-SAMPLE-BILL-UNTAGGED). */
   const [operatorMemo, setOperatorMemo] = useState("");
   const [isSampleData, setIsSampleData] = useState(false);
@@ -310,6 +312,7 @@ export function VendorBillForm({
     await onSubmit({
       vendor_id: vendorKey,
       bill_number: billNumber.trim() || undefined,
+      display_id: oursDisplayId.trim() || undefined,
       bill_date: billDate,
       due_date: dueDate.trim() || undefined,
       amount_cents: amountCents,
@@ -404,16 +407,25 @@ export function VendorBillForm({
             </>
           </Field>
         </div>
-        <div className="ml-auto w-44 shrink-0 text-right">
+        <div className="ml-auto flex w-[22rem] shrink-0 flex-col gap-2 text-right">
           <QboDocumentNumberField
-            label="Bill no."
-            value={billNumber}
-            onChange={setBillNumber}
+            label="Bill no. (ours)"
+            value={oursDisplayId}
+            onChange={setOursDisplayId}
             operatingCompanyId={operatingCompanyId}
             nextNumberPath="/api/v1/accounting/bills/next-number"
             checkPath="/api/v1/accounting/bills/next-number"
             fieldName="bill"
+            data-testid="vendor-bill-ours-number"
+          />
+          <QboDocumentNumberField
+            label="Vendor invoice no."
+            value={billNumber}
+            onChange={setBillNumber}
+            operatingCompanyId={operatingCompanyId}
+            fieldName="vendor invoice"
             data-testid="vendor-bill-number"
+            hint="Vendor's invoice. Blank allowed. Never auto-filled."
           />
         </div>
       </div>

@@ -45,7 +45,7 @@ export function LiveLoadIdBar({ operatingCompanyId, onReservationUpdate }: Props
       }
       reservationRef.current = { companyId: submittedCompanyId, reservationId: r.reservation_uuid };
       setDisplay(r);
-      onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() || r.load_number });
+      onUpdateRef.current({ ...r, load_number: manualNumberRef.current.trim() });
       const until = new Date(r.reserved_until).getTime();
       setSecondsLeft(Math.max(0, Math.ceil((until - Date.now()) / 1000)));
     } catch (err) {
