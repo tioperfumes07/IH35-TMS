@@ -22,7 +22,7 @@ const REQUIRED = [
   },
   {
     file: "apps/frontend/src/pages/Customers.tsx",
-    markers: ["data-view-mode-toggle=\"customers\"", "CustomersListView", "useViewModePref"],
+    markers: ['data-view-mode-toggle=\"customers\"|\"data-view-mode-toggle\": \"customers\"', "CustomersListView", "useViewModePref"],
   },
   {
     file: "apps/frontend/src/pages/Vendors.tsx",
@@ -33,6 +33,28 @@ const REQUIRED = [
     markers: ["EntityViewMode", "list", "master-detail"],
   },
 ];
+
+function hasMarker(source, marker) {
+  return marker.split("|").some((alternative) => source.includes(alternative));
+}
+
+if (process.argv.includes("--selftest")) {
+  const marker = 'data-view-mode-toggle=\"customers\"|\"data-view-mode-toggle\": \"customers\"';
+  const cases = [
+    ["direct DOM attribute passes", '<div data-view-mode-toggle="customers" />', true],
+    ["shared component dataAttributes passes", 'dataAttributes={{ "data-view-mode-toggle": "customers" }}', true],
+    ["vendor value does not satisfy customers", 'dataAttributes={{ "data-view-mode-toggle": "vendors" }}', false],
+    ["commentary without the contract fails", "customers view mode", false],
+  ];
+  for (const [name, source, expected] of cases) {
+    if (hasMarker(source, marker) !== expected) {
+      console.error(`[verify-customers-vendors-have-list-view] SELFTEST FAIL: ${name}`);
+      process.exit(1);
+    }
+  }
+  console.log(`[verify-customers-vendors-have-list-view] SELFTEST PASS (${cases.length}/${cases.length})`);
+  process.exit(0);
+}
 
 const failures = [];
 
@@ -45,7 +67,7 @@ for (const req of REQUIRED) {
   const source = fs.readFileSync(full, "utf8");
   for (const marker of req.markers) {
     // A marker may list alternatives separated by "|" (any-of). Accept if any present.
-    const ok = marker.split("|").some((alt) => source.includes(alt));
+    const ok = hasMarker(source, marker);
     if (!ok) {
       failures.push(`${req.file} (missing marker: ${marker})`);
     }
