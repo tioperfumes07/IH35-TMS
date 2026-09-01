@@ -242,6 +242,19 @@ export function BillPaymentsListPage() {
       },
       { key: "is_reconciled", label: "Reconciled", sortable: true, sortValue: (row) => (row.is_reconciled ? 1 : 0), render: (row) => <ReconciledBadge isReconciled={row.is_reconciled} /> },
       {
+        // VIS-02 — void as first-class Status column (gear-togglable via ParityTable), not only Actions text.
+        key: "status",
+        label: "Status",
+        sortable: true,
+        sortValue: (row) => (row.revoked_at ? "voided" : "active"),
+        render: (row) =>
+          row.revoked_at ? (
+            <span className="rounded-sm bg-slate-200 px-1.5 py-0.5 text-[11px] font-medium text-slate-700">Voided</span>
+          ) : (
+            <span className="rounded-sm bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-800">Active</span>
+          ),
+      },
+      {
         key: "actions",
         label: "Actions",
         alwaysVisible: true,

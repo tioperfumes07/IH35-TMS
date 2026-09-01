@@ -406,6 +406,8 @@ export const BILL_PAYMENT_LIST_SORT_SQL: Record<string, string> = {
   journal_entry_id: "je_link.journal_entry_id",
   matched_bank_transaction_id: `(${BILL_PAYMENT_BANK_TRANSACTION_ID_SQL})`,
   is_reconciled: `(${BILL_PAYMENT_IS_RECONCILED_SQL})`,
+  // VIS-02 — void as first-class status (revoked_at → voided)
+  status: `(CASE WHEN bp.revoked_at IS NULL THEN 'active' ELSE 'voided' END)`,
 };
 
 export function billPaymentListOrderBy(sort: string | undefined, dir: "asc" | "desc" | undefined): string {

@@ -33,6 +33,13 @@ if (!/bill-payments-hide-voided/.test(billPayPage)) {
 if (!/include_voided:\s*hideVoided \? undefined : true/.test(billPayPage)) {
   failures.push("BillPaymentsListPage must pass include_voided when Hide voided is off");
 }
+// VIS-02 — void as first-class Status column + gear (ParityTable columns) + filter (hide voided).
+if (!/key:\s*"status"[\s\S]{0,220}Voided/.test(billPayPage)) {
+  failures.push("VIS-02: BillPaymentsListPage must expose a Status column with Voided state");
+}
+if (!/sortMode=["']external["']/.test(billPayPage)) {
+  failures.push("BillPaymentsListPage must keep sortMode=external with Status sortable server-side");
+}
 
 const billPayApi = read("apps/frontend/src/api/accounting.ts");
 if (!/include_voided\?: boolean/.test(billPayApi) || !/include_voided/.test(billPayApi)) {
@@ -47,6 +54,9 @@ if (!/include_voided/.test(billPayRoutes)) {
 const billPaySvc = read("apps/backend/src/accounting/bills.service.ts");
 if (!/includeVoided/.test(billPaySvc) || !/if \(!options\.includeVoided\)/.test(billPaySvc)) {
   failures.push("listBillPayments must only filter revoked_at when includeVoided is false");
+}
+if (!/BILL_PAYMENT_LIST_SORT_SQL[\s\S]*?status:\s*`\(CASE WHEN bp\.revoked_at/.test(billPaySvc)) {
+  failures.push("VIS-02: BILL_PAYMENT_LIST_SORT_SQL must whitelist status → revoked_at CASE");
 }
 
 const payments = read("apps/frontend/src/pages/accounting/PaymentsListPage.tsx");
