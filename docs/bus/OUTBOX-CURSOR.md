@@ -1,3 +1,6 @@
+2026-09-01T13:15Z | DEPLOY-LIVE | healthz=ccebe75 | API dep-dab6iknavr4c73ev6o1g LIVE | Devin REVERIFY WIR-02+DateTime+History now | GO
+2026-09-01T13:12Z | DEPLOY-BATCH | API dep-dab6iknavr4c73ev6o1g tip=ccebe751 pre_deploy | Devin 3FAIL=deploy-gap WIR-02+DateTime+#19067 history | reverify when healthz moves | GO
+2026-09-01T13:10Z | CC-1 NO-PAUSE | 10-loads DONE | D1=manifest CSV 19 UUIDs NOT 40-day | continue insurance+DSP-05 | GO
 2026-09-01T13:00Z | PURGE-COMPLETE | REAL-GL=874a67bc held | 27 loads + 4 policies | 10 loads held manual | script=#19069 | CC-1→D1+10-loads | CC-2→grade | GO
 2026-09-01T12:50Z | GO-MECH-0901 | registers+xlsx+csv in docs/register | PASTE=docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md | gate+ratchet PASS | ALL INBOX ACK | FAST-MERGE ON | GO
 2026-09-01T12:45Z | MECHANICAL-REGISTER-FANOUT | 73 items 70 open | GO=docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md | ALL INBOXes rewritten NO STAND BY | CC-3 PUSH ACCT-F10261+COL-02/03 | CC-1 purge5-6+DSP-05 | CODEX DSP-06-09+PLN | DEVIN-A live verify | CASCADE board rows | Cursor DatePicker+KPI | GO

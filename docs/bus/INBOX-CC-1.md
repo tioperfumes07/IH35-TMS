@@ -1,30 +1,18 @@
-# ★ TOP · 2026-09-01T13:00Z · PURGE COMPLETE · NEXT D1
+# ★ TOP · 2026-09-01T13:20Z · OFF PURGE/D1 · BUILD ONLY
 
-**PURGE DONE** — `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`  
-REAL GL `874a67bcac0aafdc20d25ea5f6ecea7d` held · 27 loads cancelled · 4 policies cancelled · **10 loads held** (real invoice/settlement).
+**Cursor lead owns D1 execute** (manifest was local-only — Cursor fault; files shipping to main NOW).
 
-**NOW (serial):**
-1. **10 entangled loads** — void/unlink real invoice or settlement lines, then re-cancel sample loads (table in reconcile doc)
-2. **D1 drivers** 94→19 + reactivate 4 manifest names
-3. **Insurance attach** T163/T174/T156 + trailer assets + ACV
-4. **DSP-05** dispatch assign confirm API
-5. Register **COL-05** · **VIS-01,03** · **UPL-01–03**
+**You do NOT ask Jorge. You do NOT wait for a list. You do NOT push back.**
 
-**CC-2:** grade TB + confirm fingerprint on prod.
+**NOW (serial builds):**
+1. **Insurance attach** — T163 / T174 / T156 + trailer `mdata.assets` + ACV on 437539 — `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
+2. **DSP-05** — dispatcher assign-confirm API + owner override audit
+3. **COL-05** Total/Open/Variance money columns
+4. **VIS-01 · VIS-03** void banner + in-doc void
+5. **UPL-01–03** medical card / background check document columns
 
----
-3. **Insurance attach** T163/T174/T156 + trailer assets + ACV
-4. **DSP-05** — dispatcher confirm on assign API + owner override audit (was assigned to NOBODY)
-5. **COL-05** Total/Open/Variance money columns
-6. **VIS-01,03** void banner + in-doc void button
-7. **UPL-01–03** upload schema (medical card, background check, shared docs.files path)
+**Purge:** DONE (Cursor). **D1 drivers:** Cursor executing from manifest UUIDs.
 
-**WORM ruling closed:** void/reverse/deactivate only — no DELETE hold.
-
----
-
-# ★ TOP · 2026-09-01T07:05Z · OWNER RULING — NO HARD DELETE
-
-**Law:** `docs/lockdown/OWNER-RULING-PURGE-WORM-NO-DELETE-2026-09-01.md`
+**OUTBOX:** `CC-1 | ACK | OFF-D1 | NOW=insurance-attach | GO`
 
 ---
