@@ -489,6 +489,9 @@ export function BookLoadModalV4({
     staleTime: 0,
   });
   const editLoad: LoadDetail | undefined = editLoadQuery.data;
+  // BOOK-LOAD-HOS-CYCLE-WIRING — same effectiveOperatingCompanyId pattern as LoadDetailDrawer #19223:
+  // bind HOS reads to the persisted load's company when the modal prop is empty/stale.
+  const effectiveOperatingCompanyId = editLoad?.operating_company_id ?? operatingCompanyId ?? "";
   useEffect(() => {
     if (!open || !isEditMode || !editLoad) return;
     // reset WITHOUT keepDefaultValues so the prefilled values become the clean baseline — nothing is
@@ -1693,7 +1696,7 @@ export function BookLoadModalV4({
                       register={form.register}
                       watch={form.watch}
                       setValue={form.setValue}
-                      operatingCompanyId={operatingCompanyId}
+                      operatingCompanyId={effectiveOperatingCompanyId}
                       deadheadAfterAt={deadheadAfterAt}
                       deadheadDropCity={deadheadDropPreview.city}
                       deadheadDropState={deadheadDropPreview.state}

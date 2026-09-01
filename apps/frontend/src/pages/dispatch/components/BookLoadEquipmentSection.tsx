@@ -44,8 +44,9 @@ type Props = {
 
 export function BookLoadEquipmentSection({ register, watch, setValue, operatingCompanyId, optimizerLoadId, deadheadAfterAt, deadheadDropCity, deadheadDropState, onOptionsResolved }: Props) {
   const assignmentMode = watch ? watch("assignment_mode") : "solo";
-  const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "") : "";
-  const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "") : "";
+  const primaryDriverId = watch ? String(watch("assigned_primary_driver_id") ?? "").trim() : "";
+  const secondaryDriverId = watch ? String(watch("assigned_secondary_driver_id") ?? "").trim() : "";
+  const hosOperatingCompanyId = operatingCompanyId?.trim() || undefined;
   const assignedUnitId = watch ? String(watch("assigned_unit_id") ?? "") : "";
   const assignedTrailerUnitId = watch ? String(watch("assigned_trailer_unit_id") ?? "") : "";
   const [primaryDriverOption, setPrimaryDriverOption] = useState<EntityPickerOption | null>(null);
@@ -433,9 +434,9 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
           Expected adjustments <span className="font-normal text-gray-400">HOS · detention · late risk</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
-          <DriverHosClocksBlock driverId={primaryDriverId} operatingCompanyId={operatingCompanyId} heading="Driver HOS (hours of service)" />
+          <DriverHosClocksBlock driverId={primaryDriverId || undefined} operatingCompanyId={hosOperatingCompanyId} heading="Driver HOS (hours of service)" />
           {assignmentMode === "team" && secondaryDriverId ? (
-            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={operatingCompanyId} heading="Team driver HOS" />
+            <DriverHosClocksBlock driverId={secondaryDriverId} operatingCompanyId={hosOperatingCompanyId} heading="Team driver HOS" />
           ) : null}
           <ExpectedAdjustmentsCallout
             register={register as never}
