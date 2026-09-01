@@ -26,16 +26,66 @@ function bool(v) {
 }
 
 function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter((l) => l.length > 0);
-  const headers = lines[0].split(",");
-  return lines.slice(1).map((line) => {
-    const cols = line.split(",");
-    const row = {};
+  const table = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += c;
+      }
+      continue;
+    }
+    if (c === '"') {
+      inQuotes = true;
+      continue;
+    }
+    if (c === ",") {
+      row.push(field);
+      field = "";
+      continue;
+    }
+    if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(field);
+      field = "";
+      if (row.some((x) => x.length > 0)) table.push(row);
+      row = [];
+      continue;
+    }
+    field += c;
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    if (row.some((x) => x.length > 0)) table.push(row);
+  }
+  const headers = (table[0] ?? []).map((h) => h.trim());
+  return table.slice(1).map((cols) => {
+    const out = {};
     headers.forEach((h, i) => {
-      row[h] = cols[i] ?? "";
+      out[h] = cols[i] ?? "";
     });
-    return row;
+    return out;
   });
+}
+
+if (process.argv.includes("--selftest")) {
+  const rows = parseCsv('Origin City,practical_miles\n"Shippensburg, Pa",292.2\n');
+  if (rows[0]["Origin City"] !== "Shippensburg, Pa" || rows[0].practical_miles !== "292.2") {
+    console.error("seed-lane-mileage SELFTEST FAIL — quoted city / decimal column");
+    process.exit(1);
+  }
+  console.log("seed-lane-mileage SELFTEST PASS");
+  process.exit(0);
 }
 
 async function main() {
@@ -97,9 +147,9 @@ async function main() {
         r["Destination City"],
         r["Destination State"],
         zip(r["Destination ZIP"]),
-        num(r.practical_miles),
+        num(r.practical_miles) ?? num(r.short_miles),
         num(r.short_miles),
-        num(r.empty_miles),
+        num(r.empty_miles) ?? 0,
         Math.trunc(num(r.runs) ?? 0),
         Math.trunc(num(r.short_runs) ?? 0),
         num(r.practical_min),
