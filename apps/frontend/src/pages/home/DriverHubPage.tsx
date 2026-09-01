@@ -3,7 +3,7 @@ import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { DriverInbox } from "../../components/driver-inbox/DriverInbox";
+import { DriverHubOverview } from "./DriverHubOverview";
 import { DriverSchedulerGridPage } from "../safety/driver-scheduler/DriverSchedulerGridPage";
 import { DriverSchedulerRequestInboxPage } from "../safety/driver-scheduler/DriverSchedulerRequestInboxPage";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
@@ -48,7 +48,7 @@ export function DriverHubPage() {
     <div className="space-y-4" data-testid="driver-hub-page">
       <PageHeader
         title="Driver Hub"
-        subtitle="Driver overview, scheduling, and leave"
+        subtitle="Driver requests, approvals, scheduling, and leave"
         actions={
           canReview ? (
             <Link
@@ -74,7 +74,7 @@ export function DriverHubPage() {
         ]}
       />
       {/* Reuse the existing Safety Driver Scheduler + Leave Requests components (no rebuild). */}
-      {tab === "overview" && <DriverInbox key="overview" companyId={companyId} canReview={canReview} />}
+      {tab === "overview" && <DriverHubOverview key="overview" companyId={companyId} canReview={canReview} />}
       {tab === "scheduler" && <DriverSchedulerGridPage key="scheduler" />}
       {tab === "leave_requests" && <DriverSchedulerRequestInboxPage key="leave_requests" />}
     </div>
