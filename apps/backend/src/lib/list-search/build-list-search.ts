@@ -209,6 +209,31 @@ export function expenseListSearchFields(aliases: {
     { kind: "text", sql: `${e}.memo` },
     {
       kind: "text",
+      sql: `(SELECT el.description FROM accounting.expense_lines el WHERE el.expense_id = ${e}.id ORDER BY el.line_sequence LIMIT 1)`,
+    },
+    {
+      kind: "text",
+      sql: `(SELECT ec.name FROM accounting.expense_lines el
+             JOIN catalogs.expense_categories ec ON ec.id = el.expense_category_uuid
+             WHERE el.expense_id = ${e}.id
+             ORDER BY el.line_sequence LIMIT 1)`,
+    },
+    {
+      kind: "text",
+      sql: `(SELECT ec.code FROM accounting.expense_lines el
+             JOIN catalogs.expense_categories ec ON ec.id = el.expense_category_uuid
+             WHERE el.expense_id = ${e}.id
+             ORDER BY el.line_sequence LIMIT 1)`,
+    },
+    {
+      kind: "text",
+      sql: `(SELECT a.name FROM accounting.expense_lines el
+             JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
+             WHERE el.expense_id = ${e}.id
+             ORDER BY el.line_sequence LIMIT 1)`,
+    },
+    {
+      kind: "text",
       sql: `(SELECT l.load_number FROM mdata.loads l WHERE l.id = ${e}.load_id AND l.operating_company_id = ${e}.operating_company_id LIMIT 1)`,
     },
   ];

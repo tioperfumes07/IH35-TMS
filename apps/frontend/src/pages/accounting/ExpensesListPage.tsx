@@ -602,7 +602,7 @@ export function ExpensesListPage() {
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search # · vendor · amount · date · status · load · memo"
+          placeholder="Search # · vendor · amount · date · status · load · memo · category"
           className="w-full max-w-xl rounded-sm border border-gray-300 px-2 py-1 text-sm"
         />
       </div>

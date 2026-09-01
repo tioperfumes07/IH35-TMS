@@ -45,6 +45,12 @@ function assertRoutesUseBuilder() {
   const exp = read("apps/backend/src/accounting/expenses.routes.ts");
   assert.match(exp, /buildListSearchClause/);
   assert.match(exp, /expenseListSearchFields/);
+  const builder = read("apps/backend/src/lib/list-search/build-list-search.ts");
+  // SEARCH LAW expense: memo is load-bearing when expense_number is NULL (128/132 class).
+  assert.match(builder, /expenseListSearchFields[\s\S]*?\$\{e\}\.memo/);
+  assert.match(builder, /expense_lines el WHERE el\.expense_id = \$\{e\}\.id[\s\S]*?el\.description|el\.description FROM accounting\.expense_lines/);
+  assert.match(builder, /catalogs\.expense_categories/);
+  assert.match(builder, /expense_account_uuid/);
 }
 
 async function assertRuntimeAmountSemantics() {
