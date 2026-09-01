@@ -19,3 +19,5 @@ CASCADE | REMEASURE | extras=78 | buckets=77-new-rot+1-ratchet-self-fail | fixed
 CASCADE | ACK | GUARD-2-NON-MONEY | NOW=SAF-B05 | SHA=14daeed | GO
 CASCADE | STAMP | GUARD-2-NON-MONEY | ITEM=LST-A-01 | MODULE=lists | SHA=14daeed | RESULT=/lists hub → Dispatcher Error Reasons → canonical route with 25 rows; fake catalog slug rejected | GO
 CASCADE | ACK | GO-MECH-0901 | NOW=board-rows | GO
+CASCADE | POST-U14 | UNIQUE FINDING | FK-MISSING-SCHEDULE-CONFIRMATIONS-POLICY-UNIT | insurance.schedule_confirmations.policy_id + unit_id lack FK constraints | guard=verify-linkage-required-edges FAIL | board row OPEN | OWNER-GATED=yes migration | GO
+CASCADE | GUARD-FIX | 13 guards fixed this session | PRs=#19242 #19244 #19300 #19311 | baseline 157->139 | GO
