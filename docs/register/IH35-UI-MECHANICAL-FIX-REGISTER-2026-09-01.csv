@@ -44,7 +44,7 @@ VIS-04,4 Void visibility,"Void reason must be a dropdown catalog, memo optional 
 DSP-01,5 Dispatch board,Keep pickup city and delivery city columns,Dispatch board,NOT VERIFIED,Owner requirement 5.1.,CURSOR
 DSP-02,5 Dispatch board,"Add pickup DATE, pickup TIME, delivery DATE, delivery TIME",Dispatch board,STILL OPEN,The data already exists in mdata.load_stops. Four columns.,CURSOR
 DSP-03,5 Dispatch board,Board shows LIVE loads only — completed and cancelled to a History tab,Dispatch board,STILL OPEN,65 of 78 loads on the board are already finished.,CURSOR
-DSP-04,5 Dispatch board,"Each section gets its OWN headers, sort and filters",Dispatch board,STILL OPEN,Owner requirement 5.4.,CURSOR
+DSP-04,5 Dispatch board,"Each section gets its OWN headers, sort and filters",Dispatch board,FIXED (PR #19089),Owner requirement 5.4.,CURSOR
 DSP-05,5 Dispatch board,Dispatcher on-screen confirmation on assignment + owner override,Dispatch board,DROPPED — ASSIGNED TO NOBODY,Owner requirement 5.5.,NOBODY
 DSP-06,5 Dispatch board,Detention board never clears — closed loads stay on it forever,/dispatch detention,FIXED (PR #19079),"detention.service.ts:220 filters on the detention event status, joins mdata.loads, selects l.status and never filters on it.",CODEX
 DSP-07,5 Dispatch board,At-Risk board is narrower than its own label,/dispatch at-risk,FIXED (PR #19081),arch-tabs.service.ts:61 filters l.status='in_transit' ONLY. A dispatched load already blowing its window is invisible here but visible on Late Arrivals.,CODEX
