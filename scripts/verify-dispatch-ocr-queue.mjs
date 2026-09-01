@@ -69,7 +69,7 @@ function bookLoadPrefillOrderSignals(bookLoad) {
   const failures = [];
   const reset = bookLoad.indexOf("form.reset();");
   const lastReset = bookLoad.lastIndexOf("form.reset();");
-  const prefill = bookLoad.indexOf("applyLoadTemplateToBookForm(");
+  const prefill = bookLoad.indexOf("applyBookLoadPrefillToForm(");
   if (reset < 0) failures.push("Book Load must reset a newly opened form");
   if (prefill < 0) failures.push("Book Load must apply OCR/template prefill");
   if (reset >= 0 && prefill >= 0 && (reset > prefill || lastReset > prefill)) {
@@ -166,8 +166,8 @@ function main() {
     ];
     if (!finalizeMutants.every((mutant) => finalizeLifecycleSignals(mutant).length > 0)) fail("selftest finalize lifecycle mutation escaped");
     const reorderedPrefill = bookLoad.replace(
-      "applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson);",
-      "applyLoadTemplateToBookForm(form.setValue as unknown as UseFormSetValue<MinimalBookForm>, templatePrefillJson); form.reset();"
+      "applyBookLoadPrefillToForm(form.setValue, templatePrefillJson, liveLoadNumberUserTypedRef.current);",
+      "applyBookLoadPrefillToForm(form.setValue, templatePrefillJson, liveLoadNumberUserTypedRef.current); form.reset();"
     );
     if (!bookLoadPrefillOrderSignals(reorderedPrefill).some((message) => message.includes("reset must run only before"))) {
       fail("selftest post-prefill reset mutation escaped");
