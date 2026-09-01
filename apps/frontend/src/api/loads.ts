@@ -364,17 +364,39 @@ function toDispatchTransitionStatus(status: LoadStatus): DispatchStatus | null {
   }
 }
 
+/** Real mdata lifecycle targets — must PATCH /mdata/loads/:id/status, never dispatch transition. */
+const MDATA_LIFECYCLE_STATUS_TARGETS = new Set<LoadStatus>(["invoiced", "paid", "closed"]);
+
+function patchMdataLoadStatus(
+  id: string,
+  body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string },
+  operatingCompanyId: string
+) {
+  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
+  return apiRequest<LoadDetail | { ok: true; status: string }>(`/api/v1/mdata/loads/${id}/status?${query.toString()}`, {
+    method: "PATCH",
+    body,
+  });
+}
+
 /**
  * Office status writer. When the target maps to a dispatch transition status, call
  * PATCH /api/v1/dispatch/loads/:id/transition (runs postLoadRevenueLatch + pingSettlementOnLoadEvent).
  * LV-TXN-004 / USMCA-WIRE-GATES: never silently fall back to mdata for post-dispatch transitions —
  * that path skips departure evidence and settlement hooks (dispatched→in_transit proved broken on prod).
+ *
+ * Post-delivery lifecycle writes (invoiced/paid/closed) are the exception: dispatch state machine
+ * collapses those to completed_docs_received, but mdata allowedStatusTransitions allows
+ * completed_docs_received→invoiced|closed and re-enters ensureDriverBillArtifactsForLoad on transition.
  */
 export function updateLoadStatus(
   id: string,
   body: { new_status: LoadStatus; cancellation_reason_code?: string; cancellation_notes?: string },
   operatingCompanyId: string
 ) {
+  if (MDATA_LIFECYCLE_STATUS_TARGETS.has(body.new_status)) {
+    return patchMdataLoadStatus(id, body, operatingCompanyId);
+  }
   const dispatchStatus = toDispatchTransitionStatus(body.new_status);
   if (dispatchStatus) {
     return transitionDispatchLoad(id, operatingCompanyId, {
@@ -382,11 +404,7 @@ export function updateLoadStatus(
       cancellation_reason_code: body.cancellation_reason_code,
     }) as Promise<LoadDetail | { ok: true; status: string }>;
   }
-  const query = new URLSearchParams({ operating_company_id: operatingCompanyId });
-  return apiRequest<LoadDetail | { ok: true; status: string }>(`/api/v1/mdata/loads/${id}/status?${query.toString()}`, {
-    method: "PATCH",
-    body,
-  });
+  return patchMdataLoadStatus(id, body, operatingCompanyId);
 }
 
 /**

@@ -385,6 +385,30 @@ describe("DISPATCH-NO-IN-TRANSIT-UI-CONTROL — human sequence requires in_trans
       })
     );
   });
+
+  it("completed_docs_received Mark invoiced fires PATCH new_status invoiced", async () => {
+    statusMutateAsyncSpy.mockReset();
+    statusMutateAsyncSpy.mockResolvedValue({ ok: true, status: "invoiced" });
+    mockUseDispatchLoad.mockReturnValue({
+      data: mockLoadDetail({ status: "completed_docs_received" }),
+      isLoading: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    mockUseLoad.mockReturnValue({ data: undefined, isLoading: false, isError: false, error: null, refetch: vi.fn() });
+    mockUseLoadAudit.mockReturnValue({ data: [], refetch: vi.fn() });
+
+    renderDrawer(<LoadDetailDrawer loadId="load-1" isOpen canEdit operatingCompanyId="co-1" onClose={vi.fn()} />);
+
+    fireEvent.click(screen.getByTestId("load-mark-invoiced-button"));
+    await waitFor(() =>
+      expect(statusMutateAsyncSpy).toHaveBeenCalledWith({
+        id: "load-1",
+        body: { new_status: "invoiced" },
+      })
+    );
+  });
 });
 
 describe("LV-INVOICE-RATE-SNAPSHOT — a $0-rate load must not mint an invoice", () => {
