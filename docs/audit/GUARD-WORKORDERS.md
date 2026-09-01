@@ -8060,7 +8060,7 @@ Source: remeasure at 5e94f941c7 (origin/main). These 77 guards are newly failing
 | verify-matrix-metrics-tally.mjs | CASCADE | OPEN |
 | verify-module-completion-requires-tieout.mjs | CASCADE | OPEN |
 | verify-module-hub-navigation-connectivity.mjs | CASCADE | OPEN |
-| verify-no-boot-throwing-env-checks.mjs | CODEX | OPEN |
+| verify-no-boot-throwing-env-checks.mjs | CODEX | FIXED CODE — real `--selftest` executes 4 positive/negative fixtures and is invoked by workflow step 16; normal PASS + selftest 4/4 |
 | verify-no-circular-dependencies.mjs | CODEX | OPEN |
 | verify-no-closed-loop-guards.mjs | CASCADE | OPEN |
 | verify-no-execsync-on-request-path.mjs | CODEX | OPEN |

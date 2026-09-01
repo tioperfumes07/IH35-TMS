@@ -16,3 +16,4 @@ CODEX | VERIFIED | GO-05-WAVE-2 | files=11-18 | live-grids=ParityTable/already-m
 CODEX | SHIPPED | GO-03+GO-13 | PR=#19346@d794ba0e7e+#19352@a4c85a03c4 | honest=34-covered/$1,040,540/T144-excluded | guard=locked-workflow+selftest-16/16 | GO-07=current-main-verified+selftest-23/23 | NEXT=INBOX | GO
 CODEX | CLOSED-STALE | PLN-01/02/05 | existing-main=e35d660247 | presets+custom-range=applied-to-all-4-planners | prior-dates=end-anchored | drivers=Active+not-deactivated | units=InService+not-deactivated | guard=normal-PASS+selftest-6/6 | NEXT=FLT-04 | GO
 CODEX | CLOSED-STALE | FLT-04 | register=FIXED-PR-19085 | at-risk+late+detention=query-key-and-request-bind-from/to | guard=normal-PASS+selftest-23/23 | NEXT=INBOX | GO
+CODEX | FIXED | verify-no-boot-throwing-env-checks | root=--selftest-was-ignored | selftest=4/4-real-fixtures | normal=PASS | workflow=step-16-runs-both | NEXT=verify-no-circular-dependencies | GO

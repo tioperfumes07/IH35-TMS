@@ -1,10 +1,29 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import ts from "typescript";
 
 const ROOT = process.cwd();
+
+if (process.argv.includes("--selftest")) {
+  const fixtureSuite = path.join(ROOT, "scripts/__tests__/verify-no-boot-throwing-env-checks.test.mjs");
+  const planted = spawnSync(process.execPath, ["--test", fixtureSuite], {
+    cwd: ROOT,
+    encoding: "utf8",
+  });
+  const proofOutput = `${planted.stdout ?? ""}\n${planted.stderr ?? ""}`;
+  if (planted.status !== 0 || !/\btests 4\b/.test(proofOutput) || !/\bpass 4\b/.test(proofOutput)) {
+    process.stderr.write(planted.stdout ?? "");
+    process.stderr.write(planted.stderr ?? "");
+    console.error("verify:no-boot-throwing-env-checks SELFTEST FAIL — planted boot-time violations escaped");
+    process.exit(1);
+  }
+  console.log("verify:no-boot-throwing-env-checks SELFTEST PASS — 4/4 fixture mutations classified");
+  process.exit(0);
+}
+
 const DIST_ROOT = fs.existsSync(path.join(ROOT, "apps/backend/dist")) ? path.join(ROOT, "apps/backend/dist") : path.join(ROOT, "dist");
 const SOURCE_ROOT = path.join(ROOT, "apps/backend/src");
 
