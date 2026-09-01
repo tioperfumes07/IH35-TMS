@@ -71,7 +71,7 @@ export function findNonSortableDataColumns(source) {
   return offenders;
 }
 
-export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages }) {
+export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutesSrc, invApiSrc }) {
   const failures = [];
 
   if (!hookSrc) {
@@ -106,6 +106,12 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages }) {
     if (!/isSortControlled/.test(parityTableSrc)) {
       failures.push(`${PARITY_TABLE_FILE} — must branch controlled vs internal sort state (isSortControlled)`);
     }
+    // Cascade 2026-08-31 DEFECT 1 — label-only button left most of <th> dead (DataTable already w-full).
+    if (!/className=\{`inline-flex w-full items-center gap-1/.test(parityTableSrc) && !/inline-flex w-full items-center gap-1/.test(parityTableSrc)) {
+      failures.push(
+        `${PARITY_TABLE_FILE} — sortable header button must include w-full (full cell hit target; not label-only)`,
+      );
+    }
   }
 
   for (const { file, label, src } of pages) {
@@ -139,6 +145,32 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages }) {
         failures.push(`${file} (${label}) — payee column must set sortValue (derived from vendor/driver)`);
       }
     }
+    // Cascade 2026-08-31 DEFECT 2 — invoices exemplar: URL sort → SQL ORDER BY, not client-only ≤100.
+    if (file.includes("InvoicesListPage")) {
+      if (!/sortMode=["']external["']/.test(src)) {
+        failures.push(`${file} (${label}) — must use sortMode="external" so ParityTable does not reorder a capped page`);
+      }
+      if (!/sort:\s*sortKey/.test(src) || !/dir:\s*sortKey\s*\?\s*sortDirection/.test(src)) {
+        failures.push(`${file} (${label}) — listInvoices must pass sort/dir from useUrlSort into the API`);
+      }
+      if (!/limit:\s*100/.test(src)) {
+        failures.push(`${file} (${label}) — must pass an explicit limit (no silent API default)`);
+      }
+    }
+  }
+
+  const invRoutes =
+    invRoutesSrc ?? readFile("apps/backend/src/accounting/invoices.routes.ts") ?? "";
+  if (!/INVOICE_LIST_SORT_SQL/.test(invRoutes) || !/invoiceListOrderBy/.test(invRoutes)) {
+    failures.push("apps/backend/src/accounting/invoices.routes.ts — must whitelist sort → SQL ORDER BY (INVOICE_LIST_SORT_SQL)");
+  }
+  if (!/sort:\s*z\.string\(\)/.test(invRoutes) || !/dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(invRoutes)) {
+    failures.push("apps/backend/src/accounting/invoices.routes.ts — listQuerySchema must accept sort + dir");
+  }
+
+  const invApi = invApiSrc ?? readFile("apps/frontend/src/api/accounting.ts") ?? "";
+  if (!/function listInvoices[\s\S]*?params\.sort[\s\S]*?query\.set\("sort"/.test(invApi)) {
+    failures.push("apps/frontend/src/api/accounting.ts — listInvoices must forward sort query param");
   }
 
   return failures;
@@ -155,6 +187,7 @@ function selftest() {
     onSortChange?: (key: string, dir: "asc" | "desc") => void;
     sortValue?: (row: T) => string | number | null;
     const isSortControlled = sortKey != null;
+    className={\`inline-flex w-full items-center gap-1 \${x}\`}
   `;
   const goodPage = `
     import { useUrlSort } from "../../hooks/useUrlSort";
@@ -166,17 +199,47 @@ function selftest() {
     ]}
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} />
   `;
+  const goodInvoices = `
+    import { useUrlSort } from "../../hooks/useUrlSort";
+    const { sortKey, sortDirection, onSortChange } = useUrlSort();
+    columns={[
+      { key: "date", sortable: true },
+      { key: "amount", sortable: true },
+      { key: "actions", label: "Actions" },
+    ]}
+    listInvoices(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 100 })
+    <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
+  `;
   const goodExpenses = `${goodPage}
     { key: "payee", sortable: true, sortValue: (row) => row.payee }
+  `;
+
+  const goodInvRoutes = `
+    sort: z.string().trim().max(64).optional(),
+    dir: z.enum(["asc", "desc"]).optional(),
+    const INVOICE_LIST_SORT_SQL: Record<string, string> = { issue_date: "i.issue_date" };
+    function invoiceListOrderBy(sort, dir) { return "i.issue_date DESC"; }
+  `;
+  const goodInvApi = `
+    function listInvoices(operatingCompanyId, params = {}) {
+      if (params.sort) query.set("sort", params.sort);
+      if (params.dir) query.set("dir", params.dir);
+    }
   `;
 
   const good = {
     hookSrc: goodHook,
     parityTableSrc: goodParity,
+    invRoutesSrc: goodInvRoutes,
+    invApiSrc: goodInvApi,
     pages: PAGES.map(({ file, label }) => ({
       file,
       label,
-      src: file.includes("ExpensesListPage") ? goodExpenses : goodPage,
+      src: file.includes("ExpensesListPage")
+        ? goodExpenses
+        : file.includes("InvoicesListPage")
+          ? goodInvoices
+          : goodPage,
     })),
   };
 
@@ -186,6 +249,8 @@ function selftest() {
     ["Bills missing sortKey wiring", { ...good, pages: good.pages.map((p, i) => (i === 0 ? { ...p, src: goodPage.replace("sortKey={sortKey}", "") } : p)) }, "sortKey={sortKey}"],
     ["Expenses missing sortable column", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace("sortable: true, sortValue", "sortValue") } : p)) }, "missing sortable: true"],
     ["Expenses payee missing sortValue", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace(", sortValue: (row) => row.payee", "") } : p)) }, "payee column must set sortValue"],
+    ["Invoices missing SQL ORDER BY whitelist", { ...good, invRoutesSrc: goodInvRoutes.replace("INVOICE_LIST_SORT_SQL", "NOPE") }, "INVOICE_LIST_SORT_SQL"],
+    ["listInvoices missing sort forward", { ...good, invApiSrc: goodInvApi.replace('query.set("sort"', 'query.set("q"') }, "listInvoices must forward sort"],
   ];
 
   const goodErrors = sortableHeaderErrors(good);

@@ -226,6 +226,8 @@ export function InvoicesListPage() {
       fromDate,
       toDate,
       deepLinkSourceLoadId,
+      sortKey,
+      sortDirection,
     ],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
@@ -236,6 +238,11 @@ export function InvoicesListPage() {
         from_date: fromDate || undefined,
         to_date: toDate || undefined,
         source_load_id: deepLinkSourceLoadId || undefined,
+        // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤100 page.
+        sort: sortKey || undefined,
+        dir: sortKey ? sortDirection : undefined,
+        limit: 100,
+        offset: 0,
       }),
     enabled: Boolean(selectedCompanyId),
   });
@@ -530,6 +537,7 @@ export function InvoicesListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        sortMode="external"
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 invoices at once.", "error")}

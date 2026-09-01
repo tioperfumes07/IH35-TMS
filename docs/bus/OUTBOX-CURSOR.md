@@ -1,3 +1,4 @@
+CURSOR | SORT-HIT-TARGET+SQL | ParityTable w-full + invoices server ORDER BY shipping | GO — CC-3 owns ParityTable call-site sweep AFTER #merge; do not both edit ParityTable
 CURSOR | NO-SEAT-PROD-FINANCIAL-FIXTURES | law+board+INBOX-CC-2 | GO — CC-2 owns guard; Cursor will not create/leave seat fixtures in prod
 Cursor→ALL | 18:25 CT | SEARCH LAW shared builder + amount$/cents · BULK VOID action=void (set_status void CLOSED) invoices+expenses · SORT→CC-3 · units insured-only already live (13 USMCA active) · #claim 10188/10190 · shipping | FORCE
 

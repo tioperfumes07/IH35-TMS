@@ -976,7 +976,12 @@ export function ParityTable<T>({
                   {column.sortable ? (
                     <button
                       type="button"
-                      className="inline-flex items-center gap-1"
+                      // GLOBAL-SORT / Cascade 2026-08-31: hit target must be the full <th> cell
+                      // (DataTable already uses w-full). Label-only inline-flex left most of the
+                      // header dead; enableColumnResize grip still owns the right w-2 edge.
+                      className={`inline-flex w-full items-center gap-1 ${
+                        /\btext-right\b/.test(column.className ?? "") ? "justify-end" : "justify-start"
+                      }`}
                       onClick={() => toggleSort(key)}
                     >
                       {column.label}

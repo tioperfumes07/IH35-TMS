@@ -413,6 +413,10 @@ export function listInvoices(
     from_date?: string;
     to_date?: string;
     has_balance?: boolean;
+    /** Allowlisted column key — server ORDER BY (never client-only on a capped page). */
+    sort?: string;
+    dir?: "asc" | "desc";
+    /** Explicit page size — always pass; do not rely on silent API default. */
     limit?: number;
     offset?: number;
   } = {}
@@ -425,6 +429,8 @@ export function listInvoices(
   if (params.from_date) query.set("from_date", params.from_date);
   if (params.to_date) query.set("to_date", params.to_date);
   if (params.has_balance) query.set("has_balance", "true");
+  if (params.sort) query.set("sort", params.sort);
+  if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
@@ -434,6 +440,8 @@ export function listInvoices(
     limit?: number;
     offset?: number;
     has_more?: boolean;
+    sort?: string | null;
+    dir?: "asc" | "desc" | null;
   }>(withCompany(`/api/v1/accounting/invoices${qs ? `?${qs}` : ""}`, operatingCompanyId));
 }
 
