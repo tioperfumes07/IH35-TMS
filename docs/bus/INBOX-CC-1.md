@@ -1,3 +1,8 @@
+# ★ OWNER REWRITE · 2026-09-01T02:36Z
+**DESIGN FILE:** `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` · rewrite: `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md` · NO Cascade Void code until Jorge APPROVED.
+
+Your void-tree API is what Cursor will render. Sample backfill 233 + route proof first. Do not invent a second graph.
+
 # ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
 
 ## CC-1 ORDER (money — Phase 1 then queue)

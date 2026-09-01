@@ -1,3 +1,8 @@
+# ★ OWNER REWRITE · 2026-09-01T02:36Z
+**DESIGN FILE:** `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` · rewrite: `docs/bus/OWNER-REWRITE-DISPATCH-AND-CASCADE-VOID-2026-09-01.md` · NO Cascade Void code until Jorge APPROVED.
+
+**DISPATCH BOARD (owner words — KEEP cities · ADD PU/DEL date+time · LIVE only + HISTORY tab · movable+sortable · real filters/search · CC-3 tokens).** Cascade Void wait APPROVED. Multi-select today = Reverse (settlements) / Cancel loads — not labeled Void until cascade ships.
+
 # ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
 
 **VERIFY (Cursor lead, independent of Claude):** Phase-1 bulk Cancel loads + settlements Reverse + Hide voided/cancelled + Receive Payment nav are on live `8112092` (#19042/#19036/#19052). Owner "no multi-select void" = naming/UX gap (Reverse/Cancel ≠ button labeled Void) + Cascade Void not built.

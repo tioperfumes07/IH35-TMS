@@ -1,3 +1,6 @@
+# ★ OWNER REWRITE · 2026-09-01T02:36Z
+Insurance P0 still ahead of UI. Then token table + **movable columns** for Cursor dispatch board (owner requires movable + sortable headers).
+
 # ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
 
 ## CC-3 ORDER — INSURANCE AHEAD OF UI CONTROL LAW

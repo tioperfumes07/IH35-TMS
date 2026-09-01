@@ -1,3 +1,6 @@
+# ★ OWNER REWRITE · 2026-09-01T02:36Z
+See rewrite doc. Innocent-name GL trail continues. No delete.
+
 # ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
 
 ## DEVIN-A ORDER
