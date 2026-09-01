@@ -1,0 +1,17 @@
+{
+  "note": "SORT-02 — ParityTable mounts with controlled sort (onSortChange) but no sortMode=\"external\", combined with a server-pagination signal (offset/has_more/.limit(). Each entry sorts only the fetched page, not the true population, while looking sorted. An INVENTORY of remaining debt, not an approval of it. May only SHRINK. Fix per file: wire the list's own API to accept ?sort=/?dir= with a column-name allowlist (never a raw client-supplied SQL identifier, see INVOICE_SORT_COLUMNS in apps/backend/src/accounting/invoices.routes.ts for the pattern), pass them through, then add sortMode=\"external\" to the ParityTable mount.",
+  "files_scanned": 1313,
+  "offenders": [
+    "apps/frontend/src/pages/CustomerDetail.tsx",
+    "apps/frontend/src/pages/Customers.tsx",
+    "apps/frontend/src/pages/accounting/AllocationsPage.tsx",
+    "apps/frontend/src/pages/accounting/FixedAssetsPage.tsx",
+    "apps/frontend/src/pages/accounting/IntegrationTransactionsPage.tsx",
+    "apps/frontend/src/pages/accounting/MaintenanceShopHubPage.tsx",
+    "apps/frontend/src/pages/accounting/ManualJEListPage.tsx",
+    "apps/frontend/src/pages/accounting/PrepaidExpensesPage.tsx",
+    "apps/frontend/src/pages/accounting/ReceiptsPage.tsx",
+    "apps/frontend/src/pages/banking/components/BankingPlaidConnectionsPanel.tsx",
+    "apps/frontend/src/pages/lists/accounting/ItemsListPage.tsx"
+  ]
+}

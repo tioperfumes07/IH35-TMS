@@ -931,4 +931,82 @@ describe("ParityTable (A1 grammar)", () => {
       expect(renderedNameOrder()).toEqual(["Alpha", "Bravo"]);
     });
   });
+
+  describe("COLUMN LAW 2026-09-01 — auto-fit + reorder", () => {
+    it("auto-fits a column to its content when no manual width is persisted", () => {
+      window.localStorage.clear();
+      type WideRow = { id: string; short: string; long: string };
+      const wideColumns: Array<ParityColumn<WideRow>> = [
+        { key: "short", label: "S" },
+        { key: "long", label: "L" },
+      ];
+      const wideRows: WideRow[] = [
+        { id: "1", short: "A", long: "A very long piece of content that should not truncate" },
+      ];
+      render(<ParityTable<WideRow> columns={wideColumns} rows={wideRows} rowKey={(r) => r.id} storageKey="test-autofit" />);
+      const headers = screen.getAllByRole("columnheader");
+      const shortWidth = parseFloat((headers[0] as HTMLElement).style.width || "0");
+      const longWidth = parseFloat((headers[1] as HTMLElement).style.width || "0");
+      // The long-content column must auto-size wider than the short one — this is the whole point
+      // of AUTO-FIT (Payee/Vendor/State must always show fully, never truncate silently).
+      expect(longWidth).toBeGreaterThan(shortWidth);
+      window.localStorage.clear();
+    });
+
+    it("a manual resize wins over auto-fit and is never overwritten by it", () => {
+      window.localStorage.clear();
+      render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-autofit-override" />);
+      const handle = screen.getByLabelText("Resize Name");
+      fireEvent.keyDown(handle, { key: "ArrowRight" });
+      fireEvent.keyDown(handle, { key: "ArrowRight" });
+      const nameHeader = screen.getAllByRole("columnheader")[0] as HTMLElement;
+      const manualWidth = parseFloat(nameHeader.style.width || "0");
+      expect(manualWidth).toBeGreaterThan(48);
+      const persisted = JSON.parse(window.localStorage.getItem("paritytable:test-autofit-override") ?? "{}");
+      expect(persisted.colWidths?.name).toBe(manualWidth);
+      window.localStorage.clear();
+    });
+
+    it("dragging a header onto another reorders the columns and persists the order", () => {
+      window.localStorage.clear();
+      render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-reorder" />);
+      const headersBefore = screen.getAllByRole("columnheader").map((th) => th.textContent);
+      expect(headersBefore).toEqual(["Name", "Amount"]);
+
+      const nameHeader = screen.getAllByRole("columnheader")[0];
+      const amountHeader = screen.getAllByRole("columnheader")[1];
+      fireEvent.dragStart(nameHeader);
+      fireEvent.dragOver(amountHeader);
+      fireEvent.drop(amountHeader);
+      fireEvent.dragEnd(nameHeader);
+
+      const headersAfter = screen.getAllByRole("columnheader").map((th) => th.textContent);
+      expect(headersAfter).toEqual(["Amount", "Name"]);
+
+      const persisted = JSON.parse(window.localStorage.getItem("paritytable:test-reorder") ?? "{}");
+      expect(persisted.colOrder).toEqual(["amount", "name"]);
+      window.localStorage.clear();
+    });
+
+    it("a new column not present in a saved colOrder is appended, never dropped", () => {
+      window.localStorage.clear();
+      window.localStorage.setItem("paritytable:test-reorder-forward-compat", JSON.stringify({ colOrder: ["amount"] }));
+      render(<ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-reorder-forward-compat" />);
+      const headers = screen.getAllByRole("columnheader").map((th) => th.textContent);
+      // "amount" (the only key in the saved order) comes first; "name" — added to `columns` after
+      // the order was saved — is appended rather than silently vanishing.
+      expect(headers).toEqual(["Amount", "Name"]);
+      window.localStorage.clear();
+    });
+
+    it("column reorder can be disabled (a table with a real reason columns must stay fixed)", () => {
+      window.localStorage.clear();
+      render(
+        <ParityTable<Row> columns={columns} rows={rows} rowKey={(r) => r.id} storageKey="test-reorder-off" enableColumnReorder={false} />,
+      );
+      const nameHeader = screen.getAllByRole("columnheader")[0];
+      expect(nameHeader).not.toHaveAttribute("draggable", "true");
+      window.localStorage.clear();
+    });
+  });
 });

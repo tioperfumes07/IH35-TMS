@@ -7405,3 +7405,258 @@ The following rows register every `STILL OPEN` ID from `docs/register/IH35-UI-ME
 | **CLOSED AS STALE (CODEX 2026-09-01):** `DSP-07-AT-RISK-IN-TRANSIT-ONLY` — the register cited `arch-tabs.service.ts:61` as filtering only `l.status='in_transit'`, but current `origin/main` imports `DISPATCH_ALERT_ACTIVE_STATUSES_SQL` and the canonical set contains `dispatched`, `at_pickup`, `in_transit`, and `at_delivery`. The same shared set governs late arrivals. This was fixed by prior Codex commit `1b06cf8517`; no product code changed in this closeout. | `apps/backend/src/dispatch/arch-tabs.service.ts`; `apps/backend/src/dispatch/dispatch-alert-statuses.ts`; `scripts/verify-dispatch-at-risk-complete-range.mjs` | **CODEX dispatch** | retain shared status universe; never restore a route-local literal | guard normal PASS; selftest caught 23/23 mutations, including missing `at_pickup` and `in_transit`-only replacement | **CLOSED · stale register diagnosis · already on main** |
 
 | **CLOSED AS STALE + FIXED CODE THIS PR (CODEX 2026-09-01):** `DSP-08` was already fixed on main: `DispatchOverview` uses the deduplicated combined feed's `.count`, and its guard plants restoration of `atRiskCount + lateCount`. `DSP-09` remained real: detention had a full panel/query but no KPI-row card. Added a Detention KPI driven by the canonical board `count`, active-accrual hint, and `/dispatch/detention` drill; registered it in the existing derived-action contract and planted a dead-drill mutation. | `apps/frontend/src/pages/dispatch/DispatchOverview.tsx`; `docs/specs/dispatch/DISPATCH-OVERVIEW-DERIVED-ACTION-CONTRACTS.json`; `scripts/verify-dispatch-overview-derived-actions.mjs` | **CODEX dispatch** | reuse existing detention query, no second fetch; one registered KPI action | focused derived-action guard normal/selftest; at-risk complete-range normal/selftest; frontend TypeScript | **DSP-08 CLOSED STALE · DSP-09 FIXED CODE THIS PR · Live=UNVERIFIED** |
+| **FINDING: N/A — duplicate fix abandoned, credited to a parallel concurrent claim (CC-3 2026-09-01):** `ACCT-F10196-BULK-ACTIONMAP-BUILD-BREAK` — independently found and root-caused a real `build:backend` break on origin/main (2 unrelated defects in `bills-bulk.routes.ts`/`bulk-update.factory.ts`: unreachable dead code with stale types after an owner-directed hard-return lockdown, and an over-narrow `actionMap: Record<string, z.ZodType<TPayload>>` generic that broke the moment bulk-void's empty-payload schema joined the map). Built, tested (14+7 pre-existing tests green), and committed a fix on branch `cc3-ci-unblock-bulk-actionmap-2026-09-01` — before pushing, re-fetched origin/main and found another seat had ALREADY landed a working fix in the meantime (adding `z.infer<typeof emptyPayloadSchema>` to the `BillBulkPayload` union directly, a more targeted fix than my factory-level generic loosening). Verified live: a clean `npx tsc -p tsconfig.json --noEmit` on current origin/main tip (`b2e3f65c44`) exits 0. My own duplicate branch/commit abandoned, not pushed — no wasted CI cycle, no redundant PR. | `apps/backend/src/accounting/bills-bulk.routes.ts`, `apps/backend/src/bulk/bulk-update.factory.ts` | N/A — already fixed by another seat | none — verify-only | clean `tsc --noEmit` on origin/main tip `b2e3f65c44`, exit 0 | **CLOSED · duplicate abandoned, not pushed · credited to the concurrent fix already on origin/main** |
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 21:05 CT — repo-wide push-gate red, root-caused, not mine to fix
+
+**Finding:** `scripts/verify-architectural-design.ts`'s `extractArrayBlock`/`extractSubNavTabs` hardcodes
+the literal string `export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [` when scanning
+`apps/frontend/src/pages/reports/ReportsSubNav.tsx`. The file's actual, current (and correct —
+intentional NAVY-SUBNAV work by another seat) declaration is
+`export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [` (line 85) — the type annotation
+changed from `NavItem[]` to `NavyPageSubNavItem[]`, so the brittle string match no longer finds the
+array start token, and `verify:arch-design` (step 6/2523 of `verify:pre-commit`, the real
+CI-equivalent `ci / build-typecheck` gate) throws and aborts the ENTIRE pre-commit chain — not a
+soft/gated failure, a hard `process.exit`/thrown-error abort.
+
+**Impact confirmed repo-wide, not specific to my branch:** `docs/audit/VERIFY-STATIC-BASELINE.json`
+(the separate local-only `verify-static.mjs` fallback's seeded baseline, status=seeded, 151 names,
+unmodified by me and identical to origin/main's committed copy) is also stale against the current
+tip — a raw `node scripts/verify-static.mjs` run reports 73 gated failures NOT in that baseline
+across files I have never touched (verify-canonical-load-nav.mjs, verify-je-type-fk.mjs,
+verify-schema-parity.mjs, verify-customers-list-master-detail.mjs, etc.) — this is a separate,
+SECOND stale-baseline issue, also not mine (Cascade owns re-seeding that file per its own header
+comment).
+
+**What I verified is NOT the cause:** my own uncommitted/committed diff this session touches only
+`apps/frontend/src/components/Button.tsx`, `apps/frontend/src/components/parity/ParityTable.tsx`,
+`apps/frontend/src/design/tokens.ts`, `scripts/verify-ui-control-law.mjs`,
+`scripts/ui-control-law-baseline.json`, `scripts/.guard-exempt.json` (3 new exempt entries for my
+own guards, following the exact precedent DEVIN-A set for `verify-money-column-void-aware.mjs`),
+and `docs/bus/INBOX-CC-3.md`/`OUTBOX-CC-3.md`. None of these touch `ReportsSubNav.tsx` or
+`verify-architectural-design.ts`. A real §7 palette violation I did introduce earlier this session
+(REORDER's drop-target highlight using `bg-blue-50`/`outline-blue-300` instead of the locked
+navy/slate tokens) was found and fixed in this same pass (now uses `colors.accentTint`/`colors.navy`
+inline, matching the existing selected-row pattern at ParityTable.tsx:913).
+
+**Not fixing `verify-architectural-design.ts` myself:** it is a shared architecture-law parser, not
+chrome-only-lane territory, and whoever is mid-flight on the NAVY-SUBNAV type rename should own the
+2-line parser fix (accept `NavyPageSubNavItem[]` alongside `NavItem[]`, or generalize the match) to
+avoid stepping on their in-progress work.
+
+**Status: BLOCKED on landing `cc3-ui-control-law-build-2026-09-01`** — local `verify:pre-commit`
+(the real CI-equivalent gate) cannot complete due to the above, unrelated to my diff. My own code is
+independently verified clean: `tsc -b` (frontend), the 3 touched guards' `--selftest` + real scans,
+`verify-guard-wired.mjs`/`verify-cc1-money-orphan-guard-registry-batch.mjs` (0 unaccounted after the
+exempt additions), `verify-section7-palette-maintenance.mjs` (clean after the fix), and
+`ParityTable.test.tsx` (44/44). Not force-pushing with `--no-verify` (forbidden) or bypassing
+unilaterally. Escalating to the owner in chat; will re-attempt the push the moment
+`verify-architectural-design.ts` or `ReportsSubNav.tsx`'s coupling is fixed by whoever owns that
+lane, or on explicit owner authorization to bypass this specific, disclosed, root-caused check.
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 21:40 CT — SECOND unrelated repo-wide break, origin/main currently red on plain frontend tsc
+
+**Finding:** a fresh push attempt (branch `cc3-insurance-policy-bill-param-fix-2026-08-31`, a
+1-file backend fix, unrelated to frontend/driver-finance) failed the `frontend-tsc` pre-push
+step with a REAL, unrelated TypeScript error on origin/main's current tip:
+```
+src/pages/driver-finance/SettlementsPage.tsx(23,33): error TS2307: Cannot find module
+'../accounting/VoidReasonModal' or its corresponding type declarations.
+src/pages/driver-finance/SettlementsPage.tsx(428,26): error TS7006: Parameter 'reason'
+implicitly has an 'any' type.
+```
+This is a SECOND, independent, unrelated repo-wide break tonight (the first being
+`verify-architectural-design.ts`/`ReportsSubNav.tsx`, logged above at 21:05 CT) — origin/main's
+tip is currently failing a plain `cd apps/frontend && npx tsc -b`, which every seat's pre-push
+hook runs regardless of what that seat's own diff touches. This is not my file (driver-finance/
+settlements, a missing `VoidReasonModal` import — clearly another seat's in-flight commit that
+landed on main broken or mid-refactor) and not something I'm touching or fixing.
+
+**Not my lane, not fixing.** Flagging because it independently confirms the pattern: main is
+moving too fast tonight for individual seats' local-gate pushes to land cleanly, and this is a
+repo-wide blocking condition, not specific to CC-3's diff. Holding further push attempts until
+main stabilizes rather than retrying against a target that is itself currently broken.
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 22:20 CT — DRIVERS cleanup, full verified lists
+
+**Criteria (owner): stays Active if EITHER (a) hos.duty_status_events.started_at within last 40 days, OR (b) appears on a driver_finance.driver_settlements row with period_start in August 2026 AND is_sample_data=false. Everything else -> Inactive.**
+
+**73 driver row IDs going Inactive (69 real persons, matched by name):**
+- db37af23-ea20-493b-8321-a26a30205250
+- 44455b45-2610-4d0c-bd6a-0febeecd70f3
+- 2ada20b9-5a51-46e2-902e-c8e8f68f8034
+- 9c0ae9a4-64e1-41d1-b5ab-8ef43c0e3a0f
+- 7f0341f2-8d7a-4885-b534-d4e93a95fa2a
+- d75b74ea-e718-408d-99e6-9cf0f8234a70
+- e3ac0879-8558-4c01-922f-0cc2d94b937b
+- a5f3e6e4-047d-44b1-9292-72b6bbe6519a
+- 1fc4d27f-0ffe-4735-9fbb-506e77e1f295
+- b7f84d33-a1bf-40a2-b6d4-86eafd44323f
+- ab1dbf48-6b26-4765-bf4a-69a1295cd189
+- 603e4b63-e4c5-4061-a911-329e24bd991e
+- e901be6e-cee7-41cd-8827-8b5c320c9a20
+- a593d0c4-fe55-451d-8193-ac481d9f1a01
+- 6f082eb6-091f-461c-bb7d-6ac8a25ac828
+- 56c5bbb9-70b7-42a2-aa65-ff69e4864e68
+- 521bd093-ad57-49a6-937e-82ed24c1563b
+- ff62fc9b-7258-4d89-9778-43d2e1a02d4a
+- c169126c-beb1-4508-93a9-e1d270f22e11
+- 9f35cf21-01bb-467e-bc31-e96bb9c60dfe
+- 1d2dae01-2cc5-4e7e-b0c4-6cd9f855ec1e
+- 2f166249-8158-4650-9074-eaedb1b5b305
+- ba75a6cf-50fa-4056-bba2-1bcede88fad7
+- 52c492ea-b1f3-4d2b-a90f-0559d8ab4981
+- c8379cc6-6148-4fe9-8842-7c12d8fa8dce
+- e8d08faf-ac5a-4351-8bef-8c7bf260f95e
+- 74ff1e2c-c329-4b3e-a2bd-4c5603d719e4
+- fc24d491-d592-4e03-94f0-cb7ab2ca79f1
+- 8f8adcdc-fc0d-4be3-8efe-2b488e98e773
+- 30806c79-9a89-4cf1-93e4-c25820e6df14
+- d5a8f2e2-632e-4eaf-84c4-0ac3cfbd945e
+- 47f156a2-4457-4a2f-a49e-4c3e46cdd76a
+- 1cf3d539-4795-4dfa-88ea-b09a9b7b2a17
+- cf02d95c-7c1c-4061-9251-77a8375765dd
+- b1235476-2a03-47fb-86ca-4ff2ac1c307d
+- 70ae2d01-b38e-4c82-b4da-5c8c00059fe8
+- 69da980b-2a16-455f-aacb-39514b759e04
+- d4a753ab-2e02-47d7-9808-57631b5f93c1
+- e0a9d212-c02b-4ca0-b530-29e961dd6145
+- a2a1275f-f709-4df2-9ed8-388e4d4f555b
+- 450be925-56e6-425a-a56b-f99cf97d2b5f
+- dd59fbbc-79e3-4e23-83cc-ae0f74fac59c
+- 7f9698ae-fce5-417c-9d83-739910a529ac
+- 09e229e7-e877-4a85-8731-c85eec9904ee
+- deb4e3a4-15d7-49d4-9f16-ccfb9c5ebfaf
+- 82898fdf-8f3c-4545-9990-27cd03a86e99
+- 0558786b-2c98-4033-9c8b-57f4d6f5ed40
+- dd7c5f8c-2ade-4b3c-8308-9a89735a2d3d
+- 809450a7-1134-449f-b484-9e91de8db5f3
+- a6f18a3c-f4e9-4bc6-a38b-1d6ef5b92d28
+- 3bdd88ee-7e29-4fd2-ab1a-07c2245ef1e9
+- 7d867b16-06e2-4b2b-9ff2-1451e26c2d71
+- c4650462-f7a0-49d0-81ec-886f44be027c
+- 0da95346-5565-4b76-b579-751798614d04
+- 49427973-e93e-4ea7-a2eb-eb9eefa7f331
+- 29e443a0-7025-44eb-b2d2-e1bf1b296619
+- f2a3f7f2-3362-4fae-a069-366ca7a4f65f
+- 72db8f7e-5611-4c0a-823a-8d61559413a7
+- b069765d-7735-48c7-aa1d-7d75b83aaade
+- 16002920-c1ea-4930-8ccf-561f4e06171e
+- 435f2b96-91d7-45a9-a6b2-a293acef4857
+- 9c0c45f1-e462-4178-a66c-f29aaf6b93cb
+- 795c85b8-3b5f-4af0-8d53-98eceac8ae46
+- 113678a2-6f6f-4a34-8cad-4e46cbf4f143
+- 7e65dd62-1085-4d0f-8a1e-0a61c47d5439
+- 611a9fbb-b27c-4b64-a8c3-b7c5fbec5f30
+- 15aead15-bb72-496a-8ae1-a20e9629b872
+- 315c9f2a-a1e7-4db5-ae16-129338b7d44f
+- a3227aa8-eb21-4066-9905-6287d3f50ae9
+- e3cf9598-783e-43c0-b361-b229537daedc
+- e8770055-7e5b-4ca3-ad55-a469b5ef5412
+- 64fb0800-334c-42f3-82fa-82510442599f
+- bfc906db-b778-48c9-944a-e59c5ffb73c5
+
+**34 driver row IDs staying Active (20 real persons):** posted in OUTBOX-CC-3.md with per-person reasons (HOS<=40d / REAL-Aug-settlement).
+
+**Not yet executed** — status changes pending Codex sync per queue discipline, joint task.
+
+## 2026-09-01 01:15 CC-3 — VERIFY-STATIC-BASELINE.json wall is real, reproduced, 74 names (blocks ALL seats)
+
+Owner said "verify-static-ratchet.mjs -> PASS on current main (seeded/151) -- baseline ratchet is
+not the blocker on tip main." That check PASSES (confirmed, re-run live) but it ONLY validates that
+the COMMITTED docs/audit/VERIFY-STATIC-BASELINE.json is internally shrink-consistent vs origin/main's
+copy of the same file -- it does NOT execute a single guard. It is not the same check as the
+precheck-push fallback.
+
+The actual blocking step (`verify-static-fallback: node scripts/verify-static.mjs`, invoked because
+block-ready is SKIP-CAPABILITY'd for no local DATABASE_URL) DOES execute every scripts/verify-*.mjs
+for real, then reports every genuine failure NOT already listed in that same baseline's failingNames[].
+
+Ran it directly (not via the git hook) on cc3-insurance-policy-bill-param-fix-2026-08-31, rebased
+onto current origin/main (29f8614487, tip at test time): **74 gated fail(s) NOT in VERIFY-STATIC-BASELINE**.
+Full list posted below. This reproduced IDENTICALLY across 2 separate push attempts (both rebased
+onto the then-current main tip) -- not stale-tip drift, not caused by my branch (my only touched
+file is apps/backend/src/insurance/policy-create-atomic.service.ts, not referenced by any of the 74).
+
+Spot-checked 4 of the 74 directly against the dead-DB sentinel to rule out a false-DB-skip:
+- verify-schema-parity.mjs: REAL, legitimate self-heal available -- a merged migration added
+  accounting.payments.cleared_date + accounting.bill_payments.cleared_date; docs/schema-parity-baseline.json
+  was never regenerated. `node scripts/verify-schema-parity.mjs --update` fixes it cleanly (2-line
+  diff, tables tracked count unchanged at 618). Tested, not yet committed anywhere.
+- verify-sql-column-existence.mjs: REAL, same baseline-drift family (catalogs.accounts.name flagged
+  as not-in-baseline; likely also clears once schema-parity-baseline.json is current, not re-tested
+  after the --update above).
+- verify-void-predicate-map-current.mjs: REAL, separate cause (docs/audit/void-predicate-map.json drift).
+- verify-vendor-category-picker-law.mjs: REAL, separate cause (By Category picker not using
+  ReferenceSelect + missing canonical vendor_type creator + missing first-row "+ Add new" label) --
+  a genuine FE/vendor-lane defect, not something I'm scoping into right now.
+- verify-vend-verify-01.mjs: ran standalone -> PASS. Only fails inside the full 150+-guard sweep --
+  smells like cross-guard order/resource contention on this heavily-loaded shared machine, not a
+  real code defect. Flagging as a possible flaky-guard, not confirmed root-caused.
+
+This blocks EVERY seat's push through this exact fallback path identically -- not lane-specific.
+Not something a rebase fixes (reproduced twice, onto two different main tips, same list both times).
+Not something I can/should bulk-fix (73 of 74 span accounting/banking/dispatch/drivers/factoring/
+linkage/migration/scoreboard -- every lane but mine) or bulk-allowlist (VERIFY-STATIC-BASELINE.json's
+own contract: never grow it to hide rot -- and this isn't rot I introduced).
+
+ASK: whoever owns VERIFY-STATIC-BASELINE.json (Cascade per convention) needs to reseed it against
+CURRENT main's real guard-execution state (not just re-validate the committed file's own internal
+shrink-consistency) -- that's the actual global unblock. Until then this wall reproduces for every
+seat's push identically, regardless of branch content.
+
+Full 74-name list (verbatim from the direct run):
+verify-accounting-subnav-grouped.mjs, verify-acct-period-close-01-ensureopenperiod-wired.mjs,
+verify-acct-surf-03-bill-payment.mjs, verify-acct-surf-04-receive-payment.mjs,
+verify-acct-surface-dod-sweep.mjs, verify-bank-automatch-memo-threshold-calibrated.mjs,
+verify-bank-surface-dod-sweep.mjs, verify-bill-detail-panel-visible-label.mjs,
+verify-bills-bulk-void-reverses-gl.mjs, verify-canonical-load-nav.mjs,
+verify-cash-advance-load-trailer-entity-picker.mjs, verify-compliance-notification-rule-visible-errors.mjs,
+verify-customers-list-master-detail.mjs, verify-customers-load-column-remainder.mjs,
+verify-customers-vendors-list-segment-tabs.mjs, verify-deactivated-counterparty-resolver-coverage.mjs,
+verify-disp-wire-08-settlement-ping.mjs, verify-disp-wire-10-cancel-economics.mjs,
+verify-dispatch-secondary-nav-depth.mjs, verify-display-id-lookups-entity-scoped.mjs,
+verify-drivers-active-path.mjs, verify-drivers-qbo-chrome-leaves.mjs,
+verify-drivers-teams-view-url-sync.mjs, verify-eld-tabs-canonical.mjs,
+verify-entity-label-rejects-uuid-shaped-name.mjs, verify-factoring-advances-write-role-gated.mjs,
+verify-factoring-void-reverses-funding-je.mjs, verify-finance-landing-hub.mjs,
+verify-finance-tabs-overflow-scrollable.mjs, verify-guard-selftests-are-real.mjs,
+verify-guard-wired.mjs, verify-healthz-no-raw-error-leak.mjs, verify-invoices-bulk-void-reverses-gl.mjs,
+verify-je-type-fk.mjs, verify-je-type-inbound-density.mjs, verify-join-entity-scoped.mjs,
+verify-linkage-required-edges.mjs, verify-list-segment-tabs-present.mjs,
+verify-live-load-number-not-self-referential.mjs, verify-load-cancellations-report.mjs,
+verify-local-ci-parity.mjs, verify-lst-picker01-equipment-type-inline-create.mjs,
+verify-matrix-metrics-tally.mjs, verify-migration-void-posts-reversal.mjs,
+verify-module-completion-requires-tieout.mjs, verify-module-hub-navigation-connectivity.mjs,
+verify-no-circular-dependencies.mjs, verify-no-closed-loop-guards.mjs,
+verify-no-execsync-on-request-path.mjs, verify-one-load-one-open-invoice.mjs,
+verify-operator-record-surface-connectivity.mjs, verify-orphan-fk-inventory.mjs,
+verify-payments-create-role-gated.mjs, verify-pre-settlements-reverse-drill.mjs,
+verify-primary-module-navigation-connectivity.mjs, verify-primary-record-selector-reverse-links.mjs,
+verify-prod-verified-live-binding.mjs, verify-program-audit-scoreboard-api-url.mjs,
+verify-program-scoreboard-13gate-prodread.mjs, verify-push-gate-classification.mjs,
+verify-reports-hub-connectivity.mjs, verify-required-surface-inventory-complete.mjs,
+verify-scenario-tracker-live-binding.mjs, verify-scheduler-tenant-context.mjs,
+verify-settlement-dispute-adjustment-lines-and-aggregation.mjs, verify-settlements-qbo-chrome-surfaces.mjs,
+verify-sql-column-existence.mjs, verify-sweep-c6-money-insert-requires-je-poster.mjs,
+verify-test-provider-completeness.mjs, verify-vend-s03-s04-dedup-and-types.mjs,
+verify-vend-verify-01.mjs, verify-vendor-category-picker-law.mjs, verify-void-predicate-map-current.mjs,
+verify-wo-console-list-uses-paritytable.mjs
+
+## 2026-09-01 01:20 CC-3 — URGENT: no branch can currently push clean (73-name wall is content-independent)
+
+Realized after preparing a 2nd, unrelated, 1-file mechanical PR (cc3-schema-parity-baseline-regen-2026-09-01,
+fixing exactly 1 of the 74 gated fails logged above): pushing it would hit the IDENTICAL remaining
+~73-name wall, because verify-static.mjs globs and runs EVERY scripts/verify-*.mjs unconditionally --
+it does not scope to files touched by the branch's own diff. Killed that push before wasting another
+~10min sweep on a guaranteed-identical result (confirmed: still in money-pr-local-gate stage, not yet
+at the slow step, zero waste).
+
+This means: **no seat can currently get a clean push through the normal hook path, on any branch,
+regardless of what it touches** -- until docs/audit/VERIFY-STATIC-BASELINE.json is reseeded against
+current main's real guard-execution state (see the 01:15 entry above for the full 74-name list and
+root-cause detail). This supersedes "push now" as an achievable instruction until that reseed happens
+-- not a stall, a reproduced structural fact.
+
+The schema-parity-baseline-regen branch is committed, gate-tested clean (money-pr-local-gate PASS),
+and ready to push the moment the wall clears -- holding it rather than burning another cycle.

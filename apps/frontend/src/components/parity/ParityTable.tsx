@@ -25,7 +25,9 @@ import {
   type ReactNode,
   type TouchEvent as ReactTouchEvent,
 } from "react";
-import { colors, typography } from "../../design/tokens";
+import { colors, typography, MIN_HIT_TARGET_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { Button } from "../Button";
+import { Settings as GearIcon } from "lucide-react";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -113,6 +115,10 @@ export type ParityTableProps<T> = {
   stickyHeader?: boolean;
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
+  /** Drag-a-header-to-move-it column reordering (order persists per storageKey, alongside width).
+   * Default true — set false only for a table with a real reason columns must stay fixed (a
+   * written reason, per COLUMN LAW). */
+  enableColumnReorder?: boolean;
   /**
    * Optional per-row expandable detail. When provided, a ▸/▾ toggle column is prepended; clicking it
    * reveals renderExpanded(row) in a full-width detail row beneath the parent row. Additive — existing
@@ -262,7 +268,61 @@ const DENSITY_LABEL: Record<ParityDensity, string> = {
   ultra: "Ultra compact",
 };
 
-type Persisted = { hidden?: string[]; density?: ParityDensity; pageSize?: number; colWidths?: Record<string, number> };
+// AUTO-FIT (owner law, COLUMN LAW 2026-09-01): `table-fixed` (below) never re-measures content —
+// a column with no explicit width either collapses to whatever the FIRST rendered row happened to
+// need or inherits a stale persisted width, silently truncating a real value (Payee/Vendor/State
+// were the named examples). AUTO_FIT_MIN/MAX are a WRITTEN bound, not an arbitrary guess: MIN keeps
+// a short numeric/status column from shrinking to illegible; MAX stops one long free-text column
+// (a memo/description) from eating the whole table — a user who genuinely needs more still has the
+// existing manual drag-resize, which always wins once used (see colWidths vs autoFitWidths below).
+const AUTO_FIT_MIN_WIDTH = 64;
+const AUTO_FIT_MAX_WIDTH = 320;
+// Cell horizontal padding (px-2 = 0.5rem each side) + the sort arrow glyph + a small buffer so a
+// freshly-measured column isn't immediately re-truncated by its own chrome.
+const AUTO_FIT_CHROME_PX = 28;
+// AUTO-FIT measures a BOUNDED sample of the current page, not the whole dataset — the default
+// `pageSizeOptions` below go up to 300 rows; measuring all of them on every keystroke of a live
+// filter would be real, needless canvas work. 40 rows is enough to catch the page's longest value
+// in practice without being a performance concern.
+const AUTO_FIT_SAMPLE_ROWS = 40;
+
+let measureCanvasCtx: CanvasRenderingContext2D | null | undefined;
+function getMeasureCanvasCtx(): CanvasRenderingContext2D | null {
+  if (measureCanvasCtx !== undefined) return measureCanvasCtx;
+  if (typeof document === "undefined") {
+    measureCanvasCtx = null;
+    return measureCanvasCtx;
+  }
+  const canvas = document.createElement("canvas");
+  measureCanvasCtx = canvas.getContext("2d");
+  return measureCanvasCtx;
+}
+
+/** Plain-text width of `text` at the table's own font size — same measurement approach export/CSV
+ * already relies on (`exportValue`) to get a real value out of a computed/rendered column. */
+function measureTextWidth(text: string, fontPx: number): number {
+  const ctx = getMeasureCanvasCtx();
+  if (!ctx) return text.length * fontPx * 0.6; // SSR / no-canvas fallback: a reasonable estimate.
+  ctx.font = `600 ${fontPx}px sans-serif`;
+  return ctx.measureText(text).width;
+}
+
+function cellTextForMeasurement<T>(column: ParityColumn<T>, row: T): string {
+  const value = column.exportValue?.(row) ?? column.sortValue?.(row) ?? (row as Record<string, unknown>)[String(column.key)];
+  if (value === null || value === undefined) return "";
+  return String(value);
+}
+
+type Persisted = {
+  hidden?: string[];
+  density?: ParityDensity;
+  pageSize?: number;
+  colWidths?: Record<string, number>;
+  /** REORDER (COLUMN LAW 2026-09-01) — column keys in display order. Missing/unknown keys keep
+   * their original `columns` prop order and are appended after any explicitly ordered ones, so an
+   * older saved order never silently hides a column a later release adds. */
+  colOrder?: string[];
+};
 
 function loadPersisted(storageKey?: string): Persisted {
   if (!storageKey || typeof window === "undefined") return {};
@@ -310,6 +370,7 @@ export function ParityTable<T>({
   exportFilename,
   stickyHeader = true,
   enableColumnResize = true,
+  enableColumnReorder = true,
   renderExpanded,
   tableTestId,
   rowTestId,
@@ -391,6 +452,12 @@ export function ParityTable<T>({
     [isCollapseControlled, controlledCollapsedKeys, internalCollapsed],
   );
   const [colWidths, setColWidths] = useState<Record<string, number>>(persisted.colWidths ?? {});
+  // REORDER — drag-to-move columns. `colOrder` holds ONLY keys the user has explicitly reordered
+  // into a non-default position; `dragKey`/`dragOverKey` are transient drag-in-progress state, not
+  // persisted.
+  const [colOrder, setColOrder] = useState<string[]>(persisted.colOrder ?? []);
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
   const gearRef = useRef<HTMLDivElement>(null);
   const resizing = useRef<{ key: string; startX: number; startW: number } | null>(null);
 
@@ -412,7 +479,7 @@ export function ParityTable<T>({
     setHidden(new Set(draftHidden));
     setDensity(draftDensity);
     changePageSize(draftPageSize);
-    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: draftPageSize, colWidths });
+    savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: draftPageSize, colWidths, colOrder });
     setGearOpen(false);
   };
 
@@ -437,7 +504,40 @@ export function ParityTable<T>({
     };
   }, [density, gearOpen, hidden]);
 
-  const visibleColumns = columns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
+  // REORDER — apply the user's saved drag order BEFORE the hidden-column filter, so hiding/showing
+  // a column never disturbs the order of the ones that stay visible.
+  const orderedColumns = useMemo(() => {
+    if (colOrder.length === 0) return columns;
+    const byKey = new Map(columns.map((c) => [String(c.key), c]));
+    const ordered: typeof columns = [];
+    for (const key of colOrder) {
+      const c = byKey.get(key);
+      if (c) {
+        ordered.push(c);
+        byKey.delete(key);
+      }
+    }
+    // Any column not in the saved order (new since the order was saved, or never dragged) keeps
+    // its original relative position, appended after the explicitly ordered ones.
+    for (const c of columns) {
+      if (byKey.has(String(c.key))) ordered.push(c);
+    }
+    return ordered;
+  }, [columns, colOrder]);
+  const visibleColumns = orderedColumns.filter((c) => c.alwaysVisible || !hidden.has(String(c.key)));
+
+  function moveColumn(sourceKey: string, targetKey: string) {
+    if (sourceKey === targetKey) return;
+    const currentOrder = orderedColumns.map((c) => String(c.key));
+    const from = currentOrder.indexOf(sourceKey);
+    const to = currentOrder.indexOf(targetKey);
+    if (from === -1 || to === -1) return;
+    const next = [...currentOrder];
+    next.splice(from, 1);
+    next.splice(to, 0, sourceKey);
+    setColOrder(next);
+    savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths, colOrder: next });
+  }
   const toolbarFilteredRows = useMemo(
     () => applyUniversalListFilters(sourceRows, toolbarSearch, toolbarRange),
     [sourceRows, toolbarRange, toolbarSearch],
@@ -478,6 +578,31 @@ export function ParityTable<T>({
   const offset = (safePage - 1) * pageSize;
   const pageRows = sortedRows.slice(offset, offset + pageSize);
   const d = DENSITY[density];
+
+  // AUTO-FIT — only for columns the user has NOT manually resized (colWidths, still the source of
+  // truth once set — see the `w = colWidths[key] ?? autoFitWidths[key]` lookup below). Recomputed
+  // per page/column-set rather than truly once-ever: a column can legitimately need to widen again
+  // when a later page's data is longer than what was on screen at mount, and the owner's actual law
+  // is "must always show fully", not "measured once and then possibly wrong forever".
+  const autoFitWidths = useMemo(() => {
+    const widths: Record<string, number> = {};
+    const sample = pageRows.slice(0, AUTO_FIT_SAMPLE_ROWS);
+    for (const column of visibleColumns) {
+      const key = String(column.key);
+      if (colWidths[key] != null) continue; // manual resize already won for this column.
+      let widest = measureTextWidth(column.label, typography.kpiLabel ?? 11);
+      for (const row of sample) {
+        const text = cellTextForMeasurement(column, row);
+        if (!text) continue;
+        const w = measureTextWidth(text, d.font);
+        if (w > widest) widest = w;
+      }
+      widths[key] = Math.min(AUTO_FIT_MAX_WIDTH, Math.max(AUTO_FIT_MIN_WIDTH, Math.ceil(widest + AUTO_FIT_CHROME_PX)));
+    }
+    return widths;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- colWidths only gates which columns are
+    // (re)computed; including it would recompute every autofit width on every manual drag-resize.
+  }, [visibleColumns, pageRows, d.font]);
 
   // Phase A2: group the CURRENT page's rows in their CURRENT order (stable — first appearance of
   // each key sets group order; rows are never re-sorted). Pagination math above is untouched.
@@ -543,7 +668,7 @@ export function ParityTable<T>({
       resizing.current = null;
       // Persist the LATEST widths (read via the state setter to avoid a stale closure value).
       setColWidths((cur) => {
-        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur });
+        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
         return cur;
       });
     };
@@ -567,7 +692,7 @@ export function ParityTable<T>({
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onEnd);
       setColWidths((cur) => {
-        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur });
+        savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: cur, colOrder });
         return cur;
       });
     };
@@ -582,7 +707,7 @@ export function ParityTable<T>({
       const base = prev[key] || thEl?.getBoundingClientRect().width || 120;
       const w = Math.max(48, Math.round(base + delta));
       const next = { ...prev, [key]: w };
-      savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: next });
+      savePersisted(storageKey, { hidden: [...hidden], density, pageSize, colWidths: next, colOrder });
       return next;
     });
   }
@@ -807,12 +932,16 @@ export function ParityTable<T>({
         ) : null}
         {selectable ? (
           <td className="px-2" onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              aria-label="Select row"
-              checked={selected.has(id)}
-              onChange={() => toggleRow(id)}
-            />
+            {/* UI CONTROL LAW — the native checkbox stays its own small visual size; the wrapper
+             * is the >=24x24 WCAG 2.2 SC 2.5.8 clickable area (was a bare, unwrapped <input>). */}
+            <span className={MIN_HIT_TARGET_CLASS}>
+              <input
+                type="checkbox"
+                aria-label="Select row"
+                checked={selected.has(id)}
+                onChange={() => toggleRow(id)}
+              />
+            </span>
           </td>
         ) : null}
         {visibleColumns.map((column) => (
@@ -901,24 +1030,26 @@ export function ParityTable<T>({
         <div className="flex items-center gap-2">
           {toolbar}
           {exportFilename ? (
-            <button
-              type="button"
-              aria-label="Export CSV"
-              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
-              onClick={exportCsv}
-            >
+            // UI CONTROL LAW — this used to be a hand-rolled <button> with its own ad-hoc,
+            // smaller fixed size, a THIRD button size alongside Button.tsx's own two. Now the
+            // real shared Button primitive, matching every other toolbar action's size.
+            <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" onClick={exportCsv}>
               ⤓ Export
-            </button>
+            </Button>
           ) : null}
           <div className="relative" ref={gearRef}>
-            <button
+            <Button
               type="button"
+              variant="tertiary"
+              size="icon"
               aria-label="Table settings"
-              className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 sm:min-h-0"
               onClick={() => { if (gearOpen) cancelGear(); else openGear(); }}
             >
-              ⚙
-            </button>
+              {/* UI CONTROL LAW — was a bare ⚙ Unicode glyph inheriting the button's own
+               * ambient font-size; now a real icon at the app's one toolbar-icon size, so the
+               * gear stops being smaller than the icons next to it. */}
+              <GearIcon className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
+            </Button>
             {gearOpen ? (
               <div className="absolute right-0 z-20 mt-1 w-60 rounded-md border border-gray-200 bg-white p-2 shadow-lg">
                 <div className="mb-2">
@@ -934,7 +1065,7 @@ export function ParityTable<T>({
                       const next = Number(e.target.value);
                       setDraftPageSize(next);
                       changePageSize(next);
-                      savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths });
+                      savePersisted(storageKey, { hidden: [...draftHidden], density: draftDensity, pageSize: next, colWidths, colOrder });
                     }}
                   >
                     {pageSizeOptions.map((opt) => (
@@ -1005,22 +1136,63 @@ export function ParityTable<T>({
             {renderExpanded ? <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`} /> : null}
             {selectable ? (
               <th className={`w-8 px-2 ${stickyHeader ? "bg-gray-50" : ""}`}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all on page"
-                  checked={pageAllSelected}
-                  onChange={togglePageAll}
-                />
+                {/* UI CONTROL LAW — same >=24x24 hit-target wrap as the row checkbox. */}
+                <span className={MIN_HIT_TARGET_CLASS}>
+                  <input
+                    type="checkbox"
+                    aria-label="Select all on page"
+                    checked={pageAllSelected}
+                    onChange={togglePageAll}
+                  />
+                </span>
               </th>
             ) : null}
             {visibleColumns.map((column) => {
               const key = String(column.key);
-              const w = colWidths[key];
+              // AUTO-FIT — manual resize (colWidths) always wins once the user has dragged a
+              // column; until then, size to the column's own content (autoFitWidths) instead of
+              // silently truncating under table-fixed's own no-remeasure default.
+              const w = colWidths[key] ?? autoFitWidths[key];
               return (
                 <th
                   key={key}
-                  className={`relative px-2 font-semibold uppercase text-gray-600 ${stickyHeader ? "bg-gray-50" : ""} ${column.className ?? ""}`}
-                  style={{ fontSize: typography.kpiLabel ?? 11, letterSpacing: 0.3, ...(w ? { width: w } : {}) }}
+                  // REORDER — draggable on the whole <th>, not a separate handle: the sort button
+                  // (a click, no movement) and the resize grip (its own onMouseDown + stopPropagation)
+                  // both already coexist fine with a draggable ancestor; a real drag gesture bubbles
+                  // to dragstart here regardless of which child the pointer started on.
+                  draggable={enableColumnReorder}
+                  onDragStart={enableColumnReorder ? () => setDragKey(key) : undefined}
+                  onDragOver={
+                    enableColumnReorder
+                      ? (e) => {
+                          e.preventDefault();
+                          if (dragKey && dragKey !== key) setDragOverKey(key);
+                        }
+                      : undefined
+                  }
+                  onDragLeave={enableColumnReorder ? () => setDragOverKey((cur) => (cur === key ? null : cur)) : undefined}
+                  onDrop={
+                    enableColumnReorder
+                      ? (e) => {
+                          e.preventDefault();
+                          if (dragKey) moveColumn(dragKey, key);
+                          setDragKey(null);
+                          setDragOverKey(null);
+                        }
+                      : undefined
+                  }
+                  onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
+                  className={`relative px-2 font-semibold uppercase text-gray-600 ${stickyHeader ? "bg-gray-50" : ""} ${
+                    enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
+                  } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
+                  style={{
+                    fontSize: typography.kpiLabel ?? 11,
+                    letterSpacing: 0.3,
+                    ...(w ? { width: w } : {}),
+                    // §7 LOCKED palette (verify:section7-palette-maintenance) — drop-target highlight
+                    // must use the navy/slate accent tokens, never Tailwind's default blue-50/blue-300.
+                    ...(dragOverKey === key ? { backgroundColor: colors.accentTint, outlineColor: colors.navy } : {}),
+                  }}
                 >
                   {column.sortable ? (
                     <button
@@ -1028,6 +1200,9 @@ export function ParityTable<T>({
                       // GLOBAL-SORT / Cascade 2026-08-31: hit target must be the full <th> cell
                       // (DataTable already uses w-full). Label-only inline-flex left most of the
                       // header dead; enableColumnResize grip still owns the right w-2 edge.
+                      // (CC-3 note: this SORT-01 fix landed via Cursor's own parallel branch first
+                      // — per owner coordination, my own equivalent hunk was dropped in favor of
+                      // this one rather than double-editing ParityTable's sort button.)
                       className={`inline-flex w-full items-center gap-1 ${
                         /\btext-right\b/.test(column.className ?? "") ? "justify-end" : "justify-start"
                       }`}

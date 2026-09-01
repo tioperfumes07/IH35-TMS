@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from "react";
-import { spacing } from "../design/tokens";
+import { spacing, BUTTON_MD_SIZE_CLASS, BUTTON_ICON_SM_SIZE_CLASS } from "../design/tokens";
 
 type ButtonVariant = "primary" | "secondary" | "tertiary" | "danger";
 type ButtonSize = "md" | "sm" | "icon";
@@ -23,11 +23,14 @@ function variantClasses(variant: ButtonVariant) {
   return "border-[#1f2a44] bg-[#1f2a44] text-white hover:bg-[#0f1729]";
 }
 
-function sizeClasses(variant: ButtonVariant, size: ButtonSize) {
-  if (size === "icon") return "h-6 w-6 p-0 text-[11px]";
-  if (size === "sm") return "h-6 px-2 text-[11px]";
-  if (variant === "primary" || variant === "danger") return "h-8 px-3 text-[13px]";
-  return "h-7 px-3 text-[13px]";
+// UI CONTROL LAW (owner ruling 2026-09-01) — ONE height for every "md" button regardless of
+// variant (was h-8 for primary/danger vs h-7 for secondary/tertiary — the direct, file-level
+// cause of the owner's "three different box sizes" report). "md" also matches
+// FILTER_CONTROL_SIZE_CLASS so a button and a filter in the same toolbar row read as one row.
+function sizeClasses(_variant: ButtonVariant, size: ButtonSize) {
+  if (size === "icon") return `${BUTTON_ICON_SM_SIZE_CLASS} w-8 p-0`;
+  if (size === "sm") return `${BUTTON_ICON_SM_SIZE_CLASS} px-2`;
+  return BUTTON_MD_SIZE_CLASS;
 }
 
 export function Button({ variant = "primary", size = "md", loading = false, className = "", children, ...props }: Props) {

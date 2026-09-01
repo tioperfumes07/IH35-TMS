@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Settings } from "lucide-react";
+import { Button } from "../Button";
+import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 
 // GLOBAL-TABLE-CONTROLS — QuickBooks-style gear menu: rows-per-page + show/hide columns.
 // GLOBAL-TABLE-ALIGNMENT (Block A): `numeric`/`align` let a consumer mark a column once; the shared
@@ -77,15 +79,19 @@ export function ColumnChooser({
 
   return (
     <div className="relative" ref={ref}>
-      <button
+      {/* UI CONTROL LAW — was a hand-rolled gear button at its own ad-hoc size with a 14px icon.
+          Now the shared Button primitive + the locked 16px toolbar icon size (same conversion as
+          ParityTable's own gear). */}
+      <Button
         type="button"
+        variant="tertiary"
+        size="icon"
         aria-label="Table settings"
         aria-expanded={open}
-        className="flex h-8 items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
         onClick={() => setOpen((o) => !o)}
       >
-        <Settings className="h-3.5 w-3.5" aria-hidden />
-      </button>
+        <Settings className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
+      </Button>
       {open ? (
         <div className="absolute right-0 z-20 mt-1 w-56 rounded-sm border border-gray-200 bg-white p-2 shadow-lg" role="menu">
           <div className="mb-2">
@@ -124,9 +130,12 @@ export function ColumnChooser({
             ))}
           </div>
           <div className="mt-2 flex items-center justify-end gap-2 border-t border-gray-200 pt-2">
-            <button type="button" className="rounded-sm px-2 py-1 text-[12px] font-semibold text-gray-600 hover:bg-gray-100" onClick={reset}>Reset</button>
-            <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50" onClick={cancel}>Cancel</button>
-            <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-[12px] font-semibold text-white hover:bg-[#172036]" onClick={apply}>Apply</button>
+            {/* UI CONTROL LAW — was 3 hand-rolled buttons at a fourth ad-hoc size (px-2 py-1, no
+                shared height token). Now the real Button primitive, one scale with every other
+                toolbar action. */}
+            <Button type="button" variant="tertiary" size="sm" onClick={reset}>Reset</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={cancel}>Cancel</Button>
+            <Button type="button" variant="primary" size="sm" onClick={apply}>Apply</Button>
           </div>
         </div>
       ) : null}

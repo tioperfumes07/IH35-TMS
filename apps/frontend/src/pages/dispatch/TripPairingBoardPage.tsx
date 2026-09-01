@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getTripPairingBoard, type TripLeg, type TripPairingUnitRow } from "../../api/dispatch";
 import { BookLoadModalV4 } from "./components/BookLoadModalV4";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
@@ -194,15 +195,19 @@ export function TripPairingBoardPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button
+        {/* UI CONTROL LAW — was a hand-rolled Export button at its own ad-hoc size. Now the
+            shared Button primitive. */}
+        <Button
           type="button"
+          variant="tertiary"
+          size="md"
+          className="ml-auto"
           onClick={exportCsv}
           disabled={!data || (tours.length === 0 && unbooked.length === 0)}
           title="Download the visible board rows (current segment + search) as CSV"
-          className="ml-auto h-9 rounded-sm border border-slate-300 bg-white px-2.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Export CSV
-        </button>
+        </Button>
       </div>
 
       {query.isLoading ? (

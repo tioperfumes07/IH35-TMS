@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -463,48 +464,28 @@ export function ArApAgingPage() {
                 />
               </label>
             </CollapsedListFilters>
-            <button
-              type="button"
-              onClick={handleExport}
-              disabled={rowCount === 0}
-              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
+            {/* UI CONTROL LAW — was 2 hand-rolled buttons at their own ad-hoc size. Now the real
+                Button primitive. */}
+            <Button type="button" variant="tertiary" size="md" onClick={handleExport} disabled={rowCount === 0}>
               Export CSV
-            </button>
-            <button
-              type="button"
-              onClick={printLetter}
-              disabled={rowCount === 0}
-              className="h-9 px-3 text-[13px] rounded-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" variant="tertiary" size="md" onClick={printLetter} disabled={rowCount === 0}>
               Print
-            </button>
+            </Button>
           </div>
         }
       />
       <FinanceModuleTabs />
 
       <div className="flex items-center gap-2 print:hidden">
-        <button
-          type="button"
-          onClick={() => setMode("ar")}
-          className={[
-            "h-9 px-4 text-[13px] rounded-sm border font-medium",
-            mode === "ar" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
-          ].join(" ")}
-        >
+        {/* UI CONTROL LAW — was 2 hand-rolled toggle buttons at their own ad-hoc size. Now the
+            real Button primitive; active/inactive maps to primary/secondary. */}
+        <Button type="button" variant={mode === "ar" ? "primary" : "secondary"} size="md" onClick={() => setMode("ar")}>
           A/R — by Customer
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("ap")}
-          className={[
-            "h-9 px-4 text-[13px] rounded-sm border font-medium",
-            mode === "ap" ? "border-slate-700 bg-slate-700 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
-          ].join(" ")}
-        >
+        </Button>
+        <Button type="button" variant={mode === "ap" ? "primary" : "secondary"} size="md" onClick={() => setMode("ap")}>
           A/P — by Vendor
-        </button>
+        </Button>
       </div>
 
       <p className="text-xs text-gray-400">

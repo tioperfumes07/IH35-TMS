@@ -226,6 +226,8 @@ export function InvoicesListPage() {
       fromDate,
       toDate,
       deepLinkSourceLoadId,
+      // SORT-02 — sort/dir are part of the query identity so changing the active column refetches
+      // with the new server ORDER BY instead of silently reordering a stale cached page in memory.
       sortKey,
       sortDirection,
     ],
@@ -569,6 +571,12 @@ export function InvoicesListPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        // SORT-02 — rows now arrive pre-ordered by the server (INVOICE_LIST_SORT_SQL ORDER BY);
+        // "external" stops ParityTable's own internal re-sort, which previously reordered only
+        // the already-fetched page and silently disagreed with the true population order.
+        // REMAINING (disclosed, not fixed here): correct only for the fetched page — an entity
+        // with more invoices than the fetch limit (has_more=true) still only gets a correctly
+        // ordered PARTIAL population until real offset-paged fetching is also wired.
         sortMode="external"
         selectable
         maxSelectable={200}

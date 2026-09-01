@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { createPortal } from "react-dom";
+import { FILTER_CONTROL_SIZE_CLASS } from "../design/tokens";
 
 export type ComboboxOption = {
   value: string;
@@ -469,7 +470,10 @@ export function Combobox({
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
       <div
-        className={`flex h-9 items-center gap-1 rounded border bg-white px-2 text-[13px] ${
+        // FILTER LAW (COLUMN LAW 2026-09-01) — this is the ONE place the app's canonical filter/
+        // combobox control height+font live; TableSearch.tsx now shares the same constant so a
+        // filter and the search box sitting next to it in the same toolbar row never drift apart.
+        className={`flex ${FILTER_CONTROL_SIZE_CLASS} items-center gap-1 rounded border bg-white px-2 ${
           disabled
             ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
             : error

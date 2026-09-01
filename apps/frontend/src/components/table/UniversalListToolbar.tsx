@@ -4,6 +4,8 @@ import { DatePicker } from "../forms/DatePicker";
 import { MoneyInput } from "../forms/MoneyInput";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { TableSearch } from "./TableSearch";
+import { FILTER_CONTROL_SIZE_CLASS, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
+import { Button } from "../Button";
 
 /** QBO-style date range presets — same set as Account Register (This Month / Last Month / …). */
 export function applyUniversalDatePreset(preset: string): { from: string; to: string } | null {
@@ -176,24 +178,27 @@ export function UniversalListToolbar({
       )}
       {hideRange ? null : (
       <div className="relative" ref={ref}>
-        <button
+        {/* UI CONTROL LAW — was a hand-rolled toggle button at its own ad-hoc size with a 14px
+            icon. Now the shared Button primitive + the locked 16px toolbar icon size. */}
+        <Button
           type="button"
+          variant="tertiary"
+          size="sm"
           aria-expanded={open}
           aria-label="Date or amount range"
-          className="flex h-8 items-center gap-1 bg-white px-1 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
           onClick={() => setOpen((current) => !current)}
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+          <SlidersHorizontal className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
           Range
           {range?.key ? <span className="rounded-full bg-[#1F2A44] px-1 text-[10px] text-white">1</span> : null}
-        </button>
+        </Button>
         {open ? (
           <div className="absolute left-0 z-30 mt-1 w-[min(520px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
             <label className="block text-[11px] font-semibold text-gray-600">
               Date or amount field
               <select
                 aria-label="Range field"
-                className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
                 value={draft?.key ?? ""}
                 onChange={(event) => {
                   const next = rangeColumns.find((column) => column.key === event.target.value);
@@ -211,7 +216,7 @@ export function UniversalListToolbar({
                     Date range (QBO)
                     <select
                       aria-label="QBO date range preset"
-                      className="mt-1 h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-[12px]"
+                      className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 bg-white px-2`}
                       defaultValue="custom"
                       onChange={(event) => {
                         const preset = event.target.value;
@@ -234,7 +239,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.from ? Number(draft.from) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, from: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range from amount" />
                     ) : (
-                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`} />
                     )}
                   </label>
                   <label className="text-[11px] font-semibold text-gray-600">To
@@ -243,7 +248,7 @@ export function UniversalListToolbar({
                     ) : selected.kind === "amount" ? (
                       <MoneyInput valueDollars={draft?.to ? Number(draft.to) : null} onChangeDollars={(value) => setDraft((current) => current ? { ...current, to: value == null ? "" : String(value) } : current)} className="mt-1" ariaLabel="Range to amount" />
                     ) : (
-                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className="mt-1 h-8 w-full rounded-sm border border-gray-300 px-2 text-[12px]" />
+                      <input type="number" aria-label="Range to number" value={draft?.to ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, to: event.target.value } : current)} className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`} />
                     )}
                   </label>
                 </div>
@@ -258,9 +263,9 @@ export function UniversalListToolbar({
               <p className="text-[12px] text-gray-500">Choose a field above to set From/To.</p>
             )}
             <div className="flex items-center justify-end gap-2 border-t border-gray-200 pt-3">
-              <button type="button" className="rounded-sm px-2 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-100" onClick={reset}>Reset</button>
-              <button type="button" className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50" onClick={cancel}>Cancel</button>
-              <button type="button" className="rounded-sm bg-[#1F2A44] px-2 py-1 text-xs font-semibold text-white hover:bg-[#172036] disabled:opacity-50" disabled={!draft?.key} onClick={apply}>Apply</button>
+              <Button type="button" variant="tertiary" size="sm" onClick={reset}>Reset</Button>
+              <Button type="button" variant="secondary" size="sm" onClick={cancel}>Cancel</Button>
+              <Button type="button" variant="primary" size="sm" disabled={!draft?.key} onClick={apply}>Apply</Button>
             </div>
           </div>
         ) : null}
