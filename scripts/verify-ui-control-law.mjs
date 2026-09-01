@@ -80,7 +80,9 @@ export function parityTableCheckboxesWrapped(src) {
 
 export function parityTableExportGearUseButton(src) {
   const hasStrayAdHocSize = /min-h-11[\s\S]{0,60}text-\[12px\]/.test(src);
-  const usesButtonForExport = /<Button[^>]*aria-label="Export CSV"/.test(src);
+  // Same [^>]* attribute-order fragility as fileHasAdHocButtonSize above -- tolerate `=>` so an
+  // onClick prop ahead of aria-label (a legal, common JSX ordering) doesn't break detection.
+  const usesButtonForExport = /<Button(?:[^>]|=>)*aria-label="Export CSV"/.test(src);
   const usesButtonForGear = /<Button[\s\S]{0,200}aria-label="Table settings"/.test(src);
   const gearUsesIcon = /GearIcon[\s\S]{0,40}TOOLBAR_ICON_SIZE_CLASS/.test(src);
   if (hasStrayAdHocSize) return { ok: false, reason: "min-h-11/text-[12px] ad-hoc button size reintroduced" };
@@ -94,14 +96,26 @@ export function parityTableExportGearUseButton(src) {
  * Shrink-only ratchet: a bare `<button ...>` (not `<Button`) combining a literal height class
  * (h-N or min-h-N) with a literal font-size (text-[Npx]) is the exact "third ad-hoc size" shape
  * that caused the owner's original report. Button.tsx itself is excluded (it's the primitive).
+ *
+ * CTL-01-COLLAPSED-LIST-FILTERS-GAP: `[^>]*` between the tag open and `className=` silently
+ * stops at the FIRST literal `>` it meets -- including the one inside an inline arrow-function
+ * prop like `onClick={() => ...}`, which sits ahead of className in plenty of real components
+ * (CollapsedListFilters.tsx's own "Filters" toggle did exactly this). That let a real, live
+ * ad-hoc h-8/text-[12px] button slip past this ratchet with a false "0 offenders" baseline.
+ * `(?:[^>]|=>)*` tolerates a literal `=>` as a unit while still stopping at the tag's real close.
+ *
+ * Height is bounded to h-6..h-9 (Button.tsx's own actual scale: icon/sm=h-8, md=h-9) on purpose --
+ * a large dashboard/KPI-tile button (e.g. BankingHome's h-16 nav cards) is a legitimately
+ * different, out-of-law UI pattern, not the toolbar "third ad-hoc size" this guard targets;
+ * matching bare h-\d would false-flag every one of those as a regression.
  */
 export function fileHasAdHocButtonSize(src) {
   // Case-sensitive: <button (the raw HTML tag) never matches <Button (the shared component).
-  const tagRe = /<button\b[^>]*className=(\{`[^`]*`\}|"[^"]*")/g;
+  const tagRe = /<button\b(?:[^>]|=>)*className=(\{`[^`]*`\}|"[^"]*")/g;
   let m;
   while ((m = tagRe.exec(src))) {
     const classBlob = m[1];
-    if (/\b(?:min-)?h-\d/.test(classBlob) && /text-\[\d+px\]/.test(classBlob)) return true;
+    if (/\b(?:min-)?h-[6-9]\b/.test(classBlob) && /text-\[\d+px\]/.test(classBlob)) return true;
   }
   return false;
 }
@@ -193,6 +207,25 @@ if (SELFTEST) {
     {
       name: "a <Button> component call is not flagged as a bare button",
       fn: () => fileHasAdHocButtonSize('<Button className="h-8 text-[12px]">Go</Button>') === false,
+    },
+    {
+      // CTL-01-COLLAPSED-LIST-FILTERS-GAP regression: an inline arrow-function prop (onClick)
+      // ahead of className used to make [^>]* stop at the `>` inside `=>`, hiding this exact,
+      // real, live shape (CollapsedListFilters.tsx's un-fixed "Filters" toggle) from the ratchet.
+      name: "an onClick={() => ...} prop AHEAD of className does not hide a bare ad-hoc button",
+      fn: () =>
+        fileHasAdHocButtonSize(
+          '<button type="button" onClick={() => setOpen((o) => !o)} className="h-8 px-2 text-[12px]">Filters</button>',
+        ) === true,
+    },
+    {
+      // A large dashboard/KPI-tile button (BankingHome's h-16 nav cards) is a legitimately
+      // different UI pattern, not the toolbar "third ad-hoc size" -- must NOT be flagged.
+      name: "a large h-16 dashboard tile button is not a toolbar ad-hoc-size violation",
+      fn: () =>
+        fileHasAdHocButtonSize(
+          '<button type="button" onClick={() => navigate("/x")} className="flex h-16 flex-col text-[12px]">Tile</button>',
+        ) === false,
     },
   ];
   let failed = false;
