@@ -1,10 +1,10 @@
 {
-  "healthzSha": "ace28a6",
+  "healthzSha": "4db4c20",
   "generated_at": "2026-08-31T15:22:35.000Z",
   "meta": {
     "generatedAt": "2026-08-31T10:22:35-05:00",
     "sourceSha": "237d06c610",
-    "deployedSha": "ace28a6",
+    "deployedSha": "4db4c20",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2383,
     "failOpen": 177,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 19174,
-      "title": "DEVIN-A: VERIFY fe=ace28a6 — guard infra only, all PASS, UPL safety still blocked",
+      "number": 19261,
+      "title": "FINDING: N/A -- fix a fresh main-tip TS6133 (blocking Render deploys again) + repair 3 stale ProfitPerTruckPage tests found via a background full-suite run",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:55 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19174",
-      "sha": "dcc73589f6",
-      "committedAtIso": "2026-09-01T03:55:45-05:00"
+      "mergedAtCt": "09/01/2026, 07:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19261",
+      "sha": "ba4e80cebd",
+      "committedAtIso": "2026-09-01T07:36:34-05:00"
     },
     {
-      "number": 19111,
-      "title": "GUARD-SELFTEST-MUTATES-SOURCE root fix + SORT/VOID law guard + GUARD-LANE-BYPASS-01",
+      "number": 19260,
+      "title": "FINDING: ACCT-F68 settlement ping selftest missed duplicate team pay",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:52 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19111",
-      "sha": "ace28a6cf3",
-      "committedAtIso": "2026-09-01T03:52:01-05:00"
+      "mergedAtCt": "09/01/2026, 07:35 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19260",
+      "sha": "1651c5b8a2",
+      "committedAtIso": "2026-09-01T07:35:41-05:00"
     },
     {
-      "number": 19173,
-      "title": "DEVIN-A: VERIFY fe=d548cb0 — GO-MECH-0901 dispatch-secondary-nav PASS, UPL safety still blocked",
+      "number": 19259,
+      "title": "FINDING: SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19173",
-      "sha": "8959d3285c",
-      "committedAtIso": "2026-09-01T03:45:15-05:00"
+      "mergedAtCt": "09/01/2026, 07:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19259",
+      "sha": "4334520880",
+      "committedAtIso": "2026-09-01T07:31:47-05:00"
     },
     {
-      "number": 19105,
-      "title": "ACCT-F10217: LAW-TRANSACTION-HEALTH-REGISTER bands A/B/C/F + trial-balance purge guard",
+      "number": 19258,
+      "title": "FINDING: SWEEP-A-PARITYTABLE-HEADER-HIT-TARGET",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19105",
-      "sha": "d548cb010d",
-      "committedAtIso": "2026-09-01T03:39:19-05:00"
+      "mergedAtCt": "09/01/2026, 07:31 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19258",
+      "sha": "1114560657",
+      "committedAtIso": "2026-09-01T07:31:13-05:00"
     },
     {
-      "number": 19103,
-      "title": "GO-MECH-0901: NO-SEAT guard + WIR-02 guard + register CSV patch",
+      "number": 0,
+      "title": "FINDING: ACCT-F10380 (SETL-HEADER-05) -- settlement header never got its own money back-link",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19103",
-      "sha": "77f9eb549a",
-      "committedAtIso": "2026-09-01T03:39:10-05:00"
+      "mergedAtCt": "09/01/2026, 07:29 AM CT",
+      "url": "",
+      "sha": "69035a9c07",
+      "committedAtIso": "2026-09-01T07:29:52-05:00"
     },
     {
-      "number": 19170,
-      "title": "DEVIN-A: VERIFY fe=abac2be — all PASS, UPL safety still blocked (9 deploys)",
+      "number": 19257,
+      "title": "chore: CLAIM-RESERVE verify-step 3020 bookload-alwaystrack-field-race",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:15 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19170",
-      "sha": "28ffdf2872",
-      "committedAtIso": "2026-09-01T03:15:45-05:00"
+      "mergedAtCt": "09/01/2026, 07:29 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19257",
+      "sha": "13609c339b",
+      "committedAtIso": "2026-09-01T07:29:46-05:00"
     },
     {
-      "number": 19169,
-      "title": "docs(bus): CC-1 status sync -- 8 PRs shipped, flagging data blockers on Defect 2/5",
+      "number": 19255,
+      "title": "DEVIN-A: MDP-PANEL-PROPORTION PASS, DSP-05 pending deploy at fe=0642d75",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19169",
-      "sha": "2cd52b1aed",
-      "committedAtIso": "2026-09-01T03:13:40-05:00"
+      "mergedAtCt": "09/01/2026, 07:28 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19255",
+      "sha": "08f11a3cb6",
+      "committedAtIso": "2026-09-01T07:28:31-05:00"
     },
     {
-      "number": 19168,
-      "title": "DEVIN-A: VERIFY fe=78253f0 — UPL safety items BLOCKED by build cache (8 deploys, chunk unchanged)",
+      "number": 19227,
+      "title": "CC-2-self-grade: void-reversal guard structurally near-blind for most real invoices",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:13 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19168",
-      "sha": "eb5dec0758",
-      "committedAtIso": "2026-09-01T03:13:19-05:00"
+      "mergedAtCt": "09/01/2026, 07:26 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19227",
+      "sha": "6fce6fa716",
+      "committedAtIso": "2026-09-01T07:26:19-05:00"
     },
     {
-      "number": 19166,
-      "title": "FINDING: N/A -- reversal is_sample_data one-hop backfill (23 rows) + second-hop finding filed",
+      "number": 19250,
+      "title": "FINDING: N/A — OUTBOX/INBOX close: GUARD verify #19175-#19219 task complete",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19166",
-      "sha": "abac2be39b",
-      "committedAtIso": "2026-09-01T03:12:01-05:00"
+      "mergedAtCt": "09/01/2026, 07:25 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19250",
+      "sha": "4db4c20c8e",
+      "committedAtIso": "2026-09-01T07:25:48-05:00"
     },
     {
-      "number": 19165,
-      "title": "DEVIN-A: VERIFY fe=6cfb224 — UPL-06 pending, UPL safety chunk still not rebuilt",
+      "number": 19254,
+      "title": "FINDING: BOOK-LOAD-HOS-CYCLE-WIRING",
       "state": "merged",
-      "mergedAtCt": "09/01/2026, 03:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19165",
-      "sha": "40b0211f9a",
-      "committedAtIso": "2026-09-01T03:10:48-05:00"
+      "mergedAtCt": "09/01/2026, 07:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/19254",
+      "sha": "ef5534e850",
+      "committedAtIso": "2026-09-01T07:24:58-05:00"
     }
   ]
 }
