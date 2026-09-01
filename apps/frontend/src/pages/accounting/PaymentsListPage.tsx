@@ -68,12 +68,12 @@ export function PaymentsListPage() {
   // BANK-SORT-ROLLOUT-ACCT: every visible column header sorts ASC/DESC; sort persists in the URL
   // (?sort=&dir=) so it survives reload / is shareable, same as Bills / Expenses.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
-  const [status, setStatus] = useState<"all" | "active" | "voided">("all");
+  const [status, setStatus] = useState<"all" | "active" | "voided">("active");
   const [method, setMethod] = useState<"" | PaymentMethod | "factoring">("");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: "all" as const, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
+  const staged = useStagedListFilters({ applied: { status, method, dateFrom, dateTo }, empty: { status: "active" as const, method: "" as const, dateFrom: "", dateTo: "" }, onApply: (next) => { setStatus(next.status); setMethod(next.method); setDateFrom(next.dateFrom); setDateTo(next.dateTo); } });
   // ACCT-F5055 — Topbar Create→Receive payment uses ?create=1 (Bills/Expenses/Invoices parity).
   const recordOpen = searchParams.get("create") === "1";
   function setRecordOpen(next: boolean) {

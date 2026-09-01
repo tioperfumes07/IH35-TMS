@@ -60,6 +60,9 @@ export function SettlementsPage() {
   // Driver filter commits via staged Apply (CLS-ADJACENT — no silent URL helper).
   const effectiveDriverId = driverPickerId.trim() || filterDriverId || undefined;
   const selectedPaymentState = (searchParams.get("payment_state") as PaymentStateFilter | null) || null;
+  // HIDE-VOIDED-01 — cancelled/reversed settlements clog the list after bulk reverse; default HIDE.
+  // URL `include_cancelled=1` shows them (same pattern as safety "Show voided").
+  const hideCancelled = searchParams.get("include_cancelled") !== "1";
   // B-A3: KPI focus filter — same predicates as the KPI counts (not a guess-route).
   const focusFilter = parseFocus(searchParams.get("focus"));
   // BANK-F5210 + CLS-ADJACENT — driver FK stages with payment_state; URL only on Apply.
@@ -67,8 +70,9 @@ export function SettlementsPage() {
     applied: {
       paymentState: (selectedPaymentState ?? "") as PaymentStateFilter,
       driverId: driverPickerId || filterDriverId || "",
+      hideCancelled,
     },
-    empty: { paymentState: "" as PaymentStateFilter, driverId: "" },
+    empty: { paymentState: "" as PaymentStateFilter, driverId: "", hideCancelled: true },
     onApply: (next) => {
       setDriverPickerId(next.driverId);
       setSearchParams(
@@ -78,6 +82,8 @@ export function SettlementsPage() {
           else params.delete("payment_state");
           if (next.driverId) params.set("driver_id", next.driverId);
           else params.delete("driver_id");
+          if (next.hideCancelled) params.delete("include_cancelled");
+          else params.set("include_cancelled", "1");
           return params;
         },
         { replace: true },
@@ -103,9 +109,11 @@ export function SettlementsPage() {
     enabled: Boolean(companyId),
   });
 
-  const settlements = (listQuery.data?.settlements ?? []).filter((s) =>
-    effectiveDriverId ? s.driver_id === effectiveDriverId : true,
-  );
+  const settlements = (listQuery.data?.settlements ?? []).filter((s) => {
+    if (effectiveDriverId && s.driver_id !== effectiveDriverId) return false;
+    if (hideCancelled && s.status === "cancelled") return false;
+    return true;
+  });
   const kpiSettlements = (kpiBaseQuery.data?.settlements ?? []).filter((s) =>
     effectiveDriverId ? s.driver_id === effectiveDriverId : true,
   );
@@ -243,7 +251,7 @@ export function SettlementsPage() {
       {activeTab === "settlements" ? (
         <>
       <CollapsedListFilters
-        activeFilterCount={(selectedPaymentState ? 1 : 0) + (effectiveDriverId ? 1 : 0)}
+        activeFilterCount={(selectedPaymentState ? 1 : 0) + (effectiveDriverId ? 1 : 0) + (hideCancelled ? 0 : 1)}
         onApply={staged.apply}
         onReset={staged.reset}
         onCancel={staged.cancel}
@@ -282,6 +290,16 @@ export function SettlementsPage() {
               <option value="bounced">Bounced</option>
               <option value="manual_paid">Manual Paid</option>
             </SelectCombobox>
+          </label>
+          <label className="flex items-center gap-2 self-end pb-1 text-xs font-semibold text-gray-600">
+            <input
+              type="checkbox"
+              checked={staged.draft.hideCancelled}
+              onChange={(event) => staged.setDraft({ ...staged.draft, hideCancelled: event.target.checked })}
+              data-testid="settlements-hide-cancelled"
+              aria-label="Hide cancelled settlements"
+            />
+            Hide cancelled
           </label>
         </div>
       </CollapsedListFilters>

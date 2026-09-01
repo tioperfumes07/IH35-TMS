@@ -131,6 +131,8 @@ type ListBillPaymentsOptions = {
   vendorId?: string;
   dateFrom?: string;
   dateTo?: string;
+  /** HIDE-VOIDED-01 — default false (hide revoked). When true, include revoked_at rows. */
+  includeVoided?: boolean;
   limit: number;
   offset: number;
 };
@@ -1374,7 +1376,10 @@ export async function listBillPayments(
 ) {
   return withCurrentUser(userId, async (client) => {
     await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
-    const where: string[] = ["bp.operating_company_id = $1::uuid", "bp.revoked_at IS NULL"];
+    const where: string[] = ["bp.operating_company_id = $1::uuid"];
+    if (!options.includeVoided) {
+      where.push("bp.revoked_at IS NULL");
+    }
     const values: unknown[] = [operatingCompanyId];
     if (options.vendorId) {
       values.push(options.vendorId);
