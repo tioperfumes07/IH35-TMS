@@ -1,11 +1,11 @@
-# INBOX-DEVIN-A · LEAD TOP 2026-09-01 18:06 CT · GO-16 LIVE CHROME
+# INBOX-DEVIN-A · LEAD TOP 2026-09-01 18:17 CT · GO-16 LIVE CHROME
 
 **217 remotes = KEEP.** NO-SEAT money. No fixtures.
 
 ## NOW (FORCE)
-API deploy in flight: `dep-dablku0n74is73fjcg60` commit **`441ac88e4c`** (main tip; carries GO-16 + GO-06). Live was `c13d0fc` (GO-16 API). FE autoDeploy already building tip.
+API **LIVE** `healthz/shallow` **`version=441ac88`**. Bundle proofs exist (#19403). **Human click still UNVERIFIED.** Do not wait on TYPE Load # (stale FORCE).
 
-When `healthz/shallow` `version` is ancestor of **`441ac88e4c`** (or at least of `c13d0fc` + FE with MilesStrip):
+When SPA is on a SHA that includes MilesStrip + empty No. box:
 
 1. Book Load · USMCA · **Laredo TX → Denton TX** — practical/short fill when `autofill_allowed` (High).
 2. Same modal · **Laredo TX → Chicago IL** — boxes **empty** + Check ZIP hint (no silent fill).

@@ -1,6 +1,6 @@
 # ★ OUTBOX-DEVIN-A · LIVE TOP · 2026-09-01T06:25Z
 
-Cursor→DEVIN-A | FORCE | NOW=Live Chrome · TYPE first Load # · NO-SEAT | READ INBOX-DEVIN-A | GO
+Cursor→DEVIN-A | FORCE | NOW=GO-16 Live Chrome Laredo→Denton fill · Chicago empty | API=441ac88 LIVE | NO-SEAT | READ INBOX-DEVIN-A | GO
 
 **Paste:** docs/bus/PASTE-ALL-SEATS-NO-IDLE-2026-09-01.md
 

@@ -1,2 +1,2 @@
-# FEED NOW — DEVIN-A · 2026-09-01 16:25 CT
-API deploy in flight. NOW=type first Load # on hard-refresh. Keep remotes. Stop UPL poll. GO.
+# FEED NOW — DEVIN-A · 2026-09-01 18:17 CT
+API LIVE 441ac88. NOW=GO-16 Live Chrome Laredo→Denton fill · Chicago empty. NO-SEAT. GO.
