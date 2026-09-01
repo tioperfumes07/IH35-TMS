@@ -1,0 +1,59 @@
+pool,at_trailer,vin,at_make,at_year,at_last_date,tms_equipment,actions
+at_trailer,10006,1UYVS2537EU760006,UTILITY,2014,2026-07-23 08:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10012,1UYVS2532CM194012,UTILITY,2012,2026-06-04 20:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10106,1UYVS2530DU525106,UTILITY,2013,2025-08-28 07:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,10113,1UYVS2537CU428113,UTILITY,2012,2026-06-29 12:00,USMCA-APD-22,exists as USMCA-APD-22 | ensure mdata.assets + policy attach
+apd_insured,10202,1UYVS2539J2280202,UTILITY,2018,2026-08-29 08:00,USMCA-APD-19,exists as USMCA-APD-19 | ensure mdata.assets + policy attach
+apd_insured,10209,1UYVS253XJ2159209,UTILITY,2018,2026-08-14 09:00,USMCA-APD-16,exists as USMCA-APD-16 | ensure mdata.assets + policy attach
+apd_insured,10215,1UYVS2535J2159215,UTILITY,2018,2026-07-29 07:00,USMCA-APD-32,exists as USMCA-APD-32 | ensure mdata.assets + policy attach
+apd_insured,10218,1UYVS2530J2159218,UTILITY,2018,2026-03-19 06:00,USMCA-APD-17,exists as USMCA-APD-17 | ensure mdata.assets + policy attach
+at_trailer,10219,1UYVS2532J2159219,UTILITY,2018,2026-08-31 08:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,10222,1UYVS2532J2159222,UTILITY,2018,2026-08-19 10:00,USMCA-APD-33,exists as USMCA-APD-33 | ensure mdata.assets + policy attach
+apd_insured,10224,1UYVS2536J2159224,UTILITY,2018,2026-08-31 08:00,USMCA-APD-18,exists as USMCA-APD-18 | ensure mdata.assets + policy attach
+at_trailer,10327,1UYVS2538EU857327,UTILITY,2014,2025-12-08 08:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,10380,1UYVS2532FM277380,Utility,2015,2026-09-01 04:00,USMCA-APD-24,exists as USMCA-APD-24 | ensure mdata.assets + policy attach
+at_trailer,10425,1UYVS2538EU857425,UTILITY,2014,2025-12-17 18:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+excluded_trailer,10456,1UYVS2530GM762456,UTILITY,2016,2025-03-07 11:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10502,1UYVS2530EU857502,Utility,2014,2025-05-27 09:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10518,1UYVS2531EU830518,UTILITY,2014,2026-06-23 00:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10619,1UYVS2537EU760619,UTILITY,2014,2025-09-05 17:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10672,1UYVS2530FM219672,Utility,2015,2025-10-17 10:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10702,1UYVS2530DU524702,UTILITY,2013,2025-09-01 06:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10723,1UYVS2539DM555723,UTILITY,2013,2025-05-09 07:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10767,1JJV532B7GL965767,WABASH,2016,2025-10-03 14:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10827,1UYVS2539DU524827,UTILITY,2013,2026-01-08 10:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10831,1UYVS2530DU524831,UTILITY,2013,2025-07-28 12:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10837,1UYVS2531DU524837,UTILITY,2013,2025-03-24 05:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,10870,1JJV532B0GL965870,WABASH,2016,2026-08-31 06:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+excluded_trailer,10873,1JJV532B6GL965873,WABASH,2016,2025-10-20 06:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+excluded_trailer,10876,1JJV532B1GL965876,WABASH,2016,2026-08-25 06:00,USMCA-APD-31,exists as USMCA-APD-31 | EXCLUDE from insurance — repo
+at_trailer,10898,1UYVS2530DM555898,UTILITY,2013,2025-11-10 11:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,S3500,1GB3W9E71NF156305,Chevrolet,2022,1969-12-31 18:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-5042,1UYFS25329A606203,UTILITY,2009,2025-12-18 16:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-5038,1UYFS25399A606201,UTILITY,2009,2026-07-10 19:00,USMCA-APD-23,exists as USMCA-APD-23 | ensure mdata.assets + policy attach
+apd_insured,FB-5056,1UYFS25389A666602,UTILITY,2009,2026-05-06 08:00,USMCA-APD-35,exists as USMCA-APD-35 | ensure mdata.assets + policy attach
+apd_insured,FB-56210,1UYFS2534L5927210,UTILITY,2020,2026-08-07 08:00,USMCA-APD-21,exists as USMCA-APD-21 | ensure mdata.assets + policy attach
+at_trailer,FB-56211,1UYFS2536L5927211,UTILITY,2020,2026-02-25 17:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56404,1UYFS2534L5806404,UTILITY,2020,2026-04-20 12:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56710,1UYFS2530J5394706,UTILITY,2018,2026-08-10 08:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-56207,1UYFS2534L5927207,UTILITY,2020,2026-08-03 23:00,USMCA-APD-34,exists as USMCA-APD-34 | ensure mdata.assets + policy attach
+at_trailer,FB-56711,1UYFS2538K5650446,UTILITY,2019,2026-03-06 09:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-56208,1UYFS2536L5927208,UTILITY,2020,2026-06-19 08:00,USMCA-APD-20,exists as USMCA-APD-20 | ensure mdata.assets + policy attach
+at_trailer,FB-56712,1UYFS253XK5650447,UTILITY,2019,2026-02-23 06:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56209,1UYFS2538L5927209,UTILITY,2020,2025-08-01 07:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-56704,1UYFS2533DA521301,UTILITY,2013,2026-08-31 00:00,USMCA-APD-26,exists as USMCA-APD-26 | ensure mdata.assets + policy attach
+apd_insured,FB-56713,1UYFS2531K5650448,UTILITY,2019,2026-08-31 08:00,USMCA-APD-29,exists as USMCA-APD-29 | ensure mdata.assets + policy attach
+at_trailer,FB-56705,1UYFS2535DA521302,UTILITY,2013,2024-10-16 15:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56714,1UYFS2534K5650413,UTILITY,2019,2026-01-07 11:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56706,1UYFS2538DA521312,UTILITY,2013,2024-08-19 09:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,FB-56707,1UYFS2531DA521314,UTILITY,2013,2026-01-12 09:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-56716,1UYFS2536K5650414,UTILITY,2019,2026-07-10 00:00,USMCA-APD-30,exists as USMCA-APD-30 | ensure mdata.assets + policy attach
+at_trailer,FB-56708,1UYFS2539J5394705,UTILITY,2018,2026-07-28 13:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+apd_insured,FB-56709,1UYFS2537DA614628,UTILITY,2013,2026-07-24 08:00,USMCA-APD-27,exists as USMCA-APD-27 | ensure mdata.assets + policy attach
+at_trailer,Honda,5J6YH18988L006962,Honda,2008,1969-12-31 18:00,SAM-45350f2b,exists as SAM-45350f2b
+at_trailer,NS076053,3H3V532KONS076053,UTILITY,2019,2025-10-02 20:00,,CREATE mdata.equipment + mdata.assets for insurance if in APD set
+at_trailer,Ranger,8AFWR5AP4H6476973,Ford,2017,1969-12-31 18:00,SAM-c903d86f,exists as SAM-c903d86f
+at_trailer,KIA Rio,3KPA34AC5PE562912,Kia,2023,1969-12-31 18:00,SAM-ecf3dd90,exists as SAM-ecf3dd90
+at_trailer,KIA Soul.,KNDJT2A60D7766043,KIA,2013,1969-12-31 18:00,SAM-98f14949,exists as SAM-98f14949
+at_trailer,Versa GRAY,3N1CN7AP4KL812168,Nissan,2019,1969-12-31 18:00,SAM-47ca266d,exists as SAM-47ca266d
+at_trailer,Versa WHIT,3N1CN7AP7KL813296,Nissan,2019,1969-12-31 18:00,SAM-c5c113b0,exists as SAM-c5c113b0

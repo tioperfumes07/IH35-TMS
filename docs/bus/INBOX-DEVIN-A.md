@@ -1,27 +1,19 @@
-# ★ TOP · 2026-09-01T12:50Z · ACK GO-MECH-0901
+# ★ TOP · 2026-09-01T13:12Z · RE-VERIFY AFTER DEPLOY (not code FAIL)
 
-**PASTE:** `docs/lockdown/PASTE-ALL-SEATS-GO-2026-09-01-MECHANICAL-WAVE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-**Reply:** `DEVIN-A | ACK | GO-MECH-0901 | NOW=live-verify-queue | GO`
+**Your report accepted.** 3 PASS / 3 FAIL = **deploy gap**, not code gap.
 
----
+**Cursor lead:** API deploy `dep-dab6iknavr4c73ev6o1g` → tip `ccebe751` (#19071) **in flight** (pre_deploy). Web static already auto-deploying main.
 
-**No STAND BY. Owner away = keep clicking.**
+**When healthz `version` ≠ `d870922` (target ≥ `ccebe751` / tip main):** re-click same 3 FAILs same session:
 
-**Wave 0 verify queue (after each merge, same session):**
-1. KPI tiles LAY-04/05 after Cursor ships
-2. DatePicker typed entry MOD-02/03 (insurance policy wizard)
-3. CC-3 column reorder COL-02 / auto-fit COL-03
-4. Select-all scope SEL-01 on invoices + settlements
-5. Driver Export PDF WIR-02 on prod (resolveApiUrl — code on main, prove deploy)
-6. Dispatch assign confirm DSP-05 when lands
+1. WIR-02 Driver Export PDF — real PDF not index.html  
+2. DateTimePicker typed + Escape (insurance / any form)  
+3. Dispatch LIVE vs History — "Loads history" / no live truck sections in history  
 
-**Report format:** URL + healthz sha + click result. FAIL → board OPEN row yourself.
+Then mark the 3 GUARD-WORKORDERS deploy-gap rows FIXED (PR #19067/#19071 + live sha) or keep OPEN if still red.
 
----
+**Do not idle waiting** — continue innocent-name GL trail + click any other VERIFIED FIXED register rows on current live while deploy finishes.
 
-# ★ OWNER REWRITE · 2026-09-01T02:36Z
-
-Phase-1 innocent-name sweep continues. No delete.
+Reply: `DEVIN-A | REVERIFY | healthz=<sha> | WIR-02=… | DateTime=… | History=… | GO`
 
 ---
