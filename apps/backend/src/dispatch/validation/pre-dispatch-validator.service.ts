@@ -413,6 +413,58 @@ async function checkDriverInsuranceSchedule(
   }];
 }
 
+// INS-SCHEDULE (unit): same owner ruling — policy_unit membership on an active policy, NOT unit assignment.
+async function checkUnitInsuranceSchedule(
+  client: DbClient,
+  unitUuid: string,
+  operatingCompanyId: string
+): Promise<ValidationItem[]> {
+  const flagRes = await client.query<{ enabled: boolean }>(
+    `SELECT COALESCE(
+       (SELECT ffo.enabled FROM lib.feature_flag_overrides ffo
+        WHERE ffo.flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' AND ffo.operating_company_id = $1::uuid LIMIT 1),
+       (SELECT default_enabled FROM lib.feature_flags WHERE flag_key = 'INSURANCE_SCHEDULE_WARNING_ENABLED' LIMIT 1),
+       false) AS enabled`,
+    [operatingCompanyId]
+  );
+  if (flagRes.rows[0]?.enabled !== true) return [];
+
+  const res = await client.query<{ on_schedule: boolean; unit_number: string | null }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM insurance.policy_unit pu
+       JOIN insurance.policy p ON p.id = pu.policy_id
+       JOIN mdata.assets a ON a.id = pu.asset_id
+       WHERE a.unit_id = $1::uuid
+         AND pu.operating_company_id = $2::uuid
+         AND pu.removed_at IS NULL
+         AND p.status = 'active'
+     ) AS on_schedule,
+     u.unit_number
+     FROM mdata.units u
+     WHERE u.id = $1::uuid
+       AND (u.operating_company_id = $2::uuid
+            OR u.currently_leased_to_company_id = $2::uuid
+            OR u.owner_company_id = $2::uuid)
+     LIMIT 1`,
+    [unitUuid, operatingCompanyId]
+  );
+  const row = res.rows[0];
+  if (!row || row.on_schedule) return [];
+
+  const unitLabel = row.unit_number ?? "Unit";
+  return [{
+    rule_id: "INS-SCHEDULE-UNIT-NOT-ON-POLICY",
+    severity: "warn",
+    message: [
+      `${unitLabel}: Truck/trailer is not listed on an active insurance policy schedule.`,
+      `This is usually a setup workflow state (not yet submitted to the insurer), not a violation.`,
+      `The dispatcher MUST explicitly confirm before booking.`,
+    ].join(" "),
+    evidence: { unit_id: unitUuid, on_schedule: false, confirmation_required: true },
+  }];
+}
+
 async function checkUnitOos(
   client: DbClient,
   unitUuid: string,
@@ -633,6 +685,7 @@ export async function validatePreDispatch(
   if (input.unit_uuid) {
     const unitUuid = input.unit_uuid;
     checks.push({ name: "unit_oos", run: (c) => checkUnitOos(c, unitUuid, input.operating_company_id) });
+    checks.push({ name: "unit_insurance_schedule", run: (c) => checkUnitInsuranceSchedule(c, unitUuid, input.operating_company_id) });
   }
   if (input.customer_id) {
     const customerId = input.customer_id;

@@ -393,10 +393,11 @@ export function BookLoadModalV4({
   const watchedCustomerId = form.watch("customer_id");
   const watchedCustomerName = form.watch("customer_name");
   const watchedTripType = form.watch("trip_type");
-  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean; hasWarnings: boolean }>({
+  const [preDispatch, setPreDispatch] = useState<{ canDispatch: boolean; hasBlockers: boolean; hasWarnings: boolean; hasUnackedInsScheduleConfirm: boolean }>({
     canDispatch: true,
     hasBlockers: false,
     hasWarnings: false,
+    hasUnackedInsScheduleConfirm: false,
   });
   // GAP-47 — dispatch authorization gates (distinct from GAP-14's physical-readiness checks above):
   // server-side already enforces these on POST .../book (auth-gates preHandler, 422 dispatch_auth_gate_blocked
@@ -1754,10 +1755,12 @@ export function BookLoadModalV4({
                 <span className="blw-sec-meta">
                   {preDispatch.hasBlockers || authGateBlocked || repairBlockSubmitBlocked ? (
                     <b className="text-red-700">Active blocker(s) — override required</b>
+                  ) : preDispatch.hasUnackedInsScheduleConfirm ? (
+                    <b className="text-slate-700">Insurance schedule confirmation required before booking</b>
                   ) : assignedPrimaryDriverId || assignedUnitId || watchedCustomerId ? (
                     <b>
                       {preDispatch.hasWarnings
-                        ? "Warnings to review · booking allowed"
+                        ? "Warnings reviewed · booking allowed"
                         : preDispatch.canDispatch
                           ? "All checks pass · ready to book"
                           : "Validation unavailable · retry checks"}
@@ -1778,8 +1781,8 @@ export function BookLoadModalV4({
                   trailerUuid={assignedTrailerUnitId || null}
                   customerId={watchedCustomerId || null}
                   customerLabel={watchedCustomerName || null}
-                  onValidationChange={(canDispatch, hasBlockers, hasWarnings) =>
-                    setPreDispatch({ canDispatch, hasBlockers, hasWarnings })
+                  onValidationChange={(canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm) =>
+                    setPreDispatch({ canDispatch, hasBlockers, hasWarnings, hasUnackedInsScheduleConfirm })
                   }
                   // OWNER-ALWAYS-OVERRIDE: these two props were NEVER passed. Both are optional, so
                   // inside the panel `value={overrideReason ?? ""}` was permanently "" and onChange
@@ -1900,7 +1903,7 @@ export function BookLoadModalV4({
                   Save draft
                 </Button>
               )}
-              <Button type="submit" disabled={form.formState.isSubmitting || (isEditMode && !editLoad) || repairBlockSubmitBlocked || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
+              <Button type="submit" disabled={form.formState.isSubmitting || (isEditMode && !editLoad) || repairBlockSubmitBlocked || preDispatch.hasUnackedInsScheduleConfirm || (creditLimitBlock != null && (!canOverrideCreditLimit || !overrideCreditLimit))}>
                 {isEditMode ? "Save changes" : "Book + dispatch"}
               </Button>
             </div>
