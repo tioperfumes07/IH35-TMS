@@ -69,4 +69,10 @@ describe("dispatch detention routes (B21-D5)", () => {
     const src = readFileSync(indexPath, "utf8");
     expect(src).toContain("registerDispatchDetentionRoutes");
   });
+
+  it("keeps terminal loads off the operational board through the canonical state machine", () => {
+    const src = readFileSync(servicePath, "utf8");
+    expect(src).toContain('import { isTerminalLoadStatus } from "./load-state-machine.js"');
+    expect(src).toContain("res.rows.filter((row) => !isTerminalLoadStatus(String(row.load_status)))");
+  });
 });
