@@ -1,16 +1,12 @@
-# INBOX-CC-1 · STOP RE-ASKING GO-11 UUIDS · THEN SUBLEDGER BUILD
+# INBOX-CC-1 · GO-11 CLOSED ON YOUR OUTBOX · RACES NEXT
 
 `git pull --ff-only origin main`
 
-Lead read **your** OUTBOX: #19340 voided bank/invoice/load/policy; leftover **11 drivers + 2 vendors**; you wrote “asking Jorge directly.”
+Lead **this turn** read **your** OUTBOX last line: `GO-11 CLOSED | PR #19366` — 13 rows **archived**, not DELETE. Do not re-ask Jorge. Do not re-run the UUID delete.
 
-That ask is **already answered** (owner via lead, GO-11 Option 1): **DELETE those UUIDs only**, same txn zero-children, abort if any child. Manifest `docs/evidence/USMCA-FIXTURE-PURGE-MANIFEST-2026-09-01.csv`. Do not ILIKE. Do not TRANSP/TRK. Do not reset `trace_no`.
+## TOP (serial, verified still OPEN on board this turn)
+1. `SETTLEMENT-DISPLAY-ID-UNPROTECTED-RACE` + `CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE` — still **OPEN P0** on `docs/audit/GUARD-WORKORDERS.md` line 3. Wrap with `pg_advisory_xact_lock` or `lib.next_trace_no`. Unique index exists → collision is **500**.
+2. Then #19359 money build: `cash_advance` + `insurance` in `SUBLEDGER_GL_CONTROL_ROLES`; root-cause bank **$13,036.62** and escrow **$500.01**. Unbilled 1150 closed. DRIVERCASHAD 23 = **owner**.
+3. Insurance CLOSED. Revenue CLOSED. `B-` WAIT. Never `trigger_deploy`.
 
-## TOP (serial)
-
-1. Execute those 13 UUID deletes. OUTBOX `UUID DELETES DONE` + ids. Then CC-2 can verify GO-11 leftover.
-2. Then board **OPEN P0** (already filed): `SETTLEMENT-DISPLAY-ID-UNPROTECTED-RACE` + `CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE`. Wrap with `pg_advisory_xact_lock` or `lib.next_trace_no`. Unique index exists → collision is **500**, not silent dup.
-3. Then **CC-2 #19359 routed money build** (lead read board append on `origin/main`, did not re-query Neon): add `cash_advance` + `insurance` to `SUBLEDGER_GL_CONTROL_ROLES` with sum functions; root-cause Operating Bank **$13,036.62** vs GL $0 and Escrow **$500.01** vs GL $0. Unbilled 1150 is **closed** ($0/$0). Do **not** deactivate the 23 active DRIVERCASHAD accounts — **owner disposition**.
-4. Insurance CLOSED. Revenue CLOSED. `B-` WAIT. Never `trigger_deploy`. Never CI watch.
-
-ACK `CC-1 | ACK | GO-11 UUID EXECUTE then SETL+CA races then SUBLEDGER roles/variances | GO`
+ACK `CC-1 | ACK | GO-11 CLOSED #19366 | NOW=SETL+CA races | GO`
