@@ -134,6 +134,11 @@ const createExpenseBodySchema = z.object({
   legal_matter_id: z.string().uuid().optional().nullable(),
   // QBO Ref no. — optional override. Empty → server assigns EXP-YYYY-##### (or load-scoped L-seq).
   expense_number: z.string().trim().max(80).optional().nullable(),
+  // GO-09 L2 — the VENDOR's own receipt/invoice number, separate from expense_number (OURS,
+  // company-wide unique, mint-if-blank). This one is NEVER minted by the server; blank is allowed.
+  // Same intent as accounting.bills.bill_number (L1): the office types the vendor's own number to
+  // link back to a paper receipt and to catch a double-entry of the same vendor document.
+  vendor_document_number: z.string().trim().max(80).optional().nullable(),
   // WAVE-H2: optional explicit load FK (TMS create). When set, stamped on INSERT; attribution only fills when absent.
   load_id: z.string().uuid().optional().nullable(),
   location_lat: z.number().finite().optional(),
@@ -198,6 +203,7 @@ export type ExpenseListFilters = {
 export type ExpenseListRow = {
   id: string;
   expense_number: string | null;
+  vendor_document_number: string | null;
   transaction_date: string;
   total_amount_cents: string;
   status: string;
@@ -331,6 +337,7 @@ export async function queryExpensesList(
       SELECT
         e.id::text                                   AS id,
         e.expense_number                             AS expense_number,
+        e.vendor_document_number                     AS vendor_document_number,
         e.transaction_date                           AS transaction_date,
         e.total_amount_cents::text                   AS total_amount_cents,
         e.status                                     AS status,
@@ -527,6 +534,7 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           SELECT
             e.id::text                                   AS id,
             e.expense_number                             AS expense_number,
+            e.vendor_document_number                     AS vendor_document_number,
             e.transaction_date                           AS transaction_date,
             e.total_amount_cents::text                   AS total_amount_cents,
             e.status                                     AS status,
@@ -812,6 +820,39 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
         if (hasLegalMatterId) {
           columns.push(`legal_matter_id`);
           values.push(body.legal_matter_id ?? null);
+        }
+
+        // GO-09 L2 — vendor_document_number is NEVER minted (blank stays blank); duplicate
+        // detection is per (operating_company_id, vendor_uuid), mirroring accounting.bills'
+        // uq_bills_tms_native_vendor_bill_number exactly (two DIFFERENT vendors may reuse the same
+        // number; the SAME vendor reusing it is very likely a double-entry). Sentinel-return
+        // pattern (not reply.send here) matches the memo-duplicate check above -- this callback's
+        // return value is inspected AFTER withCompanyScope resolves, not replied to from inside it.
+        const hasVendorDocumentNumber = await columnExists(client, "accounting", "expenses", "vendor_document_number");
+        const operatorVendorDocumentNumber = body.vendor_document_number?.trim() || null;
+        if (hasVendorDocumentNumber && operatorVendorDocumentNumber && hasVendor && body.vendor_uuid) {
+          const dupVendorDoc = await client.query(
+            `
+              SELECT id::text FROM accounting.expenses
+              WHERE operating_company_id = $1::uuid
+                AND vendor_uuid = $2::uuid
+                AND vendor_document_number = $3
+                AND voided_at IS NULL
+              LIMIT 1
+            `,
+            [body.operating_company_id, body.vendor_uuid, operatorVendorDocumentNumber]
+          );
+          if (dupVendorDoc.rows[0]) {
+            return {
+              duplicateVendorDocumentNumber: true as const,
+              vendorDocumentNumber: operatorVendorDocumentNumber,
+              existingExpenseId: String((dupVendorDoc.rows[0] as { id?: string }).id ?? ""),
+            };
+          }
+        }
+        if (hasVendorDocumentNumber) {
+          columns.push(`vendor_document_number`);
+          values.push(operatorVendorDocumentNumber);
         }
 
         // ACT-F5413 (LV-EXPENSES-UNAUDITED-AND-ACTORLESS, actor half): the audit-trigger half of this
@@ -1125,6 +1166,12 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
           detail:
             "An expense with this exact memo was already recorded for this company in the last 2 minutes. If this is intentional, vary the memo text.",
           existing_expense_id: (payload as { existingExpenseId?: string }).existingExpenseId ?? null,
+        });
+      if ("duplicateVendorDocumentNumber" in payload)
+        return reply.code(409).send({
+          error: "duplicate_vendor_document_number",
+          vendor_document_number: (payload as { vendorDocumentNumber?: string }).vendorDocumentNumber ?? null,
+          existing_id: (payload as { existingExpenseId?: string }).existingExpenseId ?? null,
         });
       // ACCOUNTING-SPINE-EVENT-FIRE-AND-FORGET-SILENT-DROP: expense.created now emits inside the
       // creation transaction above — awaited, never diverges from the row.
