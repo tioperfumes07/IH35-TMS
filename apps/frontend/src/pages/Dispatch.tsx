@@ -387,9 +387,11 @@ export function DispatchPage({
 
       <DispatchSubnav operatingCompanyId={defaultCompanyIds[0] ?? ""} />
 
-      <NavyPageSubNav
-        items={DISPATCH_SUB_TABS.map((tab) => ({ label: tab.label, to: DISPATCH_SECONDARY_TAB_PATH[tab.id] }))}
-      />
+      <div data-testid="dispatch-secondary-nav">
+        <NavyPageSubNav
+          items={DISPATCH_SUB_TABS.map((tab) => ({ label: tab.label, to: DISPATCH_SECONDARY_TAB_PATH[tab.id] }))}
+        />
+      </div>
 
       {subTab === "load_board" && view === "overview" ? (
         <DispatchOverview
