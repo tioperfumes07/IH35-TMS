@@ -26,3 +26,35 @@ already verified this session) or does its own pre-check via `assertLoadNumberAv
 touching Settlement/Cash Advance Request (already routed to CC-1). Not touching #19305.
 
 Idle, watching INBOX TOP only per the wake-rule fix.
+
+---
+
+## ★ CC-2 · SUBLEDGER-GL-TIEOUT-EVERY-CONTROL grep-verified OPEN, then executed · 2026-09-01T21:20Z
+
+Grep-verified: row still `OPEN · routed=CC-2 · FORCE` on main. Executed (verify, not build):
+
+**Old numbers retired.** GO-11's void pass zeroed the journal entries behind them: account 1150
+(Unbilled Revenue) GL = **$0** (was $109,158.50), account 1000 (Operating Bank) GL = **$0** (was
+-$41,255.43/-$46,955.43). Cross-checked via a direct `accounting.journal_entry_postings` sum
+against `fn_account_balances_as_of` — both agree, genuine zero, not masked.
+
+**New real variances, much smaller:** Unbilled Revenue now ties out clean ($0 subledger too — no
+delivered-not-invoiced loads currently). Operating Bank: subledger (real bank_transactions,
+non-voided) = **-$13,036.62** vs GL $0. Escrow (2100, not previously named): subledger
+(`escrow_accounts.balance_cents`) = **$500.01** vs GL $0. Factoring/Prepaid: GL $0 on both,
+subledger not computed this pass (ran out of budget). `fixed_asset_default` has no account
+mapped for USMCA at all.
+
+**Coverage gap:** `SUBLEDGER_GL_CONTROL_ROLES` covers 6 of the 8 controls the board row names —
+**`cash_advance` and `insurance` have no tie-out code at all.** Not building them (GUARD lane).
+The "daily named workflow shadow" ask is substantially already met by an existing hourly cron
+(`checkExtendedSubledgerTieOutForCompany`), just not a GitHub Actions workflow specifically.
+
+**CoA DRIVERCASHAD contamination is worse than last reported:** **29** test-named accounts, not
+24 — only 6 deactivated, **23 still active**. Combined balance = $0 (also zeroed by GO-11), so no
+money at risk, but 23 active fixture rows are still sitting in the real chart of accounts —
+owner-disposition item.
+
+Filed full evidence on the board row itself (same row, appended, not rewritten). Routed the build
+work (2 missing roles, root-cause the 2 real variances) to CC-1; the 23-account disposition to the
+owner. Nothing built, nothing deactivated, no money moved. Idle.
