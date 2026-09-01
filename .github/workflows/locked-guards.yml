@@ -58,6 +58,10 @@ jobs:
         run: node scripts/verify-planner-load-templates.mjs --selftest
       - name: verify:planner-load-templates
         run: npm run verify:planner-load-templates
+      - name: verify:planner-grid-canonical --selftest
+        run: node scripts/verify-planner-grid-canonical.mjs --selftest
+      - name: verify:planner-grid-canonical
+        run: node scripts/verify-planner-grid-canonical.mjs
       - name: verify:dispatch-notify-prefs-onerror --selftest
         run: node scripts/verify-dispatch-notify-prefs-onerror.mjs --selftest
       - name: verify:dispatch-notify-prefs-onerror

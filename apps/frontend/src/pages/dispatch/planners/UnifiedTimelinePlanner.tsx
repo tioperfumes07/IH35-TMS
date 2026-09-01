@@ -241,6 +241,7 @@ export function UnifiedTimelinePlanner() {
       <PlannerGrid
         days={days}
         frozenLabel="Driver / Unit"
+        actionLabel="Book"
         frozenPx={360}
         rows={toRows(inService)}
         empty={
@@ -255,6 +256,7 @@ export function UnifiedTimelinePlanner() {
           <PlannerGrid
             days={days}
             frozenLabel="Out of service"
+            actionLabel="Book"
             frozenPx={360}
             rows={toRows(oos)}
             empty={null}

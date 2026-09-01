@@ -59,9 +59,23 @@ function inspect({ registry, sources }) {
 
   const gridPath = registry.canonical_grid?.tsx;
   const grid = sources[gridPath] ?? "";
+  const timeline = sources["apps/frontend/src/pages/dispatch/planners/UnifiedTimelinePlanner.tsx"] ?? "";
   const track = trackRenderer(grid);
   if (!track) errors.push("A5_TRACK_HAS_NO_AVAILABLE_TEXT: pg-track renderer not found");
   else if (/\bAvailable\b/.test(track)) errors.push("A5_TRACK_HAS_NO_AVAILABLE_TEXT: Available text rendered inside pg-track");
+
+  // PLN-06 — action width is a grid contract, not row content. Rows without an
+  // available action still render the empty action cell, so links/buttons never
+  // shift horizontally as status changes.
+  if (!grid.includes("hasActionColumn ? <div className=\"pg-col-action\">{row.action}</div> : null")) {
+    errors.push("PLN-06: canonical grid does not reserve the action cell for every row");
+  }
+  if (!grid.includes("actionLabel?: string") || !grid.includes('actionLabel ?? "Action"')) {
+    errors.push("PLN-06: canonical grid lacks an explicit action-column header");
+  }
+  if ((timeline.match(/actionLabel="Book"/g) ?? []).length !== 2) {
+    errors.push("PLN-06: both unified timeline groups must name the Book column");
+  }
 
   const routes = new Set();
   for (const contract of registry.route_contracts ?? []) {
@@ -99,6 +113,8 @@ export function selftestPlannerGridCanonical() {
     ["A5 Available in track", mutate(good, grid, "<TrackOverlays days={days}", '<span>Available</span><TrackOverlays days={days}')],
     ["A6 dwell label", mutate(good, grid, "<i>{w.label}</i>", "<i />")],
     ["A7 OOS sticky flush", mutate(good, timeline, 'className="mt-3" data-testid="planner-oos-group"', 'className="sticky mt-3" data-testid="planner-oos-group"')],
+    ["PLN-06 empty action cell", mutate(good, grid, 'hasActionColumn ? <div className="pg-col-action">{row.action}</div> : null', 'row.action != null ? <div className="pg-col-action">{row.action}</div> : null')],
+    ["PLN-06 Book header", mutate(good, timeline, 'actionLabel="Book"', 'actionLabel=""')],
     ...good.registry.route_contracts.map((contract) => [
       `route ${contract.route}`,
       mutate(good, contract.renderer_file, contract.renderer_tokens[0], "LegacyPlannerGrid,"),
