@@ -303,6 +303,7 @@ export async function bulkPostTransactionsAsBills(
             bill_id,
             vendor_id,
             payment_date,
+            cleared_date,
             amount_cents,
             amount,
             payment_method,
@@ -317,13 +318,16 @@ export async function bulkPostTransactionsAsBills(
             -- ACCT-F353 — same derivation as the bill row two statements up (vendorIsSampleData).
             is_sample_data
           )
-          VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now(),$11)
+          VALUES ($1,$2,$3,$4,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_bulk_post',$9,$10,now(),now(),$11)
           RETURNING id
         `,
         [
           input.operatingCompanyId,
           billId,
           vendorId,
+          // THREE-DATES-COVERAGE-GAP: bulk-posting an already-cleared bank transaction directly
+          // into a bill+payment -- issued and cleared are legitimately the same moment here, both
+          // bound to $4. See bank-transaction-splits.service.ts for the non-bulk sibling flow.
           txn.transaction_date,
           amountCents,
           amountCents / 100,

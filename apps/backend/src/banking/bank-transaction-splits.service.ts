@@ -876,19 +876,25 @@ async function commitVendorBillSplitLineAtomic(input: {
     const paymentRes = await client.query<{ id: string }>(
       `
         INSERT INTO accounting.bill_payments (
-          operating_company_id, bill_id, vendor_id, payment_date, amount_cents, amount,
+          operating_company_id, bill_id, vendor_id, payment_date, cleared_date, amount_cents, amount,
           payment_method, from_bank_account_id, memo, status, payment_source_kind,
           source_bank_transaction_id, created_by_user_id, created_at, updated_at,
           -- ACCT-F353 — same derivation as the bill row above (vendorIsSampleData).
           is_sample_data
         )
-        VALUES ($1,$2,$3,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_split',$9,$10,now(),now(),$11)
+        VALUES ($1,$2,$3,$4,$4,$5,$6,'ach',$7,$8,'posted','bank_tx_split',$9,$10,now(),now(),$11)
         RETURNING id::text
       `,
       [
         input.companyId,
         billId,
         input.vendorId,
+        // THREE-DATES-COVERAGE-GAP: this flow categorizes an ALREADY-POSTED bank transaction
+        // directly into a bill+payment -- there is no separate "issued" moment distinct from the
+        // bank's own date, so payment_date (issued) and cleared_date (cleared) are legitimately
+        // the SAME value here, both bound to $4. A deliberate "pay bill" flow that issues a
+        // payment BEFORE the bank clears it must NOT copy this pattern -- its cleared_date stays
+        // NULL until an actual bank match sets it.
         input.txnPostingDate,
         input.amountCents,
         input.amountCents / 100,
