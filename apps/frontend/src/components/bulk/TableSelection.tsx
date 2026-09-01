@@ -60,6 +60,11 @@ export function TableSelection<TRow>({
 export type TableSelectionHeaderProps = {
   selectedIds: Set<string>;
   pageRowIds: string[];
+  /**
+   * SEL-01 — when set, the header checkbox selects this full matching set (filtered list),
+   * not only the current page. Defaults to pageRowIds (page-scoped) when omitted.
+   */
+  matchingRowIds?: string[];
   onSelectionChange: (next: Set<string>) => void;
   cap?: number;
   onCapExceeded?: (message: string) => void;
@@ -69,34 +74,43 @@ export type TableSelectionHeaderProps = {
 export function TableSelectionHeader({
   selectedIds,
   pageRowIds,
+  matchingRowIds,
   onSelectionChange,
   cap = DEFAULT_CAP,
   onCapExceeded,
-  ariaLabel = "Select all rows on this page",
+  ariaLabel,
 }: TableSelectionHeaderProps) {
-  const allVisibleSelected =
-    pageRowIds.length > 0 && pageRowIds.every((id) => selectedIds.has(id));
-  const someVisibleSelected = pageRowIds.some((id) => selectedIds.has(id));
+  const scopeIds = matchingRowIds ?? pageRowIds;
+  const resolvedAria =
+    ariaLabel ??
+    (matchingRowIds != null
+      ? `Select all ${matchingRowIds.length} matching rows`
+      : "Select all rows on this page");
+  const allScopeSelected =
+    scopeIds.length > 0 && scopeIds.every((id) => selectedIds.has(id));
+  const someScopeSelected = scopeIds.some((id) => selectedIds.has(id));
 
-  const toggleAllVisible = () => {
-    const next = new Set(selectedIds);
-    if (allVisibleSelected) {
-      for (const id of pageRowIds) next.delete(id);
-    } else {
-      for (const id of pageRowIds) next.add(id);
+  const toggleAllScope = () => {
+    if (allScopeSelected) {
+      const next = new Set(selectedIds);
+      for (const id of scopeIds) next.delete(id);
+      applyWithCap(next, cap, onSelectionChange, onCapExceeded);
+      return;
     }
-    applyWithCap(next, cap, onSelectionChange, onCapExceeded);
+    applyWithCap(new Set(scopeIds), cap, onSelectionChange, onCapExceeded);
   };
 
   return (
     <input
       type="checkbox"
-      aria-label={ariaLabel}
-      checked={allVisibleSelected}
+      aria-label={resolvedAria}
+      data-testid="table-selection-select-all"
+      data-select-scope={matchingRowIds != null ? "matching" : "page"}
+      checked={allScopeSelected}
       ref={(el) => {
-        if (el) el.indeterminate = someVisibleSelected && !allVisibleSelected;
+        if (el) el.indeterminate = someScopeSelected && !allScopeSelected;
       }}
-      onChange={toggleAllVisible}
+      onChange={toggleAllScope}
     />
   );
 }

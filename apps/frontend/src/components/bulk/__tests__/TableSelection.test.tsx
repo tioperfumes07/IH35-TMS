@@ -64,13 +64,58 @@ describe("TableSelection", () => {
     { id: "3", label: "Three" },
   ];
 
-  it("select-all checks every visible row", () => {
+  it("select-all checks every visible row (page scope)", () => {
     render(<DemoTable rows={rows} />);
     fireEvent.click(screen.getByLabelText("Select all rows on this page"));
     const rowChecks = screen.getAllByRole("checkbox").slice(1);
     for (const checkbox of rowChecks) {
       expect((checkbox as HTMLInputElement).checked).toBe(true);
     }
+  });
+
+  it("SEL-01: matchingRowIds selects full matching set not just page", () => {
+    function MatchingDemo() {
+      const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+      const page = rows.slice(0, 1);
+      const matching = rows;
+      return (
+        <table>
+          <thead>
+            <tr>
+              <th>
+                <TableSelectionHeader
+                  selectedIds={selectedIds}
+                  pageRowIds={page.map((r) => r.id)}
+                  matchingRowIds={matching.map((r) => r.id)}
+                  onSelectionChange={setSelectedIds}
+                />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {matching.map((row) => (
+              <tr key={row.id}>
+                <td>
+                  <input
+                    type="checkbox"
+                    aria-label={`Select ${row.label}`}
+                    checked={selectedIds.has(row.id)}
+                    readOnly
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+    }
+    render(<MatchingDemo />);
+    const header = screen.getByTestId("table-selection-select-all");
+    expect(header.getAttribute("data-select-scope")).toBe("matching");
+    fireEvent.click(header);
+    expect(screen.getByLabelText("Select One")).toBeChecked();
+    expect(screen.getByLabelText("Select Two")).toBeChecked();
+    expect(screen.getByLabelText("Select Three")).toBeChecked();
   });
 
   it("blocks selection above cap", () => {

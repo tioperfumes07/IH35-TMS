@@ -220,8 +220,9 @@ export function FleetTable({
   });
 
   const pageRows = table.paged;
-  // select-all targets ONLY the current filtered page — never the whole hidden fleet.
   const pageRowIds = useMemo(() => pageRows.map((row) => row.id), [pageRows]);
+  // SEL-01 — header select-all = all filter-matching rows (capped), not page-only.
+  const matchingRowIds = useMemo(() => listFiltered.map((row) => row.id), [listFiltered]);
   const vehicleTypes = useMemo(() => Array.from(new Set(rows.map(deriveVehicleType))), [rows]);
 
   const selection = useBulkSelection({
@@ -595,10 +596,11 @@ export function FleetTable({
                     <TableSelectionHeader
                       selectedIds={selection.selectedIds}
                       pageRowIds={pageRowIds}
+                      matchingRowIds={matchingRowIds}
                       onSelectionChange={selection.setSelectedIds}
                       cap={FLEET_SELECTION_CAP}
                       onCapExceeded={(message) => pushToast(message, "error")}
-                      ariaLabel="Select all units on this page"
+                      ariaLabel={`Select all ${matchingRowIds.length} matching units`}
                     />
                   </th>
                   {columns.filter((c) => isVisible(c.key)).map((c) => (
