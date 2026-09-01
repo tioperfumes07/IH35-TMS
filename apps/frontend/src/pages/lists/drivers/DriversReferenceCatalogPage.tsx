@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import type { DriversReferenceCatalogRow } from "../../../api/lists-drivers-catalogs";
@@ -48,6 +50,8 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
         search: search || undefined,
         include_archived: includeArchived,
       }),
+    enabled: true,
+    ...catalogListSearchQueryOptions,
   });
 
   const rows = useMemo(() => {
@@ -124,16 +128,7 @@ export function DriversReferenceCatalogPage({ client, displayName, catalogKey }:
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* LST-F3514: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          // A placeholder is NOT an accessible name — it is not announced as a label by screen readers and
-          // it disappears once the user types. This input had no name at all (verified by dumping the render:
-          // every control here came back label=NONE), so it was unreachable by name for assistive tech.
-          aria-label="Search by code or label"
-          placeholder="Search by code or label"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-        />
+        <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search by code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
         <SelectCombobox
           value={archiveFilter}
           onChange={(event) => setArchiveFilter(event.target.value as ArchiveFilter)}

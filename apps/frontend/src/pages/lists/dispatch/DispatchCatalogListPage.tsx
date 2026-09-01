@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../../../api/client";
@@ -116,6 +118,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         offset: 0,
       }),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const createMutation = useMutation({
@@ -184,7 +187,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
           {/* LST-F3510: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or display name" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show

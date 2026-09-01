@@ -3,6 +3,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
+import { catalogListSearchQueryOptions } from "./catalogListSearchQueryOptions";
 
 export type MaintenanceService = {
   id: string;
@@ -64,6 +65,7 @@ export function useMaintenanceServicesCatalog(
       `/api/v1/catalogs/maintenance/services-catalog?${params.toString()}`
     ),
     enabled: Boolean(operatingCompanyId),
+    ...catalogListSearchQueryOptions,
   });
 }
 

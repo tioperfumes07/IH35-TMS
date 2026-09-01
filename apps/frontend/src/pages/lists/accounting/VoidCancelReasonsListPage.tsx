@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { CatalogListSearchInput } from "../../../../components/lists/CatalogListSearchInput";
+import { catalogListSearchQueryOptions } from "../../../../hooks/catalogListSearchQueryOptions";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
@@ -83,6 +85,7 @@ export function VoidCancelReasonsListPage() {
     queryKey: ["void-cancel-reasons", companyId],
     queryFn: () => listVoidCancelReasons(companyId, true),
     enabled: Boolean(companyId),
+    ...catalogListSearchQueryOptions,
   });
 
   const createMutation = useMutation({
@@ -169,12 +172,7 @@ export function VoidCancelReasonsListPage() {
       <div className="grid gap-2 rounded-sm border border-slate-200 bg-white p-3 md:grid-cols-[1fr_180px]">
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Search
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search code or label"
-            className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]"
-          />
+          <CatalogListSearchInput value={search} onChange={setSearch} placeholder="Search code or label" className="h-9 rounded-sm border border-gray-300 px-2 text-[13px]" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
           Show

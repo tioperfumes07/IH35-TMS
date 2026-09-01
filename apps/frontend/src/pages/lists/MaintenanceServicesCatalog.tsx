@@ -3,6 +3,7 @@
  * Route: /lists/maintenance/services-catalog
  */
 import { useState } from "react";
+import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { Button } from "../../components/Button";
 import { BackArrowHeader } from "../../components/layout/BackArrowHeader";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -220,12 +221,7 @@ export function MaintenanceServicesCatalog() {
 
       <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3">
         {/* MAINT-F3506: server-bound catalog search — keep; ParityTable toolbar Search suppressed */}
-        <input
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          placeholder="Search by code or service name"
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
-        />
+        <CatalogListSearchInput value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search by code or service name" className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2" />
         <SelectCombobox value={appliesTo} onChange={(e) => { setAppliesTo(e.target.value); setPage(1); }} className="h-9 rounded-sm border border-gray-300 px-2 text-sm">
           {APPLIES_TO.map((t) => <option key={t} value={t}>{t || "All vehicle types"}</option>)}
         </SelectCombobox>
