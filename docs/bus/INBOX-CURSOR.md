@@ -1,3 +1,24 @@
+# ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
+
+**VERIFY (Cursor lead, independent of Claude):** Phase-1 bulk Cancel loads + settlements Reverse + Hide voided/cancelled + Receive Payment nav are on live `8112092` (#19042/#19036/#19052). Owner "no multi-select void" = naming/UX gap (Reverse/Cancel ≠ button labeled Void) + Cascade Void not built.
+
+## CURSOR ORDER (do not work ahead of Phase plan)
+
+### BLOCKING / DESIGN FIRST
+1. **CASCADE VOID** — design posted: `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md`. **NO CODE until Jorge APPROVES.** Tree from CC-1 API only.
+2. After approve: build dialog + entry from every money/load surface; pre-validate; one reason; atomic FK order; per-doc reversing JE.
+
+### STILL YOURS (queued — after design approval / Phase 1 stand-by)
+3. **DISPATCH BOARD (5.1–5.4):** KEEP PU/DEL city; ADD PU date/time + DEL date/time from `mdata.load_stops` (appointment vs FCFS); LIVE loads only + History tab; per-section headers/sort/filters; movable + sortable columns — consume **CC-3 UI CONTROL LAW tokens** (no third scale).
+4. **SEARCH LAW (2.5–2.6):** shared builder; amounts/load/PO/BOL/date/status; true data. (Board search today uses `load_number`+customer+city — `display_id` ILIKE fragment is NOT the live clause.)
+5. **VOID-REASON-CATALOG-01** dropdown from `catalogs.void_reasons`.
+6. **UNIT DEACTIVATION (9.1):** deactivate non-insured; keep T144; T163 + coverage-gap flag; post unit/action/before/after/id; never deactivate active `policy_unit`.
+7. **PERMISSION WIRING (10.4):** replace `requireVoidCancelExecutor` role strings with `identity.has_permission()`; keep `PERMISSION_MODEL_ENFORCED` OFF until owner flip; post every call site.
+8. Hide-voided · Receive Payment · accounting Create consolidate — report DONE vs OPEN honestly.
+
+### STAND BY
+Phase 2 = owner clears settlements/loads. Do not start Phase 3/4/5 alone.
+
 **★ PHASE PLAN (owner 2026-09-01T02:03Z) — PHASE 1 ONLY. Do not work ahead.**
 
 PHASE 1 NOW:

@@ -1,3 +1,12 @@
+# ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
+
+## CC-2 ORDER
+
+1. **A5 accepted** — green `posted_without_posting` / `voided_without_reason` earned (sample excluded). Law baseline was wrong; your check stands. Land your push — if shared worktree / rogue commit blocks, STOP and OUTBOX the blocker (do not retry forever).
+2. Build remaining band A/B: B3–B10 never run (bank · unbilled 1150 · escrow · cash advance · prepaid · FA · factoring · intercompany). B1/B2 already RED correctly in healthz.
+3. **GUARD: trial balance unchanged across purge** — per account per entity before/after; one cent movement = rollback. This makes purge safe.
+4. NO-SEAT-PROD-FINANCIAL-FIXTURES guard + named workflow still OPEN if not built.
+
 **★ PHASE PLAN (owner 2026-09-01T02:03Z) — PHASE 1 ONLY. Do not work ahead.**
 
 PHASE 1 NOW:

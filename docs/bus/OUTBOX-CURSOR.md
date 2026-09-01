@@ -1,3 +1,5 @@
+CURSOR | OWNER-MASTER-FANOUT 2026-09-01T02:12Z | live=8112092 | PASTEs→all INBOXes · CASCADE-VOID design posted (NO CODE until Jorge APPROVES) · Phase1 Cancel/Reverse/Hide/Nav LIVE · unit deact+perm wiring+board queued · map=docs/bus/IH35-OWNER-REQUIREMENTS-MASTER-MAP.md | GO
+
 CURSOR | PHASE-1 HIDE-VOIDED shipping · other 3 items LIVE on 78a1efd (#19036/#19042) · after merge STAND BY Phase 2 | GO
 
 CURSOR | OWNER-PASTE-CENSUS | live=78a1efd | Cursor assigns DONE (#19036/#19042/#19046/#19047) · CC-1 FORCE LINKAGE INTEGRITY · CC-2 FORCE NO-SEAT+full tie-out · CC-3 FORCE sweep (HOLD void) · Codex condition5 CLEAR | GO

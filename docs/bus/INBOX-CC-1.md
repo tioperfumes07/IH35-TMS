@@ -1,3 +1,20 @@
+# ★ OWNER MASTER FANOUT · 2026-09-01T02:12Z · live=`8112092`
+
+## CC-1 ORDER (money — Phase 1 then queue)
+
+1. **Reversals inherit `is_sample_data` + backfill 233** — BLOCKS purge. Do first.
+2. **`categorization_recover_from_driver`** — prove fix **THROUGH THE HTTP ROUTE**, not SQL. (OUTBOX admitted Neon SQL for orphan backfill — route proof still owed.)
+3. **Dependency-tree API for CASCADE VOID** — single graph Cursor will render (`can_void` + MUST/MAY + block_reason). One model with LINKAGE INTEGRITY LAW — no second truth.
+4. LINKAGE INTEGRITY LAW: `banking.matches` record + bidirectional trigger + one void column.
+5. Driver bill auto-mint (all 5 paths) — you claim live; still UNVERIFIED by lead.
+6. Expense numbering `<load#>-<seq>`.
+7. Settlement approval + owner popup + alarm; negative → `driver_liabilities`; PAID path; September session.
+8. **DISPATCHER CONFIRMATION (5.5)** — queued behind money chain: on-screen ack + warnings + owner override + audit who/when/warnings/override.
+9. **Purge:** include BILL-2026-00016 (`401456d1`) — $1,200 on DRIVERCASHAD896665-023; innocent name. Name sweeps insufficient — use `is_sample_data` + GL trail. Execute against CASCADE's FK-order list; TB identical or rollback (CC-2 guard).
+10. FLAG from CC-3: `mdata.assets` 90 tractors / 0 trailers / empty insured_value — schema/data for you, not CC-3.
+
+NO Phase 2/3 ahead of owner. Report + stand by when Phase-1 money items done.
+
 **★ PHASE PLAN (owner 2026-09-01T02:03Z) — PHASE 1 ONLY. Do not work ahead.**
 
 PHASE 1 NOW:
