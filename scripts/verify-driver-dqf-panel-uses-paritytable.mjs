@@ -68,6 +68,16 @@ function assertMigrated(src) {
     errors.push(`${PANEL}: must not use free-text item-name placeholder (catalog pick only)`);
   }
 
+  // LAY-06 — DQF card font stack: at most three distinct Tailwind text-size tokens.
+  const sizeTokens = [...src.matchAll(/text-(?:\[[0-9]+px\]|xs|sm|base|lg)/g)].map((m) => m[0]);
+  const uniqueSizes = new Set(sizeTokens);
+  if (uniqueSizes.size > 3) {
+    errors.push(`${PANEL}: font size stack must use at most 3 text-size tokens (LAY-06); found ${[...uniqueSizes].join(", ")}`);
+  }
+  if (/text-\[11px\]/.test(src) || /text-\[12px\]/.test(src) || /text-\[14px\]/.test(src)) {
+    errors.push(`${PANEL}: must not use ad-hoc px font sizes — normalize to text-xs / text-[10px] (LAY-06)`);
+  }
+
   return errors;
 }
 
@@ -101,8 +111,10 @@ function selftest() {
     data-testid="dqf-create-checklist-pick-hint"
     listRequiredDocumentTypes(companyId, "driver")
     required_document_type_id: input.documentTypeId
+    className="text-xs text-slate-600"
+    className="text-[10px] hover:bg-gray-50"
   `;
-  const bad = `<table><thead><tr><th>Item</th></tr></thead></table>`;
+  const bad = `<table><thead><tr><th>Item</th></tr></thead></table><p className="text-[11px]">x</p>`;
   const goodErrors = assertMigrated(good);
   const badErrors = assertMigrated(bad);
   if (goodErrors.length > 0 || badErrors.length < 5) {
