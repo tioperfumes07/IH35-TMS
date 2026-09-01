@@ -51,7 +51,7 @@ function assertWiring(readSourceFn = readSource) {
   }
 
   for (const [name, src, needles] of [
-    [FILES.hubPage, hub, ['useSearchParams', "leave_requests", "DriverSchedulerGridPage", "DriverSchedulerRequestInboxPage", "DriverInbox"]],
+    [FILES.hubPage, hub, ['useSearchParams', "leave_requests", "DriverSchedulerGridPage", "DriverSchedulerRequestInboxPage", "DriverHubOverview"]],
     [FILES.reporting, reporting, ["useCompanyContext", 'queryKey: ["driver-inbox-reporting", companyId, range.from, range.to]', "ListErrorBanner", "EntityLink", "getInboxReporting", 'data-testid="driver-hub-reporting-need-company"']],
     [FILES.reportingApi, reportingApi, ["operating_company_id: string", "/api/v1/driver-finance/inbox-reporting?${q}"]],
     [FILES.reportingBackend, reportingBackend, ['app.get("/api/v1/driver-finance/inbox-reporting"', "reportingQuerySchema.safeParse", "withCompanyScope(user.uuid, parsed.data.operating_company_id", "getInboxReportingData(client, parsed.data.operating_company_id"]],
