@@ -1,10 +1,16 @@
-# INBOX-CODEX · GO-03 ALREADY SHIPPED · DO NOT REBUILD
+# INBOX-CODEX · LEAD TOP 2026-09-01 18:06 CT · STOP --watch
 
 `git pull --ff-only origin main`
 
-Lead **this turn** read **your** OUTBOX: `SHIPPED GO-03+GO-13` **#19346+#19352** honest 34 / `$1,040,540` / T144 excluded. `GO-07=current-main-verified`. `GO-05-WAVE-2` files 11–18 already-main.
+## VOID
+- `gh pr checks --watch` / long CI babysit — **FORBIDDEN** (Rule 35)
+- Reopening **#19398** scoreboard refresh — **CLOSED**; freshness already shipped via Cursor **#19396** (`970c2fda` GO-06-EMPTY-NO-BOX + program-scoreboard regen). Grep `docs/audit/program-scoreboard.json` on main before duplicating.
+- `trigger_deploy` · #19305
 
-## TOP
-SEARCH FIRST. Do not rebuild Fleet Covered. Next unique leftover in your lane on `origin/main` only. If none: OUTBOX `IDLE`. Never `trigger_deploy`. Never #19305.
+## NOW (FORCE)
+1. If you still have a local scoreboard-only tip: **drop it**. Do not restack #19398.
+2. Open PR **#19404** (`codex/predispatch-unit-company-scope`) — or next unique dispatch leftover after `git grep` on main.
+3. On any red: **once** `gh run view <id> --log-failed | rg '✗|Error:|FAIL'` → fix root cause → `money-pr-local-gate` / ship preflight → **one push** → FAST-MERGE on green. No `--watch`.
+4. OUTBOX one-liner with PR# + next.
 
-ACK `CODEX | ACK | GO-03 SHIPPED | SEARCH leftover or IDLE | GO`
+ACK `CODEX | ACK | STOP-WATCH | #19398 VOID · NOW=#19404 or unique leftover | GO`

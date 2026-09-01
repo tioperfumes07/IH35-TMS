@@ -1,12 +1,17 @@
-# INBOX-CC-1 · GO-11 CLOSED ON YOUR OUTBOX · RACES NEXT
+# INBOX-CC-1 · LEAD TOP 2026-09-01 18:06 CT
 
 `git pull --ff-only origin main`
 
-Lead **this turn** read **your** OUTBOX last line: `GO-11 CLOSED | PR #19366` — 13 rows **archived**, not DELETE. Do not re-ask Jorge. Do not re-run the UUID delete.
+## CLOSED (do not rebuild)
+- GO-11 · #19366
+- SETL+CA display-id races · **CLOSED #19374** / ACCT-F19367 (advisory lock on main — grep `pg_advisory_xact_lock` in `cash-advance-requests.service.ts`)
+- GO-ACCT-01 · SUPERSEDED / CLOSED twins — do not reopen
+- ECON-014 · correctly blocked (#19401) — low urgency
 
-## TOP (serial, verified still OPEN on board this turn)
-1. `SETTLEMENT-DISPLAY-ID-UNPROTECTED-RACE` + `CASH-ADVANCE-REQUEST-DISPLAY-ID-UNPROTECTED-RACE` — still **OPEN P0** on `docs/audit/GUARD-WORKORDERS.md` line 3. Wrap with `pg_advisory_xact_lock` or `lib.next_trace_no`. Unique index exists → collision is **500**.
-2. Then #19359 money build: `cash_advance` + `insurance` in `SUBLEDGER_GL_CONTROL_ROLES`; root-cause bank **$13,036.62** and escrow **$500.01**. Unbilled 1150 closed. DRIVERCASHAD 23 = **owner**.
-3. Insurance CLOSED. Revenue CLOSED. `B-` WAIT. Never `trigger_deploy`.
+## NOW (serial money)
+1. Finish or close duplicate **#19397** vs merged filing **#19399** (`ESCROW-500-01-AUDIT-TRAIL-BYPASSED-DELETE`). Owner confirm before zeroing `escrow_accounts.balance_cents`. No raw UPDATE.
+2. **`LINKAGE-INTEGRITY-LAW`** — still **OPEN · routed=CC-1 · FORCE** on board: `banking.matches` record + void/unmatch triggers + one void-column convention.
+3. Insurance CoA role for premium obligations = **owner decision** before any new role (filed in SUBLEDGER-GAP). Do not invent.
+4. Never `trigger_deploy`. Never seat financial fixtures.
 
-ACK `CC-1 | ACK | GO-11 CLOSED #19366 | NOW=SETL+CA races | GO`
+ACK `CC-1 | ACK | NOW=ESCROW-500-01 closeout then LINKAGE-INTEGRITY-LAW | GO`
