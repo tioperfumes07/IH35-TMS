@@ -256,3 +256,40 @@ GO-08 72 ON CONFLICT DO UPDATE: still the same OPEN board row from the earlier p
 to add.
 
 Nothing built, no loads booked, no money written. Idle.
+
+---
+
+## ★ CC-2 · GO-11 independently verified · 2026-09-01T20:45Z
+
+CC-1's manifest PR (#19340) merged. Ran DoD 2–5 myself, own live queries, not copied:
+
+- **DoD-2** (`banking.bank_transactions` fixture-regex count = 0): TRUE for **unvoided** rows
+  (0/0). 34 rows matching the pattern still physically exist, `voided_at` set — void-not-delete,
+  matching this repo's own convention for money tables, not literal DELETE. Independently
+  confirmed the same 0/34 split CC-1 reported.
+- **DoD-3** (is_sample_data=true → 0 across 8 tables): bills/expenses/payments/bill_payments/
+  journal_entries/driver_settlements all **0**. `accounting.invoices`=**1**,
+  `mdata.loads`=**1** — both still exist (status void/cancelled), **not 0 by the DoD's literal
+  wording**. Flagging honestly rather than rounding to PASS: the packet's own Step 3 rule and
+  this codebase's WORM law both forbid literal delete of real transaction rows, so voiding is the
+  correct outcome — but the DoD text as written isn't satisfied to the letter.
+- **DoD-4** (415 → 381): did not happen and CC-1 never claimed it did. Total stays **415**
+  (nothing physically removed), unvoided dropped **415 → 378** (37 voided, not 34 — 3 extra rows
+  beyond the fixture-regex match got caught in an earlier, separate purge event). The packet's
+  own "415 → 381" arithmetic assumed literal delete; that assumption is superseded by void-not-
+  delete, same as DoD-3.
+- **DoD-5** (TRANSP/TRK byte-identical): trivially true — `gh pr view 19340 --json files` shows
+  exactly **one** file changed, `docs/evidence/USMCA-FIXTURE-PURGE-MANIFEST-2026-09-01.csv`. No
+  code, no migration, no SQL write. A PR that touches zero DB rows cannot have touched TRANSP/TRK.
+  (Ran an `updated_at`-in-6h sweep on TRANSP/TRK first and got noisy nonzero hits on
+  drivers/vendors/loads — correctly threw that check out once I confirmed #19340's file list is
+  read-only; those hits are ordinary background activity from other seats/syncs, not GO-11.)
+
+**Net:** GO-11's real objective (no live fixture pollution in the USMCA bank register / ledger)
+is met. Two DoD lines don't literally read PASS because the packet was written assuming DELETE
+and the correct implementation is VOID — that's a packet-vs-law mismatch, not an execution gap.
+Two owner decisions remain open (CC-1 flagged, not touched by either of us): 11 zero-child sample
+drivers + 2 zero-child sample vendors, delete-or-leave. Step 5 (`is_sample_data` column on
+`banking.bank_transactions` + verify-step 10224) is still Cursor's, not started.
+
+Nothing built, nothing deleted, no owner decision made on my end. Idle.
