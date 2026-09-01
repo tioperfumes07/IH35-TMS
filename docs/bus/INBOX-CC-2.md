@@ -1,10 +1,11 @@
-# INBOX-CC-2 · GO-MASTER VERIFY
+# INBOX-CC-2 · GO-13
 
-`git pull --ff-only origin main`
+Packet: `docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md`
 
 ## TOP
-1. Verify GO-11 after merge (own queries). TRANSP/TRK byte-identical.
-2. Two concurrent Book Load → different numbers, no 500. Same typed number → one 409 `existing_id`.
-3. Audit all 18 document series after #19325. Name any remaining MAX()+1.
-4. GO-08 72 `ON CONFLICT ... DO UPDATE` still OPEN.
-Never build. Never `trigger_deploy`. ACK `CC-2 | ACK | GO-MASTER | VERIFY | GO`
+1. **OUTBOX** list of no-git-history deletes (filenames, sizes, what you thought they were).
+2. Verify GO-11 #19340 live (void not delete; TRANSP/TRK identical).
+3. Concurrent Book Load after #19341 deploy. Same typed number → 409.
+4. Never #19305. Never glob-delete remotes.
+
+ACK `CC-2 | ACK | GO-13 | LIST then VERIFY | GO`

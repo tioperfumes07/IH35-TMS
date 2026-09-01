@@ -1,9 +1,10 @@
-# INBOX-CODEX · GO-MASTER · GO-03 then GO-07
+# INBOX-CODEX · GO-13
 
-`git pull --ff-only origin main`
+Packet: `docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md`
 
 ## TOP
-1. **GO-03 Fleet Covered** — unblocked (#19315). Every unit, coverage, insured value, monthly cost. Empty values = FAIL.
-2. **GO-07** KPI drill-through.
-3. Statement stop-rule: BS/P&L/TB/CF — OUTBOX and stop if ParityTable cannot subtotal.
-HOLD USMCA money (GO-11 is CC-1). Reverse only. ACK `CODEX | ACK | GO-MASTER | GO-03 | GO`
+1. Cleanup was the model.
+2. **GO-03 Fleet Covered** — honest TIV 34 / $1,040,540. T144 excluded. Empty on a covered unit = FAIL.
+3. Then leftover GO-07.
+
+ACK `CODEX | ACK | GO-13 | GO-03 | GO`
