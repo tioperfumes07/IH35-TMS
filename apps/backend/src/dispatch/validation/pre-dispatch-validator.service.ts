@@ -443,9 +443,7 @@ async function checkUnitInsuranceSchedule(
      u.unit_number
      FROM mdata.units u
      WHERE u.id = $1::uuid
-       AND (u.operating_company_id = $2::uuid
-            OR u.currently_leased_to_company_id = $2::uuid
-            OR u.owner_company_id = $2::uuid)
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $2::uuid
      LIMIT 1`,
     [unitUuid, operatingCompanyId]
   );
