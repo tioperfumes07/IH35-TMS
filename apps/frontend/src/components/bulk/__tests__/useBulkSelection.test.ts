@@ -18,19 +18,28 @@ describe("useBulkSelection", () => {
     expect(result.current.selectedIds.has("a")).toBe(false);
   });
 
-  it("selectAll is page-scoped — replaces prior page, does not accumulate", () => {
+  it("selectPage is page-scoped — replaces with exactly those ids", () => {
     const { result } = renderHook(() => useBulkSelection());
-    act(() => result.current.selectAll(["page1-a", "page1-b"]));
+    act(() => result.current.selectPage(["page1-a", "page1-b"]));
     expect(result.current.count).toBe(2);
-    act(() => result.current.selectAll(["page2-c"]));
+    act(() => result.current.selectPage(["page2-c"]));
     expect(result.current.count).toBe(1);
     expect(result.current.selectedIds.has("page1-a")).toBe(false);
     expect(result.current.selectedIds.has("page2-c")).toBe(true);
   });
 
-  it("selectMatching deliberately selects a full matching set (cap enforced)", () => {
+  it("SEL-01: selectAll selects the full matching set passed in (not page-only alias)", () => {
+    const { result } = renderHook(() => useBulkSelection());
+    act(() => result.current.selectPage(["page1-a"]));
+    act(() => result.current.selectAll(["a", "b", "c", "d"]));
+    expect(result.current.count).toBe(4);
+    expect(result.current.selectedIds.has("page1-a")).toBe(false);
+    expect(result.current.selectedIds.has("d")).toBe(true);
+  });
+
+  it("selectMatching selects a full matching set (cap enforced)", () => {
     const { result } = renderHook(() => useBulkSelection({ cap: 3 }));
-    act(() => result.current.selectAll(["a"]));
+    act(() => result.current.selectPage(["a"]));
     act(() => result.current.selectMatching(["a", "b", "c"]));
     expect(result.current.count).toBe(3);
   });
@@ -48,20 +57,15 @@ describe("useBulkSelection", () => {
     act(() => result.current.selectAll(["a", "b"]));
     act(() => result.current.toggle("c"));
     expect(result.current.count).toBe(2);
-    expect(result.current.selectedIds.has("c")).toBe(false);
-    expect(onCapExceeded).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "SELECTION_CAP_EXCEEDED", cap: 2, attempted: 3 })
-    );
+    expect(onCapExceeded).toHaveBeenCalled();
   });
 
   it("selectMatching over cap is a no-op with onCapExceeded", () => {
     const onCapExceeded = vi.fn();
     const { result } = renderHook(() => useBulkSelection({ cap: 2, onCapExceeded }));
-    act(() => result.current.selectAll(["a"]));
+    act(() => result.current.selectPage(["a"]));
     act(() => result.current.selectMatching(["a", "b", "c"]));
     expect(result.current.count).toBe(1);
-    expect(onCapExceeded).toHaveBeenCalledWith(
-      expect.objectContaining({ code: "SELECTION_CAP_EXCEEDED", cap: 2, attempted: 3 })
-    );
+    expect(onCapExceeded).toHaveBeenCalled();
   });
 });

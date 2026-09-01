@@ -58,9 +58,9 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
   );
 
   /**
-   * BULK-SELECTION-SCOPE-01 — PAGE-SCOPED select.
-   * Selecting a page REPLACES the selection with exactly those ids (does not accumulate
-   * prior pages). Destructive bulk is fail-stop atomic; cross-page accumulation is a defect.
+   * SEL-01 / GO-MECH-0901 — selectAll selects the FULL id set passed in (all matching),
+   * capped. It is NOT an alias of selectPage. Call sites that only mean the current page
+   * must call selectPage explicitly. Destructive bulk still fail-stop + cap.
    */
   const selectPage = useCallback(
     (ids: string[]) => {
@@ -84,9 +84,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
     });
   }, []);
 
-  const selectAll = selectPage;
-
-  /** Deliberate escape hatch: select an explicit matching set (still capped). */
+  /** Deliberate: select an explicit matching set (still capped). Same as selectAll. */
   const selectMatching = useCallback(
     (ids: string[]) => {
       setSelectedIds((prev) => {
@@ -100,6 +98,8 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
     },
     [emitCapError, wouldExceedCap]
   );
+
+  const selectAll = selectMatching;
 
   const clear = useCallback(() => {
     setSelectedIds(new Set());

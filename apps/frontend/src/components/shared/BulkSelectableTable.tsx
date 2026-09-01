@@ -16,6 +16,11 @@ export type BulkSelectableTableProps<TRow> = {
   entityType: string;
   rows: TRow[];
   getRowId: (row: TRow) => string;
+  /**
+   * SEL-01 — when set, header select-all uses this full matching set (e.g. all filtered
+   * rows across pages). Defaults to `rows` (page) when omitted.
+   */
+  matchingRows?: TRow[];
   bulkActions: BulkActionItem[];
   applying?: boolean;
   selectionOptions?: UseBulkSelectionOptions;
@@ -28,6 +33,7 @@ export function BulkSelectableTable<TRow>({
   entityType,
   rows,
   getRowId,
+  matchingRows,
   bulkActions,
   applying = false,
   selectionOptions,
@@ -37,6 +43,7 @@ export function BulkSelectableTable<TRow>({
 }: BulkSelectableTableProps<TRow>) {
   const selection = useBulkSelection(selectionOptions);
   const pageRowIds = rows.map(getRowId);
+  const matchingRowIds = matchingRows != null ? matchingRows.map(getRowId) : undefined;
 
   return (
     <div className={className} data-entity-type={entityType} data-bulk-selectable="true">
@@ -63,6 +70,7 @@ export function BulkSelectableTable<TRow>({
               <TableSelectionHeader
                 selectedIds={selection.selectedIds}
                 pageRowIds={pageRowIds}
+                matchingRowIds={matchingRowIds}
                 onSelectionChange={selection.setSelectedIds}
                 cap={selection.cap}
               />

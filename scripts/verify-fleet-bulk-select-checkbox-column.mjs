@@ -9,7 +9,11 @@ const source = fs.readFileSync(targetFile, "utf8");
 function audit(text) {
   const checks = [
     ["selection context", /<TableSelection[\s\S]*rows=\{pageRows\}[\s\S]*pageRowIds=\{pageRowIds\}/],
-    ["header checkbox", /<TableSelectionHeader[\s\S]*pageRowIds=\{pageRowIds\}[\s\S]*ariaLabel="Select all units on this page"/],
+    ["matching ids memo", /matchingRowIds\s*=\s*useMemo\(\(\)\s*=>\s*listFiltered\.map/],
+    [
+      "header checkbox matching scope",
+      /<TableSelectionHeader[\s\S]*matchingRowIds=\{matchingRowIds\}[\s\S]*ariaLabel=\{`Select all \$\{matchingRowIds\.length\} matching units`\}/,
+    ],
     ["row checkbox state", /type="checkbox"[\s\S]*checked=\{selectCtx\.isSelected\(row\.id\)\}/],
     ["row checkbox toggle", /onChange=\{\(\) => selectCtx\.toggle\(row\.id\)\}/],
   ];
@@ -19,16 +23,22 @@ function audit(text) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     source.replace("rows={pageRows}", "rows={[]}"),
-    source.replace('ariaLabel="Select all units on this page"', 'ariaLabel="Fleet"'),
+    source.replace("matchingRowIds={matchingRowIds}", "matchingRowIds={pageRowIds}"),
     source.replace("checked={selectCtx.isSelected(row.id)}", "checked={false}"),
     source.replace("onChange={() => selectCtx.toggle(row.id)}", "onChange={() => {}}"),
+    source.replace(
+      "matchingRowIds = useMemo(() => listFiltered.map((row) => row.id), [listFiltered]);",
+      "matchingRowIds = pageRowIds;"
+    ),
   ];
   const escaped = mutations.filter((fixture) => audit(fixture).length === 0);
   if (audit(source).length || escaped.length) {
-    console.error(`[verify-fleet-bulk-select-checkbox-column] selftest failed: ${escaped.length} mutation(s) escaped`);
+    console.error(
+      `[verify-fleet-bulk-select-checkbox-column] selftest failed: audit=${audit(source).join(",") || "ok"} escaped=${escaped.length}`
+    );
     process.exit(1);
   }
-  console.log("[verify-fleet-bulk-select-checkbox-column] selftest PASS — 4/4 planted selection regressions detected");
+  console.log("[verify-fleet-bulk-select-checkbox-column] selftest PASS — planted selection regressions detected");
   process.exit(0);
 }
 
@@ -38,4 +48,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log("[verify-fleet-bulk-select-checkbox-column] PASS — page-scoped header and row selection are wired");
+console.log("[verify-fleet-bulk-select-checkbox-column] PASS — SEL-01 matching-scope header and row selection are wired");
