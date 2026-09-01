@@ -7,12 +7,15 @@ export type ActiveHosDriver = {
 };
 
 /**
- * Return the selected company's active Samsara board roster.
+ * Return the selected company's active Samsara HOS roster.
+ *
+ * HOS is per driver in Samsara — not only drivers with an open truck pairing.
+ * Every Active driver with a mapped samsara_driver_id is polled; an optional
+ * OPEN vehicle assignment supplies unit_id when the driver is currently paired.
  *
  * Driver identity may be owned by another company and shared through the
- * canonical authorization table. The assignment itself always belongs to the
- * selected company; otherwise one tenant's open pairing could feed another
- * tenant's HOS poll.
+ * canonical authorization table. Assignments always belong to the selected
+ * company so one tenant's open pairing cannot feed another tenant's HOS poll.
  */
 export async function listActiveHosDriverRoster(
   client: PgClient,
@@ -24,7 +27,7 @@ export async function listActiveHosDriverRoster(
        d.samsara_driver_id::text AS samsara_driver_id,
        a.unit_id::text AS unit_id
      FROM mdata.drivers d
-     JOIN telematics.vehicle_driver_assignments a
+     LEFT JOIN telematics.vehicle_driver_assignments a
        ON a.driver_id = d.id
       AND a.operating_company_id = $1::uuid
       AND a.ended_at IS NULL
@@ -41,7 +44,8 @@ export async function listActiveHosDriverRoster(
            )
        AND d.samsara_driver_id IS NOT NULL
        AND d.deactivated_at IS NULL
-     ORDER BY d.id, a.started_at DESC`,
+       AND d.status = 'Active'
+     ORDER BY d.id, a.started_at DESC NULLS LAST`,
     [operatingCompanyId]
   );
   return active.rows as ActiveHosDriver[];

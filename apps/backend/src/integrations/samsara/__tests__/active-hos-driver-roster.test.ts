@@ -14,6 +14,8 @@ describe("active HOS driver roster tenant scope", () => {
     expect(sql).toContain("dca.company_id = $1::uuid");
     expect(sql).toContain("dca.is_authorized = true");
     expect(sql).toContain("dca.deactivated_at IS NULL");
+    expect(sql).toContain("LEFT JOIN telematics.vehicle_driver_assignments");
+    expect(sql).toContain("d.status = 'Active'");
     expect(sql).toContain("a.ended_at IS NULL");
   });
 });
