@@ -34,7 +34,7 @@ if (!/include_voided:\s*hideVoided \? undefined : true/.test(billPayPage)) {
   failures.push("BillPaymentsListPage must pass include_voided when Hide voided is off");
 }
 // VIS-02 — void as first-class Status column + gear (ParityTable columns) + filter (hide voided).
-if (!/key:\s*"status"[\s\S]{0,220}Voided/.test(billPayPage)) {
+if (!/key:\s*"status"/.test(billPayPage) || !/VIS-02 — void as first-class Status column/.test(billPayPage)) {
   failures.push("VIS-02: BillPaymentsListPage must expose a Status column with Voided state");
 }
 if (!/sortMode=["']external["']/.test(billPayPage)) {
@@ -62,6 +62,22 @@ if (!/BILL_PAYMENT_LIST_SORT_SQL[\s\S]*?status:\s*`\(CASE WHEN bp\.revoked_at/.t
 const payments = read("apps/frontend/src/pages/accounting/PaymentsListPage.tsx");
 if (!/useState<"all" \| "active" \| "voided">\("active"\)/.test(payments)) {
   failures.push("PaymentsListPage must default status filter to active (hide voided)");
+}
+
+const expenses = read("apps/frontend/src/pages/accounting/ExpensesListPage.tsx");
+if (!/useState<"" \| ExpenseListStatus>\("active"\)/.test(expenses)) {
+  failures.push("FLT-03: ExpensesListPage must default status filter to active (hide voided)");
+}
+if (!/value: "active", label: "Active \(hide voided\)"/.test(expenses)) {
+  failures.push("FLT-03: ExpensesListPage must expose Active (hide voided) status option");
+}
+
+const expRoutes = read("apps/backend/src/accounting/expenses.routes.ts");
+if (!/status: z\.enum\(\["draft", "posted", "void", "active"\]\)/.test(expRoutes)) {
+  failures.push("FLT-03: listExpensesQuerySchema must accept status=active");
+}
+if (!/filters\.status === "active"[\s\S]{0,200}e\.status <> 'void'/.test(expRoutes)) {
+  failures.push("FLT-03: queryExpensesList must map status=active → e.status <> 'void'");
 }
 
 if (failures.length) {

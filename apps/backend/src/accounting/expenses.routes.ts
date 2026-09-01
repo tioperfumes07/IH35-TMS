@@ -153,7 +153,8 @@ const reattributeBodySchema = z.object({
 // GAP-EXPENSES browse (read-only): GET list query. status values match the header CHECK
 // (accounting.expenses.status IN ('draft','posted','void')); date filters read transaction_date.
 const listExpensesQuerySchema = companyQuerySchema.extend({
-  status: z.enum(["draft", "posted", "void"]).optional(),
+  // FLT-03 — "active" = hide voided (default); exact draft|posted|void still allowed; omit = all.
+  status: z.enum(["draft", "posted", "void", "active"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   load_id: z.string().uuid().optional(),
@@ -178,7 +179,7 @@ const listExpensesQuerySchema = companyQuerySchema.extend({
 const expenseIdParamSchema = z.object({ id: z.string().uuid() });
 
 export type ExpenseListFilters = {
-  status?: "draft" | "posted" | "void";
+  status?: "draft" | "posted" | "void" | "active";
   dateFrom?: string;
   dateTo?: string;
   loadId?: string;
@@ -265,7 +266,10 @@ export async function queryExpensesList(
 ): Promise<ExpenseListRow[]> {
   const values: unknown[] = [operatingCompanyId];
   const where: string[] = ["e.operating_company_id = $1::uuid"];
-  if (filters.status) {
+  if (filters.status === "active") {
+    // FLT-03 — hide voided by default (Payments status=active pattern).
+    where.push(`e.status <> 'void'`);
+  } else if (filters.status) {
     values.push(filters.status);
     where.push(`e.status = $${values.length}`);
   }
