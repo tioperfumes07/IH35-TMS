@@ -9,7 +9,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
-import type { DispatchAlertQuery } from "../../api/dispatch";
+import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 
 function etaLabel(prediction: Record<string, unknown> | null | undefined): string {
   if (!prediction) return "No ETA";
@@ -23,22 +23,22 @@ export function AtRiskQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
-  const [sort, setSort] = useState<Required<Pick<DispatchAlertQuery, "sort" | "direction">>>({ sort: "event_at", direction: "asc" });
+  const [paritySortKey, setParitySortKey] = useState("load_number");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const serverSort = serverDispatchAlertQueryFromSortState(paritySortKey, sortDirection);
 
   const loadsQ = useQuery({
-    queryKey: ["dispatch", "at-risk-or-late-loads", companyId, range, sort],
-    queryFn: () => listAtRiskOrLateDispatchLoads(companyId, { ...range, ...sort }),
+    queryKey: ["dispatch", "at-risk-or-late-loads", companyId, range, serverSort],
+    queryFn: () => listAtRiskOrLateDispatchLoads(companyId, { ...range, ...serverSort }),
     enabled: Boolean(companyId),
   });
 
-  const loads = loadsQ.data?.loads ?? [];
+  const loads = useMemo(
+    () => sortDispatchAlertBoardRows(loadsQ.data?.loads ?? [], paritySortKey, sortDirection),
+    [loadsQ.data?.loads, paritySortKey, sortDirection],
+  );
   type AtRiskRow = (typeof loads)[number];
 
-  // Migrated to the shared QBO-parity grid — columns, order, load deep-link, and the ETA signal badge
-  // are preserved verbatim (§7 additive-only). Declared BEFORE the `!companyId` early return below so
-  // the hook call is unconditional (Rules of Hooks — companyId can change between renders).
-  // Resolved identities drill through; unavailable historical identities remain honest,
-  // non-interactive tombstones instead of dead links.
   const columns = useMemo<ParityColumn<AtRiskRow>[]>(
     () => [
       {
@@ -75,11 +75,13 @@ export function AtRiskQueuePage() {
       {
         key: "risk_state",
         label: "Risk state",
+        sortable: true,
         render: (load) => [load.is_at_risk ? "At-risk" : null, load.is_late ? "Late" : null].filter(Boolean).join(" + "),
       },
       {
         key: "eta_signal",
         label: "ETA signal",
+        sortable: true,
         render: (load) => (
           <>
             <StatusBadge status={String(load.latest_eta_prediction?.confidence_class ?? "warning")} />
@@ -126,23 +128,13 @@ export function AtRiskQueuePage() {
           storageKey="dispatch-at-risk-late-queue"
           exportFilename="at-risk-late-queue"
           suppressToolbarRange
-          sortKey={
-            (sort.sort ?? "event_at") === "event_at"
-              ? "next_stop_scheduled_at"
-              : sort.sort === "location"
-                ? "delivery_city"
-                : sort.sort
-          }
-          sortDirection={sort.direction}
+          sortKey={paritySortKey}
+          sortDirection={sortDirection}
           sortMode="external"
-          onSortChange={(key, direction) =>
-            setSort({
-              sort: (key === "next_stop_scheduled_at" ? "event_at" : key === "delivery_city" ? "location" : key) as NonNullable<
-                DispatchAlertQuery["sort"]
-              >,
-              direction,
-            })
-          }
+          onSortChange={(key, direction) => {
+            setParitySortKey(key);
+            setSortDirection(direction);
+          }}
         />
       )}
     </div>

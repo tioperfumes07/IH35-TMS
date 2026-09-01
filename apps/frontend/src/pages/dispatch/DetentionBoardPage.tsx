@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   bridgeDetentionBilling,
   closeDetentionEvent,
@@ -9,7 +9,6 @@ import {
   notifyDetentionCustomer,
   syncDetentionFromArrivals,
   type DetentionBoardEvent,
-  type DispatchAlertQuery,
 } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -21,6 +20,7 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
+import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
 
 function formatMoney(cents: number): string {
   return formatUsdCents(Math.max(0, cents));
@@ -127,7 +127,9 @@ export function DetentionBoardPage() {
   const { pushToast } = useToast();
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
-  const [sort, setSort] = useState<Required<Pick<DispatchAlertQuery, "sort" | "direction">>>({ sort: "event_at", direction: "asc" });
+  const [paritySortKey, setParitySortKey] = useState("started_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const serverSort = serverDispatchAlertQueryFromSortState(paritySortKey, sortDirection);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000);
@@ -135,8 +137,8 @@ export function DetentionBoardPage() {
   }, []);
 
   const boardQ = useQuery({
-    queryKey: ["dispatch", "detention-board", companyId, range, sort],
-    queryFn: () => getDetentionBoard(companyId, { ...range, ...sort }),
+    queryKey: ["dispatch", "detention-board", companyId, range, serverSort],
+    queryFn: () => getDetentionBoard(companyId, { ...range, ...serverSort }),
     enabled: Boolean(companyId),
     refetchInterval: 60_000,
   });
@@ -156,7 +158,10 @@ export function DetentionBoardPage() {
     return <div className="rounded-sm border bg-white p-4 text-sm text-slate-600">Select an operating company.</div>;
   }
 
-  const events = boardQ.data?.events ?? [];
+  const events = useMemo(
+    () => sortDispatchAlertBoardRows(boardQ.data?.events ?? [], paritySortKey, sortDirection),
+    [boardQ.data?.events, paritySortKey, sortDirection],
+  );
   type DetentionRow = (typeof events)[number];
 
   // Migrated to the shared QBO-parity grid — columns, order, and per-row action buttons preserved
@@ -210,23 +215,27 @@ export function DetentionBoardPage() {
     {
       key: "billable_minutes",
       label: "Billable",
+      sortable: true,
       cellClass: "tabular-nums",
       render: (event) => `${Number(event.billable_minutes ?? 0)} min`,
     },
     {
       key: "live_accrued_amount_cents",
       label: "Estimated / unbilled",
+      sortable: true,
       cellClass: "tabular-nums font-medium",
       render: (event) => formatMoney(Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0)),
     },
     {
       key: "operational_state",
       label: "Detention status",
+      sortable: true,
       render: (event) => <StatusBadge status={operationalStateLabel(event.operational_state)} />,
     },
     {
       key: "billing_state",
       label: "Customer balance",
+      sortable: true,
       render: (event) => <StatusBadge status={billingStateLabel(event.billing_state)} />,
     },
     {
@@ -282,21 +291,13 @@ export function DetentionBoardPage() {
         storageKey="dispatch-detention-board"
         exportFilename="detention-board"
         suppressToolbarRange
-        sortKey={
-          (sort.sort ?? "event_at") === "event_at"
-            ? "started_at"
-            : sort.sort === "location"
-              ? "stop_city"
-              : sort.sort
-        }
-        sortDirection={sort.direction}
+        sortKey={paritySortKey}
+        sortDirection={sortDirection}
         sortMode="external"
-        onSortChange={(key, direction) =>
-          setSort({
-            sort: (key === "started_at" ? "event_at" : key === "stop_city" ? "location" : key) as NonNullable<DispatchAlertQuery["sort"]>,
-            direction,
-          })
-        }
+        onSortChange={(key, direction) => {
+          setParitySortKey(key);
+          setSortDirection(direction);
+        }}
         />
       )}
     </div>

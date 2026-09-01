@@ -50,13 +50,46 @@ function statusLabelForUnit(unit: UnitRecord): string {
   return "Unavailable";
 }
 
+type FleetOosSortKey = "unit" | "status" | "reason" | "eta_back";
+
+function compareFleetOosRows(a: OosUnitRow, b: OosUnitRow, key: FleetOosSortKey): number {
+  switch (key) {
+    case "unit":
+      return a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: "base" });
+    case "status":
+      return a.statusLabel.localeCompare(b.statusLabel, undefined, { sensitivity: "base" });
+    case "reason":
+      return (a.reason || "—").localeCompare(b.reason || "—", undefined, { sensitivity: "base" });
+    case "eta_back": {
+      const aTbd = a.etaBack === "TBD";
+      const bTbd = b.etaBack === "TBD";
+      if (aTbd && bTbd) return 0;
+      if (aTbd) return 1;
+      if (bTbd) return -1;
+      return a.etaBack.localeCompare(b.etaBack, undefined, { numeric: true, sensitivity: "base" });
+    }
+    default:
+      return 0;
+  }
+}
+
 type Props = {
   operatingCompanyId: string;
 };
 
 export function FleetOosStrip({ operatingCompanyId }: Props) {
   const enabled = Boolean(operatingCompanyId);
-  const [unitSortDir, setUnitSortDir] = useState<"asc" | "desc">("asc");
+  const [sortKey, setSortKey] = useState<FleetOosSortKey>("unit");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+
+  const onToggleSort = (key: string) => {
+    const next = key as FleetOosSortKey;
+    if (next === sortKey) setSortDir((dir) => (dir === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(next);
+      setSortDir("asc");
+    }
+  };
 
   const unitsQuery = useQuery({
     queryKey: ["dispatch", "fleet-oos-units", operatingCompanyId],
@@ -130,10 +163,10 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
     }
 
     return [...byUnitId.values()].sort((a, b) => {
-      const cmp = a.unitNumber.localeCompare(b.unitNumber, undefined, { numeric: true, sensitivity: "base" });
-      return unitSortDir === "asc" ? cmp : -cmp;
+      const cmp = compareFleetOosRows(a, b, sortKey);
+      return sortDir === "asc" ? cmp : -cmp;
     });
-  }, [severeQuery.data?.data, unitsQuery.data?.units, unitSortDir]);
+  }, [severeQuery.data?.data, unitsQuery.data?.units, sortKey, sortDir]);
 
   if (!enabled) return null;
   const fleetReadFailed = unitsQuery.isError || severeQuery.isError;
@@ -186,14 +219,38 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
                   columnKey="unit"
                   label="Unit"
                   sortable
-                  sortKey="unit"
-                  sortDir={unitSortDir}
-                  onToggleSort={() => setUnitSortDir((dir) => (dir === "asc" ? "desc" : "asc"))}
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onToggleSort={onToggleSort}
                   resizable={false}
                 />
-                <th className="px-2 py-1 font-semibold">Status</th>
-                <th className="px-2 py-1 font-semibold">Reason</th>
-                <th className="px-2 py-1 font-semibold">ETA back</th>
+                <TableHeaderCell
+                  columnKey="status"
+                  label="Status"
+                  sortable
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onToggleSort={onToggleSort}
+                  resizable={false}
+                />
+                <TableHeaderCell
+                  columnKey="reason"
+                  label="Reason"
+                  sortable
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onToggleSort={onToggleSort}
+                  resizable={false}
+                />
+                <TableHeaderCell
+                  columnKey="eta_back"
+                  label="ETA back"
+                  sortable
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onToggleSort={onToggleSort}
+                  resizable={false}
+                />
               </tr>
             </thead>
             <tbody>
