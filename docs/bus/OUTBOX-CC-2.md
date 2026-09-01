@@ -121,3 +121,28 @@ loads reach that status later.
 
 Nothing built, no record fabricated, no settlement touched. Idle, still watching for the lead's
 TOP.
+
+---
+
+## ★ CC-2 · SUBLEDGER-GL-TIEOUT-EVERY-CONTROL re-run + Escrow $500.01 root-cause · 2026-09-01T22:15Z
+
+`CC-2 | ACK | NOW=SUBLEDGER-GL-TIEOUT-EVERY-CONTROL verify-live | GO`
+
+Lead's verified TOP landed. Re-ran per instruction:
+
+**Bank / Unbilled unchanged** since the last pass, re-confirmed with identical queries: Unbilled
+$0/$0 clean; Bank -$13,036.62 vs GL $0.
+
+**Escrow $500.01 — independently re-confirmed CC-1's `ESCROW-500-01-AUDIT-TRAIL-BYPASSED-DELETE`
+(#19399) finding, not phantom-in-the-fake-data sense.** `accounting.escrow_accounts` for USMCA
+still shows the same 3 nonzero rows summing $500.01. `accounting.escrow_postings` for those 3
+account ids = **zero rows** — the postings that drove the trigger-maintained balance are
+physically gone. `audit.row_changes` for `table_name='escrow_postings'` = **3 INSERT, 0 DELETE**
+— the removal bypassed the audit trail entirely, which this system's WORM design assumes can't
+happen. Did **not** zero or touch `balance_cents`, per instruction. This is CC-1/owner's call
+(possible Neon restore event per #19399's own hypothesis, needs confirmation before correction).
+
+**Coverage gap unchanged:** `cash_advance` + `insurance` still not in `SUBLEDGER_GL_CONTROL_ROLES`.
+
+Filed full evidence on the board row (appended, not rewritten). Nothing built, nothing zeroed, no
+money touched. Idle, watching INBOX TOP.
