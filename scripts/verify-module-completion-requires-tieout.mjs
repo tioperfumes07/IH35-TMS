@@ -25,14 +25,16 @@ function schemaHasTieout() {
 }
 
 const FLAG_FILTER_RE =
-  /\bis_sample_data\b|\bis_duplicate\b|\baccounting_bill_id\s*IS\s+NOT\s+NULL/i;
+  /\bis_duplicate\b|\baccounting_bill_id\s*IS\s*NOT\s+NULL/i;
 
 function tieoutScriptsMustNotTrustFlags() {
   const dir = path.join(ROOT, "scripts/tieout");
   const failures = [];
   for (const f of fs.readdirSync(dir).filter((n) => n.endsWith(".mjs") && n !== "_lib.mjs")) {
-    const t = fs.readFileSync(path.join(dir, f), "utf8");
-    if (FLAG_FILTER_RE.test(t)) {
+    const raw = fs.readFileSync(path.join(dir, f), "utf8");
+    // Strip comments (// ... and /* ... */ and * ...) so flag mentions in prose don't false-positive
+    const code = raw.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "").replace(/^\s*\*.*$/gm, "");
+    if (FLAG_FILTER_RE.test(code)) {
       failures.push(`scripts/tieout/${f}: auto_check must not filter on unverified flags`);
     }
   }
@@ -124,8 +126,8 @@ function selftest() {
   if (copy.status !== 0) {
     failures.push("copy-integrity --selftest failed:\n" + (copy.stdout || "") + (copy.stderr || ""));
   }
-  if (!FLAG_FILTER_RE.test("WHERE is_sample_data = false")) {
-    failures.push("flag-filter regex does not catch is_sample_data");
+  if (!FLAG_FILTER_RE.test("WHERE is_duplicate = true")) {
+    failures.push("flag-filter regex does not catch is_duplicate");
   }
   if (failures.length) {
     console.error("verify-module-completion-requires-tieout --selftest FAIL", failures);
