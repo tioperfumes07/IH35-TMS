@@ -1,13 +1,5 @@
 {
   "note": "UI CONTROL LAW — bare <button> elements (not the shared Button.tsx primitive) combining a literal height class with a literal font-size class: the exact ad-hoc third-button-size shape the owner reported live. An INVENTORY of remaining debt, not an approval of it. May only SHRINK. Fix per file: replace with <Button size=\"md\"|\"sm\"|\"icon\" variant=\"...\">.",
   "files_scanned": 1313,
-  "offenders": [
-    "apps/frontend/src/components/FleetTable.tsx",
-    "apps/frontend/src/components/table/ColumnChooser.tsx",
-    "apps/frontend/src/components/table/UniversalListToolbar.tsx",
-    "apps/frontend/src/pages/accounting/AccountRegisterPage.tsx",
-    "apps/frontend/src/pages/accounting/TransactionRegisterPage.tsx",
-    "apps/frontend/src/pages/dispatch/TripPairingBoardPage.tsx",
-    "apps/frontend/src/pages/finance/ArApAgingPage.tsx"
-  ]
+  "offenders": []
 }

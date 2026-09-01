@@ -1184,8 +1184,15 @@ export function ParityTable<T>({
                   onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
                   className={`relative px-2 font-semibold uppercase text-gray-600 ${stickyHeader ? "bg-gray-50" : ""} ${
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
-                  } ${dragOverKey === key ? "bg-blue-50 outline outline-2 outline-blue-300 -outline-offset-2" : ""} ${column.className ?? ""}`}
-                  style={{ fontSize: typography.kpiLabel ?? 11, letterSpacing: 0.3, ...(w ? { width: w } : {}) }}
+                  } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
+                  style={{
+                    fontSize: typography.kpiLabel ?? 11,
+                    letterSpacing: 0.3,
+                    ...(w ? { width: w } : {}),
+                    // §7 LOCKED palette (verify:section7-palette-maintenance) — drop-target highlight
+                    // must use the navy/slate accent tokens, never Tailwind's default blue-50/blue-300.
+                    ...(dragOverKey === key ? { backgroundColor: colors.accentTint, outlineColor: colors.navy } : {}),
+                  }}
                 >
                   {column.sortable ? (
                     <button

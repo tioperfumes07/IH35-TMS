@@ -13,6 +13,8 @@ import { formatCurrencyFromCents } from "../lists/accounting/coa-list-utils";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Button } from "../../components/Button";
+import { TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 
 const PAGE_SIZE = 100;
 
@@ -224,14 +226,13 @@ export function TransactionRegisterPage() {
       title="All Transactions"
       subtitle="Every bank, fuel, invoice, bill & settlement transaction in one reviewable register"
       actions={
-        <button
-          type="button"
-          onClick={exportCsv}
-          disabled={rows.length === 0}
-          className="inline-flex h-9 items-center gap-1 rounded-sm border border-slate-300 bg-white px-2 text-[12px] text-slate-700 disabled:opacity-50"
-        >
-          <Download className="h-3.5 w-3.5" /> Export CSV
-        </button>
+        // UI CONTROL LAW — was a hand-rolled Export button at its own ad-hoc size. Now the shared
+        // Button primitive + the locked 16px toolbar icon size.
+        (
+          <Button type="button" variant="tertiary" size="md" onClick={exportCsv} disabled={rows.length === 0}>
+            <Download className={TOOLBAR_ICON_SIZE_CLASS} /> Export CSV
+          </Button>
+        )
       }
     >
 

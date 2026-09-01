@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../api/client";
 import { BulkActionBar, TableSelection, TableSelectionHeader, useBulkSelection } from "./bulk";
 import { useToast } from "./Toast";
+import { Button } from "./Button";
 import { FleetBulkControls, type BulkApplyPayload } from "./fleet/BulkActionBar";
 import { EditVehicleModal } from "./fleet/EditVehicleModal";
 import { EditTrailerModal } from "./fleet/EditTrailerModal";
@@ -534,14 +535,11 @@ export function FleetTable({
           </div>
         </CollapsedListFilters>
         {showMaintenanceColumns ? (
-          <button
-            type="button"
-            aria-label="Export CSV"
-            className="h-8 rounded-sm border border-gray-300 bg-white px-2 text-[12px] font-semibold text-gray-700 hover:bg-gray-50"
-            onClick={exportCsv}
-          >
+          // UI CONTROL LAW — was a hand-rolled Export button at its own ad-hoc size. Now the
+          // shared Button primitive, matching every other toolbar action's size.
+          <Button type="button" variant="tertiary" size="sm" aria-label="Export CSV" onClick={exportCsv}>
             ⤓ Export
-          </button>
+          </Button>
         ) : null}
       </TableControls>
 

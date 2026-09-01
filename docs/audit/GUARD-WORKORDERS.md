@@ -7406,3 +7406,50 @@ The following rows register every `STILL OPEN` ID from `docs/register/IH35-UI-ME
 
 | **CLOSED AS STALE + FIXED CODE THIS PR (CODEX 2026-09-01):** `DSP-08` was already fixed on main: `DispatchOverview` uses the deduplicated combined feed's `.count`, and its guard plants restoration of `atRiskCount + lateCount`. `DSP-09` remained real: detention had a full panel/query but no KPI-row card. Added a Detention KPI driven by the canonical board `count`, active-accrual hint, and `/dispatch/detention` drill; registered it in the existing derived-action contract and planted a dead-drill mutation. | `apps/frontend/src/pages/dispatch/DispatchOverview.tsx`; `docs/specs/dispatch/DISPATCH-OVERVIEW-DERIVED-ACTION-CONTRACTS.json`; `scripts/verify-dispatch-overview-derived-actions.mjs` | **CODEX dispatch** | reuse existing detention query, no second fetch; one registered KPI action | focused derived-action guard normal/selftest; at-risk complete-range normal/selftest; frontend TypeScript | **DSP-08 CLOSED STALE · DSP-09 FIXED CODE THIS PR · Live=UNVERIFIED** |
 | **FINDING: N/A — duplicate fix abandoned, credited to a parallel concurrent claim (CC-3 2026-09-01):** `ACCT-F10196-BULK-ACTIONMAP-BUILD-BREAK` — independently found and root-caused a real `build:backend` break on origin/main (2 unrelated defects in `bills-bulk.routes.ts`/`bulk-update.factory.ts`: unreachable dead code with stale types after an owner-directed hard-return lockdown, and an over-narrow `actionMap: Record<string, z.ZodType<TPayload>>` generic that broke the moment bulk-void's empty-payload schema joined the map). Built, tested (14+7 pre-existing tests green), and committed a fix on branch `cc3-ci-unblock-bulk-actionmap-2026-09-01` — before pushing, re-fetched origin/main and found another seat had ALREADY landed a working fix in the meantime (adding `z.infer<typeof emptyPayloadSchema>` to the `BillBulkPayload` union directly, a more targeted fix than my factory-level generic loosening). Verified live: a clean `npx tsc -p tsconfig.json --noEmit` on current origin/main tip (`b2e3f65c44`) exits 0. My own duplicate branch/commit abandoned, not pushed — no wasted CI cycle, no redundant PR. | `apps/backend/src/accounting/bills-bulk.routes.ts`, `apps/backend/src/bulk/bulk-update.factory.ts` | N/A — already fixed by another seat | none — verify-only | clean `tsc --noEmit` on origin/main tip `b2e3f65c44`, exit 0 | **CLOSED · duplicate abandoned, not pushed · credited to the concurrent fix already on origin/main** |
+
+## GUARD-WORKORDERS — CC-3 2026-08-31 21:05 CT — repo-wide push-gate red, root-caused, not mine to fix
+
+**Finding:** `scripts/verify-architectural-design.ts`'s `extractArrayBlock`/`extractSubNavTabs` hardcodes
+the literal string `export const REPORTS_SUB_NAV_ITEMS: NavItem[] = [` when scanning
+`apps/frontend/src/pages/reports/ReportsSubNav.tsx`. The file's actual, current (and correct —
+intentional NAVY-SUBNAV work by another seat) declaration is
+`export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [` (line 85) — the type annotation
+changed from `NavItem[]` to `NavyPageSubNavItem[]`, so the brittle string match no longer finds the
+array start token, and `verify:arch-design` (step 6/2523 of `verify:pre-commit`, the real
+CI-equivalent `ci / build-typecheck` gate) throws and aborts the ENTIRE pre-commit chain — not a
+soft/gated failure, a hard `process.exit`/thrown-error abort.
+
+**Impact confirmed repo-wide, not specific to my branch:** `docs/audit/VERIFY-STATIC-BASELINE.json`
+(the separate local-only `verify-static.mjs` fallback's seeded baseline, status=seeded, 151 names,
+unmodified by me and identical to origin/main's committed copy) is also stale against the current
+tip — a raw `node scripts/verify-static.mjs` run reports 73 gated failures NOT in that baseline
+across files I have never touched (verify-canonical-load-nav.mjs, verify-je-type-fk.mjs,
+verify-schema-parity.mjs, verify-customers-list-master-detail.mjs, etc.) — this is a separate,
+SECOND stale-baseline issue, also not mine (Cascade owns re-seeding that file per its own header
+comment).
+
+**What I verified is NOT the cause:** my own uncommitted/committed diff this session touches only
+`apps/frontend/src/components/Button.tsx`, `apps/frontend/src/components/parity/ParityTable.tsx`,
+`apps/frontend/src/design/tokens.ts`, `scripts/verify-ui-control-law.mjs`,
+`scripts/ui-control-law-baseline.json`, `scripts/.guard-exempt.json` (3 new exempt entries for my
+own guards, following the exact precedent DEVIN-A set for `verify-money-column-void-aware.mjs`),
+and `docs/bus/INBOX-CC-3.md`/`OUTBOX-CC-3.md`. None of these touch `ReportsSubNav.tsx` or
+`verify-architectural-design.ts`. A real §7 palette violation I did introduce earlier this session
+(REORDER's drop-target highlight using `bg-blue-50`/`outline-blue-300` instead of the locked
+navy/slate tokens) was found and fixed in this same pass (now uses `colors.accentTint`/`colors.navy`
+inline, matching the existing selected-row pattern at ParityTable.tsx:913).
+
+**Not fixing `verify-architectural-design.ts` myself:** it is a shared architecture-law parser, not
+chrome-only-lane territory, and whoever is mid-flight on the NAVY-SUBNAV type rename should own the
+2-line parser fix (accept `NavyPageSubNavItem[]` alongside `NavItem[]`, or generalize the match) to
+avoid stepping on their in-progress work.
+
+**Status: BLOCKED on landing `cc3-ui-control-law-build-2026-09-01`** — local `verify:pre-commit`
+(the real CI-equivalent gate) cannot complete due to the above, unrelated to my diff. My own code is
+independently verified clean: `tsc -b` (frontend), the 3 touched guards' `--selftest` + real scans,
+`verify-guard-wired.mjs`/`verify-cc1-money-orphan-guard-registry-batch.mjs` (0 unaccounted after the
+exempt additions), `verify-section7-palette-maintenance.mjs` (clean after the fix), and
+`ParityTable.test.tsx` (44/44). Not force-pushing with `--no-verify` (forbidden) or bypassing
+unilaterally. Escalating to the owner in chat; will re-attempt the push the moment
+`verify-architectural-design.ts` or `ReportsSubNav.tsx`'s coupling is fixed by whoever owns that
+lane, or on explicit owner authorization to bypass this specific, disclosed, root-caused check.

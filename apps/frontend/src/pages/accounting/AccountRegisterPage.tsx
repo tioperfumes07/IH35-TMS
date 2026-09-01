@@ -13,6 +13,7 @@ import { listCoaAccountsForJe, listAccountingAuditTrail, type AccountingAuditTra
 import { getAllAccounts } from "../../api/banking";
 import { getAccountRegister, type AccountRegisterReport, type AccountRegisterRow } from "../../api/account-register";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { Button } from "../../components/Button";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useUrlSort } from "../../hooks/useUrlSort";
@@ -505,13 +506,11 @@ export function AccountRegisterPage() {
           <DatePicker value={toDate} onChange={(next) => { setToDate(next); setPreset("custom"); }} className={inputCls} />
         </label>
         <div className="relative">
-          <button
-            type="button"
-            onClick={() => setFilterOpen((o) => !o)}
-            className="h-9 rounded-sm border border-gray-300 bg-white px-3 text-[13px] font-semibold text-gray-700 hover:bg-gray-50"
-          >
+          {/* UI CONTROL LAW — was a hand-rolled h-9/text-[13px] button; already matched the token
+              values but bypassed the shared primitive. Now the real Button. */}
+          <Button type="button" variant="secondary" size="md" onClick={() => setFilterOpen((o) => !o)}>
             Filter{activeChips.length ? ` (${activeChips.length})` : ""}
-          </button>
+          </Button>
           {filterOpen ? (
             <div className="absolute left-0 top-10 z-20 w-72 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
               <label className="mb-2 flex flex-col gap-1 text-xs font-semibold text-gray-600">
@@ -618,24 +617,14 @@ export function AccountRegisterPage() {
           suppressToolbarSearch
           toolbar={
             <>
-              <button
-                type="button"
-                onClick={exportCsv}
-                disabled={!report || report.rows.length === 0}
-                title="Export to Excel"
-                className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 disabled:opacity-40 sm:min-h-0"
-              >
+              {/* UI CONTROL LAW — was 2 hand-rolled buttons at their own ad-hoc size (the same
+                  shape fixed in ParityTable's own Export/gear). Now the real Button primitive. */}
+              <Button type="button" variant="tertiary" size="sm" onClick={exportCsv} disabled={!report || report.rows.length === 0} title="Export to Excel">
                 Export to Excel
-              </button>
-              <button
-                type="button"
-                onClick={printList}
-                disabled={!report || report.rows.length === 0}
-                title="Print list"
-                className="min-h-11 rounded-sm border border-gray-300 px-2 py-1 text-[12px] text-gray-700 hover:bg-gray-50 disabled:opacity-40 sm:min-h-0"
-              >
+              </Button>
+              <Button type="button" variant="tertiary" size="sm" onClick={printList} disabled={!report || report.rows.length === 0} title="Print list">
                 Print list
-              </button>
+              </Button>
             </>
           }
         />

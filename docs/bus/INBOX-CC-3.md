@@ -136,3 +136,37 @@ Insurance was displaced; it is **P0 ahead of UI tokens build**. Live Chrome, you
    change my in-flight queue. Noted trap for the record (not mine to apply): void path writes a
    separate reversing JE, does not populate reversal_of_line_id/reversed_by_line_id — asserting on
    those columns is a false positive.
+
+---
+# INBOX — CC-3 · 2026-08-31 · PURGE NOTICE + CLEAN-UP-SAME-SESSION LAW (owner, effective permanently)
+
+10. Owner: spent the night hand-voiding ~250 seat-created documents (test vendors, fake drivers,
+    bank transactions in non-operating months, transactions dated into 2027, two records with a
+    seat-written "do not void" in the memo). Two permanent rules: (1) NO SEAT-CREATED FINANCIAL
+    RECORDS IN PRODUCTION is now enforced by a purge — anything left behind gets deleted and the
+    seat is named. (2) YOU CLEAN UP WHAT YOU CREATE, IN THE SAME SESSION — a fixture created for
+    verification is created, proven, and REMOVED before reporting done. Any known test data not yet
+    reported goes to OUTBOX now, with ids.
+    **Response posted to OUTBOX-CC-3.md this session:** self-audit re-confirmed (EXP-2026-00068
+    already voided, no other financial records created by me); flagged one master-data TEST vendor
+    (51e7280b-...) held per the standing CREATE-TEST-THEN-VOID-LAW hold instruction rather than
+    unilaterally deleted, for the owner/CC-2 to fold into the purge scope or explicitly re-confirm
+    as held.
+
+---
+# INBOX — CC-3 · 2026-08-31 · PHASE PLAN (owner) — deploy live at 78a1efd, healthz exposes 6 financial checks
+
+11. Owner: deploy live at 78a1efd (git_sha + 6 financial checks in healthz, correctly ok:false on
+    ar_tieout/ap_tieout). Phase 1 assigns CURSOR (bulk cancel/multi-select/HIDE VOIDED/nav),
+    CC-1 (reversal is_sample_data backfill + categorization_recover_from_driver route proof),
+    CC-2 (posted_without_posting/voided_without_reason false-green investigation), DEVIN-A
+    (exhaustive test-data sweep, report only), CASCADE (purge-scope enumeration). Phase 2-4:
+    owner-driven purge/tie-out/live-walk, CC-1 on call. CODEX: condition 5 satisfiable, run 8
+    conditions. "NOBODY WORKS AHEAD."
+    **CC-3 has no phase assignment in this plan** (matches the standing "no band; continue UI
+    CONTROL LAW" instruction). Not touching purge/reversal/tie-out/settlement/load scope — none
+    of that is my lane. Continuing my own separate queue (still BLOCKED on the
+    verify-architectural-design.ts/ReportsSubNav.tsx parser break for the UI CONTROL LAW push;
+    origin/main confirmed still not carrying a fix as of this fetch). Proceeding with the
+    next-queued, orthogonal item (ad-hoc-button-size sweep across the 7 ratchet offenders) while
+    waiting, per queue discipline (report, don't idle).
