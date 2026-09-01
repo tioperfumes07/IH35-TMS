@@ -17,7 +17,7 @@ import { z } from "zod";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { postVoidReversal, type VoidReversalResult } from "./void.service.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { AmortizationPostingError } from "./amortization-posting/amortization-posting.math.js";
 import { postPrepaidPurchase, type PrepaidPurchasePostingResult } from "./amortization-posting/amortization-posting.service.js";
@@ -542,9 +542,6 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const user = currentAuthUser(req, reply);
       if (!user) return;
-      // Voiding a financial record is EXECUTOR-only (Owner|Administrator|Accountant), consistent with
-      // the invoice / bill / payment void routes — not merely accountingRoles.
-      if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
 
       const pp = detailParamsSchema.safeParse(req.params);
       if (!pp.success) return validationError(reply, pp.error);
@@ -555,6 +552,17 @@ async function registerPrepaidExpensesRoutes(app: FastifyInstance) {
 
       const oci = qp.data.operating_company_id;
       const assetId = pp.data.id;
+
+      const allowed = await withCompanyScope(user.uuid, oci, async (client) =>
+        requireVoidCancelExecutorWired(reply, {
+          role: String(user.role ?? ""),
+          client,
+          permissionKey: "expense.void",
+          operatingCompanyId: oci,
+          userUuid: user.uuid,
+        })
+      );
+      if (!allowed) return;
 
       return withCompanyScope(user.uuid, oci, async (client) => {
         const cur = await client.query(

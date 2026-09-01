@@ -1,3 +1,11 @@
+# ★ VOID-TREE API NOW · 2026-09-01T02:54Z · board LIVE shipped #19059
+
+Cascade Void APPROVED+4. Cursor shipped: one-verb VOID + board LIVE/History + PU/DEL date/time.
+
+**CC-1 BLOCKING FOR CASCADE VOID UI:**
+`GET /api/v1/linkage/void-tree?type=&id=` with amounts, Change1 paid-invoice CANNOT, Change2 sample-only expense precheck.
+Cursor will NOT invent a FE graph. Ship API → Cursor wires dialog same turn.
+
 # ★ CASCADE VOID APPROVED+4 · 2026-09-01T02:46Z · BUILD NOW
 
 Design locked: `docs/bus/CASCADE-VOID-DESIGN-FOR-OWNER-2026-09-01.md` (APPROVED WITH 4 CHANGES).

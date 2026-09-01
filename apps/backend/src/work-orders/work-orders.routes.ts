@@ -7,7 +7,7 @@ import { companyQuerySchema, resolvePrintOperatingCompanyId, validationError, wi
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
-import { requireVoidCancelExecutor } from "../lib/authz/void-cancel-authz.js";
+import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { generatePresignedUploadUrl, isR2Configured } from "../storage/r2-client.js";
 import { reassignDraftAttachments } from "../documents/attachments.service.js";
@@ -1127,15 +1127,23 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   app.post("/api/v1/work-orders/:id/cancel", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
-    // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
-    // telling them to file a governance void/cancel request for approval.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const parsed = cancelBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "work_order.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };
@@ -1246,15 +1254,23 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
   app.post("/api/v1/work-orders/:id/void", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
     const user = authed(req, reply);
     if (!user) return;
-    // Void/cancel EXECUTORS = Owner|Administrator|Accountant (canVoidCancel). Non-executors get a 403
-    // telling them to file a governance void/cancel request for approval.
-    if (!requireVoidCancelExecutor(reply, String(user.role ?? ""))) return;
     const params = idParamsSchema.safeParse(req.params ?? {});
     if (!params.success) return validationError(reply, params.error);
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
     const parsed = voidBodySchema.safeParse(req.body ?? {});
     if (!parsed.success) return validationError(reply, parsed.error);
+
+    const allowed = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) =>
+      requireVoidCancelExecutorWired(reply, {
+        role: String(user.role ?? ""),
+        client,
+        permissionKey: "work_order.void",
+        operatingCompanyId: query.data.operating_company_id,
+        userUuid: user.uuid,
+      })
+    );
+    if (!allowed) return;
 
     const row = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       if (!(await maintenanceReady(client))) return { kind: "unavailable" as const };

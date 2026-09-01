@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 // [HOLD-FOR-JORGE — TIER 1] Void/cancel governance authorization must stay centralized + maker-checker safe.
 //
@@ -25,6 +26,8 @@ const FINANCIAL_VOID_ROUTES = [
   { rel: "apps/backend/src/accounting/invoices.routes.ts", route: "/api/v1/accounting/invoices/:id/void" },
   { rel: "apps/backend/src/accounting/factoring-advances.routes.ts", route: "/api/v1/accounting/factoring-advances/:id/void" },
   { rel: "apps/backend/src/accounting/bills.routes.ts", route: "/api/v1/accounting/bill-payments/:id/void" },
+  { rel: "apps/backend/src/accounting/bills.routes.ts", route: "/api/v1/accounting/bills/:id/void" },
+  { rel: "apps/backend/src/accounting/prepaid-expenses.routes.ts", route: "/api/v1/accounting/prepaid-expenses/:id/void" },
 ];
 
 function read(rel) {
@@ -53,6 +56,9 @@ export default {
     const authz = read(AUTHZ);
     requireAll(AUTHZ, authz, [
       { token: "export function canVoidCancel", why: "single source of truth for who may void/cancel directly" },
+      { token: "export async function requireVoidCancelExecutorWired", why: "PERMISSION WIRING 10.4 dual-path gate" },
+      { token: "PERMISSION_MODEL_ENFORCED", why: "flag OFF preserves role-only path; ON enables has_permission" },
+      { token: "identity.has_permission", why: "permission model consulted when flag ON" },
       { token: '"Owner"', why: "Owner is an executor role" },
       { token: '"Administrator"', why: "Administrator is an executor role" },
       { token: '"Accountant"', why: "Accountant is an executor role (Jorge 2026-06-29)" },
@@ -60,7 +66,7 @@ export default {
 
     const wo = read(WO_ROUTES);
     requireAll(WO_ROUTES, wo, [
-      { token: "requireVoidCancelExecutor", why: "WO void/cancel must gate via the shared canVoidCancel helper" },
+      { token: "requireVoidCancelExecutorWired", why: "WO void/cancel must gate via the wired canVoidCancel / has_permission helper" },
     ]);
     // The old hand-rolled gate must be GONE — no per-endpoint role list may shadow the shared policy.
     if (/function\s+ownerOrAdmin\s*\(/.test(wo)) {
@@ -71,9 +77,8 @@ export default {
       process.exit(1);
     }
 
-    // G9-C3: each financial void handler must call requireVoidCancelExecutor BEFORE it opens a company DB
-    // scope (i.e. outside any feature flag / before touching data). We locate the void route registration,
-    // then require the executor guard to appear after it but before the first withCompanyScope(.
+    // G9-C3 / PERMISSION WIRING 10.4: each financial void handler must call requireVoidCancelExecutorWired
+    // inside withCompanyScope (withCurrentUser) before mutating data.
     for (const { rel, route } of FINANCIAL_VOID_ROUTES) {
       const src = read(rel);
       const routeIdx = src.indexOf(`"${route}"`);
@@ -85,22 +90,31 @@ export default {
         process.exit(1);
       }
       const after = src.slice(routeIdx);
-      const guardIdx = after.indexOf("requireVoidCancelExecutor");
+      const guardIdx = after.indexOf("requireVoidCancelExecutorWired");
       const scopeIdx = after.indexOf("withCompanyScope(");
       if (guardIdx === -1) {
         console.error(
-          `verify-void-cancel-authz FAILED — ${rel} does not guard ${route} with requireVoidCancelExecutor ` +
-            "(Owner|Administrator|Accountant). Anyone could void this financial record (G9-C3)."
+          `verify-void-cancel-authz FAILED — ${rel} does not guard ${route} with requireVoidCancelExecutorWired ` +
+            "(Owner|Administrator|Accountant / has_permission when flag ON)."
         );
         process.exit(1);
       }
-      if (scopeIdx !== -1 && guardIdx > scopeIdx) {
+      if (scopeIdx === -1 || guardIdx < scopeIdx) {
         console.error(
-          `verify-void-cancel-authz FAILED — ${rel} calls requireVoidCancelExecutor for ${route} only AFTER ` +
-            "opening a company DB scope; the executor guard must run FIRST, outside any feature flag (G9-C3)."
+          `verify-void-cancel-authz FAILED — ${rel} must call requireVoidCancelExecutorWired for ${route} ` +
+            "inside withCompanyScope (withCurrentUser) before mutation work."
         );
         process.exit(1);
       }
+    }
+
+    const smoke = spawnSync("node", ["scripts/verify-permission-wiring-void-cancel.mjs"], {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    });
+    if (smoke.status !== 0) {
+      console.error(smoke.stdout || smoke.stderr || "verify-permission-wiring-void-cancel failed");
+      process.exit(smoke.status ?? 1);
     }
 
     const gov = read(GOV_ROUTES);
@@ -112,8 +126,8 @@ export default {
 
     console.log(
       "verify-void-cancel-authz OK — void/cancel is centralized on canVoidCancel (Owner|Administrator|Accountant), " +
-        "the 4 financial void endpoints (payments/invoices/factoring-advances/bill-payments) gate through " +
-        "requireVoidCancelExecutor outside any feature flag, and the governance approve route blocks self-approval."
+        "financial void endpoints gate through requireVoidCancelExecutorWired inside withCompanyScope, " +
+        "PERMISSION_MODEL_ENFORCED OFF preserves role-only path, and the governance approve route blocks self-approval."
     );
   },
 };
