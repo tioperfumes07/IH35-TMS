@@ -40,6 +40,10 @@ const ALLOWLIST = new Set([
   "outbox/handlers/twilio-sms.ts",
   "outbox/handlers/registry.ts",
   "qbo/push.service.ts",
+  // accounting posting cycle — JE service ↔ revrec poster ↔ posting engine. Owner-gated financial refactor.
+  "accounting/journal-entries.service.ts",
+  "accounting/revrec-delivery-posting/poster.service.ts",
+  "accounting/posting-engine.service.ts",
 ]);
 
 /** Must stay acyclic — shared types/constants live in leaf modules, not via registry import. */
