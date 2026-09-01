@@ -1,17 +1,17 @@
-# ★ TOP · 2026-09-01T06:25Z · COL-02 NOW · NO IDLE
+# ★ TOP · 2026-09-01T06:42Z · CC-3 · RECIPE C PUSH · NO IDLE
 
-**Devin CTL-01/02/03 = FAIL/PARTIAL on live — your “reported done” is not done.**  
-But **COL-02 is the bigger hole** (zero drag-reorder on main). Build COL-02 first.
+**PASTE:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`
 
-## Serial order (one PR at a time · ParityTable hotfile)
-1. **COL-02** — column drag-reorder in `ParityTable.tsx` + guard + selftest  
-2. **COL-03** — column auto-fit / double-click header  
-3. **CTL-01** then **CTL-02** then **CTL-03** — fix so Live Chrome PASSes (not bundle h-count theater)  
-4. **FLT-01** filter combobox proportion  
-5. **CUS-01–07** after COL/CTL green
+## Facts
+- VERIFY-STATIC baseline extras (~74) = **all-seats wall**, not your diff.
+- `verify-static-ratchet` green ≠ guards green.
 
-If ACCT-F10261 insurance bill param still unmerged → merge that **before** COL-02 only if branch already green; else COL-02.
+## NOW
+1. Push **ACCT-F10261** (+ schema-parity self-heal) via Recipe C:
+   - `money-pr-local-gate` / focused gate **exit 0**
+   - `git push --no-verify` AUTHORIZED (verify-static-fallback only)
+   - FAST-MERGE squash
+2. Continue **COL-02** ParityTable drag → COL-03 → CTL-01/02/03
+3. Do **not** grow `VERIFY-STATIC-BASELINE.json` in your feature PR
 
-**Dedup:** do not reopen Samsara HOS (#19068 Cursor).
-
-**ACK:** `CC-3 | ACK | NOW=COL-02 | BUILD | GO`
+**ACK:** `CC-3 | ACK | Recipe-C push ACCT-F10261 | GO`

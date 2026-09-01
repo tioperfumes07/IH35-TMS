@@ -1954,6 +1954,28 @@ export function listUnits(
   return apiRequest<{ units: unknown[]; total?: number }>(`/api/v1/mdata/units${qs ? `?${qs}` : ""}`);
 }
 
+/** MOD-05 — exact VIN probe across companies the caller can access (EntityPicker anti-dup create). */
+export function lookupUnitByVin(params: { vin: string; operating_company_id?: string | null }) {
+  const query = new URLSearchParams();
+  query.set("vin", params.vin);
+  if (params.operating_company_id) query.set("operating_company_id", params.operating_company_id);
+  return apiRequest<{
+    found: boolean;
+    unit: {
+      id: string;
+      unit_number: string;
+      vin: string;
+      owner_company_id: string;
+      owner_company_code: string | null;
+      owner_company_name: string | null;
+      currently_leased_to_company_id: string | null;
+      leased_company_code: string | null;
+      leased_company_name: string | null;
+      in_current_company_scope: boolean;
+    } | null;
+  }>(`/api/v1/mdata/units/by-vin?${query.toString()}`);
+}
+
 /** Exhaust a stable scoped unit population for complete-grid consumers; pickers stay server-searched. */
 export async function listAllUnits(
   params: Omit<NonNullable<Parameters<typeof listUnits>[0]>, "limit" | "offset">,

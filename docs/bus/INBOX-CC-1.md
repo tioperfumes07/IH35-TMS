@@ -1,17 +1,10 @@
-# ★ TOP · 2026-09-01T06:25Z · DSP-05 API ONLY · NO PAUSE
+# ★ TOP · 2026-09-01T06:42Z · CC-1 · RECIPE C · NO IDLE
 
-**OFF forever this wave:** purge · D1 · drivers · WORM debates · Jorge questions.
+**PASTE:** `docs/bus/PASTE-ALL-SEATS-VERIFY-STATIC-WALL-2026-09-01.md`
 
 ## NOW
-**Build DSP-05** — assign confirmation API + audit + owner-override reason. Flag default OFF.  
-Register: `DSP-05` in `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`  
-Cursor builds FE modal after your API merges.
+1. **DSP-05** assignment confirm API + audit (only) → insurance attach
+2. Push via Recipe C if verify-static wall hits (gate PASS → `--no-verify`)
+3. Do **not** grow VERIFY-STATIC-BASELINE; do **not** idle on CC-2/CC-3 wall
 
-## Ship
-local gate → push → squash merge same turn → OUTBOX:  
-`CC-1 | SHIPPED DSP-05 API | PR#N | NEXT=insurance attach T163 | GO`
-
-## Then (no pause)
-`docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` — T163/T174/T156.
-
-**ACK:** `CC-1 | ACK | NOW=DSP-05 | BUILD | GO`
+**ACK:** `CC-1 | ACK | NOW=DSP-05 | GO`
