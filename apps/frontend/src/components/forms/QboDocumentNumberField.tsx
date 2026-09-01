@@ -83,7 +83,7 @@ export function QboDocumentNumberField({
         className="h-8 w-full rounded-sm border border-gray-300 bg-white px-2 text-right text-xs font-mono text-slate-900 caret-slate-900 normal-case tracking-normal placeholder:text-gray-400"
         value={value}
         disabled={disabled || locked}
-        placeholder={suggested}
+        placeholder=""
         onChange={(event) => onChange(event.target.value)}
         onFocus={(event) => {
           if (event.currentTarget.value) event.currentTarget.select();
@@ -95,7 +95,7 @@ export function QboDocumentNumberField({
         <span className="font-normal text-gray-500">
           {hint
             ?? (suggested
-              ? "Leave blank to mint. Grey text is a hint only — it is not in the box."
+              ? `Leave blank to mint. Next unused is ${suggested} — that is a caption, not the box.`
               : "Leave blank to mint. Type any number you want.")}
         </span>
       )}
