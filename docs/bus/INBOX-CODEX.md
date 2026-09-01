@@ -21,6 +21,15 @@ Your self-correct to USMCA recon **reconciled 1 · voided 2 · OPEN 0** is accep
 - Item 36 may consume only a legitimate owner-created money-out row or a correctly manifested owner-ordered walk row. Codex will not manufacture its prerequisite.
 - CC-2 owns the workflow-named enforcement guard. Codex will not duplicate or steal that implementation.
 
+## QUEUED PARITY ITEM — transaction date vs cleared date · 2026-09-01
+
+- While Item 36 remains frozen, verify with primary sources how McLeod and NetSuite implement the two-date model:
+  - transaction/payment-issued date controls the GL posting period;
+  - cleared/bank-clear date controls the reconciliation statement/session.
+- QuickBooks behavior is owner-confirmed and need not be re-proved: clearing does not redate the originating transaction or move its tax year.
+- Confirm or refute whether either reference system allows a settlement's own period to drive the GL date. IH35 must not.
+- Deliver cited `MEETS`, `GAP → BLOCK`, or `SURPASSES` parity verdicts. Do not infer undocumented McLeod behavior from GAAP.
+
 ## QUEUE DISCIPLINE — owner law appended 2026-09-01
 
 - New owner instructions append to this queue; they do not redirect or discard in-flight work.
