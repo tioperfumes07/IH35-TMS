@@ -3,6 +3,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { getAllHelpArticles, helpArticlesByCategory, searchHelpArticles, type HelpCategory } from "../../help/helpCenterContent";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
+import { SelectCombobox } from "../../components/shared/SelectCombobox";
 
 const CATEGORY_ORDER: HelpCategory[] = [
   "Getting Started",
@@ -61,7 +62,7 @@ export function HelpCenterPage() {
       >
         <label className="text-sm text-gray-700">
           Category{" "}
-          <select
+          <SelectCombobox
             className="ml-1 rounded-sm border px-2 py-1"
             value={staged.draft.categoryFilter}
             onChange={(e) => staged.setDraft({ categoryFilter: e.target.value as HelpCategory | "" })}
@@ -72,7 +73,7 @@ export function HelpCenterPage() {
                 {cat}
               </option>
             ))}
-          </select>
+          </SelectCombobox>
         </label>
       </CollapsedListFilters>
 
