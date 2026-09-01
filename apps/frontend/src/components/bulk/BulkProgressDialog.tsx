@@ -73,6 +73,12 @@ export function BulkProgressDialog({
                 </>
               ) : null}
             </p>
+            {!loading && succeeded === 0 && failedCount > 0 ? (
+              <p className="text-xs text-slate-700" data-testid="bulk-precheck-deselect-hint">
+                Nothing was changed. Deselect the blocked rows below, then retry the rest — bulk money
+                actions are atomic and will not partially apply.
+              </p>
+            ) : null}
             {bulk_call_id ? (
               <p className="text-xs text-gray-500">
                 Bulk call ID: <code>{bulk_call_id}</code>
@@ -82,7 +88,9 @@ export function BulkProgressDialog({
         )}
         {!loading && failedCount > 0 ? (
           <div className="max-h-48 overflow-y-auto rounded-sm border border-red-100 bg-red-50 p-2">
-            <p className="mb-2 text-xs font-semibold uppercase text-red-800">Failures</p>
+            <p className="mb-2 text-xs font-semibold uppercase text-red-800">
+              {succeeded === 0 ? "Blocked (deselect these)" : "Failures"}
+            </p>
             <ul className="space-y-1 text-xs text-red-900">
               {failed.map((item, index) => {
                 const isBatch = item.id === "batch";

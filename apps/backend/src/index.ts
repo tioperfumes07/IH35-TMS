@@ -146,6 +146,7 @@ import { registerFleetLocationHosRoutes } from "./telematics/fleet-location-hos.
 import { registerDriverDaySummaryRoutes } from "./telematics/driver-day-summary.routes.js";
 import { registerTelematicsHeatmapRoutes } from "./telematics/heatmap.routes.js";
 import { registerDriverFinanceSettlementRoutes } from "./driver-finance/settlements.routes.js";
+import { registerSettlementsBulkRoutes } from "./driver-finance/settlements-bulk.routes.js";
 import { registerPreSettlementsRoutes as registerC1PreSettlementsRoutes } from "./settlements/pre-settlements.routes.js";
 import { registerCustomerContractRoutes } from "./customer-contracts/customer-contract.routes.js";
 import { registerPreSettlementRoutes } from "./driver-finance/pre-settlement.routes.js";
@@ -942,6 +943,7 @@ async function main() {
   await registerTelematicsPositionsRoutes(app);
   await registerFleetLocationHosRoutes(app);
   await registerDriverFinanceSettlementRoutes(app);
+  await registerSettlementsBulkRoutes(app);
   await registerPreSettlementRoutes(app);
   await registerC1PreSettlementsRoutes(app);
   await registerCustomerContractRoutes(app);
