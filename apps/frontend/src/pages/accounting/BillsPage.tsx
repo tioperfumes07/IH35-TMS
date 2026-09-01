@@ -488,20 +488,19 @@ export function BillsPage() {
         },
       },
       { key: "bill_date", label: "Date", sortable: true, render: (bill) => formatDateUS(bill.bill_date) },
-      { key: "amount_cents", label: "Original", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.amount_cents) },
-      { key: "paid_cents", label: "Paid", sortable: true, className: "text-right", cellClass: "text-right", render: (bill) => money(bill.paid_cents) },
+      { key: "amount_cents", label: "Total", sortable: true, className: "text-right", cellClass: "text-right tabular-nums", render: (bill) => money(bill.amount_cents) },
       {
         key: "balance",
-        label: "Balance",
+        label: "Open",
         sortable: true,
         sortValue: (bill) => billBalanceCents(bill),
         className: "text-right",
-        cellClass: "text-right font-semibold",
+        cellClass: "text-right tabular-nums font-semibold",
         render: (bill) => money(bill.balance_cents ?? Math.max(0, bill.amount_cents - bill.paid_cents)),
       },
       {
-        // COL-05 (owner requirement 4.3): "Total / Open / Variance, red when non-zero." Original
-        // (=Total) / Balance (=Open) already existed; Variance was the missing third column --
+        // COL-05 (owner requirement 4.3): "Total / Open / Variance, red when non-zero." Total
+        // / Open labels now match InvoicesListPage; Paid stays gear-available but default-hidden.
         // same reconciliation-health check InvoicesListPage already runs (total - paid - open),
         // mirrored here for the AP side. Compares against the SERVER's own balance_cents (not the
         // client-recomputed billBalanceCents helper, which would always net to zero against itself)
@@ -519,6 +518,15 @@ export function BillsPage() {
             <span className={`font-semibold ${variance !== 0 ? "text-red-700" : "text-slate-400"}`}>{money(variance)}</span>
           );
         },
+      },
+      {
+        key: "paid_cents",
+        label: "Paid",
+        sortable: true,
+        defaultHidden: true,
+        className: "text-right",
+        cellClass: "text-right tabular-nums",
+        render: (bill) => money(bill.paid_cents),
       },
       {
         // VIS-02 — void as first-class Status column (gear-togglable via ParityTable), not only filter text.

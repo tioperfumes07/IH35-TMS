@@ -7,7 +7,7 @@
  * grid already renders via ParityTable; this guard pins that the per-row expanded
  * payments sub-table also uses the shared ParityTable grammar (no hand-rolled <table>),
  * and that the display-only contract holds: exact column order (Vendor, Bill #, Date,
- * Original, Paid, Balance, Status, Reconciled, Due date, Claim, Work order, Memo, Allocate), cents-based
+ * Total, Open, Variance, Paid (defaultHidden), Status, Reconciled, Due date, Claim, Work order, Memo, Allocate), cents-based
  * money() formatting, the ListErrorBanner error surface, the inline Allocate action
  * (handler unchanged), and the "No bills found." empty text.
  */
@@ -24,9 +24,10 @@ const MAIN_LABELS_IN_ORDER = [
   "Vendor",
   "Bill #",
   "Date",
-  "Original",
+  "Total",
+  "Open",
+  "Variance",
   "Paid",
-  "Balance",
   "Status",
   "Reconciled",
   "Due date",
@@ -109,9 +110,10 @@ function selftest() {
       { key: "vendor_name", label: "Vendor" },
       { key: "bill_number", label: "Bill #" },
       { key: "bill_date", label: "Date" },
-      { key: "amount_cents", label: "Original" },
-      { key: "paid_cents", label: "Paid" },
-      { key: "balance", label: "Balance" },
+      { key: "amount_cents", label: "Total" },
+      { key: "balance", label: "Open" },
+      { key: "variance_cents", label: "Variance" },
+      { key: "paid_cents", label: "Paid", defaultHidden: true },
       { key: "status", label: "Status" },
       { key: "is_reconciled", label: "Reconciled" },
       { key: "due_date", label: "Due date" },
