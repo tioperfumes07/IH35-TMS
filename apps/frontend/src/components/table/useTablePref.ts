@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 // per-user-per-device; mirrors the useViewModePref pattern. Never destroys data.
 const PREFIX = "ih35:table-pref:";
 
-export type TablePref = { pageSize: number; hidden: string[]; widths: Record<string, number> };
+export type TablePref = { pageSize: number; hidden: string[]; widths: Record<string, number>; columnOrder?: string[] };
 
 function read(key: string): Partial<TablePref> | null {
   try {
@@ -32,10 +32,11 @@ export function useTablePref(tableKey: string, defaults: { pageSize: number; hid
   const [pageSize, setPageSizeState] = useState<number>(initial?.pageSize ?? defaults.pageSize);
   const [hidden, setHiddenState] = useState<Set<string>>(new Set(initial?.hidden ?? defaults.hidden ?? []));
   const [widths, setWidthsState] = useState<Record<string, number>>(initial?.widths ?? {});
+  const [columnOrder, setColumnOrderState] = useState<string[]>(initial?.columnOrder ?? []);
 
   useEffect(() => {
-    write(tableKey, { pageSize, hidden: Array.from(hidden), widths });
-  }, [tableKey, pageSize, hidden, widths]);
+    write(tableKey, { pageSize, hidden: Array.from(hidden), widths, columnOrder: columnOrder.length ? columnOrder : undefined });
+  }, [tableKey, pageSize, hidden, widths, columnOrder]);
 
   const setPageSize = useCallback((n: number) => setPageSizeState(n), []);
   const toggleColumn = useCallback((key: string) => {
@@ -50,6 +51,7 @@ export function useTablePref(tableKey: string, defaults: { pageSize: number; hid
   const setColumnWidth = useCallback((key: string, width: number) => {
     setWidthsState((prev) => ({ ...prev, [key]: Math.max(48, Math.round(width)) }));
   }, []);
+  const setColumnOrder = useCallback((order: string[]) => setColumnOrderState(order), []);
 
-  return { pageSize, setPageSize, hidden, toggleColumn, setHidden, widths, setColumnWidth };
+  return { pageSize, setPageSize, hidden, toggleColumn, setHidden, widths, setColumnWidth, columnOrder, setColumnOrder };
 }

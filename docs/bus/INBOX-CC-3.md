@@ -1,3 +1,26 @@
+# ★ TOP · 2026-09-01T04:40Z · CC-3
+
+**Policies LIVE (Claude verified):** CIMD-2026-0720 · 437539 · 437540 — do NOT recreate.
+
+**YOUR P0 after CC-1 assets:**
+1. Smoke wizard `+ Create policy + schedule 12 bills` once `$2::uuid` deploys.
+2. Attach COI + 11 ID cards per unit (skip T144; T163 APD-only gap).
+3. Fix date picker: typing + month/year jump; Escape must NOT close whole wizard.
+4. Fix "Couldn't load unit list" false red on empty search.
+5. Block `+ Add new unit` when VIN exists under another entity.
+
+**Dispatch columns:** Cursor shipping drag-reorder on load board; you sweep app-wide per SORT law after.
+
+---
+
+# ★ OWNER EXECUTE · GO-INSURANCE-PURGE-0901 · 2026-09-01
+
+**Law (insurance/legal/hiring/ethics):** live Chrome **+ Create Policy** for AL/APD/MTC. Down payment unpaid. No test policies. One ask max.
+
+ACK `GO-INSURANCE-PURGE-0901`.
+
+---
+
 # ★ DISPATCH BOARD MOVABLE · 2026-09-01T02:54Z
 
 Cursor shipped board LIVE/History + PU/DEL date/time (#19059). **Movable column reorder still waits on YOU.**
