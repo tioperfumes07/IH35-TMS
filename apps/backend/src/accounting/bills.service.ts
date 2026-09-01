@@ -123,9 +123,41 @@ type ListBillsOptions = {
   unitId?: string;
   /** ACCT-F5037 — load→bill reverse via EXISTS on accounting.bill_lines.load_id. */
   loadId?: string;
+  /** SORT LAW (COL-04) — allowlisted column key from BillsPage; unknown → bill_date. */
+  sort?: string;
+  dir?: "asc" | "desc";
   limit: number;
   offset: number;
 };
+
+/**
+ * Whitelist only — never interpolate raw client sort into SQL (mirrors INVOICE_LIST_SORT_SQL).
+ * Keys match BillsPage ParityTable column keys.
+ */
+export const BILL_LIST_SORT_SQL: Record<string, string> = {
+  vendor_name: "COALESCE(v.vendor_name, b.vendor_id, b.vendor_uuid)",
+  display_id: "b.display_id",
+  bill_number: "b.bill_number",
+  bill_date: "b.bill_date",
+  amount_cents: "COALESCE(b.amount_cents, 0)",
+  paid_cents: "COALESCE(b.paid_cents, 0)",
+  // balance alias — same net expression used by has_balance filter
+  balance: `(COALESCE(b.amount_cents, 0) - COALESCE(b.paid_cents, 0))`,
+  status: "b.status",
+  due_date: "b.due_date",
+  memo: "b.memo",
+  insurance_claim_id: "claim.claim_number",
+  linked_work_order_uuid: "wo.display_id",
+};
+
+export function billListOrderBy(sort: string | undefined, dir: "asc" | "desc" | undefined): string {
+  const expr = sort ? BILL_LIST_SORT_SQL[sort] : undefined;
+  const direction = dir === "asc" || dir === "desc" ? dir.toUpperCase() : "DESC";
+  if (!expr) {
+    return "b.bill_date DESC, b.created_at DESC";
+  }
+  return `${expr} ${direction} NULLS LAST, b.created_at DESC`;
+}
 
 type ListBillPaymentsOptions = {
   vendorId?: string;
@@ -877,7 +909,7 @@ export async function listBillsByVendor(
           ON claim.id = b.insurance_claim_id
          AND claim.tenant_id = b.operating_company_id
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
-        ORDER BY b.bill_date DESC, b.created_at DESC
+        ORDER BY ${billListOrderBy(options.sort, options.dir)}
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
       `,
@@ -985,7 +1017,7 @@ export async function listAllBillsForCompany(
           ON claim.id = b.insurance_claim_id
          AND claim.tenant_id = b.operating_company_id
         WHERE b.operating_company_id = $1::uuid AND ${where.join(" AND ")}
-        ORDER BY b.bill_date DESC, b.created_at DESC
+        ORDER BY ${billListOrderBy(options.sort, options.dir)}
         LIMIT $${values.length - 1}
         OFFSET $${values.length}
       `,

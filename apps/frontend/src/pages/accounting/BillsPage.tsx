@@ -298,6 +298,9 @@ export function BillsPage() {
       deepLinkLegalMatterId,
       deepLinkUnitId,
       deepLinkLoadId,
+      // SORT LAW — sort/dir part of query identity so header click refetches SQL ORDER BY.
+      sortKey,
+      sortDirection,
     ],
     queryFn: () =>
       listBills(companyId, {
@@ -312,6 +315,9 @@ export function BillsPage() {
         legal_matter_id: deepLinkLegalMatterId || undefined,
         unit_id: deepLinkUnitId || undefined,
         load_id: deepLinkLoadId || undefined,
+        // SORT LAW — push URL sort into SQL ORDER BY; never reorder only the silent ≤200 page.
+        sort: sortKey || undefined,
+        dir: sortKey ? sortDirection : undefined,
         limit: 200,
       }),
     enabled: Boolean(companyId),
@@ -792,6 +798,7 @@ export function BillsPage() {
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
+        sortMode="external"
         selectable
         maxSelectable={200}
         onSelectionCapExceeded={() => pushToast("You can select up to 200 bills at once.", "error")}

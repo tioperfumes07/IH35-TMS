@@ -157,6 +157,15 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
         failures.push(`${file} (${label}) — must pass an explicit limit (no silent API default)`);
       }
     }
+    // COL-04 — Bills list: same SORT LAW as invoices (server ORDER BY, not client page reorder).
+    if (file.includes("BillsPage")) {
+      if (!/sortMode=["']external["']/.test(src)) {
+        failures.push(`${file} (${label}) — must use sortMode="external" so ParityTable does not reorder a capped page`);
+      }
+      if (!/sort:\s*sortKey/.test(src) || !/dir:\s*sortKey\s*\?\s*sortDirection/.test(src)) {
+        failures.push(`${file} (${label}) — listBills must pass sort/dir from useUrlSort into the API`);
+      }
+    }
   }
 
   const invRoutes =
@@ -169,8 +178,33 @@ export function sortableHeaderErrors({ hookSrc, parityTableSrc, pages, invRoutes
   }
 
   const invApi = invApiSrc ?? readFile("apps/frontend/src/api/accounting.ts") ?? "";
-  if (!/function listInvoices[\s\S]*?params\.sort[\s\S]*?query\.set\("sort"/.test(invApi)) {
+  function sliceExportedFn(src, name) {
+    const start = src.indexOf(`function ${name}(`);
+    if (start < 0) return "";
+    const nextExport = src.indexOf("\nexport function ", start + 1);
+    const nextFn = src.indexOf("\nfunction ", start + 1);
+    let end = src.length;
+    for (const n of [nextExport, nextFn]) {
+      if (n > start && n < end) end = n;
+    }
+    return src.slice(start, end);
+  }
+  const listInvoicesFn = sliceExportedFn(invApi, "listInvoices");
+  if (!/params\.sort/.test(listInvoicesFn) || !/query\.set\("sort"/.test(listInvoicesFn)) {
     failures.push("apps/frontend/src/api/accounting.ts — listInvoices must forward sort query param");
+  }
+  const listBillsFn = sliceExportedFn(invApi, "listBills");
+  if (!/params\.sort/.test(listBillsFn) || !/query\.set\("sort"/.test(listBillsFn)) {
+    failures.push("apps/frontend/src/api/accounting.ts — listBills must forward sort query param");
+  }
+
+  const billRoutes = readFile("apps/backend/src/accounting/bills.routes.ts") ?? "";
+  const billService = readFile("apps/backend/src/accounting/bills.service.ts") ?? "";
+  if (!/BILL_LIST_SORT_SQL/.test(billService) || !/billListOrderBy/.test(billService)) {
+    failures.push("apps/backend/src/accounting/bills.service.ts — must whitelist sort → SQL ORDER BY (BILL_LIST_SORT_SQL)");
+  }
+  if (!/sort:\s*z\.string\(\)/.test(billRoutes) || !/dir:\s*z\.enum\(\["asc", "desc"\]\)/.test(billRoutes)) {
+    failures.push("apps/backend/src/accounting/bills.routes.ts — listBillsQuerySchema must accept sort + dir");
   }
 
   return failures;
@@ -210,6 +244,17 @@ function selftest() {
     listInvoices(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 100 })
     <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
   `;
+  const goodBills = `
+    import { useUrlSort } from "../../hooks/useUrlSort";
+    const { sortKey, sortDirection, onSortChange } = useUrlSort();
+    columns={[
+      { key: "date", sortable: true },
+      { key: "amount", sortable: true },
+      { key: "actions", label: "Actions" },
+    ]}
+    listBills(id, { sort: sortKey, dir: sortKey ? sortDirection : undefined, limit: 200 })
+    <ParityTable sortKey={sortKey} sortDirection={sortDirection} onSortChange={onSortChange} sortMode="external" />
+  `;
   const goodExpenses = `${goodPage}
     { key: "payee", sortable: true, sortValue: (row) => row.payee }
   `;
@@ -222,6 +267,10 @@ function selftest() {
   `;
   const goodInvApi = `
     function listInvoices(operatingCompanyId, params = {}) {
+      if (params.sort) query.set("sort", params.sort);
+      if (params.dir) query.set("dir", params.dir);
+    }
+    function listBills(operatingCompanyId, params = {}) {
       if (params.sort) query.set("sort", params.sort);
       if (params.dir) query.set("dir", params.dir);
     }
@@ -239,7 +288,9 @@ function selftest() {
         ? goodExpenses
         : file.includes("InvoicesListPage")
           ? goodInvoices
-          : goodPage,
+          : file.includes("BillsPage")
+            ? goodBills
+            : goodPage,
     })),
   };
 
@@ -250,7 +301,19 @@ function selftest() {
     ["Expenses missing sortable column", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace("sortable: true, sortValue", "sortValue") } : p)) }, "missing sortable: true"],
     ["Expenses payee missing sortValue", { ...good, pages: good.pages.map((p) => (p.file.includes("ExpensesListPage") ? { ...p, src: goodExpenses.replace(", sortValue: (row) => row.payee", "") } : p)) }, "payee column must set sortValue"],
     ["Invoices missing SQL ORDER BY whitelist", { ...good, invRoutesSrc: goodInvRoutes.replace("INVOICE_LIST_SORT_SQL", "NOPE") }, "INVOICE_LIST_SORT_SQL"],
-    ["listInvoices missing sort forward", { ...good, invApiSrc: goodInvApi.replace('query.set("sort"', 'query.set("q"') }, "listInvoices must forward sort"],
+    [
+      "listInvoices missing sort forward",
+      {
+        ...good,
+        invApiSrc: goodInvApi.replace(
+          `function listInvoices(operatingCompanyId, params = {}) {
+      if (params.sort) query.set("sort", params.sort);`,
+          `function listInvoices(operatingCompanyId, params = {}) {
+      if (params.sort) query.set("q", params.sort);`,
+        ),
+      },
+      "listInvoices must forward sort",
+    ],
   ];
 
   const goodErrors = sortableHeaderErrors(good);

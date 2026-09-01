@@ -857,6 +857,9 @@ export function listBills(
     legal_matter_id?: string;
     unit_id?: string;
     load_id?: string;
+    /** SORT LAW — ParityTable column key; server ORDER BY via BILL_LIST_SORT_SQL. */
+    sort?: string;
+    dir?: "asc" | "desc";
     limit?: number;
     offset?: number;
   } = {}
@@ -873,13 +876,15 @@ export function listBills(
   if (params.legal_matter_id) query.set("legal_matter_id", params.legal_matter_id);
   if (params.unit_id) query.set("unit_id", params.unit_id);
   if (params.load_id) query.set("load_id", params.load_id);
+  if (params.sort) query.set("sort", params.sort);
+  if (params.dir) query.set("dir", params.dir);
   if (params.limit !== undefined) query.set("limit", String(params.limit));
   if (params.offset !== undefined) query.set("offset", String(params.offset));
   const qs = query.toString();
   // REVERSE-SECTIONS-SILENT-LIST-CAPS: `total` is honest-optional — populated for the no-vendor_id
   // filter set (countAllBillsForCompany), undefined when vendor_id is set (no counted path yet;
   // consumers fall back to CappedListNotice's "Showing the first N" disclosure).
-  return apiRequest<{ rows: VendorBill[]; total?: number; limit?: number; offset?: number }>(
+  return apiRequest<{ rows: VendorBill[]; total?: number; limit?: number; offset?: number; sort?: string | null; dir?: string | null }>(
     withCompany(`/api/v1/accounting/bills?${qs}`, operatingCompanyId)
   );
 }
