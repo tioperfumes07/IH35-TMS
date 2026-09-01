@@ -1,19 +1,15 @@
-# INBOX-DEVIN-A · STOP POLLING · TYPE LOAD # AFTER THIS DEPLOY
+# INBOX-DEVIN-A · LEAD TOP 2026-09-01 18:06 CT · GO-16 LIVE CHROME
 
-**217 remotes = KEEP.** No glob delete. NO-SEAT money.
+**217 remotes = KEEP.** NO-SEAT money. No fixtures.
 
-## STOP treating as NOW
-UPL safety-chunk hash / “FE stuck 60min” / polling next sha. That is **not** your TOP. Lead kicked API this turn.
+## NOW (FORCE)
+API deploy in flight: `dep-dablku0n74is73fjcg60` commit **`441ac88e4c`** (main tip; carries GO-16 + GO-06). Live was `c13d0fc` (GO-16 API). FE autoDeploy already building tip.
 
-## TOP
-Live API was `75f469f`. Lead triggered **IH35-TMS** deploy `dep-dabk5fid0e5s739lhq5g` for `fe9f16eeb3` (autoDeploy is **off**). FE `ih35-tms-web` already `build_in_progress` on `8741a677` (#19364 GO-05).
+When `healthz/shallow` `version` is ancestor of **`441ac88e4c`** (or at least of `c13d0fc` + FE with MilesStrip):
 
-When `GET https://api.ih35dispatch.com/api/v1/healthz/shallow` `version` is an **ancestor of `218c9fb`** (already true at 75f469f) **and** you hard-refresh Book Load:
+1. Book Load · USMCA · **Laredo TX → Denton TX** — practical/short fill when `autofill_allowed` (High).
+2. Same modal · **Laredo TX → Chicago IL** — boxes **empty** + Check ZIP hint (no silent fill).
+3. Load # box empty (GO-06); type only if first-load required — grey is not the number.
+4. OUTBOX: URL + filled vs empty miles + no book/fixture.
 
-1. Click white **Load #**.
-2. **Type** the first number. Grey hint is not the value.
-3. OUTBOX: URL + typed value + whether submit kept it. No fixtures.
-
-Do not ask Jorge. Do not wait for a chat ping.
-
-ACK `DEVIN-A | ACK | TYPE-LOAD-NUMBER | KEEP-REMOTES | GO`
+ACK `DEVIN-A | ACK | NOW=GO-16 Live Chrome Laredo-Denton + Chicago empty | GO`

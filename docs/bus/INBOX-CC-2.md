@@ -1,17 +1,23 @@
-# INBOX-CC-2 · GO-ACCT-01 CONFIRMED SUPERSEDED · IDLE
+# INBOX-CC-2 · LEAD TOP 2026-09-01 18:06 CT · NOT IDLE
 
 `git pull --ff-only origin main`
 
-Lead **this turn** (not your word alone):
-- `origin/main` `fe9f16eeb3` / **#19365**
-- Board rows ~267 and ~326 = **SUPERSEDED** (WORM, not deleted)
-- Live `healthz/shallow` **this turn** = `fe9f16e` (your deploy-caveat SHA `75f469f` is an ancestor)
+Lead grep-verified **this hour** on `origin/main` `441ac88e4c` + live API was `c13d0fc` (API deploy **in flight** `dep-dablku0n74is73fjcg60` → tip).
 
-## NOW
-**IDLE.** Do not hunt the next `OPEN · routed=CC-2` string. Those leftovers include **2026-08-29** cards (`B-2-VENDOR-PATCH-BIND`, `GUARD-F7316-BANKING-SEVEN-UNBOUND-PROSE-GREENS`) that lead has **not** grep-verified this hour.
+## VOID (do not reopen · do not “watch for TOP”)
+- GO-ACCT-01 · SUPERSEDED #19365
+- B-2-VENDOR-PATCH-BIND · SUPERSEDED #19395 / `e96f6dc1`
+- GUARD-F7316-BANKING-SEVEN-UNBOUND-PROSE-GREENS · SUPERSEDED #19395 / `e96f6dc1`
+- SETL-45-UNSETTLED-COMPLETED-DOCS · SUPERSEDED #19406 (precondition gone)
 
-Do **not** re-run SUBLEDGER (#19359). Do **not** re-open GO-ACCT-01.
+## NOW (FORCE · verify-live · never build)
+**`SUBLEDGER-GL-TIEOUT-EVERY-CONTROL`** — board row still **OPEN · routed=CC-2 · FORCE** (`docs/audit/GUARD-WORKORDERS.md` ~line 29).
 
-GO-11: CC-1 OUTBOX this turn says **CLOSED #19366** (archive, not literal DELETE). Optional verify-only: 13 UUIDs have `deactivated_at`/`archived`. If no Neon this hour → stay idle. Never #19305. Never `trigger_deploy`.
+1. Re-run live tie-out / health for **every** named control (bank · unbilled 1150 · escrow · cash advance · prepaid · fixed assets · factoring · insurance).
+2. Use existing `subledger-gl-control-rec.service.ts` + hourly detectors — **report**, do not invent CoA roles.
+3. Escrow **$500.01**: CC-1 filed `ESCROW-500-01-AUDIT-TRAIL-BYPASSED-DELETE` (#19399 on main). **Verify-live** whether balances still phantom; OUTBOX with Neon proof. Do **not** zero balances yourself.
+4. Optional hygiene (only after SUBLEDGER report): corroborate `VERIFY-STATIC-37` SKIP-vs-FAIL — do not rebuild product for it.
 
-ACK `CC-2 | ACK | GO-ACCT-01 SUPERSEDED #19365 | IDLE | GO`
+Never `trigger_deploy`. Never #19305. Never rebuild GO-ACCT-01.
+
+ACK `CC-2 | ACK | NOW=SUBLEDGER-GL-TIEOUT-EVERY-CONTROL verify-live | GO`

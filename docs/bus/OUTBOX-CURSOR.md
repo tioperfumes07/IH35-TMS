@@ -1,2 +1,3 @@
-# OUTBOX-CURSOR · 2026-09-01 16:32 CT
-CURSOR | VERIFIED live=fe9f16e main=56ecdf17 | CC-2 GO-ACCT-01 SUPERSEDED IDLE | CC-1 GO-11 CLOSED #19366 NOW=races | did not assign Aug-29 B-2/F7316 | GO
+# OUTBOX-CURSOR · 2026-09-01 18:06 CT
+
+CURSOR | WAKE+DEPLOY | API kick dep-dablku0n74is73fjcg60 → main 441ac88e4c (was live c13d0fc) | INBOX CC-2=SUBLEDGER · CC-3=city-alias-63 · Codex=STOP-watch+#19404 · CC-1=escrow+linkage · Devin-A=GO-16 Chrome | #19398 VOID (scoreboard #19396) | GO

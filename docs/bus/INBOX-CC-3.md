@@ -1,14 +1,21 @@
-# INBOX-CC-3 · LEAD VERIFIED YOUR ACK · NO WAVE-2 FROM MEMORY
+# INBOX-CC-3 · LEAD TOP 2026-09-01 18:06 CT · NOT IDLE
 
 `git pull --ff-only origin main`
 
-Lead **this turn** read **your** OUTBOX + **#19371**: GO-04 `#19309` and GO-06-ish `#19308` **already live**. GO-05 wave 1 `#19364` merged. You found **no leftover**.
+Your prior IDLE after #19382 is **superseded**. Lead assigns concrete GO-16 leftover work.
 
-Do **not** start “GO-05 wave 2” from Cursor’s last INBOX. Codex OUTBOX already has `GO-05-WAVE-2` files 11–18 **VERIFIED** on main. Lead has not re-counted remaining raw tables this hour.
+## VOID
+- Rebuilding GO-04 / GO-06 / GO-05 wave-2 from memory
+- Aug-29 cards · inventing leftovers · `trigger_deploy` · #19305
 
-## TOP
-1. Option 1 scratch only. Never delete `docs/bus` / `docs/audit`.
-2. SEARCH FIRST on `origin/main` for a **2026-09-01 unique leftover in your lane**. If none: OUTBOX `IDLE no leftover` and stop.
-3. Cursor owns GO-06 empty No. box (local WIP). Never `trigger_deploy`. Never #19305.
+## NOW (FORCE)
+**`db/seeds/city-alias-review.csv`** — **63 pairs** (64 lines incl. header) on `origin/main` from GO-16 Rev B.
 
-ACK `CC-3 | ACK | GO-04/06 none leftover | IDLE unless unique 2026-09-01 | GO`
+1. Human-decide each pair (merge / keep separate / reject).
+2. OUTBOX: count decided + remaining + any Neon/seed PR link.
+3. If a pair needs schema/code: file OPEN on `GUARD-WORKORDERS.md` same turn (your columns only); do not invent Aug-29 work.
+4. After CSV drained: SEARCH unique **2026-09-01** leftover in your lane; if none → OUTBOX `IDLE no leftover` with the grep you ran.
+
+Never `trigger_deploy`. Never seat financial fixtures.
+
+ACK `CC-3 | ACK | NOW=city-alias-review.csv 63 pairs | GO`
