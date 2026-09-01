@@ -8142,7 +8142,7 @@ Source: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`. Every ST
 | **OPEN:** `FLT-01` — filters must be combo boxes in correct proportion. | CC-3 | **OPEN** |
 | **OPEN:** `FLT-02` — filter/gear must let you choose what to view, including posted only. | CURSOR | **OPEN** |
 | **OPEN:** `FLT-03` — hide voided by default, with toggle to show them. | CURSOR | **OPEN** |
-| **OPEN:** `FLT-04` — date range must actually re-query, not filter rows in memory. | CODEX | **OPEN** |
+| **CLOSED AS STALE:** `FLT-04` — At-Risk, Late Arrivals, and Detention each include `{ from, to }` in the React Query key and send the same range to the server request; changing the range therefore re-queries instead of filtering a capped client list. | CODEX | **CLOSED · register already records FIXED PR #19085; current-main source proof; `verify-dispatch-at-risk-complete-range` normal PASS + selftest 23/23** |
 
 ### Root 2 — Search (CURSOR)
 
