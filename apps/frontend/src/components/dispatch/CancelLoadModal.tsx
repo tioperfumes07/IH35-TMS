@@ -244,6 +244,21 @@ export function CancelLoadModal({
           placeholder="Cancellation charge (USD, optional)"
           className="w-full"
         />
+        {/* Cascade void notice — always shown so the operator knows what will happen automatically. */}
+        {!needsApproval || ownerInlineApprove ? (
+          <div
+            className="rounded-sm border border-slate-300 bg-slate-100 px-2 py-1.5 text-xs text-slate-800"
+            data-testid="cancel-load-modal-cascade-notice"
+          >
+            <span className="font-semibold">This will automatically:</span>
+            <ul className="mt-0.5 list-inside list-disc space-y-0.5">
+              <li>Void all open driver bills on this load</li>
+              <li>Cancel any linked driver settlements (if not yet paid out)</li>
+              <li>Void all open invoices on this load with a reversing journal entry</li>
+            </ul>
+            <p className="mt-1 text-slate-600">Paid or factored invoices and paid-out settlements must be resolved manually.</p>
+          </div>
+        ) : null}
         {needsApproval ? (
           ownerInlineApprove ? (
             <div className="rounded-sm border border-slate-200 bg-slate-100 px-2 py-1 text-xs text-slate-700">

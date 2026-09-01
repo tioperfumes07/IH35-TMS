@@ -5,6 +5,7 @@ import { createTonuInvoiceForCancellation, TONU_CANCELLATION_AR_POSTING_FLAG_KEY
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { emitDispatchSpineEvent } from "./dispatch-spine-emit.js";
 import { auditVoid, isVoidEnforcementEnabled, pgDateColumnToIsoDay, postVoidReversal } from "../accounting/void.service.js";
+import { executeVoidCancel } from "../governance/void-cancel-executors.js";
 
 function isOwner(role: string) {
   return role === "Owner";
@@ -272,31 +273,88 @@ export async function cancelLoadInClientTx(
       //      cancellation is refused, unchanged, until a human voids/settles those first. No
       //      partial cascade, no silent orphan.
       if (!pendingOwnerApproval) {
-        const openBillsForGate = await client.query<{ id: string; bill_number: string }>(
-          `SELECT id::text, bill_number FROM driver_finance.driver_bills
-            WHERE load_id = $1::uuid AND operating_company_id = $2::uuid AND status <> 'void'`,
+        // VOID-CASCADE-DRIVER-BILLS — void every open (non-void) driver bill for this load in the
+        // same transaction. A cancelled load should not leave phantom payables orphaned. The driver
+        // bill schema carries only status + updated_at (no voided_at column) so a simple status
+        // flip + audit is the correct WORM pattern here. This does NOT invent GL math — driver bills
+        // are a TMS-native subledger concept; their GL impact materialises only when they are pulled
+        // into a settlement and settled via reverseSettlementBillPaymentInClientTx below.
+        const openDriverBillsRes = await client.query<{ id: string; bill_number: string }>(
+          `SELECT id::text, bill_number
+             FROM driver_finance.driver_bills
+            WHERE load_id = $1::uuid
+              AND operating_company_id = $2::uuid
+              AND status <> 'void'
+            FOR UPDATE`,
           [input.load_id, input.operating_company_id]
         );
-        if (openBillsForGate.rows.length > 0) {
-          throw Object.assign(
-            new Error(
-              `load_cancel_blocked_open_driver_bills: ${openBillsForGate.rows.map((r) => r.bill_number).join(", ")} must be voided or settled before this load can be cancelled`
-            ),
-            { code: "load_cancel_blocked_open_driver_bills", details: openBillsForGate.rows }
+        const voidedDriverBillIds: string[] = [];
+        for (const bill of openDriverBillsRes.rows) {
+          await client.query(
+            `UPDATE driver_finance.driver_bills
+                SET status = 'void',
+                    updated_at = now()
+              WHERE id = $1::uuid
+                AND operating_company_id = $2::uuid
+                AND status <> 'void'`,
+            [bill.id, input.operating_company_id]
           );
+          await appendCrudAudit(
+            client,
+            userId,
+            "driver_finance.driver_bill.voided_by_load_cancel",
+            {
+              resource_type: "driver_finance.driver_bills",
+              resource_id: bill.id,
+              bill_number: bill.bill_number,
+              load_id: input.load_id,
+              operating_company_id: input.operating_company_id,
+              reason: `Load cancelled (${input.reason_code}) — driver bill voided by load cancellation cascade`,
+            },
+            "warning",
+            "VOID-CASCADE-LOAD-CANCEL"
+          );
+          voidedDriverBillIds.push(bill.id);
         }
-        const openSettlementLinesForGate = await client.query<{ id: string; settlement_id: string }>(
-          `SELECT id::text, settlement_id::text FROM driver_finance.settlement_lines
-            WHERE load_id = $1::uuid`,
-          [input.load_id]
+
+        // VOID-CASCADE-SETTLEMENTS — for each distinct settlement that has lines tied to this load
+        // and is not already paid/cancelled, cancel it via the shared executeVoidCancel executor
+        // (reuses reverseSettlementBillPaymentInClientTx — no new GL math). A 'paid' settlement
+        // already disbursed cash to the driver and cannot be reversed here; it becomes an explicit
+        // human task (the API will still succeed: paid settlements are skipped, not blocked).
+        const settlementLinesRes = await client.query<{ settlement_id: string }>(
+          `SELECT DISTINCT sl.settlement_id::text
+             FROM driver_finance.settlement_lines sl
+             JOIN driver_finance.driver_settlements ds
+               ON ds.id = sl.settlement_id
+              AND ds.operating_company_id = $2::uuid
+            WHERE sl.load_id = $1::uuid`,
+          [input.load_id, input.operating_company_id]
         );
-        if (openSettlementLinesForGate.rows.length > 0) {
-          throw Object.assign(
-            new Error(
-              `load_cancel_blocked_settlement_lines: this load has ${openSettlementLinesForGate.rows.length} settlement line(s) already attached — must be resolved before this load can be cancelled`
-            ),
-            { code: "load_cancel_blocked_settlement_lines", details: openSettlementLinesForGate.rows }
-          );
+        const cancelledSettlementIds: string[] = [];
+        const skippedSettlementIds: string[] = [];
+        for (const row of settlementLinesRes.rows) {
+          const cancelResult = await executeVoidCancel("driver_settlement", {
+            client,
+            operatingCompanyId: input.operating_company_id,
+            entityId: row.settlement_id,
+            action: "cancel",
+            userId,
+            reason: `Load cancelled (${input.reason_code}) — settlement cancelled by load cancellation cascade: ${input.cancellation_notes.trim()}`,
+          });
+          if (cancelResult.kind === "ok" || cancelResult.kind === "already_done") {
+            cancelledSettlementIds.push(row.settlement_id);
+          } else if (cancelResult.kind === "not_completable") {
+            // Settlement is 'paid' — cash already disbursed; skip and record for human review.
+            skippedSettlementIds.push(row.settlement_id);
+          } else {
+            throw Object.assign(
+              new Error(
+                `load_cancel_settlement_void_failed:${row.settlement_id}:${cancelResult.kind}`
+              ),
+              { code: "load_cancel_settlement_void_failed", settlement_id: row.settlement_id, result: cancelResult.kind }
+            );
+          }
         }
 
         const liveInvoicesForGate = await client.query<{ id: string; status: string; issue_date: string | null }>(
@@ -372,7 +430,10 @@ export async function cancelLoadInClientTx(
         // INV-2026-00024 (still proforma, voided_at NULL) and again on L-20260830-0020/0024 (still
         // 'sent', $2,500.00 + $1,100.00 orphaned, no reversing JE — the VOID-CANCEL-NOT-VOID
         // finding this whole block now closes).
-        if (voidedInvoiceIds.length > 0) {
+        // Always write the money-artifacts audit when any financial artifact was touched — this
+        // includes driver bills, settlements, and invoices. Even an empty set on one axis is
+        // worth recording (zero orphans = confirmed clean cascade).
+        if (voidedDriverBillIds.length > 0 || cancelledSettlementIds.length > 0 || voidedInvoiceIds.length > 0) {
           await appendCrudAudit(
             client,
             userId,
@@ -381,8 +442,12 @@ export async function cancelLoadInClientTx(
               resource_type: "mdata.loads",
               resource_id: input.load_id,
               operating_company_id: input.operating_company_id,
+              // Ordered steps: settlements first (GL reversal), then driver bills (subledger), then invoices (A/R reversal).
+              settlements_cancelled: cancelledSettlementIds,
+              settlements_skipped_paid: skippedSettlementIds,
+              driver_bills_voided: voidedDriverBillIds,
               invoices_voided: voidedInvoiceIds,
-              note: "every live (non-void) invoice on this load was voided with a reversing JE as part of the cancellation cascade",
+              note: "load cancellation cascade: settlements cancelled, driver bills voided, invoices voided with reversing JEs — all in the same transaction",
             },
             "warning",
             "VOID-CANCEL-NOT-VOID"
