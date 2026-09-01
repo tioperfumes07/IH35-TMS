@@ -1,3 +1,21 @@
+# ★ TOP · 2026-09-01T04:45Z · READ FIRST
+
+**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md` — single source for all insurance wiring.
+
+| # | Defect | You | Status |
+|---|---|---|---|
+| 1 | Wizard `$2::uuid` | **Verify live** after deploy `be6b02b` (#19063) | FIX merged — **smoke wizard + paste bills** |
+| 2 | 20 trailer assets + ACVs + attach 437539 | **BUILD** migration + data | OPEN — TIV tie $1,077,940 |
+| 3 | T144/T174/T156 USMCA assets + attach | **BUILD** — ask owner **once** on T156 Sold + T144 lease | OPEN |
+| 5 | 13 driver_schedule + dispatch gate | **BUILD** | OPEN |
+| purge | Finish phases 4–6 | **RUN** script to completion | Phase 4 in flight |
+
+**Do NOT:** recreate CIMD/437539/437540 · duplicate Lloyd's vendor · invent policy numbers.
+
+**Also:** void-tree API still blocks Cascade Void UI (below).
+
+---
+
 # ★ TOP · 2026-09-01T04:40Z · CC-1
 
 **P0 ASSET REGISTER (blocks insurance attach + wizard):**

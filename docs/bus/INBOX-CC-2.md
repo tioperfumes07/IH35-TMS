@@ -1,3 +1,13 @@
+# ★ TOP · 2026-09-01T04:45Z · READ FIRST
+
+**GO:** `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`
+
+1. **Grade purge** — phases 1–3b committed; REAL-only GL gate held. Phase 4 (485 sample JEs) running. Re-verify TB when CC-1 finishes.
+2. **NO-SEAT guard** — still OPEN if not on main.
+3. **Do not block CC-1** on insurance asset migration — grade proofs after merge.
+
+---
+
 # ★ MAIN UNBLOCKED · 2026-09-01T02:43Z · tip=`2ceb3449a0` (#19056)
 
 **tsc broken import FIXED.** SettlementsPage VoidReasonModal now imports `../../components/accounting/VoidReasonModal`.

@@ -1,5 +1,11 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 
+| **OPEN — P0 GO 2026-09-01:** `GO-INSURANCE-FULL-WIRING-FIX` — canonical: `docs/bus/GO-INSURANCE-FULL-WIRING-FIX-2026-09-01.md`. CC-1: trailer assets (20) + ACVs + 3 unit assets + driver_schedule + wizard live proof. CC-3: SAM-85 CSV. CURSOR: Defect 6 UI. **Do not recreate policies.** T163 correction: 12/15 APD attach today. | insurance · assets · dispatch | **CC-1+CC-3+CURSOR** | live query proof | Claude GO 2026-09-01 | **OPEN · FANOUT** |
+
+| **FIXED (PR #19063):** `INS-WIZARD-BILL-INSERT-TYPE-MISMATCH` — `$2::uuid` on `mdata_vendor_id` in policy-create-atomic bill INSERT. CC-1/CC-3 must smoke wizard post-deploy. | policy-create-atomic.service.ts | CC-1 verify | deploy `be6b02b` | merge 2026-09-01 | **FIXED · LIVE=UNVERIFIED until wizard smoke** |
+
+| **OPEN — P0 OWNER EXECUTE 2026-09-01:** `GO-INSURANCE-PURGE-0901` — **insurance/legal/hiring/ethics:** live Chrome create, no attorney pushback (`OWNER-EXECUTE-NO-PUSHBACK-LAW`). **Financial purge:** CC-1 money lane, TB/WORM unchanged. CC-3: real policies AL/APD/MTC. CC-1: seat junk purge, keep Plaid. | insurance + USMCA purge | **CC-3+CC-1** | paste + execute | owner chat | **OPEN** |
+
 | **OPEN — P0 OWNER PASTE 2026-09-01:** `LINKAGE-INTEGRITY-LAW` — match must be a record (`banking.matches`), not a one-sided pointer; DB TRIGGER releases both sides on void OR bank unmatch; ONE void column convention (`voided_at`+reason+by). Supersedes patching BANK-ORPHAN as one-offs. Owner paste → CC-1. | banking.matches · void triggers · void column migrate | **CC-1** | migration + trigger + migrate pointers + guard | OUTBOX-CC-1 claimed starting; zero matches table on main | **OPEN · routed=CC-1 · FORCE** |
 | **OPEN — P0 OWNER PASTE 2026-09-01:** `SUBLEDGER-GL-TIEOUT-EVERY-CONTROL` — extend beyond AR/AP: bank / unbilled 1150 / escrow / cash advance / prepaid / fixed assets / factoring / insurance; reuse `subledger-gl-control-rec.service.ts`; daily named workflow shadow until known variances resolve. Also file Unbilled $109k / BoA -$41k / CoA DRIVERCASHAD contamination. | recon + health + workflow | **CC-2** | report every control · shadow daily | health only AR/AP live; F-BAND handoff ≠ full tie-out | **OPEN · routed=CC-2 · FORCE** |
 
