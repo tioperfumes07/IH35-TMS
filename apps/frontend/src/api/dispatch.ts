@@ -846,7 +846,7 @@ export type AtRiskLoadRow = {
 export type DispatchAlertQuery = {
   from?: string;
   to?: string;
-  sort?: "event_at" | "load_number" | "customer_name" | "driver_name" | "unit_number" | "status";
+  sort?: "event_at" | "load_number" | "customer_name" | "driver_name" | "unit_number" | "status" | "location";
   direction?: "asc" | "desc";
 };
 
@@ -892,7 +892,7 @@ export type DispatchAlertLoadRow = AtRiskLoadRow & {
 
 function compareDispatchAlertRows(a: DispatchAlertLoadRow, b: DispatchAlertLoadRow, query: DispatchAlertQuery): number {
   const key = query.sort ?? "event_at";
-  const field = key === "event_at" ? "next_stop_scheduled_at" : key;
+  const field = key === "event_at" ? "next_stop_scheduled_at" : key === "location" ? "delivery_city" : key;
   const left = String(a[field as keyof DispatchAlertLoadRow] ?? "");
   const right = String(b[field as keyof DispatchAlertLoadRow] ?? "");
   const compared = left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" });

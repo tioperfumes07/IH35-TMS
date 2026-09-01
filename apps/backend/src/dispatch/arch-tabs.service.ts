@@ -8,7 +8,7 @@ export async function listAtRiskLoads(userId: string, operatingCompanyId: string
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const orderBy = dispatchAlertOrderBy(filters, {
       event_at: "sp.scheduled_arrival_at", load_number: "l.load_number", customer_name: "customer_name",
-      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status", location: "sd.city",
     });
     const res = await client.query(
       `

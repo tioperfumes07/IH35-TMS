@@ -39,7 +39,7 @@ export async function listLateArrivalLoads(userId: string, operatingCompanyId: s
     await setScopedCompanyContext(client, userId, operatingCompanyId);
     const orderBy = dispatchAlertOrderBy(filters, {
       event_at: "sp.scheduled_arrival_at", load_number: "l.load_number", customer_name: "customer_name",
-      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status",
+      driver_name: "driver_name", unit_number: "u.unit_number", status: "l.status", location: "sp.city",
     });
     const res = await client.query(
       `

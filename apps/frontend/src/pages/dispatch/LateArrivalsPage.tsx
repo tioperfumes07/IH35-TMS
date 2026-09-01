@@ -106,6 +106,7 @@ export function LateArrivalsPage() {
     {
       key: "next_stop_city",
       label: "Next stop",
+      sortable: true,
       render: (load) => (
         <>
           {[load.next_stop_city, load.next_stop_state].filter(Boolean).join(", ") || "—"}
@@ -162,10 +163,23 @@ export function LateArrivalsPage() {
           storageKey="dispatch-late-arrivals"
           exportFilename="late-arrivals"
           suppressToolbarRange
-          sortKey={(sort.sort ?? "event_at") === "event_at" ? "next_stop_scheduled_at" : sort.sort}
+          sortKey={
+            (sort.sort ?? "event_at") === "event_at"
+              ? "next_stop_scheduled_at"
+              : sort.sort === "location"
+                ? "next_stop_city"
+                : sort.sort
+          }
           sortDirection={sort.direction}
           sortMode="external"
-          onSortChange={(key, direction) => setSort({ sort: (key === "next_stop_scheduled_at" ? "event_at" : key) as NonNullable<DispatchAlertQuery["sort"]>, direction })}
+          onSortChange={(key, direction) =>
+            setSort({
+              sort: (key === "next_stop_scheduled_at" ? "event_at" : key === "next_stop_city" ? "location" : key) as NonNullable<
+                DispatchAlertQuery["sort"]
+              >,
+              direction,
+            })
+          }
         />
       ) : null}
     </div>
