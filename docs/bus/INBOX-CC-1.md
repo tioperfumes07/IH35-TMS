@@ -1,9 +1,8 @@
-# INBOX-CC-1 · seats paused · continuous
+# INBOX-CC-1 · GO-01 APPROVED
 
 ## TOP
-1. **GO `SETL-DUAL-APPROVAL-STATE-CONTRADICTION`** — 4 USMCA `driver_finance.driver_settlements` rows carry `status='approved'` while `approval_status='needs_review'`. One shared approve helper updates both columns + timestamps; entity-scoped backfill; ratcheting guard. Cursor SKIP — not FE-displayable.
-2. **LINKAGE-INTEGRITY-LAW** — banking.matches + void triggers
-3. **GO-INSURANCE assets/ACV** — NO recreate policies; NO-SEAT prod money
-4. **INV-OPEN-VOID-01** — phantom open on voided invoices
+1. **GO-01 P0** — trailers + ACV + 437539 unit count (15 tractors incl T163 + 20 trailers) + 13 drivers. TIV **exactly $1,077,940.00**. Copy schedule — do not invent. NO recreate policies. NO-SEAT money.
+2. **GO-02 API** — `GET coverage-gaps` returns per-unit `{coverage_type, status, policy_id, policy_number, expiry_date}[]`. Catalog-driven. Trailer Auto Liability = `not_required` not MISSING.
+3. **GO-05** — per-user column prefs table (after GO-01).
 
-Continuous FAST-MERGE. Never trigger_deploy.
+FAST-MERGE. Never trigger_deploy.

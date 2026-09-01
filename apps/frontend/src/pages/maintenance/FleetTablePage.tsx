@@ -47,6 +47,20 @@ function normalizeFleetStatusParam(raw: string | null): string {
   return v;
 }
 
+/** GO-04 class boxes — tractor/truck vs reefer vs flatbed vs everything else (incl. DryVan / SAM mistypes). */
+export function equipmentClassOf(row: { kind?: string; type?: string | null }): "trucks" | "reefers" | "flatbeds" | "other" {
+  const t = String(row.type ?? "").toLowerCase();
+  if (t === "reefer") return "reefers";
+  if (t === "flatbed") return "flatbeds";
+  if (row.kind === "truck" || t === "tractor" || t === "truck") return "trucks";
+  return "other";
+}
+
+function parseEquipmentClass(raw: string | null): "" | "trucks" | "reefers" | "flatbeds" | "other" {
+  if (raw === "trucks" || raw === "reefers" || raw === "flatbeds" || raw === "other") return raw;
+  return "";
+}
+
 function rowMatchesFleetStatus(row: UnifiedUnitRow, status: string): boolean {
   if (!status) return true;
   // Normalize again here so deep links (?status=out-of-service) still match when the
@@ -110,6 +124,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   const [locationHosExportError, setLocationHosExportError] = useState<string | null>(null);
   const [isExportingLocationHos, setIsExportingLocationHos] = useState(false);
   const typeFilter = parseFleetTypeFilter(searchParams);
+  const equipmentClass = parseEquipmentClass(searchParams.get("eqclass"));
   const kindFilter = searchParams.get("kind") ?? "";
   const rawStatus = searchParams.get("status");
   // Absent status → default (active-only on /fleet, all in Maintenance). "all" → no status filter.
@@ -261,9 +276,10 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
         // Operational status filter only narrows the default (Active) view; Inactive/All
         // show soft-deleted units of any operational status.
         if (softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus(r, effectiveStatus)) return false;
+        if (equipmentClass && equipmentClassOf(r) !== equipmentClass) return false;
         return true;
       }).map((r) => ({ ...r, ...(locationByUnit[r.id] ?? {}), ...(maintByUnit[r.id] ?? {}) })),
-    [allRows, kindFilter, effectiveStatus, softDeleteFilter, locationByUnit, maintByUnit]
+    [allRows, kindFilter, effectiveStatus, softDeleteFilter, equipmentClass, locationByUnit, maintByUnit]
   );
 
   // LV-FLEET-SEARCH-NO-FILTER: page-level search must narrow rows AND the "Showing X of Y"
@@ -285,7 +301,8 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       ? (totalRowsQuery.isError ? 0 : totalRowsQuery.data?.total ?? 0)
       : (rowsQuery.isError ? 0 : rowsQuery.data?.total ?? allRows.length);
   const filteredCount = searchedRows.length;
-  const hasActiveFilter = typeFilter !== "" || kindFilter !== "" || effectiveStatus !== "" || rosterSearch.trim() !== "";
+  const hasActiveFilter =
+    typeFilter !== "" || kindFilter !== "" || equipmentClass !== "" || effectiveStatus !== "" || rosterSearch.trim() !== "";
 
   const counters = useMemo(() => {
     // Count the same soft-delete slice the table uses (default: active / not deactivated).
@@ -306,6 +323,22 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
     };
   }, [rowsQuery.data?.rows, rowsQuery.isError, softDeleteFilter]);
 
+  const classCounters = useMemo(() => {
+    const sourceRows = (rowsQuery.isError ? [] : rowsQuery.data?.rows ?? []).filter((r) => {
+      if (softDeleteFilter === "active" && r.deactivated_at != null) return false;
+      if (softDeleteFilter === "inactive" && r.deactivated_at == null) return false;
+      if (kindFilter && r.kind !== kindFilter) return false;
+      if (softDeleteFilter === "active" && effectiveStatus && !rowMatchesFleetStatus(r, effectiveStatus)) return false;
+      return true;
+    });
+    return {
+      trucks: sourceRows.filter((r) => equipmentClassOf(r) === "trucks").length,
+      reefers: sourceRows.filter((r) => equipmentClassOf(r) === "reefers").length,
+      flatbeds: sourceRows.filter((r) => equipmentClassOf(r) === "flatbeds").length,
+      other: sourceRows.filter((r) => equipmentClassOf(r) === "other").length,
+    };
+  }, [rowsQuery.data?.rows, rowsQuery.isError, softDeleteFilter, kindFilter, effectiveStatus]);
+
   const patchParams = (mutate: (params: URLSearchParams) => void) => {
     setSearchParams(
       (prev) => {
@@ -318,10 +351,23 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
   };
 
   const setTypeFilter = (nextType: string) =>
-    patchParams((params) => (nextType ? params.set("type", nextType) : params.delete("type")));
+    patchParams((params) => {
+      if (nextType) params.set("type", nextType);
+      else params.delete("type");
+      params.delete("eqclass");
+    });
   const setKind = (nextKind: string) =>
     patchParams((params) => (nextKind ? params.set("kind", nextKind) : params.delete("kind")));
   const setStatus = (nextStatus: string) => patchParams((params) => params.set("status", nextStatus));
+  const setEquipmentClass = (next: typeof equipmentClass) =>
+    patchParams((params) => {
+      if (!next || next === equipmentClass) {
+        params.delete("eqclass");
+        return;
+      }
+      params.set("eqclass", next);
+      params.delete("type");
+    });
   const staged = useStagedListFilters({
     applied: { activeOnly, typeFilter }, empty: { activeOnly: defaultActiveOnly, typeFilter: "" },
     onApply: (next) => { setStatus(next.activeOnly ? "InService" : "all"); setTypeFilter(next.typeFilter); },
@@ -331,6 +377,7 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
       params.delete("type");
       params.delete("kind");
       params.delete("status");
+      params.delete("eqclass");
       // LV-FLEET-CLEAR-FILTERS-DROPS-Q: Clear filters must also drop ?q= or the Showing counter
       // stays narrowed after operators clear type/status (search sticks invisibly via URL).
       params.delete("q");
@@ -386,6 +433,36 @@ export function FleetTablePage({ operatingCompanyId, defaultActiveOnly = false, 
           }
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4" data-testid="maint-fleet-class-boxes">
+        <KpiCard
+          label="Trucks"
+          value={classCounters.trucks}
+          active={equipmentClass === "trucks"}
+          onClick={() => setEquipmentClass("trucks")}
+        />
+        <KpiCard
+          label="Reefers"
+          value={classCounters.reefers}
+          active={equipmentClass === "reefers"}
+          onClick={() => setEquipmentClass("reefers")}
+        />
+        <KpiCard
+          label="Flatbeds"
+          value={classCounters.flatbeds}
+          active={equipmentClass === "flatbeds"}
+          onClick={() => setEquipmentClass("flatbeds")}
+        />
+        <KpiCard
+          label="Other"
+          value={classCounters.other}
+          active={equipmentClass === "other"}
+          onClick={() => setEquipmentClass("other")}
+        />
+      </div>
+      <p className="text-[11px] text-gray-500">
+        Class boxes combine with Active / In-Shop / OOS. Click the selected class again to clear. Other includes DryVan and any SAM rows still mistyped — that number is honest, not massaged.
+      </p>
 
       {kpisQuery.isError ? <ListErrorState status={0} message="Fleet age metrics could not be loaded." onRetry={() => void kpisQuery.refetch()} /> : null}
       {totalRowsQuery.isError ? <ListErrorState status={0} message="The all-type fleet count could not be loaded." onRetry={() => void totalRowsQuery.refetch()} /> : null}

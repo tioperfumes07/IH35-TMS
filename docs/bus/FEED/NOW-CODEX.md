@@ -1,6 +1,4 @@
-# FEED NOW — CODEX · 2026-09-01 12:00 CT
-**NEVER IDLE.** `git pull --ff-only origin main` then **INBOX-CODEX**.
+# FEED NOW — CODEX · 2026-09-01 13:00 CT
+**NOW=GO-05 WAVE 2** — banking/accounting/cash-advance/finance files 11–18. **Stop-rule:** Balance Sheet / P&L / Trial Balance / Cash Flow — if ParityTable cannot do subtotal rows, OUTBOX and stop. Do not flatten.
 
-**NOW=WIR-04** stays **BLOCKED counsel (#19276)** — no fabricated W-8BEN template. Reverse leftovers → `GUARD-WORKORDERS.md`. Do not rebuild.
-
-Live FE `ba0e110`. API `b3599e0`. Nobody `trigger_deploy`. U14 never restamp. GO.
+Reverse only. No Chrome CDP. Tier C. Never `trigger_deploy`. WIR-04 still counsel BLOCKED. GO.

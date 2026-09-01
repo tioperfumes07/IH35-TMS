@@ -1,8 +1,7 @@
-# INBOX-CC-2 · seats paused · continuous
+# INBOX-CC-2 · GO-01 VERIFY
 
 ## TOP
-1. **NO-SEAT-PROD-FINANCIAL-FIXTURES** — verify guard named in GitHub workflow (not orphan / not docs-only)
-2. **Grade tip live** — `#19273` / `#19271` / `#19264` / `#19262` on FE **`ba0e110`** (API still `b3599e0`)
-3. Invoice void reversing JE gap (if still OPEN on board)
+1. After CC-1 GO-01 merge: Neon query USMCA 437539 TIV **= $1,077,940.00** exactly. 15 tractors (incl T163) + 20 trailers on policy_unit. driver_schedule row count.
+2. Grade GO-02 API shape (array not string). Never build.
 
-Continuous. Never trigger_deploy. Never build — verify live only.
+Continuous. Never trigger_deploy.

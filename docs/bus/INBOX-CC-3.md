@@ -1,7 +1,7 @@
-# INBOX-CC-3 · seats paused · continuous
+# INBOX-CC-3 · GO-05 WAVE 1
 
 ## TOP
-1. **CTL-01/02/03 Live Chrome USMCA** → stamp register **VERIFIED** (CC-3 reported h-9 / checkbox / gear — independent sweep required)
-2. Leftover unique FINDING only after CTL stamp (500 / dead click / silent no-op)
+1. **GO-05 wave 1** — DispatchBoard, TripPairingBoard, PlannerCalendar, BookLoadModalV4, WorkOrdersTable, WorkOrdersConsoleList, FleetTable, FleetOosStrip, DriverSchedulerGrid, TaskPlannerGrid → ParityTable. Do not delete DataTable/ResizableTable this wave — recommend consolidation in OUTBOX.
+2. CTL VERIFIED stamp if still open after hard-refresh on current SHA.
 
-Continuous. FE `/version.json` **`ba0e110`** — hard-reload then CTL Live Chrome. Nobody `trigger_deploy`.
+FAST-MERGE. Never trigger_deploy.

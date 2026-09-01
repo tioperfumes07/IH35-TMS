@@ -1,2 +1,2 @@
-# INBOX-DEVIN-A · OWNER NO PAUSE
-FE **`ba0e110` live.** CTL prove; Mark Invoiced; Assignment Location; Book Load Cycle. OUTBOX. NO-SEAT. No idle. Hard-reload. API still `b3599e0`.
+# INBOX-DEVIN-A · GO-01–05
+Hard-reload. API `7496ccf`. Walk maintenance home KPIs + fleet class boxes after GO-04 FE. Coverage Gaps / Fleet Covered still unbuilt until GO-02/03. NO-SEAT. OUTBOX.
