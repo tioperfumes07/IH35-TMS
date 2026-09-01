@@ -37,7 +37,7 @@ import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 // "not_sent" remains a client-side derived filter over the fetched page (no server contract).
 // NOTE: QBO's "Viewed" filter is intentionally NOT offered — accounting.invoices has no read-receipt /
 // viewed_at tracking field, so a "Viewed" option would silently return nothing (do not fabricate).
-type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance";
+type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance" | "active";
 
 const REAL_INVOICE_STATUSES: InvoiceStatus[] = ["draft", "sent", "partial", "paid", "void", "factored"];
 function isRealInvoiceStatus(value: string): value is InvoiceStatus {
@@ -45,7 +45,8 @@ function isRealInvoiceStatus(value: string): value is InvoiceStatus {
 }
 
 const STATUS_OPTIONS: Array<{ value: InvoiceListFilter; label: string }> = [
-  { value: "", label: "All statuses" },
+  { value: "active", label: "Active (hide voided)" },
+  { value: "", label: "All statuses (include voided)" },
   { value: "draft", label: "Draft" },
   { value: "sent", label: "Sent" },
   { value: "partial", label: "Partial" },
@@ -88,10 +89,13 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   const statusRaw = searchParams.get("status") ?? "";
   // Legacy deep-link status=with_balance → treat as has_balance (UI still shows "With balance").
   const hasBalance = hasBalanceParam || statusRaw === "with_balance";
-  let status: InvoiceListFilter = "";
+  let status: InvoiceListFilter = "active";
   if (hasBalance) status = "with_balance";
   else if (statusRaw === "not_sent") status = "not_sent";
+  else if (statusRaw === "active") status = "active";
+  else if (statusRaw === "all") status = "";
   else if (isRealInvoiceStatus(statusRaw)) status = statusRaw;
+  else if (statusRaw === "") status = "";
   return { customerId, status, hasBalance };
 }
 
@@ -147,6 +151,8 @@ export function InvoicesListPage() {
         params.delete("status");
         params.delete("has_balance");
         if (next.status === "with_balance") params.set("has_balance", "true");
+        else if (next.status === "") params.set("status", "all");
+        else if (next.status === "active") params.set("status", "active");
         else if (next.status) params.set("status", next.status);
         if (next.customerId) params.set("customer_id", next.customerId);
         else params.delete("customer_id");
@@ -159,7 +165,7 @@ export function InvoicesListPage() {
   }
   const staged = useStagedListFilters({
     applied: { status, customerId, fromDate, toDate, sourceLoadId: deepLinkSourceLoadId || "" },
-    empty: { status: "" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "", sourceLoadId: "" },
+    empty: { status: "active" as InvoiceListFilter, customerId: "", fromDate: "", toDate: "", sourceLoadId: "" },
     onApply: (next) => {
       applyUrlFilters({ status: next.status, customerId: next.customerId, sourceLoadId: next.sourceLoadId });
       setFromDate(next.fromDate);
@@ -233,7 +239,14 @@ export function InvoicesListPage() {
     ],
     queryFn: () =>
       listInvoices(selectedCompanyId!, {
-        status: isRealInvoiceStatus(status) ? status : undefined,
+        status:
+          status === "active"
+            ? "active"
+            : status === "" || status === "not_sent" || status === "with_balance"
+              ? undefined
+              : isRealInvoiceStatus(status)
+                ? status
+                : undefined,
         has_balance: hasBalance || undefined,
         customer_id: customerId || undefined,
         search: search || undefined,

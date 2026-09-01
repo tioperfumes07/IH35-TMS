@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, useLoadsList, useUpdateLoadStatus } from "../api/loads";
@@ -123,6 +123,17 @@ export function DispatchPage({
   const { companies, selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [newLoadOpen, setNewLoadOpen] = useState(initialSubTab === "book_load");
+  // MOD-01 — after Cancel, URL-derived /dispatch/book-load must not reopen until the operator clicks + Book Load.
+  const bookLoadAutoOpenSuppressedRef = useRef(false);
+  const openBookLoadModal = useCallback(() => {
+    bookLoadAutoOpenSuppressedRef.current = false;
+    setNewLoadOpen(true);
+  }, []);
+  const dismissBookLoadModal = useCallback(() => {
+    bookLoadAutoOpenSuppressedRef.current = true;
+    setNewLoadOpen(false);
+    setBookUnitId(null);
+  }, []);
   // Dispatch "+ Book load" per Awaiting-assignment truck card — prefill that unit into the new booking.
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
@@ -216,6 +227,7 @@ export function DispatchPage({
     const onBookPath = location.pathname.replace(/\/$/, "") === "/dispatch/book-load";
     const q = searchParams.get("book_load") === "1";
     if (!onBookPath && !q) return;
+    if (bookLoadAutoOpenSuppressedRef.current) return;
     setNewLoadOpen(true);
     if (!q) return;
     const next = new URLSearchParams(searchParams);
@@ -378,7 +390,7 @@ export function DispatchPage({
             >
               Planners
             </Button>
-            <Button type="button" onClick={() => setNewLoadOpen(true)}>
+            <Button type="button" onClick={() => openBookLoadModal()}>
               + Book Load
             </Button>
           </div>
@@ -441,7 +453,7 @@ export function DispatchPage({
               next.set("load_id", id);
               setSearchParams(next);
             }}
-            onBookReturn={() => setNewLoadOpen(true)}
+            onBookReturn={() => openBookLoadModal()}
           />
         ) : view === "list" ? (
           <DispatchBoard
@@ -476,7 +488,7 @@ export function DispatchPage({
             onExportCsv={exportCsv}
             onBookForUnit={(unitId) => {
               setBookUnitId(unitId);
-              setNewLoadOpen(true);
+              openBookLoadModal();
             }}
           />
         ) : (
@@ -502,7 +514,7 @@ export function DispatchPage({
             }}
             onBookForUnit={(unitId) => {
               setBookUnitId(unitId);
-              setNewLoadOpen(true);
+              openBookLoadModal();
             }}
             onStatusDrop={async (id, nextStatus) => {
               // DO NOT add a try/catch here. DispatchKanban owns this failure path and handles it correctly:
@@ -523,7 +535,7 @@ export function DispatchPage({
         <DataPanel title="Book load">
           <DataPanelRow>
             <span className="text-sm text-gray-700">Use the Book Load flow to create a new dispatch load.</span>
-            <button className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => setNewLoadOpen(true)} type="button">
+            <button className="rounded-sm border border-slate-300 px-2 py-1 text-xs text-slate-700" onClick={() => openBookLoadModal()} type="button">
               + Book Load
             </button>
           </DataPanelRow>
@@ -619,14 +631,12 @@ export function DispatchPage({
         operatingCompanyId={defaultCompanyIds[0] ?? ""}
         prefillUnitId={bookUnitId}
         onClose={() => {
-          setNewLoadOpen(false);
-          setBookUnitId(null);
+          dismissBookLoadModal();
           retractBookLoadUrl();
         }}
         onCreated={() => {
           pushToast("Load saved", "success");
-          setNewLoadOpen(false);
-          setBookUnitId(null);
+          dismissBookLoadModal();
           retractBookLoadUrl();
           void loadsQuery.refetch();
         }}

@@ -108,8 +108,24 @@ type ListVendorBalancesOptions = {
   sort: "balance_desc" | "balance_asc" | "vendor_asc";
 };
 
+type BillListStatus = BillStatus | "unpaid" | "active" | "all";
+
+function applyBillListStatusFilter(where: string[], status: BillListStatus | undefined) {
+  if (!status || status === "all") return;
+  if (status === "active") {
+    where.push("b.revoked_at IS NULL");
+    where.push("b.status NOT IN ('void', 'voided')");
+    return;
+  }
+  if (status === "open") where.push("b.status IN ('open','unpaid')");
+  if (status === "partial") where.push("b.status IN ('partial','partially_paid')");
+  if (status === "paid") where.push("b.status = 'paid'");
+  if (status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
+  if (status !== "voided") where.push("b.revoked_at IS NULL");
+}
+
 type ListBillsOptions = {
-  status?: BillStatus;
+  status?: BillListStatus;
   fromDate?: string;
   toDate?: string;
   hasBalance?: boolean;
@@ -883,15 +899,7 @@ export async function listBillsByVendor(
       values.push(options.toDate);
       where.push(`b.bill_date <= $${values.length}::date`);
     }
-    if (options.status) {
-      if (options.status === "open") where.push("b.status IN ('open','unpaid')");
-      if (options.status === "partial") where.push("b.status IN ('partial','partially_paid')");
-      if (options.status === "paid") where.push("b.status = 'paid'");
-      if (options.status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
-      if (options.status !== "voided") where.push("b.revoked_at IS NULL");
-    } else {
-      where.push("b.revoked_at IS NULL");
-    }
+    applyBillListStatusFilter(where, options.status);
     if (options.hasBalance) {
       // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
       // status 'void' can exist with revoked_at NULL (legacy/partial void) and still amount-paid > 0.
@@ -981,15 +989,7 @@ function buildAllBillsWhereClause(
     values.push(options.toDate);
     where.push(`b.bill_date <= $${values.length}::date`);
   }
-  if (options.status) {
-    if (options.status === "open") where.push("b.status IN ('open','unpaid')");
-    if (options.status === "partial") where.push("b.status IN ('partial','partially_paid')");
-    if (options.status === "paid") where.push("b.status = 'paid'");
-    if (options.status === "voided") where.push("(b.status IN ('void','voided') OR b.revoked_at IS NOT NULL)");
-    if (options.status !== "voided") where.push("b.revoked_at IS NULL");
-  } else {
-    where.push("b.revoked_at IS NULL");
-  }
+  applyBillListStatusFilter(where, options.status);
   if (options.hasBalance) {
     // LV-PAYABLE-SELECTOR-OFFERS-VOIDED-BILLS / ACCT-F5028: dollar open ≠ payable.
     where.push(`${BILL_OPEN_BALANCE_SQL} > 0`);

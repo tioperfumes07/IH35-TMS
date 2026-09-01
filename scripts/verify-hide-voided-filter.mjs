@@ -80,6 +80,37 @@ if (!/filters\.status === "active"[\s\S]{0,200}e\.status <> 'void'/.test(expRout
   failures.push("FLT-03: queryExpensesList must map status=active → e.status <> 'void'");
 }
 
+const billsPage = read("apps/frontend/src/pages/accounting/BillsPage.tsx");
+if (!/const \[status, setStatus\][\s\S]{0,320}: "active"/.test(billsPage)) {
+  failures.push("FLT-03: BillsPage must default status filter to active (hide voided)");
+}
+if (!/value="active">Active \(hide voided\)/.test(billsPage)) {
+  failures.push("FLT-03: BillsPage must expose Active (hide voided) status option");
+}
+
+const billsRoutes = read("apps/backend/src/accounting/bills.routes.ts");
+if (!/status: z\.enum\(\[[^\]]*"active"[^\]]*\]\)/.test(billsRoutes)) {
+  failures.push("FLT-03: listBillsQuerySchema must accept status=active");
+}
+
+const billsSvc = read("apps/backend/src/accounting/bills.service.ts");
+if (!/function applyBillListStatusFilter/.test(billsSvc) || !/status === "active"[\s\S]{0,120}b\.status NOT IN \('void', 'voided'\)/.test(billsSvc)) {
+  failures.push("FLT-03: listBills must map status=active → hide voided bills");
+}
+
+const invoicesPage = read("apps/frontend/src/pages/accounting/InvoicesListPage.tsx");
+if (!/value: "active", label: "Active \(hide voided\)"/.test(invoicesPage)) {
+  failures.push("FLT-03: InvoicesListPage must expose Active (hide voided) status option");
+}
+if (!/let status: InvoiceListFilter = "active"/.test(invoicesPage)) {
+  failures.push("FLT-03: InvoicesListPage must default status filter to active (hide voided)");
+}
+
+const invRoutes = read("apps/backend/src/accounting/invoices.routes.ts");
+if (!/q\.status === "active"[\s\S]{0,200}i\.status NOT IN \('void', 'voided'\)/.test(invRoutes)) {
+  failures.push("FLT-03: listInvoices must map status=active → hide voided invoices");
+}
+
 if (failures.length) {
   console.error(`${LABEL} FAIL`);
   for (const f of failures) console.error(`- ${f}`);

@@ -275,7 +275,10 @@ export async function registerInvoiceRoutes(app: FastifyInstance) {
       // (verify-mdata-entity-scope scans template text; interpolated JS where-clauses alone are insufficient).
       const extraWhere: string[] = [];
       const values: unknown[] = [q.operating_company_id];
-      if (q.status) {
+      if (q.status === "active") {
+        extraWhere.push("i.voided_at IS NULL");
+        extraWhere.push("i.status NOT IN ('void', 'voided')");
+      } else if (q.status && q.status !== "all") {
         values.push(q.status);
         extraWhere.push(`i.status = $${values.length}`);
       }
