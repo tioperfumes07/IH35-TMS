@@ -117,35 +117,38 @@ function sectionControlIssues(content) {
   return issues;
 }
 
-/** DSP-05 — Assignment + Booked/Assigned partitions must expose header sort + column reorder/width. */
+/** DSP-05 — Assignment Booked/Assigned bands use ParityTable (COL-02 reorder + location column). */
 function assignmentHeaderSortIssues(content) {
   const issues = [];
   if (!content.includes('data-testid="dispatch-board-assignment-view"')) {
     issues.push("assignment view must remain mounted with dispatch-board-assignment-view testid (DSP-05)");
   }
-  if (!content.includes('data-testid={`dispatch-assignment-headers-${band}`}')) {
-    issues.push("assignment partitions must render band-scoped sortable header rows (DSP-05)");
+  if (!/renderAssignmentView[\s\S]{0,18000}<ParityTable/.test(content)) {
+    issues.push("assignment booked/assigned bands must use ParityTable for COL-02 drag-reorder (DSP-05)");
   }
-  if (!/renderAssignmentView[\s\S]{0,12000}<TableHeaderCell/.test(content)) {
-    issues.push("assignment booked/assigned tables must use TableHeaderCell for ASC/DESC sort (DSP-05)");
+  if (!content.includes('storageKey={`dispatch-assignment-${band}`}')) {
+    issues.push("assignment ParityTable must persist column order/width per band via storageKey (DSP-05)");
   }
-  if (!content.includes('useTablePref("dispatch-assignment-booked"')) {
-    issues.push("booked assignment band must persist column widths/order via useTablePref (DSP-05)");
+  if (!content.includes('tableTestId={`dispatch-assignment-table-${band}`}')) {
+    issues.push("assignment ParityTable must expose band-scoped tableTestId (DSP-05)");
   }
-  if (!content.includes('useTablePref("dispatch-assignment-assigned"')) {
-    issues.push("assigned assignment band must persist column widths/order via useTablePref (DSP-05)");
+  if (!/bookedAssignmentColumns[\s\S]{0,2500}key:\s*"location"/.test(content)) {
+    issues.push("booked assignment band must include location column via locationByUnit (DSP-05)");
   }
-  if (!/useColumnReorder[\s\S]{0,4000}dispatch-assignment-booked|savedBookedAssignmentOrder/.test(content)) {
-    issues.push("booked assignment band must wire useColumnReorder for drag-reorder (DSP-05)");
+  if (!/assignedAssignmentColumns[\s\S]{0,2500}key:\s*"location"/.test(content)) {
+    issues.push("assigned assignment band must include location column via locationByUnit (DSP-05)");
   }
-  if (!/useColumnReorder[\s\S]{0,4000}dispatch-assignment-assigned|savedAssignedAssignmentOrder/.test(content)) {
-    issues.push("assigned assignment band must wire useColumnReorder for drag-reorder (DSP-05)");
+  if (!/function renderUnitLocationCell\s*\(/.test(content)) {
+    issues.push("assignment location column must reuse renderUnitLocationCell + fleetLocationQuery feed (DSP-05)");
   }
-  if (!content.includes("toggleAssignmentBandSort")) {
-    issues.push("assignment partitions must expose band-local header sort toggles (DSP-05)");
+  if (!content.includes('sortMode="external"')) {
+    issues.push("assignment ParityTable must use external sortMode with band-local sort state (DSP-05)");
   }
-  if (!content.includes('onToggleSort={(columnKey) => toggleAssignmentBandSort(band, columnKey)}')) {
-    issues.push("assignment TableHeaderCell must call toggleAssignmentBandSort (DSP-05)");
+  if (!/setAssignmentBandSorts\s*\(\(current\)/.test(content)) {
+    issues.push("assignment partitions must expose band-local header sort state (DSP-05)");
+  }
+  if (/dispatch-assignment-table-(booked|assigned)[\s\S]{0,500}enableColumnReorder=\{false\}/.test(content)) {
+    issues.push("assignment ParityTable must not disable enableColumnReorder (COL-02 / DSP-05)");
   }
   return issues;
 }
@@ -325,10 +328,12 @@ if (process.argv.includes("--selftest")) {
     fail("selftest mutation escaped DSP-02 four-column schedule guard");
   }
   const assignmentMutants = [
-    src.replace('useTablePref("dispatch-assignment-booked"', 'useTablePref("dispatch-board"'),
-    src.replaceAll("toggleAssignmentBandSort", "toggleDispatchSort"),
-    src.replaceAll("<TableHeaderCell", "<th"),
-    src.replace('data-testid={`dispatch-assignment-headers-${band}`}', 'data-testid="dispatch-assignment-headers"'),
+    src.replace('<ParityTable<BoardLoad>', '<table'),
+    src.replace('storageKey={`dispatch-assignment-${band}`}', 'storageKey="dispatch-board"'),
+    src.replace('key: "location", label: "Location"', 'key: "location_removed", label: "Location"'),
+    src.replace("function renderUnitLocationCell(", "function renderUnitLocationCellRemoved("),
+    src.replace('sortMode="external"', 'sortMode="internal"'),
+    src.replace("setAssignmentBandSorts((current)", "setAssignmentBandSortsRemoved((current)"),
   ];
   if (!assignmentMutants.every((mutant) => assignmentHeaderSortIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-05 assignment header sort guard");
