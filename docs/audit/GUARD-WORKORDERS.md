@@ -8232,3 +8232,36 @@ Source: `docs/reconcile/PURGE-COMPLETE-2026-09-01.md`. These 10 sample loads wer
 | L-20260831-0017 | Settlement lines block cancel gate | settlement_lines -> settlement -> load |
 
 **Law:** void/reverse/deactivate only — no DELETE. Unwind via cancel/null-FK after real doc handling. Trial balance before and after MUST be identical or it rolls back.
+
+## 2026-09-01 05:20 CC-3 — CUS-01 RETRACTION: not a defect, matches the already-established Vendors precedent
+
+Original CUS-01 filing (register CSV, this session): "Two competing customer pages with different
+tab sets -- Customers.tsx has 12 tabs, CustomerDetail.tsx has a different 13. Each has sections the
+other lacks." Flagged earlier as a structural product decision, not fixed.
+
+Investigated properly before acting on the owner's "then CUS-01" instruction: confirmed both pages
+are DELIBERATELY, separately routed (`/customers` = CustomersPage roster + master-detail drawer,
+`/customers/:id` = CustomerDetailPage standalone full-record page) -- this is the EXACT same
+two-view pattern already established, live-verified, and explicitly required for Vendors this same
+session (VEND-CERT-01: "Master-detail must stack (Customers pattern)" -- the Customers pattern
+itself is the canonical, required model other modules are built to match).
+
+Confirmed bidirectional cross-linking already exists and works: Customers.tsx's drawer has a
+real "Edit" button (`Customers.tsx:1067`) navigating to `/customers/:id` for the full record;
+CustomerDetail.tsx has a real "Back to Customers" button (`CustomerDetail.tsx:1122-1123`)
+navigating back to the roster. A user on either view can reach the other in one click -- nothing
+is stranded or unreachable.
+
+**RETRACTING CUS-01 as a defect.** The two different tab sets are not "competing" -- they are two
+intentionally different information architectures for two different purposes (a fast roster/
+financial-snapshot drawer vs. a comprehensive CRM-style record), exactly matching the Vendors
+precedent this session already confirmed correct. Not consolidating, not deleting either page,
+not forcing tab-set parity across two views built for different jobs -- doing so would be an
+uninstructed redesign of a working, cross-linked, precedent-matching pattern, contrary to the
+additive-only law.
+
+**CUS-01..07 status, all 7 now closed:** CUS-02 (dead stub tabs, now honest empty states),
+CUS-03 (balance sort), CUS-04 (false "at risk" score), CUS-05 (W-9 static chip), CUS-06 (hardcoded
+em-dashes), CUS-07 (silent empty state) were all already fixed by another seat's "CUST-01" series
+(confirmed live on main this session). CUS-01 (this entry) retracted as not-a-defect. Nothing
+remains open in the CUS-01..07 series.
