@@ -4,6 +4,7 @@ import { listUnits } from "../../api/mdata";
 import { listSevereRepairEstimates } from "../../api/maintenance";
 import { capNotice, listCapInfo } from "../../lib/list-cap";
 import { entityLabel } from "../../lib/entity-label";
+import { isOperatorVisibleUnit } from "../../lib/operator-fleet-visibility";
 import { EntityLink } from "../shared/EntityLink";
 import { ListErrorState } from "../ListErrorState";
 
@@ -88,6 +89,7 @@ export function FleetOosStrip({ operatingCompanyId }: Props) {
       const unit = raw as UnitRecord;
       const unitId = String(unit.id ?? "");
       if (!unitId) continue;
+      if (!isOperatorVisibleUnit(unit)) continue;
 
       const inShop =
         Boolean(unit.is_oos) ||

@@ -6,6 +6,7 @@ import { processMaintenanceWorkOrderClose } from "../accounting/maintenance-post
 import { companyQuerySchema, resolvePrintOperatingCompanyId, validationError, withCompanyScope } from "../accounting/shared.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { autoCreateBillFromWO } from "../maintenance/two-section-service.js";
+import { operatorWorkOrderListSql } from "../maintenance/work-order-visibility.js";
 import { auditVoid, postVoidReversal, type VoidReversalResult } from "../accounting/void.service.js";
 import { requireVoidCancelExecutorWired } from "../lib/authz/void-cancel-authz.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -457,11 +458,8 @@ export async function registerWorkOrdersV1Routes(app: FastifyInstance) {
 
       const values: unknown[] = [q.operating_company_id];
       const where: string[] = ["w.operating_company_id = $1::uuid"];
-      // MAINT-1: hide DEMO-/TEST- seed work orders (e.g. DEMO-WO-001) from the live WO list. Applied
-      // to the shared `where` so both the tab counts and the rows exclude them. Read-only — the WO
-      // rows stay in maintenance.work_orders (void-not-delete), just hidden from operational views.
-      where.push("COALESCE(w.display_id, '') NOT ILIKE 'DEMO-%'");
-      where.push("COALESCE(w.display_id, '') NOT ILIKE 'TEST-%'");
+      // MAINT-1: hide DEMO-/TEST- seed work orders from operator lists (shared work-order-visibility.ts).
+      where.push(operatorWorkOrderListSql("w"));
 
       if (q.wo_billing_type) {
         values.push(q.wo_billing_type);
