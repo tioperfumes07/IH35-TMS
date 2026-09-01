@@ -826,7 +826,7 @@ export function BillsPage() {
                 setBatchVoidOpen(true);
               }}
             >
-              Void
+              {`Void ${selected.length} selected`}
             </Button>
           </>
         )}

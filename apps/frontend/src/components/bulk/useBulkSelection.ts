@@ -8,7 +8,11 @@ export type BulkSelectionCapError = {
 };
 
 export type UseBulkSelectionOptions = {
-  /** Max selectable IDs (200 default; Fleet uses 100). */
+  /**
+   * Max selectable IDs. Default **200** (matches DEFAULT_BULK_MAX_IDS / ParityTable maxSelectable).
+   * When a toggle/select would exceed the cap, the change is a **no-op** and `onCapExceeded` fires —
+   * selection is NEVER silently truncated (owner would otherwise void fewer than selected).
+   */
   cap?: number;
   onCapExceeded?: (error: BulkSelectionCapError) => void;
 };
@@ -53,11 +57,15 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
     [emitCapError, wouldExceedCap]
   );
 
+  /**
+   * BULK-SELECTION-SCOPE-01 — PAGE-SCOPED select.
+   * Selecting a page REPLACES the selection with exactly those ids (does not accumulate
+   * prior pages). Destructive bulk is fail-stop atomic; cross-page accumulation is a defect.
+   */
   const selectPage = useCallback(
     (ids: string[]) => {
       setSelectedIds((prev) => {
-        const next = new Set(prev);
-        for (const id of ids) next.add(id);
+        const next = new Set(ids);
         if (wouldExceedCap(next)) {
           emitCapError(next.size);
           return prev;
@@ -78,6 +86,21 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
 
   const selectAll = selectPage;
 
+  /** Deliberate escape hatch: select an explicit matching set (still capped). */
+  const selectMatching = useCallback(
+    (ids: string[]) => {
+      setSelectedIds((prev) => {
+        const next = new Set(ids);
+        if (wouldExceedCap(next)) {
+          emitCapError(next.size);
+          return prev;
+        }
+        return next;
+      });
+    },
+    [emitCapError, wouldExceedCap]
+  );
+
   const clear = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
@@ -91,11 +114,12 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       toggle,
       selectPage,
       selectAll,
+      selectMatching,
       deselectPage,
       clear,
       count,
       cap,
     }),
-    [cap, clear, count, deselectPage, selectAll, selectPage, selectedIds, setSelectedIds, toggle]
+    [cap, clear, count, deselectPage, selectAll, selectMatching, selectPage, selectedIds, setSelectedIds, toggle]
   );
 }

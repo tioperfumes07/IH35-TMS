@@ -24,6 +24,7 @@ export function useBulkSelection(options: UseBulkSelectionOptions = {}) {
       toggleAll: base.selectPage,
       selectPage: base.selectPage,
       selectAll: base.selectAll,
+      selectMatching: base.selectMatching,
       deselectPage: base.deselectPage,
       clearSelection: base.clear,
       clear: base.clear,

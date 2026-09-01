@@ -126,6 +126,36 @@ describe("ParityTable (A1 grammar)", () => {
       expect(screen.getByTestId("batch-ids")).toHaveTextContent("1,2");
     });
 
+    it("BULK-SELECTION-SCOPE-01: select-all on page replaces selection; Clear selection always present", () => {
+      const many: Row[] = [
+        { id: "1", name: "A", amount: "$1" },
+        { id: "2", name: "B", amount: "$2" },
+        { id: "3", name: "C", amount: "$3" },
+      ];
+      render(
+        <ParityTable<Row>
+          columns={columns}
+          rows={many}
+          rowKey={(r) => r.id}
+          selectable
+          initialPageSize={2}
+          batchActions={(selected) => (
+            <span data-testid="batch-ids">{selected.map((r) => r.id).join(",")}</span>
+          )}
+        />,
+      );
+      fireEvent.click(screen.getByLabelText("Select all on page"));
+      expect(screen.getByTestId("parity-selection-count")).toHaveTextContent("2 selected");
+      expect(screen.getByTestId("batch-ids")).toHaveTextContent("1,2");
+      expect(screen.getByRole("button", { name: "Clear selection" })).toBeInTheDocument();
+      expect(screen.getByTestId("parity-select-all-matching")).toHaveTextContent(
+        "All 2 on this page are selected. Select all 3 matching?",
+      );
+      fireEvent.click(screen.getByTestId("parity-select-all-matching"));
+      expect(screen.getByTestId("parity-selection-count")).toHaveTextContent("3 selected");
+      expect(screen.getByTestId("batch-ids")).toHaveTextContent("1,2,3");
+    });
+
     it("controlled mode: toggle row fires onSelectionChange with next keys; does not change checkboxes without prop update", () => {
       const onSelectionChange = vi.fn();
       const { rerender } = render(

@@ -299,7 +299,7 @@ export function PaymentsListPage() {
               setBatchVoidOpen(true);
             }}
           >
-            Void
+            {`Void ${selected.filter((row) => !row.voided_at).length} selected`}
           </Button>
         )}
         emptyText="No payments found."

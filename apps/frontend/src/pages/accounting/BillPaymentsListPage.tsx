@@ -414,7 +414,7 @@ export function BillPaymentsListPage() {
                 setBatchVoidOpen(true);
               }}
             >
-              Void
+              {`Void ${selected.filter((row) => !row.revoked_at).length} selected`}
             </button>
           ) : null
         }
