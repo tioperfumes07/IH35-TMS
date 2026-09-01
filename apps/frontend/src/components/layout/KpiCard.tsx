@@ -23,7 +23,7 @@ type Props = {
 export function KpiCard({ label, number, accent, to, onClick, disabled, disabledReason }: Props) {
   const card = (
     <div
-      className="flex min-w-[150px] flex-1 items-center justify-between bg-white"
+      className="flex min-w-[150px] max-w-full shrink-0 items-center justify-between gap-2 bg-white"
       style={{
         height: spacing.kpiCardHeight,
         paddingLeft: spacing.kpiCardPaddingX,
@@ -40,14 +40,20 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
       >
         {label}
       </span>
-      <span style={{ color: colors.pageHeading, fontSize: typography.kpiNumber, fontWeight: 700 }}>{number}</span>
+      <span
+        className="min-w-0 truncate text-right"
+        style={{ color: colors.pageHeading, fontSize: typography.kpiNumber, fontWeight: 700 }}
+        title={typeof number === "string" ? number : String(number)}
+      >
+        {number}
+      </span>
     </div>
   );
 
   if (disabled) {
     return (
       <div
-        className="block flex-1 cursor-not-allowed rounded-sm"
+        className="block shrink-0 cursor-not-allowed rounded-sm"
         aria-disabled="true"
         title={disabledReason ?? NOT_AVAILABLE_YET}
         data-kpi-disabled="true"
@@ -59,7 +65,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
 
   if (to) {
     return (
-      <Link to={to} aria-label={`${label} — view details`} className="block flex-1 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
+      <Link to={to} aria-label={`${label} — view details`} className="block shrink-0 rounded-sm transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400">
         {card}
       </Link>
     );
@@ -71,7 +77,7 @@ export function KpiCard({ label, number, accent, to, onClick, disabled, disabled
         type="button"
         onClick={onClick}
         aria-label={`${label} — view details`}
-        className="block w-full flex-1 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
+        className="block w-full shrink-0 rounded-sm text-left transition hover:shadow-xs focus:outline-hidden focus:ring-2 focus:ring-slate-400"
       >
         {card}
       </button>
