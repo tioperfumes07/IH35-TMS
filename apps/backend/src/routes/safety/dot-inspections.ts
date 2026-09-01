@@ -17,6 +17,7 @@ const dotInspectionsListQuerySchema = companyQuerySchema.extend({
   driver_id: z.string().uuid().optional(),
   unit_id: z.string().uuid().optional(),
   trailer_id: z.string().uuid().optional(),
+  outcome: z.enum(["PASS", "WARNING", "OOS"]).optional(),
   from: z.string().date().optional(),
   to: z.string().date().optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -144,6 +145,10 @@ export async function registerSafetyDotInspectionsRoutes(app: FastifyInstance) {
       if (query.data.trailer_id) {
         values.push(query.data.trailer_id);
         filters.push(`AND di.trailer_id = $${values.length}`);
+      }
+      if (query.data.outcome) {
+        values.push(query.data.outcome);
+        filters.push(`AND di.outcome = $${values.length}`);
       }
       if (query.data.from) {
         values.push(query.data.from);

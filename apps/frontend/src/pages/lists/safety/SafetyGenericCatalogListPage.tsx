@@ -8,7 +8,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useCreateQueryParam } from "../../../hooks/useCreateQueryParam";
 import { SafetyGenericCatalogModal, type SafetyGenericCatalogClient } from "./SafetyGenericCatalogModal";
-import { SelectCombobox } from "../../../components/shared/SelectCombobox";
+import { CatalogStatusFilterCombobox } from "./CatalogStatusFilterCombobox";
 
 type Props = {
   client: SafetyGenericCatalogClient & {
@@ -121,15 +121,7 @@ export function SafetyGenericCatalogListPage({ client, displayName, breadcrumbPa
           placeholder="Search by code or display name"
           className="h-9 rounded-sm border border-gray-300 px-2 text-sm md:col-span-2"
         />
-        <SelectCombobox
-          value={status}
-          onChange={(event) => setStatus(event.target.value as "true" | "false" | "all")}
-          className="h-9 rounded-sm border border-gray-300 px-2 text-sm"
-        >
-          <option value="true">Active</option>
-          <option value="false">Inactive</option>
-          <option value="all">All</option>
-        </SelectCombobox>
+        <CatalogStatusFilterCombobox value={status} onChange={setStatus} />
       </div>
 
       <ParityTable

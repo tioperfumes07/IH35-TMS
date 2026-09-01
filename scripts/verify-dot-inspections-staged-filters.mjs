@@ -20,8 +20,20 @@ function assertPage(src) {
   if (!src.includes('data-testid="dot-inspections-filter-cancel"')) errors.push("must expose filter-cancel");
   if (!src.includes('data-testid="dot-inspections-filter-apply"')) errors.push("must expose filter-apply");
   if (!src.includes('data-testid="dot-inspections-filters"')) errors.push("must keep filters chrome");
-  if (!/applied\.driverId/.test(src) || !/applied\.trailerId/.test(src)) {
+  if (!/applied\.driverId/.test(src) || !/applied\.trailerId/.test(src) || !/applied\.outcome/.test(src)) {
     errors.push("query must use applied.* (not draft/silent state)");
+  }
+  if (!src.includes('data-testid="dot-inspections-filter-outcome"')) {
+    errors.push("must expose outcome SelectCombobox filter");
+  }
+  if (!/searchParams\.get\("outcome"\)/.test(src)) {
+    errors.push("must keep outcome URL sync");
+  }
+  if (!/lg:grid-cols-6/.test(src) || !src.includes("SAFETY_FIELD_CLASS")) {
+    errors.push("create row must use uniform lg:grid-cols-6 + SAFETY_FIELD_CLASS");
+  }
+  if (/filterBar=/.test(src)) {
+    errors.push("filters must live above create row, not ParityTable filterBar");
   }
   if (!/setSearchParams/.test(src) || !/searchParams\.get\("driver_id"\)/.test(src)) {
     errors.push("must keep LST-F5189 URL sync");
@@ -41,8 +53,12 @@ function selftest() {
   `;
   const good = `
     useStagedListFilters({ applied, empty: EMPTY_FILTERS, onApply: (next) => { setApplied(next); patchSearchParam(next); } });
-    queryKey: [applied.driverId, applied.trailerId]
+    queryKey: [applied.driverId, applied.trailerId, applied.outcome]
+    searchParams.get("outcome")
     searchParams.get("driver_id")
+    data-testid="dot-inspections-filter-outcome"
+    lg:grid-cols-6
+    SAFETY_FIELD_CLASS
     setSearchParams
     <div data-testid="dot-inspections-filters" />
     <button data-testid="dot-inspections-filter-apply" onClick={staged.apply}>Apply</button>

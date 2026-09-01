@@ -10,6 +10,9 @@ import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useStagedListFilters } from "../../components/table";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -314,10 +317,12 @@ function RenditionListView({
 function RenditionDetailView({ companyId, renditionId }: { companyId: string; renditionId: string }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
-  const [assessedInput, setAssessedInput] = useState("");
-  const [selectedAsset, setSelectedAsset] = useState("");
-  const [renderedInput, setRenderedInput] = useState("");
-  const [costInput, setCostInput] = useState("");
+  const [assessedInput, setAssessedInput] = useState<number | null>(null);
+  const [selectedAssets, setSelectedAssets] = useState<CandidateAsset[]>([]);
+  const [assetPickerValue, setAssetPickerValue] = useState<string | null>(null);
+  const [renderedDollars, setRenderedDollars] = useState<number | null>(null);
+  const [costDollars, setCostDollars] = useState<number | null>(null);
+  const [acquisitionDate, setAcquisitionDate] = useState("");
 
   const detailQ = useQuery({
     queryKey: ["property-tax-rendition", companyId, renditionId],
@@ -361,20 +366,25 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
     onError: (err) => pushToast(userFacingApiError(err, "Could not update the extension request"), "error"),
   });
   const addLineM = useMutation({
-    mutationFn: (asset: CandidateAsset | null) =>
-      addRenditionLine(companyId, renditionId, {
-        unit_id: asset?.kind === "unit" ? asset.id : null,
-        equipment_id: asset?.kind === "equipment" ? asset.id : null,
-        asset_description: asset ? asset.label : "Asset",
-        asset_category: asset?.kind === "unit" ? "tractor" : asset?.kind === "equipment" ? "trailer" : "other",
-        acquisition_date: asset?.acquired_date ?? null,
-        acquisition_cost_cents: costInput ? Math.round(Number(costInput) * 100) : null,
-        rendered_value_cents: renderedInput ? Math.round(Number(renderedInput) * 100) : 0,
-      }),
+    mutationFn: async (assets: CandidateAsset[]) => {
+      for (const asset of assets) {
+        await addRenditionLine(companyId, renditionId, {
+          unit_id: asset.kind === "unit" ? asset.id : null,
+          equipment_id: asset.kind === "equipment" ? asset.id : null,
+          asset_description: asset.label,
+          asset_category: asset.kind === "unit" ? "tractor" : asset.kind === "equipment" ? "trailer" : "other",
+          acquisition_date: acquisitionDate || asset.acquired_date || null,
+          acquisition_cost_cents: costDollars != null ? Math.round(costDollars * 100) : null,
+          rendered_value_cents: renderedDollars != null ? Math.round(renderedDollars * 100) : 0,
+        });
+      }
+    },
     onSuccess: () => {
-      setSelectedAsset("");
-      setRenderedInput("");
-      setCostInput("");
+      setSelectedAssets([]);
+      setAssetPickerValue(null);
+      setRenderedDollars(null);
+      setCostDollars(null);
+      setAcquisitionDate("");
       invalidate();
     },
     onError: (err) => pushToast(userFacingApiError(err, "Could not add the taxable asset line"), "error"),
@@ -400,7 +410,22 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
 
   const { rendition, lines } = detail;
   const assets = assetsQ.data?.assets ?? [];
-  const chosen = assets.find((a) => `${a.kind}:${a.id}` === selectedAsset) ?? null;
+  const assetOptions = assets.map((asset) => ({
+    value: `${asset.kind}:${asset.id}`,
+    label: asset.label,
+    sublabel: asset.vin ?? undefined,
+  }));
+
+  const addSelectedAsset = (assetKey: string | null) => {
+    if (!assetKey) return;
+    const asset = assets.find((row) => `${row.kind}:${row.id}` === assetKey);
+    if (!asset) return;
+    setSelectedAssets((current) =>
+      current.some((row) => row.kind === asset.kind && row.id === asset.id) ? current : [...current, asset],
+    );
+    setAssetPickerValue(null);
+    if (!acquisitionDate && asset.acquired_date) setAcquisitionDate(asset.acquired_date);
+  };
 
   return (
     <div className="space-y-4" data-testid="property-tax-detail">
@@ -440,18 +465,17 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
         <div>
           <div className="text-[11px] uppercase tracking-wide text-slate-500">CAD-Assessed Tax (drives accrual)</div>
           <div className="mt-1 flex items-center gap-2">
-            <input
-              type="number"
-              step="0.01"
+            <MoneyInput
+              valueDollars={assessedInput}
+              onChangeDollars={setAssessedInput}
               placeholder={rendition.assessed_tax_cents != null ? (rendition.assessed_tax_cents / 100).toFixed(2) : "0.00"}
-              value={assessedInput}
-              onChange={(e) => setAssessedInput(e.target.value)}
-              className="w-32 rounded-sm border px-2 py-1 text-sm"
+              className={`${FILTER_CONTROL_SIZE_CLASS} w-32 rounded-sm border px-2 text-sm`}
+              ariaLabel="CAD-assessed tax"
             />
             <button
               type="button"
-              disabled={!assessedInput || assessedM.isPending}
-              onClick={() => assessedM.mutate(Math.round(Number(assessedInput) * 100))}
+              disabled={assessedInput == null || assessedM.isPending}
+              onClick={() => assessedM.mutate(Math.round((assessedInput ?? 0) * 100))}
               className="rounded-sm bg-[#1f2a44] px-2 py-1 text-sm font-semibold text-white disabled:opacity-40"
             >
               Save
@@ -476,38 +500,78 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
           Line", matching InvoiceDetailPage.tsx's identical add-a-row-to-a-list pattern. */}
       <section className="rounded-sm border border-slate-200 bg-white p-3">
         <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-700">Taxable Assets Rendered</h2>
-        <div className="flex flex-wrap items-end gap-2">
-          <label className="text-sm">
-            Asset (owned fleet)
-            <select
-              value={selectedAsset}
-              onChange={(e) => setSelectedAsset(e.target.value)}
-              className="ml-1 rounded-sm border px-2 py-1"
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-64 text-sm">
+              <label htmlFor="property-tax-asset-picker">Assets (owned fleet)</label>
+              <Combobox
+                id="property-tax-asset-picker"
+                className="mt-1"
+                options={assetOptions}
+                value={assetPickerValue}
+                onChange={(next) => {
+                  setAssetPickerValue(next);
+                  addSelectedAsset(next);
+                }}
+                placeholder="Search unit/trailer…"
+                loading={assetsQ.isLoading}
+                dataTestId="property-tax-rendition-asset-picker"
+              />
+            </div>
+            <label className="text-sm">
+              Acquisition date
+              <DatePicker
+                id="property-tax-acquisition-date"
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-40 rounded-sm border px-2 text-sm`}
+                value={acquisitionDate}
+                onChange={setAcquisitionDate}
+              />
+            </label>
+            <label className="text-sm">
+              Acquisition cost
+              <MoneyInput
+                valueDollars={costDollars}
+                onChangeDollars={setCostDollars}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-sm`}
+                ariaLabel="Acquisition cost"
+              />
+            </label>
+            <label className="text-sm">
+              Rendered value
+              <MoneyInput
+                valueDollars={renderedDollars}
+                onChangeDollars={setRenderedDollars}
+                className={`${FILTER_CONTROL_SIZE_CLASS} mt-1 w-36 rounded-sm border px-2 text-sm`}
+                ariaLabel="Rendered value"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={selectedAssets.length === 0 || addLineM.isPending}
+              onClick={() => addLineM.mutate(selectedAssets)}
+              className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+              data-testid="property-tax-rendition-create-lines"
             >
-              <option value="">Select unit/trailer…</option>
-              {assets.map((a) => (
-                <option key={`${a.kind}:${a.id}`} value={`${a.kind}:${a.id}`}>
-                  {a.label}
-                </option>
+              + Create Line{selectedAssets.length === 1 ? "" : "s"}
+            </button>
+          </div>
+          {selectedAssets.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5" data-testid="property-tax-rendition-selected-assets">
+              {selectedAssets.map((asset) => (
+                <button
+                  key={`${asset.kind}:${asset.id}`}
+                  type="button"
+                  onClick={() => setSelectedAssets((current) => current.filter((row) => !(row.kind === asset.kind && row.id === asset.id)))}
+                  className="rounded-full border border-gray-300 bg-gray-50 px-2 py-1 text-xs text-slate-700"
+                  aria-label={`Remove ${asset.label}`}
+                >
+                  {asset.label} ×
+                </button>
               ))}
-            </select>
-          </label>
-          <label className="text-sm">
-            Acquisition Cost $
-            <input value={costInput} onChange={(e) => setCostInput(e.target.value)} type="number" step="0.01" className="ml-1 w-28 rounded-sm border px-2 py-1" />
-          </label>
-          <label className="text-sm">
-            Rendered Value $
-            <input value={renderedInput} onChange={(e) => setRenderedInput(e.target.value)} type="number" step="0.01" className="ml-1 w-28 rounded-sm border px-2 py-1" />
-          </label>
-          <button
-            type="button"
-            disabled={!selectedAsset || addLineM.isPending}
-            onClick={() => addLineM.mutate(chosen)}
-            className="rounded-sm bg-[#1f2a44] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            + Create Line
-          </button>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-500">Select one or more units/trailers for this {rendition.tax_year} rendition.</p>
+          )}
         </div>
       </section>
 

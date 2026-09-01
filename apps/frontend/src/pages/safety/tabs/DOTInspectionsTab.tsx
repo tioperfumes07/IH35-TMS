@@ -23,7 +23,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { uploadSourceDocumentFromFile } from "../../../api/docs";
 
-const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "" };
+const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "", outcome: "" };
+
+const SAFETY_FIELD_CLASS = "h-9 w-full rounded-sm border border-gray-300 px-2 text-xs";
 
 const emptyInspectionForm = (trailerId = "") => ({
   inspection_date: companyToday(),
@@ -51,14 +53,16 @@ export function DOTInspectionsTab() {
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const trailerIdFromUrl = searchParams.get("trailer_id")?.trim() ?? "";
+  const outcomeFromUrl = searchParams.get("outcome")?.trim() ?? "";
 
   // LV-SAFETY-DOT-INSPECTIONS-FILTER-SILENT-APPLY — stage until Apply; Cancel restores.
-  function patchSearchParam(next: { driverId: string; unitId: string; trailerId: string }) {
+  function patchSearchParam(next: { driverId: string; unitId: string; trailerId: string; outcome: string }) {
     const p = new URLSearchParams(searchParams);
-    const pairs: Array<["driver_id" | "unit_id" | "trailer_id", string]> = [
+    const pairs: Array<["driver_id" | "unit_id" | "trailer_id" | "outcome", string]> = [
       ["driver_id", next.driverId],
       ["unit_id", next.unitId],
       ["trailer_id", next.trailerId],
+      ["outcome", next.outcome],
     ];
     for (const [key, value] of pairs) {
       if (value) p.set(key, value);
@@ -72,6 +76,7 @@ export function DOTInspectionsTab() {
     driverId: driverIdFromUrl,
     unitId: unitIdFromUrl,
     trailerId: trailerIdFromUrl,
+    outcome: outcomeFromUrl,
   }));
   const staged = useStagedListFilters({
     applied,
@@ -99,8 +104,9 @@ export function DOTInspectionsTab() {
       driverId: driverIdFromUrl,
       unitId: unitIdFromUrl,
       trailerId: trailerIdFromUrl,
+      outcome: outcomeFromUrl,
     }));
-  }, [driverIdFromUrl, unitIdFromUrl, trailerIdFromUrl]);
+  }, [driverIdFromUrl, unitIdFromUrl, trailerIdFromUrl, outcomeFromUrl]);
 
   // LST-F5163C: reverse ?trailer_id= also seeds create form when empty.
   useEffect(() => {
@@ -110,12 +116,13 @@ export function DOTInspectionsTab() {
   }, [trailerIdFromUrl]);
 
   const query = useQuery({
-    queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId, page],
+    queryKey: ["safety-v64", "dot-inspections", companyId, applied.driverId, applied.unitId, applied.trailerId, applied.outcome, page],
     queryFn: () =>
       listDotInspections(companyId, {
         driver_id: applied.driverId.trim() || undefined,
         unit_id: applied.unitId.trim() || undefined,
         trailer_id: applied.trailerId.trim() || undefined,
+        outcome: applied.outcome.trim() || undefined,
         limit: pageSize,
         offset: (page - 1) * pageSize,
       }),
@@ -124,7 +131,7 @@ export function DOTInspectionsTab() {
   const totalCount = query.isError ? 0 : query.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  useEffect(() => setPage(1), [companyId, applied.driverId, applied.unitId, applied.trailerId]);
+  useEffect(() => setPage(1), [companyId, applied.driverId, applied.unitId, applied.trailerId, applied.outcome]);
 
   const createMutation = useMutation({
     mutationFn: async (input: CreateInput) => {
@@ -299,20 +306,101 @@ export function DOTInspectionsTab() {
         <h2 className="text-sm font-semibold text-slate-900">DOT Inspections</h2>
         <InspectionScoreBadge companyId={companyId} />
       </div>
-      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5 lg:grid-cols-11">
+      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-gray-200 bg-white p-3" data-testid="dot-inspections-filters">
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Driver
+          <div className="mt-1">
+            <EntityPicker
+              kind="driver"
+              operatingCompanyId={companyId}
+              value={draft.driverId || null}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
+              allowCreate={false}
+              placeholder="All drivers"
+              className="w-full"
+              dataTestId="dot-inspections-filter-driver"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Unit
+          <div className="mt-1">
+            <EntityPicker
+              kind="unit"
+              operatingCompanyId={companyId}
+              value={draft.unitId || null}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
+              allowCreate={false}
+              placeholder="All units"
+              className="w-full"
+              dataTestId="dot-inspections-filter-unit"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[200px] text-xs text-slate-600">
+          Trailer
+          <div className="mt-1">
+            <EntityPicker
+              kind="trailer"
+              operatingCompanyId={companyId}
+              value={draft.trailerId || null}
+              onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
+              allowCreate={false}
+              placeholder="All trailers"
+              className="w-full"
+              dataTestId="dot-inspections-trailer-filter"
+            />
+          </div>
+        </label>
+        <label className="block min-w-[160px] text-xs text-slate-600">
+          Outcome
+          <SelectCombobox
+            className={`${SAFETY_FIELD_CLASS} mt-1`}
+            value={draft.outcome}
+            onChange={(e) => staged.setDraft((d) => ({ ...d, outcome: e.target.value }))}
+            data-testid="dot-inspections-filter-outcome"
+          >
+            <option value="">All outcomes</option>
+            <option value="PASS">PASS</option>
+            <option value="WARNING">WARNING</option>
+            <option value="OOS">OOS</option>
+          </SelectCombobox>
+        </label>
+        <Button type="button" size="sm" data-testid="dot-inspections-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
+          Apply
+        </Button>
+        <Button type="button" size="sm" variant="secondary" data-testid="dot-inspections-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          data-testid="dot-inspections-filter-reset"
+          onClick={() => {
+            staged.cancel();
+            setApplied(EMPTY_FILTERS);
+            patchSearchParam(EMPTY_FILTERS);
+          }}
+        >
+          Reset
+        </Button>
+      </div>
+      <div className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-3 lg:grid-cols-6">
         <div>
           <label className="sr-only" htmlFor="dot-inspection-tab-date">Inspection date</label>
-          <DatePicker id="dot-inspection-tab-date" className="" value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
+          <DatePicker id="dot-inspection-tab-date" className={SAFETY_FIELD_CLASS} value={form.inspection_date} onChange={(next) => setForm((v) => ({ ...v, inspection_date: next }))} />
         </div>
-        <div data-testid="dot-inspection-driver-picker">
+        <div className={SAFETY_FIELD_CLASS} data-testid="dot-inspection-driver-picker">
           <DriverPickerWithCreate
             operatingCompanyId={companyId}
             value={form.driver_id || null}
             onChange={(next) => setForm((v) => ({ ...v, driver_id: next ?? "" }))}
             placeholder="Search driver…"
+            className="h-full w-full border-0 p-0 text-xs shadow-none"
           />
         </div>
-        <div data-testid="dot-inspection-unit-picker">
+        <div className={SAFETY_FIELD_CLASS} data-testid="dot-inspection-unit-picker">
           <EntityPicker
             kind="unit"
             operatingCompanyId={companyId}
@@ -320,9 +408,10 @@ export function DOTInspectionsTab() {
             onChange={(next) => setForm((v) => ({ ...v, unit_id: next ?? "" }))}
             placeholder="Search unit…"
             allowCreate
+            className="h-full w-full border-0 p-0 text-xs shadow-none"
           />
         </div>
-        <div data-testid="dot-inspection-trailer-picker">
+        <div className={SAFETY_FIELD_CLASS} data-testid="dot-inspection-trailer-picker">
           <EntityPicker
             kind="trailer"
             operatingCompanyId={companyId}
@@ -330,22 +419,30 @@ export function DOTInspectionsTab() {
             onChange={(next) => setForm((v) => ({ ...v, trailer_id: next ?? "" }))}
             placeholder="Search trailer…"
             allowCreate
+            className="h-full w-full border-0 p-0 text-xs shadow-none"
           />
         </div>
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={1} max={6} value={form.inspection_level} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))} />
-        <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1 text-xs" value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>
+        <input className={SAFETY_FIELD_CLASS} placeholder="Inspector" value={form.inspector_name} onChange={(e) => setForm((v) => ({ ...v, inspector_name: e.target.value }))} />
+        <SelectCombobox className={SAFETY_FIELD_CLASS} value={String(form.inspection_level)} onChange={(e) => setForm((v) => ({ ...v, inspection_level: Number(e.target.value || 1) }))}>
+          <option value="1">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+          <option value="4">Level 4</option>
+          <option value="5">Level 5</option>
+          <option value="6">Level 6</option>
+        </SelectCombobox>
+        <SelectCombobox className={SAFETY_FIELD_CLASS} value={form.outcome} onChange={(e) => setForm((v) => ({ ...v, outcome: e.target.value as typeof form.outcome }))}>
           <option value="PASS">PASS</option>
           <option value="WARNING">WARNING</option>
           <option value="OOS">OOS</option>
         </SelectCombobox>
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
-        <input className="rounded-sm border border-gray-300 px-2 py-1 text-xs" type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
-        <label className="flex cursor-pointer items-center justify-center rounded-sm border border-gray-300 px-2 py-1 text-xs text-slate-700">
+        <input className={SAFETY_FIELD_CLASS} placeholder="Location" value={form.location} onChange={(e) => setForm((v) => ({ ...v, location: e.target.value }))} />
+        <input className={SAFETY_FIELD_CLASS} type="number" min={0} placeholder="CSA pts" value={form.csa_points} onChange={(e) => setForm((v) => ({ ...v, csa_points: Number(e.target.value || 0) }))} />
+        <label className={`${SAFETY_FIELD_CLASS} flex cursor-pointer items-center justify-center text-slate-700`}>
           {evidenceFile ? evidenceFile.name : "Inspection PDF"}
           <input type="file" accept="application/pdf" className="sr-only" onChange={(event) => setEvidenceFile(event.target.files?.[0] ?? null)} />
         </label>
-        <button type="button" className="rounded-sm bg-[#1f2a44] px-2 py-1 text-xs font-semibold text-white disabled:opacity-60" disabled={!form.inspector_name || createMutation.isPending} onClick={() => {
+        <button type="button" className={`${SAFETY_FIELD_CLASS} bg-[#1f2a44] font-semibold text-white disabled:opacity-60`} disabled={!form.inspector_name || createMutation.isPending} onClick={() => {
           const input: CreateInput = {
             companyId,
             generation: companyGenerationRef.current,
@@ -411,68 +508,6 @@ export function DOTInspectionsTab() {
         pageSize={pageSize}
         pageSizeOptions={[pageSize]}
         hidePager
-        filterBar={
-          <div className="flex flex-wrap items-end gap-3" data-testid="dot-inspections-filters">
-            <label className="text-[11px] text-slate-600">
-              Driver
-              <EntityPicker
-                kind="driver"
-                operatingCompanyId={companyId}
-                value={draft.driverId || null}
-                onChange={(next) => staged.setDraft((d) => ({ ...d, driverId: next ?? "" }))}
-                allowCreate={false}
-                placeholder="All drivers"
-                className="mt-1"
-                dataTestId="dot-inspections-filter-driver"
-              />
-            </label>
-            <label className="text-[11px] text-slate-600">
-              Unit
-              <EntityPicker
-                kind="unit"
-                operatingCompanyId={companyId}
-                value={draft.unitId || null}
-                onChange={(next) => staged.setDraft((d) => ({ ...d, unitId: next ?? "" }))}
-                allowCreate={false}
-                placeholder="All units"
-                className="mt-1"
-                dataTestId="dot-inspections-filter-unit"
-              />
-            </label>
-            <label className="text-[11px] text-slate-600">
-              Trailer
-              <EntityPicker
-                kind="trailer"
-                operatingCompanyId={companyId}
-                value={draft.trailerId || null}
-                onChange={(next) => staged.setDraft((d) => ({ ...d, trailerId: next ?? "" }))}
-                allowCreate={false}
-                placeholder="All trailers"
-                className="mt-1"
-                dataTestId="dot-inspections-trailer-filter"
-              />
-            </label>
-            <Button type="button" size="sm" data-testid="dot-inspections-filter-apply" onClick={staged.apply} disabled={!staged.dirty}>
-              Apply
-            </Button>
-            <Button type="button" size="sm" variant="secondary" data-testid="dot-inspections-filter-cancel" onClick={staged.cancel} disabled={!staged.dirty}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              data-testid="dot-inspections-filter-reset"
-              onClick={() => {
-                staged.cancel();
-                setApplied(EMPTY_FILTERS);
-                patchSearchParam(EMPTY_FILTERS);
-              }}
-            >
-              Reset
-            </Button>
-          </div>
-        }
       />
       )}
 
