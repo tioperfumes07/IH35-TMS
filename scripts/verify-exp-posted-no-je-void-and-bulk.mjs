@@ -74,6 +74,9 @@ export function assertGuard(expensesSrc, billsSrc, bulkSrc, migrationSrc) {
     if (!/ROLLBACK TO SAVEPOINT \$\{safeProbe\}/.test(bulkSrc)) {
       errs.push(`${BULK_FILE}: the probe pass must unconditionally roll back its savepoint (success or failure alike) -- it must never persist`);
     }
+    if (!/try\s*\{[\s\S]*enforceBulkRateLimit[\s\S]*finally\s*\{[\s\S]*releaseBulkInFlight/.test(bulkSrc)) {
+      errs.push(`${BULK_FILE}: enforceBulkRateLimit must live inside try/finally with releaseBulkInFlight (SEL-02)`);
+    }
   }
 
   if (!migrationSrc) errs.push(`${MIGRATION_FILE}: missing`);

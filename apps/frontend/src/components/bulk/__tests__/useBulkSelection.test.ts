@@ -18,6 +18,19 @@ describe("useBulkSelection", () => {
     expect(result.current.selectedIds.has("a")).toBe(false);
   });
 
+  it("togglePage unions pages for cross-page accumulation (SEL-01)", () => {
+    const { result } = renderHook(() => useBulkSelection());
+    act(() => result.current.togglePage(["page1-a", "page1-b"]));
+    expect(result.current.count).toBe(2);
+    act(() => result.current.togglePage(["page2-c"]));
+    expect(result.current.count).toBe(3);
+    expect(result.current.selectedIds.has("page1-a")).toBe(true);
+    expect(result.current.selectedIds.has("page2-c")).toBe(true);
+    act(() => result.current.togglePage(["page1-a", "page1-b"]));
+    expect(result.current.count).toBe(1);
+    expect(result.current.selectedIds.has("page2-c")).toBe(true);
+  });
+
   it("selectPage is page-scoped — replaces with exactly those ids", () => {
     const { result } = renderHook(() => useBulkSelection());
     act(() => result.current.selectPage(["page1-a", "page1-b"]));

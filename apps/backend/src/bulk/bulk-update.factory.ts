@@ -292,9 +292,9 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
     const authUser = currentBulkAuthUser(req, reply);
     if (!authUser) return reply;
 
-    if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
-
     try {
+      if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
+
       const parsedQuery = bulkQuerySchema.safeParse(req.query ?? {});
       if (!parsedQuery.success) return sendBulkValidationError(reply, parsedQuery.error);
 
@@ -437,10 +437,10 @@ export async function withLegacyBulkRequest(
   const authUser = currentBulkAuthUser(req, reply);
   if (!authUser) return reply;
   if (!isWriteRole(authUser.role)) return reply.code(403).send({ error: "forbidden" });
-  if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
 
   const bulkCallId = randomUUID();
   try {
+    if (!(await enforceBulkRateLimit(authUser.uuid, reply))) return;
     return await run({ authUser, bulkCallId });
   } finally {
     releaseBulkInFlight(authUser.uuid);

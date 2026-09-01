@@ -838,15 +838,16 @@ export function ParityTable<T>({
   }
 
   function togglePageAll() {
-    // BULK-SELECTION-SCOPE-01 — page-scoped: selecting the header checkbox sets selection to
-    // EXACTLY this page's rows (never unions prior pages). Destructive bulk is fail-stop.
+    // SEL-01 — page header unions this page into the existing selection (cross-page accumulation).
+    // Deselecting the header removes only this page's rows. selectAllMatching still selects the full filtered set.
     const applyPageAll = (prev: Set<string>): Set<string> => {
       if (pageAllSelected) {
         const next = new Set(prev);
         pageRows.forEach((r) => next.delete(rowKey(r)));
         return next;
       }
-      const next = new Set(pageRows.map((r) => rowKey(r)));
+      const next = new Set(prev);
+      for (const row of pageRows) next.add(rowKey(row));
       if (maxSelectable != null && next.size > maxSelectable) {
         onSelectionCapExceeded?.(next.size);
         return prev;

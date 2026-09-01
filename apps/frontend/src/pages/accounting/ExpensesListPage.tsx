@@ -26,6 +26,8 @@ import { humanMemo } from "./ManualJEListPage";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { useUrlSort } from "../../hooks/useUrlSort";
 import { BulkProgressDialog } from "../../components/bulk";
+import { BulkPreValidationDialog } from "../../components/bulk/BulkPreValidationDialog";
+import { expenseBulkPrecheckRows } from "../../components/bulk/expenseBulkPrecheck";
 import { bulkRowLabelsFromRows, expenseBulkRowLabel } from "../../components/bulk/bulkRowLabels";
 import { useEntityBulkAction } from "../../components/bulk/useEntityBulkAction";
 
@@ -519,6 +521,7 @@ export function ExpensesListPage() {
         onSubmit={async (reason) => {
           if (!selectedCompanyId) return;
           setBatchVoidOpen(false);
+          const selectedExpenses = rows.filter((expense) => pendingVoidIds.includes(expense.id));
           await bulk.runBulk(
             {
               domain: "accounting",
@@ -529,6 +532,7 @@ export function ExpensesListPage() {
               operatingCompanyId: selectedCompanyId,
               invalidateKeys: [["accounting", "expenses", selectedCompanyId]],
               rowLabels: pendingVoidLabels,
+              precheck: expenseBulkPrecheckRows(selectedExpenses),
             },
             () => {
               setPendingVoidIds([]);
@@ -536,6 +540,11 @@ export function ExpensesListPage() {
             }
           );
         }}
+      />
+      <BulkPreValidationDialog
+        {...bulk.precheckDialogProps}
+        actionLabel="Void"
+        entityKind="expense"
       />
       <BulkProgressDialog
         open={bulk.progressOpen}

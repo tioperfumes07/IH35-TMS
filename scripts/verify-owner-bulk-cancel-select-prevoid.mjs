@@ -79,6 +79,21 @@ if (!/bulk-precheck-deselect-hint/.test(progress)) {
   failures.push("BulkProgressDialog must tell operator to deselect blocked rows");
 }
 
+const prevalidationDialog = read("apps/frontend/src/components/bulk/BulkPreValidationDialog.tsx");
+if (!prevalidationDialog || !/bulk-prevalidation-summary/.test(prevalidationDialog)) {
+  failures.push("BulkPreValidationDialog must surface blocked rows before bulk submit (SEL-03)");
+}
+
+const entityBulk = read("apps/frontend/src/components/bulk/useEntityBulkAction.ts");
+if (!/precheck\?: BulkPrecheckRow\[\]/.test(entityBulk) || !/partitionBulkPrecheck/.test(entityBulk)) {
+  failures.push("useEntityBulkAction must accept client precheck rows before POST (SEL-03)");
+}
+
+const billsPage = read("apps/frontend/src/pages/accounting/BillsPage.tsx");
+if (!/billBulkPrecheckRows/.test(billsPage) || !/BulkPreValidationDialog/.test(billsPage)) {
+  failures.push("BillsPage must wire bill bulk precheck + BulkPreValidationDialog (SEL-03)");
+}
+
 if (failures.length) {
   console.error(`${LABEL} FAIL`);
   for (const f of failures) console.error(`- ${f}`);
