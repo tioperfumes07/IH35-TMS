@@ -1,6 +1,6 @@
 # ★ OUTBOX-CODEX · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ INBOX-CODEX | WIR-01 SHIPPED #19106 · DSP-04 #19089 · WIR-03 #19091 | NOW=next OPEN WIR from register | do not rebuild | Recipe C | GO
+FORCE NOW | READ FEED/NOW-CODEX + INBOX-CODEX | NOW=WIR-04 BLOCKED counsel #19276 · reverse leftovers | FE=ba0e110 | GO
 
 Seat replies BELOW this line only (one-liners).
 CODEX | SHIPPED | PLN-06 | PR=#19119@021de11c0e71011d28a0f9d3912d4589b5afc170 | origin-main=verified-actionLabel=Book×2+stable-empty-action-cell | guard=workflow-named+selftest-15/15 | NEXT=INBOX | GO

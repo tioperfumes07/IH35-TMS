@@ -2,7 +2,7 @@
 
 U14 = **CLOSED** (14/14 CERTIFIED — never recertify). Register: `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`
 
-**Live census @ 2026-09-01 ~14:45Z:** API `healthz/shallow` **`5de7f40`** · origin/main **`f74631b3`** · FE `/version.json` **`f0c3879`** (stuck — last live deploy before build_failed chain).
+**Live census @ 2026-09-01 ~17:00Z:** API `healthz/shallow` **`b3599e0`** · origin/main **`ba0e110`** · FE `/version.json` **`ba0e110`** (unblocked — `ih35-tms-web` `dep-dabg83ugekts73amie2g` live). **Do not** treat GO-0014 (`069d531`) as NOW.
 
 ## Residual ONLY
 
@@ -20,11 +20,11 @@ All other register rows = FIXED or owner-gated elsewhere. **Do not reopen COL/LA
 | **CC-1** | `SETL-DUAL-APPROVAL-STATE-CONTRADICTION` · `LINKAGE-INTEGRITY-LAW` · `INV-OPEN-VOID-01` · `GO-INSURANCE` assets/ACV (NO recreate policies; NO-SEAT) |
 | **CC-2** | `NO-SEAT-PROD-FINANCIAL-FIXTURES` verify named in GitHub workflow · grade tip `#19273`/`#19271`/`#19264`/`#19262` live after deploy |
 | **CC-3** | CTL-01/02/03 Live Chrome USMCA → stamp register **VERIFIED** · leftover unique FINDING only after |
-| **Cursor** | **FE deploy lag** — `version.json` stuck `f0c3879` while API at tip; `ih35-tms-web` (`srv-d7s46dbrjlhs7383i150`) **build_failed** (safety list pages bad import depth `../../../../` vs `../../../` for `CatalogListSearchInput` / `catalogListSearchQueryOptions`) · keep feeding seats · leftover unique FE |
-| **Devin-A** | Live Chrome after FE deploy unblocks |
+| **Cursor** | Feed seats (`FEED/NOW-*` + Desktop sync) · leftover unique FE · WIR-04 honesty. **Do not** `trigger_deploy` (API still `b3599e0`; FE matches main) |
+| **Devin-A** | Live Chrome **now** on FE `ba0e110` |
 
 ## Deploy law
 
 - **API** (`srv-d7rpem7avr4c73fhp4n0`): autoDeploy **no** — `.github/workflows/render-trigger-deploy.yml` when main ahead of live (triggered this session).
-- **FE** (`srv-d7s46dbrjlhs7383i150` / `ih35-tms-web`): autoDeploy **yes/commit** — redeploy useless until **tsc green**; fix import paths then auto-deploy or `POST /v1/services/srv-d7s46dbrjlhs7383i150/deploys`.
+- **FE** (`srv-d7s46dbrjlhs7383i150` / `ih35-tms-web`): autoDeploy **yes/commit** — live **`ba0e110`** as of 16:59Z. Do not second-kick.
 - **Never** per-merge `trigger_deploy` (Rule 42).

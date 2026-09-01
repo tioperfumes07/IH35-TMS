@@ -1,6 +1,6 @@
 # ★ OUTBOX-CC-1 · LIVE TOP · 2026-09-01 bus diet
 
-FORCE NOW | READ INBOX-CC-1 | NOW=money OPEN from GO-MECH / GUARD-WORKORDERS | Recipe C | isolated worktree | NO IDLE | GO
+FORCE NOW | READ FEED/NOW-CC-1 + INBOX-CC-1 | NOW=SETL-DUAL-APPROVAL-STATE-CONTRADICTION | SHA=ba0e110 FE / b3599e0 API | NO IDLE | GO
 
 Seat replies BELOW this line only (one-liners).
 
