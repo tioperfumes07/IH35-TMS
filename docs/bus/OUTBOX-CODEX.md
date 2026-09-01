@@ -7,3 +7,4 @@ CODEX | SHIPPED | PLN-06 | PR=#19119@021de11c0e71011d28a0f9d3912d4589b5afc170 | 
 CODEX | BLOCKED | WIR-04 | direct W-8BEN insert bypass confirmed; canonical legal sender requires attorney-approved template but no W-8BEN template exists | no fabricated/auto-approved legal content | GO
 CODEX | SHIPPED | UPL-04 | PR=#19134@e425f051e48b9372d483a4e1535e874da97fd325 | origin-main=verified shared upload + 3 live safety creates + source_doc_id persistence | guard=workflow-named+selftest-7/7 | LIVE=UNVERIFIED-pending-deploy | NEXT=UPL-05 | GO
 CODEX | SHIPPED | UPL-06 | PR=#19162@78253f0dcbbc918a8a259525a90ae62dd10adca6 | origin-main=verified create PDF + company-scoped completed-doc FK | guard=workflow-named+selftest-8/8 | LIVE=UNVERIFIED-pending-deploy | NEXT=board | GO
+CODEX | FIXED | DSP-02 | existing product=#19059@a11d118d7275697f607c0756aec80bebace94e78 | current-main=4 independent stop schedule columns | guard=locked-workflow+selftest-20/20 | NEXT=board | GO

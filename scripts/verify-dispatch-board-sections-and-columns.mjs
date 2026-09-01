@@ -67,6 +67,30 @@ function dsp01CityColumnIssues(content) {
   return issues;
 }
 
+/** DSP-02 — stop schedule must remain four independent board columns, not collapse into city/lane. */
+function dsp02ScheduleColumnIssues(content) {
+  const issues = [];
+  const columns = [
+    ["pickup_date", "PU date", "renderPickupDateCell"],
+    ["pickup_time", "PU time", "renderPickupTimeCell"],
+    ["delivery_date", "Del date", "renderDeliveryDateCell"],
+    ["delivery_time", "Del time", "renderDeliveryTimeCell"],
+  ];
+  for (const [key, header, renderer] of columns) {
+    if (!content.includes(`{ key: "${key}", header: "${header}", cell: (load) => ${renderer}(load) }`)) {
+      issues.push(`${key} must remain an independent board column rendered by ${renderer} (DSP-02)`);
+    }
+    if (!content.includes(`"${key}"`)) issues.push(`${key} must remain sortable (DSP-02)`);
+  }
+  if (!/function renderPickupDateCell[\s\S]{0,180}pickup_scheduled_at[\s\S]{0,80}pickup_appointment_start_at/.test(content)) {
+    issues.push("pickup date must derive from persisted pickup stop schedule/appointment fields (DSP-02)");
+  }
+  if (!/function renderDeliveryTimeCell[\s\S]{0,220}delivery_time_window_type[\s\S]{0,120}delivery_scheduled_at[\s\S]{0,100}delivery_appointment_start_at/.test(content)) {
+    issues.push("delivery time must derive from persisted delivery stop window/schedule fields (DSP-02)");
+  }
+  return issues;
+}
+
 function sectionControlIssues(content) {
   const issues = [];
   if (!content.includes('data-testid={`dispatch-board-headers-${section.key}`}')) {
@@ -175,6 +199,7 @@ for (const issue of preSettlementReadIssues(src)) fail(issue);
 for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
 for (const issue of sectionControlIssues(src)) fail(issue);
 for (const issue of dsp01CityColumnIssues(src)) fail(issue);
+for (const issue of dsp02ScheduleColumnIssues(src)) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const mutants = [
@@ -219,7 +244,16 @@ if (process.argv.includes("--selftest")) {
   if (!dsp01Mutants.every((mutant) => dsp01CityColumnIssues(mutant).length > 0)) {
     fail("selftest mutation escaped DSP-01 pickup/delivery city column guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 16/16 defects caught");
+  const dsp02Mutants = [
+    src.replace('{ key: "pickup_date", header: "PU date", cell: (load) => renderPickupDateCell(load) }', '{ key: "pickup", header: "Pickup", cell: (load) => renderPickupDateCell(load) }'),
+    src.replace('{ key: "pickup_time", header: "PU time", cell: (load) => renderPickupTimeCell(load) }', '{ key: "pickup", header: "Pickup", cell: (load) => renderPickupTimeCell(load) }'),
+    src.replace('{ key: "delivery_date", header: "Del date", cell: (load) => renderDeliveryDateCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryDateCell(load) }'),
+    src.replace('{ key: "delivery_time", header: "Del time", cell: (load) => renderDeliveryTimeCell(load) }', '{ key: "delivery", header: "Delivery", cell: (load) => renderDeliveryTimeCell(load) }'),
+  ];
+  if (!dsp02Mutants.every((mutant) => dsp02ScheduleColumnIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-02 four-column schedule guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 20/20 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");
