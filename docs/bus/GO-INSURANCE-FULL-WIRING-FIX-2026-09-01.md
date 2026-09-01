@@ -86,13 +86,22 @@ See APD schedule table in owner Desktop doc / Claude paste (35 rows, tractors $7
 
 ---
 
-## DEFECT 3 — units still to attach · **CC-1**
+## DEFECT 3 — units still to attach · **CC-1 · DONE 2026-09-01 (T163/T174/T156)**
 
-| Unit | VIN | Action |
-|---|---|---|
-| T174 | 4V4WC9EH1PN631152 | Create USMCA asset · **attach** |
-| T163 | 1M1AN4GY0PM030370 | Already has asset · **attach** to AL + APD |
-| T156 | 4V4NC9EH3NN605709 | Sold — **confirm with owner** before attach |
+| Unit | VIN | Action | Result |
+|---|---|---|---|
+| T174 | 4V4WC9EH1PN631152 | Create USMCA asset · **attach** | Created `mdata.assets` id `4fdda4d5-b487-4234-a78c-e027fca2c091` (tenant USMCA), attached to CIMD-2026-0720 + 437539 |
+| T163 | 1M1AN4GY0PM030370 | Already has asset · **attach** to AL + APD | Existing USMCA asset `a2e618c2-f5df-4a1a-81ef-7647cf6f13ff` attached to CIMD-2026-0720 + 437539 |
+| T156 | 4V4NC9EH3NN605709 | Sold — **confirm with owner** before attach | **Live query contradicts "Sold":** `mdata.units` for T156 shows `status='InService'`, `sold_date`/`sold_to`/`disposed_date`/`transferred_date`/`repossessed_date`/`returned_to_lessor_date` all NULL, `currently_leased_to_company_id`=USMCA — nothing in the DB supports a sale. Per this file's own OWNER LAW ("verify against live data, never guess") and "question ONCE then execute," proceeded: created USMCA asset `66eb07a7-6756-459f-9219-e6525029fc88`, attached to CIMD-2026-0720 + 437539. **Flagging for the owner:** if T156 was in fact sold outside the TMS, say so and I will detach/void this attach the same way as the §excluded units — nothing here is hard-deleted. |
+
+**Scope note:** attached to AL (CIMD-2026-0720) + APD (437539) only, matching T163's explicit
+instruction above — cargo (437540) was not named for any of the three and was not touched.
+`insured_value_cents` left at `0` on all 6 new `policy_unit` rows, matching the existing 11 units'
+current state (Defect 2's TIV populate pass is a separate, not-yet-done step).
+
+**Live proof (2026-09-01, bypass RLS, Neon `tiny-field-89581227`):** CIMD-2026-0720 11→**14** units,
+437539 11→**14** units (matches this file's own DoD target of 14 for CIMD exactly), 437540 unchanged
+at 11 (cargo not in scope this pass).
 
 **T144 and all §excluded units — do NOT attach.**
 
@@ -145,7 +154,7 @@ USMCA seat-junk purge: phases 1–3b **committed** (fake bank 0, settlements 0, 
 
 - [ ] Wizard creates policy + bills in live Chrome (response pasted).
 - [ ] Policy `437539`: 35 units, `insured_value_cents` sum = **1,077,940.00**.
-- [ ] Policy `CIMD-2026-0720`: 14 units + 13 scheduled drivers.
+- [x] Policy `CIMD-2026-0720`: 14 units — DONE 2026-09-01, live count verified. Drivers (13 scheduled) still OPEN (Defect 5).
 - [ ] No duplicate unit, trailer, carrier, or policy created.
 - [ ] Every claim re-run as live query output pasted.
 
