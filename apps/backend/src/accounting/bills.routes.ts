@@ -40,7 +40,7 @@ const listBillsQuerySchema = companyQuerySchema.extend({
   vendor_id: z.string().trim().min(1).optional(),
   include_balance: z.coerce.boolean().optional(),
   has_balance: z.coerce.boolean().optional(),
-  status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all"]).optional(),
+  status: z.enum(["open", "partial", "paid", "voided", "unpaid", "active", "all", "posted"]).optional(),
   date_from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   date_to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   search: z.string().trim().max(200).optional(),

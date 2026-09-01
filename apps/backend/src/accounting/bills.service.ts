@@ -108,11 +108,32 @@ type ListVendorBalancesOptions = {
   sort: "balance_desc" | "balance_asc" | "vendor_asc";
 };
 
-type BillListStatus = BillStatus | "unpaid" | "active" | "all";
+type BillListStatus = BillStatus | "unpaid" | "active" | "all" | "posted";
+
+/** FLT-02 — GL-posted bills only (owner req 2.7); mirrors Expenses status=posted. */
+const BILL_POSTED_GL_EXISTS_SQL = `
+  EXISTS (
+    SELECT 1
+    FROM accounting.journal_entry_postings jep
+    JOIN accounting.journal_entries je
+      ON je.id = jep.journal_entry_uuid
+     AND je.operating_company_id = jep.operating_company_id
+    WHERE jep.operating_company_id = b.operating_company_id
+      AND jep.source_transaction_type = 'bill'
+      AND jep.source_transaction_id = b.id::text
+      AND je.status = 'posted'
+  )
+`;
 
 function applyBillListStatusFilter(where: string[], status: BillListStatus | undefined) {
   if (!status || status === "all") return;
   if (status === "active") {
+    where.push("b.revoked_at IS NULL");
+    where.push("b.status NOT IN ('void', 'voided')");
+    return;
+  }
+  if (status === "posted") {
+    where.push(BILL_POSTED_GL_EXISTS_SQL);
     where.push("b.revoked_at IS NULL");
     where.push("b.status NOT IN ('void', 'voided')");
     return;

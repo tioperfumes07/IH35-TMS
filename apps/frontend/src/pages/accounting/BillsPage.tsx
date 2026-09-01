@@ -224,11 +224,11 @@ export function BillsPage() {
   const [highlightedBillId, setHighlightedBillId] = useState<string | null>(() => deepLinkBillId);
   // RPT-155 / RPT-PAR-1: honor deep-link ?status=&vendor_id=&has_balance= so A/P Aging drill
   // (has_balance=true — includes partial) and legacy Pay-now unpaid land pre-filtered.
-  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided", "active", "all"]);
+  const STATUS_FILTER_VALUES = new Set(["unpaid", "partial", "paid", "voided", "active", "all", "posted"]);
   const initialStatus = searchParams.get("status");
-  const [status, setStatus] = useState<"" | BillStatus | "unpaid" | "active" | "all">(
+  const [status, setStatus] = useState<"" | BillStatus | "unpaid" | "active" | "all" | "posted">(
     initialStatus && STATUS_FILTER_VALUES.has(initialStatus)
-      ? (initialStatus as BillStatus | "unpaid" | "active" | "all")
+      ? (initialStatus as BillStatus | "unpaid" | "active" | "all" | "posted")
       : "active"
   );
   const hasBalance = searchParams.get("has_balance") === "true";
@@ -519,6 +519,7 @@ export function BillsPage() {
         },
       },
       {
+        // VIS-02 — void as first-class Status column (gear-togglable via ParityTable), not only filter text.
         key: "status",
         label: "Status",
         sortable: true,
@@ -701,6 +702,7 @@ export function BillsPage() {
           <SelectCombobox className="rounded-sm border border-gray-300 px-2 py-1" value={staged.draft.status} onChange={(e) => staged.setDraft({ ...staged.draft, status: e.target.value as typeof status })}>
             <option value="active">Active (hide voided)</option>
             <option value="all">All (include voided)</option>
+            <option value="posted">Posted (GL)</option>
             <option value="unpaid">Unpaid</option>
             <option value="partial">Partial</option>
             <option value="paid">Paid</option>

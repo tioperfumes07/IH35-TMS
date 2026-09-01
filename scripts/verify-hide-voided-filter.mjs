@@ -111,6 +111,36 @@ if (!/q\.status === "active"[\s\S]{0,200}i\.status NOT IN \('void', 'voided'\)/.
   failures.push("FLT-03: listInvoices must map status=active → hide voided invoices");
 }
 
+// VIS-02 — invoices Status column renders void as first-class badge (not raw string).
+if (!/VIS-02 — void as first-class Status column/.test(invoicesPage) || !/invoiceStatusBadge/.test(invoicesPage)) {
+  failures.push("VIS-02: InvoicesListPage must expose Status column with void badge render");
+}
+
+// VIS-02 — bills Status column comment + voided badge styling.
+if (!/VIS-02 — void as first-class Status column/.test(billsPage) || !/statusBadgeClass\(bill\.status\)/.test(billsPage)) {
+  failures.push("VIS-02: BillsPage must expose Status column with voided badge styling");
+}
+
+// FLT-02 — posted-only view in accounting list gear/filter (owner req 2.7).
+if (!/value: "posted", label: "Posted \(GL\)"/.test(invoicesPage)) {
+  failures.push("FLT-02: InvoicesListPage must expose Posted (GL) status filter option");
+}
+if (!/q\.status === "posted"[\s\S]{0,800}source_transaction_type = 'invoice'/.test(invRoutes)) {
+  failures.push("FLT-02: listInvoices must map status=posted → GL-posted invoices EXISTS");
+}
+if (!/value="posted">Posted \(GL\)/.test(billsPage)) {
+  failures.push("FLT-02: BillsPage must expose Posted (GL) status filter option");
+}
+if (!/status === "posted"[\s\S]{0,200}BILL_POSTED_GL_EXISTS_SQL/.test(billsSvc)) {
+  failures.push("FLT-02: listBills must map status=posted → GL-posted bills EXISTS");
+}
+if (!/status: z\.enum\(\[[^\]]*"posted"[^\]]*\]\)/.test(billsRoutes)) {
+  failures.push("FLT-02: listBillsQuerySchema must accept status=posted");
+}
+if (!/value: "posted", label: "Posted"/.test(expenses)) {
+  failures.push("FLT-02: ExpensesListPage must expose Posted status filter option");
+}
+
 if (failures.length) {
   console.error(`${LABEL} FAIL`);
   for (const f of failures) console.error(`- ${f}`);

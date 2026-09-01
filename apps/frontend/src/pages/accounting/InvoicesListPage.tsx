@@ -31,13 +31,14 @@ import { useUrlSort } from "../../hooks/useUrlSort";
 import { EntityPicker } from "../../components/parity/EntityPicker";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { StatusBadge } from "../../components/layout/StatusBadge";
 
 // INVOICE-LISTFILTER-01: real InvoiceStatus values go to the backend `status` param.
 // "with_balance" is a UI label for server-side has_balance=true (aging-compatible open AR).
 // "not_sent" remains a client-side derived filter over the fetched page (no server contract).
 // NOTE: QBO's "Viewed" filter is intentionally NOT offered — accounting.invoices has no read-receipt /
 // viewed_at tracking field, so a "Viewed" option would silently return nothing (do not fabricate).
-type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance" | "active";
+type InvoiceListFilter = "" | InvoiceStatus | "not_sent" | "with_balance" | "active" | "posted";
 
 const REAL_INVOICE_STATUSES: InvoiceStatus[] = ["draft", "sent", "partial", "paid", "void", "factored"];
 function isRealInvoiceStatus(value: string): value is InvoiceStatus {
@@ -51,6 +52,7 @@ const STATUS_OPTIONS: Array<{ value: InvoiceListFilter; label: string }> = [
   { value: "sent", label: "Sent" },
   { value: "partial", label: "Partial" },
   { value: "paid", label: "Paid" },
+  { value: "posted", label: "Posted (GL)" },
   { value: "void", label: "Void" },
   { value: "factored", label: "Factored" },
   { value: "not_sent", label: "Not sent" },
@@ -79,6 +81,22 @@ export function invoiceTotalCentsForAggregate(row: Pick<Invoice, "status" | "voi
   return Number(row.total_cents ?? 0) || 0;
 }
 
+/** VIS-02 — void as first-class Status column badge (gear-togglable via ParityTable). */
+export function invoiceStatusBadge(row: Pick<Invoice, "status" | "voided_at">) {
+  if (isVoidInvoice(row)) {
+    return <StatusBadge variant="neutral">voided</StatusBadge>;
+  }
+  const variant =
+    row.status === "paid"
+      ? "positive"
+      : row.status === "draft"
+        ? "info"
+        : row.status === "partial"
+          ? "warn"
+          : "neutral";
+  return <StatusBadge variant={variant}>{row.status}</StatusBadge>;
+}
+
 function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   customerId: string;
   status: InvoiceListFilter;
@@ -93,6 +111,7 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
   if (hasBalance) status = "with_balance";
   else if (statusRaw === "not_sent") status = "not_sent";
   else if (statusRaw === "active") status = "active";
+  else if (statusRaw === "posted") status = "posted";
   else if (statusRaw === "all") status = "";
   else if (isRealInvoiceStatus(statusRaw)) status = statusRaw;
   else if (statusRaw === "") status = "";
@@ -242,6 +261,8 @@ export function InvoicesListPage() {
         status:
           status === "active"
             ? "active"
+            : status === "posted"
+              ? "posted"
             : status === "" || status === "not_sent" || status === "with_balance"
               ? undefined
               : isRealInvoiceStatus(status)
@@ -359,7 +380,13 @@ export function InvoicesListPage() {
       },
       { key: "issue_date", label: "Issue", sortable: true, render: (row) => formatDateUS(row.issue_date) },
       { key: "due_date", label: "Due", sortable: true, render: (row) => formatDateUS(row.due_date) },
-      { key: "status", label: "Status", sortable: true },
+      {
+        // VIS-02 — void as first-class Status column (gear-togglable via ParityTable), not only filter text.
+        key: "status",
+        label: "Status",
+        sortable: true,
+        render: (row) => invoiceStatusBadge(row),
+      },
       {
         key: "source_load_chargeback_requested",
         label: "Chargeback flag",
