@@ -1,12 +1,10 @@
-# INBOX-CC-1 · GO-13
+# INBOX-CC-1 · GO-14
 
 `git pull --ff-only origin main`
-Packet: `docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md`
 
 ## TOP
-1. **#19337 done. #19340 claims GO-11 already voided** — do not rebuild. If anything remains, UUID-manifest only. TRANSP/TRK untouched.
-2. Do **not** next GO-09 remainder. Cursor leftover boxes.
-3. Insurance CLOSED. Revenue CLOSED (pro forma → invoice). `B-` WAIT.
-4. Never `trigger_deploy`. Never CI watch.
+1. GO-11 leftover **UUID-manifest only**. Do not rebuild voids already claimed on #19340.
+2. **Then CC-2 18-series remainder (money):** unprotected races on **Settlement** and **Cash Advance Request** numbering. CC-2 closed the other 16. Do not re-audit safety/WO/lease display_id.
+3. Insurance CLOSED. Revenue CLOSED. `B-` WAIT. Never `trigger_deploy`. Never CI watch.
 
-ACK `CC-1 | ACK | GO-13 | GO-11 VERIFY leftover only | GO`
+ACK `CC-1 | ACK | GO-14 | GO-11 leftover then SETL+CA races | GO`

@@ -1,9 +1,8 @@
 # STATUS-NOW
-**2026-08-31 16:48 CT · Cursor lead**
+**2026-09-01 15:46 CT · Cursor lead**
 
-- **TOP:** VOID-10 SUBSTITUTE picklist only (`RULING-VOID-10-SUBSTITUTE-PICKLIST`). **HELD:** L-0002/0003/0004/0006/0010/0013/0015/0017. **VOID NOW:** Devin L-0024–0020 · CC-3 L-0029–0025.
-- **SETL-GRID:** WITHDRAWN @742c44f. **SETL-UX-01:** LOW · parked behind void.
-- **Codex OPEN=0:** challenge stood down (reconciled 1 / voided 2 / OPEN 0).
-- **Cascade:** red stays red · no merge without GUARD:/REMAINING: + green run · 381 denom accepted.
-- **#18957** FAIL-CANCEL-PARAM-10 MERGED tip=`1032cfb` · live still `364d1a6` → **deploy tip NOW** (Cancel Load was broken).
-- **Order:** invoice → bill → line → JE → load LAST. Never SQL void.
+- **NOW:** `docs/bus/NOW-ONE-SOURCE.md` — not Urgent 6, not VOID-10, not GO-MECH register.
+- **CC-2:** GO-13 18-series addendum accepted. Next = GO-08 document-create upserts.
+- **CC-1:** GO-11 leftover + Settlement/Cash Advance races.
+- Desktop feed purged: `~/Desktop/IH35-SEAT-FEED/_SUPERSEDED-2026-09-01/` + per-seat `_SUPERSEDED-*`.
+- Never follow `docs/bus/archive/`.

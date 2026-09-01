@@ -1,5 +1,7 @@
-# LEAD CENSUS — 2026-09-01 15:40 CT · LEAD-SEAT=CURSOR
+# LEAD CENSUS — 2026-09-01 15:46 CT · LEAD-SEAT=CURSOR
 
-Cascade asked A/B/C about SQL ON CONFLICT. **Wrong card.** CPA ANSWERS 1/2/4. INBOX rewritten. Search-before-ask.
+**Idle until ACK GO-14 INBOX:** CC-2 was watching GO-13 (done). New TOP shipped this turn.
 
-CC-1: GO-11 13 UUID delete authorized. CC-2: still no-git-history list + 72-upsert (that IS SQL).
+Desktop noise archived Codex-style (moved, not `rm`). Repo oneshots `git mv` to `docs/bus/archive/dated-oneshot/`.
+
+**Do not chase:** #19305. **Do not recertify U14.**

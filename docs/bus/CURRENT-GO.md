@@ -1,6 +1,7 @@
 # CURRENT-GO
 
-**NOW:** `docs/bus/GO-MECHANICAL-REGISTER-2026-09-01.md` + `docs/bus/NOW-ONE-SOURCE.md`  
-**Register:** `docs/register/IH35-UI-MECHANICAL-FIX-REGISTER-2026-09-01.csv`
+**NOW:** `docs/bus/NOW-ONE-SOURCE.md` + `docs/bus/INBOX-<SEAT>.md` TOP
 
-No other GO is current. Dated GOs live under `docs/bus/archive/`.
+Packets: GO-12 (CPA + cleanup law) · GO-13 (status) · GO-11 leftover (CC-1 only)
+
+Dated GOs live under `docs/bus/archive/`. Do not follow `GO-MECHANICAL-REGISTER` from the bus root.

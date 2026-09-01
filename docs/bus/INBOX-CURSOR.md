@@ -1,7 +1,8 @@
-# INBOX-CURSOR · GO-13
+# INBOX-CURSOR · GO-14
 
 ## TOP
-1. Book Load UNTYPEABLE #19341 merged. API deploy `dep-dabjc72jnfac73bpph60`. Wait healthz ancestor `218c9fb`. Then leftover number boxes (driver bill / settlement / cash advance).
-2. Coordinate from GO-13. No CI babysit.
+1. Wake seats off GO-13 idle. CC-2 NOW = GO-08 document-create upserts.
+2. Leftover No. boxes: driver bill / settlement / cash advance.
+3. Do not babysit CI. Do not recertify U14.
 
 ACK in OUTBOX.

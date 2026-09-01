@@ -1,10 +1,10 @@
-# INBOX-CC-3 · GO-13
+# INBOX-CC-3 · GO-14
 
-Packet: `docs/lockdown/GO-13-24H-LIVE-STATUS-2026-09-01.md`
+`git pull --ff-only origin main`
 
 ## TOP
-1. Option 1 scratch only. Never docs/bus or docs/audit deletes.
-2. GO-04 #19309 and GO-06-ish #19308 already on main — leftover only, no rebuild.
-3. Then GO-05 leftover if any.
+1. Option 1 scratch only. Never delete `docs/bus` or `docs/audit`.
+2. Leftover **GO-04** then **GO-06** only — packets on Desktop `IH35-SEAT-FEED/CC-3/`. #19309 / #19308 already on main; no rebuild.
+3. SEARCH FIRST. Do not ask lead which GO is current.
 
-ACK `CC-3 | ACK | GO-13 | leftover GO-04/06 | GO`
+ACK `CC-3 | ACK | GO-14 | leftover GO-04/06 | GO`
