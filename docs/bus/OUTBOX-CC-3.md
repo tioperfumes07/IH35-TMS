@@ -362,3 +362,19 @@ Filed to `GUARD-WORKORDERS.md` and `QUEUE-CC-3.md`.
 - **T174, `156-provisional`** — remain genuinely blocked by the pre-existing `UNIT-ENTITY-SCOPE-NO-THIRD-PARTY-INSURANCE-VISIBILITY` finding (both 404 on `GET /api/v1/mdata/units/:id` under the USMCA session — `currently_leased_to_company_id` is TRANSP/NULL, not USMCA), already filed to GUARD-WORKORDERS and routed to CC-1 (needs a migration, outside my lane). Left unattached rather than route around via SQL/API.
 
 **Also fixed in passing, self-disclosed:** the main repo's working tree had `core.bare=true` set in its git config — a leftover corruption from an earlier `git worktree add` this session, which made every git command in the primary checkout fail with "this operation must be run in a work tree." Confirmed the directory holds a real working tree (not actually bare) before flipping `core.bare` back to `false`; no object data touched, purely a config fix, verified `git status`/`git log` work normally afterward. Flagging here rather than silently self-fixing without a record, since this could have blocked any other seat using this same clone.
+
+CC-3 | 2026-09-01 03:05Z | Recovered 3 lost findings from 2026-08-31's void-walk pass | GO
+
+Found an old worktree (push-worktree5) holding a real, never-merged commit from Aug 31 ~16:53 CT
+(same corruption class as the earlier insurance-COI recovery this session). Recovered the
+hand-authored findings only, into GUARD-WORKORDERS.md -- deliberately excluded the stale
+generated scoreboard files and the superseded QUEUE-CC-3.md diff (both would misrepresent current
+state if landed as-is a full day later). See GUARD-WORKORDERS.md for full text; short version:
+(1) INVOICE-JE-SINGLE-LINE-UNBALANCED-NO-CREDIT-LEG -- 29 of 39 invoice-linked JEs book-wide were
+single-line debit-only with no credit leg, blocking the void-picklist for both my 5 assigned
+loads and DEVIN-A's 5, routed CC-1; (2) INSURANCE-COI-REQUEST-MULTI-TYPE-MIGRATION-NEEDS-CC1 -- a
+fully-built, twice-validated insurance-request feature held on a branch because CC-3 can't author
+its own migration, routed CC-1; (3) GUARD-HOOKS-01 -- a fresh git worktree silently skips the
+pre-push hook (untracked .husky/_ absent), owner-graded MEDIUM (server CI still caught it), routed
+CC-2. All 3 are stated as their ORIGINAL Aug-31 status, not re-verified as still-current today --
+flagging that explicitly rather than implying they're live-open right now without a fresh check.

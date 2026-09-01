@@ -7702,3 +7702,79 @@ FLAG for owner/whoever owns Customers product decisions: which of Customers.tsx 
 is canonical, and what's the intended relationship between the two (one subsumes the other? two
 legitimately different views -- roster drawer vs full record -- that should each carry a DEFINED,
 not accidental, tab subset?).
+
+## 2026-08-31 (recovered 2026-09-01, lost to a corrupted worktree) — CC-3 void-walk findings
+
+**RECOVERY NOTE:** the 3 entries below were originally filed 2026-08-31 ~16:53 CT on a branch that
+never merged (a stray "init"-commit corruption + shared-worktree dirty-tree contamination stranded
+it, same root-cause class documented in the 00:53/01:15/01:20 entries earlier in this file).
+Recovered and landed here 2026-09-01 with the stale generated files (docs/audit/program-scoreboard.json,
+apps/frontend/src/pages/program/programScoreboard.data.ts) deliberately EXCLUDED from the recovery
+(they were the Aug-31 snapshot and would have clobbered everything regenerated since) — only the
+hand-authored findings text is restored. docs/bus/QUEUE-CC-3.md's own diff from that commit is
+ALSO excluded (that file is a live current-queue tracker, not an append-only log; its Aug-31 state
+is superseded by a full day of subsequent work and would misleadingly reopen already-resolved items).
+
+**FINDING — INVOICE-JE-SINGLE-LINE-UNBALANCED-NO-CREDIT-LEG (CC-3 2026-08-31, discovered live
+during the RULING-VOID-10-SUBSTITUTE-PICKLIST void walk):** attempting to void invoice
+`9af66179-caf0-4a96-ad99-edcd18443a25` (L-20260830-0028) through the live UI returned
+`void_reversal_requires_debit_and_credit` -- the void feature correctly refuses to construct a
+one-sided reversal. Live Neon read of `accounting.journal_entry_postings WHERE
+source_transaction_type='invoice' AND source_transaction_id=<that invoice>` returns exactly ONE
+row -- a single debit line for $4,900.00 to A/R, memo "Revrec Event 2 bill -- load L-20260830-0028
+-- A/R". No credit leg at all -- the Event 2 two-event revenue-recognition latch (DR A/R / CR
+Unbilled Revenue at completed_docs_received/POD) is posting only its debit half. Confirmed
+systemic, not a one-off: all 5 of CC-3's assigned picklist loads' invoices are single-line,
+debit-only, credits=0; all 5 of DEVIN-A's parallel picklist loads too. Widened to the whole book:
+**29 of 39 invoice-linked journal entries (74%) are single-line with credits=0.** Every one of
+these invoices is currently understating Unbilled Revenue in a way that would never balance the
+trial balance if summed -- the void feature's refusal is the only thing that caught this. Not
+fixed (money-posting/GL logic, outside CC-3's lane; patching a missing credit leg via SQL would be
+invented-money-math). Not routed around (Law 1 -- the UI's refusal is the defect signal, not an
+obstacle). Files: `accounting.journal_entry_postings` (29 of 39 invoice-linked JEs affected, live
+count); the revenue-recognition Event 2 poster (exact file not located, this is a finding+
+reproduction, not a code fix). Routed to CC-1 (money/GL lane). **Status as of the original filing:
+OPEN, blocks the void-picklist for both CC-3's and DEVIN-A's assigned loads until fixed.** Given a
+full day has passed since the original filing, whether this is still live/unfixed needs a fresh
+check before anyone acts on it as current -- recovered here for the historical record and so it
+is not permanently lost, not asserted as still-open today without re-verification.
+
+**HANDOFF — INSURANCE-COI-REQUEST-MULTI-TYPE-MIGRATION-NEEDS-CC1 (CC-3 2026-08-31):** built the
+full owner-authorized "insurance request" feature (customer COI + driver-add to insurer, one
+pipeline, `insurance.coi_request` extended additively, no second table, no second email sender)
+on branch `cc3-insurance-request-pipeline` -- backend routes/services/tests/guard all passed
+(tsc clean both apps, guard 13/13 selftest, 10/10 route tests, migration applied+verified twice
+against a real local ephemeral Postgres, full migration chain, never touched prod). Blocked on
+`verify-migration-lane-band.mjs`: CC-3-prefixed branches are hard-barred (`authorMigrations:
+false`) from authoring `db/migrations/202613310200_insurance_coi_request_multi_type_extend.sql`.
+The migration is additive-only (customer_id widened nullable, request_type/driver_id/unit_id
+added with a target-consistency CHECK, lifecycle vocabulary added to the status CHECK, sent_at/
+acknowledged_at/broker_email/email_queue_id added, docs.file_links.entity_type widened for
+'insurance_request' hub-linking) -- validated twice, idempotent, no hardcoded UUID. Files:
+`db/migrations/202613310200_insurance_coi_request_multi_type_extend.sql` (on branch
+`cc3-insurance-request-pipeline`, commit `97b17f394d` -- that branch's own current state, if it
+still exists, has not been re-checked as part of this recovery); dependent code:
+`apps/backend/src/insurance/coi.shared.ts`, `coi.service.ts`, `coi-send.service.ts` (new),
+`coi-request.routes.ts`, `apps/frontend/src/api/insurance.ts`,
+`apps/frontend/src/components/drivers/DriverInsuranceRequestPanel.tsx`. Routed to CC-1 (migration
+authorship). **Whether this feature has since been built/landed independently by another seat
+needs a fresh check** -- recovered for the record, not asserted as still-pending today.
+
+**FINDING (owner-graded MEDIUM, filed as GUARD-HOOKS-01, CC-3 2026-08-31):**
+`GUARD-HOOKS-01-SILENT-HOOK-SKIP-IN-FRESH-WORKTREE` -- a `git worktree add --detach` push
+succeeded with zero pre-push hook output (no typecheck, no money-pr-local-gate). Root cause:
+`core.hooksPath=.husky/_` is a relative path; `.husky/_` is untracked (generated by the `prepare:
+husky` npm script), so it never existed in the fresh worktree, and git silently found no hook
+script rather than erroring. Self-caught, not owner-caught: ran the full gate manually afterward
+in the properly-configured main directory against the same commit and it surfaced the migration-
+lane rejection above. Owner's grading, verbatim: "MEDIUM not critical -- verify-migration-lane-
+band.mjs is a real CI verify-step and ci.yml runs verify:pre-commit on pull_request, so the lane-
+band check is enforced server-side on the PR regardless of what the local hook did. An unvalidated
+BRANCH was pushed; unvalidated CODE could not have MERGED. The control held." Fix, per owner
+instruction: a tracked pre-push shim that fails loud ("run npm install") when `.husky/_` is
+absent, instead of silently no-op-ing. Files: `.husky/` (tracked) vs `.husky/_` (untracked,
+generated); `scripts/branch-precheck-push.mjs`. Routed to CC-2. **NOTE: this session's own
+worktree pattern (established after this finding, used for every branch this pass) explicitly
+copies `.husky/_` into each new worktree before running any gate or push specifically to avoid
+this exact silent-skip failure mode -- confirmed applied correctly throughout, not a live risk
+in this session's own work.**
