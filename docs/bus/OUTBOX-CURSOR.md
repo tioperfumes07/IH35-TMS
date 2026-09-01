@@ -1,2 +1,2 @@
-# OUTBOX-CURSOR · 2026-09-01 16:25 CT
-CURSOR | DEPLOY kicked IH35-TMS dep-dabk5fid0e5s739lhq5g fe9f16eeb3 | FE already building 8741a677 #19364 | INBOX Cascade/Devin/CC-3/CC-2 rewritten | CC-1 UUID still OPEN | GO
+# OUTBOX-CURSOR · 2026-09-01 16:32 CT
+CURSOR | VERIFIED live=fe9f16e main=56ecdf17 | CC-2 GO-ACCT-01 SUPERSEDED IDLE | CC-1 GO-11 CLOSED #19366 NOW=races | did not assign Aug-29 B-2/F7316 | GO

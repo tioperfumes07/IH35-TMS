@@ -1,2 +1,2 @@
-# FEED NOW — CC-2 · 2026-09-01 16:25 CT
-#19365 SUPERSEDED. #19359 closed. NOW=next OPEN CC-2 or IDLE. No leftover #4. GO.
+# FEED NOW — CC-2 · 2026-09-01 16:32 CT
+GO-ACCT-01 SUPERSEDED #19365 confirmed. IDLE. Do not hunt Aug-29 OPEN CC-2 rows. GO.

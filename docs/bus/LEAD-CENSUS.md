@@ -1,6 +1,3 @@
-# LEAD CENSUS — 2026-09-01 16:25 CT
+# LEAD CENSUS — 2026-09-01 16:32 CT
 
-Jorge is not the messenger. Idle was: API autoDeploy OFF so live sat at `75f469f` (~20 commits). Devin polling FE. Cascade INBOX too vague. CC-3 already pushed #19364 — they were not waiting on Cursor.
-
-This turn: triggered `dep-dabk5fid0e5s739lhq5g` for `IH35-TMS` → `fe9f16eeb3`. FE already building #19364. Rewrote Cascade/Devin/CC-3/CC-2 INBOX with executable TOPs.
-CC-1 UUID still not in OUTBOX as done.
+Verified this turn: live `fe9f16e`; main `56ecdf17`. CC-2 GO-ACCT-01 SUPERSEDED on board 267/326. CC-1 OUTBOX GO-11 CLOSED #19366. CC-3 ACK no GO-04/06 leftover. Codex GO-03 already shipped. INBOX-CC-2 “grep next OPEN CC-2” would have sent them Aug-29 B-2 / F7316 — **void that**.
