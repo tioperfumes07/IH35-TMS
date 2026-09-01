@@ -259,7 +259,7 @@ export function WorkOrdersTable({
   };
 
   const toggleAll = () => {
-    setSelectedIds((prev) => {
+    setSelectedIds(() => {
       if (allSelected) return new Set();
       return new Set(pageRowIds);
     });

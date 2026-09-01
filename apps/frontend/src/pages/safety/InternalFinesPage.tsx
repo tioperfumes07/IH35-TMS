@@ -257,7 +257,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
       ),
     },
     { key: "reason_code", label: "Reason", render: (row) => String(row.reason_code ?? row.reason_name ?? "—") },
-    { key: "amount", label: "Amount", render: (row) => formatUsd(row.amount) },
+    { key: "amount", label: "Amount", render: (row) => formatUsd(row.amount as string | number | null | undefined) },
     {
       key: "related_load_id",
       label: "Load",
@@ -540,7 +540,7 @@ export function InternalFinesPage({ operatingCompanyId }: Props) {
         title={lifecycleTarget?.action === "void" ? "Void Internal Fine" : "Dispute Internal Fine"}
         entityRef={
           lifecycleTarget
-            ? `${internalFineDisplayId(lifecycleTarget.row)} · ${formatUsd(lifecycleTarget.row.amount)} · ${formatDateUS(lifecycleTarget.row.imposed_date)}`
+            ? `${internalFineDisplayId(lifecycleTarget.row)} · ${formatUsd(lifecycleTarget.row.amount as string | number | null | undefined)} · ${formatDateUS(lifecycleTarget.row.imposed_date)}`
             : undefined
         }
         minLength={3}

@@ -475,7 +475,7 @@ export function DispatchBoard({
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
   const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
   const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
-  const [assignmentBandSorts, setAssignmentBandSorts] = useState<Record<"booked" | "assigned", SectionSort>>({});
+  const [assignmentBandSorts, setAssignmentBandSorts] = useState<Partial<Record<"booked" | "assigned", SectionSort>>>({});
   const bulk = useEntityBulkAction();
   const selection = useBulkSelection({
     cap: 200,
