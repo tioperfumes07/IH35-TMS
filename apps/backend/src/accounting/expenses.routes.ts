@@ -1422,13 +1422,30 @@ export async function registerExpenseRoutes(app: FastifyInstance) {
       const voided = await withCompanyScope(user.uuid, oci, async (client) => {
         let reversingJeId: string | null = null;
         if (pre.posting_status === "posted") {
-          const rev = await reversePostedSourceTransactionInClientTx(
-            client,
-            { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
-            { userId: String(user.uuid) },
-            todayIso()
-          );
-          reversingJeId = rev.journal_entry_id;
+          // EXP-POSTED-NO-JE-01 (owner-verified live 2026-09-01, expense 8a1b3d84-2cd5-4099-8c98-
+          // 4076cda163c7, $75.00): posting_status='posted' does not guarantee a posted batch exists
+          // to reverse -- this row had posted_at NULL, journal_entry_id NULL, and zero
+          // journal_entry_postings. reversePostedSourceTransactionInClientTx throws
+          // PostingEngineError("SOURCE_NOT_FOUND") in that case, correctly ("there is nothing to
+          // reverse"), but the route had no path forward: it is not this route's job to fake a
+          // reversal for a document that never actually posted. Voiding an unposted document is a
+          // status change plus an audit entry, nothing more -- caught here, specifically, so any
+          // OTHER posting-engine error (PERIOD_LOCKED, a real reversal failure) still fails loud
+          // through the outer catch below.
+          try {
+            const rev = await reversePostedSourceTransactionInClientTx(
+              client,
+              { operating_company_id: oci, source_transaction_type: "expense", source_transaction_id: expenseId },
+              { userId: String(user.uuid) },
+              todayIso()
+            );
+            reversingJeId = rev.journal_entry_id;
+          } catch (revErr) {
+            if (!(revErr instanceof PostingEngineError) || revErr.code !== "SOURCE_NOT_FOUND") throw revErr;
+            // Nothing posted -- fall through with reversingJeId still null. The UPDATE below still
+            // flips posting_status='posted' -> 'reversed' for consistency (it already claimed
+            // posted; 'reversed' is the honest terminal state), but no JE is invented.
+          }
         }
 
         await client.query(

@@ -4,6 +4,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withCurrentUser, withSavepoint, type SavepointQueryClient } from "../auth/db.js";
+import { afterCommitMark, afterCommitRollbackTo } from "../lib/after-commit.js";
 import { requireAuth } from "../auth/session-middleware.js";
 import { enforceBulkRateLimit, releaseBulkInFlight } from "./bulk-rate-limit.js";
 import type {
@@ -147,6 +148,25 @@ export async function appendBulkCrudAudit(
   );
 }
 
+/**
+ * EXP-POSTED-NO-JE-01 fix (b) — thrown when the pre-validation pass (atomicFailStop actions
+ * only) finds one or more rows that would fail the real run. Carries EVERY blocked row, not just
+ * the first, so the caller can report and let the user deselect them before resubmitting — the
+ * real pass never runs at all when this fires.
+ */
+export class BulkPreValidationError extends Error {
+  readonly code = "bulk_pre_validation_failed";
+  constructor(
+    readonly failures: BulkUpdateFailure[],
+    readonly attemptedCount: number
+  ) {
+    super(
+      `Bulk pre-validation blocked ${failures.length}/${attemptedCount} row(s): ${failures.map((f) => `${f.id} (${f.code})`).join(", ")}`
+    );
+    this.name = "BulkPreValidationError";
+  }
+}
+
 export class BulkFailStopError extends Error {
   readonly code = "bulk_fail_stop";
   constructor(
@@ -173,11 +193,50 @@ export async function processBulkPerId<TPayload>(
   const auditLogIds: string[] = [];
   const atomicFailStop = options.atomicFailStop === true;
 
+  if (atomicFailStop) {
+    // EXP-POSTED-NO-JE-01 fix (b) — owner-verified live 2026-09-01: fail-stop atomic is the
+    // right call for money (never a partial void batch), but running the real pass blind meant
+    // ONE unreversible row rolled back all 11 bills the owner selected — "0 of 11 succeeded; 1
+    // failed", discovered only by losing the whole batch, with no visibility into which OTHER
+    // rows (if any) would also have blocked. PRE-VALIDATE every row first, in a savepoint that is
+    // ALWAYS rolled back regardless of outcome (success or failure) — the identical handler, no
+    // duplicated per-action validation logic, just run once to find out and once for real. If
+    // ANY row would fail, report ALL of them (by id, with each one's own reason) and never touch
+    // the real pass at all — the caller can deselect the blocked rows and resubmit.
+    const preValidationFailures: BulkUpdateFailure[] = [];
+    for (let i = 0; i < ids.length; i += 1) {
+      const id = ids[i]!;
+      const probeSavepoint = `bulk_probe_${i}`;
+      const safeProbe = probeSavepoint.replace(/[^a-z0-9_]/gi, "_");
+      // Same after-commit-queue bookkeeping withSavepoint uses — a rolled-back probe must not
+      // leave a deferred money side-effect queued to fire after the real (later) COMMIT.
+      const mark = afterCommitMark(client);
+      await client.query(`SAVEPOINT ${safeProbe}`);
+      try {
+        const result = await handler({ ...baseCtx, id, client });
+        if (!result.ok) preValidationFailures.push({ id, code: result.code, message: result.message });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Bulk row processing failed";
+        preValidationFailures.push({ id, code: "E_INTERNAL", message });
+      } finally {
+        // Unconditional rollback — this pass never persists, success or failure alike.
+        await client.query(`ROLLBACK TO SAVEPOINT ${safeProbe}`).catch(() => {});
+        afterCommitRollbackTo(client, mark);
+      }
+    }
+    if (preValidationFailures.length > 0) {
+      throw new BulkPreValidationError(preValidationFailures, ids.length);
+    }
+  }
+
   for (let i = 0; i < ids.length; i += 1) {
     const id = ids[i]!;
 
     if (atomicFailStop) {
-      // No savepoint: first failure aborts the whole transaction (never a partial batch).
+      // No savepoint: first failure aborts the whole transaction (never a partial batch). Pre-
+      // validation above already confirmed every row passes, so this only fires on a genuine
+      // race (e.g. concurrent modification between the probe and the real pass) — a real
+      // fail-stop, correctly, not a discoverable-in-advance one.
       let result: BulkPerEntityResult;
       try {
         result = await handler({ ...baseCtx, id, client });
@@ -308,6 +367,20 @@ export function registerBulkRoute<TPayload>(options: RegisterBulkRouteOptions<TP
         };
         return reply.code(200).send(body);
       } catch (err) {
+        if (err instanceof BulkPreValidationError) {
+          const body: BulkUpdateResponse = {
+            requested: ids.length,
+            succeeded: [],
+            failed: err.failures,
+            audit_log_ids: [],
+            bulk_call_id: bulkCallId,
+          };
+          return reply.code(409).send({
+            ...body,
+            error: "bulk_pre_validation_failed",
+            message: err.message,
+          });
+        }
         if (err instanceof BulkFailStopError) {
           const body: BulkUpdateResponse = {
             requested: ids.length,
