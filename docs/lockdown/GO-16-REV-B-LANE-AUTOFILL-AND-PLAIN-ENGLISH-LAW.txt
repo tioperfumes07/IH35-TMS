@@ -1,0 +1,215 @@
+================================================================================
+GO-16 REV-B   LANE MILEAGE AUTO-FILL, CORRECTED
+              + THE PLAIN ENGLISH LAW FOR THE WHOLE APPLICATION
+SEATS: CC-1 (schema/API/seed) · CURSOR (UI) · CC-2 (verify) · CC-3 (data)
+DATE: 2026-09-01   SUPERSEDES: GO-16 REV-A
+SEED: lane mileage seed.csv — 3,375 rows, rebuilt clean
+ALSO: city alias review.csv — 63 name pairs needing a human eye
+SCOPE: USMCA only. Transportation and Trucking stay frozen.
+================================================================================
+
+OWNER LAW — reproduce at the top of every file you write
+  You do what the owner says, the first time, in the live app. You may question
+  ONCE, then execute. Empty is a question, not an answer. No "done" without proof.
+
+================================================================================
+PART 1 — THE PLAIN ENGLISH LAW. THIS IS NOT ABOUT MILEAGE. IT IS THE WHOLE APP.
+================================================================================
+OWNER RULING, 2026-09-01, effective everywhere immediately:
+
+  EVERYTHING AN OPERATOR SEES IS WRITTEN IN PROPER ENGLISH.
+  No underscores. No dashes standing in for spaces. No ALL CAPS data. No
+  machine names. No abbreviations nobody says out loud. Correct spelling and
+  correct capitalization, every screen, every column header, every dropdown,
+  every toast, every error, every export, every report.
+
+  WRONG on screen              RIGHT on screen
+    miles_practical              Practical miles
+    check_zip                    Check ZIP
+    trust_level=high             34 prior runs, median 456.7 miles
+    lane_history                 From load history
+    duplicate_document_number    That number is already used on invoice 13508
+    LAREDO, TX                   Laredo, TX
+    FORTH WORTH                  Fort Worth
+    is_sample_data               Sample data
+    operating_company_id         Company
+    delivered_pending_docs       Delivered, waiting on paperwork
+
+  Wire names stay wire names. `miles_practical` may live in the table and in the
+  JSON. It may NEVER print on a screen, in an export, on a PDF, or in a message
+  a person reads.
+
+  THIS APPLIES RETROACTIVELY. Every seat, on every screen you touch from now on,
+  fixes the labels in the same pull request as your feature. You do not open a
+  separate "labels" ticket. A screen you touched and left speaking machine is
+  not finished.
+
+  Data values obey it too. City names ship Title Case — "Fort Worth", never
+  "FORTH WORTH". Status words read as English. Enumerations display their
+  English label, never their stored token.
+
+================================================================================
+PART 2 — TWO CORRECTIONS I OWE. BOTH MINE.
+================================================================================
+CORRECTION 1 — "THE INVOICE USES PRACTICAL MILES" WAS WRONG.
+  GO-16 REV-A said practical miles are what we bill on. They are not. The owner
+  was explicit and Cursor was right to catch it:
+
+    THE CUSTOMER PAYS THE TYPED RATE. Destination plus rate is the booking.
+    Practical miles exist only to compute REVENUE PER MILE, so the lane can be
+    judged. Revenue per mile = line haul divided by PRACTICAL miles.
+    Short miles pay the driver. Empty miles live inside short.
+
+  Nothing about the invoice is computed from a mile count. Any seat that wires
+  billing to a mileage figure is building the wrong company's software.
+
+CORRECTION 2 — I OVERSTATED THE TEAM DEFECT.
+  I wrote that the settlement engine may be broken until this block lands. It is
+  not, and I did not verify before saying it. Live pay resolves through
+  `mdata.driver_teams`. The table I named, `team_settlement_splits`, is not in
+  this repo at all.
+
+  THE REAL P0 IS NARROWER AND STILL REAL:
+    Never rebuild lane statistics from Driver Pay divided by Driver R.P.M.
+    without the team flag. On a team load the rate is per driver and the pay is
+    the combined total, so the division doubles the miles. That is how Phenix
+    City to Laredo read 4,433 miles on a 1,358-mile trip in my first seed.
+  It is a rule about deriving statistics. It is not an accusation against the
+  settlement engine.
+
+================================================================================
+PART 3 — WHAT CHANGED IN THE SEED, AND WHY
+================================================================================
+Cursor's review was right on every substantive point. The seed is rebuilt.
+
+  DROPPED — 31 same-city rows. Laredo to Laredo showed 918.4 miles across 33
+  loads with a 4,402-mile spread. That is not a lane, it is local moves and
+  reloads mixed together. Never suggest it.
+
+  DROPPED — 5 rows whose origin and destination never parsed. One of them
+  carried a practical median of 3,860,510.6 miles. That was my error and it
+  would have been visible on a booking screen.
+
+  MERGED — 72 misspellings, automatically, only where one spelling outnumbers
+  the other at least three to one:
+     Forth Smith and Fort Simth -> Fort Smith        Gainsville -> Gainesville
+     Albertiville -> Albertville                     Savnnah -> Savannah
+     Hauppague and Hauppanage -> Hauppauge           Wilmintong -> Wilmington
+  Hauppauge went from 277 runs to 325 once its variants joined it. Those 48
+  loads were invisible to any exact-match lookup.
+
+  FLAGGED, NOT MERGED — 63 more name pairs are too close to call automatically.
+  They are in "city alias review.csv" with both spellings and both run counts.
+  A person decides. I will not silently rename a city on a pay basis.
+
+  STATE SUFFIX STRIPPED — "Fort Valley GA" became "Fort Valley", state GA.
+
+  TITLE CASE EVERYWHERE — per Part 1. Laredo, Fort Worth, Phenix City.
+
+  FINAL SEED: 3,375 lanes.  High 475 · Check ZIP 183 · Thin 2,717.
+  AUTO-FILL ALLOWED: 474 lanes.
+
+  ONE NUMBER IN CURSOR'S REVIEW IS OFF: it quoted Chicago to Laredo at 1,164.9
+  miles. The seed says 1,354.6 across 17 runs. Its point stands anyway — the
+  reverse direction carries 33.6 empty miles where the outbound carries none, so
+  short miles differ by 35. Reverse is a hint. It is never a silent swap.
+
+================================================================================
+PART 4 — BUILD. CURSOR'S ARCHITECTURE, WHICH IS BETTER THAN MINE.
+================================================================================
+DO NOT ADD A SECOND PAIR OF MILEAGE COLUMNS.
+  The load already carries `miles_practical` and `miles_shortest`. Book Load
+  already writes them, pay already reads `miles_shortest`, and `loaded_miles`
+  copies from shortest. A parallel pair is a dual write path and a future
+  reconciliation problem. Reuse what exists.
+
+  ADD ONLY:
+    mdata.loads.mileage_source          text
+    mdata.loads.mileage_variance_flag   boolean default false
+    mdata.loads.stop_count              text
+    mdata.load_stops.postal_code        text
+  Map the seed's names to the existing columns in the API layer, never in the
+  table.
+
+NEW TABLE — catalogs.lane_mileage, as specified in REV-A section 2, with these
+changes:
+    confidence          text  CHECK IN ('High','Check ZIP','Thin','Manual')
+    autofill_allowed    boolean NOT NULL DEFAULT false
+    source              text  CHECK IN ('History','Manual','Routing engine')
+  Values are stored in the English the operator reads. No tokens.
+  FORCED row level security, both partial unique indexes, verified with
+  pg_index — pg_constraint returns a false empty on partial indexes.
+
+AUTO-FILL RULE — the single most important line in this packet:
+    FILL ONLY WHERE autofill_allowed IS TRUE. 474 lanes.
+    Everything else shows the hint and leaves the boxes EMPTY.
+  Filling 1,353.7 for Chicago as though it were a surveyed number, when those
+  123 runs span 351 miles, teaches the dispatcher to trust a figure that is not
+  trustworthy. A typed value always wins and marks the field as operator entered.
+
+EXCLUDED FROM LOOKUP ENTIRELY:
+    same origin and destination city, and any lane with three or more runs and a
+    spread over 100 miles — 112 of them. They would look precise and be wrong.
+
+RESOLUTION ORDER, each labelled in plain English on screen:
+    ZIP match ......... "Matched by ZIP"
+    City match ........ "34 prior runs, median 456.7 miles"
+    Reverse lane ...... "From the reverse lane, 17 prior runs"
+    No match .......... "New lane. Enter the miles."
+
+THE LEARNING LOOP — unchanged from REV-A and still the point of the build. Every
+delivered single-stop load updates its lane. Multi-stop loads are skipped. A
+lane entered by hand becomes Thin at one run and High at three inside a 20-mile
+spread. Nobody maintains a spreadsheet.
+
+MILES STRIP LABELS — fix in the same pull request:
+    Practical miles ... used for revenue per mile
+    Short miles ....... what the driver is paid on, deadhead included
+    Empty miles ....... deadhead to the pickup
+    Revenue per mile .. line haul divided by practical miles
+  Delete the old "fuel and ETA" wording and delete the "PC*MILER is not
+  connected" note. Neither is true and both teach the wrong model.
+
+PC*MILER — do not wait for it. History first is correct for this company because
+the historical figures ARE the medians of what we actually ran. When it is
+connected later it arrives as source 'Routing engine', is compared against the
+lane median, and never silently replaces a number a customer already agreed.
+Version-lock the engine year at that point; contracts pin the version.
+
+================================================================================
+PART 5 — DEFINITION OF DONE
+================================================================================
+ 1. Seed loads 3,375 rows. Confidence 475 High, 183 Check ZIP, 2,717 Thin.
+    Auto-fill allowed on 474.
+ 2. pg_index output for both partial unique indexes and forced row level
+    security.
+ 3. Paste these rows exactly:
+      Laredo to Denton        34 runs   practical 456.7   short 452.2   High
+      Laredo to Fort Worth    10 runs   practical 439.0   short 430.9   High
+      Laredo to Chicago      123 runs   practical 1353.7  short 1339.1  Check ZIP
+      Phenix City to Laredo  368 runs   practical 1065.8  short 1324.1  empty 292.2
+ 4. Book Laredo to Denton. Screenshot both boxes filled and the line reading
+    "34 prior runs, median 456.7 miles". No machine words anywhere on screen.
+ 5. Book Laredo to Chicago. Screenshot the boxes EMPTY with "123 prior runs,
+    spread 351 miles. Enter ZIP to narrow."
+ 6. Confirm Laredo to Laredo returns no suggestion at all.
+ 7. Type a mileage over a filled suggestion. Show the typed value survives save.
+ 8. Screenshot the miles strip with the four corrected labels and revenue per
+    mile computing from practical miles.
+ 9. Grep the frontend for user-visible strings containing an underscore. Paste
+    the count. On the screens this block touches it must be zero.
+10. Confirm the seed created no loads, invoices, bills, expenses or journal
+    entries, and wrote to no money table.
+
+SEAT ORDER
+  CC-1     Schema, seed, lookup endpoint, learning loop, variance flag, tests.
+           One pull request. Seed committed with it.
+  CURSOR   Miles strip labels, auto-fill wiring, provenance line, plain English
+           sweep on Book Load. Then deploy.
+  CC-3     Work "city alias review.csv" — 63 pairs, a human decision each. Then
+           ZIP codes for the 183 Check ZIP lanes only. Never a default ZIP on
+           those; they are the ones a default cannot represent.
+  CC-2     Verify after merge. Reproduce every number in section 5 yourself. If
+           a figure in this packet does not reproduce, that is a finding against
+           ME and I want it filed.
+================================================================================

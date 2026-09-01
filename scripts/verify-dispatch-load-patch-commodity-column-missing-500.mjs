@@ -99,7 +99,7 @@ export function check(routesText, serviceText, mappingText, bookLoadText) {
 
   // 3) The CREATE path (book-load.service.ts) must actually persist commodity/weight_lbs — the
   // sibling silent-no-op this migration also fixes.
-  if (!/commodity, cargo_weight_lbs\s*\)/.test(bookLoadText)) {
+  if (!/commodity,\s*cargo_weight_lbs/.test(bookLoadText)) {
     failures.push(`${BOOK_LOAD_FILE} INSERT column list no longer includes commodity, cargo_weight_lbs`);
   }
   if (!bookLoadText.includes("input.commodity?.trim() || null")) {

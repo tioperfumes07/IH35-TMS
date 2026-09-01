@@ -42,6 +42,17 @@ vi.mock("../../../api/dispatch", async (importOriginal) => {
       ttl_seconds: 60,
     }),
     releaseDispatchLoadReservation: vi.fn().mockResolvedValue({ released: true }),
+    getLaneMileage: vi.fn().mockResolvedValue({
+      practical_miles: null,
+      short_miles: null,
+      empty_miles: null,
+      runs: 0,
+      autofill_allowed: false,
+      match: "New lane",
+      provenance: "New lane. Enter the miles.",
+      matched_lane_id: null,
+      source: null,
+    }),
   };
 });
 
@@ -80,9 +91,9 @@ describe("BookLoadModalV4", () => {
     expect(screen.getByText(/Drop rate confirmation PDF/)).toBeTruthy();
     expect(screen.getAllByText(/Expected adjustments/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Equipment · Driver · Trailer/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Stops · Miles/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Stops and miles/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Pre-dispatch validation/i)).toBeTruthy();
-    expect(screen.getByText(/Enter Shortest \(driver pay\)/i)).toBeTruthy();
+    expect(screen.getByText(/Enter destination and the customer rate/i)).toBeTruthy();
     await waitFor(() => {
       expect(screen.getByText(/L-20991231-0001/)).toBeTruthy();
     });
