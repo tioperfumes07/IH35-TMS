@@ -105,6 +105,7 @@ export type DispatchBoardProps = Omit<DispatchListProps, "showEtaColumn"> & {
 };
 
 type BoardMode = "list" | "table" | "assignment";
+type SectionSort = { key: string; direction: "asc" | "desc" };
 
 type BoardLoadExtras = {
   customer_wo_number?: string | null;
@@ -337,6 +338,23 @@ function dispatchSortValue(load: BoardLoad, key: string): string | number | null
   }
 }
 
+function matchesDispatchSectionFilter(load: BoardLoad, query: string): boolean {
+  const needle = query.trim().toLocaleLowerCase();
+  if (!needle) return true;
+  return [
+    load.load_number,
+    load.assigned_unit_number,
+    load.trailer_number,
+    load.assigned_primary_driver_name,
+    load.customer_name,
+    load.commodity,
+    load.first_pickup_city,
+    load.first_delivery_city,
+    load.customer_wo_number,
+    load.status,
+  ].some((value) => String(value ?? "").toLocaleLowerCase().includes(needle));
+}
+
 function statusVariant(status: DispatchLoadRow["status"]) {
   if (status === "cancelled") return "bg-red-100 text-red-700";
   if (status === "delivered") return "bg-slate-100 text-slate-700";
@@ -448,6 +466,8 @@ export function DispatchBoard({
   const [pendingTransition, setPendingTransition] = useState<string>(LOAD_TRANSITION_OPTIONS[0].value);
   const [rowOverrides, setRowOverrides] = useState<Record<string, RowOverride>>({});
   const [quickAssignLoad, setQuickAssignLoad] = useState<BoardLoad | null>(null);
+  const [sectionFilters, setSectionFilters] = useState<Record<string, string>>({});
+  const [sectionSorts, setSectionSorts] = useState<Record<string, SectionSort>>({});
   const bulk = useEntityBulkAction();
   const selection = useBulkSelection({
     cap: 200,
@@ -589,7 +609,8 @@ export function DispatchBoard({
   // open WO). Every active truck lands in exactly one place.
   const boardSections = useMemo(() => {
     const seenLoadIds = new Set<string>();
-    const dedupedLoads = sortedLoads.filter((load) => {
+    const sectionSource = isHistoryBoard ? sortedLoads : sortUnassignedFirst(effectiveLoads);
+    const dedupedLoads = sectionSource.filter((load) => {
       if (seenLoadIds.has(load.id)) return false;
       seenLoadIds.add(load.id);
       return true;
@@ -615,7 +636,31 @@ export function DispatchBoard({
               ? inShopRows
               : [],
     }));
-  }, [isHistoryBoard, unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads]);
+  }, [isHistoryBoard, unassignedUnits, inShopUnits, inShopUnitIds, sortedLoads, effectiveLoads]);
+
+  const visibleSectionRows = (sectionKey: string, rows: BoardLoad[]) => {
+    const filtered = rows.filter((row) => matchesDispatchSectionFilter(row, sectionFilters[sectionKey] ?? ""));
+    if (isHistoryBoard) return filtered;
+    const sectionSort = sectionSorts[sectionKey] ?? { key: dispatchSortKey, direction: dispatchSortDir };
+    if (!sectionSort.key) return filtered;
+    return [...filtered].sort((a, b) => {
+      const cmp = compareDispatch(dispatchSortValue(a, sectionSort.key), dispatchSortValue(b, sectionSort.key));
+      return sectionSort.direction === "asc" ? cmp : -cmp;
+    });
+  };
+
+  const toggleSectionSort = (sectionKey: string, columnKey: string) => {
+    setSectionSorts((current) => {
+      const prior = current[sectionKey] ?? { key: dispatchSortKey, direction: dispatchSortDir };
+      return {
+        ...current,
+        [sectionKey]: {
+          key: columnKey,
+          direction: prior.key === columnKey && prior.direction === "asc" ? "desc" : "asc",
+        },
+      };
+    });
+  };
 
   const from = totalCount === 0 ? 0 : offset + 1;
   const to = Math.min(offset + limit, totalCount);
@@ -1124,34 +1169,36 @@ export function DispatchBoard({
           >
             {(selectCtx) => (
               <table className="w-full text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
-                  <tr>
-                    <th className="w-10 px-2 py-2">
-                      <TableSelectionHeader
-                        selectedIds={selection.selectedIds}
-                        pageRowIds={pageRowIds}
-                        onSelectionChange={selection.setSelectedIds}
-                        onCapExceeded={(message) => pushToast(message, "error")}
-                      />
-                    </th>
-                    {columns.map((column) => (
-                      <TableHeaderCell
-                        key={column.key}
-                        columnKey={column.key}
-                        label={column.header}
-                        sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
-                        sortKey={dispatchSortKey}
-                        sortDir={dispatchSortDir}
-                        onToggleSort={toggleDispatchSort}
-                        width={dispatchColWidths[column.key]}
-                        onResize={setDispatchColWidth}
-                        draggable
-                        dragHandleProps={dragHandleProps(column.key)}
-                        dragOver={dragOverId === column.key}
-                      />
-                    ))}
-                  </tr>
-                </thead>
+                {isHistoryBoard ? (
+                  <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+                    <tr>
+                      <th className="w-10 px-2 py-2">
+                        <TableSelectionHeader
+                          selectedIds={selection.selectedIds}
+                          pageRowIds={pageRowIds}
+                          onSelectionChange={selection.setSelectedIds}
+                          onCapExceeded={(message) => pushToast(message, "error")}
+                        />
+                      </th>
+                      {columns.map((column) => (
+                        <TableHeaderCell
+                          key={column.key}
+                          columnKey={column.key}
+                          label={column.header}
+                          sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
+                          sortKey={dispatchSortKey}
+                          sortDir={dispatchSortDir}
+                          onToggleSort={toggleDispatchSort}
+                          width={dispatchColWidths[column.key]}
+                          onResize={setDispatchColWidth}
+                          draggable
+                          dragHandleProps={dragHandleProps(column.key)}
+                          dragOver={dragOverId === column.key}
+                        />
+                      ))}
+                    </tr>
+                  </thead>
+                ) : null}
                 <tbody>
                   {loading ? (
                     <tr>
@@ -1160,20 +1207,66 @@ export function DispatchBoard({
                       </td>
                     </tr>
                   ) : (
-                    // DISPATCH-REDESIGN Part C — three labeled sections inside ONE table so the
-                    // shared column sort/resize stays global across all rows. No load is dropped:
-                    // every row lands in exactly one section. In shop rows come from the live
-                    // maintenance fleet-table feed (read-only).
+                    // DSP-04 — every LIVE partition owns its filter and repeated sortable header.
+                    // Column order/width remain shared because they describe the same record shape;
+                    // row visibility and sort direction are section-local so operating one queue
+                    // cannot silently reorder or hide another queue.
                     boardSections.map((section) => {
-                      const rows = section.rows;
+                      const allRows = section.rows;
+                      const rows = visibleSectionRows(section.key, allRows);
+                      const sectionSort = sectionSorts[section.key] ?? { key: dispatchSortKey, direction: dispatchSortDir };
                       return (
                         <Fragment key={section.key}>
                           <tr className="border-b border-gray-200 bg-gray-100" data-testid={`dispatch-board-section-${section.key}`}>
-                            <td colSpan={columns.length + 1} className="px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-600">
-                              {section.title}
-                              <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">{rows.length}</span>
+                            <td colSpan={columns.length + 1} className="px-3 py-1.5">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
+                                  {section.title}
+                                  <span className="ml-2 rounded-full bg-white px-1.5 text-[10px] font-bold text-gray-500">
+                                    {rows.length}{rows.length === allRows.length ? "" : ` of ${allRows.length}`}
+                                  </span>
+                                </div>
+                                {!isHistoryBoard ? (
+                                  <label className="flex items-center gap-2 text-[10px] font-medium normal-case tracking-normal text-gray-600">
+                                    Filter {section.title}
+                                    <input
+                                      type="search"
+                                      value={sectionFilters[section.key] ?? ""}
+                                      onChange={(event) => setSectionFilters((current) => ({ ...current, [section.key]: event.target.value }))}
+                                      placeholder={`Search ${section.title.toLocaleLowerCase()}`}
+                                      className="w-48 rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-normal text-gray-900"
+                                      data-testid={`dispatch-board-filter-${section.key}`}
+                                    />
+                                  </label>
+                                ) : null}
+                              </div>
                             </td>
                           </tr>
+                          {!isHistoryBoard ? (
+                            <tr className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-600" data-testid={`dispatch-board-headers-${section.key}`}>
+                              <th className="w-10 px-2 py-2" aria-label={`${section.title} selection`}>
+                                <TableSelectionHeader
+                                  selectedIds={selection.selectedIds}
+                                  pageRowIds={rows.map((row) => row.id)}
+                                  onSelectionChange={selection.setSelectedIds}
+                                  onCapExceeded={(message) => pushToast(message, "error")}
+                                />
+                              </th>
+                              {columns.map((column) => (
+                                <TableHeaderCell
+                                  key={column.key}
+                                  columnKey={column.key}
+                                  label={column.header}
+                                  sortable={DISPATCH_SORTABLE_COLS.has(column.key)}
+                                  sortKey={sectionSort.key}
+                                  sortDir={sectionSort.direction}
+                                  onToggleSort={(columnKey) => toggleSectionSort(section.key, columnKey)}
+                                  width={dispatchColWidths[column.key]}
+                                  onResize={setDispatchColWidth}
+                                />
+                              ))}
+                            </tr>
+                          ) : null}
                           {section.key === "in_shop" && inShopUnitsQuery.isError ? (
                             <tr className="border-b border-gray-100">
                               <td colSpan={columns.length + 1} className="px-3 py-2">
@@ -1209,12 +1302,19 @@ export function DispatchBoard({
                             </tr>
                           ) : null}
                           {section.placeholder &&
-                          rows.length === 0 &&
+                          allRows.length === 0 &&
                           !(section.key === "in_shop" && inShopUnitsQuery.isError) &&
                           !(section.key === "awaiting" && unitsWithoutLoadQuery.isError) ? (
                             <tr className="border-b border-gray-100">
                               <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-400">
                                 {section.placeholder}
+                              </td>
+                            </tr>
+                          ) : null}
+                          {allRows.length > 0 && rows.length === 0 ? (
+                            <tr className="border-b border-gray-100">
+                              <td colSpan={columns.length + 1} className="px-3 py-2 text-[11px] italic text-gray-500">
+                                No {section.title.toLocaleLowerCase()} rows match this section filter.
                               </td>
                             </tr>
                           ) : null}

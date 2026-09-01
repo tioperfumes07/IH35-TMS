@@ -52,6 +52,29 @@ function preSettlementPanelReadIssues(content) {
   return issues;
 }
 
+function sectionControlIssues(content) {
+  const issues = [];
+  if (!content.includes('data-testid={`dispatch-board-headers-${section.key}`}')) {
+    issues.push("each live section must render its own column-header row");
+  }
+  if (!content.includes('data-testid={`dispatch-board-filter-${section.key}`}')) {
+    issues.push("each live section must render its own filter control");
+  }
+  if (!content.includes("visibleSectionRows(section.key, allRows)")) {
+    issues.push("each live section must derive its own visible row set");
+  }
+  if (!content.includes("toggleSectionSort(section.key, columnKey)")) {
+    issues.push("each live section header must update section-local sort state");
+  }
+  if (!/const \[sectionFilters, setSectionFilters\] = useState<Record<string, string>>\(\{\}\)/.test(content)) {
+    issues.push("section filters must be independent state keyed by section");
+  }
+  if (!/const \[sectionSorts, setSectionSorts\] = useState<Record<string, SectionSort>>\(\{\}\)/.test(content)) {
+    issues.push("section sorts must be independent state keyed by section");
+  }
+  return issues;
+}
+
 // 1. One shared column model, List and Table both alias it.
 if (!src.includes("const boardColumns")) fail("missing shared `boardColumns` model");
 if (!/const listColumns = boardColumns/.test(src)) fail("listColumns must alias boardColumns (List == Table grid)");
@@ -135,6 +158,7 @@ if (/Showing \{from\}-\{to\} of \{totalCount\}\s*<\/(div|span)>/.test(src)) {
 
 for (const issue of preSettlementReadIssues(src)) fail(issue);
 for (const issue of preSettlementPanelReadIssues(panelSrc)) fail(issue);
+for (const issue of sectionControlIssues(src)) fail(issue);
 
 if (process.argv.includes("--selftest")) {
   const mutants = [
@@ -160,7 +184,18 @@ if (process.argv.includes("--selftest")) {
   if (!panelMutants.every((mutant) => preSettlementPanelReadIssues(mutant).length > 0)) {
     fail("selftest mutation escaped pre-settlement panel read-honesty guard");
   }
-  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 7/7 read-honesty defects caught");
+  const sectionMutants = [
+    src.replace('data-testid={`dispatch-board-headers-${section.key}`}', 'data-testid="dispatch-board-headers"'),
+    src.replace('data-testid={`dispatch-board-filter-${section.key}`}', 'data-testid="dispatch-board-filter"'),
+    src.replace("visibleSectionRows(section.key, allRows)", "allRows"),
+    src.replace("toggleSectionSort(section.key, columnKey)", "toggleDispatchSort(columnKey)"),
+    src.replace("const [sectionFilters, setSectionFilters]", "const [filters, setSectionFilters]"),
+    src.replace("const [sectionSorts, setSectionSorts]", "const [sorts, setSectionSorts]"),
+  ];
+  if (!sectionMutants.every((mutant) => sectionControlIssues(mutant).length > 0)) {
+    fail("selftest mutation escaped DSP-04 per-section control guard");
+  }
+  console.log("PASS verify-dispatch-board-sections-and-columns SELFTEST — 13/13 defects caught");
 }
 
 console.log("PASS verify-dispatch-board-sections-and-columns");
