@@ -126,51 +126,74 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
         </div>
       ) : null}
       {editable ? (
-        <form
-          className="flex flex-wrap items-end gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!documentTypeId) return;
-            createMutation.mutate({
-              companyId,
-              driverId,
-              documentTypeId,
-              effectiveDate,
-              expiryDate,
-              executedAt,
-              removableAfter,
-              retainUntil,
-              generation: scopeGenerationRef.current,
-            });
-          }}
+        <section
+          className="rounded-sm border border-slate-200 bg-slate-50 p-3"
+          aria-labelledby="dqf-create-checklist-heading"
+          data-testid="dqf-create-checklist-form"
         >
-          <div className="min-w-[280px] text-xs text-slate-600">
-            <label htmlFor="dqf-required-document-type">Required document type</label>
-            <Combobox
-              id="dqf-required-document-type"
-              className="mt-1"
-              options={(documentTypesQ.data ?? []).map((type) => ({ value: type.id, label: type.label, sublabel: type.authority ?? undefined }))}
-              value={documentTypeId}
-              onChange={setDocumentTypeId}
-              loading={documentTypesQ.isLoading}
-              error={documentTypesQ.isError ? "Could not load required document types" : undefined}
-              clearCommittedOnEdit
-              placeholder="Select required document type"
-            />
+          <div className="mb-2 space-y-1">
+            <h3 id="dqf-create-checklist-heading" className="text-xs font-semibold text-slate-900">
+              Add DQF checklist item
+            </h3>
+            <p id="dqf-create-checklist-help" className="text-[11px] text-slate-600">
+              Pick a required document type from the 49 CFR catalog below. Dates are optional. The button stays disabled until a catalog row is selected — it is not a free-text item name.
+            </p>
           </div>
-          <label className="block text-xs text-slate-600">Effective<DatePicker className="mt-1 w-36" value={effectiveDate} onChange={setEffectiveDate} /></label>
-          <label className="block text-xs text-slate-600">Expiry<DatePicker className="mt-1 w-36" value={expiryDate} onChange={setExpiryDate} /></label>
-          <label className="block text-xs text-slate-600">Executed<DatePicker className="mt-1 w-36" value={executedAt} onChange={setExecutedAt} /></label>
-          <label className="block text-xs text-slate-600">Removable after<DatePicker className="mt-1 w-36" value={removableAfter} onChange={setRemovableAfter} /></label>
-          <label className="block text-xs text-slate-600">Retain until<DatePicker className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
-          <button
-            type="submit"
-            className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
-            disabled={createMutation.isPending || !documentTypeId || documentTypesQ.isError}
+          <form
+            className="flex flex-wrap items-end gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!documentTypeId) return;
+              createMutation.mutate({
+                companyId,
+                driverId,
+                documentTypeId,
+                effectiveDate,
+                expiryDate,
+                executedAt,
+                removableAfter,
+                retainUntil,
+                generation: scopeGenerationRef.current,
+              });
+            }}
           >
-            + Create checklist item
-          </button>
-        </form>
+            <div className="min-w-[280px] text-xs text-slate-600">
+              <label htmlFor="dqf-required-document-type">Required document type</label>
+              <Combobox
+                id="dqf-required-document-type"
+                className="mt-1"
+                options={(documentTypesQ.data ?? []).map((type) => ({ value: type.id, label: type.label, sublabel: type.authority ?? undefined }))}
+                value={documentTypeId}
+                onChange={setDocumentTypeId}
+                loading={documentTypesQ.isLoading}
+                error={documentTypesQ.isError ? "Could not load required document types" : undefined}
+                clearCommittedOnEdit
+                placeholder="Search catalog — Application, MVR, Road test…"
+                aria-describedby="dqf-create-checklist-help"
+              />
+            </div>
+            <label className="block text-xs text-slate-600">Effective<DatePicker className="mt-1 w-36" value={effectiveDate} onChange={setEffectiveDate} /></label>
+            <label className="block text-xs text-slate-600">Expiry<DatePicker className="mt-1 w-36" value={expiryDate} onChange={setExpiryDate} /></label>
+            <label className="block text-xs text-slate-600">Executed<DatePicker className="mt-1 w-36" value={executedAt} onChange={setExecutedAt} /></label>
+            <label className="block text-xs text-slate-600">Removable after<DatePicker className="mt-1 w-36" value={removableAfter} onChange={setRemovableAfter} /></label>
+            <label className="block text-xs text-slate-600">Retain until<DatePicker className="mt-1 w-36" value={retainUntil} onChange={setRetainUntil} /></label>
+            <button
+              type="submit"
+              className="rounded-sm bg-slate-800 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+              disabled={createMutation.isPending || !documentTypeId || documentTypesQ.isError}
+              aria-describedby="dqf-create-checklist-help"
+              data-testid="dqf-create-checklist-item"
+              title={documentTypeId ? undefined : "Select a required document type from the catalog first"}
+            >
+              + Create checklist item
+            </button>
+          </form>
+          {!documentTypeId && !documentTypesQ.isLoading && !documentTypesQ.isError ? (
+            <p className="mt-2 text-[11px] text-slate-500" data-testid="dqf-create-checklist-pick-hint">
+              Select a catalog document type to enable Create.
+            </p>
+          ) : null}
+        </section>
       ) : null}
 
       {mutationError ? (

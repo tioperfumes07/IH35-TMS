@@ -48,6 +48,25 @@ function assertMigrated(src) {
   if (!/patchMutation\.mutate\(\{[\s\S]*?id:\s*item\.id,[\s\S]*?status,[\s\S]*?companyId,[\s\S]*?driverId,[\s\S]*?generation:\s*scopeGenerationRef\.current[\s\S]*?\}\)/.test(src)) {
     errors.push(`${PANEL}: must preserve DQF status actions`);
   }
+  // DQF-01 — catalog-backed create affordance (not free-text item name).
+  if (!src.includes('data-testid="dqf-create-checklist-form"')) {
+    errors.push(`${PANEL}: must expose a labeled DQF create form region`);
+  }
+  if (!src.includes('data-testid="dqf-create-checklist-item"')) {
+    errors.push(`${PANEL}: must expose a stable Create checklist item control`);
+  }
+  if (!src.includes("listRequiredDocumentTypes")) {
+    errors.push(`${PANEL}: must load required document types from catalog API`);
+  }
+  if (!src.includes("required_document_type_id")) {
+    errors.push(`${PANEL}: create payload must bind required_document_type_id FK`);
+  }
+  if (!src.includes('data-testid="dqf-create-checklist-pick-hint"')) {
+    errors.push(`${PANEL}: must explain why Create stays disabled until catalog pick`);
+  }
+  if (/placeholder="[^"]*item name/i.test(src)) {
+    errors.push(`${PANEL}: must not use free-text item-name placeholder (catalog pick only)`);
+  }
 
   return errors;
 }
@@ -77,6 +96,11 @@ function selftest() {
     const driverId = "driver-1";
     const scopeGenerationRef = { current: 1 };
     patchMutation.mutate({ id: item.id, status, companyId, driverId, generation: scopeGenerationRef.current });
+    data-testid="dqf-create-checklist-form"
+    data-testid="dqf-create-checklist-item"
+    data-testid="dqf-create-checklist-pick-hint"
+    listRequiredDocumentTypes(companyId, "driver")
+    required_document_type_id: input.documentTypeId
   `;
   const bad = `<table><thead><tr><th>Item</th></tr></thead></table>`;
   const goodErrors = assertMigrated(good);
